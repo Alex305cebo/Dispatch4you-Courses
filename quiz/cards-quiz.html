@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎯 Dispatcher Cards - Квиз</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #000000;
+  color: #ffffff;
+  min-height: 100vh;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+body::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.15) 0%, transparent 50%);
+  animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.user-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 100px;
+  margin-bottom: 20px;
+}
+
+.stats {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+.card-container {
+  perspective: 1000px;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  width: 100%;
+  max-width: 500px;
+  min-height: 400px;
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 48px 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  transition: transform 0.3s;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+
+.card:hover {
+  transform: translateY(-8px);
+}
+
+.card.swipe-left {
+  animation: swipeLeft 0.5s forwards;
+}
+
+.card.swipe-right {
+  animation: swipeRight 0.5s forwards;
+}
+
+@keyframes swipeLeft {
+  to {
+    transform: translateX(-150%) rotate(-30deg);
+    opacity: 0;
+  }
+}
+
+@keyframes swipeRight {
+  to {
+    transform: translateX(150%) rotate(30deg);
+    opacity: 0;
+  }
+}
+
+.card-number {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.question {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.answers {
+  display: grid;
+  gap: 12px;
+}
+
+.answer-btn {
+  padding: 16px 24px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: left;
+}
+
+.answer-btn:hover {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.5);
+  transform: translateX(8px);
+}
+
+.swipe-hint {
+  text-align: center;
+  margin-top: 32px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.result-screen {
+  display: none;
+  text-align: center;
+  padding: 60px 40px;
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+}
+
+.result-score {
+  font-size: 72px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 20px;
+}
+
+.result-text {
+  font-size: 24px;
+  margin-bottom: 40px;
+  color: #94a3b8;
+}
+
+.result-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-decoration: none;
+  display: inline-block;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  color: white;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 32px 24px;
+    min-height: 350px;
+  }
+  
+  .question {
+    font-size: 20px;
+  }
+  
+  .result-score {
+    font-size: 56px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="user-info">
+      <span>👤</span>
+      <span id="username"></span>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-value" id="current-question">1</div>
+      <div class="stat-label">Вопрос</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="correct-count">0</div>
+      <div class="stat-label">Правильно</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="wrong-count">0</div>
+      <div class="stat-label">Ошибок</div>
+    </div>
+  </div>
+
+  <div class="card-container" id="card-container">
+    <div class="card" id="current-card">
+      <div class="card-number" id="card-number">1/15</div>
+      <div class="question" id="question"></div>
+      <div class="answers" id="answers"></div>
+      <div class="swipe-hint">Выберите ответ</div>
+    </div>
+  </div>
+
+  <div class="result-screen" id="result-screen">
+    <div class="result-score" id="result-score"></div>
+    <div class="result-text" id="result-text"></div>
+    <div class="result-buttons">
+      <button class="btn btn-primary" onclick="location.reload()">🔄 Пройти снова</button>
+      <a href="difficulty-select.html" class="btn btn-secondary">← Выбрать сложность</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const username = urlParams.get('name') || localStorage.getItem('dispatcher_username') || 'Гость';
+const difficulty = urlParams.get('difficulty') || localStorage.getItem('dispatcher_difficulty') || 'easy';
+
+document.getElementById('username').textContent = username;
+
+const questions = {
+  easy: [
+    { q: "Что означает BOL?", a: ["Bill of Lading", "Book of Loads", "Broker Online", "Basic License"], correct: 0 },
+    { q: "Что такое Dry Van?", a: ["Рефрижератор", "Закрытый фургон", "Платформа", "Цистерна"], correct: 1 },
+    { q: "Что означает Deadhead?", a: ["Груз просрочен", "Поездка без груза", "Отмена", "Поломка"], correct: 1 },
+    { q: "Что такое Reefer?", a: ["Платформа", "Рефрижератор", "Цистерна", "Контейнер"], correct: 1 },
+    { q: "Что означает MC Number?", a: ["Motor Carrier Number", "Main Contract", "Max Capacity", "Maintenance Cert"], correct: 0 },
+    { q: "Что такое Detention?", a: ["Отмена", "Плата за задержку", "Штраф", "Страховка"], correct: 1 },
+    { q: "Что такое Flatbed?", a: ["Фургон", "Открытая платформа", "Рефрижератор", "Цистерна"], correct: 1 },
+    { q: "Что означает DOT?", a: ["Department of Transportation", "Driver Test", "Delivery Time", "Document Transfer"], correct: 0 },
+    { q: "Что такое Lumper Fee?", a: ["Топливо", "Погрузка/разгрузка", "Повреждение", "Комиссия"], correct: 1 },
+    { q: "Что означает TONU?", a: ["New Use", "Truck Ordered Not Used", "Number Updated", "Order Unified"], correct: 1 },
+    { q: "Что такое Step Deck?", a: ["Двухэтажный", "Пониженная платформа", "Фургон", "Рефрижератор"], correct: 1 },
+    { q: "Что означает Backhaul?", a: ["Возврат", "Груз на обратном пути", "Отмена", "Допогрузка"], correct: 1 },
+    { q: "Что такое Power Only?", a: ["Электроника", "Только тягач", "Экспресс", "Батареи"], correct: 1 },
+    { q: "Что означает Layover?", a: ["Перегрузка", "Остановка на ночь", "Отмена", "Страховка"], correct: 1 },
+    { q: "Что такое Hot Shot?", a: ["Высокая температура", "Срочная доставка", "Опасный груз", "Оружие"], correct: 1 }
+  ],
+  medium: [
+    ...Array(30).fill(null).map((_, i) => ({
+      q: `Вопрос средней сложности ${i + 1}`,
+      a: ["Вариант A", "Вариант B", "Вариант C", "Вариант D"],
+      correct: Math.floor(Math.random() * 4)
+    }))
+  ],
+  hard: [
+    ...Array(50).fill(null).map((_, i) => ({
+      q: `Сложный вопрос ${i + 1}`,
+      a: ["Вариант A", "Вариант B", "Вариант C", "Вариант D"],
+      correct: Math.floor(Math.random() * 4)
+    }))
+  ]
+};
+
+let currentIndex = 0;
+let correctCount = 0;
+let wrongCount = 0;
+const quizQuestions = questions[difficulty];
+
+function loadQuestion() {
+  if (currentIndex >= quizQuestions.length) {
+    showResults();
+    return;
+  }
+
+  const q = quizQuestions[currentIndex];
+  document.getElementById('question').textContent = q.q;
+  document.getElementById('card-number').textContent = `${currentIndex + 1}/${quizQuestions.length}`;
+  document.getElementById('current-question').textContent = currentIndex + 1;
+  
+  const answersContainer = document.getElementById('answers');
+  answersContainer.innerHTML = q.a.map((answer, index) => `
+    <button class="answer-btn" onclick="checkAnswer(${index})">${answer}</button>
+  `).join('');
+}
+
+function checkAnswer(selected) {
+  const q = quizQuestions[currentIndex];
+  const card = document.getElementById('current-card');
+  
+  if (selected === q.correct) {
+    correctCount++;
+    card.classList.add('swipe-right');
+  } else {
+    wrongCount++;
+    card.classList.add('swipe-left');
+  }
+  
+  document.getElementById('correct-count').textContent = correctCount;
+  document.getElementById('wrong-count').textContent = wrongCount;
+  
+  setTimeout(() => {
+    card.classList.remove('swipe-left', 'swipe-right');
+    currentIndex++;
+    loadQuestion();
+  }, 500);
+}
+
+function showResults() {
+  document.getElementById('card-container').style.display = 'none';
+  const resultScreen = document.getElementById('result-screen');
+  const percentage = Math.round((correctCount / quizQuestions.length) * 100);
+  
+  document.getElementById('result-score').textContent = percentage + '%';
+  
+  if (percentage >= 90) {
+    document.getElementById('result-text').textContent = '🎉 Отлично! Вы профессионал!';
+  } else if (percentage >= 70) {
+    document.getElementById('result-text').textContent = '👍 Хорошо! Продолжайте практиковаться.';
+  } else if (percentage >= 50) {
+    document.getElementById('result-text').textContent = '📚 Неплохо, но есть куда расти.';
+  } else {
+    document.getElementById('result-text').textContent = '💪 Нужно больше практики!';
+  }
+  
+  resultScreen.style.display = 'block';
+}
+
+loadQuestion();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вход | Курсы Диспетчера</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --primary: #6366f1; --secondary: #8b5cf6; --accent: #ec4899;
+  --bg-dark: #0f172a; --bg-darker: #020617;
+  --text-primary: #f1f5f9; --text-secondary: #94a3b8; --text-muted: #64748b;
+}
+[data-theme="light"] {
+  --bg-dark: #ffffff; --bg-darker: #f8fafc;
+  --text-primary: #0f172a; --text-secondary: #475569;
+}
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-darker);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+.container { position: relative; z-index: 1; max-width: 480px; width: 100%; padding: 0 24px; }
+.login-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 32px;
+  padding: 48px;
+  backdrop-filter: blur(20px);
+}
+.logo-section {
+  text-align: center;
+  margin-bottom: 40px;
+}
+.logo-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+.logo-text {
+  font-size: 28px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.login-title {
+  font-size: 32px;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 8px;
+}
+.login-subtitle {
+  text-align: center;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+}
+.form-group {
+  margin-bottom: 24px;
+}
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+.form-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  transition: all 0.3s;
+}
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+.form-input::placeholder {
+  color: var(--text-muted);
+}
+.forgot-password {
+  text-align: right;
+  margin-bottom: 24px;
+}
+.forgot-password a {
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: color 0.3s;
+}
+.forgot-password a:hover {
+  color: var(--secondary);
+}
+.btn-submit {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.btn-submit::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+.btn-submit:hover::before {
+  left: 100%;
+}
+.btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(99, 102, 241, 0.4);
+}
+.divider {
+  text-align: center;
+  margin: 32px 0;
+  position: relative;
+}
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+.divider span {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0 16px;
+  position: relative;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.social-login {
+  display: grid;
+  gap: 12px;
+}
+.btn-social {
+  width: 100%;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.btn-social:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+.signup-link {
+  text-align: center;
+  margin-top: 32px;
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+.signup-link a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 700;
+  transition: color 0.3s;
+}
+.signup-link a:hover {
+  color: var(--secondary);
+}
+.back-home {
+  text-align: center;
+  margin-top: 24px;
+}
+.back-home a {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.3s;
+}
+.back-home a:hover {
+  color: var(--text-primary);
+}
+@media (max-width: 768px) {
+  .login-card {
+    padding: 32px 24px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="login-card">
+    <div class="logo-section">
+      <div class="logo-icon">🎓</div>
+      <div class="logo-text">Курсы Диспетчера</div>
+    </div>
+
+    <h1 class="login-title">Вход</h1>
+    <p class="login-subtitle">Добро пожаловать! Войдите в свой аккаунт</p>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" placeholder="your@email.com" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Пароль</label>
+        <input type="password" class="form-input" placeholder="••••••••" required>
+      </div>
+
+      <div class="forgot-password">
+        <a href="#">Забыли пароль?</a>
+      </div>
+
+      <button type="submit" class="btn-submit">Войти</button>
+    </form>
+
+    <div class="divider">
+      <span>или войти через</span>
+    </div>
+
+    <div class="social-login">
+      <div id="googleSignInButton"></div>
+      <button class="btn-social" id="facebookBtn">
+        <span>📘</span>
+        <span>Продолжить с Facebook</span>
+      </button>
+    </div>
+
+    <div class="signup-link">
+      Нет аккаунта? <a href="register.html">Зарегистрироваться</a>
+    </div>
+
+    <div class="back-home">
+      <a href="index.html">← Вернуться на главную</a>
+    </div>
+  </div>
+</div>
+
+<script>
+// Google Sign-In Configuration
+const GOOGLE_CLIENT_ID = '1234567890-abcdefghijklmnopqrstuvwxyz123456.apps.googleusercontent.com'; // Замените на ваш Client ID
+
+// Инициализация Google Sign-In
+function initGoogleSignIn() {
+  if (typeof google !== 'undefined') {
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleGoogleSignIn,
+      auto_select: false,
+      cancel_on_tap_outside: true
+    });
+
+    google.accounts.id.renderButton(
+      document.getElementById('googleSignInButton'),
+      { 
+        theme: 'filled_blue',
+        size: 'large',
+        width: '100%',
+        text: 'continue_with',
+        locale: 'ru'
+      }
+    );
+  }
+}
+
+// Обработка Google Sign-In
+async function handleGoogleSignIn(response) {
+  try {
+    const res = await fetch('http://localhost:3000/api/auth/google', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        credential: response.credential
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      // Сохраняем токен
+      localStorage.setItem('authToken', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
+      alert('Вход через Google успешен! Добро пожаловать, ' + data.user.firstName + '!');
+
+      // Перенаправляем в личный кабинет
+      window.location.href = 'dashboard.html';
+    } else {
+      alert('Ошибка: ' + data.message);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Ошибка подключения к серверу. Убедитесь, что сервер запущен (npm start)');
+  }
+}
+
+// Инициализация при загрузке страницы
+window.addEventListener('load', function() {
+  // Даём время на загрузку Google SDK
+  setTimeout(initGoogleSignIn, 500);
+});
+
+// Обработка формы входа
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const form = e.target;
+  const email = form.querySelector('input[type="email"]').value;
+  const password = form.querySelector('input[type="password"]').value;
+  const submitBtn = form.querySelector('.btn-submit');
+  
+  // Отключаем кнопку во время отправки
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Вход...';
+  
+  try {
+    const response = await fetch('http://localhost:3000/api/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: email,
+        password: password
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Сохраняем токен
+      localStorage.setItem('authToken', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      
+      alert('Вход выполнен успешно! Добро пожаловать, ' + data.user.firstName + '!');
+      
+      // Перенаправляем в личный кабинет
+      window.location.href = 'dashboard.html';
+    } else {
+      alert('Ошибка: ' + data.message);
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Войти';
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Ошибка подключения к серверу. Убедитесь, что сервер запущен (npm start)');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Войти';
+  }
+});
+
+// Обработка Facebook кнопки
+document.getElementById('facebookBtn').addEventListener('click', function() {
+  alert('Авторизация через Facebook будет доступна в следующей версии');
+});
+</script>
+
+</body>
+</html>

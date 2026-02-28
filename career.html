@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Карьера | Курсы Диспетчера</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --primary: #6366f1; --secondary: #8b5cf6; --accent: #ec4899;
+  --bg-dark: #0f172a; --bg-darker: #020617;
+  --text-primary: #f1f5f9; --text-secondary: #94a3b8; --text-muted: #64748b;
+}
+[data-theme="light"] {
+  --bg-dark: #ffffff; --bg-darker: #f8fafc;
+  --text-primary: #0f172a; --text-secondary: #475569;
+}
+body { font-family: 'Inter', sans-serif; background: var(--bg-darker); color: var(--text-primary); line-height: 1.6; }
+.container { max-width: 1400px; margin: 0 auto; padding: 0 40px; }
+.navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+  background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding: 16px 0; }
+[data-theme="light"] .navbar { background: rgba(248, 250, 252, 0.8); }
+.nav-content { display: flex; align-items: center; justify-content: space-between; }
+.logo { display: flex; align-items: center; gap: 12px; text-decoration: none;
+  font-size: 20px; font-weight: 700; color: var(--text-primary); }
+.logo-icon { font-size: 28px; }
+.nav-links { display: flex; gap: 32px; }
+.nav-link { text-decoration: none; color: var(--text-secondary); font-weight: 500; transition: color 0.3s; }
+.nav-link:hover { color: var(--primary); }
+.btn-login, .btn-signup { padding: 8px 20px; text-decoration: none;
+  font-weight: 600; font-size: 14px; border-radius: 8px; transition: all 0.3s; }
+.btn-login { color: var(--text-primary); }
+.btn-signup { color: white; background: linear-gradient(135deg, var(--primary), var(--secondary)); }
+.page-header { padding: 140px 0 80px; text-align: center; }
+.page-title { font-size: clamp(48px, 6vw, 72px); font-weight: 900; margin-bottom: 24px; }
+.gradient-text { background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.page-subtitle { font-size: 20px; color: var(--text-secondary); max-width: 700px; margin: 0 auto; }
+.content-section { padding: 60px 0; }
+.job-grid { display: grid; gap: 32px; margin-top: 60px; }
+.job-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px; padding: 40px; transition: all 0.4s; }
+.job-card:hover { transform: translateY(-4px); box-shadow: 0 20px 60px rgba(99, 102, 241, 0.2); }
+.job-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+.job-title { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+.job-badge { display: inline-block; padding: 6px 16px; background: rgba(99, 102, 241, 0.2);
+  border-radius: 100px; font-size: 12px; font-weight: 600; color: var(--primary); }
+.job-meta { display: flex; gap: 24px; margin-bottom: 24px; flex-wrap: wrap; font-size: 15px; color: var(--text-muted); }
+.job-meta-item { display: flex; align-items: center; gap: 8px; }
+.job-description { color: var(--text-secondary); line-height: 1.8; margin-bottom: 24px; }
+.job-requirements { margin-bottom: 24px; }
+.job-requirements h4 { font-size: 18px; font-weight: 700; margin-bottom: 16px; color: var(--text-primary); }
+.job-requirements ul { list-style: none; }
+.job-requirements li { padding: 8px 0; color: var(--text-secondary); }
+.job-requirements li::before { content: '✓'; color: var(--primary); margin-right: 12px; font-weight: 700; }
+.btn-apply { display: inline-block; padding: 16px 32px; background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white; text-decoration: none; border-radius: 12px; font-weight: 600; transition: all 0.3s; }
+.btn-apply:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4); }
+.footer { padding: 80px 0 40px; border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: 80px; }
+.footer-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 48px; margin-bottom: 48px; }
+.footer-section h4 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+.footer-section p { color: var(--text-secondary); font-size: 14px; line-height: 1.7; }
+.footer-section a { display: block; color: var(--text-secondary); text-decoration: none; font-size: 14px; margin-bottom: 12px; transition: all 0.3s ease; }
+.footer-section a:hover { color: var(--primary); transform: translateX(4px); }
+.footer-bottom { text-align: center; padding-top: 32px; border-top: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-muted); font-size: 14px; }
+
+@media (max-width: 968px) {
+  .footer-content { grid-template-columns: repeat(2, 1fr); gap: 40px; }
+}
+
+@media (max-width: 568px) {
+  .footer { padding: 40px 0 30px; margin-top: 48px; }
+  .footer-content { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 20px !important; }
+  .footer .container { padding: 0 16px; }
+  .footer-section { text-align: center; }
+  .footer-section:first-child { grid-column: 1 / -1; margin-bottom: 16px; text-align: center; }
+  .footer-section:first-child h4 { font-size: 18px; margin-bottom: 8px; }
+  .footer-section:first-child p { font-size: 13px; line-height: 1.5; max-width: 400px; margin: 0 auto; }
+  .footer-section h4 { font-size: 14px; margin-bottom: 12px; }
+  .footer-section a { margin-bottom: 8px; font-size: 12px; }
+  .footer-section p { font-size: 12px; line-height: 1.4; }
+  .footer-section a:hover { transform: translateX(0); }
+  .footer-bottom { font-size: 11px; padding-top: 20px; }
+}
+
+@media (max-width: 400px) {
+  .footer .container { padding: 0 12px; }
+  .footer-content { grid-template-columns: 1fr !important; gap: 24px !important; }
+  .footer-section:first-child { margin-bottom: 20px; }
+  .footer-section h4 { font-size: 16px; }
+  .footer-section a { font-size: 13px; }
+}
+
+.footer-section a { display: block; color: var(--text-secondary); text-decoration: none;
+  font-size: 14px; margin-bottom: 12px; transition: all 0.3s; }
+.footer-section a:hover { color: var(--primary); transform: translateX(4px); }
+.footer-bottom { text-align: center; padding-top: 32px; border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted); font-size: 14px; }
+@media (max-width: 768px) {
+  .container { padding: 0 24px; }
+  .nav-links { display: none; }
+  .job-header { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container">
+    <div class="nav-content">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">🎓</span>
+        <span>Курсы Диспетчера</span>
+      </a>
+      <div class="nav-links">
+        <a href="index.html#features" class="nav-link">Преимущества</a>
+        <a href="index.html#pricing" class="nav-link">Тарифы</a>
+        <a href="courses.html" class="nav-link">Курсы</a>
+        <a href="about.html" class="nav-link">О нас</a>
+      </div>
+      <div class="nav-actions">
+        <a href="login.html" class="btn-login">Войти</a>
+        <a href="register.html" class="btn-signup">Регистрация</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<section class="page-header">
+  <div class="container">
+    <h1 class="page-title">
+      <span class="gradient-text">Карьера</span>
+    </h1>
+    <p class="page-subtitle">
+      Присоединяйтесь к нашей команде и помогайте людям менять жизнь
+    </p>
+  </div>
+</section>
+
+<section class="content-section">
+  <div class="container">
+    <div class="job-grid">
+      
+      <div class="job-card">
+        <div class="job-header">
+          <div>
+            <h3 class="job-title">Преподаватель курсов</h3>
+            <span class="job-badge">Полная занятость</span>
+          </div>
+        </div>
+        <div class="job-meta">
+          <div class="job-meta-item">
+            <span>📍</span>
+            <span>Удалённо</span>
+          </div>
+          <div class="job-meta-item">
+            <span>💰</span>
+            <span>$4,000 - $6,000/мес</span>
+          </div>
+          <div class="job-meta-item">
+            <span>⏰</span>
+            <span>Гибкий график</span>
+          </div>
+        </div>
+        <p class="job-description">
+          Мы ищем опытного диспетчера грузоперевозок для преподавания на наших курсах. 
+          Вы будете проводить вебинары, консультировать студентов и делиться своим опытом.
+        </p>
+        <div class="job-requirements">
+          <h4>Требования:</h4>
+          <ul>
+            <li>Опыт работы диспетчером от 3 лет</li>
+            <li>Отличное знание FMCSA и DOT регуляций</li>
+            <li>Опыт работы с Load Boards</li>
+            <li>Навыки публичных выступлений</li>
+            <li>Английский язык на уровне Advanced</li>
+          </ul>
+        </div>
+        <a href="#" class="btn-apply">Откликнуться</a>
+      </div>
+
+      <div class="job-card">
+        <div class="job-header">
+          <div>
+            <h3 class="job-title">Методист образовательных программ</h3>
+            <span class="job-badge">Полная занятость</span>
+          </div>
+        </div>
+        <div class="job-meta">
+          <div class="job-meta-item">
+            <span>📍</span>
+            <span>Удалённо</span>
+          </div>
+          <div class="job-meta-item">
+            <span>💰</span>
+            <span>$3,500 - $5,000/мес</span>
+          </div>
+          <div class="job-meta-item">
+            <span>⏰</span>
+            <span>Полный день</span>
+          </div>
+        </div>
+        <p class="job-description">
+          Разработка и улучшение образовательных программ, создание учебных материалов, 
+          анализ эффективности курсов и внедрение новых методик обучения.
+        </p>
+        <div class="job-requirements">
+          <h4>Требования:</h4>
+          <ul>
+            <li>Опыт в образовательной сфере от 2 лет</li>
+            <li>Знание методик онлайн-обучения</li>
+            <li>Опыт создания учебных материалов</li>
+            <li>Аналитические навыки</li>
+            <li>Понимание индустрии грузоперевозок</li>
+          </ul>
+        </div>
+        <a href="#" class="btn-apply">Откликнуться</a>
+      </div>
+
+      <div class="job-card">
+        <div class="job-header">
+          <div>
+            <h3 class="job-title">Специалист по поддержке студентов</h3>
+            <span class="job-badge">Частичная занятость</span>
+          </div>
+        </div>
+        <div class="job-meta">
+          <div class="job-meta-item">
+            <span>📍</span>
+            <span>Удалённо</span>
+          </div>
+          <div class="job-meta-item">
+            <span>💰</span>
+            <span>$2,000 - $3,000/мес</span>
+          </div>
+          <div class="job-meta-item">
+            <span>⏰</span>
+            <span>4-6 часов/день</span>
+          </div>
+        </div>
+        <p class="job-description">
+          Помощь студентам в процессе обучения, ответы на вопросы, техническая поддержка 
+          и сопровождение на всех этапах прохождения курсов.
+        </p>
+        <div class="job-requirements">
+          <h4>Требования:</h4>
+          <ul>
+            <li>Опыт работы в поддержке клиентов</li>
+            <li>Отличные коммуникативные навыки</li>
+            <li>Знание платформ онлайн-обучения</li>
+            <li>Терпение и эмпатия</li>
+            <li>Базовые технические навыки</li>
+          </ul>
+        </div>
+        <a href="#" class="btn-apply">Откликнуться</a>
+      </div>
+
+      <div class="job-card">
+        <div class="job-header">
+          <div>
+            <h3 class="job-title">Контент-менеджер</h3>
+            <span class="job-badge">Полная занятость</span>
+          </div>
+        </div>
+        <div class="job-meta">
+          <div class="job-meta-item">
+            <span>📍</span>
+            <span>Удалённо</span>
+          </div>
+          <div class="job-meta-item">
+            <span>💰</span>
+            <span>$3,000 - $4,500/мес</span>
+          </div>
+          <div class="job-meta-item">
+            <span>⏰</span>
+            <span>Полный день</span>
+          </div>
+        </div>
+        <p class="job-description">
+          Создание контента для блога, социальных сетей и email-рассылок. Разработка 
+          маркетинговых материалов и ведение сообщества студентов.
+        </p>
+        <div class="job-requirements">
+          <h4>Требования:</h4>
+          <ul>
+            <li>Опыт создания образовательного контента</li>
+            <li>Отличные навыки письма</li>
+            <li>Знание SMM и email-маркетинга</li>
+            <li>Креативность и внимание к деталям</li>
+            <li>Базовые навыки дизайна (плюс)</li>
+          </ul>
+        </div>
+        <a href="#" class="btn-apply">Откликнуться</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Курсы Диспетчера</h4>
+        <p>Профессиональное обучение диспетчеров грузоперевозок</p>
+      </div>
+      <div class="footer-section">
+        <h4>Обучение</h4>
+        <a href="courses.html">Курсы</a>
+        <a href="certification.html">Сертификация</a>
+        <a href="webinars.html">Вебинары</a>
+      </div>
+      <div class="footer-section">
+        <h4>Поддержка</h4>
+        <a href="faq.html">FAQ</a>
+        <a href="contacts.html">Контакты</a>
+        <a href="help.html">Помощь</a>
+      </div>
+      <div class="footer-section">
+        <h4>Компания</h4>
+        <a href="about.html">О нас</a>
+        <a href="blog.html">Блог</a>
+        <a href="career.html">Карьера</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2024 Курсы Диспетчера. Все права защищены.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="auth.js"></script>
+
+</body>
+</html>

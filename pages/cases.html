@@ -1,0 +1,742 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Практические кейсы | Курсы - Диспетчера</title>
+    <script src="auth-check.js"></script>
+        <style>
+        :root {
+            --bg: #070b14;
+            --text: #f0f4ff;
+            --text-secondary: #8892aa;
+            --accent: #8b5cf6;
+            --accent-hover: #7c3aed;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --success: #22c55e;
+            --warning: #eab308;
+            --danger: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 30px 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.15), transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.15), transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.1), transparent 50%);
+            animation: backgroundMove 20s ease infinite;
+            z-index: -2;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+        }
+
+        @keyframes backgroundMove {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(5%, 5%) scale(1.05); }
+            50% { transform: translate(-5%, 5%) scale(1.1); }
+            75% { transform: translate(5%, -5%) scale(1.05); }
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+            padding: 32px 40px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 {
+            color: var(--text);
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .back-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .content-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+            padding: 32px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .section-title {
+            color: var(--text);
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-content p {
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        .cases-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .case-card-wrapper {
+            perspective: 1000px;
+            height: 380px;
+        }
+
+        .case-card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .case-card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .case-front, .case-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            border: 1px solid var(--card-border);
+        }
+
+        .case-front {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            backdrop-filter: blur(10px);
+        }
+
+        .case-back {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+            backdrop-filter: blur(10px);
+            transform: rotateY(180deg);
+        }
+
+        .case-number {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            align-self: flex-start;
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+        }
+
+        .case-back .case-number {
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .case-title {
+            color: var(--text);
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            line-height: 1.3;
+        }
+
+        .case-back .solution-title {
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .case-description {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 16px;
+            flex-grow: 1;
+        }
+
+        .solution-content {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 13px;
+            line-height: 1.7;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .solution-content p {
+            margin-bottom: 8px;
+            text-align: left;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .case-difficulty {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            margin-top: auto;
+            margin-bottom: 12px;
+            align-self: flex-start;
+        }
+
+        .difficulty-easy {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .difficulty-medium {
+            background: rgba(234, 179, 8, 0.15);
+            color: var(--warning);
+            border: 1px solid rgba(234, 179, 8, 0.3);
+        }
+
+        .difficulty-hard {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .flip-hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            font-style: italic;
+            opacity: 0.7;
+        }
+
+        .case-back .flip-hint {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .refresh-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 0;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .refresh-icon {
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.6s ease;
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 24px rgba(139, 92, 246, 0.5);
+        }
+
+        .refresh-btn:hover .refresh-icon {
+            transform: rotate(360deg);
+        }
+
+        .refresh-btn:active {
+            transform: scale(1);
+        }
+
+        /* Custom scrollbar */
+        .case-front::-webkit-scrollbar,
+        .case-back::-webkit-scrollbar,
+        .solution-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .case-front::-webkit-scrollbar-track,
+        .case-back::-webkit-scrollbar-track,
+        .solution-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        .case-front::-webkit-scrollbar-thumb,
+        .case-back::-webkit-scrollbar-thumb,
+        .solution-content::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.5);
+            border-radius: 3px;
+        }
+
+        .case-front::-webkit-scrollbar-thumb:hover,
+        .case-back::-webkit-scrollbar-thumb:hover,
+        .solution-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 92, 246, 0.7);
+        }
+
+        @media (max-width: 1024px) {
+            .cases-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 15px;
+            }
+
+            .header {
+                padding: 24px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .content-card {
+                padding: 24px;
+            }
+
+            .cases-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .case-card-wrapper {
+                height: 360px;
+            }
+
+            .refresh-btn {
+                width: 56px;
+                height: 56px;
+                bottom: 20px;
+                right: 20px;
+            }
+
+            .refresh-icon {
+                font-size: 24px;
+            }
+        }
+    
+/* Footer */
+.footer {
+  padding: 80px 0 40px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 80px;
+}
+
+.footer .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 60px;
+  margin-bottom: 48px;
+}
+
+@media (max-width: 968px) {
+  .footer-content {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 40px;
+  }
+}
+
+@media (max-width: 568px) {
+  .footer {
+    padding: 40px 0 30px;
+    margin-top: 48px;
+  }
+  
+  .footer-content {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 20px !important;
+  }
+  
+  .footer .container {
+    padding: 0 16px;
+  }
+  
+  .footer-section:first-child {
+    grid-column: 1 / -1;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  
+  .footer-section:first-child h4 {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+  
+  .footer-section:first-child p {
+    font-size: 13px;
+    line-height: 1.5;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  
+  .footer-section {
+    text-align: center;
+  }
+  
+  .footer-section h4 {
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+  
+  .footer-section a {
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+  
+  .footer-section a:hover {
+    transform: translateX(0);
+  }
+  
+  .footer-bottom {
+    font-size: 11px;
+    padding-top: 20px;
+  }
+}
+
+@media (max-width: 400px) {
+  .footer .container {
+    padding: 0 12px;
+  }
+  
+  .footer-content {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+  
+  .footer-section:first-child {
+    margin-bottom: 20px;
+  }
+  
+  .footer-section h4 {
+    font-size: 16px;
+  }
+  
+  .footer-section a {
+    font-size: 13px;
+  }
+}
+
+.footer-section h4 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #f1f5f9;
+}
+
+.footer-section p {
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.footer-section a {
+  display: block;
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.footer-section a:hover {
+  color: #6366f1;
+  transform: translateX(4px);
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: #64748b;
+  font-size: 14px;
+}
+
+</style>
+
+    <script>!function(){var t=localStorage.getItem('dispatcher-theme')||'dark';'dark'===t&&document.documentElement.setAttribute('data-theme','dark')}();</script>
+
+
+    <link rel="stylesheet" href="../dark-theme.css">
+    <script src="../dark-mode.js"></script>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="header-top">
+            <h1>💼 Практические кейсы диспетчера</h1>
+            <div style="display: flex; gap: 12px;">
+                <a href="../course.html" class="back-btn">← Назад</a>
+                <a href="../index.html" class="back-btn">🏠 Главная</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-card">
+        <h2 class="section-title">📋 О кейсах</h2>
+        <div class="section-content">
+            <p>
+                Реальные ситуации из практики диспетчеров грузоперевозок США. Каждый кейс содержит детальное описание проблемы и пошаговое решение.
+            </p>
+            <p>
+                Нажмите на карточку чтобы увидеть решение. При каждой загрузке показываются 18 случайных кейсов из 20.
+            </p>
+        </div>
+    </div>
+
+    <div class="content-card">
+        <h2 class="section-title">📚 Доступные кейсы</h2>
+        
+        <!-- Плавающая кнопка обновления кейсов -->
+        <button class="refresh-btn" id="refreshBtn" onclick="displayCases()">
+            <span class="refresh-icon">🔄</span>
+        </button>
+        
+        <div class="cases-grid" id="casesContainer">
+            <!-- Кейсы будут добавлены через JavaScript -->
+        </div>
+    </div>
+
+    <div class="content-card">
+        <h2 class="section-title">✅ Что вы получите</h2>
+        <div class="section-content">
+            <p>
+                ✅ Практический опыт - решение реальных задач из работы диспетчера
+            </p>
+            <p>
+                ✅ Развитие навыков - умение быстро принимать решения в стрессовых ситуациях
+            </p>
+            <p>
+                ✅ Анализ ошибок - разбор типичных ошибок и способов их избежать
+            </p>
+            <p>
+                ✅ Готовые решения - проверенные алгоритмы действий для разных ситуаций
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+// Массив всех кейсов
+const allCases = [
+    { num: 1, title: "Срочная замена водителя", desc: "Сегодня 14:00, погрузка в 16:00. Водитель заболел. Груз - медицинское оборудование $85,000, доставка завтра к 8:00 утра в Майами. Задержка недопустима.", difficulty: "easy", solution: "1. Проверить базу водителей в радиусе 50 миль\n2. Позвонить топ-3 резервным водителям\n3. Предложить бонус $150-200 за срочность\n4. Уведомить брокера - дать 30 минут на поиск решения\n5. Проверить партнерские компании\n6. Если за 45 минут не нашли - связаться с клиентом\n7. Документировать все действия\n8. После решения - добавить новых резервных водителей" },
+    { num: 2, title: "Поломка в пути", desc: "23:30 - фура сломалась на I-95 около Саванны. До Нью-Йорка 850 миль. Груз - электроника $120,000. Доставка завтра в 10:00.", difficulty: "hard", solution: "1. Убедиться что водитель в безопасности\n2. Узнать точные координаты GPS\n3. Вызвать мобильную службу ремонта\n4. Связаться с ближайшим сервисом\n5. Если ремонт > 4 часов - организовать перегрузку\n6. Найти ближайшую доступную фуру\n7. Уведомить брокера СРАЗУ\n8. Активировать страховку на задержку\n9. Документировать все: фото, чеки, время" },
+    { num: 3, title: "Конфликт на погрузке", desc: "Менеджер склада требует $300 за погрузку. В Rate Confirmation указано 'loading included'. Водитель без денег.", difficulty: "medium", solution: "1. Попросить водителя передать телефон менеджеру\n2. Спокойно выяснить причину доплаты\n3. Проверить Rate Confirmation и BOL\n4. Немедленно позвонить брокеру\n5. Отправить скриншот RC\n6. Дать брокеру 15 минут связаться со складом\n7. Водитель НЕ должен платить из своих денег\n8. Документировать все звонки и сообщения" },
+    { num: 4, title: "Нарушение HOS", desc: "19:30 - у водителя осталось 45 минут driving time, но до получателя 120 миль (2 часа). Склад закрывается до понедельника.", difficulty: "medium", solution: "1. Проверить точное время в ELD\n2. Водитель ДОЛЖЕН остановиться через 45 минут\n3. Найти ближайшую безопасную парковку\n4. Немедленно позвонить получателю\n5. Предложить доставку завтра утром или relay\n6. Найти водителя для relay в радиусе 50 миль\n7. Сохранить скриншот ELD\n8. НИКОГДА не просить нарушать HOS" },
+    { num: 5, title: "Недостача при приемке", desc: "Получатель говорит не хватает 3 коробок из 50. Каждая коробка $2,500. Отказывается подписывать POD.", difficulty: "hard", solution: "1. Сказать водителю: НЕ подписывай НИЧЕГО!\n2. Сфотографировать все коробки и пустую фуру\n3. Проверить BOL - сколько указано при погрузке\n4. Связаться с отправителем\n5. Попросить пересчитать коробки вместе\n6. Запросить видео с камер склада\n7. Позвонить брокеру\n8. Если коробок действительно нет - оформить акт\n9. Активировать cargo insurance" },
+    { num: 6, title: "Перегруз на весах", desc: "Weigh station в Огайо - фура перегружена на 2,800 фунтов. Штраф $850. Инспектор не пускает дальше.", difficulty: "medium", solution: "1. Сфотографировать весовой билет и штраф\n2. Проверить BOL с указанным весом\n3. Позвонить отправителю - запросить их весовой билет\n4. Найти ближайший склад для хранения\n5. Выгрузить 3,000 lbs груза\n6. Вернуться на weigh station\n7. Организовать доставку оставшегося груза\n8. Связаться с брокером о задержке\n9. На будущее: ВСЕГДА взвешивать после погрузки" },
+    { num: 7, title: "Оптимизация маршрута", desc: "Multi-stop рейс: 5 точек погрузки, 3 точки разгрузки. Ричмонд - только 15:00-16:00! Ставка $3,200.", difficulty: "medium", solution: "1. Проанализировать все временные окна\n2. Ричмонд - КРИТИЧЕСКОЕ окно 1 час\n3. Рассчитать HOS ограничения\n4. Построить маршрут с учетом 11 часов driving\n5. ВЫВОД: маршрут невыполним в текущем виде!\n6. Позвонить брокеру - показать расчеты\n7. Предложить изменить время или разделить на 2 рейса\n8. Ставка должна быть минимум $4,000-4,500\n9. Не бояться отказываться от нереальных рейсов" },
+    { num: 8, title: "Дорога закрыта", desc: "I-80 через Вайоминг закрыта из-за снежной бури. Откроют через 8-12 часов. Объезд +400 миль. Груз должен быть завтра в 09:00.", difficulty: "medium", solution: "1. Проверить 511 Wyoming road conditions\n2. Узнать у водителя: топливо, еда, состояние фуры\n3. Рассчитать варианты: ждать или объезд\n4. РЕШЕНИЕ: ждать до 20:00\n5. Мониторить ситуацию каждый час\n6. Уведомить получателя о возможной задержке\n7. Связаться с брокером - force majeure\n8. Водитель фотографирует знак 'Road Closed'\n9. Документировать для доказательства" },
+    { num: 9, title: "Потерян BOL", desc: "Водитель потерял Bill of Lading. Груз доставлен, но документов нет.", difficulty: "medium", solution: "1. Запросить копию у брокера немедленно\n2. Связаться с отправителем за дубликатом\n3. Попросить получателя подписать временный POD\n4. Оформить affidavit о потере документа\n5. Отправить все копии факторингу\n6. На будущее: всегда делать фото BOL при получении" },
+    { num: 10, title: "Задержка оплаты", desc: "Брокер не платит 45 дней. Факторинг отказывается работать.", difficulty: "hard", solution: "1. Проверить контракт - срок оплаты\n2. Отправить formal demand letter\n3. Позвонить accounting department брокера\n4. Угрожать прекращением сотрудничества\n5. Подать в коллекторское агентство\n6. Обратиться к транспортному юристу\n7. Подать в small claims court если < $10,000\n8. Оставить негативный отзыв на load boards" },
+    { num: 11, title: "Водитель пропал", desc: "Не отвечает 4 часа. GPS показывает парковку.", difficulty: "medium", solution: "1. Проверить последнюю активность GPS\n2. Позвонить emergency contact водителя\n3. Проверить HOS - может спит после 11 часов\n4. Позвонить в полицию для welfare check\n5. Отправить другого водителя проверить\n6. Уведомить брокера о ситуации\n7. Подготовить план Б для груза" },
+    { num: 12, title: "Брокер снижает ставку", desc: "Требует снизить на $200 или отменит рейс.", difficulty: "medium", solution: "1. Проверить signed Rate Confirmation\n2. Напомнить что это binding contract\n3. Оценить реальные затраты на рейс\n4. Предложить компромисс -$100\n5. Если настаивает - искать другой груз\n6. Документировать попытку изменения условий\n7. Не соглашаться на убыточные условия\n8. Пожаловаться в FMCSA если нарушает контракт" },
+    { num: 13, title: "Водитель отказывается", desc: "Приехал на погрузку и отказывается брать груз.", difficulty: "hard", solution: "1. Выяснить конкретную причину отказа\n2. Сравнить груз с первоначальным описанием\n3. Если соответствует - объяснить последствия\n4. Предложить бонус $100-200\n5. Если НЕ соответствует - связаться с брокером\n6. Срочно искать замену водителю\n7. Документировать инцидент\n8. Возможно штраф водителю за отказ" },
+    { num: 14, title: "Авария на дороге", desc: "ДТП. Груз цел, фура не на ходу. Клиент ждет через 6 часов.", difficulty: "hard", solution: "1. Убедиться водитель не ранен\n2. Вызвать полицию и скорую\n3. Сфотографировать место ДТП\n4. Получить police report number\n5. Организовать эвакуацию фуры\n6. Срочно найти замену для перегрузки\n7. Уведомить страховую компанию\n8. Информировать брокера\n9. Подготовить документы для claim" },
+    { num: 15, title: "Ураган на маршруте", desc: "Объявлен ураган. Дороги закроют через 12 часов.", difficulty: "hard", solution: "1. Проверить прогноз NOAA\n2. Оценить - успеет ли водитель проехать зону\n3. Если НЕТ - найти безопасное укрытие\n4. Уведомить клиента о force majeure\n5. Предложить отложить доставку на 2-3 дня\n6. Обеспечить безопасность водителя и груза\n7. Проверить cargo insurance coverage\n8. Документировать погодные условия" },
+    { num: 16, title: "Повреждение груза", desc: "Водитель сообщает что груз поврежден при погрузке.", difficulty: "medium", solution: "1. Немедленно сфотографировать повреждения\n2. НЕ покидать склад отправителя\n3. Позвать менеджера склада\n4. Оформить damage report вместе\n5. Связаться с брокером - решить везти или нет\n6. Если везем - отметить damage в BOL\n7. Уведомить получателя о повреждениях\n8. Активировать cargo insurance" },
+    { num: 17, title: "Неправильное оборудование", desc: "Нужен рефрижератор, водитель приехал на dry van.", difficulty: "hard", solution: "1. Проверить Rate Confirmation - что указано\n2. Если ваша ошибка - срочно искать reefer\n3. Позвонить всем водителям с рефрижераторами\n4. Предложить бонус за срочность\n5. Уведомить брокера о задержке\n6. Компенсировать водителю dry van\n7. На будущее: double-check equipment type" },
+    { num: 18, title: "Низкая ставка", desc: "Брокер предлагает $1.50/миля. Ваши расходы $1.80/миля.", difficulty: "easy", solution: "1. Вежливо отказаться от рейса\n2. Объяснить что это ниже себестоимости\n3. Предложить встречную ставку $2.00/миля\n4. Если не согласен - искать другой груз\n5. НИКОГДА не работать в убыток\n6. Знать свои реальные затраты на милю" },
+    { num: 19, title: "Языковой барьер", desc: "Водитель не говорит по-английски. Конфликт на складе.", difficulty: "medium", solution: "1. Использовать Google Translate по телефону\n2. Найти переводчика (другой водитель)\n3. Связаться через видео-звонок\n4. Разобраться в ситуации\n5. Объяснить складу что сейчас решим\n6. Решить конфликт через переводчика\n7. На будущее: иметь список переводчиков" },
+    { num: 20, title: "Двойное бронирование", desc: "По ошибке два водителя на один рейс. Оба едут на погрузку.", difficulty: "hard", solution: "1. Немедленно остановить одного водителя\n2. Срочно искать второй груз для него\n3. Проверить load boards - что доступно\n4. Извиниться перед водителем\n5. Компенсировать потерянное время $100-150\n6. Гарантировать следующий рейс\n7. Внедрить систему проверки назначений\n8. Использовать TMS для предотвращения дублей" },
+    { num: 21, title: "Опасный груз без разрешения", desc: "Водитель приехал на погрузку. Груз - химикаты класса 3 (легковоспламеняющиеся). У водителя нет HAZMAT endorsement. Брокер не предупредил.", difficulty: "hard", solution: "1. Водитель НЕ МОЖЕТ брать груз без HAZMAT\n2. Немедленно связаться с брокером\n3. Требовать компенсацию за пустой пробег\n4. Срочно искать водителя с HAZMAT\n5. Проверить базу сертифицированных водителей\n6. Уведомить отправителя о задержке\n7. Документировать что брокер скрыл информацию\n8. На будущее: ВСЕГДА уточнять тип груза заранее" },
+    { num: 22, title: "Отказ в разгрузке", desc: "Получатель отказывается принимать груз. Говорит 'не заказывали'. Водитель ждет 3 часа. Detention time растет.", difficulty: "hard", solution: "1. Проверить адрес доставки в BOL\n2. Связаться с брокером НЕМЕДЛЕННО\n3. Запросить контакт получателя\n4. Брокер должен связаться с shipper\n5. Начать считать detention с момента прибытия\n6. Сфотографировать адрес и документы\n7. Если через 2 часа не решено - требовать TONU\n8. Не покидать место без письменного подтверждения\n9. Документировать все время ожидания" },
+    { num: 23, title: "Кража топлива", desc: "Водитель остановился на ночь. Утром обнаружил что слили 150 галлонов дизеля. Полиция составила протокол. До доставки 400 миль.", difficulty: "medium", solution: "1. Получить копию police report\n2. Сфотографировать место и бак\n3. Связаться со страховой компанией\n4. Заправить фуру - сохранить чек\n5. Уведомить брокера о задержке 2-3 часа\n6. Подать claim на возмещение топлива\n7. На будущее: парковаться только на охраняемых стоянках\n8. Установить замки на топливные баки" },
+    { num: 24, title: "Проблема с ELD", desc: "ELD перестал работать в пути. Водитель в Техасе, до доставки 600 миль. Без ELD нельзя ехать по закону.", difficulty: "medium", solution: "1. Проверить подключение и перезагрузить устройство\n2. Если не помогло - переключиться на paper logs\n3. Водитель заполняет бумажные логи вручную\n4. Записать все driving time за последние 8 дней\n5. Уведомить брокера о технической проблеме\n6. Заказать новый ELD с доставкой\n7. Продолжить рейс на paper logs (законно до 8 дней)\n8. Сохранить все записи для FMCSA" },
+    { num: 25, title: "Мошенничество брокера", desc: "Выполнили рейс. Брокер исчез - телефон не отвечает, email не работает. MC number активен, но офис закрыт. Сумма $2,800.", difficulty: "hard", solution: "1. Проверить MC number на FMCSA website\n2. Проверить broker bond information\n3. Отправить demand letter заказным письмом\n4. Подать claim против broker bond\n5. Связаться с surety company (компания выдавшая bond)\n6. Подать жалобу в FMCSA\n7. Обратиться к транспортному юристу\n8. Опубликовать на Highway, DAT, Truckstop\n9. На будущее: проверять брокеров через RMIS" },
+    { num: 26, title: "Водитель арестован", desc: "Водитель остановлен полицией. Обнаружен просроченный CDL на 3 месяца. Арестован. Фура на impound lot. Груз стоимостью $95,000 внутри.", difficulty: "hard", solution: "1. Связаться с адвокатом водителя\n2. Оплатить bail если возможно\n3. Срочно найти другого водителя с CDL\n4. Связаться с impound lot - узнать процедуру\n5. Оплатить impound fees для выпуска фуры\n6. Организовать перегрузку груза\n7. Уведомить брокера о задержке\n8. Активировать cargo insurance\n9. Уволить водителя за нарушение\n10. На будущее: проверять CDL каждые 30 дней" },
+    { num: 27, title: "Забастовка на порту", desc: "Груз должен быть доставлен в порт Лонг-Бич. Объявлена забастовка докеров. Порт закрыт на неопределенный срок. Контейнер должен быть на корабле через 48 часов.", difficulty: "hard", solution: "1. Проверить новости - когда откроют порт\n2. Связаться с брокером и shipper\n3. Узнать альтернативные порты (Oakland, Seattle)\n4. Рассчитать дополнительные мили и время\n5. Согласовать новую ставку за доп. расстояние\n6. Проверить HOS водителя для нового маршрута\n7. Уведомить получателя о изменении плана\n8. Документировать force majeure\n9. Мониторить ситуацию каждые 4 часа" },
+    { num: 28, title: "Поддельный Rate Confirmation", desc: "Выполнили рейс. Брокер говорит 'мы не отправляли этот RC'. Подпись не совпадает. Кто-то подделал документ. Потеря $3,400.", difficulty: "hard", solution: "1. Сравнить email адрес отправителя RC\n2. Позвонить брокеру напрямую - проверить MC\n3. Проверить домен email (может fake)\n4. Собрать все переписки и звонки\n5. Подать в полицию - это fraud\n6. Связаться с FBI Cyber Crime Division\n7. Предупредить других carriers на форумах\n8. На будущее: ВСЕГДА звонить брокеру для подтверждения\n9. Проверять email домен брокера\n10. Использовать verified load boards" },
+    { num: 29, title: "Груз не готов", desc: "Водитель приехал на погрузку в назначенное время 10:00. Груз не готов. Говорят 'будет через 6-8 часов'. Detention не платят. У водителя HOS кончается через 5 часов.", difficulty: "medium", solution: "1. Немедленно связаться с брокером\n2. Начать считать detention time с 10:00\n3. Запросить письменное подтверждение задержки\n4. Сфотографировать пустой склад и время\n5. Если груз не готов через 2 часа - требовать TONU\n6. Рассчитать HOS - хватит ли времени после погрузки\n7. Если НЕТ - отказаться от рейса\n8. Требовать оплату detention $50-75/час\n9. Искать другой груз поблизости" },
+    { num: 30, title: "Проблема с таможней", desc: "Груз из Канады в США. На границе таможня задерживает груз для инспекции. Говорят 'может занять 24-72 часа'. Груз - автозапчасти $180,000. Получатель ждет завтра.", difficulty: "hard", solution: "1. Узнать причину задержки у таможни\n2. Запросить inspection report number\n3. Проверить все документы: BOL, invoice, PAPS\n4. Связаться с customs broker\n5. Ускорить процесс через broker\n6. Уведомить получателя о задержке\n7. Связаться с shipper - могут помочь\n8. Обеспечить водителя жильем и едой\n9. Документировать все расходы\n10. Требовать компенсацию за задержку от брокера" }
+];
+
+function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
+function displayCases() {
+    const container = document.getElementById('casesContainer');
+    const shuffledCases = shuffleArray(allCases);
+    const casesToShow = shuffledCases.slice(0, 18);
+    
+    container.innerHTML = casesToShow.map(c => `
+        <div class="case-card-wrapper">
+            <div class="case-card" onclick="this.classList.toggle('flipped')">
+                <div class="case-front">
+                    <span class="case-number">Кейс #${c.num}</span>
+                    <h3 class="case-title">${c.title}</h3>
+                    <p class="case-description">${c.desc}</p>
+                    <span class="case-difficulty difficulty-${c.difficulty}">
+                        ${c.difficulty === 'easy' ? '🟢 Легкий' : c.difficulty === 'medium' ? '🟡 Средний' : '🔴 Сложный'}
+                    </span>
+                    <p class="flip-hint">👆 Нажмите для решения</p>
+                </div>
+                <div class="case-back">
+                    <span class="case-number">Решение #${c.num}</span>
+                    <h3 class="solution-title">✅ Рекомендуемые действия</h3>
+                    <div class="solution-content">
+                        ${c.solution.split('\n').map(line => `<p>${line}</p>`).join('')}
+                    </div>
+                    <p class="flip-hint">👆 Нажмите чтобы вернуться</p>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Отображаем кейсы при загрузке страницы
+displayCases();
+</script>
+
+<script src="../theme-switcher.js"></script>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Курсы Диспетчера</h4>
+        <p>Профессиональное обучение диспетчеров грузоперевозок</p>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Обучение</h4>
+        <a href="courses.html">Курсы</a>
+        <a href="certification.html">Сертификация</a>
+        <a href="webinars.html">Вебинары</a>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Поддержка</h4>
+        <a href="faq.html">FAQ</a>
+        <a href="contacts.html">Контакты</a>
+        <a href="help.html">Помощь</a>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Компания</h4>
+        <a href="about.html">О нас</a>
+        <a href="blog.html">Блог</a>
+        <a href="career.html">Карьера</a>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <p>&copy; 2024 Курсы Диспетчера. Все права защищены.</p>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

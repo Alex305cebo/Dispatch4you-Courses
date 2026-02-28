@@ -1,0 +1,337 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест: Модуль 3 - Hours of Service (HOS) | Курсы - Диспетчера</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 30px 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { max-width: 900px; width: 100%; margin: 0 auto; }
+        .header { background: white; backdrop-filter: blur(10px); padding: 30px 40px; border-radius: 20px; margin-bottom: 30px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .test-badge { display: inline-flex; align-items: center; gap: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 20px; border-radius: 25px; font-weight: 600; font-size: 18px; }
+        .back-btn { padding: 10px 20px; background: #f3f4f6; color: #374151; text-decoration: none; border-radius: 8px; font-weight: 600; transition: all 0.3s ease; }
+        .back-btn:hover { background: #e5e7eb; }
+        h1 { color: #2d3748; font-size: 32px; margin-bottom: 10px; }
+        .subtitle { color: #718096; font-size: 18px; }
+        .progress-bar { background: #e5e7eb; height: 8px; border-radius: 10px; margin: 20px 0; overflow: hidden; }
+        .progress-fill { background: linear-gradient(90deg, #16a34a, #22c55e); height: 100%; width: 0%; transition: width 0.3s ease; }
+        .question-card { background: white; backdrop-filter: blur(10px); border-radius: 20px; padding: 35px; margin-bottom: 25px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); display: none; }
+        .question-card.active { display: block; animation: slideIn 0.4s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        .question-number { color: #16a34a; font-size: 16px; font-weight: 600; margin-bottom: 10px; }
+        .question-text { color: #2d3748; font-size: 22px; font-weight: 600; margin-bottom: 25px; line-height: 1.5; }
+        .answers { display: flex; flex-direction: column; gap: 12px; }
+        .answer { background: #f7fafc; padding: 18px 20px; border-radius: 10px; border: 2px solid transparent; cursor: pointer; transition: all 0.3s ease; font-size: 17px; color: #4a5568; }
+        .answer:hover { background: #edf2f7; border-color: #16a34a; transform: translateX(5px); }
+        .answer.selected { background: #dcfce7; border-color: #16a34a; color: #166534; font-weight: 600; }
+        .answer.correct { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-color: #10b981; color: #065f46; font-weight: 600; }
+        .answer.incorrect { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-color: #ef4444; color: #991b1b; font-weight: 600; opacity: 0.6; }
+        .nav-buttons { display: flex; gap: 15px; margin-top: 25px; }
+        .btn { padding: 14px 30px; border-radius: 10px; font-weight: 600; font-size: 16px; border: none; cursor: pointer; transition: all 0.3s ease; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(22, 163, 74, 0.4); }
+        .btn-secondary { background: white; backdrop-filter: blur(10px); color: #16a34a; border: 2px solid #16a34a; }
+        .btn-secondary:hover { background: #16a34a; color: white; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .results { background: white; backdrop-filter: blur(10px); border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); text-align: center; display: none; }
+        .results.show { display: block; animation: slideIn 0.4s ease; }
+        .score { font-size: 72px; font-weight: bold; margin: 20px 0; }
+        .score.pass { color: #16a34a; }
+        .score.fail { color: #ef4444; }
+        .result-message { font-size: 24px; color: #2d3748; margin-bottom: 30px; }
+        @media (max-width: 768px) { 
+            .container { padding: 10px; }
+            .header { padding: 30px 20px; margin-bottom: 20px; }
+            .header-top { flex-direction: column; gap: 15px; } 
+            h1 { font-size: 24px; } 
+            .subtitle { font-size: 16px; }
+            .question-card { padding: 25px 20px; }
+            .question-text { font-size: 18px; } 
+            .answer { padding: 15px; font-size: 16px; }
+            .btn { padding: 12px 20px; font-size: 15px; }
+            .nav-buttons { flex-direction: column; }
+            .nav-buttons .btn { width: 100%; }
+            .score { font-size: 56px; }
+            .result-message { font-size: 20px; }
+        }
+    body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3), transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(138, 43, 226, 0.3), transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(75, 0, 130, 0.2), transparent 50%);
+    animation: backgroundMove 20s ease infinite;
+    z-index: -1;
+}
+
+@keyframes backgroundMove {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(5%, 5%) scale(1.05); }
+    50% { transform: translate(-5%, 5%) scale(1.1); }
+    75% { transform: translate(5%, -5%) scale(1.05); }
+}
+/* Footer */
+.footer {
+  padding: 80px 0 40px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 80px;
+}
+
+.footer .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 60px;
+  margin-bottom: 48px;
+}
+
+@media (max-width: 968px) {
+  .footer-content {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 40px;
+  }
+}
+
+@media (max-width: 568px) {
+  .footer-content {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  
+  .footer .container {
+    padding: 0 20px;
+  }
+}
+
+.footer-section h4 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #f1f5f9;
+}
+
+.footer-section p {
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.footer-section a {
+  display: block;
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.footer-section a:hover {
+  color: #6366f1;
+  transform: translateX(4px);
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: #64748b;
+  font-size: 14px;
+}
+
+</style>
+
+    <script>!function(){var t=localStorage.getItem('dispatcher-theme')||'dark';'dark'===t&&document.documentElement.setAttribute('data-theme','dark')}();</script>
+
+
+    <link rel="stylesheet" href="../dark-theme.css">
+    <script src="../dark-mode.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <div class="header-top">
+                <div class="test-badge">📝 Тест: Модуль 3</div>
+                <div style="display: flex; gap: 12px;">
+                    <a href="modules.html" class="back-btn">← Назад</a>
+                    <a href="../index.html" class="back-btn">🏠 Главная</a>
+                </div>
+            </div>
+            <h1>Hours of Service (HOS)</h1>
+            <p class="subtitle">18 вопросов для проверки знаний</p>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
+        </div>
+
+        <div id="questionsContainer"></div>
+
+        <div class="results" id="results">
+            <h2 style="color: #2d3748; font-size: 32px; margin-bottom: 20px;">Результаты теста</h2>
+            <div class="score" id="scoreDisplay"></div>
+            <p class="result-message" id="resultMessage"></p>
+            <div class="nav-buttons">
+                <button class="btn btn-primary" onclick="location.href='module-4.html'">Следующий модуль →</button>
+                <button class="btn btn-secondary" onclick="location.reload()">Пройти заново</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {q: "Максимальное время вождения в день:", a: ["8 часов", "10 часов", "11 часов", "14 часов"], correct: 2},
+            {q: "14-Hour On-Duty Window означает:", a: ["14 часов вождения", "14 часов с момента начала рабочего дня", "14 часов отдыха", "14 часов перерыва"], correct: 1},
+            {q: "Обязательный перерыв после 8 часов вождения:", a: ["15 минут", "30 минут", "1 час", "2 часа"], correct: 1},
+            {q: "60/70-Hour Duty Limits означают:", a: ["60 часов за 7 дней или 70 за 8 дней", "60 часов в месяц", "70 часов в неделю", "60 дней работы"], correct: 0},
+            {q: "34-Hour Restart обнуляет:", a: ["Счетчик 11 часов", "Счетчик 60/70 часов", "Все счетчики", "Ничего"], correct: 1},
+            {q: "Что такое ELD?", a: ["Электронное устройство логирования", "Тип страховки", "Водительские права", "Номер трака"], correct: 0},
+            {q: "Минимальный отдых перед 11-часовым вождением:", a: ["8 часов", "10 часов", "12 часов", "14 часов"], correct: 1},
+            {q: "Можно ли водить после 14 часов On-Duty?", a: ["Да", "Нет", "Только с разрешения", "Только 1 час"], correct: 1},
+            {q: "30-минутный перерыв должен быть:", a: ["За рулем", "Off-Duty или Sleeper Berth", "On-Duty", "Любой"], correct: 1},
+            {q: "Sleeper Berth Provision позволяет:", a: ["Не спать", "Разделить 10-часовой отдых", "Водить дольше", "Игнорировать HOS"], correct: 1},
+            {q: "Штраф за нарушение HOS для водителя:", a: ["$100-$500", "$500-$1,000", "$1,000-$11,000", "$25,000"], correct: 2},
+            {q: "Кто обязан соблюдать HOS правила?", a: ["Только водители", "Только компании", "Водители и компании", "Только брокеры"], correct: 2},
+            {q: "Adverse Driving Conditions добавляют:", a: ["1 час", "2 часа", "3 часа", "4 часа"], correct: 1},
+            {q: "Short-Haul Exception позволяет:", a: ["Не вести логи", "Водить 24 часа", "Игнорировать HOS", "Не отдыхать"], correct: 0},
+            {q: "Personal Conveyance это:", a: ["Коммерческое использование", "Личное использование трака", "Тип груза", "Страховка"], correct: 1},
+            {q: "Yard Move это:", a: ["Движение по территории склада", "Дальняя поездка", "Тип груза", "Отдых"], correct: 0},
+            {q: "Waiting Time считается как:", a: ["Off-Duty", "On-Duty", "Driving", "Sleeper"], correct: 1},
+            {q: "Максимум часов On-Duty за 7 дней:", a: ["50", "60", "70", "80"], correct: 1}
+        ];
+
+        let currentQuestion = 0;
+        let answers = [];
+        let score = 0;
+
+        function initTest() {
+            const container = document.getElementById('questionsContainer');
+            questions.forEach((q, index) => {
+                const card = document.createElement('div');
+                card.className = 'question-card' + (index === 0 ? ' active' : '');
+                card.innerHTML = `
+                    <div class="question-number">Вопрос ${index + 1} из ${questions.length}</div>
+                    <div class="question-text">${q.q}</div>
+                    <div class="answers">
+                        ${q.a.map((answer, i) => `<div class="answer" onclick="selectAnswer(${index}, ${i})">${answer}</div>`).join('')}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function selectAnswer(questionIndex, answerIndex) {
+            if (answers[questionIndex] !== undefined) return;
+            const card = document.querySelectorAll('.question-card')[questionIndex];
+            const answerDivs = card.querySelectorAll('.answer');
+            const correctAnswer = questions[questionIndex].correct;
+            answerDivs.forEach(div => { div.style.pointerEvents = 'none'; });
+            answerDivs.forEach((div, i) => {
+                if (i === correctAnswer) { div.classList.add('correct'); }
+                else { div.classList.add('incorrect'); }
+            });
+            answers[questionIndex] = answerIndex;
+            setTimeout(() => {
+                if (questionIndex < questions.length - 1) { nextQuestion(); }
+                else { finishTest(); }
+            }, 2000);
+        }
+
+        function nextQuestion() {
+            document.querySelectorAll('.question-card')[currentQuestion].classList.remove('active');
+            currentQuestion++;
+            document.querySelectorAll('.question-card')[currentQuestion].classList.add('active');
+            updateProgress();
+        }
+
+        function prevQuestion() {
+            document.querySelectorAll('.question-card')[currentQuestion].classList.remove('active');
+            currentQuestion--;
+            document.querySelectorAll('.question-card')[currentQuestion].classList.add('active');
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const progress = ((currentQuestion + 1) / questions.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function finishTest() {
+            score = 0;
+            questions.forEach((q, index) => {
+                if (answers[index] === q.correct) score++;
+            });
+            
+            const percentage = Math.round((score / questions.length) * 100);
+            const passed = percentage >= 70;
+            
+            // Сохраняем результат в localStorage
+            localStorage.setItem('module_3_test_result', percentage);
+            localStorage.setItem('module_3_test_score', score);
+            localStorage.setItem('module_3_test_total', questions.length);
+            localStorage.setItem('module_3_test_date', new Date().toISOString());
+            
+            document.getElementById('questionsContainer').style.display = 'none';
+            document.getElementById('results').classList.add('show');
+            
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            scoreDisplay.textContent = percentage + '%';
+            scoreDisplay.className = 'score ' + (passed ? 'pass' : 'fail');
+            
+            document.getElementById('resultMessage').textContent = passed ? 
+                `Поздравляем! Вы успешно прошли тест (${score}/${questions.length})` :
+                `Тест не пройден. Необходимо набрать минимум 70% (${score}/${questions.length})`;
+        }
+
+        initTest();
+    </script>
+<script src="../theme-switcher.js"></script>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Курсы Диспетчера</h4>
+        <p>Профессиональное обучение диспетчеров грузоперевозок</p>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Обучение</h4>
+        <a href="../courses.html">Курсы</a>
+        <a href="../certification.html">Сертификация</a>
+        <a href="../webinars.html">Вебинары</a>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Поддержка</h4>
+        <a href="../faq.html">FAQ</a>
+        <a href="../contacts.html">Контакты</a>
+        <a href="../help.html">Помощь</a>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Компания</h4>
+        <a href="../about.html">О нас</a>
+        <a href="../blog.html">Блог</a>
+        <a href="../career.html">Карьера</a>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <p>&copy; 2024 Курсы Диспетчера. Все права защищены.</p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

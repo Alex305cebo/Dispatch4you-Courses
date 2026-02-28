@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Контакты | Курсы Диспетчера</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --primary: #6366f1; --secondary: #8b5cf6; --accent: #ec4899;
+  --bg-dark: #0f172a; --bg-darker: #020617;
+  --text-primary: #f1f5f9; --text-secondary: #94a3b8; --text-muted: #64748b;
+}
+[data-theme="light"] {
+  --bg-dark: #ffffff; --bg-darker: #f8fafc;
+  --text-primary: #0f172a; --text-secondary: #475569;
+}
+body { font-family: 'Inter', sans-serif; background: var(--bg-darker); color: var(--text-primary); line-height: 1.6; }
+.container { max-width: 1400px; margin: 0 auto; padding: 0 40px; }
+.navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+  background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding: 16px 0; }
+[data-theme="light"] .navbar { background: rgba(248, 250, 252, 0.8); }
+.nav-content { display: flex; align-items: center; justify-content: space-between; }
+.logo { display: flex; align-items: center; gap: 12px; text-decoration: none;
+  font-size: 20px; font-weight: 700; color: var(--text-primary); }
+.logo-icon { font-size: 28px; }
+.nav-links { display: flex; gap: 32px; }
+.nav-link { text-decoration: none; color: var(--text-secondary); font-weight: 500; transition: color 0.3s; }
+.nav-link:hover { color: var(--primary); }
+.btn-login, .btn-signup { padding: 8px 20px; text-decoration: none;
+  font-weight: 600; font-size: 14px; border-radius: 8px; transition: all 0.3s; }
+.btn-login { color: var(--text-primary); }
+.btn-signup { color: white; background: linear-gradient(135deg, var(--primary), var(--secondary)); }
+.page-header { padding: 140px 0 80px; text-align: center; }
+.page-title { font-size: clamp(48px, 6vw, 72px); font-weight: 900; margin-bottom: 24px; }
+.gradient-text { background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.page-subtitle { font-size: 20px; color: var(--text-secondary); max-width: 700px; margin: 0 auto; }
+.content-section { padding: 60px 0; }
+.contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; margin-top: 60px; }
+.contact-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px; padding: 40px; text-align: center; transition: all 0.4s; }
+.contact-card:hover { transform: translateY(-8px); box-shadow: 0 20px 60px rgba(99, 102, 241, 0.2); }
+.contact-icon { font-size: 48px; margin-bottom: 24px; }
+.contact-title { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+.contact-info { color: var(--text-secondary); font-size: 16px; }
+.contact-form { max-width: 600px; margin: 60px auto 0; background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 40px; }
+.form-group { margin-bottom: 24px; }
+.form-label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary); }
+.form-input, .form-textarea { width: 100%; padding: 12px 16px; background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: var(--text-primary);
+  font-family: 'Inter', sans-serif; font-size: 15px; transition: all 0.3s; }
+.form-input:focus, .form-textarea:focus { outline: none; border-color: var(--primary);
+  background: rgba(255, 255, 255, 0.08); }
+.form-textarea { resize: vertical; min-height: 120px; }
+.btn-submit { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white; border: none; border-radius: 12px; font-weight: 600; font-size: 16px;
+  cursor: pointer; transition: all 0.3s; }
+.btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4); }
+.footer { padding: 80px 0 40px; border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: 80px; }
+.footer-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 48px; margin-bottom: 48px; }
+.footer-section h4 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+.footer-section p { color: var(--text-secondary); font-size: 14px; line-height: 1.7; }
+.footer-section a { display: block; color: var(--text-secondary); text-decoration: none; font-size: 14px; margin-bottom: 12px; transition: all 0.3s ease; }
+.footer-section a:hover { color: var(--primary); transform: translateX(4px); }
+.footer-bottom { text-align: center; padding-top: 32px; border-top: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-muted); font-size: 14px; }
+
+@media (max-width: 968px) {
+  .footer-content { grid-template-columns: repeat(2, 1fr); gap: 40px; }
+}
+
+@media (max-width: 568px) {
+  .footer { padding: 40px 0 30px; margin-top: 48px; }
+  .footer-content { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 20px !important; }
+  .footer .container { padding: 0 16px; }
+  .footer-section { text-align: center; }
+  .footer-section:first-child { grid-column: 1 / -1; margin-bottom: 16px; text-align: center; }
+  .footer-section:first-child h4 { font-size: 18px; margin-bottom: 8px; }
+  .footer-section:first-child p { font-size: 13px; line-height: 1.5; max-width: 400px; margin: 0 auto; }
+  .footer-section h4 { font-size: 14px; margin-bottom: 12px; }
+  .footer-section a { margin-bottom: 8px; font-size: 12px; }
+  .footer-section p { font-size: 12px; line-height: 1.4; }
+  .footer-section a:hover { transform: translateX(0); }
+  .footer-bottom { font-size: 11px; padding-top: 20px; }
+}
+
+@media (max-width: 400px) {
+  .footer .container { padding: 0 12px; }
+  .footer-content { grid-template-columns: 1fr !important; gap: 24px !important; }
+  .footer-section:first-child { margin-bottom: 20px; }
+  .footer-section h4 { font-size: 16px; }
+  .footer-section a { font-size: 13px; }
+}
+
+.footer-section a { display: block; color: var(--text-secondary); text-decoration: none;
+  font-size: 14px; margin-bottom: 12px; transition: all 0.3s; }
+.footer-section a:hover { color: var(--primary); transform: translateX(4px); }
+.footer-bottom { text-align: center; padding-top: 32px; border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted); font-size: 14px; }
+@media (max-width: 768px) {
+  .container { padding: 0 24px; }
+  .nav-links { display: none; }
+  .contact-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container">
+    <div class="nav-content">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">🎓</span>
+        <span>Курсы Диспетчера</span>
+      </a>
+      <div class="nav-links">
+        <a href="index.html#features" class="nav-link">Преимущества</a>
+        <a href="index.html#pricing" class="nav-link">Тарифы</a>
+        <a href="courses.html" class="nav-link">Курсы</a>
+        <a href="about.html" class="nav-link">О нас</a>
+      </div>
+      <div class="nav-actions">
+        <a href="login.html" class="btn-login">Войти</a>
+        <a href="register.html" class="btn-signup">Регистрация</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<section class="page-header">
+  <div class="container">
+    <h1 class="page-title">
+      <span class="gradient-text">Контакты</span>
+    </h1>
+    <p class="page-subtitle">
+      Свяжитесь с нами любым удобным способом
+    </p>
+  </div>
+</section>
+
+<section class="content-section">
+  <div class="container">
+    <div class="contact-grid">
+      
+      <div class="contact-card">
+        <div class="contact-icon">📧</div>
+        <h3 class="contact-title">Email</h3>
+        <p class="contact-info">info@dispatcher-courses.com</p>
+      </div>
+
+      <div class="contact-card">
+        <div class="contact-icon">📱</div>
+        <h3 class="contact-title">Телефон</h3>
+        <p class="contact-info">+1 (555) 123-4567</p>
+      </div>
+
+      <div class="contact-card">
+        <div class="contact-icon">💬</div>
+        <h3 class="contact-title">Telegram</h3>
+        <p class="contact-info">@dispatcher_support</p>
+      </div>
+
+    </div>
+
+    <div class="contact-form">
+      <h3 style="font-size: 28px; font-weight: 700; margin-bottom: 24px; text-align: center;">
+        Напишите нам
+      </h3>
+      <form>
+        <div class="form-group">
+          <label class="form-label">Имя</label>
+          <input type="text" class="form-input" placeholder="Ваше имя" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" placeholder="your@email.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Тема</label>
+          <input type="text" class="form-input" placeholder="Тема сообщения" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Сообщение</label>
+          <textarea class="form-textarea" placeholder="Ваше сообщение..." required></textarea>
+        </div>
+        <button type="submit" class="btn-submit">Отправить сообщение</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Курсы Диспетчера</h4>
+        <p>Профессиональное обучение диспетчеров грузоперевозок</p>
+      </div>
+      <div class="footer-section">
+        <h4>Обучение</h4>
+        <a href="courses.html">Курсы</a>
+        <a href="certification.html">Сертификация</a>
+        <a href="webinars.html">Вебинары</a>
+      </div>
+      <div class="footer-section">
+        <h4>Поддержка</h4>
+        <a href="faq.html">FAQ</a>
+        <a href="contacts.html">Контакты</a>
+        <a href="help.html">Помощь</a>
+      </div>
+      <div class="footer-section">
+        <h4>Компания</h4>
+        <a href="about.html">О нас</a>
+        <a href="blog.html">Блог</a>
+        <a href="career.html">Карьера</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2024 Курсы Диспетчера. Все права защищены.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="auth.js"></script>
+
+</body>
+</html>
