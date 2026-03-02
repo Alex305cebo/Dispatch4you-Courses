@@ -89,8 +89,6 @@
       pointer-events: none;
       opacity: 1;
       display: block;
-      filter: blur(4px);
-      /* Увеличили размытие с 2px до 4px */
     }
 
     /* Grid pattern overlay */
@@ -4520,7 +4518,7 @@
       background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
       border: 1px solid rgba(99, 102, 241, 0.2);
       border-radius: 16px;
-      padding: 20px;
+      padding: 12px 20px 20px 20px;
       max-width: 700px;
       margin: 0 auto 40px auto;
       box-shadow: 0 8px 32px rgba(99, 102, 241, 0.1);
@@ -4529,7 +4527,7 @@
     .chart-container h3 {
       font-size: 16px;
       font-weight: 700;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
       color: #ffffff;
       text-align: center;
       display: flex;
@@ -6129,35 +6127,55 @@
       const ctx = canvas.getContext('2d');
       let width = window.innerWidth;
       let height = window.innerHeight;
-      let time = 0;
       let animationFrameId;
+      let particles = [];
+      const particleCount = 80;
+      const connectionDistance = 150;
+      const mouse = { x: null, y: null, radius: 150 };
 
-      const waves = [
-        {
-          amplitude: 50,
-          frequency: 0.004,
-          speed: 0.04,
-          offset: 0,
-          color: 'rgba(99, 102, 241, 0.04)',
-          y: height * 0.3
-        },
-        {
-          amplitude: 60,
-          frequency: 0.0035,
-          speed: 0.05,
-          offset: Math.PI / 3,
-          color: 'rgba(139, 92, 246, 0.03)',
-          y: height * 0.5
-        },
-        {
-          amplitude: 70,
-          frequency: 0.0045,
-          speed: 0.035,
-          offset: Math.PI / 2,
-          color: 'rgba(167, 139, 250, 0.025)',
-          y: height * 0.7
+      class Particle {
+        constructor() {
+          this.x = Math.random() * width;
+          this.y = Math.random() * height;
+          this.vx = (Math.random() - 0.5) * 0.5;
+          this.vy = (Math.random() - 0.5) * 0.5;
+          this.radius = Math.random() * 2 + 1;
+          this.opacity = Math.random() * 0.5 + 0.3;
         }
-      ];
+
+        update() {
+          this.x += this.vx;
+          this.y += this.vy;
+
+          // Отталкивание от мыши
+          if (mouse.x !== null && mouse.y !== null) {
+            const dx = this.x - mouse.x;
+            const dy = this.y - mouse.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < mouse.radius) {
+              const force = (mouse.radius - distance) / mouse.radius;
+              this.x += dx * force * 0.1;
+              this.y += dy * force * 0.1;
+            }
+          }
+
+          // Отскок от границ
+          if (this.x < 0 || this.x > width) this.vx *= -1;
+          if (this.y < 0 || this.y > height) this.vy *= -1;
+
+          // Ограничение позиции
+          this.x = Math.max(0, Math.min(width, this.x));
+          this.y = Math.max(0, Math.min(height, this.y));
+        }
+
+        draw() {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(99, 102, 241, ${this.opacity})`;
+          ctx.fill();
+        }
+      }
 
       function init() {
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -6167,40 +6185,30 @@
         canvas.style.width = `${width}px`;
         canvas.style.height = `${height}px`;
 
-        // Update wave positions on resize
-        waves[0].y = height * 0.3;
-        waves[1].y = height * 0.5;
-        waves[2].y = height * 0.7;
+        particles = [];
+        for (let i = 0; i < particleCount; i++) {
+          particles.push(new Particle());
+        }
       }
 
-      function drawWave(wave) {
-        ctx.beginPath();
-        ctx.moveTo(0, wave.y);
+      function connectParticles() {
+        for (let i = 0; i < particles.length; i++) {
+          for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
 
-        for (let x = 0; x <= width; x += 5) {
-          const y = wave.y +
-            Math.sin(x * wave.frequency + time * wave.speed + wave.offset) * wave.amplitude;
-          ctx.lineTo(x, y);
+            if (distance < connectionDistance) {
+              const opacity = (1 - distance / connectionDistance) * 0.3;
+              ctx.beginPath();
+              ctx.strokeStyle = `rgba(99, 102, 241, ${opacity})`;
+              ctx.lineWidth = 1;
+              ctx.moveTo(particles[i].x, particles[i].y);
+              ctx.lineTo(particles[j].x, particles[j].y);
+              ctx.stroke();
+            }
+          }
         }
-
-        // Complete the shape
-        ctx.lineTo(width, height);
-        ctx.lineTo(0, height);
-        ctx.closePath();
-
-        // Fill with gradient
-        const gradient = ctx.createLinearGradient(0, wave.y - wave.amplitude, 0, wave.y + wave.amplitude);
-        gradient.addColorStop(0, wave.color.replace(/[\d.]+\)$/, '0.02)'));
-        gradient.addColorStop(0.5, wave.color);
-        gradient.addColorStop(1, wave.color.replace(/[\d.]+\)$/, '0.01)'));
-
-        ctx.fillStyle = gradient;
-        ctx.fill();
-
-        // Stroke for wave line
-        ctx.strokeStyle = wave.color.replace(/[\d.]+\)$/, '0.15)');
-        ctx.lineWidth = 2;
-        ctx.stroke();
       }
 
       function animate() {
@@ -6209,13 +6217,16 @@
           return;
         }
 
-        time += 1;
-
-        // Clear canvas
         ctx.clearRect(0, 0, width, height);
 
-        // Draw waves from back to front
-        waves.forEach(wave => drawWave(wave));
+        // Рисуем соединения
+        connectParticles();
+
+        // Обновляем и рисуем частицы
+        particles.forEach(particle => {
+          particle.update();
+          particle.draw();
+        });
 
         animationFrameId = requestAnimationFrame(animate);
       }
@@ -6226,11 +6237,23 @@
         init();
       }
 
+      function handleMouseMove(e) {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+      }
+
+      function handleMouseLeave() {
+        mouse.x = null;
+        mouse.y = null;
+      }
+
       // Start
       init();
       animate();
 
       window.addEventListener('resize', handleResize);
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseleave', handleMouseLeave);
     })();
   </script>
 
