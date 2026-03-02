@@ -9,6 +9,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet">
+
+  <!-- amCharts 5 -->
+  <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/geodata/usaLow.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+
   <style>
     :root {
       --primary: #6366f1;
@@ -45,7 +52,8 @@
         radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.15), transparent 50%),
         radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.15), transparent 50%);
       animation: backgroundMove 20s ease infinite;
-      z-index: 0;
+      z-index: -1;
+      pointer-events: none;
     }
 
     @keyframes backgroundMove {
@@ -66,6 +74,24 @@
       padding: 0 32px;
       position: relative;
       z-index: 1;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 0 12px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 0 10px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .container {
+        padding: 0 8px;
+      }
     }
 
     /* Content wrapper with top padding */
@@ -467,7 +493,7 @@
     /* Mobile Responsive */
     @media (max-width: 768px) {
       .container {
-        padding: 40px 16px;
+        padding: 0 12px;
       }
 
       h1 {
@@ -548,6 +574,807 @@
       flex-shrink: 0;
     }
 
+    /* USA Map Styles */
+    .usa-map-container {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95));
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 20px;
+      padding: 20px 24px;
+      margin-bottom: 48px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .usa-map-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.1), transparent 70%);
+      pointer-events: none;
+    }
+
+    #chartdiv {
+      width: 100%;
+      height: 500px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Скрываем водяной знак amCharts */
+    #chartdiv a[title*="amCharts"],
+    #chartdiv a[title*="JavaScript charts"],
+    #chartdiv div[class*="am5-logo"],
+    .am5-logo-container {
+      display: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+    }
+
+    /* Blur эффект для tooltip */
+    #chartdiv .am5-tooltip-container {
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    /* Сетка карточек штатов */
+    .mobile-states-section {
+      display: block;
+      margin-bottom: 60px;
+    }
+
+    .mobile-states-section h2 {
+      text-align: center;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 32px;
+      color: #ffffff;
+    }
+
+    .states-cards-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      padding: 0;
+    }
+
+    .state-card-mobile {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      min-height: auto;
+    }
+
+    .state-card-mobile::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .state-card-mobile:active {
+      transform: scale(0.98);
+    }
+
+    .state-card-mobile.expanded::before {
+      opacity: 1;
+    }
+
+    .state-card-mobile.expanded {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.08));
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+
+    .state-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      gap: 10px;
+    }
+
+    .state-card-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .state-card-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .state-card-flag {
+      font-size: 24px;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+      flex-shrink: 0;
+    }
+
+    .state-card-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .state-card-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .state-card-separator {
+      display: none;
+    }
+
+    .state-card-cities {
+      font-size: 11px;
+      color: #64748b;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .state-card-rate {
+      font-size: 17px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #10b981, #22c55e);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .state-card-badge {
+      font-size: 9px;
+      padding: 3px 7px;
+      border-radius: 8px;
+      font-weight: 600;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .state-card-badge.hot {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+    }
+
+    .state-card-badge.high {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #ffffff;
+    }
+
+    .state-card-badge.medium {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      color: #ffffff;
+    }
+
+    .state-card-badge.low {
+      background: linear-gradient(135deg, #ec4899, #db2777);
+      color: #ffffff;
+    }
+
+    .state-card-badge.minimal {
+      background: rgba(100, 116, 139, 0.3);
+      color: #cbd5e1;
+    }
+
+    .state-card-main {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+      margin-top: 0;
+    }
+
+    .state-card-mobile.expanded .state-card-main {
+      max-height: 300px;
+      opacity: 1;
+      margin-top: 12px;
+    }
+
+    .state-card-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+    }
+
+    .state-card-icon {
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .state-card-label {
+      color: #94a3b8;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .state-card-value {
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 12px;
+      margin-left: auto;
+      text-align: right;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .state-card-details {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+      opacity: 0;
+    }
+
+    .state-card-mobile.expanded .state-card-details {
+      max-height: 200px;
+      opacity: 1;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .state-card-detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      font-size: 12px;
+    }
+
+    .state-card-detail-label {
+      color: #94a3b8;
+    }
+
+    .state-card-detail-value {
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+      .states-cards-container {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .state-card-mobile {
+        padding: 12px 14px;
+        min-height: auto;
+      }
+
+      .state-card-flag {
+        font-size: 22px;
+      }
+
+      .state-card-name {
+        font-size: 14px;
+      }
+
+      .state-card-cities {
+        font-size: 10px;
+      }
+
+      .state-card-rate {
+        font-size: 16px;
+      }
+
+      .state-card-badge {
+        font-size: 8px;
+        padding: 3px 6px;
+      }
+
+      .mobile-states-section h2 {
+        font-size: 22px;
+        margin-bottom: 24px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .states-cards-container {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .state-card-mobile {
+        padding: 10px 12px;
+        min-height: auto;
+        border-radius: 12px;
+      }
+
+      .state-card-flag {
+        font-size: 20px;
+      }
+
+      .state-card-name {
+        font-size: 13px;
+      }
+
+      .state-card-cities {
+        font-size: 9px;
+      }
+
+      .state-card-rate {
+        font-size: 15px;
+      }
+
+      .state-card-badge {
+        font-size: 7px;
+        padding: 2px 5px;
+      }
+
+      .state-card-left {
+        gap: 8px;
+      }
+
+      .state-card-right {
+        gap: 4px;
+      }
+    }
+
+    /* Tablet */
+    @media (max-width: 1024px) {
+      .usa-map-container {
+        padding: 20px 18px;
+      }
+
+      #chartdiv {
+        height: 450px;
+      }
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      .usa-map-container {
+        padding: 16px 14px;
+        margin-bottom: 32px;
+      }
+
+      #chartdiv {
+        height: 380px;
+      }
+
+      .map-legend {
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .legend-title {
+        font-size: 13px;
+      }
+
+      .legend-items {
+        justify-content: center;
+        gap: 12px;
+      }
+
+      .legend-item {
+        font-size: 11px;
+      }
+
+      .legend-color {
+        width: 20px;
+        height: 10px;
+      }
+    }
+
+    /* Small Mobile */
+    @media (max-width: 480px) {
+      .usa-map-container {
+        padding: 14px 12px;
+        border-radius: 16px;
+      }
+
+      #chartdiv {
+        height: 320px;
+      }
+
+      .map-legend {
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .legend-items {
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .legend-item {
+        font-size: 10px;
+        gap: 4px;
+      }
+
+      .legend-color {
+        width: 18px;
+        height: 8px;
+      }
+    }
+
+    /* Extra Small Mobile */
+    @media (max-width: 360px) {
+      .usa-map-container {
+        padding: 12px 10px;
+      }
+
+      #chartdiv {
+        height: 280px;
+      }
+
+      .legend-title {
+        font-size: 12px;
+      }
+
+      .legend-item {
+        font-size: 9px;
+      }
+    }
+
+    .map-legend {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+
+    .legend-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+
+    .legend-items {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+
+    .legend-color {
+      width: 24px;
+      height: 12px;
+      border-radius: 3px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .usa-map-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+      z-index: 1;
+    }
+
+    .usa-map-svg {
+      width: 100%;
+      height: auto;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+    }
+
+    .state-path {
+      fill: #64748b;
+      stroke: rgba(15, 23, 42, 0.8);
+      stroke-width: 2;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      opacity: 0.85;
+    }
+
+    .state-path:hover {
+      opacity: 1;
+      stroke: rgba(255, 255, 255, 0.6);
+      stroke-width: 3;
+      filter: brightness(1.2);
+      transform: scale(1.02);
+      transform-origin: center;
+    }
+
+    /* Цветовое кодирование по количеству грузов */
+    .state-path[data-loads] {
+      animation: fadeInState 0.6s ease-out forwards;
+    }
+
+    @keyframes fadeInState {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+
+      to {
+        opacity: 0.85;
+      }
+    }
+
+    /* Горячие штаты с пульсацией */
+    .state-path.hot-state {
+      animation: statePulse 2s ease-in-out infinite;
+    }
+
+    @keyframes statePulse {
+
+      0%,
+      100% {
+        filter: brightness(1) drop-shadow(0 0 8px currentColor);
+      }
+
+      50% {
+        filter: brightness(1.3) drop-shadow(0 0 16px currentColor);
+      }
+    }
+
+    /* Динамическое окрашивание штатов по количеству грузов */
+    .state-path[data-loads="3247"] {
+      fill: #10b981;
+    }
+
+    .state-path[data-loads="2891"] {
+      fill: #10b981;
+    }
+
+    .state-path[data-loads="2156"] {
+      fill: #6366f1;
+    }
+
+    .state-path[data-loads="1923"] {
+      fill: #6366f1;
+    }
+
+    .state-path[data-loads="1687"] {
+      fill: #8b5cf6;
+    }
+
+    .state-path[data-loads="1534"] {
+      fill: #8b5cf6;
+    }
+
+    .state-path[data-loads="1421"] {
+      fill: #8b5cf6;
+    }
+
+    .state-path[data-loads="1298"] {
+      fill: #8b5cf6;
+    }
+
+    .state-path[data-loads="1147"] {
+      fill: #8b5cf6;
+    }
+
+    .state-path[data-loads="987"] {
+      fill: #ec4899;
+    }
+
+    .state-path[data-loads="845"] {
+      fill: #ec4899;
+    }
+
+    .state-path[data-loads="723"] {
+      fill: #ec4899;
+    }
+
+    .state-path[data-loads="654"] {
+      fill: #ec4899;
+    }
+
+    .state-path[data-loads="589"] {
+      fill: #ec4899;
+    }
+
+    /* Дополнительные штаты - Розовый (500-1000) */
+    .state-path[data-loads="898"],
+    .state-path[data-loads="867"],
+    .state-path[data-loads="834"],
+    .state-path[data-loads="823"],
+    .state-path[data-loads="756"],
+    .state-path[data-loads="745"],
+    .state-path[data-loads="734"],
+    .state-path[data-loads="689"],
+    .state-path[data-loads="678"],
+    .state-path[data-loads="645"],
+    .state-path[data-loads="612"],
+    .state-path[data-loads="567"] {
+      fill: #ec4899;
+    }
+
+    /* Фиолетовый (1000-2000) */
+    .state-path[data-loads="1212"],
+    .state-path[data-loads="1089"],
+    .state-path[data-loads="1045"] {
+      fill: #8b5cf6;
+    }
+
+    /* Серый (<500) */
+    .state-path[data-loads="498"],
+    .state-path[data-loads="456"],
+    .state-path[data-loads="454"],
+    .state-path[data-loads="445"],
+    .state-path[data-loads="423"],
+    .state-path[data-loads="412"],
+    .state-path[data-loads="389"],
+    .state-path[data-loads="387"],
+    .state-path[data-loads="334"],
+    .state-path[data-loads="312"],
+    .state-path[data-loads="298"],
+    .state-path[data-loads="267"],
+    .state-path[data-loads="245"],
+    .state-path[data-loads="234"],
+    .state-path[data-loads="223"],
+    .state-path[data-loads="198"],
+    .state-path[data-loads="189"],
+    .state-path[data-loads="178"],
+    .state-path[data-loads="156"],
+    .state-path[data-loads="145"],
+    .state-path[data-loads="89"] {
+      fill: #64748b;
+    }
+
+    /* Popup для деталей штата */
+    .state-popup {
+      position: absolute;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.98));
+      border: 2px solid rgba(99, 102, 241, 0.5);
+      border-radius: 16px;
+      padding: 20px;
+      min-width: 280px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+    }
+
+    .state-popup.active {
+      opacity: 1;
+      pointer-events: all;
+      transform: translateY(0);
+    }
+
+    .popup-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .popup-state-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .popup-close {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: rgba(239, 68, 68, 0.2);
+      border-radius: 8px;
+      color: #ffffff;
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .popup-close:hover {
+      background: rgba(239, 68, 68, 0.4);
+      transform: scale(1.1);
+    }
+
+    .popup-content {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .popup-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+
+    .popup-label {
+      font-size: 14px;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    .popup-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .popup-loads {
+      color: #10b981;
+    }
+
+    .popup-rate {
+      color: #6366f1;
+    }
+
+    .popup-diesel {
+      color: #f59e0b;
+    }
+
+    @media (max-width: 768px) {
+      .usa-map-container {
+        padding: 20px 16px;
+      }
+
+      .map-legend {
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .legend-items {
+        justify-content: center;
+      }
+
+      .state-popup {
+        min-width: 240px;
+        padding: 16px;
+      }
+
+      .popup-state-name {
+        font-size: 16px;
+      }
+
+      .popup-label {
+        font-size: 12px;
+      }
+
+      .popup-value {
+        font-size: 14px;
+      }
+    }
+
     .rates-header h3 {
       font-size: 24px;
       font-weight: 700;
@@ -575,13 +1402,36 @@
 
     .rate-bar-modern {
       position: relative;
-      height: 70px;
+      height: auto;
+      min-height: 70px;
       margin-bottom: 16px;
       border-radius: 16px;
-      overflow: hidden;
+      overflow: visible;
       opacity: 0;
       animation: fadeInUp 0.6s ease-out forwards;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      z-index: 1;
+      transition: all 0.3s ease;
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+      .rate-bar-modern {
+        min-height: 60px;
+      }
+    }
+
+    .rate-bar-modern.expanded {
+      z-index: 10;
+    }
+
+    .rate-bar-wrapper {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      height: 70px;
     }
 
     .rate-bar-modern:nth-child(1) {
@@ -604,33 +1454,32 @@
       animation-delay: 0.5s;
     }
 
-    .rate-bar-modern:hover {
-      transform: translateY(-4px) scale(1.02);
-      box-shadow: 0 12px 32px rgba(99, 102, 241, 0.3);
-    }
-
     .rate-bar-bg {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
-      height: 100%;
+      height: 70px;
       background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 16px;
       backdrop-filter: blur(10px);
+      pointer-events: none;
+      z-index: 1;
     }
 
     .rate-bar-fill {
       position: absolute;
       top: 0;
       left: 0;
-      height: 100%;
+      height: 70px;
       background: linear-gradient(90deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.2));
       border-radius: 16px;
       animation: fillBarSmooth 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
       transform-origin: left;
       box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.1);
+      pointer-events: none;
+      z-index: 2;
     }
 
     .rate-bar-modern:nth-child(1) .rate-bar-fill {
@@ -685,6 +1534,17 @@
       justify-content: center;
       gap: 8px;
       transition: all 0.3s ease;
+      -webkit-tap-highlight-color: rgba(99, 102, 241, 0.3);
+      touch-action: manipulation;
+      user-select: none;
+    }
+
+    @media (max-width: 768px) {
+      .rates-expand-btn {
+        padding: 16px 20px;
+        font-size: 15px;
+        min-height: 48px;
+      }
     }
 
     .rates-expand-btn:hover {
@@ -720,12 +1580,8 @@
       align-items: center;
       padding: 0 24px;
       height: 100%;
-      z-index: 2;
-    }
-
-    .rate-bar-modern:hover .rate-bar-content {
-      transform: translateX(8px);
-      transition: transform 0.3s ease;
+      z-index: 10;
+      min-height: 70px;
     }
 
     .region-name {
@@ -734,6 +1590,7 @@
       color: #ffffff;
       text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
       letter-spacing: 0.5px;
+      pointer-events: none;
     }
 
     .rate-value {
@@ -743,6 +1600,7 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       text-shadow: 0 2px 16px rgba(99, 102, 241, 0.5);
+      pointer-events: none;
     }
 
     .rate-bar-glow {
@@ -750,88 +1608,335 @@
       top: 0;
       left: 0;
       width: 100%;
-      height: 100%;
+      height: 70px;
       opacity: 0;
-      transition: opacity 0.4s ease;
       pointer-events: none;
       border-radius: 16px;
+      z-index: 0;
     }
 
-    .rate-bar-modern:hover .rate-bar-glow {
-      opacity: 0.6;
-      animation: glowPulse 2s ease-in-out infinite;
+    /* Dropdown под кнопкой региона */
+    .region-dropdown {
+      position: relative;
+      max-height: 0;
+      overflow: hidden;
+      background: linear-gradient(135deg, rgba(20, 30, 48, 0.98), rgba(30, 41, 59, 0.98));
+      border-top: 0px solid rgba(99, 102, 241, 0.3);
+      padding: 0 16px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      opacity: 0;
+      z-index: 100;
     }
 
-    @keyframes glowPulse {
+    .region-dropdown.active {
+      max-height: 600px;
+      padding: 12px 16px 16px 16px;
+      border-top: 1px solid rgba(99, 102, 241, 0.3);
+      margin-top: 8px;
+      opacity: 1;
+    }
 
-      0%,
-      100% {
-        opacity: 0.4;
+    @keyframes dropdownSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
       }
 
-      50% {
-        opacity: 0.8;
+      to {
+        opacity: 1;
+        transform: translateY(0);
       }
     }
 
-    .states-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-      padding: 12px;
-      background: rgba(0, 0, 0, 0.4);
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+    .dropdown-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
     }
 
-    .states-info .state-card {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      padding: 12px;
-      transition: all 0.2s ease;
-    }
-
-    .states-info .state-card:hover {
-      background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.1));
-      border-color: rgba(245, 158, 11, 0.4);
-      transform: translateY(-2px);
-    }
-
-    .states-info .state-name {
+    .dropdown-title {
       font-size: 14px;
       font-weight: 700;
       color: #ffffff;
-      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     }
 
-    .states-info .state-details {
+    .dropdown-close {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: #ffffff;
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .dropdown-close:hover {
+      background: rgba(239, 68, 68, 0.2);
+    }
+
+    .dropdown-states-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+      max-height: none;
+      overflow: visible;
+    }
+
+    .dropdown-state-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 10px;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(5px);
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .dropdown-state-card:hover {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.15));
+      border-color: rgba(99, 102, 241, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .dropdown-state-card.expanded {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.1));
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+
+    .state-card-main {
+      display: block;
+    }
+
+    .state-card-main .state-card-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+    }
+
+    .dropdown-state-card.expanded .state-card-main .state-card-row {
+      max-height: 50px;
+      opacity: 1;
+      margin-top: 4px;
+    }
+
+    .state-card-main .state-card-icon {
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .state-card-main .state-card-label {
+      color: #94a3b8;
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+
+    .state-card-main .state-card-value {
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 11px;
+      margin-left: auto;
+      text-align: right;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Скрываем детали по умолчанию */
+    .state-card-main .state-card-row {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+    }
+
+    /* Показываем детали при раскрытии */
+    .dropdown-state-card.expanded .state-card-main .state-card-row {
+      max-height: 50px;
+      opacity: 1;
+      margin-top: 6px;
+    }
+
+    .state-card-details {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+      opacity: 0;
+    }
+
+    .dropdown-state-card.expanded .state-card-details {
+      max-height: 200px;
+      opacity: 1;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .state-detail-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      padding: 4px 0;
+      font-size: 11px;
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.3s ease, opacity 0.3s ease;
     }
 
-    .states-info .city-name {
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.7);
+    .dropdown-state-card.expanded .state-detail-row {
+      max-height: 50px;
+      opacity: 1;
     }
 
-    .states-info .fuel-price {
-      font-size: 14px;
+    .state-detail-label {
+      color: #94a3b8;
+    }
+
+    .state-detail-value {
+      color: #ffffff;
       font-weight: 600;
-      color: #f59e0b;
+    }
+
+    .dropdown-state-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .dropdown-state-flag {
+      font-size: 18px;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+    }
+
+    .dropdown-state-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    .dropdown-state-rate {
+      font-size: 16px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #10b981, #22c55e);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+    }
+
+    .dropdown-state-diesel {
+      font-size: 12px;
+      font-weight: 600;
+      color: #fbbf24;
+      margin-bottom: 4px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .dropdown-state-info {
+      font-size: 10px;
+      color: #94a3b8;
+      line-height: 1.3;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    @media (max-width: 768px) {
+      .dropdown-states-grid {
+        grid-template-columns: 1fr;
+        max-height: none;
+        gap: 8px;
+      }
+
+      .region-dropdown {
+        padding: 0 12px;
+      }
+
+      .region-dropdown.active {
+        padding: 10px 12px 12px 12px;
+        max-height: none;
+      }
+
+      .dropdown-state-card {
+        padding: 12px;
+      }
+
+      .rate-bar-modern {
+        margin-bottom: 12px;
+      }
+
+      .rate-bar-wrapper {
+        height: 60px;
+      }
+
+      .rate-bar-bg,
+      .rate-bar-fill,
+      .rate-bar-glow {
+        height: 60px;
+      }
+
+      .rate-bar-content {
+        min-height: 60px;
+        padding: 0 16px;
+      }
+
+      .region-name {
+        font-size: 16px;
+      }
+
+      .rate-value {
+        font-size: 20px;
+      }
+
+      .rates-section {
+        padding: 24px;
+      }
+
+      .rates-header {
+        margin-bottom: 24px;
+      }
+
+      .rates-icon {
+        font-size: 32px;
+      }
+
+      .rates-header h3 {
+        font-size: 20px;
+      }
+
+      .rates-badge {
+        font-size: 11px;
+        padding: 4px 12px;
+      }
     }
 
     @media (max-width: 768px) {
       .rates-container {
         grid-template-columns: 1fr;
         gap: 24px;
-      }
-
-      .states-grid {
-        grid-template-columns: 1fr;
-        padding: 10px;
-        gap: 6px;
       }
     }
 
@@ -842,21 +1947,30 @@
     /* Tablets landscape (1024px) */
     @media (max-width: 1024px) {
       .container {
-        padding: 0 24px;
+        padding: 0 20px;
+      }
+
+      .rates-container {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+      }
+
+      .dropdown-states-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       }
     }
 
     /* Tablets portrait (900px) */
     @media (max-width: 900px) {
       .container {
-        padding: 0 20px;
+        padding: 0 16px;
       }
     }
 
     /* Mobile landscape (768px) */
     @media (max-width: 768px) {
       .container {
-        padding: 0 20px;
+        padding: 0 12px;
       }
 
       .content-wrapper {
@@ -927,14 +2041,14 @@
     /* Mobile portrait (600px) */
     @media (max-width: 600px) {
       .container {
-        padding: 0 16px;
+        padding: 0 10px;
       }
     }
 
     /* Small mobile (480px) */
     @media (max-width: 480px) {
       .container {
-        padding: 0 16px;
+        padding: 0 10px;
       }
 
       .content-wrapper {
@@ -981,12 +2095,67 @@
       .rate-value {
         font-size: 18px;
       }
+
+      .rate-bar-wrapper {
+        height: 55px;
+      }
+
+      .rate-bar-bg,
+      .rate-bar-fill,
+      .rate-bar-glow {
+        height: 55px;
+      }
+
+      .rate-bar-content {
+        min-height: 55px;
+        padding: 0 12px;
+      }
+
+      .rates-section {
+        padding: 20px;
+      }
+
+      .rates-header h3 {
+        font-size: 18px;
+      }
+
+      .rates-icon {
+        font-size: 28px;
+      }
+
+      .dropdown-state-card {
+        padding: 10px;
+      }
+
+      .dropdown-state-name {
+        font-size: 12px;
+      }
+
+      .dropdown-state-rate {
+        font-size: 14px;
+      }
+
+      .dropdown-state-diesel {
+        font-size: 11px;
+      }
+
+      .dropdown-state-info {
+        font-size: 9px;
+      }
+
+      .dropdown-state-flag {
+        font-size: 16px;
+      }
+
+      .region-dropdown.active {
+        padding: 8px 10px 10px 10px;
+      }
     }
 
     /* Extra small mobile (360px) */
     @media (max-width: 360px) {
       .container {
-        padding: 0 12px;
+        padding: 0 8px;
       }
 
       h1 {
@@ -1017,9 +2186,84 @@
       .feature-card p {
         font-size: 13px;
       }
+
+      .rate-bar-wrapper {
+        height: 50px;
+      }
+
+      .rate-bar-bg,
+      .rate-bar-fill,
+      .rate-bar-glow {
+        height: 50px;
+      }
+
+      .rate-bar-content {
+        min-height: 50px;
+        padding: 0 10px;
+      }
+
+      .region-name {
+        font-size: 13px;
+      }
+
+      .rate-value {
+        font-size: 16px;
+      }
+
+      .rates-section {
+        padding: 16px;
+      }
+
+      .rates-header {
+        gap: 10px;
+      }
+
+      .rates-header h3 {
+        font-size: 16px;
+      }
+
+      .rates-icon {
+        font-size: 24px;
+      }
+
+      .rates-badge {
+        font-size: 10px;
+        padding: 3px 10px;
+      }
+
+      .dropdown-state-card {
+        padding: 8px;
+      }
+
+      .dropdown-state-name {
+        font-size: 11px;
+      }
+
+      .dropdown-state-rate {
+        font-size: 13px;
+      }
+
+      .dropdown-state-diesel {
+        font-size: 10px;
+      }
+
+      .dropdown-state-info {
+        font-size: 8px;
+      }
+
+      .dropdown-state-flag {
+        font-size: 14px;
+      }
+
+      .region-dropdown.active {
+        padding: 8px;
+      }
     }
   </style>
   <link rel="stylesheet" href="../shared-nav.css">
+
+  <style>
+  </style>
 </head>
 
 <body>
@@ -1318,86 +2562,6 @@
             </button>
           </div>
 
-          <!-- Flatbed Rates -->
-          <div class="rates-section">
-            <div class="rates-header">
-              <div class="rates-icon">🏗️</div>
-              <h3>Flatbed</h3>
-              <div class="rates-badge">$2.71/миля средняя</div>
-            </div>
-
-            <div class="rates-chart">
-              <div class="rate-bar-modern" data-rate="2.71">
-                <div class="rate-bar-bg"></div>
-                <div class="rate-bar-fill" style="width: 77.43%;"></div>
-                <div class="rate-bar-content">
-                  <span class="region-name">National Average</span>
-                  <span class="rate-value">$2.71</span>
-                </div>
-                <div class="rate-bar-glow"
-                  style="background: linear-gradient(90deg, transparent, #6366f1, transparent);">
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Дизель -->
-          <div class="rates-section" style="cursor: pointer;" data-type="diesel">
-            <div class="rates-header">
-              <div class="rates-icon">⛽</div>
-              <h3>Дизель</h3>
-              <div class="rates-badge">$3.45/галлон средняя</div>
-            </div>
-
-            <div class="rates-chart">
-              <div class="rate-bar-modern" data-rate="3.45">
-                <div class="rate-bar-bg"></div>
-                <div class="rate-bar-fill" style="width: 98.57%;"></div>
-                <div class="rate-bar-content">
-                  <span class="region-name">National Average</span>
-                  <span class="rate-value">$3.45</span>
-                </div>
-                <div class="rate-bar-glow"
-                  style="background: linear-gradient(90deg, transparent, #ec4899, transparent);">
-                </div>
-              </div>
-            </div>
-
-            <!-- Expandable States Info -->
-            <div class="states-info"
-              style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-              <div class="states-grid">
-                <div class="state-card">
-                  <div class="state-name">California</div>
-                  <div class="state-details">
-                    <span class="city-name">Los Angeles</span>
-                    <span class="fuel-price">$4.25/галлон</span>
-                  </div>
-                </div>
-                <div class="state-card">
-                  <div class="state-name">Texas</div>
-                  <div class="state-details">
-                    <span class="city-name">Houston</span>
-                    <span class="fuel-price">$3.15/галлон</span>
-                  </div>
-                </div>
-                <div class="state-card">
-                  <div class="state-name">Illinois</div>
-                  <div class="state-details">
-                    <span class="city-name">Chicago</span>
-                    <span class="fuel-price">$3.62/галлон</span>
-                  </div>
-                </div>
-                <div class="state-card">
-                  <div class="state-name">Florida</div>
-                  <div class="state-details">
-                    <span class="city-name">Miami</span>
-                    <span class="fuel-price">$3.48/галлон</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -1566,6 +2730,15 @@
         </div>
       </div>
 
+      <!-- Секция: Сетка штатов -->
+      <div class="section-container mobile-states-section">
+        <h2>🗺️ Штаты США - Грузы и ставки</h2>
+
+        <div class="states-cards-container">
+          <!-- Карточки штатов будут добавлены через JavaScript -->
+        </div>
+      </div>
+
       <div class="features-grid">
         <div class="feature-card">
           <span class="feature-icon">🚛</span>
@@ -1601,35 +2774,6 @@
           <span class="feature-icon">🔄</span>
           <h3>Постоянные обновления</h3>
           <p>База грузов обновляется автоматически 24/7</p>
-        </div>
-      </div>
-
-      <div class="comparison-section">
-        <h2>💸 Сравнение с популярными Load Boards</h2>
-        <div class="comparison-table">
-          <div class="comparison-header">Наш Load Board</div>
-          <div class="comparison-header">DAT</div>
-          <div class="comparison-header">Truckstop</div>
-
-          <div class="comparison-cell highlight">БЕСПЛАТНО</div>
-          <div class="comparison-cell negative">$149-299/месяц</div>
-          <div class="comparison-cell negative">$99-249/месяц</div>
-
-          <div class="comparison-cell highlight">50+ брокеров</div>
-          <div class="comparison-cell">Все брокеры</div>
-          <div class="comparison-cell">Все брокеры</div>
-
-          <div class="comparison-cell highlight">Реальное время</div>
-          <div class="comparison-cell">Реальное время</div>
-          <div class="comparison-cell">Реальное время</div>
-
-          <div class="comparison-cell highlight">Простой интерфейс</div>
-          <div class="comparison-cell">Сложный интерфейс</div>
-          <div class="comparison-cell">Средний интерфейс</div>
-
-          <div class="comparison-cell highlight">Для студентов</div>
-          <div class="comparison-cell">Для профессионалов</div>
-          <div class="comparison-cell">Для профессионалов</div>
         </div>
       </div>
 
@@ -2151,6 +3295,236 @@
     { name: 'Arizona', flag: '🏔️', baseValue: 987, dieselPrice: 3.98, element: null, bar: null } // Транзит с Мексикой
   ];
 
+  // ============================================
+  // ДАННЫЕ О ШТАТАХ (вынесены для немедленной загрузки карточек)
+  // ============================================
+  const stateLoadsData = {
+    "US-CA": { loads: 3247, diesel: "$4.89", rate: "$2.45", name: "California" },
+    "US-TX": { loads: 2891, diesel: "$3.15", rate: "$2.35", name: "Texas" },
+    "US-FL": { loads: 2156, diesel: "$3.45", rate: "$2.40", name: "Florida" },
+    "US-IL": { loads: 1923, diesel: "$3.89", rate: "$2.83", name: "Illinois" },
+    "US-GA": { loads: 1687, diesel: "$3.35", rate: "$2.38", name: "Georgia" },
+    "US-PA": { loads: 1534, diesel: "$3.95", rate: "$2.42", name: "Pennsylvania" },
+    "US-NY": { loads: 1421, diesel: "$3.75", rate: "$2.35", name: "New York" },
+    "US-OH": { loads: 1298, diesel: "$3.65", rate: "$2.55", name: "Ohio" },
+    "US-MI": { loads: 1212, diesel: "$3.70", rate: "$2.48", name: "Michigan" },
+    "US-NC": { loads: 1147, diesel: "$3.55", rate: "$2.32", name: "North Carolina" },
+    "US-VA": { loads: 1089, diesel: "$3.48", rate: "$2.38", name: "Virginia" },
+    "US-AL": { loads: 1045, diesel: "$3.28", rate: "$2.36", name: "Alabama" },
+    "US-AZ": { loads: 987, diesel: "$3.85", rate: "$2.28", name: "Arizona" },
+    "US-TN": { loads: 898, diesel: "$3.30", rate: "$2.40", name: "Tennessee" },
+    "US-IN": { loads: 867, diesel: "$3.75", rate: "$2.60", name: "Indiana" },
+    "US-WA": { loads: 845, diesel: "$4.25", rate: "$2.18", name: "Washington" },
+    "US-LA": { loads: 834, diesel: "$3.30", rate: "$2.42", name: "Louisiana" },
+    "US-SC": { loads: 823, diesel: "$3.38", rate: "$2.34", name: "South Carolina" },
+    "US-OK": { loads: 756, diesel: "$3.25", rate: "$2.30", name: "Oklahoma" },
+    "US-KY": { loads: 745, diesel: "$3.40", rate: "$2.38", name: "Kentucky" },
+    "US-NJ": { loads: 734, diesel: "$3.88", rate: "$2.40", name: "New Jersey" },
+    "US-OR": { loads: 723, diesel: "$4.15", rate: "$2.15", name: "Oregon" },
+    "US-MO": { loads: 723, diesel: "$3.25", rate: "$2.45", name: "Missouri" },
+    "US-CO": { loads: 689, diesel: "$3.45", rate: "$2.25", name: "Colorado" },
+    "US-WI": { loads: 678, diesel: "$3.55", rate: "$2.65", name: "Wisconsin" },
+    "US-MN": { loads: 645, diesel: "$3.60", rate: "$2.70", name: "Minnesota" },
+    "US-MA": { loads: 612, diesel: "$3.78", rate: "$2.32", name: "Massachusetts" },
+    "US-MS": { loads: 567, diesel: "$3.25", rate: "$2.35", name: "Mississippi" },
+    "US-MD": { loads: 567, diesel: "$3.70", rate: "$2.38", name: "Maryland" },
+    "US-IA": { loads: 498, diesel: "$3.50", rate: "$2.55", name: "Iowa" },
+    "US-WV": { loads: 456, diesel: "$3.58", rate: "$2.42", name: "West Virginia" },
+    "US-NV": { loads: 454, diesel: "$4.35", rate: "$2.20", name: "Nevada" },
+    "US-KS": { loads: 445, diesel: "$3.35", rate: "$2.28", name: "Kansas" },
+    "US-NM": { loads: 423, diesel: "$3.55", rate: "$2.22", name: "New Mexico" },
+    "US-AR": { loads: 412, diesel: "$3.20", rate: "$2.28", name: "Arkansas" },
+    "US-CT": { loads: 389, diesel: "$3.82", rate: "$2.35", name: "Connecticut" },
+    "US-UT": { loads: 387, diesel: "$3.75", rate: "$2.18", name: "Utah" },
+    "US-NE": { loads: 334, diesel: "$3.45", rate: "$2.20", name: "Nebraska" },
+    "US-ID": { loads: 312, diesel: "$3.95", rate: "$2.12", name: "Idaho" },
+    "US-ME": { loads: 298, diesel: "$3.85", rate: "$2.25", name: "Maine" },
+    "US-NH": { loads: 267, diesel: "$3.72", rate: "$2.30", name: "New Hampshire" },
+    "US-MT": { loads: 245, diesel: "$3.85", rate: "$2.08", name: "Montana" },
+    "US-VT": { loads: 234, diesel: "$3.68", rate: "$2.28", name: "Vermont" },
+    "US-SD": { loads: 223, diesel: "$3.50", rate: "$2.15", name: "South Dakota" },
+    "US-WY": { loads: 198, diesel: "$3.65", rate: "$2.05", name: "Wyoming" },
+    "US-ND": { loads: 189, diesel: "$3.55", rate: "$2.10", name: "North Dakota" },
+    "US-DE": { loads: 178, diesel: "$3.65", rate: "$2.32", name: "Delaware" },
+    "US-HI": { loads: 156, diesel: "$5.25", rate: "$3.20", name: "Hawaii" },
+    "US-RI": { loads: 145, diesel: "$3.80", rate: "$2.28", name: "Rhode Island" },
+    "US-AK": { loads: 89, diesel: "$4.95", rate: "$3.50", name: "Alaska" }
+  };
+
+  // ============================================
+  // ГЕНЕРАЦИЯ КАРТОЧЕК ШТАТОВ (выполняется сразу)
+  // ============================================
+  (function generateMobileStatesCards() {
+    const container = document.querySelector('.states-cards-container');
+    if (!container) {
+      console.error('Container .states-cards-container not found!');
+      return;
+    }
+
+    console.log('Generating state cards...');
+
+    // Топ-30 штатов
+    const topStates = [
+      { id: "US-CA", ...stateLoadsData["US-CA"] },
+      { id: "US-TX", ...stateLoadsData["US-TX"] },
+      { id: "US-FL", ...stateLoadsData["US-FL"] },
+      { id: "US-IL", ...stateLoadsData["US-IL"] },
+      { id: "US-GA", ...stateLoadsData["US-GA"] },
+      { id: "US-PA", ...stateLoadsData["US-PA"] },
+      { id: "US-NY", ...stateLoadsData["US-NY"] },
+      { id: "US-OH", ...stateLoadsData["US-OH"] },
+      { id: "US-MI", ...stateLoadsData["US-MI"] },
+      { id: "US-NC", ...stateLoadsData["US-NC"] },
+      { id: "US-VA", ...stateLoadsData["US-VA"] },
+      { id: "US-AL", ...stateLoadsData["US-AL"] },
+      { id: "US-AZ", ...stateLoadsData["US-AZ"] },
+      { id: "US-TN", ...stateLoadsData["US-TN"] },
+      { id: "US-IN", ...stateLoadsData["US-IN"] },
+      { id: "US-WA", ...stateLoadsData["US-WA"] },
+      { id: "US-LA", ...stateLoadsData["US-LA"] },
+      { id: "US-SC", ...stateLoadsData["US-SC"] },
+      { id: "US-OK", ...stateLoadsData["US-OK"] },
+      { id: "US-KY", ...stateLoadsData["US-KY"] },
+      { id: "US-NJ", ...stateLoadsData["US-NJ"] },
+      { id: "US-OR", ...stateLoadsData["US-OR"] },
+      { id: "US-MO", ...stateLoadsData["US-MO"] },
+      { id: "US-CO", ...stateLoadsData["US-CO"] },
+      { id: "US-WI", ...stateLoadsData["US-WI"] },
+      { id: "US-MN", ...stateLoadsData["US-MN"] },
+      { id: "US-MA", ...stateLoadsData["US-MA"] },
+      { id: "US-MS", ...stateLoadsData["US-MS"] },
+      { id: "US-MD", ...stateLoadsData["US-MD"] },
+      { id: "US-IA", ...stateLoadsData["US-IA"] }
+    ];
+
+    // Эмодзи флаги для штатов
+    const stateFlags = {
+      "US-CA": "🌴", "US-TX": "⭐", "US-FL": "🌊", "US-IL": "🏙️",
+      "US-GA": "🍑", "US-PA": "🌲", "US-NY": "🗽", "US-OH": "🌾",
+      "US-MI": "🚗", "US-NC": "🌲", "US-VA": "🏛️", "US-AL": "🏈",
+      "US-AZ": "🏜️", "US-TN": "🎸", "US-IN": "🏁", "US-WA": "🌲",
+      "US-LA": "🎺", "US-SC": "🌴", "US-OK": "🤠", "US-KY": "🐴",
+      "US-NJ": "🏖️", "US-OR": "🌲", "US-MO": "🎭", "US-CO": "⛰️",
+      "US-WI": "🧀", "US-MN": "❄️", "US-MA": "🦞", "US-MS": "🎵",
+      "US-MD": "🦀", "US-IA": "🌽"
+    };
+
+    // Главные города для каждого штата
+    const stateCities = {
+      "US-CA": "LA, SF",
+      "US-TX": "Houston, Dallas",
+      "US-FL": "Miami, Tampa",
+      "US-IL": "Chicago",
+      "US-GA": "Atlanta",
+      "US-PA": "Philly, Pittsburgh",
+      "US-NY": "NYC, Buffalo",
+      "US-OH": "Columbus, Cleveland",
+      "US-MI": "Detroit",
+      "US-NC": "Charlotte, Raleigh",
+      "US-VA": "Richmond, Norfolk",
+      "US-AL": "Birmingham",
+      "US-AZ": "Phoenix, Tucson",
+      "US-TN": "Nashville, Memphis",
+      "US-IN": "Indianapolis",
+      "US-WA": "Seattle, Spokane",
+      "US-LA": "New Orleans",
+      "US-SC": "Charleston",
+      "US-OK": "Oklahoma City",
+      "US-KY": "Louisville",
+      "US-NJ": "Newark, Jersey City",
+      "US-OR": "Portland",
+      "US-MO": "Kansas City, St. Louis",
+      "US-CO": "Denver",
+      "US-WI": "Milwaukee",
+      "US-MN": "Minneapolis",
+      "US-MA": "Boston",
+      "US-MS": "Jackson",
+      "US-MD": "Baltimore",
+      "US-IA": "Des Moines"
+    };
+
+    topStates.forEach((state, index) => {
+      const loads = state.loads;
+
+      // Определяем badge
+      let badgeClass = 'minimal';
+      let badgeText = 'Низкая';
+      if (loads >= 3000) {
+        badgeClass = 'hot';
+        badgeText = '🔥 ТОП';
+      } else if (loads >= 2000) {
+        badgeClass = 'high';
+        badgeText = 'Высокая';
+      } else if (loads >= 1000) {
+        badgeClass = 'medium';
+        badgeText = 'Средняя';
+      } else if (loads >= 500) {
+        badgeClass = 'low';
+        badgeText = 'Низкая';
+      }
+
+      // Определяем тренд
+      let trend = "→ Стабильно";
+      if (loads < 500) trend = "→ Стабильно";
+      else if (loads > 2000) trend = "🔥 Высокий спрос";
+      else trend = "↗️ Растет";
+
+      // Определяем активность
+      let activity = "Высокая";
+      if (loads < 500) activity = "Низкая";
+      else if (loads < 1000) activity = "Средняя";
+      else if (loads < 2000) activity = "Высокая";
+      else activity = "Очень высокая";
+
+      const card = document.createElement('div');
+      card.className = 'state-card-mobile';
+      card.style.animationDelay = `${index * 0.05}s`;
+
+      card.innerHTML = `
+        <div class="state-card-header">
+          <span class="state-card-flag">${stateFlags[state.id] || '📍'}</span>
+          <div class="state-card-info">
+            <span class="state-card-name">${state.name}</span>
+            ${stateCities[state.id] ? `<span class="state-card-separator">•</span><span class="state-card-cities">${stateCities[state.id]}</span>` : ''}
+          </div>
+          <div class="state-card-right">
+            <span class="state-card-badge ${badgeClass}">${badgeText}</span>
+            <span class="state-card-rate">${state.rate}/mi</span>
+          </div>
+        </div>
+        <div class="state-card-main">
+          <div class="state-card-row">
+            <span class="state-card-icon">🚛</span>
+            <span class="state-card-label">Грузов</span>
+            <span class="state-card-value">${loads.toLocaleString('ru-RU')}</span>
+          </div>
+          <div class="state-card-row">
+            <span class="state-card-icon">⛽</span>
+            <span class="state-card-label">Дизель</span>
+            <span class="state-card-value">${state.diesel}</span>
+          </div>
+          <div class="state-card-detail-row">
+            <span class="state-card-detail-label">📊 Тренд:</span>
+            <span class="state-card-detail-value">${trend}</span>
+          </div>
+          <div class="state-card-detail-row">
+            <span class="state-card-detail-label">🔥 Активность:</span>
+            <span class="state-card-detail-value">${activity}</span>
+          </div>
+        </div>
+      `;
+
+      // Добавляем обработчик клика
+      card.addEventListener('click', function () {
+        this.classList.toggle('expanded');
+      });
+
+      container.appendChild(card);
+    });
+
+    console.log(`Generated ${topStates.length} state cards`);
+  })();
+
   // Инициализация элементов после загрузки
   setTimeout(() => {
     console.log('Initializing chart interactions...');
@@ -2323,6 +3697,229 @@
       }
     });
 
+    // ============================================
+    // USA MAP INTERACTIVE FUNCTIONALITY (amCharts 5)
+    // ============================================
+
+    // Данные о штатах уже определены выше (stateLoadsData)
+
+    // Функция для определения цвета по количеству грузов
+    function getColorByLoads(loads) {
+      if (loads >= 3000) return am5.color(0x10b981); // Зеленый
+      if (loads >= 2000) return am5.color(0x6366f1); // Синий
+      if (loads >= 1000) return am5.color(0x8b5cf6); // Фиолетовый
+      if (loads >= 500) return am5.color(0xec4899);  // Розовый
+      return am5.color(0x64748b); // Серый
+    }
+
+    // Инициализация amCharts карты
+    am5.ready(function () {
+      // Создаем root элемент
+      var root = am5.Root.new("chartdiv");
+
+      // Убираем водяной знак amCharts
+      root._logo.dispose();
+
+      // Устанавливаем темную тему
+      root.setThemes([am5themes_Animated.new(root)]);
+
+      // Определяем мобильное устройство
+      const isMobile = window.innerWidth <= 768;
+
+      // Создаем карту (полностью статичная)
+      var chart = root.container.children.push(
+        am5map.MapChart.new(root, {
+          panX: "none",
+          panY: "none",
+          projection: am5map.geoAlbersUsa(),
+          homeGeoPoint: { longitude: -98, latitude: 38 },
+          wheelY: "none",
+          pinchZoom: false,
+          maxZoomLevel: 1,
+          minZoomLevel: 1
+        })
+      );
+
+      // Создаем серию полигонов (штаты)
+      var polygonSeries = chart.series.push(
+        am5map.MapPolygonSeries.new(root, {
+          geoJSON: am5geodata_usaLow,
+          valueField: "value",
+          calculateAggregates: true
+        })
+      );
+
+      // Настройка внешнего вида штатов
+      polygonSeries.mapPolygons.template.setAll({
+        tooltipText: isMobile
+          ? "{name}\n🚛 Грузов: {loads}\n💰 {rate}/миля\n⛽ {diesel}"
+          : "{name}\n🚛 Грузов: {loads}\n💰 Ставка: {rate}/миля\n⛽ Дизель: {diesel}\n📊 Тренд: {trend}\n🔥 Активность: {activity}",
+        fill: am5.color(0x64748b),
+        fillOpacity: 0.85,
+        stroke: am5.color(0x1e293b),
+        strokeWidth: isMobile ? 1.5 : 2,
+        strokeOpacity: 0.8,
+        interactive: true,
+        tooltipPosition: "pointer",
+        draggable: false,
+        cursorOverStyle: "pointer"
+      });
+
+      // Настройка tooltip с улучшенным дизайном и анимацией
+      polygonSeries.mapPolygons.template.set("tooltip", am5.Tooltip.new(root, {
+        getFillFromSprite: false,
+        fill: am5.color(0x1e293b),
+        fillOpacity: 0.95,
+        stroke: am5.color(0x6366f1),
+        strokeWidth: 2,
+        strokeOpacity: 1,
+        labelText: isMobile
+          ? "[bold fontSize:17px #ffffff]{name}[/]\n[fontSize:11px #94a3b8]━━━━━━━━━━━━━━━[/]\n[fontSize:14px]🚛 [bold #10b981]{loads}[/] грузов[/]\n[fontSize:13px]💰 [bold #6366f1]{rate}[/]/миля[/]\n[fontSize:13px]⛽ [bold #f59e0b]{diesel}[/][/]"
+          : "[bold fontSize:19px #ffffff]{name}[/]\n[fontSize:12px #94a3b8]━━━━━━━━━━━━━━━━━━━━[/]\n[fontSize:15px]🚛 Грузов: [bold #10b981]{loads}[/][/]\n[fontSize:14px]💰 Ставка: [bold #6366f1]{rate}[/]/миля[/]\n[fontSize:14px]⛽ Дизель: [bold #f59e0b]{diesel}[/][/]\n[fontSize:12px #94a3b8]━━━━━━━━━━━━━━━━━━━━[/]\n[fontSize:13px]📊 {trend}[/]\n[fontSize:13px]🔥 {activity}[/]",
+        pointerOrientation: "vertical",
+        paddingTop: 18,
+        paddingBottom: 18,
+        paddingLeft: 22,
+        paddingRight: 22,
+        centerX: am5.p50,
+        centerY: am5.p100,
+        autoTextColor: false,
+        shadowColor: am5.color(0x000000),
+        shadowBlur: 25,
+        shadowOffsetX: 0,
+        shadowOffsetY: 10,
+        shadowOpacity: 0.6,
+        cornerRadius: 14,
+        animationDuration: 300,
+        animationEasing: am5.ease.out(am5.ease.cubic)
+      }));
+
+      // Устанавливаем цвет текста tooltip
+      polygonSeries.mapPolygons.template.get("tooltip").label.setAll({
+        fill: am5.color(0xe2e8f0),
+        fontSize: isMobile ? 13 : 14,
+        lineHeight: 1.5,
+        oversizedBehavior: "wrap",
+        maxWidth: isMobile ? 250 : 320
+      });
+
+      // Добавляем анимацию при наведении на штат
+      polygonSeries.mapPolygons.template.events.on("pointerover", function (ev) {
+        const polygon = ev.target;
+        polygon.animate({
+          key: "fillOpacity",
+          to: 1,
+          duration: 200,
+          easing: am5.ease.out(am5.ease.quad)
+        });
+      });
+
+      polygonSeries.mapPolygons.template.events.on("pointerout", function (ev) {
+        const polygon = ev.target;
+        polygon.animate({
+          key: "fillOpacity",
+          to: 0.85,
+          duration: 200,
+          easing: am5.ease.out(am5.ease.quad)
+        });
+      });
+
+      // Улучшенный hover эффект с анимацией
+      polygonSeries.mapPolygons.template.states.create("hover", {
+        fill: am5.color(0xa5b4fc),
+        fillOpacity: 1,
+        stroke: am5.color(0x6366f1),
+        strokeWidth: isMobile ? 2.5 : 3.5,
+        strokeOpacity: 1
+      });
+
+      // Добавляем анимацию при наведении на штат
+      polygonSeries.mapPolygons.template.events.on("pointerover", function (ev) {
+        const polygon = ev.target;
+        polygon.animate({
+          key: "fillOpacity",
+          to: 1,
+          duration: 200,
+          easing: am5.ease.out(am5.ease.quad)
+        });
+      });
+
+      polygonSeries.mapPolygons.template.events.on("pointerout", function (ev) {
+        const polygon = ev.target;
+        polygon.animate({
+          key: "fillOpacity",
+          to: 0.85,
+          duration: 200,
+          easing: am5.ease.out(am5.ease.quad)
+        });
+      });
+
+      // Устанавливаем данные для штатов
+      polygonSeries.data.setAll(
+        Object.keys(stateLoadsData).map(id => {
+          const loads = stateLoadsData[id].loads;
+          // Определяем тренд
+          let trend = "↗️ Растет";
+          if (loads < 500) trend = "→ Стабильно";
+          else if (loads > 2000) trend = "🔥 Высокий спрос";
+
+          // Определяем активность
+          let activity = "Высокая";
+          if (loads < 500) activity = "Низкая";
+          else if (loads < 1000) activity = "Средняя";
+          else if (loads < 2000) activity = "Высокая";
+          else activity = "Очень высокая";
+
+          return {
+            id: id,
+            name: stateLoadsData[id].name,
+            loads: loads.toLocaleString('ru-RU'),
+            diesel: stateLoadsData[id].diesel,
+            rate: stateLoadsData[id].rate,
+            trend: trend,
+            activity: activity,
+            value: loads,
+            fill: getColorByLoads(loads)
+          };
+        })
+      );
+
+      // Применяем цвета к штатам
+      polygonSeries.mapPolygons.template.adapters.add("fill", function (fill, target) {
+        var dataItem = target.dataItem;
+        if (dataItem) {
+          return dataItem.dataContext.fill;
+        }
+        return fill;
+      });
+
+      // Анимация пульсации для топ-3 штатов (только на десктопе)
+      if (!isMobile) {
+        polygonSeries.events.on("datavalidated", function () {
+          const hotStates = ["US-CA", "US-TX", "US-FL"];
+          polygonSeries.mapPolygons.each(function (polygon) {
+            if (hotStates.includes(polygon.dataItem.get("id"))) {
+              polygon.animate({
+                key: "fill",
+                to: am5.color(0xffffff),
+                duration: 1000,
+                loops: Infinity,
+                easing: am5.ease.inOut(am5.ease.cubic)
+              });
+            }
+          });
+        });
+      }
+
+      // Анимация появления
+      chart.appear(isMobile ? 500 : 1000, 100);
+    });
+
+    // ============================================
+    // MOBILE STATES CARDS GENERATION
+    // ============================================
+    // Карточки штатов уже сгенерированы выше (вне setTimeout)
+
     // Запускаем анимацию изменения данных
     if (barsAnimated) {
       startChartAnimation();
@@ -2416,5 +4013,310 @@
         cell.style.transform = 'translateY(0)';
       }, index * 50);
     });
+  });
+
+  // Данные о штатах для каждого региона (глобальная переменная)
+  const regionData = {
+    'Midwest': {
+      icon: '🚛',
+      type: 'Dry Van',
+      averageRate: '$2.83',
+      states: [
+        { flag: '🏙️', name: 'Illinois', cities: 'Chicago', rate: '$2.95/миля', diesel: '$3.62/gal', info: 'Чикаго - крупнейший транспортный хаб' },
+        { flag: '🌾', name: 'Ohio', cities: 'Columbus, Cleveland', rate: '$2.88/миля', diesel: '$3.52/gal', info: 'Производство и сельское хозяйство' },
+        { flag: '🏭', name: 'Michigan', cities: 'Detroit', rate: '$2.82/миля', diesel: '$3.58/gal', info: 'Автомобильная промышленность' },
+        { flag: '🌽', name: 'Indiana', cities: 'Indianapolis', rate: '$2.79/миля', diesel: '$3.48/gal', info: 'Сельское хозяйство и логистика' },
+        { flag: '🧀', name: 'Wisconsin', cities: 'Milwaukee', rate: '$2.76/миля', diesel: '$3.55/gal', info: 'Молочная промышленность' },
+        { flag: '🌾', name: 'Iowa', cities: 'Des Moines', rate: '$2.71/миля', diesel: '$3.42/gal', info: 'Сельское хозяйство' },
+        { flag: '🌾', name: 'Minnesota', cities: 'Minneapolis', rate: '$2.68/миля', diesel: '$3.45/gal', info: 'Сельское хозяйство, логистика' },
+        { flag: '🌾', name: 'Missouri', cities: 'KC, St. Louis', rate: '$2.65/миля', diesel: '$3.38/gal', info: 'Транспортный хаб' }
+      ]
+    },
+    'Southeast': {
+      icon: '🚛',
+      type: 'Dry Van',
+      averageRate: '$2.30',
+      states: [
+        { flag: '🌊', name: 'Florida', cities: 'Miami, Tampa', rate: '$2.48/миля', diesel: '$3.48/gal', info: 'Порты, туризм, цитрусовые' },
+        { flag: '🍑', name: 'Georgia', cities: 'Atlanta', rate: '$2.45/миля', diesel: '$3.38/gal', info: 'Атланта - логистический центр' },
+        { flag: '🌲', name: 'North Carolina', cities: 'Charlotte, Raleigh', rate: '$2.38/миля', diesel: '$3.42/gal', info: 'Производство и текстиль' },
+        { flag: '🎸', name: 'Tennessee', cities: 'Nashville, Memphis', rate: '$2.32/миля', diesel: '$3.35/gal', info: 'Мемфис - транспортный хаб' },
+        { flag: '🏖️', name: 'South Carolina', cities: 'Charleston', rate: '$2.28/миля', diesel: '$3.40/gal', info: 'Порты и производство' },
+        { flag: '🎺', name: 'Alabama', cities: 'Birmingham', rate: '$2.22/миля', diesel: '$3.32/gal', info: 'Производство и сталь' },
+        { flag: '🎭', name: 'Mississippi', cities: 'Jackson', rate: '$2.18/миля', diesel: '$3.28/gal', info: 'Сельское хозяйство' },
+        { flag: '🎷', name: 'Louisiana', cities: 'New Orleans', rate: '$2.15/миля', diesel: '$3.22/gal', info: 'Порты и нефтехимия' }
+      ]
+    },
+    'South/TX': {
+      icon: '🚛',
+      type: 'Dry Van',
+      averageRate: '$2.27',
+      states: [
+        { flag: '⭐', name: 'Texas', cities: 'Houston, Dallas', rate: '$2.35/миля', diesel: '$3.15/gal', info: 'Нефть, газ, производство' },
+        { flag: '🏈', name: 'Oklahoma', cities: 'Oklahoma City', rate: '$2.22/миля', diesel: '$3.18/gal', info: 'Нефть и газ' },
+        { flag: '🌶️', name: 'Arkansas', cities: 'Little Rock', rate: '$2.18/миля', diesel: '$3.25/gal', info: 'Сельское хозяйство' },
+        { flag: '🎺', name: 'Louisiana', cities: 'New Orleans', rate: '$2.28/миля', diesel: '$3.22/gal', info: 'Порты и нефтехимия' },
+        { flag: '🌵', name: 'New Mexico', cities: 'Albuquerque', rate: '$2.15/миля', diesel: '$3.28/gal', info: 'Транзит и логистика' }
+      ]
+    },
+    'West': {
+      icon: '🚛',
+      type: 'Dry Van',
+      averageRate: '$2.22',
+      states: [
+        { flag: '🌴', name: 'California', cities: 'LA, SF', rate: '$2.45/миля', diesel: '$4.89/gal', info: 'Крупнейшая экономика, порты' },
+        { flag: '🏔️', name: 'Arizona', cities: 'Phoenix, Tucson', rate: '$2.28/миля', diesel: '$3.68/gal', info: 'Транзит с Мексикой' },
+        { flag: '🎰', name: 'Nevada', cities: 'Las Vegas', rate: '$2.22/миля', diesel: '$4.12/gal', info: 'Лас-Вегас, логистика' },
+        { flag: '🏔️', name: 'Utah', cities: 'Salt Lake City', rate: '$2.18/миля', diesel: '$3.72/gal', info: 'Горнодобыча и технологии' },
+        { flag: '🌲', name: 'Oregon', cities: 'Portland', rate: '$2.15/миля', diesel: '$4.25/gal', info: 'Порты и лесная промышленность' },
+        { flag: '🌲', name: 'Washington', cities: 'Seattle, Spokane', rate: '$2.12/миля', diesel: '$4.38/gal', info: 'Сиэтл - порт и технологии' }
+      ]
+    },
+    'Northeast': {
+      icon: '🚛',
+      type: 'Dry Van',
+      averageRate: '$2.25',
+      states: [
+        { flag: '🗽', name: 'New York', cities: 'NYC, Buffalo', rate: '$2.42/миля', diesel: '$4.15/gal', info: 'Порты, импорт, финансы' },
+        { flag: '🌲', name: 'Pennsylvania', cities: 'Philly, Pittsburgh', rate: '$2.35/миля', diesel: '$4.08/gal', info: 'Производство и логистика' },
+        { flag: '🦞', name: 'Massachusetts', cities: 'Boston', rate: '$2.28/миля', diesel: '$3.95/gal', info: 'Технологии и образование' },
+        { flag: '🏖️', name: 'New Jersey', cities: 'Newark, Jersey City', rate: '$2.25/миля', diesel: '$3.88/gal', info: 'Порты и логистика' },
+        { flag: '🦀', name: 'Maryland', cities: 'Baltimore', rate: '$2.18/миля', diesel: '$3.82/gal', info: 'Порты Балтимора' },
+        { flag: '🦞', name: 'Connecticut', cities: 'Hartford', rate: '$2.15/миля', diesel: '$3.92/gal', info: 'Финансы и страхование' },
+        { flag: '🏔️', name: 'Vermont', cities: 'Burlington', rate: '$2.12/миля', diesel: '$3.85/gal', info: 'Сельское хозяйство' },
+        { flag: '🌲', name: 'Maine', cities: 'Portland', rate: '$2.10/миля', diesel: '$3.78/gal', info: 'Морепродукты, лес' }
+      ]
+    },
+    // Reefer rates
+    'Midwest-Reefer': {
+      icon: '❄️',
+      type: 'Reefer',
+      averageRate: '$3.42',
+      states: [
+        { flag: '🏙️', name: 'Illinois', cities: 'Chicago', rate: '$3.58/миля', diesel: '$3.62/gal', info: 'Чикаго - крупнейший продуктовый хаб' },
+        { flag: '🌾', name: 'Ohio', cities: 'Columbus, Cleveland', rate: '$3.45/миля', diesel: '$3.52/gal', info: 'Молочные продукты' },
+        { flag: '🧀', name: 'Wisconsin', cities: 'Milwaukee', rate: '$3.42/миля', diesel: '$3.55/gal', info: 'Молочная промышленность' },
+        { flag: '🌽', name: 'Indiana', cities: 'Indianapolis', rate: '$3.38/миля', diesel: '$3.48/gal', info: 'Мясопереработка' },
+        { flag: '🏭', name: 'Michigan', cities: 'Detroit', rate: '$3.35/миля', diesel: '$3.58/gal', info: 'Фрукты и овощи' },
+        { flag: '🌾', name: 'Iowa', cities: 'Des Moines', rate: '$3.28/миля', diesel: '$3.42/gal', info: 'Свинина и кукуруза' },
+        { flag: '🌾', name: 'Minnesota', cities: 'Minneapolis', rate: '$3.25/миля', diesel: '$3.45/gal', info: 'Молочные продукты' },
+        { flag: '🌾', name: 'Missouri', cities: 'KC, St. Louis', rate: '$3.22/миля', diesel: '$3.38/gal', info: 'Мясопереработка' }
+      ]
+    },
+    'South/TX-Reefer': {
+      icon: '❄️',
+      type: 'Reefer',
+      averageRate: '$3.05',
+      states: [
+        { flag: '⭐', name: 'Texas', cities: 'Houston, Dallas', rate: '$3.18/миля', diesel: '$3.15/gal', info: 'Мясо, овощи из Мексики' },
+        { flag: '🎺', name: 'Louisiana', cities: 'New Orleans', rate: '$3.08/миля', diesel: '$3.22/gal', info: 'Морепродукты' },
+        { flag: '🏈', name: 'Oklahoma', cities: 'Oklahoma City', rate: '$2.98/миля', diesel: '$3.18/gal', info: 'Мясопереработка' },
+        { flag: '🌶️', name: 'Arkansas', cities: 'Little Rock', rate: '$2.92/миля', diesel: '$3.25/gal', info: 'Птицеводство' },
+        { flag: '🌵', name: 'New Mexico', cities: 'Albuquerque', rate: '$2.88/миля', diesel: '$3.28/gal', info: 'Овощи из Мексики' }
+      ]
+    },
+    'West-Reefer': {
+      icon: '❄️',
+      type: 'Reefer',
+      averageRate: '$2.78',
+      states: [
+        { flag: '🌴', name: 'California', cities: 'LA, SF', rate: '$2.95/миля', diesel: '$4.89/gal', info: 'Фрукты, овощи, вино' },
+        { flag: '🏔️', name: 'Arizona', cities: 'Phoenix, Tucson', rate: '$2.82/миля', diesel: '$3.68/gal', info: 'Овощи и цитрусовые' },
+        { flag: '🌲', name: 'Washington', cities: 'Seattle, Spokane', rate: '$2.75/миля', diesel: '$4.38/gal', info: 'Яблоки, вишня' },
+        { flag: '🌲', name: 'Oregon', cities: 'Portland', rate: '$2.68/миля', diesel: '$4.25/gal', info: 'Ягоды и фрукты' },
+        { flag: '🎰', name: 'Nevada', cities: 'Las Vegas', rate: '$2.62/миля', diesel: '$4.12/gal', info: 'Транзит продуктов' },
+        { flag: '🏔️', name: 'Utah', cities: 'Salt Lake City', rate: '$2.58/миля', diesel: '$3.72/gal', info: 'Транзит продуктов' },
+        { flag: '🏔️', name: 'Idaho', cities: 'Boise', rate: '$2.55/миля', diesel: '$3.65/gal', info: 'Картофель, овощи' }
+      ]
+    },
+    'Southeast-Reefer': {
+      icon: '❄️',
+      type: 'Reefer',
+      averageRate: '$2.59',
+      states: [
+        { flag: '🌊', name: 'Florida', cities: 'Miami, Tampa', rate: '$2.75/миля', diesel: '$3.48/gal', info: 'Цитрусовые, овощи' },
+        { flag: '🍑', name: 'Georgia', cities: 'Atlanta', rate: '$2.68/миля', diesel: '$3.38/gal', info: 'Персики, орехи' },
+        { flag: '🌲', name: 'North Carolina', cities: 'Charlotte, Raleigh', rate: '$2.58/миля', diesel: '$3.42/gal', info: 'Свинина, птица' },
+        { flag: '🏖️', name: 'South Carolina', cities: 'Charleston', rate: '$2.52/миля', diesel: '$3.40/gal', info: 'Персики' },
+        { flag: '🎸', name: 'Tennessee', cities: 'Nashville, Memphis', rate: '$2.48/миля', diesel: '$3.35/gal', info: 'Мясопереработка' },
+        { flag: '🎺', name: 'Alabama', cities: 'Birmingham', rate: '$2.45/миля', diesel: '$3.32/gal', info: 'Птицеводство' },
+        { flag: '🎭', name: 'Mississippi', cities: 'Jackson', rate: '$2.42/миля', diesel: '$3.28/gal', info: 'Птицеводство' }
+      ]
+    },
+    'Northeast-Reefer': {
+      icon: '❄️',
+      type: 'Reefer',
+      averageRate: '$2.58',
+      states: [
+        { flag: '🗽', name: 'New York', cities: 'NYC, Buffalo', rate: '$2.72/миля', diesel: '$4.15/gal', info: 'Импорт продуктов' },
+        { flag: '🌲', name: 'Pennsylvania', cities: 'Philly, Pittsburgh', rate: '$2.65/миля', diesel: '$4.08/gal', info: 'Молочные продукты' },
+        { flag: '🦞', name: 'Massachusetts', cities: 'Boston', rate: '$2.58/миля', diesel: '$3.95/gal', info: 'Морепродукты' },
+        { flag: '🏖️', name: 'New Jersey', cities: 'Newark, Jersey City', rate: '$2.52/миля', diesel: '$3.88/gal', info: 'Импорт через порты' },
+        { flag: '🦀', name: 'Maryland', cities: 'Baltimore', rate: '$2.48/миля', diesel: '$3.82/gal', info: 'Крабы и морепродукты' },
+        { flag: '🦞', name: 'Connecticut', cities: 'Hartford', rate: '$2.45/миля', diesel: '$3.92/gal', info: 'Молочные продукты' },
+        { flag: '🏔️', name: 'Vermont', cities: 'Burlington', rate: '$2.42/миля', diesel: '$3.85/gal', info: 'Молочные продукты' }
+      ]
+    }
+  };
+
+  // Добавляем обработчики кликов для кнопок регионов (rate-bar-modern)
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('=== INITIALIZING REGION BAR CLICK HANDLERS ===');
+    const regionBars = document.querySelectorAll('.rate-bar-modern');
+    console.log(`Found ${regionBars.length} region bars for click handlers`);
+
+    // Выводим информацию о каждой кнопке
+    regionBars.forEach((bar, index) => {
+      const regionName = bar.querySelector('.region-name')?.textContent || 'Unknown';
+      const rateValue = bar.querySelector('.rate-value')?.textContent || 'Unknown';
+      console.log(`Bar ${index}: ${regionName} - ${rateValue}`);
+    });
+
+    regionBars.forEach((bar, index) => {
+      // Делаем кнопки кликабельными
+      bar.style.cursor = 'pointer';
+      bar.style.userSelect = 'none';
+      bar.style.position = 'relative';
+      bar.style.zIndex = '5';
+
+      // Обработчик клика
+      bar.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const regionName = this.querySelector('.region-name')?.textContent?.trim() || 'Unknown';
+        console.log(`✅ CLICKED on region bar ${index}: ${regionName}`);
+
+        // Определяем тип (Dry Van или Reefer) по родительской секции
+        const parentSection = this.closest('.rates-section');
+        const sectionTitle = parentSection?.querySelector('h3')?.textContent?.trim() || '';
+        const isReefer = sectionTitle === 'Reefer';
+
+        // Формируем ключ для поиска данных
+        let dataKey = regionName;
+        if (isReefer) {
+          dataKey = regionName + '-Reefer';
+        }
+
+        console.log(`Section: ${sectionTitle}, Key: ${dataKey}`);
+
+        // Проверяем, есть ли уже открытый dropdown (ищем следующий элемент)
+        const existingDropdown = this.nextElementSibling?.classList.contains('region-dropdown')
+          ? this.nextElementSibling
+          : null;
+
+        if (existingDropdown && existingDropdown.classList.contains('active')) {
+          // Если dropdown уже открыт, закрываем его
+          existingDropdown.classList.remove('active');
+          this.classList.remove('expanded');
+          setTimeout(() => existingDropdown.remove(), 400);
+        } else {
+          // Закрываем все другие открытые dropdowns
+          document.querySelectorAll('.region-dropdown.active').forEach(dropdown => {
+            dropdown.classList.remove('active');
+            const prevBar = dropdown.previousElementSibling;
+            if (prevBar?.classList.contains('rate-bar-modern')) {
+              prevBar.classList.remove('expanded');
+            }
+            setTimeout(() => dropdown.remove(), 400);
+          });
+
+          // Если dropdown еще не создан, создаем его
+          if (!existingDropdown && regionData[dataKey]) {
+            this.classList.add('expanded');
+            createRegionDropdown(this, regionData[dataKey]);
+          } else if (existingDropdown) {
+            // Если dropdown уже существует, просто открываем его
+            this.classList.add('expanded');
+            existingDropdown.classList.add('active');
+          } else {
+            console.warn(`No data found for region: ${dataKey}`);
+          }
+        }
+      });
+    });
+
+    console.log('✅ Region bar click handlers initialized successfully');
+  });
+
+  // Функция создания выпадающего окна под кнопкой
+  function createRegionDropdown(barElement, data) {
+    console.log('Creating dropdown with data:', data);
+
+    // Создаем dropdown элемент
+    const dropdown = document.createElement('div');
+    dropdown.className = 'region-dropdown';
+
+    // Создаем HTML содержимое с аккордионом для каждого штата
+    dropdown.innerHTML = `
+      <div class="dropdown-states-grid">
+        ${data.states.map((state, index) => `
+          <div class="dropdown-state-card" data-state-index="${index}">
+            <div class="dropdown-state-header">
+              <span class="dropdown-state-flag">${state.flag}</span>
+              <span class="dropdown-state-name">${state.name}</span>
+            </div>
+            <div style="font-size: 9px; color: #64748b; margin-top: -4px; margin-bottom: 6px; padding-left: 24px;">${state.cities || ''}</div>
+            <div class="state-card-main">
+              <div class="state-card-row">
+                <span class="state-card-icon">💰</span>
+                <span class="state-card-label">Ставка</span>
+                <span class="state-card-value">${state.rate}</span>
+              </div>
+              <div class="state-card-row">
+                <span class="state-card-icon">⛽</span>
+                <span class="state-card-label">Дизель</span>
+                <span class="state-card-value">${state.diesel}</span>
+              </div>
+              <div class="state-card-row">
+                <span class="state-card-icon">ℹ️</span>
+                <span class="state-card-label">Инфо</span>
+                <span class="state-card-value" style="font-size: 10px; font-weight: 500;">${state.info}</span>
+              </div>
+              <div class="state-detail-row">
+                <span class="state-detail-label">Тип:</span>
+                <span class="state-detail-value">${data.type}</span>
+              </div>
+              <div class="state-detail-row">
+                <span class="state-detail-label">Регион:</span>
+                <span class="state-detail-value">${data.icon}</span>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    // Добавляем dropdown ПОСЛЕ barElement (не внутри!)
+    barElement.insertAdjacentElement('afterend', dropdown);
+
+    // Показываем dropdown с анимацией
+    setTimeout(() => {
+      dropdown.classList.add('active');
+    }, 10);
+
+    // Добавляем обработчики клика для каждой карточки штата
+    setTimeout(() => {
+      const stateCards = dropdown.querySelectorAll('.dropdown-state-card');
+      stateCards.forEach(card => {
+        card.addEventListener('click', function (e) {
+          e.stopPropagation(); // Предотвращаем закрытие dropdown
+          this.classList.toggle('expanded');
+        });
+      });
+    }, 50);
+  }
+
+  // Закрытие dropdown при клике вне его (опционально)
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.rate-bar-modern') && !e.target.closest('.region-dropdown')) {
+      document.querySelectorAll('.region-dropdown.active').forEach(dropdown => {
+        dropdown.classList.remove('active');
+        const prevBar = dropdown.previousElementSibling;
+        if (prevBar?.classList.contains('rate-bar-modern')) {
+          prevBar.classList.remove('expanded');
+        }
+        setTimeout(() => dropdown.remove(), 400);
+      });
+    }
   });
 </script>
