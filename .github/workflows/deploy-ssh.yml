@@ -1,0 +1,49 @@
+name: Deploy to Hostinger (SSH)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Test SSH Connection (Port 22)
+      continue-on-error: true
+      run: |
+        echo "Testing SSH on port 22..."
+        ssh-keyscan -p 22 -H ${{ secrets.FTP_SERVER }} >> ~/.ssh/known_hosts 2>&1 || echo "Port 22 failed"
+        
+    - name: Test SSH Connection (Port 65002)
+      continue-on-error: true
+      run: |
+        echo "Testing SSH on port 65002..."
+        ssh-keyscan -p 65002 -H ${{ secrets.FTP_SERVER }} >> ~/.ssh/known_hosts 2>&1 || echo "Port 65002 failed"
+    
+    - name: Deploy via SFTP (Port 22)
+      id: deploy_22
+      continue-on-error: true
+      uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        port: 22
+        local_path: './*'
+        remote_path: '/public_html/'
+        sftp_only: true
+        
+    - name: Deploy via SFTP (Port 65002) if port 22 failed
+      if: steps.deploy_22.outcome == 'failure'
+      uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        port: 65002
+        local_path: './*'
+        remote_path: '/public_html/'
+        sftp_only: true
