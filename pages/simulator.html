@@ -2015,20 +2015,34 @@
         const dispatcherNames = ['Alex', 'Mike', 'Sarah', 'John', 'Maria', 'David', 'Lisa', 'Tom', 'Anna', 'Chris'];
         const brokerNames = ['James', 'Robert', 'Jennifer', 'Michael', 'Linda', 'William', 'Patricia', 'Richard', 'Susan', 'Daniel'];
 
-        // Массив готов для новых диалогов
-        const greetingOptions = [
-            {
-                lines: ["Phoenix AZ to Denver CO dry van.", "820 miles paper products."],
-                fullText: "Good morning!\nThis is Carlos from Southwest Transport Solutions.\nI'm calling about your Phoenix to Denver dry van load.\nIs this still available?",
-                scenarioIndex: 0
-            },
-            {
-                lines: ["Los Angeles CA to Chicago IL reefer.", "2,015 miles produce. 🧪 EXPERT TEST"],
-                fullText: "Good afternoon!\nThis is Marcus from Reliable Transport Group.\nI'm calling about your Los Angeles to Chicago reefer load.\nIs this still available?",
-                scenarioIndex: 1
+        // Функция для автоматического создания карточек из всех диалогов
+        function generateGreetingOptions() {
+            if (typeof allScenarios === 'undefined' || !allScenarios || allScenarios.length === 0) {
+                console.error('allScenarios is not available');
+                return [];
             }
-        ];
 
+            return allScenarios.map((scenario, index) => {
+                // Создаем краткое описание для карточки
+                const line1 = `${scenario.route} ${scenario.equipment.toLowerCase()}.`;
+                let line2 = `${scenario.distance} miles`;
+
+                // Добавляем метку сложности если есть
+                if (scenario.difficulty === 'expert') {
+                    line2 += ' 🧪 EXPERT TEST';
+                } else if (scenario.difficulty === 'hard') {
+                    line2 += ' 🔥 HARD';
+                } else if (scenario.difficulty === 'medium') {
+                    line2 += ' ⚡ MEDIUM';
+                }
+
+                return {
+                    lines: [line1, line2],
+                    fullText: scenario.initialMessage,
+                    scenarioIndex: index
+                };
+            });
+        }
 
         function init() {
             console.log('Initializing simulator...');
@@ -2038,7 +2052,7 @@
                 console.log('allScenarios:', allScenarios);
             } else {
                 console.error('ERROR: allScenarios is not defined!');
-                alert('Ошибка: файл scenarios-data-test.js не загружен или содержит ошибки. Откройте консоль браузера (F12) для деталей.');
+                alert('Ошибка: файл scenarios-data-v2.js не загружен или содержит ошибки. Откройте консоль браузера (F12) для деталей.');
             }
             showRandomBubbles();
             setupEventListeners();
@@ -2046,9 +2060,18 @@
 
         function showRandomBubbles() {
             bubblesContainer.innerHTML = '';
-            const shuffled = greetingOptions.sort(() => 0.5 - Math.random());
 
-            shuffled.forEach(option => {
+            // Генерируем карточки автоматически из всех диалогов
+            const greetingOptions = generateGreetingOptions();
+
+            if (greetingOptions.length === 0) {
+                console.error('No greeting options available');
+                return;
+            }
+
+            // Показываем все карточки (без перемешивания если хотите по порядку)
+            // Или с перемешиванием: const shuffled = greetingOptions.sort(() => 0.5 - Math.random());
+            greetingOptions.forEach(option => {
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble';
                 const linesHTML = option.lines.map(line => `<span>${line}</span>`).join('');
