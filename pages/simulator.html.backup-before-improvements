@@ -1026,8 +1026,6 @@
 
             .input-container {
                 padding: 12px;
-                padding-bottom: 30px;
-                /* Поднимаем выше для iPhone */
                 margin: 0;
                 border-radius: 0;
                 border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -1043,25 +1041,6 @@
                 width: 44px;
                 height: 44px;
                 font-size: 18px;
-            }
-        }
-
-        /* Дополнительные стили для iPhone и узких экранов */
-        @media (max-width: 430px) {
-            .input-container {
-                padding-bottom: 40px !important;
-                /* Еще выше для iPhone 15 и подобных */
-            }
-
-            .chat-view {
-                padding-bottom: 20px;
-            }
-        }
-
-        /* Для очень узких экранов (iPhone SE и подобные) */
-        @media (max-width: 375px) {
-            .input-container {
-                padding-bottom: 50px !important;
             }
         }
 
@@ -2029,208 +2008,12 @@
         let currentPath = null; // 'good', 'normal', or 'bad'
         let qualityScore = 0; // Track user's response quality
 
-        // История для возможности вернуться назад
-        let conversationHistory = [];
-
-        // Режим: 'training' или 'testing'
-        let currentMode = localStorage.getItem('simulatorMode') || 'training';
-
         // Random names for dispatcher and broker
         let dispatcherName = '';
         let brokerName = '';
 
         const dispatcherNames = ['Alex', 'Mike', 'Sarah', 'John', 'Maria', 'David', 'Lisa', 'Tom', 'Anna', 'Chris'];
         const brokerNames = ['James', 'Robert', 'Jennifer', 'Michael', 'Linda', 'William', 'Patricia', 'Richard', 'Susan', 'Daniel'];
-
-        // Функция для получения визуального индикатора пути
-        function getPathIndicator(path) {
-            const indicators = {
-                master: { icon: '💎', text: 'ОТЛИЧНО', color: '#22c55e', bgColor: 'rgba(34, 197, 94, 0.1)', borderColor: '#22c55e' },
-                good: { icon: '✅', text: 'ХОРОШО', color: '#3b82f6', bgColor: 'rgba(59, 130, 246, 0.1)', borderColor: '#3b82f6' },
-                normal: { icon: '⚪', text: 'НОРМАЛЬНО', color: '#64748b', bgColor: 'rgba(100, 116, 139, 0.1)', borderColor: '#64748b' },
-                weak: { icon: '⚠️', text: 'НЕДОСТАТОЧНО', color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.1)', borderColor: '#f59e0b' },
-                aggressive: { icon: '🔥', text: 'АГРЕССИВНО', color: '#ef4444', bgColor: 'rgba(239, 68, 68, 0.1)', borderColor: '#ef4444' }
-            };
-            return indicators[path] || indicators.normal;
-        }
-
-        // СИСТЕМА ВОЗВРАТА НАЗАД
-        function saveConversationState() {
-            conversationHistory.push({
-                step: conversationStep,
-                path: currentPath,
-                messagesHTML: messagesContainer.innerHTML
-            });
-
-            // Ограничиваем историю последними 10 шагами
-            if (conversationHistory.length > 10) {
-                conversationHistory.shift();
-            }
-
-            updateBackButton();
-        }
-
-        function goBackOneStep() {
-            if (conversationHistory.length === 0) {
-                console.log('Нет истории для возврата');
-                return;
-            }
-
-            const previousState = conversationHistory.pop();
-            conversationStep = previousState.step;
-            currentPath = previousState.path;
-            messagesContainer.innerHTML = previousState.messagesHTML;
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-            updateBackButton();
-
-            // Показать текущие suggestions
-            if (conversationStep < currentScenario.paths[currentPath].length) {
-                const currentStepData = currentScenario.paths[currentPath][conversationStep];
-                if (currentStepData.suggestions) {
-                    showSuggestions(currentStepData.suggestions);
-                }
-            }
-        }
-
-        function updateBackButton() {
-            let backBtn = document.getElementById('backButton');
-
-            // В режиме тестирования кнопка возврата недоступна
-            if (currentMode === 'testing') {
-                if (backBtn) backBtn.style.display = 'none';
-                return;
-            }
-
-            if (conversationHistory.length > 0 && conversationActive) {
-                if (!backBtn) {
-                    backBtn = document.createElement('button');
-                    backBtn.id = 'backButton';
-                    backBtn.innerHTML = '↩️ Вернуться назад';
-                    backBtn.style.cssText = `
-                        position: fixed;
-                        bottom: 100px;
-                        right: 20px;
-                        background: rgba(99, 102, 241, 0.9);
-                        color: white;
-                        border: none;
-                        padding: 12px 20px;
-                        border-radius: 25px;
-                        font-size: 14px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-                        transition: all 0.3s ease;
-                        z-index: 1000;
-                        animation: fadeIn 0.3s ease;
-                    `;
-                    backBtn.onmouseover = () => {
-                        backBtn.style.transform = 'translateY(-2px)';
-                        backBtn.style.boxShadow = '0 6px 20px rgba(99, 102, 241, 0.6)';
-                    };
-                    backBtn.onmouseout = () => {
-                        backBtn.style.transform = 'translateY(0)';
-                        backBtn.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.4)';
-                    };
-                    backBtn.onclick = goBackOneStep;
-                    document.body.appendChild(backBtn);
-                }
-                backBtn.style.display = 'block';
-            } else if (backBtn) {
-                backBtn.style.display = 'none';
-            }
-        }
-
-        // АВТОМАТИЧЕСКАЯ ПРОВЕРКА ДИАЛОГОВ
-        function validateDialogue(dialogue, dialogueIndex) {
-            const errors = [];
-            const warnings = [];
-
-            // Проверка 1: Есть ли пути?
-            if (!dialogue.paths || Object.keys(dialogue.paths).length === 0) {
-                errors.push(`Диалог #${dialogueIndex}: Нет путей (paths)`);
-                return { valid: false, errors, warnings };
-            }
-
-            const paths = Object.keys(dialogue.paths);
-            const firstPath = paths[0];
-            const firstStep = dialogue.paths[firstPath][0];
-
-            // Проверка 2: Есть ли suggestions в первом шаге?
-            if (!firstStep || !firstStep.suggestions || firstStep.suggestions.length === 0) {
-                errors.push(`Диалог #${dialogueIndex}: Нет suggestions в первом шаге`);
-                return { valid: false, errors, warnings };
-            }
-
-            // Проверка 3: Если только один путь - есть ли path у всех suggestions?
-            if (paths.length === 1) {
-                const missingPaths = firstStep.suggestions.filter(s => !s.path);
-                if (missingPaths.length > 0) {
-                    errors.push(`Диалог #${dialogueIndex}: Только один путь "${firstPath}", но ${missingPaths.length} suggestions без path! ТУПИК!`);
-                }
-            }
-
-            // Проверка 4: Все ли указанные пути существуют?
-            firstStep.suggestions.forEach((s, idx) => {
-                if (s.path && !dialogue.paths[s.path]) {
-                    errors.push(`Диалог #${dialogueIndex}, suggestion #${idx}: path "${s.path}" не существует!`);
-                }
-            });
-
-            // Проверка 5: Есть ли brokerQuestion или brokerResponse в шагах?
-            paths.forEach(pathName => {
-                const pathSteps = dialogue.paths[pathName];
-                pathSteps.forEach((step, stepIdx) => {
-                    if (!step.brokerQuestion && !step.brokerResponse && !step.outcome) {
-                        warnings.push(`Диалог #${dialogueIndex}, путь "${pathName}", шаг ${stepIdx}: Нет brokerQuestion и brokerResponse`);
-                    }
-                });
-            });
-
-            return {
-                valid: errors.length === 0,
-                errors,
-                warnings
-            };
-        }
-
-        // Валидация всех диалогов при загрузке
-        function validateAllDialogues() {
-            if (typeof allScenarios === 'undefined' || !allScenarios) {
-                console.error('❌ allScenarios не определен!');
-                return;
-            }
-
-            console.log('🔍 Проверка всех диалогов...');
-            let totalErrors = 0;
-            let totalWarnings = 0;
-
-            allScenarios.forEach((dialogue, index) => {
-                const result = validateDialogue(dialogue, index);
-
-                if (!result.valid) {
-                    console.error(`❌ Диалог #${index} (${dialogue.route}): ОШИБКИ!`);
-                    result.errors.forEach(err => console.error(`  - ${err}`));
-                    totalErrors += result.errors.length;
-                }
-
-                if (result.warnings.length > 0) {
-                    console.warn(`⚠️ Диалог #${index} (${dialogue.route}): Предупреждения`);
-                    result.warnings.forEach(warn => console.warn(`  - ${warn}`));
-                    totalWarnings += result.warnings.length;
-                }
-
-                if (result.valid && result.warnings.length === 0) {
-                    console.log(`✅ Диалог #${index} (${dialogue.route}): OK`);
-                }
-            });
-
-            console.log(`\n📊 Итого: ${allScenarios.length} диалогов, ${totalErrors} ошибок, ${totalWarnings} предупреждений`);
-
-            if (totalErrors > 0) {
-                alert(`⚠️ ВНИМАНИЕ! Найдено ${totalErrors} критических ошибок в диалогах!\nОткройте консоль (F12) для деталей.`);
-            }
-        }
 
         // Функция для автоматического создания карточек из всех диалогов
         function generateGreetingOptions() {
@@ -2267,54 +2050,12 @@
             if (typeof allScenarios !== 'undefined') {
                 console.log('allScenarios length:', allScenarios.length);
                 console.log('allScenarios:', allScenarios);
-
-                // АВТОМАТИЧЕСКАЯ ПРОВЕРКА ВСЕХ ДИАЛОГОВ
-                validateAllDialogues();
             } else {
                 console.error('ERROR: allScenarios is not defined!');
                 alert('Ошибка: файл scenarios-data-v2.js не загружен или содержит ошибки. Откройте консоль браузера (F12) для деталей.');
             }
-
-            // Инициализация кнопки режима
-            createModeToggleButton();
-
             showRandomBubbles();
             setupEventListeners();
-        }
-
-        // Создание кнопки переключения режима
-        function createModeToggleButton() {
-            const modeBtn = document.createElement('button');
-            modeBtn.id = 'modeButton';
-            modeBtn.style.cssText = `
-                position: fixed;
-                top: 80px;
-                right: 20px;
-                background: ${currentMode === 'training' ? 'rgba(34, 197, 94, 0.9)' : 'rgba(239, 68, 68, 0.9)'};
-                color: white;
-                border: none;
-                padding: 10px 18px;
-                border-radius: 20px;
-                font-size: 13px;
-                font-weight: 600;
-                cursor: pointer;
-                box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-                transition: all 0.3s ease;
-                z-index: 1000;
-            `;
-            modeBtn.innerHTML = currentMode === 'training' ? '📚 Обучение' : '🎯 Тестирование';
-            modeBtn.onclick = () => {
-                currentMode = currentMode === 'training' ? 'testing' : 'training';
-                localStorage.setItem('simulatorMode', currentMode);
-                modeBtn.innerHTML = currentMode === 'training' ? '📚 Обучение' : '🎯 Тестирование';
-                modeBtn.style.background = currentMode === 'training' ? 'rgba(34, 197, 94, 0.9)' : 'rgba(239, 68, 68, 0.9)';
-                updateBackButton();
-
-                const modeText = currentMode === 'training' ? '📚 Режим обучения' : '🎯 Режим тестирования';
-                const modeDesc = currentMode === 'training' ? 'Подсказки включены, можно вернуться назад' : 'Без подсказок, нельзя вернуться назад';
-                alert(`${modeText}\n${modeDesc}`);
-            };
-            document.body.appendChild(modeBtn);
         }
 
         function showRandomBubbles() {
@@ -2623,7 +2364,7 @@
                     borderColor = 'rgba(34, 197, 94, 0.6)';
                     badgeColor = '#22c55e';
                     badgeBg = 'rgba(34, 197, 94, 0.2)';
-                    badge.textContent = '💎 Отлично';
+                    badge.textContent = '💎 Мастер';
                 } else if (quality === 'good') {
                     borderColor = 'rgba(34, 197, 94, 0.4)';
                     badgeColor = '#22c55e';
@@ -2638,7 +2379,7 @@
                     borderColor = 'rgba(156, 163, 175, 0.5)';
                     badgeColor = '#9ca3af';
                     badgeBg = 'rgba(156, 163, 175, 0.15)';
-                    badge.textContent = '⚠️ Недостаточно';
+                    badge.textContent = '⚠️ Слабо';
                 } else if (quality === 'aggressive') {
                     borderColor = 'rgba(251, 191, 36, 0.5)';
                     badgeColor = '#fbbf24';
@@ -2740,9 +2481,6 @@
         }
 
         function selectSuggestion(text, quality, suggestedPath) {
-            // Сохранить текущее состояние перед выбором
-            saveConversationState();
-
             const suggestions = document.getElementById('suggestions');
             if (suggestions) suggestions.remove();
 
@@ -2769,66 +2507,15 @@
                 } else {
                     currentPath = 'normal';
                 }
-
-                // Show path indicator when path is first determined
-                const pathInfo = getPathIndicator(currentPath);
-                const pathIndicatorDiv = document.createElement('div');
-                pathIndicatorDiv.className = 'path-indicator';
-                pathIndicatorDiv.style.cssText = `
-                    background: ${pathInfo.bgColor};
-                    border-left: 3px solid ${pathInfo.borderColor};
-                    padding: 10px 12px;
-                    margin: 10px 0;
-                    border-radius: 8px;
-                    font-size: 13px;
-                    font-weight: 600;
-                    color: ${pathInfo.color};
-                    text-align: center;
-                    animation: fadeInUp 0.4s ease-out;
-                `;
-                pathIndicatorDiv.textContent = `${pathInfo.icon} ${pathInfo.text}`;
-                messagesContainer.appendChild(pathIndicatorDiv);
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
             }
 
             // Get current step from the selected path
-            let pathSteps = currentScenario.paths[currentPath];
+            const pathSteps = currentScenario.paths[currentPath];
 
-            // УЛУЧШЕННЫЙ FALLBACK - если путь не найден, ищем ближайший
+            // Fallback to 'good' path if selected path doesn't exist
             if (!pathSteps) {
-                console.warn(`⚠️ Path "${currentPath}" not found! Using fallback...`);
-                const oldPath = currentPath;
-
-                // Попробовать в порядке: good → normal → master
-                if (currentScenario.paths.good) {
-                    currentPath = 'good';
-                } else if (currentScenario.paths.normal) {
-                    currentPath = 'normal';
-                } else if (currentScenario.paths.master) {
-                    currentPath = 'master';
-                } else {
-                    // Берем первый доступный путь
-                    currentPath = Object.keys(currentScenario.paths)[0];
-                }
-
+                currentPath = 'good';
                 pathSteps = currentScenario.paths[currentPath];
-                console.log(`✅ Fallback: ${oldPath} → ${currentPath}`);
-
-                // Показать уведомление пользователю
-                const fallbackNotice = document.createElement('div');
-                fallbackNotice.style.cssText = `
-                    background: rgba(245, 158, 11, 0.1);
-                    border-left: 3px solid #f59e0b;
-                    padding: 10px 12px;
-                    margin: 10px 0;
-                    border-radius: 8px;
-                    font-size: 12px;
-                    color: #f59e0b;
-                    animation: fadeInUp 0.4s ease-out;
-                `;
-                fallbackNotice.textContent = `⚠️ Путь "${oldPath}" не найден, переключено на "${currentPath}"`;
-                messagesContainer.appendChild(fallbackNotice);
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
             }
 
             const currentStep = pathSteps[conversationStep];
@@ -2931,7 +2618,6 @@
             currentScenario = null;
             currentPath = null;
             qualityScore = 0;
-            conversationHistory = []; // Очистить историю
 
             messagesContainer.innerHTML = '';
             chatView.classList.remove('active');
@@ -2941,9 +2627,6 @@
             if (infoSections) {
                 infoSections.classList.remove('hidden');
             }
-
-            // Скрыть кнопку возврата
-            updateBackButton();
 
             showRandomBubbles();
         }
