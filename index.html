@@ -1415,7 +1415,7 @@
         margin-bottom: 16px;
         flex-shrink: 0;
         transition: all 3.2s cubic-bezier(0.45, 0.5, 0.45, 1);
-        transform: scale(1) translateX(0);
+        transform: scale(1) translateX(0) translateY(0);
         border-radius: 50%;
       }
 
@@ -1439,7 +1439,18 @@
       .timeline-node.active .node-circle {
         margin-bottom: 0;
         margin-right: 16px;
-        transform: scale(1.5) translateX(-80px);
+        transform: scale(1.5) translateX(-80px) translateY(0);
+        animation: moveCircleUp 1s ease-out 3.2s forwards;
+      }
+
+      @keyframes moveCircleUp {
+        from {
+          transform: scale(1.5) translateX(-80px) translateY(0);
+        }
+
+        to {
+          transform: scale(1.5) translateX(-80px) translateY(-15px);
+        }
       }
 
       .timeline-node[data-step="1"].active .node-circle::before {
@@ -6371,21 +6382,21 @@
           // Если hint видим, скрываем его и планируем следующий
           hideHint();
 
-          // Задержка перед следующим показом - 12 секунд
+          // Задержка перед следующим показом - 20 секунд
           hintTimeout = setTimeout(() => {
             // Переходим к следующему разделу
             currentHintIndex = (currentHintIndex + 1) % nodes.length;
             showHintOnNode(currentHintIndex);
 
-            // Планируем скрытие через 8 секунд
-            hintTimeout = setTimeout(scheduleNextHint, 8000);
-          }, 12000);
+            // Планируем скрытие через 10 секунд
+            hintTimeout = setTimeout(scheduleNextHint, 10000);
+          }, 20000);
         } else {
           // Если hint скрыт, показываем его
           showHintOnNode(currentHintIndex);
 
-          // Планируем скрытие через 8 секунд
-          hintTimeout = setTimeout(scheduleNextHint, 8000);
+          // Планируем скрытие через 10 секунд
+          hintTimeout = setTimeout(scheduleNextHint, 10000);
         }
       }
 
@@ -6402,13 +6413,15 @@
           if (hintTimeout) {
             clearTimeout(hintTimeout);
           }
-          hintTimeout = setTimeout(scheduleNextHint, 8000);
+          hintTimeout = setTimeout(scheduleNextHint, 10000);
         });
       });
 
-      // Показываем hint на первом узле и запускаем цикл
-      showHintOnNode(currentHintIndex);
-      hintTimeout = setTimeout(scheduleNextHint, 8000);
+      // Показываем hint на первом узле и запускаем цикл через 5 секунд
+      setTimeout(() => {
+        showHintOnNode(currentHintIndex);
+        hintTimeout = setTimeout(scheduleNextHint, 10000);
+      }, 5000);
     })();
   </script>
 
