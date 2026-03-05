@@ -2042,13 +2042,25 @@
         const dispatcherNames = ['Alex', 'Mike', 'Sarah', 'John', 'Maria', 'David', 'Lisa', 'Tom', 'Anna', 'Chris'];
         const brokerNames = ['James', 'Robert', 'Jennifer', 'Michael', 'Linda', 'William', 'Patricia', 'Richard', 'Susan', 'Daniel'];
 
+        // Режим отображения текста: 'full' (полный), 'short' (сокращенный)
+        // UPDATED: 2026-03-05 v2.1
+        let textDisplayMode = 'short';
+
+        // Функция для сокращения текста
+        function shortenText(text, maxLength = 60) {
+            if (!text || text.length <= maxLength) return text;
+
+            // Простое обрезание по символам с многоточием
+            return text.substring(0, maxLength).trim() + '...';
+        }
+
         // Функция для получения визуального индикатора пути
         function getPathIndicator(path) {
             const indicators = {
-                master: { icon: '💎', text: 'ОТЛИЧНО', color: '#22c55e', bgColor: 'rgba(34, 197, 94, 0.1)', borderColor: '#22c55e' },
-                good: { icon: '✅', text: 'ХОРОШО', color: '#3b82f6', bgColor: 'rgba(59, 130, 246, 0.1)', borderColor: '#3b82f6' },
+                master: { icon: '✅', text: 'ХОРОШО', color: '#22c55e', bgColor: 'rgba(34, 197, 94, 0.1)', borderColor: '#22c55e' },
+                good: { icon: '⚪', text: 'НОРМАЛЬНО', color: '#64748b', bgColor: 'rgba(100, 116, 139, 0.1)', borderColor: '#64748b' },
                 normal: { icon: '⚪', text: 'НОРМАЛЬНО', color: '#64748b', bgColor: 'rgba(100, 116, 139, 0.1)', borderColor: '#64748b' },
-                weak: { icon: '⚠️', text: 'НЕДОСТАТОЧНО', color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.1)', borderColor: '#f59e0b' },
+                weak: { icon: '⚠️', text: 'НЕЙТРАЛЬНО', color: '#be185d', bgColor: 'rgba(190, 24, 93, 0.1)', borderColor: '#be185d' },
                 aggressive: { icon: '🔥', text: 'АГРЕССИВНО', color: '#ef4444', bgColor: 'rgba(239, 68, 68, 0.1)', borderColor: '#ef4444' }
             };
             return indicators[path] || indicators.normal;
@@ -2722,6 +2734,7 @@
                 font-size: 16px;
                 cursor: pointer;
                 transition: all 0.3s ease;
+                margin-left: 8px;
             `;
             closeBtn.onmouseover = () => {
                 closeBtn.style.background = 'rgba(239, 68, 68, 0.3)';
@@ -2741,17 +2754,19 @@
             const suggestionsContainer = document.createElement('div');
             suggestionsContainer.style.cssText = 'display: flex; flex-direction: column; gap: 10px;';
 
-            suggestions.forEach((suggestion, index) => {
-                const btn = document.createElement('button');
-                btn.className = 'suggestion-modal-btn';
+            // Функция создания кнопок с вариантами
+            function createSuggestionButtons() {
+                suggestions.forEach((suggestion, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'suggestion-modal-btn';
 
-                const text = typeof suggestion === 'string' ? suggestion : suggestion.text;
-                const quality = typeof suggestion === 'object' ? suggestion.quality : 'normal';
-                const analytics = typeof suggestion === 'object' ? suggestion.analytics : '';
-                const path = typeof suggestion === 'object' ? suggestion.path : null;
+                    const text = typeof suggestion === 'string' ? suggestion : suggestion.text;
+                    const quality = typeof suggestion === 'object' ? suggestion.quality : 'normal';
+                    const analytics = typeof suggestion === 'object' ? suggestion.analytics : '';
+                    const path = typeof suggestion === 'object' ? suggestion.path : null;
 
-                // Create suggestion card
-                btn.style.cssText = `
+                    // Create suggestion card
+                    btn.style.cssText = `
                     background: rgba(30, 41, 59, 0.6);
                     border: 2px solid rgba(100, 116, 139, 0.3);
                     border-radius: 10px;
@@ -2763,9 +2778,9 @@
                     overflow: hidden;
                 `;
 
-                // Quality badge
-                const badge = document.createElement('div');
-                badge.style.cssText = `
+                    // Quality badge
+                    const badge = document.createElement('div');
+                    badge.style.cssText = `
                     display: inline-block;
                     padding: 3px 10px;
                     border-radius: 10px;
@@ -2775,51 +2790,50 @@
                     text-transform: uppercase;
                 `;
 
-                // Set colors based on quality
-                let borderColor = 'rgba(100, 116, 139, 0.5)';
-                let badgeColor = '#64748b';
-                let badgeBg = 'rgba(100, 116, 139, 0.2)';
+                    // Set colors based on quality
+                    let borderColor = 'rgba(100, 116, 139, 0.5)';
+                    let badgeColor = '#64748b';
+                    let badgeBg = 'rgba(100, 116, 139, 0.2)';
 
-                if (quality === 'master' || quality === 'excellent') {
-                    borderColor = 'rgba(34, 197, 94, 0.6)';
-                    badgeColor = '#22c55e';
-                    badgeBg = 'rgba(34, 197, 94, 0.2)';
-                    badge.textContent = '💎 Отлично';
-                } else if (quality === 'good') {
-                    borderColor = 'rgba(34, 197, 94, 0.4)';
-                    badgeColor = '#22c55e';
-                    badgeBg = 'rgba(34, 197, 94, 0.15)';
-                    badge.textContent = '✅ Хорошо';
-                } else if (quality === 'normal') {
-                    borderColor = 'rgba(59, 130, 246, 0.4)';
-                    badgeColor = '#3b82f6';
-                    badgeBg = 'rgba(59, 130, 246, 0.15)';
-                    badge.textContent = '⚪ Нормально';
-                } else if (quality === 'weak') {
-                    borderColor = 'rgba(156, 163, 175, 0.5)';
-                    badgeColor = '#9ca3af';
-                    badgeBg = 'rgba(156, 163, 175, 0.15)';
-                    badge.textContent = '⚠️ Недостаточно';
-                } else if (quality === 'aggressive') {
-                    borderColor = 'rgba(251, 191, 36, 0.5)';
-                    badgeColor = '#fbbf24';
-                    badgeBg = 'rgba(251, 191, 36, 0.15)';
-                    badge.textContent = '⚠️ Агрессивно';
-                } else if (quality === 'bad' || quality === 'reject' || quality === 'fail') {
-                    borderColor = 'rgba(239, 68, 68, 0.5)';
-                    badgeColor = '#ef4444';
-                    badgeBg = 'rgba(239, 68, 68, 0.15)';
-                    badge.textContent = '❌ Провал';
-                }
+                    if (quality === 'master' || quality === 'excellent') {
+                        borderColor = 'rgba(34, 197, 94, 0.6)';
+                        badgeColor = '#22c55e';
+                        badgeBg = 'rgba(34, 197, 94, 0.2)';
+                        badge.textContent = '✨ Отлично';
+                    } else if (quality === 'good') {
+                        borderColor = 'rgba(100, 116, 139, 0.4)';
+                        badgeColor = '#64748b';
+                        badgeBg = 'rgba(100, 116, 139, 0.15)';
+                        badge.textContent = '✔️ Хорошо';
+                    } else if (quality === 'normal') {
+                        borderColor = 'rgba(100, 116, 139, 0.4)';
+                        badgeColor = '#64748b';
+                        badgeBg = 'rgba(100, 116, 139, 0.15)';
+                        badge.textContent = '⚪ Нормально';
+                    } else if (quality === 'weak') {
+                        borderColor = 'rgba(190, 24, 93, 0.5)';
+                        badgeColor = '#be185d';
+                        badgeBg = 'rgba(190, 24, 93, 0.15)';
+                        badge.textContent = '⚠️ Слабо';
+                    } else if (quality === 'aggressive') {
+                        borderColor = 'rgba(251, 191, 36, 0.5)';
+                        badgeColor = '#fbbf24';
+                        badgeBg = 'rgba(251, 191, 36, 0.15)';
+                        badge.textContent = '🔴 Агрессивно';
+                    } else if (quality === 'bad' || quality === 'reject' || quality === 'fail') {
+                        borderColor = 'rgba(239, 68, 68, 0.5)';
+                        badgeColor = '#ef4444';
+                        badgeBg = 'rgba(239, 68, 68, 0.15)';
+                        badge.textContent = '❌ Провал';
+                    }
 
-                btn.style.borderColor = borderColor;
-                badge.style.color = badgeColor;
-                badge.style.background = badgeBg;
+                    btn.style.borderColor = borderColor;
+                    badge.style.color = badgeColor;
+                    badge.style.background = badgeBg;
 
-                // Message text
-                const messageText = document.createElement('div');
-                messageText.textContent = text;
-                messageText.style.cssText = `
+                    // Message text
+                    const messageText = document.createElement('div');
+                    messageText.style.cssText = `
                     color: #e2e8f0;
                     font-size: 13px;
                     line-height: 1.5;
@@ -2827,11 +2841,11 @@
                     white-space: pre-wrap;
                 `;
 
-                // Analytics text
-                const analyticsText = document.createElement('div');
-                if (analytics) {
-                    analyticsText.textContent = analytics;
-                    analyticsText.style.cssText = `
+                    // Analytics text
+                    const analyticsText = document.createElement('div');
+                    if (analytics) {
+                        analyticsText.textContent = analytics;
+                        analyticsText.style.cssText = `
                         color: #94a3b8;
                         font-size: 11px;
                         font-style: italic;
@@ -2839,34 +2853,43 @@
                         padding-top: 8px;
                         border-top: 1px solid rgba(100, 116, 139, 0.3);
                     `;
-                }
+                    }
 
-                btn.appendChild(badge);
-                btn.appendChild(messageText);
-                if (analytics) btn.appendChild(analyticsText);
+                    btn.appendChild(badge);
 
-                // Hover effects
-                btn.onmouseover = () => {
-                    btn.style.borderColor = borderColor.replace('0.3', '0.8').replace('0.4', '0.8').replace('0.5', '0.8').replace('0.6', '0.9');
-                    btn.style.background = 'rgba(30, 41, 59, 0.9)';
-                    btn.style.transform = 'translateX(5px)';
-                    btn.style.boxShadow = `0 4px 20px ${borderColor}`;
-                };
+                    // Отображаем полный текст аналитики
+                    if (analytics) {
+                        messageText.textContent = analytics;
+                        messageText.style.color = '#94a3b8';
+                        btn.appendChild(messageText);
+                    }
 
-                btn.onmouseout = () => {
-                    btn.style.borderColor = borderColor;
-                    btn.style.background = 'rgba(30, 41, 59, 0.6)';
-                    btn.style.transform = 'translateX(0)';
-                    btn.style.boxShadow = 'none';
-                };
+                    // Hover effects
+                    btn.onmouseover = () => {
+                        btn.style.borderColor = borderColor.replace('0.3', '0.8').replace('0.4', '0.8').replace('0.5', '0.8').replace('0.6', '0.9');
+                        btn.style.background = 'rgba(30, 41, 59, 0.9)';
+                        btn.style.transform = 'translateX(5px)';
+                        btn.style.boxShadow = `0 4px 20px ${borderColor}`;
+                    };
 
-                btn.onclick = () => {
-                    modalOverlay.remove();
-                    selectSuggestion(text, quality, path);
-                };
+                    btn.onmouseout = () => {
+                        btn.style.borderColor = borderColor;
+                        btn.style.background = 'rgba(30, 41, 59, 0.6)';
+                        btn.style.transform = 'translateX(0)';
+                        btn.style.boxShadow = 'none';
+                    };
 
-                suggestionsContainer.appendChild(btn);
-            });
+                    btn.onclick = () => {
+                        modalOverlay.remove();
+                        selectSuggestion(text, quality, path);
+                    };
+
+                    suggestionsContainer.appendChild(btn);
+                });
+            }
+
+            // Создаем кнопки при первой загрузке
+            createSuggestionButtons();
 
             modalContent.appendChild(suggestionsContainer);
             modalOverlay.appendChild(modalContent);

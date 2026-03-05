@@ -6021,13 +6021,18 @@
               mouseY = null;
             });
 
-            // Wait for layout to be ready
+            // Wait for layout to be ready and CSS to apply
             setTimeout(() => {
+              // Force reflow to ensure CSS is applied
+              container.offsetHeight;
+
               const containerRect = container.getBoundingClientRect();
               const padding = 16;
 
               // Initialize each button with position and smooth trajectory
               buttons.forEach((button, index) => {
+                // Force reflow for button
+                button.offsetHeight;
                 const btnRect = button.getBoundingClientRect();
                 const btnWidth = btnRect.width || 100;
                 const btnHeight = btnRect.height || 35;
@@ -6035,7 +6040,7 @@
                 // Calculate center area (middle 60% of container)
                 const centerX = containerRect.width / 2;
                 const centerY = containerRect.height / 2;
-                const spawnRadius = Math.min(containerRect.width, containerRect.height) * 0.3;
+                const spawnRadius = Math.min(containerRect.width, containerRect.height) * 0.25;
 
                 // Try to find non-overlapping position near center
                 let x, y, attempts = 0;
@@ -6056,8 +6061,8 @@
                   for (let other of buttonData) {
                     const dx = Math.abs((x + btnWidth / 2) - (other.x + other.width / 2));
                     const dy = Math.abs((y + btnHeight / 2) - (other.y + other.height / 2));
-                    const minDx = (btnWidth + other.width) / 2 + 2;
-                    const minDy = (btnHeight + other.height) / 2 + 2;
+                    const minDx = (btnWidth + other.width) / 2 + 8;
+                    const minDy = (btnHeight + other.height) / 2 + 8;
 
                     if (dx < minDx && dy < minDy) {
                       overlapping = true;
@@ -6153,7 +6158,7 @@
                     const dx = (btn.x + btn.width / 2) - (other.x + other.width / 2);
                     const dy = (btn.y + btn.height / 2) - (other.y + other.height / 2);
                     const distance = Math.sqrt(dx * dx + dy * dy);
-                    const minDistance = (btn.width + other.width) / 2;
+                    const minDistance = (btn.width + other.width) / 2 + 5;
 
                     if (distance < minDistance && distance > 0) {
                       // Smooth elastic collision with heavy damping
