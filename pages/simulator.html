@@ -2254,6 +2254,8 @@
     <!-- <script src="scenarios-data-v4.js"></script> DISABLED: incorrect format -->
     <script src="scenarios-data-v5.js"></script>
     <script src="scenarios-data-v6.js"></script>
+    <script src="scenarios-data-v7.js"></script>
+    <script src="scenarios-data-v8.js"></script>
 
     <script>
         const welcomeScreen = document.getElementById('welcomeScreen');
@@ -3348,7 +3350,7 @@
                     badge.style.color = badgeColor;
                     badge.style.background = badgeBg;
 
-                    // Message text
+                    // Message text with truncation
                     const messageText = document.createElement('div');
                     messageText.style.cssText = `
                     color: #e2e8f0;
@@ -3357,6 +3359,43 @@
                     margin-bottom: 8px;
                     white-space: pre-wrap;
                 `;
+
+                    // Truncate to 2 sentences
+                    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+                    const firstTwoSentences = sentences.slice(0, 2).join(' ');
+                    const hasMore = sentences.length > 2;
+                    const remainingText = sentences.slice(2).join(' ');
+
+                    const truncatedText = document.createElement('span');
+                    truncatedText.textContent = firstTwoSentences;
+                    messageText.appendChild(truncatedText);
+
+                    if (hasMore) {
+                        const moreText = document.createElement('span');
+                        moreText.textContent = ' ' + remainingText;
+                        moreText.style.display = 'none';
+                        moreText.className = 'more-text';
+                        messageText.appendChild(moreText);
+
+                        const showMoreBtn = document.createElement('button');
+                        showMoreBtn.textContent = '...далее';
+                        showMoreBtn.style.cssText = `
+                            color: #60a5fa;
+                            background: none;
+                            border: none;
+                            cursor: pointer;
+                            font-size: 12px;
+                            padding: 0;
+                            margin-left: 4px;
+                            text-decoration: underline;
+                        `;
+                        showMoreBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            moreText.style.display = 'inline';
+                            showMoreBtn.style.display = 'none';
+                        };
+                        messageText.appendChild(showMoreBtn);
+                    }
 
                     // Analytics text
                     const analyticsText = document.createElement('div');
@@ -3375,9 +3414,6 @@
                     }
 
                     btn.appendChild(badge);
-
-                    // Отображаем текст ответа
-                    messageText.textContent = text;
                     btn.appendChild(messageText);
 
                     // Отображаем analytics внизу (скрыт до выбора)
