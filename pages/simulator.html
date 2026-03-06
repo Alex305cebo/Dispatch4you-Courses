@@ -760,13 +760,17 @@
             visibility: hidden;
             opacity: 0;
             flex-direction: column;
-            min-height: calc(100vh - 80px);
-            max-height: calc(100vh - 80px);
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            bottom: 0;
             max-width: 650px;
             margin: 0 auto;
             width: 100%;
             animation: fadeIn 0.5s ease-out;
             padding: 20px 0;
+            z-index: 100;
         }
 
         .chat-view.active {
@@ -783,11 +787,16 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
-            margin-bottom: 16px;
+            margin-bottom: 0;
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 14px;
             min-height: 0;
+        }
+
+        /* Убираем margin у последнего элемента в контейнере */
+        .messages-container> :last-child {
+            margin-bottom: 0 !important;
         }
 
         .messages-container::-webkit-scrollbar {
@@ -988,13 +997,29 @@
             .container {
                 padding: 0;
                 height: 100vh;
+                overflow: hidden;
             }
 
             /* Блокируем скролл body когда чат активен */
             body:has(.chat-view.active) {
                 overflow: hidden !important;
-                position: fixed;
-                width: 100%;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100% !important;
+                height: 100vh !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                /* Убираем все отступы */
+            }
+
+            html:has(.chat-view.active) {
+                overflow: hidden !important;
+                height: 100vh !important;
+                padding: 0 !important;
+                margin: 0 !important;
             }
 
             .nav-links,
@@ -1071,15 +1096,17 @@
                 display: none !important;
             }
 
-            /* Контейнер сообщений - оставляем место для input снизу */
+            /* Контейнер сообщений - вплотную к input */
             .messages-container {
                 position: absolute !important;
                 top: 0 !important;
                 left: 0 !important;
                 right: 0 !important;
-                bottom: 80px !important;
-                /* Оставляем место для плавающего input */
+                bottom: 0 !important;
+                /* Вплотную к низу, input будет поверх */
                 padding: 12px !important;
+                padding-bottom: 64px !important;
+                /* Отступ только внутри для input */
                 margin: 0 !important;
                 gap: 12px;
                 border-radius: 0;
@@ -1090,24 +1117,39 @@
                 -webkit-overflow-scrolling: touch;
             }
 
-            /* Плавающая строка ввода внизу */
+            /* Убираем margin у последнего элемента */
+            .messages-container> :last-child {
+                margin-bottom: 0 !important;
+            }
+
+            /* Плавающая строка ввода с закругленными углами */
             .input-area {
                 display: flex !important;
                 position: fixed !important;
-                bottom: 0 !important;
-                left: 0 !important;
-                right: 0 !important;
-                width: 100vw !important;
+                bottom: 12px !important;
+                /* Отступ от низа */
+                left: 12px !important;
+                /* Отступ слева */
+                right: 12px !important;
+                /* Отступ справа */
+                width: auto !important;
                 height: auto !important;
-                padding: 12px !important;
+                padding: 10px 12px !important;
                 margin: 0 !important;
-                background: rgba(10, 14, 26, 0.95) !important;
+                background: rgba(15, 23, 42, 0.95) !important;
                 backdrop-filter: blur(20px) !important;
-                border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
-                border-radius: 0 !important;
+                border: 1px solid rgba(99, 102, 241, 0.3) !important;
+                border-radius: 24px !important;
+                /* Закругленные углы */
                 z-index: 10000 !important;
                 visibility: visible !important;
-                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3) !important;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset !important;
+                transition: all 0.3s ease !important;
+            }
+
+            .input-area:focus-within {
+                border-color: rgba(99, 102, 241, 0.6) !important;
+                box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3), 0 0 0 1px rgba(99, 102, 241, 0.2) inset !important;
             }
 
             .input-container {
@@ -1165,8 +1207,9 @@
         @media (max-width: 430px) {
             .messages-container {
                 padding: 10px !important;
-                bottom: 70px !important;
-                /* Меньше места для input */
+                padding-bottom: 70px !important;
+                /* Больше места для плавающего input */
+                bottom: 0 !important;
             }
 
             .message-content {
@@ -1185,7 +1228,11 @@
             }
 
             .input-area {
-                padding: 10px !important;
+                bottom: 10px !important;
+                left: 10px !important;
+                right: 10px !important;
+                padding: 8px 10px !important;
+                border-radius: 20px !important;
             }
 
             .input-field {
@@ -1203,7 +1250,9 @@
         @media (max-width: 375px) {
             .messages-container {
                 padding: 8px !important;
-                bottom: 65px !important;
+                padding-bottom: 66px !important;
+                /* Больше места для плавающего input */
+                bottom: 0 !important;
             }
 
             .message-avatar {
@@ -1229,7 +1278,11 @@
             }
 
             .input-area {
+                bottom: 8px !important;
+                left: 8px !important;
+                right: 8px !important;
                 padding: 8px !important;
+                border-radius: 18px !important;
             }
 
             .input-field {
@@ -2177,15 +2230,15 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="chat-view" id="chatView">
-            <div class="messages-container" id="messagesContainer"></div>
+    <!-- Chat View - вынесен из container -->
+    <div class="chat-view" id="chatView">
+        <div class="messages-container" id="messagesContainer"></div>
 
-            <div class="input-area">
-                <textarea class="input-field" id="inputField" placeholder="Введите ваше сообщение..."
-                    rows="1"></textarea>
-                <button class="send-btn" id="sendBtn" disabled>➤</button>
-            </div>
+        <div class="input-area">
+            <textarea class="input-field" id="inputField" placeholder="Введите ваше сообщение..." rows="1"></textarea>
+            <button class="send-btn" id="sendBtn" disabled>➤</button>
         </div>
     </div>
 
@@ -2760,7 +2813,7 @@
             indicator.appendChild(avatar);
             indicator.appendChild(content);
             messagesContainer.appendChild(indicator);
-            // messagesContainer.scrollTop = messagesContainer.scrollHeight; // Автоскроллинг отключен
+            messagesContainer.scrollTop = messagesContainer.scrollHeight; // Автоскролл вниз
         }
 
         function hideTypingIndicator() {
