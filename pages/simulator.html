@@ -3236,6 +3236,9 @@
 
             // Функция создания кнопок с вариантами
             function createSuggestionButtons() {
+                // Флаг для отслеживания выбора (общий для всех кнопок)
+                let isAnswerSelected = false;
+
                 // Умная логика выбора 3 вариантов:
                 // 1. Всегда показываем лучший ответ (excellent/good/master)
                 // 2. Остальные 2 варианта выбираем случайно из оставшихся (normal, weak, bad)
@@ -3381,25 +3384,42 @@
                         btn.appendChild(analyticsText);
                     }
 
-                    // Hover effects
+                    // Hover effects (без цветов до выбора)
                     btn.onmouseover = () => {
-                        btn.style.borderColor = borderColor.replace('0.3', '0.8').replace('0.4', '0.8').replace('0.5', '0.8').replace('0.6', '0.9');
-                        btn.style.background = 'rgba(30, 41, 59, 0.9)';
-                        btn.style.transform = 'translateX(5px)';
-                        btn.style.boxShadow = `0 4px 20px ${borderColor}`;
+                        if (!isAnswerSelected) {
+                            // До выбора - только нейтральные эффекты
+                            btn.style.borderColor = 'rgba(100, 116, 139, 0.6)';
+                            btn.style.background = 'rgba(30, 41, 59, 0.9)';
+                            btn.style.transform = 'translateX(5px)';
+                            btn.style.boxShadow = '0 4px 20px rgba(100, 116, 139, 0.3)';
+                        } else {
+                            // После выбора - цветные эффекты
+                            btn.style.borderColor = borderColor.replace('0.3', '0.8').replace('0.4', '0.8').replace('0.5', '0.8').replace('0.6', '0.9');
+                            btn.style.background = 'rgba(30, 41, 59, 0.9)';
+                            btn.style.transform = 'translateX(5px)';
+                            btn.style.boxShadow = `0 4px 20px ${borderColor}`;
+                        }
                     };
 
                     btn.onmouseout = () => {
-                        btn.style.borderColor = borderColor;
+                        if (!isAnswerSelected) {
+                            // До выбора - нейтральный цвет
+                            btn.style.borderColor = 'rgba(100, 116, 139, 0.3)';
+                        } else {
+                            // После выбора - цветная граница
+                            btn.style.borderColor = borderColor;
+                        }
                         btn.style.background = 'rgba(30, 41, 59, 0.6)';
                         btn.style.transform = 'translateX(0)';
                         btn.style.boxShadow = 'none';
                     };
 
                     btn.onclick = () => {
+                        isAnswerSelected = true;
+
                         // Показываем цвета и подсказки для ВСЕХ карточек после выбора
                         const allButtons = suggestionsContainer.querySelectorAll('.suggestion-modal-btn');
-                        allButtons.forEach(button => {
+                        allButtons.forEach((button, idx) => {
                             // Показываем бейдж
                             const badgeEl = button.querySelector('.quality-badge-hidden');
                             if (badgeEl) {
@@ -3411,10 +3431,28 @@
                             if (analyticsEl) {
                                 analyticsEl.style.display = 'block';
                             }
-                        });
 
-                        // Применяем цвет границы к выбранной кнопке
-                        btn.style.borderColor = borderColor;
+                            // Применяем цвет границы к каждой кнопке на основе её quality
+                            const btnSuggestion = limitedSuggestions[idx];
+                            const btnQuality = typeof btnSuggestion === 'object' ? btnSuggestion.quality : 'normal';
+                            let btnBorderColor = 'rgba(100, 116, 139, 0.3)';
+
+                            if (btnQuality === 'master' || btnQuality === 'excellent') {
+                                btnBorderColor = 'rgba(34, 197, 94, 0.6)';
+                            } else if (btnQuality === 'good') {
+                                btnBorderColor = 'rgba(132, 204, 22, 0.6)';
+                            } else if (btnQuality === 'normal') {
+                                btnBorderColor = 'rgba(234, 179, 8, 0.6)';
+                            } else if (btnQuality === 'weak') {
+                                btnBorderColor = 'rgba(249, 115, 22, 0.6)';
+                            } else if (btnQuality === 'aggressive') {
+                                btnBorderColor = 'rgba(239, 68, 68, 0.6)';
+                            } else if (btnQuality === 'bad' || btnQuality === 'reject' || btnQuality === 'fail') {
+                                btnBorderColor = 'rgba(220, 38, 38, 0.6)';
+                            }
+
+                            button.style.borderColor = btnBorderColor;
+                        });
 
                         // Небольшая задержка перед закрытием, чтобы пользователь увидел результат
                         setTimeout(() => {
