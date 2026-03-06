@@ -3287,10 +3287,11 @@
                     overflow: hidden;
                 `;
 
-                    // Quality badge
+                    // Quality badge (скрыт до выбора)
                     const badge = document.createElement('div');
+                    badge.className = 'quality-badge-hidden';
                     badge.style.cssText = `
-                    display: inline-block;
+                    display: none;
                     padding: 3px 10px;
                     border-radius: 10px;
                     font-size: 11px;
@@ -3299,44 +3300,47 @@
                     text-transform: uppercase;
                 `;
 
-                    // Set colors based on quality
-                    let borderColor = 'rgba(234, 179, 8, 0.5)';
+                    // Set colors based on quality (но не применяем до выбора)
+                    let borderColor = 'rgba(100, 116, 139, 0.3)'; // Нейтральный цвет
                     let badgeColor = '#eab308';
                     let badgeBg = 'rgba(234, 179, 8, 0.2)';
+                    let badgeText = '';
 
                     if (quality === 'master' || quality === 'excellent') {
                         borderColor = 'rgba(34, 197, 94, 0.6)';
                         badgeColor = '#22c55e';
                         badgeBg = 'rgba(34, 197, 94, 0.2)';
-                        badge.textContent = '✨ Отлично';
+                        badgeText = '✨ Отлично';
                     } else if (quality === 'good') {
                         borderColor = 'rgba(132, 204, 22, 0.6)';
                         badgeColor = '#84cc16';
                         badgeBg = 'rgba(132, 204, 22, 0.2)';
-                        badge.textContent = '✔️ Хорошо';
+                        badgeText = '✔️ Хорошо';
                     } else if (quality === 'normal') {
                         borderColor = 'rgba(234, 179, 8, 0.6)';
                         badgeColor = '#eab308';
                         badgeBg = 'rgba(234, 179, 8, 0.2)';
-                        badge.textContent = '⚪ Нормально';
+                        badgeText = '⚪ Нормально';
                     } else if (quality === 'weak') {
                         borderColor = 'rgba(249, 115, 22, 0.6)';
                         badgeColor = '#f97316';
                         badgeBg = 'rgba(249, 115, 22, 0.2)';
-                        badge.textContent = '⚠️ Слабо';
+                        badgeText = '⚠️ Слабо';
                     } else if (quality === 'aggressive') {
                         borderColor = 'rgba(239, 68, 68, 0.6)';
                         badgeColor = '#ef4444';
                         badgeBg = 'rgba(239, 68, 68, 0.2)';
-                        badge.textContent = '🔴 Агрессивно';
+                        badgeText = '🔴 Агрессивно';
                     } else if (quality === 'bad' || quality === 'reject' || quality === 'fail') {
                         borderColor = 'rgba(220, 38, 38, 0.6)';
                         badgeColor = '#dc2626';
                         badgeBg = 'rgba(220, 38, 38, 0.2)';
-                        badge.textContent = '❌ Провал';
+                        badgeText = '❌ Провал';
                     }
 
-                    btn.style.borderColor = borderColor;
+                    // Применяем только нейтральный цвет до выбора
+                    btn.style.borderColor = 'rgba(100, 116, 139, 0.3)';
+                    badge.textContent = badgeText;
                     badge.style.color = badgeColor;
                     badge.style.background = badgeBg;
 
@@ -3354,7 +3358,9 @@
                     const analyticsText = document.createElement('div');
                     if (analytics) {
                         analyticsText.textContent = analytics;
+                        analyticsText.className = 'analytics-hidden';
                         analyticsText.style.cssText = `
+                        display: none;
                         color: #94a3b8;
                         font-size: 11px;
                         font-style: italic;
@@ -3370,7 +3376,7 @@
                     messageText.textContent = text;
                     btn.appendChild(messageText);
 
-                    // Отображаем analytics внизу
+                    // Отображаем analytics внизу (скрыт до выбора)
                     if (analytics) {
                         btn.appendChild(analyticsText);
                     }
@@ -3391,8 +3397,30 @@
                     };
 
                     btn.onclick = () => {
-                        modalOverlay.remove();
-                        selectSuggestion(text, quality, path);
+                        // Показываем цвета и подсказки для ВСЕХ карточек после выбора
+                        const allButtons = suggestionsContainer.querySelectorAll('.suggestion-modal-btn');
+                        allButtons.forEach(button => {
+                            // Показываем бейдж
+                            const badgeEl = button.querySelector('.quality-badge-hidden');
+                            if (badgeEl) {
+                                badgeEl.style.display = 'inline-block';
+                            }
+
+                            // Показываем подсказку
+                            const analyticsEl = button.querySelector('.analytics-hidden');
+                            if (analyticsEl) {
+                                analyticsEl.style.display = 'block';
+                            }
+                        });
+
+                        // Применяем цвет границы к выбранной кнопке
+                        btn.style.borderColor = borderColor;
+
+                        // Небольшая задержка перед закрытием, чтобы пользователь увидел результат
+                        setTimeout(() => {
+                            modalOverlay.remove();
+                            selectSuggestion(text, quality, path);
+                        }, 1500);
                     };
 
                     suggestionsContainer.appendChild(btn);
