@@ -20,14 +20,14 @@ const scenario5 = {
     brokerStyle: "Professional Hazmat broker",
     difficulty: "hard",
 
-    initialMessage: "Good morning! This is Kevin Anderson from SafeHaul Logistics.\nI saw your load posting for Houston to Chicago Hazmat tanker load.\nCan you tell me more about this load?",
+    initialMessage: "Good morning! This is calling from SafeHaul Logistics.\nI saw your load posting for Houston to Chicago Hazmat tanker load.\nCan you tell me more about this load?",
 
     paths: {
         master: [
             // ШАГ 1: MC verification + truck location
             {
                 brokerQuestion: "Good morning! This is David from ChemTrans Brokers.\nYes, load is available.\nWhat's your MC number and where is your tanker right now?",
-                dispatcherPrompt: "💎 Брокер проверяет вашу компанию для Hazmat груза. Представьтесь: MC номер, название компании, специализация (Hazmat/tanker). Укажите ТОЧНОЕ местоположение tanker, статус (empty/clean), готовность для Class 3 Flammable. Hazmat требует максимальной точности!",
+                dispatcherPrompt: "💎 Брокер проверяет MC и местоположение. Дайте точную информацию.",
                 suggestions: [
                     {
                         text: "Good morning David! This is SafeHaul Logistics, MC 889944. Our tanker is in Houston right now, just finished unloading at the Port of Houston this morning around 7 AM. Driver is at the Love's truck stop on I-10, exit 770. Tank is cleaned, inspected, and ready for Class 3 Flammable. We can pick up tomorrow morning. What are the load details?",
@@ -70,7 +70,7 @@ const scenario5 = {
             // ШАГ 2: Hazmat endorsement verification
             {
                 brokerQuestion: "MC verified, good safety rating.\nThis is Class 3 Flammable chemicals - does your driver have Hazmat endorsement on CDL?\nAnd tanker endorsement?",
-                dispatcherPrompt: "💎 Брокер проверяет КРИТИЧЕСКУЮ квалификацию для Hazmat. Подтвердите: driver имеет Hazmat endorsement, Tanker endorsement, сколько лет опыта с Class 3, когда endorsements обновлялись. БЕЗ endorsements = НЕТ груза!",
+                dispatcherPrompt: "💎 Брокер проверяет Hazmat сертификацию. Подтвердите квалификацию.",
                 suggestions: [
                     {
                         text: "Absolutely! Our driver has both Hazmat and Tanker endorsements on his CDL. He's been hauling Class 3 Flammable materials for 8 years, over 500 Hazmat loads. His endorsements are current, renewed last year. He also completed the TSA background check. Very experienced with chemical transport and safety protocols.",
@@ -113,7 +113,7 @@ const scenario5 = {
             // ШАГ 3: Placard requirements discussion
             {
                 brokerQuestion: "Good. For Class 3 Flammable, you'll need specific placards.\nDo you have Class 3 placards and understand the placarding requirements?",
-                dispatcherPrompt: "💎 Брокер проверяет знание DOT placarding для Class 3 Flammable. Подтвердите: имеете Class 3 placards (red diamond с flame), знаете правила размещения (4 стороны tanker), UN identification numbers. Покажите знание 49 CFR 172 regulations!",
+                dispatcherPrompt: "💎 Брокер спрашивает о placards. Покажите знание требований.",
                 suggestions: [
                     {
                         text: "Yes, we have Class 3 Flammable placards - the red diamond with flame symbol. We know they must be placed on all four sides of the tanker, visible from 50 feet. We also carry the UN identification number placards. Driver will display them immediately after loading and remove only after complete unloading and tank cleaning. We follow 49 CFR 172 placarding regulations.",
@@ -156,7 +156,7 @@ const scenario5 = {
             // ШАГ 4: Routing restrictions and tunnel prohibitions
             {
                 brokerQuestion: "Perfect. This route goes through several states.\nAre you aware of Hazmat routing restrictions and tunnel prohibitions?\nSome tunnels don't allow Class 3 materials.",
-                dispatcherPrompt: "💎 Брокер проверяет знание Hazmat routing restrictions. Покажите понимание: какие штаты на маршруте (LA, MS, TN, KY, IL), какие tunnels запрещены для Class 3, есть ли GPS с Hazmat routing mode. Знание маршрута = безопасность!",
+                dispatcherPrompt: "💎 Брокер проверяет знание маршрутных ограничений. Покажите понимание.",
                 suggestions: [
                     {
                         text: "Absolutely! We're very familiar with Hazmat routing. Houston to Chicago goes through Louisiana, Mississippi, Tennessee, Kentucky, and Illinois. We'll avoid restricted tunnels - no Fort McHenry Tunnel, no tunnels in major cities. We use the Hazmat-approved routes on I-10, I-55, and I-57. Driver has the latest Hazmat routing guide and will check state-specific restrictions. We also have GPS with Hazmat routing mode.",
@@ -199,7 +199,7 @@ const scenario5 = {
             // ШАГ 5: Emergency response kit requirements
             {
                 brokerQuestion: "Excellent knowledge.\nDo you have emergency response kit, spill containment equipment, and emergency contact numbers?\nThis is required for Hazmat transport.",
-                dispatcherPrompt: "💎 Брокер проверяет ОБЯЗАТЕЛЬНОЕ safety equipment для Hazmat. Перечислите: fire extinguisher (20-lb ABC), spill containment kit, emergency triangles, first aid kit, ERG (Emergency Response Guidebook), CHEMTREC number (1-800-424-9300). Полное оборудование = получите груз!",
+                dispatcherPrompt: "💎 Брокер спрашивает о safety equipment. Подтвердите готовность.",
                 suggestions: [
                     {
                         text: "Yes, we're fully equipped! Our tanker has complete emergency response kit: fire extinguisher (20-lb ABC type), spill containment kit with absorbent pads and booms, emergency triangles, first aid kit. Driver has emergency response guidebook (ERG), CHEMTREC emergency number (1-800-424-9300), and shipper's 24-hour emergency contact. He's trained in spill response procedures and knows to call 911 and CHEMTREC immediately if incident occurs.",
@@ -242,7 +242,7 @@ const scenario5 = {
             // ШАГ 6: Rate negotiation
             {
                 brokerQuestion: "Great, you're well-prepared.\nFor this load: 1100 miles, Houston to Chicago, 44,000 lbs Class 3 Flammable.\nPickup tomorrow 6-10 AM, delivery in 2 days.\nI'm offering $3,200 all-in. That's $2.91 per mile.\nWhat do you think?",
-                dispatcherPrompt: "💎 ТОРГ ЗА ЦЕНУ! Брокер предложил $3,200 ($2.91/mile). Hazmat платит БОЛЬШЕ! Posted обычно $3,000-3,200 - просите $3,500-3,600 ($3.18-3.27/mile). Обоснуйте: Hazmat endorsements, safety equipment, routing restrictions, emergency response. Чем больше просите - тем больше заработаете!",
+                dispatcherPrompt: "💎 Брокер предложил ставку. Оцените и ответьте профессионально.",
                 suggestions: [
                     {
                         text: "I appreciate the offer, David. $3,200 is reasonable, but for Class 3 Flammable Hazmat with tanker, considering the specialized endorsements required, routing restrictions, and safety compliance, the market rate is typically $3.00-$3.20 per mile. Could we do $3,500? That's $3.18/mile, which reflects the Hazmat premium and our experience. We're ready to move immediately and guarantee on-time delivery with full compliance.",
@@ -285,7 +285,7 @@ const scenario5 = {
             // ШАГ 7: Detention/layover terms
             {
                 brokerQuestion: "I can do $3,500 final. That's $3.18/mile for Hazmat.\nDetention is $100/hour after 2 hours free time.\nLayover $300/day if needed.\nSound good?",
-                dispatcherPrompt: "💎 ФИНАЛЬНОЕ ПРЕДЛОЖЕНИЕ! Брокер дал $3,500 (вы просили больше, он предложил $3,200). Вы заработали $300 больше! Detention $100/hr, Layover $300/day - отличные условия для Hazmat. Это ПОСЛЕДНИЙ шанс - принимайте! Подтвердите все условия. НЕ торгуйтесь дальше!",
+                dispatcherPrompt: "💎 Брокер дал финальную ставку и условия. Подтвердите.",
                 suggestions: [
                     {
                         text: "Perfect! $3,500 at $3.18/mile works great. Detention $100/hour after 2 hours free time - that's fair. Layover $300/day if needed - understood. Just to confirm: detention starts after 2 hours at both pickup and delivery, correct? And we'll document all wait times with signed BOL timestamps. This all sounds good, let's move forward with pickup details.",
@@ -328,7 +328,7 @@ const scenario5 = {
             // ШАГ 8: Pickup details + loading procedures
             {
                 brokerQuestion: "Perfect! Pickup details:\nChemical Solutions Inc\n7800 Port of Houston Blvd, Houston TX 77029\nContact: Safety Manager Mike Chen 713-555-0199\nPickup tomorrow 6 AM - 10 AM\nWhat questions do you have about pickup?",
-                dispatcherPrompt: "💎 Брокер дал pickup детали для Hazmat груза. Задайте ВАЖНЫЕ вопросы: сколько времени loading (safety checks), какие документы нужны, есть ли special gate для tankers, нужно ли звонить Mike перед arrival, какие safety procedures на facility. Вопросы = профессионализм!",
+                dispatcherPrompt: "💎 Брокер дал pickup детали. Задайте важные вопросы.",
                 suggestions: [
                     {
                         text: "Great! I have the address: 7800 Port of Houston Blvd, Houston TX 77029. Contact Mike Chen at 713-555-0199, tomorrow 6-10 AM. Few questions: What's the loading time estimate? Do we need any special permits or documentation? Is there a specific gate or entrance for tanker trucks? Should driver call Mike before arrival or just show up during the window? Any special safety procedures at this facility?",
@@ -371,7 +371,7 @@ const scenario5 = {
             // ШАГ 9: Delivery details + safety protocols
             {
                 brokerQuestion: "Loading takes 90 minutes with safety checks.\nThey provide all placards and emergency response documentation.\nDriver must attend safety briefing before loading.\nNow for delivery - any questions about the delivery location?",
-                dispatcherPrompt: "💎 Брокер дал loading информацию (90 min, safety briefing, placards provided). Спросите о delivery: полный адрес, контакт, time window, сколько времени unloading, нужно ли звонить заранее, какие safety procedures при unloading. Детали = безопасность!",
+                dispatcherPrompt: "💎 Брокер дал loading информацию. Спросите о delivery.",
                 suggestions: [
                     {
                         text: "Perfect! 90 minutes loading, safety briefing required, they provide placards and emergency docs - all clear. For delivery: What's the complete address and contact? What's the delivery time window? How long does unloading take? Should driver call ahead? Are there any special unloading procedures or safety requirements at delivery? Any gate codes or special instructions?",
@@ -414,7 +414,7 @@ const scenario5 = {
             // ШАГ 10: Final confirmation + outcome
             {
                 brokerQuestion: "Delivery:\nChicago Chemical Depot\n5500 S Cicero Ave, Chicago IL 60638\nContact: Receiving Supervisor Lisa Martinez 773-555-0244\nDelivery window: Day after tomorrow 8 AM - 6 PM\nUnloading takes 2 hours with safety inspection.\nCall Lisa 4 hours before arrival.\nAny final questions?",
-                dispatcherPrompt: "💎 УСПЕХ! Брокер дал все delivery детали. РЕЗЮМИРУЙТЕ ВСЁ: pickup (Chemical Solutions, Mike 713-555-0199, tomorrow 6-10 AM, 90 min loading), delivery (Chicago Chemical Depot, Lisa 773-555-0244, day after tomorrow 8 AM-6 PM, call 4 hrs ahead), rate ($3,500, $3.18/mile, detention $100/hr, layover $300/day), Hazmat requirements (Class 3, routing, safety). Полное резюме = профессионализм!",
+                dispatcherPrompt: "💎 Брокер дал delivery детали. Подтвердите все и резюмируйте.",
                 suggestions: [
                     {
                         text: "Perfect! Let me confirm everything: Pickup tomorrow 6-10 AM at Chemical Solutions Inc, 7800 Port of Houston Blvd, Mike Chen 713-555-0199. Loading 90 minutes with safety briefing. Delivery day after tomorrow 8 AM-6 PM at Chicago Chemical Depot, 5500 S Cicero Ave, Lisa Martinez 773-555-0244. Unloading 2 hours, call 4 hours ahead. 1100 miles, $3,500 at $3.18/mile, detention $100/hr after 2 hours, layover $300/day. Class 3 Flammable, Hazmat routing, all safety equipment ready. We're 100% confirmed! Sending NOA now.",

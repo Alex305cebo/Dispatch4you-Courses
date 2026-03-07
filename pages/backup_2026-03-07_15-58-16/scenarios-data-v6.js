@@ -20,14 +20,14 @@ const scenario6 = {
     brokerStyle: "Professional auto transport broker",
     difficulty: "medium-hard",
 
-    initialMessage: "Good morning! This is Jennifer Williams from Premier Auto Transport.\nI saw your load posting for Detroit to Phoenix car carrier load.\nCan you tell me more about this shipment?",
+    initialMessage: "Good morning! This is calling from Premier Auto Transport.\nI saw your load posting for Detroit to Phoenix car carrier load.\nCan you tell me more about this shipment?",
 
     paths: {
         master: [
             // ШАГ 1: MC verification + equipment availability
             {
                 brokerQuestion: "Good morning! This is Sarah from AutoLink Brokers.\nYes, the load is available.\nWhat's your MC number and do you have a car carrier available right now?",
-                dispatcherPrompt: "💎 Брокер проверяет вашу компанию для luxury auto transport. Представьтесь: MC номер, название компании, специализация (auto transport/enclosed carrier). Укажите где carrier сейчас, сколько cars capacity (9-car), enclosed или open. Luxury vehicles требуют enclosed!",
+                dispatcherPrompt: "💎 Брокер проверяет MC и наличие оборудования. Дайте точную информацию.",
                 suggestions: [
                     {
                         text: "Good morning Sarah! This is Premier Auto Transport, MC 776655. We have a 9-car enclosed carrier available right now in Detroit area. Just finished delivering 8 vehicles to a dealership in Dearborn this morning. Carrier is empty, inspected, and ready for luxury vehicles. We specialize in high-value auto transport with full insurance coverage. Can pick up tomorrow morning. What are the vehicle details?",
@@ -70,7 +70,7 @@ const scenario6 = {
             // ШАГ 2: Cargo insurance verification
             {
                 brokerQuestion: "MC verified, excellent safety rating.\nThese are luxury vehicles - Tesla Model S, BMW 7 Series, Mercedes S-Class.\nTotal value around $900,000.\nWhat's your cargo insurance coverage limit?",
-                dispatcherPrompt: "💎 Брокер проверяет страховку для $900K luxury vehicles. Назовите: сумму покрытия ($1M для luxury), per-vehicle limit ($150K+), страховую компанию (A+ rated), готовность предоставить certificate. БЕЗ достаточной страховки = НЕТ груза!",
+                dispatcherPrompt: "💎 Брокер проверяет страховку. Подтвердите достаточное покрытие.",
                 suggestions: [
                     {
                         text: "We carry $1 million cargo insurance for high-value auto transport. Policy covers luxury vehicles up to $150K per vehicle. We can provide certificate of insurance immediately. Insurance is with Progressive Commercial - A+ rated carrier.",
@@ -113,7 +113,7 @@ const scenario6 = {
             // ШАГ 3: Vehicle inspection procedures
             {
                 brokerQuestion: "Perfect insurance coverage.\nFor luxury vehicles, inspection and documentation are critical.\nWhat's your process for vehicle inspection and damage documentation?",
-                dispatcherPrompt: "💎 Брокер проверяет КРИТИЧЕСКИЙ процесс inspection для luxury vehicles. Опишите: сколько photos (20-30 per vehicle), 360-degree inspection, condition report с подписью customer, mobile app с timestamps/GPS. Детальная документация = защита от claims!",
+                dispatcherPrompt: "💎 Брокер спрашивает о процедурах осмотра. Покажите профессиональный подход.",
                 suggestions: [
                     {
                         text: "We do comprehensive 360-degree inspection. Driver takes 20-30 photos of each vehicle from all angles. We document every scratch or dent on detailed condition report. Customer signs at pickup. We use mobile app with timestamps and GPS tags. Same process at delivery.",
@@ -156,7 +156,7 @@ const scenario6 = {
             // ШАГ 4: Enclosed vs open transport discussion
             {
                 brokerQuestion: "Excellent documentation process.\nFor these luxury vehicles, the customer is requesting enclosed transport.\nYou mentioned enclosed carrier - can you confirm it's fully enclosed, not open?",
-                dispatcherPrompt: "💎 Брокер уточняет ТИП carrier для luxury vehicles. Подтвердите: fully enclosed (hard-sided walls, roof, door), НЕ soft-side/tarp, НЕ open carrier. Опишите: hydraulic lift system, complete protection от weather/road debris. Enclosed = premium service!",
+                dispatcherPrompt: "💎 Брокер уточняет тип транспорта. Подтвердите enclosed carrier.",
                 suggestions: [
                     {
                         text: "Absolutely! Our carrier is fully enclosed - hard-sided walls, roof, and rear door. Not a soft-side or tarp. Vehicles completely protected from weather and road debris. We use hydraulic lift system for loading. Perfect for luxury vehicles.",
@@ -199,7 +199,7 @@ const scenario6 = {
             // ШАГ 5: Luxury vehicle experience
             {
                 brokerQuestion: "Perfect equipment for luxury transport.\nHow much experience does your company have with high-value vehicles?\nAny references or track record you can share?",
-                dispatcherPrompt: "💎 Брокер проверяет ОПЫТ с luxury vehicles. Продемонстрируйте: сколько лет в бизнесе, сколько luxury cars перевезли, работаете ли с dealerships (BMW, Mercedes, Tesla), track record (zero claims), BBB rating, можете ли дать references. Опыт = доверие!",
+                dispatcherPrompt: "💎 Брокер проверяет опыт. Продемонстрируйте квалификацию.",
                 suggestions: [
                     {
                         text: "We specialize in luxury vehicle transport. Been in business 7 years, transported over 3,000 high-value vehicles. Regular contracts with BMW, Mercedes, and Tesla dealerships. Zero damage claims. A+ BBB rating. Can provide references.",
@@ -242,7 +242,7 @@ const scenario6 = {
             // ШАГ 6: Rate negotiation
             {
                 brokerQuestion: "Impressive track record and experience.\nFor this load: 1900 miles, Detroit to Phoenix, 9 luxury vehicles.\nPickup tomorrow 8 AM - 12 PM, delivery in 4 days.\nI'm offering $5,000 all-in. That's $2.63 per mile.\nWhat do you think?",
-                dispatcherPrompt: "💎 ТОРГ ЗА ЦЕНУ! Брокер предложил $5,000 ($2.63/mile). Enclosed luxury transport платит БОЛЬШЕ! Posted обычно $5,000-5,200 - просите $5,500-5,700 ($2.89-3.00/mile). Обоснуйте: enclosed carrier, $1M insurance, 360° inspection, luxury experience, zero claims. Чем больше просите - тем больше заработаете!",
+                dispatcherPrompt: "💎 Брокер предложил ставку. Оцените и ответьте профессионально.",
                 suggestions: [
                     {
                         text: "I appreciate the offer, Sarah. $5,000 is a starting point, but for enclosed car carrier with 9 luxury vehicles totaling $900K value, considering the specialized equipment, $1 million insurance, comprehensive inspection process, and our 7-year track record with zero claims, the market rate for enclosed luxury transport is typically $2.75-$3.00 per mile. Could we do $5,500? That's $2.89/mile, which reflects the enclosed transport premium and high-value cargo handling. We guarantee on-time delivery with white-glove service and complete documentation.",
@@ -285,7 +285,7 @@ const scenario6 = {
             // ШАГ 7: Detention/layover terms
             {
                 brokerQuestion: "I can do $5,500 final. That's $2.89/mile for enclosed luxury transport.\nDetention is $75/hour after 2 hours free time at pickup and delivery.\nLayover $250/day if needed.\nSound good?",
-                dispatcherPrompt: "💎 ФИНАЛЬНОЕ ПРЕДЛОЖЕНИЕ! Брокер дал $5,500 (вы просили больше, он предложил $5,000). Вы заработали $500 больше! Detention $75/hr, Layover $250/day - хорошие условия. Это ПОСЛЕДНИЙ шанс - принимайте! Подтвердите все условия (2 hrs free time at pickup AND delivery). НЕ торгуйтесь дальше!",
+                dispatcherPrompt: "💎 Брокер дал финальную ставку и условия. Подтвердите.",
                 suggestions: [
                     {
                         text: "Perfect! $5,500 at $2.89/mile works great for us. Detention $75/hour after 2 hours free time - that's fair for both pickup and delivery. Layover $250/day if needed - understood. Just to confirm: the 2 hours free time applies to loading all 9 vehicles at pickup, and unloading at delivery, correct? And we'll document all wait times with signed timestamps on the BOL. This all sounds good, let's move forward with the pickup details.",
@@ -328,7 +328,7 @@ const scenario6 = {
             // ШАГ 8: Pickup details + vehicle condition documentation
             {
                 brokerQuestion: "Perfect! Pickup details:\nPrestige Auto Group\n15500 Michigan Ave, Dearborn MI 48126\nContact: Fleet Manager Tom Rodriguez 313-555-0188\nPickup tomorrow 8 AM - 12 PM\nWhat questions do you have about pickup?",
-                dispatcherPrompt: "💎 Брокер дал pickup детали для 9 luxury vehicles. Задайте ВАЖНЫЕ вопросы: сколько времени loading (90 min?), все ли vehicles ready и keys available, нужны ли access codes/gate procedures, звонить ли Tom перед arrival, кто подпишет condition reports для КАЖДОГО vehicle, fueled ли vehicles, special handling для Tesla. Детали = профессионализм!",
+                dispatcherPrompt: "💎 Брокер дал pickup детали. Задайте важные вопросы.",
                 suggestions: [
                     {
                         text: "Great! I have the address: 15500 Michigan Ave, Dearborn MI 48126. Contact Tom Rodriguez at 313-555-0188, tomorrow 8 AM-12 PM. Few questions: How long does loading typically take for 9 vehicles? Are all vehicles ready and keys available? Do we need any special access codes or gate procedures? Should driver call Tom before arrival or just show up during the window? Will someone be available to sign condition reports for each vehicle? Are the vehicles fueled or do we need to add fuel? Any special handling instructions for the Tesla?",
@@ -371,7 +371,7 @@ const scenario6 = {
             // ШАГ 9: Delivery details + customer communication
             {
                 brokerQuestion: "Loading takes about 90 minutes for 9 vehicles.\nAll vehicles are ready, detailed, and keys available.\nTom will meet driver and sign all condition reports.\nVehicles are fueled. Tesla needs to stay charged - don't let battery drain below 20%.\nNow for delivery - any questions about the delivery location?",
-                dispatcherPrompt: "💎 Брокер дал loading информацию (90 min, vehicles ready, Tom signs reports, Tesla battery >20%). Спросите о delivery: полный адрес, контакт, time window, сколько времени unloading, звонить ли заранее (когда?), кто подпишет condition reports, нужны ли delivery updates во время transport, special customer communication. Детали = успех!",
+                dispatcherPrompt: "💎 Брокер дал loading информацию. Спросите о delivery.",
                 suggestions: [
                     {
                         text: "Perfect! 90 minutes loading, vehicles ready and detailed, Tom signs condition reports, vehicles fueled, Tesla battery above 20% - all clear. For delivery: What's the complete address and contact? What's the delivery time window? How long does unloading take? Should driver call ahead and how far in advance? Will there be someone to sign condition reports for each vehicle? Are there any special delivery instructions or customer communication requirements? Should we provide delivery updates to the customer or dealership? Any gate codes or special access at delivery location?",
@@ -414,7 +414,7 @@ const scenario6 = {
             // ШАГ 10: Final confirmation + outcome
             {
                 brokerQuestion: "Delivery:\nDesert Luxury Motors\n8800 E Indian School Rd, Scottsdale AZ 85251\nContact: General Manager Jennifer Park 480-555-0277\nDelivery window: 4 days from pickup, 9 AM - 5 PM\nUnloading takes 90 minutes with inspection.\nCall Jennifer 24 hours before arrival to schedule exact time.\nShe'll want updates during transport - text her daily with location.\nAny final questions?",
-                dispatcherPrompt: "💎 УСПЕХ! Брокер дал все delivery детали. РЕЗЮМИРУЙТЕ ВСЁ: pickup (Prestige Auto, Tom 313-555-0188, tomorrow 8 AM-12 PM, 90 min loading, Tesla battery >20%), delivery (Desert Luxury Motors, Jennifer 480-555-0277, 4 days, 9 AM-5 PM, call 24 hrs ahead, daily text updates), rate ($5,500, $2.89/mile, detention $75/hr, layover $250/day), 9 luxury vehicles enclosed. Полное резюме = профессионализм!",
+                dispatcherPrompt: "💎 Брокер дал delivery детали. Подтвердите все и резюмируйте.",
                 suggestions: [
                     {
                         text: "Perfect! Let me confirm everything: Pickup tomorrow 8 AM-12 PM at Prestige Auto Group, 15500 Michigan Ave Dearborn, Tom Rodriguez 313-555-0188. Loading 90 minutes, all vehicles ready, Tesla battery above 20%. Delivery in 4 days, 9 AM-5 PM at Desert Luxury Motors, 8800 E Indian School Rd Scottsdale, Jennifer Park 480-555-0277. Call 24 hours ahead, text daily updates. Unloading 90 minutes. 1900 miles, $5,500 at $2.89/mile, detention $75/hr after 2 hours, layover $250/day. 9 luxury vehicles, enclosed transport, full documentation. We're 100% confirmed! Sending NOA and insurance certificate now.",

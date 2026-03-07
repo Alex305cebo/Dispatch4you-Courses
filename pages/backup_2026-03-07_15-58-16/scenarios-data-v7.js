@@ -20,7 +20,7 @@ const scenario7 = {
     brokerStyle: "Professional electronics broker",
     difficulty: "medium",
 
-    initialMessage: "Good morning! This is Tom Wilson from FastTrack Logistics.\nI saw your load posting for Phoenix to Miami electronics.\nIs this load still available?",
+    initialMessage: "Good morning! This is calling from FastTrack Logistics.\nI saw your load posting for Phoenix to Miami electronics.\nIs this load still available?",
 
     paths: {
         master: [

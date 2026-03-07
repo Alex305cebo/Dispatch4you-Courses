@@ -20,7 +20,7 @@ const scenario8 = {
     brokerStyle: "Professional food broker",
     difficulty: "medium-hard",
 
-    initialMessage: "Good morning! This is David Martinez from ColdChain Logistics.\nI saw your load posting for Seattle to Atlanta reefer load.\nIs this load still available?",
+    initialMessage: "Good morning! This is calling from ColdChain Logistics.\nI saw your load posting for Seattle to Atlanta reefer load.\nIs this load still available?",
 
     paths: {
         master: [
