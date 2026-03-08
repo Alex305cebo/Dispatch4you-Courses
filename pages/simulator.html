@@ -2868,18 +2868,7 @@
         const allScenarios = [];
     </script>
     <script src="scenarios-data-v1.js"></script>
-    <script src="scenarios-data-v5.js"></script>
-    <script src="scenarios-data-v6.js"></script>
-    <script src="scenarios-data-v7.js"></script>
-    <script src="scenarios-data-v8.js"></script>
-    <script src="scenarios-data-v9.js"></script>
-    <script src="scenarios-data-v10.js"></script>
-    <script src="scenarios-data-v11.js"></script>
-    <script src="scenarios-data-v12.js"></script>
-    <script src="scenarios-data-v13.js"></script>
-    <script src="scenarios-data-v14.js"></script>
-    <script src="scenarios-data-v15.js"></script>
-    <script src="scenarios-data-v16.js"></script>
+    <script src="scenarios-data-v2.js"></script>
 
     <script>
         const welcomeScreen = document.getElementById('welcomeScreen');
@@ -4152,14 +4141,58 @@
                 return card;
             }
 
-            // Добавляем stat-карточки
-            statsGrid.appendChild(createStatCard('Качество', outcome.quality.toUpperCase(), getQualityIcon(outcome.quality)));
-            statsGrid.appendChild(createStatCard('Ставка', outcome.rate, '💰'));
-            statsGrid.appendChild(createStatCard('За милю', outcome.ratePerMile, '📏'));
-            statsGrid.appendChild(createStatCard('Отношения', outcome.relationship, '🤝'));
-            statsGrid.appendChild(createStatCard('Время', outcome.dialogueTime, '⏱️'));
-            statsGrid.appendChild(createStatCard('Вопросы', outcome.questionsAsked, '❓'));
+            // Вычисляем данные
+            const postedRate = currentScenario.postedRate.split(' ')[0];
+            const finalRate = parseInt(outcome.rate.replace(/[$,]/g, ''));
+            const posted = parseInt(postedRate.replace(/[$,]/g, ''));
+            const difference = finalRate - posted;
 
+            // Вычисляем расход на дизель
+            const distance = currentScenario.distance;
+            const mpg = 6.5;
+            const gallonsNeeded = distance / mpg;
+
+            const route = currentScenario.route;
+            let avgDieselPrice = 4.20;
+
+            if (route.includes('CA') || route.includes('WA') || route.includes('OR')) {
+                avgDieselPrice = 5.10;
+            } else if (route.includes('TX') || route.includes('OK') || route.includes('LA')) {
+                avgDieselPrice = 3.80;
+            } else if (route.includes('AZ') || route.includes('NM') || route.includes('NV')) {
+                avgDieselPrice = 4.40;
+            } else if (route.includes('IL') || route.includes('IN') || route.includes('OH')) {
+                avgDieselPrice = 4.00;
+            } else if (route.includes('FL') || route.includes('GA') || route.includes('SC')) {
+                avgDieselPrice = 3.90;
+            }
+
+            const fuelCost = Math.round(gallonsNeeded * avgDieselPrice);
+            const netProfit = finalRate - fuelCost;
+
+            // Добавляем компактные stat-карточки
+            statsGrid.appendChild(createStatCard('Качество', outcome.quality.toUpperCase(), getQualityIcon(outcome.quality)));
+
+            const rateText = difference > 0 ? `${outcome.rate} (Posted ${postedRate}, +$${difference.toLocaleString()})` :
+                difference < 0 ? `${outcome.rate} (Posted ${postedRate}, -$${Math.abs(difference).toLocaleString()})` :
+                    `${outcome.rate} (Posted ${postedRate})`;
+            statsGrid.appendChild(createStatCard('Ставка', rateText, difference > 0 ? '' : difference < 0 ? '' : ''));
+
+            const postedPerMile = currentScenario.postedRate.match(/\(\$[\d.]+\/mile\)/)?.[0] || '';
+            const perMileText = `${outcome.ratePerMile} (Posted ${postedPerMile})`;
+            statsGrid.appendChild(createStatCard('За милю', perMileText, ''));
+
+            const fuelText = `$${fuelCost.toLocaleString()} (${Math.round(gallonsNeeded)} gal  $${avgDieselPrice.toFixed(2)})`;
+            statsGrid.appendChild(createStatCard('Дизель', fuelText, ''));
+
+            const profitText = netProfit > 0 ? `$${netProfit.toLocaleString()}` : '$0';
+            const profitIcon = netProfit > 0 ? '' : '';
+            statsGrid.appendChild(createStatCard('Чистая прибыль', profitText, profitIcon));
+
+            const relationshipRu = outcome.relationship === 'strengthened' ? 'Укреплены' :
+                outcome.relationship === 'neutral' ? 'Нейтральные' :
+                    outcome.relationship === 'damaged' ? 'Испорчены' : outcome.relationship;
+            statsGrid.appendChild(createStatCard('Отношения', relationshipRu, ''));
             outcomeCard.appendChild(statsGrid);
 
             // Weekly loads - отдельный блок
@@ -4906,18 +4939,39 @@
             const suggestionsContainer = document.createElement('div');
             suggestionsContainer.style.cssText = 'display: flex; flex-direction: column; gap: 10px;';
 
-            // Функция создания кнопок с вариантами - НОВАЯ СИСТЕМА V2.0
+            // Функция создания кнопок с вариантами - НОВАЯ СИСТЕМА V3.0
             function createSuggestionButtons() {
                 // Флаг для отслеживания выбора (общий для всех кнопок)
                 let isAnswerSelected = false;
                 let selectedButton = null;
 
-                // НОВАЯ ЛОГИКА: Показываем ВСЕ варианты, перемешанные случайно
-                const allSuggestions = [...suggestions].sort(() => Math.random() - 0.5);
+                // НОВАЯ ЛОГИКА V3.0: Показываем только 4 карточки из 6
+                // 1 карточка: normal или good (обязательно)
+                // 3 карточки: остальные рандомно
 
-                allSuggestions.forEach((suggestion, index) => {
+                const normalOrGood = suggestions.filter(s => s.quality === 'normal' || s.quality === 'good');
+                const others = suggestions.filter(s => s.quality !== 'normal' && s.quality !== 'good');
+
+                // Выбираем 1 normal/good (приоритет good)
+                const goodOnes = normalOrGood.filter(s => s.quality === 'good');
+                const normalOnes = normalOrGood.filter(s => s.quality === 'normal');
+                const guaranteedOne = goodOnes.length > 0
+                    ? goodOnes[Math.floor(Math.random() * goodOnes.length)]
+                    : normalOnes[Math.floor(Math.random() * normalOnes.length)];
+
+                // Выбираем 3 рандомных из остальных
+                const shuffledOthers = [...others].sort(() => Math.random() - 0.5);
+                const selectedOthers = shuffledOthers.slice(0, 3);
+
+                // Объединяем и перемешиваем
+                const displaySuggestions = [guaranteedOne, ...selectedOthers].sort(() => Math.random() - 0.5);
+
+                displaySuggestions.forEach((suggestion, index) => {
                     const btn = document.createElement('button');
                     btn.className = 'suggestion-modal-btn';
+
+                    // КРИТИЧЕСКИ ВАЖНО: Сохраняем ссылку на оригинальный suggestion
+                    btn.dataset.suggestionIndex = suggestions.indexOf(suggestion);
 
                     const text = typeof suggestion === 'string' ? suggestion : suggestion.text;
                     const quality = typeof suggestion === 'object' ? suggestion.quality : 'normal';
@@ -5055,8 +5109,10 @@
 
                         // Показываем оценку для ВСЕХ карточек
                         const allButtons = suggestionsContainer.querySelectorAll('.suggestion-modal-btn');
-                        allButtons.forEach((button, idx) => {
-                            const btnSuggestion = allSuggestions[idx];
+                        allButtons.forEach((button) => {
+                            // Получаем оригинальный suggestion по сохраненному индексу
+                            const originalIndex = parseInt(button.dataset.suggestionIndex);
+                            const btnSuggestion = suggestions[originalIndex];
                             const btnQuality = typeof btnSuggestion === 'object' ? btnSuggestion.quality : 'normal';
 
                             // Определяем цвет границы
