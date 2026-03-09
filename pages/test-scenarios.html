@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Test Scenarios Loading</title>
+</head>
+
+<body>
+    <h1>Testing Scenario Loading</h1>
+    <div id="output"></div>
+
+    <script>
+        // Initialize allScenarios array GLOBALLY
+        window.allScenarios = [];
+        console.log('✅ Initialized allScenarios array (global)');
+    </script>
+    <script src="scenarios-data-v1.js?v=20260308-3"></script>
+    <script src="scenarios-data-v2.js?v=20260308-3"></script>
+    <script src="scenarios-generator-15.js?v=20260308-3"></script>
+    <script>
+        console.log(`📊 Total scenarios loaded: ${window.allScenarios.length}`);
+        console.log('📋 Scenarios:', window.allScenarios.map(s => `#${s.id}: ${s.route}`));
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const output = document.getElementById('output');
+
+            if (window.allScenarios && window.allScenarios.length > 0) {
+                output.innerHTML = `
+                    <h2 style="color: green;">✅ SUCCESS!</h2>
+                    <p>Loaded ${window.allScenarios.length} scenarios:</p>
+                    <ul>
+                        ${window.allScenarios.map(s => `<li>#${s.id}: ${s.route} (${s.equipment})</li>`).join('')}
+                    </ul>
+                `;
+            } else {
+                output.innerHTML = `
+                    <h2 style="color: red;">❌ FAILED!</h2>
+                    <p>No scenarios loaded. Check console for errors.</p>
+                `;
+            }
+        });
+    </script>
+</body>
+
+</html>

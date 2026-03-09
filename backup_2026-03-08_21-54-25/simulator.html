@@ -15,23 +15,6 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Arial', 'Helvetica', sans-serif !important;
-            font-size: 17px !important;
-            font-weight: 700 !important;
-            line-height: 1.5 !important;
-        }
-
-        /* Убираем разницу для мобильных - везде одинаково */
-        @media (max-width: 768px) {
-            * {
-                font-size: 17px !important;
-            }
-        }
-
-        @media (max-width: 480px) {
-            * {
-                font-size: 17px !important;
-            }
         }
 
         html {
@@ -39,12 +22,10 @@
         }
 
         body {
-            font-family: 'Arial', 'Helvetica', sans-serif;
-            font-size: 17px;
-            font-weight: 700;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #0a0e1a;
             color: #ffffff;
-            line-height: 1.5;
+            line-height: 1.6;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             overflow-x: hidden;
@@ -1404,20 +1385,18 @@
         }
 
         .message-content {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 14px;
             padding: 14px 18px;
-            font-size: 17px !important;
+            font-size: clamp(16px, 2.5vw, 18px);
             line-height: 1.7;
             color: #ffffff;
-            font-weight: 700 !important;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
 
         .message.user .message-content {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3));
-            border-color: rgba(99, 102, 241, 0.4);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+            border-color: rgba(99, 102, 241, 0.3);
         }
 
         .typing-indicator {
@@ -1451,17 +1430,14 @@
         }
 
         .dispatcher-prompt {
-            background: rgba(99, 102, 241, 0.15);
-            border-left: 4px solid #6366f1;
+            background: rgba(99, 102, 241, 0.1);
+            border-left: 3px solid #6366f1;
             padding: 14px;
             margin: 10px 0;
             border-radius: 8px;
-            font-size: 17px !important;
+            font-size: 16px;
             line-height: 1.6;
-            color: #a5b4fc;
-            font-weight: 700 !important;
-            font-family: 'Arial', 'Helvetica', sans-serif !important;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            color: #818cf8;
         }
 
         .suggestion-hint {
@@ -1509,11 +1485,6 @@
             align-items: center;
             transition: all 0.3s ease;
             flex-shrink: 0;
-        }
-
-        /* Скрыть все кнопки КРОМЕ sendBtn, resetButton, historyButton */
-        .input-area button:not(#sendBtn):not(#resetButton):not(#historyButton) {
-            display: none !important;
         }
 
         .input-area:focus-within {
@@ -2092,40 +2063,6 @@
                 grid-template-columns: repeat(2, 1fr);
                 gap: 20px;
             }
-
-            /* Исправление навигации для планшетов */
-            .nav-content {
-                padding: 0 16px;
-                gap: 12px;
-            }
-
-            .nav-links {
-                gap: 12px;
-                flex: 1;
-                justify-content: center;
-            }
-
-            .nav-link {
-                font-size: 12px;
-            }
-
-            .logo {
-                font-size: 10px;
-            }
-
-            .logo-icon {
-                font-size: 14px;
-            }
-
-            .nav-actions {
-                gap: 8px;
-            }
-
-            .btn-login,
-            .btn-signup {
-                padding: 6px 12px;
-                font-size: 11px;
-            }
         }
 
         /* Tablets portrait (900px) */
@@ -2149,34 +2086,6 @@
 
             .bubble {
                 padding: 20px;
-            }
-
-            /* Скрываем некоторые пункты меню на планшетах */
-            .nav-link[data-short]::after {
-                content: attr(data-short);
-            }
-
-            .nav-link[data-short] {
-                font-size: 0;
-            }
-
-            .nav-link[data-short]::after {
-                font-size: 11px;
-            }
-
-            .nav-content {
-                padding: 0 12px;
-                gap: 8px;
-            }
-
-            .nav-links {
-                gap: 8px;
-            }
-
-            .btn-login,
-            .btn-signup {
-                padding: 5px 10px;
-                font-size: 10px;
             }
         }
 
@@ -2960,13 +2869,6 @@
     </script>
     <script src="scenarios-data-v1.js"></script>
     <script src="scenarios-data-v2.js"></script>
-    <script src="scenarios-data-v16.js"></script>
-    <!-- Fixed versions - no deadlocks! -->
-    <script src="scenarios-data-v21.js"></script>
-    <script src="scenarios-data-v22.js"></script>
-    <script src="scenarios-data-v23.js"></script>
-    <script src="scenarios-data-v20.js"></script>
-
 
     <script>
         const welcomeScreen = document.getElementById('welcomeScreen');
@@ -4018,17 +3920,17 @@
 
                 // Для диспетчера добавляем прогресс-бар (только если уже есть оценка)
                 if (sender === 'user' && currentDispatcherScore > 0) {
-                    // Имя диспетчера БЕЗ прогресс-бара
-                    nameLabel.textContent = `${dispatcherName} (Dispatcher)`;
-                    content.appendChild(nameLabel);
+                    const nameContainer = document.createElement('div');
+                    nameContainer.style.display = 'flex';
+                    nameContainer.style.alignItems = 'center';
+                    nameContainer.style.gap = '12px';
+                    nameContainer.style.marginBottom = '8px';
 
-                    // Прогресс-бар и статус ПОСЛЕ сообщения (вне content)
-                    const progressWrapper = document.createElement('div');
-                    progressWrapper.style.display = 'flex';
-                    progressWrapper.style.alignItems = 'center';
-                    progressWrapper.style.gap = '12px';
-                    progressWrapper.style.marginTop = '8px';
-                    progressWrapper.style.marginLeft = '52px'; // Отступ как у сообщения
+                    const nameText = document.createElement('span');
+                    nameText.style.fontWeight = '700';
+                    nameText.style.fontSize = '14px';
+                    nameText.style.color = '#818cf8';
+                    nameText.textContent = `${dispatcherName} (Dispatcher)`;
 
                     const progressContainer = document.createElement('div');
                     progressContainer.style.flex = '1';
@@ -4072,11 +3974,11 @@
                     qualityLabel.style.whiteSpace = 'nowrap';
                     qualityLabel.textContent = scoreInfo.label;
 
-                    progressWrapper.appendChild(progressContainer);
-                    progressWrapper.appendChild(qualityLabel);
+                    nameContainer.appendChild(nameText);
+                    nameContainer.appendChild(progressContainer);
+                    nameContainer.appendChild(qualityLabel);
 
-                    // Добавим progressWrapper ПОСЛЕ того как message будет добавлен
-                    message._progressWrapper = progressWrapper;
+                    content.appendChild(nameContainer);
                 } else if (sender === 'user') {
                     // Для первого сообщения диспетчера (без оценки)
                     nameLabel.textContent = `${dispatcherName} (Dispatcher)`;
@@ -4133,12 +4035,6 @@
             message.appendChild(avatar);
             message.appendChild(content);
             messagesContainer.appendChild(message);
-
-            // Добавляем прогресс-бар ПОСЛЕ сообщения (если есть)
-            if (message._progressWrapper) {
-                messagesContainer.appendChild(message._progressWrapper);
-            }
-
             // messagesContainer.scrollTop = messagesContainer.scrollHeight; // Автоскроллинг отключен
 
             // Запускаем отложенный автоскроллинг
