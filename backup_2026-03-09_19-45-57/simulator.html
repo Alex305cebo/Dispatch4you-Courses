@@ -1456,7 +1456,7 @@
             padding: 14px;
             margin: 10px 0;
             border-radius: 8px;
-            font-size: 20px !important;
+            font-size: 17px !important;
             line-height: 1.6;
             color: #a5b4fc;
             font-weight: 700 !important;
@@ -2958,13 +2958,6 @@
     </script>
     <!-- Dialogue files - PREMIUM QUALITY -->
     <script src="scenarios-data-v1.js"></script>
-    <script src="scenarios-data-v2.js"></script>
-    <script src="scenarios-data-v3.js"></script>
-    <script src="scenarios-data-v4.js"></script>
-    <script src="scenarios-data-v5.js"></script>
-    <script src="scenarios-data-v6.js"></script>
-    <script src="scenarios-data-v7.js"></script>
-    <script src="scenarios-data-v8.js"></script>
 
 
     <script>
@@ -5123,44 +5116,37 @@
                     let badgeColor = '#eab308';
                     let badgeBg = 'rgba(234, 179, 8, 0.2)';
                     let badgeText = '';
-                    let points = 0;
 
                     if (quality === 'master' || quality === 'excellent') {
                         borderColor = 'rgba(34, 197, 94, 0.6)';
                         badgeColor = '#22c55e';
                         badgeBg = 'rgba(34, 197, 94, 0.2)';
-                        badgeText = '⭐ 100';
-                        points = 100;
+                        badgeText = '✨ Отлично';
                     } else if (quality === 'good') {
                         borderColor = 'rgba(132, 204, 22, 0.6)';
                         badgeColor = '#84cc16';
                         badgeBg = 'rgba(132, 204, 22, 0.2)';
-                        badgeText = '✓ 80';
-                        points = 80;
+                        badgeText = '✔️ Хорошо';
                     } else if (quality === 'normal') {
                         borderColor = 'rgba(234, 179, 8, 0.6)';
                         badgeColor = '#eab308';
                         badgeBg = 'rgba(234, 179, 8, 0.2)';
-                        badgeText = '⚠️ 60';
-                        points = 60;
+                        badgeText = '⚪ Нормально';
                     } else if (quality === 'weak') {
                         borderColor = 'rgba(249, 115, 22, 0.6)';
                         badgeColor = '#f97316';
                         badgeBg = 'rgba(249, 115, 22, 0.2)';
-                        badgeText = '⚠️ 40';
-                        points = 40;
+                        badgeText = '⚠️ Слабо';
                     } else if (quality === 'aggressive') {
                         borderColor = 'rgba(239, 68, 68, 0.6)';
                         badgeColor = '#ef4444';
                         badgeBg = 'rgba(239, 68, 68, 0.2)';
-                        badgeText = '❌ 10';
-                        points = 10;
+                        badgeText = '🔴 Агрессивно';
                     } else if (quality === 'bad' || quality === 'reject' || quality === 'fail') {
                         borderColor = 'rgba(220, 38, 38, 0.6)';
                         badgeColor = '#dc2626';
                         badgeBg = 'rgba(220, 38, 38, 0.2)';
-                        badgeText = '❌ 10';
-                        points = 10;
+                        badgeText = '❌ Провал';
                     }
 
                     badge.textContent = badgeText;
@@ -5259,42 +5245,15 @@
                             }
 
                             // Показываем подсказку
-                            // СКРЫТО ПО ЗАПРОСУ ПОЛЬЗОВАТЕЛЯ
-                            /*
                             const analyticsEl = button.querySelector('.analytics-hidden');
                             if (analyticsEl) {
                                 analyticsEl.style.display = 'block';
                             }
-                            */
 
                             // Подсвечиваем выбранную карточку
                             if (button === selectedButton) {
                                 button.style.boxShadow = `0 0 20px ${btnBorderColor}`;
-                                button.style.transition = 'all 0.5s ease'; // Плавная анимация
-                                button.style.zIndex = '1000'; // Поверх других карточек
-
-                                // Увеличиваем до максимального размера экрана
-                                button.style.position = 'fixed';
-                                button.style.top = '50%';
-                                button.style.left = '50%';
-                                button.style.transform = 'translate(-50%, -50%) scale(1)';
-                                button.style.width = '90vw';
-                                button.style.maxWidth = '800px';
-                                button.style.height = 'auto';
-                                button.style.maxHeight = '80vh';
-                                button.style.overflow = 'auto';
-
-                                // Скроллим к выбранной карточке (посередине экрана)
-                                setTimeout(() => {
-                                    button.scrollIntoView({
-                                        behavior: 'smooth',
-                                        block: 'center',
-                                        inline: 'center'
-                                    });
-                                }, 100);
-                            } else {
-                                // СКРЫВАЕМ все невыбранные кнопки
-                                button.style.display = 'none';
+                                button.style.transform = 'scale(1.02)';
                             }
                         });
 
@@ -5415,8 +5374,6 @@
             }
 
             // Show path indicator when path is first determined or changed
-            // СКРЫТО ПО ЗАПРОСУ ПОЛЬЗОВАТЕЛЯ
-            /*
             if (currentPath && (clickedSuggestion?.path || conversationStep === 0)) {
                 const pathInfo = getPathIndicator(currentPath);
                 const pathIndicatorDiv = document.createElement('div');
@@ -5437,7 +5394,6 @@
                 messagesContainer.appendChild(pathIndicatorDiv);
                 // messagesContainer.scrollTop = messagesContainer.scrollHeight; // Автоскроллинг отключен
             }
-            */
 
             // Get current step from the selected path
             let pathSteps = currentScenario.paths[currentPath];
@@ -5497,10 +5453,6 @@
                         const nextStep = pathSteps[conversationStep];
 
                         console.log(`📋 Next step:`, nextStep);
-                        console.log(`📋 Has brokerResponse:`, !!nextStep.brokerResponse);
-                        console.log(`📋 Has brokerQuestion:`, !!nextStep.brokerQuestion);
-                        console.log(`📋 Has suggestions:`, !!nextStep.suggestions);
-                        console.log(`📋 Has outcome:`, !!nextStep.outcome);
 
                         // Show broker's response (only if it exists and not empty)
                         if (nextStep.brokerResponse && nextStep.brokerResponse.trim() !== '') {
@@ -5532,10 +5484,7 @@
 
                                 // Show suggestions if available (even if no brokerQuestion - for warning paths)
                                 if (nextStep.responseComponents || nextStep.suggestions) {
-                                    console.log(`📋 Showing suggestions:`, nextStep.suggestions?.length || 0);
                                     showSuggestions(nextStep.responseComponents || nextStep.suggestions);
-                                } else {
-                                    console.warn(`⚠️ No suggestions found in step!`);
                                 }
                             }, 1000);
                         }
