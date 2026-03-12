@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 
 <head>
@@ -199,7 +199,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             position: relative;
-            z-index: 2;
+            z-index: 10;
             box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
         }
 
@@ -287,12 +287,37 @@
             width: 70px;
             height: 70px;
             cursor: pointer;
-            z-index: 3;
+            z-index: 5;
+            pointer-events: none;
+            border-radius: 50%;
         }
 
-        .progress-ring-interactive:hover .progress-ring-fill {
-            stroke-width: 7;
-            filter: drop-shadow(0 0 8px rgba(255, 107, 107, 0.8));
+        .progress-ring-interactive.seekable {
+            pointer-events: auto;
+            /* Создаем кольцо с прозрачным центром для клика */
+            background: radial-gradient(circle, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.01) 60%, rgba(255, 255, 255, 0.01) 100%);
+        }
+
+        /* На мобильных устройствах ПОЛНОСТЬЮ отключаем перемотку */
+        @media (max-width: 768px) {
+            .progress-ring-interactive {
+                pointer-events: none !important;
+                cursor: default !important;
+            }
+
+            .progress-ring-interactive.seekable {
+                pointer-events: none !important;
+                cursor: default !important;
+                background: none;
+            }
+        }
+
+        /* Hover эффект только на desktop */
+        @media (min-width: 769px) {
+            .progress-ring-interactive:hover .progress-ring-fill {
+                stroke-width: 7;
+                filter: drop-shadow(0 0 8px rgba(255, 107, 107, 0.8));
+            }
         }
 
         /* Audio Duration Display */
@@ -315,6 +340,58 @@
         .audio-container:hover .audio-duration,
         .audio-container.playing .audio-duration {
             opacity: 1;
+        }
+
+        /* Mobile Progress Bar (под кнопкой) */
+        .mobile-progress-bar {
+            display: none;
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .mobile-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--audio-primary), var(--audio-secondary));
+            border-radius: 2px;
+            transition: width 0.1s ease;
+        }
+
+        /* Показываем полосу только на мобильных */
+        @media (max-width: 768px) {
+            .mobile-progress-bar {
+                display: block;
+            }
+
+            .audio-container.playing .mobile-progress-bar {
+                display: block;
+            }
+
+            /* Скрываем кольцо на мобильных */
+            .progress-ring,
+            .progress-ring-interactive {
+                display: none !important;
+            }
+
+            /* Сдвигаем время вниз */
+            .audio-duration {
+                bottom: -50px;
+            }
+        }
+
+        /* На desktop скрываем полосу, показываем кольцо */
+        @media (min-width: 769px) {
+            .mobile-progress-bar {
+                display: none !important;
+            }
         }
 
         /* Content */
@@ -1226,7 +1303,7 @@
                             <a href="../courses.html" class="nav-link" data-short="Курсы">Курсы</a>
                             <div class="dropdown-content">
                                 <a href="../course.html">Обзор курса</a>
-                                <a href="modules.html">12 Модулей обучения</a>
+                                <a href="modules-index.html">12 Модулей обучения</a>
                                 <a href="simulator.html">Симулятор переговоров</a>
                                 <a href="calls.html">Примеры звонков</a>
                                 <a href="cases.html">Практические кейсы</a>
@@ -1294,7 +1371,7 @@
                     <div class="mobile-section-title">📚 КУРСЫ</div>
                     <a href="../courses.html" class="nav-link nav-link-sub">Все курсы</a>
                     <a href="../course.html" class="nav-link nav-link-sub">Обзор курса</a>
-                    <a href="modules.html" class="nav-link nav-link-sub">12 Модулей обучения</a>
+                    <a href="modules-index.html" class="nav-link nav-link-sub">12 Модулей обучения</a>
                     <a href="simulator.html" class="nav-link nav-link-sub">Симулятор переговоров</a>
                     <a href="calls.html" class="nav-link nav-link-sub">Примеры звонков</a>
                     <a href="cases.html" class="nav-link nav-link-sub">Практические кейсы</a>
@@ -1345,6 +1422,9 @@
                         <span class="pause-icon">⏸</span>
                     </button>
                     <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio1')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio1')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
                     <div class="audio-duration">0:00 / 0:00</div>
                 </div>
             </div>
@@ -1382,6 +1462,9 @@
                         <span class="pause-icon">⏸</span>
                     </button>
                     <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio2')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio2')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
                     <div class="audio-duration">0:00 / 0:00</div>
                 </div>
             </div>
@@ -1430,6 +1513,9 @@
                         <span class="pause-icon">⏸</span>
                     </button>
                     <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio3')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio3')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
                     <div class="audio-duration">0:00 / 0:00</div>
                 </div>
             </div>
@@ -1463,7 +1549,7 @@
 
         <!-- Navigation -->
         <nav class="lesson-nav">
-            <a href="doc-module-1.html" class="nav-btn">
+            <a href="../doc-module-1" class="nav-btn">
                 <span>←</span>
                 <span>Предыдущий урок</span>
             </a>
@@ -1514,24 +1600,68 @@
         function updateProgress(audioId, currentTime, duration) {
             const container = document.querySelector(`[onclick*="${audioId}"]`).closest('.audio-container');
             const progressRing = container.querySelector('.progress-ring-fill');
+            const mobileProgressFill = container.querySelector('.mobile-progress-fill');
             const durationDisplay = container.querySelector('.audio-duration');
 
             const progress = currentTime / duration;
             const circumference = 2 * Math.PI * 32; // radius = 32
             const offset = circumference - (progress * circumference);
 
-            progressRing.style.strokeDashoffset = offset;
+            // Update ring progress (desktop)
+            if (progressRing) {
+                progressRing.style.strokeDashoffset = offset;
+            }
+
+            // Update mobile progress bar
+            if (mobileProgressFill) {
+                mobileProgressFill.style.width = `${progress * 100}%`;
+            }
+
             durationDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+        }
+
+        function seekAudioMobile(event, element, audioId) {
+            event.stopPropagation();
+
+            const audio = document.getElementById(audioId);
+            if (!audio || audio.paused) {
+                return; // Only allow seeking when playing
+            }
+
+            const rect = element.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const progress = clickX / rect.width;
+            const duration = audioDurations[audioId];
+            const newTime = progress * duration;
+
+            // Update progress immediately
+            updateProgress(audioId, newTime, duration);
         }
 
         function seekAudio(event, element, audioId) {
             event.stopPropagation();
+
+            // Only allow seeking if audio is playing
+            if (!element.classList.contains('seekable')) {
+                return;
+            }
 
             const rect = element.getBoundingClientRect();
             const centerX = rect.left + rect.width / 2;
             const centerY = rect.top + rect.height / 2;
             const x = event.clientX - centerX;
             const y = event.clientY - centerY;
+
+            // Calculate distance from center
+            const distance = Math.sqrt(x * x + y * y);
+            const radius = rect.width / 2;
+
+            // Only allow seeking if click is on the ring (outer 40% of radius)
+            // This prevents conflicts with the play button in the center
+            if (distance < radius * 0.55) {
+                // Click is too close to center, ignore it
+                return;
+            }
 
             // Calculate angle from top (0 degrees)
             let angle = Math.atan2(x, -y) * (180 / Math.PI);
@@ -1555,6 +1685,7 @@
         function toggleAudio(button, audioId) {
             const audio = document.getElementById(audioId);
             const container = button.closest('.audio-container');
+            const interactiveRing = container.querySelector('.progress-ring-interactive');
 
             // Stop current audio if different
             if (currentAudio && currentAudio !== audio) {
@@ -1565,6 +1696,8 @@
                 }
                 if (currentContainer) {
                     currentContainer.classList.remove('playing');
+                    const oldRing = currentContainer.querySelector('.progress-ring-interactive');
+                    oldRing.classList.remove('seekable');
                 }
                 if (progressUpdateInterval) {
                     clearInterval(progressUpdateInterval);
@@ -1575,6 +1708,7 @@
                 audio.play();
                 button.classList.add('playing');
                 container.classList.add('playing');
+                interactiveRing.classList.add('seekable');
                 currentAudio = audio;
                 currentButton = button;
                 currentContainer = container;
@@ -1592,6 +1726,7 @@
                         clearInterval(progressUpdateInterval);
                         button.classList.remove('playing');
                         container.classList.remove('playing');
+                        interactiveRing.classList.remove('seekable');
                         currentAudio = null;
                         currentButton = null;
                         currentContainer = null;
@@ -1605,6 +1740,7 @@
                 audio.pause();
                 button.classList.remove('playing');
                 container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
                 if (progressUpdateInterval) {
                     clearInterval(progressUpdateInterval);
                 }
@@ -1617,6 +1753,7 @@
             audio.onended = function () {
                 button.classList.remove('playing');
                 container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
                 if (progressUpdateInterval) {
                     clearInterval(progressUpdateInterval);
                 }
@@ -1631,6 +1768,7 @@
                 console.log('Audio file not found, but button still works for demo');
                 button.classList.remove('playing');
                 container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
                 if (progressUpdateInterval) {
                     clearInterval(progressUpdateInterval);
                 }

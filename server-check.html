@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Проверка сервера</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #fff;
+            text-align: center;
+        }
+
+        .status {
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid #10b981;
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid #ef4444;
+        }
+
+        .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #667eea;
+        }
+
+        .info {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #f093fb;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔍 Проверка веб-сервера</h1>
+
+    <div id="status" class="status">
+        <div class="icon">⏳</div>
+        <h2>Проверка...</h2>
+    </div>
+
+    <div class="info">
+        <strong>Текущий протокол:</strong> <code id="protocol">...</code><br>
+        <strong>Текущий хост:</strong> <code id="host">...</code><br>
+        <strong>Полный URL:</strong> <code id="fullUrl">...</code>
+    </div>
+
+    <div id="recommendation"></div>
+
+    <script>
+        const protocol = window.location.protocol;
+        const host = window.location.host;
+        const fullUrl = window.location.href;
+
+        document.getElementById('protocol').textContent = protocol;
+        document.getElementById('host').textContent = host || 'Локальный файл';
+        document.getElementById('fullUrl').textContent = fullUrl;
+
+        const statusDiv = document.getElementById('status');
+        const recommendationDiv = document.getElementById('recommendation');
+
+        if (protocol === 'file:') {
+            // Открыто как локальный файл
+            statusDiv.className = 'status error';
+            statusDiv.innerHTML = `
+                <div class="icon">❌</div>
+                <h2>Веб-сервер НЕ запущен</h2>
+                <p>Вы открыли файл напрямую через file:// протокол</p>
+            `;
+
+            recommendationDiv.innerHTML = `
+                <div class="info">
+                    <h3>🚀 Как запустить сервер:</h3>
+                    <ol style="text-align: left;">
+                        <li>Откройте PowerShell в папке проекта</li>
+                        <li>Выполните: <code>.\\start-local-server.ps1</code></li>
+                        <li>Откройте: <code>http://localhost:8000/server-check.html</code></li>
+                    </ol>
+                    <p><strong>Или:</strong></p>
+                    <ul style="text-align: left;">
+                        <li>Используйте <code>test-local-navigation.html</code> для прямых ссылок</li>
+                        <li>Установите XAMPP для полной поддержки .htaccess</li>
+                    </ul>
+                </div>
+            `;
+        } else if (protocol === 'http:' || protocol === 'https:') {
+            // Открыто через веб-сервер
+            statusDiv.className = 'status success';
+            statusDiv.innerHTML = `
+                <div class="icon">✅</div>
+                <h2>Веб-сервер работает!</h2>
+                <p>Сайт открыт через ${protocol}//</p>
+            `;
+
+            recommendationDiv.innerHTML = `
+                <div class="info">
+                    <h3>🎉 Отлично! Теперь проверьте стандартные пути:</h3>
+                    <ul style="text-align: left;">
+                        <li><a href="/pages/modules-index.html" style="color: #667eea;">Перейти к /pages/modules-index.html</a></li>
+                        <li><a href="/pages/doc-module-1.html" style="color: #667eea;">Перейти к /pages/doc-module-1.html</a></li>
+                        <li><a href="/pages/simulator.html" style="color: #667eea;">Перейти к /pages/simulator.html</a></li>
+                    </ul>
+                    <p><strong>Если ссылки не работают:</strong></p>
+                    <ul style="text-align: left;">
+                        <li>Убедитесь, что используете Apache (XAMPP)</li>
+                        <li>Проверьте, что .htaccess файл в корне проекта</li>
+                        <li>Или используйте прямые ссылки: <code>/pages/modules-index.html</code></li>
+                    </ul>
+                </div>
+            `;
+        }
+    </script>
+</body>
+
+</html>

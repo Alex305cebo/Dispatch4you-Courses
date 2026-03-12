@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 
 <head>
@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Модуль 1: Введение в диспетчерство | DispatcherPro</title>
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="stylesheet" href="../interactive-modules.css">
     <style>
         * {
             margin: 0;
@@ -199,7 +200,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             position: relative;
-            z-index: 2;
+            z-index: 10;
             box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
         }
 
@@ -287,12 +288,37 @@
             width: 70px;
             height: 70px;
             cursor: pointer;
-            z-index: 3;
+            z-index: 5;
+            pointer-events: none;
+            border-radius: 50%;
         }
 
-        .progress-ring-interactive:hover .progress-ring-fill {
-            stroke-width: 7;
-            filter: drop-shadow(0 0 8px rgba(255, 107, 107, 0.8));
+        .progress-ring-interactive.seekable {
+            pointer-events: auto;
+            /* Создаем кольцо с прозрачным центром для клика */
+            background: radial-gradient(circle, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.01) 60%, rgba(255, 255, 255, 0.01) 100%);
+        }
+
+        /* На мобильных устройствах ПОЛНОСТЬЮ отключаем перемотку */
+        @media (max-width: 768px) {
+            .progress-ring-interactive {
+                pointer-events: none !important;
+                cursor: default !important;
+            }
+
+            .progress-ring-interactive.seekable {
+                pointer-events: none !important;
+                cursor: default !important;
+                background: none;
+            }
+        }
+
+        /* Hover эффект только на desktop */
+        @media (min-width: 769px) {
+            .progress-ring-interactive:hover .progress-ring-fill {
+                stroke-width: 7;
+                filter: drop-shadow(0 0 8px rgba(255, 107, 107, 0.8));
+            }
         }
 
         .progress-ring-interactive:hover+.audio-btn+.progress-ring-interactive+.audio-duration {
@@ -319,6 +345,58 @@
         .audio-container:hover .audio-duration,
         .audio-container.playing .audio-duration {
             opacity: 1;
+        }
+
+        /* Mobile Progress Bar (под кнопкой) */
+        .mobile-progress-bar {
+            display: none;
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .mobile-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--audio-primary), var(--audio-secondary));
+            border-radius: 2px;
+            transition: width 0.1s ease;
+        }
+
+        /* Показываем полосу только на мобильных */
+        @media (max-width: 768px) {
+            .mobile-progress-bar {
+                display: block;
+            }
+
+            .audio-container.playing .mobile-progress-bar {
+                display: block;
+            }
+
+            /* Скрываем кольцо на мобильных */
+            .progress-ring,
+            .progress-ring-interactive {
+                display: none !important;
+            }
+
+            /* Сдвигаем время вниз */
+            .audio-duration {
+                bottom: -50px;
+            }
+        }
+
+        /* На desktop скрываем полосу, показываем кольцо */
+        @media (min-width: 769px) {
+            .mobile-progress-bar {
+                display: none !important;
+            }
         }
 
         /* Content */
@@ -1280,7 +1358,7 @@
     </style>
 </head>
 
-<body>
+<body data-module-id="module-1">
     <!-- Header -->
     <header class="header">
         <!-- Navigation -->
@@ -1299,7 +1377,7 @@
                             <a href="../courses.html" class="nav-link" data-short="Курсы">Курсы</a>
                             <div class="dropdown-content">
                                 <a href="../course.html">Обзор курса</a>
-                                <a href="modules.html">12 Модулей обучения</a>
+                                <a href="modules-index.html">12 Модулей обучения</a>
                                 <a href="simulator.html">Симулятор переговоров</a>
                                 <a href="calls.html">Примеры звонков</a>
                                 <a href="cases.html">Практические кейсы</a>
@@ -1367,7 +1445,7 @@
                     <div class="mobile-section-title">📚 КУРСЫ</div>
                     <a href="../courses.html" class="nav-link nav-link-sub">Все курсы</a>
                     <a href="../course.html" class="nav-link nav-link-sub">Обзор курса</a>
-                    <a href="modules.html" class="nav-link nav-link-sub">12 Модулей обучения</a>
+                    <a href="modules-index.html" class="nav-link nav-link-sub">12 Модулей обучения</a>
                     <a href="simulator.html" class="nav-link nav-link-sub">Симулятор переговоров</a>
                     <a href="calls.html" class="nav-link nav-link-sub">Примеры звонков</a>
                     <a href="cases.html" class="nav-link nav-link-sub">Практические кейсы</a>
@@ -1418,6 +1496,9 @@
                         <span class="pause-icon">⏸</span>
                     </button>
                     <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio1')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio1')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
                     <div class="audio-duration">0:00 / 0:00</div>
                 </div>
             </div>
@@ -1438,6 +1519,73 @@
                     <strong>💡 Важно:</strong> Успешный диспетчер должен уметь работать в многозадачном режиме и
                     принимать быстрые решения под давлением.
                 </div>
+
+                <!-- Audio Completion Trigger -->
+                <button class="audio-completion-trigger" data-unlocks="quiz-1">
+                    🎧 Я закончил(а) слушать
+                </button>
+            </div>
+        </div>
+
+        <!-- Case Study 1: Первый день работы -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">💼</span>
+                <h3 class="case-study-title">Реальный кейс: Первый день диспетчера</h3>
+            </div>
+            <div class="case-study-content">
+                <p>
+                    <strong>Ситуация:</strong> Вы только начали работать диспетчером в небольшой компании с 5
+                    грузовиками.
+                    Утром понедельника вам нужно:
+                </p>
+                <ul>
+                    <li>Проверить статус 3 активных грузов в пути</li>
+                    <li>Найти новый груз для водителя, который разгружается в Dallas сегодня вечером</li>
+                    <li>Решить проблему: один водитель опаздывает на 2 часа из-за пробки</li>
+                    <li>Ответить на 5 звонков от брокеров</li>
+                </ul>
+                <div class="case-study-highlight">
+                    💡 Вопрос: С чего вы начнете свой рабочий день? Какая задача самая приоритетная?
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Check 1 -->
+        <div class="quick-check-block locked" id="quiz-1" data-quiz-id="quiz-1-1" data-correct-answer="b">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">✅</span>
+                <h3 class="quick-check-title">Быстрая проверка</h3>
+            </div>
+
+            <div class="quick-check-question">
+                Какая задача должна быть выполнена в первую очередь?
+            </div>
+
+            <div class="quick-check-options">
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-1" id="quiz-1-a" value="a">
+                    <label for="quiz-1-a">Начать искать новый груз для водителя в Dallas</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-1" id="quiz-1-b" value="b">
+                    <label for="quiz-1-b">Связаться с получателем груза, где водитель опаздывает, и предупредить о
+                        задержке</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-1" id="quiz-1-c" value="c">
+                    <label for="quiz-1-c">Ответить на звонки от брокеров</label>
+                </div>
+            </div>
+
+            <div class="quick-check-feedback">
+                <strong>Правильно! ✓</strong>
+                Коммуникация с получателем о задержке — это критически важная задача. Опоздание на 2 часа может сорвать
+                их график разгрузки.
+                Предупредив заранее, вы сохраните хорошие отношения и избежите штрафов. Остальные задачи важны, но не
+                требуют немедленного действия.
             </div>
         </div>
 
@@ -1455,6 +1603,9 @@
                         <span class="pause-icon">⏸</span>
                     </button>
                     <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio2')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio2')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
                     <div class="audio-duration">0:00 / 0:00</div>
                 </div>
             </div>
@@ -1510,6 +1661,68 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Audio Completion Trigger -->
+                <button class="audio-completion-trigger" data-unlocks="quiz-2">
+                    🎧 Я закончил(а) слушать
+                </button>
+            </div>
+        </div>
+
+        <!-- Case Study 2: Переговоры с брокером -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">💼</span>
+                <h3 class="case-study-title">Реальный кейс: Переговоры о ставке</h3>
+            </div>
+            <div class="case-study-content">
+                <p>
+                    <strong>Ситуация:</strong> Вы нашли груз на DAT Load Board: Chicago, IL → Dallas, TX,
+                    1,200 миль, 45,000 lbs. Брокер предлагает $2,400 ($2.00/mile).
+                </p>
+                <p>
+                    Вы знаете, что средняя ставка на этом маршруте сейчас $2.50/mile из-за высокого спроса.
+                    Дизель стоит $3.80/галлон, и ваш водитель получает 6 MPG (miles per gallon).
+                </p>
+                <div class="case-study-highlight">
+                    💡 Вопрос: Стоит ли брать этот груз? Какую контр-оффер вы предложите брокеру?
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Check 2 -->
+        <div class="quick-check-block locked" id="quiz-2" data-quiz-id="quiz-1-2" data-correct-answer="b">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">✅</span>
+                <h3 class="quick-check-title">Быстрая проверка</h3>
+            </div>
+
+            <div class="quick-check-question">
+                Какая минимальная ставка будет выгодной для этого груза, учитывая расходы на топливо?
+            </div>
+
+            <div class="quick-check-options">
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-2" id="quiz-2-a" value="a">
+                    <label for="quiz-2-a">$2,400 ($2.00/mile) - принять оригинальное предложение</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-2" id="quiz-2-b" value="b">
+                    <label for="quiz-2-b">$2,880 ($2.40/mile) - покрывает топливо + разумная прибыль</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-2" id="quiz-2-c" value="c">
+                    <label for="quiz-2-c">$3,600 ($3.00/mile) - максимальная ставка</label>
+                </div>
+            </div>
+
+            <div class="quick-check-feedback">
+                <strong>Правильно! ✓</strong>
+                При 6 MPG и $3.80/галлон, топливо стоит ~$760 (1,200 миль ÷ 6 × $3.80).
+                Ставка $2.40/mile ($2,880) покрывает топливо, износ, зарплату водителя и дает разумную прибыль.
+                Это реалистичная контр-оффер, которую брокер может принять.
             </div>
         </div>
 
@@ -1527,6 +1740,9 @@
                         <span class="pause-icon">⏸</span>
                     </button>
                     <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio3')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio3')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
                     <div class="audio-duration">0:00 / 0:00</div>
                 </div>
             </div>
@@ -1551,6 +1767,68 @@
                     <strong>🎯 Цель модуля:</strong> После изучения этого модуля вы будете понимать роль диспетчера и
                     основные требования к профессии.
                 </div>
+
+                <!-- Audio Completion Trigger -->
+                <button class="audio-completion-trigger" data-unlocks="quiz-3">
+                    🎧 Я закончил(а) слушать
+                </button>
+            </div>
+        </div>
+
+        <!-- Case Study 3: Стрессовая ситуация -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">💼</span>
+                <h3 class="case-study-title">Реальный кейс: Пустой пробег (Deadhead)</h3>
+            </div>
+            <div class="case-study-content">
+                <p>
+                    <strong>Ситуация:</strong> Ваш водитель только что разгрузился в Phoenix, AZ.
+                    Следующий груз находится в Los Angeles, CA (370 миль deadhead - пустой пробег).
+                </p>
+                <p>
+                    Груз: LA → Seattle, WA, 1,150 миль, $3,450 ($3.00/mile).
+                    Но вам нужно проехать 370 миль пустым до LA, чтобы забрать груз.
+                </p>
+                <div class="case-study-highlight">
+                    💡 Вопрос: Как deadhead miles влияют на реальную прибыльность этого груза?
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Check 3 -->
+        <div class="quick-check-block locked" id="quiz-3" data-quiz-id="quiz-1-3" data-correct-answer="b">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">✅</span>
+                <h3 class="quick-check-title">Быстрая проверка</h3>
+            </div>
+
+            <div class="quick-check-question">
+                Какая реальная ставка за милю для этого груза с учетом deadhead?
+            </div>
+
+            <div class="quick-check-options">
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-3" id="quiz-3-a" value="a">
+                    <label for="quiz-3-a">$3.00/mile - как указано в оффере</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-3" id="quiz-3-b" value="b">
+                    <label for="quiz-3-b">$2.27/mile - с учетом deadhead (370 + 1,150 = 1,520 миль)</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-3" id="quiz-3-c" value="c">
+                    <label for="quiz-3-c">$2.50/mile - средняя ставка</label>
+                </div>
+            </div>
+
+            <div class="quick-check-feedback">
+                <strong>Правильно! ✓</strong>
+                Общее расстояние: 370 (deadhead) + 1,150 (loaded) = 1,520 миль.
+                Доход: $3,450 ÷ 1,520 миль = $2.27/mile реальная ставка.
+                Всегда учитывайте deadhead miles при расчете прибыльности!
             </div>
         </div>
 
@@ -1567,7 +1845,7 @@
                 </div>
                 <div>10% завершено</div>
             </div>
-            <a href="doc-module-2.html" class="nav-btn">
+            <a href="../doc-module-2" class="nav-btn">
                 <span>Следующий урок</span>
                 <span>→</span>
             </a>
@@ -1639,24 +1917,73 @@
         function updateProgress(audioId, currentTime, duration) {
             const container = document.querySelector(`[onclick*="${audioId}"]`).closest('.audio-container');
             const progressRing = container.querySelector('.progress-ring-fill');
+            const mobileProgressFill = container.querySelector('.mobile-progress-fill');
             const durationDisplay = container.querySelector('.audio-duration');
 
             const progress = currentTime / duration;
             const circumference = 2 * Math.PI * 32; // radius = 32
             const offset = circumference - (progress * circumference);
 
-            progressRing.style.strokeDashoffset = offset;
+            // Update ring progress (desktop)
+            if (progressRing) {
+                progressRing.style.strokeDashoffset = offset;
+            }
+
+            // Update mobile progress bar
+            if (mobileProgressFill) {
+                mobileProgressFill.style.width = `${progress * 100}%`;
+            }
+
             durationDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+        }
+
+        function seekAudioMobile(event, element, audioId) {
+            event.stopPropagation();
+
+            const audio = document.getElementById(audioId);
+            if (!audio || audio.paused) {
+                return; // Only allow seeking when playing
+            }
+
+            const rect = element.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const progress = clickX / rect.width;
+            const duration = audioDurations[audioId];
+            const newTime = progress * duration;
+
+            // Update progress immediately
+            updateProgress(audioId, newTime, duration);
+
+            // Seek audio
+            if (audioId === 'audio1' && audio.duration) {
+                audio.currentTime = newTime;
+            }
         }
 
         function seekAudio(event, element, audioId) {
             event.stopPropagation();
+
+            // Only allow seeking if audio is playing
+            if (!element.classList.contains('seekable')) {
+                return;
+            }
 
             const rect = element.getBoundingClientRect();
             const centerX = rect.left + rect.width / 2;
             const centerY = rect.top + rect.height / 2;
             const x = event.clientX - centerX;
             const y = event.clientY - centerY;
+
+            // Calculate distance from center
+            const distance = Math.sqrt(x * x + y * y);
+            const radius = rect.width / 2;
+
+            // Only allow seeking if click is on the ring (outer 40% of radius)
+            // This prevents conflicts with the play button in the center
+            if (distance < radius * 0.55) {
+                // Click is too close to center, ignore it
+                return;
+            }
 
             // Calculate angle from top (0 degrees)
             let angle = Math.atan2(x, -y) * (180 / Math.PI);
@@ -1682,9 +2009,30 @@
             }
         }
 
+        // Auto-unlock quiz when audio ends
+        function unlockQuizForAudio(audioId) {
+            // Map audio IDs to quiz IDs
+            const audioToQuizMap = {
+                'audio1': 'quiz-1',
+                'audio2': 'quiz-2',
+                'audio3': 'quiz-3'
+            };
+
+            const quizId = audioToQuizMap[audioId];
+            if (quizId) {
+                // Find the trigger button for this quiz
+                const triggerButton = document.querySelector(`[data-unlocks="${quizId}"]`);
+                if (triggerButton && !triggerButton.classList.contains('completed')) {
+                    // Simulate button click to unlock quiz
+                    triggerButton.click();
+                }
+            }
+        }
+
         function toggleAudio(button, audioId) {
             const audio = document.getElementById(audioId);
             const container = button.closest('.audio-container');
+            const interactiveRing = container.querySelector('.progress-ring-interactive');
 
             // Stop current audio if different
             if (currentAudio && currentAudio !== audio) {
@@ -1695,6 +2043,8 @@
                 }
                 if (currentContainer) {
                     currentContainer.classList.remove('playing');
+                    const oldRing = currentContainer.querySelector('.progress-ring-interactive');
+                    oldRing.classList.remove('seekable');
                 }
                 if (progressUpdateInterval) {
                     clearInterval(progressUpdateInterval);
@@ -1705,6 +2055,7 @@
                 audio.play();
                 button.classList.add('playing');
                 container.classList.add('playing');
+                interactiveRing.classList.add('seekable');
                 currentAudio = audio;
                 currentButton = button;
                 currentContainer = container;
@@ -1731,12 +2082,16 @@
                             clearInterval(progressUpdateInterval);
                             button.classList.remove('playing');
                             container.classList.remove('playing');
+                            interactiveRing.classList.remove('seekable');
                             currentAudio = null;
                             currentButton = null;
                             currentContainer = null;
 
                             // Reset progress
                             updateProgress(audioId, 0, duration);
+
+                            // Auto-unlock quiz when simulated audio ends
+                            unlockQuizForAudio(audioId);
                         }
                     }, 100);
                 }
@@ -1745,6 +2100,7 @@
                 audio.pause();
                 button.classList.remove('playing');
                 container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
                 if (progressUpdateInterval) {
                     clearInterval(progressUpdateInterval);
                 }
@@ -1757,6 +2113,7 @@
             audio.onended = function () {
                 button.classList.remove('playing');
                 container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
                 if (progressUpdateInterval) {
                     clearInterval(progressUpdateInterval);
                 }
@@ -1764,6 +2121,9 @@
                 currentButton = null;
                 currentContainer = null;
                 updateProgress(audioId, 0, audioDurations[audioId]);
+
+                // Auto-unlock quiz when audio ends
+                unlockQuizForAudio(audioId);
             };
 
             // Handle audio error
@@ -1771,6 +2131,7 @@
                 console.log('Audio file not found, but button still works for demo');
                 button.classList.remove('playing');
                 container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
                 if (progressUpdateInterval) {
                     clearInterval(progressUpdateInterval);
                 }
@@ -1847,6 +2208,9 @@
             });
         }
     </script>
+
+    <!-- Interactive Modules Script -->
+    <script src="../interactive-modules.js"></script>
 </body>
 
 </html>
