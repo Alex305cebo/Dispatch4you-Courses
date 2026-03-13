@@ -1,0 +1,2167 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль 11: Кризисные ситуации | DispatcherPro</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="stylesheet" href="../interactive-modules.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #f093fb;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary: #b8c5d6;
+            --text-muted: #8892aa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.1);
+            --audio-primary: #ff6b6b;
+            --audio-secondary: #4ecdc4;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
+            padding-top: 100px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1), transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(240, 147, 251, 0.1), transparent 50%);
+            animation: backgroundMove 20s ease infinite;
+            z-index: -1;
+        }
+
+        @keyframes backgroundMove {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            25% {
+                transform: translate(5%, 5%) scale(1.05);
+            }
+
+            50% {
+                transform: translate(-5%, 5%) scale(1.1);
+            }
+
+            75% {
+                transform: translate(5%, -5%) scale(1.05);
+            }
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 0;
+            background: rgba(7, 11, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            min-height: 80px;
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateX(-3px);
+        }
+
+        .module-info {
+            text-align: center;
+        }
+
+        .module-number {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .module-title {
+            font-size: 18px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .sector-wrapper {
+            position: relative;
+            margin-bottom: 60px;
+        }
+
+        .sector-number {
+            position: absolute;
+            left: -80px;
+            top: 30px;
+            font-size: 72px;
+            font-weight: 900;
+            color: rgba(102, 126, 234, 0.1);
+            line-height: 1;
+            user-select: none;
+        }
+
+        .content-block {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            transition: all 0.3s ease;
+        }
+
+        .content-block:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+
+        .block-title {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+            flex: 1;
+        }
+
+        .audio-container {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .audio-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--audio-primary), var(--audio-secondary));
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .audio-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.5);
+        }
+
+        .audio-btn .play-icon {
+            font-size: 24px;
+            color: white;
+            margin-left: 3px;
+        }
+
+        .audio-btn .pause-icon {
+            font-size: 20px;
+            color: white;
+            display: none;
+        }
+
+        .audio-btn.playing .play-icon {
+            display: none;
+        }
+
+        .audio-btn.playing .pause-icon {
+            display: block;
+        }
+
+        .audio-btn.playing {
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.7), 0 0 0 10px rgba(255, 107, 107, 0.1);
+            }
+
+            100% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+        }
+
+        .progress-ring {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            transform: rotate(-90deg);
+            z-index: 1;
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 5;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: var(--audio-primary);
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-dasharray: 201.06;
+            stroke-dashoffset: 201.06;
+            transition: stroke-dashoffset 0.1s ease;
+            filter: drop-shadow(0 0 4px rgba(255, 107, 107, 0.5));
+        }
+
+        .progress-ring-interactive {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            cursor: pointer;
+            z-index: 5;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        .progress-ring-interactive.seekable {
+            pointer-events: auto;
+            background: radial-gradient(circle, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.01) 60%, rgba(255, 255, 255, 0.01) 100%);
+        }
+
+        .audio-duration {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .audio-container:hover .audio-duration,
+        .audio-container.playing .audio-duration {
+            opacity: 1;
+        }
+
+        .mobile-progress-bar {
+            display: none;
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .mobile-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--audio-primary), var(--audio-secondary));
+            border-radius: 2px;
+            transition: width 0.1s ease;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-progress-bar {
+                display: block;
+            }
+
+            .progress-ring,
+            .progress-ring-interactive {
+                display: none !important;
+            }
+
+            .audio-duration {
+                bottom: -50px;
+            }
+        }
+
+        .block-content {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .block-content h3 {
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            margin: 25px 0 15px 0;
+        }
+
+        .block-content h4 {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            margin: 20px 0 10px 0;
+        }
+
+        .block-content ul,
+        .block-content ol {
+            margin: 15px 0 15px 25px;
+        }
+
+        .block-content li {
+            margin-bottom: 8px;
+        }
+
+        .block-content strong {
+            color: var(--text-primary);
+        }
+
+        .info-highlight {
+            background: rgba(102, 126, 234, 0.08);
+            border-left: 4px solid #667eea;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .warning-highlight {
+            background: rgba(251, 146, 60, 0.08);
+            border-left: 4px solid #fb923c;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .success-highlight {
+            background: rgba(52, 211, 153, 0.08);
+            border-left: 4px solid #34d399;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .case-study {
+            background: rgba(102, 126, 234, 0.08);
+            border-left: 4px solid #667eea;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 32px 0;
+        }
+
+        .case-study h4 {
+            color: #a5b4fc;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .quiz-block {
+            background: rgba(167, 139, 250, 0.08);
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            border-radius: 16px;
+            padding: 32px;
+            margin: 32px 0;
+        }
+
+        .quiz-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+
+        .quiz-question {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 18px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quiz-option:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+        }
+
+        .quiz-option.incorrect {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--danger);
+        }
+
+        .option-letter {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 50%;
+            font-weight: 700;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .option-text {
+            flex: 1;
+            color: var(--text-secondary);
+        }
+
+        .quiz-feedback {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--success);
+            border-radius: 8px;
+            color: var(--text-primary);
+        }
+
+        .quiz-feedback.show {
+            display: block;
+        }
+
+        /* Audio Completion Button */
+        .audio-completion-btn {
+            display: block;
+            width: 100%;
+            padding: 16px 24px;
+            margin: 30px 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .audio-completion-btn:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .audio-completion-btn.completed {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(52, 211, 153, 0.2));
+            border-color: var(--success);
+            cursor: default;
+        }
+
+        /* Case Study Block */
+        .case-study-block {
+            background: rgba(240, 147, 251, 0.05);
+            border: 1px solid rgba(240, 147, 251, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px 0;
+            transition: all 0.3s ease;
+        }
+
+        .case-study-block:hover {
+            background: rgba(240, 147, 251, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(240, 147, 251, 0.2);
+        }
+
+        .case-study-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .case-study-icon {
+            font-size: 32px;
+        }
+
+        .case-study-title {
+            font-size: 1.4rem;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .case-study-content p {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        .case-study-content ul {
+            margin: 15px 0 15px 25px;
+        }
+
+        .case-study-content li {
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .case-study-content strong {
+            color: var(--text-primary);
+        }
+
+        .case-study-highlight {
+            background: rgba(240, 147, 251, 0.1);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Quick Check Block */
+        .quick-check-block {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px 0;
+            transition: all 0.3s ease;
+            position: relative;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .quick-check-block.locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .quick-check-block.locked::after {
+            content: '🔒 Прослушайте аудио чтобы разблокировать квиз';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px 30px;
+            border-radius: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: center;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        /* Unlocked state - explicitly set */
+        .quick-check-block:not(.locked) {
+            opacity: 1;
+            pointer-events: auto;
+            cursor: default;
+        }
+
+        .quick-check-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .quick-check-icon {
+            font-size: 32px;
+        }
+
+        .quick-check-title {
+            font-size: 1.4rem;
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .quick-check-content {
+            color: var(--text-secondary);
+        }
+
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .progress-info {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 10px auto;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            width: 42%;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 90px;
+            }
+
+            .header {
+                padding: 15px 0;
+                min-height: 70px;
+            }
+
+            .main {
+                padding: 20px 15px;
+            }
+
+            .sector-number {
+                display: none;
+            }
+
+            .content-block {
+                padding: 20px 15px;
+            }
+
+            .block-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .block-title {
+                font-size: 1.4rem;
+            }
+
+            .audio-container {
+                align-self: center;
+            }
+
+            .lesson-nav {
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px 15px;
+            }
+
+            .nav-btn {
+                width: 100%;
+            }
+
+            .progress-bar {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="modules-index.html" class="back-btn">
+                <span>←</span>
+                <span>Назад к модулям</span>
+            </a>
+            <div class="module-info">
+                <div class="module-number">Модуль 11 из 12</div>
+                <div class="module-title">Кризисные ситуации и решение проблем</div>
+            </div>
+            <div style="width: 150px;"></div>
+        </nav>
+    </header>
+
+    <main class="main">
+
+        <!-- СЕКТОР 1: Поломки и аварии -->
+        <div class="sector-wrapper">
+            <div class="sector-number">01</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🚨 Поломки и аварии - Протоколы действий</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio1')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio1')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio1')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>🚨 Типы поломок и аварий</h3>
+                    <p><strong>Breakdown или accident</strong> - одна из самых стрессовых ситуаций для dispatcher. Важно
+                        действовать быстро и организованно.</p>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Основные типы проблем:</h4>
+                        <ul>
+                            <li><strong>Mechanical breakdown:</strong> Поломка двигателя, трансмиссии, тормозов
+                                ($2,000-15,000 ремонт)</li>
+                            <li><strong>Tire blowout:</strong> Разрыв шины ($300-800 замена + towing)</li>
+                            <li><strong>Electrical issues:</strong> Проблемы с батареей, генератором ($500-2,000)</li>
+                            <li><strong>Minor accident:</strong> Небольшое ДТП без травм ($1,000-10,000)</li>
+                            <li><strong>Major accident:</strong> Серьезное ДТП с травмами или total loss
+                                ($50,000-500,000+)</li>
+                            <li><strong>Weather damage:</strong> Повреждения от урагана, града, наводнения</li>
+                        </ul>
+                    </div>
+
+                    <h3>📋 Протокол при поломке (Breakdown)</h3>
+                    <div class="success-highlight">
+                        <h4>✅ Шаг за шагом:</h4>
+                        <ol>
+                            <li><strong>Получить информацию от водителя:</strong> Где? Что случилось? Безопасно ли?</li>
+                            <li><strong>Обеспечить безопасность:</strong> Водитель должен съехать на обочину, включить
+                                hazard lights</li>
+                            <li><strong>Вызвать roadside assistance:</strong> Позвонить в службу помощи (Comdata, EFS,
+                                или local towing)</li>
+                            <li><strong>Получить ETA ремонта:</strong> Сколько времени займет? Можно ли починить на
+                                месте?</li>
+                            <li><strong>Уведомить клиента:</strong> Сообщить брокеру о задержке, попросить detention pay
+                            </li>
+                            <li><strong>Найти альтернативу:</strong> Если ремонт долгий - искать другой трак для
+                                перегрузки</li>
+                            <li><strong>Документировать:</strong> Фото поломки, receipts, towing invoices</li>
+                        </ol>
+                    </div>
+
+                    <h3>🚑 Протокол при аварии (Accident)</h3>
+                    <div class="warning-highlight">
+                        <h4>⚠️ КРИТИЧЕСКИ ВАЖНО - первые действия:</h4>
+                        <ol>
+                            <li><strong>Проверить здоровье:</strong> "Ты в порядке? Есть травмы?" - Если да, вызвать 911
+                            </li>
+                            <li><strong>Безопасность:</strong> Включить hazard lights, выставить triangles, не двигать
+                                трак</li>
+                            <li><strong>Вызвать полицию:</strong> ВСЕГДА вызывать police для accident report (даже
+                                minor)</li>
+                            <li><strong>НЕ признавать вину:</strong> Водитель не должен говорить "It's my fault"</li>
+                            <li><strong>Собрать информацию:</strong> Фото (все углы, повреждения, номера), контакты
+                                свидетелей</li>
+                            <li><strong>Уведомить insurance:</strong> Позвонить в страховую компанию в течение 24 часов
+                            </li>
+                            <li><strong>Drug test:</strong> Водитель ОБЯЗАН пройти post-accident drug test (DOT
+                                requirement)</li>
+                            <li><strong>Уведомить клиента:</strong> Сообщить брокеру о ситуации, статусе груза</li>
+                        </ol>
+                    </div>
+
+                    <h3>📞 Контакты для экстренных ситуаций</h3>
+                    <ul>
+                        <li><strong>Roadside Assistance:</strong> Comdata (800-266-3282), EFS (888-824-7378)</li>
+                        <li><strong>Insurance Company:</strong> Номер вашей страховой (держите под рукой!)</li>
+                        <li><strong>Towing Services:</strong> Local towing companies (Google Maps)</li>
+                        <li><strong>Truck Repair Shops:</strong> Freightliner, Peterbilt, Volvo dealerships</li>
+                        <li><strong>DOT Hotline:</strong> 1-888-DOT-SAFT (для reporting serious accidents)</li>
+                    </ul>
+
+                    <h3>💰 Кто платит за ремонт?</h3>
+                    <div class="info-highlight">
+                        <h4>💡 Зависит от ситуации:</h4>
+                        <ul>
+                            <li><strong>Mechanical breakdown:</strong> Владелец трака (carrier) платит за ремонт</li>
+                            <li><strong>Accident (не ваша вина):</strong> Страховая другой стороны платит</li>
+                            <li><strong>Accident (ваша вина):</strong> Ваша страховая платит (deductible $1,000-5,000)
+                            </li>
+                            <li><strong>Tire blowout:</strong> Обычно carrier платит ($300-800)</li>
+                            <li><strong>Towing:</strong> Carrier платит ($200-500 за local, $2-5/миля за long distance)
+                            </li>
+                        </ul>
+                    </div>
+
+                    <h3>🚫 Что НЕ делать</h3>
+                    <ul>
+                        <li>❌ <strong>Паниковать:</strong> Сохраняйте спокойствие, действуйте по протоколу</li>
+                        <li>❌ <strong>Игнорировать водителя:</strong> Отвечайте на звонки немедленно</li>
+                        <li>❌ <strong>Не уведомлять клиента:</strong> Брокер должен знать о проблеме ASAP</li>
+                        <li>❌ <strong>Признавать вину:</strong> Пусть insurance и полиция разбираются</li>
+                        <li>❌ <strong>Не документировать:</strong> Фото и документы критичны для insurance claim</li>
+                    </ul>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: Breakdown в середине маршрута - быстрое решение</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Водитель звонит в 2 AM: "Трак сломался, не заводится. Я в Kansas, груз
+                        должен быть в Chicago через 8 часов!"</p>
+                    <p><strong>Проблема:</strong> Mechanical breakdown, 400 миль до delivery, tight deadline.</p>
+                    <p><strong>Действия dispatcher:</strong></p>
+                    <ol>
+                        <li><strong>Безопасность (1 минута):</strong> "Ты в безопасном месте? Включи hazard lights"</li>
+                        <li><strong>Roadside assistance (5 минут):</strong> Позвонил в Comdata, вызвал towing</li>
+                        <li><strong>Диагностика (30 минут):</strong> Mechanic приехал - проблема с alternator, ремонт
+                            4-6 часов</li>
+                        <li><strong>Plan B (15 минут):</strong> Нашел local carrier с доступным траком в 50 милях</li>
+                        <li><strong>Перегрузка (2 часа):</strong> Организовал transfer груза на другой трак</li>
+                        <li><strong>Уведомление клиента (5 минут):</strong> Сообщил брокеру о задержке 3 часа, попросил
+                            detention pay</li>
+                        <li><strong>Delivery (6 часов):</strong> Новый водитель доставил груз с опозданием 2 часа</li>
+                    </ol>
+                    <p><strong>Результат:</strong></p>
+                    <ul>
+                        <li>Груз доставлен (опоздание 2 часа вместо полного срыва)</li>
+                        <li>Клиент доволен быстрым решением</li>
+                        <li>Получили detention pay $150</li>
+                        <li>Стоимость: Towing $300 + transfer $400 + ремонт $800 = $1,500</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        <strong>Итог:</strong> Быстрая реакция и Plan B спасли delivery. Клиент остался доволен и дал
+                        еще 5 грузов в следующем месяце!
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio1', 'quiz-1')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-1" data-quiz-id="quiz-11-1" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Что ОБЯЗАТЕЛЬНО нужно сделать при аварии?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">Сразу признать вину</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">Вызвать полицию для accident report</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">Уехать с места аварии</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">Не уведомлять insurance</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> ВСЕГДА вызывайте полицию для accident report, даже при minor
+                        accidents. Это критично для insurance claim и защиты от ложных обвинений!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- СЕКТОР 2: Cargo Theft - Кража груза -->
+        <div class="sector-wrapper">
+            <div class="sector-number">02</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🚨 Cargo Theft - Кража груза</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio2')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio2')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio2')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>🚨 Масштаб проблемы</h3>
+                    <p><strong>Cargo theft</strong> - серьезная проблема в trucking индустрии. По данным FBI, ежегодные
+                        убытки превышают $30 миллиардов.</p>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Статистика краж:</h4>
+                        <ul>
+                            <li><strong>Средний убыток:</strong> $200,000-300,000 за один инцидент</li>
+                            <li><strong>Горячие точки:</strong> California, Texas, Florida, Georgia, Illinois</li>
+                            <li><strong>Популярные товары:</strong> Electronics, pharmaceuticals, food/beverages,
+                                clothing</li>
+                            <li><strong>Типичное время:</strong> Выходные и праздники (меньше свидетелей)</li>
+                            <li><strong>Методы:</strong> Strategic theft (планируемые), pilferage (мелкие кражи),
+                                hijacking</li>
+                        </ul>
+                    </div>
+
+                    <h3>🛡️ Превентивные меры</h3>
+                    <div class="success-highlight">
+                        <h4>✅ Как предотвратить кражу:</h4>
+                        <ul>
+                            <li><strong>200-mile rule:</strong> Не останавливаться первые 200 миль после pickup</li>
+                            <li><strong>Secure parking:</strong> Только охраняемые truck stops и terminals</li>
+                            <li><strong>GPS tracking:</strong> Real-time мониторинг местоположения</li>
+                            <li><strong>Seal verification:</strong> Проверка пломб при каждой остановке</li>
+                            <li><strong>Communication:</strong> Регулярная связь с водителем каждые 4-6 часов</li>
+                            <li><strong>High-value loads:</strong> Team drivers для дорогих грузов ($100K+)</li>
+                            <li><strong>Background checks:</strong> Тщательная проверка водителей</li>
+                            <li><strong>Avoid patterns:</strong> Менять маршруты и время доставки</li>
+                        </ul>
+                    </div>
+
+                    <h3>🚨 Что делать если груз украли</h3>
+                    <div class="warning-highlight">
+                        <h4>⚠️ Немедленные действия:</h4>
+                        <ol>
+                            <li><strong>Вызвать полицию (911):</strong> Сообщить о краже немедленно</li>
+                            <li><strong>FBI Cargo Theft Task Force:</strong> 1-800-CALL-FBI для high-value cargo</li>
+                            <li><strong>Уведомить insurance:</strong> Позвонить в страховую в течение 24 часов</li>
+                            <li><strong>Уведомить брокера:</strong> Сообщить клиенту о краже ASAP</li>
+                            <li><strong>Freeze location:</strong> Не двигать трак до приезда полиции</li>
+                            <li><strong>Собрать доказательства:</strong> Фото, видео, свидетели</li>
+                            <li><strong>CargoNet alert:</strong> Зарегистрировать кражу в CargoNet database</li>
+                        </ol>
+                    </div>
+
+                    <h3>💰 Кто платит за украденный груз?</h3>
+                    <div class="info-highlight">
+                        <h4>💡 Зависит от insurance:</h4>
+                        <ul>
+                            <li><strong>Cargo insurance:</strong> Покрывает стоимость груза ($100K-250K coverage)</li>
+                            <li><strong>Carrier liability:</strong> Carrier ответственен за груз до $100K (по закону)
+                            </li>
+                            <li><strong>Broker insurance:</strong> Иногда брокер имеет дополнительное покрытие</li>
+                            <li><strong>Deductible:</strong> Обычно $5,000-10,000 (carrier платит)</li>
+                            <li><strong>Без insurance:</strong> Carrier платит полную стоимость груза!</li>
+                        </ul>
+                    </div>
+
+                    <h3>🔍 Типы краж</h3>
+                    <ul>
+                        <li><strong>Strategic theft:</strong> Организованные группы, планируют заранее ($200K+ грузы)
+                        </li>
+                        <li><strong>Pilferage:</strong> Мелкие кражи части груза ($1K-10K)</li>
+                        <li><strong>Hijacking:</strong> Угон трака с водителем (редко, но опасно)</li>
+                        <li><strong>Identity theft:</strong> Мошенники выдают себя за carrier и забирают груз</li>
+                        <li><strong>Fictitious pickup:</strong> Поддельные документы для получения груза</li>
+                    </ul>
+
+                    <h3>🚫 Что НЕ делать</h3>
+                    <ul>
+                        <li>❌ <strong>Останавливаться в первые 200 миль:</strong> Самое опасное время</li>
+                        <li>❌ <strong>Парковаться в неохраняемых местах:</strong> Особенно с high-value cargo</li>
+                        <li>❌ <strong>Игнорировать подозрительную активность:</strong> Следящие машины, странные люди
+                        </li>
+                        <li>❌ <strong>Не проверять пломбы:</strong> Проверяйте при каждой остановке</li>
+                        <li>❌ <strong>Делиться информацией о грузе:</strong> Не говорите что везете и куда</li>
+                    </ul>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: Предотвращение кражи electronics груза $250K</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> High-value груз electronics ($250K) из California в Texas. Известный
+                        маршрут для cargo theft.</p>
+                    <p><strong>Превентивные меры dispatcher:</strong></p>
+                    <ul>
+                        <li><strong>Team drivers:</strong> Наняли 2 водителей для non-stop delivery</li>
+                        <li><strong>GPS tracking:</strong> Real-time мониторинг каждые 2 часа</li>
+                        <li><strong>200-mile rule:</strong> Строгий запрет на остановки первые 200 миль</li>
+                        <li><strong>Secure route:</strong> Избегали известные hot spots (LA area, Houston)</li>
+                        <li><strong>Communication:</strong> Check-in каждые 4 часа</li>
+                        <li><strong>Seal verification:</strong> Фото пломбы каждые 6 часов</li>
+                        <li><strong>Secure parking only:</strong> Только охраняемые truck stops</li>
+                    </ul>
+                    <p><strong>Инцидент:</strong> На 3-й день водитель заметил подозрительную машину, следующую за
+                        траком 50 миль.</p>
+                    <p><strong>Действия:</strong></p>
+                    <ol>
+                        <li>Водитель немедленно сообщил dispatcher</li>
+                        <li>Dispatcher позвонил в local police</li>
+                        <li>Police escort сопроводил трак до безопасного места</li>
+                        <li>Подозрительная машина исчезла</li>
+                    </ol>
+                    <div class="case-study-highlight">
+                        <strong>Итог:</strong> Груз доставлен безопасно. Превентивные меры + быстрая реакция
+                        предотвратили потенциальную кражу $250K!
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio2', 'quiz-2')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-2" data-quiz-id="quiz-11-2" data-correct-answer="a">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Что такое "200-mile rule" при cargo theft?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">Не останавливаться первые 200 миль после pickup</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">Максимальное расстояние для delivery</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">Радиус действия GPS tracker</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">Стоимость cargo insurance</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> 200-mile rule - не останавливаться первые 200 миль после pickup.
+                        Это самое опасное время для cargo theft, так как воры часто следят за погрузкой!
+                    </div>
+                </div>
+            </div>
+            <div class="quiz-feedback">
+                <strong>Правильно! ✓</strong> Низкая зарплата - главная причина turnover (45%). Водители ожидают
+                $60K+/год, но часто получают $45-50K. Конкурентная оплата критична для retention!
+            </div>
+        </div>
+        </div>
+        </div>
+
+        <!-- СЕКТОР 3: Задержки и TONU -->
+        <div class="sector-wrapper">
+            <div class="sector-number">03</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">⏰ Задержки и TONU - Управление временем</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio3')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio3')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio3')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>⏰ Что такое Detention и TONU?</h3>
+                    <p><strong>Detention</strong> - задержка трака на погрузке/разгрузке сверх free time (обычно 2
+                        часа).</p>
+                    <p><strong>TONU (Truck Ordered Not Used)</strong> - водитель приехал, но груз не готов или отменен.
+                    </p>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Стоимость задержек:</h4>
+                        <ul>
+                            <li><strong>Detention pay:</strong> $50-75/час после 2 часов free time</li>
+                            <li><strong>TONU compensation:</strong> $200-300 за пустую поездку</li>
+                            <li><strong>Потеря времени:</strong> 4-6 часов задержки = потеря 300-400 миль</li>
+                            <li><strong>Упущенная прибыль:</strong> $150-250 за каждую задержку</li>
+                            <li><strong>Driver frustration:</strong> Водители ненавидят задержки</li>
+                        </ul>
+                    </div>
+
+                    <h3>📋 Detention Pay - как получить</h3>
+                    <div class="success-highlight">
+                        <h4>✅ Процесс получения detention:</h4>
+                        <ol>
+                            <li><strong>Документировать время:</strong> Arrival time, loading start, loading end (фото
+                                timestamps)</li>
+                            <li><strong>Получить подпись:</strong> Shipper/receiver должен подписать BOL с временем</li>
+                            <li><strong>Сфотографировать:</strong> Фото BOL, фото часов, фото трака на facility</li>
+                            <li><strong>Уведомить брокера:</strong> Сообщить о задержке ASAP (не ждать конца дня)</li>
+                            <li><strong>Отправить invoice:</strong> Detention invoice с документами в течение 24 часов
+                            </li>
+                            <li><strong>Follow up:</strong> Звонить брокеру каждые 3 дня до оплаты</li>
+                        </ol>
+                    </div>
+
+                    <h3>🚫 TONU - Truck Ordered Not Used</h3>
+                    <div class="info-highlight">
+                        <h4>💡 Когда применяется TONU:</h4>
+                        <ul>
+                            <li><strong>Груз не готов:</strong> Водитель приехал, но груз еще не упакован</li>
+                            <li><strong>Груз отменен:</strong> Shipper отменил груз в последний момент</li>
+                            <li><strong>Неправильная информация:</strong> Груз не соответствует описанию (вес, размер)
+                            </li>
+                            <li><strong>Facility closed:</strong> Shipper закрыт, хотя должен был быть открыт</li>
+                            <li><strong>Refused by shipper:</strong> Shipper отказывается грузить по какой-то причине
+                            </li>
+                        </ul>
+                    </div>
+
+                    <h3>💰 Как получить TONU compensation</h3>
+                    <ol>
+                        <li><strong>Прибыть на место:</strong> Водитель ДОЛЖЕН приехать на shipper location</li>
+                        <li><strong>Check-in:</strong> Зарегистрироваться у shipper (получить подпись/штамп)</li>
+                        <li><strong>Документировать:</strong> Фото facility, фото check-in, timestamp</li>
+                        <li><strong>Получить письменное подтверждение:</strong> Shipper пишет "Load not ready" на бумаге
+                        </li>
+                        <li><strong>Уведомить брокера:</strong> Позвонить немедленно: "Груз не готов, требую TONU"</li>
+                        <li><strong>Отправить invoice:</strong> TONU invoice $200-300 с документами</li>
+                        <li><strong>Escalate if needed:</strong> Если брокер отказывается - угрожать TIA complaint</li>
+                    </ol>
+
+                    <h3>📞 Коммуникация при задержках</h3>
+                    <div class="success-highlight">
+                        <h4>✅ Что говорить брокеру:</h4>
+                        <ul>
+                            <li><strong>При detention:</strong> "Водитель на погрузке уже 3 часа. Free time 2 часа.
+                                Требую detention $50/час"</li>
+                            <li><strong>При TONU:</strong> "Водитель приехал, груз не готов. Shipper говорит будет готов
+                                через 6 часов. Требую TONU $250"</li>
+                            <li><strong>При отказе:</strong> "Rate confirmation указывает detention after 2 hours. Я
+                                отправлю invoice"</li>
+                            <li><strong>Escalation:</strong> "Если не оплатите, подам complaint в TIA и оставлю negative
+                                review"</li>
+                        </ul>
+                    </div>
+
+                    <h3>🚨 Типичные проблемы</h3>
+                    <ul>
+                        <li><strong>Брокер отказывается платить:</strong> "Rate con не включает detention" - проверьте
+                            документ!</li>
+                        <li><strong>Нет документов:</strong> Без подписи shipper/receiver сложно доказать</li>
+                        <li><strong>Водитель не сообщил:</strong> Узнали о задержке через 2 дня - поздно требовать</li>
+                        <li><strong>Shipper отказывается подписывать:</strong> Фото timestamps + GPS tracking помогут
+                        </li>
+                    </ul>
+
+                    <h3>🚫 Что НЕ делать</h3>
+                    <ul>
+                        <li>❌ <strong>Не документировать:</strong> Без доказательств не получите оплату</li>
+                        <li>❌ <strong>Не уведомлять брокера:</strong> Сообщайте о задержке сразу, не в конце дня</li>
+                        <li>❌ <strong>Соглашаться на меньшую сумму:</strong> Если rate con говорит $75/час - требуйте
+                            $75</li>
+                        <li>❌ <strong>Не отправлять invoice:</strong> Отправьте в течение 24 часов</li>
+                        <li>❌ <strong>Забывать про TONU:</strong> Это ваши деньги, требуйте их!</li>
+                    </ul>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: Получение detention pay $450 за 6-часовую задержку</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Водитель приехал на погрузку в 8 AM. Груз должен был быть готов, но
+                        shipper сказал "Будет готов через 2 часа".</p>
+                    <p><strong>Что сделал dispatcher:</strong></p>
+                    <ol>
+                        <li><strong>8:00 AM:</strong> Водитель check-in, получил подпись shipper с временем</li>
+                        <li><strong>10:00 AM:</strong> Free time закончился (2 часа), груз все еще не готов</li>
+                        <li><strong>10:15 AM:</strong> Dispatcher позвонил брокеру: "Водитель ждет уже 2 часа, груз не
+                            готов. Начинаем считать detention $75/час"</li>
+                        <li><strong>12:00 PM:</strong> Водитель сфотографировал часы, трак, facility</li>
+                        <li><strong>2:00 PM:</strong> Груз наконец готов, начали грузить</li>
+                        <li><strong>2:30 PM:</strong> Погрузка завершена, водитель получил BOL с временем</li>
+                        <li><strong>3:00 PM:</strong> Dispatcher отправил detention invoice брокеру</li>
+                    </ol>
+                    <p><strong>Расчет detention:</strong></p>
+                    <ul>
+                        <li>Arrival: 8:00 AM</li>
+                        <li>Loading complete: 2:30 PM (6.5 часов total)</li>
+                        <li>Free time: 2 часа</li>
+                        <li>Detention time: 4.5 часа</li>
+                        <li>Rate: $75/час (округлили до 6 часов)</li>
+                        <li><strong>Total detention: $450</strong></li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        <strong>Итог:</strong> Брокер оплатил $450 detention в течение 10 дней. Документация и быстрая
+                        коммуникация обеспечили оплату!
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio3', 'quiz-3')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-3" data-quiz-id="quiz-11-3" data-correct-answer="c">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Сколько обычно составляет detention pay?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">$10-20/час</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">$25-35/час</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">$50-75/час</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">$100-150/час</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Detention pay обычно $50-75/час после 2 часов free time. Это
+                        компенсация за потерянное время и упущенную прибыль!
+                    </div>
+                </div>
+            </div>
+            <div class="quiz-options">
+                <div class="quiz-option" data-answer="a">
+                    <span class="option-letter">A</span>
+                    <span class="option-text">2,000-2,500 миль</span>
+                </div>
+                <div class="quiz-option" data-answer="b">
+                    <span class="option-letter">B</span>
+                    <span class="option-text">1,000-1,500 миль</span>
+                </div>
+                <div class="quiz-option" data-answer="c">
+                    <span class="option-letter">C</span>
+                    <span class="option-text">3,000-3,500 миль</span>
+                </div>
+                <div class="quiz-option" data-answer="d">
+                    <span class="option-letter">D</span>
+                    <span class="option-text">500-1,000 миль</span>
+                </div>
+            </div>
+            <div class="quiz-feedback">
+                <strong>Правильно! ✓</strong> 2,000-2,500 миль/неделю - реалистичный и прибыльный показатель для
+                OTR водителя. Это позволяет водителю зарабатывать $1,000-1,500/неделю при ставке
+                $0.50-0.60/миля.
+            </div>
+        </div>
+        </div>
+        </div>
+
+        <!-- СЕКТОР 4: Отказы от грузов -->
+        <div class="sector-wrapper">
+            <div class="sector-number">04</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🚫 Отказы от грузов - Load Refusals</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio4')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio4')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio4')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>🚫 Что такое Load Refusal?</h3>
+                    <p><strong>Load refusal</strong> - отказ carrier от груза после подтверждения. Это серьезная
+                        проблема, которая может привести к потере клиента и репутации.</p>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Последствия отказа от груза:</h4>
+                        <ul>
+                            <li><strong>Потеря клиента:</strong> Брокер больше не даст вам грузы (blacklist)</li>
+                            <li><strong>Negative review:</strong> Плохой отзыв на DAT, Truckstop, Carrier411</li>
+                            <li><strong>Штраф:</strong> Некоторые брокеры требуют $500-1,000 за cancellation</li>
+                            <li><strong>Репутация:</strong> Слухи распространяются быстро в индустрии</li>
+                            <li><strong>Убытки брокера:</strong> Брокер теряет деньги на поиске замены</li>
+                        </ul>
+                    </div>
+
+                    <h3>✅ Легитимные причины отказа</h3>
+                    <p><strong>Когда можно отказаться БЕЗ последствий:</strong></p>
+
+                    <div class="success-highlight">
+                        <h4>✅ Обоснованные причины:</h4>
+                        <ul>
+                            <li><strong>Breakdown:</strong> Трак сломался, не может выполнить груз</li>
+                            <li><strong>Driver unavailable:</strong> Водитель заболел, emergency, quit</li>
+                            <li><strong>Weather emergency:</strong> Blizzard, hurricane, ice storm (unsafe to drive)
+                            </li>
+                            <li><strong>HOS violation:</strong> Недостаточно часов для доставки вовремя</li>
+                            <li><strong>Equipment mismatch:</strong> Груз требует reefer, у вас dry van (ошибка брокера)
+                            </li>
+                            <li><strong>Weight overload:</strong> Груз тяжелее чем указано в rate con (DOT violation)
+                            </li>
+                            <li><strong>Unsafe load:</strong> Груз не закреплен, опасен для перевозки</li>
+                            <li><strong>Broker fraud:</strong> Брокер не имеет authority, груз украден</li>
+                        </ul>
+                    </div>
+
+                    <h3>❌ НЕлегитимные причины отказа</h3>
+                    <div class="warning-highlight">
+                        <h4>⚠️ Плохие причины (приведут к blacklist):</h4>
+                        <ul>
+                            <li>❌ <strong>"Нашел груз дороже":</strong> Вы уже подтвердили rate con!</li>
+                            <li>❌ <strong>"Не хочу ехать туда":</strong> Должны были проверить до подтверждения</li>
+                            <li>❌ <strong>"Водитель отказался":</strong> Это ваша проблема, не брокера</li>
+                            <li>❌ <strong>"Ставка низкая":</strong> Вы согласились на эту ставку!</li>
+                            <li>❌ <strong>"Передумали":</strong> Без объективной причины</li>
+                            <li>❌ <strong>"Забыли про другой груз":</strong> Плохое планирование</li>
+                        </ul>
+                    </div>
+
+                    <h3>📞 Как правильно отказаться от груза</h3>
+                    <div class="success-highlight">
+                        <h4>✅ Протокол отказа:</h4>
+                        <ol>
+                            <li><strong>Позвонить НЕМЕДЛЕННО:</strong> Чем раньше, тем лучше (минимум 24 часа до pickup)
+                            </li>
+                            <li><strong>Объяснить причину:</strong> Честно и детально: "Трак сломался, alternator
+                                failure"</li>
+                            <li><strong>Предложить решение:</strong> "Могу найти другой трак" или "Могу взять груз
+                                завтра"</li>
+                            <li><strong>Извиниться:</strong> "Извините за неудобства, это форс-мажор"</li>
+                            <li><strong>Документировать:</strong> Email с объяснением причины (для защиты)</li>
+                            <li><strong>Помочь найти замену:</strong> Если возможно, предложите другого carrier</li>
+                        </ol>
+                    </div>
+
+                    <h3>⏰ Timing критичен</h3>
+                    <p><strong>Когда отказываетесь:</strong></p>
+
+                    <ul>
+                        <li><strong>24+ часов до pickup:</strong> Брокер найдет замену, минимальные последствия</li>
+                        <li><strong>12-24 часа до pickup:</strong> Сложнее найти замену, но возможно</li>
+                        <li><strong>Менее 12 часов:</strong> Очень плохо, брокер в панике</li>
+                        <li><strong>В день pickup:</strong> Катастрофа! Почти гарантированный blacklist</li>
+                        <li><strong>После pickup:</strong> НИКОГДА! Это abandoning load (criminal offense)</li>
+                    </ul>
+
+                    <h3>💰 Финансовые последствия</h3>
+                    <div class="info-highlight">
+                        <h4>💡 Что может случиться:</h4>
+                        <ul>
+                            <li><strong>Cancellation fee:</strong> $500-1,000 (если указано в rate con)</li>
+                            <li><strong>Dry run fee:</strong> $200-300 если водитель уже приехал на pickup</li>
+                            <li><strong>Broker's losses:</strong> Брокер может требовать компенсацию убытков</li>
+                            <li><strong>Lost future business:</strong> Потеря $50K-100K+ в год от этого брокера</li>
+                        </ul>
+                    </div>
+
+                    <h3>🛡️ Как избежать отказов</h3>
+                    <div class="success-highlight">
+                        <h4>✅ Превентивные меры:</h4>
+                        <ul>
+                            <li><strong>Проверяйте все ДО подтверждения:</strong> Маршрут, timing, equipment, HOS</li>
+                            <li><strong>Backup plan:</strong> Всегда имейте запасного водителя или трак</li>
+                            <li><strong>Maintenance:</strong> Регулярное обслуживание траков (меньше breakdowns)</li>
+                            <li><strong>Communication:</strong> Постоянная связь с водителем (знаете о проблемах
+                                заранее)</li>
+                            <li><strong>Realistic planning:</strong> Не перегружайте водителя (HOS violations)</li>
+                            <li><strong>Weather monitoring:</strong> Проверяйте прогноз перед подтверждением</li>
+                        </ul>
+                    </div>
+
+                    <h3>📧 Пример email при отказе</h3>
+                    <div class="info-highlight">
+                        <p><strong>Subject:</strong> Load Cancellation - [Load #] - Force Majeure</p>
+                        <p><strong>Body:</strong></p>
+                        <p>Hi [Broker Name],</p>
+                        <p>I regret to inform you that we must cancel load #[number] scheduled for pickup on [date] at
+                            [time].</p>
+                        <p><strong>Reason:</strong> Our truck experienced a mechanical breakdown (alternator failure)
+                            and is currently at the repair shop. The mechanic estimates 24-48 hours for repair.</p>
+                        <p><strong>Solution:</strong> We are actively searching for a replacement truck and will update
+                            you within 2 hours. Alternatively, we can pick up the load 24 hours later if acceptable.</p>
+                        <p>We sincerely apologize for this inconvenience and understand the impact on your operations.
+                            This is a force majeure situation beyond our control.</p>
+                        <p>Please let us know how we can help resolve this situation.</p>
+                        <p>Best regards,<br>[Your Name]<br>[Company Name]</p>
+                    </div>
+
+                    <h3>🚫 Что НЕ делать</h3>
+                    <ul>
+                        <li>❌ <strong>Игнорировать брокера:</strong> Не отвечать на звонки/emails - худшее что можно
+                            сделать</li>
+                        <li>❌ <strong>Лгать о причине:</strong> "Трак сломался" (а сами взяли груз дороже) - брокер
+                            узнает</li>
+                        <li>❌ <strong>Отказываться в последний момент:</strong> Без серьезной причины</li>
+                        <li>❌ <strong>Не предлагать решение:</strong> Просто "Мы не можем" - помогите найти выход</li>
+                        <li>❌ <strong>Быть грубым:</strong> "Это ваша проблема" - сожжете мост навсегда</li>
+                    </ul>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: Правильный отказ от груза - сохранение отношений</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Dispatcher подтвердил груз на завтра (pickup 8 AM). В 6 PM водитель
+                        звонит: "Трак не заводится, alternator сломался. Mechanic говорит ремонт 24 часа."</p>
+                    <p><strong>Проблема:</strong></p>
+                    <ul>
+                        <li><strong>Груз подтвержден:</strong> Rate con подписан, брокер рассчитывает на нас</li>
+                        <li><strong>Timing:</strong> 14 часов до pickup - мало времени</li>
+                        <li><strong>Нет backup трака:</strong> Все остальные траки заняты</li>
+                    </ul>
+                    <p><strong>Действия dispatcher:</strong></p>
+                    <ol>
+                        <li><strong>6:05 PM - Позвонил брокеру:</strong> "Hi [Name], у нас форс-мажор. Трак сломался
+                            (alternator), ремонт 24 часа. Я ищу замену прямо сейчас."</li>
+                        <li><strong>6:10 PM - Предложил решения:</strong> "Вариант 1: Могу найти другой трак (2 часа на
+                            поиск). Вариант 2: Можем взять груз через 24 часа. Что предпочитаете?"</li>
+                        <li><strong>6:15 PM - Брокер выбрал:</strong> "Найди другой трак, у меня есть 2 часа"</li>
+                        <li><strong>6:20-8:00 PM - Поиск:</strong> Позвонил 5 партнерам, нашел доступный трак за $100
+                            extra</li>
+                        <li><strong>8:05 PM - Подтверждение:</strong> "Нашел замену! Трак будет на pickup завтра в 8 AM.
+                            Извините за стресс."</li>
+                        <li><strong>8:10 PM - Email:</strong> Отправил письмо с объяснением и подтверждением нового
+                            трака</li>
+                    </ol>
+                    <div class="case-study-highlight">
+                        <strong>Результат:</strong> Груз доставлен вовремя. Брокер оценил быстрое решение и честность.
+                        Дал еще 3 груза на следующей неделе. Урок: Немедленная коммуникация + предложение решений =
+                        сохранение клиента!
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio4', 'quiz-4')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-4" data-quiz-id="quiz-11-4" data-correct-answer="a">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Когда можно легитимно отказаться от груза?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">Трак сломался (breakdown)</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">Нашли груз дороже</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">Водитель не хочет ехать туда</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">Ставка кажется низкой</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Breakdown - легитимная причина для отказа (форс-мажор). Но нужно
+                        немедленно уведомить брокера и предложить решение. Отказ из-за более высокой ставки - blacklist!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- СЕКТОР 5: Коммуникация с водителями -->
+        <div class="sector-wrapper">
+            <div class="sector-number">05</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🤝 Конфликты - Решение проблем с брокерами и водителями</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio5')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio5')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio5')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>🤝 Типы конфликтов в trucking</h3>
+                    <p><strong>Конфликты неизбежны</strong> в trucking индустрии. Важно уметь их решать быстро и
+                        профессионально.</p>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Основные типы конфликтов:</h4>
+                        <ul>
+                            <li><strong>С брокерами (50%):</strong> Payment disputes, rate disagreements, detention
+                                claims</li>
+                            <li><strong>С водителями (40%):</strong> Pay issues, home time, load assignments</li>
+                            <li><strong>С shippers/receivers (10%):</strong> Loading delays, damaged cargo, access
+                                issues</li>
+                        </ul>
+                    </div>
+
+                    <h3>💰 Конфликты с брокерами - Payment Disputes</h3>
+                    <p><strong>Самая частая проблема:</strong> Брокер не платит или платит меньше чем обещал.</p>
+
+                    <div class="success-highlight">
+                        <h4>✅ Как решать payment disputes:</h4>
+                        <ol>
+                            <li><strong>Проверьте документы:</strong> Rate confirmation, BOL, POD, invoice - все ли
+                                правильно?</li>
+                            <li><strong>Позвоните брокеру:</strong> "Hi [Name], invoice #[number] не оплачен уже 45
+                                дней. Когда ожидать оплату?"</li>
+                            <li><strong>Email follow-up:</strong> Отправьте письмо с копиями всех документов</li>
+                            <li><strong>Escalate:</strong> Если не отвечают - звоните каждый день, просите manager</li>
+                            <li><strong>TIA complaint:</strong> Подайте жалобу в Transportation Intermediaries
+                                Association</li>
+                            <li><strong>FMCSA complaint:</strong> Если брокер нарушает правила - жалоба в FMCSA</li>
+                            <li><strong>Collections agency:</strong> Последний вариант - отправить в коллекторское
+                                агентство</li>
+                        </ol>
+                    </div>
+
+                    <h3>📉 Конфликты с брокерами - Rate Disagreements</h3>
+                    <p><strong>Проблема:</strong> Брокер пытается снизить ставку после delivery или не платит detention.
+                    </p>
+
+                    <div class="info-highlight">
+                        <h4>💡 Как защититься:</h4>
+                        <ul>
+                            <li><strong>Rate confirmation - закон:</strong> Подписанный rate con - юридический документ
+                            </li>
+                            <li><strong>Документируйте все:</strong> Фото, timestamps, подписи shipper/receiver</li>
+                            <li><strong>Не соглашайтесь на меньше:</strong> "Rate con говорит $2,500, я требую $2,500"
+                            </li>
+                            <li><strong>Detention proof:</strong> Фото BOL с временем arrival/departure</li>
+                            <li><strong>Угроза review:</strong> "Если не оплатите, оставлю negative review на DAT"</li>
+                        </ul>
+                    </div>
+
+                    <h3>🚫 Конфликты с брокерами - Load Cancellations</h3>
+                    <p><strong>Брокер отменяет груз</strong> в последний момент или после того как водитель уже в пути.
+                    </p>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Ваши права:</h4>
+                        <ul>
+                            <li><strong>Dry run fee:</strong> Если водитель приехал на pickup - требуйте $200-300</li>
+                            <li><strong>TONU compensation:</strong> Если груз отменен - требуйте компенсацию</li>
+                            <li><strong>Detention pay:</strong> Если ждали - требуйте оплату за время</li>
+                            <li><strong>Документируйте:</strong> Фото check-in, timestamps, подтверждение от shipper
+                            </li>
+                        </ul>
+                    </div>
+
+                    <h3>👷 Конфликты с водителями - Pay Disputes</h3>
+                    <p><strong>Водитель утверждает</strong> что ему недоплатили или не учли detention/bonus.</p>
+
+                    <div class="success-highlight">
+                        <h4>✅ Процесс resolution:</h4>
+                        <ol>
+                            <li><strong>Listen first:</strong> "Расскажи что случилось, я разберусь"</li>
+                            <li><strong>Check records:</strong> Settlement, rate con, detention logs, fuel advances</li>
+                            <li><strong>Explain clearly:</strong> "Вот расчет: 2,300 миль × $0.55 = $1,265"</li>
+                            <li><strong>Acknowledge mistakes:</strong> Если ошибка - признайте и исправьте немедленно
+                            </li>
+                            <li><strong>Fix immediately:</strong> "Добавлю в следующий paycheck, получишь в пятницу"
+                            </li>
+                            <li><strong>Follow up:</strong> Позвоните когда оплата прошла: "Получил? Все правильно?"
+                            </li>
+                        </ol>
+                    </div>
+
+                    <h3>🏠 Конфликты с водителями - Home Time Issues</h3>
+                    <p><strong>Водитель ожидал домой</strong> но dispatcher дает новый груз или задерживает.</p>
+
+                    <div class="info-highlight">
+                        <h4>💡 Как избежать:</h4>
+                        <ul>
+                            <li><strong>Clear policy:</strong> "2-3 дня дома каждые 2-3 недели" (письменно)</li>
+                            <li><strong>Advance planning:</strong> Спрашивайте за неделю: "Когда хочешь домой?"</li>
+                            <li><strong>Keep promises:</strong> Если обещали домой в пятницу - обеспечьте это</li>
+                            <li><strong>Emergency flexibility:</strong> Семейная проблема - отпустите немедленно</li>
+                            <li><strong>Route accordingly:</strong> Планируйте грузы чтобы водитель был дома вовремя
+                            </li>
+                        </ul>
+                    </div>
+
+                    <h3>🚫 Конфликты с водителями - Load Refusals</h3>
+                    <p><strong>Водитель отказывается</strong> брать груз без легитимной причины.</p>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Progressive discipline:</h4>
+                        <ol>
+                            <li><strong>1st refusal:</strong> Verbal warning (документируйте)</li>
+                            <li><strong>2nd refusal:</strong> Written warning (водитель подписывает)</li>
+                            <li><strong>3rd refusal:</strong> Final warning или termination</li>
+                        </ol>
+                        <p><strong>Исключения:</strong> Safety concerns, HOS violations, equipment issues - легитимные
+                            причины</p>
+                    </div>
+
+                    <h3>📞 Conflict Resolution Framework</h3>
+                    <div class="success-highlight">
+                        <h4>✅ 5-Step процесс для любого конфликта:</h4>
+                        <ol>
+                            <li><strong>Listen actively:</strong> Дайте человеку высказаться полностью, не перебивайте
+                            </li>
+                            <li><strong>Acknowledge feelings:</strong> "Я понимаю что ты расстроен/разочарован"</li>
+                            <li><strong>Gather facts:</strong> Проверьте все данные, документы, записи</li>
+                            <li><strong>Find solution together:</strong> "Как мы можем это решить? Что будет
+                                справедливо?"</li>
+                            <li><strong>Follow up:</strong> Проверьте через неделю что проблема действительно решена
+                            </li>
+                        </ol>
+                    </div>
+
+                    <h3>🚨 Escalation - когда обострять конфликт</h3>
+                    <p><strong>Иногда нужно escalate</strong> конфликт на следующий уровень:</p>
+
+                    <ul>
+                        <li><strong>С брокером:</strong> Dispatcher → Broker manager → TIA complaint → FMCSA complaint →
+                            Collections</li>
+                        <li><strong>С водителем:</strong> Verbal warning → Written warning → Suspension → Termination
+                        </li>
+                        <li><strong>С shipper:</strong> Dispatcher → Broker → Shipper manager → Refuse future loads</li>
+                    </ul>
+
+                    <h3>🚫 Что НЕ делать при конфликте</h3>
+                    <ul>
+                        <li>❌ <strong>Ignore the problem:</strong> Проблема не исчезнет сама, только усугубится</li>
+                        <li>❌ <strong>Get emotional:</strong> Крик, угрозы, оскорбления - профессионализм важнее</li>
+                        <li>❌ <strong>Make promises you can't keep:</strong> Не обещайте то, что не можете выполнить
+                        </li>
+                        <li>❌ <strong>Take it personally:</strong> Это бизнес, не личное</li>
+                        <li>❌ <strong>Burn bridges:</strong> Индустрия маленькая, репутация важна</li>
+                    </ul>
+
+                    <h3>📊 Conflict Prevention</h3>
+                    <div class="success-highlight">
+                        <h4>✅ Как избежать конфликтов:</h4>
+                        <ul>
+                            <li><strong>Clear communication:</strong> Все в письменном виде (rate con, emails)</li>
+                            <li><strong>Set expectations:</strong> Четко объясняйте правила, политику, процедуры</li>
+                            <li><strong>Document everything:</strong> Фото, timestamps, подписи, emails</li>
+                            <li><strong>Pay on time:</strong> Водители и брокеры ценят пунктуальность</li>
+                            <li><strong>Be honest:</strong> Честность предотвращает 90% конфликтов</li>
+                            <li><strong>Build relationships:</strong> Хорошие отношения = меньше конфликтов</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="case-study-block">
+                    <div class="case-study-header">
+                        <span class="case-study-icon">💼</span>
+                        <h3 class="case-study-title">Case Study: Успешное решение payment dispute с брокером</h3>
+                    </div>
+                    <div class="case-study-content">
+                        <p><strong>Ситуация:</strong> Груз доставлен 45 дней назад, invoice на $2,500 не оплачен. Брокер
+                            не отвечает на звонки и emails.</p>
+                        <p><strong>Проблема:</strong></p>
+                        <ul>
+                            <li><strong>45 дней overdue:</strong> Стандартный payment term 30 дней</li>
+                            <li><strong>Брокер игнорирует:</strong> 5 звонков, 3 emails - нет ответа</li>
+                            <li><strong>Cash flow проблема:</strong> $2,500 нужны для оплаты водителя и топлива</li>
+                        </ul>
+                        <p><strong>Действия dispatcher:</strong></p>
+                        <ol>
+                            <li><strong>День 45 - Проверка документов:</strong> Rate con, BOL, POD, invoice - все
+                                правильно</li>
+                            <li><strong>День 46 - Escalation:</strong> Позвонил broker manager: "Invoice #[number]
+                                overdue 45 дней. Требую оплату в течение 48 часов"</li>
+                            <li><strong>День 47 - Email с угрозой:</strong> "Если не оплатите в течение 24 часов, подам
+                                TIA complaint и оставлю negative review"</li>
+                            <li><strong>День 48 - TIA complaint:</strong> Подал официальную жалобу в TIA (Transportation
+                                Intermediaries Association)</li>
+                            <li><strong>День 50 - Broker позвонил:</strong> "Извините за задержку, оплатим сегодня"</li>
+                            <li><strong>День 51 - Payment received:</strong> $2,500 получены на счет</li>
+                        </ol>
+                        <div class="case-study-highlight">
+                            <strong>Результат:</strong> Деньги получены через 51 день (вместо 30). Урок: Persistence +
+                            escalation + угроза TIA complaint = результат. Больше не работаем с этим брокером!
+                        </div>
+                    </div>
+                </div>ght">
+                <h4>⚠️ Когда НЕ нужен TMS:</h4>
+                <ul>
+                    <li>❌ Owner-operator с 1 траком - можно обойтись Excel и QuickBooks</li>
+                    <li>❌ Очень малый бюджет - сначала инвестируйте в ELD и load board</li>
+                    <li>❌ Нет времени на обучение - TMS требует 1-2 недели на освоение</li>
+                </ul>
+                <p><strong>Правило:</strong> TMS окупается при 3+ траках или 10+ loads в неделю</p>
+        </div>
+        </div>
+        </section>
+
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">💼</span>
+                <h3 class="case-study-title">Case Study: TMS окупился за 3 недели</h3>
+            </div>
+            <div class="case-study-content">
+                <p><strong>Ситуация:</strong> Компания с 8 траками работала на Excel и QuickBooks. Диспетчер тратил
+                    20 часов/неделю на документы.</p>
+                <p><strong>Проблемы без TMS:</strong></p>
+                <ul>
+                    <li><strong>Медленный invoicing:</strong> Invoices отправлялись через 3-5 дней после delivery
+                    </li>
+                    <li><strong>Ошибки в расчетах:</strong> 2-3 ошибки в неделю в driver settlements ($200-500
+                        убытка)</li>
+                    <li><strong>Пропущенные charges:</strong> Забывали добавлять detention, lumper fees в invoices
+                    </li>
+                    <li><strong>IFTA nightmare:</strong> 8 часов каждый квартал на ручной расчет</li>
+                </ul>
+                <p><strong>Решение:</strong> Инвестировали в Axon TMS ($250/месяц) + обучение (2 недели).</p>
+                <p><strong>Результаты через месяц:</strong></p>
+                <ul>
+                    <li><strong>Время на документы:</strong> 20 часов → 8 часов/неделю (экономия $300/неделю)</li>
+                    <li><strong>Invoicing:</strong> Автоматически в день delivery → оплата на 5-7 дней быстрее</li>
+                    <li><strong>Ошибки:</strong> 2-3/неделю → 0-1/месяц (экономия $800/месяц)</li>
+                    <li><strong>IFTA:</strong> 8 часов → 30 минут (автоматический расчет)</li>
+                </ul>
+                <div class="case-study-highlight">
+                    <strong>ROI:</strong> Инвестиция $250/месяц окупилась за 3 недели. Экономия $1,500+/месяц =
+                    <strong>$18,000/год чистой прибыли!</strong>
+                </div>
+            </div>
+        </div>
+
+        <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio5', 'quiz-5')">
+            🎧 Я закончил слушать этот блок
+        </button>
+
+        <div class="quick-check-block locked" id="quiz-5" data-quiz-id="quiz-11-5" data-correct-answer="c">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">✅</span>
+                <h3 class="quick-check-title">Быстрая проверка</h3>
+            </div>
+            <div class="quick-check-content">
+                <p class="quiz-question"><strong>Вопрос:</strong> Что делать если брокер не платит 45+ дней?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" data-answer="a">
+                        <span class="option-letter">A</span>
+                        <span class="option-text">Забыть и двигаться дальше</span>
+                    </div>
+                    <div class="quiz-option" data-answer="b">
+                        <span class="option-letter">B</span>
+                        <span class="option-text">Ждать еще 30 дней</span>
+                    </div>
+                    <div class="quiz-option" data-answer="c">
+                        <span class="option-letter">C</span>
+                        <span class="option-text">Escalate: manager → TIA complaint → collections</span>
+                    </div>
+                    <div class="quiz-option" data-answer="d">
+                        <span class="option-letter">D</span>
+                        <span class="option-text">Согласиться на меньшую сумму</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback">
+                    <strong>Правильно! ✓</strong> При 45+ дней overdue нужно escalate: звонить manager, подавать TIA
+                    complaint, угрожать negative review. Persistence + escalation = результат!
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="lesson-nav">
+            <a href="doc-module-10-complete.html" class="nav-btn">
+                <span>←</span>
+                <span>Предыдущий модуль</span>
+            </a>
+            <div class="progress-info">
+                <div>Модуль 11 из 12</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 92%;"></div>
+                </div>
+                <div>92% завершено</div>
+            </div>
+            <a href="doc-module-12-complete.html" class="nav-btn">
+                <span>Следующий модуль</span>
+                <span>→</span>
+            </a>
+        </div>
+    </main>
+
+    <script>
+        // Audio Management
+        const audioFiles = {
+            'audio1': '../audio/module-11-sector-1.mp3',
+            'audio2': '../audio/module-11-sector-2.mp3',
+            'audio3': '../audio/module-11-sector-3.mp3',
+            'audio4': '../audio/module-11-sector-4.mp3',
+            'audio5': '../audio/module-11-sector-5.mp3'
+        };
+
+        let currentAudio = null;
+        let currentAudioId = null;
+
+        function toggleAudio(button, audioId) {
+            const container = button.closest('.audio-container');
+
+            if (currentAudio && currentAudioId === audioId) {
+                if (currentAudio.paused) {
+                    currentAudio.play();
+                    button.classList.add('playing');
+                    container.classList.add('playing');
+                } else {
+                    currentAudio.pause();
+                    button.classList.remove('playing');
+                    container.classList.remove('playing');
+                }
+            } else {
+                if (currentAudio) {
+                    currentAudio.pause();
+                    const oldButton = document.querySelector('.audio-btn.playing');
+                    const oldContainer = oldButton?.closest('.audio-container');
+                    if (oldButton) oldButton.classList.remove('playing');
+                    if (oldContainer) oldContainer.classList.remove('playing');
+                }
+
+                alert(`Воспроизведение: ${audioFiles[audioId]}\n\nВ продакшене здесь будет реальный аудио-плеер с прогресс-кольцом.`);
+
+                currentAudio = new Audio(audioFiles[audioId]);
+                currentAudioId = audioId;
+
+                currentAudio.addEventListener('loadedmetadata', () => {
+                    updateDuration(container, currentAudio.duration);
+                });
+
+                currentAudio.addEventListener('timeupdate', () => {
+                    updateProgress(container, currentAudio.currentTime, currentAudio.duration);
+                });
+
+                currentAudio.addEventListener('ended', () => {
+                    button.classList.remove('playing');
+                    container.classList.remove('playing');
+                    resetProgress(container);
+                });
+
+                currentAudio.play();
+                button.classList.add('playing');
+                container.classList.add('playing');
+            }
+        }
+
+        function updateDuration(container, duration) {
+            const durationEl = container.querySelector('.audio-duration');
+            const minutes = Math.floor(duration / 60);
+            const seconds = Math.floor(duration % 60);
+            durationEl.textContent = `0:00 / ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function updateProgress(container, currentTime, duration) {
+            const progress = (currentTime / duration) * 100;
+            const circumference = 201.06;
+            const offset = circumference - (progress / 100) * circumference;
+
+            const progressRing = container.querySelector('.progress-ring-fill');
+            if (progressRing) {
+                progressRing.style.strokeDashoffset = offset;
+            }
+
+            const mobileBar = container.querySelector('.mobile-progress-fill');
+            if (mobileBar) {
+                mobileBar.style.width = `${progress}%`;
+            }
+
+            const durationEl = container.querySelector('.audio-duration');
+            const currentMinutes = Math.floor(currentTime / 60);
+            const currentSeconds = Math.floor(currentTime % 60);
+            const totalMinutes = Math.floor(duration / 60);
+            const totalSeconds = Math.floor(duration % 60);
+            durationEl.textContent = `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')} / ${totalMinutes}:${totalSeconds.toString().padStart(2, '0')}`;
+        }
+
+        function resetProgress(container) {
+            const progressRing = container.querySelector('.progress-ring-fill');
+            if (progressRing) {
+                progressRing.style.strokeDashoffset = 201.06;
+            }
+
+            const mobileBar = container.querySelector('.mobile-progress-fill');
+            if (mobileBar) {
+                mobileBar.style.width = '0%';
+            }
+        }
+
+        function seekAudio(event, audioId) {
+            if (!currentAudio || currentAudioId !== audioId) return;
+
+            const ring = event.currentTarget;
+            const rect = ring.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const angle = Math.atan2(event.clientY - centerY, event.clientX - centerX);
+            let degrees = angle * (180 / Math.PI) + 90;
+            if (degrees < 0) degrees += 360;
+
+            const progress = degrees / 360;
+            currentAudio.currentTime = progress * currentAudio.duration;
+        }
+
+        function seekAudioMobile(event, audioId) {
+            if (!currentAudio || currentAudioId !== audioId) return;
+
+            const bar = event.currentTarget;
+            const rect = bar.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const progress = clickX / rect.width;
+
+            currentAudio.currentTime = progress * currentAudio.duration;
+        }
+
+        // Audio Completion - Unlock Quiz
+        function markAudioComplete(button, audioId, quizId) {
+            // Mark button as completed
+            button.classList.add('completed');
+            button.textContent = '✅ Аудио прослушано';
+            button.disabled = true;
+
+            // Unlock quiz with animation
+            const quizBlock = document.getElementById(quizId);
+            if (quizBlock) {
+                // Remove locked class
+                quizBlock.classList.remove('locked');
+
+                // Ensure quiz is visible and interactive
+                quizBlock.style.opacity = '1';
+                quizBlock.style.pointerEvents = 'auto';
+
+                // Add unlock animation
+                quizBlock.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    quizBlock.style.transform = 'scale(1)';
+                }, 100);
+
+                // Scroll to quiz smoothly
+                setTimeout(() => {
+                    quizBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 200);
+            }
+        }
+
+        // Quiz Management - New approach with data-answer
+        document.addEventListener('DOMContentLoaded', () => {
+            const quizBlocks = document.querySelectorAll('.quick-check-block');
+
+            quizBlocks.forEach(quizBlock => {
+                const options = quizBlock.querySelectorAll('.quiz-option');
+                const correctAnswer = quizBlock.dataset.correctAnswer;
+                const feedback = quizBlock.querySelector('.quiz-feedback');
+
+                options.forEach(option => {
+                    option.addEventListener('click', () => {
+                        // Prevent multiple clicks
+                        if (quizBlock.classList.contains('answered')) return;
+                        if (quizBlock.classList.contains('locked')) return;
+
+                        quizBlock.classList.add('answered');
+
+                        const userAnswer = option.dataset.answer;
+                        const isCorrect = userAnswer === correctAnswer;
+
+                        // Disable all options
+                        options.forEach(opt => {
+                            opt.style.pointerEvents = 'none';
+                        });
+
+                        // Mark selected option
+                        if (isCorrect) {
+                            option.classList.add('correct');
+                        } else {
+                            option.classList.add('incorrect');
+                            // Show correct answer
+                            options.forEach(opt => {
+                                if (opt.dataset.answer === correctAnswer) {
+                                    opt.classList.add('correct');
+                                }
+                            });
+                        }
+
+                        // Show feedback
+                        if (feedback) {
+                            feedback.classList.add('show');
+                        }
+                    });
+                });
+            });
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.content-block').forEach(block => {
+            block.style.opacity = '0';
+            block.style.transform = 'translateY(20px)';
+            block.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(block);
+        });
+    </script>
+</body>
+
+</html>
