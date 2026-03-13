@@ -1,1 +1,3090 @@
-﻿<!DOCTYPE html><html lang='ru'><head><meta charset='UTF-8'><title>Модуль 3: Типы оборудования и грузов</title></head><body><h1>Модуль 3: Типы оборудования и грузов</h1><p>В разработке</p><a href='modules-index.html'>Назад</a></body></html>
+﻿<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль 3: Типы оборудования и грузов | DispatcherPro</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="stylesheet" href="../interactive-modules.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #f093fb;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary: #b8c5d6;
+            --text-muted: #8892aa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.1);
+            --audio-primary: #ff6b6b;
+            --audio-secondary: #4ecdc4;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 0;
+            background: rgba(7, 11, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            min-height: 80px;
+        }
+
+        /* Добавляем отступ для body чтобы контент не перекрывался навигацией */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
+            padding-top: 100px;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1), transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(240, 147, 251, 0.1), transparent 50%);
+            animation: none;
+            z-index: -1;
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateX(-3px);
+        }
+
+        .module-info {
+            text-align: center;
+        }
+
+        .module-number {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .module-title {
+            font-size: 18px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Content Blocks */
+        .content-block {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            gap: 20px;
+        }
+
+        .block-title {
+            flex: 1;
+            font-size: 1.8rem;
+            color: var(--primary);
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        /* Audio Play Button with Progress Ring */
+        .audio-container {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .audio-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--audio-primary), var(--audio-secondary));
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .audio-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.5);
+        }
+
+        .audio-btn:active {
+            transform: scale(0.95);
+        }
+
+        .audio-btn .play-icon {
+            font-size: 24px;
+            color: white;
+            margin-left: 3px;
+        }
+
+        .audio-btn .pause-icon {
+            font-size: 20px;
+            color: white;
+            display: none;
+        }
+
+        .audio-btn.playing .play-icon {
+            display: none;
+        }
+
+        .audio-btn.playing .pause-icon {
+            display: block;
+        }
+
+        .audio-btn.playing {
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.7), 0 0 0 10px rgba(255, 107, 107, 0.1);
+            }
+
+            100% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+        }
+
+        /* Progress Ring */
+        .progress-ring {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            transform: rotate(-90deg);
+            z-index: 1;
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 5;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: var(--audio-primary);
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-dasharray: 201.06;
+            stroke-dashoffset: 201.06;
+            transition: stroke-dashoffset 0.1s ease;
+            filter: drop-shadow(0 0 4px rgba(255, 107, 107, 0.5));
+        }
+
+        /* Interactive Progress Ring */
+        .progress-ring-interactive {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            cursor: pointer;
+            z-index: 5;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        .progress-ring-interactive.seekable {
+            pointer-events: auto;
+            background: radial-gradient(circle, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.01) 60%, rgba(255, 255, 255, 0.01) 100%);
+        }
+
+        @media (max-width: 768px) {
+            .progress-ring-interactive {
+                pointer-events: none !important;
+                cursor: default !important;
+            }
+
+            .progress-ring-interactive.seekable {
+                pointer-events: none !important;
+                cursor: default !important;
+                background: none;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .progress-ring-interactive:hover .progress-ring-fill {
+                stroke-width: 7;
+                filter: drop-shadow(0 0 8px rgba(255, 107, 107, 0.8));
+            }
+        }
+
+        .progress-ring-interactive:hover+.audio-btn+.progress-ring-interactive+.audio-duration {
+            opacity: 1;
+        }
+
+        /* Audio Duration Display */
+        .audio-duration {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .audio-container:hover .audio-duration,
+        .audio-container.playing .audio-duration {
+            opacity: 1;
+        }
+
+        /* Mobile Progress Bar */
+        .mobile-progress-bar {
+            display: none;
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .mobile-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--audio-primary), var(--audio-secondary));
+            border-radius: 2px;
+            transition: width 0.1s ease;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-progress-bar {
+                display: block;
+            }
+
+            .audio-container.playing .mobile-progress-bar {
+                display: block;
+            }
+
+            .progress-ring,
+            .progress-ring-interactive {
+                display: none !important;
+            }
+
+            .audio-duration {
+                bottom: -50px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-progress-bar {
+                display: none !important;
+            }
+        }
+
+        /* Content */
+        .block-content {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        /* Learning Section - объединяет аудио + кейс + тест */
+        .learning-section {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            border-radius: 24px;
+            padding: 0;
+            margin-bottom: 60px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .learning-section:hover {
+            border-color: rgba(102, 126, 234, 0.5);
+            box-shadow: 0 15px 50px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .learning-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+            border-radius: 24px 24px 0 0;
+        }
+
+        .learning-section .content-block {
+            margin-bottom: 0;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 40px 35px 30px 35px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .learning-section .content-block::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 35px;
+            right: 35px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.3), transparent);
+        }
+
+        .learning-section .case-study-block {
+            margin-bottom: 0;
+            background: rgba(240, 147, 251, 0.05);
+            border: none;
+            border-radius: 0;
+            padding: 30px 35px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .learning-section .case-study-block::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 35px;
+            right: 35px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(240, 147, 251, 0.3), transparent);
+        }
+
+        .learning-section .case-study-block::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 35px;
+            right: 35px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(240, 147, 251, 0.3), transparent);
+        }
+
+        .learning-section .quick-check-block {
+            margin-bottom: 0;
+            background: rgba(16, 185, 129, 0.05);
+            border: none;
+            border-radius: 0 0 24px 24px;
+            padding: 30px 35px 40px 35px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .learning-section .quick-check-block::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 35px;
+            right: 35px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.3), transparent);
+        }
+
+        /* Section Number Badge */
+        .learning-section .section-badge {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            z-index: 10;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Large Background Text */
+        .learning-section::after {
+            content: attr(data-section-text);
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 120px;
+            font-weight: 900;
+            color: rgba(99, 102, 241, 0.05);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 10;
+            user-select: none;
+            line-height: 1;
+        }
+
+        @media (max-width: 768px) {
+            .learning-section {
+                padding: 0;
+                margin-bottom: 40px;
+                border-radius: 20px;
+            }
+
+            .learning-section::after {
+                font-size: 36px !important;
+                top: 15px;
+                right: 20px;
+            }
+
+            .learning-section .content-block {
+                padding: 30px 20px 25px 20px;
+            }
+
+            .learning-section .content-block::after {
+                left: 20px;
+                right: 20px;
+            }
+
+            .learning-section .case-study-block {
+                padding: 25px 20px;
+            }
+
+            .learning-section .case-study-block::before,
+            .learning-section .case-study-block::after {
+                left: 20px;
+                right: 20px;
+            }
+
+            .learning-section .quick-check-block {
+                padding: 25px 20px 30px 20px;
+                border-radius: 0 0 20px 20px;
+            }
+
+            .learning-section .quick-check-block::before {
+                left: 20px;
+                right: 20px;
+            }
+
+            .learning-section .section-badge {
+                top: 15px;
+                right: 20px;
+                padding: 6px 12px;
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .learning-section {
+                margin-bottom: 30px;
+                border-radius: 16px;
+            }
+
+            .learning-section .content-block {
+                padding: 25px 15px 20px 15px;
+            }
+
+            .learning-section .content-block::after {
+                left: 15px;
+                right: 15px;
+            }
+
+            .learning-section .case-study-block {
+                padding: 20px 15px;
+            }
+
+            .learning-section .case-study-block::before,
+            .learning-section .case-study-block::after {
+                left: 15px;
+                right: 15px;
+            }
+
+            .learning-section .quick-check-block {
+                padding: 20px 15px 25px 15px;
+                border-radius: 0 0 16px 16px;
+            }
+
+            .learning-section .quick-check-block::before {
+                left: 15px;
+                right: 15px;
+            }
+
+            .learning-section .section-badge {
+                top: 12px;
+                right: 15px;
+                padding: 5px 10px;
+                font-size: 10px;
+            }
+        }
+
+        .block-content h3 {
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            margin: 25px 0 15px 0;
+        }
+
+        .block-content h4 {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            margin: 20px 0 10px 0;
+        }
+
+        .block-content ul,
+        .block-content ol {
+            margin: 15px 0 15px 25px;
+        }
+
+        .block-content li {
+            margin-bottom: 8px;
+        }
+
+        .block-content strong {
+            color: var(--text-primary);
+        }
+
+        /* Navigation */
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .nav-btn.disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .nav-btn.disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .progress-info {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 10px auto;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            color: var(--text-primary);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: var(--warning);
+            color: var(--text-primary);
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+            color: var(--text-primary);
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 25px 0;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        th,
+        td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        td {
+            color: var(--text-secondary);
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Mobile Responsive - Complete Coverage */
+        @media (max-width: 1200px) {
+            .nav {
+                padding: 0 15px;
+            }
+
+            .main {
+                max-width: 100%;
+                padding: 30px 15px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 90px;
+            }
+
+            .header {
+                padding: 15px 0;
+                min-height: 70px;
+            }
+
+            .nav {
+                padding: 0 15px;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .back-btn {
+                padding: 10px 16px;
+                font-size: 14px;
+                order: 1;
+                flex: 1;
+                min-width: 150px;
+            }
+
+            .module-info {
+                order: 2;
+                width: 100%;
+                margin-top: 10px;
+            }
+
+            .module-title {
+                font-size: 16px;
+            }
+
+            .module-number {
+                font-size: 12px;
+            }
+
+            .main {
+                padding: 20px 15px;
+            }
+
+            .content-block {
+                padding: 20px 15px;
+                margin-bottom: 20px;
+                border-radius: 12px;
+            }
+
+            .block-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                margin-bottom: 20px;
+            }
+
+            .block-title {
+                font-size: 1.4rem;
+                margin-bottom: 0;
+                line-height: 1.3;
+                width: 100%;
+            }
+
+            .audio-btn {
+                width: 70px;
+                height: 70px;
+                align-self: center;
+                margin: 0 auto;
+            }
+
+            .audio-container {
+                width: 70px;
+                height: 70px;
+                align-self: center;
+                margin: 0 auto;
+            }
+
+            .progress-ring {
+                width: 80px;
+                height: 80px;
+                top: -5px;
+                left: -5px;
+            }
+
+            .progress-ring-interactive {
+                width: 80px;
+                height: 80px;
+                top: -5px;
+                left: -5px;
+            }
+
+            .audio-btn .play-icon {
+                font-size: 28px;
+            }
+
+            .audio-btn .pause-icon {
+                font-size: 24px;
+            }
+
+            .block-content {
+                font-size: 15px;
+                line-height: 1.6;
+            }
+
+            .block-content h3 {
+                font-size: 1.2rem;
+                margin: 20px 0 12px 0;
+            }
+
+            .block-content h4 {
+                font-size: 1rem;
+                margin: 15px 0 8px 0;
+            }
+
+            .lesson-nav {
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px 15px;
+                margin-top: 30px;
+            }
+
+            .nav-btn {
+                width: 100%;
+                min-width: auto;
+                padding: 15px 20px;
+                font-size: 15px;
+            }
+
+            .progress-bar {
+                width: 100%;
+                max-width: 250px;
+            }
+
+            .progress-info {
+                order: 2;
+            }
+
+            .table-container {
+                font-size: 14px;
+                margin: 20px -15px;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+            }
+
+            th,
+            td {
+                padding: 12px 8px;
+                font-size: 13px;
+            }
+
+            .alert {
+                padding: 15px;
+                margin: 15px -15px;
+                border-radius: 0;
+                border-left: 4px solid;
+                border-right: none;
+                border-top: none;
+                border-bottom: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding-top: 80px;
+            }
+
+            .header {
+                padding: 15px 0;
+                min-height: 60px;
+            }
+
+            .nav {
+                padding: 0 10px;
+            }
+
+            .back-btn {
+                padding: 8px 12px;
+                font-size: 13px;
+                gap: 6px;
+            }
+
+            .module-title {
+                font-size: 14px;
+            }
+
+            .module-number {
+                font-size: 11px;
+            }
+
+            .main {
+                padding: 15px 10px;
+            }
+
+            .content-block {
+                padding: 15px 10px;
+                margin-bottom: 15px;
+            }
+
+            .block-title {
+                font-size: 1.2rem;
+                line-height: 1.2;
+            }
+
+            .audio-btn {
+                width: 80px;
+                height: 80px;
+            }
+
+            .audio-container {
+                width: 80px;
+                height: 80px;
+            }
+
+            .progress-ring {
+                width: 90px;
+                height: 90px;
+                top: -5px;
+                left: -5px;
+            }
+
+            .progress-ring-interactive {
+                width: 90px;
+                height: 90px;
+                top: -5px;
+                left: -5px;
+            }
+
+            .audio-btn .play-icon {
+                font-size: 32px;
+            }
+
+            .audio-btn .pause-icon {
+                font-size: 28px;
+            }
+
+            .block-content {
+                font-size: 14px;
+            }
+
+            .block-content h3 {
+                font-size: 1.1rem;
+            }
+
+            .block-content h4 {
+                font-size: 0.95rem;
+            }
+
+            .nav-btn {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+
+            .lesson-nav {
+                padding: 15px 10px;
+            }
+
+            .table-container {
+                margin: 15px -10px;
+            }
+
+            th,
+            td {
+                padding: 10px 6px;
+                font-size: 12px;
+            }
+
+            .alert {
+                padding: 12px;
+                margin: 15px -10px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            body {
+                padding-top: 70px;
+            }
+
+            .header {
+                padding: 12px 0;
+                min-height: 55px;
+            }
+
+            .nav {
+                padding: 0 8px;
+            }
+
+            .back-btn {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+
+            .main {
+                padding: 12px 8px;
+            }
+
+            .content-block {
+                padding: 12px 8px;
+            }
+
+            .block-title {
+                font-size: 1.1rem;
+            }
+
+            .audio-btn {
+                width: 75px;
+                height: 75px;
+            }
+
+            .audio-container {
+                width: 75px;
+                height: 75px;
+            }
+
+            .progress-ring {
+                width: 85px;
+                height: 85px;
+                top: -5px;
+                left: -5px;
+            }
+
+            .progress-ring-interactive {
+                width: 85px;
+                height: 85px;
+                top: -5px;
+                left: -5px;
+            }
+
+            .audio-btn .play-icon {
+                font-size: 30px;
+            }
+
+            .audio-btn .pause-icon {
+                font-size: 26px;
+            }
+
+            .block-content {
+                font-size: 13px;
+            }
+
+            .nav-btn {
+                padding: 10px 14px;
+                font-size: 13px;
+            }
+
+            .lesson-nav {
+                padding: 12px 8px;
+            }
+
+            .table-container {
+                margin: 12px -8px;
+            }
+
+            th,
+            td {
+                padding: 8px 4px;
+                font-size: 11px;
+            }
+
+            .alert {
+                padding: 10px;
+                margin: 12px -8px;
+                font-size: 13px;
+            }
+        }
+
+        /* Large screens optimization */
+        @media (min-width: 1400px) {
+            .main {
+                max-width: 1000px;
+            }
+
+            .content-block {
+                padding: 35px;
+            }
+
+            .block-title {
+                font-size: 2rem;
+            }
+
+            .block-content {
+                font-size: 17px;
+            }
+        }
+
+        /* Ultra-wide screens */
+        @media (min-width: 1920px) {
+            .main {
+                max-width: 1200px;
+            }
+
+            .content-block {
+                padding: 40px;
+            }
+        }
+
+        /* Navigation Styles */
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 999;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 0;
+            transition: all 0.3s ease;
+        }
+
+        .nav-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: translateY(-2px);
+        }
+
+        .logo-icon {
+            font-size: 16px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: clamp(11px, 1.1vw, 14px);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .nav-link.active {
+            color: var(--primary);
+        }
+
+        .nav-link.active::after {
+            width: 100%;
+        }
+
+        /* Dropdown Navigation */
+        .nav-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .nav-dropdown .nav-link {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-dropdown .nav-link::before {
+            content: '▼';
+            font-size: 8px;
+            transition: transform 0.3s ease;
+            margin-left: 4px;
+        }
+
+        .nav-dropdown .nav-link::after {
+            display: none;
+        }
+
+        .nav-dropdown:hover .nav-link::before {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 200px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 8px;
+            margin-top: 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            z-index: 1000;
+        }
+
+        .nav-dropdown:hover .dropdown-content {
+            display: flex;
+            flex-direction: column;
+            animation: fadeInDown 0.3s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-content a {
+            display: block;
+            padding: 10px 14px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .dropdown-content a:hover {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--text-primary);
+            transform: translateX(2px);
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-login {
+            padding: 6px 16px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .btn-login:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-signup {
+            padding: 6px 16px;
+            text-decoration: none;
+            color: white;
+            font-weight: 500;
+            font-size: 12px;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .btn-signup:hover {
+            background: rgba(99, 102, 241, 0.25);
+            border-color: rgba(99, 102, 241, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .mobile-menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 10px 19px;
+            z-index: 1001;
+            transition: all 0.3s ease;
+            margin-right: 0;
+        }
+
+        .mobile-menu-toggle:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .mobile-menu-toggle span {
+            width: 38px;
+            height: 2px;
+            background: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .mobile-menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -6px);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 85%;
+            max-width: 380px;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 100px 20px 32px;
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .mobile-menu.active {
+            right: 0;
+        }
+
+        .mobile-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+
+        .mobile-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .mobile-nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin-bottom: 32px;
+            width: 100%;
+        }
+
+        .mobile-nav-links .nav-link {
+            padding: 14px 16px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-size: 15px;
+        }
+
+        .mobile-nav-links .nav-link:hover {
+            background: rgba(99, 102, 241, 0.15);
+            transform: translateX(4px);
+        }
+
+        .mobile-nav-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .mobile-menu-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 20px 0;
+        }
+
+        .mobile-nav-section {
+            margin: 0;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 0;
+            padding: 12px 0;
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            width: 100%;
+        }
+
+        .mobile-section-title {
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 4px;
+        }
+
+        .nav-link-sub {
+            padding: 10px 16px 10px 36px !important;
+            font-size: 14px;
+            color: var(--text-muted) !important;
+        }
+
+        /* Mobile Navigation Responsive */
+        @media (max-width: 1024px) {
+            .nav-links {
+                display: none;
+            }
+
+            .mobile-menu-toggle {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-content {
+                gap: 12px;
+            }
+
+            .navbar {
+                padding: 12px 0;
+            }
+
+            .nav-actions {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-content {
+                padding: 0 16px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .nav-content {
+                gap: 8px;
+                padding: 0 12px;
+            }
+        }
+    </style>
+</head>
+
+<body data-module-id="module-3">
+    <!-- Header -->
+    <header class="header">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-content">
+                    <a href="../index.html" class="logo">
+                        <span class="logo-icon">🎓</span>
+                        <span class="logo-text">Курсы Диспетчера</span>
+                    </a>
+
+                    <div class="nav-links">
+                        <a href="../index.html" class="nav-link" data-short="Главная">Главная</a>
+
+                        <div class="nav-dropdown">
+                            <a href="../courses.html" class="nav-link" data-short="Курсы">Курсы</a>
+                            <div class="dropdown-content">
+                                <a href="../course.html">Обзор курса</a>
+                                <a href="modules-index.html">12 Модулей обучения</a>
+                                <a href="simulator.html">Симулятор переговоров</a>
+                                <a href="calls.html">Примеры звонков</a>
+                                <a href="cases.html">Практические кейсы</a>
+                                <a href="testing.html">Тестирование</a>
+                            </div>
+                        </div>
+
+                        <div class="nav-dropdown">
+                            <span class="nav-link" data-short="Инстр.">Инструменты</span>
+                            <div class="dropdown-content">
+                                <a href="loadboard.html">Load Board</a>
+                                <a href="load-finder.html">Load Finder</a>
+                                <a href="dispatcher-cards.html">Dispatcher Cards</a>
+                                <a href="simulator.html">Dispatch Simulator</a>
+                            </div>
+                        </div>
+
+                        <div class="nav-dropdown">
+                            <span class="nav-link" data-short="Инфо">Информация</span>
+                            <div class="dropdown-content">
+                                <a href="../about.html">О нас</a>
+                                <a href="../career.html">Карьера</a>
+                                <a href="../faq.html">FAQ</a>
+                                <a href="../help.html">Помощь</a>
+                                <a href="../contacts.html">Контакты</a>
+                            </div>
+                        </div>
+
+                        <a href="modules-index.html" class="nav-link active" data-short="Докум.">Документация</a>
+                        <a href="../pricing.html" class="nav-link" data-short="Тарифы">Тарифы</a>
+                        <a href="../dashboard.html" class="nav-link" id="dashboardLink" style="display: none;"
+                            data-short="Кабинет">Личный кабинет</a>
+                    </div>
+
+                    <div class="nav-actions">
+                        <a href="../login.html" class="btn-login">Войти</a>
+                        <a href="../register.html" class="btn-signup">Регистрация</a>
+                    </div>
+
+                    <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Mobile Menu Overlay -->
+        <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+
+        <!-- Mobile Menu -->
+        <div class="mobile-menu" id="mobileMenu">
+            <div class="mobile-nav-links">
+                <div class="mobile-nav-actions">
+                    <a href="../login.html" class="btn-login">Войти</a>
+                    <a href="../register.html" class="btn-signup">Регистрация</a>
+                </div>
+
+                <div class="mobile-menu-divider"></div>
+
+                <a href="../index.html" class="nav-link">🏠 Главная</a>
+
+                <div class="mobile-nav-section">
+                    <div class="mobile-section-title">📚 КУРСЫ</div>
+                    <a href="../courses.html" class="nav-link nav-link-sub">Все курсы</a>
+                    <a href="../course.html" class="nav-link nav-link-sub">Обзор курса</a>
+                    <a href="modules-index.html" class="nav-link nav-link-sub">12 Модулей обучения</a>
+                    <a href="simulator.html" class="nav-link nav-link-sub">Симулятор переговоров</a>
+                    <a href="calls.html" class="nav-link nav-link-sub">Примеры звонков</a>
+                    <a href="cases.html" class="nav-link nav-link-sub">Практические кейсы</a>
+                    <a href="testing.html" class="nav-link nav-link-sub">Тестирование</a>
+                </div>
+
+                <div class="mobile-nav-section">
+                    <div class="mobile-section-title">🛠️ ИНСТРУМЕНТЫ</div>
+                    <a href="loadboard.html" class="nav-link nav-link-sub">Load Board</a>
+                    <a href="load-finder.html" class="nav-link nav-link-sub">Load Finder</a>
+                    <a href="dispatcher-cards.html" class="nav-link nav-link-sub">Dispatcher Cards</a>
+                    <a href="simulator.html" class="nav-link nav-link-sub">Dispatch Simulator</a>
+                </div>
+
+                <div class="mobile-nav-section">
+                    <div class="mobile-section-title">ℹ️ ИНФОРМАЦИЯ</div>
+                    <a href="../about.html" class="nav-link nav-link-sub">О нас</a>
+                    <a href="../career.html" class="nav-link nav-link-sub">Карьера</a>
+                    <a href="../faq.html" class="nav-link nav-link-sub">FAQ</a>
+                    <a href="../help.html" class="nav-link nav-link-sub">Помощь</a>
+                    <a href="../contacts.html" class="nav-link nav-link-sub">Контакты</a>
+                </div>
+
+                <a href="modules-index.html" class="nav-link active">📄 Документация</a>
+                <a href="../pricing.html" class="nav-link">💰 Тарифы</a>
+                <a href="../dashboard.html" class="nav-link" id="dashboardLinkMobile" style="display: none;">👤 Личный
+                    кабинет</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+
+        <!-- Section 1: Dry Van - Complete Learning Block -->
+        <div class="learning-section" data-section-text="СЕК. 1-5">
+            <!-- Audio Content Block -->
+            <div class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🚛 Dry Van - Сухой фургон</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio1')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio1')"></div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio1')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <p>Dry Van — самый распространенный тип прицепа в США. Это закрытый фургон для перевозки грузов, не
+                        требующих температурного контроля. <a href="documentation.html#dry-van" target="_blank"
+                            style="color: var(--primary); text-decoration: underline;">📚 Подробнее о Dry Van</a></p>
+
+                    <h3>Характеристики Dry Van:</h3>
+                    <ul>
+                        <li><strong>Длина:</strong> 53 фута (16.15 м) — стандарт, также 48 футов</li>
+                        <li><strong>Ширина:</strong> 8.5 футов (2.59 м)</li>
+                        <li><strong>Высота:</strong> 13.5 футов (4.11 м)</li>
+                        <li><strong>Грузоподъемность:</strong> до 45,000 lbs (20,400 кг)</li>
+                        <li><strong>Объем:</strong> около 3,800 кубических футов</li>
+                    </ul>
+
+                    <h3>Типичные грузы для Dry Van:</h3>
+                    <ul>
+                        <li>📦 Упакованные товары (коробки, паллеты)</li>
+                        <li>🛋️ Мебель и бытовая техника</li>
+                        <li>👕 Одежда и текстиль</li>
+                        <li>📱 Электроника (не требующая температурного режима)</li>
+                        <li>🏭 Промышленные товары</li>
+                        <li>📚 Бумага, книги, документы</li>
+                    </ul>
+
+                    <h3>Преимущества работы с Dry Van:</h3>
+                    <ul>
+                        <li>✅ Самый большой выбор грузов на load boards</li>
+                        <li>✅ Стабильные ставки круглый год</li>
+                        <li>✅ Простая загрузка/разгрузка</li>
+                        <li>✅ Защита груза от погодных условий</li>
+                        <li>✅ Не требует специального оборудования</li>
+                    </ul>
+
+                    <h3>Недостатки:</h3>
+                    <ul>
+                        <li>❌ Высокая конкуренция среди перевозчиков</li>
+                        <li>❌ Ниже ставки по сравнению со специализированными прицепами</li>
+                        <li>❌ Сезонные колебания спроса</li>
+                    </ul>
+
+                    <div class="alert alert-info">
+                        <strong>💡 Совет диспетчера:</strong> Dry Van грузы составляют около 70% всех грузоперевозок в
+                        США.
+                        Это отличный старт для новых диспетчеров, так как легко найти грузы и набраться опыта. <a
+                            href="documentation.html#getting-started" target="_blank"
+                            style="color: var(--primary); text-decoration: underline;">📚 Руководство для начинающих</a>
+                    </div>
+
+                    <h3>Средние ставки Dry Van (2024):</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Маршрут</th>
+                                    <th>Расстояние</th>
+                                    <th>Средняя ставка</th>
+                                    <th>$/миля</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Chicago → Dallas</td>
+                                    <td>1,000 миль</td>
+                                    <td>$2,200 - $2,500</td>
+                                    <td>$2.20 - $2.50</td>
+                                </tr>
+                                <tr>
+                                    <td>LA → Phoenix</td>
+                                    <td>370 миль</td>
+                                    <td>$800 - $1,000</td>
+                                    <td>$2.16 - $2.70</td>
+                                </tr>
+                                <tr>
+                                    <td>Atlanta → Miami</td>
+                                    <td>660 миль</td>
+                                    <td>$1,400 - $1,650</td>
+                                    <td>$2.12 - $2.50</td>
+                                </tr>
+                                <tr>
+                                    <td>NYC → Chicago</td>
+                                    <td>790 миль</td>
+                                    <td>$1,800 - $2,100</td>
+                                    <td>$2.28 - $2.66</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Case Study 1: Choosing Equipment Type -->
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Реальный кейс: Выбор типа оборудования</h3>
+                </div>
+                <div class="case-study-content">
+                    <p>
+                        <strong>Ситуация:</strong> Вы только что открыли свою компанию грузоперевозок. У вас есть
+                        $50,000 на
+                        покупку первого прицепа.
+                        Вы живете в California и планируете возить грузы по всей стране.
+                    </p>
+                    <p>
+                        <strong>Варианты:</strong>
+                    </p>
+                    <ul>
+                        <li>Dry Van за $35,000 - много грузов, низкие ставки ($2.00-$2.50/миля)</li>
+                        <li>Reefer за $50,000 - меньше грузов, высокие ставки ($2.70-$3.20/миля)</li>
+                        <li>Flatbed за $40,000 - средне грузов, высокие ставки ($3.00-$3.50/миля)</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        💡 Вопрос: Какой тип оборудования выбрать для начала? Учитывайте бюджет, опыт водителя (новичок)
+                        и
+                        географию (California).
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Check 1: Dry Van vs Reefer -->
+            <div class="quick-check-block locked" id="quiz-1" data-quiz-id="quiz-3-1" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+
+                <div class="quick-check-question">
+                    Вы нашли два груза на одном маршруте Chicago → Dallas (1,000 миль). Dry Van за $2,200 и Reefer за
+                    $2,800. У вас есть оба типа прицепов. Какой груз выгоднее взять?
+                </div>
+
+                <div class="quick-check-options">
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-1" id="quiz-1-a" value="a">
+                        <label for="quiz-1-a">Dry Van за $2,200 - меньше расходов на топливо</label>
+                    </div>
+
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-1" id="quiz-1-b" value="b">
+                        <label for="quiz-1-b">Reefer за $2,800 - выше ставка покрывает расходы на рефрижератор</label>
+                    </div>
+
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-1" id="quiz-1-c" value="c">
+                        <label for="quiz-1-c">Оба одинаково выгодны</label>
+                    </div>
+                </div>
+
+                <div class="quick-check-feedback">
+                    <strong>Правильно! ✓</strong>
+                    Reefer за $2,800 выгоднее. Разница $600 покрывает дополнительные расходы на топливо для
+                    рефрижератора
+                    (~$100-150 на 1,000 миль) и дает больше прибыли. Reefer грузы всегда на 20-40% выше по ставке.
+                </div>
+
+                <!-- Unlock Message -->
+                <div class="quiz-unlock-message">
+                    <p>🔒 Для активации теста необходимо прослушать аудио-материал выше</p>
+                    <button class="audio-completion-trigger" data-unlocks="quiz-1">
+                        🎧 Я закончил(а) слушать
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Section 2: Reefer - Complete Learning Block -->
+        <div class="learning-section" data-section-text="СЕК. 2-5">
+            <!-- Block 2: Reefer -->
+            <div class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">❄️ Reefer - Рефрижератор</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio2')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio2')"></div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio2')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <p>Reefer (Refrigerated trailer) — прицеп с холодильной установкой для перевозки грузов, требующих
+                        контроля температуры. <a href="documentation.html#reefer" target="_blank"
+                            style="color: var(--primary); text-decoration: underline;">📚 Подробнее о Reefer</a></p>
+
+                    <h3>Характеристики Reefer:</h3>
+                    <ul>
+                        <li><strong>Длина:</strong> 53 фута (стандарт)</li>
+                        <li><strong>Температурный диапазон:</strong> от -20°F до +70°F (-29°C до +21°C)</li>
+                        <li><strong>Грузоподъемность:</strong> до 43,000 lbs (меньше чем Dry Van из-за веса холодильной
+                            установки)</li>
+                        <li><strong>Топливо:</strong> требует дополнительное топливо для работы рефрижератора (50-100
+                            галлонов в неделю)</li>
+                    </ul>
+
+                    <h3>Типичные грузы для Reefer:</h3>
+                    <ul>
+                        <li>🥩 Мясо и мясные продукты</li>
+                        <li>🥛 Молочные продукты</li>
+                        <li>🍎 Фрукты и овощи</li>
+                        <li>🍕 Замороженные продукты</li>
+                        <li>💊 Фармацевтика (требующая температурного контроля)</li>
+                        <li>🌸 Цветы и растения</li>
+                        <li>🍫 Шоколад и кондитерские изделия</li>
+                    </ul>
+
+                    <h3>Преимущества Reefer:</h3>
+                    <ul>
+                        <li>✅ Более высокие ставки (на 20-40% выше чем Dry Van)</li>
+                        <li>✅ Стабильный спрос круглый год</li>
+                        <li>✅ Меньше конкуренции (требуется специальное оборудование)</li>
+                        <li>✅ Можно возить и обычные грузы (работать как Dry Van)</li>
+                    </ul>
+
+                    <h3>Недостатки и особенности:</h3>
+                    <ul>
+                        <li>❌ Высокие расходы на топливо для рефрижератора</li>
+                        <li>❌ Дорогое обслуживание холодильной установки</li>
+                        <li>❌ Строгие требования к температурному режиму</li>
+                        <li>❌ Риск порчи груза при поломке рефрижератора</li>
+                        <li>❌ Более длительная загрузка/разгрузка</li>
+                    </ul>
+
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Важно для диспетчера:</strong> При работе с Reefer грузами всегда уточняйте:
+                        <ul style="margin-top: 10px;">
+                            <li>Требуемую температуру (точно!) <a href="documentation.html#temperature-control"
+                                    target="_blank" style="color: var(--primary); text-decoration: underline;">📚
+                                    Подробнее</a></li>
+                            <li>Кто оплачивает топливо для рефрижератора</li>
+                            <li>Есть ли pre-cooling требования <a href="documentation.html#pre-cooling" target="_blank"
+                                    style="color: var(--primary); text-decoration: underline;">📚 Подробнее</a></li>
+                            <li>Нужен ли continuous monitoring температуры</li>
+                        </ul>
+                    </div>
+
+                    <h3>Средние ставки Reefer (2024):</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Маршрут</th>
+                                    <th>Расстояние</th>
+                                    <th>Средняя ставка</th>
+                                    <th>$/миля</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>California → Texas</td>
+                                    <td>1,400 миль</td>
+                                    <td>$3,920 - $4,480</td>
+                                    <td>$2.80 - $3.20</td>
+                                </tr>
+                                <tr>
+                                    <td>Florida → NYC</td>
+                                    <td>1,280 миль</td>
+                                    <td>$3,456 - $3,840</td>
+                                    <td>$2.70 - $3.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Washington → Chicago</td>
+                                    <td>2,100 миль</td>
+                                    <td>$5,670 - $6,300</td>
+                                    <td>$2.70 - $3.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Georgia → Pennsylvania</td>
+                                    <td>850 миль</td>
+                                    <td>$2,380 - $2,720</td>
+                                    <td>$2.80 - $3.20</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3>Популярные маршруты для Reefer:</h3>
+                    <ul>
+                        <li>🌽 <strong>Midwest → East Coast:</strong> Мясо, молочные продукты</li>
+                        <li>🍊 <strong>Florida → Northeast:</strong> Фрукты, овощи, соки</li>
+                        <li>🍎 <strong>California → East:</strong> Фрукты, овощи, вино</li>
+                        <li>🥩 <strong>Texas → Everywhere:</strong> Мясо, птица</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Case Study 2: Reefer Temperature Crisis -->
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Реальный кейс: Кризис с температурой</h3>
+                </div>
+                <div class="case-study-content">
+                    <p>
+                        <strong>Ситуация:</strong> Ваш водитель везет Reefer груз с замороженным мясом из Texas в New
+                        York
+                        (1,800 миль).
+                        Температура должна быть -10°F. Через 800 миль водитель звонит: "Рефрижератор показывает -5°F, не
+                        могу опустить ниже!"
+                    </p>
+                    <p>
+                        Груз стоит $80,000. До места назначения еще 1,000 миль (15 часов езды). Ближайший сервис в 200
+                        милях.
+                    </p>
+                    <div class="case-study-highlight">
+                        💡 Вопрос: Что вы делаете? Продолжать ехать, остановиться на ремонт, или искать другое решение?
+                    </div>
+                    <p style="margin-top: 15px;">
+                        <strong>Правильное решение:</strong> Немедленно остановиться! Разница в 5°F критична для
+                        замороженного мяса.
+                        Если продолжить, мясо начнет размораживаться и испортится. Вы будете должны $80,000 + потеряете
+                        репутацию.
+                        Лучше потерять 3-4 часа на ремонт, чем весь груз.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Quick Check 2: Reefer Temperature -->
+            <div class="quick-check-block locked" id="quiz-2" data-quiz-id="quiz-3-2" data-correct-answer="c">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+
+                <div class="quick-check-question">
+                    Брокер предлагает Reefer груз с замороженными продуктами. Какая самая важная информация, которую вы
+                    должны уточнить ПЕРВОЙ?
+                </div>
+
+                <div class="quick-check-options">
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-2" id="quiz-2-a" value="a">
+                        <label for="quiz-2-a">Кто оплачивает топливо для рефрижератора</label>
+                    </div>
+
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-2" id="quiz-2-b" value="b">
+                        <label for="quiz-2-b">Есть ли detention pay</label>
+                    </div>
+
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-2" id="quiz-2-c" value="c">
+                        <label for="quiz-2-c">Требуемая температура (точное значение в градусах)</label>
+                    </div>
+                </div>
+
+                <div class="quick-check-feedback">
+                    <strong>Правильно! ✓</strong>
+                    Температура - критически важная информация! Замороженные продукты требуют -10°F до -20°F. Если ваш
+                    рефрижератор не может поддерживать нужную температуру, груз испортится и вы понесете огромные
+                    убытки.
+                    Всегда уточняйте точную температуру ПЕРВЫМ делом!
+                </div>
+
+                <!-- Unlock Message -->
+                <div class="quiz-unlock-message">
+                    <p>🔒 Для активации теста необходимо прослушать аудио-материал выше</p>
+                    <button class="audio-completion-trigger" data-unlocks="quiz-2">
+                        🎧 Я закончил(а) слушать
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: Flatbed - Complete Learning Block -->
+        <div class="learning-section" data-section-text="СЕК. 3-5">
+            <!-- Block 3: Flatbed -->
+            <div class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🏗️ Flatbed - Платформа</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio3')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio3')"></div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio3')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <p>Flatbed — открытая платформа без стен и крыши для перевозки негабаритных, тяжелых или
+                        нестандартных
+                        грузов. <a href="documentation.html#flatbed" target="_blank"
+                            style="color: var(--primary); text-decoration: underline;">📚 Подробнее о Flatbed</a></p>
+
+                    <h3>Характеристики Flatbed:</h3>
+                    <ul>
+                        <li><strong>Длина:</strong> 48-53 фута</li>
+                        <li><strong>Ширина:</strong> 8.5 футов</li>
+                        <li><strong>Грузоподъемность:</strong> до 48,000 lbs</li>
+                        <li><strong>Высота груза:</strong> до 8.5 футов (без специальных разрешений)</li>
+                    </ul>
+
+                    <h3>Типичные грузы для Flatbed:</h3>
+                    <ul>
+                        <li>🏗️ Строительные материалы (балки, трубы, панели)</li>
+                        <li>🚜 Сельскохозяйственная техника</li>
+                        <li>🏭 Промышленное оборудование</li>
+                        <li>🪵 Пиломатериалы, доски</li>
+                        <li>🚗 Автомобили и спецтехника</li>
+                        <li>⚙️ Металлоконструкции</li>
+                        <li>🏠 Модульные дома</li>
+                    </ul>
+
+                    <h3>Преимущества Flatbed:</h3>
+                    <ul>
+                        <li>✅ Высокие ставки (на 30-50% выше Dry Van)</li>
+                        <li>✅ Меньше конкуренции</li>
+                        <li>✅ Возможность перевозить негабаритные грузы</li>
+                        <li>✅ Быстрая загрузка краном сверху</li>
+                    </ul>
+
+                    <h3>Недостатки и требования:</h3>
+                    <ul>
+                        <li>❌ Требуется навык крепления груза (tarping, chains, straps)</li>
+                        <li>❌ Груз не защищен от погоды</li>
+                        <li>❌ Физически тяжелая работа для водителя</li>
+                        <li>❌ Дополнительное время на крепление/раскрепление</li>
+                        <li>❌ Нужны специальные инструменты (тарпы, цепи, стропы)</li>
+                    </ul>
+
+                    <div class="alert alert-info">
+                        <strong>💡 Важно знать:</strong> Flatbed грузы часто требуют:
+                        <ul style="margin-top: 10px;">
+                            <li><strong>Tarping</strong> — накрытие груза брезентом (оплачивается отдельно: $50-$150) <a
+                                    href="documentation.html#tarping" target="_blank"
+                                    style="color: var(--primary); text-decoration: underline;">📚 Подробнее</a>
+                            </li>
+                            <li><strong>Chains & Straps</strong> — правильное крепление груза <a
+                                    href="documentation.html#cargo-securement" target="_blank"
+                                    style="color: var(--primary); text-decoration: underline;">📚 Подробнее</a></li>
+                            <li><strong>Permits</strong> — разрешения для негабаритных грузов <a
+                                    href="documentation.html#oversize-permits" target="_blank"
+                                    style="color: var(--primary); text-decoration: underline;">📚 Подробнее</a></li>
+                            <li><strong>Escort vehicles</strong> — сопровождение для сверхгабаритных грузов</li>
+                        </ul>
+                    </div>
+
+                    <h3>Средние ставки Flatbed (2024):</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Маршрут</th>
+                                    <th>Расстояние</th>
+                                    <th>Средняя ставка</th>
+                                    <th>$/миля</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Texas → California</td>
+                                    <td>1,400 миль</td>
+                                    <td>$4,200 - $4,900</td>
+                                    <td>$3.00 - $3.50</td>
+                                </tr>
+                                <tr>
+                                    <td>Pennsylvania → Florida</td>
+                                    <td>1,100 миль</td>
+                                    <td>$3,300 - $3,850</td>
+                                    <td>$3.00 - $3.50</td>
+                                </tr>
+                                <tr>
+                                    <td>Illinois → Texas</td>
+                                    <td>1,000 миль</td>
+                                    <td>$3,000 - $3,500</td>
+                                    <td>$3.00 - $3.50</td>
+                                </tr>
+                                <tr>
+                                    <td>Oregon → Arizona</td>
+                                    <td>1,300 миль</td>
+                                    <td>$3,640 - $4,290</td>
+                                    <td>$2.80 - $3.30</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3>Дополнительные сборы Flatbed:</h3>
+                    <ul>
+                        <li>💰 <strong>Tarping fee:</strong> $50 - $150 за груз <a href="documentation.html#tarping"
+                                target="_blank" style="color: var(--primary); text-decoration: underline;">📚
+                                Подробнее</a></li>
+                        <li>💰 <strong>Oversize permit:</strong> $50 - $500 (зависит от штата) <a
+                                href="documentation.html#oversize-permits" target="_blank"
+                                style="color: var(--primary); text-decoration: underline;">📚 Подробнее</a></li>
+                        <li>💰 <strong>Escort vehicle:</strong> $150 - $300 в день</li>
+                        <li>💰 <strong>Detention:</strong> $50 - $75 в час после 2 часов ожидания <a
+                                href="documentation.html#detention-pay" target="_blank"
+                                style="color: var(--primary); text-decoration: underline;">📚 Подробнее</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Case Study 3: Flatbed Tarping Negotiation -->
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Реальный кейс: Переговоры о tarping</h3>
+                </div>
+                <div class="case-study-content">
+                    <p>
+                        <strong>Ситуация:</strong> Брокер предлагает Flatbed груз: стальные балки, Pennsylvania → Texas,
+                        1,500 миль, $4,500 ($3.00/миля).
+                        Груз требует tarping. Вы говорите: "Нужно добавить $150 за tarping."
+                    </p>
+                    <p>
+                        Брокер отвечает: "Tarping уже включен в ставку $3.00/миля. Это стандартная практика."
+                    </p>
+                    <div class="case-study-highlight">
+                        💡 Вопрос: Как вы ответите брокеру? Согласитесь или будете настаивать на дополнительной оплате?
+                    </div>
+                    <p style="margin-top: 15px;">
+                        <strong>Правильный ответ:</strong> "Я понимаю, но tarping - это дополнительная услуга. Мой
+                        водитель
+                        тратит 45 минут на установку тарпа,
+                        это физически тяжелая работа. Стандартная ставка на рынке $100-150 сверх основной ставки. Я могу
+                        сделать $100, но без этого не могу взять груз."
+                        <br><br>
+                        Если брокер отказывается - ищите другой груз. Не работайте бесплатно!
+                    </p>
+                </div>
+            </div>
+
+            <!-- Quick Check 3: Flatbed Tarping -->
+            <div class="quick-check-block locked" id="quiz-3" data-quiz-id="quiz-3-3" data-correct-answer="a">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+
+                <div class="quick-check-question">
+                    Брокер предлагает Flatbed груз: строительные материалы, 1,200 миль, $3,600 ($3.00/mile). Груз
+                    требует
+                    tarping. Сколько вы должны запросить дополнительно за tarping?
+                </div>
+
+                <div class="quick-check-options">
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-3" id="quiz-3-a" value="a">
+                        <label for="quiz-3-a">$100-150 - стандартная ставка за tarping</label>
+                    </div>
+
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-3" id="quiz-3-b" value="b">
+                        <label for="quiz-3-b">$50 - минимальная компенсация</label>
+                    </div>
+
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-3" id="quiz-3-c" value="c">
+                        <label for="quiz-3-c">Ничего - tarping включен в ставку</label>
+                    </div>
+                </div>
+
+                <div class="quick-check-feedback">
+                    <strong>Правильно! ✓</strong>
+                    Tarping - это дополнительная услуга, которая оплачивается отдельно! Стандартная ставка $100-150 за
+                    груз.
+                    Это физически тяжелая работа (тарпы весят 50-100 lbs), требует времени (30-60 минут) и специальных
+                    навыков. Всегда запрашивайте tarping fee отдельно от основной ставки!
+                </div>
+
+                <!-- Unlock Message -->
+                <div class="quiz-unlock-message">
+                    <p>🔒 Для активации теста необходимо прослушать аудио-материал выше</p>
+                    <button class="audio-completion-trigger" data-unlocks="quiz-3">
+                        🎧 Я закончил(а) слушать
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: Step Deck - Complete Learning Block -->
+        <div class="learning-section" data-section-text="СЕК. 4-5">
+            <!-- Block 4: Step Deck -->
+            <div class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">📐 Step Deck (Drop Deck) - Низкорамная платформа</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio4')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio4')"></div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio4')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <p>Step Deck (Drop Deck) — платформа с двумя уровнями: верхняя часть (well) и нижняя часть (deck).
+                        Позволяет перевозить более высокие грузы. <a href="documentation.html#step-deck" target="_blank"
+                            style="color: var(--primary); text-decoration: underline;">📚 Подробнее о Step Deck</a></p>
+
+                    <h3>Характеристики Step Deck:</h3>
+                    <ul>
+                        <li><strong>Длина:</strong> 48-53 фута</li>
+                        <li><strong>Высота верхней части:</strong> 11 футов от земли</li>
+                        <li><strong>Высота нижней части:</strong> 3.5 фута от земли</li>
+                        <li><strong>Максимальная высота груза:</strong> до 10 футов (без разрешений)</li>
+                        <li><strong>Грузоподъемность:</strong> до 48,000 lbs</li>
+                    </ul>
+
+                    <h3>Типичные грузы для Step Deck:</h3>
+                    <ul>
+                        <li>🏗️ Высокое строительное оборудование</li>
+                        <li>🚜 Крупная сельхозтехника</li>
+                        <li>⚙️ Промышленные машины</li>
+                        <li>🏭 Генераторы, трансформаторы</li>
+                        <li>🚁 Вертолеты (разобранные)</li>
+                        <li>🏠 Крупные модульные конструкции</li>
+                    </ul>
+
+                    <h3>Преимущества Step Deck:</h3>
+                    <ul>
+                        <li>✅ Очень высокие ставки (на 40-60% выше Dry Van)</li>
+                        <li>✅ Минимальная конкуренция</li>
+                        <li>✅ Можно возить высокие грузы без разрешений</li>
+                        <li>✅ Может работать как обычный Flatbed</li>
+                    </ul>
+
+                    <h3>Недостатки:</h3>
+                    <ul>
+                        <li>❌ Дорогое оборудование</li>
+                        <li>❌ Требуется опыт крепления груза</li>
+                        <li>❌ Меньше доступных грузов</li>
+                        <li>❌ Сложная загрузка/разгрузка</li>
+                    </ul>
+
+                    <div class="alert alert-success">
+                        <strong>💰 Прибыльность:</strong> Step Deck — один из самых прибыльных типов оборудования.
+                        Средняя
+                        ставка $3.20-$4.00 за милю. Опытные диспетчеры могут найти грузы по $4.50-$5.00/миля.
+                    </div>
+
+                    <h3>Средние ставки Step Deck (2024):</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Маршрут</th>
+                                    <th>Расстояние</th>
+                                    <th>Средняя ставка</th>
+                                    <th>$/миля</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Texas → California</td>
+                                    <td>1,400 миль</td>
+                                    <td>$4,760 - $5,600</td>
+                                    <td>$3.40 - $4.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Illinois → Florida</td>
+                                    <td>1,200 миль</td>
+                                    <td>$4,080 - $4,800</td>
+                                    <td>$3.40 - $4.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Pennsylvania → Texas</td>
+                                    <td>1,500 миль</td>
+                                    <td>$5,100 - $6,000</td>
+                                    <td>$3.40 - $4.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Washington → Arizona</td>
+                                    <td>1,400 миль</td>
+                                    <td>$4,480 - $5,320</td>
+                                    <td>$3.20 - $3.80</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Case Study 4: Step Deck Investment Decision -->
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Реальный кейс: Инвестиция в Step Deck</h3>
+                </div>
+                <div class="case-study-content">
+                    <p>
+                        <strong>Ситуация:</strong> Вы работаете с Dry Van уже 2 года. Зарабатываете стабильно
+                        $15,000/месяц
+                        чистой прибыли.
+                        Ваш друг-диспетчер работает со Step Deck и зарабатывает $25,000/месяц.
+                    </p>
+                    <p>
+                        Он говорит: "Купи Step Deck за $55,000, я научу тебя искать грузы. Окупишь за год!"
+                    </p>
+                    <p>
+                        Но вы знаете, что Step Deck грузы сложнее: нужны permits, escort vehicles, специальные навыки
+                        крепления.
+                        Ваш водитель работает с Dry Van 2 года и не имеет опыта с Step Deck.
+                    </p>
+                    <div class="case-study-highlight">
+                        💡 Вопрос: Стоит ли покупать Step Deck сейчас? Или сначала набраться опыта?
+                    </div>
+                    <p style="margin-top: 15px;">
+                        <strong>Разумное решение:</strong> Сначала опыт! Найдите 2-3 Step Deck груза и возите их на
+                        арендованном прицепе ($500-800/неделя аренда).
+                        Так вы поймете все нюансы без риска $55,000. Если через 2-3 месяца всё идет хорошо - покупайте
+                        свой
+                        Step Deck.
+                        Не спешите с большими инвестициями без опыта!
+                    </p>
+                </div>
+            </div>
+
+            <!-- Quick Check 4: Step Deck Profitability -->
+            <div class="quick-check-block locked" id="quiz-4" data-quiz-id="quiz-3-4" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+
+                <div class="quick-check-question">
+                    У вас есть выбор: купить Dry Van за $35,000 или Step Deck за $55,000. Средние ставки: Dry Van
+                    $2.20/mile, Step Deck $3.60/mile. Вы планируете ездить 10,000 миль в месяц. За сколько месяцев
+                    окупится
+                    разница в цене Step Deck?
+                </div>
+
+                <div class="quick-check-options">
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-4" id="quiz-4-a" value="a">
+                        <label for="quiz-4-a">10 месяцев</label>
+                    </div>
+
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-4" id="quiz-4-b" value="b">
+                        <label for="quiz-4-b">~14 месяцев (1 год 2 месяца)</label>
+                    </div>
+
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-4" id="quiz-4-c" value="c">
+                        <label for="quiz-4-c">24 месяца (2 года)</label>
+                    </div>
+                </div>
+
+                <div class="quick-check-feedback">
+                    <strong>Правильно! ✓</strong>
+                    Расчет: Разница в цене = $55,000 - $35,000 = $20,000. Разница в доходе = ($3.60 - $2.20) × 10,000
+                    миль =
+                    $14,000/месяц. Окупаемость = $20,000 ÷ $14,000 = ~14 месяцев. Step Deck окупается быстро благодаря
+                    высоким ставкам!
+                </div>
+
+                <!-- Unlock Message -->
+                <div class="quiz-unlock-message">
+                    <p>🔒 Для активации теста необходимо прослушать аудио-материал выше</p>
+                    <button class="audio-completion-trigger" data-unlocks="quiz-4">
+                        🎧 Я закончил(а) слушать
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 5: Power Only - Complete Learning Block -->
+        <div class="learning-section" data-section-text="СЕК. 5-5">
+            <!-- Block 5: Power Only -->
+            <div class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🚚 Power Only - Только тягач</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio5')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio5')"></div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio5')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <p>Power Only — это когда перевозчик предоставляет только тягач (truck), а прицеп (trailer)
+                        принадлежит
+                        грузоотправителю или брокеру. <a href="documentation.html#power-only" target="_blank"
+                            style="color: var(--primary); text-decoration: underline;">📚 Подробнее о Power Only</a></p>
+
+                    <h3>Как работает Power Only:</h3>
+                    <ul>
+                        <li>🚛 Водитель приезжает на pickup location</li>
+                        <li>🔗 Подцепляет уже загруженный прицеп клиента</li>
+                        <li>🚚 Везет прицеп до места назначения</li>
+                        <li>📍 Оставляет прицеп на delivery location</li>
+                        <li>🔄 Может сразу забрать другой прицеп для обратного рейса</li>
+                    </ul>
+
+                    <h3>Типы прицепов для Power Only:</h3>
+                    <ul>
+                        <li>📦 Dry Van trailers</li>
+                        <li>❄️ Reefer trailers</li>
+                        <li>🏗️ Flatbed trailers</li>
+                        <li>🚢 Chassis с контейнерами</li>
+                    </ul>
+
+                    <h3>Преимущества Power Only:</h3>
+                    <ul>
+                        <li>✅ Не нужно покупать прицеп (экономия $30,000-$50,000)</li>
+                        <li>✅ Нет расходов на обслуживание прицепа</li>
+                        <li>✅ Быстрая загрузка (прицеп уже загружен)</li>
+                        <li>✅ Можно работать с разными типами прицепов</li>
+                        <li>✅ Хорошие ставки ($2.50-$3.50/миля)</li>
+                    </ul>
+
+                    <h3>Недостатки и риски:</h3>
+                    <ul>
+                        <li>❌ Ответственность за чужой прицеп</li>
+                        <li>❌ Прицеп может быть в плохом состоянии</li>
+                        <li>❌ Нужна тщательная pre-trip inspection</li>
+                        <li>❌ Могут быть проблемы с документами на прицеп</li>
+                        <li>❌ Ограниченная доступность грузов</li>
+                    </ul>
+
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Важно для диспетчера:</strong> При работе с Power Only всегда проверяйте:
+                        <ul style="margin-top: 10px;">
+                            <li>Состояние прицепа (фото от водителя)</li>
+                            <li>Наличие всех документов на прицеп</li>
+                            <li>Работают ли lights, brakes, tires <a href="documentation.html#pre-trip-inspection"
+                                    target="_blank" style="color: var(--primary); text-decoration: underline;">📚
+                                    Pre-trip Inspection</a></li>
+                            <li>Кто несет ответственность за поломку прицепа</li>
+                            <li>Есть ли insurance coverage на прицеп <a href="documentation.html#insurance"
+                                    target="_blank" style="color: var(--primary); text-decoration: underline;">📚
+                                    Подробнее о страховании</a></li>
+                        </ul>
+                    </div>
+
+                    <h3>Популярные клиенты для Power Only:</h3>
+                    <ul>
+                        <li>🏪 <strong>Amazon:</strong> Много Power Only грузов между складами <a
+                                href="documentation.html#amazon-freight" target="_blank"
+                                style="color: var(--primary); text-decoration: underline;">📚 Подробнее</a></li>
+                        <li>📦 <strong>UPS/FedEx:</strong> Перевозка между терминалами</li>
+                        <li>🏭 <strong>Крупные производители:</strong> Перемещение между заводами</li>
+                        <li>🚢 <strong>Порты:</strong> Chassis с контейнерами <a href="documentation.html#port-drayage"
+                                target="_blank" style="color: var(--primary); text-decoration: underline;">📚 Подробнее
+                                о Drayage</a></li>
+                    </ul>
+
+                    <h3>Средние ставки Power Only (2024):</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Маршрут</th>
+                                    <th>Расстояние</th>
+                                    <th>Средняя ставка</th>
+                                    <th>$/миля</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Chicago → Dallas</td>
+                                    <td>1,000 миль</td>
+                                    <td>$2,700 - $3,200</td>
+                                    <td>$2.70 - $3.20</td>
+                                </tr>
+                                <tr>
+                                    <td>LA → Phoenix</td>
+                                    <td>370 миль</td>
+                                    <td>$1,000 - $1,200</td>
+                                    <td>$2.70 - $3.24</td>
+                                </tr>
+                                <tr>
+                                    <td>Atlanta → Miami</td>
+                                    <td>660 миль</td>
+                                    <td>$1,782 - $2,112</td>
+                                    <td>$2.70 - $3.20</td>
+                                </tr>
+                                <tr>
+                                    <td>NYC → Chicago</td>
+                                    <td>790 миль</td>
+                                    <td>$2,133 - $2,528</td>
+                                    <td>$2.70 - $3.20</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Case Study 5: Power Only Trailer Breakdown -->
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Реальный кейс: Поломка чужого прицепа</h3>
+                </div>
+                <div class="case-study-content">
+                    <p>
+                        <strong>Ситуация:</strong> Ваш водитель везет Power Only груз (прицеп Amazon). Chicago →
+                        Atlanta,
+                        700 миль, $2,100.
+                        Через 400 миль прицеп ломается - отказали brakes. Груз стоит $150,000 (электроника).
+                    </p>
+                    <p>
+                        Ремонт прицепа стоит $2,500 и займет 8 часов. Amazon требует доставку вовремя (через 10 часов).
+                        Вы звоните Amazon, они говорят: "Это ваша проблема, вы взяли наш прицеп - вы отвечаете за
+                        доставку."
+                    </p>
+                    <div class="case-study-highlight">
+                        💡 Вопрос: Кто должен оплатить ремонт? Что делать с задержкой доставки?
+                    </div>
+                    <p style="margin-top: 15px;">
+                        <strong>Правильное решение:</strong>
+                    </p>
+                    <ul style="margin-top: 10px;">
+                        <li><strong>Ремонт:</strong> Если вы делали pre-trip inspection и brakes были в порядке - ремонт
+                            оплачивает владелец прицепа (Amazon).
+                            Если не делали inspection - платите вы.</li>
+                        <li><strong>Задержка:</strong> Немедленно сообщите Amazon и получателю о поломке. Отправьте
+                            фото,
+                            документы.
+                            Если поломка не ваша вина - detention pay должен покрыть Amazon.</li>
+                        <li><strong>Урок:</strong> ВСЕГДА делайте детальную pre-trip inspection с фото/видео перед тем
+                            как
+                            взять чужой прицеп!
+                            Это ваша защита.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Quick Check 5: Power Only Inspection -->
+            <div class="quick-check-block locked" id="quiz-5" data-quiz-id="quiz-3-5" data-correct-answer="a">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+
+                <div class="quick-check-question">
+                    Ваш водитель приехал забрать Power Only груз. Прицеп клиента выглядит старым, одна шина лысая,
+                    lights не
+                    все работают. Что вы должны сделать?
+                </div>
+
+                <div class="quick-check-options">
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-5" id="quiz-5-a" value="a">
+                        <label for="quiz-5-a">Отказаться от груза и сообщить брокеру о проблемах с прицепом</label>
+                    </div>
+
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-5" id="quiz-5-b" value="b">
+                        <label for="quiz-5-b">Взять груз, но ехать медленно и осторожно</label>
+                    </div>
+
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-5" id="quiz-5-c" value="c">
+                        <label for="quiz-5-c">Взять груз, это проблема владельца прицепа</label>
+                    </div>
+                </div>
+
+                <div class="quick-check-feedback">
+                    <strong>Правильно! ✓</strong>
+                    ВСЕГДА отказывайтесь от небезопасного прицепа! Если DOT остановит вас с неисправным прицепом, штраф
+                    получите ВЫ, а не владелец прицепа. Лысая шина или неработающие lights - это серьезные нарушения
+                    ($500-1,000 штраф + out of service). Безопасность важнее любого груза!
+                </div>
+
+                <!-- Unlock Message -->
+                <div class="quiz-unlock-message">
+                    <p>🔒 Для активации теста необходимо прослушать аудио-материал выше</p>
+                    <button class="audio-completion-trigger" data-unlocks="quiz-5">
+                        🎧 Я закончил(а) слушать
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">📊 Сравнение типов оборудования</h2>
+            </div>
+            <div class="block-content">
+                <p>Сравнительная таблица поможет вам быстро выбрать подходящий тип оборудования для вашей компании.
+                </p>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Тип</th>
+                                <th>Средняя ставка</th>
+                                <th>Конкуренция</th>
+                                <th>Сложность</th>
+                                <th>Доступность грузов</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Dry Van</strong></td>
+                                <td>$2.00 - $2.50/миля</td>
+                                <td>🔴 Очень высокая</td>
+                                <td>🟢 Легко</td>
+                                <td>🟢 Очень много</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Reefer</strong></td>
+                                <td>$2.70 - $3.20/миля</td>
+                                <td>🟡 Средняя</td>
+                                <td>🟡 Средне</td>
+                                <td>🟢 Много</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Flatbed</strong></td>
+                                <td>$3.00 - $3.50/миля</td>
+                                <td>🟡 Средняя</td>
+                                <td>🔴 Сложно</td>
+                                <td>🟡 Средне</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Step Deck</strong></td>
+                                <td>$3.40 - $4.00/миля</td>
+                                <td>🟢 Низкая</td>
+                                <td>🔴 Очень сложно</td>
+                                <td>🔴 Мало</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Power Only</strong></td>
+                                <td>$2.70 - $3.20/миля</td>
+                                <td>🟡 Средняя</td>
+                                <td>🟢 Легко</td>
+                                <td>🟡 Средне</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Рекомендации для начинающих:</h3>
+                <ul>
+                    <li>🎯 <strong>Начните с Dry Van</strong> — легко найти грузы, простая работа, низкий риск</li>
+                    <li>📈 <strong>Переходите на Reefer</strong> — когда наберетесь опыта (6-12 месяцев)</li>
+                    <li>🚀 <strong>Flatbed/Step Deck</strong> — для опытных диспетчеров (1-2 года опыта)</li>
+                    <li>💡 <strong>Power Only</strong> — хороший вариант для экономии на оборудовании</li>
+                </ul>
+
+                <h3>Факторы выбора оборудования:</h3>
+                <ul>
+                    <li>💰 <strong>Бюджет:</strong> Dry Van дешевле, Reefer/Flatbed дороже</li>
+                    <li>👨‍💼 <strong>Опыт водителя:</strong> Flatbed требует специальных навыков</li>
+                    <li>📍 <strong>География:</strong> Reefer популярен в CA, FL; Flatbed в TX, PA</li>
+                    <li>⏰ <strong>Сезонность:</strong> Reefer стабилен круглый год, Dry Van имеет пики</li>
+                </ul>
+
+                <div class="alert alert-success">
+                    <strong>🎯 Итог модуля:</strong> Теперь вы знаете основные типы оборудования, их особенности,
+                    преимущества и недостатки. Это поможет вам эффективно искать грузы и консультировать клиентов. <a
+                        href="documentation.html#equipment-types" target="_blank"
+                        style="color: var(--primary); text-decoration: underline;">📚 Полная документация</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="lesson-nav">
+            <a href="module-2-regulations.html" class="nav-btn">
+                <span>←</span>
+                <span>Предыдущий урок</span>
+            </a>
+            <div class="progress-info">
+                <div>Модуль 3 из 12</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 25%"></div>
+                </div>
+                <div>25% завершено</div>
+            </div>
+            <a href="module-4-loadboards.html" class="nav-btn">
+                <span>Следующий урок</span>
+                <span>→</span>
+            </a>
+        </nav>
+    </main>
+
+    <script>
+        // Audio Management System
+        let currentAudio = null;
+        let audioElements = {};
+        let progressIntervals = {};
+
+        // Initialize audio elements
+        function initAudio() {
+            const audioContainers = document.querySelectorAll('.audio-container');
+            audioContainers.forEach((container, index) => {
+                const audioId = `audio${index + 1}`;
+                // Create audio element (placeholder - in production would load actual audio files)
+                audioElements[audioId] = {
+                    duration: 180 + (index * 30), // Simulated duration
+                    currentTime: 0,
+                    playing: false
+                };
+            });
+        }
+
+        // Toggle audio play/pause
+        function toggleAudio(button, audioId) {
+            const container = button.closest('.audio-container');
+            const audio = audioElements[audioId];
+
+            if (!audio) return;
+
+            // Stop other audios
+            if (currentAudio && currentAudio !== audioId) {
+                stopAudio(currentAudio);
+            }
+
+            if (audio.playing) {
+                pauseAudio(audioId, button, container);
+            } else {
+                playAudio(audioId, button, container);
+            }
+        }
+
+        // Play audio
+        function playAudio(audioId, button, container) {
+            const audio = audioElements[audioId];
+            audio.playing = true;
+            currentAudio = audioId;
+
+            button.classList.add('playing');
+            container.classList.add('playing');
+
+            // Enable seeking
+            const interactiveRing = container.querySelector('.progress-ring-interactive');
+            if (interactiveRing) {
+                interactiveRing.classList.add('seekable');
+            }
+
+            // Start progress update
+            progressIntervals[audioId] = setInterval(() => {
+                updateProgress(audioId, container);
+            }, 100);
+        }
+
+        // Pause audio
+        function pauseAudio(audioId, button, container) {
+            const audio = audioElements[audioId];
+            audio.playing = false;
+
+            button.classList.remove('playing');
+            container.classList.remove('playing');
+
+            // Clear progress interval
+            if (progressIntervals[audioId]) {
+                clearInterval(progressIntervals[audioId]);
+            }
+        }
+
+        // Stop audio
+        function stopAudio(audioId) {
+            const audio = audioElements[audioId];
+            if (!audio) return;
+
+            audio.playing = false;
+            audio.currentTime = 0;
+
+            const containers = document.querySelectorAll('.audio-container');
+            containers.forEach(container => {
+                const btn = container.querySelector('.audio-btn');
+                if (btn) {
+                    btn.classList.remove('playing');
+                    container.classList.remove('playing');
+                }
+            });
+
+            if (progressIntervals[audioId]) {
+                clearInterval(progressIntervals[audioId]);
+            }
+        }
+
+        // Update progress
+        function updateProgress(audioId, container) {
+            const audio = audioElements[audioId];
+            if (!audio.playing) return;
+
+            // Simulate audio progress
+            audio.currentTime += 0.1;
+            if (audio.currentTime >= audio.duration) {
+                audio.currentTime = audio.duration;
+                const button = container.querySelector('.audio-btn');
+                pauseAudio(audioId, button, container);
+                return;
+            }
+
+            // Update progress ring
+            const progressFill = container.querySelector('.progress-ring-fill');
+            if (progressFill) {
+                const progress = (audio.currentTime / audio.duration) * 100;
+                const circumference = 201.06;
+                const offset = circumference - (progress / 100) * circumference;
+                progressFill.style.strokeDashoffset = offset;
+            }
+
+            // Update mobile progress bar
+            const mobileProgressFill = container.querySelector('.mobile-progress-fill');
+            if (mobileProgressFill) {
+                const progress = (audio.currentTime / audio.duration) * 100;
+                mobileProgressFill.style.width = `${progress}%`;
+            }
+
+            // Update duration display
+            const durationDisplay = container.querySelector('.audio-duration');
+            if (durationDisplay) {
+                durationDisplay.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+            }
+        }
+
+        // Seek audio (desktop - ring click)
+        function seekAudio(event, element, audioId) {
+            // Only on desktop
+            if (window.innerWidth <= 768) return;
+
+            const audio = audioElements[audioId];
+            if (!audio) return;
+
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const mouseX = event.clientX - centerX;
+            const mouseY = event.clientY - centerY;
+
+            // Calculate angle
+            let angle = Math.atan2(mouseY, mouseX) * (180 / Math.PI);
+            angle = (angle + 90 + 360) % 360;
+
+            // Convert angle to progress
+            const progress = angle / 360;
+            audio.currentTime = progress * audio.duration;
+
+            // Update display immediately
+            const container = element.closest('.audio-container');
+            updateProgress(audioId, container);
+        }
+
+        // Seek audio (mobile - progress bar click)
+        function seekAudioMobile(event, element, audioId) {
+            const audio = audioElements[audioId];
+            if (!audio) return;
+
+            const rect = element.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const progress = clickX / rect.width;
+
+            audio.currentTime = progress * audio.duration;
+
+            // Update display immediately
+            const container = element.closest('.audio-container');
+            updateProgress(audioId, container);
+        }
+
+        // Format time (seconds to MM:SS)
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initAudio();
+        });
+
+        // Save progress to localStorage
+        function saveProgress() {
+            const moduleId = document.body.dataset.moduleId;
+            if (!moduleId) return;
+
+            // Calculate completion based on audio listened
+            let totalDuration = 0;
+            let totalListened = 0;
+
+            Object.values(audioElements).forEach(audio => {
+                totalDuration += audio.duration;
+                totalListened += audio.currentTime;
+            });
+
+            const progress = Math.min(100, Math.round((totalListened / totalDuration) * 100));
+
+            localStorage.setItem(`${moduleId}-progress`, progress);
+            localStorage.setItem(`${moduleId}-last-visit`, new Date().toISOString());
+        }
+
+        // Save progress every 10 seconds
+        setInterval(saveProgress, 10000);
+
+        // Save progress on page unload
+        window.addEventListener('beforeunload', saveProgress);
+
+        // Mobile Menu JavaScript
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+
+        if (mobileMenuToggle && mobileMenu && mobileMenuOverlay) {
+            mobileMenuToggle.addEventListener('click', function () {
+                mobileMenuToggle.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+                mobileMenuOverlay.classList.toggle('active');
+                document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+            });
+
+            mobileMenuOverlay.addEventListener('click', function () {
+                mobileMenuToggle.classList.remove('active');
+                mobileMenu.classList.remove('active');
+                mobileMenuOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+
+            // Close mobile menu when clicking on a link
+            document.querySelectorAll('.mobile-nav-links .nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (mobileMenu.classList.contains('active')) {
+                        mobileMenuToggle.classList.remove('active');
+                        mobileMenu.classList.remove('active');
+                        mobileMenuOverlay.classList.remove('active');
+                        document.body.style.overflow = '';
+                    }
+                });
+            });
+        }
+
+        // Quiz System
+        document.addEventListener('DOMContentLoaded', () => {
+            // Handle quiz answers
+            document.querySelectorAll('.quick-check-option input[type="radio"]').forEach(radio => {
+                radio.addEventListener('change', function () {
+                    const quizBlock = this.closest('.quick-check-block');
+                    const correctAnswer = quizBlock.dataset.correctAnswer;
+                    const selectedAnswer = this.value;
+
+                    if (selectedAnswer === correctAnswer) {
+                        quizBlock.querySelector('.quick-check-feedback').style.display = 'block';
+                        quizBlock.style.borderColor = 'var(--success)';
+                    } else {
+                        quizBlock.style.borderColor = 'var(--danger)';
+                        setTimeout(() => {
+                            quizBlock.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                            this.checked = false;
+                        }, 1000);
+                    }
+                });
+            });
+
+            // Handle audio completion triggers (unlock quizzes)
+            document.querySelectorAll('.audio-completion-trigger').forEach(button => {
+                button.addEventListener('click', function () {
+                    const unlockId = this.dataset.unlocks;
+                    const quizBlock = document.getElementById(unlockId);
+
+                    if (quizBlock) {
+                        quizBlock.classList.remove('locked');
+                        quizBlock.classList.add('visible');
+                        this.closest('.quiz-unlock-message').style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
