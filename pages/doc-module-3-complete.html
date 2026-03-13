@@ -1,0 +1,2074 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль 3: Типы оборудования и грузов | DispatcherPro</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="stylesheet" href="../interactive-modules.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #f093fb;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary: #b8c5d6;
+            --text-muted: #8892aa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.1);
+            --audio-primary: #ff6b6b;
+            --audio-secondary: #4ecdc4;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
+            padding-top: 100px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1), transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(240, 147, 251, 0.1), transparent 50%);
+            animation: backgroundMove 20s ease infinite;
+            z-index: -1;
+        }
+
+        @keyframes backgroundMove {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            25% {
+                transform: translate(5%, 5%) scale(1.05);
+            }
+
+            50% {
+                transform: translate(-5%, 5%) scale(1.1);
+            }
+
+            75% {
+                transform: translate(5%, -5%) scale(1.05);
+            }
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 0;
+            background: rgba(7, 11, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            min-height: 80px;
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateX(-3px);
+        }
+
+        .module-info {
+            text-align: center;
+        }
+
+        .module-number {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .module-title {
+            font-size: 18px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Sector Wrapper */
+        .sector-wrapper {
+            position: relative;
+            margin-bottom: 60px;
+        }
+
+        .sector-number {
+            position: absolute;
+            left: -80px;
+            top: 30px;
+            font-size: 72px;
+            font-weight: 900;
+            color: rgba(102, 126, 234, 0.1);
+            line-height: 1;
+            z-index: 0;
+        }
+
+        .content-block {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            gap: 20px;
+        }
+
+        .block-title {
+            flex: 1;
+            font-size: 1.8rem;
+            color: var(--primary);
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        /* Audio Button with Progress Ring */
+        .audio-container {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .audio-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--audio-primary), var(--audio-secondary));
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .audio-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.5);
+        }
+
+        .audio-btn .play-icon {
+            font-size: 24px;
+            color: white;
+            margin-left: 3px;
+        }
+
+        .audio-btn .pause-icon {
+            font-size: 20px;
+            color: white;
+            display: none;
+        }
+
+        .audio-btn.playing .play-icon {
+            display: none;
+        }
+
+        .audio-btn.playing .pause-icon {
+            display: block;
+        }
+
+        .audio-btn.playing {
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.7), 0 0 0 10px rgba(255, 107, 107, 0.1);
+            }
+
+            100% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+        }
+
+        /* Progress Ring */
+        .progress-ring {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            transform: rotate(-90deg);
+            z-index: 1;
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 5;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: var(--audio-primary);
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-dasharray: 201.06;
+            stroke-dashoffset: 201.06;
+            transition: stroke-dashoffset 0.1s ease;
+            filter: drop-shadow(0 0 4px rgba(255, 107, 107, 0.5));
+        }
+
+        .progress-ring-interactive {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            cursor: pointer;
+            z-index: 5;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        .progress-ring-interactive.seekable {
+            pointer-events: auto;
+            background: radial-gradient(circle, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.01) 60%, rgba(255, 255, 255, 0.01) 100%);
+        }
+
+        .audio-duration {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .audio-container:hover .audio-duration,
+        .audio-container.playing .audio-duration {
+            opacity: 1;
+        }
+
+        /* Mobile Progress Bar */
+        .mobile-progress-bar {
+            display: none;
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .mobile-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--audio-primary), var(--audio-secondary));
+            border-radius: 2px;
+            transition: width 0.1s ease;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-progress-bar {
+                display: block;
+            }
+
+            .progress-ring,
+            .progress-ring-interactive {
+                display: none !important;
+            }
+
+            .audio-duration {
+                bottom: -50px;
+            }
+        }
+
+        /* Content */
+        .block-content {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .block-content h3 {
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            margin: 25px 0 15px 0;
+        }
+
+        .block-content h4 {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            margin: 20px 0 10px 0;
+        }
+
+        .block-content ul,
+        .block-content ol {
+            margin: 15px 0 15px 25px;
+        }
+
+        .block-content li {
+            margin-bottom: 8px;
+        }
+
+        .block-content strong {
+            color: var(--text-primary);
+        }
+
+        /* Highlights */
+        .info-highlight {
+            background: rgba(102, 126, 234, 0.08);
+            border-left: 4px solid #667eea;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .info-highlight h4 {
+            color: #a5b4fc;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .warning-highlight {
+            background: rgba(251, 146, 60, 0.08);
+            border-left: 4px solid #fb923c;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .warning-highlight h4 {
+            color: #fdba74;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .success-highlight {
+            background: rgba(52, 211, 153, 0.08);
+            border-left: 4px solid #34d399;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .success-highlight h4 {
+            color: #6ee7b7;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .stat-box {
+            background: rgba(102, 126, 234, 0.08);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+            border-color: rgba(102, 126, 234, 0.4);
+        }
+
+        .stat-box .number {
+            font-size: 36px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .stat-box .label {
+            font-size: 13px;
+            color: #cbd5e1;
+            font-weight: 600;
+        }
+
+        /* Audio Completion Button */
+        .audio-completion-btn {
+            display: block;
+            width: 100%;
+            padding: 16px 24px;
+            margin: 30px 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .audio-completion-btn:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .audio-completion-btn.completed {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(52, 211, 153, 0.2));
+            border-color: var(--success);
+            cursor: default;
+        }
+
+        /* Case Study Block */
+        .case-study-block {
+            background: rgba(240, 147, 251, 0.05);
+            border: 1px solid rgba(240, 147, 251, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px 0;
+            transition: all 0.3s ease;
+        }
+
+        .case-study-block:hover {
+            background: rgba(240, 147, 251, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(240, 147, 251, 0.2);
+        }
+
+        .case-study-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .case-study-icon {
+            font-size: 32px;
+        }
+
+        .case-study-title {
+            font-size: 1.4rem;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .case-study-content p {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        .case-study-content ul {
+            margin: 15px 0 15px 25px;
+        }
+
+        .case-study-content li {
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .case-study-highlight {
+            background: rgba(240, 147, 251, 0.1);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .case-study-solution {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--success);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .case-study-solution h4 {
+            color: var(--success);
+            margin-bottom: 10px;
+        }
+
+        /* Quick Check Block */
+        .quick-check-block {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px 0;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .quick-check-block.locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .quick-check-block.locked::after {
+            content: '🔒 Прослушайте аудио чтобы разблокировать квиз';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px 30px;
+            border-radius: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: center;
+            z-index: 10;
+        }
+
+        .quick-check-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .quick-check-icon {
+            font-size: 32px;
+        }
+
+        .quick-check-title {
+            font-size: 1.4rem;
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .quick-check-content {
+            color: var(--text-secondary);
+        }
+
+        .quiz-question {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quiz-option:hover {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+        }
+
+        .quiz-option.incorrect {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--danger);
+        }
+
+        .option-letter {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 50%;
+            font-weight: 700;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .option-text {
+            flex: 1;
+            color: var(--text-secondary);
+        }
+
+        .quiz-feedback {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--success);
+            border-radius: 8px;
+            color: var(--text-primary);
+        }
+
+        .quiz-feedback.show {
+            display: block;
+        }
+
+        /* Navigation */
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .progress-info {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 10px auto;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            width: 8%;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding-top: 90px;
+            }
+
+            .header {
+                padding: 15px 0;
+                min-height: 70px;
+            }
+
+            .main {
+                padding: 20px 15px;
+            }
+
+            .sector-number {
+                display: none;
+            }
+
+            .content-block {
+                padding: 20px 15px;
+            }
+
+            .block-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .block-title {
+                font-size: 1.4rem;
+            }
+
+            .audio-container {
+                align-self: center;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .lesson-nav {
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px 15px;
+            }
+
+            .nav-btn {
+                width: 100%;
+            }
+
+            .progress-bar {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <a href="modules-index.html" class="back-btn">
+                <span>←</span>
+                <span>Назад к модулям</span>
+            </a>
+            <div class="module-info">
+                <div class="module-number">Модуль 3 из 12</div>
+                <div class="module-title">Типы оборудования и грузов</div>
+            </div>
+            <div style="width: 150px;"></div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+
+        <!-- СЕКТОР 1: Индустрия грузоперевозок -->
+        <div class="sector-wrapper">
+            <div class="sector-number">01</div>
+
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🚛 Dry Van и Reefer: Основные типы прицепов</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio1')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio1')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio1')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>🚚 Dry Van - Самый популярный тип</h3>
+                    <p>
+                        Dry Van — это закрытый прицеп без температурного контроля, используемый для перевозки
+                        <strong>70% всех грузов</strong> в США.
+                        Это стандартный выбор для большинства начинающих диспетчеров и owner-operators.
+                    </p>
+
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="number">70%</div>
+                            <div class="label">Всех грузов США</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">$2.00-3.00</div>
+                            <div class="label">RPM (за милю)</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">53'</div>
+                            <div class="label">Стандартная длина</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">45,000</div>
+                            <div class="label">Макс. вес (lbs)</div>
+                        </div>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>💡 Преимущества Dry Van:</h4>
+                        <ul>
+                            <li><strong>Простота:</strong> Не требует специальных навыков или оборудования</li>
+                            <li><strong>Доступность грузов:</strong> Тысячи грузов ежедневно на Load Boards</li>
+                            <li><strong>Низкие расходы:</strong> Минимальные затраты на maintenance</li>
+                            <li><strong>Универсальность:</strong> Подходит для 90% товаров (одежда, электроника, мебель)
+                            </li>
+                            <li><strong>Быстрая погрузка:</strong> Обычно 1-2 часа на loading/unloading</li>
+                        </ul>
+                    </div>
+
+                    <h3>❄️ Reefer - Рефрижераторные перевозки</h3>
+                    <p>
+                        Reefer (Refrigerated trailer) — прицеп с температурным контролем от -20°F до +70°F.
+                        Используется для перевозки скоропортящихся продуктов, фармацевтики и цветов.
+                    </p>
+
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="number">+20-40%</div>
+                            <div class="label">Выше ставки Dry Van</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">$2.50-4.00</div>
+                            <div class="label">RPM (за милю)</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">24/7</div>
+                            <div class="label">Мониторинг температуры</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">$15K-20K</div>
+                            <div class="label">Доп. стоимость трейлера</div>
+                        </div>
+                    </div>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Challenges Reefer:</h4>
+                        <ul>
+                            <li><strong>Fuel costs:</strong> На 30-50% выше из-за работы холодильной установки</li>
+                            <li><strong>Maintenance:</strong> Дорогой ремонт рефрижераторного оборудования ($3K-5K)</li>
+                            <li><strong>Ответственность:</strong> Испорченный груз = полная стоимость возмещения</li>
+                            <li><strong>Сложная логистика:</strong> Строгие time windows для pickup/delivery</li>
+                            <li><strong>Сезонность:</strong> Летом спрос выше, зимой меньше грузов</li>
+                        </ul>
+                    </div>
+
+                    <h3>📊 Сравнение Dry Van vs Reefer</h3>
+                    <ul>
+                        <li><strong>Начальные инвестиции:</strong> Dry Van $30K-40K, Reefer $50K-60K</li>
+                        <li><strong>Операционные расходы:</strong> Dry Van $0.40/миля, Reefer $0.60/миля</li>
+                        <li><strong>Доступность грузов:</strong> Dry Van 10:1, Reefer меньше конкуренции</li>
+                        <li><strong>Profit margin:</strong> Dry Van 15-20%, Reefer 20-30%</li>
+                        <li><strong>Для новичков:</strong> Dry Van - лучший старт, Reefer - после 1-2 лет опыта</li>
+                    </ul>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Реальный кейс: Выбор между Dry Van и Reefer</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Owner-operator Mike хочет купить второй трейлер. У него есть:</p>
+                    <ul>
+                        <li><strong>Вариант 1:</strong> Dry Van за $35K, RPM $2.20, много грузов, простая работа</li>
+                        <li><strong>Вариант 2:</strong> Reefer за $55K, RPM $3.00, меньше грузов, сложнее maintenance
+                        </li>
+                        <li>Бюджет ограничен, кредит на 5 лет под 7%</li>
+                        <li>Водитель опытный, но никогда не работал с Reefer</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        💡 Вопрос: Какой трейлер выбрать? Как рассчитать ROI?
+                    </div>
+                    <div class="case-study-solution">
+                        <h4>✅ Решение:</h4>
+                        <p><strong>Расчет ROI:</strong></p>
+                        <ul>
+                            <li><strong>Dry Van:</strong> 10,000 миль/месяц × $2.20 = $22K revenue, $8K расходы = $14K
+                                profit</li>
+                            <li><strong>Reefer:</strong> 8,000 миль/месяц × $3.00 = $24K revenue, $12K расходы = $12K
+                                profit</li>
+                        </ul>
+                        <p><strong>Рекомендация:</strong> Dry Van - проще, стабильнее, выше profit margin. Reefer стоит
+                            рассматривать после 2-3 лет опыта и наличия специализированных клиентов.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audio Completion Button -->
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio1', 'quiz-1')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <!-- Quick Check 1 -->
+            <div class="quick-check-block locked" id="quiz-1" data-quiz-id="quiz-3-1" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> На сколько процентов ставки Reefer выше чем Dry
+                        Van?
+                    </p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">10-15%</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">20-40%</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">50-70%</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Reefer ставки на 20-40% выше Dry Van из-за дополнительных расходов
+                        на топливо и maintenance холодильного оборудования.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- СЕКТОР 2: Роль диспетчера -->
+        <div class="sector-wrapper">
+            <div class="sector-number">02</div>
+
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🏗️ Flatbed и Step Deck: Открытые прицепы</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio2')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio2')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio2')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>🔧 Flatbed - Для тяжелых грузов</h3>
+                    <p>
+                        Flatbed — открытая платформа без стенок и крыши, используется для перевозки строительных
+                        материалов,
+                        металла, оборудования и негабаритных грузов. Требует специальных навыков securing груза.
+                    </p>
+
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="number">+15-30%</div>
+                            <div class="label">Выше ставки Dry Van</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">$2.50-3.80</div>
+                            <div class="label">RPM (за милю)</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">48,000</div>
+                            <div class="label">Макс. вес (lbs)</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">8.5'</div>
+                            <div class="label">Высота платформы</div>
+                        </div>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>💡 Что перевозят Flatbed:</h4>
+                        <ul>
+                            <li><strong>Строительные материалы:</strong> Lumber, steel beams, pipes, concrete</li>
+                            <li><strong>Оборудование:</strong> Tractors, forklifts, generators</li>
+                            <li><strong>Металл:</strong> Steel coils, aluminum sheets, rebar</li>
+                            <li><strong>Крупногабарит:</strong> Prefab homes, boats, industrial machinery</li>
+                        </ul>
+                    </div>
+
+                    <h3>🎯 Навыки для Flatbed водителя</h3>
+                    <ul>
+                        <li><strong>Securing груза:</strong> Chains, straps, binders - правильное натяжение критично
+                        </li>
+                        <li><strong>Tarping:</strong> Защита груза от погоды (30-45 минут на установку)</li>
+                        <li><strong>Weight distribution:</strong> Правильное распределение веса для безопасности</li>
+                        <li><strong>DOT inspections:</strong> Flatbed проверяют чаще из-за видимости груза</li>
+                    </ul>
+
+                    <h3>📐 Step Deck (Stepdeck/Drop Deck)</h3>
+                    <p>
+                        Step Deck — платформа с двумя уровнями: верхний 5' и нижний 3.5' от земли.
+                        Позволяет перевозить более высокие грузы (до 10-11 футов) без oversized permits.
+                    </p>
+
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="number">+20-35%</div>
+                            <div class="label">Выше ставки Flatbed</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">$2.80-4.20</div>
+                            <div class="label">RPM (за милю)</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">10-11'</div>
+                            <div class="label">Макс. высота груза</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">43,000</div>
+                            <div class="label">Макс. вес (lbs)</div>
+                        </div>
+                    </div>
+
+                    <div class="success-highlight">
+                        <h4>✅ Преимущества Step Deck:</h4>
+                        <ul>
+                            <li>Меньше конкуренции - специализированный equipment</li>
+                            <li>Выше ставки за счет уникальности</li>
+                            <li>Избегаете oversized permits для грузов 10-11'</li>
+                            <li>Востребован в construction и industrial секторах</li>
+                        </ul>
+                    </div>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Challenges Flatbed/Step Deck:</h4>
+                        <ul>
+                            <li><strong>Физический труд:</strong> Tarping, securing - 1-2 часа дополнительной работы
+                            </li>
+                            <li><strong>Погодозависимость:</strong> Дождь, снег усложняют loading/unloading</li>
+                            <li><strong>Сезонность:</strong> Зимой меньше construction грузов</li>
+                            <li><strong>Liability:</strong> Неправильное securing = штрафы $5K-10K + cargo damage</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Реальный кейс: Неправильное securing груза</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Flatbed водитель Tom перевозит steel coils (30,000 lbs). На highway
+                        patrol остановка:</p>
+                    <ul>
+                        <li>Inspector находит только 2 chains вместо требуемых 4</li>
+                        <li>Chains неправильно натянуты (slack 2 inches)</li>
+                        <li>Нет edge protectors на coils</li>
+                        <li>Штраф $8,500 + Out of Service order</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        💡 Вопрос: Кто виноват? Как избежать таких ситуаций?
+                    </div>
+                    <div class="case-study-solution">
+                        <h4>✅ Решение:</h4>
+                        <p><strong>Ответственность:</strong></p>
+                        <ul>
+                            <li>Водитель отвечает за securing, но диспетчер должен обучить</li>
+                            <li>Компания платит штраф, но может вычесть из зарплаты водителя</li>
+                        </ul>
+                        <p><strong>Профилактика:</strong></p>
+                        <ol>
+                            <li>Обязательное обучение FMCSA cargo securement rules</li>
+                            <li>Фото груза после securing (отправлять диспетчеру)</li>
+                            <li>Checklist для каждого типа груза</li>
+                            <li>Регулярные проверки equipment (chains, straps, binders)</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio2', 'quiz-2')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-2" data-quiz-id="quiz-3-2" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Какая максимальная высота груза для Step Deck без
+                        oversized permit?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">8-9 футов</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">10-11 футов</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">13-14 футов</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Step Deck позволяет перевозить грузы высотой 10-11 футов без
+                        oversized permits благодаря низкой платформе.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- СЕКТОР 3: Рабочий день -->
+        <div class="sector-wrapper">
+            <div class="sector-number">03</div>
+
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🔌 Power Only и Specialized Equipment</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio3')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio3')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio3')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>🔌 Power Only - Трак без трейлера</h3>
+                    <p>
+                        Power Only — это когда водитель предоставляет только трак (power unit), а трейлер уже загружен и
+                        ждет на shipper's yard.
+                        Популярно для intermodal перевозок и drop-and-hook операций.
+                    </p>
+
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="number">$1.50-2.50</div>
+                            <div class="label">RPM (за милю)</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">30-60 мин</div>
+                            <div class="label">Время на pickup</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">100%</div>
+                            <div class="label">Drop-and-hook</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">-30%</div>
+                            <div class="label">Меньше detention</div>
+                        </div>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>💡 Преимущества Power Only:</h4>
+                        <ul>
+                            <li><strong>Быстрая погрузка:</strong> Трейлер уже загружен, просто hook and go</li>
+                            <li><strong>Меньше ответственности:</strong> Shipper загружает, вы только везете</li>
+                            <li><strong>Гибкость:</strong> Можно работать с разными типами трейлеров</li>
+                            <li><strong>Intermodal:</strong> Популярно для rail-to-truck перевозок</li>
+                        </ul>
+                    </div>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Challenges Power Only:</h4>
+                        <ul>
+                            <li><strong>Ниже ставки:</strong> На 20-30% меньше чем full truckload</li>
+                            <li><strong>Inspection трейлера:</strong> Водитель отвечает за состояние чужого трейлера
+                            </li>
+                            <li><strong>Compatibility:</strong> Нужно проверить что трак совместим с трейлером</li>
+                            <li><strong>Документация:</strong> Дополнительные формы для interchange</li>
+                        </ul>
+                    </div>
+
+                    <h3>⚠️ Hazmat - Опасные грузы</h3>
+                    <p>
+                        Hazmat (Hazardous Materials) — перевозка опасных материалов: химикаты, батареи, краски, газы.
+                        Требует специального endorsement на CDL и строгое соблюдение DOT regulations.
+                    </p>
+
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="number">+30-50%</div>
+                            <div class="label">Выше ставки обычных</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">$3.00-4.50</div>
+                            <div class="label">RPM (за милю)</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">$5K-25K</div>
+                            <div class="label">Штрафы за нарушения</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">9 классов</div>
+                            <div class="label">Типов Hazmat</div>
+                        </div>
+                    </div>
+
+                    <h3>🎯 Требования для Hazmat:</h3>
+                    <ul>
+                        <li><strong>CDL Hazmat Endorsement:</strong> Экзамен + TSA background check ($86.50)</li>
+                        <li><strong>Placards:</strong> Правильные знаки на траке (Class 1-9)</li>
+                        <li><strong>Shipping Papers:</strong> Специальные документы с emergency response info</li>
+                        <li><strong>Training:</strong> Обязательное обучение каждые 3 года</li>
+                        <li><strong>Route restrictions:</strong> Нельзя через тоннели, некоторые города</li>
+                    </ul>
+
+                    <h3>🏗️ Oversized/Overweight - Негабарит</h3>
+                    <p>
+                        Oversized loads — грузы превышающие стандартные размеры: ширина >8.5', высота >13.5', длина
+                        >53', вес >80,000 lbs.
+                        Требует специальных permits в каждом штате.
+                    </p>
+
+                    <div class="success-highlight">
+                        <h4>✅ Почему Oversized прибыльно:</h4>
+                        <ul>
+                            <li>Ставки на 50-100%+ выше обычных</li>
+                            <li>Меньше конкуренции - нужен опыт и equipment</li>
+                            <li>Долгосрочные контракты с construction/industrial компаниями</li>
+                            <li>RPM $4.00-8.00 для сложных грузов</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Реальный кейс: Hazmat груз без endorsement</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Брокер предлагает отличный груз: $3,500 за 800 миль ($4.37/миля). Но:
+                    </p>
+                    <ul>
+                        <li>Груз - industrial chemicals (Hazmat Class 8)</li>
+                        <li>Ваш водитель НЕ имеет Hazmat endorsement</li>
+                        <li>Брокер говорит: "It's just paint, no one checks"</li>
+                        <li>Вы уже отказались от другого груза ради этого</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        💡 Вопрос: Взять груз или отказаться? Какие риски?
+                    </div>
+                    <div class="case-study-solution">
+                        <h4>✅ Решение:</h4>
+                        <p><strong>ОТКАЗАТЬСЯ НЕМЕДЛЕННО!</strong></p>
+                        <p><strong>Риски:</strong></p>
+                        <ul>
+                            <li>Штраф $5,000-25,000 для водителя</li>
+                            <li>Штраф $10,000-75,000 для компании</li>
+                            <li>Out of Service order (трак не может двигаться)</li>
+                            <li>Потеря MC authority</li>
+                            <li>Уголовная ответственность при аварии</li>
+                        </ul>
+                        <p><strong>Правильные действия:</strong></p>
+                        <ol>
+                            <li>Отказаться от груза</li>
+                            <li>Объяснить брокеру что нужен Hazmat endorsement</li>
+                            <li>Занести брокера в blacklist (он нарушает закон)</li>
+                            <li>Найти легальный груз</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio3', 'quiz-3')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-3" data-quiz-id="quiz-3-3" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> На сколько процентов ставки Hazmat выше обычных
+                        грузов?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">10-20%</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">30-50%</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">60-80%</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Hazmat грузы платят на 30-50% выше из-за дополнительных рисков,
+                        требований и ответственности.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- СЕКТОР 4: Выбор оборудования для груза -->
+        <div class="sector-wrapper">
+            <div class="sector-number">04</div>
+
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🎯 Как выбрать правильное оборудование для груза</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio4')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio4')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio4')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>📋 Decision Matrix: Груз → Equipment</h3>
+                    <p>
+                        Правильный выбор оборудования критичен для прибыльности и безопасности. Вот как определить какой
+                        трейлер нужен:
+                    </p>
+
+                    <div class="info-highlight">
+                        <h4>💡 Dry Van - Используйте для:</h4>
+                        <ul>
+                            <li><strong>Упакованные товары:</strong> Коробки, паллеты, картонная упаковка</li>
+                            <li><strong>Электроника:</strong> Компьютеры, телевизоры, бытовая техника</li>
+                            <li><strong>Одежда и текстиль:</strong> Hanging garments, folded clothes</li>
+                            <li><strong>Мебель:</strong> Столы, стулья, диваны (не требующие климат-контроля)</li>
+                            <li><strong>Непортящиеся продукты:</strong> Консервы, сухие продукты, напитки</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>❄️ Reefer - Используйте для:</h4>
+                        <ul>
+                            <li><strong>Свежие продукты:</strong> Мясо, рыба, молочные продукты</li>
+                            <li><strong>Замороженные товары:</strong> Ice cream, frozen vegetables, seafood</li>
+                            <li><strong>Фармацевтика:</strong> Vaccines, medications (строгий temp control)</li>
+                            <li><strong>Цветы:</strong> Roses, orchids (35-40°F)</li>
+                            <li><strong>Шоколад:</strong> Требует 60-65°F летом</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>🏗️ Flatbed - Используйте для:</h4>
+                        <ul>
+                            <li><strong>Строительные материалы:</strong> Lumber, steel beams, pipes</li>
+                            <li><strong>Металл:</strong> Steel coils, aluminum sheets, rebar</li>
+                            <li><strong>Оборудование:</strong> Tractors, forklifts, generators</li>
+                            <li><strong>Крупногабарит:</strong> Prefab structures, boats</li>
+                            <li><strong>Все что не помещается в Dry Van:</strong> Ширина >8', длина >48'</li>
+                        </ul>
+                    </div>
+
+                    <h3>⚠️ Красные флаги: Когда НЕ брать груз</h3>
+                    <ul>
+                        <li><strong>Hazmat без endorsement:</strong> Штрафы $5K-25K</li>
+                        <li><strong>Overweight без permit:</strong> $500-5,000 за каждый штат</li>
+                        <li><strong>Reefer груз в Dry Van:</strong> Испорченный груз = полная стоимость</li>
+                        <li><strong>Flatbed груз без tarps:</strong> Повреждение от погоды</li>
+                        <li><strong>Груз выше 13.5' без permit:</strong> Удар в мост = $100K+ ущерб</li>
+                    </ul>
+
+                    <h3>💰 ROI Calculator: Какое оборудование купить</h3>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="number">Dry Van</div>
+                            <div class="label">$35K, ROI 18-24 мес</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">Reefer</div>
+                            <div class="label">$55K, ROI 24-30 мес</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">Flatbed</div>
+                            <div class="label">$40K, ROI 20-26 мес</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">Step Deck</div>
+                            <div class="label">$50K, ROI 22-28 мес</div>
+                        </div>
+                    </div>
+
+                    <div class="success-highlight">
+                        <h4>✅ Рекомендации для начинающих:</h4>
+                        <ul>
+                            <li><strong>Год 1:</strong> Dry Van - простота, много грузов, низкие риски</li>
+                            <li><strong>Год 2-3:</strong> Добавить Reefer или Flatbed для диверсификации</li>
+                            <li><strong>Год 4+:</strong> Специализация (Hazmat, Oversized) для premium rates</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Реальный кейс: Неправильный выбор equipment</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Брокер предлагает груз: 20 паллет замороженной рыбы, LA → Chicago,
+                        $4,200 (1,800 миль = $2.33/миля).</p>
+                    <ul>
+                        <li>У вас есть Dry Van в LA, готов к погрузке</li>
+                        <li>Брокер говорит: "It's packed in ice, will be fine"</li>
+                        <li>Delivery через 3 дня, летом (90°F+)</li>
+                        <li>Вы хотите взять груз, так как трак пустой</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        💡 Вопрос: Можно ли везти замороженную рыбу в Dry Van?
+                    </div>
+                    <div class="case-study-solution">
+                        <h4>✅ Решение:</h4>
+                        <p><strong>КАТЕГОРИЧЕСКИ НЕТ!</strong></p>
+                        <p><strong>Что произойдет:</strong></p>
+                        <ul>
+                            <li>Лед растает за 6-8 часов в жару</li>
+                            <li>Рыба испортится через 12-24 часа</li>
+                            <li>Receiver откажется принять груз</li>
+                            <li>Вы заплатите $20,000-30,000 за испорченный груз</li>
+                            <li>Потеряете MC authority за нарушение food safety</li>
+                        </ul>
+                        <p><strong>Правильные действия:</strong></p>
+                        <ol>
+                            <li>Отказаться от груза</li>
+                            <li>Объяснить что нужен Reefer</li>
+                            <li>Найти Dry Van груз из LA</li>
+                            <li>Никогда не везти perishables без temp control</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio4', 'quiz-4')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-4" data-quiz-id="quiz-3-4" data-correct-answer="a">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Какое оборудование лучше для начинающего
+                        owner-operator?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">Dry Van</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">Reefer</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">Flatbed</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Dry Van - лучший выбор для начинающих: простота, много грузов,
+                        низкие расходы на maintenance, минимальные риски.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- СЕКТОР 5: Ставки по типам оборудования -->
+        <div class="sector-wrapper">
+            <div class="sector-number">05</div>
+
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">💰 Ставки и прибыльность по типам оборудования</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio5')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio5')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio5')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>📊 Сравнительная таблица ставок (2024)</h3>
+                    <p>
+                        Ставки варьируются в зависимости от региона, сезона и спроса. Вот средние показатели по США:
+                    </p>
+
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="number">$2.00-3.00</div>
+                            <div class="label">Dry Van RPM</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">$2.50-4.00</div>
+                            <div class="label">Reefer RPM</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">$2.50-3.80</div>
+                            <div class="label">Flatbed RPM</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number">$3.00-4.50</div>
+                            <div class="label">Hazmat RPM</div>
+                        </div>
+                    </div>
+
+                    <h3>🌍 Premium lanes (высокие ставки)</h3>
+                    <ul>
+                        <li><strong>California → Texas:</strong> $2.80-3.50/миля (Dry Van), $3.50-4.50 (Reefer)</li>
+                        <li><strong>Florida → New York:</strong> $3.00-3.80/миля (produce season)</li>
+                        <li><strong>Pacific Northwest → Midwest:</strong> $2.60-3.40/миля</li>
+                        <li><strong>Texas → California:</strong> $2.20-2.80/миля (backhaul, ниже)</li>
+                    </ul>
+
+                    <h3>📉 Low-paying lanes (избегать)</h3>
+                    <ul>
+                        <li><strong>Midwest → Midwest:</strong> $1.50-2.00/миля (oversupply траков)</li>
+                        <li><strong>South → South:</strong> $1.60-2.20/миля</li>
+                        <li><strong>Deadhead zones:</strong> Montana, Wyoming, Dakotas - мало обратных грузов</li>
+                    </ul>
+
+                    <div class="info-highlight">
+                        <h4>💡 Сезонные колебания ставок:</h4>
+                        <ul>
+                            <li><strong>Q4 (Oct-Dec):</strong> Пик сезона, ставки +20-40% (holidays, retail)</li>
+                            <li><strong>Q1 (Jan-Mar):</strong> Низкий сезон, ставки -15-25% (post-holiday slump)</li>
+                            <li><strong>Q2 (Apr-Jun):</strong> Produce season, Reefer ставки +30-50%</li>
+                            <li><strong>Q3 (Jul-Sep):</strong> Средний сезон, стабильные ставки</li>
+                        </ul>
+                    </div>
+
+                    <h3>💵 Расчет прибыльности</h3>
+                    <p><strong>Пример: Dry Van груз 1,000 миль @ $2.50/миля</strong></p>
+                    <ul>
+                        <li><strong>Gross Revenue:</strong> $2,500</li>
+                        <li><strong>Fuel (6 MPG @ $3.50/gal):</strong> -$583</li>
+                        <li><strong>Driver pay (30%):</strong> -$750</li>
+                        <li><strong>Truck payment:</strong> -$200</li>
+                        <li><strong>Insurance:</strong> -$150</li>
+                        <li><strong>Maintenance:</strong> -$150</li>
+                        <li><strong>Dispatch fee (5%):</strong> -$125</li>
+                        <li><strong>Net Profit:</strong> $542 (21.7%)</li>
+                    </ul>
+
+                    <div class="success-highlight">
+                        <h4>✅ Как максимизировать прибыль:</h4>
+                        <ul>
+                            <li><strong>Negotiate rates:</strong> Всегда просите +$0.20-0.50 к первой ставке</li>
+                            <li><strong>Minimize deadhead:</strong> Планируйте backhaul ДО доставки</li>
+                            <li><strong>Premium lanes:</strong> Фокус на CA, FL, NY, TX маршрутах</li>
+                            <li><strong>Fuel efficiency:</strong> 6-8 MPG экономит $200-400 на 1,000 миль</li>
+                            <li><strong>Detention pay:</strong> Требуйте $50-75/час после 2 часов</li>
+                            <li><strong>Seasonal planning:</strong> Больше грузов в Q4, меньше в Q1</li>
+                        </ul>
+                    </div>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Красные флаги низкой прибыльности:</h4>
+                        <ul>
+                            <li>RPM ниже $2.00 для Dry Van (работаете в убыток)</li>
+                            <li>Deadhead >15% (слишком много пустых миль)</li>
+                            <li>Fuel cost >35% от revenue (плохая эффективность)</li>
+                            <li>Profit margin <10% (нужно пересмотреть стратегию)</li>
+                        </ul>
+                    </div>
+
+                    <h3>🎯 Целевые показатели по equipment</h3>
+                    <ul>
+                        <li><strong>Dry Van:</strong> $25K-35K revenue/месяц, 15-20% profit margin</li>
+                        <li><strong>Reefer:</strong> $30K-45K revenue/месяц, 20-25% profit margin</li>
+                        <li><strong>Flatbed:</strong> $28K-40K revenue/месяц, 18-23% profit margin</li>
+                        <li><strong>Specialized:</strong> $35K-60K revenue/месяц, 25-35% profit margin</li>
+                    </ul>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Реальный кейс: Выбор между двумя грузами</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> У вас Dry Van в Dallas. Два предложения на выбор:</p>
+                    <ul>
+                        <li><strong>Груз A:</strong> Dallas → Atlanta, 800 миль, $1,600 ($2.00/миля), pickup сегодня
+                        </li>
+                        <li><strong>Груз B:</strong> Dallas → LA, 1,400 миль, $3,360 ($2.40/миля), pickup завтра</li>
+                        <li>Из Atlanta много грузов обратно в TX ($2.50/миля)</li>
+                        <li>Из LA обратно в TX мало грузов ($1.80/миля)</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        💡 Вопрос: Какой груз выбрать? Как рассчитать полную прибыльность?
+                    </div>
+                    <div class="case-study-solution">
+                        <h4>✅ Решение:</h4>
+                        <p><strong>Расчет с учетом backhaul:</strong></p>
+                        <p><strong>Груз A (Dallas → Atlanta → Dallas):</strong></p>
+                        <ul>
+                            <li>Туда: 800 миль × $2.00 = $1,600</li>
+                            <li>Обратно: 800 миль × $2.50 = $2,000</li>
+                            <li>Итого: 1,600 миль, $3,600 revenue = $2.25/миля average</li>
+                        </ul>
+                        <p><strong>Груз B (Dallas → LA → Dallas):</strong></p>
+                        <ul>
+                            <li>Туда: 1,400 миль × $2.40 = $3,360</li>
+                            <li>Обратно: 1,400 миль × $1.80 = $2,520</li>
+                            <li>Итого: 2,800 миль, $5,880 revenue = $2.10/миля average</li>
+                        </ul>
+                        <p><strong>Рекомендация:</strong> Груз A лучше! Выше average RPM, меньше миль, быстрее оборот,
+                            лучший backhaul market.</p>
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio5', 'quiz-5')">
+                🎧 Я закончил слушать этот блок
+            </button>
+            <div class="quick-check-block locked" id="quiz-5" data-quiz-id="quiz-3-5" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Какой целевой profit margin для Dry Van?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">5-10%</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">15-20%</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">30-40%</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Целевой profit margin для Dry Van 15-20% после всех расходов
+                        (fuel, driver, maintenance, insurance).
+                    </div>
+                </div>
+            </div>
+            <div class="quiz-feedback">
+                <strong>Правильно! ✓</strong> Целевой RPM для dry van составляет $2.00-3.00, обеспечивая
+                прибыльность перевозок.
+            </div>
+        </div>
+        </div>
+        </div>
+
+        <!-- СЕКТОР 6: Требования и навыки -->
+        <div class="sector-wrapper">
+            <div class="sector-number">06</div>
+
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🎓 Требования и навыки</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio6')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio6')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio6')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>📋 Образование и опыт</h3>
+                    <ul>
+                        <li><strong>Образование:</strong> High School Diploma (минимум)</li>
+                        <li><strong>Опыт:</strong> Не требуется для Entry Level</li>
+                        <li><strong>Обучение:</strong> 1-3 месяца on-the-job training</li>
+                        <li><strong>Сертификация:</strong> Не обязательна, но желательна</li>
+                    </ul>
+
+                    <h3>💻 Технические навыки</h3>
+                    <ul>
+                        <li><strong>Load Boards:</strong> DAT, Truckstop, 123Loadboard</li>
+                        <li><strong>TMS Software:</strong> McLeod, TMW, Axon</li>
+                        <li><strong>Excel:</strong> Базовые формулы, таблицы</li>
+                        <li><strong>Google Maps:</strong> Планирование маршрутов</li>
+                    </ul>
+
+                    <h3>🗣️ Soft Skills</h3>
+                    <div class="info-highlight">
+                        <h4>💡 Ключевые навыки:</h4>
+                        <ul>
+                            <li><strong>Многозадачность:</strong> Управление 5-10 траками одновременно</li>
+                            <li><strong>Коммуникация:</strong> Переговоры с брокерами, общение с водителями</li>
+                            <li><strong>Стрессоустойчивость:</strong> Работа под давлением дедлайнов</li>
+                            <li><strong>Решение проблем:</strong> Быстрое реагирование на кризисы</li>
+                        </ul>
+                    </div>
+
+                    <h3>💰 Зарплата и карьерный рост</h3>
+                    <ul>
+                        <li><strong>Entry Level:</strong> $35-45K/год</li>
+                        <li><strong>Mid Level (2-5 лет):</strong> $45-65K/год</li>
+                        <li><strong>Senior (5+ лет):</strong> $65-85K/год</li>
+                        <li><strong>Dispatch Manager:</strong> $85-120K/год</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Case Study 6 -->
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Реальный кейс: Собеседование</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Вы на интервью на позицию Junior Dispatcher. Менеджер спрашивает:</p>
+                    <p><em>"У нас 8 траков, часто возникают проблемы в пути. Как вы справитесь со стрессом?"</em></p>
+                    <div class="case-study-highlight">
+                        💡 Вопрос: Что ответить? Какие навыки подчеркнуть?
+                    </div>
+                    <div class="case-study-solution">
+                        <h4>✅ Решение:</h4>
+                        <p><strong>Хороший ответ:</strong></p>
+                        <p>"I thrive in fast-paced environments. I prioritize tasks by urgency - deliveries today come
+                            first,
+                            then tomorrow's pickups. I stay calm under pressure and communicate proactively with brokers
+                            and drivers.
+                            For example, [приведите пример из жизни где вы справились со стрессом]."</p>
+                        <p><strong>Подчеркните:</strong></p>
+                        <ul>
+                            <li>Многозадачность</li>
+                            <li>Коммуникативные навыки</li>
+                            <li>Стрессоустойчивость</li>
+                            <li>Готовность учиться</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio6', 'quiz-6')">
+                🎧 Я закончил слушать этот блок
+            </button>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="lesson-nav">
+            <a href="doc-module-2-complete.html" class="nav-btn">
+                <span>←</span>
+                <span>Предыдущий модуль</span>
+            </a>
+            <div class="progress-info">
+                <div>Модуль 3 из 12</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 25%;"></div>
+                </div>
+            </div>
+            <a href="doc-module-4-complete.html" class="nav-btn">
+                <span>Следующий модуль</span>
+                <span>→</span>
+            </a>
+        </nav>
+
+    </main>
+
+    <!-- Audio Elements -->
+    <audio id="audio1" src="../audio/module-3-sector-1.mp3"></audio>
+    <audio id="audio2" src="../audio/module-3-sector-2.mp3"></audio>
+    <audio id="audio3" src="../audio/module-3-sector-3.mp3"></audio>
+    <audio id="audio4" src="../audio/module-3-sector-4.mp3"></audio>
+    <audio id="audio5" src="../audio/module-3-sector-5.mp3"></audio>
+    <script>
+        // Audio durations (in seconds) - simulated for demo
+        const audioDurations = {
+            'audio1': 180, // 3 minutes
+            'audio2': 240, // 4 minutes
+            'audio3': 210, // 3.5 minutes
+            'audio4': 195, // 3.25 minutes
+            'audio5': 165  // 2.75 minutes
+        };
+
+        let currentAudio = null;
+        let currentButton = null;
+        let currentContainer = null;
+        let progressUpdateInterval = null;
+
+        function updateProgress(audioId, currentTime, duration) {
+            const container = document.querySelector(`button[onclick*="${audioId}"]`)?.closest('.audio-container');
+            if (!container) return;
+
+            const progressRingFill = container.querySelector('.progress-ring-fill');
+            const durationDisplay = container.querySelector('.audio-duration');
+            const mobileProgressFill = container.querySelector('.mobile-progress-fill');
+
+            const circumference = 2 * Math.PI * 32;
+            const progress = currentTime / duration;
+            const offset = circumference - (progress * circumference);
+
+            if (progressRingFill) {
+                progressRingFill.style.strokeDashoffset = offset;
+            }
+
+            if (mobileProgressFill) {
+                mobileProgressFill.style.width = `${progress * 100}%`;
+            }
+
+            if (durationDisplay) {
+                durationDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+            }
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function seekAudio(event, audioId) {
+            const ring = event.currentTarget;
+            const rect = ring.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const angle = Math.atan2(event.clientY - centerY, event.clientX - centerX);
+            let progress = (angle + Math.PI / 2) / (2 * Math.PI);
+            if (progress < 0) progress += 1;
+
+            const audio = document.getElementById(audioId);
+            const duration = audioDurations[audioId];
+            const newTime = progress * duration;
+
+            if (audio && !audio.paused) {
+                audio.currentTime = newTime;
+                updateProgress(audioId, newTime, duration);
+            }
+        }
+        function seekAudioMobile(event, audioId) {
+            const bar = event.currentTarget;
+            const rect = bar.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const progress = clickX / rect.width;
+
+            const audio = document.getElementById(audioId);
+            const duration = audioDurations[audioId];
+            const newTime = progress * duration;
+
+            if (audio && !audio.paused) {
+                audio.currentTime = newTime;
+                updateProgress(audioId, newTime, duration);
+            }
+        }
+
+        function toggleAudio(button, audioId) {
+            const audio = document.getElementById(audioId);
+            const container = button.closest('.audio-container');
+            const interactiveRing = container.querySelector('.progress-ring-interactive');
+
+            if (currentAudio && currentAudio !== audio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                if (currentButton) currentButton.classList.remove('playing');
+                if (currentContainer) currentContainer.classList.remove('playing');
+                if (progressUpdateInterval) clearInterval(progressUpdateInterval);
+            }
+
+            if (audio.paused) {
+                audio.play().catch(() => {
+                    // Simulate audio playback for demo
+                    let currentTime = 0;
+                    const duration = audioDurations[audioId];
+
+                    button.classList.add('playing');
+                    container.classList.add('playing');
+                    currentAudio = audio;
+                    currentButton = button;
+                    currentContainer = container;
+
+                    progressUpdateInterval = setInterval(() => {
+                        if (currentTime < duration) {
+                            currentTime += 0.1;
+                            updateProgress(audioId, currentTime, duration);
+                        } else {
+                            clearInterval(progressUpdateInterval);
+                            button.classList.remove('playing');
+                            container.classList.remove('playing');
+                            currentAudio = null;
+                            currentButton = null;
+                            currentContainer = null;
+                            updateProgress(audioId, 0, duration);
+                        }
+                    }, 100);
+                });
+
+                button.classList.add('playing');
+                container.classList.add('playing');
+                currentAudio = audio;
+                currentButton = button;
+                currentContainer = container;
+
+                progressUpdateInterval = setInterval(() => {
+                    if (audio.currentTime < audio.duration) {
+                        updateProgress(audioId, audio.currentTime, audio.duration);
+                    }
+                }, 100);
+            } else {
+                audio.pause();
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                if (progressUpdateInterval) clearInterval(progressUpdateInterval);
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+            }
+        }
+        function markAudioComplete(button, audioId, quizId) {
+            button.classList.add('completed');
+            button.textContent = '✅ Блок прослушан';
+            button.disabled = true;
+
+            const quizBlock = document.getElementById(quizId);
+            if (quizBlock) {
+                quizBlock.classList.remove('locked');
+            }
+        }
+
+        // Quiz handling
+        document.addEventListener('DOMContentLoaded', function () {
+            Object.keys(audioDurations).forEach(audioId => {
+                const duration = audioDurations[audioId];
+                updateProgress(audioId, 0, duration);
+            });
+
+            document.querySelectorAll('.quiz-option').forEach(option => {
+                option.addEventListener('click', function () {
+                    const quizBlock = this.closest('.quick-check-block');
+                    if (quizBlock.classList.contains('locked')) return;
+
+                    const correctAnswer = quizBlock.dataset.correctAnswer;
+                    const selectedAnswer = this.dataset.answer;
+                    const allOptions = quizBlock.querySelectorAll('.quiz-option');
+                    const feedback = quizBlock.querySelector('.quiz-feedback');
+
+                    allOptions.forEach(opt => {
+                        opt.style.pointerEvents = 'none';
+                        if (opt.dataset.answer === correctAnswer) {
+                            opt.classList.add('correct');
+                        } else if (opt === this && selectedAnswer !== correctAnswer) {
+                            opt.classList.add('incorrect');
+                        }
+                    });
+
+                    if (feedback) {
+                        feedback.classList.add('show');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
