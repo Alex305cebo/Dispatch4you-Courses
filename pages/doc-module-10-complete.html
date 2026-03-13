@@ -1,0 +1,2916 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль 10: Финансы и расчеты | DispatcherPro</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="stylesheet" href="../interactive-modules.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #f093fb;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary: #b8c5d6;
+            --text-muted: #8892aa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.1);
+            --audio-primary: #ff6b6b;
+            --audio-secondary: #4ecdc4;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
+            padding-top: 100px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1), transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(240, 147, 251, 0.1), transparent 50%);
+            animation: backgroundMove 20s ease infinite;
+            z-index: -1;
+        }
+
+        @keyframes backgroundMove {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            25% {
+                transform: translate(5%, 5%) scale(1.05);
+            }
+
+            50% {
+                transform: translate(-5%, 5%) scale(1.1);
+            }
+
+            75% {
+                transform: translate(5%, -5%) scale(1.05);
+            }
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 0;
+            background: rgba(7, 11, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            min-height: 80px;
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateX(-3px);
+        }
+
+        .module-info {
+            text-align: center;
+        }
+
+        .module-number {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .module-title {
+            font-size: 18px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .sector-wrapper {
+            position: relative;
+            margin-bottom: 60px;
+        }
+
+        .sector-number {
+            position: absolute;
+            left: -80px;
+            top: 30px;
+            font-size: 72px;
+            font-weight: 900;
+            color: rgba(102, 126, 234, 0.1);
+            line-height: 1;
+            user-select: none;
+        }
+
+        .content-block {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            transition: all 0.3s ease;
+        }
+
+        .content-block:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+
+        .block-title {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+            flex: 1;
+        }
+
+        .audio-container {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .audio-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--audio-primary), var(--audio-secondary));
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .audio-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.5);
+        }
+
+        .audio-btn .play-icon {
+            font-size: 24px;
+            color: white;
+            margin-left: 3px;
+        }
+
+        .audio-btn .pause-icon {
+            font-size: 20px;
+            color: white;
+            display: none;
+        }
+
+        .audio-btn.playing .play-icon {
+            display: none;
+        }
+
+        .audio-btn.playing .pause-icon {
+            display: block;
+        }
+
+        .audio-btn.playing {
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.7), 0 0 0 10px rgba(255, 107, 107, 0.1);
+            }
+
+            100% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+        }
+
+        .progress-ring {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            transform: rotate(-90deg);
+            z-index: 1;
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 5;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: var(--audio-primary);
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-dasharray: 201.06;
+            stroke-dashoffset: 201.06;
+            transition: stroke-dashoffset 0.1s ease;
+            filter: drop-shadow(0 0 4px rgba(255, 107, 107, 0.5));
+        }
+
+        .progress-ring-interactive {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            cursor: pointer;
+            z-index: 5;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        .progress-ring-interactive.seekable {
+            pointer-events: auto;
+            background: radial-gradient(circle, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.01) 60%, rgba(255, 255, 255, 0.01) 100%);
+        }
+
+        .audio-duration {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .audio-container:hover .audio-duration,
+        .audio-container.playing .audio-duration {
+            opacity: 1;
+        }
+
+        .mobile-progress-bar {
+            display: none;
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .mobile-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--audio-primary), var(--audio-secondary));
+            border-radius: 2px;
+            transition: width 0.1s ease;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-progress-bar {
+                display: block;
+            }
+
+            .progress-ring,
+            .progress-ring-interactive {
+                display: none !important;
+            }
+
+            .audio-duration {
+                bottom: -50px;
+            }
+        }
+
+        .block-content {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .block-content h3 {
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            margin: 25px 0 15px 0;
+        }
+
+        .block-content h4 {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            margin: 20px 0 10px 0;
+        }
+
+        .block-content ul,
+        .block-content ol {
+            margin: 15px 0 15px 25px;
+        }
+
+        .block-content li {
+            margin-bottom: 8px;
+        }
+
+        .block-content strong {
+            color: var(--text-primary);
+        }
+
+        .info-highlight {
+            background: rgba(102, 126, 234, 0.08);
+            border-left: 4px solid #667eea;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .warning-highlight {
+            background: rgba(251, 146, 60, 0.08);
+            border-left: 4px solid #fb923c;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .success-highlight {
+            background: rgba(52, 211, 153, 0.08);
+            border-left: 4px solid #34d399;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .case-study {
+            background: rgba(102, 126, 234, 0.08);
+            border-left: 4px solid #667eea;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 32px 0;
+        }
+
+        .case-study h4 {
+            color: #a5b4fc;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .quiz-block {
+            background: rgba(167, 139, 250, 0.08);
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            border-radius: 16px;
+            padding: 32px;
+            margin: 32px 0;
+        }
+
+        .quiz-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+
+        .quiz-question {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 18px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quiz-option:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+        }
+
+        .quiz-option.incorrect {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--danger);
+        }
+
+        .option-letter {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 50%;
+            font-weight: 700;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .option-text {
+            flex: 1;
+            color: var(--text-secondary);
+        }
+
+        .quiz-feedback {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--success);
+            border-radius: 8px;
+            color: var(--text-primary);
+        }
+
+        .quiz-feedback.show {
+            display: block;
+        }
+
+        /* Audio Completion Button */
+        .audio-completion-btn {
+            display: block;
+            width: 100%;
+            padding: 16px 24px;
+            margin: 30px 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .audio-completion-btn:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .audio-completion-btn.completed {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(52, 211, 153, 0.2));
+            border-color: var(--success);
+            cursor: default;
+        }
+
+        /* Case Study Block */
+        .case-study-block {
+            background: rgba(240, 147, 251, 0.05);
+            border: 1px solid rgba(240, 147, 251, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px 0;
+            transition: all 0.3s ease;
+        }
+
+        .case-study-block:hover {
+            background: rgba(240, 147, 251, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(240, 147, 251, 0.2);
+        }
+
+        .case-study-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .case-study-icon {
+            font-size: 32px;
+        }
+
+        .case-study-title {
+            font-size: 1.4rem;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .case-study-content p {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        .case-study-content ul {
+            margin: 15px 0 15px 25px;
+        }
+
+        .case-study-content li {
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .case-study-content strong {
+            color: var(--text-primary);
+        }
+
+        .case-study-highlight {
+            background: rgba(240, 147, 251, 0.1);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Quick Check Block */
+        .quick-check-block {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px 0;
+            transition: all 0.3s ease;
+            position: relative;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .quick-check-block.locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .quick-check-block.locked::after {
+            content: '🔒 Прослушайте аудио чтобы разблокировать квиз';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px 30px;
+            border-radius: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: center;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        /* Unlocked state - explicitly set */
+        .quick-check-block:not(.locked) {
+            opacity: 1;
+            pointer-events: auto;
+            cursor: default;
+        }
+
+        .quick-check-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .quick-check-icon {
+            font-size: 32px;
+        }
+
+        .quick-check-title {
+            font-size: 1.4rem;
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .quick-check-content {
+            color: var(--text-secondary);
+        }
+
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .progress-info {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 10px auto;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            width: 42%;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 90px;
+            }
+
+            .header {
+                padding: 15px 0;
+                min-height: 70px;
+            }
+
+            .main {
+                padding: 20px 15px;
+            }
+
+            .sector-number {
+                display: none;
+            }
+
+            .content-block {
+                padding: 20px 15px;
+            }
+
+            .block-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .block-title {
+                font-size: 1.4rem;
+            }
+
+            .audio-container {
+                align-self: center;
+            }
+
+            .lesson-nav {
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px 15px;
+            }
+
+            .nav-btn {
+                width: 100%;
+            }
+
+            .progress-bar {
+                width: 100%;
+            }
+        }
+
+        /* Quiz Container Styles */
+        .quiz-container {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            margin-top: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .quiz-container:hover {
+            background: rgba(16, 185, 129, 0.08);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .quiz-container h4 {
+            color: var(--success);
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quiz-container h4::before {
+            content: '✅';
+            font-size: 28px;
+        }
+
+        .quiz-question {
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .quiz-option {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        .quiz-option:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .quiz-option.selected {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            color: var(--text-primary);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .quiz-option.incorrect {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .quiz-feedback {
+            margin-top: 20px;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-size: 15px;
+            display: none;
+        }
+
+        .quiz-feedback.show {
+            display: block;
+        }
+
+        .quiz-feedback.correct {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--success);
+        }
+
+        .quiz-feedback.incorrect {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger);
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="modules-index.html" class="back-btn">
+                <span>←</span>
+                <span>Назад к модулям</span>
+            </a>
+            <div class="module-info">
+                <div class="module-number">Модуль 10 из 12</div>
+                <div class="module-title">Финансы и расчеты</div>
+            </div>
+            <div style="width: 150px;"></div>
+        </nav>
+    </header>
+
+    <main class="main">
+
+        <!-- СЕКТОР 1: Cost Per Mile (CPM) -->
+        <div class="sector-wrapper">
+            <div class="sector-number">01</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">💰 Cost Per Mile (CPM) - Себестоимость</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio1')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio1')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio1')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>💰 Что такое Cost Per Mile (CPM)?</h3>
+                    <p><strong>CPM (Cost Per Mile)</strong> - это себестоимость одной мили работы трака. Это
+                        КРИТИЧЕСКИ важная метрика для понимания прибыльности бизнеса.</p>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Почему CPM важен:</h4>
+                        <ul>
+                            <li><strong>Определяет минимальную ставку:</strong> Если CPM = $1.80, то ставка ниже
+                                $1.80/миля = убыток</li>
+                            <li><strong>Показывает эффективность:</strong> Низкий CPM = больше прибыли при той же
+                                ставке</li>
+                            <li><strong>Помогает в переговорах:</strong> Знаете свой break-even point</li>
+                            <li><strong>Планирование бюджета:</strong> Прогнозирование расходов на месяц/год</li>
+                        </ul>
+                    </div>
+
+                    <h3>📊 Формула расчета CPM</h3>
+                    <div class="success-highlight">
+                        <h4>✅ CPM = Total Operating Costs ÷ Total Miles</h4>
+                        <p><strong>Пример:</strong></p>
+                        <ul>
+                            <li>Месячные расходы: $18,000</li>
+                            <li>Мили за месяц: 10,000</li>
+                            <li>CPM = $18,000 ÷ 10,000 = <strong>$1.80/миля</strong></li>
+                        </ul>
+                    </div>
+
+                    <h3>🔧 Fixed Costs (Фиксированные расходы)</h3>
+                    <p><strong>Не зависят от пробега</strong> - платите даже если трак стоит:</p>
+
+                    <div class="info-highlight">
+                        <h4>💡 Основные Fixed Costs:</h4>
+                        <ul>
+                            <li><strong>Truck Payment:</strong> $1,500-2,500/месяц (lease или loan)</li>
+                            <li><strong>Trailer Payment:</strong> $400-800/месяц</li>
+                            <li><strong>Insurance:</strong> $800-1,500/месяц (liability + cargo + physical damage)
+                            </li>
+                            <li><strong>Permits:</strong> $200-400/месяц (IRP, IFTA, UCR, 2290 amortized)</li>
+                            <li><strong>Dispatcher Fee:</strong> 5-10% от gross (если используете)</li>
+                            <li><strong>Office/Admin:</strong> $100-300/месяц (phone, internet, software)</li>
+                        </ul>
+                        <p><strong>Total Fixed Costs:</strong> $3,000-5,500/месяц</p>
+                    </div>
+
+                    <h3>⛽ Variable Costs (Переменные расходы)</h3>
+                    <p><strong>Зависят от пробега</strong> - чем больше едете, тем больше платите:</p>
+
+                    <div class="info-highlight">
+                        <h4>💡 Основные Variable Costs:</h4>
+                        <ul>
+                            <li><strong>Fuel:</strong> $0.40-0.60/миля (зависит от цены топлива и MPG)</li>
+                            <li><strong>Maintenance:</strong> $0.15-0.25/миля (oil changes, repairs, PM)</li>
+                            <li><strong>Tires:</strong> $0.03-0.05/миля (замена каждые 100K-150K миль)</li>
+                            <li><strong>Tolls:</strong> $0.02-0.10/миля (зависит от маршрута)</li>
+                            <li><strong>Driver Pay:</strong> $0.40-0.60/миля (если платите per mile)</li>
+                        </ul>
+                        <p><strong>Total Variable Costs:</strong> $1.00-1.60/миля</p>
+                    </div>
+
+                    <h3>📈 Расчет Total CPM</h3>
+                    <div class="success-highlight">
+                        <h4>✅ Пример расчета для owner-operator:</h4>
+                        <p><strong>Fixed Costs (месяц):</strong></p>
+                        <ul>
+                            <li>Truck payment: $2,000</li>
+                            <li>Insurance: $1,200</li>
+                            <li>Permits: $300</li>
+                            <li>Admin: $200</li>
+                            <li><strong>Total Fixed: $3,700/месяц</strong></li>
+                        </ul>
+                        <p><strong>Variable Costs (per mile):</strong></p>
+                        <ul>
+                            <li>Fuel: $0.50</li>
+                            <li>Maintenance: $0.20</li>
+                            <li>Tires: $0.04</li>
+                            <li>Tolls: $0.05</li>
+                            <li><strong>Total Variable: $0.79/миля</strong></li>
+                        </ul>
+                        <p><strong>Расчет CPM (10,000 миль/месяц):</strong></p>
+                        <ul>
+                            <li>Fixed per mile: $3,700 ÷ 10,000 = $0.37/миля</li>
+                            <li>Variable: $0.79/миля</li>
+                            <li><strong>Total CPM: $0.37 + $0.79 = $1.16/миля</strong></li>
+                        </ul>
+                    </div>
+
+                    <h3>🎯 Целевые показатели CPM</h3>
+                    <ul>
+                        <li><strong>Owner-Operator (no driver):</strong> $1.00-1.30/миля</li>
+                        <li><strong>Owner-Operator (with driver):</strong> $1.50-1.80/миля</li>
+                        <li><strong>Small Fleet (2-5 trucks):</strong> $1.60-2.00/миля</li>
+                        <li><strong>Medium Fleet (10+ trucks):</strong> $1.80-2.20/миля</li>
+                    </ul>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Как снизить CPM:</h4>
+                        <ul>
+                            <li><strong>Увеличить мили:</strong> Fixed costs распределяются на больше миль</li>
+                            <li><strong>Улучшить MPG:</strong> Снизить скорость до 62-65 mph</li>
+                            <li><strong>Preventive maintenance:</strong> Избежать дорогих поломок</li>
+                            <li><strong>Negotiate insurance:</strong> Shop around каждый год</li>
+                            <li><strong>Minimize deadhead:</strong> Меньше пустых миль</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: Снижение CPM с $1.95 до $1.65</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Owner-operator с 1 траком, CPM = $1.95/миля. При средней ставке
+                        $2.20/миля прибыль только $0.25/миля.</p>
+                    <p><strong>Анализ расходов:</strong></p>
+                    <ul>
+                        <li><strong>Fixed costs:</strong> $4,200/месяц</li>
+                        <li><strong>Variable costs:</strong> $0.95/миля</li>
+                        <li><strong>Мили:</strong> 8,000/месяц</li>
+                        <li><strong>CPM:</strong> ($4,200 ÷ 8,000) + $0.95 = $1.48 + $0.95 = $1.95/миля</li>
+                    </ul>
+                    <p><strong>Действия для снижения CPM:</strong></p>
+                    <ul>
+                        <li><strong>Увеличил мили:</strong> 8,000 → 10,000/месяц (лучшее планирование, меньше
+                            downtime)</li>
+                        <li><strong>Улучшил MPG:</strong> 6.0 → 6.5 (снизил скорость, preventive maintenance)</li>
+                        <li><strong>Снизил insurance:</strong> $1,500 → $1,200/месяц (нашел лучшую ставку)</li>
+                        <li><strong>Preventive maintenance:</strong> Избежал 2 дорогих поломок ($3,000 экономии)
+                        </li>
+                    </ul>
+                    <p><strong>Новый CPM:</strong></p>
+                    <ul>
+                        <li>Fixed: $3,900/месяц (снизили insurance)</li>
+                        <li>Variable: $0.82/миля (улучшили MPG)</li>
+                        <li>Мили: 10,000/месяц</li>
+                        <li>CPM: ($3,900 ÷ 10,000) + $0.82 = $0.39 + $0.82 = <strong>$1.21/миля</strong></li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        <strong>Результат:</strong> CPM снизился с $1.95 до $1.21 (экономия $0.74/миля). При 10,000
+                        миль/месяц = <strong>$7,400/месяц дополнительной прибыли!</strong>
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio1', 'quiz-1')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-1" data-quiz-id="quiz-10-1" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Компания имеет fixed costs $4,000/месяц,
+                        variable costs $0.80/миля, и делает 10,000 миль/месяц. Какой CPM?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">$1.00/миля</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">$1.20/миля</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">$1.60/миля</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">$2.00/миля</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> CPM = (Fixed ÷ Miles) + Variable = ($4,000 ÷ 10,000) + $0.80 =
+                        $0.40 + $0.80 = $1.20/миля. Это минимальная ставка для break-even!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- СЕКТОР 2: Fuel Costs -->
+        <div class="sector-wrapper">
+            <div class="sector-number">02</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">⛽ Fuel Costs - Топливные расходы</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio2')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio2')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio2')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>⛽ Почему топливо - самый большой расход?</h3>
+                    <p><strong>Fuel costs</strong> составляют 30-40% всех операционных расходов в trucking. Это
+                        САМАЯ большая переменная стоимость.</p>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Статистика топливных расходов:</h4>
+                        <ul>
+                            <li><strong>Средняя цена дизеля:</strong> $3.50-4.50/галлон (зависит от штата и сезона)
+                            </li>
+                            <li><strong>Средний расход:</strong> 6.0-7.0 MPG (Miles Per Gallon)</li>
+                            <li><strong>Стоимость на милю:</strong> $0.50-0.75/миля</li>
+                            <li><strong>Месячные расходы:</strong> $5,000-7,500 при 10,000 миль/месяц</li>
+                            <li><strong>Годовые расходы:</strong> $60,000-90,000 на один трак!</li>
+                        </ul>
+                    </div>
+
+                    <h3>📊 Формула расчета fuel cost</h3>
+                    <div class="success-highlight">
+                        <h4>✅ Fuel Cost Per Mile = Fuel Price ÷ MPG</h4>
+                        <p><strong>Пример 1:</strong></p>
+                        <ul>
+                            <li>Цена дизеля: $4.00/галлон</li>
+                            <li>MPG: 6.5</li>
+                            <li>Fuel cost: $4.00 ÷ 6.5 = <strong>$0.62/миля</strong></li>
+                        </ul>
+                        <p><strong>Пример 2 (плохой MPG):</strong></p>
+                        <ul>
+                            <li>Цена дизеля: $4.00/галлон</li>
+                            <li>MPG: 5.5 (плохое обслуживание, высокая скорость)</li>
+                            <li>Fuel cost: $4.00 ÷ 5.5 = <strong>$0.73/миля</strong></li>
+                            <li><strong>Разница:</strong> $0.11/миля × 10,000 миль = $1,100/месяц убытка!</li>
+                        </ul>
+                    </div>
+
+                    <h3>🚀 Как улучшить MPG</h3>
+                    <div class="success-highlight">
+                        <h4>✅ Топ-10 способов экономии топлива:</h4>
+                        <ol>
+                            <li><strong>Снизить скорость:</strong> 70 mph → 62-65 mph = +1.0 MPG (экономия
+                                $150-200/месяц)</li>
+                            <li><strong>Minimize idle time:</strong> Выключать двигатель при остановках 10+ минут
+                            </li>
+                            <li><strong>Proper tire pressure:</strong> Проверять давление еженедельно (недокачанные
+                                шины = -0.5 MPG)</li>
+                            <li><strong>Aerodynamics:</strong> Использовать side skirts, trailer tails (+0.3-0.5
+                                MPG)</li>
+                            <li><strong>Smooth driving:</strong> Избегать резких ускорений и торможений</li>
+                            <li><strong>Route planning:</strong> Избегать горных маршрутов когда возможно</li>
+                            <li><strong>Weight management:</strong> Не возить лишний вес (каждые 1,000 lbs = -0.1
+                                MPG)</li>
+                            <li><strong>Regular maintenance:</strong> Чистые фильтры, свежее масло</li>
+                            <li><strong>Cruise control:</strong> Использовать на highway для постоянной скорости
+                            </li>
+                            <li><strong>Engine tuning:</strong> Профессиональная настройка двигателя</li>
+                        </ol>
+                    </div>
+
+                    <h3>💳 Fuel Surcharge (FSC)</h3>
+                    <p><strong>FSC</strong> - дополнительная плата от брокера для компенсации топливных расходов.
+                    </p>
+
+                    <div class="info-highlight">
+                        <h4>💡 Как работает FSC:</h4>
+                        <ul>
+                            <li><strong>Базовая цена:</strong> Обычно $1.20-1.50/галлон (baseline)</li>
+                            <li><strong>Текущая цена:</strong> Например, $4.00/галлон</li>
+                            <li><strong>Разница:</strong> $4.00 - $1.20 = $2.80</li>
+                            <li><strong>FSC rate:</strong> $2.80 ÷ 6.0 MPG = $0.47/миля</li>
+                            <li><strong>Пример груза:</strong> 1,000 миль × $0.47 = $470 FSC</li>
+                        </ul>
+                        <p><strong>Важно:</strong> Не все брокеры платят FSC! Всегда спрашивайте: "Is FSC included
+                            in the rate?"</p>
+                    </div>
+
+                    <h3>💳 Fuel Cards и Discounts</h3>
+                    <div class="success-highlight">
+                        <h4>✅ Популярные fuel cards:</h4>
+                        <ul>
+                            <li><strong>Comdata:</strong> 3-5 cents/галлон discount, широкая сеть</li>
+                            <li><strong>EFS (WEX):</strong> 2-4 cents/галлон, хорошие отчеты</li>
+                            <li><strong>TCS Fuel Card:</strong> До 50 cents/галлон discount на некоторых станциях
+                            </li>
+                            <li><strong>Pilot Flying J:</strong> Loyalty program, накопление points</li>
+                            <li><strong>Love's:</strong> Fuel rewards program</li>
+                        </ul>
+                        <p><strong>Экономия:</strong> 5 cents/галлон × 1,500 галлонов/месяц = <strong>$75/месяц =
+                                $900/год!</strong></p>
+                    </div>
+
+                    <h3>📊 Tracking Fuel Expenses</h3>
+                    <p><strong>Что отслеживать:</strong></p>
+                    <ul>
+                        <li><strong>MPG по неделям:</strong> Видеть тренды и проблемы</li>
+                        <li><strong>Fuel cost per mile:</strong> Сравнивать с целевым показателем</li>
+                        <li><strong>Цены по штатам:</strong> Заправляться в дешевых штатах (TX, OK, LA)</li>
+                        <li><strong>Idle time:</strong> Минимизировать простой с включенным двигателем</li>
+                        <li><strong>Driver behavior:</strong> Кто из водителей экономит топливо лучше</li>
+                    </ul>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Дорогие штаты для топлива (избегать заправки):</h4>
+                        <ul>
+                            <li>California: $5.00-5.50/галлон</li>
+                            <li>Washington: $4.50-5.00/галлон</li>
+                            <li>Oregon: $4.30-4.80/галлон</li>
+                            <li>Nevada: $4.20-4.70/галлон</li>
+                        </ul>
+                        <h4>✅ Дешевые штаты (заправляться здесь):</h4>
+                        <ul>
+                            <li>Texas: $3.20-3.70/галлон</li>
+                            <li>Oklahoma: $3.10-3.60/галлон</li>
+                            <li>Louisiana: $3.00-3.50/галлон</li>
+                            <li>Mississippi: $3.00-3.50/галлон</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: Экономия $18,000/год на топливе</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Owner-operator с 1 траком, MPG = 5.8, fuel cost = $0.69/миля при
+                        цене $4.00/галлон.</p>
+                    <p><strong>Проблемы:</strong></p>
+                    <ul>
+                        <li>Водитель ездил 70-75 mph (экономия времени)</li>
+                        <li>Idle time 3-4 часа/день (кондиционер, обогрев)</li>
+                        <li>Давление в шинах не проверялось месяцами</li>
+                        <li>Заправка где попало (не искал дешевые станции)</li>
+                    </ul>
+                    <p><strong>Действия для улучшения:</strong></p>
+                    <ul>
+                        <li><strong>Снизил скорость:</strong> 70 mph → 63 mph</li>
+                        <li><strong>Minimize idle:</strong> APU установка ($8,000) для кондиционера без двигателя
+                        </li>
+                        <li><strong>Tire pressure:</strong> Еженедельная проверка</li>
+                        <li><strong>Fuel card:</strong> TCS Fuel Card с 30-50 cents discount</li>
+                        <li><strong>Route planning:</strong> Заправка в TX, OK, LA (дешевые штаты)</li>
+                    </ul>
+                    <p><strong>Результаты через 3 месяца:</strong></p>
+                    <ul>
+                        <li>MPG: 5.8 → 6.7 (+0.9 MPG)</li>
+                        <li>Fuel cost: $0.69/миля → $0.60/миля</li>
+                        <li>Экономия: $0.09/миля × 10,000 миль/месяц = $900/месяц</li>
+                        <li>Годовая экономия: $900 × 12 = <strong>$10,800/год</strong></li>
+                        <li>Fuel card discounts: $75/месяц = $900/год</li>
+                        <li>Заправка в дешевых штатах: $50/месяц = $600/год</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        <strong>Total экономия:</strong> $10,800 + $900 + $600 = <strong>$12,300/год!</strong> APU
+                        окупился за 8 месяцев.
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio2', 'quiz-2')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-2" data-quiz-id="quiz-10-2" data-correct-answer="c">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Цена дизеля $4.00/галлон, MPG = 6.0. Какой
+                        fuel cost per mile?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">$0.50/миля</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">$0.60/миля</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">$0.67/миля</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">$0.75/миля</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Fuel Cost = Price ÷ MPG = $4.00 ÷ 6.0 = $0.67/миля. Это 30-40%
+                        от total operating costs!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- СЕКТОР 3: Revenue Per Mile (RPM) -->
+        <div class="sector-wrapper">
+            <div class="sector-number">03</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">💵 Revenue Per Mile (RPM) - Доходность</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio3')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio3')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio3')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>💵 Что такое Revenue Per Mile (RPM)?</h3>
+                    <p><strong>RPM</strong> - это доход на одну милю. Показывает сколько вы зарабатываете с каждой
+                        мили.</p>
+
+                    <div class="success-highlight">
+                        <h4>✅ Формула RPM:</h4>
+                        <p><strong>RPM = Total Revenue ÷ Total Miles</strong></p>
+                        <p><strong>Пример:</strong></p>
+                        <ul>
+                            <li>Груз: $2,500</li>
+                            <li>Total miles: 1,200</li>
+                            <li>RPM = $2,500 ÷ 1,200 = <strong>$2.08/миля</strong></li>
+                        </ul>
+                    </div>
+
+                    <h3>📊 Loaded Miles vs Total Miles</h3>
+                    <div class="warning-highlight">
+                        <h4>⚠️ Критическая разница:</h4>
+                        <ul>
+                            <li><strong>Loaded Miles:</strong> Мили с грузом (платные)</li>
+                            <li><strong>Deadhead Miles:</strong> Пустые мили (неоплачиваемые)</li>
+                            <li><strong>Total Miles:</strong> Loaded + Deadhead</li>
+                        </ul>
+                        <p><strong>Пример:</strong></p>
+                        <ul>
+                            <li>Груз Chicago → Dallas: $2,400 за 1,000 loaded miles</li>
+                            <li>Deadhead к pickup: 100 миль</li>
+                            <li>Total miles: 1,100</li>
+                            <li><strong>RPM (loaded):</strong> $2,400 ÷ 1,000 = $2.40/миля</li>
+                            <li><strong>RPM (total):</strong> $2,400 ÷ 1,100 = $2.18/миля</li>
+                            <li><strong>Реальная прибыль ниже на $0.22/миля!</strong></li>
+                        </ul>
+                    </div>
+
+                    <h3>🎯 Целевые показатели RPM</h3>
+                    <div class="success-highlight">
+                        <h4>✅ Минимальные RPM для прибыльности:</h4>
+                        <ul>
+                            <li><strong>Dry Van:</strong> $2.00-2.50/миля (total miles)</li>
+                            <li><strong>Reefer:</strong> $2.50-3.00/миля</li>
+                            <li><strong>Flatbed:</strong> $2.50-3.50/миля</li>
+                            <li><strong>Specialized:</strong> $3.00-5.00/миля</li>
+                        </ul>
+                        <p><strong>Правило:</strong> RPM должен быть минимум на $0.50-0.80 выше чем CPM для прибыли!
+                        </p>
+                    </div>
+
+                    <h3>📉 Deadhead Impact на RPM</h3>
+                    <p><strong>Deadhead убивает прибыль!</strong> Каждая пустая миля снижает ваш RPM.</p>
+
+                    <div class="info-highlight">
+                        <h4>💡 Пример влияния deadhead:</h4>
+                        <p><strong>Груз:</strong> $3,000 за 1,000 loaded miles</p>
+                        <ul>
+                            <li><strong>0% deadhead:</strong> RPM = $3,000 ÷ 1,000 = $3.00/миля</li>
+                            <li><strong>10% deadhead (100 миль):</strong> RPM = $3,000 ÷ 1,100 = $2.73/миля (-$0.27)
+                            </li>
+                            <li><strong>20% deadhead (200 миль):</strong> RPM = $3,000 ÷ 1,200 = $2.50/миля (-$0.50)
+                            </li>
+                            <li><strong>30% deadhead (300 миль):</strong> RPM = $3,000 ÷ 1,300 = $2.31/миля (-$0.69)
+                            </li>
+                        </ul>
+                        <p><strong>Вывод:</strong> Держите deadhead ниже 10% для максимальной прибыли!</p>
+                    </div>
+
+                    <h3>🚀 Как увеличить RPM</h3>
+                    <ol>
+                        <li><strong>Negotiate higher rates:</strong> Не соглашайтесь на первое предложение</li>
+                        <li><strong>Minimize deadhead:</strong> Ищите backhaul грузы</li>
+                        <li><strong>Target high-paying lanes:</strong> CA, TX, FL обычно платят больше</li>
+                        <li><strong>Specialized equipment:</strong> Reefer, flatbed платят на 20-30% больше</li>
+                        <li><strong>Direct shippers:</strong> Работайте напрямую, избегайте брокеров когда возможно
+                        </li>
+                        <li><strong>Seasonal demand:</strong> Используйте peak seasons (produce season, holidays)
+                        </li>
+                        <li><strong>Accessorial charges:</strong> Detention, layover, TONU - всегда требуйте оплату
+                        </li>
+                    </ol>
+
+                    <h3>📊 RPM Benchmarks по регионам</h3>
+                    <div class="success-highlight">
+                        <h4>✅ Средний RPM по популярным lanes (Dry Van):</h4>
+                        <ul>
+                            <li><strong>CA → TX:</strong> $2.80-3.20/миля</li>
+                            <li><strong>TX → CA:</strong> $2.20-2.60/миля (backhaul)</li>
+                            <li><strong>Midwest → East Coast:</strong> $2.40-2.80/миля</li>
+                            <li><strong>FL → Northeast:</strong> $2.60-3.00/миля</li>
+                            <li><strong>Short hauls (<250 миль):</strong> $3.00-4.00/миля</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: Увеличение RPM с $2.10 до $2.65</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Dispatcher принимал любые грузы, средний RPM = $2.10/миля (total
+                        miles). При CPM $1.80 прибыль только $0.30/миля.</p>
+                    <p><strong>Проблемы:</strong></p>
+                    <ul>
+                        <li>Deadhead 20-25% (плохое планирование)</li>
+                        <li>Соглашался на первую ставку брокера</li>
+                        <li>Не требовал detention pay</li>
+                        <li>Работал только с брокерами (no direct shippers)</li>
+                    </ul>
+                    <p><strong>Изменения:</strong></p>
+                    <ul>
+                        <li><strong>Снизил deadhead:</strong> 25% → 8% (лучшее планирование, backhaul search)</li>
+                        <li><strong>Negotiation:</strong> Начал торговаться, +$0.10-0.20/миля в среднем</li>
+                        <li><strong>Detention pay:</strong> Требует $50-75/час после 2 часов ожидания</li>
+                        <li><strong>Direct shippers:</strong> Нашел 3 постоянных клиентов (на 15% выше ставки)</li>
+                        <li><strong>High-paying lanes:</strong> Фокус на CA, TX, FL</li>
+                    </ul>
+                    <p><strong>Результаты через 2 месяца:</strong></p>
+                    <ul>
+                        <li>RPM: $2.10 → $2.65/миля (+$0.55)</li>
+                        <li>Deadhead: 25% → 8%</li>
+                        <li>Detention pay: +$200-300/месяц</li>
+                        <li>Прибыль: $0.30/миля → $0.85/миля</li>
+                        <li>При 10,000 миль/месяц: $0.55 × 10,000 = <strong>$5,500/месяц дополнительного
+                                дохода!</strong></li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        <strong>Годовая прибыль:</strong> $5,500 × 12 = <strong>$66,000/год!</strong> Просто за
+                        лучшее планирование и переговоры.
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio3', 'quiz-3')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-3" data-quiz-id="quiz-10-3" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Груз $2,800 за 1,000 loaded miles + 200
+                        deadhead miles. Какой RPM (total)?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">$2.80/миля</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">$2.33/миля</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">$2.50/миля</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">$3.00/миля</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> RPM = Revenue ÷ Total Miles = $2,800 ÷ (1,000 + 200) = $2,800
+                        ÷ 1,200 = $2.33/миля. Deadhead снизил RPM на $0.47!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- СЕКТОР 4: Profit Margins -->
+        <div class="sector-wrapper">
+            <div class="sector-number">04</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">📊 Profit Margins - Прибыльность</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio4')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio4')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio4')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>📊 Gross Profit vs Net Profit</h3>
+                    <div class="success-highlight">
+                        <h4>✅ Gross Profit:</h4>
+                        <p><strong>Gross Profit = Revenue - Direct Costs</strong></p>
+                        <p>Direct costs: fuel, driver pay, tolls</p>
+                        <p><strong>Пример:</strong> Revenue $3,000 - Fuel $700 - Driver $600 - Tolls $50 =
+                            <strong>$1,650 gross profit</strong>
+                        </p>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>💡 Net Profit:</h4>
+                        <p><strong>Net Profit = Gross Profit - Fixed Costs</strong></p>
+                        <p>Fixed costs: insurance, permits, truck payment, admin</p>
+                        <p><strong>Пример:</strong> Gross $1,650 - Fixed $400 = <strong>$1,250 net profit</strong>
+                        </p>
+                    </div>
+
+                    <h3>📈 Profit Margin формулы</h3>
+                    <div class="success-highlight">
+                        <h4>✅ Profit Margin % = (Net Profit ÷ Revenue) × 100</h4>
+                        <p><strong>Пример:</strong></p>
+                        <ul>
+                            <li>Revenue: $3,000</li>
+                            <li>Net Profit: $1,250</li>
+                            <li>Margin: ($1,250 ÷ $3,000) × 100 = <strong>41.7%</strong></li>
+                        </ul>
+                        <p><strong>Целевой margin:</strong> 25-35% для здорового бизнеса</p>
+                    </div>
+
+                    <h3>🎯 Break-Even Point</h3>
+                    <p><strong>Break-even</strong> - точка где доход = расходы (нет прибыли, нет убытка)</p>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Расчет break-even rate:</h4>
+                        <p><strong>Break-Even Rate = CPM</strong></p>
+                        <p>Если ваш CPM = $1.80/миля, то минимальная ставка для break-even = $1.80/миля</p>
+                        <p><strong>Для прибыли нужно:</strong> Rate > CPM + желаемая прибыль</p>
+                        <p><strong>Пример:</strong> CPM $1.80 + $0.50 прибыль = минимум $2.30/миля</p>
+                    </div>
+
+                    <h3>💰 Минимальная прибыльная ставка</h3>
+                    <div class="success-highlight">
+                        <h4>✅ Формула минимальной ставки:</h4>
+                        <p><strong>Min Rate = CPM + Desired Profit Per Mile</strong></p>
+                        <p><strong>Примеры:</strong></p>
+                        <ul>
+                            <li>CPM $1.60 + $0.40 profit = <strong>$2.00/миля minimum</strong></li>
+                            <li>CPM $1.80 + $0.50 profit = <strong>$2.30/миля minimum</strong></li>
+                            <li>CPM $2.00 + $0.60 profit = <strong>$2.60/миля minimum</strong></li>
+                        </ul>
+                    </div>
+
+                    <h3>📊 Анализ прибыльности грузов</h3>
+                    <p><strong>Перед принятием груза проверяйте:</strong></p>
+                    <ol>
+                        <li><strong>Total miles:</strong> Loaded + deadhead</li>
+                        <li><strong>RPM:</strong> Revenue ÷ total miles</li>
+                        <li><strong>Profit per mile:</strong> RPM - CPM</li>
+                        <li><strong>Total profit:</strong> Profit per mile × total miles</li>
+                        <li><strong>Time value:</strong> Profit ÷ days on road</li>
+                    </ol>
+
+                    <div class="info-highlight">
+                        <h4>💡 Пример анализа груза:</h4>
+                        <p><strong>Груз:</strong> Chicago → LA, $3,500, 2,000 loaded miles, 100 deadhead</p>
+                        <ul>
+                            <li>Total miles: 2,100</li>
+                            <li>RPM: $3,500 ÷ 2,100 = $1.67/миля</li>
+                            <li>CPM: $1.50/миля</li>
+                            <li>Profit per mile: $1.67 - $1.50 = $0.17/миля</li>
+                            <li>Total profit: $0.17 × 2,100 = $357</li>
+                            <li>Time: 3 дня</li>
+                            <li>Profit per day: $357 ÷ 3 = $119/день</li>
+                        </ul>
+                        <p><strong>Вердикт:</strong> ❌ Слишком низкая прибыль! Ищите лучший груз или negotiate
+                            higher rate.</p>
+                    </div>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: Увеличение profit margin с 15% до 32%</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Компания с 3 траками, profit margin = 15% (ниже целевого 25-35%)
+                    </p>
+                    <p><strong>Анализ показал:</strong></p>
+                    <ul>
+                        <li>Принимали грузы с profit $0.20-0.30/миля</li>
+                        <li>Не анализировали прибыльность перед принятием</li>
+                        <li>Высокий deadhead (18%)</li>
+                        <li>Не требовали accessorial charges</li>
+                    </ul>
+                    <p><strong>Изменения:</strong></p>
+                    <ul>
+                        <li><strong>Минимальная прибыль:</strong> Установили правило - минимум $0.50/миля profit
+                        </li>
+                        <li><strong>Анализ каждого груза:</strong> Калькулятор прибыльности перед принятием</li>
+                        <li><strong>Снизили deadhead:</strong> 18% → 9%</li>
+                        <li><strong>Accessorial charges:</strong> Detention, layover, TONU - всегда требуют</li>
+                        <li><strong>Отказ от убыточных:</strong> Научились говорить "нет" низким ставкам</li>
+                    </ul>
+                    <p><strong>Результаты через квартал:</strong></p>
+                    <ul>
+                        <li>Profit margin: 15% → 32%</li>
+                        <li>Средняя прибыль: $0.25/миля → $0.65/миля</li>
+                        <li>Месячная прибыль: $7,500 → $19,500 (на 3 трака)</li>
+                        <li>Годовая прибыль: $90,000 → $234,000</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        <strong>Результат:</strong> Дополнительно $144,000/год прибыли! Просто за правильный анализ
+                        и отказ от убыточных грузов.
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio4', 'quiz-4')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-4" data-quiz-id="quiz-10-4" data-correct-answer="c">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Revenue $4,000, Net Profit $1,200. Какой
+                        profit margin?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">20%</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">25%</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">30%</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">35%</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Profit Margin = (Net Profit ÷ Revenue) × 100 = ($1,200 ÷
+                        $4,000) × 100 = 30%. Это здоровый margin!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- СЕКТОР 5: Factoring и Quick Pay -->
+        <div class="sector-wrapper">
+            <div class="sector-number">05</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">💳 Factoring и Quick Pay - Cash Flow</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio5')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio5')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio5')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>💳 Что такое Factoring?</h3>
+                    <p><strong>Factoring</strong> - продажа ваших invoices факторинговой компании для быстрой оплаты
+                        (1-2 дня вместо 30 дней).</p>
+
+                    <div class="success-highlight">
+                        <h4>✅ Как работает Factoring:</h4>
+                        <ol>
+                            <li>Вы доставляете груз и получаете POD</li>
+                            <li>Отправляете POD + invoice факторинговой компании</li>
+                            <li>Factoring company платит вам 95-99% в течение 24 часов</li>
+                            <li>Factoring company собирает оплату от брокера (30 дней)</li>
+                            <li>Вы получаете оставшиеся 1-5% после оплаты брокером</li>
+                        </ol>
+                        <p><strong>Комиссия:</strong> 1-5% от invoice (зависит от объема и кредита брокера)</p>
+                    </div>
+
+                    <h3>💰 Стоимость Factoring</h3>
+                    <div class="info-highlight">
+                        <h4>💡 Типичные ставки:</h4>
+                        <ul>
+                            <li><strong>High volume (10+ loads/week):</strong> 1-2%</li>
+                            <li><strong>Medium volume (5-10 loads/week):</strong> 2-3%</li>
+                            <li><strong>Low volume (<5 loads/week):</strong> 3-5%</li>
+                            <li><strong>Risky brokers:</strong> +1-2% extra</li>
+                        </ul>
+                        <p><strong>Пример:</strong> Invoice $3,000, комиссия 3% = $90. Вы получаете $2,910 за 24
+                            часа вместо ожидания 30 дней.</p>
+                    </div>
+
+                    <h3>🏦 Топ Factoring компании</h3>
+                    <div class="success-highlight">
+                        <h4>✅ Рекомендуемые:</h4>
+                        <ul>
+                            <li><strong>RTS Financial:</strong> 1-3%, отличный сервис, быстрая оплата</li>
+                            <li><strong>Triumph Business Capital:</strong> 1.5-3.5%, хорошие отчеты</li>
+                            <li><strong>OTR Capital:</strong> 2-4%, специализация на trucking</li>
+                            <li><strong>TBS Factoring:</strong> 2-5%, работают с новыми компаниями</li>
+                            <li><strong>Apex Capital:</strong> 1.5-3%, большая сеть брокеров</li>
+                        </ul>
+                    </div>
+
+                    <h3>⚡ Quick Pay от брокеров</h3>
+                    <p><strong>Quick Pay</strong> - опция быстрой оплаты напрямую от брокера (без factoring
+                        company).</p>
+
+                    <div class="info-highlight">
+                        <h4>💡 Как работает Quick Pay:</h4>
+                        <ul>
+                            <li><strong>Срок:</strong> 1-5 дней после delivery</li>
+                            <li><strong>Комиссия:</strong> 3-5% от invoice</li>
+                            <li><strong>Процесс:</strong> Отправляете POD → брокер платит через 1-5 дней</li>
+                        </ul>
+                        <p><strong>Пример:</strong> Invoice $2,500, Quick Pay 4% = $100 комиссия. Получаете $2,400
+                            через 2-3 дня.</p>
+                    </div>
+
+                    <h3>📊 Net 30 vs Quick Pay vs Factoring</h3>
+                    <div class="warning-highlight">
+                        <h4>⚠️ Сравнение:</h4>
+                        <p><strong>Net 30 (стандарт):</strong></p>
+                        <ul>
+                            <li>Срок: 30 дней</li>
+                            <li>Комиссия: 0%</li>
+                            <li>Плюсы: Нет комиссии</li>
+                            <li>Минусы: Долгое ожидание, проблемы с cash flow</li>
+                        </ul>
+                        <p><strong>Quick Pay:</strong></p>
+                        <ul>
+                            <li>Срок: 1-5 дней</li>
+                            <li>Комиссия: 3-5%</li>
+                            <li>Плюсы: Быстро, работаете напрямую с брокером</li>
+                            <li>Минусы: Дороже чем factoring</li>
+                        </ul>
+                        <p><strong>Factoring:</strong></p>
+                        <ul>
+                            <li>Срок: 24 часа</li>
+                            <li>Комиссия: 1-5%</li>
+                            <li>Плюсы: Самый быстрый, credit check брокеров, collections service</li>
+                            <li>Минусы: Дополнительная компания в процессе</li>
+                        </ul>
+                    </div>
+
+                    <h3>💡 Когда использовать Factoring</h3>
+                    <ul>
+                        <li><strong>Новая компания:</strong> Нет cash reserves для ожидания 30 дней</li>
+                        <li><strong>Рост бизнеса:</strong> Нужны деньги для fuel, driver pay</li>
+                        <li><strong>Плохой cash flow:</strong> Расходы превышают доходы</li>
+                        <li><strong>Risky brokers:</strong> Factoring проверяет кредит брокера</li>
+                        <li><strong>Collections:</strong> Factoring занимается сбором долгов</li>
+                    </ul>
+
+                    <h3>🚫 Когда НЕ нужен Factoring</h3>
+                    <ul>
+                        <li>✅ Хороший cash flow (можете ждать 30 дней)</li>
+                        <li>✅ Работаете с direct shippers (платят быстрее)</li>
+                        <li>✅ Большие cash reserves</li>
+                        <li>✅ Низкий объем (комиссия 5% слишком дорого)</li>
+                    </ul>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: Factoring спас бизнес от банкротства</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Новая компания с 2 траками, работали на Net 30. Через 2 месяца -
+                        кризис cash flow.</p>
+                    <p><strong>Проблемы:</strong></p>
+                    <ul>
+                        <li>$45,000 outstanding invoices (ждут оплаты)</li>
+                        <li>Нет денег на fuel ($6,000 нужно)</li>
+                        <li>Driver pay задержан на неделю</li>
+                        <li>Insurance payment через 3 дня ($2,400)</li>
+                        <li>Траки стоят - нет денег на топливо</li>
+                    </ul>
+                    <p><strong>Решение:</strong> Подписали контракт с RTS Financial (2.5% комиссия)</p>
+                    <p><strong>Результаты:</strong></p>
+                    <ul>
+                        <li>Отправили все PODs → получили $43,875 за 24 часа (97.5%)</li>
+                        <li>Заплатили fuel, driver pay, insurance</li>
+                        <li>Траки вернулись на дорогу</li>
+                        <li>Стабильный cash flow - деньги каждый день</li>
+                        <li>Через 6 месяцев: накопили $20,000 reserves</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        <strong>Итог:</strong> Factoring стоил $1,125 (2.5% от $45K), но спас бизнес от банкротства.
+                        Теперь работают на Net 30 с хорошим cash flow.
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio5', 'quiz-5')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-5" data-quiz-id="quiz-10-5" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Invoice $5,000, factoring комиссия 3%. Сколько
+                        получите за 24 часа?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">$5,000</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">$4,850</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">$4,700</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">$4,500</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Factoring advance = $5,000 × 97% = $4,850 (3% комиссия =
+                        $150). Оставшиеся $150 получите после оплаты брокером.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- СЕКТОР 6: Budgeting -->
+        <div class="sector-wrapper">
+            <div class="sector-number">06</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">📊 Budgeting - Бюджетирование</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio6')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio6')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio6')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="block-content">
+                    <h3>💼 Бюджетирование и финансовое планирование</h3>
+
+                    <p><strong>Operating Budget Components:</strong></p>
+                    <ul>
+                        <li>Fixed costs (insurance, permits, truck payments)</li>
+                        <li>Variable costs (fuel, maintenance, repairs)</li>
+                        <li>Driver compensation</li>
+                        <li>Administrative expenses</li>
+                        <li>Contingency fund (10-15%)</li>
+                    </ul>
+
+                    <p><strong>Capital Expenditure Planning:</strong></p>
+                    <ul>
+                        <li>Equipment replacement schedule</li>
+                        <li>Major repairs budget</li>
+                        <li>Technology investments</li>
+                        <li>Facility improvements</li>
+                        <li>ROI analysis для каждой покупки</li>
+                    </ul>
+
+                    <p><strong>Emergency Fund:</strong></p>
+                    <ul>
+                        <li>Цель: 3-6 месяцев операционных расходов</li>
+                        <li>Покрытие непредвиденных ремонтов</li>
+                        <li>Защита от сезонных колебаний</li>
+                        <li>Возможность использовать opportunities</li>
+                    </ul>
+
+                    <p><strong>Monthly Budget Review:</strong></p>
+                    <ul>
+                        <li>Actual vs budgeted comparison</li>
+                        <li>Variance analysis</li>
+                        <li>Trend identification</li>
+                        <li>Adjustments для следующего месяца</li>
+                    </ul>
+
+                    <p><strong>Savings Strategy:</strong></p>
+                    <ul>
+                        <li>5-10% от дохода в резервы</li>
+                        <li>Separate accounts для разных целей</li>
+                        <li>Automatic transfers</li>
+                        <li>Quarterly review и adjustment</li>
+                    </ul>
+                </div>
+
+                <div class="case-study-block">
+                    <div class="case-study-header">
+                        <span class="case-study-icon">💰</span>
+                        <h3 class="case-study-title">Case Study: Annual Budget Planning</h3>
+                    </div>
+                    <div class="case-study-content">
+                        <p><strong>Ситуация:</strong> Small carrier планирует годовой бюджет</p>
+                        <p><strong>Projected Revenue:</strong> $600,000</p>
+                        <p><strong>Budget Breakdown:</strong></p>
+                        <ul>
+                            <li>Fuel: $180,000 (30%)</li>
+                            <li>Driver pay: $150,000 (25%)</li>
+                            <li>Truck payments: $60,000 (10%)</li>
+                            <li>Insurance: $48,000 (8%)</li>
+                            <li>Maintenance: $42,000 (7%)</li>
+                            <li>Other expenses: $30,000 (5%)</li>
+                            <li>Emergency fund: $30,000 (5%)</li>
+                            <li>Target profit: $60,000 (10%)</li>
+                        </ul>
+                        <div class="case-study-highlight">
+                            <strong>Результат:</strong> Четкий финансовый план, контроль расходов, достижение
+                            целевой прибыли
+                        </div>
+                    </div>
+                </div>
+
+                <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio6', 'quiz-6')">
+                    🎧 Я закончил слушать этот блок
+                </button>
+
+                <div class="quick-check-block locked" id="quiz-6" data-quiz-id="quiz-10-6" data-correct-answer="c">
+                    <div class="quick-check-header">
+                        <span class="quick-check-icon">✅</span>
+                        <h3 class="quick-check-title">Быстрая проверка</h3>
+                    </div>
+                    <div class="quick-check-content">
+                        <p class="quiz-question"><strong>Вопрос:</strong> Какой процент дохода рекомендуется
+                            откладывать в emergency fund?</p>
+                        <div class="quiz-options">
+                            <div class="quiz-option" data-answer="a">
+                                <span class="option-letter">A</span>
+                                <span class="option-text">1-3%</span>
+                            </div>
+                            <div class="quiz-option" data-answer="b">
+                                <span class="option-letter">B</span>
+                                <span class="option-text">3-5%</span>
+                            </div>
+                            <div class="quiz-option" data-answer="c">
+                                <span class="option-letter">C</span>
+                                <span class="option-text">5-10%</span>
+                            </div>
+                            <div class="quiz-option" data-answer="d">
+                                <span class="option-letter">D</span>
+                                <span class="option-text">15-20%</span>
+                            </div>
+                        </div>
+                        <div class="quiz-feedback">
+                            <strong>Правильно! ✓</strong> Рекомендуется откладывать 5-10% дохода в emergency fund
+                            для покрытия непредвиденных расходов.
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- СЕКТОР 7: Taxes -->
+        <div class="sector-wrapper">
+            <div class="sector-number">07</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">💼 Taxes (IFTA, IRP, UCR, 2290)</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio7')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio7')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio7')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="block-content">
+                    <h3>📋 Налоги и сборы в trucking</h3>
+
+                    <p><strong>IFTA (International Fuel Tax Agreement):</strong></p>
+                    <ul>
+                        <li>Quarterly reporting (Jan 31, Apr 30, Jul 31, Oct 31)</li>
+                        <li>Отчет по всем штатам/провинциям</li>
+                        <li>Расчет: miles driven × tax rate per state</li>
+                        <li>Penalties за late filing: $50-100/месяц</li>
+                        <li>Требуется точный fuel log</li>
+                    </ul>
+
+                    <p><strong>IRP (International Registration Plan):</strong></p>
+                    <ul>
+                        <li>Annual registration renewal</li>
+                        <li>Apportioned plates для interstate</li>
+                        <li>Стоимость: $1,500-3,000/год</li>
+                        <li>Based on miles traveled per jurisdiction</li>
+                        <li>Renewal 60 дней до expiration</li>
+                    </ul>
+
+                    <p><strong>UCR (Unified Carrier Registration):</strong></p>
+                    <ul>
+                        <li>Annual fee: $76-2,187 (зависит от fleet size)</li>
+                        <li>Deadline: December 31</li>
+                        <li>Required для interstate operations</li>
+                        <li>Per-vehicle basis</li>
+                    </ul>
+
+                    <p><strong>Form 2290 (Heavy Vehicle Use Tax):</strong></p>
+                    <ul>
+                        <li>Annual filing (August 31 deadline)</li>
+                        <li>$550/year для vehicles 55,000+ lbs</li>
+                        <li>Prorated для новых vehicles</li>
+                        <li>Stamped Schedule 1 нужен для registration</li>
+                    </ul>
+
+                    <p><strong>Tax Planning Tips:</strong></p>
+                    <ul>
+                        <li>Set aside 25-30% дохода для taxes</li>
+                        <li>Quarterly estimated tax payments</li>
+                        <li>Track all deductible expenses</li>
+                        <li>Work with trucking-specialized CPA</li>
+                        <li>Use accounting software</li>
+                    </ul>
+                </div>
+
+                <div class="case-study-block">
+                    <div class="case-study-header">
+                        <span class="case-study-icon">📊</span>
+                        <h3 class="case-study-title">Case Study: Tax Compliance</h3>
+                    </div>
+                    <div class="case-study-content">
+                        <p><strong>Ситуация:</strong> New carrier пропустил IFTA deadline</p>
+                        <p><strong>Проблема:</strong></p>
+                        <ul>
+                            <li>Late filing penalty: $100</li>
+                            <li>Interest на unpaid taxes</li>
+                            <li>Риск suspension of operations</li>
+                            <li>Audit trigger</li>
+                        </ul>
+                        <p><strong>Решение:</strong></p>
+                        <ul>
+                            <li>Немедленная подача отчета</li>
+                            <li>Оплата penalties</li>
+                            <li>Внедрение calendar reminders</li>
+                            <li>Автоматизация fuel tracking</li>
+                            <li>Quarterly CPA review</li>
+                        </ul>
+                        <div class="case-study-highlight">
+                            <strong>Результат:</strong> Восстановлен compliance, избежали дальнейших penalties,
+                            улучшена система отчетности
+                        </div>
+                    </div>
+                </div>
+
+                <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio7', 'quiz-7')">
+                    🎧 Я закончил слушать этот блок
+                </button>
+
+                <div class="quick-check-block locked" id="quiz-7" data-quiz-id="quiz-10-7" data-correct-answer="b">
+                    <div class="quick-check-header">
+                        <span class="quick-check-icon">✅</span>
+                        <h3 class="quick-check-title">Быстрая проверка</h3>
+                    </div>
+                    <div class="quick-check-content">
+                        <p class="quiz-question"><strong>Вопрос:</strong> Как часто нужно подавать IFTA отчеты?</p>
+                        <div class="quiz-options">
+                            <div class="quiz-option" data-answer="a">
+                                <span class="option-letter">A</span>
+                                <span class="option-text">Ежемесячно</span>
+                            </div>
+                            <div class="quiz-option" data-answer="b">
+                                <span class="option-letter">B</span>
+                                <span class="option-text">Ежеквартально</span>
+                            </div>
+                            <div class="quiz-option" data-answer="c">
+                                <span class="option-letter">C</span>
+                                <span class="option-text">Раз в полгода</span>
+                            </div>
+                            <div class="quiz-option" data-answer="d">
+                                <span class="option-letter">D</span>
+                                <span class="option-text">Ежегодно</span>
+                            </div>
+                        </div>
+                        <div class="quiz-feedback">
+                            <strong>Правильно! ✓</strong> IFTA отчеты подаются ежеквартально с дедлайнами: Jan 31,
+                            Apr 30, Jul 31, Oct 31.
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- СЕКТОР 8: Financial KPIs -->
+        <div class="sector-wrapper">
+            <div class="sector-number">08</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">📊 Financial KPIs - Ключевые показатели</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio8')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio8')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio8')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="block-content">
+                    <h3>🎯 Ключевые показатели эффективности</h3>
+
+                    <p><strong>Revenue per Truck:</strong></p>
+                    <ul>
+                        <li>Средний доход на единицу техники</li>
+                        <li>Цель: $8,000-12,000/неделя</li>
+                        <li>Показатель эффективности использования</li>
+                        <li>Учитывает все источники дохода</li>
+                    </ul>
+
+                    <p><strong>Profit per Mile:</strong></p>
+                    <ul>
+                        <li>Чистая прибыль на милю</li>
+                        <li>Цель: $0.30-0.50/миля</li>
+                        <li>После всех расходов</li>
+                        <li>Ключевой показатель рентабельности</li>
+                    </ul>
+
+                    <p><strong>Operating Ratio:</strong></p>
+                    <ul>
+                        <li>Отношение расходов к доходам</li>
+                        <li>Формула: (Expenses / Revenue) × 100</li>
+                        <li>Цель: 85-90% (ниже = лучше)</li>
+                        <li>Индикатор операционной эффективности</li>
+                    </ul>
+
+                    <p><strong>Deadhead Percentage:</strong></p>
+
+                    <ul>
+                        <li>Процент пустых миль</li>
+                        <li>Цель: менее 10%</li>
+                        <li>Влияет на прибыльность</li>
+                        <li>Требует оптимизации маршрутов</li>
+                    </ul>
+
+                    <p><strong>Utilization Rate:</strong></p>
+                    <ul>
+                        <li>Процент времени в работе</li>
+                        <li>Цель: 85-90%</li>
+                        <li>Показатель загрузки</li>
+                        <li>Влияет на доходность</li>
+                    </ul>
+
+                    <p><strong>Dashboard Metrics:</strong></p>
+                    <ul>
+                        <li>Ежедневный мониторинг KPIs</li>
+                        <li>Еженедельные отчеты</li>
+                        <li>Месячный анализ трендов</li>
+                        <li>Сравнение с целевыми показателями</li>
+                    </ul>
+
+                    <!-- Case Study -->
+                    <div class="case-study">
+                        <h4>📈 Case Study: KPI Dashboard</h4>
+
+                        <p><strong>Ситуация:</strong> Carrier внедрил систему мониторинга KPIs</p>
+                        <p><strong>Показатели до внедрения:</strong></p>
+                        <ul>
+                            <li>Operating Ratio: 95%</li>
+                            <li>Deadhead: 15%</li>
+                            <li>Utilization: 75%</li>
+                            <li>Profit/mile: $0.15</li>
+                        </ul>
+                        <p><strong>Действия:</strong></p>
+                        <ul>
+                            <li>Ежедневный мониторинг показателей</li>
+                            <li>Оптимизация маршрутов</li>
+                            <li>Контроль расходов</li>
+                            <li>Улучшение загрузки</li>
+                        </ul>
+                        <p><strong>Результат через 6 месяцев:</strong></p>
+                        <ul>
+                            <li>Operating Ratio: 88%</li>
+                            <li>Deadhead: 8%</li>
+                            <li>Utilization: 87%</li>
+                            <li>Profit/mile: $0.42</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio8', 'quiz-8')">
+                    🎧 Я закончил слушать этот блок
+                </button>
+
+                <div class="quick-check-block locked" id="quiz-8" data-quiz-id="quiz-10-8" data-correct-answer="b">
+                    <div class="quick-check-header">
+                        <span class="quick-check-icon">✅</span>
+                        <h3 class="quick-check-title">Быстрая проверка</h3>
+                    </div>
+                    <div class="quick-check-content">
+                        <p class="quiz-question"><strong>Вопрос:</strong> Какой целевой Operating Ratio для
+                            эффективного carrier?</p>
+                        <div class="quiz-options">
+                            <div class="quiz-option" data-answer="a">
+                                <span class="option-letter">A</span>
+                                <span class="option-text">95-100%</span>
+                            </div>
+                            <div class="quiz-option" data-answer="b">
+                                <span class="option-letter">B</span>
+                                <span class="option-text">85-90%</span>
+                            </div>
+                            <div class="quiz-option" data-answer="c">
+                                <span class="option-letter">C</span>
+                                <span class="option-text">70-75%</span>
+                            </div>
+                            <div class="quiz-option" data-answer="d">
+                                <span class="option-letter">D</span>
+                                <span class="option-text">60-65%</span>
+                            </div>
+                        </div>
+                        <div class="quiz-feedback">
+                            <strong>Правильно! ✓</strong> Целевой Operating Ratio для эффективного carrier
+                            составляет 85-90%. Чем ниже, тем лучше прибыльность.
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- СЕКТОР 9: Driver Settlements -->
+        <div class="sector-wrapper">
+            <div class="sector-number">09</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">💰 Driver Settlements - Расчеты с водителями</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio9')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio9')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio9')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="block-content">
+                    <h3>💵 Расчеты с водителями</h3>
+
+                    <p><strong>Payment Types:</strong></p>
+                    <ul>
+                        <li>Percentage of load (25-30%)</li>
+                        <li>Per mile rate ($0.40-0.60/mile)</li>
+                        <li>Salary + bonus</li>
+                        <li>Hybrid models</li>
+                    </ul>
+
+                    <p><strong>Common Deductions:</strong></p>
+                    <ul>
+                        <li>Fuel advances</li>
+                        <li>Insurance premiums</li>
+                        <li>Equipment damage</li>
+                        <li>Permits and violations</li>
+                        <li>Escrow deposits</li>
+                    </ul>
+
+                    <p><strong>Settlement Statement Components:</strong></p>
+
+                    <ul>
+                        <li>Gross revenue earned</li>
+                        <li>Itemized deductions</li>
+                        <li>Net pay calculation</li>
+                        <li>YTD totals</li>
+                        <li>Escrow balance</li>
+                    </ul>
+
+                    <p><strong>Escrow Management:</strong></p>
+                    <ul>
+                        <li>Initial deposit: $1,000-2,000</li>
+                        <li>Purpose: damage/violation coverage</li>
+                        <li>Refund policy при увольнении</li>
+                        <li>Interest accrual (если применимо)</li>
+                    </ul>
+
+                    <p><strong>Settlement Frequency:</strong></p>
+                    <ul>
+                        <li>Weekly settlements (стандарт)</li>
+                        <li>Bi-weekly опции</li>
+                        <li>Quick pay services</li>
+                        <li>Direct deposit timing</li>
+                    </ul>
+
+                    <p><strong>Documentation:</strong></p>
+                    <ul>
+                        <li>Detailed settlement statements</li>
+                        <li>Load confirmations</li>
+                        <li>Expense receipts</li>
+                        <li>Tax documents (1099)</li>
+                    </ul>
+
+
+                    <!-- Case Study -->
+                    <div class="case-study">
+                        <h4>💼 Case Study: Settlement Dispute</h4>
+                        <p><strong>Ситуация:</strong> Водитель оспаривает удержания в settlement</p>
+                        <p><strong>Проблема:</strong></p>
+                        <ul>
+                            <li>Неожиданные удержания $800</li>
+                            <li>Нет детализации расходов</li>
+                            <li>Водитель угрожает уйти</li>
+                        </ul>
+                        <p><strong>Решение:</strong></p>
+                        <ul>
+                            <li>Детальный разбор каждого удержания</li>
+                            <li>Предоставление всех документов</li>
+                            <li>Объяснение политики компании</li>
+                            <li>Внедрение прозрачной системы</li>
+                        </ul>
+                        <p><strong>Результат:</strong></p>
+                        <ul>
+                            <li>Конфликт разрешен</li>
+                            <li>Водитель остался в компании</li>
+                            <li>Улучшена система отчетности</li>
+                            <li>Снижение споров на 70%</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio9', 'quiz-9')">
+                    🎧 Я закончил слушать этот блок
+                </button>
+
+                <div class="quick-check-block locked" id="quiz-9" data-quiz-id="quiz-10-9" data-correct-answer="b">
+                    <div class="quick-check-header">
+                        <span class="quick-check-icon">✅</span>
+                        <h3 class="quick-check-title">Быстрая проверка</h3>
+                    </div>
+                    <div class="quick-check-content">
+                        <p class="quiz-question"><strong>Вопрос:</strong> Какой стандартный процент оплаты водителя
+                            от загрузки?</p>
+                        <div class="quiz-options">
+                            <div class="quiz-option" data-answer="a">
+                                <span class="option-letter">A</span>
+                                <span class="option-text">15-20%</span>
+                            </div>
+                            <div class="quiz-option" data-answer="b">
+                                <span class="option-letter">B</span>
+                                <span class="option-text">25-30%</span>
+                            </div>
+                            <div class="quiz-option" data-answer="c">
+                                <span class="option-letter">C</span>
+                                <span class="option-text">35-40%</span>
+                            </div>
+                            <div class="quiz-option" data-answer="d">
+                                <span class="option-letter">D</span>
+                                <span class="option-text">45-50%</span>
+                            </div>
+                        </div>
+                        <div class="quiz-feedback">
+                            <strong>Правильно! ✓</strong> Стандартный процент оплаты водителя от загрузки составляет
+                            25-30%.
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- СЕКТОР 10: Financial Planning -->
+        <div class="sector-wrapper">
+            <div class="sector-number">10</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">📈 Financial Planning - Финансовое планирование</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio10')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio10')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio10')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="block-content">
+                    <h3>🎯 Стратегическое финансовое планирование</h3>
+
+                    <p><strong>Quarterly Financial Reviews:</strong></p>
+                    <ul>
+                        <li>Анализ P&L statements</li>
+                        <li>Сравнение с бюджетом</li>
+                        <li>Выявление трендов</li>
+                        <li>Корректировка стратегии</li>
+                        <li>Forecast на следующий квартал</li>
+                    </ul>
+
+                    <p><strong>Tax Planning Strategies:</strong></p>
+                    <ul>
+                        <li>Quarterly estimated tax payments</li>
+                        <li>Depreciation planning (Section 179)</li>
+                        <li>Expense timing optimization</li>
+                        <li>Retirement account contributions</li>
+                        <li>Work with CPA quarterly</li>
+                    </ul>
+
+                    <p><strong>Growth Planning:</strong></p>
+
+                    <ul>
+                        <li>Expansion timeline (1, 3, 5 years)</li>
+                        <li>Equipment acquisition plan</li>
+                        <li>Financing strategy</li>
+                        <li>Market analysis</li>
+                        <li>Risk assessment</li>
+                    </ul>
+
+                    <p><strong>ROI Calculations:</strong></p>
+                    <ul>
+                        <li>New truck ROI: 18-24 months</li>
+                        <li>Technology investments</li>
+                        <li>Training programs ROI</li>
+                        <li>Marketing spend effectiveness</li>
+                        <li>Process improvement returns</li>
+                    </ul>
+
+                    <p><strong>Cash Reserve Strategy:</strong></p>
+                    <ul>
+                        <li>Emergency fund: 3-6 months expenses</li>
+                        <li>Equipment replacement fund</li>
+                        <li>Opportunity fund для роста</li>
+                        <li>Seasonal fluctuation buffer</li>
+                    </ul>
+
+                    <p><strong>Financial Goals Setting:</strong></p>
+                    <ul>
+                        <li>Revenue targets по кварталам</li>
+                        <li>Profit margin goals</li>
+                        <li>Fleet expansion milestones</li>
+
+                        <li>Debt reduction timeline</li>
+                        <li>Personal income objectives</li>
+                    </ul>
+
+                    <!-- Case Study -->
+                    <div class="case-study">
+                        <h4>🚀 Case Study: 5-Year Growth Plan</h4>
+                        <p><strong>Starting Point (Year 0):</strong></p>
+                        <ul>
+                            <li>3 trucks, $1.2M revenue</li>
+                            <li>10% profit margin</li>
+                            <li>$50K cash reserves</li>
+                        </ul>
+                        <p><strong>5-Year Plan:</strong></p>
+                        <ul>
+                            <li>Year 1: Add 2 trucks, improve margins to 12%</li>
+                            <li>Year 2: Add 3 trucks, build $200K reserves</li>
+                            <li>Year 3: Add 4 trucks, 15% margins</li>
+                            <li>Year 4: Add 5 trucks, diversify services</li>
+                            <li>Year 5: 20 trucks total, $8M revenue</li>
+                        </ul>
+                        <p><strong>Результат:</strong></p>
+                        <ul>
+                            <li>Достигнуто: 18 trucks, $7.2M revenue</li>
+                            <li>Profit margin: 14%</li>
+                            <li>Cash reserves: $500K</li>
+                            <li>Stable, profitable operation</li>
+                        </ul>
+                    </div>
+
+
+                </div>
+
+                <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio10', 'quiz-10')">
+                    🎧 Я закончил слушать этот блок
+                </button>
+
+                <div class="quick-check-block locked" id="quiz-10" data-quiz-id="quiz-10-10" data-correct-answer="b">
+                    <div class="quick-check-header">
+                        <span class="quick-check-icon">✅</span>
+                        <h3 class="quick-check-title">Быстрая проверка</h3>
+                    </div>
+                    <div class="quick-check-content">
+                        <p class="quiz-question"><strong>Вопрос:</strong> Какой рекомендуемый размер emergency fund
+                            для carrier?</p>
+                        <div class="quiz-options">
+                            <div class="quiz-option" data-answer="a">
+                                <span class="option-letter">A</span>
+                                <span class="option-text">1-2 месяца расходов</span>
+                            </div>
+                            <div class="quiz-option" data-answer="b">
+                                <span class="option-letter">B</span>
+                                <span class="option-text">3-6 месяцев расходов</span>
+                            </div>
+                            <div class="quiz-option" data-answer="c">
+                                <span class="option-letter">C</span>
+                                <span class="option-text">6-12 месяцев расходов</span>
+                            </div>
+                            <div class="quiz-option" data-answer="d">
+                                <span class="option-letter">D</span>
+                                <span class="option-text">12-24 месяца расходов</span>
+                            </div>
+                        </div>
+                        <div class="quiz-feedback">
+                            <strong>Правильно! ✓</strong> Рекомендуемый размер emergency fund составляет 3-6 месяцев
+                            операционных расходов.
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Navigation -->
+        <div class="lesson-nav">
+            <a href="doc-module-9-complete.html" class="nav-btn">
+                <span>←</span>
+                <span>Предыдущий модуль</span>
+            </a>
+            <div class="progress-info">
+                <div>Модуль 10 из 12</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 83%;"></div>
+                </div>
+                <div>83% завершено</div>
+            </div>
+            <a href="doc-module-11-complete.html" class="nav-btn">
+                <span>Следующий модуль</span>
+                <span>→</span>
+            </a>
+        </div>
+    </main>
+
+    <script>
+        // Audio Management
+        const audioFiles = {
+            'audio1': '../audio/module-10-sector-1.mp3',
+            'audio2': '../audio/module-10-sector-2.mp3',
+            'audio3': '../audio/module-10-sector-3.mp3',
+            'audio4': '../audio/module-10-sector-4.mp3',
+            'audio5': '../audio/module-10-sector-5.mp3',
+            'audio6': '../audio/module-10-sector-6.mp3',
+            'audio7': '../audio/module-10-sector-7.mp3',
+            'audio8': '../audio/module-10-sector-8.mp3',
+            'audio9': '../audio/module-10-sector-9.mp3',
+            'audio10': '../audio/module-10-sector-10.mp3'
+        };
+
+        let currentAudio = null;
+        let currentAudioId = null;
+
+        function toggleAudio(button, audioId) {
+            const container = button.closest('.audio-container');
+
+            if (currentAudio && currentAudioId === audioId) {
+                if (currentAudio.paused) {
+                    currentAudio.play();
+                    button.classList.add('playing');
+                    container.classList.add('playing');
+                } else {
+                    currentAudio.pause();
+                    button.classList.remove('playing');
+                    container.classList.remove('playing');
+                }
+            } else {
+                if (currentAudio) {
+                    currentAudio.pause();
+                    const oldButton = document.querySelector('.audio-btn.playing');
+                    const oldContainer = oldButton?.closest('.audio-container');
+                    if (oldButton) oldButton.classList.remove('playing');
+                    if (oldContainer) oldContainer.classList.remove('playing');
+                }
+
+                alert(`Воспроизведение: ${audioFiles[audioId]}\n\nВ продакшене здесь будет реальный аудио-плеер с прогресс-кольцом.`);
+
+                currentAudio = new Audio(audioFiles[audioId]);
+                currentAudioId = audioId;
+
+                currentAudio.addEventListener('loadedmetadata', () => {
+                    updateDuration(container, currentAudio.duration);
+                });
+
+                currentAudio.addEventListener('timeupdate', () => {
+                    updateProgress(container, currentAudio.currentTime, currentAudio.duration);
+                });
+
+                currentAudio.addEventListener('ended', () => {
+                    button.classList.remove('playing');
+                    container.classList.remove('playing');
+                    resetProgress(container);
+                });
+
+                currentAudio.play();
+                button.classList.add('playing');
+                container.classList.add('playing');
+            }
+        }
+
+        function updateDuration(container, duration) {
+            const durationEl = container.querySelector('.audio-duration');
+            const minutes = Math.floor(duration / 60);
+            const seconds = Math.floor(duration % 60);
+            durationEl.textContent = `0:00 / ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function updateProgress(container, currentTime, duration) {
+            const progress = (currentTime / duration) * 100;
+            const circumference = 201.06;
+            const offset = circumference - (progress / 100) * circumference;
+
+            const progressRing = container.querySelector('.progress-ring-fill');
+            if (progressRing) {
+                progressRing.style.strokeDashoffset = offset;
+            }
+
+            const mobileBar = container.querySelector('.mobile-progress-fill');
+            if (mobileBar) {
+                mobileBar.style.width = `${progress}%`;
+            }
+
+            const durationEl = container.querySelector('.audio-duration');
+            const currentMinutes = Math.floor(currentTime / 60);
+            const currentSeconds = Math.floor(currentTime % 60);
+            const totalMinutes = Math.floor(duration / 60);
+            const totalSeconds = Math.floor(duration % 60);
+            durationEl.textContent = `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')} / ${totalMinutes}:${totalSeconds.toString().padStart(2, '0')}`;
+        }
+
+        function resetProgress(container) {
+            const progressRing = container.querySelector('.progress-ring-fill');
+            if (progressRing) {
+                progressRing.style.strokeDashoffset = 201.06;
+            }
+
+            const mobileBar = container.querySelector('.mobile-progress-fill');
+            if (mobileBar) {
+                mobileBar.style.width = '0%';
+            }
+        }
+
+        function seekAudio(event, audioId) {
+            if (!currentAudio || currentAudioId !== audioId) return;
+
+            const ring = event.currentTarget;
+            const rect = ring.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const angle = Math.atan2(event.clientY - centerY, event.clientX - centerX);
+            let degrees = angle * (180 / Math.PI) + 90;
+            if (degrees < 0) degrees += 360;
+
+            const progress = degrees / 360;
+            currentAudio.currentTime = progress * currentAudio.duration;
+        }
+
+        function seekAudioMobile(event, audioId) {
+            if (!currentAudio || currentAudioId !== audioId) return;
+
+            const bar = event.currentTarget;
+            const rect = bar.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const progress = clickX / rect.width;
+
+            currentAudio.currentTime = progress * currentAudio.duration;
+        }
+
+        // Audio Completion - Unlock Quiz
+        function markAudioComplete(button, audioId, quizId) {
+            // Mark button as completed
+            button.classList.add('completed');
+            button.textContent = '✅ Аудио прослушано';
+            button.disabled = true;
+
+            // Unlock quiz with animation
+            const quizBlock = document.getElementById(quizId);
+            if (quizBlock) {
+                // Remove locked class
+                quizBlock.classList.remove('locked');
+
+                // Ensure quiz is visible and interactive
+                quizBlock.style.opacity = '1';
+                quizBlock.style.pointerEvents = 'auto';
+
+                // Add unlock animation
+                quizBlock.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    quizBlock.style.transform = 'scale(1)';
+                }, 100);
+
+                // Scroll to quiz smoothly
+                setTimeout(() => {
+                    quizBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 200);
+            }
+        }
+
+        // Quiz Management - New approach with data-answer
+        document.addEventListener('DOMContentLoaded', () => {
+            const quizBlocks = document.querySelectorAll('.quick-check-block');
+
+            quizBlocks.forEach(quizBlock => {
+                const options = quizBlock.querySelectorAll('.quiz-option');
+                const correctAnswer = quizBlock.dataset.correctAnswer;
+                const feedback = quizBlock.querySelector('.quiz-feedback');
+
+                options.forEach(option => {
+                    option.addEventListener('click', () => {
+                        // Prevent multiple clicks
+                        if (quizBlock.classList.contains('answered')) return;
+                        if (quizBlock.classList.contains('locked')) return;
+
+                        quizBlock.classList.add('answered');
+
+                        const userAnswer = option.dataset.answer;
+                        const isCorrect = userAnswer === correctAnswer;
+
+                        // Disable all options
+                        options.forEach(opt => {
+                            opt.style.pointerEvents = 'none';
+                        });
+
+                        // Mark selected option
+                        if (isCorrect) {
+                            option.classList.add('correct');
+                        } else {
+                            option.classList.add('incorrect');
+                            // Show correct answer
+                            options.forEach(opt => {
+                                if (opt.dataset.answer === correctAnswer) {
+                                    opt.classList.add('correct');
+                                }
+                            });
+                        }
+
+                        // Show feedback
+                        if (feedback) {
+                            feedback.classList.add('show');
+                        }
+                    });
+                });
+            });
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Quiz Container Management (for sectors 6-10)
+        document.addEventListener('DOMContentLoaded', () => {
+            const quizContainers = document.querySelectorAll('.quiz-container');
+
+            quizContainers.forEach(container => {
+                const options = container.querySelectorAll('.quiz-option');
+                const feedback = container.querySelector('.quiz-feedback');
+
+                options.forEach(option => {
+                    option.addEventListener('click', () => {
+                        // Prevent multiple clicks
+                        if (container.classList.contains('answered')) return;
+
+                        container.classList.add('answered');
+
+                        const isCorrect = option.dataset.correct === 'true';
+
+                        // Disable all options
+                        options.forEach(opt => {
+                            opt.style.pointerEvents = 'none';
+                        });
+
+                        // Mark selected option
+                        option.classList.add('selected');
+
+                        if (isCorrect) {
+                            option.classList.add('correct');
+                            if (feedback) {
+                                feedback.textContent = '✓ Правильно! Отличная работа!';
+                                feedback.classList.add('show', 'correct');
+                            }
+                        } else {
+                            option.classList.add('incorrect');
+                            // Show correct answer
+                            options.forEach(opt => {
+                                if (opt.dataset.correct === 'true') {
+                                    opt.classList.add('correct');
+                                }
+                            });
+                            if (feedback) {
+                                feedback.textContent = '✗ Неправильно. Правильный ответ выделен зеленым.';
+                                feedback.classList.add('show', 'incorrect');
+                            }
+                        }
+                    });
+                });
+            });
+        });
+
+        // Animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.content-block').forEach(block => {
+            block.style.opacity = '0';
+            block.style.transform = 'translateY(20px)';
+            block.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(block);
+        });
+    </script>
+</body>
+
+</html>

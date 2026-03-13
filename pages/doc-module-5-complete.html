@@ -1,0 +1,2015 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль 5: Переговоры с брокерами | DispatcherPro</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="stylesheet" href="../interactive-modules.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #f093fb;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary: #b8c5d6;
+            --text-muted: #8892aa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.1);
+            --audio-primary: #ff6b6b;
+            --audio-secondary: #4ecdc4;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
+            padding-top: 100px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1), transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(240, 147, 251, 0.1), transparent 50%);
+            animation: backgroundMove 20s ease infinite;
+            z-index: -1;
+        }
+
+        @keyframes backgroundMove {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            25% {
+                transform: translate(5%, 5%) scale(1.05);
+            }
+
+            50% {
+                transform: translate(-5%, 5%) scale(1.1);
+            }
+
+            75% {
+                transform: translate(5%, -5%) scale(1.05);
+            }
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 0;
+            background: rgba(7, 11, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            min-height: 80px;
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateX(-3px);
+        }
+
+        .module-info {
+            text-align: center;
+        }
+
+        .module-number {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .module-title {
+            font-size: 18px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .sector-wrapper {
+            position: relative;
+            margin-bottom: 60px;
+        }
+
+        .sector-number {
+            position: absolute;
+            left: -80px;
+            top: 30px;
+            font-size: 72px;
+            font-weight: 900;
+            color: rgba(102, 126, 234, 0.1);
+            line-height: 1;
+            user-select: none;
+        }
+
+        .content-block {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            transition: all 0.3s ease;
+        }
+
+        .content-block:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+
+        .block-title {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+            flex: 1;
+        }
+
+        .audio-container {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .audio-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--audio-primary), var(--audio-secondary));
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .audio-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.5);
+        }
+
+        .audio-btn .play-icon {
+            font-size: 24px;
+            color: white;
+            margin-left: 3px;
+        }
+
+        .audio-btn .pause-icon {
+            font-size: 20px;
+            color: white;
+            display: none;
+        }
+
+        .audio-btn.playing .play-icon {
+            display: none;
+        }
+
+        .audio-btn.playing .pause-icon {
+            display: block;
+        }
+
+        .audio-btn.playing {
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.7), 0 0 0 10px rgba(255, 107, 107, 0.1);
+            }
+
+            100% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+        }
+
+        .progress-ring {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            transform: rotate(-90deg);
+            z-index: 1;
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 5;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: var(--audio-primary);
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-dasharray: 201.06;
+            stroke-dashoffset: 201.06;
+            transition: stroke-dashoffset 0.1s ease;
+            filter: drop-shadow(0 0 4px rgba(255, 107, 107, 0.5));
+        }
+
+        .progress-ring-interactive {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            cursor: pointer;
+            z-index: 5;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        .progress-ring-interactive.seekable {
+            pointer-events: auto;
+            background: radial-gradient(circle, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.01) 60%, rgba(255, 255, 255, 0.01) 100%);
+        }
+
+        .audio-duration {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .audio-container:hover .audio-duration,
+        .audio-container.playing .audio-duration {
+            opacity: 1;
+        }
+
+        .mobile-progress-bar {
+            display: none;
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .mobile-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--audio-primary), var(--audio-secondary));
+            border-radius: 2px;
+            transition: width 0.1s ease;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-progress-bar {
+                display: block;
+            }
+
+            .progress-ring,
+            .progress-ring-interactive {
+                display: none !important;
+            }
+
+            .audio-duration {
+                bottom: -50px;
+            }
+        }
+
+        .block-content {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .block-content h3 {
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            margin: 25px 0 15px 0;
+        }
+
+        .block-content h4 {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            margin: 20px 0 10px 0;
+        }
+
+        .block-content ul,
+        .block-content ol {
+            margin: 15px 0 15px 25px;
+        }
+
+        .block-content li {
+            margin-bottom: 8px;
+        }
+
+        .block-content strong {
+            color: var(--text-primary);
+        }
+
+        .info-highlight {
+            background: rgba(102, 126, 234, 0.08);
+            border-left: 4px solid #667eea;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .warning-highlight {
+            background: rgba(251, 146, 60, 0.08);
+            border-left: 4px solid #fb923c;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .success-highlight {
+            background: rgba(52, 211, 153, 0.08);
+            border-left: 4px solid #34d399;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .case-study {
+            background: rgba(102, 126, 234, 0.08);
+            border-left: 4px solid #667eea;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 32px 0;
+        }
+
+        .case-study h4 {
+            color: #a5b4fc;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .quiz-block {
+            background: rgba(167, 139, 250, 0.08);
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            border-radius: 16px;
+            padding: 32px;
+            margin: 32px 0;
+        }
+
+        .quiz-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+
+        .quiz-question {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 18px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quiz-option:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+        }
+
+        .quiz-option.incorrect {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--danger);
+        }
+
+        .option-letter {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 50%;
+            font-weight: 700;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .option-text {
+            flex: 1;
+            color: var(--text-secondary);
+        }
+
+        .quiz-feedback {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--success);
+            border-radius: 8px;
+            color: var(--text-primary);
+        }
+
+        .quiz-feedback.show {
+            display: block;
+        }
+
+        /* Audio Completion Button */
+        .audio-completion-btn {
+            display: block;
+            width: 100%;
+            padding: 16px 24px;
+            margin: 30px 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .audio-completion-btn:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .audio-completion-btn.completed {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(52, 211, 153, 0.2));
+            border-color: var(--success);
+            cursor: default;
+        }
+
+        /* Case Study Block */
+        .case-study-block {
+            background: rgba(240, 147, 251, 0.05);
+            border: 1px solid rgba(240, 147, 251, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px 0;
+            transition: all 0.3s ease;
+        }
+
+        .case-study-block:hover {
+            background: rgba(240, 147, 251, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(240, 147, 251, 0.2);
+        }
+
+        .case-study-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .case-study-icon {
+            font-size: 32px;
+        }
+
+        .case-study-title {
+            font-size: 1.4rem;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .case-study-content p {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        .case-study-content ul {
+            margin: 15px 0 15px 25px;
+        }
+
+        .case-study-content li {
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .case-study-content strong {
+            color: var(--text-primary);
+        }
+
+        .case-study-highlight {
+            background: rgba(240, 147, 251, 0.1);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Quick Check Block */
+        .quick-check-block {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px 0;
+            transition: all 0.3s ease;
+            position: relative;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .quick-check-block.locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .quick-check-block.locked::after {
+            content: '🔒 Прослушайте аудио чтобы разблокировать квиз';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px 30px;
+            border-radius: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: center;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        /* Unlocked state - explicitly set */
+        .quick-check-block:not(.locked) {
+            opacity: 1;
+            pointer-events: auto;
+            cursor: default;
+        }
+
+        .quick-check-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .quick-check-icon {
+            font-size: 32px;
+        }
+
+        .quick-check-title {
+            font-size: 1.4rem;
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .quick-check-content {
+            color: var(--text-secondary);
+        }
+
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .progress-info {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 10px auto;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            width: 42%;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 90px;
+            }
+
+            .header {
+                padding: 15px 0;
+                min-height: 70px;
+            }
+
+            .main {
+                padding: 20px 15px;
+            }
+
+            .sector-number {
+                display: none;
+            }
+
+            .content-block {
+                padding: 20px 15px;
+            }
+
+            .block-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .block-title {
+                font-size: 1.4rem;
+            }
+
+            .audio-container {
+                align-self: center;
+            }
+
+            .lesson-nav {
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px 15px;
+            }
+
+            .nav-btn {
+                width: 100%;
+            }
+
+            .progress-bar {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="modules-index.html" class="back-btn">
+                <span>←</span>
+                <span>Назад к модулям</span>
+            </a>
+            <div class="module-info">
+                <div class="module-number">Модуль 5 из 12</div>
+                <div class="module-title">Переговоры с брокерами</div>
+            </div>
+            <div style="width: 150px;"></div>
+        </nav>
+    </header>
+
+    <main class="main">
+
+        <!-- СЕКТОР 1: Основы переговоров -->
+        <div class="sector-wrapper">
+            <div class="sector-number">01</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">📋 Основы переговоров с брокерами</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio1')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio1')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio1')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>🤝 Типы брокеров и особенности работы</h3>
+                    <p>Понимание типов брокеров критично для выбора правильной стратегии переговоров:</p>
+
+                    <ul>
+                        <li><strong>Freight Brokers:</strong> Независимые посредники между грузоотправителями и
+                            перевозчиками. Обычно работают с множеством клиентов и имеют гибкость в ценообразовании.
+                        </li>
+                        <li><strong>3PL (Third Party Logistics):</strong> Крупные логистические компании, управляющие
+                            цепочками поставок. Более структурированные процессы, но часто лучшие долгосрочные
+                            отношения.</li>
+                        <li><strong>Shipper Direct:</strong> Прямые грузоотправители без посредников. Обычно лучшие
+                            ставки, но меньше гибкости в переговорах.</li>
+                        <li><strong>Load Board Brokers:</strong> Работают через платформы DAT, Truckstop. Быстрые
+                            сделки, но часто более жесткие переговоры.</li>
+                    </ul>
+
+                    <div class="info-highlight">
+                        <h4>💡 Ключевые принципы успешных переговоров:</h4>
+                        <ul>
+                            <li><strong>Подготовка:</strong> Знайте рыночные ставки для маршрута (DAT RateView,
+                                Truckstop)</li>
+                            <li><strong>Уверенность:</strong> Говорите четко и профессионально, без извинений за свою
+                                цену</li>
+                            <li><strong>Гибкость:</strong> Будьте готовы к компромиссам, но знайте свою минимальную
+                                ставку</li>
+                            <li><strong>Долгосрочное мышление:</strong> Иногда стоит взять чуть меньше для построения
+                                отношений</li>
+                            <li><strong>Документирование:</strong> Всегда подтверждайте договоренности письменно</li>
+                        </ul>
+                    </div>
+
+                    <h3>📞 Структура эффективного звонка брокеру</h3>
+                    <p>Профессиональный звонок состоит из 5 этапов:</p>
+
+                    <ol>
+                        <li><strong>Представление (10 сек):</strong> "Hi, this is [Name] from [Company], calling about
+                            load #[Number]"</li>
+                        <li><strong>Уточнение деталей (1-2 мин):</strong> Маршрут, вес, размеры, специальные требования,
+                            сроки</li>
+                        <li><strong>Обсуждение ставки (2-3 мин):</strong> Узнайте предложение брокера, затем озвучьте
+                            свою цену</li>
+                        <li><strong>Переговоры (1-2 мин):</strong> Используйте техники для достижения желаемой ставки
+                        </li>
+                        <li><strong>Подтверждение (30 сек):</strong> "Great! Please send rate confirmation to [email]"
+                        </li>
+                    </ol>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Частые ошибки начинающих диспетчеров:</h4>
+                        <ul>
+                            <li>❌ Называют свою цену первыми (теряют преимущество)</li>
+                            <li>❌ Соглашаются на первое предложение брокера</li>
+                            <li>❌ Не знают рыночные ставки для маршрута</li>
+                            <li>❌ Слишком агрессивны или наоборот слишком мягки</li>
+                            <li>❌ Забывают подтвердить детали письменно</li>
+                        </ul>
+                    </div>
+
+                </div>
+        </div>
+        </section>
+
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">💼</span>
+                <h3 class="case-study-title">Case Study: Первый звонок новому брокеру</h3>
+            </div>
+            <div class="case-study-content">
+                <p><strong>Ситуация:</strong> Вы нашли груз на DAT: Chicago, IL → Dallas, TX, 45,000 lbs, Dry Van.
+                    Брокер предлагает $2,000.</p>
+                <p><strong>Ваш анализ:</strong></p>
+                <ul>
+                    <li>Расстояние: 950 миль</li>
+                    <li>Рыночная ставка по DAT: $2.45/миля = $2,327</li>
+                    <li>Ваша минимальная ставка: $2,200 ($2.31/миля)</li>
+                    <li>Целевая ставка: $2,400 ($2.52/миля)</li>
+                </ul>
+                <p><strong>Ваш ответ:</strong> "I appreciate the offer, but looking at current market rates for this
+                    lane, I need $2,500 to make this work for my driver."</p>
+                <div class="case-study-highlight">
+                    <strong>Результат:</strong> Брокер повышает до $2,300. Вы соглашаетесь на $2,350 - выше вашего
+                    минимума и близко к цели.
+                </div>
+            </div>
+        </div>
+
+        <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio1', 'quiz-1')">
+            🎧 Я закончил слушать этот блок
+        </button>
+
+        <div class="quick-check-block locked" id="quiz-1" data-quiz-id="quiz-5-1" data-correct-answer="c">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">✅</span>
+                <h3 class="quick-check-title">Быстрая проверка</h3>
+            </div>
+            <div class="quick-check-content">
+                <p class="quiz-question"><strong>Вопрос:</strong> Брокер предлагает $1,800 за груз 900 миль. Рыночная
+                    ставка $2.30/миля. Какой должна быть ваша первая контр-оферта?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" data-answer="a">
+                        <span class="option-letter">A</span>
+                        <span class="option-text">$2,070 (рыночная ставка)</span>
+                    </div>
+                    <div class="quiz-option" data-answer="b">
+                        <span class="option-letter">B</span>
+                        <span class="option-text">$1,900 (чуть выше предложения)</span>
+                    </div>
+                    <div class="quiz-option" data-answer="c">
+                        <span class="option-letter">C</span>
+                        <span class="option-text">$2,300-2,400 (выше рынка для якорения)</span>
+                    </div>
+                    <div class="quiz-option" data-answer="d">
+                        <span class="option-letter">D</span>
+                        <span class="option-text">$2,000 (компромисс сразу)</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback">
+                    <strong>Правильно! ✓</strong> Техника Anchoring (якорение) требует называть цену на 15-20% выше
+                    желаемой. Это создает пространство для переговоров и повышает шансы получить лучшую ставку.
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- СЕКТОР 2: 5 продвинутых техник -->
+        <div class="sector-wrapper">
+            <div class="sector-number">02</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">💰 5 продвинутых техник переговоров</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio2')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio2')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio2')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>🎯 Техника #1: Anchoring (Якорение)</h3>
+                    <p><strong>Суть:</strong> Первым называйте цену выше желаемой, чтобы "заякорить" переговоры в вашу
+                        пользу.</p>
+
+                    <div class="success-highlight">
+                        <h4>✅ Как применять:</h4>
+                        <ul>
+                            <li><strong>Шаг 1:</strong> Узнайте предложение брокера: "What's your rate for this load?"
+                            </li>
+                            <li><strong>Шаг 2:</strong> Назовите цену на 15-20% выше вашей цели</li>
+                            <li><strong>Шаг 3:</strong> Обоснуйте: "Based on market rates and our service quality..."
+                            </li>
+                            <li><strong>Шаг 4:</strong> Будьте готовы к торгу, но не опускайтесь ниже минимума</li>
+                        </ul>
+                        <p><strong>Пример:</strong></p>
+                        <ul>
+                            <li>Брокер: "We can do $2,000 for this load"</li>
+                            <li>Вы: "I was looking at $2,800 based on market rates" (ваша цель $2,400)</li>
+                            <li>Брокер: "That's too high, best I can do is $2,200"</li>
+                            <li>Вы: "Can you meet me at $2,500?"</li>
+                            <li>Результат: Договариваетесь на $2,300-2,400 ✅</li>
+                        </ul>
+                    </div>
+
+                    <h3>🎯 Техника #2: BATNA (Best Alternative To Negotiated Agreement)</h3>
+                    <p><strong>Суть:</strong> Всегда имейте альтернативу, чтобы не соглашаться на плохие условия.</p>
+
+                    <div class="info-highlight">
+                        <h4>💡 Применение BATNA:</h4>
+                        <ul>
+                            <li><strong>Перед звонком:</strong> Найдите 2-3 альтернативных груза на том же маршруте</li>
+                            <li><strong>Знайте минимум:</strong> Рассчитайте минимальную приемлемую ставку</li>
+                            <li><strong>Будьте готовы уйти:</strong> "I appreciate the offer, but I have another load at
+                                better rate"</li>
+                            <li><strong>Психология:</strong> Часто брокер повысит ставку, чтобы не потерять трак</li>
+                        </ul>
+                        <p><strong>Важно:</strong> Не блефуйте! Если нет реальной альтернативы, брокер может согласиться
+                            отпустить вас.</p>
+                    </div>
+
+                    <h3>🎯 Техника #3: Value Stacking (Наращивание ценности)</h3>
+                    <p><strong>Суть:</strong> Обоснуйте высокую цену дополнительной ценностью, которую вы
+                        предоставляете.</p>
+
+                    <ul>
+                        <li><strong>"Our driver has 10 years experience, zero accidents"</strong> - безопасность</li>
+                        <li><strong>"We provide real-time GPS tracking"</strong> - прозрачность</li>
+                        <li><strong>"We guarantee on-time delivery or detention pay waived"</strong> - надежность</li>
+                        <li><strong>"We have $1M cargo insurance, not just minimum"</strong> - защита</li>
+                        <li><strong>"We can pickup 2 hours earlier if needed"</strong> - гибкость</li>
+                        <li><strong>"Our trucks are newer models, less breakdown risk"</strong> - качество</li>
+                    </ul>
+
+                    <h3>🎯 Техника #4: Silence is Golden</h3>
+                    <p><strong>Суть:</strong> После того как назвали цену - молчите. Кто заговорит первым - проиграл.
+                    </p>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Как использовать молчание:</h4>
+                        <p><strong>Сценарий:</strong></p>
+                        <ul>
+                            <li>Вы: "I need $2,600 for this load"</li>
+                            <li>Брокер: "That's high..." [пауза]</li>
+                            <li>Вы: [МОЛЧИТЕ 5-10 секунд - не оправдывайтесь, не снижайте цену]</li>
+                            <li>Брокер: "...but let me see what I can do. How about $2,450?"</li>
+                            <li>Результат: Брокер сам повысил ставку без вашего давления ✅</li>
+                        </ul>
+                        <p><strong>Психология:</strong> Молчание создает дискомфорт. Брокер заполнит паузу, часто
+                            улучшая предложение.</p>
+                    </div>
+
+                    <h3>🎯 Техника #5: Package Deal</h3>
+                    <p><strong>Суть:</strong> Предложите несколько грузов за лучшую общую ставку.</p>
+
+                    <ul>
+                        <li><strong>"I can do $2,200 for this load if you give me the backhaul too"</strong></li>
+                        <li><strong>"Give me 3 loads this week at $2,400 each instead of $2,600 for one"</strong></li>
+                        <li><strong>"I'll take this low-paying load if you guarantee me a good load next week"</strong>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: Комбинация техник</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Груз LA → Phoenix, 380 миль, $800 предложение брокера. Рынок:
+                        $2.20/миля = $836.</p>
+                    <p><strong>Ваша стратегия:</strong></p>
+                    <ul>
+                        <li><strong>Anchoring:</strong> "I need $1,000 for this lane" (цель $900)</li>
+                        <li><strong>Value Stacking:</strong> "Our driver knows this route, guaranteed 6-hour transit"
+                        </li>
+                        <li><strong>Silence:</strong> [Пауза 8 секунд после их "That's too high"]</li>
+                        <li><strong>BATNA:</strong> "I have another Phoenix load at $950, but prefer working with you"
+                        </li>
+                        <li><strong>Package Deal:</strong> "Give me the backhaul Phoenix → LA and I'll do both at $900
+                            each"</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        <strong>Результат:</strong> Брокер соглашается на $920 за первый груз + обещает backhaul. Вы
+                        заработали $84 больше!
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio2', 'quiz-2')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-2" data-quiz-id="quiz-5-2" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Брокер говорит "That's too high" после вашей цены.
+                        Какая техника наиболее эффективна в этот момент?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">Немедленно снизить цену на $100</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">Молчать 5-10 секунд (Silence is Golden)</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">Оправдываться и объяснять цену</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">Сразу предложить Package Deal</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Техника "Silence is Golden" - после того как назвали цену, молчите
+                        5-10 секунд. Молчание создает дискомфорт, и брокер часто сам улучшает предложение.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- СЕКТОР 3: Дополнительные тактики -->
+        <div class="sector-wrapper">
+            <div class="sector-number">03</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🎭 Дополнительные тактики и психология</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio3')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio3')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio3')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>🪞 Mirroring (Зеркалирование)</h3>
+                    <p><strong>Суть:</strong> Повторяйте последние 1-3 слова собеседника с вопросительной интонацией.
+                    </p>
+
+                    <div class="info-highlight">
+                        <h4>💡 Как работает Mirroring:</h4>
+                        <p><strong>Пример диалога:</strong></p>
+                        <ul>
+                            <li>Брокер: "Best I can do is $1,800"</li>
+                            <li>Вы: "$1,800?" [с вопросительной интонацией]</li>
+                            <li>Брокер: "Well... maybe I can push to $1,900 if you can pickup today"</li>
+                        </ul>
+                        <p><strong>Психология:</strong> Зеркалирование заставляет собеседника продолжать говорить и
+                            часто раскрывать больше информации или улучшать предложение.</p>
+                    </div>
+
+                    <h3>🏷️ Labeling (Маркировка эмоций)</h3>
+                    <p><strong>Суть:</strong> Называйте эмоции или мысли собеседника, чтобы создать доверие.</p>
+
+                    <ul>
+                        <li><strong>"It seems like you're under pressure to fill this load quickly"</strong></li>
+                        <li><strong>"It sounds like your shipper is being difficult about rates"</strong></li>
+                        <li><strong>"It looks like you're trying to work within a tight budget"</strong></li>
+                    </ul>
+
+                    <p><strong>Результат:</strong> Брокер чувствует, что вы понимаете его ситуацию, и становится более
+                        открытым к компромиссу.</p>
+
+                    <h3>❓ Calibrated Questions (Калиброванные вопросы)</h3>
+                    <p><strong>Суть:</strong> Задавайте открытые вопросы, начинающиеся с "Как" или "Что", чтобы получить
+                        контроль.</p>
+
+                    <div class="success-highlight">
+                        <h4>✅ Мощные калиброванные вопросы:</h4>
+                        <ul>
+                            <li><strong>"How am I supposed to make this work at that rate?"</strong> - заставляет
+                                брокера думать о вашей позиции</li>
+                            <li><strong>"What can we do to make this fair for both sides?"</strong> - переводит в режим
+                                сотрудничества</li>
+                            <li><strong>"How does this rate compare to what you're paying other carriers?"</strong> -
+                                получаете информацию</li>
+                            <li><strong>"What would it take to get to $2,500?"</strong> - узнаете условия</li>
+                        </ul>
+                        <p><strong>Избегайте:</strong> Вопросов, на которые можно ответить "да" или "нет". Они закрывают
+                            диалог.</p>
+                    </div>
+
+                    <h3>🔄 Принцип взаимности (Reciprocity)</h3>
+                    <p><strong>Суть:</strong> Если вы делаете что-то для брокера, он чувствует обязанность ответить
+                        взаимностью.</p>
+
+                    <ul>
+                        <li><strong>Применение:</strong> "I took that low-paying load last week to help you out. Can you
+                            give me a better rate this time?"</li>
+                        <li><strong>Статистика:</strong> Работает в 70% случаев - брокер повысит ставку</li>
+                        <li><strong>Долгосрочно:</strong> Стройте "банк услуг" - помогайте брокерам в сложных ситуациях
+                        </li>
+                    </ul>
+
+                    <h3>⏰ Принцип дефицита (Scarcity)</h3>
+                    <p><strong>Суть:</strong> Люди ценят то, что ограничено или может исчезнуть.</p>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Как использовать дефицит:</h4>
+                        <ul>
+                            <li><strong>Применение:</strong> "I have another broker interested in my truck. Need to
+                                decide in 10 minutes"</li>
+                            <li><strong>Осторожно:</strong> Не блефуйте если нет альтернативы - могут согласиться
+                                отпустить</li>
+                            <li><strong>Лучше:</strong> "My truck will be available until 3 PM, then I'm booking another
+                                load"</li>
+                        </ul>
+                    </div>
+
+                    <h3>👔 Принцип авторитета (Authority)</h3>
+                    <p><strong>Суть:</strong> Люди доверяют экспертам и опыту.</p>
+
+                    <ul>
+                        <li><strong>Применение:</strong> "I've been dispatching this lane for 5 years. Market rate is
+                            $2.80/mile"</li>
+                        <li><strong>Подкрепление:</strong> Ссылайтесь на DAT RateView, industry reports, статистику</li>
+                        <li><strong>Профиль:</strong> Упоминайте опыт компании, количество траков, специализацию</li>
+                    </ul>
+
+                    <h3>😊 Принцип симпатии (Liking)</h3>
+                    <p><strong>Суть:</strong> Мы охотнее соглашаемся с теми, кто нам нравится.</p>
+
+                    <ul>
+                        <li><strong>Small talk:</strong> "How's the weather in Chicago? I'm from there originally!"</li>
+                        <li><strong>Общее:</strong> Найдите общие интересы (родной город, хобби, спорт)</li>
+                        <li><strong>Комплименты:</strong> "You're always so professional to work with"</li>
+                        <li><strong>Юмор:</strong> Легкая шутка разряжает напряжение</li>
+                    </ul>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: Психологические техники в действии</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Брокер предлагает $1,600 за груз. Вы хотите $2,000.</p>
+                    <p><strong>Диалог с техниками:</strong></p>
+                    <ul>
+                        <li><strong>Вы (Labeling):</strong> "It sounds like you're working with a tight budget from the
+                            shipper"</li>
+                        <li><strong>Брокер:</strong> "Yeah, they're only giving me $2,200 total"</li>
+                        <li><strong>Вы (Calibrated Question):</strong> "How can we make this work for both of us?"</li>
+                        <li><strong>Брокер:</strong> "Well, what's your best rate?"</li>
+                        <li><strong>Вы (Authority + Mirroring):</strong> "I've run this lane 50+ times. Best rate?
+                            [пауза]"</li>
+                        <li><strong>Брокер:</strong> "I can probably do $1,850"</li>
+                        <li><strong>Вы (Reciprocity):</strong> "I helped you last month with that urgent Phoenix load.
+                            Can you do $1,950?"</li>
+                        <li><strong>Брокер:</strong> "Alright, $1,900 and we have a deal"</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        <strong>Результат:</strong> Вы получили $300 больше начального предложения, используя
+                        психологические техники!
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio3', 'quiz-3')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-3" data-quiz-id="quiz-5-3" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Брокер говорит: "Best I can do is $2,100". Какой
+                        ответ использует технику Mirroring?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">"That's too low for me"</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">"$2,100?" [с вопросительной интонацией]</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">"Can you do $2,300?"</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">"I need to think about it"</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Техника Mirroring - повторяйте последние 1-3 слова собеседника с
+                        вопросительной интонацией. Это заставляет собеседника продолжать говорить и часто улучшать
+                        предложение.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- СЕКТОР 4: Работа с возражениями -->
+        <div class="sector-wrapper">
+            <div class="sector-number">04</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🛡️ Работа с возражениями</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio4')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio4')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio4')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>💬 Топ-10 возражений брокеров и ответы</h3>
+
+                    <div class="info-highlight">
+                        <h4>1️⃣ "That's too high"</h4>
+                        <p><strong>Плохой ответ:</strong> "Okay, I can do $100 less" ❌</p>
+                        <p><strong>Хороший ответ:</strong> "Too high compared to what? Let me show you current market
+                            rates..." ✅</p>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>2️⃣ "I have other carriers at lower rates"</h4>
+                        <p><strong>Плохой ответ:</strong> "Then go with them" ❌</p>
+                        <p><strong>Хороший ответ:</strong> "I understand. What makes you still consider us? Our 99%
+                            on-time rate and real-time tracking might be worth the difference" ✅</p>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>3️⃣ "The shipper won't pay more"</h4>
+                        <p><strong>Хороший ответ:</strong> "I understand your position. How can we make this work? Can
+                            you reduce detention time or offer a backhaul?" ✅</p>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>4️⃣ "This is my final offer"</h4>
+                        <p><strong>Хороший ответ:</strong> [Молчание 5 секунд] "I appreciate that. Let me check with my
+                            driver and get back to you in 5 minutes" ✅</p>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>5️⃣ "You're new, I don't know you"</h4>
+                        <p><strong>Хороший ответ:</strong> "That's fair. Here's our MC#, insurance, and references. How
+                            about we start with one load at your rate, and if we perform well, we discuss better rates?"
+                            ✅</p>
+                    </div>
+
+                    <div class="warning-highlight">
+                        <h4>6️⃣ "I need you to move now or I'm giving it to someone else"</h4>
+                        <p><strong>Хороший ответ:</strong> "I understand the urgency. My truck is ready, but I need fair
+                            compensation. Can you do $[your rate] and I'll commit right now?" ✅</p>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>7️⃣ "Market rates are lower than what you're asking"</h4>
+                        <p><strong>Хороший ответ:</strong> "Let's look at DAT together. I'm seeing $2.45/mile for this
+                            lane this week. What source are you using?" ✅</p>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>8️⃣ "Can you do it for [low rate] as a favor?"</h4>
+                        <p><strong>Хороший ответ:</strong> "I'd love to help. If I take this at [low rate], can you
+                            guarantee me 2 loads next week at market rates?" ✅</p>
+                    </div>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: Агрессивный брокер</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Брокер кричит: "You're wasting my time! $1,500 or I'm done!"</p>
+                    <p><strong>Ваша стратегия:</strong></p>
+                    <ul>
+                        <li><strong>Шаг 1 (Сохраняйте спокойствие):</strong> "I understand you're frustrated. Let's find
+                            solution"</li>
+                        <li><strong>Шаг 2 (Labeling):</strong> "It sounds like you're under a lot of pressure to fill
+                            this load"</li>
+                        <li><strong>Шаг 3 (Calibrated Question):</strong> "What can we do to make this work for both of
+                            us?"</li>
+                        <li><strong>Шаг 4 (Твердость):</strong> "I can do $1,800, but that's my absolute minimum"</li>
+                        <li><strong>Шаг 5 (BATNA):</strong> "If that doesn't work, I have another load. No hard
+                            feelings"</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        <strong>Результат:</strong> В 60% случаев брокер соглашается. В 40% - вы избежали плохой сделки
+                        и сохранили профессионализм.
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio4', 'quiz-4')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-4" data-quiz-id="quiz-5-4" data-correct-answer="c">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Брокер говорит: "I have other carriers at $200
+                        less". Какой лучший ответ?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">"Then go with them"</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">"Okay, I'll match that price"</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">"What makes you still consider us? Our 99% on-time rate might be
+                                worth the difference"</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">"You're lying"</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Техника Value Stacking - вместо снижения цены, обоснуйте её
+                        дополнительной ценностью (99% on-time rate, tracking, опыт). Это показывает уверенность и
+                        профессионализм.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- СЕКТОР 5: Построение отношений -->
+        <div class="sector-wrapper">
+            <div class="sector-number">05</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🤝 Построение долгосрочных отношений</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio5')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio5')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio5')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>🎯 Почему долгосрочные отношения важнее разовых сделок</h3>
+
+                    <div class="success-highlight">
+                        <h4>✅ Преимущества постоянных брокеров:</h4>
+                        <ul>
+                            <li><strong>Лучшие ставки:</strong> На 10-15% выше рынка для проверенных партнеров</li>
+                            <li><strong>Приоритет:</strong> Первыми узнаете о хороших грузах</li>
+                            <li><strong>Меньше paperwork:</strong> Уже есть все документы и договоры</li>
+                            <li><strong>Быстрые платежи:</strong> 7-14 дней вместо 30-45</li>
+                            <li><strong>Гибкость:</strong> Понимание в сложных ситуациях (поломки, задержки)</li>
+                            <li><strong>Стабильность:</strong> Предсказуемый поток грузов</li>
+                        </ul>
+                    </div>
+
+                    <h3>📈 Как построить отношения с брокером</h3>
+
+                    <div class="info-highlight">
+                        <h4>Этап 1: Первое впечатление (Загрузки 1-3)</h4>
+                        <ul>
+                            <li><strong>Будьте безупречны:</strong> On-time pickup и delivery, никаких оправданий</li>
+                            <li><strong>Коммуникация:</strong> Отвечайте на звонки/SMS в течение 15 минут</li>
+                            <li><strong>Проактивность:</strong> Отправляйте обновления без запроса</li>
+                            <li><strong>Документы:</strong> POD в течение 2 часов после доставки</li>
+                            <li><strong>Профессионализм:</strong> Никаких драм, жалоб, оправданий</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>Этап 2: Укрепление доверия (Загрузки 4-10)</h4>
+                        <ul>
+                            <li><strong>Consistency:</strong> Поддерживайте высокий уровень сервиса</li>
+                            <li><strong>Помощь в кризисах:</strong> Возьмите сложный груз когда брокер в беде</li>
+                            <li><strong>Feedback:</strong> "How did we do? Any areas for improvement?"</li>
+                            <li><strong>Личное общение:</strong> Узнайте имя, интересы, найдите общее</li>
+                            <li><strong>Запрашивайте больше:</strong> "Do you have more loads on this lane?"</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>Этап 3: Партнерство (Загрузки 11+)</h4>
+                        <ul>
+                            <li><strong>Preferred carrier status:</strong> Попросите добавить в список приоритетных</li>
+                            <li><strong>Dedicated lanes:</strong> "Can we handle all your Chicago-Dallas loads?"</li>
+                            <li><strong>Rate agreements:</strong> Договоритесь о фиксированных ставках на месяц</li>
+                            <li><strong>Volume discounts:</strong> "Give me 10 loads/week at $X rate"</li>
+                            <li><strong>Referrals:</strong> "Do you know other brokers who need reliable carriers?"</li>
+                        </ul>
+                    </div>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Что убивает отношения с брокерами:</h4>
+                        <ul>
+                            <li>❌ Постоянные опоздания или no-shows</li>
+                            <li>❌ Плохая коммуникация (не отвечаете на звонки)</li>
+                            <li>❌ Ложь или сокрытие проблем</li>
+                            <li>❌ Агрессивное поведение или грубость</li>
+                            <li>❌ Постоянные жалобы и оправдания</li>
+                            <li>❌ Попытки обмануть (fake POD, завышенные расходы)</li>
+                        </ul>
+                    </div>
+
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: От разовой сделки к партнерству</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Месяц 1:</strong> Взяли первый груз у брокера John за $2,000. Доставили на 2 часа
+                        раньше, отправили POD сразу.</p>
+                    <p><strong>Месяц 2:</strong> John позвонил с еще 3 грузами. Один был сложный (tight delivery),
+                        но вы справились. Ставки: $2,100-2,200.</p>
+                    <p><strong>Месяц 3:</strong> Попросили preferred carrier status. John дал 8 грузов за месяц.
+                        Ставки выросли до $2,300-2,400.</p>
+                    <p><strong>Месяц 6:</strong> Договорились о dedicated lane Chicago-Dallas: 12 грузов/месяц по
+                        $2,500 фиксированно. Платежи 10 дней.</p>
+                    <p><strong>Год 1:</strong> John дал 120+ грузов, заработали $280,000+. Он рекомендовал вас 3
+                        другим брокерам.</p>
+                    <div class="case-study-highlight">
+                        <strong>Результат:</strong> Один хороший брокер может обеспечить 30-40% вашего дохода!
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio5', 'quiz-5')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-5" data-quiz-id="quiz-5-5" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Что наиболее важно для становления preferred
+                        carrier у брокера?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">Всегда брать самые низкие ставки</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">Consistency в качестве сервиса и коммуникации</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">Звонить брокеру каждый день</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">Работать только с одним брокером</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Consistency в качестве сервиса и коммуникации - ключ к становлению
+                        preferred carrier. Брокеры ценят надежность и предсказуемость больше, чем низкие ставки.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- СЕКТОР 6: Готовые скрипты -->
+        <div class="sector-wrapper">
+            <div class="sector-number">06</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">📞 Готовые скрипты для переговоров</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio6')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio6')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio6')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>📋 Скрипт #1: Первый звонок новому брокеру</h3>
+
+                    <div class="info-highlight">
+                        <p><strong>Вы:</strong> "Hi, this is [Your Name] from [Company]. I'm calling about load
+                            #[Number] posted on DAT. Is it still available?"</p>
+                        <p><strong>Брокер:</strong> "Yes, it's available."</p>
+                        <p><strong>Вы:</strong> "Great! Can you confirm the details? Pickup location, delivery, weight,
+                            any special requirements?"</p>
+                        <p><strong>Брокер:</strong> [Дает детали]</p>
+                        <p><strong>Вы:</strong> "Perfect. What rate are you offering for this load?"</p>
+                        <p><strong>Брокер:</strong> "$2,000"</p>
+                        <p><strong>Вы:</strong> [Пауза 3 секунды] "I was looking at $2,600 based on current market
+                            rates. We provide real-time GPS tracking and have 99% on-time delivery rate."</p>
+                        <p><strong>Брокер:</strong> "That's too high. Best I can do is $2,200."</p>
+                        <p><strong>Вы:</strong> "Can you meet me at $2,450? That's fair for both of us."</p>
+                        <p><strong>Брокер:</strong> "I can do $2,300."</p>
+                        <p><strong>Вы:</strong> "Deal. Please send rate confirmation to [email]. Our MC# is [Number]."
+                        </p>
+                    </div>
+
+                    <h3>📋 Скрипт #2: Переговоры с постоянным брокером</h3>
+
+                    <div class="success-highlight">
+                        <p><strong>Вы:</strong> "Hey John, it's [Name]. How's it going?"</p>
+                        <p><strong>Брокер:</strong> "Good! Got a load for you Chicago to Dallas."</p>
+                        <p><strong>Вы:</strong> "Perfect, that's our lane. What are the details?"</p>
+                        <p><strong>Брокер:</strong> [Дает детали] "Can do $2,400."</p>
+                        <p><strong>Вы:</strong> "I appreciate that. We've done 15 loads together with zero issues. Can
+                            you do $2,550 this time? Market is hot right now."</p>
+                        <p><strong>Брокер:</strong> "Let me check... Okay, $2,500 and you got it."</p>
+                        <p><strong>Вы:</strong> "Perfect! Send it over. By the way, do you have a backhaul Dallas to
+                            Chicago?"</p>
+                    </div>
+
+                    <h3>📋 Скрипт #3: Отказ от низкой ставки</h3>
+
+                    <div class="warning-highlight">
+                        <p><strong>Брокер:</strong> "Best I can do is $1,800."</p>
+                        <p><strong>Вы:</strong> "I appreciate the offer, but that's below our operating costs for this
+                            lane. Market rate is $2.40/mile according to DAT."</p>
+                        <p><strong>Брокер:</strong> "That's all I have budget for."</p>
+                        <p><strong>Вы:</strong> "I understand. Unfortunately I can't make it work at that rate. I have
+                            another load at better rate. But please keep me in mind for future loads."</p>
+                        <p><strong>Брокер:</strong> "Wait, let me see if I can get approval for $2,100."</p>
+                        <p><strong>Вы:</strong> "If you can do $2,200, I'll commit right now."</p>
+                    </div>
+
+                    <h3>📋 Скрипт #4: Запрос лучших условий</h3>
+
+                    <div class="info-highlight">
+                        <p><strong>Вы:</strong> "Hey Sarah, we've been working together for 3 months now. I've done 25
+                            loads with zero issues."</p>
+                        <p><strong>Брокер:</strong> "Yes, you guys are great!"</p>
+                        <p><strong>Вы:</strong> "Thank you! I wanted to discuss becoming a preferred carrier. If you can
+                            guarantee me 10 loads per month on Chicago-Dallas lane, I can offer you priority service and
+                            consistent $2,450 rate."</p>
+                        <p><strong>Брокер:</strong> "That sounds interesting. Let me talk to my manager."</p>
+                        <p><strong>Вы:</strong> "Great! Also, is there any way to improve payment terms? Currently it's
+                            30 days, but if we're doing volume, maybe we can do 15 days?"</p>
+                    </div>
+
+                    <h3>📋 Скрипт #5: Работа с агрессивным брокером</h3>
+
+                    <div class="warning-highlight">
+                        <p><strong>Брокер:</strong> [Кричит] "You're wasting my time! Take $1,500 or I'm done!"</p>
+                        <p><strong>Вы:</strong> [Спокойно] "I understand you're frustrated. Let's find a solution that
+                            works for both of us."</p>
+                        <p><strong>Брокер:</strong> "There's no solution! $1,500 or nothing!"</p>
+                        <p><strong>Вы:</strong> "I hear you. My absolute minimum for this load is $1,900 based on my
+                            costs. If that doesn't work for you, I respect that and wish you luck. No hard feelings."
+                        </p>
+                        <p><strong>Брокер:</strong> [Пауза] "Fine, $1,850."</p>
+                        <p><strong>Вы:</strong> "I can do $1,875 and we have a deal."</p>
+                    </div>
+
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: Использование скриптов</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Новый диспетчер Alex использовал Скрипт #1 для 20 звонков за
+                        неделю.</p>
+                    <p><strong>Результаты:</strong></p>
+                    <ul>
+                        <li><strong>Без скрипта (первые 5 звонков):</strong> Средняя ставка $2,050, 2 груза
+                            забронированы</li>
+                        <li><strong>Со скриптом (следующие 15 звонков):</strong> Средняя ставка $2,340, 8 грузов
+                            забронированы</li>
+                        <li><strong>Улучшение:</strong> +$290 на груз (+14%), в 4 раза больше успешных сделок</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        <strong>Вывод:</strong> Скрипты работают! Они дают структуру, уверенность и лучшие результаты.
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio6', 'quiz-6')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-6" data-quiz-id="quiz-5-6" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> В каком моменте скрипта лучше всего использовать
+                        паузу (Silence is Golden)?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">Сразу после представления</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">После того как брокер назвал свою ставку</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">Во время уточнения деталей груза</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">После подтверждения сделки</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Техника "Silence is Golden" наиболее эффективна после того как
+                        брокер назвал свою ставку. Пауза 3-5 секунд создает дискомфорт и часто заставляет брокера
+                        улучшить предложение.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="lesson-nav">
+            <a href="doc-module-4-complete.html" class="nav-btn">
+                <span>←</span>
+                <span>Предыдущий модуль</span>
+            </a>
+            <div class="progress-info">
+                <div>Модуль 5 из 12</div>
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <div>42% завершено</div>
+            </div>
+            <a href="doc-module-6-complete.html" class="nav-btn">
+                <span>Следующий модуль</span>
+                <span>→</span>
+            </a>
+        </div>
+    </main>
+
+    <script>
+        // Audio Management
+        const audioFiles = {
+            'audio1': '../audio/module-5-sector-1.mp3',
+            'audio2': '../audio/module-5-sector-2.mp3',
+            'audio3': '../audio/module-5-sector-3.mp3',
+            'audio4': '../audio/module-5-sector-4.mp3',
+            'audio5': '../audio/module-5-sector-5.mp3',
+            'audio6': '../audio/module-5-sector-6.mp3'
+        };
+
+        let currentAudio = null;
+        let currentAudioId = null;
+
+        function toggleAudio(button, audioId) {
+            const container = button.closest('.audio-container');
+
+            if (currentAudio && currentAudioId === audioId) {
+                if (currentAudio.paused) {
+                    currentAudio.play();
+                    button.classList.add('playing');
+                    container.classList.add('playing');
+                } else {
+                    currentAudio.pause();
+                    button.classList.remove('playing');
+                    container.classList.remove('playing');
+                }
+            } else {
+                if (currentAudio) {
+                    currentAudio.pause();
+                    const oldButton = document.querySelector('.audio-btn.playing');
+                    const oldContainer = oldButton?.closest('.audio-container');
+                    if (oldButton) oldButton.classList.remove('playing');
+                    if (oldContainer) oldContainer.classList.remove('playing');
+                }
+
+                alert(`Воспроизведение: ${audioFiles[audioId]}\n\nВ продакшене здесь будет реальный аудио-плеер с прогресс-кольцом.`);
+
+                currentAudio = new Audio(audioFiles[audioId]);
+                currentAudioId = audioId;
+
+                currentAudio.addEventListener('loadedmetadata', () => {
+                    updateDuration(container, currentAudio.duration);
+                });
+
+                currentAudio.addEventListener('timeupdate', () => {
+                    updateProgress(container, currentAudio.currentTime, currentAudio.duration);
+                });
+
+                currentAudio.addEventListener('ended', () => {
+                    button.classList.remove('playing');
+                    container.classList.remove('playing');
+                    resetProgress(container);
+                });
+
+                currentAudio.play();
+                button.classList.add('playing');
+                container.classList.add('playing');
+            }
+        }
+
+        function updateDuration(container, duration) {
+            const durationEl = container.querySelector('.audio-duration');
+            const minutes = Math.floor(duration / 60);
+            const seconds = Math.floor(duration % 60);
+            durationEl.textContent = `0:00 / ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function updateProgress(container, currentTime, duration) {
+            const progress = (currentTime / duration) * 100;
+            const circumference = 201.06;
+            const offset = circumference - (progress / 100) * circumference;
+
+            const progressRing = container.querySelector('.progress-ring-fill');
+            if (progressRing) {
+                progressRing.style.strokeDashoffset = offset;
+            }
+
+            const mobileBar = container.querySelector('.mobile-progress-fill');
+            if (mobileBar) {
+                mobileBar.style.width = `${progress}%`;
+            }
+
+            const durationEl = container.querySelector('.audio-duration');
+            const currentMinutes = Math.floor(currentTime / 60);
+            const currentSeconds = Math.floor(currentTime % 60);
+            const totalMinutes = Math.floor(duration / 60);
+            const totalSeconds = Math.floor(duration % 60);
+            durationEl.textContent = `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')} / ${totalMinutes}:${totalSeconds.toString().padStart(2, '0')}`;
+        }
+
+        function resetProgress(container) {
+            const progressRing = container.querySelector('.progress-ring-fill');
+            if (progressRing) {
+                progressRing.style.strokeDashoffset = 201.06;
+            }
+
+            const mobileBar = container.querySelector('.mobile-progress-fill');
+            if (mobileBar) {
+                mobileBar.style.width = '0%';
+            }
+        }
+
+        function seekAudio(event, audioId) {
+            if (!currentAudio || currentAudioId !== audioId) return;
+
+            const ring = event.currentTarget;
+            const rect = ring.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const angle = Math.atan2(event.clientY - centerY, event.clientX - centerX);
+            let degrees = angle * (180 / Math.PI) + 90;
+            if (degrees < 0) degrees += 360;
+
+            const progress = degrees / 360;
+            currentAudio.currentTime = progress * currentAudio.duration;
+        }
+
+        function seekAudioMobile(event, audioId) {
+            if (!currentAudio || currentAudioId !== audioId) return;
+
+            const bar = event.currentTarget;
+            const rect = bar.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const progress = clickX / rect.width;
+
+            currentAudio.currentTime = progress * currentAudio.duration;
+        }
+
+        // Audio Completion - Unlock Quiz
+        function markAudioComplete(button, audioId, quizId) {
+            // Mark button as completed
+            button.classList.add('completed');
+            button.textContent = '✅ Аудио прослушано';
+            button.disabled = true;
+
+            // Unlock quiz with animation
+            const quizBlock = document.getElementById(quizId);
+            if (quizBlock) {
+                // Remove locked class
+                quizBlock.classList.remove('locked');
+
+                // Ensure quiz is visible and interactive
+                quizBlock.style.opacity = '1';
+                quizBlock.style.pointerEvents = 'auto';
+
+                // Add unlock animation
+                quizBlock.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    quizBlock.style.transform = 'scale(1)';
+                }, 100);
+
+                // Scroll to quiz smoothly
+                setTimeout(() => {
+                    quizBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 200);
+            }
+        }
+
+        // Quiz Management - New approach with data-answer
+        document.addEventListener('DOMContentLoaded', () => {
+            const quizBlocks = document.querySelectorAll('.quick-check-block');
+
+            quizBlocks.forEach(quizBlock => {
+                const options = quizBlock.querySelectorAll('.quiz-option');
+                const correctAnswer = quizBlock.dataset.correctAnswer;
+                const feedback = quizBlock.querySelector('.quiz-feedback');
+
+                options.forEach(option => {
+                    option.addEventListener('click', () => {
+                        // Prevent multiple clicks
+                        if (quizBlock.classList.contains('answered')) return;
+                        if (quizBlock.classList.contains('locked')) return;
+
+                        quizBlock.classList.add('answered');
+
+                        const userAnswer = option.dataset.answer;
+                        const isCorrect = userAnswer === correctAnswer;
+
+                        // Disable all options
+                        options.forEach(opt => {
+                            opt.style.pointerEvents = 'none';
+                        });
+
+                        // Mark selected option
+                        if (isCorrect) {
+                            option.classList.add('correct');
+                        } else {
+                            option.classList.add('incorrect');
+                            // Show correct answer
+                            options.forEach(opt => {
+                                if (opt.dataset.answer === correctAnswer) {
+                                    opt.classList.add('correct');
+                                }
+                            });
+                        }
+
+                        // Show feedback
+                        if (feedback) {
+                            feedback.classList.add('show');
+                        }
+                    });
+                });
+            });
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.content-block').forEach(block => {
+            block.style.opacity = '0';
+            block.style.transform = 'translateY(20px)';
+            block.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(block);
+        });
+    </script>
+</body>
+
+</html>

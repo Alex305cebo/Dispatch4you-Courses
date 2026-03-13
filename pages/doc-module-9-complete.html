@@ -1,0 +1,3016 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль 9: Безопасность и CSA Scores | DispatcherPro</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="stylesheet" href="../interactive-modules.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #f093fb;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary: #b8c5d6;
+            --text-muted: #8892aa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.1);
+            --audio-primary: #ff6b6b;
+            --audio-secondary: #4ecdc4;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
+            padding-top: 100px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1), transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(240, 147, 251, 0.1), transparent 50%);
+            animation: backgroundMove 20s ease infinite;
+            z-index: -1;
+        }
+
+        @keyframes backgroundMove {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            25% {
+                transform: translate(5%, 5%) scale(1.05);
+            }
+
+            50% {
+                transform: translate(-5%, 5%) scale(1.1);
+            }
+
+            75% {
+                transform: translate(5%, -5%) scale(1.05);
+            }
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 0;
+            background: rgba(7, 11, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            min-height: 80px;
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateX(-3px);
+        }
+
+        .module-info {
+            text-align: center;
+        }
+
+        .module-number {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .module-title {
+            font-size: 18px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .sector-wrapper {
+            position: relative;
+            margin-bottom: 60px;
+        }
+
+        .sector-number {
+            position: absolute;
+            left: -80px;
+            top: 30px;
+            font-size: 72px;
+            font-weight: 900;
+            color: rgba(102, 126, 234, 0.1);
+            line-height: 1;
+            user-select: none;
+        }
+
+        .content-block {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            transition: all 0.3s ease;
+        }
+
+        .content-block:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+
+        .block-title {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+            flex: 1;
+        }
+
+        .audio-container {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .audio-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--audio-primary), var(--audio-secondary));
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .audio-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.5);
+        }
+
+        .audio-btn .play-icon {
+            font-size: 24px;
+            color: white;
+            margin-left: 3px;
+        }
+
+        .audio-btn .pause-icon {
+            font-size: 20px;
+            color: white;
+            display: none;
+        }
+
+        .audio-btn.playing .play-icon {
+            display: none;
+        }
+
+        .audio-btn.playing .pause-icon {
+            display: block;
+        }
+
+        .audio-btn.playing {
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.7), 0 0 0 10px rgba(255, 107, 107, 0.1);
+            }
+
+            100% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+        }
+
+        .progress-ring {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            transform: rotate(-90deg);
+            z-index: 1;
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 5;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: var(--audio-primary);
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-dasharray: 201.06;
+            stroke-dashoffset: 201.06;
+            transition: stroke-dashoffset 0.1s ease;
+            filter: drop-shadow(0 0 4px rgba(255, 107, 107, 0.5));
+        }
+
+        .progress-ring-interactive {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            cursor: pointer;
+            z-index: 5;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        .progress-ring-interactive.seekable {
+            pointer-events: auto;
+            background: radial-gradient(circle, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.01) 60%, rgba(255, 255, 255, 0.01) 100%);
+        }
+
+        .audio-duration {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .audio-container:hover .audio-duration,
+        .audio-container.playing .audio-duration {
+            opacity: 1;
+        }
+
+        .mobile-progress-bar {
+            display: none;
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .mobile-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--audio-primary), var(--audio-secondary));
+            border-radius: 2px;
+            transition: width 0.1s ease;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-progress-bar {
+                display: block;
+            }
+
+            .progress-ring,
+            .progress-ring-interactive {
+                display: none !important;
+            }
+
+            .audio-duration {
+                bottom: -50px;
+            }
+        }
+
+        .block-content {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .block-content h3 {
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            margin: 25px 0 15px 0;
+        }
+
+        .block-content h4 {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            margin: 20px 0 10px 0;
+        }
+
+        .block-content ul,
+        .block-content ol {
+            margin: 15px 0 15px 25px;
+        }
+
+        .block-content li {
+            margin-bottom: 8px;
+        }
+
+        .block-content strong {
+            color: var(--text-primary);
+        }
+
+        .info-highlight {
+            background: rgba(102, 126, 234, 0.08);
+            border-left: 4px solid #667eea;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .warning-highlight {
+            background: rgba(251, 146, 60, 0.08);
+            border-left: 4px solid #fb923c;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .success-highlight {
+            background: rgba(52, 211, 153, 0.08);
+            border-left: 4px solid #34d399;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .danger-highlight {
+            background: rgba(239, 68, 68, 0.08);
+            border-left: 4px solid #ef4444;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .audio-completion-btn {
+            display: block;
+            width: 100%;
+            padding: 16px 24px;
+            margin: 30px 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .audio-completion-btn:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .audio-completion-btn.completed {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(52, 211, 153, 0.2));
+            border-color: var(--success);
+            cursor: default;
+        }
+
+        .case-study-block {
+            background: rgba(240, 147, 251, 0.05);
+            border: 1px solid rgba(240, 147, 251, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px 0;
+            transition: all 0.3s ease;
+        }
+
+        .case-study-block:hover {
+            background: rgba(240, 147, 251, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(240, 147, 251, 0.2);
+        }
+
+        .case-study-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .case-study-icon {
+            font-size: 32px;
+        }
+
+        .case-study-title {
+            font-size: 1.4rem;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .case-study-content p {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        .case-study-content ul {
+            margin: 15px 0 15px 25px;
+        }
+
+        .case-study-content li {
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .case-study-content strong {
+            color: var(--text-primary);
+        }
+
+        .case-study-highlight {
+            background: rgba(240, 147, 251, 0.1);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .quick-check-block {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px 0;
+            transition: all 0.3s ease;
+            position: relative;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .quick-check-block.locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .quick-check-block.locked::after {
+            content: '🔒 Прослушайте аудио чтобы разблокировать квиз';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px 30px;
+            border-radius: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: center;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        .quick-check-block:not(.locked) {
+            opacity: 1;
+            pointer-events: auto;
+            cursor: default;
+        }
+
+        .quick-check-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .quick-check-icon {
+            font-size: 32px;
+        }
+
+        .quick-check-title {
+            font-size: 1.4rem;
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .quick-check-content {
+            color: var(--text-secondary);
+        }
+
+        .quiz-question {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 18px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quiz-option:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+        }
+
+        .quiz-option.incorrect {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--danger);
+        }
+
+        .option-letter {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 50%;
+            font-weight: 700;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .option-text {
+            flex: 1;
+            color: var(--text-secondary);
+        }
+
+        .quiz-feedback {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--success);
+            border-radius: 8px;
+            color: var(--text-primary);
+        }
+
+        .quiz-feedback.show {
+            display: block;
+        }
+
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .progress-info {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 10px auto;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            width: 75%;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 90px;
+            }
+
+            .header {
+                padding: 15px 0;
+                min-height: 70px;
+            }
+
+            .main {
+                padding: 20px 15px;
+            }
+
+            .sector-number {
+                display: none;
+            }
+
+            .content-block {
+                padding: 20px 15px;
+            }
+
+            .block-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .block-title {
+                font-size: 1.4rem;
+            }
+
+            .audio-container {
+                align-self: center;
+            }
+
+            .lesson-nav {
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px 15px;
+            }
+
+            .nav-btn {
+                width: 100%;
+            }
+
+            .progress-bar {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="modules-index.html" class="back-btn">
+                <span>←</span>
+                <span>Назад к модулям</span>
+            </a>
+            <div class="module-info">
+                <div class="module-number">Модуль 9 из 12</div>
+                <div class="module-title">Безопасность и CSA Scores</div>
+            </div>
+            <div style="width: 150px;"></div>
+        </nav>
+    </header>
+
+    <main class="main">
+
+        <!-- СЕКТОР 1: Система CSA и SMS scores -->
+        <div class="sector-wrapper">
+            <div class="sector-number">01</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🛡️ Система CSA и SMS scores</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio1')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio1')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio1')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>🛡️ Что такое CSA (Compliance, Safety, Accountability)?</h3>
+                    <p><strong>CSA</strong> - федеральная программа FMCSA для мониторинга безопасности trucking компаний
+                        и водителей.</p>
+
+                    <div class="info-highlight">
+                        <h4>💡 Как работает CSA:</h4>
+                        <ul>
+                            <li><strong>Roadside inspections:</strong> DOT инспекторы проверяют траки и водителей</li>
+                            <li><strong>Violations:</strong> Нарушения записываются в систему</li>
+                            <li><strong>Points:</strong> За каждое нарушение начисляются баллы (severity weight)</li>
+                            <li><strong>SMS scores:</strong> Safety Measurement System считает общий рейтинг</li>
+                            <li><strong>Interventions:</strong> При плохом рейтинге - проверки, штрафы, приостановка MC#
+                            </li>
+                        </ul>
+                    </div>
+
+                    <h3>📊 7 BASIC категорий CSA</h3>
+                    <p><strong>BASIC</strong> = Behavior Analysis and Safety Improvement Categories</p>
+
+                    <div class="success-highlight">
+                        <h4>✅ 1. Unsafe Driving</h4>
+                        <ul>
+                            <li><strong>Что проверяют:</strong> Speeding, reckless driving, lane violations, texting
+                            </li>
+                            <li><strong>Severity:</strong> 1-10 баллов (speeding 15+ mph = 10 баллов)</li>
+                            <li><strong>Threshold:</strong> 65% percentile = intervention</li>
+                            <li><strong>Примеры:</strong> Превышение скорости, использование телефона, improper lane
+                                change</li>
+                        </ul>
+                    </div>
+
+                    <div class="success-highlight">
+                        <h4>✅ 2. Hours of Service (HOS) Compliance</h4>
+                        <ul>
+                            <li><strong>Что проверяют:</strong> Logbook violations, ELD tampering, driving over 11 hours
+                            </li>
+                            <li><strong>Severity:</strong> 1-10 баллов (falsifying logs = 10 баллов)</li>
+                            <li><strong>Threshold:</strong> 65% percentile</li>
+                            <li><strong>Примеры:</strong> Превышение 11-hour limit, неправильные logs, missing ELD data
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="success-highlight">
+                        <h4>✅ 3. Driver Fitness</h4>
+                        <ul>
+                            <li><strong>Что проверяют:</strong> CDL validity, medical card, drug/alcohol violations</li>
+                            <li><strong>Severity:</strong> 1-10 баллов (no CDL = 8 баллов)</li>
+                            <li><strong>Threshold:</strong> 80% percentile</li>
+                            <li><strong>Примеры:</strong> Expired medical card, suspended CDL, failed drug test</li>
+                        </ul>
+                    </div>
+
+                    <div class="success-highlight">
+                        <h4>✅ 4. Controlled Substances/Alcohol</h4>
+                        <ul>
+                            <li><strong>Что проверяют:</strong> Drug/alcohol use, testing violations, refusal to test
+                            </li>
+                            <li><strong>Severity:</strong> 5-10 баллов (DUI = 10 баллов)</li>
+                            <li><strong>Threshold:</strong> 80% percentile</li>
+                            <li><strong>Примеры:</strong> Positive drug test, DUI, отказ от теста</li>
+                        </ul>
+                    </div>
+
+                    <div class="success-highlight">
+                        <h4>✅ 5. Vehicle Maintenance</h4>
+                        <ul>
+                            <li><strong>Что проверяют:</strong> Brakes, tires, lights, leaks, structural integrity</li>
+                            <li><strong>Severity:</strong> 1-8 баллов (brake violations = 4-8 баллов)</li>
+                            <li><strong>Threshold:</strong> 80% percentile</li>
+                            <li><strong>Примеры:</strong> Worn brakes, bald tires, broken lights, oil leaks</li>
+                        </ul>
+                    </div>
+
+                    <div class="success-highlight">
+                        <h4>✅ 6. Hazardous Materials (HM) Compliance</h4>
+                        <ul>
+                            <li><strong>Что проверяют:</strong> HM placards, packaging, shipping papers, training</li>
+                            <li><strong>Severity:</strong> 1-10 баллов</li>
+                            <li><strong>Threshold:</strong> 80% percentile</li>
+                            <li><strong>Примеры:</strong> Missing placards, improper packaging, no HM endorsement</li>
+                        </ul>
+                    </div>
+
+                    <div class="success-highlight">
+                        <h4>✅ 7. Crash Indicator</h4>
+                        <ul>
+                            <li><strong>Что проверяют:</strong> Frequency и severity аварий</li>
+                            <li><strong>Severity:</strong> Зависит от типа аварии (fatal, injury, tow-away)</li>
+                            <li><strong>Threshold:</strong> 65% percentile</li>
+                            <li><strong>Примеры:</strong> Preventable accidents, at-fault crashes</li>
+                        </ul>
+                    </div>
+
+                    <h3>📈 SMS Scores - как считаются</h3>
+                    <div class="warning-highlight">
+                        <h4>⚠️ Формула расчета:</h4>
+                        <ol>
+                            <li><strong>Severity Weight:</strong> Каждое нарушение = 1-10 баллов</li>
+                            <li><strong>Time Weight:</strong> Свежие нарушения весят больше (последние 6 месяцев × 3,
+                                6-12 месяцев × 2, 12-24 месяца × 1)</li>
+                            <li><strong>Total Points:</strong> Сумма всех взвешенных баллов</li>
+                            <li><strong>Percentile Rank:</strong> Сравнение с другими компаниями (0-100%)</li>
+                            <li><strong>Threshold:</strong> Если выше 65-80% = intervention</li>
+                        </ol>
+                        <p><strong>Пример:</strong> Speeding 15 mph (10 баллов) × 3 (последние 6 месяцев) = 30 баллов
+                        </p>
+                    </div>
+
+                    <h3>🚨 Последствия плохого CSA score</h3>
+                    <ul>
+                        <li><strong>Warning Letter:</strong> FMCSA отправляет предупреждение</li>
+                        <li><strong>Targeted Roadside Inspections:</strong> Чаще останавливают для проверки</li>
+                        <li><strong>Off-Site Investigation:</strong> DOT приезжает в офис проверять документы</li>
+                        <li><strong>On-Site Compliance Review:</strong> Полный аудит компании</li>
+                        <li><strong>Conditional/Unsatisfactory Rating:</strong> Потеря клиентов, проблемы с insurance
+                        </li>
+                        <li><strong>Out-of-Service Order:</strong> Приостановка операций</li>
+                        <li><strong>Revocation of MC#:</strong> Отзыв лицензии (крайний случай)</li>
+                    </ul>
+
+                    <h3>💡 Как улучшить CSA score</h3>
+                    <div class="success-highlight">
+                        <h4>✅ Стратегии:</h4>
+                        <ul>
+                            <li><strong>Driver training:</strong> Регулярное обучение безопасности</li>
+                            <li><strong>Pre-trip inspections:</strong> Водители проверяют трак перед каждой поездкой
+                            </li>
+                            <li><strong>Maintenance schedule:</strong> Регулярное обслуживание (каждые 10,000-15,000
+                                миль)</li>
+                            <li><strong>ELD monitoring:</strong> Контроль HOS violations в реальном времени</li>
+                            <li><strong>Speed limiters:</strong> Ограничение скорости 65-68 mph</li>
+                            <li><strong>DataQs process:</strong> Оспаривание неправильных violations (30 дней на подачу)
+                            </li>
+                            <li><strong>Safety incentives:</strong> Бонусы водителям за 0 violations</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: Плохой CSA score стоил $50,000 контракта</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Компания с 15 траками имела CSA score 85% в категории Unsafe Driving
+                        (выше threshold 65%).</p>
+                    <p><strong>Причины плохого score:</strong></p>
+                    <ul>
+                        <li><strong>Speeding violations:</strong> 8 нарушений за 6 месяцев (10 баллов каждое × 3 = 240
+                            баллов)</li>
+                        <li><strong>Improper lane change:</strong> 3 нарушения (5 баллов × 3 = 45 баллов)</li>
+                        <li><strong>Texting while driving:</strong> 2 нарушения (10 баллов × 3 = 60 баллов)</li>
+                        <li><strong>Total:</strong> 345 баллов = 85% percentile</li>
+                    </ul>
+                    <p><strong>Последствия:</strong></p>
+                    <ul>
+                        <li>Крупный клиент (Walmart) проверил CSA score перед renewal контракта</li>
+                        <li>Отказались продлевать контракт на $50,000/месяц из-за плохого safety rating</li>
+                        <li>Insurance premium вырос на 25% ($15,000/год extra)</li>
+                        <li>Targeted inspections - траки останавливали 3-4 раза в неделю</li>
+                    </ul>
+                    <p><strong>Действия компании:</strong></p>
+                    <ol>
+                        <li>Установили speed limiters на все траки (65 mph max)</li>
+                        <li>Внедрили dash cams для контроля водителей</li>
+                        <li>Провели safety training для всех водителей</li>
+                        <li>Оспорили 2 неправильных violations через DataQs</li>
+                        <li>Ввели bonus $200/месяц за 0 violations</li>
+                    </ol>
+                    <div class="case-study-highlight">
+                        <strong>Результат через 6 месяцев:</strong> CSA score снизился до 45% (ниже threshold). Вернули
+                        контракт с Walmart. Урок: CSA score напрямую влияет на бизнес!
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio1', 'quiz-1')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-1" data-quiz-id="quiz-9-1" data-correct-answer="a">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Сколько BASIC категорий в системе CSA?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">7 категорий</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">5 категорий</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">10 категорий</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">3 категории</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> В системе CSA 7 BASIC категорий: Unsafe Driving, HOS Compliance,
+                        Driver Fitness, Controlled Substances, Vehicle Maintenance, Hazardous Materials, Crash
+                        Indicator.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- СЕКТОР 2: Roadside Inspections -->
+        <div class="sector-wrapper">
+            <div class="sector-number">02</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🚔 Roadside Inspections</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio2')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio2')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio2')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>🚔 Что такое Roadside Inspection?</h3>
+                    <p><strong>Roadside inspection</strong> - проверка трака и водителя DOT инспектором на дороге или на
+                        weigh station.</p>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Частота inspections:</h4>
+                        <ul>
+                            <li><strong>Random:</strong> Любой трак могут остановить для проверки</li>
+                            <li><strong>Targeted:</strong> Траки с плохим CSA score останавливают чаще</li>
+                            <li><strong>Weigh stations:</strong> Обязательная остановка для проверки веса</li>
+                            <li><strong>Статистика:</strong> ~3.5 миллионов inspections в год в США</li>
+                            <li><strong>Вероятность:</strong> Средний трак проверяют 1-2 раза в год</li>
+                        </ul>
+                    </div>
+
+                    <h3>📋 Типы inspections (Levels)</h3>
+
+                    <div class="danger-highlight">
+                        <h4>🔴 Level 1: Full Inspection (North American Standard)</h4>
+                        <ul>
+                            <li><strong>Что проверяют:</strong> ВСЕ - трак + водитель + документы</li>
+                            <li><strong>Длительность:</strong> 30-60 минут</li>
+                            <li><strong>Частота:</strong> 37% всех inspections</li>
+                            <li><strong>Проверка трака:</strong>
+                                <ul>
+                                    <li>Brakes (каждое колесо)</li>
+                                    <li>Tires (глубина протектора, давление)</li>
+                                    <li>Lights (все фары, поворотники, стоп-сигналы)</li>
+                                    <li>Steering (люфт, состояние)</li>
+                                    <li>Suspension (springs, shocks)</li>
+                                    <li>Exhaust system (leaks)</li>
+                                    <li>Frame (cracks, rust)</li>
+                                    <li>Fuel system (leaks)</li>
+                                    <li>Coupling devices (fifth wheel, kingpin)</li>
+                                    <li>Cargo securement (straps, chains)</li>
+                                </ul>
+                            </li>
+                            <li><strong>Проверка водителя:</strong>
+                                <ul>
+                                    <li>CDL license (valid, correct class)</li>
+                                    <li>Medical card (not expired)</li>
+                                    <li>Logbook/ELD (HOS compliance)</li>
+                                    <li>Vehicle inspection report (DVIR)</li>
+                                    <li>Registration, insurance</li>
+                                    <li>Shipping documents (BOL, hazmat papers)</li>
+                                    <li>Drug/alcohol test (random или при подозрении)</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="warning-highlight">
+                        <h4>🟡 Level 2: Walk-Around Driver/Vehicle Inspection</h4>
+                        <ul>
+                            <li><strong>Что проверяют:</strong> Визуальный осмотр трака + документы водителя</li>
+                            <li><strong>Длительность:</strong> 15-30 минут</li>
+                            <li><strong>Частота:</strong> 28% всех inspections</li>
+                            <li><strong>Отличие от Level 1:</strong> Не проверяют brakes под траком</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>🟢 Level 3: Driver-Only Inspection</h4>
+                        <ul>
+                            <li><strong>Что проверяют:</strong> Только документы водителя</li>
+                            <li><strong>Длительность:</strong> 10-15 минут</li>
+                            <li><strong>Частота:</strong> 24% всех inspections</li>
+                            <li><strong>Проверяют:</strong> CDL, medical card, HOS, DVIR, shipping papers</li>
+                        </ul>
+                    </div>
+
+                    <div class="success-highlight">
+                        <h4>✅ Level 4: Special Inspection</h4>
+                        <ul>
+                            <li><strong>Что проверяют:</strong> Одна конкретная вещь (например, только HOS или только
+                                cargo securement)</li>
+                            <li><strong>Длительность:</strong> 5-15 минут</li>
+                            <li><strong>Частота:</strong> 5% всех inspections</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>💡 Level 5: Vehicle-Only Inspection</h4>
+                        <ul>
+                            <li><strong>Что проверяют:</strong> Только трак (без водителя)</li>
+                            <li><strong>Когда:</strong> На терминале компании, без водителя</li>
+                            <li><strong>Частота:</strong> 4% всех inspections</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>💡 Level 6: Enhanced NAS Inspection for Radioactive Shipments</h4>
+                        <ul>
+                            <li><strong>Что проверяют:</strong> Специальная проверка для radioactive materials</li>
+                            <li><strong>Частота:</strong> Редко (только для hazmat)</li>
+                        </ul>
+                    </div>
+
+                    <h3>✅ Как подготовиться к inspection</h3>
+
+                    <div class="success-highlight">
+                        <h4>✅ Pre-Trip Inspection (водитель делает КАЖДЫЙ день):</h4>
+                        <ol>
+                            <li><strong>Exterior walk-around:</strong> Проверка lights, tires, leaks (10 минут)</li>
+                            <li><strong>Under the hood:</strong> Oil, coolant, belts, hoses (5 минут)</li>
+                            <li><strong>Brake test:</strong> Проверка air pressure, brake function (5 минут)</li>
+                            <li><strong>Interior check:</strong> Gauges, wipers, horn, mirrors (5 минут)</li>
+                            <li><strong>Trailer check:</strong> Doors, cargo securement, lights (5 минут)</li>
+                            <li><strong>DVIR:</strong> Записать все проблемы в Daily Vehicle Inspection Report</li>
+                        </ol>
+                        <p><strong>Total time:</strong> 30 минут каждое утро</p>
+                    </div>
+
+                    <div class="success-highlight">
+                        <h4>✅ Документы всегда должны быть в траке:</h4>
+                        <ul>
+                            <li><strong>CDL license:</strong> Valid, correct class (Class A для semi-trucks)</li>
+                            <li><strong>Medical card:</strong> Not expired (действителен 2 года)</li>
+                            <li><strong>Registration:</strong> Трак и trailer зарегистрированы</li>
+                            <li><strong>Insurance:</strong> Proof of insurance ($750K-$1M minimum)</li>
+                            <li><strong>IFTA decals:</strong> На обоих сторонах трака</li>
+                            <li><strong>Logbook/ELD:</strong> Последние 8 дней HOS records</li>
+                            <li><strong>DVIR:</strong> Последние 15 дней inspection reports</li>
+                            <li><strong>Shipping documents:</strong> BOL, rate confirmation</li>
+                            <li><strong>Hazmat papers:</strong> Если везете hazmat (placards, emergency response)</li>
+                        </ul>
+                    </div>
+
+                    <h3>🚨 Что делать во время inspection</h3>
+
+                    <div class="info-highlight">
+                        <h4>💡 Правила поведения:</h4>
+                        <ol>
+                            <li><strong>Be polite:</strong> "Yes sir/ma'am", уважительный тон</li>
+                            <li><strong>Pull over safely:</strong> Съезжайте на обочину, включите hazards</li>
+                            <li><strong>Stay calm:</strong> Не нервничайте, это routine проверка</li>
+                            <li><strong>Have documents ready:</strong> CDL, medical card, registration, insurance</li>
+                            <li><strong>Answer questions honestly:</strong> Не врите - это ухудшит ситуацию</li>
+                            <li><strong>Don't volunteer information:</strong> Отвечайте только на вопросы</li>
+                            <li><strong>Don't argue:</strong> Если не согласны - оспорите позже через DataQs</li>
+                            <li><strong>Take notes:</strong> Записывайте что проверяли, какие violations</li>
+                            <li><strong>Call dispatcher:</strong> Сообщите о inspection и результатах</li>
+                        </ol>
+                    </div>
+
+                    <h3>📊 Результаты inspection</h3>
+
+                    <div class="success-highlight">
+                        <h4>✅ Clean Inspection:</h4>
+                        <ul>
+                            <li><strong>0 violations:</strong> Отлично! Получаете "clean inspection" в CSA</li>
+                            <li><strong>Benefit:</strong> Улучшает CSA score</li>
+                            <li><strong>Decal:</strong> Могут дать CVSA decal (действителен 3 месяца, меньше проверок)
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Violations Found:</h4>
+                        <ul>
+                            <li><strong>Minor violations:</strong> Warning или citation, можете ехать дальше</li>
+                            <li><strong>Points added:</strong> Violations добавляются в CSA систему</li>
+                            <li><strong>Fix timeframe:</strong> Обычно 15 дней на исправление</li>
+                        </ul>
+                    </div>
+
+                    <div class="danger-highlight">
+                        <h4>🔴 Out-of-Service (OOS):</h4>
+                        <ul>
+                            <li><strong>Critical violations:</strong> Трак или водитель не могут продолжать</li>
+                            <li><strong>Must fix immediately:</strong> Нельзя ехать пока не исправите</li>
+                            <li><strong>Towing:</strong> Может потребоваться эвакуация трака</li>
+                            <li><strong>CSA impact:</strong> Очень плохо влияет на score</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: Clean inspection спас $10,000 контракт</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Водитель везет груз для нового клиента (Amazon). Остановлен для Level
+                        1 inspection в California.</p>
+                    <p><strong>Подготовка водителя:</strong></p>
+                    <ul>
+                        <li><strong>Pre-trip inspection:</strong> Каждое утро 30 минут проверки трака</li>
+                        <li><strong>Документы:</strong> Все в порядке (CDL, medical card, insurance, DVIR)</li>
+                        <li><strong>Maintenance:</strong> Трак обслужен 2 недели назад (новые brakes, tires)</li>
+                        <li><strong>HOS:</strong> ELD показывает полное compliance (0 violations)</li>
+                    </ul>
+                    <p><strong>Inspection (45 минут):</strong></p>
+                    <ol>
+                        <li>Инспектор проверил все документы - все в порядке</li>
+                        <li>Проверил brakes на всех колесах - отлично</li>
+                        <li>Проверил tires - глубина протектора 8/32" (минимум 4/32")</li>
+                        <li>Проверил lights - все работают</li>
+                        <li>Проверил cargo securement - правильно закреплено</li>
+                        <li>Проверил ELD - 0 HOS violations</li>
+                    </ol>
+                    <p><strong>Результат:</strong></p>
+                    <ul>
+                        <li><strong>Clean inspection:</strong> 0 violations!</li>
+                        <li><strong>CVSA decal:</strong> Получил decal (3 месяца меньше проверок)</li>
+                        <li><strong>CSA benefit:</strong> Clean inspection улучшил company CSA score</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        <strong>Итог:</strong> Amazon проверил CSA score компании перед renewal контракта. Увидели clean
+                        inspections и продлили контракт на $10,000/месяц. Урок: Pre-trip inspections и maintenance
+                        окупаются!
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio2', 'quiz-2')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-2" data-quiz-id="quiz-9-2" data-correct-answer="a">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Какой самый полный тип roadside inspection?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">Level 1 (Full Inspection)</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">Level 2 (Walk-Around)</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">Level 3 (Driver-Only)</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">Level 4 (Special)</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Level 1 (Full Inspection) - самый полный тип, проверяют ВСЕ: трак,
+                        водителя, документы. Длится 30-60 минут и составляет 37% всех inspections.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- СЕКТОР 3: Out-of-Service Violations -->
+        <div class="sector-wrapper">
+            <div class="sector-number">03</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🚫 Out-of-Service Violations</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio3')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio3')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio3')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>🚫 Что такое Out-of-Service (OOS)?</h3>
+                    <p><strong>Out-of-Service</strong> - критическое нарушение, при котором трак или водитель НЕ МОГУТ
+                        продолжать движение до исправления проблемы.</p>
+
+                    <div class="danger-highlight">
+                        <h4>🔴 Последствия OOS:</h4>
+                        <ul>
+                            <li><strong>Immediate stop:</strong> Нельзя ехать дальше (даже 1 милю!)</li>
+                            <li><strong>Must fix on spot:</strong> Исправить немедленно или вызвать механика</li>
+                            <li><strong>Towing:</strong> Может потребоваться эвакуация ($500-2,000)</li>
+                            <li><strong>Delay:</strong> Потеря времени (2-24 часа)</li>
+                            <li><strong>CSA points:</strong> Максимальные баллы (8-10 points)</li>
+                            <li><strong>Fines:</strong> Штрафы $1,000-25,000</li>
+                            <li><strong>Criminal charges:</strong> За driving while OOS</li>
+                        </ul>
+                    </div>
+
+                    <h3>🚨 Топ-10 OOS violations (Vehicle)</h3>
+
+                    <div class="danger-highlight">
+                        <h4>1️⃣ Brake System Violations</h4>
+                        <ul>
+                            <li><strong>20% or more brakes out of adjustment:</strong> Самое частое OOS (30% всех OOS)
+                            </li>
+                            <li><strong>Brake hose/tubing leak:</strong> Утечка воздуха из brake system</li>
+                            <li><strong>Missing/broken brake parts:</strong> Отсутствующие или сломанные компоненты</li>
+                            <li><strong>Low air pressure:</strong> Меньше 60 psi при запуске</li>
+                            <li><strong>CSA points:</strong> 4-8 баллов</li>
+                            <li><strong>Fix:</strong> Механик должен отрегулировать/заменить brakes</li>
+                        </ul>
+                    </div>
+
+                    <div class="danger-highlight">
+                        <h4>2️⃣ Tire Violations</h4>
+                        <ul>
+                            <li><strong>Tread depth less than 4/32":</strong> На steering axle (передние колеса)</li>
+                            <li><strong>Tread depth less than 2/32":</strong> На других осях</li>
+                            <li><strong>Flat tire:</strong> Спущенное колесо</li>
+                            <li><strong>Tire separation:</strong> Расслоение резины</li>
+                            <li><strong>Exposed cords:</strong> Видны металлические корды</li>
+                            <li><strong>CSA points:</strong> 8 баллов</li>
+                            <li><strong>Fix:</strong> Заменить шину немедленно</li>
+                        </ul>
+                    </div>
+
+                    <div class="danger-highlight">
+                        <h4>3️⃣ Lighting Violations</h4>
+                        <ul>
+                            <li><strong>No headlights:</strong> Оба headlights не работают</li>
+                            <li><strong>No tail lights:</strong> Оба tail lights не работают</li>
+                            <li><strong>No brake lights:</strong> Brake lights не работают</li>
+                            <li><strong>CSA points:</strong> 6 баллов</li>
+                            <li><strong>Fix:</strong> Заменить лампочки/проводку</li>
+                        </ul>
+                    </div>
+
+                    <div class="danger-highlight">
+                        <h4>4️⃣ Steering System Violations</h4>
+                        <ul>
+                            <li><strong>Excessive steering wheel play:</strong> Люфт больше допустимого</li>
+                            <li><strong>Steering column damage:</strong> Трещины, поломки</li>
+                            <li><strong>Power steering leak:</strong> Утечка жидкости</li>
+                            <li><strong>CSA points:</strong> 8 баллов</li>
+                            <li><strong>Fix:</strong> Ремонт steering system</li>
+                        </ul>
+                    </div>
+
+                    <div class="danger-highlight">
+                        <h4>5️⃣ Suspension Violations</h4>
+                        <ul>
+                            <li><strong>Broken spring:</strong> Сломанная рессора</li>
+                            <li><strong>Cracked/broken frame:</strong> Трещины в раме</li>
+                            <li><strong>Loose U-bolts:</strong> Ослабленные крепления</li>
+                            <li><strong>CSA points:</strong> 4 баллов</li>
+                            <li><strong>Fix:</strong> Замена springs/ремонт рамы</li>
+                        </ul>
+                    </div>
+
+                    <h3>🚨 Топ-5 OOS violations (Driver)</h3>
+
+                    <div class="danger-highlight">
+                        <h4>1️⃣ HOS Violations</h4>
+                        <ul>
+                            <li><strong>Driving over 11 hours:</strong> Превышение daily limit</li>
+                            <li><strong>Driving over 14 hours on-duty:</strong> Превышение 14-hour window</li>
+                            <li><strong>No 30-minute break:</strong> Не взял break после 8 часов</li>
+                            <li><strong>Driving over 60/70 hours:</strong> Превышение weekly limit</li>
+                            <li><strong>False logbook:</strong> Подделка HOS records</li>
+                            <li><strong>CSA points:</strong> 7-10 баллов</li>
+                            <li><strong>Consequence:</strong> Водитель должен взять 10-hour break немедленно</li>
+                        </ul>
+                    </div>
+
+                    <div class="danger-highlight">
+                        <h4>2️⃣ License Violations</h4>
+                        <ul>
+                            <li><strong>No CDL:</strong> Нет CDL license</li>
+                            <li><strong>Suspended/revoked CDL:</strong> CDL приостановлен</li>
+                            <li><strong>Wrong CDL class:</strong> Class B вместо Class A</li>
+                            <li><strong>Expired CDL:</strong> CDL истек</li>
+                            <li><strong>CSA points:</strong> 8 баллов</li>
+                            <li><strong>Consequence:</strong> Водитель не может ехать, нужен replacement driver</li>
+                        </ul>
+                    </div>
+
+                    <div class="danger-highlight">
+                        <h4>3️⃣ Medical Card Violations</h4>
+                        <ul>
+                            <li><strong>No medical card:</strong> Нет medical certificate</li>
+                            <li><strong>Expired medical card:</strong> Истек срок действия</li>
+                            <li><strong>Medical restrictions violated:</strong> Нарушение ограничений (например, glasses
+                                required)</li>
+                            <li><strong>CSA points:</strong> 7 баллов</li>
+                            <li><strong>Consequence:</strong> Водитель не может ехать до получения нового medical card
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="danger-highlight">
+                        <h4>4️⃣ Drug/Alcohol Violations</h4>
+                        <ul>
+                            <li><strong>Positive drug test:</strong> Наркотики в крови</li>
+                            <li><strong>BAC 0.04% or higher:</strong> Алкоголь в крови</li>
+                            <li><strong>Refusal to test:</strong> Отказ от теста</li>
+                            <li><strong>CSA points:</strong> 10 баллов</li>
+                            <li><strong>Consequence:</strong> Immediate termination, criminal charges</li>
+                        </ul>
+                    </div>
+
+                    <div class="danger-highlight">
+                        <h4>5️⃣ Cargo Securement Violations</h4>
+                        <ul>
+                            <li><strong>Unsecured cargo:</strong> Груз не закреплен</li>
+                            <li><strong>Insufficient tie-downs:</strong> Недостаточно straps/chains</li>
+                            <li><strong>Overweight:</strong> Превышение допустимого веса</li>
+                            <li><strong>CSA points:</strong> 3-7 баллов</li>
+                            <li><strong>Consequence:</strong> Должны закрепить груз или снять лишний вес</li>
+                        </ul>
+                    </div>
+
+                    <h3>💰 Штрафы за OOS violations</h3>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Типичные штрафы:</h4>
+                        <ul>
+                            <li><strong>Brake violations:</strong> $1,000-5,000</li>
+                            <li><strong>HOS violations:</strong> $1,000-11,000 (водитель), $11,000-16,000 (компания)
+                            </li>
+                            <li><strong>No CDL:</strong> $2,500-10,000</li>
+                            <li><strong>Drug/alcohol:</strong> $5,000-25,000 + criminal charges</li>
+                            <li><strong>Driving while OOS:</strong> $2,750-25,000 + 180 days jail</li>
+                            <li><strong>Overweight:</strong> $100-10,000 (зависит от перевеса)</li>
+                        </ul>
+                    </div>
+
+                    <h3>🛠️ Что делать при OOS</h3>
+
+                    <div class="success-highlight">
+                        <h4>✅ Immediate actions:</h4>
+                        <ol>
+                            <li><strong>Don't panic:</strong> Сохраняйте спокойствие</li>
+                            <li><strong>Call dispatcher:</strong> Немедленно сообщите о OOS</li>
+                            <li><strong>Get details:</strong> Узнайте точно что нужно исправить</li>
+                            <li><strong>Find mechanic:</strong> Dispatcher ищет ближайший truck repair shop</li>
+                            <li><strong>Get estimate:</strong> Узнайте стоимость и время ремонта</li>
+                            <li><strong>Notify customer:</strong> Dispatcher уведомляет клиента о задержке</li>
+                            <li><strong>Fix problem:</strong> Ремонт/замена/отдых</li>
+                            <li><strong>Get clearance:</strong> Механик подписывает что проблема исправлена</li>
+                            <li><strong>Document everything:</strong> Фото, receipts, paperwork</li>
+                            <li><strong>Continue trip:</strong> Только после полного исправления</li>
+                        </ol>
+                    </div>
+
+                    <h3>🚫 Что НЕ делать</h3>
+
+                    <ul>
+                        <li>❌ <strong>Drive while OOS:</strong> Это federal crime! Штраф до $25,000 + jail</li>
+                        <li>❌ <strong>Argue with inspector:</strong> Не спорьте, оспорите позже</li>
+                        <li>❌ <strong>Hide violations:</strong> Не пытайтесь скрыть проблемы</li>
+                        <li>❌ <strong>Bribe inspector:</strong> Это criminal offense</li>
+                        <li>❌ <strong>Ignore OOS order:</strong> Это ухудшит ситуацию</li>
+                    </ul>
+
+                    <h3>📊 Статистика OOS</h3>
+
+                    <div class="info-highlight">
+                        <h4>💡 Цифры:</h4>
+                        <ul>
+                            <li><strong>OOS rate:</strong> ~20% inspections заканчиваются OOS</li>
+                            <li><strong>Vehicle OOS:</strong> 15% (brakes, tires, lights)</li>
+                            <li><strong>Driver OOS:</strong> 5% (HOS, license, medical card)</li>
+                            <li><strong>Average downtime:</strong> 4-8 часов для ремонта</li>
+                            <li><strong>Cost per OOS:</strong> $1,500-5,000 (ремонт + downtime + штраф)</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: OOS violation стоил $8,000 и 24 часа</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Водитель везет груз из Texas в California. Остановлен для Level 1
+                        inspection в Arizona.</p>
+                    <p><strong>Проблема:</strong></p>
+                    <ul>
+                        <li><strong>Brake violation:</strong> 25% brakes out of adjustment (threshold 20%)</li>
+                        <li><strong>Причина:</strong> Компания пропустила scheduled maintenance (должны были обслужить 2
+                            недели назад)</li>
+                        <li><strong>OOS order:</strong> Трак не может ехать дальше</li>
+                    </ul>
+                    <p><strong>Последствия:</strong></p>
+                    <ul>
+                        <li><strong>Downtime:</strong> 24 часа (ночь + следующий день)</li>
+                        <li><strong>Mechanic:</strong> Вызвали mobile mechanic ($150/час × 4 часа = $600)</li>
+                        <li><strong>Parts:</strong> Замена brake components ($1,200)</li>
+                        <li><strong>Fine:</strong> $2,500 штраф за brake violation</li>
+                        <li><strong>Towing:</strong> $800 (эвакуация до repair shop)</li>
+                        <li><strong>Lost revenue:</strong> $2,000 (не смогли взять следующий груз)</li>
+                        <li><strong>Customer penalty:</strong> $900 (late delivery fee)</li>
+                        <li><strong>CSA points:</strong> 8 баллов добавлено в систему</li>
+                    </ul>
+                    <p><strong>Total cost:</strong> $8,000 + потеря 24 часов + плохой CSA score</p>
+                    <div class="case-study-highlight">
+                        <strong>Урок:</strong> Scheduled maintenance стоит $300-500 каждые 10,000 миль. Пропуск
+                        maintenance привел к $8,000 убытка. Профилактика ВСЕГДА дешевле ремонта!
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio3', 'quiz-3')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-3" data-quiz-id="quiz-9-3" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Какое самое частое OOS violation?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">HOS violations</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">Brake system violations (30% всех OOS)</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">Tire violations</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">Lighting violations</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Brake system violations - самое частое OOS (30% всех OOS). 20% или
+                        более brakes out of adjustment = автоматический OOS. Regular maintenance критичен!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- СЕКТОР 4: Программы безопасности -->
+        <div class="sector-wrapper">
+            <div class="sector-number">04</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">📋 Программы безопасности</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio4')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio4')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio4')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>📋 Зачем нужны Safety Programs?</h3>
+                    <p><strong>Safety program</strong> - комплекс мер для предотвращения аварий, violations, и улучшения
+                        CSA scores.</p>
+
+                    <div class="success-highlight">
+                        <h4>✅ Преимущества safety program:</h4>
+                        <ul>
+                            <li><strong>Lower CSA scores:</strong> Меньше violations = лучший рейтинг</li>
+                            <li><strong>Fewer accidents:</strong> Снижение аварий на 30-50%</li>
+                            <li><strong>Lower insurance:</strong> Скидки до 20% на insurance premium</li>
+                            <li><strong>Better drivers:</strong> Привлечение опытных водителей</li>
+                            <li><strong>More contracts:</strong> Крупные клиенты требуют safety programs</li>
+                            <li><strong>Compliance:</strong> Соответствие FMCSA требованиям</li>
+                        </ul>
+                    </div>
+
+                    <h3>🎓 Driver Training Programs</h3>
+
+                    <div class="info-highlight">
+                        <h4>💡 Обязательное обучение:</h4>
+                        <ul>
+                            <li><strong>New driver orientation:</strong> 2-3 дня (company policies, safety rules,
+                                equipment)</li>
+                            <li><strong>Road test:</strong> Проверка навыков вождения (backing, turning, highway)</li>
+                            <li><strong>Mentor program:</strong> 2-4 недели с опытным водителем</li>
+                            <li><strong>HOS training:</strong> Правила Hours of Service, ELD использование</li>
+                            <li><strong>Pre-trip inspection:</strong> Как правильно проверять трак</li>
+                            <li><strong>Cargo securement:</strong> Правила крепления груза</li>
+                            <li><strong>Hazmat training:</strong> Если везут hazmat (обязательно каждые 3 года)</li>
+                        </ul>
+                    </div>
+
+                    <div class="success-highlight">
+                        <h4>✅ Регулярное обучение (ongoing training):</h4>
+                        <ul>
+                            <li><strong>Quarterly safety meetings:</strong> Каждые 3 месяца (1-2 часа)</li>
+                            <li><strong>Annual refresher:</strong> Ежегодное обновление знаний</li>
+                            <li><strong>Defensive driving course:</strong> Каждые 2 года</li>
+                            <li><strong>Winter driving:</strong> Перед зимним сезоном</li>
+                            <li><strong>Accident review:</strong> После каждой аварии</li>
+                            <li><strong>Violation review:</strong> После каждого violation</li>
+                        </ul>
+                    </div>
+
+                    <h3>🔧 Maintenance Programs</h3>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Preventive Maintenance Schedule:</h4>
+                        <ul>
+                            <li><strong>A-Service (10,000-15,000 miles):</strong>
+                                <ul>
+                                    <li>Oil change, filter replacement</li>
+                                    <li>Fluid level check (coolant, brake fluid, power steering)</li>
+                                    <li>Tire inspection, rotation</li>
+                                    <li>Brake adjustment</li>
+                                    <li>Light check</li>
+                                    <li>Cost: $300-500</li>
+                                    <li>Time: 2-3 hours</li>
+                                </ul>
+                            </li>
+                            <li><strong>B-Service (25,000-30,000 miles):</strong>
+                                <ul>
+                                    <li>All A-Service items</li>
+                                    <li>Transmission service</li>
+                                    <li>Differential service</li>
+                                    <li>Brake inspection (detailed)</li>
+                                    <li>Suspension check</li>
+                                    <li>Cost: $800-1,200</li>
+                                    <li>Time: 4-6 hours</li>
+                                </ul>
+                            </li>
+                            <li><strong>C-Service (50,000-60,000 miles):</strong>
+                                <ul>
+                                    <li>All B-Service items</li>
+                                    <li>Major component inspection</li>
+                                    <li>Engine diagnostics</li>
+                                    <li>Exhaust system check</li>
+                                    <li>Cost: $1,500-2,500</li>
+                                    <li>Time: 8-12 hours</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="danger-highlight">
+                        <h4>🔴 Daily Vehicle Inspection Report (DVIR):</h4>
+                        <ul>
+                            <li><strong>Requirement:</strong> Водитель ОБЯЗАН заполнять DVIR каждый день</li>
+                            <li><strong>Pre-trip:</strong> Проверка перед началом смены (30 минут)</li>
+                            <li><strong>Post-trip:</strong> Проверка после окончания смены (10 минут)</li>
+                            <li><strong>Report defects:</strong> Записать все проблемы (lights, brakes, tires, leaks)
+                            </li>
+                            <li><strong>Mechanic review:</strong> Механик проверяет и исправляет defects</li>
+                            <li><strong>Driver signature:</strong> Водитель подписывает что проверил</li>
+                            <li><strong>Retention:</strong> Хранить DVIR 3 месяца</li>
+                        </ul>
+                    </div>
+
+                    <h3>📊 Driver Monitoring Programs</h3>
+
+                    <div class="info-highlight">
+                        <h4>💡 Технологии мониторинга:</h4>
+                        <ul>
+                            <li><strong>ELD (Electronic Logging Device):</strong>
+                                <ul>
+                                    <li>Автоматический учет HOS</li>
+                                    <li>Real-time monitoring violations</li>
+                                    <li>Alerts при приближении к 11-hour limit</li>
+                                    <li>Cost: $20-40/месяц per truck</li>
+                                </ul>
+                            </li>
+                            <li><strong>Dash Cams:</strong>
+                                <ul>
+                                    <li>Видеозапись дороги и водителя</li>
+                                    <li>Event-triggered recording (hard braking, swerving)</li>
+                                    <li>Защита от false claims</li>
+                                    <li>Driver coaching (review footage)</li>
+                                    <li>Cost: $200-500 per camera + $20-30/месяц cloud storage</li>
+                                </ul>
+                            </li>
+                            <li><strong>GPS Tracking:</strong>
+                                <ul>
+                                    <li>Real-time location</li>
+                                    <li>Speed monitoring</li>
+                                    <li>Route optimization</li>
+                                    <li>Idle time tracking</li>
+                                    <li>Cost: $15-30/месяц per truck</li>
+                                </ul>
+                            </li>
+                            <li><strong>Telematics:</strong>
+                                <ul>
+                                    <li>Engine diagnostics</li>
+                                    <li>Fuel efficiency</li>
+                                    <li>Harsh braking/acceleration alerts</li>
+                                    <li>Maintenance reminders</li>
+                                    <li>Cost: $30-50/месяц per truck</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <h3>🎯 Safety Incentive Programs</h3>
+
+                    <div class="success-highlight">
+                        <h4>✅ Примеры incentives:</h4>
+                        <ul>
+                            <li><strong>Clean inspection bonus:</strong> $100-200 за каждый clean inspection</li>
+                            <li><strong>Zero violations bonus:</strong> $200-500/месяц за 0 violations</li>
+                            <li><strong>Safe miles bonus:</strong> $0.01-0.02/миля за безопасное вождение</li>
+                            <li><strong>Quarterly safety award:</strong> $500-1,000 лучшему водителю</li>
+                            <li><strong>Annual safety award:</strong> $2,000-5,000 + recognition</li>
+                            <li><strong>Fuel efficiency bonus:</strong> $100-300/месяц за экономию топлива</li>
+                            <li><strong>Referral bonus:</strong> $500-1,000 за привлечение нового водителя</li>
+                        </ul>
+                    </div>
+
+                    <h3>📝 Safety Policies</h3>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Обязательные policies:</h4>
+                        <ul>
+                            <li><strong>Drug & Alcohol Policy:</strong> Zero tolerance, random testing</li>
+                            <li><strong>Distracted Driving Policy:</strong> No texting, no handheld phones</li>
+                            <li><strong>Speeding Policy:</strong> Speed limiters (65-68 mph), penalties за speeding</li>
+                            <li><strong>Fatigue Management:</strong> Соблюдение HOS, mandatory breaks</li>
+                            <li><strong>Accident Reporting:</strong> Immediate notification, documentation</li>
+                            <li><strong>Vehicle Inspection Policy:</strong> Daily DVIR, pre-trip inspections</li>
+                            <li><strong>Cargo Securement Policy:</strong> Proper tie-downs, weight distribution</li>
+                            <li><strong>Weather Policy:</strong> Shutdown при extreme weather</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: Safety program сэкономил $100,000 в год</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Компания с 25 траками имела 8 аварий в год, CSA score 75%, insurance
+                        premium $80,000/год.</p>
+                    <p><strong>Внедрили safety program:</strong></p>
+                    <ul>
+                        <li><strong>Dash cams:</strong> Установили на все траки ($12,500 + $7,500/год)</li>
+                        <li><strong>Quarterly training:</strong> Safety meetings каждые 3 месяца ($5,000/год)</li>
+                        <li><strong>Speed limiters:</strong> Ограничение 65 mph на всех траках ($2,500)</li>
+                        <li><strong>Incentive program:</strong> $200/месяц за 0 violations ($60,000/год budget)</li>
+                        <li><strong>Maintenance schedule:</strong> Строгий график обслуживания ($75,000/год)</li>
+                    </ul>
+                    <p><strong>Результаты через 1 год:</strong></p>
+                    <ul>
+                        <li><strong>Accidents:</strong> Снизились с 8 до 2 (75% reduction)</li>
+                        <li><strong>Violations:</strong> Снизились на 60%</li>
+                        <li><strong>CSA score:</strong> Улучшился с 75% до 40%</li>
+                        <li><strong>Insurance premium:</strong> Снизился на 25% ($20,000 savings)</li>
+                        <li><strong>Downtime:</strong> Снизился на 40% (меньше breakdowns)</li>
+                        <li><strong>Driver retention:</strong> Вырос на 30% (водители ценят safety culture)</li>
+                    </ul>
+                    <p><strong>Total savings:</strong></p>
+                    <ul>
+                        <li>Insurance savings: $20,000</li>
+                        <li>Accident costs avoided: $60,000 (6 аварий × $10,000)</li>
+                        <li>Downtime reduction: $15,000</li>
+                        <li>Fewer violations/fines: $5,000</li>
+                        <li><strong>Total:</strong> $100,000 savings</li>
+                    </ul>
+                    <p><strong>Program cost:</strong> $90,000 (dash cams, training, incentives, maintenance)</p>
+                    <div class="case-study-highlight">
+                        <strong>ROI:</strong> $10,000 net profit в первый год + долгосрочные преимущества (better CSA,
+                        reputation, driver retention). Safety programs окупаются!
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio4', 'quiz-4')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-4" data-quiz-id="quiz-9-4" data-correct-answer="c">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Как часто нужно делать A-Service (preventive
+                        maintenance)?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">Каждые 5,000 миль</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">Каждые 25,000 миль</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">Каждые 10,000-15,000 миль</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">Каждые 50,000 миль</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> A-Service делается каждые 10,000-15,000 миль. Включает oil change,
+                        filter replacement, tire inspection, brake adjustment. Стоит $300-500 и занимает 2-3 часа.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- СЕКТОР 5: Предотвращение аварий -->
+        <div class="sector-wrapper">
+            <div class="sector-number">05</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🚗 Предотвращение аварий</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio5')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio5')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio5')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>🚗 Defensive Driving Techniques</h3>
+                    <p><strong>Defensive driving</strong> - техники вождения для предотвращения аварий, даже если другие
+                        водители делают ошибки.</p>
+
+                    <div class="success-highlight">
+                        <h4>✅ Основные принципы:</h4>
+                        <ul>
+                            <li><strong>Space management:</strong> Держать безопасную дистанцию (7-8 секунд следования)
+                            </li>
+                            <li><strong>Scan ahead:</strong> Смотреть на 12-15 секунд вперед</li>
+                            <li><strong>Check mirrors:</strong> Каждые 5-8 секунд</li>
+                            <li><strong>Anticipate hazards:</strong> Предвидеть опасные ситуации</li>
+                            <li><strong>Avoid blind spots:</strong> Не ехать в слепых зонах других машин</li>
+                            <li><strong>Signal early:</strong> Включать поворотники за 3-5 секунд</li>
+                            <li><strong>Smooth inputs:</strong> Плавное ускорение/торможение</li>
+                            <li><strong>Exit strategy:</strong> Всегда иметь план отступления</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>💡 Following Distance (7-8 секунд):</h4>
+                        <ul>
+                            <li><strong>Как считать:</strong> Выберите объект (знак, мост). Когда машина впереди
+                                проезжает его, начните считать "one thousand one, one thousand two..."</li>
+                            <li><strong>Dry conditions:</strong> 7 секунд минимум</li>
+                            <li><strong>Wet conditions:</strong> 10-12 секунд</li>
+                            <li><strong>Snow/ice:</strong> 15-20 секунд</li>
+                            <li><strong>Night driving:</strong> 8-10 секунд</li>
+                            <li><strong>Why important:</strong> Semi-truck весит 80,000 lbs, stopping distance 525 feet
+                                (при 65 mph)</li>
+                        </ul>
+                    </div>
+
+                    <h3>🌧️ Driving in Weather Conditions</h3>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Rain:</h4>
+                        <ul>
+                            <li><strong>Reduce speed:</strong> 10-15 mph ниже limit</li>
+                            <li><strong>Increase following distance:</strong> 10-12 секунд</li>
+                            <li><strong>Avoid hydroplaning:</strong> Не ехать по лужам на высокой скорости</li>
+                            <li><strong>Use headlights:</strong> Low beams (не high beams!)</li>
+                            <li><strong>Avoid cruise control:</strong> Нужен полный контроль</li>
+                            <li><strong>Watch for standing water:</strong> Может скрывать глубокие ямы</li>
+                            <li><strong>Brake gently:</strong> Резкое торможение = skidding</li>
+                        </ul>
+                    </div>
+
+                    <div class="danger-highlight">
+                        <h4>🔴 Snow/Ice:</h4>
+                        <ul>
+                            <li><strong>Reduce speed:</strong> 20-30 mph ниже limit (или медленнее)</li>
+                            <li><strong>Increase following distance:</strong> 15-20 секунд</li>
+                            <li><strong>Gentle inputs:</strong> Плавное ускорение, торможение, повороты</li>
+                            <li><strong>Avoid sudden movements:</strong> Резкие движения = потеря контроля</li>
+                            <li><strong>Use chains:</strong> Если требуется (chain laws в горах)</li>
+                            <li><strong>Watch for black ice:</strong> Особенно на мостах, overpasses</li>
+                            <li><strong>If sliding:</strong> Не паниковать, убрать ногу с газа, рулить в направлении
+                                заноса</li>
+                            <li><strong>Consider shutdown:</strong> Если условия слишком опасные - остановиться</li>
+                        </ul>
+                    </div>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Fog:</h4>
+                        <ul>
+                            <li><strong>Reduce speed:</strong> Ехать со скоростью видимости</li>
+                            <li><strong>Use low beams:</strong> High beams отражаются от тумана</li>
+                            <li><strong>Use fog lights:</strong> Если есть</li>
+                            <li><strong>Follow road lines:</strong> Ориентироваться по разметке</li>
+                            <li><strong>Avoid passing:</strong> Не обгонять в тумане</li>
+                            <li><strong>Use hazards if stopped:</strong> Если остановились на обочине</li>
+                        </ul>
+                    </div>
+
+                    <div class="danger-highlight">
+                        <h4>🔴 High Winds:</h4>
+                        <ul>
+                            <li><strong>Reduce speed:</strong> 10-20 mph ниже limit</li>
+                            <li><strong>Firm grip on wheel:</strong> Крепко держать руль (ветер может толкнуть трак)
+                            </li>
+                            <li><strong>Watch for gusts:</strong> Особенно при выезде из-за зданий, деревьев</li>
+                            <li><strong>Empty trailers:</strong> Более опасны (легче, ветер сильнее влияет)</li>
+                            <li><strong>Avoid high-profile areas:</strong> Мосты, открытые участки</li>
+                            <li><strong>Consider shutdown:</strong> Если ветер 40+ mph</li>
+                        </ul>
+                    </div>
+
+                    <h3>😴 Fatigue Management</h3>
+
+                    <div class="danger-highlight">
+                        <h4>🔴 Признаки усталости:</h4>
+                        <ul>
+                            <li><strong>Heavy eyelids:</strong> Тяжелые веки, частое моргание</li>
+                            <li><strong>Yawning:</strong> Частая зевота</li>
+                            <li><strong>Drifting:</strong> Трак уходит с полосы</li>
+                            <li><strong>Missing exits:</strong> Пропускаете повороты</li>
+                            <li><strong>Can't remember last few miles:</strong> Не помните последние мили</li>
+                            <li><strong>Daydreaming:</strong> Мысли блуждают</li>
+                            <li><strong>Irritability:</strong> Раздражительность</li>
+                        </ul>
+                    </div>
+
+                    <div class="success-highlight">
+                        <h4>✅ Как бороться с усталостью:</h4>
+                        <ul>
+                            <li><strong>Stop immediately:</strong> При первых признаках - остановиться!</li>
+                            <li><strong>Power nap:</strong> 15-20 минут сна (не больше, иначе будет хуже)</li>
+                            <li><strong>Walk around:</strong> 10-15 минут прогулки</li>
+                            <li><strong>Fresh air:</strong> Открыть окна</li>
+                            <li><strong>Caffeine:</strong> Кофе/энергетик (действует через 15-30 минут)</li>
+                            <li><strong>Snack:</strong> Легкий перекус (не тяжелая еда!)</li>
+                            <li><strong>Music/radio:</strong> Включить бодрую музыку</li>
+                            <li><strong>Call someone:</strong> Поговорить по телефону (hands-free!)</li>
+                        </ul>
+                    </div>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Что НЕ работает:</h4>
+                        <ul>
+                            <li>❌ <strong>Loud music:</strong> Временный эффект, потом еще хуже</li>
+                            <li>❌ <strong>Cold air:</strong> Не помогает надолго</li>
+                            <li>❌ <strong>Energy drinks:</strong> Временный boost, потом crash</li>
+                            <li>❌ <strong>"Push through":</strong> Опасно! Microsleep может случиться в любой момент
+                            </li>
+                        </ul>
+                    </div>
+
+                    <h3>🚨 Accident Protocols</h3>
+
+                    <div class="danger-highlight">
+                        <h4>🔴 Если произошла авария:</h4>
+                        <ol>
+                            <li><strong>Stop immediately:</strong> Остановиться (не уезжать!)</li>
+                            <li><strong>Check for injuries:</strong> Проверить себя и других</li>
+                            <li><strong>Call 911:</strong> Если есть травмы или major damage</li>
+                            <li><strong>Move to safety:</strong> Если возможно, съехать с дороги</li>
+                            <li><strong>Set up triangles:</strong> Предупреждающие треугольники (10, 100, 200 feet)</li>
+                            <li><strong>Turn on hazards:</strong> Включить аварийку</li>
+                            <li><strong>Call dispatcher:</strong> Немедленно сообщить о аварии</li>
+                            <li><strong>Exchange information:</strong> Имя, номер, insurance, license plate</li>
+                            <li><strong>Take photos:</strong> Damage, scene, license plates, road conditions</li>
+                            <li><strong>Get witness info:</strong> Имена и контакты свидетелей</li>
+                            <li><strong>Don't admit fault:</strong> Не говорить "It's my fault"</li>
+                            <li><strong>Police report:</strong> Дождаться полицию, получить report number</li>
+                            <li><strong>Drug test:</strong> Обязательный drug test в течение 8 часов (DOT requirement)
+                            </li>
+                            <li><strong>Document everything:</strong> Записать все детали</li>
+                        </ol>
+                    </div>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Что НЕ делать:</h4>
+                        <ul>
+                            <li>❌ <strong>Leave the scene:</strong> Hit and run = criminal offense</li>
+                            <li>❌ <strong>Admit fault:</strong> Даже если кажется что ваша вина</li>
+                            <li>❌ <strong>Argue:</strong> Не спорить с другим водителем</li>
+                            <li>❌ <strong>Sign anything:</strong> Кроме police report</li>
+                            <li>❌ <strong>Post on social media:</strong> Не публиковать до разбора</li>
+                        </ul>
+                    </div>
+
+                    <h3>📊 Статистика аварий</h3>
+
+                    <div class="info-highlight">
+                        <h4>💡 Основные причины truck accidents:</h4>
+                        <ul>
+                            <li><strong>Driver fatigue:</strong> 30% аварий</li>
+                            <li><strong>Speeding:</strong> 23% аварий</li>
+                            <li><strong>Distracted driving:</strong> 15% аварий (texting, eating, radio)</li>
+                            <li><strong>Following too close:</strong> 12% аварий</li>
+                            <li><strong>Improper lane change:</strong> 8% аварий</li>
+                            <li><strong>Weather conditions:</strong> 7% аварий</li>
+                            <li><strong>Vehicle failure:</strong> 5% аварий (brakes, tires)</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: Defensive driving предотвратил $500,000 аварию</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Водитель везет груз по I-80 в Wyoming зимой. Снег, гололед, видимость
+                        100 футов.</p>
+                    <p><strong>Опасная ситуация:</strong></p>
+                    <ul>
+                        <li><strong>Weather:</strong> Снегопад, температура 20°F, ветер 30 mph</li>
+                        <li><strong>Road conditions:</strong> Гололед на мосту</li>
+                        <li><strong>Traffic:</strong> 4-car pileup впереди (не видно из-за снега)</li>
+                        <li><strong>Speed:</strong> Другие траки едут 55 mph (limit 65 mph)</li>
+                    </ul>
+                    <p><strong>Действия водителя (defensive driving):</strong></p>
+                    <ol>
+                        <li><strong>Reduced speed:</strong> Ехал 35 mph (на 30 mph ниже других)</li>
+                        <li><strong>Increased following distance:</strong> 20 секунд (вместо обычных 7)</li>
+                        <li><strong>Watched for brake lights:</strong> Заметил brake lights впереди за 500 футов</li>
+                        <li><strong>Gentle braking:</strong> Начал плавно тормозить (не резко!)</li>
+                        <li><strong>Downshifted:</strong> Использовал engine brake вместо foot brake</li>
+                        <li><strong>Stayed calm:</strong> Не паниковал, контролировал трак</li>
+                        <li><strong>Stopped safely:</strong> Остановился за 100 футов до pileup</li>
+                    </ol>
+                    <p><strong>Результат:</strong></p>
+                    <ul>
+                        <li><strong>Avoided accident:</strong> Не врезался в pileup</li>
+                        <li><strong>No injuries:</strong> Водитель и груз в безопасности</li>
+                        <li><strong>No damage:</strong> Трак и trailer не повреждены</li>
+                        <li><strong>Delivered on time:</strong> После расчистки дороги продолжил путь</li>
+                    </ul>
+                    <p><strong>Что могло бы случиться:</strong></p>
+                    <ul>
+                        <li>Если бы ехал 55 mph (как другие) - не смог бы остановиться</li>
+                        <li>Авария с 4 машинами = $500,000+ damage</li>
+                        <li>Возможные травмы/смерти</li>
+                        <li>CSA points, штрафы, потеря работы</li>
+                        <li>Criminal charges (если есть fatalities)</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        <strong>Урок:</strong> Defensive driving спасает жизни и деньги. Лучше приехать на 30 минут
+                        позже, чем не приехать вообще. Speed limits - это МАКСИМУМ, не цель!
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio5', 'quiz-5')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-5" data-quiz-id="quiz-9-5" data-correct-answer="a">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Какая безопасная дистанция следования для
+                        semi-truck в сухих условиях?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">7-8 секунд</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">3-4 секунды</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">10-12 секунд</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">15-20 секунд</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> 7-8 секунд - безопасная дистанция в сухих условиях. Semi-truck
+                        весит 80,000 lbs и имеет stopping distance 525 feet при 65 mph. В дождь - 10-12 секунд, в снег -
+                        15-20 секунд.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- СЕКТОР 6: Проверка брокеров -->
+        <div class="sector-wrapper">
+            <div class="sector-number">06</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🔍 Проверка брокеров</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio6')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio6')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio6')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>🔍 Зачем проверять брокеров?</h3>
+                    <p><strong>Broker vetting</strong> - проверка надежности брокера перед тем как взять груз.</p>
+
+                    <div class="danger-highlight">
+                        <h4>🔴 Риски работы с плохими брокерами:</h4>
+                        <ul>
+                            <li><strong>Non-payment:</strong> Не платят за груз ($3,000-10,000 потеря)</li>
+                            <li><strong>Delayed payment:</strong> Платят через 60-90 дней (вместо 30)</li>
+                            <li><strong>Lowball rates:</strong> Предлагают $1.00-1.20/миля (ниже рынка)</li>
+                            <li><strong>Hidden fees:</strong> Вычитают $200-500 за "admin fees"</li>
+                            <li><strong>Fake loads:</strong> Груз не существует (scam)</li>
+                            <li><strong>Double brokering:</strong> Перепродают груз другому брокеру (illegal)</li>
+                            <li><strong>Bad credit:</strong> Брокер банкрот, не может платить</li>
+                        </ul>
+                    </div>
+
+                    <h3>🛡️ Инструменты проверки брокеров</h3>
+
+                    <div class="success-highlight">
+                        <h4>✅ 1. FMCSA SAFER System (FREE)</h4>
+                        <ul>
+                            <li><strong>Website:</strong> safer.fmcsa.dot.gov</li>
+                            <li><strong>Что проверяет:</strong>
+                                <ul>
+                                    <li>MC# validity (действителен ли номер)</li>
+                                    <li>Authority status (Active, Inactive, Revoked)</li>
+                                    <li>Insurance on file (есть ли страховка)</li>
+                                    <li>Operating status (Out of Service?)</li>
+                                    <li>Company info (address, phone, contact)</li>
+                                </ul>
+                            </li>
+                            <li><strong>Red flags:</strong>
+                                <ul>
+                                    <li>❌ Authority status: Inactive/Revoked</li>
+                                    <li>❌ No insurance on file</li>
+                                    <li>❌ Out of Service order</li>
+                                    <li>❌ MC# less than 6 months old (новый брокер = риск)</li>
+                                </ul>
+                            </li>
+                            <li><strong>Time:</strong> 2 минуты</li>
+                        </ul>
+                    </div>
+
+                    <div class="success-highlight">
+                        <h4>✅ 2. RTS Pro / Carrier411 ($30-50/месяц)</h4>
+                        <ul>
+                            <li><strong>Что проверяет:</strong>
+                                <ul>
+                                    <li>Payment history (платят ли вовремя)</li>
+                                    <li>Average days to pay (30, 45, 60+ дней)</li>
+                                    <li>Credit score (A, B, C, D, F)</li>
+                                    <li>Carrier reviews (отзывы других водителей)</li>
+                                    <li>Factoring company (кто платит)</li>
+                                    <li>Dispute history (были ли споры)</li>
+                                </ul>
+                            </li>
+                            <li><strong>Credit ratings:</strong>
+                                <ul>
+                                    <li>✅ <strong>A:</strong> Excellent (платят в течение 30 дней)</li>
+                                    <li>✅ <strong>B:</strong> Good (платят в течение 45 дней)</li>
+                                    <li>⚠️ <strong>C:</strong> Fair (платят в течение 60 дней)</li>
+                                    <li>❌ <strong>D:</strong> Poor (платят 60+ дней или проблемы)</li>
+                                    <li>❌ <strong>F:</strong> Fail (не платят, scam)</li>
+                                </ul>
+                            </li>
+                            <li><strong>Time:</strong> 3 минуты</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>💡 3. Google Search (FREE)</h4>
+                        <ul>
+                            <li><strong>Что искать:</strong>
+                                <ul>
+                                    <li>"[Broker name] reviews"</li>
+                                    <li>"[Broker name] scam"</li>
+                                    <li>"[Broker name] payment issues"</li>
+                                    <li>"[Broker name] complaints"</li>
+                                </ul>
+                            </li>
+                            <li><strong>Где смотреть:</strong>
+                                <ul>
+                                    <li>Google reviews</li>
+                                    <li>Better Business Bureau (BBB)</li>
+                                    <li>Trucking forums (TruckersReport, Reddit r/Truckers)</li>
+                                    <li>Facebook groups</li>
+                                </ul>
+                            </li>
+                            <li><strong>Red flags:</strong>
+                                <ul>
+                                    <li>❌ Много negative reviews</li>
+                                    <li>❌ Complaints о non-payment</li>
+                                    <li>❌ BBB rating F</li>
+                                    <li>❌ Нет информации вообще (новый/fake broker)</li>
+                                </ul>
+                            </li>
+                            <li><strong>Time:</strong> 5 минут</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>💡 4. LinkedIn Check (FREE)</h4>
+                        <ul>
+                            <li><strong>Что проверять:</strong>
+                                <ul>
+                                    <li>Company page exists (есть ли страница компании)</li>
+                                    <li>Number of employees (сколько сотрудников)</li>
+                                    <li>How long in business (сколько лет работают)</li>
+                                    <li>Employee profiles (реальные ли люди)</li>
+                                </ul>
+                            </li>
+                            <li><strong>Red flags:</strong>
+                                <ul>
+                                    <li>❌ No LinkedIn page</li>
+                                    <li>❌ Less than 5 employees</li>
+                                    <li>❌ Company less than 1 year old</li>
+                                    <li>❌ Fake employee profiles</li>
+                                </ul>
+                            </li>
+                            <li><strong>Time:</strong> 2 минуты</li>
+                        </ul>
+                    </div>
+
+                    <h3>⚡ 5-минутный чек-лист проверки брокера</h3>
+
+                    <div class="success-highlight">
+                        <h4>✅ Quick Vetting Process:</h4>
+                        <ol>
+                            <li><strong>Minute 1:</strong> FMCSA SAFER - проверить MC#, authority, insurance</li>
+                            <li><strong>Minute 2:</strong> RTS Pro/Carrier411 - проверить credit score, payment history
+                            </li>
+                            <li><strong>Minute 3:</strong> Google search - "[Broker name] reviews scam"</li>
+                            <li><strong>Minute 4:</strong> LinkedIn - проверить company page, employees</li>
+                            <li><strong>Minute 5:</strong> Call broker - задать вопросы, проверить professionalism</li>
+                        </ol>
+                    </div>
+
+                    <h3>🚩 Red Flags - НЕ работать с брокером если:</h3>
+
+                    <div class="danger-highlight">
+                        <h4>🔴 Критические red flags:</h4>
+                        <ul>
+                            <li>❌ <strong>No MC# или fake MC#:</strong> Illegal broker</li>
+                            <li>❌ <strong>Authority inactive/revoked:</strong> Не имеют права работать</li>
+                            <li>❌ <strong>No insurance on file:</strong> Нет страховки</li>
+                            <li>❌ <strong>Credit score D или F:</strong> Не платят</li>
+                            <li>❌ <strong>Payment terms 60+ days:</strong> Слишком долго</li>
+                            <li>❌ <strong>Upfront payment required:</strong> Scam (брокеры не требуют предоплату)</li>
+                            <li>❌ <strong>Pressure to book immediately:</strong> "Book now or lose it!"</li>
+                            <li>❌ <strong>Rate too good to be true:</strong> $5.00/миля для dry van = scam</li>
+                            <li>❌ <strong>No written rate confirmation:</strong> Только verbal agreement</li>
+                            <li>❌ <strong>Gmail/Yahoo email:</strong> Профессиональные брокеры используют company email
+                            </li>
+                            <li>❌ <strong>Can't verify company:</strong> Нет website, LinkedIn, reviews</li>
+                        </ul>
+                    </div>
+
+                    <h3>✅ Green Flags - Хорошие признаки брокера:</h3>
+
+                    <div class="success-highlight">
+                        <h4>✅ Признаки надежного брокера:</h4>
+                        <ul>
+                            <li>✅ <strong>MC# active 2+ years:</strong> Опытный брокер</li>
+                            <li>✅ <strong>Credit score A или B:</strong> Платят вовремя</li>
+                            <li>✅ <strong>Payment terms 30 days:</strong> Стандартный срок</li>
+                            <li>✅ <strong>Written rate confirmation:</strong> Email с деталями</li>
+                            <li>✅ <strong>Professional communication:</strong> Быстрые ответы, вежливость</li>
+                            <li>✅ <strong>Clear BOL:</strong> Правильно заполненный Bill of Lading</li>
+                            <li>✅ <strong>Factoring friendly:</strong> Работают с factoring companies</li>
+                            <li>✅ <strong>Good reviews:</strong> Положительные отзывы от других carriers</li>
+                            <li>✅ <strong>Transparent fees:</strong> Нет скрытых charges</li>
+                            <li>✅ <strong>Established company:</strong> Website, LinkedIn, office address</li>
+                        </ul>
+                    </div>
+
+                    <h3>📞 Вопросы брокеру перед booking</h3>
+
+                    <div class="info-highlight">
+                        <h4>💡 Что спросить:</h4>
+                        <ol>
+                            <li><strong>"What's your MC number?"</strong> - Проверить в SAFER</li>
+                            <li><strong>"What are your payment terms?"</strong> - 30 days = good, 60+ = bad</li>
+                            <li><strong>"Do you work with factoring companies?"</strong> - Если да = easier payment</li>
+                            <li><strong>"Can you send written rate confirmation?"</strong> - Должны отправить email</li>
+                            <li><strong>"What's included in the rate?"</strong> - Detention, layover, fuel surcharge?
+                            </li>
+                            <li><strong>"Any deductions or fees?"</strong> - Admin fees, quick pay fees?</li>
+                            <li><strong>"Who's the shipper/receiver?"</strong> - Проверить что груз реальный</li>
+                            <li><strong>"What's the commodity?"</strong> - Убедиться что можете везти</li>
+                        </ol>
+                    </div>
+
+                    <h3>📄 Документы для защиты</h3>
+
+                    <div class="success-highlight">
+                        <h4>✅ Всегда получать:</h4>
+                        <ul>
+                            <li><strong>Rate confirmation:</strong> Email с rate, pickup/delivery, commodity</li>
+                            <li><strong>Signed BOL:</strong> Bill of Lading с подписью receiver</li>
+                            <li><strong>POD:</strong> Proof of Delivery (фото signed BOL)</li>
+                            <li><strong>Lumper receipt:</strong> Если платили за unloading</li>
+                            <li><strong>Detention time:</strong> Записать arrival/departure times</li>
+                            <li><strong>Photos:</strong> Груз при pickup и delivery</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: 5-минутная проверка спасла $8,000</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Dispatcher получил load offer от нового брокера. Rate $4,500 (Chicago
+                        → LA, 2,000 миль = $2.25/миля). Звучит хорошо!</p>
+                    <p><strong>5-минутная проверка:</strong></p>
+                    <ol>
+                        <li><strong>FMCSA SAFER (1 минута):</strong>
+                            <ul>
+                                <li>MC# valid ✅</li>
+                                <li>Authority: Active ✅</li>
+                                <li>Insurance on file ✅</li>
+                                <li>MC# age: 3 months ⚠️ (новый брокер)</li>
+                            </ul>
+                        </li>
+                        <li><strong>RTS Pro (2 минуты):</strong>
+                            <ul>
+                                <li>Credit score: F ❌</li>
+                                <li>Payment history: 0 payments made ❌</li>
+                                <li>Reviews: "Never paid", "Scam", "Avoid" ❌</li>
+                                <li>Days to pay: N/A (no payments) ❌</li>
+                            </ul>
+                        </li>
+                        <li><strong>Google search (1 минута):</strong>
+                            <ul>
+                                <li>"[Broker name] scam" - 15 results ❌</li>
+                                <li>BBB rating: F ❌</li>
+                                <li>TruckersReport: "Don't work with them!" ❌</li>
+                            </ul>
+                        </li>
+                        <li><strong>LinkedIn (1 минута):</strong>
+                            <ul>
+                                <li>No company page ❌</li>
+                                <li>No employees found ❌</li>
+                            </ul>
+                        </li>
+                    </ol>
+                    <p><strong>Решение:</strong> ОТКАЗАТЬСЯ от груза!</p>
+                    <p><strong>Что случилось дальше:</strong></p>
+                    <ul>
+                        <li>Другой carrier взял этот груз (не проверил брокера)</li>
+                        <li>Доставил груз, отправил invoice</li>
+                        <li>Брокер не ответил на звонки</li>
+                        <li>Через 60 дней - все еще не заплатили</li>
+                        <li>Carrier нанял collection agency ($500 fee)</li>
+                        <li>Брокер исчез (fake company)</li>
+                        <li><strong>Total loss:</strong> $8,000 (груз) + $500 (collection) + время</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        <strong>Урок:</strong> 5 минут проверки спасли $8,500! ВСЕГДА проверяйте брокера перед booking.
+                        Если credit score F или много negative reviews - НЕ РАБОТАЙТЕ с ними, даже если rate хороший!
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio6', 'quiz-6')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-6" data-quiz-id="quiz-9-6" data-correct-answer="a">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Какой credit score брокера считается хорошим?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">A или B (платят в течение 30-45 дней)</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">C или D (платят в течение 60+ дней)</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">F (не платят)</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">Любой score подходит</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Credit score A или B - хорошие брокеры, платят в течение 30-45
+                        дней. Score C = Fair (60 дней), D = Poor, F = Fail (не платят). Используйте RTS Pro или
+                        Carrier411 для проверки.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- СЕКТОР 7: Защита от мошенничества -->
+        <div class="sector-wrapper">
+            <div class="sector-number">07</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🛡️ Защита от мошенничества</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio7')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio7')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio7')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>🛡️ Типы мошенничества в trucking</h3>
+                    <p><strong>Freight fraud</strong> - мошенничество с грузами, стоит индустрии $100+ миллионов в год.
+                    </p>
+
+                    <div class="danger-highlight">
+                        <h4>🔴 1. Freight Fraud (кража груза)</h4>
+                        <ul>
+                            <li><strong>Как работает:</strong>
+                                <ul>
+                                    <li>Мошенники создают fake carrier company</li>
+                                    <li>Получают MC# (легально или украденный)</li>
+                                    <li>Booking груз через load board</li>
+                                    <li>Забирают груз у shipper</li>
+                                    <li>Исчезают с грузом (продают на черном рынке)</li>
+                                </ul>
+                            </li>
+
+                            <li><strong>Типичные targets:</strong>
+                                <ul>
+                                    <li>Electronics (phones, laptops, TVs)</li>
+                                    <li>Pharmaceuticals (лекарства)</li>
+                                    <li>Designer clothing/shoes</li>
+                                    <li>High-value food (meat, seafood)</li>
+                                </ul>
+                            </li>
+                            <li><strong>Average loss:</strong> $200,000-500,000 per load</li>
+                            <li><strong>Red flags:</strong>
+                                <ul>
+                                    <li>❌ New MC# (less than 6 months)</li>
+                                    <li>❌ No insurance history</li>
+                                    <li>❌ Pressure to pick up immediately</li>
+                                    <li>❌ Unusual pickup location</li>
+                                    <li>❌ Driver can't answer basic questions</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+
+
+                    <div class="danger-highlight">
+                        <h4>🔴 2. Identity Theft (кража MC#)</h4>
+                        <ul>
+                            <li><strong>Как работает:</strong>
+                                <ul>
+                                    <li>Мошенники крадут MC# легитимной компании</li>
+                                    <li>Создают fake documents (insurance, authority)</li>
+                                    <li>Booking грузы под чужим MC#</li>
+                                    <li>Забирают груз и исчезают</li>
+                                    <li>Настоящая компания получает blame</li>
+                                </ul>
+                            </li>
+                            <li><strong>Как защититься:</strong>
+                                <ul>
+                                    <li>✅ Регулярно проверять свой MC# в SAFER</li>
+                                    <li>✅ Monitor load boards для fake listings</li>
+                                    <li>✅ Требовать verification от брокеров</li>
+                                    <li>✅ Report identity theft в FMCSA</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+
+
+                    <div class="danger-highlight">
+                        <h4>🔴 3. Double Brokering (illegal)</h4>
+                        <ul>
+                            <li><strong>Как работает:</strong>
+                                <ul>
+                                    <li>Брокер A дает груз брокеру B</li>
+                                    <li>Брокер B перепродает груз carrier C (без разрешения A)</li>
+                                    <li>Carrier C везет груз</li>
+                                    <li>Брокер B исчезает с деньгами</li>
+                                    <li>Carrier C не получает оплату</li>
+                                </ul>
+                            </li>
+                            <li><strong>Why illegal:</strong> FMCSA запрещает double brokering</li>
+                            <li><strong>Red flags:</strong>
+                                <ul>
+                                    <li>❌ Rate confirmation от другой компании</li>
+                                    <li>❌ BOL не совпадает с rate confirmation</li>
+                                    <li>❌ Broker не отвечает на звонки после pickup</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ 4. Fake Load Scams</h4>
+                        <ul>
+                            <li><strong>Как работает:</strong>
+                                <ul>
+                                    <li>Мошенники постят fake loads на load boards</li>
+                                    <li>Требуют upfront payment ($200-500 "booking fee")</li>
+                                    <li>Или крадут carrier information</li>
+                                    <li>Груз не существует</li>
+                                </ul>
+                            </li>
+                            <li><strong>Red flags:</strong>
+                                <ul>
+                                    <li>❌ Upfront payment required</li>
+                                    <li>❌ Rate too good to be true</li>
+                                    <li>❌ Pressure to book immediately</li>
+                                    <li>❌ Gmail/Yahoo email</li>
+                                    <li>❌ Can't verify broker MC#</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+
+
+                    <h3>🛡️ Как защититься от мошенничества</h3>
+
+                    <div class="success-highlight">
+                        <h4>✅ Verification Process:</h4>
+                        <ol>
+                            <li><strong>Verify broker MC#:</strong> FMCSA SAFER (2 минуты)</li>
+                            <li><strong>Check credit score:</strong> RTS Pro/Carrier411 (2 минуты)</li>
+                            <li><strong>Call broker back:</strong> Использовать номер с SAFER (не тот что дали)</li>
+                            <li><strong>Verify shipper:</strong> Google search, call shipper напрямую</li>
+                            <li><strong>Check rate confirmation:</strong> Company email, правильный MC#</li>
+                            <li><strong>Verify insurance:</strong> Call insurance company</li>
+                            <li><strong>Get everything in writing:</strong> Email, не verbal agreements</li>
+                        </ol>
+                    </div>
+
+
+                    <div class="info-highlight">
+                        <h4>💡 Best Practices:</h4>
+                        <ul>
+                            <li><strong>Work with known brokers:</strong> Established relationships = safer</li>
+                            <li><strong>Use reputable load boards:</strong> DAT, Truckstop, direct freight</li>
+                            <li><strong>Factoring company:</strong> Они проверяют brokers за вас</li>
+                            <li><strong>Trust your gut:</strong> Если что-то кажется подозрительным - откажитесь</li>
+                            <li><strong>Document everything:</strong> Emails, photos, signed BOL</li>
+                            <li><strong>Report fraud:</strong> FMCSA, FBI, local police</li>
+                        </ul>
+                    </div>
+
+                    <h3>📞 Что делать если стали жертвой fraud</h3>
+
+                    <div class="danger-highlight">
+                        <h4>🔴 Immediate Actions:</h4>
+                        <ol>
+                            <li><strong>Stop communication:</strong> Не отвечать мошенникам</li>
+                            <li><strong>Document everything:</strong> Сохранить все emails, texts, calls</li>
+                            <li><strong>Report to FMCSA:</strong> File complaint на fmcsa.dot.gov</li>
+                            <li><strong>Report to FBI:</strong> IC3.gov (Internet Crime Complaint Center)</li>
+                            <li><strong>Report to police:</strong> Local law enforcement</li>
+                            <li><strong>Notify insurance:</strong> Cargo insurance claim</li>
+                            <li><strong>Notify factoring:</strong> Если используете factoring</li>
+                            <li><strong>Alert industry:</strong> Post на forums, warn other carriers</li>
+                            <li><strong>Legal action:</strong> Consult attorney</li>
+                        </ol>
+                    </div>
+
+
+                    <h3>🔒 Cybersecurity для dispatchers</h3>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Защита данных:</h4>
+                        <ul>
+                            <li><strong>Strong passwords:</strong> 12+ символов, unique для каждого сайта</li>
+                            <li><strong>Two-factor authentication:</strong> Включить на всех accounts</li>
+                            <li><strong>Secure email:</strong> Не открывать suspicious attachments</li>
+                            <li><strong>VPN:</strong> Использовать при работе из дома</li>
+                            <li><strong>Antivirus:</strong> Обновлять регулярно</li>
+                            <li><strong>Backup data:</strong> Ежедневный backup важных файлов</li>
+                            <li><strong>Phishing awareness:</strong> Не кликать на suspicious links</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: Freight fraud стоил $350,000</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Broker получил запрос на перевозку electronics (Apple products) из
+                        California в New York. Value $350,000.</p>
+                    <p><strong>Мошенническая схема:</strong></p>
+                    <ul>
+                        <li><strong>Fake carrier:</strong> Мошенники создали fake company с украденным MC#</li>
+                        <li><strong>Fake documents:</strong> Поддельные insurance, authority papers</li>
+                        <li><strong>Professional appearance:</strong> Website, email, phone number выглядели легитимно
+                        </li>
+                        <li><strong>Low rate:</strong> Предложили $4,000 (рынок $6,000) - "special discount"</li>
+                        <li><strong>Pressure:</strong> "Book now or we take another load"</li>
+                    </ul>
+                    <p><strong>Что пошло не так:</strong></p>
+                    <ul>
+                        <li>Broker не проверил MC# в SAFER (был украден)</li>
+                        <li>Не позвонил в insurance company для verification</li>
+                        <li>Не проверил credit score (новый MC# = red flag)</li>
+                        <li>Поддался на pressure tactics</li>
+                    </ul>
+
+                    <p><strong>Результат:</strong></p>
+                    <ul>
+                        <li><strong>Pickup:</strong> "Carrier" забрал груз у shipper</li>
+                        <li><strong>Disappeared:</strong> Трак исчез, не отвечает на звонки</li>
+                        <li><strong>Cargo stolen:</strong> $350,000 electronics продали на черном рынке</li>
+                        <li><strong>Investigation:</strong> FBI, FMCSA, insurance investigation</li>
+                        <li><strong>Insurance claim:</strong> Частично покрыли ($200,000), но $150,000 loss</li>
+                        <li><strong>Reputation damage:</strong> Shipper больше не работает с этим broker</li>
+                    </ul>
+                    <p><strong>Что нужно было сделать:</strong></p>
+                    <ol>
+                        <li>Проверить MC# в SAFER (увидели бы что украден)</li>
+                        <li>Позвонить в insurance company (узнали бы что fake)</li>
+                        <li>Проверить credit score (новый MC# = red flag)</li>
+                        <li>Не поддаваться на pressure tactics</li>
+                        <li>Требовать references от других brokers</li>
+                    </ol>
+                    <div class="case-study-highlight">
+                        <strong>Урок:</strong> 5 минут verification могли спасти $350,000! ВСЕГДА проверяйте carrier
+                        перед booking, особенно для high-value loads. Если rate слишком хороший или есть pressure - это
+                        RED FLAG!
+                    </div>
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio7', 'quiz-7')">
+                🎧 Я закончил слушать этот блок
+            </button>
+
+            <div class="quick-check-block locked" id="quiz-7" data-quiz-id="quiz-9-7" data-correct-answer="c">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Какой главный red flag при freight fraud?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">Высокий rate</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">Старый MC# (10+ лет)</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">Новый MC# (less than 6 months) + pressure to book
+                                immediately</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">Длинная дистанция</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Новый MC# (less than 6 months) + pressure to book immediately -
+                        главные red flags freight fraud. Мошенники создают новые компании и давят на быстрое решение.
+                        ВСЕГДА проверяйте MC# в SAFER и credit score!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Навигация между модулями -->
+        <div class="lesson-nav">
+            <a href="doc-module-8-complete.html" class="nav-btn">
+                <span>←</span>
+                <span>Предыдущий модуль</span>
+            </a>
+            <div class="progress-info">
+                <div>Модуль 9 из 12</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 75%;"></div>
+                </div>
+                <div>75% курса пройдено</div>
+            </div>
+            <a href="modules-index.html" class="nav-btn">
+                <span>Следующий модуль</span>
+                <span>→</span>
+            </a>
+        </div>
+
+    </main>
+
+    <script>
+        // Audio Management
+        const audioFiles = {
+            'audio1': '../audio/module-9-sector-1.mp3',
+            'audio2': '../audio/module-9-sector-2.mp3',
+            'audio3': '../audio/module-9-sector-3.mp3',
+            'audio4': '../audio/module-9-sector-4.mp3',
+            'audio5': '../audio/module-9-sector-5.mp3',
+            'audio6': '../audio/module-9-sector-6.mp3',
+            'audio7': '../audio/module-9-sector-7.mp3'
+        };
+
+        let currentAudio = null;
+        let currentAudioId = null;
+
+
+        function toggleAudio(button, audioId) {
+            const container = button.closest('.audio-container');
+
+            if (currentAudio && currentAudioId === audioId) {
+                if (currentAudio.paused) {
+                    currentAudio.play();
+                    button.classList.add('playing');
+                    container.classList.add('playing');
+                } else {
+                    currentAudio.pause();
+                    button.classList.remove('playing');
+                    container.classList.remove('playing');
+                }
+            } else {
+                if (currentAudio) {
+                    currentAudio.pause();
+                    const oldButton = document.querySelector('.audio-btn.playing');
+                    const oldContainer = oldButton?.closest('.audio-container');
+                    if (oldButton) oldButton.classList.remove('playing');
+                    if (oldContainer) oldContainer.classList.remove('playing');
+                }
+
+                alert(`Воспроизведение: ${audioFiles[audioId]}\n\nВ продакшене здесь будет реальный аудио-плеер с прогресс-кольцом.`);
+
+                currentAudio = new Audio(audioFiles[audioId]);
+                currentAudioId = audioId;
+
+                currentAudio.addEventListener('loadedmetadata', () => {
+                    updateDuration(container, currentAudio.duration);
+                });
+
+                currentAudio.addEventListener('timeupdate', () => {
+                    updateProgress(container, currentAudio.currentTime, currentAudio.duration);
+                });
+
+                currentAudio.addEventListener('ended', () => {
+                    button.classList.remove('playing');
+                    container.classList.remove('playing');
+                    resetProgress(container);
+                });
+
+                currentAudio.play();
+                button.classList.add('playing');
+                container.classList.add('playing');
+            }
+        }
+
+
+        function updateDuration(container, duration) {
+            const durationEl = container.querySelector('.audio-duration');
+            const minutes = Math.floor(duration / 60);
+            const seconds = Math.floor(duration % 60);
+            durationEl.textContent = `0:00 / ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function updateProgress(container, currentTime, duration) {
+            const progress = (currentTime / duration) * 100;
+            const circumference = 201.06;
+            const offset = circumference - (progress / 100) * circumference;
+
+            const progressRing = container.querySelector('.progress-ring-fill');
+            if (progressRing) {
+                progressRing.style.strokeDashoffset = offset;
+            }
+
+            const mobileBar = container.querySelector('.mobile-progress-fill');
+            if (mobileBar) {
+                mobileBar.style.width = `${progress}%`;
+            }
+
+            const durationEl = container.querySelector('.audio-duration');
+            const currentMinutes = Math.floor(currentTime / 60);
+            const currentSeconds = Math.floor(currentTime % 60);
+            const totalMinutes = Math.floor(duration / 60);
+            const totalSeconds = Math.floor(duration % 60);
+            durationEl.textContent = `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')} / ${totalMinutes}:${totalSeconds.toString().padStart(2, '0')}`;
+        }
+
+        function resetProgress(container) {
+            const progressRing = container.querySelector('.progress-ring-fill');
+            if (progressRing) {
+                progressRing.style.strokeDashoffset = 201.06;
+            }
+
+            const mobileBar = container.querySelector('.mobile-progress-fill');
+            if (mobileBar) {
+                mobileBar.style.width = '0%';
+            }
+        }
+
+
+        function seekAudio(event, audioId) {
+            if (!currentAudio || currentAudioId !== audioId) return;
+
+            const ring = event.currentTarget;
+            const rect = ring.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const angle = Math.atan2(event.clientY - centerY, event.clientX - centerX);
+            let degrees = angle * (180 / Math.PI) + 90;
+            if (degrees < 0) degrees += 360;
+
+            const progress = degrees / 360;
+            currentAudio.currentTime = progress * currentAudio.duration;
+        }
+
+        function seekAudioMobile(event, audioId) {
+            if (!currentAudio || currentAudioId !== audioId) return;
+
+            const bar = event.currentTarget;
+            const rect = bar.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const progress = clickX / rect.width;
+
+            currentAudio.currentTime = progress * currentAudio.duration;
+        }
+
+        // Audio Completion - Unlock Quiz
+        function markAudioComplete(button, audioId, quizId) {
+            button.classList.add('completed');
+            button.textContent = '✅ Аудио прослушано';
+            button.disabled = true;
+
+            const quizBlock = document.getElementById(quizId);
+            if (quizBlock) {
+                quizBlock.classList.remove('locked');
+                quizBlock.style.opacity = '1';
+                quizBlock.style.pointerEvents = 'auto';
+                quizBlock.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    quizBlock.style.transform = 'scale(1)';
+                }, 100);
+                setTimeout(() => {
+                    quizBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 200);
+            }
+        }
+
+
+        // Quiz Management
+        document.addEventListener('DOMContentLoaded', () => {
+            const quizBlocks = document.querySelectorAll('.quick-check-block');
+
+            quizBlocks.forEach(quizBlock => {
+                const options = quizBlock.querySelectorAll('.quiz-option');
+                const correctAnswer = quizBlock.dataset.correctAnswer;
+                const feedback = quizBlock.querySelector('.quiz-feedback');
+
+                options.forEach(option => {
+                    option.addEventListener('click', () => {
+                        if (quizBlock.classList.contains('answered')) return;
+                        if (quizBlock.classList.contains('locked')) return;
+
+                        quizBlock.classList.add('answered');
+
+                        const userAnswer = option.dataset.answer;
+                        const isCorrect = userAnswer === correctAnswer;
+
+                        options.forEach(opt => {
+                            opt.style.pointerEvents = 'none';
+                        });
+
+                        if (isCorrect) {
+                            option.classList.add('correct');
+                        } else {
+                            option.classList.add('incorrect');
+                            options.forEach(opt => {
+                                if (opt.dataset.answer === correctAnswer) {
+                                    opt.classList.add('correct');
+                                }
+                            });
+                        }
+
+                        if (feedback) {
+                            feedback.classList.add('show');
+                        }
+                    });
+                });
+            });
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+
+        // Animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.content-block').forEach(block => {
+            block.style.opacity = '0';
+            block.style.transform = 'translateY(20px)';
+            block.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(block);
+        });
+    </script>
+</body>
+
+</html>
