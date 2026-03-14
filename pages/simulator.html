@@ -431,19 +431,19 @@
             animation: none;
         }
 
-        
 
-            50% {
-                transform: translate(-5%, 5%) scale(1.05);
-            }
+
+        50% {
+            transform: translate(-5%, 5%) scale(1.05);
+        }
         }
 
 
-        
 
-            50% {
-                transform: translate(-5%, 5%) scale(1.05);
-            }
+
+        50% {
+            transform: translate(-5%, 5%) scale(1.05);
+        }
         }
 
         @keyframes fadeIn {
@@ -1509,9 +1509,68 @@
             flex-shrink: 0;
         }
 
-        /* Скрыть все кнопки КРОМЕ sendBtn, resetButton, historyButton */
-        .input-area button:not(#sendBtn):not(#resetButton):not(#historyButton) {
+        /* Скрыть все кнопки КРОМЕ sendBtn, resetButton, historyButton, aiInlineBtn */
+        .input-area button:not(#sendBtn):not(#resetButton):not(#historyButton):not(#aiInlineBtn) {
             display: none !important;
+        }
+
+        /* AI Inline Button */
+        .ai-inline-btn {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .ai-inline-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+        }
+
+        .ai-inline-btn:active {
+            transform: scale(0.95);
+        }
+
+        .ai-inline-btn.active {
+            animation: aiPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes aiPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            }
+
+            50% {
+                box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+            }
+        }
+
+        /* AI Message in chat */
+        .message.ai-assistant {
+            align-self: center;
+            max-width: 90%;
+        }
+
+        .message.ai-assistant .message-avatar {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .message.ai-assistant .message-content {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            border-color: rgba(102, 126, 234, 0.4);
         }
 
         .input-area:focus-within {
@@ -2704,6 +2763,9 @@
                     <div class="nav-dropdown">
                         <span class="nav-link">Курсы</span>
                         <div class="dropdown-content">
+                            <a href="../documentation"
+                                style="background: rgba(99,102,241,0.15); border-left: 3px solid #6366f1; font-weight: 700; color: #ffffff;">🎓
+                                База знаний</a>
                             <a href="../courses.html">Все курсы</a>
                             <a href="../course.html">Обзор курса</a>
                             <a href="../modules">12 Модулей</a>
@@ -2770,6 +2832,9 @@
 
             <div class="mobile-nav-section">
                 <div class="mobile-section-title">📚 КУРСЫ</div>
+                <a href="../documentation" class="nav-link nav-link-sub"
+                    style="color: #ffffff; border-left: 3px solid #6366f1; padding-left: 14px; background: rgba(99,102,241,0.1); border-radius: 8px; margin-bottom: 4px;">🎓
+                    База знаний</a>
                 <a href="../courses.html" class="nav-link nav-link-sub">Все курсы</a>
                 <a href="../course.html" class="nav-link nav-link-sub">Обзор курса</a>
                 <a href="../modules" class="nav-link nav-link-sub">12 Модулей обучения</a>
@@ -2796,7 +2861,6 @@
                 <a href="../help.html" class="nav-link nav-link-sub">Помощь</a>
                 <a href="../contacts.html" class="nav-link nav-link-sub">Контакты</a>
             </div>
-            <a href="../documentation" class="nav-link">📄 Документация</a>
             <a href="../pricing.html" class="nav-link">💰 Тарифы</a>
             <a href="../dashboard.html" class="nav-link" id="dashboardLinkMobile" style="display: none;">👤 Личный
                 кабинет</a>
@@ -2938,10 +3002,16 @@
         <div class="messages-container" id="messagesContainer"></div>
 
         <div class="input-area">
+            <button class="ai-inline-btn" id="aiInlineBtn" title="Спросить AI помощника">🤖</button>
             <textarea class="input-field" id="inputField" placeholder="Введите ваше сообщение..." rows="1"></textarea>
             <button class="send-btn" id="sendBtn" disabled>➤</button>
         </div>
     </div>
+
+    <!-- AI Inline Chat Mode Toggle -->
+    <script>
+        let aiChatMode = false; // false = общение с брокером, true = общение с AI
+    </script>
 
     <!-- Scenarios Data -->
     <script>
@@ -5564,24 +5634,259 @@
                     if (!sendBtn.disabled) sendMessage();
                 }
             });
+
+            // AI Inline Button Handler - TOGGLE MODE
+            const aiInlineBtn = document.getElementById('aiInlineBtn');
+            if (aiInlineBtn) {
+                aiInlineBtn.addEventListener('click', () => {
+                    aiChatMode = !aiChatMode;
+
+                    if (aiChatMode) {
+                        // Включаем режим AI чата
+                        aiInlineBtn.classList.add('active');
+                        aiInlineBtn.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
+                        inputField.placeholder = '💬 Спроси AI помощника...';
+
+                        // Показываем автоматический анализ при включении
+                        showTypingIndicator();
+                        setTimeout(() => {
+                            hideTypingIndicator();
+                            const analysis = analyzeCurrentStep();
+                            addAIMessageToChat(analysis);
+                        }, 800);
+                    } else {
+                        // Выключаем режим AI чата
+                        aiInlineBtn.classList.remove('active');
+                        aiInlineBtn.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+                        aiInlineBtn.style.boxShadow = 'none';
+                        inputField.placeholder = 'Введите ваше сообщение...';
+
+                        // Удаляем быстрые кнопки
+                        const quickButtons = document.querySelector('.ai-quick-buttons');
+                        if (quickButtons) quickButtons.remove();
+                    }
+                });
+            }
+        }
+
+        // Add AI message directly to simulator chat
+        function addAIMessageToChat(text) {
+            const message = document.createElement('div');
+            message.className = 'message ai-assistant';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = '🤖';
+
+            const content = document.createElement('div');
+            content.className = 'message-content';
+
+            const nameLabel = document.createElement('div');
+            nameLabel.style.fontWeight = '700';
+            nameLabel.style.fontSize = '14px';
+            nameLabel.style.marginBottom = '8px';
+            nameLabel.style.color = '#a78bfa';
+            nameLabel.textContent = 'AI Помощник';
+            content.appendChild(nameLabel);
+
+            const textNode = document.createElement('div');
+            textNode.textContent = text;
+            textNode.style.whiteSpace = 'pre-wrap';
+            content.appendChild(textNode);
+
+            message.appendChild(avatar);
+            message.appendChild(content);
+
+            messagesContainer.appendChild(message);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            // Показываем быстрые кнопки после ответа AI
+            if (aiChatMode) {
+                showAIQuickButtons();
+            }
+        }
+
+        // Показать быстрые кнопки для AI чата
+        function showAIQuickButtons() {
+            // Удаляем старые кнопки если есть
+            const oldButtons = document.querySelector('.ai-quick-buttons');
+            if (oldButtons) oldButtons.remove();
+
+            const quickButtons = document.createElement('div');
+            quickButtons.className = 'ai-quick-buttons';
+            quickButtons.style.cssText = `
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+                margin: 12px 0;
+                padding: 0 16px;
+                animation: fadeInUp 0.4s ease-out;
+            `;
+
+            // БОЛЬШОЙ МАССИВ ПОДСКАЗОК (50+ вариантов)
+            const allButtons = [
+                // Анализ и статус
+                { text: '📊 Анализ', action: 'что происходит' },
+                { text: '📈 Мой счет', action: 'какой счет' },
+                { text: '🎯 Где я?', action: 'на каком шаге' },
+                { text: '📍 Статус', action: 'что сейчас' },
+                { text: '🔍 Оценка', action: 'как я' },
+
+                // Советы и рекомендации
+                { text: '🎯 Совет', action: 'что дальше' },
+                { text: '💡 Подскажи', action: 'подскажи' },
+                { text: '🚀 Что делать?', action: 'что делать' },
+                { text: '⚡ Помощь', action: 'помощь' },
+                { text: '🎓 Научи', action: 'научи' },
+                { text: '✨ Идея', action: 'дай идею' },
+                { text: '🔥 Лучший ход', action: 'лучший ответ' },
+
+                // Переговоры и торг
+                { text: '💰 Переговоры', action: 'переговоры' },
+                { text: '💵 Ставка', action: 'какую ставку' },
+                { text: '🤝 Как торговаться', action: 'как торговаться' },
+                { text: '📉 Снизить цену', action: 'как снизить' },
+                { text: '📈 Поднять цену', action: 'как поднять' },
+                { text: '💸 Цена', action: 'цена' },
+                { text: '🎲 Тактика', action: 'тактика' },
+
+                // Документы и термины
+                { text: '📋 BOL', action: 'bol' },
+                { text: '✅ POD', action: 'pod' },
+                { text: '📄 Rate Con', action: 'rate confirmation' },
+                { text: '⏰ HOS', action: 'hos' },
+                { text: '🚛 MC/DOT', action: 'mc dot' },
+                { text: '📦 Груз', action: 'про груз' },
+
+                // Типы оборудования
+                { text: '🚛 Dry Van', action: 'dry van' },
+                { text: '❄️ Reefer', action: 'reefer' },
+                { text: '📦 Flatbed', action: 'flatbed' },
+                { text: '🛢️ Tanker', action: 'tanker' },
+
+                // Проблемы и решения
+                { text: '⚠️ Проблема', action: 'что если проблема' },
+                { text: '🔴 TONU', action: 'tonu' },
+                { text: '⏱️ Detention', action: 'detention' },
+                { text: '🛠️ Поломка', action: 'breakdown' },
+                { text: '❌ Отказ', action: 'если откажут' },
+                { text: '🚨 Авария', action: 'авария' },
+
+                // Стратегии общения
+                { text: '😊 Вежливость', action: 'как быть вежливым' },
+                { text: '💪 Уверенность', action: 'как быть уверенным' },
+                { text: '🎭 Профи', action: 'как профессионал' },
+                { text: '🗣️ Что сказать', action: 'что сказать' },
+                { text: '🤐 Молчать?', action: 'молчать' },
+                { text: '❓ Вопрос', action: 'какой вопрос' },
+
+                // Финансы и расчеты
+                { text: '💵 RPM', action: 'rpm' },
+                { text: '💰 Расходы', action: 'расходы' },
+                { text: '📊 Прибыль', action: 'прибыль' },
+                { text: '💸 Зарплата', action: 'зарплата' },
+                { text: '🧮 Калькулятор', action: 'посчитай' },
+
+                // Быстрые действия
+                { text: '✅ Согласиться', action: 'согласиться' },
+                { text: '❌ Отказать', action: 'отказать' },
+                { text: '🤔 Подумать', action: 'нужно подумать' },
+                { text: '📞 Перезвонить', action: 'перезвонить' },
+                { text: '⏰ Время', action: 'попросить время' },
+
+                // Специальные ситуации
+                { text: '🔥 Срочно', action: 'срочный груз' },
+                { text: '🌙 Ночь', action: 'ночная доставка' },
+                { text: '🎄 Выходные', action: 'выходные' },
+                { text: '🌡️ Температура', action: 'температурный режим' },
+                { text: '⚖️ Вес', action: 'вес груза' },
+                { text: '📏 Размер', action: 'размеры' },
+
+                // Мотивация и поддержка
+                { text: '💪 Мотивация', action: 'мотивация' },
+                { text: '🎉 Молодец', action: 'как я справляюсь' },
+                { text: '🌟 Совет дня', action: 'совет дня' },
+                { text: '🎯 Фокус', action: 'на чем фокус' },
+                { text: '🚀 Вперед', action: 'что дальше' }
+            ];
+
+            // Выбираем 4 случайные кнопки
+            const shuffled = allButtons.sort(() => 0.5 - Math.random());
+            const selectedButtons = shuffled.slice(0, 4);
+
+            selectedButtons.forEach(btn => {
+                const button = document.createElement('button');
+                button.textContent = btn.text;
+                button.style.cssText = `
+                    background: rgba(102, 126, 234, 0.15);
+                    border: 1px solid rgba(102, 126, 234, 0.3);
+                    border-radius: 12px;
+                    padding: 10px 8px;
+                    color: #a78bfa;
+                    font-size: 13px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    width: 100%;
+                    text-align: center;
+                `;
+                button.onmouseover = () => {
+                    button.style.background = 'rgba(102, 126, 234, 0.25)';
+                    button.style.transform = 'translateY(-2px)';
+                };
+                button.onmouseout = () => {
+                    button.style.background = 'rgba(102, 126, 234, 0.15)';
+                    button.style.transform = 'translateY(0)';
+                };
+                button.onclick = () => {
+                    inputField.value = btn.action;
+                    sendMessage();
+                    quickButtons.remove();
+                };
+                quickButtons.appendChild(button);
+            });
+
+            messagesContainer.appendChild(quickButtons);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
         function sendMessage() {
             const text = inputField.value.trim();
             if (!text) return;
 
-            addMessage(text, 'user');
-            inputField.value = '';
-            inputField.style.height = 'auto';
-            sendBtn.disabled = true;
+            // Проверяем режим: AI или брокер
+            if (aiChatMode) {
+                // Режим AI чата - отправляем сообщение AI
+                addMessage(text, 'user');
+                inputField.value = '';
+                inputField.style.height = 'auto';
+                sendBtn.disabled = true;
 
-            setTimeout(() => {
                 showTypingIndicator();
                 setTimeout(() => {
                     hideTypingIndicator();
-                    addMessage("I understand. Let me check on that for you.", 'broker');
-                }, 1500);
-            }, 500);
+                    const response = getAIBotResponse(text);
+                    addAIMessageToChat(response);
+                    sendBtn.disabled = false;
+                }, 500 + Math.random() * 500);
+            } else {
+                // Обычный режим - отправляем брокеру
+                addMessage(text, 'user');
+                inputField.value = '';
+                inputField.style.height = 'auto';
+                sendBtn.disabled = true;
+
+                setTimeout(() => {
+                    showTypingIndicator();
+                    setTimeout(() => {
+                        hideTypingIndicator();
+                        addMessage("I understand. Let me check on that for you.", 'broker');
+                    }, 1500);
+                }, 500);
+            }
         }
 
         function resetConversation() {
@@ -5593,6 +5898,20 @@
             currentDispatcherScore = 0; // Сбрасываем накопительный счет
             totalPossibleScore = 0; // Сбрасываем максимум
             conversationHistory = []; // Очистить историю
+
+            // Сбрасываем режим AI чата
+            aiChatMode = false;
+            const aiInlineBtn = document.getElementById('aiInlineBtn');
+            if (aiInlineBtn) {
+                aiInlineBtn.classList.remove('active');
+                aiInlineBtn.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+                aiInlineBtn.style.boxShadow = 'none';
+            }
+            inputField.placeholder = 'Введите ваше сообщение...';
+
+            // Удаляем быстрые кнопки AI
+            const quickButtons = document.querySelector('.ai-quick-buttons');
+            if (quickButtons) quickButtons.remove();
 
             messagesContainer.innerHTML = '';
             chatView.classList.remove('active');
@@ -5854,6 +6173,948 @@
                 });
             });
         }
+    </script>
+
+    <!-- AI Chatbot Integration -->
+    <style>
+        /* AI Chatbot Button */
+        .ai-helper-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            z-index: 9998;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ai-helper-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px rgba(102, 126, 234, 0.6);
+        }
+
+        .ai-helper-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* AI Chatbot Modal */
+        .ai-chatbot-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .ai-chatbot-modal.active {
+            display: flex;
+        }
+
+        .ai-chatbot-container {
+            width: 100%;
+            max-width: 500px;
+            height: 700px;
+            max-height: 90vh;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ai-chatbot-header {
+            padding: 20px 25px;
+            background: rgba(102, 126, 234, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .ai-chatbot-header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .ai-bot-avatar {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            animation: pulse 2s infinite;
+        }
+
+        .ai-bot-info h3 {
+            color: #fff;
+            font-size: 16px;
+            margin: 0;
+        }
+
+        .ai-bot-info .status {
+            color: #4ade80;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: #4ade80;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .ai-close-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .ai-close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+
+        .ai-chatbot-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .ai-chatbot-messages::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .ai-chatbot-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .ai-chatbot-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        .ai-message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+            animation: fadeIn 0.3s ease;
+            word-wrap: break-word;
+        }
+
+        .ai-message.bot {
+            background: rgba(102, 126, 234, 0.2);
+            color: #e0e0e0;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .ai-message.user {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .ai-message .time {
+            font-size: 10px;
+            opacity: 0.6;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .ai-typing-indicator {
+            display: none;
+            align-self: flex-start;
+            padding: 12px 16px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 16px;
+            border-bottom-left-radius: 4px;
+        }
+
+        .ai-typing-indicator.active {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .ai-typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite;
+        }
+
+        .ai-typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .ai-typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+            }
+
+            30% {
+                transform: translateY(-8px);
+            }
+        }
+
+        .ai-quick-replies {
+            padding: 10px 20px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .ai-quick-reply {
+            padding: 6px 14px;
+            background: rgba(102, 126, 234, 0.2);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 20px;
+            color: #ccc;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .ai-quick-reply:hover {
+            background: rgba(102, 126, 234, 0.4);
+            border-color: #667eea;
+            color: #fff;
+        }
+
+        .ai-chatbot-input-area {
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .ai-chatbot-input-area input {
+            flex: 1;
+            padding: 12px 18px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 25px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .ai-chatbot-input-area input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .ai-chatbot-input-area input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .ai-send-btn {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ai-send-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .ai-send-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .ai-helper-btn {
+                width: 55px;
+                height: 55px;
+                bottom: 20px;
+                right: 20px;
+                font-size: 24px;
+            }
+
+            .ai-chatbot-container {
+                width: 100%;
+                height: 100%;
+                max-height: 100vh;
+                border-radius: 0;
+            }
+
+            .ai-chatbot-modal {
+                padding: 0;
+            }
+        }
+    </style>
+
+    <!-- AI Chatbot HTML -->
+    <button class="ai-helper-btn" id="aiHelperBtn" title="AI Помощник">🤖</button>
+
+    <div class="ai-chatbot-modal" id="aiChatbotModal">
+        <div class="ai-chatbot-container">
+            <div class="ai-chatbot-header">
+                <div class="ai-chatbot-header-left">
+                    <div class="ai-bot-avatar">🤖</div>
+                    <div class="ai-bot-info">
+                        <h3>AI Ассистент</h3>
+                        <div class="status">Онлайн</div>
+                    </div>
+                </div>
+                <button class="ai-close-btn" id="aiCloseBtn">×</button>
+            </div>
+
+            <div class="ai-chatbot-messages" id="aiChatbotMessages">
+                <div class="ai-message bot">
+                    Привет! 👋 Я твой AI-помощник во время симуляции!<br><br>
+                    Могу помочь с:<br>
+                    • 📋 Терминами (BOL, POD, HOS)<br>
+                    • 💰 Переговорами и ставками<br>
+                    • 🚛 Типами оборудования<br>
+                    • 💡 Советами по диалогу<br><br>
+                    Задай любой вопрос!
+                    <span class="time" id="aiWelcomeTime"></span>
+                </div>
+            </div>
+
+            <div class="ai-typing-indicator" id="aiTypingIndicator">
+                <span></span><span></span><span></span>
+            </div>
+
+            <div class="ai-quick-replies">
+                <div class="ai-quick-reply" onclick="sendAIQuick('Что происходит?')">📊 Анализ</div>
+                <div class="ai-quick-reply" onclick="sendAIQuick('Что дальше?')">🎯 Совет</div>
+                <div class="ai-quick-reply" onclick="sendAIQuick('Переговоры')">💰 Переговоры</div>
+                <div class="ai-quick-reply" onclick="sendAIQuick('Помощь')">⚡ Помощь</div>
+            </div>
+
+            <div class="ai-chatbot-input-area">
+                <input type="text" id="aiUserInput" placeholder="Напиши вопрос..." autocomplete="off">
+                <button class="ai-send-btn" onclick="sendAIMessage()">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // AI Chatbot functionality with context awareness
+        document.getElementById('aiWelcomeTime').textContent = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+        const aiHelperBtn = document.getElementById('aiHelperBtn');
+        const aiChatbotModal = document.getElementById('aiChatbotModal');
+        const aiCloseBtn = document.getElementById('aiCloseBtn');
+        const aiChatbotMessages = document.getElementById('aiChatbotMessages');
+        const aiUserInput = document.getElementById('aiUserInput');
+        const aiTypingIndicator = document.getElementById('aiTypingIndicator');
+
+        // Track conversation context
+        let conversationContext = [];
+
+        // Open AI chatbot with automatic context analysis
+        aiHelperBtn.addEventListener('click', () => {
+            aiChatbotModal.classList.add('active');
+            aiUserInput.focus();
+
+            // Automatically show context analysis when opening
+            setTimeout(() => {
+                const context = captureConversationContext();
+                if (context.length > 0) {
+                    // Add automatic analysis message
+                    showAITyping();
+                    setTimeout(() => {
+                        hideAITyping();
+                        const analysis = analyzeCurrentStep();
+                        addAIMessage(analysis, 'bot');
+                    }, 800);
+                }
+            }, 300);
+        });
+
+        // Close AI chatbot
+        aiCloseBtn.addEventListener('click', () => {
+            aiChatbotModal.classList.remove('active');
+        });
+
+        // Close on backdrop click
+        aiChatbotModal.addEventListener('click', (e) => {
+            if (e.target === aiChatbotModal) {
+                aiChatbotModal.classList.remove('active');
+            }
+        });
+
+        // AI Bot Brain - Knowledge Base with context awareness
+        const aiBotBrain = {
+            greetings: {
+                patterns: ['привет', 'здравствуй', 'хай', 'hello', 'hi'],
+                responses: ['Привет! 😊 Чем могу помочь во время симуляции?']
+            },
+            context: {
+                patterns: ['что происходит', 'где я', 'контекст', 'диалог', 'разговор', 'что сейчас', 'на каком шаге'],
+                responses: ['CONTEXT_RESPONSE']
+            },
+            analyze: {
+                patterns: ['анализ', 'как я', 'оцени', 'что думаешь', 'мой ответ', 'какой счет', 'мой счет'],
+                responses: ['ANALYZE_RESPONSE']
+            },
+            nextstep: {
+                patterns: ['что дальше', 'следующий шаг', 'что сказать', 'как ответить', 'что делать', 'лучший ответ', 'на чем фокус'],
+                responses: ['NEXT_STEP_RESPONSE']
+            },
+
+            // Документы
+            bol: {
+                patterns: ['bol', 'бол', 'bill of lading', 'накладная'],
+                responses: ['📋 BOL (Bill of Lading) — транспортная накладная:\n• Описание груза и количество\n• Адреса pickup/delivery\n• Условия перевозки\n• Подписи сторон\n• Номер груза']
+            },
+            pod: {
+                patterns: ['pod', 'proof of delivery', 'подтверждение доставки'],
+                responses: ['✅ POD (Proof of Delivery):\n• Подпись получателя\n• Дата и время доставки\n• Состояние груза\n• Фото (если требуется)\n\n⚠️ Без POD брокер не заплатит!']
+            },
+            ratecon: {
+                patterns: ['rate confirmation', 'rate con', 'рейт кон', 'подтверждение ставки'],
+                responses: ['📄 Rate Confirmation:\n• Официальное подтверждение ставки\n• Детали груза и маршрута\n• Условия оплаты\n• Контакты сторон\n\n💡 Всегда проверяй перед началом!']
+            },
+            hos: {
+                patterns: ['hos', 'hours of service', 'часы работы', 'логбук'],
+                responses: ['⏰ HOS (Hours of Service):\n• 11 часов вождения в день\n• 14 часов рабочего времени\n• 10 часов отдыха\n• 70 часов за 8 дней\n\n⚠️ Нарушение = штраф!']
+            },
+            mcdot: {
+                patterns: ['mc', 'dot', 'mc dot', 'номер компании'],
+                responses: ['🚛 MC/DOT номера:\n• MC = Motor Carrier (брокер/перевозчик)\n• DOT = Department of Transportation\n• Проверяй на FMCSA.gov\n• Убедись что компания активна']
+            },
+
+            // Переговоры
+            negotiation: {
+                patterns: ['переговоры', 'как торговаться', 'ставка', 'тактика'],
+                responses: [
+                    '💰 Тактика переговоров:\n1. Называй цену на 15-20% выше\n2. Обоснуй (расстояние, топливо, время)\n3. После цены — молчи 5-10 сек\n4. Имей план Б\n5. Будь уверен и вежлив',
+                    '🎯 Переговорный приём:\n• Назови цену и замолчи\n• Кто говорит первым — проигрывает\n• "That\'s my best rate"\n• Не оправдывайся за цену\n• Уверенность = деньги',
+                    '💡 Золотое правило торга:\n• Первая цена брокера — не финальная\n• Всегда есть пространство\n• Встреться посередине\n• Или уходи — это тоже сила\n• Практика делает мастера'
+                ]
+            },
+            price: {
+                patterns: ['какую ставку', 'цена', 'сколько просить', 'какую цену'],
+                responses: [
+                    '💵 Как назвать цену:\n• Узнай posted rate\n• Добавь 15-20% сверху\n• Обоснуй (deadhead, время, топливо)\n• Будь готов к торгу\n• Знай свой минимум',
+                    '📊 Формула цены:\nPosted Rate + 15% = твоя цена\n\nПример: $1800 posted\n→ Проси $2070-2100\n→ Минимум: $1900\n→ Цель: $2000+',
+                    '🎯 Стратегия цены:\n• Изучи рынок (DAT, Truckstop)\n• Назови выше рынка на 10-20%\n• Обоснуй уникальность\n• Не бойся высокой цены\n• Брокер всегда торгуется'
+                ]
+            },
+            lower: {
+                patterns: ['как снизить', 'снизить цену', 'дешевле'],
+                responses: ['📉 Если брокер просит снизить:\n• "Это моя лучшая цена"\n• "Могу встретиться посередине"\n• "У меня есть другие предложения"\n• Не снижай сразу больше 5%']
+            },
+            raise: {
+                patterns: ['как поднять', 'поднять цену', 'дороже'],
+                responses: ['📈 Как поднять цену:\n• Укажи на срочность\n• Упомяни deadhead\n• "Топливо выросло"\n• "Специальное оборудование"\n• Будь уверен в цифрах']
+            },
+
+            // Оборудование
+            dryvan: {
+                patterns: ['dry van', 'драй ван', 'фургон'],
+                responses: ['🚛 Dry Van:\n• Самый популярный тип\n• Закрытый фургон 53 фута\n• Обычные грузы\n• Ставки: $1.50-2.50/mile\n• Легко найти груз']
+            },
+            reefer: {
+                patterns: ['reefer', 'рефрижератор', 'холодильник'],
+                responses: ['❄️ Reefer (Рефрижератор):\n• Температурный контроль\n• Продукты, медикаменты\n• Ставки: $2.00-3.50/mile\n• Выше оплата, больше ответственность\n• Проверяй температуру!']
+            },
+            flatbed: {
+                patterns: ['flatbed', 'флэтбед', 'платформа'],
+                responses: ['📦 Flatbed:\n• Открытая платформа\n• Стройматериалы, оборудование\n• Ставки: $2.00-3.00/mile\n• Нужны ремни/цепи\n• Погода важна!']
+            },
+            tanker: {
+                patterns: ['tanker', 'танкер', 'цистерна'],
+                responses: ['🛢️ Tanker:\n• Жидкости (топливо, химия)\n• Ставки: $2.50-4.00/mile\n• Нужен endorsement\n• Высокая ответственность\n• Специальная лицензия']
+            },
+
+            // Проблемы
+            tonu: {
+                patterns: ['tonu', 'тону', 'отмена'],
+                responses: ['🔴 TONU (Truck Ordered Not Used):\n• Груз отменен после подтверждения\n• Требуй компенсацию!\n• Обычно $50-150\n• Документируй все\n• Пиши в Rate Con']
+            },
+            detention: {
+                patterns: ['detention', 'детеншн', 'простой', 'ожидание'],
+                responses: ['⏱️ Detention (Простой):\n• Ожидание >2 часов\n• $25-75 за час\n• Засекай время прибытия!\n• Фотографируй документы\n• Требуй оплату']
+            },
+            breakdown: {
+                patterns: ['breakdown', 'поломка', 'сломался'],
+                responses: ['🛠️ Поломка:\n1. Сразу звони брокеру\n2. Найди замену (если можешь)\n3. Документируй все\n4. Проверь страховку\n5. Будь честен о сроках']
+            },
+            accident: {
+                patterns: ['авария', 'accident', 'дтп'],
+                responses: ['🚨 При аварии:\n1. Безопасность первое!\n2. Вызови полицию\n3. Звони брокеру СРАЗУ\n4. Фото всего\n5. Не признавай вину\n6. Страховая компания']
+            },
+            refuse: {
+                patterns: ['если откажут', 'отказ', 'отказать'],
+                responses: ['❌ Если брокер отказывает:\n• "Спасибо, удачи!"\n• Не спорь\n• Переходи к следующему\n• Запомни компанию\n• Анализируй почему']
+            },
+
+            // Стратегии
+            polite: {
+                patterns: ['вежливость', 'как быть вежливым', 'вежливо'],
+                responses: ['😊 Вежливость:\n• "Thank you for the opportunity"\n• "I appreciate your time"\n• "Let me check and get back to you"\n• Никогда не груби\n• Профессионализм = больше грузов']
+            },
+            confident: {
+                patterns: ['уверенность', 'как быть уверенным', 'уверенно'],
+                responses: ['💪 Уверенность:\n• Знай свои цифры\n• Говори четко\n• Не извиняйся за цену\n• "This is my rate"\n• Пауза после цены = сила']
+            },
+            professional: {
+                patterns: ['профессионал', 'как профессионал', 'профи'],
+                responses: ['🎭 Профессионализм:\n• Знай терминологию\n• Задавай правильные вопросы\n• Записывай детали\n• Перезванивай вовремя\n• Держи слово']
+            },
+            silence: {
+                patterns: ['молчать', 'молчание', 'пауза'],
+                responses: ['🤐 Сила молчания:\n• После названия цены — МОЛЧИ\n• Пусть брокер говорит первым\n• 5-10 секунд тишины\n• Не заполняй паузу\n• Кто говорит первый — проигрывает']
+            },
+            question: {
+                patterns: ['какой вопрос', 'что спросить', 'вопрос'],
+                responses: ['❓ Важные вопросы:\n• Pickup/delivery time?\n• Weight and dimensions?\n• Any special requirements?\n• Detention pay?\n• Payment terms?\n• Contact info?']
+            },
+
+            // Финансы
+            rpm: {
+                patterns: ['rpm', 'rate per mile', 'ставка за милю'],
+                responses: ['💵 RPM (Rate Per Mile):\n• Общая ставка ÷ мили\n• Хороший RPM: $2.00+\n• Учитывай deadhead!\n• Пример: $2000 ÷ 1000 = $2.00/mi']
+            },
+            costs: {
+                patterns: ['расходы', 'затраты', 'costs'],
+                responses: ['💰 Основные расходы:\n• Топливо: $0.50-0.80/mile\n• Страховка: $500-1500/месяц\n• Maintenance: $0.15-0.25/mile\n• Permits: $500-2000/год\n• Итого: ~$1.00-1.50/mile']
+            },
+            profit: {
+                patterns: ['прибыль', 'profit', 'заработок'],
+                responses: ['📊 Расчет прибыли:\n• Gross = общая ставка\n• Вычти все расходы\n• Net = чистая прибыль\n• Цель: 20-30% margin\n• Пример: $2000 - $1200 = $800']
+            },
+            salary: {
+                patterns: ['зарплата', 'salary', 'сколько платят'],
+                responses: ['💸 Зарплата диспетчера:\n• Начинающий: $35-45k/год\n• Опытный: $50-70k/год\n• Топ: $70-100k+/год\n• Часто % от gross\n• Зависит от компании']
+            },
+
+            // Действия
+            agree: {
+                patterns: ['согласиться', 'принять', 'agree'],
+                responses: ['✅ Как согласиться:\n• "That works for me"\n• "Let\'s book it"\n• "Send me the Rate Con"\n• Подтверди детали\n• Запиши все']
+            },
+            decline: {
+                patterns: ['отказать', 'decline', 'refuse'],
+                responses: ['❌ Как отказать:\n• "Thank you, but I\'ll pass"\n• "Not this time"\n• "I have a better offer"\n• Будь вежлив\n• Не сжигай мосты']
+            },
+            think: {
+                patterns: ['подумать', 'нужно подумать', 'think'],
+                responses: ['🤔 Попросить время:\n• "Let me check my schedule"\n• "I need to calculate"\n• "Can I call you back in 10 min?"\n• Не спеши!\n• Проверь альтернативы']
+            },
+            callback: {
+                patterns: ['перезвонить', 'callback', 'call back'],
+                responses: ['📞 Перезвонить:\n• "I\'ll call you back in 15 minutes"\n• Запиши имя и номер\n• Перезвони ВОВРЕМЯ\n• Подготовь ответ\n• Профессионализм важен']
+            },
+            time: {
+                patterns: ['попросить время', 'время подумать', 'нужно время'],
+                responses: ['⏰ Попросить время:\n• "Give me 10 minutes"\n• "Let me check with my driver"\n• "I need to calculate costs"\n• Используй время мудро\n• Проверь конкурентов']
+            },
+
+            // Специальные ситуации
+            urgent: {
+                patterns: ['срочно', 'срочный груз', 'urgent'],
+                responses: ['🔥 Срочный груз:\n• Выше ставка (+20-50%)\n• Меньше времени на решение\n• Проверь реальность сроков\n• "I can do it for..."\n• Не паникуй!']
+            },
+            night: {
+                patterns: ['ночь', 'ночная доставка', 'night'],
+                responses: ['🌙 Ночная доставка:\n• Требуй доплату\n• Проверь HOS водителя\n• Безопасность важнее\n• +$100-300 к ставке\n• Уточни время приемки']
+            },
+            weekend: {
+                patterns: ['выходные', 'weekend', 'суббота', 'воскресенье'],
+                responses: ['🎄 Выходные:\n• Доплата обязательна!\n• +$150-500 к ставке\n• Проверь работает ли получатель\n• Detention выше\n• Планируй заранее']
+            },
+            temperature: {
+                patterns: ['температура', 'температурный режим', 'temperature'],
+                responses: ['🌡️ Температурный режим:\n• Уточни точную температуру\n• Проверь оборудование\n• Мониторинг обязателен\n• Документируй показания\n• Штраф за нарушение огромный!']
+            },
+            weight: {
+                patterns: ['вес', 'вес груза', 'weight'],
+                responses: ['⚖️ Вес груза:\n• Максимум: 45,000 lbs\n• Проверь на весах\n• Overweight = штраф\n• Учитывай вес трейлера\n• Спроси точный вес']
+            },
+            dimensions: {
+                patterns: ['размер', 'размеры', 'dimensions'],
+                responses: ['📏 Размеры:\n• Стандарт: 53\' x 8.5\' x 9\'\n• Oversize = permits\n• Проверь высоту\n• Ширина важна\n• Спроси точные размеры']
+            },
+
+            // Мотивация
+            motivation: {
+                patterns: ['мотивация', 'motivation'],
+                responses: ['💪 Ты можешь!\n• Каждый звонок = опыт\n• Ошибки = уроки\n• Практика = мастерство\n• Не сдавайся\n• Следующий груз твой!']
+            },
+            goodjob: {
+                patterns: ['молодец', 'как я справляюсь', 'good job'],
+                responses: ['🎉 Отлично работаешь!\n• Продолжай в том же духе\n• Анализируй каждый диалог\n• Учись на ошибках\n• Ты становишься лучше\n• Keep going!']
+            },
+            tipofday: {
+                patterns: ['совет дня', 'tip of day'],
+                responses: ['🌟 Совет дня:\n• Записывай каждый звонок\n• Анализируй что сработало\n• Учи новые термины\n• Слушай опытных\n• Практика каждый день!']
+            },
+
+            // Обучение
+            teach: {
+                patterns: ['научи', 'teach', 'обучи'],
+                responses: ['🎓 Основы диспетчинга:\n1. Знай рынок\n2. Умей торговаться\n3. Будь профессионален\n4. Документируй все\n5. Строй отношения\n6. Учись постоянно']
+            },
+            idea: {
+                patterns: ['дай идею', 'idea', 'идея'],
+                responses: ['✨ Попробуй:\n• Задай уточняющий вопрос\n• Покажи заинтересованность\n• Упомяни свой опыт\n• Будь уверен в цене\n• Предложи альтернативу']
+            },
+
+            // Общие
+            help: {
+                patterns: ['помощь', 'что ты умеешь', 'help'],
+                responses: ['⚡ Я помогу с:\n• Анализом диалога\n• Советами по шагам\n• Терминами и документами\n• Переговорами и ценами\n• Проблемами и решениями\n• Мотивацией\n\nПросто спроси!']
+            },
+            advice: {
+                patterns: ['совет', 'подскажи'],
+                responses: [
+                    '💡 Золотое правило:\nБудь уверенным, но вежливым. Слушай внимательно, задавай вопросы, не спеши соглашаться. Каждый диалог — это возможность!',
+                    '🌟 Совет профи:\nЗапоминай имена брокеров. Хорошие отношения = лучшие грузы. Один довольный брокер приведёт десять новых!',
+                    '🎯 Практический совет:\nПосле каждого диалога записывай что сработало. Анализ = рост. Через месяц ты будешь в 2 раза лучше!',
+                    '⚡ Быстрый совет:\nНе соглашайся на первую цену НИКОГДА. Даже если хорошая — попробуй поднять на $50-100. Хуже не будет!'
+                ]
+            },
+            thanks: {
+                patterns: ['спасибо', 'благодар', 'thanks'],
+                responses: [
+                    'Пожалуйста! 😊 Удачи в симуляции!',
+                    'Всегда рад помочь! 🚀 Ты справишься!',
+                    'Обращайся! 💪 Я здесь для тебя!'
+                ]
+            }
+        };
+
+        // Capture conversation context from main chat
+        function captureConversationContext() {
+            const messages = document.querySelectorAll('#messagesContainer .message');
+            conversationContext = [];
+
+            messages.forEach(msg => {
+                const content = msg.querySelector('.message-content');
+                const sender = msg.classList.contains('user') ? 'dispatcher' : 'broker';
+                if (content) {
+                    const text = content.textContent.trim();
+                    // Remove name labels and progress info
+                    const cleanText = text.split('\n')[0] || text;
+                    conversationContext.push({
+                        sender: sender,
+                        text: cleanText
+                    });
+                }
+            });
+
+            return conversationContext;
+        }
+
+        // Analyze conversation and provide context-aware response
+        function analyzeConversation() {
+            const context = captureConversationContext();
+
+            if (context.length === 0) {
+                return '📊 Диалог еще не начался. Выбери сценарий на главной странице!';
+            }
+
+            const lastMessages = context.slice(-3);
+            let analysis = '📊 Анализ диалога:\n\n';
+
+            // Show last 3 messages
+            analysis += '💬 Последние сообщения:\n';
+            lastMessages.forEach((msg, idx) => {
+                const icon = msg.sender === 'dispatcher' ? '👤' : '💼';
+                analysis += `${icon} ${msg.sender === 'dispatcher' ? 'Ты' : 'Брокер'}: "${msg.text.substring(0, 50)}${msg.text.length > 50 ? '...' : ''}"\n`;
+            });
+
+            analysis += `\n📈 Всего сообщений: ${context.length}`;
+
+            // Add score if available
+            if (typeof currentDispatcherScore !== 'undefined' && currentDispatcherScore > 0) {
+                analysis += `\n⭐ Твой счет: ${currentDispatcherScore}`;
+            }
+
+            return analysis;
+        }
+
+        // Analyze current step with detailed insights - AUTOMATIC ON OPEN
+        function analyzeCurrentStep() {
+            const context = captureConversationContext();
+
+            if (context.length === 0) {
+                return '📊 Диалог еще не начался.\n\n🎯 Выбери сценарий на главной странице и начни общение с брокером!';
+            }
+
+            let analysis = '📊 АНАЛИТИКА ТЕКУЩЕГО ШАГА\n\n';
+
+            // Current step info
+            if (typeof conversationStep !== 'undefined') {
+                analysis += `📍 Шаг диалога: ${conversationStep + 1}\n`;
+            }
+
+            // Score info
+            if (typeof currentDispatcherScore !== 'undefined' && currentDispatcherScore > 0) {
+                analysis += `⭐ Твой счет: ${currentDispatcherScore}`;
+                if (typeof totalPossibleScore !== 'undefined' && totalPossibleScore > 0) {
+                    const percentage = Math.round((currentDispatcherScore / totalPossibleScore) * 100);
+                    analysis += ` из ${totalPossibleScore} (${percentage}%)`;
+                }
+                analysis += '\n';
+            }
+
+            analysis += '\n';
+
+            // Show last 3 messages with full text
+            const lastMessages = context.slice(-3);
+            lastMessages.forEach((msg, idx) => {
+                const icon = msg.sender === 'dispatcher' ? '👤' : '💼';
+                const label = msg.sender === 'dispatcher' ? 'Ты' : 'Брокер';
+                analysis += `${icon} ${label}:\n"${msg.text}"\n\n`;
+            });
+
+            // Get last broker message for context
+            const lastBrokerMsg = context.filter(m => m.sender === 'broker').slice(-1)[0];
+            const lastDispatcherMsg = context.filter(m => m.sender === 'dispatcher').slice(-1)[0];
+
+            if (lastBrokerMsg) {
+                analysis += '\n🎯 ЧТО СЕЙЧАС ПРОИСХОДИТ:\n';
+                const brokerText = lastBrokerMsg.text.toLowerCase();
+
+                // Detailed context analysis
+                if (brokerText.includes('rate') || brokerText.includes('ставк') || brokerText.includes('price') || brokerText.includes('цен') || brokerText.includes('$')) {
+                    analysis += '💰 Обсуждение ставки\n';
+                    analysis += '• Брокер говорит о цене\n';
+                    if (lastDispatcherMsg && (lastDispatcherMsg.text.includes('$') || lastDispatcherMsg.text.toLowerCase().includes('rate'))) {
+                        analysis += '• Ты уже назвал свою цену\n';
+                        analysis += '• Сейчас идут переговоры\n';
+                    } else {
+                        analysis += '• Пора называть свою цену\n';
+                    }
+                } else if (brokerText.includes('load') || brokerText.includes('груз') || brokerText.includes('freight') || brokerText.includes('pickup') || brokerText.includes('delivery')) {
+                    analysis += '📦 Обсуждение деталей груза\n';
+                    analysis += '• Брокер описывает груз\n';
+                    analysis += '• Узнай все детали перед ценой\n';
+                } else if (brokerText.includes('?')) {
+                    analysis += '❓ Брокер задал вопрос\n';
+                    analysis += '• Нужен четкий ответ\n';
+                    analysis += '• Покажи профессионализм\n';
+                } else if (brokerText.includes('hello') || brokerText.includes('hi') || brokerText.includes('привет')) {
+                    analysis += '👋 Начало диалога\n';
+                    analysis += '• Приветствие\n';
+                    analysis += '• Установление контакта\n';
+                } else {
+                    analysis += '💬 Общение продолжается\n';
+                    analysis += '• Веди диалог к сделке\n';
+                }
+
+                analysis += '\n💡 РЕКОМЕНДАЦИЯ:\n';
+                const nextStepAdvice = suggestNextStep();
+                const advicePart = nextStepAdvice.split('\n\n')[1];
+                if (advicePart) {
+                    analysis += advicePart;
+                } else {
+                    analysis += 'Продолжай диалог профессионально';
+                }
+            }
+
+            return analysis;
+        }
+
+        // Provide next step suggestion based on context
+        function suggestNextStep() {
+            const context = captureConversationContext();
+
+            if (context.length === 0) {
+                return '🎯 Начни диалог! Выбери сценарий и поздоровайся с брокером.';
+            }
+
+            const lastBrokerMsg = context.filter(m => m.sender === 'broker').slice(-1)[0];
+
+            if (!lastBrokerMsg) {
+                return '🎯 Брокер еще не ответил. Подожди его сообщение.';
+            }
+
+            let suggestion = '🎯 Рекомендация:\n\n';
+            const brokerText = lastBrokerMsg.text.toLowerCase();
+
+            // Context-aware suggestions
+            if (brokerText.includes('rate') || brokerText.includes('ставк') || brokerText.includes('price') || brokerText.includes('цен')) {
+                suggestion += '💰 Брокер говорит о ставке:\n';
+                suggestion += '• Не соглашайся сразу\n';
+                suggestion += '• Назови цену на 15-20% выше\n';
+                suggestion += '• Обоснуй свою цену\n';
+                suggestion += '• Будь готов к компромиссу';
+            } else if (brokerText.includes('load') || brokerText.includes('груз') || brokerText.includes('freight')) {
+                suggestion += '📦 Брокер описывает груз:\n';
+                suggestion += '• Уточни вес и размеры\n';
+                suggestion += '• Спроси про pickup/delivery время\n';
+                suggestion += '• Узнай про специальные требования\n';
+                suggestion += '• Проверь расстояние';
+            } else if (brokerText.includes('?')) {
+                suggestion += '❓ Брокер задал вопрос:\n';
+                suggestion += '• Ответь четко и уверенно\n';
+                suggestion += '• Покажи профессионализм\n';
+                suggestion += '• Задай встречный вопрос\n';
+                suggestion += '• Не спеши соглашаться';
+            } else {
+                suggestion += '💬 Продолжай диалог:\n';
+                suggestion += '• Будь вежлив и профессионален\n';
+                suggestion += '• Задавай уточняющие вопросы\n';
+                suggestion += '• Показывай заинтересованность\n';
+                suggestion += '• Веди к выгодной сделке';
+            }
+
+            return suggestion;
+        }
+
+        function getAITime() {
+            return new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function addAIMessage(text, sender) {
+            const messageEl = document.createElement('div');
+            messageEl.classList.add('ai-message', sender);
+            messageEl.innerHTML = `${text.replace(/\n/g, '<br>')}<span class="time">${getAITime()}</span>`;
+            aiChatbotMessages.appendChild(messageEl);
+            aiChatbotMessages.scrollTop = aiChatbotMessages.scrollHeight;
+        }
+
+        function showAITyping() {
+            aiTypingIndicator.classList.add('active');
+            aiChatbotMessages.scrollTop = aiChatbotMessages.scrollHeight;
+        }
+
+        function hideAITyping() {
+            aiTypingIndicator.classList.remove('active');
+        }
+
+        function getAIBotResponse(input) {
+            const lowerInput = input.toLowerCase().trim();
+
+            // Check for context-aware responses first
+            for (const category of Object.values(aiBotBrain)) {
+                for (const pattern of category.patterns) {
+                    if (lowerInput.includes(pattern)) {
+                        const responses = category.responses;
+                        const response = responses[Math.floor(Math.random() * responses.length)];
+
+                        // Handle special context responses
+                        if (response === 'CONTEXT_RESPONSE') return analyzeConversation();
+                        if (response === 'ANALYZE_RESPONSE') return analyzeConversation();
+                        if (response === 'NEXT_STEP_RESPONSE') return suggestNextStep();
+
+                        return response;
+                    }
+                }
+            }
+
+            // Рандомный fallback из набора подсказок
+            const fallbacks = [
+                '🤔 Попробуй спросить:\n• "Что происходит?" — анализ\n• "Что дальше?" — совет\n• "Переговоры" — тактика\n• "BOL / POD / HOS" — термины',
+                '💡 Не знаю такого, но могу помочь с:\n• Анализом диалога\n• Советом по ставке\n• Документами (BOL, POD)\n• Тактикой переговоров',
+                '🎯 Уточни вопрос! Например:\n• "Какую ставку назвать?"\n• "Как отказать вежливо?"\n• "Что такое detention?"\n• "Как быть уверенным?"',
+                '⚡ Я здесь! Спроси про:\n• Цену и торг 💰\n• Документы 📋\n• Проблемы 🛠️\n• Следующий шаг 🎯'
+            ];
+            return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+        }
+
+        function sendAIMessage() {
+            const text = aiUserInput.value.trim();
+            if (!text) return;
+
+            addAIMessage(text, 'user');
+            aiUserInput.value = '';
+
+            showAITyping();
+
+            setTimeout(() => {
+                hideAITyping();
+                const response = getAIBotResponse(text);
+                addAIMessage(response, 'bot');
+            }, 500 + Math.random() * 500);
+        }
+
+        function sendAIQuick(text) {
+            aiUserInput.value = text;
+            sendAIMessage();
+        }
+
+        aiUserInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendAIMessage();
+        });
     </script>
 </body>
 
