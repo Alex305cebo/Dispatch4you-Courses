@@ -7964,9 +7964,10 @@ LANGUAGE: Match dispatcher's language. Always use real freight terms: MC, rate c
         }
 
         // ── FALLBACK BROKER (when Groq is unavailable) ───────────────────────
-        // Stage tracker so fallback progresses naturally through negotiation
         let _fallbackStage = 0;
-        function resetFallbackStage() { _fallbackStage = 0; }
+        let _fallbackMsgCount = 0; // counts every dispatcher message — forces stage advance
+
+        function resetFallbackStage() { _fallbackStage = 0; _fallbackMsgCount = 0; }
 
         function getFallbackBrokerResponse(userMessage) {
             const msg = (userMessage || '').toLowerCase();
@@ -7988,36 +7989,46 @@ LANGUAGE: Match dispatcher's language. Always use real freight terms: MC, rate c
             const bump1 = openingTotal + 150;
             const bump2 = openingTotal + 300;
 
-            const hasMC = msg.includes('mc') && /\d{4,}/.test(msg);
-            const isCounter = /\$[\d,]+/.test(msg) || msg.includes('higher') || msg.includes('more') || msg.includes('market') || msg.includes('low');
-            const hasDeal = msg.includes('deal') || msg.includes('agree') || msg.includes('accept') || msg.includes('book') || msg.includes('confirmed');
+            _fallbackMsgCount++;
+
+            const hasMC = (msg.includes('mc') && /\d{4,}/.test(msg)) || /\b\d{6,}\b/.test(msg);
+            const isCounter = /\$[\d,]+/.test(msg) || msg.includes('higher') || msg.includes('more') || msg.includes('market') || msg.includes('low') || msg.includes('best');
+            const hasDeal = msg.includes('deal') || msg.includes('agree') || msg.includes('accept') || msg.includes('book') || msg.includes('confirmed') || msg.includes('okay') || msg.includes('ok');
             const hasW9 = msg.includes('w9') || msg.includes('insurance') || msg.includes('rate con') || msg.includes('email');
 
-            if (hasDeal && _fallbackStage >= 3) { _fallbackStage = 6; }
-            else if (hasW9) { _fallbackStage = 7; }
-            else if (_fallbackStage === 0) { _fallbackStage = hasMC ? 2 : 1; }
-            else if (_fallbackStage === 1 && hasMC) { _fallbackStage = 2; }
-            else if (_fallbackStage === 2) { _fallbackStage = 3; }
-            else if (_fallbackStage === 3 && isCounter) { _fallbackStage = 4; }
-            else if (_fallbackStage === 4 && isCounter) { _fallbackStage = 5; }
+            // Priority overrides
+            if (hasW9) { _fallbackStage = 7; }
+            else if (hasDeal && _fallbackStage >= 3) { _fallbackStage = 6; }
+            // Normal flow — advance by content OR by message count (max 2 msgs per stage)
+            else if (_fallbackStage === 0) {
+                _fallbackStage = hasMC ? 2 : 1;
+            } else if (_fallbackStage === 1) {
+                if (hasMC || _fallbackMsgCount >= 3) _fallbackStage = 2;
+            } else if (_fallbackStage === 2) {
+                _fallbackStage = 3; // always advance after giving load details
+            } else if (_fallbackStage === 3) {
+                if (isCounter || _fallbackMsgCount >= 5) _fallbackStage = 4;
+            } else if (_fallbackStage === 4) {
+                if (isCounter || _fallbackMsgCount >= 7) _fallbackStage = 5;
+            }
 
             switch (_fallbackStage) {
                 case 1:
-                    return 'Freight Solutions, this is ' + bName + '. Can I get your MC number to verify?';
+                    return 'Freight Solutions, this is ' + bName + '. I need your MC number to verify — what is it?';
                 case 2:
                     return 'MC checks out. Load is ' + route + ', ' + miles + ' miles, ' + commodity + ', pickup tomorrow 8 AM. Best I can do is $' + openingTotal.toLocaleString() + ' for this load.';
                 case 3:
-                    return '$' + openingTotal.toLocaleString() + ' all-in — you interested?';
+                    return '$' + openingTotal.toLocaleString() + ' all-in, that is where I am at. You want it or not?';
                 case 4:
-                    return 'I hear you. I can go to $' + bump1.toLocaleString() + ', that is the best I can do on this lane.';
+                    return 'Alright, I can go to $' + bump1.toLocaleString() + '. That is the best I can do on this lane.';
                 case 5:
-                    return '$' + bump2.toLocaleString() + ' — that is my final number. Take it or leave it, I got other carriers ready.';
+                    return '$' + bump2.toLocaleString() + ' — final number. I got other carriers ready, take it or leave it.';
                 case 6:
-                    return 'Alright, we are good. Send your W9 and insurance cert to ops@freightco.com and I will get the rate con out to you.';
+                    return 'Done. Send W9 and insurance to ops@freightco.com, I will get the rate con out to you.';
                 case 7:
-                    return 'Got it. Rate con is on its way. Driver needs to be at pickup by 8 AM sharp.';
+                    return 'Got it. Rate con on its way. Driver at pickup by 8 AM sharp.';
                 default:
-                    return 'Freight Solutions, this is ' + bName + '. Can I get your MC number?';
+                    return 'Freight Solutions, this is ' + bName + '. Go ahead.';
             }
         }
         function sendAIMessage() {
