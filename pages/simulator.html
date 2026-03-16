@@ -1508,8 +1508,8 @@
             flex-shrink: 0;
         }
 
-        /* Скрыть все кнопки КРОМЕ sendBtn, resetButton, historyButton, aiInlineBtn */
-        .input-area button:not(#sendBtn):not(#resetButton):not(#historyButton):not(#aiInlineBtn) {
+        /* Скрыть все кнопки КРОМЕ sendBtn, resetButton, historyButton, aiInlineBtn, micBtn, ttsToggleBtn, voiceCallBtn */
+        .input-area button:not(#sendBtn):not(#resetButton):not(#historyButton):not(#aiInlineBtn):not(#micBtn):not(#ttsToggleBtn):not(#voiceCallBtn) {
             display: none !important;
         }
 
@@ -6549,6 +6549,38 @@ Return this exact JSON structure:
             }
         }
 
+        // ── LOCAL EVALUATOR (always runs, no Groq needed) ───────
+        function _localEvaluate(text) {
+            const msg = text.toLowerCase();
+            let points = 0;
+            let reason = '';
+
+            // Positive actions
+            if ((msg.includes('mc') && /\d{4,}/.test(msg)) && msg.includes('company') || (msg.includes('mc') && /\d{4,}/.test(msg) && msg.length > 20)) {
+                points = 15; reason = 'MC + компания — отличная квалификация';
+            } else if (msg.includes('mc') && /\d{4,}/.test(msg)) {
+                points = 10; reason = 'Дал MC номер';
+            } else if (/dat|market|lane rate|\$\d.*mile/i.test(msg)) {
+                points = 20; reason = 'Контр с рыночными данными';
+            } else if (/\$[\d,]{4,}/.test(msg) && (msg.includes('need') || msg.includes('can do') || msg.includes('offer'))) {
+                points = 15; reason = 'Контр-оффер с обоснованием';
+            } else if (msg.includes('deadhead') || msg.includes('fuel') || msg.includes('empty miles')) {
+                points = 12; reason = 'Обоснование через расходы';
+            } else if (msg.includes('weight') || msg.includes('pickup') || msg.includes('delivery') || msg.includes('commodity') || msg.includes('hazmat')) {
+                points = 8; reason = 'Уточнение деталей груза';
+            }
+            // Negative actions
+            else if (msg.includes('accept') || msg.includes('we take') || msg.includes('we can do it') || msg.includes('sounds good') || msg.includes('deal')) {
+                if (_fallbackStage <= 3) { points = -8; reason = 'Принял первое предложение'; }
+            } else if (msg.length < 8) {
+                points = -5; reason = 'Слишком короткий ответ';
+            } else if (msg.includes('how are you') || msg.includes('good morning') || msg.includes('good afternoon')) {
+                points = 2; reason = 'Вежливое приветствие';
+            }
+
+            if (points !== 0) showScoreFeedback(points, reason);
+        }
+
         // ── UPDATED sendMessage with evaluation ─────────────────
         function sendMessage() {
             const text = inputField.value.trim();
@@ -6577,6 +6609,9 @@ Return this exact JSON structure:
 
                 // Evaluate dispatcher message in background
                 evaluateDispatcherMessage(text);
+
+                // Local patience update — always runs regardless of Groq availability
+                _localEvaluate(text);
 
                 showTypingIndicator();
                 callGeminiAPI(text).then(response => {
