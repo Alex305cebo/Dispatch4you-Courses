@@ -3066,6 +3066,34 @@
             }
         }
 
+        @keyframes aiPulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+            }
+        }
+
+        @keyframes aiPulseRed {
+            0% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
+        }
+
         /* ── DEAL RESULT MODAL ── */
         .deal-modal-overlay {
             position: fixed;
@@ -3466,19 +3494,14 @@
     <!-- Chat View - вынесен из container -->
     <div class="chat-view" id="chatView">
 
-        <!-- Difficulty selector — shown only when chat active -->
-        <div class="difficulty-bar" id="difficultyBar">
-            <button class="diff-btn" id="diffBeginner" onclick="setDifficulty('beginner')">🟢 Beginner</button>
-            <button class="diff-btn active-standard" id="diffStandard" onclick="setDifficulty('standard')">🔵
-                Standard</button>
-            <button class="diff-btn" id="diffHard" onclick="setDifficulty('hard')">🔴 Hard</button>
-        </div>
+        <!-- Difficulty selector — hidden, locked to standard -->
+        <div class="difficulty-bar" id="difficultyBar" style="display:none!important"></div>
 
         <!-- Broker patience bar -->
         <div class="nego-progress" id="negoProgress" style="display:none">
             <div class="nego-progress-label">
-                <span>😤 Терпение брокера</span>
-                <span class="nego-patience-status" id="patienceStatus" style="color:#10b981">Спокоен</span>
+                <span>📦 Шанс потерять груз</span>
+                <span class="nego-patience-status" id="patienceStatus" style="color:#10b981">Низкий</span>
             </div>
             <div class="nego-progress-track">
                 <div class="nego-progress-fill" id="negoFill" style="width:100%"></div>
@@ -3494,13 +3517,18 @@
         </div>
 
         <div class="input-area">
-            <button class="ai-inline-btn" id="aiInlineBtn" title="Спросить AI помощника">🤖</button>
+            <button class="ai-inline-btn" id="aiInlineBtn" title="Спросить AI помощника"
+                style="display:none!important">🤖</button>
             <textarea class="input-field" id="inputField" placeholder="Введите ваше сообщение..." rows="1"></textarea>
-            <div id="groqIndicator" title="Groq AI статус"
-                style="display:flex;align-items:center;gap:4px;padding:0 6px;flex-shrink:0;cursor:default;">
-                <span id="groqDot"
-                    style="width:8px;height:8px;border-radius:50%;background:#64748b;display:inline-block;transition:background 0.4s;"></span>
-            </div>
+            <!-- AI Status Indicator Button -->
+            <button id="aiStatusBtn" title="AI активен — нажми для чата с AI" onclick="toggleAiChatMode()" style="
+                    width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;
+                    background:radial-gradient(circle, #22c55e, #16a34a);
+                    box-shadow:0 0 0 0 rgba(34,197,94,0.6);
+                    animation:aiPulse 2s ease infinite;
+                    flex-shrink:0;display:flex;align-items:center;justify-content:center;
+                    font-size:15px;transition:background 0.3s,box-shadow 0.3s;
+                ">🤖</button>
             <button class="universal-call-btn" id="universalCallBtn" title="Голосовой звонок"
                 onclick="toggleUniversalCall()">📞</button>
             <button class="send-btn" id="sendBtn" disabled>➤</button>
@@ -3536,7 +3564,7 @@
     </script>
 
     <!-- Scenarios Data - single bundled file, no external dependencies -->
-    <script src="scenarios-inline.js?v=20260316"></script>
+    <script src="scenarios-new.js?v=20260316"></script>
     <script>
         console.log('✅ Scenarios loaded:', typeof allScenarios !== 'undefined' ? allScenarios.length : 'ERROR - allScenarios undefined');
     </script>
@@ -3583,7 +3611,7 @@
         // geminiHistory declared here so it's accessible from both script blocks
         const geminiHistory = [];
 
-        // Groq API config — declared here so showSuggestions (first block) can access it
+        // AI API config — declared here so showSuggestions (first block) can access it
         const _k = ['gsk_7b9aEN1PMQBKSKbw', 'GOyoWGdyb3FYcNiq4FWZScbJ4iZYYSYOF4Qh'];
         const GROQ_API_KEY = _k[0] + _k[1];
         const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
@@ -4221,6 +4249,8 @@
             };
 
             // Добавляем кнопки в input-area перед кнопкой отправки
+            // resetBtn скрыт — сброс через меню сценариев
+            resetBtn.style.display = 'none';
             inputArea.insertBefore(resetBtn, sendBtn);
         }
 
@@ -4524,27 +4554,24 @@
                 return;
             }
 
-            // Extract dispatcher name from initialMessage
-            // Format: "This is [Name] from [Company]"
-            const nameMatch = greeting.match(/This is ([A-Z][a-z]+(?: [A-Z][a-z]+)?)/);
-            if (nameMatch && nameMatch[1]) {
-                dispatcherName = nameMatch[1].split(' ')[0]; // Get first name only
-            } else {
-                dispatcherName = dispatcherNames[Math.floor(Math.random() * dispatcherNames.length)];
-            }
+            // Dispatcher name — fixed per scenario or default "Alex"
+            // Never parse from initialMessage (that contains broker's intro)
+            dispatcherName = currentScenario.dispatcherName || 'Alex';
 
-            // Extract broker name from first broker message
-            // Format: "This is [Name] from [Company]"
-            const firstPath = Object.keys(currentScenario.paths)[0];
-            const firstStep = currentScenario.paths[firstPath][0];
-            const brokerMessage = firstStep.brokerQuestion || '';
-            const brokerNameMatch = brokerMessage.match(/This is ([A-Z][a-z]+(?: [A-Z][a-z]+)?)/);
-            if (brokerNameMatch && brokerNameMatch[1]) {
-                const extractedName = brokerNameMatch[1].split(' ')[0];
-                // Don't use broker name if it matches dispatcher name (avoid confusion)
-                brokerName = (extractedName !== dispatcherName) ? extractedName : brokerNames[Math.floor(Math.random() * brokerNames.length)];
+            // Use brokerName field if available, otherwise extract from message
+            if (currentScenario.brokerName) {
+                brokerName = currentScenario.brokerName;
             } else {
-                brokerName = brokerNames[Math.floor(Math.random() * brokerNames.length)];
+                const firstPath = Object.keys(currentScenario.paths)[0];
+                const firstStep = currentScenario.paths[firstPath][0];
+                const brokerMessage = firstStep.brokerQuestion || '';
+                const brokerNameMatch = brokerMessage.match(/This is ([A-Z][a-z]+(?: [A-Z][a-z]+)?)/);
+                if (brokerNameMatch && brokerNameMatch[1]) {
+                    const extractedName = brokerNameMatch[1].split(' ')[0];
+                    brokerName = (extractedName !== dispatcherName) ? extractedName : brokerNames[Math.floor(Math.random() * brokerNames.length)];
+                } else {
+                    brokerName = brokerNames[Math.floor(Math.random() * brokerNames.length)];
+                }
             }
 
             welcomeScreen.style.display = 'none';
@@ -4574,7 +4601,7 @@
                 const firstPath = Object.keys(currentScenario.paths)[0];
                 const firstStep = currentScenario.paths[firstPath][0];
 
-                // First broker response — use script data IMMEDIATELY (no Groq wait)
+                // First broker response — use script data IMMEDIATELY (no AI wait)
                 geminiHistory.length = 0;
                 geminiHistory.push({ role: 'user', text: greeting });
 
@@ -5023,32 +5050,68 @@
             const container = document.getElementById('messagesContainer') || messagesContainer;
             if (!container) return;
 
+            // ── ACCORDION WRAPPER ──
             const buttonContainer = document.createElement('div');
             buttonContainer.id = 'suggestions';
             buttonContainer.style.cssText = `
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-                padding: 12px 16px;
                 width: 100%;
                 box-sizing: border-box;
+                padding: 4px 16px 8px;
             `;
 
-            const label = document.createElement('div');
-            label.style.cssText = `font-size: 11px; font-weight: 600; color: rgba(167,139,250,0.7);
-                letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px;`;
-            label.textContent = '💡 Варианты ответа';
-            buttonContainer.appendChild(label);
+            // Toggle header
+            const header = document.createElement('div');
+            header.style.cssText = `
+                display: flex; align-items: center; gap: 6px;
+                cursor: pointer; user-select: none;
+                font-size: 12px; font-weight: 600;
+                color: rgba(167,139,250,0.6);
+                letter-spacing: 0.08em; text-transform: uppercase;
+                padding: 6px 2px;
+                transition: color 0.2s;
+            `;
+            header.innerHTML = `<span id="suggArrow" style="transition:transform 0.25s;display:inline-block">▶</span> 💡 Варианты ответа`;
+            header.onmouseover = () => header.style.color = 'rgba(167,139,250,0.9)';
+            header.onmouseout = () => { if (!bodyEl.style.display || bodyEl.style.display === 'none') header.style.color = 'rgba(167,139,250,0.6)'; };
 
+            // Collapsible body
+            const bodyEl = document.createElement('div');
+            bodyEl.id = 'suggestionsBody';
+            bodyEl.style.cssText = `
+                display: none;
+                flex-direction: column;
+                gap: 6px;
+                margin-top: 6px;
+                overflow: hidden;
+                transition: all 0.25s ease;
+            `;
+
+            header.onclick = () => {
+                const arrow = document.getElementById('suggArrow');
+                if (bodyEl.style.display === 'none') {
+                    bodyEl.style.display = 'flex';
+                    if (arrow) arrow.style.transform = 'rotate(90deg)';
+                    header.style.color = 'rgba(167,139,250,0.9)';
+                    // Scroll into view
+                    setTimeout(() => buttonContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+                } else {
+                    bodyEl.style.display = 'none';
+                    if (arrow) arrow.style.transform = 'rotate(0deg)';
+                    header.style.color = 'rgba(167,139,250,0.6)';
+                }
+            };
+
+            buttonContainer.appendChild(header);
+            buttonContainer.appendChild(bodyEl);
             container.appendChild(buttonContainer);
 
-            // If we have scenario suggestions — use them immediately, no Groq needed
+            // If we have scenario suggestions — use them immediately, no AI needed
             if (suggestions && suggestions.length) {
-                renderStaticSuggestions(buttonContainer, suggestions);
+                renderStaticSuggestions(bodyEl, suggestions);
                 return;
             }
 
-            // No scenario suggestions — try Groq for dynamic suggestions
+            // No scenario suggestions — try AI for dynamic suggestions
             const brokerMsgs = container.querySelectorAll('.message.broker');
             let lastBrokerMsg = '';
             if (brokerMsgs.length) {
@@ -5062,15 +5125,15 @@
             }
 
             if (!lastBrokerMsg) {
-                renderStaticSuggestions(buttonContainer, []);
+                renderStaticSuggestions(bodyEl, []);
                 return;
             }
 
-            // Loading state while fetching from Groq
+            // Loading state while fetching from AI
             const loadingDiv = document.createElement('div');
             loadingDiv.style.cssText = `color: rgba(255,255,255,0.4); font-size: 13px; padding: 6px 0;`;
             loadingDiv.textContent = '⏳ Генерирую подсказки...';
-            buttonContainer.appendChild(loadingDiv);
+            bodyEl.appendChild(loadingDiv);
 
             const allMsgs = container.querySelectorAll('.message');
             let conversationHistory = '';
@@ -5113,14 +5176,14 @@ Generate 4 realistic dispatcher reply options. Rules:
                     const match = raw.match(/\[[\s\S]*?\]/);
                     loadingDiv.remove();
                     if (match) {
-                        try { renderTipButtons(buttonContainer, JSON.parse(match[0])); return; } catch (e) { }
+                        try { renderTipButtons(bodyEl, JSON.parse(match[0])); return; } catch (e) { }
                     }
-                    renderStaticSuggestions(buttonContainer, []);
+                    renderStaticSuggestions(bodyEl, []);
                 })
                 .catch(() => {
                     clearTimeout(sugTimeout);
                     loadingDiv.remove();
-                    renderStaticSuggestions(buttonContainer, []);
+                    renderStaticSuggestions(bodyEl, []);
                 });
         }
 
@@ -5180,7 +5243,7 @@ Generate 4 realistic dispatcher reply options. Rules:
                 renderTipButtons(container, suggestions);
                 return;
             }
-            // When Groq is unavailable, show generic dispatcher prompts (NOT broker text)
+            // When AI is unavailable, show generic dispatcher prompts (NOT broker text)
             const fallbackOptions = [
                 { text: "What's the rate on this load?", quality: "green", why: "Правильный вопрос о ставке" },
                 { text: "Can you go higher? Market's around $2,400 on this lane.", quality: "green", why: "Контр с рыночными данными" },
@@ -6055,37 +6118,37 @@ Generate 4 realistic dispatcher reply options. Rules:
                 }
             });
 
-            // AI Inline Button Handler - TOGGLE MODE
-            const aiInlineBtn = document.getElementById('aiInlineBtn');
-            if (aiInlineBtn) {
-                aiInlineBtn.addEventListener('click', () => {
-                    aiChatMode = !aiChatMode;
+            // AI Status Button — handled by toggleAiChatMode()
+        }
 
-                    if (aiChatMode) {
-                        // Включаем режим AI чата
-                        aiInlineBtn.classList.add('active');
-                        aiInlineBtn.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
-                        inputField.placeholder = '💬 Спроси AI помощника...';
+        // ── AI STATUS BUTTON TOGGLE ──────────────────────────────
+        function toggleAiChatMode() {
+            const btn = document.getElementById('aiStatusBtn');
+            aiChatMode = !aiChatMode;
 
-                        // Показываем автоматический анализ при включении
-                        showTypingIndicator();
-                        setTimeout(() => {
-                            hideTypingIndicator();
-                            const analysis = analyzeCurrentStep();
-                            addAIMessageToChat(analysis);
-                        }, 800);
-                    } else {
-                        // Выключаем режим AI чата
-                        aiInlineBtn.classList.remove('active');
-                        aiInlineBtn.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
-                        aiInlineBtn.style.boxShadow = 'none';
-                        inputField.placeholder = 'Введите ваше сообщение...';
+            if (aiChatMode) {
+                // Красный — режим чата с AI
+                btn.style.background = 'radial-gradient(circle, #ef4444, #b91c1c)';
+                btn.style.animation = 'aiPulseRed 1.5s ease infinite';
+                btn.title = 'Режим чата с AI — нажми чтобы выйти';
+                inputField.placeholder = '💬 Спроси AI помощника...';
+                inputField.focus();
 
-                        // Удаляем быстрые кнопки
-                        const quickButtons = document.querySelector('.ai-quick-buttons');
-                        if (quickButtons) quickButtons.remove();
-                    }
-                });
+                showTypingIndicator();
+                setTimeout(() => {
+                    hideTypingIndicator();
+                    const analysis = analyzeCurrentStep();
+                    addAIMessageToChat(analysis);
+                }, 800);
+            } else {
+                // Зелёный — AI работает в фоне
+                btn.style.background = 'radial-gradient(circle, #22c55e, #16a34a)';
+                btn.style.animation = 'aiPulse 2s ease infinite';
+                btn.title = 'AI активен — нажми для чата с AI';
+                inputField.placeholder = 'Введите ваше сообщение...';
+
+                const quickButtons = document.querySelector('.ai-quick-buttons');
+                if (quickButtons) quickButtons.remove();
             }
         }
 
@@ -6331,27 +6394,27 @@ Generate 4 realistic dispatcher reply options. Rules:
 
             bar.style.display = 'block';
 
-            // Patience starts at 100%, each negative point costs ~2% (50 pts = broker walks)
-            const patience = Math.max(0, 100 - cumulativeNegativePoints * 2);
+            // Each negative point costs ~4% (25 pts = broker walks)
+            const patience = Math.max(0, 100 - cumulativeNegativePoints * 4);
             fill.style.width = patience + '%';
 
             if (patience > 70) {
                 fill.className = 'nego-progress-fill';
                 fill.style.background = '#10b981';
-                if (status) { status.textContent = 'Спокоен'; status.style.color = '#10b981'; }
+                if (status) { status.textContent = 'Низкий'; status.style.color = '#10b981'; }
             } else if (patience > 40) {
                 fill.className = 'nego-progress-fill warning';
                 fill.style.background = '';
-                if (status) { status.textContent = 'Раздражён'; status.style.color = '#f59e0b'; }
+                if (status) { status.textContent = 'Средний'; status.style.color = '#f59e0b'; }
             } else if (patience > 15) {
                 fill.className = 'nego-progress-fill danger';
                 fill.style.background = '';
-                if (status) { status.textContent = '⚠️ Почти ушёл'; status.style.color = '#ef4444'; }
+                if (status) { status.textContent = '⚠️ Высокий'; status.style.color = '#ef4444'; }
             } else {
                 fill.className = 'nego-progress-fill danger';
                 fill.style.background = '#ef4444';
                 fill.style.animation = 'pulseDanger 0.8s ease infinite';
-                if (status) { status.textContent = '🚨 Уходит!'; status.style.color = '#ef4444'; }
+                if (status) { status.textContent = '🚨 Критический!'; status.style.color = '#ef4444'; }
                 if (patience === 0) {
                     setTimeout(() => {
                         addMessage("You know what, I got other carriers ready. I'm gonna pass on this one. Good luck.", 'broker');
@@ -6544,7 +6607,7 @@ Return this exact JSON structure:
             }
         }
 
-        // ── LOCAL EVALUATOR (always runs, no Groq needed) ───────
+        // ── LOCAL EVALUATOR (always runs, no AI needed) ───────
         function _localEvaluate(text) {
             const msg = text.toLowerCase();
             let points = 0;
@@ -6609,7 +6672,7 @@ Return this exact JSON structure:
                 // Evaluate dispatcher message in background
                 evaluateDispatcherMessage(text);
 
-                // Local patience update — always runs regardless of Groq availability
+                // Local patience update — always runs regardless of AI availability
                 _localEvaluate(text);
 
                 showTypingIndicator();
@@ -6669,7 +6732,7 @@ Return this exact JSON structure:
             const fillReset = document.getElementById('negoFill');
             const statusReset = document.getElementById('patienceStatus');
             if (fillReset) { fillReset.style.width = '100%'; fillReset.className = 'nego-progress-fill'; fillReset.style.background = '#10b981'; fillReset.style.animation = ''; }
-            if (statusReset) { statusReset.textContent = 'Спокоен'; statusReset.style.color = '#10b981'; }
+            if (statusReset) { statusReset.textContent = 'Низкий'; statusReset.style.color = '#10b981'; }
             const badge = document.getElementById('scoreBadge');
             if (badge) badge.style.display = 'none';
             const negoBar = document.getElementById('negoProgress');
@@ -6679,11 +6742,11 @@ Return this exact JSON structure:
 
             // Сбрасываем режим AI чата
             aiChatMode = false;
-            const aiInlineBtn = document.getElementById('aiInlineBtn');
-            if (aiInlineBtn) {
-                aiInlineBtn.classList.remove('active');
-                aiInlineBtn.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
-                aiInlineBtn.style.boxShadow = 'none';
+            const aiStatusBtn = document.getElementById('aiStatusBtn');
+            if (aiStatusBtn) {
+                aiStatusBtn.style.background = 'radial-gradient(circle, #22c55e, #16a34a)';
+                aiStatusBtn.style.animation = 'aiPulse 2s ease infinite';
+                aiStatusBtn.title = 'AI активен — нажми для чата с AI';
             }
             inputField.placeholder = 'Введите ваше сообщение...';
 
@@ -7303,7 +7366,7 @@ Return this exact JSON structure:
     </style>
 
     <!-- AI Chatbot HTML -->
-    <button class="ai-helper-btn" id="aiHelperBtn" title="AI Помощник">🤖</button>
+    <button class="ai-helper-btn" id="aiHelperBtn" title="AI Помощник" style="display:none!important">🤖</button>
 
     <div class="ai-chatbot-modal" id="aiChatbotModal">
         <div class="ai-chatbot-container">
@@ -7842,7 +7905,7 @@ Return this exact JSON structure:
             aiTypingIndicator.classList.remove('active');
         }
 
-        // ── GROQ AI BROKER ──────────────────────────────────────────
+        // ── AI BROKER ──────────────────────────────────────────
         // API key and URL declared in first script block — no redeclaration here
         // Legacy aliases so old references don't break
         const GEMINI_API_KEY = GROQ_API_KEY;
@@ -7859,11 +7922,11 @@ Return this exact JSON structure:
                 dot.style.boxShadow = online ? '0 0 6px #10b981' : 'none';
             }
             if (ind) {
-                ind.title = online ? '🟢 Groq AI online' : '🔴 Groq offline — fallback mode';
+                ind.title = online ? '🟢 AI is ON' : '🔴 AI offline — fallback mode';
             }
         }
 
-        // Test Groq on page load
+        // Test AI on page load
         (async () => {
             try {
                 const r = await fetch(GROQ_URL, {
@@ -7972,7 +8035,7 @@ LANGUAGE: Match dispatcher's language. Always use real freight terms: MC, rate c
         }
 
         async function callGeminiAPI(userMessage, isAIPanel = false) {
-            // Build messages in OpenAI format (Groq is OpenAI-compatible)
+            // Build messages in OpenAI format (AI is OpenAI-compatible)
             const messages = [
                 { role: 'system', content: getBrokerSystemPrompt() }
             ];
@@ -8013,7 +8076,7 @@ LANGUAGE: Match dispatcher's language. Always use real freight terms: MC, rate c
                 if (!res.ok) {
                     clearTimeout(fetchTimeout);
                     const err = await res.json();
-                    console.error('Groq error:', err);
+                    console.error('AI error:', err);
                     if (res.status === 429) {
                         _groqStatus = 'rate_limited';
                         return getFallbackBrokerResponse(userMessage);
@@ -8026,7 +8089,7 @@ LANGUAGE: Match dispatcher's language. Always use real freight terms: MC, rate c
                 clearTimeout(fetchTimeout);
                 const reply = data.choices?.[0]?.message?.content || getFallbackBrokerResponse(userMessage);
 
-                // Mark Groq as working
+                // Mark AI as working
                 _groqStatus = 'ok';
                 _updateGroqIndicator(true);
 
@@ -8037,14 +8100,14 @@ LANGUAGE: Match dispatcher's language. Always use real freight terms: MC, rate c
                 return reply;
             } catch (e) {
                 clearTimeout(fetchTimeout);
-                console.error('Groq fetch error:', e.message);
+                console.error('AI fetch error:', e.message);
                 _groqStatus = e.name === 'AbortError' ? 'timeout' : 'offline';
                 _updateGroqIndicator(false);
                 return getFallbackBrokerResponse(userMessage);
             }
         }
 
-        // ── FALLBACK BROKER (when Groq is unavailable) ───────────────────────
+        // ── FALLBACK BROKER (when AI is unavailable) ───────────────────────
         let _fallbackStage = 0;
         let _fallbackMsgCount = 0; // counts every dispatcher message — forces stage advance
 
@@ -8210,25 +8273,42 @@ Only return the JSON array, nothing else.`;
 
             const utter = new SpeechSynthesisUtterance(clean);
             utter.lang = 'en-US';
-            utter.rate = 1.05;
-            utter.pitch = 0.95;
+            utter.rate = 1.05;   // естественный разговорный темп
+            utter.pitch = 0.88;  // низкий мужской тон
             utter.volume = 1;
 
-            // Pick best available English voice
+            // Pick male voice — explicitly exclude female names
             const voices = window.speechSynthesis.getVoices();
-            const preferred = voices.find(v =>
-                v.lang === 'en-US' && (v.name.includes('Google') || v.name.includes('Microsoft'))
-            ) || voices.find(v => v.lang === 'en-US') || voices[0];
+            const FEMALE = /zira|susan|hazel|linda|helen|karen|moira|samantha|victoria|fiona|tessa|allison|ava|nicky|aria|jenny|ana|emma|olivia|female/i;
+            const MALE = /david|guy|andrew|davis|james|mark|ryan|eric|richard|george|reed|liam|male/i;
+            const maleVoices = voices.filter(v => v.lang.startsWith('en') && !FEMALE.test(v.name));
+            const preferred =
+                maleVoices.find(v => v.name === 'Microsoft Guy Online (Natural) - English (United States)') ||
+                maleVoices.find(v => v.name === 'Microsoft Andrew Online (Natural) - English (United States)') ||
+                maleVoices.find(v => v.name === 'Microsoft Davis Online (Natural) - English (United States)') ||
+                maleVoices.find(v => v.name === 'Microsoft David - English (United States)') ||
+                maleVoices.find(v => v.name.includes('UK English Male')) ||
+                maleVoices.find(v => v.name.includes('english-male') || v.name.includes('English Male')) ||
+                maleVoices.find(v => MALE.test(v.name)) ||
+                maleVoices[0];
             if (preferred) utter.voice = preferred;
+            console.log('🎙️ Voice selected:', preferred?.name || 'default');
 
             currentUtterance = utter;
             window.speechSynthesis.speak(utter);
         }
 
-        // Voices load async — preload them
+        // Voices load async — preload them + log for debugging
         if (window.speechSynthesis) {
-            window.speechSynthesis.getVoices();
-            window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+            const _logVoices = () => {
+                const vv = window.speechSynthesis.getVoices();
+                if (vv.length) {
+                    console.log('%c🔊 Available voices:', 'color:#10b981;font-weight:bold');
+                    vv.forEach((v, i) => console.log(`  [${i}] ${v.name} | ${v.lang} | local:${v.localService}`));
+                }
+            };
+            window.speechSynthesis.onvoiceschanged = _logVoices;
+            _logVoices();
         }
 
         function toggleTTS() {
@@ -8495,16 +8575,26 @@ Only return the JSON array, nothing else.`;
 
             const utter = new SpeechSynthesisUtterance(clean);
             utter.lang = 'en-US';
-            utter.rate = 1.0;
-            utter.pitch = 0.9;
+            utter.rate = 1.05;   // естественный разговорный темп
+            utter.pitch = 0.88;  // низкий мужской тон
             utter.volume = 1;
 
+            // Pick male voice — explicitly exclude female names
             const voices = window.speechSynthesis.getVoices();
-            const preferred = voices.find(v => v.lang === 'en-US' && v.name.includes('Google'))
-                || voices.find(v => v.lang === 'en-US' && v.name.includes('Microsoft'))
-                || voices.find(v => v.lang === 'en-US')
-                || voices[0];
+            const FEMALE = /zira|susan|hazel|linda|helen|karen|moira|samantha|victoria|fiona|tessa|allison|ava|nicky|aria|jenny|ana|emma|olivia|female/i;
+            const MALE = /david|guy|andrew|davis|james|mark|ryan|eric|richard|george|reed|liam|male/i;
+            const maleVoices = voices.filter(v => v.lang.startsWith('en') && !FEMALE.test(v.name));
+            const preferred =
+                maleVoices.find(v => v.name === 'Microsoft Guy Online (Natural) - English (United States)') ||
+                maleVoices.find(v => v.name === 'Microsoft Andrew Online (Natural) - English (United States)') ||
+                maleVoices.find(v => v.name === 'Microsoft Davis Online (Natural) - English (United States)') ||
+                maleVoices.find(v => v.name === 'Microsoft David - English (United States)') ||
+                maleVoices.find(v => v.name.includes('UK English Male')) ||
+                maleVoices.find(v => v.name.includes('english-male') || v.name.includes('English Male')) ||
+                maleVoices.find(v => MALE.test(v.name)) ||
+                maleVoices[0];
             if (preferred) utter.voice = preferred;
+            console.log('🎙️ VoiceCall selected:', preferred?.name || 'default');
 
             utter.onend = () => {
                 if (voiceCallActive) setVoiceCallStatus('📞 На связи', clean);

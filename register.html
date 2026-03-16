@@ -7,7 +7,6 @@
   <title>Регистрация | Курсы Диспетчера</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
     rel="stylesheet">
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     * {
       margin: 0;
@@ -15,59 +14,34 @@
       box-sizing: border-box;
     }
 
-    html {
-      overflow-x: hidden;
-      width: 100%;
-      max-width: 100vw;
-    }
-
     :root {
       --primary: #6366f1;
       --secondary: #8b5cf6;
-      --accent: #ec4899;
-      --bg-dark: #0f172a;
       --bg-darker: #020617;
       --text-primary: #f1f5f9;
       --text-secondary: #94a3b8;
       --text-muted: #64748b;
     }
 
-    [data-theme="light"] {
-      --bg-dark: #ffffff;
-      --bg-darker: #f8fafc;
-      --text-primary: #0f172a;
-      --text-secondary: #475569;
-    }
-
     body {
       font-family: 'Inter', sans-serif;
       background: var(--bg-darker);
       color: var(--text-primary);
-      line-height: 1.6;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      position: relative;
       padding: 40px 0;
       overflow-x: hidden;
-      width: 100%;
-      max-width: 100vw;
-      margin: 0;
     }
 
     body::before {
       content: '';
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background:
-        radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+      inset: 0;
       pointer-events: none;
-      z-index: 0;
+      background: radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
     }
 
     .container {
@@ -78,7 +52,7 @@
       padding: 0 24px;
     }
 
-    .register-card {
+    .card {
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 32px;
@@ -86,90 +60,96 @@
       backdrop-filter: blur(20px);
     }
 
-    .logo-section {
+    .logo {
       text-align: center;
-      margin-bottom: 40px;
+      margin-bottom: 32px;
     }
 
     .logo-icon {
-      font-size: 64px;
-      margin-bottom: 16px;
+      font-size: 56px;
     }
 
     .logo-text {
-      font-size: 28px;
+      font-size: 24px;
       font-weight: 800;
       background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
-    .register-title {
-      font-size: 32px;
+    h1 {
+      font-size: 28px;
       font-weight: 800;
       text-align: center;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
-    .register-subtitle {
+    .subtitle {
       text-align: center;
       color: var(--text-secondary);
-      margin-bottom: 32px;
-    }
-
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    .form-label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      color: var(--text-primary);
+      margin-bottom: 28px;
       font-size: 14px;
     }
 
-    .form-input {
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    input {
       width: 100%;
-      padding: 14px 16px;
+      padding: 13px 14px;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 12px;
       color: var(--text-primary);
       font-family: 'Inter', sans-serif;
-      font-size: 15px;
+      font-size: 14px;
       transition: all 0.3s;
     }
 
-    .form-input:focus {
+    input:focus {
       outline: none;
       border-color: var(--primary);
       background: rgba(255, 255, 255, 0.08);
       box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
     }
 
-    .form-input::placeholder {
+    input::placeholder {
       color: var(--text-muted);
     }
 
     .checkbox-group {
       display: flex;
-      align-items: start;
-      gap: 12px;
-      margin-bottom: 24px;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 20px;
     }
 
     .checkbox-group input[type="checkbox"] {
-      margin-top: 4px;
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
+      width: 16px;
+      height: 16px;
+      margin-top: 3px;
+      flex-shrink: 0;
     }
 
     .checkbox-group label {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--text-secondary);
-      line-height: 1.6;
+      font-weight: 400;
     }
 
     .checkbox-group label a {
@@ -178,48 +158,33 @@
       font-weight: 600;
     }
 
-    .checkbox-group label a:hover {
-      color: var(--secondary);
-    }
-
-    .btn-submit {
+    .btn {
       width: 100%;
-      padding: 16px;
+      padding: 15px;
       background: linear-gradient(135deg, var(--primary), var(--secondary));
       color: white;
       border: none;
       border-radius: 12px;
       font-weight: 700;
-      font-size: 16px;
+      font-size: 15px;
       cursor: pointer;
       transition: all 0.3s;
-      position: relative;
-      overflow: hidden;
     }
 
-    .btn-submit::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-      transition: left 0.5s;
-    }
-
-    .btn-submit:hover::before {
-      left: 100%;
-    }
-
-    .btn-submit:hover {
+    .btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 12px 24px rgba(99, 102, 241, 0.4);
     }
 
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
     .divider {
       text-align: center;
-      margin: 32px 0;
+      margin: 24px 0;
       position: relative;
     }
 
@@ -234,285 +199,231 @@
     }
 
     .divider span {
-      background: rgba(255, 255, 255, 0.03);
-      padding: 0 16px;
+      background: #020617;
+      padding: 0 14px;
       position: relative;
       color: var(--text-muted);
-      font-size: 14px;
+      font-size: 13px;
     }
 
-    .social-login {
-      display: grid;
-      gap: 12px;
-    }
-
-    .btn-social {
+    .btn-google {
       width: 100%;
-      padding: 14px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 13px;
+      background: white;
+      border: none;
       border-radius: 12px;
-      color: var(--text-primary);
+      color: #1f2937;
       font-weight: 600;
-      font-size: 15px;
+      font-size: 14px;
       cursor: pointer;
-      transition: all 0.3s;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
+      gap: 10px;
+      transition: all 0.3s;
     }
 
-    .btn-social:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.2);
+    .btn-google:hover {
       transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
     }
 
-    .login-link {
+    .btn-google img {
+      width: 20px;
+      height: 20px;
+    }
+
+    .bottom-link {
       text-align: center;
-      margin-top: 32px;
+      margin-top: 24px;
       color: var(--text-secondary);
-      font-size: 15px;
+      font-size: 14px;
     }
 
-    .login-link a {
+    .bottom-link a {
       color: var(--primary);
       text-decoration: none;
       font-weight: 700;
-      transition: color 0.3s;
     }
 
-    .login-link a:hover {
-      color: var(--secondary);
-    }
-
-    .back-home {
+    .back {
       text-align: center;
-      margin-top: 24px;
+      margin-top: 16px;
     }
 
-    .back-home a {
+    .back a {
       color: var(--text-muted);
       text-decoration: none;
-      font-size: 14px;
-      transition: color 0.3s;
+      font-size: 13px;
     }
 
-    .back-home a:hover {
-      color: var(--text-primary);
+    .error-msg {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #fca5a5;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
     }
 
-    @media (max-width: 768px) {
-      .register-card {
-        padding: 32px 24px;
+    .success-msg {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #6ee7b7;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    @media (max-width: 480px) {
+      .card {
+        padding: 32px 20px;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
 
 <body>
-
   <div class="container">
-    <div class="register-card">
-      <div class="logo-section">
+    <div class="card">
+      <div class="logo">
         <div class="logo-icon">🎓</div>
         <div class="logo-text">Курсы Диспетчера</div>
       </div>
+      <h1>Регистрация</h1>
+      <p class="subtitle">Создайте аккаунт и начните обучение</p>
 
-      <h1 class="register-title">Регистрация</h1>
-      <p class="register-subtitle">Создайте аккаунт и начните обучение</p>
+      <div class="error-msg" id="errorMsg"></div>
+      <div class="success-msg" id="successMsg"></div>
 
       <form id="registerForm">
-        <div class="form-group">
-          <label class="form-label">Имя</label>
-          <input type="text" class="form-input" placeholder="Иван" required>
+        <div class="form-row">
+          <div>
+            <label>Имя</label>
+            <input type="text" id="firstName" placeholder="Иван" required>
+          </div>
+          <div>
+            <label>Фамилия</label>
+            <input type="text" id="lastName" placeholder="Иванов" required>
+          </div>
         </div>
-
         <div class="form-group">
-          <label class="form-label">Фамилия</label>
-          <input type="text" class="form-input" placeholder="Иванов" required>
+          <label>Email</label>
+          <input type="email" id="email" placeholder="your@email.com" required>
         </div>
-
         <div class="form-group">
-          <label class="form-label">Email</label>
-          <input type="email" class="form-input" placeholder="your@email.com" required>
+          <label>Пароль</label>
+          <input type="password" id="password" placeholder="Минимум 8 символов" required minlength="8">
         </div>
-
         <div class="form-group">
-          <label class="form-label">Пароль</label>
-          <input type="password" class="form-input" placeholder="Минимум 8 символов" required minlength="8">
+          <label>Подтвердите пароль</label>
+          <input type="password" id="confirmPassword" placeholder="Повторите пароль" required minlength="8">
         </div>
-
-        <div class="form-group">
-          <label class="form-label">Подтвердите пароль</label>
-          <input type="password" class="form-input" placeholder="Повторите пароль" required minlength="8">
-        </div>
-
         <div class="checkbox-group">
           <input type="checkbox" id="terms" required>
-          <label for="terms">
-            Я согласен с <a href="#">условиями использования</a> и <a href="#">политикой конфиденциальности</a>
-          </label>
+          <label for="terms">Я согласен с <a href="#">условиями использования</a> и <a href="#">политикой
+              конфиденциальности</a></label>
         </div>
-
-        <button type="submit" class="btn-submit">Создать аккаунт</button>
+        <button type="submit" class="btn" id="submitBtn">Создать аккаунт</button>
       </form>
 
-      <div class="divider">
-        <span>или зарегистрироваться через</span>
-      </div>
+      <div class="divider"><span>или</span></div>
 
-      <div class="social-login">
-        <div id="googleSignInButton"></div>
-        <button class="btn-social" id="facebookBtn">
-          <span>📘</span>
-          <span>Продолжить с Facebook</span>
-        </button>
-      </div>
+      <button class="btn-google" id="googleBtn">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+        Продолжить с Google
+      </button>
 
-      <div class="login-link">
-        Уже есть аккаунт? <a href="login.html">Войти</a>
-      </div>
-
-      <div class="back-home">
-        <a href="index.html">← Вернуться на главную</a>
-      </div>
+      <div class="bottom-link">Уже есть аккаунт? <a href="login.html">Войти</a></div>
+      <div class="back"><a href="index.html">← Вернуться на главную</a></div>
     </div>
   </div>
 
-  <script>
-    // Google Sign-In Configuration
-    const GOOGLE_CLIENT_ID = '1234567890-abcdefghijklmnopqrstuvwxyz123456.apps.googleusercontent.com'; // Замените на ваш Client ID
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, updateProfile } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
-    // Инициализация Google Sign-In
-    function initGoogleSignIn() {
-      if (typeof google !== 'undefined') {
-        google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: handleGoogleSignIn,
-          auto_select: false,
-          cancel_on_tap_outside: true
-        });
+    const firebaseConfig = {
+      apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
+      authDomain: "dispatch4you-80e0f.firebaseapp.com",
+      projectId: "dispatch4you-80e0f",
+      storageBucket: "dispatch4you-80e0f.firebasestorage.app",
+      messagingSenderId: "349235354473",
+      appId: "1:349235354473:web:488aeb29211b02bb153bf8"
+    };
 
-        google.accounts.id.renderButton(
-          document.getElementById('googleSignInButton'),
-          {
-            theme: 'filled_blue',
-            size: 'large',
-            width: '100%',
-            text: 'continue_with',
-            locale: 'ru'
-          }
-        );
-      }
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    const errorMsg = document.getElementById('errorMsg');
+    const successMsg = document.getElementById('successMsg');
+
+    function showError(msg) {
+      errorMsg.textContent = msg; errorMsg.style.display = 'block';
+      successMsg.style.display = 'none';
+    }
+    function showSuccess(msg) {
+      successMsg.textContent = msg; successMsg.style.display = 'block';
+      errorMsg.style.display = 'none';
+    }
+    function translateError(code) {
+      const map = {
+        'auth/email-already-in-use': 'Этот email уже зарегистрирован.',
+        'auth/invalid-email': 'Неверный формат email.',
+        'auth/weak-password': 'Пароль слишком слабый. Минимум 8 символов.',
+        'auth/network-request-failed': 'Ошибка сети. Проверьте интернет.',
+      };
+      return map[code] || 'Ошибка: ' + code;
     }
 
-    // Обработка Google Sign-In
-    async function handleGoogleSignIn(response) {
-      try {
-        const res = await fetch('http://localhost:3000/api/auth/google', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            credential: response.credential
-          })
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-          // Сохраняем токен
-          localStorage.setItem('authToken', data.token);
-          localStorage.setItem('user', JSON.stringify(data.user));
-
-          alert('Вход через Google успешен! Добро пожаловать, ' + data.user.firstName + '!');
-
-          // Перенаправляем в личный кабинет
-          window.location.href = 'dashboard.html';
-        } else {
-          alert('Ошибка: ' + data.message);
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Ошибка подключения к серверу. Убедитесь, что сервер запущен (npm start)');
-      }
-    }
-
-    // Инициализация при загрузке страницы
-    window.addEventListener('load', function () {
-      // Даём время на загрузку Google SDK
-      setTimeout(initGoogleSignIn, 500);
-    });
-
-    // Обработка формы регистрации
-    document.getElementById('registerForm').addEventListener('submit', async function (e) {
+    // Email/Password registration
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const firstName = document.getElementById('firstName').value.trim();
+      const lastName = document.getElementById('lastName').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const confirm = document.getElementById('confirmPassword').value;
+      const btn = document.getElementById('submitBtn');
 
-      const form = e.target;
-      const firstName = form.querySelector('input[placeholder="Иван"]').value;
-      const lastName = form.querySelector('input[placeholder="Иванов"]').value;
-      const email = form.querySelector('input[type="email"]').value;
-      const password = form.querySelectorAll('input[type="password"]')[0].value;
-      const confirmPassword = form.querySelectorAll('input[type="password"]')[1].value;
-      const submitBtn = form.querySelector('.btn-submit');
+      if (password !== confirm) { showError('Пароли не совпадают!'); return; }
 
-      // Проверка совпадения паролей
-      if (password !== confirmPassword) {
-        alert('Пароли не совпадают!');
-        return;
-      }
-
-      // Отключаем кнопку во время отправки
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Регистрация...';
+      btn.disabled = true; btn.textContent = 'Создаём аккаунт...';
 
       try {
-        const response = await fetch('http://localhost:3000/api/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            firstName: firstName,
-            lastName: lastName,
-            email: email,
-            password: password
-          })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          // Сохраняем токен
-          localStorage.setItem('authToken', data.token);
-          localStorage.setItem('user', JSON.stringify(data.user));
-
-          alert('Регистрация успешна! Добро пожаловать, ' + data.user.firstName + '!');
-
-          // Перенаправляем в личный кабинет
-          window.location.href = 'dashboard.html';
-        } else {
-          alert('Ошибка: ' + data.message);
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Создать аккаунт';
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Ошибка подключения к серверу. Убедитесь, что сервер запущен (npm start)');
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Создать аккаунт';
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(cred.user, { displayName: firstName + ' ' + lastName });
+        localStorage.setItem('user', JSON.stringify({ uid: cred.user.uid, firstName, lastName, email }));
+        showSuccess('Аккаунт создан! Перенаправляем...');
+        setTimeout(() => { window.location.href = 'pages/modules-index.html'; }, 1200);
+      } catch (err) {
+        showError(translateError(err.code));
+        btn.disabled = false; btn.textContent = 'Создать аккаунт';
       }
     });
 
-    // Обработка Facebook кнопки
-    document.getElementById('facebookBtn').addEventListener('click', function () {
-      alert('Авторизация через Facebook будет доступна в следующей версии');
+    // Google registration
+    document.getElementById('googleBtn').addEventListener('click', async () => {
+      try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        const parts = (user.displayName || '').split(' ');
+        localStorage.setItem('user', JSON.stringify({ uid: user.uid, firstName: parts[0] || '', lastName: parts[1] || '', email: user.email }));
+        window.location.href = 'pages/modules-index.html';
+      } catch (err) {
+        if (err.code !== 'auth/popup-closed-by-user') showError(translateError(err.code));
+      }
     });
   </script>
-
 </body>
 
 </html>
