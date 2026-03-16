@@ -3530,33 +3530,11 @@
         let aiChatMode = false; // false = общение с брокером, true = общение с AI
     </script>
 
-    <!-- Scenarios Data -->
+    <!-- Scenarios Data - single bundled file, no external dependencies -->
+    <script src="scenarios-inline.js?v=20260316"></script>
     <script>
-        // Initialize global scenarios array
-        window.allScenarios = [];
-        console.log('✅ Initialized allScenarios array');
+        console.log('✅ Scenarios loaded:', typeof allScenarios !== 'undefined' ? allScenarios.length : 'ERROR - allScenarios undefined');
     </script>
-    <!-- Load scenario data - NEW DIALOGUES ONLY -->
-    <script>
-        // Initialize allScenarios array
-        const allScenarios = [];
-    </script>
-    <!-- Dialogue files - PREMIUM QUALITY -->
-    <script src="scenarios-data-v1.js"></script>
-    <script src="scenarios-data-v2.js"></script>
-    <script src="scenarios-data-v3.js"></script>
-    <script src="scenarios-data-v4.js"></script>
-    <script src="scenarios-data-v5.js"></script>
-    <script src="scenarios-data-v6.js"></script>
-    <script src="scenarios-data-v7.js"></script>
-    <script src="scenarios-data-v8.js"></script>
-    <script src="scenarios-data-v9.js"></script>
-    <script src="scenarios-data-v11.js"></script>
-    <script src="scenarios-data-v12.js"></script>
-    <script src="scenarios-data-v13.js"></script>
-    <script src="scenarios-data-v14.js"></script>
-    <script src="scenarios-data-v15.js"></script>
-    <script src="scenarios-data-v16.js"></script>
 
 
     <script>
@@ -3596,6 +3574,14 @@
 
         // Difficulty level — declared here so startConversation can access it
         let difficultyLevel = 'standard';
+
+        // geminiHistory declared here so it's accessible from both script blocks
+        const geminiHistory = [];
+
+        // Groq API config — declared here so showSuggestions (first block) can access it
+        const _k = ['gsk_7b9aEN1PMQBKSKbw', 'GOyoWGdyb3FYcNiq4FWZScbJ4iZYYSYOF4Qh'];
+        const GROQ_API_KEY = _k[0] + _k[1];
+        const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
         // Режим отображения текста: 'full' (полный), 'short' (сокращенный)
         // UPDATED: 2026-03-05 v2.1
@@ -4420,6 +4406,10 @@
         }
 
         function showRandomBubbles() {
+            if (!bubblesContainer) {
+                console.error('❌ bubblesContainer not found!');
+                return;
+            }
             bubblesContainer.innerHTML = '';
 
             // Генерируем карточки автоматически из всех диалогов
@@ -4578,28 +4568,27 @@
                 const firstPath = Object.keys(currentScenario.paths)[0];
                 const firstStep = currentScenario.paths[firstPath][0];
 
-                // First broker response — use Gemini instead of script
+                // First broker response — use script data IMMEDIATELY (no Groq wait)
                 geminiHistory.length = 0;
                 geminiHistory.push({ role: 'user', text: greeting });
 
-                showTypingIndicator();
-                // Build context about this specific load for Gemini
-                const loadContext = `[LOAD CONTEXT: Route: ${currentScenario.route || ''} | Miles: ${currentScenario.distance || currentScenario.miles || ''} | Equipment: ${currentScenario.equipment || ''} | Cargo: ${currentScenario.cargo || currentScenario.commodity || ''} | Weight: ${currentScenario.weight || ''} | Posted rate: ${currentScenario.postedRate || ''} | The dispatcher just called you about this load. Respond as the broker receiving this call.]`;
-                callGeminiAPI(loadContext + '\n\nDispatcher said: ' + greeting).then(brokerReply => {
-                    hideTypingIndicator();
-                    addMessage(brokerReply, 'broker');
-                    geminiHistory.push({ role: 'model', text: brokerReply });
+                resetFallbackStage();
 
-                    // Show dispatcher prompt if available
-                    if (firstStep.dispatcherPrompt) {
-                        const promptDiv = document.createElement('div');
-                        promptDiv.className = 'dispatcher-prompt';
-                        promptDiv.textContent = firstStep.dispatcherPrompt;
-                        messagesContainer.appendChild(promptDiv);
-                    }
-                    showSuggestions(firstStep.responseComponents || firstStep.suggestions);
-                });
-            }, 500);
+                // Use scenario data directly for first response — instant, reliable
+                const firstBrokerReply = firstStep.brokerQuestion || getFallbackBrokerResponse(greeting);
+
+                hideTypingIndicator();
+                addMessage(firstBrokerReply, 'broker');
+                geminiHistory.push({ role: 'model', text: firstBrokerReply });
+
+                if (firstStep.dispatcherPrompt) {
+                    const promptDiv = document.createElement('div');
+                    promptDiv.className = 'dispatcher-prompt';
+                    promptDiv.textContent = firstStep.dispatcherPrompt;
+                    messagesContainer.appendChild(promptDiv);
+                }
+                showSuggestions(firstStep.responseComponents || firstStep.suggestions);
+            }, 400);
         }
 
         function addMessage(text, sender) {
@@ -5028,7 +5017,6 @@
             const container = document.getElementById('messagesContainer') || messagesContainer;
             if (!container) return;
 
-            // Create live AI suggestions container
             const buttonContainer = document.createElement('div');
             buttonContainer.id = 'suggestions';
             buttonContainer.style.cssText = `
@@ -5040,44 +5028,44 @@
                 box-sizing: border-box;
             `;
 
-            // Label
             const label = document.createElement('div');
             label.style.cssText = `font-size: 11px; font-weight: 600; color: rgba(167,139,250,0.7);
                 letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px;`;
             label.textContent = '💡 Варианты ответа';
             buttonContainer.appendChild(label);
 
-            // Loading state
-            const loadingDiv = document.createElement('div');
-            loadingDiv.style.cssText = `color: rgba(255,255,255,0.4); font-size: 13px; padding: 6px 0;`;
-            loadingDiv.textContent = '⏳ Генерирую подсказки...';
-            buttonContainer.appendChild(loadingDiv);
-
             container.appendChild(buttonContainer);
 
-            // Get last broker message text
+            // If we have scenario suggestions — use them immediately, no Groq needed
+            if (suggestions && suggestions.length) {
+                renderStaticSuggestions(buttonContainer, suggestions);
+                return;
+            }
+
+            // No scenario suggestions — try Groq for dynamic suggestions
             const brokerMsgs = container.querySelectorAll('.message.broker');
             let lastBrokerMsg = '';
             if (brokerMsgs.length) {
                 const lastBroker = brokerMsgs[brokerMsgs.length - 1];
                 const contentEl = lastBroker.querySelector('.message-content');
                 if (contentEl) {
-                    // Remove name label (first child div) and score badge, get plain text
                     const clone = contentEl.cloneNode(true);
                     clone.querySelectorAll('.name-label, .score-badge, .dispatcher-prompt').forEach(el => el.remove());
                     lastBrokerMsg = clone.innerText.trim();
                 }
             }
 
-            if (!lastBrokerMsg && suggestions && suggestions.length) {
-                // No broker message yet — use static suggestions as fallback
-                loadingDiv.remove();
-                renderStaticSuggestions(buttonContainer, suggestions);
+            if (!lastBrokerMsg) {
+                renderStaticSuggestions(buttonContainer, []);
                 return;
             }
 
-            // Generate live suggestions via Gemini
-            // Build conversation history for context
+            // Loading state while fetching from Groq
+            const loadingDiv = document.createElement('div');
+            loadingDiv.style.cssText = `color: rgba(255,255,255,0.4); font-size: 13px; padding: 6px 0;`;
+            loadingDiv.textContent = '⏳ Генерирую подсказки...';
+            buttonContainer.appendChild(loadingDiv);
+
             const allMsgs = container.querySelectorAll('.message');
             let conversationHistory = '';
             allMsgs.forEach(m => {
@@ -5090,69 +5078,43 @@
                 }
             });
 
-            // Detect if rate has been mentioned in conversation
             const ratePattern = /\$[\d,]+|\d{1,3}(,\d{3})*\s*(dollars?|usd)?/i;
             const rateDiscussed = ratePattern.test(conversationHistory);
-
-            const scenarioInfo = currentScenario ? `Load: ${currentScenario.title || ''} | Route: ${currentScenario.route || ''} | Equipment: ${currentScenario.equipment || ''}` : '';
+            const scenarioInfo = currentScenario ? `Load: ${currentScenario.route || ''} | Equipment: ${currentScenario.equipment || ''}` : '';
 
             const prompt = `You are helping a freight dispatcher student practice negotiating with a broker.
-
 Scenario: ${scenarioInfo}
-Conversation so far:
-${conversationHistory}
+Conversation so far:\n${conversationHistory}
 Broker just said: "${lastBrokerMsg}"
+Generate 4 realistic dispatcher reply options. Rules:
+- ${rateDiscussed ? 'Rate was discussed — you may reference it' : 'Rate NOT yet discussed — do NOT mention dollar amounts'}
+- Each option max 15 words. Respond in same language as broker.
+- Return ONLY a JSON array: [{"text":"...","quality":"green|yellow|red","why":"..."}]`;
 
-Generate 4 realistic dispatcher reply options for this EXACT moment in the conversation.
-Rules:
-- NEVER invent dollar amounts or rates unless the broker already mentioned a specific rate in the conversation above
-- ${rateDiscussed ? 'Rate was discussed — you may reference it or counter it' : 'Rate NOT yet discussed — do NOT mention any dollar amounts'}
-- Reply options must directly respond to what the broker JUST said
-- Mix strategies: provide MC info, ask clarifying question, confirm equipment/availability, professional introduction
-- Respond in the SAME language as the broker message (English or Russian)
-- Each option max 15 words
-- Return ONLY a JSON array of 4 objects with this structure:
-  [{"text": "reply text", "quality": "green|yellow|red", "why": "short reason in Russian max 5 words"}]
-
-Quality guide:
-- green: strong professional move (gives MC+company, counters with market data, asks smart question)
-- yellow: acceptable but not optimal
-- red: weak move (accepts too easily, vague, no value added)
-
-Example: [
-  {"text": "MC 445566, SteelHaul Express, 5 flatbeds available", "quality": "green", "why": "Полная квалификация сразу"},
-  {"text": "What's the rate on this load?", "quality": "green", "why": "Правильный первый вопрос"},
-  {"text": "Sounds good, we can do it", "quality": "red", "why": "Нет квалификации"},
-  {"text": "Let me check availability", "quality": "yellow", "why": "Нейтрально, без инфо"}
-]`;
+            const sugCtrl = new AbortController();
+            const sugTimeout = setTimeout(() => sugCtrl.abort(), 5000);
 
             fetch(GROQ_URL, {
                 method: 'POST',
+                mode: 'cors',
+                signal: sugCtrl.signal,
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API_KEY}` },
-                body: JSON.stringify({
-                    model: 'llama-3.3-70b-versatile',
-                    messages: [{ role: 'user', content: prompt }],
-                    temperature: 0.8,
-                    max_tokens: 200
-                })
+                body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages: [{ role: 'user', content: prompt }], temperature: 0.8, max_tokens: 200 })
             })
-                .then(r => r.json())
+                .then(r => { clearTimeout(sugTimeout); return r.json(); })
                 .then(data => {
                     const raw = data.choices?.[0]?.message?.content || '';
                     const match = raw.match(/\[[\s\S]*?\]/);
                     loadingDiv.remove();
                     if (match) {
-                        try {
-                            const tips = JSON.parse(match[0]);
-                            renderTipButtons(buttonContainer, tips);
-                            return;
-                        } catch (e) { }
+                        try { renderTipButtons(buttonContainer, JSON.parse(match[0])); return; } catch (e) { }
                     }
-                    renderStaticSuggestions(buttonContainer, suggestions);
+                    renderStaticSuggestions(buttonContainer, []);
                 })
                 .catch(() => {
+                    clearTimeout(sugTimeout);
                     loadingDiv.remove();
-                    renderStaticSuggestions(buttonContainer, suggestions);
+                    renderStaticSuggestions(buttonContainer, []);
                 });
         }
 
@@ -6626,6 +6588,10 @@ Return this exact JSON structure:
                     hideTypingIndicator();
                     addAIMessageToChat(response);
                     sendBtn.disabled = false;
+                }).catch(() => {
+                    hideTypingIndicator();
+                    addAIMessageToChat(getFallbackBrokerResponse(text));
+                    sendBtn.disabled = false;
                 });
             } else {
                 // Обычный режим - отправляем брокеру
@@ -6645,10 +6611,14 @@ Return this exact JSON structure:
                     hideTypingIndicator();
                     addMessage(response, 'broker');
                     sendBtn.disabled = false;
-                    // Generate contextual suggestions — pass empty array, showSuggestions reads DOM itself
                     showSuggestions([]);
-                    // Check if deal was made
                     checkForDealCompletion(response);
+                }).catch(() => {
+                    hideTypingIndicator();
+                    const fallback = getFallbackBrokerResponse(text);
+                    addMessage(fallback, 'broker');
+                    sendBtn.disabled = false;
+                    showSuggestions([]);
                 });
             }
         }
@@ -7863,10 +7833,7 @@ Return this exact JSON structure:
         }
 
         // ── GROQ AI BROKER ──────────────────────────────────────────
-        // API key stored split to avoid secret scanning
-        const _k = ['gsk_7b9aEN1PMQBKSKbw', 'GOyoWGdyb3FYcNiq4FWZScbJ4iZYYSYOF4Qh'];
-        const GROQ_API_KEY = _k[0] + _k[1];
-        const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+        // API key and URL declared in first script block — no redeclaration here
         // Legacy aliases so old references don't break
         const GEMINI_API_KEY = GROQ_API_KEY;
         const GEMINI_URL = GROQ_URL;
@@ -7909,8 +7876,8 @@ Return this exact JSON structure:
             } catch (e) { _groqStatus = 'offline'; _updateGroqIndicator(false); }
         })();
 
-        // Conversation history for context
-        const geminiHistory = [];
+        // Conversation history for context — declared in first script block
+        // const geminiHistory = []; // already declared above
 
         // difficultyLevel declared at top of script — no redeclaration here
 
@@ -8010,10 +7977,9 @@ LANGUAGE: Match dispatcher's language. Always use real freight terms: MC, rate c
                 { role: 'system', content: getBrokerSystemPrompt() }
             ];
 
-            // Add history (last 10 messages for context)
-            const recentHistory = geminiHistory.slice(-10);
+            // Add history (last 6 messages for context — keep tokens low)
+            const recentHistory = geminiHistory.slice(-6);
             for (const msg of recentHistory) {
-                // geminiHistory uses 'model' role — map to 'assistant' for OpenAI format
                 messages.push({ role: msg.role === 'model' ? 'assistant' : msg.role, content: msg.text });
             }
 
@@ -8024,14 +7990,19 @@ LANGUAGE: Match dispatcher's language. Always use real freight terms: MC, rate c
                 model: 'llama-3.3-70b-versatile',
                 messages: messages,
                 temperature: 0.85,
-                max_tokens: 120,
+                max_tokens: 80,
                 top_p: 0.9
             };
+
+            // AbortController for 4s hard timeout
+            const controller = new AbortController();
+            const fetchTimeout = setTimeout(() => controller.abort(), 4000);
 
             try {
                 const res = await fetch(GROQ_URL, {
                     method: 'POST',
                     mode: 'cors',
+                    signal: controller.signal,
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${GROQ_API_KEY}`
@@ -8040,9 +8011,9 @@ LANGUAGE: Match dispatcher's language. Always use real freight terms: MC, rate c
                 });
 
                 if (!res.ok) {
+                    clearTimeout(fetchTimeout);
                     const err = await res.json();
                     console.error('Groq error:', err);
-                    const errMsg = err.error?.message || '';
                     if (res.status === 429) {
                         _groqStatus = 'rate_limited';
                         return getFallbackBrokerResponse(userMessage);
@@ -8052,7 +8023,8 @@ LANGUAGE: Match dispatcher's language. Always use real freight terms: MC, rate c
                 }
 
                 const data = await res.json();
-                const reply = data.choices?.[0]?.message?.content || '...';
+                clearTimeout(fetchTimeout);
+                const reply = data.choices?.[0]?.message?.content || getFallbackBrokerResponse(userMessage);
 
                 // Mark Groq as working
                 _groqStatus = 'ok';
@@ -8064,8 +8036,9 @@ LANGUAGE: Match dispatcher's language. Always use real freight terms: MC, rate c
 
                 return reply;
             } catch (e) {
+                clearTimeout(fetchTimeout);
                 console.error('Groq fetch error:', e.message);
-                _groqStatus = 'offline';
+                _groqStatus = e.name === 'AbortError' ? 'timeout' : 'offline';
                 _updateGroqIndicator(false);
                 return getFallbackBrokerResponse(userMessage);
             }
@@ -8152,6 +8125,9 @@ LANGUAGE: Match dispatcher's language. Always use real freight terms: MC, rate c
                 hideAITyping();
                 addAIMessage(response, 'bot');
                 generateSmartSuggestions(response);
+            }).catch(() => {
+                hideAITyping();
+                addAIMessage('Sorry, connection issue. Please try again.', 'bot');
             });
         }
 
@@ -8501,10 +8477,14 @@ Only return the JSON array, nothing else.`;
                     if (!voiceCallActive) return;
                     addMessage(response, 'broker');
                     checkForDealCompletion(response);
-
-                    // Show in overlay and speak
                     setVoiceCallStatus('💼 Брокер говорит...', response);
                     voiceCallSpeak(response);
+                }).catch(() => {
+                    if (!voiceCallActive) return;
+                    const fb = getFallbackBrokerResponse(text);
+                    addMessage(fb, 'broker');
+                    setVoiceCallStatus('💼 Брокер говорит...', fb);
+                    voiceCallSpeak(fb);
                 });
             };
 
