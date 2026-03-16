@@ -18,7 +18,7 @@ const scenario11 = {
     deadline: "Pickup TODAY 3 PM (URGENT!), Delivery in 2 days",
     brokerStyle: "Rushed broker - needs pickup TODAY, offers speed bonus",
     difficulty: "medium",
-    initialMessage: "Good afternoon! This is Lisa from SteelTrans Brokers.\nI'm calling about your posted flatbed load Pittsburgh PA to Houston TX with steel coils.\nIs this load still available?",
+    initialMessage: "Good afternoon! This is Lisa from SteelTrans Logistics.\nI'm calling about your posted flatbed load Pittsburgh PA to Houston TX with steel coils.\nIs this load still available?",
 
     paths: {
         master: [

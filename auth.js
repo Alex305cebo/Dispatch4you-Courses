@@ -66,6 +66,7 @@ async function verifyToken() {
 
 // Проверка доступа к защищённым страницам
 function requireAuth() {
+  if (isLocalDev()) return true; // локально — всё открыто
   const user = checkAuth();
   if (!user) {
     // Сохраняем текущий URL чтобы вернуться после логина
@@ -82,6 +83,13 @@ function getLoginPath() {
   const path = window.location.pathname;
   if (path.includes('/pages/')) return '../login.html';
   return 'login.html';
+}
+
+// Локальная разработка — пропускаем авторизацию
+function isLocalDev() {
+  return location.protocol === 'file:' ||
+    location.hostname === 'localhost' ||
+    location.hostname === '127.0.0.1';
 }
 
 // Страницы, доступные БЕЗ авторизации
