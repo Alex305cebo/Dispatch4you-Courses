@@ -1613,6 +1613,58 @@
             });
         }
     </script>
+
+    <!-- Firebase Auth State -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+
+        const app = initializeApp({
+            apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
+            authDomain: "dispatch4you-80e0f.firebaseapp.com",
+            projectId: "dispatch4you-80e0f"
+        });
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+            const navActions = document.querySelector('.nav-actions');
+            const mobileNavActions = document.querySelector('.mobile-nav-actions');
+
+            if (user) {
+                // Залогинен — показываем имя и кнопку выхода
+                const name = user.displayName ? user.displayName.split(' ')[0] : user.email.split('@')[0];
+                const html = `
+                    <span style="color:#a5b4fc;font-weight:600;font-size:14px;">👤 ${name}</span>
+                    <button onclick="window.firebaseSignOut()" style="padding:6px 14px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#fca5a5;font-size:13px;cursor:pointer;font-weight:600;">Выйти</button>
+                `;
+                if (navActions) navActions.innerHTML = html;
+                if (mobileNavActions) mobileNavActions.innerHTML = html;
+
+                // Показываем ссылку на кабинет
+                const dl = document.getElementById('dashboardLink');
+                const dlm = document.getElementById('dashboardLinkMobile');
+                if (dl) dl.style.display = '';
+                if (dlm) dlm.style.display = '';
+
+                // Сохраняем в localStorage
+                localStorage.setItem('user', JSON.stringify({ uid: user.uid, email: user.email, displayName: user.displayName }));
+            } else {
+                // Не залогинен — показываем Войти/Регистрация
+                const html = `
+                    <a href="../login.html" class="btn-login">Войти</a>
+                    <a href="../register.html" class="btn-signup">Регистрация</a>
+                `;
+                if (navActions) navActions.innerHTML = html;
+                if (mobileNavActions) mobileNavActions.innerHTML = html;
+                localStorage.removeItem('user');
+            }
+        });
+
+        window.firebaseSignOut = async () => {
+            await signOut(auth);
+            window.location.href = '../index.html';
+        };
+    </script>
 </body>
 
 </html>
