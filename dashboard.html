@@ -974,10 +974,12 @@
       projectId: "dispatch4you-80e0f"
     });
     const auth = getAuth(app);
+    const SUPER_ADMIN = 'dersire.der@gmail.com';
+    let redirectTimer = null;
 
     onAuthStateChanged(auth, (firebaseUser) => {
-      const navActions = document.querySelector('.nav-actions');
-      const mobileNavActions = document.querySelector('.mobile-nav-actions');
+      // Отменяем предыдущий таймер редиректа если Firebase вернул пользователя
+      if (redirectTimer) { clearTimeout(redirectTimer); redirectTimer = null; }
 
       if (firebaseUser) {
         const parts = (firebaseUser.displayName || '').split(' ');
@@ -998,18 +1000,31 @@
         if (fLast) fLast.value = lastName;
         if (fEmail) fEmail.value = email;
 
-        // Навигация — показываем имя и выход
+        // Навигация
         const html = `
           <span style="color:#a5b4fc;font-weight:600;font-size:14px;">👤 ${firstName}</span>
           <button onclick="window.fbSignOut()" style="padding:6px 14px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#fca5a5;font-size:13px;cursor:pointer;font-weight:600;">Выйти</button>
         `;
+        const navActions = document.querySelector('.nav-actions');
+        const mobileNavActions = document.querySelector('.mobile-nav-actions');
         if (navActions) navActions.innerHTML = html;
         if (mobileNavActions) mobileNavActions.innerHTML = html;
 
         localStorage.setItem('user', JSON.stringify({ uid: firebaseUser.uid, firstName, lastName, email }));
+
+        // Кнопка админа
+        if (email.trim().toLowerCase() === SUPER_ADMIN) {
+          const btn = document.getElementById('adminPanelBtn');
+          if (btn) btn.style.display = 'inline-block';
+        }
       } else {
-        // Не залогинен — редирект на логин
-        window.location.href = 'login.html';
+        // Firebase вернул null — ждём 3 секунды прежде чем редиректить
+        // (на случай медленной загрузки SDK)
+        redirectTimer = setTimeout(() => {
+          if (!getAuth(app).currentUser) {
+            window.location.href = 'login.html';
+          }
+        }, 3000);
       }
     });
 
@@ -1018,13 +1033,6 @@
       localStorage.removeItem('user');
       window.location.href = 'login.html';
     };
-
-    // Кнопка админ-панели только для супер-админа
-    const SUPER_ADMIN = 'dersire.der@gmail.com';
-    if (firebaseUser && firebaseUser.email.trim().toLowerCase() === SUPER_ADMIN) {
-      const btn = document.getElementById('adminPanelBtn');
-      if (btn) btn.style.display = 'inline-block';
-    }
   </script>
 </body>
 
