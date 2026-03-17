@@ -17,9 +17,11 @@ window.updateAuthUI = function () {
     const name = user.firstName || user.email || 'Пользователь';
     const dashHref = isPages() ? '../dashboard.html' : 'dashboard.html';
     const html = `
-      <div style="display:flex;align-items:center;gap:12px;">
-        <a href="${dashHref}" style="color:#a5b4fc;font-weight:600;font-size:14px;text-decoration:none;">👤 ${name}</a>
-        <a href="#" class="btn-login" onclick="authLogout(event)">Выйти</a>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <a href="${dashHref}" style="display:flex;align-items:center;gap:8px;padding:8px 16px;background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.2));border:1px solid rgba(99,102,241,0.4);border-radius:10px;color:#c4b5fd;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.3s;" onmouseover="this.style.background='linear-gradient(135deg,rgba(99,102,241,0.35),rgba(139,92,246,0.35))'" onmouseout="this.style.background='linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.2))'">
+          <span style="font-size:16px;">👤</span> ${name}
+        </a>
+        <a href="#" class="btn-login" onclick="authLogout(event)" style="padding:8px 14px;border:1px solid rgba(239,68,68,0.3);border-radius:10px;color:#fca5a5;font-size:13px;font-weight:600;background:rgba(239,68,68,0.1);">Выйти</a>
       </div>`;
     navActions.innerHTML = html;
     if (mobileNavActions) mobileNavActions.innerHTML = html;
