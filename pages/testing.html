@@ -1221,6 +1221,15 @@
             const pct = answered > 0 ? Math.round(cor / answered * 100) : 0;
             showSection('results');
             document.getElementById('scoreText').textContent = pct + '%';
+
+            // XP за тест
+            if (answered > 0) {
+                import('../xp-system.js').then(m => {
+                    m.awardXP('TEST_PASSED', { score: pct, correct: cor, total: answered });
+                    // Бонус за каждый правильный ответ
+                    for (let i = 0; i < cor; i++) m.awardXP('QUIZ_CORRECT', { source: 'testing' });
+                });
+            }
             document.getElementById('cor').textContent = cor;
             document.getElementById('inc').textContent = incorrect;
             document.getElementById('tot').textContent = answered + ' из ' + total;

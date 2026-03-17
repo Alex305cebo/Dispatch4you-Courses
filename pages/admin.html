@@ -1736,6 +1736,8 @@
                                 </select>
                             </div>
                             <div style="display:flex;gap:8px;">
+                                <button class="btn btn-o btn-sm" onclick="sortByXP()" title="Сортировать по XP"><i
+                                        class="fa fa-star"></i> ⚡ Рейтинг</button>
                                 <button class="btn btn-o btn-sm" onclick="exportUsers()"><i class="fa fa-download"></i>
                                     CSV</button>
                                 <button class="btn btn-s btn-sm" onclick="sendBulkEmail()"><i
@@ -1748,6 +1750,7 @@
                                     <th><input type="checkbox" onchange="selectAll(this)"></th>
                                     <th>Пользователь</th>
                                     <th>Уровень</th>
+                                    <th>XP</th>
                                     <th>Модуль</th>
                                     <th>Прогресс</th>
                                     <th>Статус</th>
@@ -2319,6 +2322,9 @@
                         progress: 0,
                         status: d.status || 'active',
                         role: d.role || 1,
+                        xp: d.xp || 0,
+                        stats: d.stats || {},
+                        loginStreak: d.loginStreak || 0,
                         date: dateStr,
                         color: COLORS[users.length % COLORS.length]
                     });
@@ -2567,11 +2573,24 @@
             }
             tbody.innerHTML = data.map(u => {
                 const roleInfo = ROLES[u.role] || ROLES[1];
+                // XP прогресс до следующего уровня
+                const xpThresholds = [0, 50, 150, 300, 500, 800, 1200, 1800, 2500, 9999];
+                const curMin = xpThresholds[(u.role || 1) - 1] || 0;
+                const nextMin = xpThresholds[u.role] || 9999;
+                const xpPct = nextMin < 9999 ? Math.min(100, Math.round(((u.xp || 0) - curMin) / (nextMin - curMin) * 100)) : 100;
                 return `
     <tr>
       <td><input type="checkbox"></td>
       <td><div class="uc"><div class="uav" style="background:${u.color}22;color:${u.color}">${(u.name || '?')[0]}</div><div><div class="un">${u.name}</div><div class="ue">${u.email}</div></div></div></td>
       <td><span class="role-badge role-${u.role || 1}">${roleInfo.label}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="color:#818cf8;font-weight:700;font-size:13px">⚡${u.xp || 0}</span>
+          <div style="width:50px;height:4px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden">
+            <div style="width:${xpPct}%;height:100%;background:linear-gradient(90deg,#6366f1,#a78bfa)"></div>
+          </div>
+        </div>
+      </td>
       <td>${u.module}</td>
       <td><div style="display:flex;align-items:center;gap:8px"><div class="pm"><div class="pmf" style="width:${u.progress}%"></div></div><span style="font-size:12px">${u.progress}%</span></div></td>
       <td><span class="sb2 ${u.status === 'active' ? 's-act' : u.status === 'pending' ? 's-pen' : 's-ina'}">${u.status === 'active' ? 'Активен' : u.status === 'pending' ? 'Ожидает' : 'Неактивен'}</span></td>
@@ -2583,6 +2602,7 @@
         function filterUsers(q) { filteredUsers = USERS.filter(u => u.name.toLowerCase().includes(q.toLowerCase()) || u.email.toLowerCase().includes(q.toLowerCase())); renderUsers(filteredUsers); }
         function filterByStatus(s) { filteredUsers = s ? USERS.filter(u => u.status === s) : [...USERS]; renderUsers(filteredUsers); }
         function filterByModule(m) { filteredUsers = m ? USERS.filter(u => u.module === m) : [...USERS]; renderUsers(filteredUsers); }
+        function sortByXP() { filteredUsers = [...(filteredUsers.length ? filteredUsers : USERS)].sort((a, b) => (b.xp || 0) - (a.xp || 0)); renderUsers(filteredUsers); }
         function selectAll(cb) { document.querySelectorAll('#usersBody input[type=checkbox]').forEach(c => c.checked = cb.checked); }
         function exportUsers() { toast('CSV файл скачивается...', 's'); }
         function sendBulkEmail() { toast('Рассылка отправлена выбранным пользователям', 's'); }

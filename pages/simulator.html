@@ -6547,6 +6547,11 @@ Return this exact JSON structure:
                     const r = JSON.parse(match[0]);
                     const scorePercent = liveScoreTotal > 0 ? Math.round((liveScore / liveScoreTotal) * 100) : 50;
 
+                    // XP за симулятор
+                    import('../xp-system.js').then(m => {
+                        m.awardXP('SIMULATOR_DONE', { score: scorePercent, dealMade: r.dealMade });
+                    });
+
                     overlay.innerHTML = `<div class="deal-modal">
                         <h2>${r.dealMade ? '🤝 Сделка закрыта!' : '❌ Сделка не состоялась'}</h2>
                         <div class="deal-grade">${r.gradeEmoji || '🎯'}</div>
