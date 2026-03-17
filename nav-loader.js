@@ -44,8 +44,13 @@
             // Инициализируем мобильное меню
             initMobileMenu();
 
-            // Сообщаем что навбар загружен — Firebase auth может обновить .nav-actions
+            // Сообщаем что навбар загружен
             document.dispatchEvent(new Event('navLoaded'));
+
+            // Вызываем updateAuthUI напрямую если уже загружен
+            if (typeof window.updateAuthUI === 'function') {
+                window.updateAuthUI();
+            }
 
             // Если auth уже ждал — вызываем его callback
             if (window._pendingNavAuthUpdate) {
