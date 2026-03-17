@@ -63,7 +63,6 @@
                         <a href="{{BASE}}pricing.html">💰 Тарифы</a>
                     </div>
                 </div>
-                <a href="{{BASE}}dashboard.html" class="nav-link" id="dashboardLink" style="display:none;" data-short="Кабинет">Личный кабинет</a>
             </div>
             <div class="nav-actions">
                 <a href="{{BASE}}login.html" class="btn-login">Войти</a>
@@ -84,7 +83,6 @@
         </div>
         <div class="mobile-menu-divider"></div>
         <a href="{{BASE}}index.html" class="nav-link">🏠 Главная</a>
-        <a href="{{BASE}}dashboard.html" class="nav-link" id="dashboardLinkMobile" style="display:none;">👤 Личный кабинет</a>
         <div class="mobile-nav-section">
             <div class="mobile-section-title">📚 КУРСЫ</div>
             <a href="{{BASE}}pages/documentation.html" class="nav-link nav-link-sub" style="color:#ffffff;border-left:3px solid #6366f1;padding-left:14px;background:rgba(99,102,241,0.1);border-radius:8px;margin-bottom:4px;">🎓 База знаний</a>
