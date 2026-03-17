@@ -306,6 +306,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
@@ -318,6 +319,7 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
     const errorMsg = document.getElementById('errorMsg');
@@ -341,12 +343,22 @@
 
     function saveUserAndRedirect(user) {
       const parts = (user.displayName || '').split(' ');
-      localStorage.setItem('user', JSON.stringify({
+      const firstName = parts[0] || user.email.split('@')[0];
+      const lastName = parts.slice(1).join(' ') || '';
+      const userData = {
         uid: user.uid,
-        firstName: parts[0] || user.email.split('@')[0],
-        lastName: parts.slice(1).join(' ') || '',
-        email: user.email
-      }));
+        firstName,
+        lastName,
+        email: user.email,
+        displayName: user.displayName || '',
+        photoURL: user.photoURL || '',
+        lastLogin: serverTimestamp(),
+        provider: user.providerData[0]?.providerId || 'unknown'
+      };
+      // Сохраняем в localStorage
+      localStorage.setItem('user', JSON.stringify({ uid: user.uid, firstName, lastName, email: user.email }));
+      // Сохраняем в Firestore (merge чтобы не перезаписывать существующие данные)
+      setDoc(doc(db, 'users', user.uid), userData, { merge: true }).catch(console.error);
       const returnUrl = localStorage.getItem('returnUrl');
       localStorage.removeItem('returnUrl');
       window.location.href = returnUrl || 'dashboard.html';

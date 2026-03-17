@@ -2164,20 +2164,77 @@
     <!-- TOAST CONTAINER -->
     <div class="tct" id="toastContainer"></div>
 
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
+            authDomain: "dispatch4you-80e0f.firebaseapp.com",
+            projectId: "dispatch4you-80e0f",
+            storageBucket: "dispatch4you-80e0f.firebasestorage.app",
+            messagingSenderId: "349235354473",
+            appId: "1:349235354473:web:488aeb29211b02bb153bf8"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const COLORS = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a', '#f59e0b', '#a78bfa', '#34d399', '#fb923c', '#e879f9'];
+
+        async function loadUsersFromFirestore() {
+            try {
+                const snap = await getDocs(query(collection(db, 'users'), orderBy('lastLogin', 'desc')));
+                const users = [];
+                snap.forEach((doc, i) => {
+                    const d = doc.data();
+                    const lastLogin = d.lastLogin?.toDate ? d.lastLogin.toDate() : new Date();
+                    users.push({
+                        id: doc.id,
+                        name: (d.firstName || '') + ' ' + (d.lastName || '') || d.email,
+                        email: d.email || '',
+                        module: '—',
+                        progress: 0,
+                        status: 'active',
+                        date: lastLogin.toLocaleDateString('ru-RU'),
+                        color: COLORS[users.length % COLORS.length]
+                    });
+                });
+                return users;
+            } catch (e) {
+                console.error('Firestore error:', e);
+                return [];
+            }
+        }
+
+        function updateCounters(users) {
+            const total = users.length;
+            // Обновляем все элементы с числом пользователей
+            document.querySelectorAll('.sc-val').forEach(el => {
+                if (el.textContent.trim() === '1,284') el.textContent = total.toLocaleString('ru-RU');
+            });
+            document.querySelectorAll('.bdg').forEach(el => {
+                if (el.textContent.trim() === '1284') el.textContent = total;
+            });
+            document.querySelectorAll('#pagInfo').forEach(el => {
+                el.textContent = `Показано 1-${Math.min(10, total)} из ${total}`;
+            });
+        }
+
+        // Загружаем данные после инициализации панели
+        window.addEventListener('adminPanelReady', async () => {
+            const users = await loadUsersFromFirestore();
+            window.USERS = users;
+            window.filteredUsers = [...users];
+            updateCounters(users);
+            if (typeof renderUsers === 'function') renderUsers(users);
+            if (typeof renderDashUsers === 'function') renderDashUsers();
+        });
+    </script>
+
     <script>
         // ===== DATA =====
-        const USERS = [
-            { id: 1, name: 'Алексей Козлов', email: 'alex@mail.ru', module: 'Модуль 4', progress: 72, status: 'active', date: '15.03.2026', color: '#667eea' },
-            { id: 2, name: 'Мария Смирнова', email: 'maria@gmail.com', module: 'Модуль 7', progress: 91, status: 'active', date: '14.03.2026', color: '#f093fb' },
-            { id: 3, name: 'Дмитрий Волков', email: 'dmitry@yandex.ru', module: 'Модуль 2', progress: 34, status: 'pending', date: '13.03.2026', color: '#4facfe' },
-            { id: 4, name: 'Анна Петрова', email: 'anna@mail.ru', module: 'Модуль 12', progress: 100, status: 'active', date: '12.03.2026', color: '#43e97b' },
-            { id: 5, name: 'Сергей Иванов', email: 'sergey@gmail.com', module: 'Модуль 1', progress: 18, status: 'inactive', date: '10.03.2026', color: '#fa709a' },
-            { id: 6, name: 'Ольга Новикова', email: 'olga@mail.ru', module: 'Модуль 5', progress: 55, status: 'active', date: '09.03.2026', color: '#f59e0b' },
-            { id: 7, name: 'Павел Морозов', email: 'pavel@gmail.com', module: 'Модуль 3', progress: 67, status: 'active', date: '08.03.2026', color: '#a78bfa' },
-            { id: 8, name: 'Елена Соколова', email: 'elena@mail.ru', module: 'Модуль 8', progress: 43, status: 'pending', date: '07.03.2026', color: '#34d399' },
-            { id: 9, name: 'Андрей Лебедев', email: 'andrey@yandex.ru', module: 'Модуль 6', progress: 88, status: 'active', date: '06.03.2026', color: '#fb923c' },
-            { id: 10, name: 'Наталья Козлова', email: 'natalia@gmail.com', module: 'Модуль 9', progress: 22, status: 'inactive', date: '05.03.2026', color: '#e879f9' },
-        ];
+        // USERS загружаются из Firestore (см. script type="module" выше)
+        let USERS = [];
         const MODULES = [
             { id: 1, name: 'Основы диспетчирования', sectors: 6, students: 847, progress: 78, status: 'active' },
             { id: 2, name: 'FMCSA и DOT', sectors: 4, students: 612, progress: 65, status: 'active' },
@@ -2249,14 +2306,18 @@
         document.addEventListener('click', e => { if (e.target.classList.contains('mo')) e.target.classList.remove('open'); });
 
         // ===== RENDER USERS TABLE =====
-        let filteredUsers = [...USERS];
+        let filteredUsers = [];
         function renderUsers(data) {
             const tbody = document.getElementById('usersBody');
             if (!tbody) return;
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px">Нет пользователей</td></tr>';
+                return;
+            }
             tbody.innerHTML = data.map(u => `
     <tr>
       <td><input type="checkbox"></td>
-      <td><div class="uc"><div class="uav" style="background:${u.color}22;color:${u.color}">${u.name[0]}</div><div><div class="un">${u.name}</div><div class="ue">${u.email}</div></div></div></td>
+      <td><div class="uc"><div class="uav" style="background:${u.color}22;color:${u.color}">${(u.name || '?')[0]}</div><div><div class="un">${u.name}</div><div class="ue">${u.email}</div></div></div></td>
       <td>${u.module}</td>
       <td><div style="display:flex;align-items:center;gap:8px"><div class="pm"><div class="pmf" style="width:${u.progress}%"></div></div><span style="font-size:12px">${u.progress}%</span></div></td>
       <td><span class="sb2 ${u.status === 'active' ? 's-act' : u.status === 'pending' ? 's-pen' : 's-ina'}">${u.status === 'active' ? 'Активен' : u.status === 'pending' ? 'Ожидает' : 'Неактивен'}</span></td>
@@ -2276,9 +2337,13 @@
         function renderDashUsers() {
             const tbody = document.getElementById('dashUsersBody');
             if (!tbody) return;
+            if (!USERS || USERS.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">Загрузка...</td></tr>';
+                return;
+            }
             tbody.innerHTML = USERS.slice(0, 5).map(u => `
     <tr>
-      <td><div class="uc"><div class="uav" style="background:${u.color}22;color:${u.color}">${u.name[0]}</div><div><div class="un">${u.name}</div><div class="ue">${u.email}</div></div></div></td>
+      <td><div class="uc"><div class="uav" style="background:${u.color}22;color:${u.color}">${(u.name || '?')[0]}</div><div><div class="un">${u.name}</div><div class="ue">${u.email}</div></div></div></td>
       <td>${u.module}</td>
       <td><div style="display:flex;align-items:center;gap:8px"><div class="pm"><div class="pmf" style="width:${u.progress}%"></div></div><span style="font-size:12px">${u.progress}%</span></div></td>
       <td><span class="sb2 ${u.status === 'active' ? 's-act' : u.status === 'pending' ? 's-pen' : 's-ina'}">${u.status === 'active' ? 'Активен' : u.status === 'pending' ? 'Ожидает' : 'Неактивен'}</span></td>
@@ -2532,6 +2597,8 @@
             renderFeed();
             renderModStats();
             setTimeout(initCharts, 100);
+            // Запускаем загрузку реальных данных из Firestore
+            window.dispatchEvent(new Event('adminPanelReady'));
         });
     </script>
 </body>
