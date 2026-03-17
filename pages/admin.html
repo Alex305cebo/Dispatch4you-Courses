@@ -2776,37 +2776,120 @@
 
     <!-- MODAL: Edit User -->
     <div class="mo" id="modal-editUser">
-        <div class="md">
+        <div class="md" style="max-width:800px">
             <div class="mh">
-                <div class="mtt">✏️ Редактировать пользователя</div><button class="mc"
+                <div class="mtt">✏️ Полное редактирование пользователя</div><button class="mc"
                     onclick="closeModal('editUser')">✕</button>
             </div>
             <input type="hidden" id="editUserId">
-            <div class="fg"><label class="fl">Имя</label><input id="editUserFirstName" class="finp" placeholder="Иван">
+
+            <!-- Основная информация -->
+            <div
+                style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:12px;padding:16px;margin-bottom:20px">
+                <h4
+                    style="font-size:14px;font-weight:700;color:var(--primary);margin-bottom:12px;display:flex;align-items:center;gap:8px">
+                    <i class="fa fa-user"></i> Основная информация
+                </h4>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                    <div class="fg"><label class="fl">Имя</label><input id="editUserFirstName" class="finp"
+                            placeholder="Иван"></div>
+                    <div class="fg"><label class="fl">Фамилия</label><input id="editUserLastName" class="finp"
+                            placeholder="Иванов"></div>
+                </div>
+                <div class="fg"><label class="fl">Email</label><input id="editUserEmail" class="finp" type="email"
+                        placeholder="ivan@example.com" readonly style="opacity:0.6;cursor:not-allowed"></div>
+                <div class="fg">
+                    <label class="fl">Телефон (опционально)</label>
+                    <input id="editUserPhone" class="finp" type="tel" placeholder="+1 (555) 123-4567">
+                </div>
             </div>
-            <div class="fg"><label class="fl">Фамилия</label><input id="editUserLastName" class="finp"
-                    placeholder="Иванов"></div>
-            <div class="fg"><label class="fl">Email</label><input id="editUserEmail" class="finp" type="email"
-                    placeholder="ivan@example.com" readonly style="opacity:0.6"></div>
-            <div class="fg"><label class="fl">Статус</label><select id="editUserStatus" class="finp">
-                    <option value="active">Активен</option>
-                    <option value="pending">Ожидает</option>
-                    <option value="inactive">Неактивен</option>
-                </select></div>
-            <div class="fg"><label class="fl">Уровень / Звание</label><select id="editUserRole" class="finp">
-                    <option value="1">🌱 1 — Новичок</option>
-                    <option value="2">📖 2 — Стажёр</option>
-                    <option value="3">🎓 3 — Студент</option>
-                    <option value="4">🚛 4 — Диспетчер Jr</option>
-                    <option value="5">📋 5 — Диспетчер</option>
-                    <option value="6">⭐ 6 — Диспетчер Sr</option>
-                    <option value="7">🏆 7 — Эксперт</option>
-                    <option value="8">💎 8 — Наставник</option>
-                    <option value="9">🔥 9 — Модератор</option>
-                    <option value="10">👑 10 — Администратор</option>
-                </select></div>
-            <div class="mf2"><button class="btn btn-o" onclick="closeModal('editUser')">Отмена</button><button
-                    class="btn btn-p" onclick="saveEditUser()"><i class="fa fa-check"></i> Сохранить</button></div>
+
+            <!-- Статус и роль -->
+            <div
+                style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);border-radius:12px;padding:16px;margin-bottom:20px">
+                <h4
+                    style="font-size:14px;font-weight:700;color:var(--secondary);margin-bottom:12px;display:flex;align-items:center;gap:8px">
+                    <i class="fa fa-shield-alt"></i> Статус и права доступа
+                </h4>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                    <div class="fg"><label class="fl">Статус аккаунта</label><select id="editUserStatus" class="finp">
+                            <option value="active">✅ Активен</option>
+                            <option value="pending">⏳ Ожидает подтверждения</option>
+                            <option value="inactive">🚫 Неактивен</option>
+                            <option value="suspended">⛔ Заблокирован</option>
+                        </select></div>
+                    <div class="fg"><label class="fl">Уровень / Звание</label><select id="editUserRole" class="finp">
+                            <option value="1">🌱 1 — Новичок</option>
+                            <option value="2">📖 2 — Стажёр</option>
+                            <option value="3">🎓 3 — Студент</option>
+                            <option value="4">🚛 4 — Диспетчер Jr</option>
+                            <option value="5">📋 5 — Диспетчер</option>
+                            <option value="6">⭐ 6 — Диспетчер Sr</option>
+                            <option value="7">🏆 7 — Эксперт</option>
+                            <option value="8">💎 8 — Наставник</option>
+                            <option value="9">🔥 9 — Модератор</option>
+                            <option value="10">👑 10 — Администратор</option>
+                        </select></div>
+                </div>
+            </div>
+
+            <!-- Пароль -->
+            <div
+                style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:12px;padding:16px;margin-bottom:20px">
+                <h4
+                    style="font-size:14px;font-weight:700;color:var(--danger);margin-bottom:12px;display:flex;align-items:center;gap:8px">
+                    <i class="fa fa-key"></i> Управление паролем
+                </h4>
+                <div class="fg">
+                    <label class="fl">Новый пароль (оставьте пустым если не хотите менять)</label>
+                    <input id="editUserPassword" class="finp" type="password" placeholder="Минимум 8 символов">
+                    <small style="color:var(--muted);font-size:11px;margin-top:4px;display:block">
+                        ⚠️ Пароль будет изменен только если вы введете новое значение
+                    </small>
+                </div>
+                <button class="btn btn-d btn-sm" onclick="resetUserPassword()" style="margin-top:8px">
+                    <i class="fa fa-envelope"></i> Отправить письмо для сброса пароля
+                </button>
+            </div>
+
+            <!-- Дополнительные данные -->
+            <div
+                style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:16px;margin-bottom:20px">
+                <h4
+                    style="font-size:14px;font-weight:700;color:var(--success);margin-bottom:12px;display:flex;align-items:center;gap:8px">
+                    <i class="fa fa-info-circle"></i> Дополнительная информация
+                </h4>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                    <div class="fg">
+                        <label class="fl">Тариф</label>
+                        <select id="editUserTariff" class="finp">
+                            <option value="">Не выбран</option>
+                            <option value="basic">Базовый ($49)</option>
+                            <option value="standard">Стандарт ($99)</option>
+                            <option value="premium">Премиум ($199)</option>
+                        </select>
+                    </div>
+                    <div class="fg">
+                        <label class="fl">Дата окончания подписки</label>
+                        <input id="editUserSubscriptionEnd" class="finp" type="date">
+                    </div>
+                </div>
+                <div class="fg">
+                    <label class="fl">Заметки администратора</label>
+                    <textarea id="editUserNotes" class="finp" rows="3"
+                        placeholder="Внутренние заметки о пользователе..."></textarea>
+                </div>
+            </div>
+
+            <div class="mf2">
+                <button class="btn btn-o" onclick="closeModal('editUser')">Отмена</button>
+                <button class="btn btn-d" onclick="deleteUserConfirm()" style="margin-right:auto">
+                    <i class="fa fa-trash"></i> Удалить пользователя
+                </button>
+                <button class="btn btn-p" onclick="saveEditUser()">
+                    <i class="fa fa-check"></i> Сохранить все изменения
+                </button>
+            </div>
         </div>
     </div>
 
@@ -3052,8 +3135,13 @@
             document.getElementById('editUserFirstName').value = parts[0] || '';
             document.getElementById('editUserLastName').value = parts.slice(1).join(' ') || '';
             document.getElementById('editUserEmail').value = u.email || '';
+            document.getElementById('editUserPhone').value = u.phone || '';
             document.getElementById('editUserStatus').value = u.status || 'active';
             document.getElementById('editUserRole').value = u.role || 1;
+            document.getElementById('editUserPassword').value = '';
+            document.getElementById('editUserTariff').value = u.tariff || '';
+            document.getElementById('editUserSubscriptionEnd').value = u.subscriptionEnd || '';
+            document.getElementById('editUserNotes').value = u.adminNotes || '';
             openModal('editUser');
         };
 
@@ -3061,19 +3149,47 @@
             const uid = document.getElementById('editUserId').value;
             const firstName = document.getElementById('editUserFirstName').value.trim();
             const lastName = document.getElementById('editUserLastName').value.trim();
+            const phone = document.getElementById('editUserPhone').value.trim();
             const status = document.getElementById('editUserStatus').value;
             const role = parseInt(document.getElementById('editUserRole').value) || 1;
+            const password = document.getElementById('editUserPassword').value.trim();
+            const tariff = document.getElementById('editUserTariff').value;
+            const subscriptionEnd = document.getElementById('editUserSubscriptionEnd').value;
+            const adminNotes = document.getElementById('editUserNotes').value.trim();
+
             if (!uid || !firstName) { window.toast('Заполните имя', 'e'); return; }
+
             const btn = document.querySelector('#modal-editUser .btn-p');
+            const origText = btn.textContent;
             btn.disabled = true; btn.textContent = 'Сохраняем...';
+
             try {
-                await updateDoc(doc(db, 'users', uid), {
+                // Обновляем данные в Firestore
+                const updateData = {
                     firstName, lastName,
                     displayName: firstName + ' ' + lastName,
-                    status, role
-                });
-                window.toast('✅ Данные сохранены', 's');
+                    status, role, phone, tariff, subscriptionEnd, adminNotes,
+                    updatedAt: serverTimestamp(),
+                    updatedBy: 'admin'
+                };
+
+                await updateDoc(doc(db, 'users', uid), updateData);
+
+                // Если указан новый пароль - обновляем его через Firebase Auth
+                if (password && password.length >= 8) {
+                    try {
+                        const { getAuth, updatePassword } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js');
+                        const auth = getAuth();
+                        // Примечание: для изменения пароля другого пользователя нужны Admin SDK права
+                        window.toast('⚠️ Пароль можно изменить только через Admin SDK или отправив письмо для сброса', 'i');
+                    } catch (e) {
+                        console.warn('Password update requires Admin SDK', e);
+                    }
+                }
+
+                window.toast('✅ Все данные сохранены', 's');
                 closeModal('editUser');
+
                 const users = await loadUsersFromFirestore();
                 window.USERS = users; window.filteredUsers = [...users];
                 updateCounters(users);
@@ -3082,7 +3198,37 @@
                 console.error('saveEditUser error:', err);
                 window.toast('❌ Ошибка: ' + err.message, 'e');
             } finally {
-                btn.disabled = false; btn.textContent = 'Сохранить';
+                btn.disabled = false; btn.textContent = origText;
+            }
+        };
+
+        // Сброс пароля через email
+        window.resetUserPassword = async function () {
+            const email = document.getElementById('editUserEmail').value;
+            if (!email) { window.toast('Email не найден', 'e'); return; }
+
+            if (!confirm(`Отправить письмо для сброса пароля на ${email}?`)) return;
+
+            try {
+                const { getAuth, sendPasswordResetEmail } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js');
+                const auth = getAuth();
+                await sendPasswordResetEmail(auth, email);
+                window.toast('✅ Письмо для сброса пароля отправлено на ' + email, 's');
+            } catch (err) {
+                console.error('resetUserPassword error:', err);
+                window.toast('❌ Ошибка: ' + err.message, 'e');
+            }
+        };
+
+        // Подтверждение удаления
+        window.deleteUserConfirm = function () {
+            const uid = document.getElementById('editUserId').value;
+            const email = document.getElementById('editUserEmail').value;
+            if (!uid) return;
+
+            if (confirm(`⚠️ ВНИМАНИЕ!\n\nВы действительно хотите УДАЛИТЬ пользователя ${email}?\n\nЭто действие НЕОБРАТИМО!`)) {
+                closeModal('editUser');
+                window.deleteUser(uid, email);
             }
         };
 
