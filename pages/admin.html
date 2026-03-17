@@ -1726,7 +1726,7 @@
                         <div class="thead">
                             <div class="tfilters">
                                 <input class="fi" id="usersSearchInput" type="text" autocomplete="off"
-                                    placeholder="🔍 Поиск по имени или email..." oninput="filterUsers(this.value)">
+                                    placeholder="🔍 Поиск по имени или email...">
                                 <select class="sel" onchange="filterByStatus(this.value)">
                                     <option value="">Все статусы</option>
                                     <option value="active">Активные</option>
@@ -2371,16 +2371,19 @@
 
         // Загружаем данные после инициализации панели
         window.addEventListener('adminPanelReady', async () => {
-            // Сбрасываем поля поиска при загрузке (браузер мог автозаполнить)
-            const searchEl = document.getElementById('usersSearchInput');
-            if (searchEl) searchEl.value = '';
-            const topbarEl = document.getElementById('topbarSearch');
-            if (topbarEl) topbarEl.value = '';
-
             const users = await loadUsersFromFirestore();
             window.USERS = users;
             window.filteredUsers = [...users];
             updateCounters(users);
+
+            // Сбрасываем поле поиска ПОСЛЕ загрузки данных
+            const searchEl = document.getElementById('usersSearchInput');
+            if (searchEl) {
+                searchEl.value = '';
+                // Вешаем обработчик только сейчас — чтобы браузерный автофилл не успел сработать раньше
+                searchEl.addEventListener('input', function () { filterUsers(this.value); });
+            }
+
             if (typeof renderUsers === 'function') renderUsers(users);
             if (typeof renderDashUsers === 'function') renderDashUsers();
         });
@@ -2869,12 +2872,6 @@
         function exportData() { toast('Данные экспортируются...', 's'); }
         function saveSettings() { toast('Настройки сохранены!', 's'); }
         function globalSearch(q) { /* топбар-поиск удалён */ }
-
-        // Сброс поля поиска пользователей при загрузке страницы
-        window.addEventListener('load', () => {
-            const el = document.getElementById('usersSearchInput');
-            if (el) el.value = '';
-        });
 
         // ===== INIT =====
         document.addEventListener('DOMContentLoaded', () => {
