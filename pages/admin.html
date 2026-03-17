@@ -3018,13 +3018,17 @@
                         id: docSnap.id,
                         name: fullName || d.displayName || d.email || docSnap.id,
                         email: d.email || '',
-                        module: '—',
-                        progress: 0,
+                        phone: d.phone || '',
+                        module: d.stats?.module || '—',
+                        progress: d.stats?.progress || 0,
                         status: d.status || 'active',
                         role: d.role || 1,
                         xp: d.xp || 0,
                         stats: d.stats || {},
                         loginStreak: d.loginStreak || 0,
+                        tariff: d.tariff || '',
+                        subscriptionEnd: d.subscriptionEnd || '',
+                        adminNotes: d.adminNotes || '',
                         date: dateStr,
                         color: COLORS[users.length % COLORS.length]
                     });
@@ -3196,10 +3200,19 @@
                 window.toast('✅ Все данные сохранены', 's');
                 closeModal('editUser');
 
+                // Перезагружаем данные из Firestore
                 const users = await loadUsersFromFirestore();
-                window.USERS = users; window.filteredUsers = [...users];
+                window.USERS = users;
+                window.filteredUsers = [...users];
                 updateCounters(users);
-                if (typeof window.renderUsers === 'function') window.renderUsers(users);
+
+                // Принудительно перерисовываем таблицу с новыми данными
+                if (typeof window.renderUsers === 'function') {
+                    window.renderUsers(window.filteredUsers);
+                }
+                if (typeof window.renderDashUsers === 'function') {
+                    window.renderDashUsers();
+                }
             } catch (err) {
                 console.error('saveEditUser error:', err);
                 window.toast('❌ Ошибка: ' + err.message, 'e');
@@ -3290,10 +3303,20 @@
                 });
                 window.toast('✅ Статистика обновлена', 's');
                 closeModal('userStats');
+
+                // Перезагружаем данные из Firestore
                 const users = await loadUsersFromFirestore();
-                window.USERS = users; window.filteredUsers = [...users];
+                window.USERS = users;
+                window.filteredUsers = [...users];
                 updateCounters(users);
-                if (typeof window.renderUsers === 'function') window.renderUsers(users);
+
+                // Принудительно перерисовываем таблицу с новыми данными
+                if (typeof window.renderUsers === 'function') {
+                    window.renderUsers(window.filteredUsers);
+                }
+                if (typeof window.renderDashUsers === 'function') {
+                    window.renderDashUsers();
+                }
             } catch (err) {
                 console.error('saveUserStats error:', err);
                 window.toast('❌ Ошибка: ' + err.message, 'e');
