@@ -1430,7 +1430,7 @@
                 <div class="ni act" onclick="nav('dashboard',this)"><i class="fa fa-chart-pie"></i><span
                         class="nl">Дашборд</span></div>
                 <div class="ni" onclick="nav('users',this)"><i class="fa fa-users"></i><span
-                        class="nl">Пользователи</span><span class="bdg">1284</span></div>
+                        class="nl">Пользователи</span><span class="bdg" id="stat-badge-users">—</span></div>
                 <div class="ni" onclick="nav('analytics',this)"><i class="fa fa-chart-line"></i><span
                         class="nl">Аналитика</span></div>
                 <div class="ni" onclick="nav('payments',this)"><i class="fa fa-credit-card"></i><span
@@ -1522,7 +1522,7 @@
                     <div class="sg">
                         <div class="sc" style="--g:linear-gradient(90deg,#667eea,#764ba2)">
                             <div class="sc-icon" style="background:rgba(102,126,234,.2)">👥</div>
-                            <div class="sc-val">1,284</div>
+                            <div class="sc-val" id="stat-total-dash">—</div>
                             <div class="sc-lbl">Всего пользователей</div>
                             <div class="sc-tr up"><i class="fa fa-arrow-up"></i>+8.2% за месяц</div>
                             <div class="sc-bg">👥</div>
@@ -1633,7 +1633,7 @@
                     <div class="sg">
                         <div class="sc">
                             <div class="sc-icon" style="background:rgba(102,126,234,.2)">👥</div>
-                            <div class="sc-val">1,284</div>
+                            <div class="sc-val" id="stat-total-users">—</div>
                             <div class="sc-lbl">Всего</div>
                         </div>
                         <div class="sc">
@@ -2208,16 +2208,14 @@
 
         function updateCounters(users) {
             const total = users.length;
-            // Обновляем все элементы с числом пользователей
-            document.querySelectorAll('.sc-val').forEach(el => {
-                if (el.textContent.trim() === '1,284') el.textContent = total.toLocaleString('ru-RU');
-            });
-            document.querySelectorAll('.bdg').forEach(el => {
-                if (el.textContent.trim() === '1284') el.textContent = total;
-            });
-            document.querySelectorAll('#pagInfo').forEach(el => {
-                el.textContent = `Показано 1-${Math.min(10, total)} из ${total}`;
-            });
+            const el1 = document.getElementById('stat-total-dash');
+            const el2 = document.getElementById('stat-total-users');
+            const badge = document.getElementById('stat-badge-users');
+            const pagInfo = document.getElementById('pagInfo');
+            if (el1) el1.textContent = total;
+            if (el2) el2.textContent = total;
+            if (badge) badge.textContent = total;
+            if (pagInfo) pagInfo.textContent = `Показано 1-${Math.min(10, total)} из ${total}`;
         }
 
         // Загружаем данные после инициализации панели
