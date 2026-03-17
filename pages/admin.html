@@ -2142,6 +2142,30 @@
         </div>
     </div>
 
+    <!-- MODAL: Edit User -->
+    <div class="mo" id="modal-editUser">
+        <div class="md">
+            <div class="mh">
+                <div class="mtt">✏️ Редактировать пользователя</div><button class="mc"
+                    onclick="closeModal('editUser')">✕</button>
+            </div>
+            <input type="hidden" id="editUserId">
+            <div class="fg"><label class="fl">Имя</label><input id="editUserFirstName" class="finp" placeholder="Иван">
+            </div>
+            <div class="fg"><label class="fl">Фамилия</label><input id="editUserLastName" class="finp"
+                    placeholder="Иванов"></div>
+            <div class="fg"><label class="fl">Email</label><input id="editUserEmail" class="finp" type="email"
+                    placeholder="ivan@example.com" readonly style="opacity:0.6"></div>
+            <div class="fg"><label class="fl">Статус</label><select id="editUserStatus" class="finp">
+                    <option value="active">Активен</option>
+                    <option value="pending">Ожидает</option>
+                    <option value="inactive">Неактивен</option>
+                </select></div>
+            <div class="mf2"><button class="btn btn-o" onclick="closeModal('editUser')">Отмена</button><button
+                    class="btn btn-p" onclick="saveEditUser()"><i class="fa fa-check"></i> Сохранить</button></div>
+        </div>
+    </div>
+
     <!-- MODAL: Add Module -->
     <div class="mo" id="modal-addModule">
         <div class="md">
@@ -2170,7 +2194,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
@@ -2255,7 +2279,6 @@
             try {
                 const { initializeApp: initApp } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js');
                 const { getAuth: getAuth2, createUserWithEmailAndPassword: createUser } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js');
-                const { getFirestore: getFs, doc, setDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js');
                 const secondaryApp = initApp({
                     apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
                     authDomain: "dispatch4you-80e0f.firebaseapp.com",
@@ -2266,8 +2289,7 @@
                 }, 'secondary-' + Date.now());
                 const secAuth = getAuth2(secondaryApp);
                 const cred = await createUser(secAuth, email, password);
-                const db2 = getFs(secondaryApp);
-                await setDoc(doc(db2, 'users', cred.user.uid), {
+                await setDoc(doc(db, 'users', cred.user.uid), {
                     uid: cred.user.uid, firstName, lastName, email,
                     displayName: firstName + ' ' + lastName,
                     photoURL: '', tariff,
@@ -2290,6 +2312,67 @@
                 window.toast('❌ ' + (msgs[err.code] || err.message), 'e');
             } finally {
                 btn.disabled = false; btn.textContent = origText;
+            }
+        };
+
+        // ===== EDIT / VIEW / DELETE USER =====
+        window.openEditUser = function (uid) {
+            const u = (window.USERS || []).find(x => x.id === uid);
+            if (!u) { window.toast('Пользователь не найден', 'e'); return; }
+            document.getElementById('editUserId').value = uid;
+            const parts = u.name.split(' ');
+            document.getElementById('editUserFirstName').value = parts[0] || '';
+            document.getElementById('editUserLastName').value = parts.slice(1).join(' ') || '';
+            document.getElementById('editUserEmail').value = u.email || '';
+            document.getElementById('editUserStatus').value = u.status || 'active';
+            openModal('editUser');
+        };
+
+        window.saveEditUser = async function () {
+            const uid = document.getElementById('editUserId').value;
+            const firstName = document.getElementById('editUserFirstName').value.trim();
+            const lastName = document.getElementById('editUserLastName').value.trim();
+            const status = document.getElementById('editUserStatus').value;
+            if (!uid || !firstName) { window.toast('Заполните имя', 'e'); return; }
+            const btn = document.querySelector('#modal-editUser .btn-p');
+            btn.disabled = true; btn.textContent = 'Сохраняем...';
+            try {
+                await updateDoc(doc(db, 'users', uid), {
+                    firstName, lastName,
+                    displayName: firstName + ' ' + lastName,
+                    status
+                });
+                window.toast('✅ Данные сохранены', 's');
+                closeModal('editUser');
+                const users = await loadUsersFromFirestore();
+                window.USERS = users; window.filteredUsers = [...users];
+                updateCounters(users);
+                if (typeof renderUsers === 'function') renderUsers(users);
+            } catch (err) {
+                console.error('saveEditUser error:', err);
+                window.toast('❌ Ошибка: ' + err.message, 'e');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Сохранить';
+            }
+        };
+
+        window.viewUser = function (uid, name, email) {
+            window.toast('👤 ' + name + ' · ' + email, 'i');
+        };
+
+        window.deleteUser = async function (uid, name) {
+            if (!confirm('Удалить пользователя ' + name + '?')) return;
+            try {
+                await deleteDoc(doc(db, 'users', uid));
+                window.toast('🗑️ Пользователь ' + name + ' удалён', 's');
+                const users = await loadUsersFromFirestore();
+                window.USERS = users; window.filteredUsers = [...users];
+                updateCounters(users);
+                if (typeof renderUsers === 'function') renderUsers(users);
+                if (typeof renderDashUsers === 'function') renderDashUsers();
+            } catch (err) {
+                console.error('deleteUser error:', err);
+                window.toast('❌ Ошибка удаления: ' + err.message, 'e');
             }
         };
     </script>
@@ -2386,7 +2469,7 @@
       <td><div style="display:flex;align-items:center;gap:8px"><div class="pm"><div class="pmf" style="width:${u.progress}%"></div></div><span style="font-size:12px">${u.progress}%</span></div></td>
       <td><span class="sb2 ${u.status === 'active' ? 's-act' : u.status === 'pending' ? 's-pen' : 's-ina'}">${u.status === 'active' ? 'Активен' : u.status === 'pending' ? 'Ожидает' : 'Неактивен'}</span></td>
       <td style="color:var(--muted);font-size:12px">${u.date}</td>
-      <td><div class="ta"><button class="ai" title="Просмотр" onclick="toast('Профиль: ${u.name}','i')"><i class="fa fa-eye"></i></button><button class="ai" title="Редактировать" onclick="toast('Редактирование...','i')"><i class="fa fa-edit"></i></button><button class="ai" title="Удалить" onclick="toast('Пользователь удалён','e')" style="color:#fca5a5"><i class="fa fa-trash"></i></button></div></td>
+      <td><div class="ta"><button class="ai" title="Просмотр" onclick="viewUser('${u.id}','${u.name}','${u.email}')"><i class="fa fa-eye"></i></button><button class="ai" title="Редактировать" onclick="openEditUser('${u.id}')"><i class="fa fa-edit"></i></button><button class="ai" title="Удалить" onclick="deleteUser('${u.id}','${u.name}')" style="color:#fca5a5"><i class="fa fa-trash"></i></button></div></td>
     </tr>`).join('');
         }
         function filterUsers(q) { filteredUsers = USERS.filter(u => u.name.toLowerCase().includes(q.toLowerCase()) || u.email.toLowerCase().includes(q.toLowerCase())); renderUsers(filteredUsers); }
