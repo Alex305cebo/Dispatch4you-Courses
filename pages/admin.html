@@ -1379,21 +1379,22 @@
 
 <body>
 
-    <!-- Firebase Auth Guard -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-        const ADMIN = 'dersire.der@gmail.com';
-        const app = initializeApp({ apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI", authDomain: "dispatch4you-80e0f.firebaseapp.com", projectId: "dispatch4you-80e0f", storageBucket: "dispatch4you-80e0f.firebasestorage.app", messagingSenderId: "349235354473", appId: "1:349235354473:web:488aeb29211b02bb153bf8" });
-        const auth = getAuth(app);
-        onAuthStateChanged(auth, u => {
-            if (!u || u.email !== ADMIN) { document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#020617;font-family:Inter,sans-serif;color:#f1f5f9;flex-direction:column;gap:16px;"><div style="font-size:64px">🔒</div><h1 style="font-size:28px;font-weight:800">Доступ запрещён</h1><p style="color:#64748b">Только для супер-администратора</p><a href="../dashboard.html" style="margin-top:8px;padding:12px 28px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border-radius:12px;text-decoration:none;font-weight:600">← Вернуться</a></div>`; return; }
-            document.getElementById('adminEmail').textContent = u.email;
-            document.getElementById('adminName').textContent = u.displayName || 'Super Admin';
-            document.getElementById('adminInitial').textContent = (u.displayName || 'A')[0].toUpperCase();
-            document.getElementById('topbarInitial').textContent = (u.displayName || 'A')[0].toUpperCase();
+    <!-- Auth Guard: проверка через localStorage (мгновенно) -->
+    <script>
+        const ADMIN_EMAIL = 'dersire.der@gmail.com';
+        const _u = localStorage.getItem('user');
+        let _userData = null;
+        try { _userData = _u ? JSON.parse(_u) : null; } catch (e) { }
+
+        if (!_userData || (_userData.email || '').toLowerCase() !== ADMIN_EMAIL) {
+            document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#020617;font-family:Inter,sans-serif;color:#f1f5f9;flex-direction:column;gap:16px;"><div style="font-size:64px">🔒</div><h1 style="font-size:28px;font-weight:800">Доступ запрещён</h1><p style="color:#64748b">Только для супер-администратора</p><a href="../dashboard.html" style="margin-top:8px;padding:12px 28px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border-radius:12px;text-decoration:none;font-weight:600">← Вернуться</a></div>`;
+        } else {
             document.getElementById('adminPanel').style.display = 'flex';
-        });
+            const name = _userData.firstName || 'Super Admin';
+            document.getElementById('adminName').textContent = name;
+            document.getElementById('adminInitial').textContent = name[0].toUpperCase();
+            document.getElementById('topbarInitial').textContent = name[0].toUpperCase();
+        }
     </script>
 
     <!-- PANEL WRAPPER (hidden until auth) -->
