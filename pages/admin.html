@@ -1379,21 +1379,34 @@
 
 <body>
 
-    <!-- Auth Guard: проверка через localStorage (мгновенно) -->
+    <!-- Auth Guard: проверка через localStorage -->
     <script>
         const ADMIN_EMAIL = 'dersire.der@gmail.com';
-        const _u = localStorage.getItem('user');
-        let _userData = null;
-        try { _userData = _u ? JSON.parse(_u) : null; } catch (e) { }
 
-        if (!_userData || (_userData.email || '').toLowerCase() !== ADMIN_EMAIL) {
-            document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#020617;font-family:Inter,sans-serif;color:#f1f5f9;flex-direction:column;gap:16px;"><div style="font-size:64px">🔒</div><h1 style="font-size:28px;font-weight:800">Доступ запрещён</h1><p style="color:#64748b">Только для супер-администратора</p><a href="../dashboard.html" style="margin-top:8px;padding:12px 28px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border-radius:12px;text-decoration:none;font-weight:600">← Вернуться</a></div>`;
+        function initAdminPanel() {
+            const _u = localStorage.getItem('user');
+            let _userData = null;
+            try { _userData = _u ? JSON.parse(_u) : null; } catch (e) { }
+
+            if (!_userData || (_userData.email || '').toLowerCase() !== ADMIN_EMAIL) {
+                document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#020617;font-family:Inter,sans-serif;color:#f1f5f9;flex-direction:column;gap:16px;"><div style="font-size:64px">🔒</div><h1 style="font-size:28px;font-weight:800">Доступ запрещён</h1><p style="color:#64748b">Только для супер-администратора</p><a href="../dashboard.html" style="margin-top:8px;padding:12px 28px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border-radius:12px;text-decoration:none;font-weight:600">← Вернуться</a></div>`;
+            } else {
+                const panel = document.getElementById('adminPanel');
+                if (panel) panel.style.display = 'flex';
+                const name = _userData.firstName || _userData.email.split('@')[0] || 'Admin';
+                const adminName = document.getElementById('adminName');
+                const adminInitial = document.getElementById('adminInitial');
+                const topbarInitial = document.getElementById('topbarInitial');
+                if (adminName) adminName.textContent = name;
+                if (adminInitial) adminInitial.textContent = name[0].toUpperCase();
+                if (topbarInitial) topbarInitial.textContent = name[0].toUpperCase();
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAdminPanel);
         } else {
-            document.getElementById('adminPanel').style.display = 'flex';
-            const name = _userData.firstName || 'Super Admin';
-            document.getElementById('adminName').textContent = name;
-            document.getElementById('adminInitial').textContent = name[0].toUpperCase();
-            document.getElementById('topbarInitial').textContent = name[0].toUpperCase();
+            initAdminPanel();
         }
     </script>
 
