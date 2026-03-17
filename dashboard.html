@@ -886,14 +886,12 @@
   </section>
 
   <script>
-    // 🔴 MAINTENANCE MODE
+    // Быстрая проверка: если нет user в localStorage — сразу на логин
+    // (Firebase onAuthStateChanged подтвердит или опровергнет позже)
     (function () {
-      const ADMIN_EMAIL = 'dersire.der@gmail.com';
-      const bypass = localStorage.getItem('maintenance_bypass');
-      const user = localStorage.getItem('user');
-      let isAdmin = false;
-      if (user) { try { isAdmin = (JSON.parse(user).email || '').toLowerCase() === ADMIN_EMAIL; } catch (e) { } }
-      if (!isAdmin && bypass !== '1') window.location.href = 'maintenance.html';
+      if (!localStorage.getItem('user')) {
+        window.location.href = 'login.html';
+      }
     })();
   </script>
   <script>
@@ -1026,10 +1024,9 @@
           if (btn) btn.style.display = 'inline-block';
         }
       } else {
-        // Firebase вернул null — НЕ редиректим автоматически
-        // Пользователь может быть не залогинен, просто показываем гостевой вид
-        // Редирект только если явно нажали "Выйти"
-        console.log('Пользователь не авторизован — гостевой режим');
+        // Не авторизован — редиректим на логин
+        localStorage.removeItem('user');
+        window.location.href = 'login.html';
       }
     });
 
