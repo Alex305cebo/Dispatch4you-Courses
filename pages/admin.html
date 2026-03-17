@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 
 <head>
@@ -2239,6 +2239,59 @@
             if (typeof renderUsers === 'function') renderUsers(users);
             if (typeof renderDashUsers === 'function') renderDashUsers();
         });
+
+        // ===== ADD USER (глобальная функция из module scope) =====
+        window.addUser = async function () {
+            const firstName = document.getElementById('newUserFirstName').value.trim();
+            const lastName = document.getElementById('newUserLastName').value.trim();
+            const email = document.getElementById('newUserEmail').value.trim();
+            const password = document.getElementById('newUserPassword').value;
+            const tariff = document.getElementById('newUserTariff').value;
+            if (!firstName || !email || !password) { window.toast('Заполните имя, email и пароль', 'e'); return; }
+            if (password.length < 8) { window.toast('Пароль минимум 8 символов', 'e'); return; }
+            const btn = document.querySelector('#modal-addUser .btn-p');
+            const origText = btn.textContent;
+            btn.disabled = true; btn.textContent = 'Создаём...';
+            try {
+                const { initializeApp: initApp } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js');
+                const { getAuth: getAuth2, createUserWithEmailAndPassword: createUser } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js');
+                const { getFirestore: getFs, doc, setDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js');
+                const secondaryApp = initApp({
+                    apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
+                    authDomain: "dispatch4you-80e0f.firebaseapp.com",
+                    projectId: "dispatch4you-80e0f",
+                    storageBucket: "dispatch4you-80e0f.firebasestorage.app",
+                    messagingSenderId: "349235354473",
+                    appId: "1:349235354473:web:488aeb29211b02bb153bf8"
+                }, 'secondary-' + Date.now());
+                const secAuth = getAuth2(secondaryApp);
+                const cred = await createUser(secAuth, email, password);
+                const db2 = getFs(secondaryApp);
+                await setDoc(doc(db2, 'users', cred.user.uid), {
+                    uid: cred.user.uid, firstName, lastName, email,
+                    displayName: firstName + ' ' + lastName,
+                    photoURL: '', tariff,
+                    lastLogin: serverTimestamp(),
+                    provider: 'password',
+                    createdByAdmin: true
+                }, { merge: true });
+                await secAuth.signOut();
+                window.toast('✅ Пользователь ' + firstName + ' ' + lastName + ' создан!', 's');
+                closeModal('addUser');
+                ['newUserFirstName', 'newUserLastName', 'newUserEmail', 'newUserPassword'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+                const users = await loadUsersFromFirestore();
+                window.USERS = users; window.filteredUsers = [...users];
+                updateCounters(users);
+                if (typeof renderUsers === 'function') renderUsers(users);
+                if (typeof renderDashUsers === 'function') renderDashUsers();
+            } catch (err) {
+                console.error('addUser error:', err);
+                const msgs = { 'auth/email-already-in-use': 'Email уже зарегистрирован', 'auth/invalid-email': 'Неверный email', 'auth/weak-password': 'Пароль слишком слабый' };
+                window.toast('❌ ' + (msgs[err.code] || err.message), 'e');
+            } finally {
+                btn.disabled = false; btn.textContent = origText;
+            }
+        };
     </script>
 
     <script>
@@ -2309,6 +2362,7 @@
             c.appendChild(t);
             setTimeout(() => t.remove(), 3500);
         }
+        window.toast = toast;
 
         // ===== MODAL =====
         function openModal(id) { document.getElementById('modal-' + id).classList.add('open'); }
@@ -2341,65 +2395,6 @@
         function selectAll(cb) { document.querySelectorAll('#usersBody input[type=checkbox]').forEach(c => c.checked = cb.checked); }
         function exportUsers() { toast('CSV файл скачивается...', 's'); }
         function sendBulkEmail() { toast('Рассылка отправлена выбранным пользователям', 's'); }
-        async function addUser() {
-            const firstName = document.getElementById('newUserFirstName').value.trim();
-            const lastName = document.getElementById('newUserLastName').value.trim();
-            const email = document.getElementById('newUserEmail').value.trim();
-            const password = document.getElementById('newUserPassword').value;
-            const tariff = document.getElementById('newUserTariff').value;
-            if (!firstName || !email || !password) { toast('Заполните имя, email и пароль', 'e'); return; }
-            if (password.length < 8) { toast('Пароль минимум 8 символов', 'e'); return; }
-            const btn = document.querySelector('#modal-addUser .btn-p');
-            btn.disabled = true; btn.textContent = 'Создаём...';
-            try {
-                // Создаём через Firebase Admin-like approach: secondary app
-                const { initializeApp: initApp } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js');
-                const { getAuth: getAuth2, createUserWithEmailAndPassword: createUser } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js');
-                const { getFirestore: getFs, doc, setDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js');
-                // Используем secondary app чтобы не разлогинить текущего админа
-                const secondaryApp = initApp({
-                    apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
-                    authDomain: "dispatch4you-80e0f.firebaseapp.com",
-                    projectId: "dispatch4you-80e0f",
-                    storageBucket: "dispatch4you-80e0f.firebasestorage.app",
-                    messagingSenderId: "349235354473",
-                    appId: "1:349235354473:web:488aeb29211b02bb153bf8"
-                }, 'secondary-' + Date.now());
-                const secAuth = getAuth2(secondaryApp);
-                const cred = await createUser(secAuth, email, password);
-                const db2 = getFs(secondaryApp);
-                await setDoc(doc(db2, 'users', cred.user.uid), {
-                    uid: cred.user.uid, firstName, lastName, email,
-                    displayName: firstName + ' ' + lastName,
-                    photoURL: '', tariff,
-                    lastLogin: serverTimestamp(),
-                    provider: 'password',
-                    createdByAdmin: true
-                }, { merge: true });
-                await secAuth.signOut();
-                toast('✅ Пользователь ' + firstName + ' ' + lastName + ' создан!', 's');
-                closeModal('addUser');
-                // Очищаем поля
-                ['newUserFirstName', 'newUserLastName', 'newUserEmail', 'newUserPassword'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-                // Перезагружаем список
-                const users = await loadUsersFromFirestore();
-                window.USERS = users; window.filteredUsers = [...users];
-                updateCounters(users);
-                if (typeof renderUsers === 'function') renderUsers(users);
-                if (typeof renderDashUsers === 'function') renderDashUsers();
-            } catch (err) {
-                console.error('addUser error:', err);
-                const msgs = {
-                    'auth/email-already-in-use': 'Этот email уже зарегистрирован',
-                    'auth/invalid-email': 'Неверный формат email',
-                    'auth/weak-password': 'Пароль слишком слабый'
-                };
-                toast('❌ ' + (msgs[err.code] || err.message), 'e');
-            } finally {
-                btn.disabled = false; btn.textContent = 'Создать';
-            }
-        }
-
         // ===== RENDER DASH USERS =====
         function renderDashUsers() {
             const tbody = document.getElementById('dashUsersBody');
