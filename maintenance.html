@@ -509,8 +509,15 @@
 
         <div class="admin-link" onclick="showAdminModal()">🔐 Войти как администратор</div>
 
-        <!-- Registration Form -->
-        <div class="reg-section">
+        <!-- Toggle button -->
+        <div style="margin-top:20px;text-align:center;">
+            <button onclick="toggleRegForm()" id="toggleBtn"
+                style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px 24px;color:#94a3b8;font-size:20px;cursor:pointer;letter-spacing:4px;transition:all 0.3s;"
+                title="Регистрация / Вход">···</button>
+        </div>
+
+        <!-- Registration Form (hidden by default) -->
+        <div class="reg-section" id="regSection" style="display:none;margin-top:16px;">
             <div class="reg-title">🚀 Зарегистрируйтесь сейчас</div>
             <p class="reg-subtitle">Получите доступ сразу после открытия</p>
 
@@ -625,6 +632,18 @@
                 window.location.href = 'index.html';
             } else {
                 document.getElementById('modalError').style.display = 'block';
+            }
+        }
+
+        function toggleRegForm() {
+            const section = document.getElementById('regSection');
+            const btn = document.getElementById('toggleBtn');
+            const isOpen = section.style.display !== 'none';
+            section.style.display = isOpen ? 'none' : 'block';
+            btn.style.color = isOpen ? '#94a3b8' : '#a5b4fc';
+            btn.style.borderColor = isOpen ? 'rgba(255,255,255,0.12)' : 'rgba(99,102,241,0.4)';
+            if (!isOpen) {
+                setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
             }
         }
 
