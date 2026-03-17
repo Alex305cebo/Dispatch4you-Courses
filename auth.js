@@ -50,13 +50,13 @@ window.authLogout = function (event) {
   }
   // Слушаем событие от nav-loader
   document.addEventListener('navLoaded', window.updateAuthUI, { once: true });
-  // Polling fallback — на случай если событие уже прошло
+  // Polling fallback — каждые 100мс до 5 секунд
   let n = 0;
   const t = setInterval(function () {
     if (document.querySelector('.nav-actions')) {
       clearInterval(t);
       window.updateAuthUI();
     }
-    if (++n > 30) clearInterval(t);
+    if (++n > 50) clearInterval(t);
   }, 100);
 })();
