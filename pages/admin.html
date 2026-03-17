@@ -2505,8 +2505,13 @@
 
     <script>
         // ===== DATA =====
-        // USERS загружаются из Firestore (см. script type="module" выше)
-        let USERS = [];
+        // USERS загружаются из Firestore — используем window.USERS как единый источник
+        // Геттер чтобы всегда брать актуальные данные из window.USERS
+        Object.defineProperty(window, 'USERS', {
+            get: function () { return window._USERS || []; },
+            set: function (v) { window._USERS = v; },
+            configurable: true
+        });
         const MODULES = [
             { id: 1, name: 'Основы диспетчирования', sectors: 6, students: 847, progress: 78, status: 'active' },
             { id: 2, name: 'FMCSA и DOT', sectors: 4, students: 612, progress: 65, status: 'active' },
@@ -2876,8 +2881,7 @@
         // ===== INIT =====
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('pageDate').textContent = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-            renderDashUsers();
-            renderUsers(USERS);
+            // renderUsers и renderDashUsers вызываются после загрузки из Firestore (adminPanelReady)
             renderModules();
             renderPayments();
             renderQuizzes();
