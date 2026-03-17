@@ -12,15 +12,24 @@ function checkAuth() {
 function updateAuthUI() {
   const user = checkAuth();
   const navActions = document.querySelector('.nav-actions');
+  const mobileNavActions = document.querySelector('.mobile-nav-actions');
+
   if (user && navActions) {
-    navActions.innerHTML = `
+    const html = `
       <div style="display:flex;align-items:center;gap:16px;">
         <a href="dashboard.html" style="color:var(--text-secondary);font-size:14px;text-decoration:none;font-weight:600;">
           👤 ${user.firstName}
         </a>
         <a href="#" class="btn-login" onclick="logout(event)">Выйти</a>
       </div>`;
+    navActions.innerHTML = html;
+    if (mobileNavActions) mobileNavActions.innerHTML = html;
   }
+
+  const dashboardLink = document.getElementById('dashboardLink');
+  const dashboardLinkMobile = document.getElementById('dashboardLinkMobile');
+  if (user && dashboardLink) dashboardLink.style.display = 'block';
+  if (user && dashboardLinkMobile) dashboardLinkMobile.style.display = 'block';
 }
 
 function logout(event) {
@@ -30,9 +39,15 @@ function logout(event) {
   window.location.href = 'index.html';
 }
 
+// Запускаем после загрузки навбара (nav-loader.js диспатчит 'navLoaded')
+// или сразу если навбар уже есть (страницы без nav-loader)
 document.addEventListener('DOMContentLoaded', function () {
-  updateAuthUI();
-  const user = checkAuth();
-  const dashboardLink = document.getElementById('dashboardLink');
-  if (user && dashboardLink) dashboardLink.style.display = 'block';
+  if (document.querySelector('.nav-actions')) {
+    updateAuthUI();
+  } else {
+    // Ждём загрузки навбара через nav-loader
+    document.addEventListener('navLoaded', updateAuthUI, { once: true });
+    // Fallback через 800ms
+    setTimeout(updateAuthUI, 800);
+  }
 });
