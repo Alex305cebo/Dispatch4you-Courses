@@ -2166,7 +2166,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
@@ -2183,25 +2183,31 @@
 
         async function loadUsersFromFirestore() {
             try {
-                const snap = await getDocs(query(collection(db, 'users'), orderBy('lastLogin', 'desc')));
+                const snap = await getDocs(collection(db, 'users'));
                 const users = [];
-                snap.forEach((doc, i) => {
-                    const d = doc.data();
-                    const lastLogin = d.lastLogin?.toDate ? d.lastLogin.toDate() : new Date();
+                snap.forEach((docSnap) => {
+                    const d = docSnap.data();
+                    let dateStr = '—';
+                    try {
+                        const ts = d.lastLogin;
+                        if (ts && ts.toDate) dateStr = ts.toDate().toLocaleDateString('ru-RU');
+                        else if (ts) dateStr = new Date(ts).toLocaleDateString('ru-RU');
+                    } catch (e) { }
                     users.push({
-                        id: doc.id,
-                        name: (d.firstName || '') + ' ' + (d.lastName || '') || d.email,
+                        id: docSnap.id,
+                        name: ((d.firstName || '') + ' ' + (d.lastName || '')).trim() || d.email || docSnap.id,
                         email: d.email || '',
                         module: '—',
                         progress: 0,
                         status: 'active',
-                        date: lastLogin.toLocaleDateString('ru-RU'),
+                        date: dateStr,
                         color: COLORS[users.length % COLORS.length]
                     });
                 });
                 return users;
             } catch (e) {
                 console.error('Firestore error:', e);
+                toast('Ошибка загрузки пользователей: ' + e.message, 'e');
                 return [];
             }
         }
