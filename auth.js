@@ -15,13 +15,24 @@ window.updateAuthUI = function () {
 
   if (user) {
     const name = user.lastName || user.firstName || user.email || 'Пользователь';
+    const firstName = user.firstName || '';
+    const lastName = user.lastName || '';
+    const fullName = `${firstName} ${lastName}`.trim() || name;
+    const initials = (firstName[0] || '') + (lastName[0] || '');
     const dashHref = isPages() ? '../dashboard.html' : 'dashboard.html';
+
     const html = `
-      <div style="display:flex;align-items:center;gap:10px;">
-        <a href="${dashHref}" style="display:flex;align-items:center;gap:8px;padding:8px 16px;background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.2));border:1px solid rgba(99,102,241,0.4);border-radius:10px;color:#c4b5fd;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.3s;" onmouseover="this.style.background='linear-gradient(135deg,rgba(99,102,241,0.35),rgba(139,92,246,0.35))'" onmouseout="this.style.background='linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.2))'">
-          <span style="font-size:16px;">👤</span> ${name}
+      <div style="display:flex;align-items:center;gap:12px;">
+        <a href="${dashHref}" style="display:flex;align-items:center;gap:12px;padding:10px 18px;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(139,92,246,0.15));border:1px solid rgba(99,102,241,0.35);border-radius:14px;text-decoration:none;transition:all 0.3s;box-shadow:0 4px 12px rgba(99,102,241,0.2);backdrop-filter:blur(10px);" onmouseover="this.style.background='linear-gradient(135deg,rgba(99,102,241,0.25),rgba(139,92,246,0.25))';this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(99,102,241,0.35)'" onmouseout="this.style.background='linear-gradient(135deg,rgba(99,102,241,0.15),rgba(139,92,246,0.15))';this.style.transform='';this.style.boxShadow='0 4px 12px rgba(99,102,241,0.2)'">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:white;box-shadow:0 2px 8px rgba(99,102,241,0.4);">${initials || '👤'}</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;">
+            <span style="font-weight:700;font-size:14px;color:#e0e7ff;line-height:1;">${fullName}</span>
+            <span style="font-size:11px;color:#a5b4fc;font-weight:500;">Личный кабинет</span>
+          </div>
         </a>
-        <a href="#" class="btn-login" onclick="authLogout(event)" style="padding:8px 14px;border:1px solid rgba(239,68,68,0.3);border-radius:10px;color:#fca5a5;font-size:13px;font-weight:600;background:rgba(239,68,68,0.1);">Выйти</a>
+        <a href="#" class="btn-login" onclick="authLogout(event)" style="padding:10px 16px;border:1px solid rgba(239,68,68,0.35);border-radius:12px;color:#fca5a5;font-size:13px;font-weight:600;background:rgba(239,68,68,0.12);transition:all 0.3s;backdrop-filter:blur(10px);" onmouseover="this.style.background='rgba(239,68,68,0.2)';this.style.borderColor='rgba(239,68,68,0.5)';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(239,68,68,0.12)';this.style.borderColor='rgba(239,68,68,0.35)';this.style.transform=''">
+          <span style="font-size:14px;">🚪</span> Выйти
+        </a>
       </div>`;
     navActions.innerHTML = html;
     if (mobileNavActions) mobileNavActions.innerHTML = html;
