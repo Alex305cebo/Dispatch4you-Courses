@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сайт в разработке | Курсы Диспетчера</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #020617;
+            color: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 60% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 40px 24px;
+            max-width: 600px;
+        }
+
+        .icon {
+            font-size: 80px;
+            margin-bottom: 24px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        h1 {
+            font-size: 42px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: #94a3b8;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .progress-wrap {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 100px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 75%;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
+            border-radius: 100px;
+            animation: shimmer 2s infinite;
+            background-size: 200% 100%;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .feature {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 20px 12px;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .feature-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .notify-form {
+            display: flex;
+            gap: 12px;
+            max-width: 400px;
+            margin: 0 auto 24px;
+        }
+
+        .notify-form input {
+            flex: 1;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #f1f5f9;
+            font-size: 14px;
+        }
+
+        .notify-form input::placeholder {
+            color: #64748b;
+        }
+
+        .notify-form input:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .admin-link {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #334155;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .admin-link:hover {
+            color: #475569;
+        }
+
+        /* Admin bypass modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: #0f172a;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 32px;
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+        }
+
+        .modal-box h3 {
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+
+        .modal-box input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #f1f5f9;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .modal-box input:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+
+        .modal-error {
+            color: #fca5a5;
+            font-size: 13px;
+            margin-bottom: 12px;
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 28px;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+
+            .notify-form {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="icon">🚧</div>
+        <h1>Сайт в разработке</h1>
+        <p class="subtitle">Мы работаем над чем-то крутым. Скоро откроемся — следите за обновлениями!</p>
+
+        <div class="progress-wrap">
+            <div class="progress-label">
+                <span>Готовность платформы</span>
+                <span>75%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+        </div>
+
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">📚</div>
+                12 модулей обучения
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🎧</div>
+                Аудио уроки
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🎯</div>
+                Симулятор звонков
+            </div>
+        </div>
+
+        <div class="notify-form">
+            <input type="email" id="notifyEmail" placeholder="Ваш email для уведомления">
+            <button class="btn" onclick="notify()">Уведомить</button>
+        </div>
+
+        <div class="admin-link" onclick="showAdminModal()">· · ·</div>
+    </div>
+
+    <!-- Admin bypass modal -->
+    <div class="modal" id="adminModal">
+        <div class="modal-box">
+            <h3>🔐 Доступ</h3>
+            <input type="password" id="adminPass" placeholder="Пароль" onkeydown="if(event.key==='Enter')checkAdmin()">
+            <div class="modal-error" id="modalError">Неверный пароль</div>
+            <button class="btn" style="width:100%;margin-bottom:8px" onclick="checkAdmin()">Войти</button>
+            <button onclick="closeModal()"
+                style="background:none;border:none;color:#64748b;cursor:pointer;font-size:13px">Отмена</button>
+        </div>
+    </div>
+
+    <script>
+        // Если уже авторизован как админ — пропускаем
+        (function () {
+            const user = localStorage.getItem('user');
+            if (user) {
+                try {
+                    const u = JSON.parse(user);
+                    if ((u.email || '').toLowerCase() === 'dersire.der@gmail.com') {
+                        window.location.href = 'index.html';
+                    }
+                } catch (e) { }
+            }
+        })();
+
+        function notify() {
+            const email = document.getElementById('notifyEmail').value.trim();
+            if (!email) return;
+            alert('Спасибо! Мы уведомим вас на ' + email);
+            document.getElementById('notifyEmail').value = '';
+        }
+
+        function showAdminModal() {
+            document.getElementById('adminModal').classList.add('active');
+            setTimeout(() => document.getElementById('adminPass').focus(), 100);
+        }
+
+        function closeModal() {
+            document.getElementById('adminModal').classList.remove('active');
+            document.getElementById('adminPass').value = '';
+            document.getElementById('modalError').style.display = 'none';
+        }
+
+        function checkAdmin() {
+            const pass = document.getElementById('adminPass').value;
+            // Пароль для обхода maintenance
+            if (pass === 'dispatch2026admin') {
+                localStorage.setItem('maintenance_bypass', '1');
+                window.location.href = 'index.html';
+            } else {
+                document.getElementById('modalError').style.display = 'block';
+            }
+        }
+
+        document.getElementById('adminModal').addEventListener('click', function (e) {
+            if (e.target === this) closeModal();
+        });
+    </script>
+</body>
+
+</html>

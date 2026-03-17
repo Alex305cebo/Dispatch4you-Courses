@@ -18,6 +18,21 @@
       history.scrollRestoration = 'manual';
     }
   </script>
+  <script>
+    // 🔴 MAINTENANCE MODE — закрыто для всех кроме админа
+    (function () {
+      const ADMIN_EMAIL = 'dersire.der@gmail.com';
+      const bypass = localStorage.getItem('maintenance_bypass');
+      const user = localStorage.getItem('user');
+      let isAdmin = false;
+      if (user) {
+        try { isAdmin = (JSON.parse(user).email || '').toLowerCase() === ADMIN_EMAIL; } catch (e) { }
+      }
+      if (!isAdmin && bypass !== '1') {
+        window.location.href = 'maintenance.html';
+      }
+    })();
+  </script>
   <style>
     * {
       margin: 0;
