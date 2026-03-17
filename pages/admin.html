@@ -2338,6 +2338,51 @@
         </div>
     </div>
 
+    <!-- MODAL: User Stats -->
+    <div class="mo" id="modal-userStats">
+        <div class="md" style="max-width:700px">
+            <div class="mh">
+                <div class="mtt">📊 Статистика и рейтинг</div><button class="mc"
+                    onclick="closeModal('userStats')">✕</button>
+            </div>
+            <input type="hidden" id="statsUserId">
+            <div
+                style="margin-bottom:20px;padding:16px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:12px">
+                <div style="font-size:18px;font-weight:700;margin-bottom:4px" id="statsUserName">—</div>
+                <div style="font-size:13px;color:var(--muted)" id="statsUserEmail">—</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+                <div class="fg"><label class="fl">XP (опыт)</label><input id="statsUserXP" class="finp" type="number"
+                        min="0" placeholder="0"></div>
+                <div class="fg"><label class="fl">Уровень (1-10)</label><input id="statsUserRole" class="finp"
+                        type="number" min="1" max="10" placeholder="1"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+                <div class="fg"><label class="fl">Streak (дни подряд)</label><input id="statsUserStreak" class="finp"
+                        type="number" min="0" placeholder="0"></div>
+                <div class="fg"><label class="fl">Прогресс (%)</label><input id="statsUserProgress" class="finp"
+                        type="number" min="0" max="100" placeholder="0"></div>
+            </div>
+            <div class="fg"><label class="fl">Текущий модуль</label><select id="statsUserModule" class="finp">
+                    <option value="—">Не начат</option>
+                    <option value="Модуль 1">Модуль 1 — Основы</option>
+                    <option value="Модуль 2">Модуль 2 — FMCSA и DOT</option>
+                    <option value="Модуль 3">Модуль 3 — Load Boards</option>
+                    <option value="Модуль 4">Модуль 4 — Переговоры</option>
+                    <option value="Модуль 5">Модуль 5 — Документация</option>
+                    <option value="Модуль 6">Модуль 6 — Тарифы</option>
+                    <option value="Модуль 7">Модуль 7 — Управление</option>
+                    <option value="Модуль 8">Модуль 8 — Страхование</option>
+                    <option value="Модуль 9">Модуль 9 — Финансы</option>
+                    <option value="Модуль 10">Модуль 10 — Маркетинг</option>
+                    <option value="Модуль 11">Модуль 11 — Юридические</option>
+                    <option value="Модуль 12">Модуль 12 — Карьера</option>
+                </select></div>
+            <div class="mf2"><button class="btn btn-o" onclick="closeModal('userStats')">Отмена</button><button
+                    class="btn btn-p" onclick="saveUserStats()"><i class="fa fa-check"></i> Сохранить</button></div>
+        </div>
+    </div>
+
     <!-- MODAL: Add Module -->
     <div class="mo" id="modal-addModule">
         <div class="md">
@@ -2588,6 +2633,50 @@
                 window.toast('❌ Ошибка удаления: ' + err.message, 'e');
             }
         };
+
+        // ===== USER STATS =====
+        window.openUserStats = function (uid, name) {
+            const u = (window.USERS || []).find(x => x.id === uid);
+            if (!u) { window.toast('Пользователь не найден', 'e'); return; }
+            document.getElementById('statsUserId').value = uid;
+            document.getElementById('statsUserName').textContent = u.name;
+            document.getElementById('statsUserEmail').textContent = u.email;
+            document.getElementById('statsUserXP').value = u.xp || 0;
+            document.getElementById('statsUserRole').value = u.role || 1;
+            document.getElementById('statsUserStreak').value = u.loginStreak || 0;
+            document.getElementById('statsUserProgress').value = u.progress || 0;
+            document.getElementById('statsUserModule').value = u.module || '—';
+            openModal('userStats');
+        };
+
+        window.saveUserStats = async function () {
+            const uid = document.getElementById('statsUserId').value;
+            const xp = parseInt(document.getElementById('statsUserXP').value) || 0;
+            const role = parseInt(document.getElementById('statsUserRole').value) || 1;
+            const loginStreak = parseInt(document.getElementById('statsUserStreak').value) || 0;
+            const progress = parseInt(document.getElementById('statsUserProgress').value) || 0;
+            const module = document.getElementById('statsUserModule').value;
+            if (!uid) { window.toast('Ошибка: ID пользователя не найден', 'e'); return; }
+            const btn = document.querySelector('#modal-userStats .btn-p');
+            btn.disabled = true; btn.textContent = 'Сохраняем...';
+            try {
+                await updateDoc(doc(db, 'users', uid), {
+                    xp, role, loginStreak,
+                    stats: { progress, module }
+                });
+                window.toast('✅ Статистика обновлена', 's');
+                closeModal('userStats');
+                const users = await loadUsersFromFirestore();
+                window.USERS = users; window.filteredUsers = [...users];
+                updateCounters(users);
+                if (typeof window.renderUsers === 'function') window.renderUsers(users);
+            } catch (err) {
+                console.error('saveUserStats error:', err);
+                window.toast('❌ Ошибка: ' + err.message, 'e');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Сохранить';
+            }
+        };
     </script>
 
     <script>
@@ -2703,7 +2792,7 @@
       <td><div style="display:flex;align-items:center;gap:8px"><div class="pm"><div class="pmf" style="width:${u.progress}%"></div></div><span style="font-size:12px">${u.progress}%</span></div></td>
       <td><span class="sb2 ${u.status === 'active' ? 's-act' : u.status === 'pending' ? 's-pen' : 's-ina'}">${u.status === 'active' ? 'Активен' : u.status === 'pending' ? 'Ожидает' : 'Неактивен'}</span></td>
       <td style="color:var(--muted);font-size:12px">${u.date}</td>
-      <td><div class="ta"><button class="ai" title="Просмотр" onclick="viewUser('${u.id}','${u.name}','${u.email}')"><i class="fa fa-eye"></i></button><button class="ai" title="Редактировать" onclick="openEditUser('${u.id}')"><i class="fa fa-edit"></i></button><button class="ai" title="Удалить" onclick="deleteUser('${u.id}','${u.name}')" style="color:#fca5a5"><i class="fa fa-trash"></i></button></div></td>
+      <td><div class="ta"><button class="ai" title="Статистика и рейтинг" onclick="openUserStats('${u.id}','${u.name}')" style="color:#a78bfa"><i class="fa fa-chart-line"></i></button><button class="ai" title="Просмотр" onclick="viewUser('${u.id}','${u.name}','${u.email}')"><i class="fa fa-eye"></i></button><button class="ai" title="Редактировать" onclick="openEditUser('${u.id}')"><i class="fa fa-edit"></i></button><button class="ai" title="Удалить" onclick="deleteUser('${u.id}','${u.name}')" style="color:#fca5a5"><i class="fa fa-trash"></i></button></div></td>
     </tr>`;
             }).join('');
         }
