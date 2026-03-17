@@ -305,7 +305,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
@@ -332,12 +332,34 @@
         'auth/invalid-email': 'Неверный формат email.',
         'auth/too-many-requests': 'Слишком много попыток. Попробуйте позже.',
         'auth/network-request-failed': 'Ошибка сети. Проверьте интернет.',
-        'auth/unauthorized-domain': 'Домен не авторизован в Firebase. Добавьте dispatch4you.com в Firebase Console → Authentication → Settings → Authorized domains.',
-        'auth/popup-blocked': 'Браузер заблокировал popup. Разрешите всплывающие окна для этого сайта.',
+        'auth/unauthorized-domain': 'Домен не авторизован в Firebase.',
+        'auth/popup-blocked': 'Браузер заблокировал popup. Пробуем другой способ...',
         'auth/cancelled-popup-request': 'Запрос отменён.',
       };
       return map[code] || 'Ошибка: ' + code;
     }
+
+    function saveUserAndRedirect(user) {
+      const parts = (user.displayName || '').split(' ');
+      localStorage.setItem('user', JSON.stringify({
+        uid: user.uid,
+        firstName: parts[0] || user.email.split('@')[0],
+        lastName: parts.slice(1).join(' ') || '',
+        email: user.email
+      }));
+      const returnUrl = localStorage.getItem('returnUrl');
+      localStorage.removeItem('returnUrl');
+      window.location.href = returnUrl || 'dashboard.html';
+    }
+
+    // Проверяем результат redirect при загрузке страницы
+    getRedirectResult(auth).then((result) => {
+      if (result && result.user) {
+        saveUserAndRedirect(result.user);
+      }
+    }).catch((err) => {
+      console.error('Redirect result error:', err.code);
+    });
 
     // Email/Password login
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -345,37 +367,32 @@
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const btn = document.getElementById('submitBtn');
-
       btn.disabled = true; btn.textContent = 'Входим...';
-
       try {
         const cred = await signInWithEmailAndPassword(auth, email, password);
-        const user = cred.user;
-        const parts = (user.displayName || '').split(' ');
-        localStorage.setItem('user', JSON.stringify({ uid: user.uid, firstName: parts[0] || '', lastName: parts[1] || '', email: user.email }));
-        const returnUrl = localStorage.getItem('returnUrl');
-        localStorage.removeItem('returnUrl');
-        window.location.href = returnUrl || 'dashboard.html';
+        saveUserAndRedirect(cred.user);
       } catch (err) {
         showError(translateError(err.code));
         btn.disabled = false; btn.textContent = 'Войти';
       }
     });
 
-    // Google login
+    // Google login — пробуем popup, при ошибке fallback на redirect
     document.getElementById('googleBtn').addEventListener('click', async () => {
       try {
         const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        const parts = (user.displayName || '').split(' ');
-        localStorage.setItem('user', JSON.stringify({ uid: user.uid, firstName: parts[0] || '', lastName: parts[1] || '', email: user.email }));
-        const returnUrl = localStorage.getItem('returnUrl');
-        localStorage.removeItem('returnUrl');
-        window.location.href = returnUrl || 'dashboard.html';
+        saveUserAndRedirect(result.user);
       } catch (err) {
-        console.error('Google login error:', err.code, err.message);
-        if (err.code !== 'auth/popup-closed-by-user') {
-          showError(translateError(err.code) + ' (код: ' + err.code + ')');
+        console.error('Google popup error:', err.code);
+        if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+          // Fallback: redirect flow
+          try {
+            await signInWithRedirect(auth, provider);
+          } catch (redirectErr) {
+            showError(translateError(redirectErr.code));
+          }
+        } else {
+          showError(translateError(err.code));
         }
       }
     });
