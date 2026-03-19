@@ -1,50 +1,50 @@
-# 🚀 Quick Deploy Script
-# Быстрый коммит и пуш с автоматическим сообщением
+# Quick Deploy Script
+# Fast commit and push with automatic message
 
 param(
     [string]$message = ""
 )
 
 Write-Host ""
-Write-Host "╔════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║   🚀 QUICK DEPLOY TO HOSTINGER        ║" -ForegroundColor Cyan
-Write-Host "╚════════════════════════════════════════╝" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "   QUICK DEPLOY TO HOSTINGER" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Проверка изменений
+# Check for changes
 $status = git status --porcelain
 if ([string]::IsNullOrWhiteSpace($status)) {
-    Write-Host "✅ Нет изменений для деплоя" -ForegroundColor Yellow
+    Write-Host "No changes to deploy" -ForegroundColor Yellow
     exit 0
 }
 
-# Показать изменения
-Write-Host "📝 Обнаружены изменения:" -ForegroundColor Green
+# Show changes
+Write-Host "Changes detected:" -ForegroundColor Green
 git status --short
 Write-Host ""
 
-# Автоматическое сообщение коммита
+# Auto commit message
 if ([string]::IsNullOrWhiteSpace($message)) {
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
-    $message = "🚀 Auto deploy: $timestamp"
+    $message = "Auto deploy: $timestamp"
 }
 
-# Git операции
-Write-Host "📦 Добавление файлов..." -ForegroundColor Cyan
+# Git operations
+Write-Host "Adding files..." -ForegroundColor Cyan
 git add .
 
-Write-Host "💾 Коммит: $message" -ForegroundColor Cyan
+Write-Host "Commit: $message" -ForegroundColor Cyan
 git commit -m $message
 
-Write-Host "🌐 Отправка на GitHub..." -ForegroundColor Cyan
+Write-Host "Pushing to GitHub..." -ForegroundColor Cyan
 git push
 
 Write-Host ""
-Write-Host "╔════════════════════════════════════════╗" -ForegroundColor Green
-Write-Host "║   ✅ ДЕПЛОЙ ЗАПУЩЕН!                  ║" -ForegroundColor Green
-Write-Host "╚════════════════════════════════════════╝" -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Green
+Write-Host "   DEPLOY STARTED!" -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "🔗 Статус: GitHub → Actions" -ForegroundColor Yellow
-Write-Host "🌐 Сайт обновится через 2-5 минут" -ForegroundColor Yellow
-Write-Host "🎯 https://dispatch4you.com" -ForegroundColor Cyan
+Write-Host "Status: GitHub -> Actions" -ForegroundColor Yellow
+Write-Host "Site will update in 2-5 minutes" -ForegroundColor Yellow
+Write-Host "URL: https://dispatch4you.com" -ForegroundColor Cyan
 Write-Host ""
