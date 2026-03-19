@@ -1,26 +1,29 @@
 <?php
 /**
- * 🚀 Git Deploy Webhook для Hostinger
+ * 🚀 Git Deploy Webhook для Hostinger (БЕЗОПАСНЫЙ МЕТОД)
  * 
- * Этот файл автоматически обновляет сайт при push в GitHub
+ * Git репозиторий в отдельной папке ~/git-repo
+ * Файлы копируются в ~/public_html
  * 
  * Установка:
- * 1. Загрузи этот файл в /public_html/
- * 2. GitHub → Settings → Webhooks → Add webhook
- * 3. URL: https://dispatch4you.com/deploy-webhook.php
- * 4. Secret: придумай секретный ключ
- * 5. Events: Just the push event
+ * 1. SSH на Hostinger: mkdir ~/git-repo && cd ~/git-repo
+ * 2. Клонируй: git clone https://github.com/Alex305cebo/dispatch4you-site.git .
+ * 3. Отредактируй этот файл (секрет + username)
+ * 4. Загрузи этот файл в ~/public_html/
+ * 5. GitHub → Settings → Webhooks → Add webhook
+ * 6. URL: https://dispatch4you.com/deploy-webhook.php
  */
 
-// 🔐 Секретный ключ (измени на свой!)
-// Придумай сложный пароль, например: generate_random_string_here_123456
+// 🔐 Секретный ключ (ИЗМЕНИ НА СВОЙ!)
+// Придумай сложный пароль, например: my_secret_key_abc123xyz
 define('WEBHOOK_SECRET', 'CHANGE_THIS_SECRET_KEY_NOW');
 
-// 📁 Путь к репозиторию (замени u123456789 на свой username)
-define('REPO_PATH', '/home/u123456789/public_html');
+// 📁 Пути (ИЗМЕНИ u123456789 на свой username!)
+define('GIT_REPO_PATH', '/home/u123456789/git-repo');
+define('PUBLIC_HTML_PATH', '/home/u123456789/public_html');
 
 // 📝 Лог файл
-define('LOG_FILE', REPO_PATH . '/deploy.log');
+define('LOG_FILE', PUBLIC_HTML_PATH . '/deploy.log');
 
 // Функция логирования
 function logMessage($message) {
@@ -57,33 +60,71 @@ if ($data['ref'] !== 'refs/heads/main') {
 
 logMessage('🚀 Deploy started by ' . $data['pusher']['name']);
 
-// Выполняем git pull
-chdir(REPO_PATH);
+// Переходим в Git репозиторий
+chdir(GIT_REPO_PATH);
 
 $output = [];
 $return_var = 0;
 
-// Git pull
+// Git pull в отдельной папке
 exec('git pull origin main 2>&1', $output, $return_var);
 
+if ($return_var !== 0) {
+    logMessage('❌ Git pull failed: ' . implode("\n", $output));
+    http_response_code(500);
+    die('Git pull failed');
+}
+
+logMessage('✅ Git pull successful');
+
+// Копируем файлы в public_html (исключая ненужные)
+$rsyncCommand = sprintf(
+    'rsync -av --delete ' .
+    '--exclude=".git" ' .
+    '--exclude="node_modules" ' .
+    '--exclude=".kiro" ' .
+    '--exclude="backup_*" ' .
+    '--exclude="*.md" ' .
+    '--exclude="SESSION-*.md" ' .
+    '--exclude=".vscode" ' .
+    '--exclude="audio-learning-platform" ' .
+    '--exclude="dispatcher-cards-app" ' .
+    '--exclude="dispatcher-training-v2" ' .
+    '--exclude="dispatcher-training-v2-html" ' .
+    '--exclude="hero-react-app" ' .
+    '--exclude="hero-scroll-section" ' .
+    '--exclude="__tests__" ' .
+    '--exclude="test-*.html" ' .
+    '--exclude="*.py" ' .
+    '--exclude="*.ps1" ' .
+    '--exclude="*.bat" ' .
+    '--exclude="*.sh" ' .
+    '--exclude="*.zip" ' .
+    '--exclude="deploy-webhook.php" ' .
+    '%s/ %s/',
+    GIT_REPO_PATH,
+    PUBLIC_HTML_PATH
+);
+
+exec($rsyncCommand . ' 2>&1', $output, $return_var);
+
 if ($return_var === 0) {
-    logMessage('✅ Deploy successful');
-    logMessage('📝 Output: ' . implode("\n", $output));
+    logMessage('✅ Files synced to public_html');
+    logMessage('📝 Deploy completed successfully');
     
     http_response_code(200);
     echo json_encode([
         'status' => 'success',
         'message' => 'Deploy completed',
-        'output' => $output
+        'timestamp' => date('Y-m-d H:i:s')
     ]);
 } else {
-    logMessage('❌ Deploy failed');
-    logMessage('📝 Error: ' . implode("\n", $output));
+    logMessage('❌ Rsync failed: ' . implode("\n", $output));
     
     http_response_code(500);
     echo json_encode([
         'status' => 'error',
-        'message' => 'Deploy failed',
+        'message' => 'Rsync failed',
         'output' => $output
     ]);
 }
