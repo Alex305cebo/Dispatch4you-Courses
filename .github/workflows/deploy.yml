@@ -1,4 +1,4 @@
-name: 🚀 Deploy to Hostinger
+name: 🚀 Deploy via Git SSH
 
 on:
   push:
@@ -11,53 +11,33 @@ on:
       - '**.ps1'
       - '**.bat'
       - '**.sh'
-      - '.gitignore'
   workflow_dispatch:
 
 jobs:
   deploy:
-    name: 📦 Deploy to Production
+    name: 📦 Deploy to Hostinger via SSH
     runs-on: ubuntu-latest
     
     steps:
     - name: 📥 Checkout code
       uses: actions/checkout@v4
       
-    - name: 🚀 Deploy via FTP
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-      with:
-        server: ${{ secrets.FTP_SERVER }}
-        username: ${{ secrets.FTP_USERNAME }}
-        password: ${{ secrets.FTP_PASSWORD }}
-        server-dir: /public_html/
-        protocol: ftps
-        port: 21
-        exclude: |
-          **/.git*
-          **/.git*/**
-          **/node_modules/**
-          **/.kiro/**
-          **/backup_*/**
-          **/*.md
-          **/*.txt
-          **/SESSION-*.md
-          **/.vscode/**
-          **/audio-learning-platform/**
-          **/dispatcher-cards-app/**
-          **/dispatcher-training-v2/**
-          **/dispatcher-training-v2-html/**
-          **/hero-react-app/**
-          **/hero-scroll-section/**
-          **/__tests__/**
-          **/test-*.html
-          **/*.py
-          **/*.ps1
-          **/*.bat
-          **/*.sh
-          **/*.zip
-          
+    - name: 🔐 Setup SSH Key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+      
+    - name: 🚀 Deploy via SSH Git Pull
+      run: |
+        ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
+          cd /home/${{ secrets.SSH_USERNAME }}/public_html
+          git pull origin main
+          echo "✅ Git pull completed successfully!"
+        EOF
+        
     - name: ✅ Deploy Success
       run: |
-        echo "✅ Деплой успешно завершен!"
+        echo "✅ Деплой завершен!"
         echo "🌐 Сайт: https://dispatch4you.com"
-        echo "⏱️ Время: $(date)"
