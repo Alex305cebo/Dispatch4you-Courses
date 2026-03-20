@@ -188,6 +188,9 @@
     }
 
     function loadEnhancedScript() {
+        // Временно отключено для отладки
+        return;
+
         // Проверяем, не загружен ли уже скрипт
         if (document.querySelector('script[src*="nav-enhanced.js"]')) {
             return;
@@ -195,25 +198,6 @@
 
         const script = document.createElement('script');
         script.src = BASE + 'nav-enhanced.js';
-        script.async = true;
-        document.head.appendChild(script);
-    }
-
-    function loadBreadcrumbs() {
-        // Проверяем, не загружены ли уже breadcrumbs
-        if (document.querySelector('script[src*="breadcrumbs.js"]')) {
-            return;
-        }
-
-        // Загружаем CSS
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = BASE + 'breadcrumbs.css';
-        document.head.appendChild(link);
-
-        // Загружаем JS
-        const script = document.createElement('script');
-        script.src = BASE + 'breadcrumbs.js';
         script.async = true;
         document.head.appendChild(script);
     }
