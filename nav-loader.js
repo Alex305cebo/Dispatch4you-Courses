@@ -167,7 +167,7 @@
             loadEnhancedScript();
 
             // Загружаем breadcrumbs
-            loadBreadcrumbs();
+            // loadBreadcrumbs();
 
         } catch (e) {
             console.warn('nav-loader: fetch не удался, используем inline fallback', e);
@@ -183,7 +183,7 @@
             document.dispatchEvent(new Event('navLoaded'));
             if (typeof window.updateAuthUI === 'function') window.updateAuthUI();
             loadEnhancedScript();
-            loadBreadcrumbs();
+            // loadBreadcrumbs();
         }
     }
 
