@@ -126,7 +126,6 @@
 
     .container {
       position: relative;
-      z-index: 0;
       max-width: 1000px;
       margin: 0 auto;
       padding: 0 32px;
@@ -572,10 +571,6 @@
 
     /* Mobile Responsive для Hero */
     @media (max-width: 768px) {
-      .navbar {
-        padding: 8px 0;
-        min-height: 50px;
-      }
 
       .hero {
         min-height: auto;
@@ -693,15 +688,6 @@
     }
 
     @media (max-width: 480px) {
-      body {
-        padding-top: 60px;
-      }
-
-      .navbar {
-        padding: 6px 0;
-        min-height: 45px;
-      }
-
       .hero {
         padding: 40px 0 50px;
         display: flex;
@@ -835,15 +821,6 @@
     }
 
     @media (max-width: 360px) {
-      body {
-        padding-top: 55px;
-      }
-
-      .navbar {
-        padding: 5px 0;
-        min-height: 40px;
-      }
-
       .hero {
         padding: 30px 0 40px;
         display: flex;
@@ -3238,11 +3215,6 @@
         gap: 32px;
       }
 
-      .navbar {
-        padding: 12px 0;
-        min-height: 65px;
-      }
-
       .logo-text {
         font-size: 16px;
       }
@@ -4487,11 +4459,6 @@
           gap: 12px;
         }
 
-        .navbar {
-          padding: 12px 0;
-          min-height: 65px;
-        }
-
         .nav-actions {
           gap: 8px;
         }
@@ -4611,10 +4578,6 @@
       }
 
       @media (max-width: 480px) {
-        body {
-          padding-top: 80px;
-        }
-
         .container {
           padding: 0 12px;
         }
@@ -5673,17 +5636,47 @@
     }
 
     /* Ensure content is above background */
-    body>*:not(.animated-bg) {
+    body>*:not(.animated-bg):not(#nav-placeholder):not(.navbar) {
       position: relative;
       z-index: 1;
     }
-  </style>
 
-  <!-- Neural Background Canvas -->
-  <canvas id="neuralCanvas"></canvas>
+    /* Ensure navigation is always on top */
+    #nav-placeholder,
+    .navbar {
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 9999999 !important;
+    }
+  </style>
 
   <div id="nav-placeholder"></div>
   <script src="nav-loader.js"></script>
+
+  <script>
+    // Принудительно делаем navbar sticky после загрузки
+    document.addEventListener('navLoaded', function () {
+      const navbar = document.querySelector('.navbar');
+      if (navbar) {
+        navbar.style.position = 'sticky';
+        navbar.style.top = '0';
+        navbar.style.zIndex = '9999999';
+      }
+    });
+
+    // Также пробуем сразу, если navbar уже загружен
+    setTimeout(function () {
+      const navbar = document.querySelector('.navbar');
+      if (navbar) {
+        navbar.style.position = 'sticky';
+        navbar.style.top = '0';
+        navbar.style.zIndex = '9999999';
+      }
+    }, 100);
+  </script>
+
+  <!-- Neural Background Canvas -->
+  <canvas id="neuralCanvas"></canvas>
 
   <!-- Hero Section -->
   <!-- New Enhanced Hero Section -->
