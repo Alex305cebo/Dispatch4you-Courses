@@ -121,6 +121,32 @@
       transition: all 0.3s;
     }
 
+    .password-wrapper {
+      position: relative;
+    }
+
+    .password-wrapper input {
+      padding-right: 45px;
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 20px;
+      padding: 5px;
+      opacity: 0.6;
+      transition: opacity 0.3s;
+    }
+
+    .toggle-password:hover {
+      opacity: 1;
+    }
+
     input:focus {
       outline: none;
       border-color: var(--primary);
@@ -325,11 +351,17 @@
         </div>
         <div class="form-group">
           <label>Пароль</label>
-          <input type="password" id="password" placeholder="Минимум 8 символов" required minlength="8">
+          <div class="password-wrapper">
+            <input type="password" id="password" placeholder="Минимум 8 символов" required minlength="8">
+            <button type="button" class="toggle-password" id="togglePassword">👁️</button>
+          </div>
         </div>
         <div class="form-group">
           <label>Подтвердите пароль</label>
-          <input type="password" id="confirmPassword" placeholder="Повторите пароль" required minlength="8">
+          <div class="password-wrapper">
+            <input type="password" id="confirmPassword" placeholder="Повторите пароль" required minlength="8">
+            <button type="button" class="toggle-password" id="toggleConfirmPassword">👁️</button>
+          </div>
         </div>
         <div class="checkbox-group">
           <input type="checkbox" id="terms" required>
@@ -501,6 +533,33 @@
         window.location.href = 'dashboard.html';
       } catch (err) {
         if (err.code !== 'auth/popup-closed-by-user') showError(translateError(err.code));
+      }
+    });
+
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function () {
+      const passwordInput = document.getElementById('password');
+      const toggleBtn = this;
+
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleBtn.textContent = '🙈';
+      } else {
+        passwordInput.type = 'password';
+        toggleBtn.textContent = '👁️';
+      }
+    });
+
+    document.getElementById('toggleConfirmPassword').addEventListener('click', function () {
+      const confirmPasswordInput = document.getElementById('confirmPassword');
+      const toggleBtn = this;
+
+      if (confirmPasswordInput.type === 'password') {
+        confirmPasswordInput.type = 'text';
+        toggleBtn.textContent = '🙈';
+      } else {
+        confirmPasswordInput.type = 'password';
+        toggleBtn.textContent = '👁️';
       }
     });
   </script>
