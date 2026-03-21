@@ -35,15 +35,11 @@ git commit -m $message
 Write-Host "✅ Коммит создан" -ForegroundColor Green
 Write-Host ""
 
-# Push в оба репозитория
-Write-Host "🚀 Отправка в GitHub (резервный)..." -ForegroundColor Yellow
+# Push в GitHub (Hostinger автоматически задеплоит)
+Write-Host "🚀 Отправка в GitHub..." -ForegroundColor Yellow
 git push origin main
-Write-Host "✅ Отправлено в origin" -ForegroundColor Green
-Write-Host ""
-
-Write-Host "🚀 Отправка в Hostinger (основной)..." -ForegroundColor Yellow
-git push site main
-Write-Host "✅ Отправлено в site" -ForegroundColor Green
+Write-Host "✅ Отправлено в GitHub" -ForegroundColor Green
+Write-Host "⏱️  Hostinger автоматически начнет деплой..." -ForegroundColor Yellow
 Write-Host ""
 
 # Итог
@@ -53,7 +49,7 @@ Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "📊 Проверь статус:" -ForegroundColor Yellow
 Write-Host "   Hostinger: https://hpanel.hostinger.com" -ForegroundColor Cyan
-Write-Host "   GitHub: https://github.com/Alex305cebo/dispatch4you-site/actions" -ForegroundColor Cyan
+Write-Host "   GitHub: https://github.com/Alex305cebo/Dispatch4you-Courses/actions" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "⏱️  Сайт обновится через 2-4 минуты" -ForegroundColor Yellow
 Write-Host "🌐 URL: https://dispatch4you.com" -ForegroundColor Cyan
