@@ -254,7 +254,20 @@
                 e.stopPropagation();
                 var wasOpen = dd.classList.contains('open');
                 document.querySelectorAll('.nav-dropdown.open').forEach(function (d) { d.classList.remove('open'); });
-                if (!wasOpen) dd.classList.add('open');
+                if (!wasOpen) {
+                    dd.classList.add('open');
+                    // При открытии flyout — показать первую активную панель
+                    if (dd.classList.contains('has-mega')) {
+                        var firstCat = dd.querySelector('.flyout-cat');
+                        if (firstCat) {
+                            dd.querySelectorAll('.flyout-cat').forEach(function (c) { c.classList.remove('active'); });
+                            dd.querySelectorAll('.flyout-sub').forEach(function (s) { s.style.display = 'none'; });
+                            firstCat.classList.add('active');
+                            var firstSub = document.getElementById('sub-' + firstCat.dataset.sub);
+                            if (firstSub) firstSub.style.display = 'block';
+                        }
+                    }
+                }
                 return;
             }
             if (!e.target.closest('.nav-dropdown')) {
