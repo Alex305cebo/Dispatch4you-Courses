@@ -1,92 +1,92 @@
 /**
- * nav-loader.js — загрузчик меню
+ * nav-loader.js
  */
 (function () {
     var isSubfolder = window.location.pathname.includes('/pages/');
     var BASE = isSubfolder ? '../' : '';
 
-    var NAV_INLINE = `<!-- ЕДИНОЕ МЕНЮ САЙТА -->
+    var NAV_INLINE = `<!-- Р•Р”РРќРћР• РњР•РќР® РЎРђР™РўРђ -->
 <nav class="navbar">
     <div class="nav-container">
         <div class="nav-content">
             <a href="{{BASE}}index.html" class="logo">
-                <span class="logo-icon">??</span>
-                <span class="logo-text">Курсы Диспетчера</span>
+                <span class="logo-icon">рџЋ“</span>
+                <span class="logo-text">РљСѓСЂСЃС‹ Р”РёСЃРїРµС‚С‡РµСЂР°</span>
             </a>
             <div class="nav-links">
-                <a href="{{BASE}}index.html" class="nav-link">Главная</a>
+                <a href="{{BASE}}index.html" class="nav-link">Р“Р»Р°РІРЅР°СЏ</a>
                 <div class="nav-item has-dropdown">
-                    <button class="nav-btn">Курсы <span class="arrow">?</span></button>
+                    <button class="nav-btn">РљСѓСЂСЃС‹ <span class="arrow">в–ѕ</span></button>
                     <div class="dropdown mega-dropdown">
                         <div class="mega-cats">
-                            <div class="mega-cat" data-panel="sections"><span>?? 15 Разделов курса</span><span class="cat-arrow">›</span></div>
-                            <div class="mega-cat" data-panel="modules"><span>?? 12 Модулей с тестами</span><span class="cat-arrow">›</span></div>
-                            <div class="mega-cat" data-panel="resources"><span>?? Ресурсы</span><span class="cat-arrow">›</span></div>
+                            <div class="mega-cat" data-panel="sections"><span>рџ“љ 15 Р Р°Р·РґРµР»РѕРІ РєСѓСЂСЃР°</span><span class="cat-arrow">вЂє</span></div>
+                            <div class="mega-cat" data-panel="modules"><span>рџЋ“ 12 РњРѕРґСѓР»РµР№ СЃ С‚РµСЃС‚Р°РјРё</span><span class="cat-arrow">вЂє</span></div>
+                            <div class="mega-cat" data-panel="resources"><span>рџ“Ѓ Р РµСЃСѓСЂСЃС‹</span><span class="cat-arrow">вЂє</span></div>
                         </div>
                         <div class="mega-panels">
                             <div class="mega-panel" id="panel-sections">
-                                <a href="{{BASE}}pages/intro.html"><span class="num">01</span>Введение в индустрию</a>
-                                <a href="{{BASE}}pages/glossary.html"><span class="num">02</span>Глоссарий терминов</a>
-                                <a href="{{BASE}}pages/role.html"><span class="num">03</span>Роль диспетчера</a>
-                                <a href="{{BASE}}pages/equipment.html"><span class="num">04</span>Оборудование и грузы</a>
-                                <a href="{{BASE}}pages/routes.html"><span class="num">05</span>География и маршруты</a>
+                                <a href="{{BASE}}pages/intro.html"><span class="num">01</span>Р’РІРµРґРµРЅРёРµ РІ РёРЅРґСѓСЃС‚СЂРёСЋ</a>
+                                <a href="{{BASE}}pages/glossary.html"><span class="num">02</span>Р“Р»РѕСЃСЃР°СЂРёР№ С‚РµСЂРјРёРЅРѕРІ</a>
+                                <a href="{{BASE}}pages/role.html"><span class="num">03</span>Р РѕР»СЊ РґРёСЃРїРµС‚С‡РµСЂР°</a>
+                                <a href="{{BASE}}pages/equipment.html"><span class="num">04</span>РћР±РѕСЂСѓРґРѕРІР°РЅРёРµ Рё РіСЂСѓР·С‹</a>
+                                <a href="{{BASE}}pages/routes.html"><span class="num">05</span>Р“РµРѕРіСЂР°С„РёСЏ Рё РјР°СЂС€СЂСѓС‚С‹</a>
                                 <a href="{{BASE}}pages/loadboards.html"><span class="num">06</span>Load Boards</a>
-                                <a href="{{BASE}}pages/negotiation.html"><span class="num">07</span>Переговоры</a>
-                                <a href="{{BASE}}pages/brokers.html"><span class="num">08</span>Проверка брокеров</a>
-                                <a href="{{BASE}}pages/docs.html"><span class="num">09</span>Документация</a>
-                                <a href="{{BASE}}pages/regulations.html"><span class="num">10</span>Законодательство</a>
-                                <a href="{{BASE}}pages/technology.html"><span class="num">11</span>TMS и технологии</a>
-                                <a href="{{BASE}}pages/communication.html"><span class="num">12</span>Коммуникация</a>
-                                <a href="{{BASE}}pages/problems.html"><span class="num">13</span>Решение проблем</a>
-                                <a href="{{BASE}}pages/finances.html"><span class="num">14</span>Финансы и расчёты</a>
-                                <a href="{{BASE}}pages/career.html"><span class="num">15</span>Карьера и практики</a>
+                                <a href="{{BASE}}pages/negotiation.html"><span class="num">07</span>РџРµСЂРµРіРѕРІРѕСЂС‹</a>
+                                <a href="{{BASE}}pages/brokers.html"><span class="num">08</span>РџСЂРѕРІРµСЂРєР° Р±СЂРѕРєРµСЂРѕРІ</a>
+                                <a href="{{BASE}}pages/docs.html"><span class="num">09</span>Р”РѕРєСѓРјРµРЅС‚Р°С†РёСЏ</a>
+                                <a href="{{BASE}}pages/regulations.html"><span class="num">10</span>Р—Р°РєРѕРЅРѕРґР°С‚РµР»СЊСЃС‚РІРѕ</a>
+                                <a href="{{BASE}}pages/technology.html"><span class="num">11</span>TMS Рё С‚РµС…РЅРѕР»РѕРіРёРё</a>
+                                <a href="{{BASE}}pages/communication.html"><span class="num">12</span>РљРѕРјРјСѓРЅРёРєР°С†РёСЏ</a>
+                                <a href="{{BASE}}pages/problems.html"><span class="num">13</span>Р РµС€РµРЅРёРµ РїСЂРѕР±Р»РµРј</a>
+                                <a href="{{BASE}}pages/finances.html"><span class="num">14</span>Р¤РёРЅР°РЅСЃС‹ Рё СЂР°СЃС‡С‘С‚С‹</a>
+                                <a href="{{BASE}}pages/career.html"><span class="num">15</span>РљР°СЂСЊРµСЂР° Рё РїСЂР°РєС‚РёРєРё</a>
                             </div>
                             <div class="mega-panel" id="panel-modules">
-                                <a href="{{BASE}}pages/doc-module-1-complete.html"><span class="num">М1</span>Введение в диспетчерство</a>
-                                <a href="{{BASE}}pages/doc-module-2-complete.html"><span class="num">М2</span>Документы и термины</a>
-                                <a href="{{BASE}}pages/doc-module-3-complete.html"><span class="num">М3</span>Работа с водителями</a>
-                                <a href="{{BASE}}pages/doc-module-4-complete.html"><span class="num">М4</span>Работа с Load Boards</a>
-                                <a href="{{BASE}}pages/doc-module-5-complete.html"><span class="num">М5</span>Поиск грузов</a>
-                                <a href="{{BASE}}pages/doc-module-6-complete.html"><span class="num">М6</span>Переговоры с брокерами</a>
-                                <a href="{{BASE}}pages/doc-module-7-complete.html"><span class="num">М7</span>Rate Confirmation</a>
-                                <a href="{{BASE}}pages/doc-module-8-complete.html"><span class="num">М8</span>Проблемные ситуации</a>
-                                <a href="{{BASE}}pages/doc-module-9-complete.html"><span class="num">М9</span>Регуляции и безопасность</a>
-                                <a href="{{BASE}}pages/doc-module-10-complete.html"><span class="num">М10</span>Финансы диспетчера</a>
-                                <a href="{{BASE}}pages/doc-module-11-complete.html"><span class="num">М11</span>Карьера и бизнес</a>
-                                <a href="{{BASE}}pages/doc-module-12-complete.html"><span class="num">М12</span>Итоговый тест</a>
+                                <a href="{{BASE}}pages/doc-module-1-complete.html"><span class="num">Рњ1</span>Р’РІРµРґРµРЅРёРµ РІ РґРёСЃРїРµС‚С‡РµСЂСЃС‚РІРѕ</a>
+                                <a href="{{BASE}}pages/doc-module-2-complete.html"><span class="num">Рњ2</span>Р”РѕРєСѓРјРµРЅС‚С‹ Рё С‚РµСЂРјРёРЅС‹</a>
+                                <a href="{{BASE}}pages/doc-module-3-complete.html"><span class="num">Рњ3</span>Р Р°Р±РѕС‚Р° СЃ РІРѕРґРёС‚РµР»СЏРјРё</a>
+                                <a href="{{BASE}}pages/doc-module-4-complete.html"><span class="num">Рњ4</span>Р Р°Р±РѕС‚Р° СЃ Load Boards</a>
+                                <a href="{{BASE}}pages/doc-module-5-complete.html"><span class="num">Рњ5</span>РџРѕРёСЃРє РіСЂСѓР·РѕРІ</a>
+                                <a href="{{BASE}}pages/doc-module-6-complete.html"><span class="num">Рњ6</span>РџРµСЂРµРіРѕРІРѕСЂС‹ СЃ Р±СЂРѕРєРµСЂР°РјРё</a>
+                                <a href="{{BASE}}pages/doc-module-7-complete.html"><span class="num">Рњ7</span>Rate Confirmation</a>
+                                <a href="{{BASE}}pages/doc-module-8-complete.html"><span class="num">Рњ8</span>РџСЂРѕР±Р»РµРјРЅС‹Рµ СЃРёС‚СѓР°С†РёРё</a>
+                                <a href="{{BASE}}pages/doc-module-9-complete.html"><span class="num">Рњ9</span>Р РµРіСѓР»СЏС†РёРё Рё Р±РµР·РѕРїР°СЃРЅРѕСЃС‚СЊ</a>
+                                <a href="{{BASE}}pages/doc-module-10-complete.html"><span class="num">Рњ10</span>Р¤РёРЅР°РЅСЃС‹ РґРёСЃРїРµС‚С‡РµСЂР°</a>
+                                <a href="{{BASE}}pages/doc-module-11-complete.html"><span class="num">Рњ11</span>РљР°СЂСЊРµСЂР° Рё Р±РёР·РЅРµСЃ</a>
+                                <a href="{{BASE}}pages/doc-module-12-complete.html"><span class="num">Рњ12</span>РС‚РѕРіРѕРІС‹Р№ С‚РµСЃС‚</a>
                             </div>
                             <div class="mega-panel" id="panel-resources">
-                                <a href="{{BASE}}pages/documentation.html"><span class="num">??</span>База знаний</a>
-                                <a href="{{BASE}}pages/simulator.html"><span class="num">??</span>Симулятор</a>
-                                <a href="{{BASE}}pages/cases.html"><span class="num">??</span>Кейсы</a>
-                                <a href="{{BASE}}pages/testing.html"><span class="num">??</span>Тестирование</a>
+                                <a href="{{BASE}}pages/documentation.html"><span class="num">рџ“–</span>Р‘Р°Р·Р° Р·РЅР°РЅРёР№</a>
+                                <a href="{{BASE}}pages/simulator.html"><span class="num">рџЋЇ</span>РЎРёРјСѓР»СЏС‚РѕСЂ</a>
+                                <a href="{{BASE}}pages/cases.html"><span class="num">рџ’ј</span>РљРµР№СЃС‹</a>
+                                <a href="{{BASE}}pages/testing.html"><span class="num">вњЌпёЏ</span>РўРµСЃС‚РёСЂРѕРІР°РЅРёРµ</a>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="nav-item has-dropdown">
-                    <button class="nav-btn">Инструменты <span class="arrow">?</span></button>
+                    <button class="nav-btn">РРЅСЃС‚СЂСѓРјРµРЅС‚С‹ <span class="arrow">в–ѕ</span></button>
                     <div class="dropdown">
-                        <a href="{{BASE}}pages/analytics.html">?? Статистика рынка</a>
-                        <a href="{{BASE}}pages/load-finder.html">?? Load Finder</a>
-                        <a href="{{BASE}}pages/dispatcher-cards.html">?? Dispatcher Cards</a>
-                        <a href="{{BASE}}pages/simulator.html">?? Dispatch Simulator</a>
+                        <a href="{{BASE}}pages/analytics.html">рџ“Љ РЎС‚Р°С‚РёСЃС‚РёРєР° СЂС‹РЅРєР°</a>
+                        <a href="{{BASE}}pages/load-finder.html">рџ”Ќ Load Finder</a>
+                        <a href="{{BASE}}pages/dispatcher-cards.html">рџѓЏ Dispatcher Cards</a>
+                        <a href="{{BASE}}pages/simulator.html">рџЋЇ Dispatch Simulator</a>
                     </div>
                 </div>
                 <div class="nav-item has-dropdown">
-                    <button class="nav-btn">Информация <span class="arrow">?</span></button>
+                    <button class="nav-btn">РРЅС„РѕСЂРјР°С†РёСЏ <span class="arrow">в–ѕ</span></button>
                     <div class="dropdown">
-                        <a href="{{BASE}}about.html">?? О нас</a>
-                        <a href="{{BASE}}career.html">?? Карьера</a>
-                        <a href="{{BASE}}faq.html">? FAQ</a>
-                        <a href="{{BASE}}contacts.html">?? Контакты</a>
-                        <a href="{{BASE}}pricing.html">?? Тарифы</a>
+                        <a href="{{BASE}}about.html">рџ‘Ґ Рћ РЅР°СЃ</a>
+                        <a href="{{BASE}}career.html">рџ’ј РљР°СЂСЊРµСЂР°</a>
+                        <a href="{{BASE}}faq.html">вќ“ FAQ</a>
+                        <a href="{{BASE}}contacts.html">рџ“¬ РљРѕРЅС‚Р°РєС‚С‹</a>
+                        <a href="{{BASE}}pricing.html">рџ’° РўР°СЂРёС„С‹</a>
                     </div>
                 </div>
             </div>
             <div class="nav-actions">
-                <a href="{{BASE}}login.html" class="btn-login">Войти</a>
-                <a href="{{BASE}}register.html" class="btn-signup">Регистрация</a>
+                <a href="{{BASE}}login.html" class="btn-login">Р’РѕР№С‚Рё</a>
+                <a href="{{BASE}}register.html" class="btn-signup">Р РµРіРёСЃС‚СЂР°С†РёСЏ</a>
             </div>
             <button class="burger" id="burgerBtn"><span></span><span></span><span></span></button>
         </div>
@@ -94,67 +94,67 @@
 </nav>
 <div class="mob-overlay" id="mobOverlay"></div>
 <div class="mob-menu" id="mobMenu">
-    <div class="mob-header"><span>?? Меню</span><button id="mobClose">?</button></div>
+    <div class="mob-header"><span>рџ“љ РњРµРЅСЋ</span><button id="mobClose">вњ•</button></div>
     <div class="mob-body">
         <div class="mob-actions">
-            <a href="{{BASE}}login.html" class="btn-login">Войти</a>
-            <a href="{{BASE}}register.html" class="btn-signup">Регистрация</a>
+            <a href="{{BASE}}login.html" class="btn-login">Р’РѕР№С‚Рё</a>
+            <a href="{{BASE}}register.html" class="btn-signup">Р РµРіРёСЃС‚СЂР°С†РёСЏ</a>
         </div>
-        <a href="{{BASE}}index.html" class="mob-link">?? Главная</a>
+        <a href="{{BASE}}index.html" class="mob-link">рџЏ  Р“Р»Р°РІРЅР°СЏ</a>
         <div class="mob-acc">
-            <div class="mob-acc-title">?? 15 Разделов курса <span class="mob-arr">Ў</span></div>
+            <div class="mob-acc-title">рџ“љ 15 Р Р°Р·РґРµР»РѕРІ РєСѓСЂСЃР° <span class="mob-arr">в–ј</span></div>
             <div class="mob-acc-body">
-                <a href="{{BASE}}pages/intro.html" class="mob-sub"><span class="num">01</span>Введение</a>
-                <a href="{{BASE}}pages/glossary.html" class="mob-sub"><span class="num">02</span>Глоссарий</a>
-                <a href="{{BASE}}pages/role.html" class="mob-sub"><span class="num">03</span>Роль диспетчера</a>
-                <a href="{{BASE}}pages/equipment.html" class="mob-sub"><span class="num">04</span>Оборудование</a>
-                <a href="{{BASE}}pages/routes.html" class="mob-sub"><span class="num">05</span>Маршруты</a>
+                <a href="{{BASE}}pages/intro.html" class="mob-sub"><span class="num">01</span>Р’РІРµРґРµРЅРёРµ</a>
+                <a href="{{BASE}}pages/glossary.html" class="mob-sub"><span class="num">02</span>Р“Р»РѕСЃСЃР°СЂРёР№</a>
+                <a href="{{BASE}}pages/role.html" class="mob-sub"><span class="num">03</span>Р РѕР»СЊ РґРёСЃРїРµС‚С‡РµСЂР°</a>
+                <a href="{{BASE}}pages/equipment.html" class="mob-sub"><span class="num">04</span>РћР±РѕСЂСѓРґРѕРІР°РЅРёРµ</a>
+                <a href="{{BASE}}pages/routes.html" class="mob-sub"><span class="num">05</span>РњР°СЂС€СЂСѓС‚С‹</a>
                 <a href="{{BASE}}pages/loadboards.html" class="mob-sub"><span class="num">06</span>Load Boards</a>
-                <a href="{{BASE}}pages/negotiation.html" class="mob-sub"><span class="num">07</span>Переговоры</a>
-                <a href="{{BASE}}pages/brokers.html" class="mob-sub"><span class="num">08</span>Брокеры</a>
-                <a href="{{BASE}}pages/docs.html" class="mob-sub"><span class="num">09</span>Документация</a>
-                <a href="{{BASE}}pages/regulations.html" class="mob-sub"><span class="num">10</span>Законодательство</a>
+                <a href="{{BASE}}pages/negotiation.html" class="mob-sub"><span class="num">07</span>РџРµСЂРµРіРѕРІРѕСЂС‹</a>
+                <a href="{{BASE}}pages/brokers.html" class="mob-sub"><span class="num">08</span>Р‘СЂРѕРєРµСЂС‹</a>
+                <a href="{{BASE}}pages/docs.html" class="mob-sub"><span class="num">09</span>Р”РѕРєСѓРјРµРЅС‚Р°С†РёСЏ</a>
+                <a href="{{BASE}}pages/regulations.html" class="mob-sub"><span class="num">10</span>Р—Р°РєРѕРЅРѕРґР°С‚РµР»СЊСЃС‚РІРѕ</a>
                 <a href="{{BASE}}pages/technology.html" class="mob-sub"><span class="num">11</span>TMS</a>
-                <a href="{{BASE}}pages/communication.html" class="mob-sub"><span class="num">12</span>Коммуникация</a>
-                <a href="{{BASE}}pages/problems.html" class="mob-sub"><span class="num">13</span>Проблемы</a>
-                <a href="{{BASE}}pages/finances.html" class="mob-sub"><span class="num">14</span>Финансы</a>
-                <a href="{{BASE}}pages/career.html" class="mob-sub"><span class="num">15</span>Карьера</a>
+                <a href="{{BASE}}pages/communication.html" class="mob-sub"><span class="num">12</span>РљРѕРјРјСѓРЅРёРєР°С†РёСЏ</a>
+                <a href="{{BASE}}pages/problems.html" class="mob-sub"><span class="num">13</span>РџСЂРѕР±Р»РµРјС‹</a>
+                <a href="{{BASE}}pages/finances.html" class="mob-sub"><span class="num">14</span>Р¤РёРЅР°РЅСЃС‹</a>
+                <a href="{{BASE}}pages/career.html" class="mob-sub"><span class="num">15</span>РљР°СЂСЊРµСЂР°</a>
             </div>
         </div>
         <div class="mob-acc">
-            <div class="mob-acc-title">?? 12 Модулей с тестами <span class="mob-arr">Ў</span></div>
+            <div class="mob-acc-title">рџЋ“ 12 РњРѕРґСѓР»РµР№ СЃ С‚РµСЃС‚Р°РјРё <span class="mob-arr">в–ј</span></div>
             <div class="mob-acc-body">
-                <a href="{{BASE}}pages/doc-module-1-complete.html" class="mob-sub"><span class="num">М1</span>Введение</a>
-                <a href="{{BASE}}pages/doc-module-2-complete.html" class="mob-sub"><span class="num">М2</span>Документы</a>
-                <a href="{{BASE}}pages/doc-module-3-complete.html" class="mob-sub"><span class="num">М3</span>Водители</a>
-                <a href="{{BASE}}pages/doc-module-4-complete.html" class="mob-sub"><span class="num">М4</span>Load Boards</a>
-                <a href="{{BASE}}pages/doc-module-5-complete.html" class="mob-sub"><span class="num">М5</span>Поиск грузов</a>
-                <a href="{{BASE}}pages/doc-module-6-complete.html" class="mob-sub"><span class="num">М6</span>Переговоры</a>
-                <a href="{{BASE}}pages/doc-module-7-complete.html" class="mob-sub"><span class="num">М7</span>Rate Conf.</a>
-                <a href="{{BASE}}pages/doc-module-8-complete.html" class="mob-sub"><span class="num">М8</span>Проблемы</a>
-                <a href="{{BASE}}pages/doc-module-9-complete.html" class="mob-sub"><span class="num">М9</span>Регуляции</a>
-                <a href="{{BASE}}pages/doc-module-10-complete.html" class="mob-sub"><span class="num">М10</span>Финансы</a>
-                <a href="{{BASE}}pages/doc-module-11-complete.html" class="mob-sub"><span class="num">М11</span>Карьера</a>
-                <a href="{{BASE}}pages/doc-module-12-complete.html" class="mob-sub"><span class="num">М12</span>Итоговый тест</a>
+                <a href="{{BASE}}pages/doc-module-1-complete.html" class="mob-sub"><span class="num">Рњ1</span>Р’РІРµРґРµРЅРёРµ</a>
+                <a href="{{BASE}}pages/doc-module-2-complete.html" class="mob-sub"><span class="num">Рњ2</span>Р”РѕРєСѓРјРµРЅС‚С‹</a>
+                <a href="{{BASE}}pages/doc-module-3-complete.html" class="mob-sub"><span class="num">Рњ3</span>Р’РѕРґРёС‚РµР»Рё</a>
+                <a href="{{BASE}}pages/doc-module-4-complete.html" class="mob-sub"><span class="num">Рњ4</span>Load Boards</a>
+                <a href="{{BASE}}pages/doc-module-5-complete.html" class="mob-sub"><span class="num">Рњ5</span>РџРѕРёСЃРє РіСЂСѓР·РѕРІ</a>
+                <a href="{{BASE}}pages/doc-module-6-complete.html" class="mob-sub"><span class="num">Рњ6</span>РџРµСЂРµРіРѕРІРѕСЂС‹</a>
+                <a href="{{BASE}}pages/doc-module-7-complete.html" class="mob-sub"><span class="num">Рњ7</span>Rate Conf.</a>
+                <a href="{{BASE}}pages/doc-module-8-complete.html" class="mob-sub"><span class="num">Рњ8</span>РџСЂРѕР±Р»РµРјС‹</a>
+                <a href="{{BASE}}pages/doc-module-9-complete.html" class="mob-sub"><span class="num">Рњ9</span>Р РµРіСѓР»СЏС†РёРё</a>
+                <a href="{{BASE}}pages/doc-module-10-complete.html" class="mob-sub"><span class="num">Рњ10</span>Р¤РёРЅР°РЅСЃС‹</a>
+                <a href="{{BASE}}pages/doc-module-11-complete.html" class="mob-sub"><span class="num">Рњ11</span>РљР°СЂСЊРµСЂР°</a>
+                <a href="{{BASE}}pages/doc-module-12-complete.html" class="mob-sub"><span class="num">Рњ12</span>РС‚РѕРіРѕРІС‹Р№ С‚РµСЃС‚</a>
             </div>
         </div>
         <div class="mob-acc">
-            <div class="mob-acc-title">??? Инструменты <span class="mob-arr">Ў</span></div>
+            <div class="mob-acc-title">рџ› пёЏ РРЅСЃС‚СЂСѓРјРµРЅС‚С‹ <span class="mob-arr">в–ј</span></div>
             <div class="mob-acc-body">
-                <a href="{{BASE}}pages/analytics.html" class="mob-sub">?? Статистика рынка</a>
-                <a href="{{BASE}}pages/load-finder.html" class="mob-sub">?? Load Finder</a>
-                <a href="{{BASE}}pages/dispatcher-cards.html" class="mob-sub">?? Dispatcher Cards</a>
-                <a href="{{BASE}}pages/simulator.html" class="mob-sub">?? Dispatch Simulator</a>
+                <a href="{{BASE}}pages/analytics.html" class="mob-sub">рџ“Љ РЎС‚Р°С‚РёСЃС‚РёРєР° СЂС‹РЅРєР°</a>
+                <a href="{{BASE}}pages/load-finder.html" class="mob-sub">рџ”Ќ Load Finder</a>
+                <a href="{{BASE}}pages/dispatcher-cards.html" class="mob-sub">рџѓЏ Dispatcher Cards</a>
+                <a href="{{BASE}}pages/simulator.html" class="mob-sub">рџЋЇ Dispatch Simulator</a>
             </div>
         </div>
         <div class="mob-acc">
-            <div class="mob-acc-title">?? Информация <span class="mob-arr">Ў</span></div>
+            <div class="mob-acc-title">в„№пёЏ РРЅС„РѕСЂРјР°С†РёСЏ <span class="mob-arr">в–ј</span></div>
             <div class="mob-acc-body">
-                <a href="{{BASE}}about.html" class="mob-sub">?? О нас</a>
-                <a href="{{BASE}}career.html" class="mob-sub">?? Карьера</a>
-                <a href="{{BASE}}faq.html" class="mob-sub">? FAQ</a>
-                <a href="{{BASE}}contacts.html" class="mob-sub">?? Контакты</a>
-                <a href="{{BASE}}pricing.html" class="mob-sub">?? Тарифы</a>
+                <a href="{{BASE}}about.html" class="mob-sub">рџ‘Ґ Рћ РЅР°СЃ</a>
+                <a href="{{BASE}}career.html" class="mob-sub">рџ’ј РљР°СЂСЊРµСЂР°</a>
+                <a href="{{BASE}}faq.html" class="mob-sub">вќ“ FAQ</a>
+                <a href="{{BASE}}contacts.html" class="mob-sub">рџ“¬ РљРѕРЅС‚Р°РєС‚С‹</a>
+                <a href="{{BASE}}pricing.html" class="mob-sub">рџ’° РўР°СЂРёС„С‹</a>
             </div>
         </div>
     </div>
@@ -189,26 +189,26 @@
         if (window._navInited) return;
         window._navInited = true;
 
-        /* Desktop: click nav-btn > toggle .open */
         document.addEventListener('click', function (e) {
+            var cat = e.target.closest('.mega-cat');
             var btn = e.target.closest('.nav-btn');
             var item = e.target.closest('.nav-item');
-            var cat = e.target.closest('.mega-cat');
 
-            /* Переключение категорий внутри mega */
             if (cat) {
                 e.stopPropagation();
                 var panel = cat.dataset.panel;
                 var mega = cat.closest('.mega-dropdown');
+                var isActive = cat.classList.contains('active');
                 mega.querySelectorAll('.mega-cat').forEach(function (c) { c.classList.remove('active'); });
                 mega.querySelectorAll('.mega-panel').forEach(function (p) { p.classList.remove('active'); });
-                cat.classList.add('active');
-                var target = mega.querySelector('#panel-' + panel);
-                if (target) target.classList.add('active');
+                if (!isActive) {
+                    cat.classList.add('active');
+                    var target = mega.querySelector('#panel-' + panel);
+                    if (target) target.classList.add('active');
+                }
                 return;
             }
 
-            /* Открытие/закрытие дропдауна */
             if (btn && item) {
                 e.preventDefault();
                 var wasOpen = item.classList.contains('open');
@@ -217,13 +217,11 @@
                 return;
             }
 
-            /* Клик вне — закрыть всё */
             if (!e.target.closest('.nav-item')) {
                 document.querySelectorAll('.nav-item.open').forEach(function (i) { i.classList.remove('open'); });
             }
         });
 
-        /* Mobile */
         var burger = document.getElementById('burgerBtn');
         var mobMenu = document.getElementById('mobMenu');
         var mobOverlay = document.getElementById('mobOverlay');
