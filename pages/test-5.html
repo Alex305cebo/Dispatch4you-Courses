@@ -1,453 +1,488 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тест: Модуль 5 - Коммуникация с брокерами | Курсы - Диспетчера</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>РўРµСЃС‚: РњРѕРґСѓР»СЊ 5 - РљРѕРјРјСѓРЅРёРєР°С†РёСЏ СЃ Р±СЂРѕРєРµСЂР°РјРё</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="../shared-styles.css">
-  <script>!function () { var t = localStorage.getItem('dispatcher-theme') || 'dark'; 'dark' === t && document.documentElement.setAttribute('data-theme', 'dark') }();</script>
   <link rel="stylesheet" href="../dark-theme.css">
-  <script src="../dark-mode.js"></script>
-  <script src="auth-check.js"></script>
   <link rel="stylesheet" href="../shared-nav.css">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #020617; color: #f1f5f9; min-height: 100vh; padding: 80px 20px 40px; display: flex; flex-direction: column; align-items: center; }
-        .container { max-width: 700px; width: 100%; margin: 0 auto; }
-        .header { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); padding: 30px 40px; border-radius: 20px; margin-bottom: 30px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); }
-        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .test-badge { display: inline-flex; align-items: center; gap: 10px; background: #020617; color: #f1f5f9; color: white; padding: 10px 20px; border-radius: 25px; font-weight: 600; font-size: 18px; }
-        .back-btn { padding: 10px 20px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: #f1f5f9; text-decoration: none; border-radius: 8px; font-weight: 600; transition: all 0.3s ease; }
-        .back-btn:hover { background: rgba(255, 255, 255, 0.08); }
-        h1 { color: #f1f5f9; font-size: 32px; margin-bottom: 10px; }
-        .subtitle { color: #94a3b8; font-size: 18px; }
-        .progress-bar { background: rgba(255, 255, 255, 0.08); height: 8px; border-radius: 10px; margin: 20px 0; overflow: hidden; }
-        .progress-fill { background: linear-gradient(90deg, #34d399, #10b981); height: 100%; width: 0%; transition: width 0.3s ease; }
-        .question-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); border-radius: 20px; padding: 35px; margin-bottom: 25px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); display: none; }
-        .question-card.active { display: block; animation: slideIn 0.4s ease; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
-        .question-number { color: #34d399; font-size: 16px; font-weight: 600; margin-bottom: 10px; }
-        .question-text { color: #f1f5f9; font-size: 22px; font-weight: 600; margin-bottom: 25px; line-height: 1.5; }
-        .answers { display: flex; flex-direction: column; gap: 12px; }
-        .answer { background: rgba(255, 255, 255, 0.04); border: 2px solid rgba(255, 255, 255, 0.08); padding: 18px 20px; border-radius: 10px;  cursor: pointer; transition: all 0.3s ease; font-size: 17px; color: #cbd5e1; }
-        .answer:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(52, 211, 153, 0.3); transform: translateX(5px); }
-        .answer.selected { background: rgba(52, 211, 153, 0.15); border-color: #34d399; color: #34d399; font-weight: 600; }
-        .answer.correct { background: rgba(52, 211, 153, 0.2); border-color: #10b981; color: #34d399; font-weight: 600; }
-        .answer.incorrect { background: rgba(239, 68, 68, 0.15); border-color: #ef4444; color: #fca5a5; font-weight: 600; opacity: 0.6; }
-        .nav-buttons { display: flex; gap: 15px; margin-top: 25px; }
-        .btn { padding: 14px 30px; border-radius: 10px; font-weight: 600; font-size: 16px; border: none; cursor: pointer; transition: all 0.3s ease; }
-        .btn-primary { background: #020617; color: #f1f5f9; color: white; }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(52, 211, 153, 0.4); }
-        .btn-secondary { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); color: #16a34a; border: 2px solid #16a34a; }
-        .btn-secondary:hover { background: rgba(52, 211, 153, 0.15); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .results { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); text-align: center; display: none; }
-        .results.show { display: block; animation: slideIn 0.4s ease; }
-        .score { font-size: 72px; font-weight: bold; margin: 20px 0; }
-        .score.pass { color: #34d399; }
-        .score.fail { color: #ef4444; }
-        .result-message { font-size: 24px; color: #f1f5f9; margin-bottom: 30px; }
-        @media (max-width: 768px) { 
-            .container { padding: 10px; }
-            .header { padding: 30px 20px; margin-bottom: 20px; }
-            .header-top { flex-direction: column; gap: 15px; } 
-            h1 { font-size: 24px; } 
-            .subtitle { font-size: 16px; }
-            .question-card { padding: 25px 20px; }
-            .question-text { font-size: 18px; } 
-            .answer { padding: 15px; font-size: 16px; }
-            .btn { padding: 12px 20px; font-size: 15px; }
-            .nav-buttons { flex-direction: column; }
-            .nav-buttons .btn { width: 100%; }
-            .score { font-size: 56px; }
-            .result-message { font-size: 20px; }
-        }
+  <script>!function () { var t = localStorage.getItem('dispatcher-theme') || 'dark'; 'dark' === t && document.documentElement.setAttribute('data-theme', 'dark') }();</script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #020617;
+      color: #f1f5f9;
+      min-height: 100vh;
+      padding: 80px 20px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      max-width: 700px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      padding: 30px 40px;
+      border-radius: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .test-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(52, 211, 153, 0.15);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      color: #34d399;
+      padding: 10px 20px;
+      border-radius: 25px;
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    .back-btn {
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #f1f5f9;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    h1 {
+      color: #f1f5f9;
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      font-size: 18px;
+    }
+
+    .progress-bar {
+      background: rgba(255, 255, 255, 0.08);
+      height: 8px;
+      border-radius: 10px;
+      margin: 20px 0;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      background: linear-gradient(90deg, #34d399, #10b981);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .question-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 35px;
+      margin-bottom: 25px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      display: none;
+    }
+
+    .question-card.active {
+      display: block;
+      animation: slideIn 0.4s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .question-number {
+      color: #34d399;
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .question-text {
+      color: #f1f5f9;
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 25px;
+      line-height: 1.5;
+    }
+
+    .answers {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .answer {
+      background: rgba(255, 255, 255, 0.04);
+      border: 2px solid rgba(255, 255, 255, 0.08);
+      padding: 18px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 17px;
+      color: #cbd5e1;
+    }
+
+    .answer:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(52, 211, 153, 0.3);
+      transform: translateX(5px);
+    }
+
+    .answer.correct {
+      background: rgba(52, 211, 153, 0.2);
+      border-color: #10b981;
+      color: #34d399;
+      font-weight: 600;
+    }
+
+    .answer.incorrect {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: #ef4444;
+      color: #fca5a5;
+      font-weight: 600;
+      opacity: 0.6;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 15px;
+      margin-top: 25px;
+    }
+
+    .btn {
+      padding: 14px 30px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 16px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #34d399, #10b981);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(52, 211, 153, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(52, 211, 153, 0.3);
+      color: #34d399;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(52, 211, 153, 0.15);
+    }
+
+    .results {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      display: none;
+    }
+
+    .results.show {
+      display: block;
+      animation: slideIn 0.4s ease;
+    }
+
+    .score {
+      font-size: 72px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+
+    .score.pass {
+      color: #34d399;
+    }
+
+    .score.fail {
+      color: #ef4444;
+    }
+
+    .result-message {
+      font-size: 24px;
+      color: #f1f5f9;
+      margin-bottom: 30px;
+    }
+
     body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: 
-        radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.15), transparent 50%),
-        radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.15), transparent 50%);
-    animation: none;
-    z-index: -1;
-}
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.15), transparent 50%), radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.15), transparent 50%);
+      z-index: -1;
+    }
 
+    .footer {
+      padding: 80px 0 40px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      margin-top: 80px;
+      width: 100%;
+    }
 
-    25% { transform: translate(5%, 5%) scale(1.05); }
-    50% { transform: translate(-5%, 5%) scale(1.1); }
-    75% { transform: translate(5%, -5%) scale(1.05); }
-}
-/* Footer */
-.footer {
-  padding: 80px 0 40px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  margin-top: 80px;
-}
+    .footer-content {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 60px;
+      margin-bottom: 48px;
+    }
 
-.footer .container {
-  max-width: 700px;
-  margin: 0 auto;
-  padding: 0 40px;
-}
+    .footer-section h4 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: #f1f5f9;
+    }
 
-.footer-content {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 60px;
-  margin-bottom: 48px;
-}
+    .footer-section p {
+      color: #94a3b8;
+      font-size: 14px;
+      line-height: 1.7;
+    }
 
-@media (max-width: 968px) {
-  .footer-content {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 40px;
-  }
-}
+    .footer-section a {
+      display: block;
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 14px;
+      margin-bottom: 12px;
+      transition: all 0.3s ease;
+    }
 
-@media (max-width: 568px) {
-  .footer-content {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-  
-  .footer .container {
-    padding: 0 20px;
-  }
-}
+    .footer-section a:hover {
+      color: #6366f1;
+      transform: translateX(4px);
+    }
 
-.footer-section h4 {
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 20px;
-  color: #f1f5f9;
-}
+    .footer-bottom {
+      text-align: center;
+      padding-top: 32px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      color: #64748b;
+      font-size: 14px;
+    }
 
-.footer-section p {
-  color: #94a3b8;
-  font-size: 14px;
-  line-height: 1.7;
-}
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 24px;
+      }
 
-.footer-section a {
-  display: block;
-  color: #94a3b8;
-  text-decoration: none;
-  font-size: 14px;
-  margin-bottom: 12px;
-  transition: all 0.3s ease;
-}
+      .question-card {
+        padding: 25px 20px;
+      }
 
-.footer-section a:hover {
-  color: #6366f1;
-  transform: translateX(4px);
-}
+      .question-text {
+        font-size: 18px;
+      }
 
-.footer-bottom {
-  text-align: center;
-  padding-top: 32px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  color: #64748b;
-  font-size: 14px;
-}
+      .answer {
+        padding: 15px;
+        font-size: 16px;
+      }
 
-</style>
+      .btn {
+        padding: 12px 20px;
+        font-size: 15px;
+      }
 
-    <script>!function(){var t=localStorage.getItem('dispatcher-theme')||'dark';'dark'===t&&document.documentElement.setAttribute('data-theme','dark')}();</script>
+      .nav-buttons {
+        flex-direction: column;
+      }
 
+      .nav-buttons .btn {
+        width: 100%;
+      }
 
-    <link rel="stylesheet" href="../dark-theme.css">
-    <script src="../dark-mode.js"></script>
+      .score {
+        font-size: 56px;
+      }
+
+      .footer-content {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 40px;
+      }
+    }
+  </style>
 </head>
-<body>
 
-  
-<div id="nav-placeholder"></div>
+<body>
+  <div id="nav-placeholder"></div>
   <script src="../nav-loader.js"></script>
 
-          <div class="nav-dropdown">
-            <span class="nav-link" data-short="Инстр.">Инструменты</span>
-            <div class="dropdown-content">
-              <a href="../loadboard">Load Board</a>
-              <a href="../load-finder">Load Finder</a>
-              <a href="../dispatcher-cards">Dispatcher Cards</a>
-              <a href="../simulator">Dispatch Simulator</a>
-            </div>
-          </div>
-
-          <div class="nav-dropdown">
-            <span class="nav-link" data-short="Инфо">Информация</span>
-            <div class="dropdown-content">
-              <a href="../about.html">О нас</a>
-              <a href="../blog.html">Блог</a>
-              <a href="../career.html">Карьера</a>
-              <a href="../faq.html">FAQ</a>
-              <a href="../help.html">Помощь</a>
-              <a href="../contacts.html">Контакты</a>
-            </div>
-          </div>
-
-          <a href="../documentation" class="nav-link" data-short="Докум.">Документация</a>
-          <a href="../pricing.html" class="nav-link" data-short="Тарифы">Тарифы</a>
-          <a href="../dashboard.html" class="nav-link" id="dashboardLink" style="display: none;">Личный кабинет</a>
-        </div>
-
-        <div class="nav-actions">
-          <a href="../login.html" class="btn-login">Войти</a>
-          <a href="../register.html" class="btn-signup">Регистрация</a>
-        </div>
-
-        <button class="mobile-menu-toggle" id="mobileMenuToggle">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
+  <div class="container">
+    <div class="header">
+      <div class="header-top">
+        <div class="test-badge">рџ“ќ РўРµСЃС‚: РњРѕРґСѓР»СЊ 5</div>
+        <a href="../pages/testing.html" class="back-btn">в†ђ РќР°Р·Р°Рґ</a>
+      </div>
+      <h1>РљРѕРјРјСѓРЅРёРєР°С†РёСЏ СЃ Р±СЂРѕРєРµСЂР°РјРё</h1>
+      <p class="subtitle">16 РІРѕРїСЂРѕСЃРѕРІ РґР»СЏ РїСЂРѕРІРµСЂРєРё Р·РЅР°РЅРёР№</p>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressBar"></div>
       </div>
     </div>
-  </nav>
-
-  <!-- Mobile Menu Overlay -->
-  <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
-
-  <!-- Mobile Menu -->
-  <div class="mobile-menu" id="mobileMenu">
-    <div class="mobile-nav-links">
-      <div class="mobile-nav-actions">
-        <a href="../login.html" class="btn-login">Войти</a>
-        <a href="../register.html" class="btn-signup">Регистрация</a>
+    <div id="questionsContainer"></div>
+    <div class="results" id="results">
+      <h2 style="font-size: 32px; margin-bottom: 20px;">Р РµР·СѓР»СЊС‚Р°С‚С‹ С‚РµСЃС‚Р°</h2>
+      <div class="score" id="scoreDisplay"></div>
+      <p class="result-message" id="resultMessage"></p>
+      <div class="nav-buttons">
+        <button class="btn btn-primary" onclick="location.href='test-6.html'">РЎР»РµРґСѓСЋС‰РёР№ С‚РµСЃС‚ в†’</button>
+        <button class="btn btn-secondary" onclick="location.reload()">РџСЂРѕР№С‚Рё Р·Р°РЅРѕРІРѕ</button>
       </div>
-
-      <div class="mobile-menu-divider"></div>
-
-      <a href="../index.html" class="nav-link active">?? Главная</a>
-
-      <div class="mobile-nav-section">
-        <div class="mobile-section-title">?? КУРСЫ</div>
-        <a href="../courses.html" class="nav-link nav-link-sub">Все курсы</a>
-        <a href="../course.html" class="nav-link nav-link-sub">Обзор курса</a>
-        <a href="../modules" class="nav-link nav-link-sub">12 Модулей обучения</a>
-        <a href="../simulator" class="nav-link nav-link-sub">Симулятор переговоров</a>
-        <a href="../calls" class="nav-link nav-link-sub">Примеры звонков</a>
-        <a href="../cases" class="nav-link nav-link-sub">Практические кейсы</a>
-        <a href="../testing" class="nav-link nav-link-sub">Тестирование</a>
-      </div>
-
-      <div class="mobile-nav-section">
-        <div class="mobile-section-title">??? ИНСТРУМЕНТЫ</div>
-        <a href="../loadboard" class="nav-link nav-link-sub">?? Статистика рынка</a>
-        <a href="../load-finder" class="nav-link nav-link-sub">Load Finder</a>
-        <a href="../dispatcher-cards" class="nav-link nav-link-sub">Dispatcher Cards</a>
-        <a href="../simulator" class="nav-link nav-link-sub">Dispatch Simulator</a>
-      </div>
-
-      <div class="mobile-nav-section">
-        <div class="mobile-section-title">?? ИНФОРМАЦИЯ</div>
-        <a href="../about.html" class="nav-link nav-link-sub">О нас</a>
-        <a href="../blog.html" class="nav-link nav-link-sub">Блог</a>
-        <a href="../career.html" class="nav-link nav-link-sub">Карьера</a>
-        <a href="../faq.html" class="nav-link nav-link-sub">FAQ</a>
-        <a href="../help.html" class="nav-link nav-link-sub">Помощь</a>
-        <a href="../contacts.html" class="nav-link nav-link-sub">Контакты</a>
-      </div>
-      <a href="../documentation" class="nav-link">?? Документация</a>
-      <a href="../pricing.html" class="nav-link">?? Тарифы</a>
-      <a href="../dashboard.html" class="nav-link" id="dashboardLinkMobile" style="display: none;">?? Личный кабинет</a>
     </div>
   </div>
 
-  <div class="container">
-        <div class="header">
-            <div class="header-top">
-                <div class="test-badge">?? Тест: Модуль 5</div>
-                </div>
-            <h1>Коммуникация с брокерами</h1>
-            <p class="subtitle">16 вопросов для проверки знаний</p>
-            <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
-        </div>
-
-        <div id="questionsContainer"></div>
-
-        <div class="results" id="results">
-            <h2 style="color: #2d3748; font-size: 32px; margin-bottom: 20px;">Результаты теста</h2>
-            <div class="score" id="scoreDisplay"></div>
-            <p class="result-message" id="resultMessage"></p>
-            <div class="nav-buttons">
-                <button class="btn btn-primary" onclick="location.href='module-6.html'">Следующий модуль ></button>
-                <button class="btn btn-secondary" onclick="location.reload()">Пройти заново</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const questions = [
-            {q: "Правильное начало сообщения брокеру:", a: ["Hi", "Good morning/afternoon", "Hey", "Hello there"], correct: 1},
-            {q: "Что должно быть в первом сообщении?", a: ["Только цена", "MC#, DOT#, тип трака, локация", "Только имя", "Только телефон"], correct: 1},
-            {q: "Как правильно запросить Rate Confirmation?", a: ["Send RC", "Could you please send the Rate Confirmation?", "RC now", "Give me RC"], correct: 1},
-            {q: "Что такое TONU?", a: ["Truck Ordered Not Used - отмена груза", "Тип груза", "Страховка", "Документ"], correct: 0},
-            {q: "Когда отправлять Check Call?", a: ["Никогда", "При погрузке, в пути, при разгрузке", "Только в конце", "Каждый час"], correct: 1},
-            {q: "Правильный формат Check Call:", a: ["Loaded, ETA 3pm", "Driver loaded at [location], ETA [time] at [destination]", "Ok", "Done"], correct: 1},
-            {q: "Что означает 'Please advise'?", a: ["Пожалуйста, сообщите", "Отмените", "Подтвердите", "Откажитесь"], correct: 0},
-            {q: "Как запросить повышение ставки?", a: ["More money", "Could you do $X for this load?", "I want more", "Pay more"], correct: 1},
-            {q: "Что такое Detention Pay?", a: ["Оплата за задержку", "Основная ставка", "Штраф", "Бонус"], correct: 0},
-            {q: "Стандартная ставка Detention:", a: ["$25/час", "$50/час", "$100/час", "$200/час"], correct: 1},
-            {q: "Когда начинается Detention?", a: ["Сразу по прибытии", "Через 2 часа после прибытия", "Через 4 часа", "Никогда"], correct: 1},
-            {q: "Что такое TONU Pay?", a: ["Компенсация за отмену груза", "Основная ставка", "Бонус", "Штраф"], correct: 0},
-            {q: "Как сообщить о задержке?", a: ["Delay", "We are experiencing a delay due to [reason], new ETA is [time]", "Late", "Problem"], correct: 1},
-            {q: "Что такое POD?", a: ["Proof of Delivery - подтверждение доставки", "Тип груза", "Страховка", "Ставка"], correct: 0},
-            {q: "Когда отправлять POD?", a: ["Через неделю", "Сразу после разгрузки", "Через месяц", "Никогда"], correct: 1},
-            {q: "Правильное завершение сообщения:", a: ["Bye", "Thank you, have a great day!", "Ok", "Done"], correct: 1}
-        ];
-
-        let currentQuestion = 0;
-        let answers = [];
-        let score = 0;
-
-        function initTest() {
-            const container = document.getElementById('questionsContainer');
-            questions.forEach((q, index) => {
-                const card = document.createElement('div');
-                card.className = 'question-card' + (index === 0 ? ' active' : '');
-                card.innerHTML = `
-                    <div class="question-number">Вопрос ${index + 1} из ${questions.length}</div>
-                    <div class="question-text">${q.q}</div>
-                    <div class="answers">
-                        ${q.a.map((answer, i) => `<div class="answer" onclick="selectAnswer(${index}, ${i})">${answer}</div>`).join('')}
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function selectAnswer(questionIndex, answerIndex) {
-            if (answers[questionIndex] !== undefined) return;
-            const card = document.querySelectorAll('.question-card')[questionIndex];
-            const answerDivs = card.querySelectorAll('.answer');
-            const correctAnswer = questions[questionIndex].correct;
-            answerDivs.forEach(div => { div.style.pointerEvents = 'none'; });
-            answerDivs.forEach((div, i) => {
-                if (i === correctAnswer) { div.classList.add('correct'); }
-                else { div.classList.add('incorrect'); }
-            });
-            answers[questionIndex] = answerIndex;
-            setTimeout(() => {
-                if (questionIndex < questions.length - 1) { nextQuestion(); }
-                else { finishTest(); }
-            }, 2000);
-        }
-
-        function nextQuestion() {
-            document.querySelectorAll('.question-card')[currentQuestion].classList.remove('active');
-            currentQuestion++;
-            document.querySelectorAll('.question-card')[currentQuestion].classList.add('active');
-            updateProgress();
-        }
-
-        function prevQuestion() {
-            document.querySelectorAll('.question-card')[currentQuestion].classList.remove('active');
-            currentQuestion--;
-            document.querySelectorAll('.question-card')[currentQuestion].classList.add('active');
-            updateProgress();
-        }
-
-        function updateProgress() {
-            const progress = ((currentQuestion + 1) / questions.length) * 100;
-            document.getElementById('progressBar').style.width = progress + '%';
-        }
-
-        function finishTest() {
-            score = 0;
-            questions.forEach((q, index) => {
-                if (answers[index] === q.correct) score++;
-            });
-            
-            const percentage = Math.round((score / questions.length) * 100);
-            const passed = percentage >= 70;
-            
-            // Сохраняем результат в localStorage
-            localStorage.setItem('module_5_test_result', percentage);
-            localStorage.setItem('module_5_test_score', score);
-            localStorage.setItem('module_5_test_total', questions.length);
-            localStorage.setItem('module_5_test_date', new Date().toISOString());
-            
-            document.getElementById('questionsContainer').style.display = 'none';
-            document.getElementById('results').classList.add('show');
-            
-            const scoreDisplay = document.getElementById('scoreDisplay');
-            scoreDisplay.textContent = percentage + '%';
-            scoreDisplay.className = 'score ' + (passed ? 'pass' : 'fail');
-            
-            document.getElementById('resultMessage').textContent = passed ? 
-                `Поздравляем! Вы успешно прошли тест (${score}/${questions.length})` :
-                `Тест не пройден. Необходимо набрать минимум 70% (${score}/${questions.length})`;
-        }
-
-        initTest();
-    </script>
-<script src="../theme-switcher.js"></script>
-
-<!-- Footer -->
-<footer class="footer">
-  <div class="container">
-    <div class="footer-content">
-      <div class="footer-section">
-        <h4>Курсы Диспетчера</h4>
-        <p>Профессиональное обучение диспетчеров грузоперевозок</p>
-      </div>
-      
-      <div class="footer-section">
-        <h4>Обучение</h4>
-        <a href="../courses.html">Курсы</a>
-        <a href="../certification.html">Сертификация</a>
-        <a href="../webinars.html">Вебинары</a>
-      </div>
-      
-      <div class="footer-section">
-        <h4>Поддержка</h4>
-        <a href="../faq.html">FAQ</a>
-        <a href="../contacts.html">Контакты</a>
-        <a href="../help.html">Помощь</a>
-      </div>
-      
-      <div class="footer-section">
-        <h4>Компания</h4>
-        <a href="../about.html">О нас</a>
-        <a href="../blog.html">Блог</a>
-        <a href="../career.html">Карьера</a>
-      </div>
-    </div>
-    
-    <div class="footer-bottom">
-      <p>&copy; 2024 Курсы Диспетчера. Все права защищены.</p>
-    </div>
-  </div>
-</footer>
   <script>
-    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-    const mobileMenu = document.getElementById('mobileMenu');
-    const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
-
-    if (mobileMenuToggle && mobileMenu && mobileMenuOverlay) {
-      mobileMenuToggle.addEventListener('click', () => {
-        mobileMenu.classList.toggle('active');
-        mobileMenuOverlay.classList.toggle('active');
-        document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
-      });
-
-      mobileMenuOverlay.addEventListener('click', () => {
-        mobileMenu.classList.remove('active');
-        mobileMenuOverlay.classList.remove('active');
-        document.body.style.overflow = '';
+    const questions = [
+      { q: "РџСЂР°РІРёР»СЊРЅРѕРµ РЅР°С‡Р°Р»Рѕ СЃРѕРѕР±С‰РµРЅРёСЏ Р±СЂРѕРєРµСЂСѓ:", a: ["Hi", "Good morning/afternoon", "Hey", "Hello there"], correct: 1 },
+      { q: "Р§С‚Рѕ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РІ РїРµСЂРІРѕРј СЃРѕРѕР±С‰РµРЅРёРё?", a: ["РўРѕР»СЊРєРѕ С†РµРЅР°", "MC#, DOT#, С‚РёРї С‚СЂР°РєР°, Р»РѕРєР°С†РёСЏ", "РўРѕР»СЊРєРѕ РёРјСЏ", "РўРѕР»СЊРєРѕ С‚РµР»РµС„РѕРЅ"], correct: 1 },
+      { q: "РљР°Рє РїСЂР°РІРёР»СЊРЅРѕ Р·Р°РїСЂРѕСЃРёС‚СЊ Rate Confirmation?", a: ["Send RC", "Could you please send the Rate Confirmation?", "RC now", "Give me RC"], correct: 1 },
+      { q: "Р§С‚Рѕ С‚Р°РєРѕРµ TONU?", a: ["Truck Ordered Not Used - РѕС‚РјРµРЅР° РіСЂСѓР·Р°", "РўРёРї РіСЂСѓР·Р°", "РЎС‚СЂР°С…РѕРІРєР°", "Р”РѕРєСѓРјРµРЅС‚"], correct: 0 },
+      { q: "РљРѕРіРґР° РѕС‚РїСЂР°РІР»СЏС‚СЊ Check Call?", a: ["РќРёРєРѕРіРґР°", "РџСЂРё РїРѕРіСЂСѓР·РєРµ, РІ РїСѓС‚Рё, РїСЂРё СЂР°Р·РіСЂСѓР·РєРµ", "РўРѕР»СЊРєРѕ РІ РєРѕРЅС†Рµ", "РљР°Р¶РґС‹Р№ С‡Р°СЃ"], correct: 1 },
+      { q: "РџСЂР°РІРёР»СЊРЅС‹Р№ С„РѕСЂРјР°С‚ Check Call:", a: ["Loaded, ETA 3pm", "Driver loaded at [location], ETA [time] at [destination]", "Ok", "Done"], correct: 1 },
+      { q: "Р§С‚Рѕ РѕР·РЅР°С‡Р°РµС‚ 'Please advise'?", a: ["РџРѕР¶Р°Р»СѓР№СЃС‚Р°, СЃРѕРѕР±С‰РёС‚Рµ", "РћС‚РјРµРЅРёС‚Рµ", "РџРѕРґС‚РІРµСЂРґРёС‚Рµ", "РћС‚РєР°Р¶РёС‚РµСЃСЊ"], correct: 0 },
+      { q: "РљР°Рє Р·Р°РїСЂРѕСЃРёС‚СЊ РїРѕРІС‹С€РµРЅРёРµ СЃС‚Р°РІРєРё?", a: ["More money", "Could you do $X for this load?", "I want more", "Pay more"], correct: 1 },
+      { q: "Р§С‚Рѕ С‚Р°РєРѕРµ Detention Pay?", a: ["РћРїР»Р°С‚Р° Р·Р° Р·Р°РґРµСЂР¶РєСѓ", "РћСЃРЅРѕРІРЅР°СЏ СЃС‚Р°РІРєР°", "РЁС‚СЂР°С„", "Р‘РѕРЅСѓСЃ"], correct: 0 },
+      { q: "РЎС‚Р°РЅРґР°СЂС‚РЅР°СЏ СЃС‚Р°РІРєР° Detention:", a: ["$25/С‡Р°СЃ", "$50/С‡Р°СЃ", "$100/С‡Р°СЃ", "$200/С‡Р°СЃ"], correct: 1 },
+      { q: "РљРѕРіРґР° РЅР°С‡РёРЅР°РµС‚СЃСЏ Detention?", a: ["РЎСЂР°Р·Сѓ РїРѕ РїСЂРёР±С‹С‚РёРё", "Р§РµСЂРµР· 2 С‡Р°СЃР° РїРѕСЃР»Рµ РїСЂРёР±С‹С‚РёСЏ", "Р§РµСЂРµР· 4 С‡Р°СЃР°", "РќРёРєРѕРіРґР°"], correct: 1 },
+      { q: "Р§С‚Рѕ С‚Р°РєРѕРµ TONU Pay?", a: ["РљРѕРјРїРµРЅСЃР°С†РёСЏ Р·Р° РѕС‚РјРµРЅСѓ РіСЂСѓР·Р°", "РћСЃРЅРѕРІРЅР°СЏ СЃС‚Р°РІРєР°", "Р‘РѕРЅСѓСЃ", "РЁС‚СЂР°С„"], correct: 0 },
+      { q: "РљР°Рє СЃРѕРѕР±С‰РёС‚СЊ Рѕ Р·Р°РґРµСЂР¶РєРµ?", a: ["Delay", "We are experiencing a delay due to [reason], new ETA is [time]", "Late", "Problem"], correct: 1 },
+      { q: "Р§С‚Рѕ С‚Р°РєРѕРµ POD?", a: ["Proof of Delivery - РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ РґРѕСЃС‚Р°РІРєРё", "РўРёРї РіСЂСѓР·Р°", "РЎС‚СЂР°С…РѕРІРєР°", "РЎС‚Р°РІРєР°"], correct: 0 },
+      { q: "РљРѕРіРґР° РѕС‚РїСЂР°РІР»СЏС‚СЊ POD?", a: ["Р§РµСЂРµР· РЅРµРґРµР»СЋ", "РЎСЂР°Р·Сѓ РїРѕСЃР»Рµ СЂР°Р·РіСЂСѓР·РєРё", "Р§РµСЂРµР· РјРµСЃСЏС†", "РќРёРєРѕРіРґР°"], correct: 1 },
+      { q: "РџСЂР°РІРёР»СЊРЅРѕРµ Р·Р°РІРµСЂС€РµРЅРёРµ СЃРѕРѕР±С‰РµРЅРёСЏ:", a: ["Bye", "Thank you, have a great day!", "Ok", "Done"], correct: 1 }
+    ];
+    let currentQuestion = 0;
+    let answers = [];
+    function initTest() {
+      const container = document.getElementById('questionsContainer');
+      questions.forEach((q, index) => {
+        const card = document.createElement('div');
+        card.className = 'question-card' + (index === 0 ? ' active' : '');
+        card.innerHTML = `<div class="question-number">Р’РѕРїСЂРѕСЃ ${index + 1} РёР· ${questions.length}</div><div class="question-text">${q.q}</div><div class="answers">${q.a.map((answer, i) => `<div class="answer" onclick="selectAnswer(${index}, ${i})">${answer}</div>`).join('')}</div>`;
+        container.appendChild(card);
       });
     }
+    function selectAnswer(questionIndex, answerIndex) {
+      if (answers[questionIndex] !== undefined) return;
+      const card = document.querySelectorAll('.question-card')[questionIndex];
+      const answerDivs = card.querySelectorAll('.answer');
+      const correctAnswer = questions[questionIndex].correct;
+      answerDivs.forEach(div => div.style.pointerEvents = 'none');
+      answerDivs.forEach((div, i) => div.classList.add(i === correctAnswer ? 'correct' : 'incorrect'));
+      answers[questionIndex] = answerIndex;
+      setTimeout(() => {
+        if (questionIndex < questions.length - 1) {
+          document.querySelectorAll('.question-card')[currentQuestion].classList.remove('active');
+          currentQuestion++;
+          document.querySelectorAll('.question-card')[currentQuestion].classList.add('active');
+          document.getElementById('progressBar').style.width = ((currentQuestion + 1) / questions.length * 100) + '%';
+        } else { finishTest(); }
+      }, 2000);
+    }
+    function finishTest() {
+      let score = 0;
+      questions.forEach((q, i) => { if (answers[i] === q.correct) score++; });
+      const percentage = Math.round((score / questions.length) * 100);
+      const passed = percentage >= 70;
+      localStorage.setItem('module_5_test_result', percentage);
+      localStorage.setItem('module_5_test_score', score);
+      localStorage.setItem('module_5_test_total', questions.length);
+      localStorage.setItem('module_5_test_date', new Date().toISOString());
+      document.getElementById('questionsContainer').style.display = 'none';
+      document.getElementById('results').classList.add('show');
+      const scoreDisplay = document.getElementById('scoreDisplay');
+      scoreDisplay.textContent = percentage + '%';
+      scoreDisplay.className = 'score ' + (passed ? 'pass' : 'fail');
+      document.getElementById('resultMessage').textContent = passed ? `РџРѕР·РґСЂР°РІР»СЏРµРј! Р’С‹ СѓСЃРїРµС€РЅРѕ РїСЂРѕС€Р»Рё С‚РµСЃС‚ (${score}/${questions.length})` : `РўРµСЃС‚ РЅРµ РїСЂРѕР№РґРµРЅ. РќРµРѕР±С…РѕРґРёРјРѕ РЅР°Р±СЂР°С‚СЊ РјРёРЅРёРјСѓРј 70% (${score}/${questions.length})`;
+    }
+    initTest();
   </script>
 
-
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>РљСѓСЂСЃС‹ Р”РёСЃРїРµС‚С‡РµСЂР°</h4>
+          <p>РџСЂРѕС„РµСЃСЃРёРѕРЅР°Р»СЊРЅРѕРµ РѕР±СѓС‡РµРЅРёРµ РґРёСЃРїРµС‚С‡РµСЂРѕРІ РіСЂСѓР·РѕРїРµСЂРµРІРѕР·РѕРє</p>
+        </div>
+        <div class="footer-section">
+          <h4>РћР±СѓС‡РµРЅРёРµ</h4><a href="../courses.html">РљСѓСЂСЃС‹</a><a href="../certification.html">РЎРµСЂС‚РёС„РёРєР°С†РёСЏ</a><a
+            href="../webinars.html">Р’РµР±РёРЅР°СЂС‹</a>
+        </div>
+        <div class="footer-section">
+          <h4>РџРѕРґРґРµСЂР¶РєР°</h4><a href="../faq.html">FAQ</a><a href="../contacts.html">РљРѕРЅС‚Р°РєС‚С‹</a><a
+            href="../help.html">РџРѕРјРѕС‰СЊ</a>
+        </div>
+        <div class="footer-section">
+          <h4>РљРѕРјРїР°РЅРёСЏ</h4><a href="../about.html">Рћ РЅР°СЃ</a><a href="../blog.html">Р‘Р»РѕРі</a><a
+            href="../career.html">РљР°СЂСЊРµСЂР°</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2024 РљСѓСЂСЃС‹ Р”РёСЃРїРµС‚С‡РµСЂР°. Р’СЃРµ РїСЂР°РІР° Р·Р°С‰РёС‰РµРЅС‹.</p>
+      </div>
+    </div>
+  </footer>
 </body>
+
 </html>

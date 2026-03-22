@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тест: Модуль 11 - Технологии и ПО | Курсы - Диспетчера</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>РўРµСЃС‚: РњРѕРґСѓР»СЊ 11 - РўРµС…РЅРѕР»РѕРіРёРё Рё РџРћ | РљСѓСЂСЃС‹ - Р”РёСЃРїРµС‚С‡РµСЂР°</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
@@ -14,477 +15,544 @@
   <script src="../dark-mode.js"></script>
   <script src="auth-check.js"></script>
   <link rel="stylesheet" href="../shared-nav.css">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); min-height: 100vh; padding: 80px 20px 40px; display: flex; flex-direction: column; align-items: center; }
-        .container { max-width: 700px; width: 100%; margin: 0 auto; }
-        .header { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); padding: 30px 40px; border-radius: 20px; margin-bottom: 30px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); }
-        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .test-badge { display: inline-flex; align-items: center; gap: 10px; background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: white; padding: 10px 20px; border-radius: 25px; font-weight: 600; font-size: 18px; }
-        .back-btn { padding: 10px 20px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: #f1f5f9; text-decoration: none; border-radius: 8px; font-weight: 600; transition: all 0.3s ease; }
-        .back-btn:hover { background: rgba(255, 255, 255, 0.08); }
-        h1 { color: #f1f5f9; font-size: 32px; margin-bottom: 10px; }
-        .subtitle { color: #94a3b8; font-size: 18px; }
-        .progress-bar { background: rgba(255, 255, 255, 0.08); height: 8px; border-radius: 10px; margin: 20px 0; overflow: hidden; }
-        .progress-fill { background: linear-gradient(90deg, #06b6d4, #0891b2); height: 100%; width: 0%; transition: width 0.3s ease; }
-        .question-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); border-radius: 20px; padding: 35px; margin-bottom: 25px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); display: none; }
-        .question-card.active { display: block; animation: slideIn 0.4s ease; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
-        .question-number { color: #06b6d4; font-size: 16px; font-weight: 600; margin-bottom: 10px; }
-        .question-text { color: #f1f5f9; font-size: 22px; font-weight: 600; margin-bottom: 25px; line-height: 1.5; }
-        .answers { display: flex; flex-direction: column; gap: 12px; }
-        .answer { background: rgba(255, 255, 255, 0.04); border: 2px solid rgba(255, 255, 255, 0.08); padding: 18px 20px; border-radius: 10px;  cursor: pointer; transition: all 0.3s ease; font-size: 17px; color: #cbd5e1; }
-        .answer:hover { background: #edf2f7; border-color: #06b6d4; transform: translateX(5px); }
-        .answer.selected { background: #cffafe; border-color: #06b6d4; color: #155e75; font-weight: 600; }
-        .answer.correct { background: rgba(52, 211, 153, 0.2); border-color: #10b981; color: #34d399; font-weight: 600; }
-        .answer.incorrect { background: rgba(239, 68, 68, 0.15); border-color: #ef4444; color: #fca5a5; font-weight: 600; opacity: 0.6; }
-        .nav-buttons { display: flex; gap: 15px; margin-top: 25px; }
-        .btn { padding: 14px 30px; border-radius: 10px; font-weight: 600; font-size: 16px; border: none; cursor: pointer; transition: all 0.3s ease; }
-        .btn-primary { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: white; }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4); }
-        .btn-secondary { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); color: #06b6d4; border: 2px solid #06b6d4; }
-        .btn-secondary:hover { background: #06b6d4; color: white; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .results { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); text-align: center; display: none; }
-        .results.show { display: block; animation: slideIn 0.4s ease; }
-        .score { font-size: 72px; font-weight: bold; margin: 20px 0; }
-        .score.pass { color: #10b981; }
-        .score.fail { color: #ef4444; }
-        .result-message { font-size: 24px; color: #f1f5f9; margin-bottom: 30px; }
-        @media (max-width: 768px) { 
-            .container { padding: 10px; }
-            .header { padding: 30px 20px; margin-bottom: 20px; }
-            .header-top { flex-direction: column; gap: 15px; } 
-            h1 { font-size: 24px; } 
-            .subtitle { font-size: 16px; }
-            .question-card { padding: 25px 20px; }
-            .question-text { font-size: 18px; } 
-            .answer { padding: 15px; font-size: 16px; }
-            .btn { padding: 12px 20px; font-size: 15px; }
-            .nav-buttons { flex-direction: column; }
-            .nav-buttons .btn { width: 100%; }
-            .score { font-size: 56px; }
-            .result-message { font-size: 20px; }
-        }
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #020617;
+      color: #f1f5f9;
+      min-height: 100vh;
+      padding: 80px 20px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      max-width: 700px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      padding: 30px 40px;
+      border-radius: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .test-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 25px;
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    h1 {
+      color: #f1f5f9;
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      font-size: 18px;
+    }
+
+    .progress-bar {
+      background: rgba(255, 255, 255, 0.08);
+      height: 8px;
+      border-radius: 10px;
+      margin: 20px 0;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      background: linear-gradient(90deg, #06b6d4, #0891b2);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .question-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 35px;
+      margin-bottom: 25px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      display: none;
+    }
+
+    .question-card.active {
+      display: block;
+      animation: slideIn 0.4s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .question-number {
+      color: #06b6d4;
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .question-text {
+      color: #f1f5f9;
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 25px;
+      line-height: 1.5;
+    }
+
+    .answers {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .answer {
+      background: rgba(255, 255, 255, 0.04);
+      border: 2px solid rgba(255, 255, 255, 0.08);
+      padding: 18px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 17px;
+      color: #cbd5e1;
+    }
+
+    .answer:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: #06b6d4;
+      transform: translateX(5px);
+    }
+
+    .answer.correct {
+      background: rgba(52, 211, 153, 0.2);
+      border-color: #10b981;
+      color: #34d399;
+      font-weight: 600;
+    }
+
+    .answer.incorrect {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: #ef4444;
+      color: #fca5a5;
+      font-weight: 600;
+      opacity: 0.6;
+    }
+
+    .btn {
+      padding: 14px 30px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 16px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);
+    }
+
+    .btn-secondary {
+      color: #06b6d4;
+      border: 2px solid #06b6d4;
+      background: transparent;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(6, 182, 212, 0.15);
+    }
+
+    .results {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      display: none;
+    }
+
+    .results.show {
+      display: block;
+      animation: slideIn 0.4s ease;
+    }
+
+    .score {
+      font-size: 72px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+
+    .score.pass {
+      color: #10b981;
+    }
+
+    .score.fail {
+      color: #ef4444;
+    }
+
+    .result-message {
+      font-size: 24px;
+      color: #f1f5f9;
+      margin-bottom: 30px;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 15px;
+      margin-top: 25px;
+      justify-content: center;
+    }
+
     body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: 
-        radial-gradient(circle at 20% 50%, rgba(6, 182, 212, 0.3), transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(8, 145, 178, 0.3), transparent 50%),
-        radial-gradient(circle at 40% 20%, rgba(14, 116, 144, 0.2), transparent 50%);
-    animation: none;
-    z-index: -1;
-}
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 20% 50%, rgba(6, 182, 212, 0.15), transparent 50%), radial-gradient(circle at 80% 80%, rgba(8, 145, 178, 0.15), transparent 50%);
+      z-index: -1;
+    }
 
+    .footer {
+      padding: 80px 0 40px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      margin-top: 80px;
+    }
 
-    25% { transform: translate(5%, 5%) scale(1.05); }
-    50% { transform: translate(-5%, 5%) scale(1.1); }
-    75% { transform: translate(5%, -5%) scale(1.05); }
-}
-/* Footer */
-.footer {
-  padding: 80px 0 40px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  margin-top: 80px;
-}
+    .footer .container {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 0 40px;
+    }
 
-.footer .container {
-  max-width: 700px;
-  margin: 0 auto;
-  padding: 0 40px;
-}
+    .footer-content {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 60px;
+      margin-bottom: 48px;
+    }
 
-.footer-content {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 60px;
-  margin-bottom: 48px;
-}
+    .footer-section h4 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: #f1f5f9;
+    }
 
-@media (max-width: 968px) {
-  .footer-content {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 40px;
-  }
-}
+    .footer-section p {
+      color: #94a3b8;
+      font-size: 14px;
+      line-height: 1.7;
+    }
 
-@media (max-width: 568px) {
-  .footer-content {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-  
-  .footer .container {
-    padding: 0 20px;
-  }
-}
+    .footer-section a {
+      display: block;
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 14px;
+      margin-bottom: 12px;
+      transition: all 0.3s ease;
+    }
 
-.footer-section h4 {
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 20px;
-  color: #f1f5f9;
-}
+    .footer-section a:hover {
+      color: #6366f1;
+      transform: translateX(4px);
+    }
 
-.footer-section p {
-  color: #94a3b8;
-  font-size: 14px;
-  line-height: 1.7;
-}
+    .footer-bottom {
+      text-align: center;
+      padding-top: 32px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      color: #64748b;
+      font-size: 14px;
+    }
 
-.footer-section a {
-  display: block;
-  color: #94a3b8;
-  text-decoration: none;
-  font-size: 14px;
-  margin-bottom: 12px;
-  transition: all 0.3s ease;
-}
+    @media (max-width: 768px) {
+      .container {
+        padding: 10px;
+      }
 
-.footer-section a:hover {
-  color: #6366f1;
-  transform: translateX(4px);
-}
+      .header {
+        padding: 30px 20px;
+        margin-bottom: 20px;
+      }
 
-.footer-bottom {
-  text-align: center;
-  padding-top: 32px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  color: #64748b;
-  font-size: 14px;
-}
+      .header-top {
+        flex-direction: column;
+        gap: 15px;
+      }
 
-</style>
+      h1 {
+        font-size: 24px;
+      }
 
-    <script>!function(){var t=localStorage.getItem('dispatcher-theme')||'dark';'dark'===t&&document.documentElement.setAttribute('data-theme','dark')}();</script>
+      .subtitle {
+        font-size: 16px;
+      }
 
+      .question-card {
+        padding: 25px 20px;
+      }
 
-    <link rel="stylesheet" href="../dark-theme.css">
-    <script src="../dark-mode.js"></script>
+      .question-text {
+        font-size: 18px;
+      }
+
+      .answer {
+        padding: 15px;
+        font-size: 16px;
+      }
+
+      .btn {
+        padding: 12px 20px;
+        font-size: 15px;
+      }
+
+      .nav-buttons {
+        flex-direction: column;
+      }
+
+      .nav-buttons .btn {
+        width: 100%;
+      }
+
+      .score {
+        font-size: 56px;
+      }
+
+      .result-message {
+        font-size: 20px;
+      }
+
+      .footer-content {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 40px;
+      }
+
+      .footer .container {
+        padding: 0 20px;
+      }
+    }
+
+    @media (max-width: 568px) {
+      .footer-content {
+        grid-template-columns: 1fr;
+        gap: 32px;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-  
-<div id="nav-placeholder"></div>
+  <div id="nav-placeholder"></div>
   <script src="../nav-loader.js"></script>
 
-          <div class="nav-dropdown">
-            <span class="nav-link" data-short="Инстр.">Инструменты</span>
-            <div class="dropdown-content">
-              <a href="../loadboard">Load Board</a>
-              <a href="../load-finder">Load Finder</a>
-              <a href="../dispatcher-cards">Dispatcher Cards</a>
-              <a href="../simulator">Dispatch Simulator</a>
-            </div>
-          </div>
-
-          <div class="nav-dropdown">
-            <span class="nav-link" data-short="Инфо">Информация</span>
-            <div class="dropdown-content">
-              <a href="../about.html">О нас</a>
-              <a href="../blog.html">Блог</a>
-              <a href="../career.html">Карьера</a>
-              <a href="../faq.html">FAQ</a>
-              <a href="../help.html">Помощь</a>
-              <a href="../contacts.html">Контакты</a>
-            </div>
-          </div>
-
-          <a href="../documentation" class="nav-link" data-short="Докум.">Документация</a>
-          <a href="../pricing.html" class="nav-link" data-short="Тарифы">Тарифы</a>
-          <a href="../dashboard.html" class="nav-link" id="dashboardLink" style="display: none;">Личный кабинет</a>
-        </div>
-
-        <div class="nav-actions">
-          <a href="../login.html" class="btn-login">Войти</a>
-          <a href="../register.html" class="btn-signup">Регистрация</a>
-        </div>
-
-        <button class="mobile-menu-toggle" id="mobileMenuToggle">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
+  <div class="container">
+    <div class="header">
+      <div class="header-top">
+        <div class="test-badge">рџ“ќ РўРµСЃС‚: РњРѕРґСѓР»СЊ 11</div>
+      </div>
+      <h1>РўРµС…РЅРѕР»РѕРіРёРё Рё РїСЂРѕРіСЂР°РјРјРЅРѕРµ РѕР±РµСЃРїРµС‡РµРЅРёРµ</h1>
+      <p class="subtitle">20 РІРѕРїСЂРѕСЃРѕРІ РґР»СЏ РїСЂРѕРІРµСЂРєРё Р·РЅР°РЅРёР№</p>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressBar"></div>
       </div>
     </div>
-  </nav>
 
-  <!-- Mobile Menu Overlay -->
-  <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+    <div id="questionsContainer"></div>
 
-  <!-- Mobile Menu -->
-  <div class="mobile-menu" id="mobileMenu">
-    <div class="mobile-nav-links">
-      <div class="mobile-nav-actions">
-        <a href="../login.html" class="btn-login">Войти</a>
-        <a href="../register.html" class="btn-signup">Регистрация</a>
+    <div class="results" id="results">
+      <h2 style="color: #f1f5f9; font-size: 32px; margin-bottom: 20px;">Р РµР·СѓР»СЊС‚Р°С‚С‹ С‚РµСЃС‚Р°</h2>
+      <div class="score" id="scoreDisplay"></div>
+      <p class="result-message" id="resultMessage"></p>
+      <div class="nav-buttons">
+        <button class="btn btn-primary" onclick="location.href='test-12.html'">РЎР»РµРґСѓСЋС‰РёР№ С‚РµСЃС‚ в†’</button>
+        <button class="btn btn-secondary" onclick="location.reload()">РџСЂРѕР№С‚Рё Р·Р°РЅРѕРІРѕ</button>
       </div>
-
-      <div class="mobile-menu-divider"></div>
-
-      <a href="../index.html" class="nav-link active">?? Главная</a>
-
-      <div class="mobile-nav-section">
-        <div class="mobile-section-title">?? КУРСЫ</div>
-        <a href="../courses.html" class="nav-link nav-link-sub">Все курсы</a>
-        <a href="../course.html" class="nav-link nav-link-sub">Обзор курса</a>
-        <a href="../modules" class="nav-link nav-link-sub">12 Модулей обучения</a>
-        <a href="../simulator" class="nav-link nav-link-sub">Симулятор переговоров</a>
-        <a href="../calls" class="nav-link nav-link-sub">Примеры звонков</a>
-        <a href="../cases" class="nav-link nav-link-sub">Практические кейсы</a>
-        <a href="../testing" class="nav-link nav-link-sub">Тестирование</a>
-      </div>
-
-      <div class="mobile-nav-section">
-        <div class="mobile-section-title">??? ИНСТРУМЕНТЫ</div>
-        <a href="../loadboard" class="nav-link nav-link-sub">?? Статистика рынка</a>
-        <a href="../load-finder" class="nav-link nav-link-sub">Load Finder</a>
-        <a href="../dispatcher-cards" class="nav-link nav-link-sub">Dispatcher Cards</a>
-        <a href="../simulator" class="nav-link nav-link-sub">Dispatch Simulator</a>
-      </div>
-
-      <div class="mobile-nav-section">
-        <div class="mobile-section-title">?? ИНФОРМАЦИЯ</div>
-        <a href="../about.html" class="nav-link nav-link-sub">О нас</a>
-        <a href="../blog.html" class="nav-link nav-link-sub">Блог</a>
-        <a href="../career.html" class="nav-link nav-link-sub">Карьера</a>
-        <a href="../faq.html" class="nav-link nav-link-sub">FAQ</a>
-        <a href="../help.html" class="nav-link nav-link-sub">Помощь</a>
-        <a href="../contacts.html" class="nav-link nav-link-sub">Контакты</a>
-      </div>
-      <a href="../documentation" class="nav-link">?? Документация</a>
-      <a href="../pricing.html" class="nav-link">?? Тарифы</a>
-      <a href="../dashboard.html" class="nav-link" id="dashboardLinkMobile" style="display: none;">?? Личный кабинет</a>
     </div>
   </div>
 
-  <div class="container">
-        <div class="header">
-            <div class="header-top">
-                <div class="test-badge">?? Тест: Модуль 11</div>
-                </div>
-            <h1>Технологии и программное обеспечение</h1>
-            <p class="subtitle">20 вопросов для проверки знаний</p>
-            <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
-        </div>
+  <script>
+    const questions = [
+      { q: "Р§С‚Рѕ С‚Р°РєРѕРµ TMS?", a: ["Truck Management System", "Transportation Management System", "Traffic Monitoring Service", "Technical Maintenance System"], correct: 1 },
+      { q: "РљР°РєР°СЏ РїРѕРїСѓР»СЏСЂРЅР°СЏ TMS СЃРёСЃС‚РµРјР° РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІ РЎРЁРђ?", a: ["Microsoft Excel", "McLeod", "Google Sheets", "WhatsApp"], correct: 1 },
+      { q: "Р”Р»СЏ С‡РµРіРѕ РЅСѓР¶РµРЅ GPS С‚СЂРµРєРёРЅРі?", a: ["РўРѕР»СЊРєРѕ РґР»СЏ РЅР°РІРёРіР°С†РёРё", "РњРѕРЅРёС‚РѕСЂРёРЅРі РјРµСЃС‚РѕРїРѕР»РѕР¶РµРЅРёСЏ Рё РєРѕРЅС‚СЂРѕР»СЊ РјР°СЂС€СЂСѓС‚Р°", "РўРѕР»СЊРєРѕ РґР»СЏ СЃРІСЏР·Рё", "Р”Р»СЏ РѕРїР»Р°С‚С‹ С‚РѕРїР»РёРІР°"], correct: 1 },
+      { q: "Р§С‚Рѕ С‚Р°РєРѕРµ ELD?", a: ["Electronic Logging Device", "Engine Load Detector", "Emergency Light Display", "Extra Load Document"], correct: 0 },
+      { q: "РљР°РєРѕРµ С‚СЂРµР±РѕРІР°РЅРёРµ FMCSA Рє ELD?", a: ["РќРµРѕР±СЏР·Р°С‚РµР»СЊРЅРѕ", "РћР±СЏР·Р°С‚РµР»СЊРЅРѕ РґР»СЏ РІСЃРµС… РєРѕРјРјРµСЂС‡РµСЃРєРёС… РІРѕРґРёС‚РµР»РµР№", "РўРѕР»СЊРєРѕ РґР»СЏ РЅРѕРІС‹С… С‚СЂР°РєРѕРІ", "РўРѕР»СЊРєРѕ РґР»СЏ РґР°Р»СЊРЅРёС… СЂРµР№СЃРѕРІ"], correct: 1 },
+      { q: "РљР°РєР°СЏ РєСЂСѓРїРЅРµР№С€Р°СЏ Load Board РїР»Р°С‚С„РѕСЂРјР°?", a: ["Facebook", "DAT", "Instagram", "Twitter"], correct: 1 },
+      { q: "Р§С‚Рѕ С‚Р°РєРѕРµ KeepTruckin?", a: ["РРіСЂР°", "ELD СѓСЃС‚СЂРѕР№СЃС‚РІРѕ Рё РїСЂРёР»РѕР¶РµРЅРёРµ", "РЎС‚СЂР°С…РѕРІР°СЏ РєРѕРјРїР°РЅРёСЏ", "Р—Р°РїСЂР°РІРѕС‡РЅР°СЏ СЃРµС‚СЊ"], correct: 1 },
+      { q: "Р”Р»СЏ С‡РµРіРѕ РЅСѓР¶РЅР° CRM СЃРёСЃС‚РµРјР°?", a: ["РўРѕР»СЊРєРѕ РґР»СЏ email", "РЈРїСЂР°РІР»РµРЅРёРµ РєР»РёРµРЅС‚Р°РјРё Рё Р±СЂРѕРєРµСЂР°РјРё", "РўРѕР»СЊРєРѕ РґР»СЏ Р·РІРѕРЅРєРѕРІ", "Р”Р»СЏ СЂРµРјРѕРЅС‚Р° С‚СЂР°РєРѕРІ"], correct: 1 },
+      { q: "Р§С‚Рѕ С‚Р°РєРѕРµ DocuSign?", a: ["Р”РѕСЂРѕР¶РЅС‹Р№ Р·РЅР°Рє", "РЎРµСЂРІРёСЃ СЌР»РµРєС‚СЂРѕРЅРЅС‹С… РїРѕРґРїРёСЃРµР№", "GPS РЅР°РІРёРіР°С‚РѕСЂ", "Load Board"], correct: 1 },
+      { q: "РљР°РєР°СЏ Р°Р»СЊС‚РµСЂРЅР°С‚РёРІР° DAT Load Board?", a: ["YouTube", "Truckstop.com", "Netflix", "Amazon"], correct: 1 },
+      { q: "Р§С‚Рѕ РєРѕРЅС‚СЂРѕР»РёСЂСѓРµС‚ ELD Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё?", a: ["РЎРєРѕСЂРѕСЃС‚СЊ", "Hours of Service (HOS)", "Р Р°СЃС…РѕРґ С‚РѕРїР»РёРІР°", "Р’РµСЃ РіСЂСѓР·Р°"], correct: 1 },
+      { q: "Р§С‚Рѕ С‚Р°РєРѕРµ DVIR?", a: ["Driver Vehicle Inspection Report", "Daily Vehicle Insurance Record", "Dispatch Vehicle Information", "Delivery Verification Invoice"], correct: 0 },
+      { q: "РџРѕРїСѓР»СЏСЂРЅР°СЏ GPS СЃРёСЃС‚РµРјР° РґР»СЏ С‚СЂР°РєРѕРІ:", a: ["Google Maps С‚РѕР»СЊРєРѕ", "Samsara", "Instagram", "TikTok"], correct: 1 },
+      { q: "Р§С‚Рѕ РїРѕР·РІРѕР»СЏРµС‚ TMS Р°РІС‚РѕРјР°С‚РёР·РёСЂРѕРІР°С‚СЊ?", a: ["РўРѕР»СЊРєРѕ Р·РІРѕРЅРєРё", "Р”РѕРєСѓРјРµРЅС‚РѕРѕР±РѕСЂРѕС‚ Рё СѓРїСЂР°РІР»РµРЅРёРµ РіСЂСѓР·Р°РјРё", "РўРѕР»СЊРєРѕ email", "РўРѕР»СЊРєРѕ GPS"], correct: 1 },
+      { q: "Р”Р»СЏ С‡РµРіРѕ Load Board РїР»Р°С‚С„РѕСЂРјС‹?", a: ["РРіСЂС‹", "РџРѕРёСЃРє РіСЂСѓР·РѕРІ Рё РїСЂРѕРІРµСЂРєР° Р±СЂРѕРєРµСЂРѕРІ", "РЎРѕС†РёР°Р»СЊРЅС‹Рµ СЃРµС‚Рё", "РњСѓР·С‹РєР°"], correct: 1 },
+      { q: "Р§С‚Рѕ С‚Р°РєРѕРµ Rate Confirmation РІ TMS?", a: ["РџРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ СЃРєРѕСЂРѕСЃС‚Рё", "Р­Р»РµРєС‚СЂРѕРЅРЅРѕРµ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ СЃС‚Р°РІРєРё", "Р РµР№С‚РёРЅРі РІРѕРґРёС‚РµР»СЏ", "Р Р°СЃС…РѕРґ С‚РѕРїР»РёРІР°"], correct: 1 },
+      { q: "РљР°РєРѕРµ РїСЂРµРёРјСѓС‰РµСЃС‚РІРѕ СЌР»РµРєС‚СЂРѕРЅРЅРѕРіРѕ BOL?", a: ["РќРµС‚ РїСЂРµРёРјСѓС‰РµСЃС‚РІ", "Р‘С‹СЃС‚СЂР°СЏ РѕР±СЂР°Р±РѕС‚РєР° Рё С…СЂР°РЅРµРЅРёРµ", "РўРѕР»СЊРєРѕ РєСЂР°СЃРёРІС‹Р№ РІРёРґ", "Р”РѕСЂРѕР¶Рµ Р±СѓРјР°Р¶РЅРѕРіРѕ"], correct: 1 },
+      { q: "Р§С‚Рѕ РјРѕРЅРёС‚РѕСЂРёС‚ GPS РІ СЂРµР°Р»СЊРЅРѕРј РІСЂРµРјРµРЅРё?", a: ["РўРѕР»СЊРєРѕ СЃРєРѕСЂРѕСЃС‚СЊ", "РњРµСЃС‚РѕРїРѕР»РѕР¶РµРЅРёРµ, РјР°СЂС€СЂСѓС‚, СЃРєРѕСЂРѕСЃС‚СЊ", "РўРѕР»СЊРєРѕ С‚РѕРїР»РёРІРѕ", "РўРѕР»СЊРєРѕ РІРµСЃ"], correct: 1 },
+      { q: "Р—Р°С‡РµРј РґРёСЃРїРµС‚С‡РµСЂСѓ CRM?", a: ["Р”Р»СЏ РёРіСЂ", "РСЃС‚РѕСЂРёСЏ РІР·Р°РёРјРѕРґРµР№СЃС‚РІРёР№ СЃ РєР»РёРµРЅС‚Р°РјРё", "РўРѕР»СЊРєРѕ РґР»СЏ РєСЂР°СЃРѕС‚С‹", "РќРµ РЅСѓР¶РЅР°"], correct: 1 },
+      { q: "Р§С‚Рѕ С‚Р°РєРѕРµ 123Loadboard?", a: ["РќРѕРјРµСЂ С‚РµР»РµС„РѕРЅР°", "РџР»Р°С‚С„РѕСЂРјР° РґР»СЏ РїРѕРёСЃРєР° РіСЂСѓР·РѕРІ", "РђРґСЂРµСЃ РѕС„РёСЃР°", "РњРѕРґРµР»СЊ С‚СЂР°РєР°"], correct: 1 }
+    ];
 
-        <div id="questionsContainer"></div>
+    let currentQuestion = 0;
+    let answers = [];
 
-        <div class="results" id="results">
-            <h2 style="color: #2d3748; font-size: 32px; margin-bottom: 20px;">Результаты теста</h2>
-            <div class="score" id="scoreDisplay"></div>
-            <p class="result-message" id="resultMessage"></p>
-            <div class="nav-buttons">
-                <button class="btn btn-primary" onclick="location.href='module-12.html'">Следующий модуль ></button>
-                <button class="btn btn-secondary" onclick="location.reload()">Пройти заново</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const questions = [
-            {q: "Что такое TMS?", a: ["Truck Management System", "Transportation Management System", "Traffic Monitoring Service", "Technical Maintenance System"], correct: 1},
-            {q: "Какая популярная TMS система используется в США?", a: ["Microsoft Excel", "McLeod", "Google Sheets", "WhatsApp"], correct: 1},
-            {q: "Для чего нужен GPS трекинг?", a: ["Только для навигации", "Мониторинг местоположения и контроль маршрута", "Только для связи", "Для оплаты топлива"], correct: 1},
-            {q: "Что такое ELD?", a: ["Electronic Logging Device", "Engine Load Detector", "Emergency Light Display", "Extra Load Document"], correct: 0},
-            {q: "Какое требование FMCSA к ELD?", a: ["Необязательно", "Обязательно для всех коммерческих водителей", "Только для новых траков", "Только для дальних рейсов"], correct: 1},
-            {q: "Какая крупнейшая Load Board платформа?", a: ["Facebook", "DAT", "Instagram", "Twitter"], correct: 1},
-            {q: "Что такое KeepTruckin?", a: ["Игра", "ELD устройство и приложение", "Страховая компания", "Заправочная сеть"], correct: 1},
-            {q: "Для чего нужна CRM система?", a: ["Только для email", "Управление клиентами и брокерами", "Только для звонков", "Для ремонта траков"], correct: 1},
-            {q: "Что такое DocuSign?", a: ["Дорожный знак", "Сервис электронных подписей", "GPS навигатор", "Load Board"], correct: 1},
-            {q: "Какая альтернатива DAT Load Board?", a: ["YouTube", "Truckstop.com", "Netflix", "Amazon"], correct: 1},
-            {q: "Что контролирует ELD автоматически?", a: ["Скорость", "Hours of Service (HOS)", "Расход топлива", "Вес груза"], correct: 1},
-            {q: "Что такое DVIR?", a: ["Driver Vehicle Inspection Report", "Daily Vehicle Insurance Record", "Dispatch Vehicle Information", "Delivery Verification Invoice"], correct: 0},
-            {q: "Популярная GPS система для траков:", a: ["Google Maps только", "Samsara", "Instagram", "TikTok"], correct: 1},
-            {q: "Что позволяет TMS автоматизировать?", a: ["Только звонки", "Документооборот и управление грузами", "Только email", "Только GPS"], correct: 1},
-            {q: "Для чего Load Board платформы?", a: ["Игры", "Поиск грузов и проверка брокеров", "Социальные сети", "Музыка"], correct: 1},
-            {q: "Что такое Rate Confirmation в TMS?", a: ["Подтверждение скорости", "Электронное подтверждение ставки", "Рейтинг водителя", "Расход топлива"], correct: 1},
-            {q: "Какое преимущество электронного BOL?", a: ["Нет преимуществ", "Быстрая обработка и хранение", "Только красивый вид", "Дороже бумажного"], correct: 1},
-            {q: "Что мониторит GPS в реальном времени?", a: ["Только скорость", "Местоположение, маршрут, скорость", "Только топливо", "Только вес"], correct: 1},
-            {q: "Зачем диспетчеру CRM?", a: ["Для игр", "История взаимодействий с клиентами", "Только для красоты", "Не нужна"], correct: 1},
-            {q: "Что такое 123Loadboard?", a: ["Номер телефона", "Платформа для поиска грузов", "Адрес офиса", "Модель трака"], correct: 1}
-        ];
-
-        let currentQuestion = 0;
-        let answers = [];
-        let score = 0;
-
-        function initTest() {
-            const container = document.getElementById('questionsContainer');
-            
-            // Перемешиваем ответы для каждого вопроса
-            questions.forEach((q, index) => {
-                // Создаем массив с ответами и их оригинальными индексами
-                const shuffledAnswers = q.a.map((answer, i) => ({ answer, originalIndex: i }));
-                
-                // Перемешиваем массив
-                for (let i = shuffledAnswers.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [shuffledAnswers[i], shuffledAnswers[j]] = [shuffledAnswers[j], shuffledAnswers[i]];
-                }
-                
-                // Сохраняем перемешанные ответы и новый индекс правильного ответа
-                q.shuffledAnswers = shuffledAnswers;
-                q.newCorrectIndex = shuffledAnswers.findIndex(item => item.originalIndex === q.correct);
-                
-                const card = document.createElement('div');
-                card.className = 'question-card' + (index === 0 ? ' active' : '');
-                card.innerHTML = `
-                    <div class="question-number">Вопрос ${index + 1} из ${questions.length}</div>
+    function initTest() {
+      const container = document.getElementById('questionsContainer');
+      questions.forEach((q, index) => {
+        const shuffledAnswers = q.a.map((answer, i) => ({ answer, originalIndex: i }));
+        for (let i = shuffledAnswers.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffledAnswers[i], shuffledAnswers[j]] = [shuffledAnswers[j], shuffledAnswers[i]];
+        }
+        q.shuffledAnswers = shuffledAnswers;
+        q.newCorrectIndex = shuffledAnswers.findIndex(item => item.originalIndex === q.correct);
+        const card = document.createElement('div');
+        card.className = 'question-card' + (index === 0 ? ' active' : '');
+        card.innerHTML = `
+                    <div class="question-number">Р’РѕРїСЂРѕСЃ ${index + 1} РёР· ${questions.length}</div>
                     <div class="question-text">${q.q}</div>
                     <div class="answers">
                         ${shuffledAnswers.map((item, i) => `<div class="answer" onclick="selectAnswer(${index}, ${i})">${item.answer}</div>`).join('')}
                     </div>
                 `;
-                container.appendChild(card);
-            });
-        }
-
-        function selectAnswer(questionIndex, answerIndex) {
-            if (answers[questionIndex] !== undefined) return; // Уже ответили
-            
-            const card = document.querySelectorAll('.question-card')[questionIndex];
-            const answerDivs = card.querySelectorAll('.answer');
-            const correctAnswer = questions[questionIndex].newCorrectIndex;
-            
-            // Отключаем все ответы
-            answerDivs.forEach(div => {
-                div.style.pointerEvents = 'none';
-            });
-            
-            // Показываем правильные и неправильные ответы
-            answerDivs.forEach((div, i) => {
-                if (i === correctAnswer) {
-                    div.classList.add('correct');
-                } else {
-                    div.classList.add('incorrect');
-                }
-            });
-            
-            answers[questionIndex] = answerIndex;
-            
-            // Автоматический переход через 2 секунды
-            setTimeout(() => {
-                if (questionIndex < questions.length - 1) {
-                    nextQuestion();
-                } else {
-                    finishTest();
-                }
-            }, 2000);
-        }
-
-        function nextQuestion() {
-            document.querySelectorAll('.question-card')[currentQuestion].classList.remove('active');
-            currentQuestion++;
-            document.querySelectorAll('.question-card')[currentQuestion].classList.add('active');
-            updateProgress();
-        }
-
-        function prevQuestion() {
-            document.querySelectorAll('.question-card')[currentQuestion].classList.remove('active');
-            currentQuestion--;
-            document.querySelectorAll('.question-card')[currentQuestion].classList.add('active');
-            updateProgress();
-        }
-
-        function updateProgress() {
-            const progress = ((currentQuestion + 1) / questions.length) * 100;
-            document.getElementById('progressBar').style.width = progress + '%';
-        }
-
-        function finishTest() {
-            score = 0;
-            questions.forEach((q, index) => {
-                if (answers[index] === q.newCorrectIndex) score++;
-            });
-            
-            const percentage = Math.round((score / questions.length) * 100);
-            const passed = percentage >= 70;
-            
-            // Сохраняем результат в localStorage
-            localStorage.setItem('module_11_test_result', percentage);
-            localStorage.setItem('module_11_test_score', score);
-            localStorage.setItem('module_11_test_total', questions.length);
-            localStorage.setItem('module_11_test_date', new Date().toISOString());
-            
-            document.getElementById('questionsContainer').style.display = 'none';
-            document.getElementById('results').classList.add('show');
-            
-            const scoreDisplay = document.getElementById('scoreDisplay');
-            scoreDisplay.textContent = percentage + '%';
-            scoreDisplay.className = 'score ' + (passed ? 'pass' : 'fail');
-            
-            document.getElementById('resultMessage').textContent = passed ? 
-                `Поздравляем! Вы успешно прошли тест (${score}/${questions.length})` :
-                `Тест не пройден. Необходимо набрать минимум 70% (${score}/${questions.length})`;
-        }
-
-        initTest();
-    </script>
-<script src="../theme-switcher.js"></script>
-
-<!-- Footer -->
-<footer class="footer">
-  <div class="container">
-    <div class="footer-content">
-      <div class="footer-section">
-        <h4>Курсы Диспетчера</h4>
-        <p>Профессиональное обучение диспетчеров грузоперевозок</p>
-      </div>
-      
-      <div class="footer-section">
-        <h4>Обучение</h4>
-        <a href="../courses.html">Курсы</a>
-        <a href="../certification.html">Сертификация</a>
-        <a href="../webinars.html">Вебинары</a>
-      </div>
-      
-      <div class="footer-section">
-        <h4>Поддержка</h4>
-        <a href="../faq.html">FAQ</a>
-        <a href="../contacts.html">Контакты</a>
-        <a href="../help.html">Помощь</a>
-      </div>
-      
-      <div class="footer-section">
-        <h4>Компания</h4>
-        <a href="../about.html">О нас</a>
-        <a href="../blog.html">Блог</a>
-        <a href="../career.html">Карьера</a>
-      </div>
-    </div>
-    
-    <div class="footer-bottom">
-      <p>&copy; 2024 Курсы Диспетчера. Все права защищены.</p>
-    </div>
-  </div>
-</footer>
-  <script>
-    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-    const mobileMenu = document.getElementById('mobileMenu');
-    const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
-
-    if (mobileMenuToggle && mobileMenu && mobileMenuOverlay) {
-      mobileMenuToggle.addEventListener('click', () => {
-        mobileMenu.classList.toggle('active');
-        mobileMenuOverlay.classList.toggle('active');
-        document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
-      });
-
-      mobileMenuOverlay.addEventListener('click', () => {
-        mobileMenu.classList.remove('active');
-        mobileMenuOverlay.classList.remove('active');
-        document.body.style.overflow = '';
+        container.appendChild(card);
       });
     }
-  </script>
 
+    function selectAnswer(questionIndex, answerIndex) {
+      if (answers[questionIndex] !== undefined) return;
+      const card = document.querySelectorAll('.question-card')[questionIndex];
+      const answerDivs = card.querySelectorAll('.answer');
+      const correctAnswer = questions[questionIndex].newCorrectIndex;
+      answerDivs.forEach(div => { div.style.pointerEvents = 'none'; });
+      answerDivs.forEach((div, i) => {
+        if (i === correctAnswer) div.classList.add('correct');
+        else div.classList.add('incorrect');
+      });
+      answers[questionIndex] = answerIndex;
+      setTimeout(() => {
+        if (questionIndex < questions.length - 1) nextQuestion();
+        else finishTest();
+      }, 2000);
+    }
+
+    function nextQuestion() {
+      document.querySelectorAll('.question-card')[currentQuestion].classList.remove('active');
+      currentQuestion++;
+      document.querySelectorAll('.question-card')[currentQuestion].classList.add('active');
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const progress = ((currentQuestion + 1) / questions.length) * 100;
+      document.getElementById('progressBar').style.width = progress + '%';
+    }
+
+    function finishTest() {
+      let score = 0;
+      questions.forEach((q, index) => { if (answers[index] === q.newCorrectIndex) score++; });
+      const percentage = Math.round((score / questions.length) * 100);
+      const passed = percentage >= 70;
+      localStorage.setItem('module_11_test_result', percentage);
+      localStorage.setItem('module_11_test_score', score);
+      localStorage.setItem('module_11_test_total', questions.length);
+      localStorage.setItem('module_11_test_date', new Date().toISOString());
+      document.getElementById('questionsContainer').style.display = 'none';
+      document.getElementById('results').classList.add('show');
+      const scoreDisplay = document.getElementById('scoreDisplay');
+      scoreDisplay.textContent = percentage + '%';
+      scoreDisplay.className = 'score ' + (passed ? 'pass' : 'fail');
+      document.getElementById('resultMessage').textContent = passed ?
+        `РџРѕР·РґСЂР°РІР»СЏРµРј! Р’С‹ СѓСЃРїРµС€РЅРѕ РїСЂРѕС€Р»Рё С‚РµСЃС‚ (${score}/${questions.length})` :
+        `РўРµСЃС‚ РЅРµ РїСЂРѕР№РґРµРЅ. РќРµРѕР±С…РѕРґРёРјРѕ РЅР°Р±СЂР°С‚СЊ РјРёРЅРёРјСѓРј 70% (${score}/${questions.length})`;
+    }
+
+    initTest();
+  </script>
+  <script src="../theme-switcher.js"></script>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>РљСѓСЂСЃС‹ Р”РёСЃРїРµС‚С‡РµСЂР°</h4>
+          <p>РџСЂРѕС„РµСЃСЃРёРѕРЅР°Р»СЊРЅРѕРµ РѕР±СѓС‡РµРЅРёРµ РґРёСЃРїРµС‚С‡РµСЂРѕРІ РіСЂСѓР·РѕРїРµСЂРµРІРѕР·РѕРє</p>
+        </div>
+        <div class="footer-section">
+          <h4>РћР±СѓС‡РµРЅРёРµ</h4>
+          <a href="../courses.html">РљСѓСЂСЃС‹</a>
+          <a href="../certification.html">РЎРµСЂС‚РёС„РёРєР°С†РёСЏ</a>
+          <a href="../webinars.html">Р’РµР±РёРЅР°СЂС‹</a>
+        </div>
+        <div class="footer-section">
+          <h4>РџРѕРґРґРµСЂР¶РєР°</h4>
+          <a href="../faq.html">FAQ</a>
+          <a href="../contacts.html">РљРѕРЅС‚Р°РєС‚С‹</a>
+          <a href="../help.html">РџРѕРјРѕС‰СЊ</a>
+        </div>
+        <div class="footer-section">
+          <h4>РљРѕРјРїР°РЅРёСЏ</h4>
+          <a href="../about.html">Рћ РЅР°СЃ</a>
+          <a href="../blog.html">Р‘Р»РѕРі</a>
+          <a href="../career.html">РљР°СЂСЊРµСЂР°</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2024 РљСѓСЂСЃС‹ Р”РёСЃРїРµС‚С‡РµСЂР°. Р’СЃРµ РїСЂР°РІР° Р·Р°С‰РёС‰РµРЅС‹.</p>
+      </div>
+    </div>
+  </footer>
 
 </body>
-</html>
 
+</html>
