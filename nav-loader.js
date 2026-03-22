@@ -38,21 +38,21 @@
                         <div class="mega-section">
                             <div class="mega-section-head">📚 15 Разделов курса</div>
                             <div class="mega-grid">
-                                <a href="{{BASE}}pages/course-section-1.html" class="mega-item"><span class="mn">01</span>🎯 Введение</a>
-                                <a href="{{BASE}}pages/course-section-2.html" class="mega-item"><span class="mn">02</span>📖 Глоссарий</a>
-                                <a href="{{BASE}}pages/course-section-3.html" class="mega-item"><span class="mn">03</span>👤 Роль диспетчера</a>
-                                <a href="{{BASE}}pages/course-section-4.html" class="mega-item"><span class="mn">04</span>🚛 Типы траков</a>
-                                <a href="{{BASE}}pages/course-section-5.html" class="mega-item"><span class="mn">05</span>🗺️ Маршруты</a>
-                                <a href="{{BASE}}pages/course-section-6.html" class="mega-item"><span class="mn">06</span>💻 Load Boards</a>
-                                <a href="{{BASE}}pages/course-section-7.html" class="mega-item"><span class="mn">07</span>💬 Переговоры</a>
-                                <a href="{{BASE}}pages/course-section-8.html" class="mega-item"><span class="mn">08</span>🤝 Брокеры</a>
-                                <a href="{{BASE}}pages/course-section-9.html" class="mega-item"><span class="mn">09</span>📋 Документация</a>
-                                <a href="{{BASE}}pages/course-section-10.html" class="mega-item"><span class="mn">10</span>⚠️ Безопасность</a>
-                                <a href="{{BASE}}pages/course-section-11.html" class="mega-item"><span class="mn">11</span>💻 Технологии</a>
-                                <a href="{{BASE}}pages/course-section-12.html" class="mega-item"><span class="mn">12</span>📞 Коммуникация</a>
-                                <a href="{{BASE}}pages/course-section-13.html" class="mega-item"><span class="mn">13</span>🔧 Проблемы</a>
-                                <a href="{{BASE}}pages/course-section-14.html" class="mega-item"><span class="mn">14</span>💰 Финансы</a>
-                                <a href="{{BASE}}pages/course-section-15.html" class="mega-item"><span class="mn">15</span>🚀 Карьера</a>
+                                <a href="{{BASE}}pages/intro.html" class="mega-item"><span class="mn">01</span>🚛 Введение</a>
+                                <a href="{{BASE}}pages/glossary.html" class="mega-item"><span class="mn">02</span>📖 Глоссарий</a>
+                                <a href="{{BASE}}pages/role.html" class="mega-item"><span class="mn">03</span>👔 Роль диспетчера</a>
+                                <a href="{{BASE}}pages/equipment.html" class="mega-item"><span class="mn">04</span>🚚 Оборудование</a>
+                                <a href="{{BASE}}pages/routes.html" class="mega-item"><span class="mn">05</span>🗺️ Маршруты</a>
+                                <a href="{{BASE}}pages/loadboards.html" class="mega-item"><span class="mn">06</span>💻 Load Boards</a>
+                                <a href="{{BASE}}pages/negotiation.html" class="mega-item"><span class="mn">07</span>📞 Переговоры</a>
+                                <a href="{{BASE}}pages/brokers.html" class="mega-item"><span class="mn">08</span>🛡️ Брокеры</a>
+                                <a href="{{BASE}}pages/docs.html" class="mega-item"><span class="mn">09</span>📄 Документация</a>
+                                <a href="{{BASE}}pages/regulations.html" class="mega-item"><span class="mn">10</span>⚖️ Законодательство</a>
+                                <a href="{{BASE}}pages/technology.html" class="mega-item"><span class="mn">11</span>💻 TMS и технологии</a>
+                                <a href="{{BASE}}pages/communication.html" class="mega-item"><span class="mn">12</span>📱 Коммуникация</a>
+                                <a href="{{BASE}}pages/problems.html" class="mega-item"><span class="mn">13</span>🚨 Решение проблем</a>
+                                <a href="{{BASE}}pages/finances.html" class="mega-item"><span class="mn">14</span>💰 Финансы</a>
+                                <a href="{{BASE}}pages/career.html" class="mega-item"><span class="mn">15</span>💼 Карьера</a>
                             </div>
                         </div>
                         <div class="mega-divider"></div>
