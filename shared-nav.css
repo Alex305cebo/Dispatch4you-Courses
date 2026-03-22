@@ -188,12 +188,7 @@
     pointer-events: auto;
 }
 
-.nav-dropdown:hover .dropdown-content {
-    display: block;
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-}
+/* hover убран — только click через JS */
 
 .dropdown-content a {
     display: flex;
@@ -1174,25 +1169,44 @@
    🎭 MEGA MENU PANEL (click-based)
    ======================================== */
 
-.nav-dropdown .dropdown-content {
+/* mega-panel — скрыт по умолчанию, анимация через opacity+transform */
+.nav-dropdown .mega-panel {
     display: none;
+    opacity: 0;
+    transform: translateX(-50%) translateY(-6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-/* mega-panel всегда в DOM, скрыт через opacity/pointer-events */
-.nav-dropdown .mega-panel {
+.nav-dropdown.open .mega-panel {
     display: block;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+    animation: megaFadeIn 0.2s ease forwards;
+}
+
+.nav-dropdown .dropdown-content {
+    display: none;
 }
 
 .nav-dropdown.open .dropdown-content {
     display: block;
 }
 
-/* kill old hover rules */
+/* kill hover rules — только click */
 .nav-dropdown:hover .dropdown-content {
     display: none;
 }
 
+.nav-dropdown:hover .mega-panel {
+    display: none;
+}
+
 .nav-dropdown.open:hover .dropdown-content {
+    display: block;
+}
+
+.nav-dropdown.open:hover .mega-panel {
     display: block;
 }
 
