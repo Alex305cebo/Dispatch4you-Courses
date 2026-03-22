@@ -107,6 +107,18 @@ export async function awardXP(action, meta = {}) {
 
         await updateDoc(userRef, updateData);
 
+        // Обновляем локальное хранилище для быстрого доступа
+        const xpData = {
+            totalXP: newXP,
+            level: newLevel.level,
+            levelLabel: newLevel.label,
+            lastUpdated: new Date().toISOString()
+        };
+        localStorage.setItem('xp_data', JSON.stringify(xpData));
+
+        // Отправляем событие обновления XP
+        document.dispatchEvent(new CustomEvent('xpUpdated', { detail: xpData }));
+
         // Показываем тост с +XP
         showXPToast(actionData.xp, actionData.label, leveledUp ? newLevel : null);
 
