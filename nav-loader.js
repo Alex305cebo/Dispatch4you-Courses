@@ -1,5 +1,5 @@
 /**
- * nav-loader.js v1.1
+ * nav-loader.js v1.2
  */
 (function () {
     var isSubfolder = window.location.pathname.includes('/pages/');
