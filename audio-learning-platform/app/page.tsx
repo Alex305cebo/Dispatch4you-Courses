@@ -13,11 +13,9 @@ export default function Home() {
       <section className="relative overflow-hidden py-20 px-6">
         {/* Animated background gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-cyan-500 opacity-10"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(99,102,241,0.1),transparent_50%)]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(6,182,212,0.1),transparent_50%)]"></div>
 
         <div className="relative max-w-6xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-indigo-200 mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-indigo-200 mb-6">
             <Sparkles size={16} className="text-indigo-600" />
             <span className="text-sm font-medium text-indigo-600">Обучение нового поколения</span>
           </div>
@@ -38,19 +36,17 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link
               href="/course"
-              className="group relative px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+              className="group px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
             >
-              <span className="relative z-10 flex items-center gap-2">
+              <span className="flex items-center gap-2">
                 Начать обучение бесплатно
-                <Play size={20} className="group-hover:translate-x-1 transition-transform" />
+                <Play size={20} className="group-hover:translate-x-1 transition-transform duration-200" />
               </span>
-              {/* Pulsing effect */}
-              <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 animate-pulse opacity-50"></span>
             </Link>
 
             <Link
               href="/demo"
-              className="px-8 py-4 bg-white/80 backdrop-blur-sm border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-lg hover:border-indigo-300 hover:bg-white transition-all duration-300"
+              className="px-8 py-4 bg-white border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-lg hover:border-indigo-300 hover:bg-gray-50 transition-all duration-200"
             >
               Посмотреть демо
             </Link>
@@ -92,8 +88,7 @@ export default function Home() {
           {/* Bento Grid Layout */}
           <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             {/* Large card - Negotiation */}
-            <div className="md:col-span-4 md:row-span-2 group relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-8 text-white hover:scale-[1.02] transition-transform duration-300">
-              <div className="absolute inset-0 bg-black/10 backdrop-blur-sm"></div>
+            <div className="md:col-span-4 md:row-span-2 group relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-8 text-white hover:scale-[1.02] transition-transform duration-200">
               <div className="relative z-10">
                 <MessageSquare size={48} className="mb-4 opacity-90" />
                 <h3 className="text-3xl font-bold mb-3">Переговоры</h3>
@@ -108,8 +103,7 @@ export default function Home() {
             </div>
 
             {/* Medium card - Safety */}
-            <div className="md:col-span-2 group relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-500 to-orange-500 p-6 text-white hover:scale-[1.02] transition-transform duration-300">
-              <div className="absolute inset-0 bg-black/10 backdrop-blur-sm"></div>
+            <div className="md:col-span-2 group relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-500 to-orange-500 p-6 text-white hover:scale-[1.02] transition-transform duration-200">
               <div className="relative z-10">
                 <Shield size={40} className="mb-3 opacity-90" />
                 <h3 className="text-2xl font-bold mb-2">Безопасность</h3>
@@ -121,8 +115,7 @@ export default function Home() {
             </div>
 
             {/* Medium card - Workflow */}
-            <div className="md:col-span-2 group relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 p-6 text-white hover:scale-[1.02] transition-transform duration-300">
-              <div className="absolute inset-0 bg-black/10 backdrop-blur-sm"></div>
+            <div className="md:col-span-2 group relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 p-6 text-white hover:scale-[1.02] transition-transform duration-200">
               <div className="relative z-10">
                 <TrendingUp size={40} className="mb-3 opacity-90" />
                 <h3 className="text-2xl font-bold mb-2">Рабочий процесс</h3>
@@ -134,8 +127,7 @@ export default function Home() {
             </div>
 
             {/* Small cards */}
-            <div className="md:col-span-2 group relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 p-6 text-white hover:scale-[1.02] transition-transform duration-300">
-              <div className="absolute inset-0 bg-black/10 backdrop-blur-sm"></div>
+            <div className="md:col-span-2 group relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 p-6 text-white hover:scale-[1.02] transition-transform duration-200">
               <div className="relative z-10">
                 <Sparkles size={32} className="mb-2 opacity-90" />
                 <h3 className="text-xl font-bold mb-2">Mindset</h3>
@@ -143,8 +135,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="md:col-span-2 group relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 p-6 text-white hover:scale-[1.02] transition-transform duration-300">
-              <div className="absolute inset-0 bg-black/10 backdrop-blur-sm"></div>
+            <div className="md:col-span-2 group relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 p-6 text-white hover:scale-[1.02] transition-transform duration-200">
               <div className="relative z-10">
                 <BookOpen size={32} className="mb-2 opacity-90" />
                 <h3 className="text-xl font-bold mb-2">Введение</h3>
@@ -227,19 +218,20 @@ export default function Home() {
             {/* Visual Audio Player Mockup */}
             <div className="relative">
               {/* Glassmorphism card */}
-              <div className="relative bg-white/70 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl">
-                {/* Waveform visualization */}
+              <div className="relative bg-white border border-gray-200 rounded-3xl p-8 shadow-2xl">
+                {/* Waveform visualization - static heights for performance */}
                 <div className="flex items-end justify-between gap-1 h-32 mb-6">
-                  {[...Array(40)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="flex-1 bg-gradient-to-t from-indigo-500 to-purple-500 rounded-full transition-all duration-300 hover:from-indigo-600 hover:to-purple-600"
-                      style={{
-                        height: `${Math.random() * 60 + 40}%`,
-                        opacity: 0.3 + Math.random() * 0.7,
-                      }}
-                    ></div>
-                  ))}
+                  {[65, 45, 75, 55, 85, 50, 70, 60, 80, 55, 90, 65, 75, 50, 85, 60, 70, 55, 80, 65,
+                    75, 50, 85, 60, 90, 55, 70, 65, 80, 50, 75, 60, 85, 55, 70, 65, 80, 50, 75, 60].map((height, i) => (
+                      <div
+                        key={i}
+                        className="flex-1 bg-gradient-to-t from-indigo-500 to-purple-500 rounded-full"
+                        style={{
+                          height: `${height}%`,
+                          opacity: 0.4 + (i % 3) * 0.2,
+                        }}
+                      ></div>
+                    ))}
                 </div>
 
                 {/* Player controls */}
@@ -274,9 +266,6 @@ export default function Home() {
 
       {/* CTA Section */}
       <section className="py-20 px-6 bg-gradient-to-br from-indigo-600 via-purple-600 to-cyan-600 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_50%)]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(255,255,255,0.1),transparent_50%)]"></div>
-
         <div className="relative max-w-4xl mx-auto text-center text-white">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
             Начни обучение прямо сейчас

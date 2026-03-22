@@ -1,0 +1,1790 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <script src="../site-protection.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль 1: Введение в индустрию | Курсы Диспетчера</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../shared-styles.css">
+    <link rel="stylesheet" href="../dark-theme.css">
+    <link rel="stylesheet" href="../shared-nav.css">
+    <link rel="stylesheet" href="../mobile-fix.css">
+    <script>!function () { var t = localStorage.getItem('dispatcher-theme') || 'dark'; 'dark' === t && document.documentElement.setAttribute('data-theme', 'dark') }();</script>
+    <script src="../dark-mode.js"></script>
+    <script src="auth-check.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
+        }
+
+        .wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .module-progress {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .progress-text {
+            font-size: 14px;
+            color: var(--text-2);
+            font-weight: 600;
+        }
+
+        .progress-percentage {
+            font-size: 18px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 12px;
+
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #a78bfa);
+            border-radius: 20px;
+            transition: width 0.5s ease;
+        }
+
+        .doc-section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 24px;
+            scroll-margin-top: 80px;
+            transition: transform 0.2s ease;
+        }
+
+        .doc-section:hover {
+            transform: translateY(-2px);
+        }
+
+        .doc-section h2 {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 24px;
+            letter-spacing: -1px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #667eea, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .doc-section h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 32px 0 16px;
+            color: #f1f5f9;
+        }
+
+        .doc-section h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 24px 0 12px;
+            color: #e2e8f0;
+        }
+
+        .doc-section p {
+            font-size: 16px;
+            line-height: 1.8;
+
+            color: #e2e8f0;
+            margin-bottom: 16px;
+        }
+
+        .doc-section ul,
+        .doc-section ol {
+            margin: 16px 0;
+            padding-left: 24px;
+        }
+
+        .doc-section li {
+            font-size: 15px;
+            line-height: 1.8;
+            color: #e2e8f0;
+            margin-bottom: 8px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin: 24px 0;
+        }
+
+        .stat-box {
+            background: rgba(var(--primary-rgb), .08);
+            border: 1px solid rgba(var(--primary-rgb), .2);
+            border-radius: 16px;
+            padding: 16px 12px;
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-4px);
+            border-color: rgba(var(--primary-rgb), .4);
+        }
+
+        .stat-box .number {
+            font-size: clamp(24px, 3.5vw, 32px);
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .stat-box .label {
+            font-size: clamp(10px, 1.8vw, 12px);
+            color: #cbd5e1;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        .info-highlight {
+            background: rgba(102, 126, 234, .08);
+            border-left: 4px solid #667eea;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .info-highlight h4 {
+            color: #a5b4fc;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .warning-highlight {
+            background: rgba(251, 146, 60, .08);
+            border-left: 4px solid #fb923c;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .warning-highlight h4 {
+            color: #fdba74;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .success-highlight {
+            background: rgba(52, 211, 153, .08);
+            border-left: 4px solid #34d399;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .success-highlight h4 {
+            color: #6ee7b7;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .analytics-box {
+            background: rgba(167, 139, 250, 0.08);
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 16px 0;
+        }
+
+        .analytics-box h5 {
+            color: #c4b5fd;
+            margin-bottom: 12px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .expand-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 12px;
+            padding: 16px 32px;
+            margin: 24px 0;
+
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 16px;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+            position: relative;
+            overflow: hidden;
+            text-align: left;
+        }
+
+        .expand-btn:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6);
+        }
+
+        .expand-btn .icon {
+            transition: transform 0.3s ease;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .expand-btn.active .icon {
+            transform: rotate(180deg);
+        }
+
+        .collapse-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 12px;
+            padding: 14px 28px;
+            margin: 24px 0 0 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border: 2px solid rgba(167, 139, 250, 0.4);
+            border-radius: 12px;
+            color: #c4b5fd;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            text-align: left;
+        }
+
+        .collapse-btn:hover {
+            background: linear-gradient(135deg, rgba(167, 139, 250, 0.2) 0%, rgba(167, 139, 250, 0.1) 100%);
+            border-color: rgba(167, 139, 250, 0.6);
+            transform: translateY(-2px);
+            color: #e9d5ff;
+        }
+
+        .expandable-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease;
+            opacity: 0;
+            margin: 0;
+        }
+
+        .expandable-content.active {
+            max-height: 10000px;
+            opacity: 1;
+            margin: 24px 0;
+        }
+
+        .expandable-content .content-inner {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(167, 139, 250, 0.08) 100%);
+            border-left: 4px solid #667eea;
+            border-radius: 16px;
+            padding: 32px;
+        }
+
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .fade-in-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .scale-in {
+            opacity: 0;
+            transform: scale(0.9);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .scale-in.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+
+        .complete-module-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 32px 0;
+        }
+
+        .complete-module-btn:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Кнопка возврата наверх */
+        .scroll-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, rgba(167, 139, 250, 0.9), rgba(139, 92, 246, 0.9));
+            border: 2px solid rgba(167, 139, 250, 0.5);
+            border-radius: 50%;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+
+        .scroll-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .scroll-to-top:hover {
+            background: linear-gradient(135deg, rgba(167, 139, 250, 1), rgba(139, 92, 246, 1));
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+        }
+
+        .scroll-to-top:active {
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 768px) {
+            .scroll-to-top {
+                bottom: 20px;
+                right: 20px;
+                width: 45px;
+                height: 45px;
+            }
+        }
+
+        .module-navigation {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin: 48px 0;
+        }
+
+        .nav-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px 24px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .nav-btn.next {
+            justify-content: flex-end;
+        }
+
+        .nav-btn .icon {
+            font-size: 24px;
+        }
+
+        .nav-btn .text {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .nav-btn .label {
+
+            font-size: 12px;
+            color: var(--text-2);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-btn .title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        @media (max-width: 768px) {
+            .doc-section {
+                padding: 24px 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .module-navigation {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="nav-placeholder"></div>
+    <script src="../nav-loader.js"></script>
+    <div class="bg-grid"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <section style="padding-top: 30px;">
+        <div class="wrap">
+
+            <header class="page-header fade-in-up"
+                style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 250px;">
+                    <div class="page-badge">📖 Модуль 1</div>
+                    <h1 class="page-title" style="font-size: clamp(24px, 5vw, 36px); margin: 12px 0 8px;"><span>🚛
+                            Введение в индустрию грузоперевозок США</span></h1>
+                    <p class="page-subtitle" style="font-size: clamp(13px, 2.5vw, 15px); margin: 0;">Полное погружение в
+                        крупнейшую транспортную индустрию мира</p>
+                </div>
+
+                <div class="module-progress fade-in-up"
+                    style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(167, 139, 250, 0.08)); border: 1px solid rgba(167, 139, 250, 0.15); border-radius: 12px; padding: clamp(8px, 2vw, 10px) clamp(12px, 2.5vw, 14px); margin: 0; min-width: 200px;">
+                    <div class="progress-header" style="margin-bottom: 8px;">
+                        <span class="progress-text" style="font-size: clamp(11px, 2vw, 12px);">Модуль 1 из 15</span>
+                        <span class="progress-percentage"
+                            style="font-size: clamp(14px, 2.5vw, 16px); margin-left: 8px;">7%</span>
+                    </div>
+                    <div class="progress-bar-container" style="height: 6px;">
+                        <div class="progress-bar-fill" style="width: 7%"></div>
+                    </div>
+                </div>
+            </header>
+
+            <section id="intro" class="doc-section fade-in-up">
+                <h2>🚛 Индустрия грузоперевозок США: Обзор 2024-2026</h2>
+
+                <p>Индустрия грузоперевозок США является критически важной артерией американской экономики, обеспечивая
+                    движение товаров от производителей к потребителям. В 2024 году индустрия продемонстрировала
+                    впечатляющие показатели, несмотря на экономические вызовы.</p>
+
+                <p style="margin-bottom: 20px; color: #cbd5e1; font-weight: 600;">Ключевые показатели индустрии
+                    грузоперевозок США (кликни для деталей):</p>
+
+                <div class="stats-grid">
+                    <div class="stat-box scale-in industry-card" data-stat="revenue" style="cursor: pointer;">
+                        <div class="number">$906B</div>
+                        <div class="label">Годовой оборот 2024</div>
+                    </div>
+                    <div class="stat-box scale-in industry-card" data-stat="tonnage" style="cursor: pointer;">
+                        <div class="number">11.27B</div>
+                        <div class="label">Тонн грузов</div>
+                    </div>
+                    <div class="stat-box scale-in industry-card" data-stat="share" style="cursor: pointer;">
+                        <div class="number">72.7%</div>
+                        <div class="label">Всех грузов США</div>
+                    </div>
+                    <div class="stat-box scale-in industry-card" data-stat="jobs" style="cursor: pointer;">
+                        <div class="number">8.4M</div>
+                        <div class="label">Рабочих мест</div>
+                    </div>
+                    <div class="stat-box scale-in industry-card" data-stat="drivers" style="cursor: pointer;">
+                        <div class="number">3.58M</div>
+                        <div class="label">Водителей</div>
+                    </div>
+                    <div class="stat-box scale-in industry-card" data-stat="fleets" style="cursor: pointer;">
+                        <div class="number">95.5%</div>
+                        <div class="label">Малых флотов (≤10 траков)</div>
+                    </div>
+                </div>
+
+                <!-- Детальная информация для статистики (скрыта по умолчанию) -->
+                <div id="industry-details"
+                    style="display: none; margin-top: 25px; background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(167, 139, 250, 0.08)); border: 2px solid rgba(167, 139, 250, 0.3); border-radius: 16px; padding: 30px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h4 id="industry-title" style="color: #a78bfa; font-size: 24px; margin: 0;"></h4>
+                        <button onclick="closeIndustryDetails()"
+                            style="background: rgba(167, 139, 250, 0.2); border: 1px solid rgba(167, 139, 250, 0.4); color: #a78bfa; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">✕
+                            Закрыть</button>
+                    </div>
+                    <div id="industry-content"></div>
+                </div>
+
+                <div class="info-highlight">
+                    <h4>💡 Ключевые факты об индустрии:</h4>
+                    <ul>
+                        <li><strong>Доминирование в логистике:</strong> Траки перевозят 72.7% всех товаров в США по
+                            тоннажу</li>
+                        <li><strong>Экономический вклад:</strong> $906 миллиардов годового дохода в 2024 году</li>
+                        <li><strong>Занятость:</strong> 8.4 миллиона рабочих мест, включая 3.58 миллиона водителей</li>
+                        <li><strong>Структура рынка:</strong> 95.5% компаний владеют 10 или менее траками</li>
+                        <li><strong>Критическая инфраструктура:</strong> Без траков полки магазинов опустеют за 3 дня
+                        </li>
+                    </ul>
+                </div>
+
+                <h3>📊 Динамика индустрии 2023-2024</h3>
+
+                <p>2024 год показал коррекцию после рекордного 2023 года, что является нормальным циклом в индустрии:
+                </p>
+
+                <ul>
+                    <li><strong>Выручка:</strong> $906B в 2024 vs $1.004T в 2023 (-9.8%)</li>
+                    <li><strong>Тоннаж:</strong> 11.27B тонн в 2024 vs 11.41B в 2023 (-1.2%)</li>
+                    <li><strong>Причины снижения:</strong> Нормализация после пандемийного бума, инфляция, высокие
+                        процентные ставки</li>
+                    <li><strong>Прогноз:</strong> Стабилизация и рост 3-4% ежегодно с 2025 года</li>
+                </ul>
+
+                <button class="expand-btn" onclick="toggleExpand(this)">
+                    <span class="icon">▼</span>
+                    <span>Глубокая аналитика: История, структура рынка и тренды</span>
+                </button>
+
+                <div class="expandable-content">
+                    <div class="content-inner">
+                        <h4>📜 История развития индустрии</h4>
+
+                        <div class="analytics-box">
+                            <h5>🚚 Ключевые этапы развития</h5>
+                            <ul>
+                                <li><strong>1920-е годы:</strong> Появление первых коммерческих грузовиков. Конкуренция
+                                    с железными дорогами</li>
+                                <li><strong>1935:</strong> Motor Carrier Act - первое федеральное регулирование
+                                    индустрии</li>
+                                <li><strong>1956:</strong> Interstate Highway System - революция в логистике. Создание
+                                    47,000 миль скоростных дорог</li>
+                                <li><strong>1980:</strong> Motor Carrier Act - дерегуляция. Взрывной рост конкуренции и
+                                    эффективности</li>
+                                <li><strong>1990-е:</strong> Компьютеризация. Появление первых TMS систем и GPS tracking
+                                </li>
+                                <li><strong>2000-е:</strong> E-commerce бум. Amazon меняет логистику навсегда</li>
+                                <li><strong>2010-е:</strong> ELD mandate (2017). Цифровизация Hours of Service</li>
+                                <li><strong>2020-е:</strong> AI, автоматизация, электрификация. Пандемия показала
+                                    критическую важность индустрии</li>
+                            </ul>
+                        </div>
+
+                        <div class="analytics-box">
+                            <h5>🏢 Структура рынка: Кто есть кто</h5>
+
+
+                            <p><strong>Shippers (Грузоотправители) - те, кто отправляет грузы:</strong></p>
+                            <ul>
+                                <li><strong>Производители продуктов питания:</strong> Coca-Cola, PepsiCo, Kraft Heinz,
+                                    Tyson Foods, Nestlé</li>
+                                <li><strong>Ритейлеры:</strong> Walmart (крупнейший shipper в США), Target, Costco,
+                                    Kroger, Home Depot</li>
+                                <li><strong>E-commerce гиганты:</strong> Amazon (1.6B посылок в год), eBay, Wayfair,
+                                    Chewy</li>
+                                <li><strong>Дистрибьюторы продуктов:</strong> Sysco, US Foods, McLane Company,
+                                    Performance Food Group</li>
+                                <li><strong>Производители товаров:</strong> Procter & Gamble, Unilever, Johnson &
+                                    Johnson, 3M</li>
+                                <li><strong>Производители напитков:</strong> Anheuser-Busch, MillerCoors, Dr Pepper
+                                    Snapple</li>
+                            </ul>
+
+                            <p><strong>Carriers (Перевозчики) - владельцы траков:</strong></p>
+                            <ul>
+                                <li><strong>Mega Carriers (10,000+ траков):</strong>
+                                    <br>• J.B. Hunt (20,000+ траков, $12.2B выручка)
+                                    <br>• Schneider National (11,000+ траков)
+                                    <br>• Swift Transportation (18,000+ траков)
+                                    <br>• Werner Enterprises (8,000+ траков)
+                                    <br>• Knight Transportation (5,500+ траков)
+                                </li>
+                                <li><strong>Large Carriers (1,000-10,000):</strong> Региональные лидеры,
+                                    специализированные перевозки</li>
+                                <li><strong>Mid-size (100-1,000):</strong> Баланс гибкости и стабильности</li>
+                                <li><strong>Small Fleets (10-100):</strong> 95.5% всех компаний! Семейный бизнес</li>
+                                <li><strong>Owner-Operators (1-5):</strong> Независимые водители-предприниматели</li>
+                            </ul>
+
+                            <p><strong>Brokers (Брокеры) - посредники между shippers и carriers:</strong></p>
+                            <ul>
+                                <li><strong>C.H. Robinson:</strong> Крупнейший брокер в мире, $20B+ выручка</li>
+                                <li><strong>TQL (Total Quality Logistics):</strong> $6B+ выручка, 60+ офисов</li>
+                                <li><strong>XPO Logistics:</strong> $7.7B выручка, глобальная сеть</li>
+                                <li><strong>Coyote Logistics:</strong> Принадлежит UPS, $3B+ выручка</li>
+                                <li><strong>Echo Global Logistics:</strong> Технологичный брокер</li>
+                            </ul>
+                        </div>
+
+                        <div class="analytics-box">
+                            <h5>🌍 География: Ключевые маршруты и хабы</h5>
+
+
+                            <p><strong>Основные Interstate коридоры:</strong></p>
+                            <ul>
+                                <li><strong>I-95 Corridor (Восточное побережье):</strong> Бостон → Майами, 1,920 миль
+                                    <br>• Ставки: $2.50-3.50/миля
+                                    <br>• Высокая плотность населения, много грузов
+                                    <br>• Пробки в NYC, DC, Atlanta
+                                </li>
+                                <li><strong>I-5 Corridor (Западное побережье):</strong> Сиэтл → Сан-Диего, 1,381 миля
+                                    <br>• Ставки: $2.80-4.00/миля
+                                    <br>• Порты LA/Long Beach - крупнейшие в США
+                                    <br>• Produce из California
+                                </li>
+                                <li><strong>I-10 Corridor (Южный):</strong> Лос-Анджелес → Джексонвилл, 2,460 миль
+                                    <br>• Ставки: $2.20-3.20/миля
+                                    <br>• Связывает Западное и Восточное побережья через Юг
+                                </li>
+                                <li><strong>I-80 Corridor (Северный):</strong> Сан-Франциско → Нью-Йорк, 2,900 миль
+                                    <br>• Ставки: $2.40-3.40/миля
+                                    <br>• Проходит через Chicago - крупнейший хаб
+                                </li>
+                            </ul>
+
+                            <p><strong>Топ-5 логистических хабов США:</strong></p>
+                            <ul>
+                                <li><strong>1. Chicago, IL:</strong> "Crossroads of America"
+                                    <br>• 500+ грузов ежедневно на load boards
+                                    <br>• Крупнейший железнодорожный хаб
+                                    <br>• O'Hare Airport - cargo hub
+                                </li>
+                                <li><strong>2. Dallas/Fort Worth, TX:</strong> Центральное расположение
+                                    <br>• DFW Airport - 2-й по cargo в США
+                                    <br>• Близость к Мексике (USMCA trade)
+                                </li>
+                                <li><strong>3. Los Angeles/Long Beach, CA:</strong> Порты
+                                    <br>• 40% всего импорта США
+                                    <br>• Контейнеры из Азии
+                                </li>
+                                <li><strong>4. Atlanta, GA:</strong> "Distribution Capital"
+                                    <br>• Hartsfield-Jackson Airport - самый загруженный в мире
+                                    <br>• Центр для Юго-Востока
+                                </li>
+                                <li><strong>5. Memphis, TN:</strong> FedEx SuperHub
+                                    <br>• Крупнейший cargo airport ночью
+                                    <br>• Центральное расположение
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="analytics-box">
+                            <h5>🔮 Технологические тренды 2024-2030</h5>
+
+
+                            <ul>
+                                <li><strong>AI-powered Routing & Predictive Analytics:</strong>
+                                    <br>• Оптимизация маршрутов в реальном времени
+                                    <br>• Экономия 15-20% топлива
+                                    <br>• Предсказание задержек и пробок
+                                    <br>• Прогнозирование спроса и оптимальных ставок
+                                    <br>• Компании: Convoy, Uber Freight, Loadsmart
+                                </li>
+                                <li><strong>Autonomous Trucks (Автономные траки):</strong>
+                                    <br>• Waymo Via, TuSimple, Aurora, Embark
+                                    <br>• Первые коммерческие маршруты: 2027-2028
+                                    <br>• Начнут с простых маршрутов (highway, хорошая погода)
+                                    <br>• Диспетчеры будут управлять автономными флотами
+                                    <br>• Экономия $70,000+ на водителя в год
+                                </li>
+                                <li><strong>Electric Trucks (Электрификация):</strong>
+                                    <br>• Tesla Semi (500 миль на заряде, $180,000)
+                                    <br>• Nikola Tre BEV (330 миль)
+                                    <br>• Rivian Electric Delivery Van (Amazon заказал 100,000)
+                                    <br>• Снижение операционных расходов на 40%
+                                    <br>• Экологические требования California и других штатов
+                                </li>
+                                <li><strong>Blockchain для документов:</strong>
+                                    <br>• Безопасное хранение BOL, POD, rate confirmations
+                                    <br>• Мгновенная верификация
+                                    <br>• Защита от мошенничества и double brokering
+                                    <br>• Smart contracts для автоматических платежей
+                                </li>
+                                <li><strong>IoT сенсоры и телематика:</strong>
+                                    <br>• Мониторинг температуры (reefer loads)
+                                    <br>• Отслеживание влажности, вибрации, открытия дверей
+                                    <br>• Real-time location tracking
+                                    <br>• Predictive maintenance (предсказание поломок)
+                                    <br>• Fuel efficiency monitoring
+                                </li>
+                                <li><strong>Digital Freight Matching:</strong>
+                                    <br>• Uber Freight, Convoy, Transfix
+                                    <br>• Instant booking без звонков
+                                    <br>• Прозрачные ставки
+                                    <br>• Автоматизация paperwork
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="analytics-box">
+                            <h5>⚠️ Вызовы и риски индустрии</h5>
+
+
+                            <ul>
+                                <li><strong>Дефицит водителей - критическая проблема:</strong>
+                                    <br>• Нехватка 80,000+ водителей в 2024
+                                    <br>• Средний возраст водителя: 55 лет
+                                    <br>• Мало молодых специалистов (требуется 21+ лет)
+                                    <br>• Высокий turnover rate: 90%+ в год
+                                    <br>• Решение: Повышение зарплат, улучшение условий, автоматизация
+                                </li>
+                                <li><strong>Регуляторное давление:</strong>
+                                    <br>• Ужесточение Hours of Service (HOS) правил
+                                    <br>• ELD mandate - обязательные электронные логбуки
+                                    <br>• Экологические стандарты (особенно California)
+                                    <br>• Drug & Alcohol Clearinghouse
+                                    <br>• Повышение страховых требований ($1M+ liability)
+                                </li>
+                                <li><strong>Волатильность топлива:</strong>
+                                    <br>• Цены на дизель: $2.50-5.50/галлон (зависит от региона и времени)
+                                    <br>• Топливо = 24% операционных расходов
+                                    <br>• Fuel surcharges не всегда покрывают рост цен
+                                    <br>• Переход на электротраки как решение
+                                </li>
+                                <li><strong>Страховые расходы:</strong>
+                                    <br>• Рост стоимости на 20-30% за последние 3 года
+                                    <br>• Nuclear verdicts (иски на $10M+) пугают страховщиков
+                                    <br>• Малые флоты страдают больше всего
+                                    <br>• Средняя стоимость: $12,000-15,000 на трак в год
+                                </li>
+                                <li><strong>Мошенничество (Fraud):</strong>
+                                    <br>• Cargo theft: $500M+ убытков ежегодно
+                                    <br>• Фальшивые брокеры и double brokering
+                                    <br>• Identity theft (кража MC numbers)
+                                    <br>• Fictitious pickups (несуществующие грузы)
+                                    <br>• Защита: Проверка MC/DOT, RTS Pro, Carrier411
+                                </li>
+                                <li><strong>Экономические циклы:</strong>
+                                    <br>• Рецессии снижают объемы грузов на 15-25%
+                                    <br>• 2024: Коррекция после пандемийного бума
+                                    <br>• Ставки падают в слабые периоды
+                                    <br>• Малые компании закрываются первыми
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="success-highlight">
+                            <h4>🎯 Ключевые выводы для будущих диспетчеров:</h4>
+
+                            <ul>
+                                <li>Индустрия грузоперевозок США - это $906B рынок с 8.4M рабочих мест</li>
+                                <li>72.7% всех товаров в США перевозятся траками - критическая инфраструктура</li>
+                                <li>95.5% компаний - малые флоты (≤10 траков), что создает огромный спрос на диспетчеров
+                                </li>
+                                <li>Дефицит 80,000+ водителей означает высокий спрос на квалифицированных диспетчеров
+                                </li>
+                                <li>Технологии меняют индустрию, но человеческий фактор остается критическим</li>
+                                <li>Знание географии, маршрутов и ключевых игроков - основа успеха</li>
+                                <li>Постоянное обучение и адаптация к новым технологиям обязательны</li>
+                            </ul>
+                        </div>
+
+                        <button class="collapse-btn"
+                            onclick="toggleExpand(this.parentElement.parentElement.previousElementSibling)">
+                            <span class="icon">▲</span>
+                            <span>Свернуть информацию</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="career" class="doc-section fade-in-up">
+                <h2>💼 Карьера диспетчера: Возможности и перспективы</h2>
+
+                <p>Профессия диспетчера грузоперевозок предлагает отличные карьерные перспективы с возможностью
+                    удаленной работы, хорошим доходом и низким порогом входа. Давайте разберем детально все аспекты этой
+                    профессии.</p>
+
+                <h3>💰 Зарплаты диспетчеров в 2024-2026</h3>
+
+                <p style="margin-bottom: 20px; color: #cbd5e1; font-weight: 600; font-size: 18px;">
+                    Годовой доход диспетчеров грузоперевозок в США (в год). Кликни на карточку для деталей:
+                </p>
+
+                <div class="stats-grid">
+                    <div class="stat-box scale-in salary-card" data-level="entry" style="cursor: pointer;">
+                        <div class="number">$30-45K</div>
+                        <div class="label">Entry-level (0-2 года)<br><span
+                                style="font-size: 12px; opacity: 0.8;">$2.5K-3.8K в месяц</span></div>
+                    </div>
+                    <div class="stat-box scale-in salary-card" data-level="mid" style="cursor: pointer;">
+                        <div class="number">$45-65K</div>
+                        <div class="label">Mid-level (3-7 лет)<br><span
+                                style="font-size: 12px; opacity: 0.8;">$3.8K-5.4K в месяц</span></div>
+                    </div>
+                    <div class="stat-box scale-in salary-card" data-level="senior" style="cursor: pointer;">
+                        <div class="number">$65-85K+</div>
+                        <div class="label">Senior (8+ лет)<br><span style="font-size: 12px; opacity: 0.8;">$5.4K-7K+ в
+                                месяц</span></div>
+                    </div>
+                    <div class="stat-box scale-in salary-card" data-level="independent" style="cursor: pointer;">
+                        <div class="number">$50-150K+</div>
+                        <div class="label">Independent (комиссия)<br><span
+                                style="font-size: 12px; opacity: 0.8;">$4K-12.5K+ в месяц</span></div>
+                    </div>
+                </div>
+
+                <!-- Детальная информация (скрыта по умолчанию) -->
+                <div id="salary-details"
+                    style="display: none; margin-top: 25px; background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(167, 139, 250, 0.08)); border: 2px solid rgba(167, 139, 250, 0.3); border-radius: 16px; padding: 30px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h4 id="detail-title" style="color: #a78bfa; font-size: 24px; margin: 0;"></h4>
+                        <button onclick="closeSalaryDetails()"
+                            style="background: rgba(167, 139, 250, 0.2); border: 1px solid rgba(167, 139, 250, 0.4); color: #a78bfa; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">✕
+                            Закрыть</button>
+                    </div>
+                    <div id="detail-content"></div>
+                </div>
+                <div class="info-highlight">
+                    <h4>💡 Факторы, влияющие на зарплату:</h4>
+
+                    <ul>
+                        <li><strong>Опыт:</strong> Каждый год опыта добавляет $3,000-5,000 к зарплате</li>
+                        <li><strong>Размер компании:</strong> Mega carriers платят $45-65K, малые флоты $35-50K</li>
+                        <li><strong>География:</strong> California, New York, Texas платят на 15-25% больше</li>
+                        <li><strong>Специализация:</strong> Hazmat, reefer, oversized - премия 10-20%</li>
+                        <li><strong>Количество траков:</strong> Управление 10+ траками = выше зарплата</li>
+                        <li><strong>Модель оплаты:</strong> Salary vs Commission (5-10% от gross revenue)</li>
+                    </ul>
+                </div>
+
+                <h3>📈 Модели оплаты диспетчеров</h3>
+
+                <div class="analytics-box">
+                    <h5>1️⃣ Фиксированная зарплата (Salary)</h5>
+                    <ul>
+                        <li><strong>Как работает:</strong> Фиксированная годовая зарплата, обычно $35,000-65,000</li>
+                        <li><strong>Плюсы:</strong> Стабильность, предсказуемость, benefits (страховка, отпуск)</li>
+                        <li><strong>Минусы:</strong> Ограниченный потенциал роста дохода</li>
+                        <li><strong>Кому подходит:</strong> Начинающим, тем кто ценит стабильность</li>
+                        <li><strong>Типичные работодатели:</strong> Mega carriers, mid-size companies</li>
+                    </ul>
+                </div>
+
+                <div class="analytics-box">
+                    <h5>2️⃣ Почасовая оплата (Hourly)</h5>
+                    <ul>
+                        <li><strong>Ставка:</strong> $15-30/час в зависимости от опыта</li>
+                        <li><strong>Плюсы:</strong> Оплата сверхурочных (overtime), гибкость</li>
+                        <li><strong>Минусы:</strong> Нет гарантированных часов, нестабильность</li>
+                        <li><strong>Средний доход:</strong> $35,000-55,000 в год при 40 часах/неделю</li>
+                    </ul>
+                </div>
+
+                <div class="analytics-box">
+                    <h5>3️⃣ Комиссия (Commission-based)</h5>
+                    <ul>
+                        <li><strong>Стандартная ставка:</strong> 5-10% от gross revenue трака</li>
+                        <li><strong>Пример расчета:</strong> Трак делает $200,000/год → Диспетчер получает
+                            $10,000-20,000 с одного трака</li>
+                        <li><strong>Управление 5 траками:</strong> $50,000-100,000/год</li>
+                        <li><strong>Управление 10 траков:</strong> $100,000-200,000/год</li>
+                        <li><strong>Плюсы:</strong> Неограниченный потенциал дохода, мотивация</li>
+                        <li><strong>Минусы:</strong> Нестабильность, зависимость от рынка</li>
+                        <li><strong>Кому подходит:</strong> Опытным, предпринимателям, independent dispatchers</li>
+                    </ul>
+                </div>
+
+                <div class="analytics-box">
+                    <h5>4️⃣ Гибридная модель (Base + Commission)</h5>
+
+                    <ul>
+                        <li><strong>Структура:</strong> Базовая зарплата $30,000-40,000 + 2-5% комиссия</li>
+                        <li><strong>Плюсы:</strong> Баланс стабильности и потенциала роста</li>
+                        <li><strong>Пример:</strong> Base $35K + 3% от $1M revenue = $35K + $30K = $65K total</li>
+                        <li><strong>Популярность:</strong> Становится стандартом в mid-size компаниях</li>
+                    </ul>
+                </div>
+
+                <h3>🚀 Карьерный путь диспетчера</h3>
+
+                <div class="success-highlight">
+                    <h4>📊 Типичная карьерная лестница:</h4>
+                    <ul>
+                        <li><strong>Junior Dispatcher (0-2 года):</strong> $30-45K
+                            <br>• Обучение, работа под супервизией
+                            <br>• Управление 2-5 траками
+                            <br>• Базовые задачи: check calls, booking loads
+                        </li>
+                        <li><strong>Dispatcher (2-5 лет):</strong> $45-60K
+                            <br>• Самостоятельная работа
+                            <br>• Управление 5-10 траками
+                            <br>• Переговоры с брокерами, решение проблем
+                        </li>
+                        <li><strong>Senior Dispatcher (5-8 лет):</strong> $60-75K
+                            <br>• Управление 10-15 траками
+                            <br>• Менторство junior dispatchers
+                            <br>• Сложные ситуации, VIP клиенты
+                        </li>
+                        <li><strong>Lead Dispatcher / Supervisor (8+ лет):</strong> $70-85K
+                            <br>• Управление командой диспетчеров
+                            <br>• Процессы, обучение, контроль качества
+                        </li>
+                        <li><strong>Dispatch Manager (10+ лет):</strong> $80-100K+
+                            <br>• Управление всем dispatch отделом
+                            <br>• Стратегия, найм, бюджет
+                        </li>
+                        <li><strong>Operations Manager / Director:</strong> $100-150K+
+                            <br>• Управление всеми операциями компании
+                            <br>• P&L ответственность
+                        </li>
+                        <li><strong>Independent Dispatch Service Owner:</strong> $50-300K+
+                            <br>• Собственный бизнес
+                            <br>• Управление 10-50+ траками
+                            <br>• Найм своих диспетчеров
+                        </li>
+                    </ul>
+                </div>
+
+                <button class="expand-btn" onclick="toggleExpand(this)">
+                    <span class="icon">▼</span>
+                    <span>Детальный гайд: Как стать диспетчером и построить карьеру</span>
+                </button>
+
+                <div class="expandable-content">
+                    <div class="content-inner">
+                        <h4>🎓 Требования для входа в профессию</h4>
+
+
+                        <div class="analytics-box">
+                            <h5>✅ Обязательные требования:</h5>
+                            <ul>
+                                <li><strong>Возраст:</strong> 18+ лет (нет ограничений как у водителей)</li>
+                                <li><strong>Образование:</strong> High school diploma или эквивалент (НЕ требуется
+                                    высшее образование!)</li>
+                                <li><strong>Английский язык:</strong> Разговорный уровень (B1-B2)
+                                    <br>• Понимание на слух (телефонные разговоры)
+                                    <br>• Умение говорить (переговоры с брокерами)
+                                    <br>• Чтение (документы, emails)
+                                    <br>• Письмо (emails, messages)
+                                </li>
+                                <li><strong>Компьютерные навыки:</strong> Базовые
+                                    <br>• Email (Gmail, Outlook)
+                                    <br>• Google Sheets / Excel (базовый уровень)
+                                    <br>• Интернет браузер
+                                    <br>• Быстрая печать (желательно)
+                                </li>
+                                <li><strong>Оборудование:</strong>
+                                    <br>• Компьютер или ноутбук
+                                    <br>• Стабильный интернет (минимум 10 Mbps)
+                                    <br>• Телефон (или VoIP типа Google Voice)
+                                    <br>• Headset для звонков (рекомендуется)
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="analytics-box">
+                            <h5>⭐ Желательные навыки и качества:</h5>
+                            <ul>
+                                <li><strong>Soft Skills:</strong>
+                                    <br>• Коммуникабельность (80% работы - общение)
+                                    <br>• Стрессоустойчивость (дедлайны, проблемы)
+                                    <br>• Многозадачность (10 траков одновременно)
+                                    <br>• Организованность (документы, расписания)
+                                    <br>• Проактивность (предвидеть проблемы)
+                                    <br>• Терпение (сложные водители и брокеры)
+                                </li>
+                                <li><strong>Знание географии США:</strong>
+                                    <br>• Основные штаты и города
+                                    <br>• Interstate highways (I-95, I-5, I-10, I-80)
+                                    <br>• Часовые пояса (EST, CST, MST, PST)
+                                    <br>• Расстояния между городами
+                                </li>
+                                <li><strong>Базовое понимание логистики:</strong>
+                                    <br>• Типы траков и трейлеров
+                                    <br>• Документы (BOL, POD, Rate Confirmation)
+                                    <br>• Hours of Service basics
+                                </li>
+                            </ul>
+                        </div>
+
+                        <h4>📚 Как стать диспетчером: Пошаговый план</h4>
+
+                        <div class="analytics-box">
+                            <h5>Шаг 1: Обучение (2-4 недели)</h5>
+                            <ul>
+                                <li><strong>Онлайн курсы:</strong> $200-1,000
+                                    <br>• Этот курс (комплексный)
+                                    <br>• Dispatch42 School
+                                    <br>• LearnDispatch
+                                    <br>• TruckDispatchTraining.com
+                                </li>
+                                <li><strong>Что изучать:</strong>
+                                    <br>• Основы индустрии
+                                    <br>• Load boards (DAT, Truckstop)
+                                    <br>• Переговоры с брокерами
+                                    <br>• Документация
+                                    <br>• HOS и regulations
+                                    <br>• TMS системы
+                                </li>
+                                <li><strong>Практика:</strong>
+                                    <br>• Симуляция звонков
+                                    <br>• Работа с demo load boards
+                                    <br>• Заполнение документов
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="analytics-box">
+                            <h5>Шаг 2: Получение первого опыта (3-6 месяцев)</h5>
+                            <ul>
+                                <li><strong>Вариант A: Работа в компании (рекомендуется для начинающих)</strong>
+                                    <br>• Ищите Junior Dispatcher позиции
+                                    <br>• Зарплата: $30-40K
+                                    <br>• Обучение на рабочем месте
+                                    <br>• Менторство от опытных диспетчеров
+                                    <br>• Где искать: Indeed, LinkedIn, Glassdoor, ZipRecruiter
+                                </li>
+                                <li><strong>Вариант B: Стажировка (Internship)</strong>
+                                    <br>• Некоторые компании предлагают paid internships
+                                    <br>• 3-6 месяцев обучения
+                                    <br>• Возможность перехода на full-time
+                                </li>
+                                <li><strong>Вариант C: Работа с Owner-Operator (для смелых)</strong>
+                                    <br>• Найти owner-operator через форумы, Facebook groups
+                                    <br>• Предложить услуги за 5-7% комиссии
+                                    <br>• Начать с 1-2 траков
+                                    <br>• Риск: нестабильность, но быстрое обучение
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="analytics-box">
+                            <h5>Шаг 3: Набор опыта (1-3 года)</h5>
+                            <ul>
+                                <li><strong>Цели на этом этапе:</strong>
+                                    <br>• Научиться управлять 5-10 траками
+                                    <br>• Построить отношения с 20-30 брокерами
+                                    <br>• Изучить 3-5 основных lanes
+                                    <br>• Освоить все типы документов
+                                    <br>• Научиться решать проблемы самостоятельно
+                                </li>
+                                <li><strong>Развитие навыков:</strong>
+                                    <br>• Переговоры (получать на $0.10-0.20/миля больше)
+                                    <br>• Планирование (минимизировать deadhead)
+                                    <br>• Кризис-менеджмент (поломки, задержки)
+                                    <br>• Работа с TMS системами
+                                </li>
+                                <li><strong>Networking:</strong>
+                                    <br>• LinkedIn профиль
+                                    <br>• Trucking forums (TruckersReport, Reddit r/Truckers)
+                                    <br>• Facebook groups для диспетчеров
+                                    <br>• Отраслевые конференции (если возможно)
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="analytics-box">
+                            <h5>Шаг 4: Карьерный рост (3+ года)</h5>
+                            <ul>
+                                <li><strong>Путь A: Рост внутри компании</strong>
+                                    <br>• Senior Dispatcher → Lead → Supervisor → Manager
+                                    <br>• Зарплата растет до $70-100K+
+                                    <br>• Стабильность, benefits, меньше стресса
+                                </li>
+                                <li><strong>Путь B: Independent Dispatcher</strong>
+                                    <br>• Открыть свой dispatch service
+                                    <br>• Найти 5-10 owner-operators как клиентов
+                                    <br>• Комиссия 5-10% = $50-100K+ в год
+                                    <br>• Свобода, но больше ответственности
+                                </li>
+                                <li><strong>Путь C: Специализация</strong>
+                                    <br>• Стать экспертом в reefer, flatbed, или hazmat
+                                    <br>• Премиум ставки за специализацию
+                                    <br>• Меньше конкуренции
+                                </li>
+                            </ul>
+                        </div>
+
+                        <h4>💡 Секреты успешных диспетчеров</h4>
+
+                        <div class="success-highlight">
+                            <h5>🏆 Что отличает топ-диспетчеров (зарабатывающих $70K+):</h5>
+                            <ul>
+                                <li><strong>Специализация на 2-3 lanes:</strong> Знают каждый склад, каждого брокера,
+                                    каждую ставку</li>
+                                <li><strong>Личные отношения:</strong> Знают имена детей своих водителей и любимые
+                                    рестораны брокеров</li>
+                                <li><strong>Проактивность:</strong> Звонят брокеру ДО того как груз появится на load
+                                    board</li>
+                                <li><strong>Технологии:</strong> Автоматизируют рутину (Zapier, макросы, templates)</li>
+                                <li><strong>Непрерывное обучение:</strong> 30 минут в день на изучение новых
+                                    инструментов</li>
+                                <li><strong>Финансовая грамотность:</strong> Понимают P&L, cost per mile, profit margins
+                                </li>
+                                <li><strong>Стресс-менеджмент:</strong> Медитация, спорт, хобби - burnout реален!</li>
+                                <li><strong>Сеть контактов:</strong> 50+ брокеров в телефоне, активны на LinkedIn</li>
+                            </ul>
+                        </div>
+
+                        <button class="collapse-btn"
+                            onclick="toggleExpand(this.parentElement.parentElement.previousElementSibling)">
+                            <span class="icon">▲</span>
+                            <span>Свернуть информацию</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="why-dispatcher" class="doc-section fade-in-up">
+                <h2>🌟 Почему стоит стать диспетчером?</h2>
+
+                <div class="stats-grid">
+                    <div class="stat-box scale-in">
+                        <div class="number">🏠</div>
+                        <div class="label">Удаленная работа</div>
+                    </div>
+                    <div class="stat-box scale-in">
+                        <div class="number">💰</div>
+                        <div class="label">$45-65K средняя зарплата</div>
+                    </div>
+                    <div class="stat-box scale-in">
+                        <div class="number">📚</div>
+                        <div class="label">2-4 недели обучения</div>
+                    </div>
+                    <div class="stat-box scale-in">
+                        <div class="number">🚀</div>
+                        <div class="label">Быстрый карьерный рост</div>
+                    </div>
+                </div>
+
+                <div class="info-highlight">
+                    <h4>✅ Преимущества профессии:</h4>
+                    <ul>
+                        <li><strong>Удаленная работа:</strong> Работайте из дома, кафе, или путешествуя</li>
+                        <li><strong>Низкий порог входа:</strong> Не нужно высшее образование или CDL</li>
+                        <li><strong>Быстрое обучение:</strong> 2-4 недели vs 4 года в университете</li>
+                        <li><strong>Высокий спрос:</strong> Дефицит водителей = спрос на диспетчеров</li>
+                        <li><strong>Хороший доход:</strong> $45-65K для опытных, $100K+ для independent</li>
+                        <li><strong>Карьерный рост:</strong> От Junior до Manager за 5-7 лет</li>
+                        <li><strong>Предпринимательство:</strong> Можно открыть свой dispatch service</li>
+                        <li><strong>Стабильность:</strong> Индустрия не исчезнет - товары всегда нужно перевозить</li>
+                    </ul>
+                </div>
+
+                <div class="warning-highlight">
+                    <h4>⚠️ Реальные вызовы профессии:</h4>
+                    <ul>
+                        <li><strong>Стресс:</strong> Дедлайны, проблемы в пути, сложные водители</li>
+                        <li><strong>Долгие часы:</strong> Часто 10-12 часов в день, включая выходные</li>
+                        <li><strong>Многозадачность:</strong> 10 траков = 10 проблем одновременно</li>
+                        <li><strong>Эмоциональное выгорание:</strong> Постоянное общение может утомлять</li>
+                        <li><strong>Зависимость от рынка:</strong> В слабые периоды ставки падают</li>
+                        <li><strong>Начальный период:</strong> Первые 3-6 месяцев сложные, много учиться</li>
+                    </ul>
+                </div>
+            </section>
+
+            <button class="complete-module-btn fade-in-up" onclick="completeModule(1)">
+                <span>✓</span>
+                <span>Завершить модуль и перейти к следующему</span>
+            </button>
+
+            <div class="module-navigation fade-in-up">
+                <a href="glossary.html" class="nav-btn next" style="margin: 0 auto; max-width: 500px;">
+                    <div class="text">
+                        <span class="label">Следующий модуль</span>
+                        <span class="title">📖 Глоссарий терминов</span>
+                    </div>
+                    <span class="icon">→</span>
+                </a>
+            </div>
+
+        </div>
+    </section>
+
+    <script>
+        function initScrollAnimations() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => {
+                            entry.target.classList.add('visible');
+                        }, index * 100);
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in-up, .scale-in').forEach(el => {
+                observer.observe(el);
+            });
+        }
+
+        function toggleExpand(button) {
+            const content = button.nextElementSibling;
+            const icon = button.querySelector('.icon');
+            button.classList.toggle('active');
+            content.classList.toggle('active');
+            if (content.classList.contains('active')) {
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function completeModule(moduleNumber) {
+            let progress = JSON.parse(localStorage.getItem('courseProgress') || '{}');
+            progress[`module${moduleNumber}`] = true;
+            localStorage.setItem('courseProgress', JSON.stringify(progress));
+            const nextModules = ['intro', 'glossary', 'role', 'equipment', 'routes', 'loadboards',
+                'negotiation', 'brokers', 'docs', 'regulations', 'technology',
+                'communication', 'problems', 'finances', 'career'];
+            if (moduleNumber < 15) {
+                window.location.href = `${nextModules[moduleNumber]}.html`;
+            } else {
+                alert('Поздравляем! Вы завершили весь курс! 🎉');
+                window.location.href = '../index.html';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', function () {
+            initScrollAnimations();
+            initScrollToTop();
+            initSalaryCards();
+            initIndustryCards();
+            const progress = JSON.parse(localStorage.getItem('courseProgress') || '{}');
+            if (progress.module1) {
+                const btn = document.querySelector('.complete-module-btn');
+                btn.innerHTML = '<span>✓</span><span>Модуль завершен</span>';
+                btn.style.background = 'linear-gradient(135deg, #6b7280, #4b5563)';
+            }
+        });
+
+        function initSalaryCards() {
+            console.log('Initializing salary cards...');
+            const salaryCards = document.querySelectorAll('.salary-card');
+            const detailsDiv = document.getElementById('salary-details');
+            const detailTitle = document.getElementById('detail-title');
+            const detailContent = document.getElementById('detail-content');
+
+            console.log('Found salary cards:', salaryCards.length);
+            console.log('Details div:', detailsDiv);
+
+            const salaryData = {
+                entry: {
+                    title: '💼 Entry-level диспетчер (0-2 года)',
+                    content: `
+                        <div style="color: #cbd5e1; line-height: 1.8;">
+                            <p style="font-size: 16px; margin-bottom: 20px;"><strong>Годовой доход:</strong> $30,000-45,000 ($2,500-3,750/месяц)</p>
+                            
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Что ты делаешь:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Работаешь с 1-3 траками под наставничеством</li>
+                                <li>Изучаешь Load Boards (DAT, Truckstop)</li>
+                                <li>Учишься искать грузы и договариваться о ставках</li>
+                                <li>Осваиваешь MC/DOT проверку брокеров</li>
+                                <li>Работаешь с простыми маршрутами (Dry Van, Reefer)</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Модель оплаты:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Фиксированная ставка: $2,500-3,500/мес</li>
+                                <li>Или процент: 3-5% от gross revenue</li>
+                                <li>График: 8-10 часов/день, 5-6 дней/неделю</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Где работать:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Remote позиции в американских компаниях</li>
+                                <li>Dispatch компании с обучением</li>
+                                <li>Малые флоты (5-10 траков)</li>
+                            </ul>
+                        </div>
+                    `
+                },
+                mid: {
+                    title: '🚀 Mid-level диспетчер (3-7 лет)',
+                    content: `
+                        <div style="color: #cbd5e1; line-height: 1.8;">
+                            <p style="font-size: 16px; margin-bottom: 20px;"><strong>Годовой доход:</strong> $45,000-65,000 ($3,750-5,400/месяц)</p>
+                            
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Что ты делаешь:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Управляешь 5-8 траками самостоятельно</li>
+                                <li>Уверенно работаешь с Load Boards</li>
+                                <li>Строишь отношения с брокерами</li>
+                                <li>Знаешь прибыльные лейны и сезонные тренды</li>
+                                <li>Начинаешь специализацию (Power Only, Step Deck)</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Модель оплаты:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Фиксированная: $3,500-5,000/мес</li>
+                                <li>Процент: 5-8% от gross revenue</li>
+                                <li>Или $250-350 за трак/неделю</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Возможности:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Работа с крупными флотами (10-20 траков)</li>
+                                <li>Позиции в mega carriers с benefits</li>
+                                <li>Freelance с несколькими клиентами</li>
+                            </ul>
+                        </div>
+                    `
+                },
+                senior: {
+                    title: '⭐ Senior диспетчер (8+ лет)',
+                    content: `
+                        <div style="color: #cbd5e1; line-height: 1.8;">
+                            <p style="font-size: 16px; margin-bottom: 20px;"><strong>Годовой доход:</strong> $65,000-85,000+ ($5,400-7,000+/месяц)</p>
+                            
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Что ты делаешь:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Управляешь 10-15 траками с полной оптимизацией</li>
+                                <li>Прямые контракты с брокерами, dedicated lanes</li>
+                                <li>Экспертиза в специализированных грузах (Oversized, Hazmat)</li>
+                                <li>Можешь обучать новичков за доп. плату</li>
+                                <li>Стратегическое планирование и аналитика</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Модель оплаты:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Фиксированная: $5,000-7,000/мес + бонусы</li>
+                                <li>Процент: 8-10% от gross revenue</li>
+                                <li>Или $350-450 за трак/неделю</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Карьерные пути:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Dispatch Manager ($8K-12K/мес)</li>
+                                <li>Operations Manager в крупной компании</li>
+                                <li>Открытие своего Dispatch Service</li>
+                                <li>Консалтинг ($50-150/час)</li>
+                            </ul>
+                        </div>
+                    `
+                },
+                independent: {
+                    title: '💎 Independent диспетчер (комиссия)',
+                    content: `
+                        <div style="color: #cbd5e1; line-height: 1.8;">
+                            <p style="font-size: 16px; margin-bottom: 20px;"><strong>Годовой доход:</strong> $50,000-150,000+ ($4,000-12,500+/месяц)</p>
+                            
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Как работает:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Работаешь на себя, выбираешь клиентов</li>
+                                <li>Процент: 5-10% от gross revenue трака</li>
+                                <li>Пример: Трак делает $200K/год → ты получаешь $10K-20K</li>
+                                <li>Управление 5 траками = $50K-100K/год</li>
+                                <li>Управление 10 траков = $100K-200K/год</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Преимущества:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Неограниченный потенциал дохода</li>
+                                <li>Полная свобода графика и выбора клиентов</li>
+                                <li>Можешь работать из любой точки мира</li>
+                                <li>Возможность масштабирования (нанять помощников)</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Требования:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Минимум 1-2 года опыта</li>
+                                <li>Собственная клиентская база</li>
+                                <li>Отличная репутация и рекомендации</li>
+                                <li>Готовность к нестабильности дохода</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Путь к $150K+:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Создай свой Dispatch Service</li>
+                                <li>Найми 2-3 диспетчеров под себя</li>
+                                <li>Управляй флотом 20-50 траков</li>
+                                <li>Доход: $15K-50K+/мес</li>
+                            </ul>
+                        </div>
+                    `
+                }
+            };
+
+            salaryCards.forEach((card, index) => {
+                console.log(`Adding click handler to card ${index}:`, card);
+                card.style.cursor = 'pointer';
+                card.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Card clicked:', this.dataset.level);
+                    const level = this.dataset.level;
+                    const data = salaryData[level];
+
+                    if (!data) {
+                        console.error('No data found for level:', level);
+                        return;
+                    }
+
+                    console.log('Showing details for:', level);
+                    detailTitle.textContent = data.title;
+                    detailContent.innerHTML = data.content;
+                    detailsDiv.style.display = 'block';
+
+                    // Плавная прокрутка к деталям
+                    setTimeout(() => {
+                        detailsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 100);
+                }, true);
+            });
+
+            console.log('Salary cards initialized successfully');
+        }
+
+        window.closeSalaryDetails = function () {
+            document.getElementById('salary-details').style.display = 'none';
+        };
+
+        function initIndustryCards() {
+            console.log('Initializing industry cards...');
+            const industryCards = document.querySelectorAll('.industry-card');
+            const detailsDiv = document.getElementById('industry-details');
+            const detailTitle = document.getElementById('industry-title');
+            const detailContent = document.getElementById('industry-content');
+
+            console.log('Found industry cards:', industryCards.length);
+
+            const industryData = {
+                revenue: {
+                    title: '💰 Годовой оборот индустрии: $906 миллиардов',
+                    content: `
+                        <div style="color: #cbd5e1; line-height: 1.8;">
+                            <p style="font-size: 16px; margin-bottom: 20px;">Индустрия грузоперевозок США генерирует <strong>$906 миллиардов</strong> годового оборота, что делает её одной из крупнейших отраслей американской экономики.</p>
+                            
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Структура оборота:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li><strong>For-hire carriers:</strong> $732 миллиарда (81%) - компании, предоставляющие услуги перевозки</li>
+                                <li><strong>Private fleets:</strong> $174 миллиарда (19%) - собственные флоты компаний (Walmart, Amazon и др.)</li>
+                                <li><strong>Средний рост:</strong> 3-5% в год (зависит от экономики)</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Что это значит для диспетчера:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Огромный рынок с постоянным спросом на услуги</li>
+                                <li>Множество возможностей для трудоустройства</li>
+                                <li>Стабильная индустрия даже в кризис (essential service)</li>
+                                <li>Высокая конкуренция = нужно быть профессионалом</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Интересные факты:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Индустрия больше чем GDP многих стран</li>
+                                <li>Каждый доллар в trucking генерирует $3 в экономике</li>
+                                <li>80% американских сообществ зависят только от траков</li>
+                            </ul>
+                        </div>
+                    `
+                },
+                tonnage: {
+                    title: '📦 Объем грузов: 11.27 миллиардов тонн',
+                    content: `
+                        <div style="color: #cbd5e1; line-height: 1.8;">
+                            <p style="font-size: 16px; margin-bottom: 20px;">Траки перевозят <strong>11.27 миллиардов тонн</strong> грузов ежегодно по всей территории США.</p>
+                            
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Что перевозится:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li><strong>Продукты питания:</strong> 2.8 млрд тонн (25%) - самая большая категория</li>
+                                <li><strong>Строительные материалы:</strong> 2.2 млрд тонн (20%)</li>
+                                <li><strong>Промышленные товары:</strong> 1.9 млрд тонн (17%)</li>
+                                <li><strong>Retail товары:</strong> 1.5 млрд тонн (13%) - одежда, электроника, мебель</li>
+                                <li><strong>Химикаты и топливо:</strong> 1.3 млрд тонн (12%)</li>
+                                <li><strong>Другое:</strong> 1.57 млрд тонн (13%)</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Средние расстояния:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Local haul (до 100 миль): 35% грузов</li>
+                                <li>Regional (100-500 миль): 40% грузов</li>
+                                <li>Long haul (500+ миль): 25% грузов</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Для диспетчера:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Разнообразие грузов = разные ставки и требования</li>
+                                <li>Продукты (reefer) платят больше но требуют опыта</li>
+                                <li>Строительные материалы (flatbed) - сезонный бизнес</li>
+                                <li>Retail (dry van) - самый простой старт для новичков</li>
+                            </ul>
+                        </div>
+                    `
+                },
+                share: {
+                    title: '🚛 Доля рынка: 72.7% всех грузов США',
+                    content: `
+                        <div style="color: #cbd5e1; line-height: 1.8;">
+                            <p style="font-size: 16px; margin-bottom: 20px;">Траки перевозят <strong>72.7%</strong> всех грузов в США по весу, доминируя в логистической индустрии.</p>
+                            
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Сравнение с другими видами транспорта:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li><strong>Trucking:</strong> 72.7% - абсолютный лидер</li>
+                                <li><strong>Rail (поезда):</strong> 14.5% - дальние расстояния, bulk cargo</li>
+                                <li><strong>Water (корабли):</strong> 8.2% - международная торговля</li>
+                                <li><strong>Air (самолеты):</strong> 0.3% - срочные и дорогие грузы</li>
+                                <li><strong>Pipeline:</strong> 4.3% - нефть и газ</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Почему траки доминируют:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li><strong>Гибкость:</strong> Door-to-door delivery, любые локации</li>
+                                <li><strong>Скорость:</strong> Быстрее чем поезда и корабли</li>
+                                <li><strong>Доступность:</strong> 4+ миллиона миль дорог в США</li>
+                                <li><strong>Надежность:</strong> Меньше зависимость от расписаний</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Тренды:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Доля trucking растет каждый год (+0.5-1%)</li>
+                                <li>E-commerce увеличивает спрос на last-mile delivery</li>
+                                <li>Intermodal (трак+поезд) набирает популярность</li>
+                            </ul>
+                        </div>
+                    `
+                },
+                jobs: {
+                    title: '👥 Рабочие места: 8.4 миллиона',
+                    content: `
+                        <div style="color: #cbd5e1; line-height: 1.8;">
+                            <p style="font-size: 16px; margin-bottom: 20px;">Индустрия грузоперевозок обеспечивает <strong>8.4 миллиона</strong> рабочих мест в США.</p>
+                            
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Структура занятости:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li><strong>Водители траков:</strong> 3.58 миллиона (43%)</li>
+                                <li><strong>Warehouse workers:</strong> 1.9 миллиона (23%)</li>
+                                <li><strong>Mechanics:</strong> 850,000 (10%)</li>
+                                <li><strong>Dispatchers:</strong> 420,000 (5%)</li>
+                                <li><strong>Logistics coordinators:</strong> 380,000 (4.5%)</li>
+                                <li><strong>Office staff:</strong> 650,000 (8%)</li>
+                                <li><strong>Management:</strong> 540,000 (6.5%)</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Диспетчеры (420,000 позиций):</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>In-house dispatchers: 280,000 (работают в компаниях)</li>
+                                <li>Independent dispatchers: 140,000 (freelance/свой бизнес)</li>
+                                <li>Средний возраст: 38 лет</li>
+                                <li>Женщины: 35%, Мужчины: 65%</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Рост занятости:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>+2-3% новых позиций ежегодно</li>
+                                <li>Дефицит водителей = больше работы для диспетчеров</li>
+                                <li>Remote работа открыла рынок для международных специалистов</li>
+                            </ul>
+                        </div>
+                    `
+                },
+                drivers: {
+                    title: '🚗 Водители: 3.58 миллиона',
+                    content: `
+                        <div style="color: #cbd5e1; line-height: 1.8;">
+                            <p style="font-size: 16px; margin-bottom: 20px;"><strong>3.58 миллиона</strong> профессиональных водителей траков работают в США.</p>
+                            
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Типы водителей:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li><strong>Company drivers:</strong> 2.1 миллиона (59%) - работают на зарплате</li>
+                                <li><strong>Owner-operators:</strong> 1.48 миллиона (41%) - владеют своими траками</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Дефицит водителей:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Нехватка: 80,000 водителей в 2024 году</li>
+                                <li>Прогноз: 160,000 к 2030 году</li>
+                                <li>Причины: старение (средний возраст 55 лет), тяжелые условия</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Что это значит для диспетчера:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li><strong>Высокий спрос:</strong> Компании ищут диспетчеров для управления водителями</li>
+                                <li><strong>Больше власти:</strong> Водители ценят хороших диспетчеров</li>
+                                <li><strong>Лучшие условия:</strong> Конкуренция за талантливых диспетчеров</li>
+                                <li><strong>Owner-operators:</strong> Твои главные клиенты как independent dispatcher</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Средние заработки водителей:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Company driver: $45K-65K/год</li>
+                                <li>Owner-operator: $150K-250K/год gross (до расходов)</li>
+                                <li>Team drivers: $80K-120K/год на двоих</li>
+                            </ul>
+                        </div>
+                    `
+                },
+                fleets: {
+                    title: '🏢 Малые флоты: 95.5% компаний',
+                    content: `
+                        <div style="color: #cbd5e1; line-height: 1.8;">
+                            <p style="font-size: 16px; margin-bottom: 20px;"><strong>95.5%</strong> всех транспортных компаний в США - это малые флоты с 10 или меньше траками.</p>
+                            
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Структура индустрии:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li><strong>1-6 траков:</strong> 91.3% компаний (самая большая группа)</li>
+                                <li><strong>7-10 траков:</strong> 4.2% компаний</li>
+                                <li><strong>11-50 траков:</strong> 3.1% компаний</li>
+                                <li><strong>51-100 траков:</strong> 0.8% компаний</li>
+                                <li><strong>100+ траков:</strong> 0.6% компаний (mega carriers)</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Почему это важно для диспетчера:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li><strong>Огромный рынок:</strong> 500,000+ малых компаний нуждаются в диспетчерах</li>
+                                <li><strong>Легче начать:</strong> Малые флоты охотнее берут новичков</li>
+                                <li><strong>Больше ответственности:</strong> Управляешь всем флотом, а не 1-2 траками</li>
+                                <li><strong>Личные отношения:</strong> Знаешь каждого водителя лично</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Типичные малые флоты:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Owner-operator с 1-2 траками - нанимает dispatcher за 5-8%</li>
+                                <li>Семейный бизнес 3-5 траков - нужен 1 диспетчер</li>
+                                <li>Малая компания 6-10 траков - 1-2 диспетчера</li>
+                            </ul>
+
+                            <h5 style="color: #a78bfa; margin: 20px 0 10px;">Преимущества работы с малыми флотами:</h5>
+                            <ul style="margin-left: 20px;">
+                                <li>Гибкость и быстрые решения</li>
+                                <li>Прямой контакт с owner</li>
+                                <li>Возможность роста вместе с компанией</li>
+                                <li>Часто лучшие проценты (7-10% vs 5% в mega carriers)</li>
+                            </ul>
+                        </div>
+                    `
+                }
+            };
+
+            industryCards.forEach((card, index) => {
+                console.log(`Adding click handler to industry card ${index}:`, card);
+                card.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Industry card clicked:', this.dataset.stat);
+                    const stat = this.dataset.stat;
+                    const data = industryData[stat];
+
+                    if (!data) {
+                        console.error('No data found for stat:', stat);
+                        return;
+                    }
+
+                    console.log('Showing details for:', stat);
+                    detailTitle.textContent = data.title;
+                    detailContent.innerHTML = data.content;
+                    detailsDiv.style.display = 'block';
+
+                    setTimeout(() => {
+                        detailsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 100);
+                }, true);
+            });
+
+            console.log('Industry cards initialized successfully');
+        }
+
+        window.closeIndustryDetails = function () {
+            document.getElementById('industry-details').style.display = 'none';
+        };
+
+        window.closeSalaryDetails = function () {
+            document.getElementById('salary-details').style.display = 'none';
+        };
+
+        function initScrollToTop() {
+            const scrollBtn = document.getElementById('scrollToTop');
+
+            window.addEventListener('scroll', function () {
+                if (window.pageYOffset > 300) {
+                    scrollBtn.classList.add('visible');
+                } else {
+                    scrollBtn.classList.remove('visible');
+                }
+            });
+
+            scrollBtn.addEventListener('click', function () {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        }
+    </script>
+
+    <!-- Кнопка возврата наверх -->
+    <button id="scrollToTop" class="scroll-to-top" aria-label="Вернуться наверх">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+    </button>
+
+</body>
+
+</html>

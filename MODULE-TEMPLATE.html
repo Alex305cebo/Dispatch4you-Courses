@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <!-- 🔒 ЗАЩИТА САЙТА ПАРОЛЕМ -->
+    <script src="../site-protection.js"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль [X]: [Название] | Курсы Диспетчера</title>
+
+    <!-- Fonts & Styles -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../shared-styles.css">
+    <link rel="stylesheet" href="../dark-theme.css">
+    <link rel="stylesheet" href="../shared-nav.css">
+    <link rel="stylesheet" href="../mobile-fix.css">
+
+    <!-- Dark Mode -->
+    <script>!function () { var t = localStorage.getItem('dispatcher-theme') || 'dark'; 'dark' === t && document.documentElement.setAttribute('data-theme', 'dark') }();</script>
+    <script src="../dark-mode.js"></script>
+    <script src="auth-check.js"></script>
+
+    <style>
+        /* Прогресс-бар модуля */
+        .module-progress {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .progress-text {
+            font-size: 14px;
+            color: var(--text-2);
+            font-weight: 600;
+        }
+
+        .progress-percentage {
+            font-size: 18px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #a78bfa);
+            border-radius: 20px;
+            transition: width 0.5s ease;
+        }
+
+        /* Навигация между модулями */
+        .module-navigation {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin: 48px 0;
+        }
+
+        .nav-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px 24px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .nav-btn.prev {
+            justify-content: flex-start;
+        }
+
+        .nav-btn.next {
+            justify-content: flex-end;
+        }
+
+        .nav-btn .icon {
+            font-size: 24px;
+        }
+
+        .nav-btn .text {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .nav-btn .label {
+            font-size: 12px;
+            color: var(--text-2);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-btn .title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        /* Секции модуля */
+        .module-section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 24px;
+        }
+
+        .module-section h2 {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #667eea, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .module-section h3 {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 32px 0 16px;
+            color: var(--text);
+        }
+
+        .module-section h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 24px 0 12px;
+            color: var(--text);
+        }
+
+        .module-section p {
+            font-size: 16px;
+            line-height: 1.8;
+            color: var(--text-2);
+            margin-bottom: 16px;
+        }
+
+        .module-section ul,
+        .module-section ol {
+            margin: 16px 0;
+            padding-left: 24px;
+        }
+
+        .module-section li {
+            font-size: 15px;
+            line-height: 1.8;
+            color: var(--text-2);
+            margin-bottom: 8px;
+        }
+
+        /* Кнопка завершения модуля */
+        .complete-module-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 32px 0;
+        }
+
+        .complete-module-btn:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Мобильная адаптация */
+        @media (max-width: 768px) {
+            .module-navigation {
+                flex-direction: column;
+            }
+
+            .nav-btn {
+                justify-content: center !important;
+            }
+
+            .module-section {
+                padding: 24px 20px;
+            }
+
+            .module-section h2 {
+                font-size: 24px;
+            }
+
+            .module-section h3 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="nav-placeholder"></div>
+    <script src="../nav-loader.js"></script>
+
+    <div class="bg-grid"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <section style="padding-top: 100px;">
+        <div class="wrap">
+
+            <!-- Прогресс модуля -->
+            <div class="module-progress fade-in">
+                <div class="progress-header">
+                    <span class="progress-text">Модуль [X] из 15</span>
+                    <span class="progress-percentage">[X]%</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" style="width: [X]%"></div>
+                </div>
+            </div>
+
+            <!-- Заголовок модуля -->
+            <header class="page-header fade-in-down">
+                <div class="page-badge">📖 Модуль [X]</div>
+                <h1 class="page-title"><span>[Иконка] [Название модуля]</span></h1>
+                <p class="page-subtitle">[Краткое описание модуля]</p>
+            </header>
+
+            <!-- Содержание модуля -->
+            <div class="module-section fade-in">
+                <h2>📑 Содержание модуля</h2>
+                <ul>
+                    <li><a href="#section-1">[Подраздел 1]</a></li>
+                    <li><a href="#section-2">[Подраздел 2]</a></li>
+                    <li><a href="#section-3">[Подраздел 3]</a></li>
+                    <!-- Добавить все подразделы -->
+                </ul>
+            </div>
+
+            <!-- Секция 1 -->
+            <section id="section-1" class="module-section fade-in">
+                <h2>[Название секции]</h2>
+                <p>[Контент секции]</p>
+
+                <!-- Раскрывающийся блок (опционально) -->
+                <button class="expand-btn" onclick="toggleExpand(this)">
+                    <span class="icon">▼</span>
+                    <span>Подробнее</span>
+                </button>
+                <div class="expandable-content">
+                    <div class="content-inner">
+                        <p>[Дополнительный контент]</p>
+                        <button class="collapse-btn"
+                            onclick="toggleExpand(this.parentElement.parentElement.previousElementSibling)">
+                            <span class="icon">▲</span>
+                            <span>Свернуть</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Кнопка завершения -->
+            <button class="complete-module-btn" onclick="completeModule([X])">
+                <span>✓</span>
+                <span>Завершить модуль</span>
+            </button>
+
+            <!-- Навигация -->
+            <div class="module-navigation">
+                <a href="[prev-module].html" class="nav-btn prev">
+                    <span class="icon">←</span>
+                    <div class="text">
+                        <span class="label">Предыдущий</span>
+                        <span class="title">[Название предыдущего модуля]</span>
+                    </div>
+                </a>
+                <a href="[next-module].html" class="nav-btn next">
+                    <div class="text">
+                        <span class="label">Следующий</span>
+                        <span class="title">[Название следующего модуля]</span>
+                    </div>
+                    <span class="icon">→</span>
+                </a>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>О курсе</h4>
+                    <p>Профессиональное обучение диспетчеров грузоперевозок в США</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Навигация</h4>
+                    <a href="../index.html">Главная</a>
+                    <a href="../about.html">О нас</a>
+                    <a href="../documentation.html">Документация</a>
+                </div>
+                <div class="footer-section">
+                    <h4>Контакты</h4>
+                    <p>Email: info@dispatcher-course.com</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Курсы Диспетчера. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Функция раскрытия блоков
+        function toggleExpand(button) {
+            const content = button.nextElementSibling;
+            const icon = button.querySelector('.icon');
+
+            button.classList.toggle('active');
+            content.classList.toggle('active');
+
+            if (content.classList.contains('active')) {
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // Функция завершения модуля
+        function completeModule(moduleNumber) {
+            // Сохранение прогресса в localStorage
+            let progress = JSON.parse(localStorage.getItem('courseProgress') || '{}');
+            progress[`module${moduleNumber}`] = true;
+            localStorage.setItem('courseProgress', JSON.stringify(progress));
+
+            // Переход к следующему модулю
+            if (moduleNumber < 15) {
+                const nextModules = ['intro', 'glossary', 'role', 'equipment', 'routes', 'loadboards',
+                    'negotiation', 'brokers', 'docs', 'regulations', 'technology',
+                    'communication', 'problems', 'finances', 'career'];
+                window.location.href = `${nextModules[moduleNumber]}.html`;
+            } else {
+                alert('Поздравляем! Вы завершили весь курс! 🎉');
+                window.location.href = '../index.html';
+            }
+        }
+
+        // Загрузка прогресса при открытии страницы
+        window.addEventListener('DOMContentLoaded', function () {
+            const progress = JSON.parse(localStorage.getItem('courseProgress') || '{}');
+            const currentModule = parseInt(document.querySelector('.page-badge').textContent.match(/\d+/)[0]);
+
+            if (progress[`module${currentModule}`]) {
+                document.querySelector('.complete-module-btn').innerHTML = '<span>✓</span><span>Модуль завершен</span>';
+                document.querySelector('.complete-module-btn').style.background = 'linear-gradient(135deg, #6b7280, #4b5563)';
+            }
+        });
+    </script>
+</body>
+
+</html>
