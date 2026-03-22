@@ -20,7 +20,7 @@
                     <span class="nav-link nav-toggle">Курсы</span>
                     <div class="flyout-panel">
                         <div class="flyout-cats">
-                            <div class="flyout-cat active" data-sub="sections"><span>📚 15 Разделов курса</span><span class="flyout-arrow">›</span></div>
+                            <div class="flyout-cat" data-sub="sections"><span>📚 15 Разделов курса</span><span class="flyout-arrow">›</span></div>
                             <div class="flyout-cat" data-sub="modules"><span>🎓 12 Модулей с тестами</span><span class="flyout-arrow">›</span></div>
                             <div class="flyout-cat" data-sub="resources"><span>📁 Ресурсы</span><span class="flyout-arrow">›</span></div>
                         </div>
@@ -233,15 +233,19 @@
             });
         });
 
-        // Flyout category switching (hover)
+        // Flyout category switching (click)
         document.querySelectorAll('.flyout-cat').forEach(function (cat) {
-            cat.addEventListener('mouseenter', function () {
+            cat.addEventListener('click', function (e) {
+                e.stopPropagation();
                 var sub = this.dataset.sub;
+                var alreadyActive = this.classList.contains('active');
                 document.querySelectorAll('.flyout-cat').forEach(function (c) { c.classList.remove('active'); });
                 document.querySelectorAll('.flyout-sub').forEach(function (s) { s.style.display = 'none'; });
-                this.classList.add('active');
-                var el = document.getElementById('sub-' + sub);
-                if (el) el.style.display = 'block';
+                if (!alreadyActive) {
+                    this.classList.add('active');
+                    var el = document.getElementById('sub-' + sub);
+                    if (el) el.style.display = 'block';
+                }
             });
         });
 
@@ -256,16 +260,10 @@
                 document.querySelectorAll('.nav-dropdown.open').forEach(function (d) { d.classList.remove('open'); });
                 if (!wasOpen) {
                     dd.classList.add('open');
-                    // При открытии flyout — показать первую активную панель
+                    // При открытии flyout — скрыть все панели, убрать active
                     if (dd.classList.contains('has-mega')) {
-                        var firstCat = dd.querySelector('.flyout-cat');
-                        if (firstCat) {
-                            dd.querySelectorAll('.flyout-cat').forEach(function (c) { c.classList.remove('active'); });
-                            dd.querySelectorAll('.flyout-sub').forEach(function (s) { s.style.display = 'none'; });
-                            firstCat.classList.add('active');
-                            var firstSub = document.getElementById('sub-' + firstCat.dataset.sub);
-                            if (firstSub) firstSub.style.display = 'block';
-                        }
+                        dd.querySelectorAll('.flyout-cat').forEach(function (c) { c.classList.remove('active'); });
+                        dd.querySelectorAll('.flyout-sub').forEach(function (s) { s.style.display = 'none'; });
                     }
                 }
                 return;
