@@ -25,7 +25,7 @@
             scroll-behavior: smooth;
         }
 
-                :root {
+        :root {
             --primary: #06b6d4;
             --secondary: #0ea5e9;
             --accent: #f97316;
@@ -49,7 +49,7 @@
             font-size: 16px;
         }
 
-                body::before {
+        body::before {
             content: '';
             position: fixed;
             top: 0;
@@ -105,6 +105,7 @@
             padding: 50px;
             margin-bottom: 30px;
         }
+
         .doc-section:hover {
             border-color: rgba(6, 182, 212, 0.3);
             background: rgba(6, 182, 212, 0.05);
@@ -151,7 +152,7 @@
             cursor: pointer;
         }
 
-                .stat-box:hover {
+        .stat-box:hover {
             transform: translateY(-8px);
             border-color: rgba(6, 182, 212, 0.6);
             background: linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(14, 165, 233, 0.15));
@@ -498,24 +499,30 @@
                 transform: rotate(-45deg) translateY(0);
                 opacity: 0.4;
             }
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
+
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+
+            @keyframes gradientFlow {
+
+                0%,
+                100% {
+                    background-position: 0% 50%;
+                }
+
+                50% {
+                    background-position: 100% 50%;
+                }
             }
-        }
-        @keyframes gradientFlow {
-            0%, 100% {
-                background-position: 0% 50%;
-            }
-            50% {
-                background-position: 100% 50%;
-            }
-        }
 
             50% {
                 transform: rotate(-45deg) translateY(8px);
@@ -619,13 +626,13 @@
 
         @media (max-width: 768px) {
             .page-title {
-            animation: fadeInUp 0.8s ease 0.2s both;
+                animation: fadeInUp 0.8s ease 0.2s both;
                 font-size: 32px;
             }
 
             .doc-section {
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
+                transition: all 0.3s ease;
+                backdrop-filter: blur(10px);
                 padding: 30px 20px;
             }
 
@@ -948,6 +955,215 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
+
+        /* Сектор 00: Навигация */
+        .sector-navigation {
+            margin-bottom: 40px;
+        }
+
+        .navigation-block {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .navigation-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 24px 32px;
+            background: rgba(255, 255, 255, 0.03);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .navigation-toggle::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(14, 165, 233, 0.05));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .navigation-toggle:hover::before {
+            opacity: 1;
+        }
+
+        .navigation-toggle:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .navigation-toggle.active {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .navigation-toggle.active::before {
+            opacity: 1;
+        }
+
+        .nav-icon {
+            font-size: 28px;
+            position: relative;
+            z-index: 1;
+            filter: drop-shadow(0 2px 4px rgba(6, 182, 212, 0.3));
+        }
+
+        .nav-title {
+            flex: 1;
+            text-align: left;
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 0.5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav-arrow {
+            font-size: 18px;
+            color: #06b6d4;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 1;
+        }
+
+        .navigation-toggle.active .nav-arrow {
+            transform: rotate(180deg);
+        }
+
+        .navigation-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .navigation-content.active {
+            max-height: 2000px;
+        }
+
+        .navigation-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+            padding: 40px 32px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .nav-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .section-header {
+            font-size: 11px;
+            font-weight: 800;
+            color: #06b6d4;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin: 0 0 16px 0;
+            padding-bottom: 12px;
+            border-bottom: 2px solid rgba(6, 182, 212, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-items {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .section-items a {
+            padding: 12px 16px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+            background: rgba(255, 255, 255, 0.02);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-items a::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .section-items a:hover {
+            background: rgba(6, 182, 212, 0.08);
+            color: #06b6d4;
+            border-color: rgba(6, 182, 212, 0.2);
+            transform: translateX(4px);
+        }
+
+        .section-items a:hover::before {
+            transform: scaleY(1);
+        }
+
+        .section-items a.active {
+            background: rgba(6, 182, 212, 0.12);
+            color: #06b6d4;
+            border-color: rgba(6, 182, 212, 0.3);
+            font-weight: 600;
+        }
+
+        .section-items a.active::before {
+            transform: scaleY(1);
+        }
+
+        @media (max-width: 1024px) {
+            .navigation-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 24px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .navigation-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 24px 20px;
+            }
+
+            .navigation-toggle {
+                padding: 18px 24px;
+            }
+
+            .nav-title {
+                font-size: 17px;
+            }
+
+            .nav-icon {
+                font-size: 24px;
+            }
+        }
     </style>
 </head>
 
@@ -994,69 +1210,85 @@
             <div class="scroll-arrow"></div>
         </div>
 
-        <!-- Быстрые ссылки -->
-        <div class="ql-bar">
-            <div class="ql-row ql-row-orange">
-                <span class="ql-label ql-orange">📖 Разделы</span>
-                <div class="ql-tags-wrap">
-                    <a href="intro.html" class="ql-tag">Введение</a>
-                    <a href="glossary.html" class="ql-tag">Глоссарий</a>
-                    <a href="role.html" class="ql-tag">Роль</a>
-                    <a href="equipment.html" class="ql-tag">Оборудование</a>
-                    <a href="routes.html" class="ql-tag">Маршруты</a>
-                    <a href="loadboards.html" class="ql-tag">Load Boards</a>
-                    <a href="negotiation.html" class="ql-tag">Переговоры</a>
-                    <a href="brokers.html" class="ql-tag">Брокеры</a>
-                    <a href="docs.html" class="ql-tag">Документы</a>
-                    <a href="regulations.html" class="ql-tag">Законы</a>
-                    <a href="technology.html" class="ql-tag">TMS</a>
-                    <a href="communication.html" class="ql-tag">Коммуникация</a>
-                    <a href="problems.html" class="ql-tag">Проблемы</a>
-                    <a href="finances.html" class="ql-tag">Финансы</a>
-                    <a href="career.html" class="ql-tag">Карьера</a>
-                </div>
-            </div>
-            <div class="ql-row ql-row-green">
-                <span class="ql-label ql-green">📘 Модули</span>
-                <div class="ql-tags-wrap">
-                    <a href="doc-module-1-complete.html" class="ql-tag">Индустрия</a>
-                    <a href="doc-module-2-complete.html" class="ql-tag">Термины</a>
-                    <a href="doc-module-3-complete.html" class="ql-tag">Диспетчер</a>
-                    <a href="doc-module-4-complete.html" class="ql-tag">Load Boards</a>
-                    <a href="doc-module-5-complete.html" class="ql-tag">Маршруты</a>
-                    <a href="doc-module-6-complete.html" class="ql-tag">Оборудование</a>
-                    <a href="doc-module-7-complete.html" class="ql-tag">Переговоры</a>
-                    <a href="doc-module-8-complete.html" class="ql-tag">Брокеры</a>
-                    <a href="doc-module-9-complete.html" class="ql-tag">CSA Scores</a>
-                    <a href="doc-module-10-complete.html" class="ql-tag">Грузы</a>
-                    <a href="doc-module-11-complete.html" class="ql-tag">Проблемы</a>
-                    <a href="doc-module-12-complete.html" class="ql-tag">Карьера</a>
-                </div>
-            </div>
-            <div class="ql-row ql-row-blue">
-                <span class="ql-label ql-blue">✍️ Тесты</span>
-                <div class="ql-tags-wrap">
-                    <a href="test-1.html" class="ql-tag">Основы рынка</a>
-                    <a href="test-2.html" class="ql-tag">FMCSA / DOT</a>
-                    <a href="test-3.html" class="ql-tag">HOS</a>
-                    <a href="test-4.html" class="ql-tag">Load Boards</a>
-                    <a href="test-5.html" class="ql-tag">Навигация</a>
-                    <a href="test-6.html" class="ql-tag">Типы грузов</a>
-                    <a href="test-7.html" class="ql-tag">Коммуникация</a>
-                    <a href="test-8.html" class="ql-tag">Rate / Docs</a>
-                    <a href="test-9.html" class="ql-tag">CSA Scores</a>
-                    <a href="test-10.html" class="ql-tag">Страхование</a>
-                    <a href="test-11.html" class="ql-tag">TMS / ELD</a>
-                    <a href="test-12.html" class="ql-tag">Профессионал</a>
-                </div>
-            </div>
-            <div class="ql-row ql-row-purple">
-                <span class="ql-label ql-purple">🛠️ Инструменты</span>
-                <div class="ql-tags-wrap">
-                    <a href="simulator.html" class="ql-tag">🎯 Симулятор</a>
-                    <a href="cases.html" class="ql-tag">💼 Кейсы</a>
-                    <a href="load-finder.html" class="ql-tag">🔍 Load Finder</a>
-                    <a href="dispatcher-cards.html" class="ql-tag">🃏 Карточки</a>
+        <!-- UPDATED: 2026-03-22 23:45 - NEW NAVIGATION SECTOR 00 WITH JAVASCRIPT -->
+        <!-- СЕКТОР 00: Навигация по курсу -->
+        <div class="sector-wrapper sector-navigation">
+            <div class="navigation-block">
+                <button class="navigation-toggle" id="navigationToggle">
+                    <span class="nav-icon">📚</span>
+                    <span class="nav-title">Навигация по курсу</span>
+                    <span class="nav-arrow">▼</span>
+                </button>
+
+                <div class="navigation-content" id="navigationContent">
+                    <div class="navigation-grid">
+                        <div class="nav-section">
+                            <h4 class="section-header">📖 РАЗДЕЛЫ</h4>
+                            <div class="section-items">
+                                <a href="intro.html" class="active">Введение</a>
+                                <a href="glossary.html">Глоссарий</a>
+                                <a href="role.html">Роль</a>
+                                <a href="equipment.html">Оборудование</a>
+                                <a href="routes.html">Маршруты</a>
+                                <a href="loadboards.html">Load Boards</a>
+                                <a href="negotiation.html">Переговоры</a>
+                                <a href="brokers.html">Брокеры</a>
+                                <a href="docs.html">Документы</a>
+                                <a href="regulations.html">Законы</a>
+                                <a href="technology.html">TMS</a>
+                                <a href="communication.html">Коммуникация</a>
+                                <a href="problems.html">Проблемы</a>
+                                <a href="finances.html">Финансы</a>
+                                <a href="career.html">Карьера</a>
+                            </div>
+                        </div>
+
+                        <div class="nav-section">
+                            <h4 class="section-header">📘 МОДУЛИ</h4>
+                            <div class="section-items">
+                                <a href="doc-module-1-complete.html">Индустрия</a>
+                                <a href="doc-module-2-complete.html">Термины</a>
+                                <a href="doc-module-3-complete.html">Диспетчер</a>
+                                <a href="doc-module-4-complete.html">Load Boards</a>
+                                <a href="doc-module-5-complete.html">Маршруты</a>
+                                <a href="doc-module-6-complete.html">Оборудование</a>
+                                <a href="doc-module-7-complete.html">Переговоры</a>
+                                <a href="doc-module-8-complete.html">Брокеры</a>
+                                <a href="doc-module-9-complete.html">CSA Scores</a>
+                                <a href="doc-module-10-complete.html">Грузы</a>
+                                <a href="doc-module-11-complete.html">Проблемы</a>
+                                <a href="doc-module-12-complete.html">Карьера</a>
+                            </div>
+                        </div>
+
+                        <div class="nav-section">
+                            <h4 class="section-header">🔥 ТЕСТЫ</h4>
+                            <div class="section-items">
+                                <a href="test-1.html">Основы рынка</a>
+                                <a href="test-2.html">FMCSA / DOT</a>
+                                <a href="test-3.html">HOS</a>
+                                <a href="test-4.html">Load Boards</a>
+                                <a href="test-5.html">Навигация</a>
+                                <a href="test-6.html">Типы грузов</a>
+                                <a href="test-7.html">Коммуникация</a>
+                                <a href="test-8.html">Rate / Docs</a>
+                                <a href="test-9.html">CSA Scores</a>
+                                <a href="test-10.html">Страхование</a>
+                                <a href="test-11.html">TMS / ELD</a>
+                                <a href="test-12.html">Профессионал</a>
+                            </div>
+                        </div>
+
+                        <div class="nav-section">
+                            <h4 class="section-header">⚡ ИНСТРУМЕНТЫ</h4>
+                            <div class="section-items">
+                                <a href="simulator.html">🎯 Симулятор</a>
+                                <a href="cases.html">💼 Кейсы</a>
+                                <a href="load-finder.html">🔍 Load Finder</a>
+                                <a href="dispatcher-cards.html">🃏 Карточки</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1863,6 +2095,26 @@
     </script>
 
     <script src="../auth.js"></script>
+
+    <script>
+        // Сектор 00: Навигация
+        document.addEventListener('DOMContentLoaded', function () {
+            const navigationToggle = document.getElementById('navigationToggle');
+            const navigationContent = document.getElementById('navigationContent');
+
+            console.log('Navigation elements:', navigationToggle, navigationContent);
+
+            if (navigationToggle && navigationContent) {
+                navigationToggle.addEventListener('click', function () {
+                    console.log('Navigation clicked!');
+                    this.classList.toggle('active');
+                    navigationContent.classList.toggle('active');
+                });
+            } else {
+                console.error('Navigation elements not found!');
+            }
+        });
+    </script>
 
 </body>
 

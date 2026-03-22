@@ -19,6 +19,13 @@
     <script src="../dark-mode.js"></script>
     <script src="auth-check.js"></script>
     <style>
+        :root {
+            --primary: #06b6d4;
+            --secondary: #0ea5e9;
+            --accent: #f97316;
+            --primary-rgb: 6, 182, 212;
+        }
+
         * {
             box-sizing: border-box;
         }
@@ -68,7 +75,7 @@
         .progress-percentage {
             font-size: 18px;
             font-weight: 800;
-            background: linear-gradient(135deg, #667eea, #a78bfa);
+            background: linear-gradient(135deg, #06b6d4, #0ea5e9);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -84,7 +91,7 @@
 
         .progress-bar-fill {
             height: 100%;
-            background: linear-gradient(90deg, #667eea, #a78bfa);
+            background: linear-gradient(90deg, #06b6d4, #0ea5e9);
             border-radius: 20px;
             transition: width 0.5s ease;
         }
@@ -111,7 +118,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            background: linear-gradient(135deg, #667eea, #a78bfa);
+            background: linear-gradient(135deg, #06b6d4, #0ea5e9);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -176,7 +183,7 @@
         .stat-box .number {
             font-size: clamp(24px, 3.5vw, 32px);
             font-weight: 900;
-            background: linear-gradient(135deg, #667eea, #a78bfa);
+            background: linear-gradient(135deg, #06b6d4, #0ea5e9, #f97316);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -256,8 +263,7 @@
             gap: 12px;
             padding: 16px 32px;
             margin: 24px 0;
-
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 100%);
             border: none;
             border-radius: 16px;
             color: #ffffff;
@@ -265,16 +271,16 @@
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 24px rgba(6, 182, 212, 0.4);
             position: relative;
             overflow: hidden;
             text-align: left;
         }
 
         .expand-btn:hover {
-            background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+            background: linear-gradient(135deg, #0891b2 0%, #0284c7 100%);
             transform: translateY(-3px);
-            box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6);
+            box-shadow: 0 12px 32px rgba(6, 182, 212, 0.6);
         }
 
         .expand-btn .icon {
@@ -496,6 +502,219 @@
                 flex-direction: column;
             }
         }
+
+        /* Сектор 00: Навигация */
+        .sector-navigation {
+            margin-bottom: 40px;
+        }
+
+        .sector-navigation .sector-number {
+            color: rgba(6, 182, 212, 0.15);
+        }
+
+        .navigation-block {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .navigation-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 24px 32px;
+            background: rgba(255, 255, 255, 0.03);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .navigation-toggle::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(14, 165, 233, 0.05));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .navigation-toggle:hover::before {
+            opacity: 1;
+        }
+
+        .navigation-toggle:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .navigation-toggle.active {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .navigation-toggle.active::before {
+            opacity: 1;
+        }
+
+        .nav-icon {
+            font-size: 28px;
+            position: relative;
+            z-index: 1;
+            filter: drop-shadow(0 2px 4px rgba(6, 182, 212, 0.3));
+        }
+
+        .nav-title {
+            flex: 1;
+            text-align: left;
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 0.5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav-arrow {
+            font-size: 18px;
+            color: #06b6d4;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 1;
+        }
+
+        .navigation-toggle.active .nav-arrow {
+            transform: rotate(180deg);
+        }
+
+        .navigation-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .navigation-content.active {
+            max-height: 2000px;
+        }
+
+        .navigation-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+            padding: 40px 32px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .nav-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .section-header {
+            font-size: 11px;
+            font-weight: 800;
+            color: #06b6d4;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin: 0 0 16px 0;
+            padding-bottom: 12px;
+            border-bottom: 2px solid rgba(6, 182, 212, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-items {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .section-items a {
+            padding: 12px 16px;
+            color: var(--text-secondary, #94a3b8);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+            background: rgba(255, 255, 255, 0.02);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-items a::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .section-items a:hover {
+            background: rgba(6, 182, 212, 0.08);
+            color: #06b6d4;
+            border-color: rgba(6, 182, 212, 0.2);
+            transform: translateX(4px);
+        }
+
+        .section-items a:hover::before {
+            transform: scaleY(1);
+        }
+
+        .section-items a.active {
+            background: rgba(6, 182, 212, 0.12);
+            color: #06b6d4;
+            border-color: rgba(6, 182, 212, 0.3);
+            font-weight: 600;
+        }
+
+        .section-items a.active::before {
+            transform: scaleY(1);
+        }
+
+        @media (max-width: 1024px) {
+            .navigation-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 24px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .navigation-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 24px 20px;
+            }
+
+            .navigation-toggle {
+                padding: 18px 24px;
+            }
+
+            .nav-title {
+                font-size: 17px;
+            }
+
+            .nav-icon {
+                font-size: 24px;
+            }
+        }
     </style>
 </head>
 
@@ -532,6 +751,89 @@
                     </div>
                 </div>
             </header>
+
+            <!-- UPDATED: 2026-03-22 - NEW NAVIGATION SECTOR 00 -->
+            <!-- СЕКТОР 00: Навигация по курсу -->
+            <div class="sector-wrapper sector-navigation" style="margin-top: 30px;">
+                <div class="navigation-block">
+                    <button class="navigation-toggle" id="navigationToggle">
+                        <span class="nav-icon">📚</span>
+                        <span class="nav-title">Навигация по курсу</span>
+                        <span class="nav-arrow">▼</span>
+                    </button>
+
+                    <div class="navigation-content" id="navigationContent">
+                        <div class="navigation-grid">
+                            <div class="nav-section">
+                                <h4 class="section-header">📖 РАЗДЕЛЫ</h4>
+                                <div class="section-items">
+                                    <a href="documentation.html">Введение</a>
+                                    <a href="documentation.html#glossary">Глоссарий</a>
+                                    <a href="documentation.html#role">Роль</a>
+                                    <a href="documentation.html#equipment">Оборудование</a>
+                                    <a href="documentation.html#routes">Маршруты</a>
+                                    <a href="load-finder.html">Load Boards</a>
+                                    <a href="documentation.html#negotiations">Переговоры</a>
+                                    <a href="documentation.html#brokers">Брокеры</a>
+                                    <a href="documentation.html#documents">Документы</a>
+                                    <a href="documentation.html#laws">Законы</a>
+                                    <a href="documentation.html#tms">TMS</a>
+                                    <a href="documentation.html#communication">Коммуникация</a>
+                                    <a href="documentation.html#problems">Проблемы</a>
+                                    <a href="documentation.html#finances">Финансы</a>
+                                    <a href="documentation.html#career">Карьера</a>
+                                </div>
+                            </div>
+
+                            <div class="nav-section">
+                                <h4 class="section-header">📘 МОДУЛИ</h4>
+                                <div class="section-items">
+                                    <a href="doc-module-1-complete.html">Индустрия</a>
+                                    <a href="doc-module-2-complete.html">Термины</a>
+                                    <a href="doc-module-3-complete.html">Диспетчер</a>
+                                    <a href="doc-module-4-complete.html">Load Boards</a>
+                                    <a href="doc-module-5-complete.html">Маршруты</a>
+                                    <a href="doc-module-6-complete.html">Оборудование</a>
+                                    <a href="doc-module-7-complete.html">Переговоры</a>
+                                    <a href="doc-module-8-complete.html">Брокеры</a>
+                                    <a href="doc-module-9-complete.html">CSA Scores</a>
+                                    <a href="doc-module-10-complete.html">Грузы</a>
+                                    <a href="doc-module-11-complete.html">Проблемы</a>
+                                    <a href="doc-module-12-complete.html">Карьера</a>
+                                </div>
+                            </div>
+
+                            <div class="nav-section">
+                                <h4 class="section-header">🔥 ТЕСТЫ</h4>
+                                <div class="section-items">
+                                    <a href="test-1.html">Основы рынка</a>
+                                    <a href="test-2.html">FMCSA / DOT</a>
+                                    <a href="test-3.html">HOS</a>
+                                    <a href="test-4.html">Load Boards</a>
+                                    <a href="test-5.html">Навигация</a>
+                                    <a href="test-6.html">Типы грузов</a>
+                                    <a href="test-7.html">Коммуникация</a>
+                                    <a href="test-8.html">Rate / Docs</a>
+                                    <a href="test-9.html">CSA Scores</a>
+                                    <a href="test-10.html">Страхование</a>
+                                    <a href="test-11.html">TMS / ELD</a>
+                                    <a href="test-12.html">Профессионал</a>
+                                </div>
+                            </div>
+
+                            <div class="nav-section">
+                                <h4 class="section-header">⚡ ИНСТРУМЕНТЫ</h4>
+                                <div class="section-items">
+                                    <a href="simulator.html">🎯 Симулятор</a>
+                                    <a href="cases.html">💼 Кейсы</a>
+                                    <a href="load-finder.html">🔍 Load Finder</a>
+                                    <a href="dispatcher-cards.html">🃏 Карточки</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <section id="intro" class="doc-section fade-in-up">
                 <h2>🚛 Индустрия грузоперевозок США: Обзор 2024-2026</h2>
@@ -1797,6 +2099,20 @@
         </svg>
     </button>
 
+    <script>
+        // Сектор 00: Навигация
+        document.addEventListener('DOMContentLoaded', function () {
+            const navigationToggle = document.getElementById('navigationToggle');
+            const navigationContent = document.getElementById('navigationContent');
+
+            if (navigationToggle && navigationContent) {
+                navigationToggle.addEventListener('click', function () {
+                    this.classList.toggle('active');
+                    navigationContent.classList.toggle('active');
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>
