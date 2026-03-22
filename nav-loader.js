@@ -33,7 +33,7 @@
             <div class="nav-links">
                 <a href="{{BASE}}index.html" class="nav-link">Главная</a>
                 <div class="nav-dropdown has-mega">
-                    <span class="nav-link nav-toggle">Курсы ▾</span>
+                    <span class="nav-link nav-toggle">Курсы</span>
                     <div class="mega-panel">
                         <div class="mega-section">
                             <div class="mega-section-head">📚 15 Разделов курса</div>
@@ -84,7 +84,7 @@
                     </div>
                 </div>
                 <div class="nav-dropdown">
-                    <span class="nav-link nav-toggle">Инструменты ▾</span>
+                    <span class="nav-link nav-toggle">Инструменты</span>
                     <div class="dropdown-content">
                         <a href="{{BASE}}pages/analytics.html">📊 Статистика рынка</a>
                         <a href="{{BASE}}pages/load-finder.html">🔍 Load Finder</a>
@@ -93,7 +93,7 @@
                     </div>
                 </div>
                 <div class="nav-dropdown">
-                    <span class="nav-link nav-toggle">Информация ▾</span>
+                    <span class="nav-link nav-toggle">Информация</span>
                     <div class="dropdown-content">
                         <a href="{{BASE}}about.html">👥 О нас</a>
                         <a href="{{BASE}}career.html">💼 Карьера</a>
