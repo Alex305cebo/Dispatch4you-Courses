@@ -15,7 +15,7 @@
             </a>
             <div class="nav-links">
                 <a href="{{BASE}}index.html" class="nav-link">Главная</a>
-                <div class="nav-item has-dropdown">
+                <div class="nav-item">
                     <button class="nav-btn">Курсы <span class="arrow">▾</span></button>
                     <div class="dropdown">
                         <a href="{{BASE}}pages/documentation.html">📖 База знаний</a>
@@ -25,7 +25,7 @@
                         <a href="{{BASE}}pages/cases.html">💼 Кейсы</a>
                     </div>
                 </div>
-                <div class="nav-item has-dropdown">
+                <div class="nav-item">
                     <button class="nav-btn">Инструменты <span class="arrow">▾</span></button>
                     <div class="dropdown">
                         <a href="{{BASE}}pages/analytics.html">📊 Статистика рынка</a>
@@ -34,7 +34,7 @@
                         <a href="{{BASE}}pages/simulator.html">🎯 Dispatch Simulator</a>
                     </div>
                 </div>
-                <div class="nav-item has-dropdown">
+                <div class="nav-item">
                     <button class="nav-btn">Информация <span class="arrow">▾</span></button>
                     <div class="dropdown">
                         <a href="{{BASE}}about.html">👥 О нас</a>
