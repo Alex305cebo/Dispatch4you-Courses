@@ -5,7 +5,6 @@
     var isSubfolder = window.location.pathname.includes('/pages/');
     var BASE = isSubfolder ? '../' : '';
 
-    /* ── Inline fallback (должен совпадать с nav.html) ── */
     var NAV_INLINE = `<!-- ЕДИНОЕ МЕНЮ САЙТА -->
 <nav class="navbar">
     <div class="nav-container">
@@ -19,43 +18,49 @@
                 <div class="nav-item has-dropdown">
                     <button class="nav-btn">Курсы <span class="arrow">▾</span></button>
                     <div class="dropdown mega-dropdown">
-                        <div class="mega-col">
-                            <div class="mega-heading">📚 15 Разделов курса</div>
-                            <a href="{{BASE}}pages/intro.html"><span class="num">01</span>Введение в индустрию</a>
-                            <a href="{{BASE}}pages/glossary.html"><span class="num">02</span>Глоссарий терминов</a>
-                            <a href="{{BASE}}pages/role.html"><span class="num">03</span>Роль диспетчера</a>
-                            <a href="{{BASE}}pages/equipment.html"><span class="num">04</span>Оборудование и грузы</a>
-                            <a href="{{BASE}}pages/routes.html"><span class="num">05</span>География и маршруты</a>
-                            <a href="{{BASE}}pages/loadboards.html"><span class="num">06</span>Load Boards</a>
-                            <a href="{{BASE}}pages/negotiation.html"><span class="num">07</span>Переговоры</a>
-                            <a href="{{BASE}}pages/brokers.html"><span class="num">08</span>Проверка брокеров</a>
-                            <a href="{{BASE}}pages/docs.html"><span class="num">09</span>Документация</a>
-                            <a href="{{BASE}}pages/regulations.html"><span class="num">10</span>Законодательство</a>
-                            <a href="{{BASE}}pages/technology.html"><span class="num">11</span>TMS и технологии</a>
-                            <a href="{{BASE}}pages/communication.html"><span class="num">12</span>Коммуникация</a>
-                            <a href="{{BASE}}pages/problems.html"><span class="num">13</span>Решение проблем</a>
-                            <a href="{{BASE}}pages/finances.html"><span class="num">14</span>Финансы и расчёты</a>
-                            <a href="{{BASE}}pages/career.html"><span class="num">15</span>Карьера и практики</a>
+                        <div class="mega-cats">
+                            <div class="mega-cat active" data-panel="sections"><span>📚 15 Разделов курса</span><span class="cat-arrow">›</span></div>
+                            <div class="mega-cat" data-panel="modules"><span>🎓 12 Модулей с тестами</span><span class="cat-arrow">›</span></div>
+                            <div class="mega-cat" data-panel="resources"><span>📁 Ресурсы</span><span class="cat-arrow">›</span></div>
                         </div>
-                        <div class="mega-col">
-                            <div class="mega-heading">🎓 12 Модулей с тестами</div>
-                            <a href="{{BASE}}pages/doc-module-1-complete.html"><span class="num">М1</span>Введение</a>
-                            <a href="{{BASE}}pages/doc-module-2-complete.html"><span class="num">М2</span>Документы</a>
-                            <a href="{{BASE}}pages/doc-module-3-complete.html"><span class="num">М3</span>Водители</a>
-                            <a href="{{BASE}}pages/doc-module-4-complete.html"><span class="num">М4</span>Load Boards</a>
-                            <a href="{{BASE}}pages/doc-module-5-complete.html"><span class="num">М5</span>Поиск грузов</a>
-                            <a href="{{BASE}}pages/doc-module-6-complete.html"><span class="num">М6</span>Переговоры</a>
-                            <a href="{{BASE}}pages/doc-module-7-complete.html"><span class="num">М7</span>Rate Conf.</a>
-                            <a href="{{BASE}}pages/doc-module-8-complete.html"><span class="num">М8</span>Проблемы</a>
-                            <a href="{{BASE}}pages/doc-module-9-complete.html"><span class="num">М9</span>Регуляции</a>
-                            <a href="{{BASE}}pages/doc-module-10-complete.html"><span class="num">М10</span>Финансы</a>
-                            <a href="{{BASE}}pages/doc-module-11-complete.html"><span class="num">М11</span>Карьера</a>
-                            <a href="{{BASE}}pages/doc-module-12-complete.html"><span class="num">М12</span>Итоговый тест</a>
-                            <div class="mega-heading" style="margin-top:12px">📁 Ресурсы</div>
-                            <a href="{{BASE}}pages/documentation.html">📖 База знаний</a>
-                            <a href="{{BASE}}pages/simulator.html">🎯 Симулятор</a>
-                            <a href="{{BASE}}pages/cases.html">💼 Кейсы</a>
-                            <a href="{{BASE}}pages/testing.html">✍️ Тестирование</a>
+                        <div class="mega-panels">
+                            <div class="mega-panel active" id="panel-sections">
+                                <a href="{{BASE}}pages/intro.html"><span class="num">01</span>Введение в индустрию</a>
+                                <a href="{{BASE}}pages/glossary.html"><span class="num">02</span>Глоссарий терминов</a>
+                                <a href="{{BASE}}pages/role.html"><span class="num">03</span>Роль диспетчера</a>
+                                <a href="{{BASE}}pages/equipment.html"><span class="num">04</span>Оборудование и грузы</a>
+                                <a href="{{BASE}}pages/routes.html"><span class="num">05</span>География и маршруты</a>
+                                <a href="{{BASE}}pages/loadboards.html"><span class="num">06</span>Load Boards</a>
+                                <a href="{{BASE}}pages/negotiation.html"><span class="num">07</span>Переговоры</a>
+                                <a href="{{BASE}}pages/brokers.html"><span class="num">08</span>Проверка брокеров</a>
+                                <a href="{{BASE}}pages/docs.html"><span class="num">09</span>Документация</a>
+                                <a href="{{BASE}}pages/regulations.html"><span class="num">10</span>Законодательство</a>
+                                <a href="{{BASE}}pages/technology.html"><span class="num">11</span>TMS и технологии</a>
+                                <a href="{{BASE}}pages/communication.html"><span class="num">12</span>Коммуникация</a>
+                                <a href="{{BASE}}pages/problems.html"><span class="num">13</span>Решение проблем</a>
+                                <a href="{{BASE}}pages/finances.html"><span class="num">14</span>Финансы и расчёты</a>
+                                <a href="{{BASE}}pages/career.html"><span class="num">15</span>Карьера и практики</a>
+                            </div>
+                            <div class="mega-panel" id="panel-modules">
+                                <a href="{{BASE}}pages/doc-module-1-complete.html"><span class="num">М1</span>Введение в диспетчерство</a>
+                                <a href="{{BASE}}pages/doc-module-2-complete.html"><span class="num">М2</span>Документы и термины</a>
+                                <a href="{{BASE}}pages/doc-module-3-complete.html"><span class="num">М3</span>Работа с водителями</a>
+                                <a href="{{BASE}}pages/doc-module-4-complete.html"><span class="num">М4</span>Работа с Load Boards</a>
+                                <a href="{{BASE}}pages/doc-module-5-complete.html"><span class="num">М5</span>Поиск грузов</a>
+                                <a href="{{BASE}}pages/doc-module-6-complete.html"><span class="num">М6</span>Переговоры с брокерами</a>
+                                <a href="{{BASE}}pages/doc-module-7-complete.html"><span class="num">М7</span>Rate Confirmation</a>
+                                <a href="{{BASE}}pages/doc-module-8-complete.html"><span class="num">М8</span>Проблемные ситуации</a>
+                                <a href="{{BASE}}pages/doc-module-9-complete.html"><span class="num">М9</span>Регуляции и безопасность</a>
+                                <a href="{{BASE}}pages/doc-module-10-complete.html"><span class="num">М10</span>Финансы диспетчера</a>
+                                <a href="{{BASE}}pages/doc-module-11-complete.html"><span class="num">М11</span>Карьера и бизнес</a>
+                                <a href="{{BASE}}pages/doc-module-12-complete.html"><span class="num">М12</span>Итоговый тест</a>
+                            </div>
+                            <div class="mega-panel" id="panel-resources">
+                                <a href="{{BASE}}pages/documentation.html"><span class="num">📖</span>База знаний</a>
+                                <a href="{{BASE}}pages/simulator.html"><span class="num">🎯</span>Симулятор</a>
+                                <a href="{{BASE}}pages/cases.html"><span class="num">💼</span>Кейсы</a>
+                                <a href="{{BASE}}pages/testing.html"><span class="num">✍️</span>Тестирование</a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -89,10 +94,7 @@
 </nav>
 <div class="mob-overlay" id="mobOverlay"></div>
 <div class="mob-menu" id="mobMenu">
-    <div class="mob-header">
-        <span>📚 Меню</span>
-        <button id="mobClose">✕</button>
-    </div>
+    <div class="mob-header"><span>📚 Меню</span><button id="mobClose">✕</button></div>
     <div class="mob-body">
         <div class="mob-actions">
             <a href="{{BASE}}login.html" class="btn-login">Войти</a>
@@ -158,7 +160,6 @@
     </div>
 </div>`;
 
-    /* ── Load nav ── */
     function loadNav() {
         fetch(BASE + 'nav.html')
             .then(function (r) { if (!r.ok) throw 0; return r.text(); })
@@ -188,51 +189,55 @@
         if (window._navInited) return;
         window._navInited = true;
 
-        /* Desktop: click on nav-btn toggles .open */
+        /* Desktop: click nav-btn → toggle .open */
         document.addEventListener('click', function (e) {
             var btn = e.target.closest('.nav-btn');
             var item = e.target.closest('.nav-item');
+            var cat = e.target.closest('.mega-cat');
 
+            /* Переключение категорий внутри mega */
+            if (cat) {
+                e.stopPropagation();
+                var panel = cat.dataset.panel;
+                var mega = cat.closest('.mega-dropdown');
+                mega.querySelectorAll('.mega-cat').forEach(function (c) { c.classList.remove('active'); });
+                mega.querySelectorAll('.mega-panel').forEach(function (p) { p.classList.remove('active'); });
+                cat.classList.add('active');
+                var target = mega.querySelector('#panel-' + panel);
+                if (target) target.classList.add('active');
+                return;
+            }
+
+            /* Открытие/закрытие дропдауна */
             if (btn && item) {
                 e.preventDefault();
                 var wasOpen = item.classList.contains('open');
-                // close all
                 document.querySelectorAll('.nav-item.open').forEach(function (i) { i.classList.remove('open'); });
                 if (!wasOpen) item.classList.add('open');
                 return;
             }
-            // click outside — close all
+
+            /* Клик вне — закрыть всё */
             if (!e.target.closest('.nav-item')) {
                 document.querySelectorAll('.nav-item.open').forEach(function (i) { i.classList.remove('open'); });
             }
         });
 
-        /* Mobile open/close */
+        /* Mobile */
         var burger = document.getElementById('burgerBtn');
         var mobMenu = document.getElementById('mobMenu');
         var mobOverlay = document.getElementById('mobOverlay');
         var mobClose = document.getElementById('mobClose');
 
-        function openMob() {
-            mobMenu && mobMenu.classList.add('active');
-            mobOverlay && mobOverlay.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-        function closeMob() {
-            mobMenu && mobMenu.classList.remove('active');
-            mobOverlay && mobOverlay.classList.remove('active');
-            document.body.style.overflow = '';
-        }
+        function openMob() { mobMenu && mobMenu.classList.add('active'); mobOverlay && mobOverlay.classList.add('active'); document.body.style.overflow = 'hidden'; }
+        function closeMob() { mobMenu && mobMenu.classList.remove('active'); mobOverlay && mobOverlay.classList.remove('active'); document.body.style.overflow = ''; }
 
         if (burger) burger.addEventListener('click', openMob);
         if (mobClose) mobClose.addEventListener('click', closeMob);
         if (mobOverlay) mobOverlay.addEventListener('click', closeMob);
 
-        /* Mobile accordions */
         document.querySelectorAll('.mob-acc-title').forEach(function (t) {
-            t.addEventListener('click', function () {
-                this.parentElement.classList.toggle('open');
-            });
+            t.addEventListener('click', function () { this.parentElement.classList.toggle('open'); });
         });
     }
 
