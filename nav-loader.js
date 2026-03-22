@@ -33,7 +33,7 @@
             <div class="nav-links">
                 <a href="{{BASE}}index.html" class="nav-link" data-short="Главная">Главная</a>
                 <div class="nav-dropdown has-mega">
-                    <a href="{{BASE}}courses.html" class="nav-link" data-short="Курсы">Курсы</a>
+                    <span class="nav-link" data-short="Курсы" style="cursor:pointer;">▲ Курсы</span>
                     <div class="dropdown-content">
                         <a href="{{BASE}}pages/documentation.html" style="background:rgba(99,102,241,0.15);border-left:3px solid #6366f1;font-weight:700;color:#ffffff;">🎓 База знаний</a>
                         <a href="{{BASE}}course.html">📖 Обзор курса</a>
