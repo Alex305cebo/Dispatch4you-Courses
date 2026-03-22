@@ -1,4 +1,4 @@
-/**
+﻿/**
  * nav-loader.js — единый загрузчик меню для всего сайта
  * Подключай на каждой странице: <script src="nav-loader.js"></script>
  * или из pages/: <script src="../nav-loader.js"></script>
@@ -129,21 +129,21 @@
         <div class="mob-acc">
             <div class="mob-acc-title">📚 15 Разделов курса <span class="mob-arr">▼</span></div>
             <div class="mob-acc-body">
-                <a href="{{BASE}}pages/course-section-1.html" class="nav-link nav-link-sub"><span class="m-num">01</span> Введение</a>
-                <a href="{{BASE}}pages/course-section-2.html" class="nav-link nav-link-sub"><span class="m-num">02</span> Глоссарий</a>
-                <a href="{{BASE}}pages/course-section-3.html" class="nav-link nav-link-sub"><span class="m-num">03</span> Роль диспетчера</a>
-                <a href="{{BASE}}pages/course-section-4.html" class="nav-link nav-link-sub"><span class="m-num">04</span> Типы траков</a>
-                <a href="{{BASE}}pages/course-section-5.html" class="nav-link nav-link-sub"><span class="m-num">05</span> Маршруты</a>
-                <a href="{{BASE}}pages/course-section-6.html" class="nav-link nav-link-sub"><span class="m-num">06</span> Load Boards</a>
-                <a href="{{BASE}}pages/course-section-7.html" class="nav-link nav-link-sub"><span class="m-num">07</span> Переговоры</a>
-                <a href="{{BASE}}pages/course-section-8.html" class="nav-link nav-link-sub"><span class="m-num">08</span> Брокеры</a>
-                <a href="{{BASE}}pages/course-section-9.html" class="nav-link nav-link-sub"><span class="m-num">09</span> Документация</a>
-                <a href="{{BASE}}pages/course-section-10.html" class="nav-link nav-link-sub"><span class="m-num">10</span> Безопасность</a>
-                <a href="{{BASE}}pages/course-section-11.html" class="nav-link nav-link-sub"><span class="m-num">11</span> Технологии</a>
-                <a href="{{BASE}}pages/course-section-12.html" class="nav-link nav-link-sub"><span class="m-num">12</span> Коммуникация</a>
-                <a href="{{BASE}}pages/course-section-13.html" class="nav-link nav-link-sub"><span class="m-num">13</span> Решение проблем</a>
-                <a href="{{BASE}}pages/course-section-14.html" class="nav-link nav-link-sub"><span class="m-num">14</span> Финансы</a>
-                <a href="{{BASE}}pages/course-section-15.html" class="nav-link nav-link-sub"><span class="m-num">15</span> Карьера</a>
+                <a href="{{BASE}}pages/intro.html" class="nav-link nav-link-sub"><span class="m-num">01</span> Введение</a>
+                <a href="{{BASE}}pages/glossary.html" class="nav-link nav-link-sub"><span class="m-num">02</span> Глоссарий</a>
+                <a href="{{BASE}}pages/role.html" class="nav-link nav-link-sub"><span class="m-num">03</span> Роль диспетчера</a>
+                <a href="{{BASE}}pages/equipment.html" class="nav-link nav-link-sub"><span class="m-num">04</span> Оборудование</a>
+                <a href="{{BASE}}pages/routes.html" class="nav-link nav-link-sub"><span class="m-num">05</span> Маршруты</a>
+                <a href="{{BASE}}pages/loadboards.html" class="nav-link nav-link-sub"><span class="m-num">06</span> Load Boards</a>
+                <a href="{{BASE}}pages/negotiation.html" class="nav-link nav-link-sub"><span class="m-num">07</span> Переговоры</a>
+                <a href="{{BASE}}pages/brokers.html" class="nav-link nav-link-sub"><span class="m-num">08</span> Брокеры</a>
+                <a href="{{BASE}}pages/docs.html" class="nav-link nav-link-sub"><span class="m-num">09</span> Документация</a>
+                <a href="{{BASE}}pages/regulations.html" class="nav-link nav-link-sub"><span class="m-num">10</span> Законодательство</a>
+                <a href="{{BASE}}pages/technology.html" class="nav-link nav-link-sub"><span class="m-num">11</span> TMS и технологии</a>
+                <a href="{{BASE}}pages/communication.html" class="nav-link nav-link-sub"><span class="m-num">12</span> Коммуникация</a>
+                <a href="{{BASE}}pages/problems.html" class="nav-link nav-link-sub"><span class="m-num">13</span> Решение проблем</a>
+                <a href="{{BASE}}pages/finances.html" class="nav-link nav-link-sub"><span class="m-num">14</span> Финансы</a>
+                <a href="{{BASE}}pages/career.html" class="nav-link nav-link-sub"><span class="m-num">15</span> Карьера</a>
             </div>
         </div>
         <div class="mob-acc">
