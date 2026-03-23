@@ -354,7 +354,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, sendPasswordResetEmail, fetchSignInMethodsForEmail, linkWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -375,6 +375,8 @@
     const resetMsg = document.getElementById('resetMsg');
 
     function showError(msg) { errorMsg.textContent = msg; errorMsg.style.display = 'block'; resetMsg.style.display = 'none'; }
+    function showInfo(msg) { resetMsg.textContent = msg; resetMsg.style.display = 'block'; errorMsg.style.display = 'none'; }
+
     function translateError(code) {
       const map = {
         'auth/user-not-found': 'Пользователь с таким email не найден.',
@@ -386,6 +388,8 @@
         'auth/unauthorized-domain': 'Домен не авторизован в Firebase.',
         'auth/popup-blocked': 'Браузер заблокировал popup. Пробуем другой способ...',
         'auth/cancelled-popup-request': 'Запрос отменён.',
+        'auth/account-exists-with-different-credential': 'Этот email уже используется другим методом входа.',
+        'auth/email-already-in-use': 'Этот email уже зарегистрирован.',
       };
       return map[code] || 'Ошибка: ' + code;
     }
@@ -404,9 +408,7 @@
         lastLogin: serverTimestamp(),
         provider: user.providerData[0]?.providerId || 'unknown'
       };
-      // Сохраняем в localStorage
       localStorage.setItem('user', JSON.stringify({ uid: user.uid, firstName, lastName, email: user.email }));
-      // Сохраняем в Firestore и только потом редиректим
       try { await setDoc(doc(db, 'users', user.uid), userData, { merge: true }); } catch (e) { console.error(e); }
       const returnUrl = localStorage.getItem('returnUrl');
       localStorage.removeItem('returnUrl');
@@ -420,32 +422,54 @@
       }
     }).catch((err) => {
       console.error('Redirect result error:', err.code);
+      if (err.code === 'auth/account-exists-with-different-credential') {
+        showError('Этот email уже зарегистрирован через другой метод. Попробуйте войти через email/пароль или Google.');
+      }
     });
 
-    // Email/Password login
+    // Email/Password login с поддержкой связывания аккаунтов
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const btn = document.getElementById('submitBtn');
       btn.disabled = true; btn.textContent = 'Входим...';
+
       try {
         const cred = await signInWithEmailAndPassword(auth, email, password);
         await saveUserAndRedirect(cred.user);
       } catch (err) {
-        showError(translateError(err.code));
+        // Если пользователь не найден, проверяем есть ли аккаунт с Google
+        if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+          try {
+            const methods = await fetchSignInMethodsForEmail(auth, email);
+            if (methods.includes('google.com')) {
+              showError('Этот email зарегистрирован через Google. Нажмите "Продолжить с Google" для входа.');
+            } else {
+              showError(translateError(err.code));
+            }
+          } catch (e) {
+            showError(translateError(err.code));
+          }
+        } else {
+          showError(translateError(err.code));
+        }
         btn.disabled = false; btn.textContent = 'Войти';
       }
     });
 
-    // Google login — пробуем popup, при ошибке fallback на redirect
+    // Google login с поддержкой связывания аккаунтов
     document.getElementById('googleBtn').addEventListener('click', async () => {
       try {
         const result = await signInWithPopup(auth, provider);
-        saveUserAndRedirect(result.user);
+        await saveUserAndRedirect(result.user);
       } catch (err) {
         console.error('Google popup error:', err.code);
-        if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+
+        // Если аккаунт существует с другим методом
+        if (err.code === 'auth/account-exists-with-different-credential') {
+          showError('Этот email уже зарегистрирован через email/пароль. Войдите через форму выше, затем можете связать аккаунты в настройках.');
+        } else if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
           // Fallback: redirect flow
           try {
             await signInWithRedirect(auth, provider);
