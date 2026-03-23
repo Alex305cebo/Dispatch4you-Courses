@@ -33,19 +33,19 @@ window.updateAuthUI = function () {
     const dashHref = isPages() ? '../dashboard.html' : 'dashboard.html';
 
     const html = `
-      <div style="display:flex;align-items:center;gap:12px;">
-        <a href="${dashHref}" style="display:flex;align-items:center;gap:12px;padding:10px 18px;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(139,92,246,0.15));border:1px solid rgba(99,102,241,0.35);border-radius:14px;text-decoration:none;transition:all 0.3s;box-shadow:0 4px 12px rgba(99,102,241,0.2);backdrop-filter:blur(10px);" onmouseover="this.style.background='linear-gradient(135deg,rgba(99,102,241,0.25),rgba(139,92,246,0.25))';this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(99,102,241,0.35)'" onmouseout="this.style.background='linear-gradient(135deg,rgba(99,102,241,0.15),rgba(139,92,246,0.15))';this.style.transform='';this.style.boxShadow='0 4px 12px rgba(99,102,241,0.2)'">
-          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:white;box-shadow:0 2px 8px rgba(99,102,241,0.4);">${initials || '👤'}</div>
-          <div style="display:flex;flex-direction:column;align-items:flex-start;gap:3px;">
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span style="font-weight:700;font-size:14px;color:#e0e7ff;line-height:1;">${fullName}</span>
-              <span style="font-size:10px;color:#fbbf24;font-weight:700;background:rgba(251,191,36,0.15);padding:2px 6px;border-radius:6px;border:1px solid rgba(251,191,36,0.3);">⚡ ${xp} XP</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <a href="${dashHref}" style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(139,92,246,0.15));border:1px solid rgba(99,102,241,0.35);border-radius:12px;text-decoration:none;transition:all 0.3s;box-shadow:0 4px 12px rgba(99,102,241,0.2);backdrop-filter:blur(10px);" onmouseover="this.style.background='linear-gradient(135deg,rgba(99,102,241,0.25),rgba(139,92,246,0.25))';this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(99,102,241,0.35)'" onmouseout="this.style.background='linear-gradient(135deg,rgba(99,102,241,0.15),rgba(139,92,246,0.15))';this.style.transform='';this.style.boxShadow='0 4px 12px rgba(99,102,241,0.2)'">
+          <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:white;box-shadow:0 2px 8px rgba(99,102,241,0.4);">${initials || '👤'}</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;">
+            <div style="display:flex;align-items:center;gap:4px;">
+              <span style="font-weight:700;font-size:12px;color:#e0e7ff;line-height:1;">${fullName}</span>
+              <span style="font-size:9px;color:#fbbf24;font-weight:700;background:rgba(251,191,36,0.15);padding:1px 4px;border-radius:4px;border:1px solid rgba(251,191,36,0.3);">⚡ ${xp} XP</span>
             </div>
-            <span style="font-size:11px;color:#a5b4fc;font-weight:500;">Личный кабинет</span>
+            <span style="font-size:10px;color:#a5b4fc;font-weight:500;">Личный кабинет</span>
           </div>
         </a>
-        <a href="#" class="btn-login" onclick="authLogout(event)" style="display:flex;align-items:center;justify-content:center;height:56px;padding:0 18px;border:1px solid rgba(239,68,68,0.35);border-radius:14px;color:#fca5a5;font-size:13px;font-weight:600;background:rgba(239,68,68,0.12);transition:all 0.3s;backdrop-filter:blur(10px);min-width:90px;" onmouseover="this.style.background='rgba(239,68,68,0.2)';this.style.borderColor='rgba(239,68,68,0.5)';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(239,68,68,0.12)';this.style.borderColor='rgba(239,68,68,0.35)';this.style.transform=''">
-          <span style="font-size:14px;">🚪</span> Выйти
+        <a href="#" class="btn-login" onclick="authLogout(event)" style="display:flex;align-items:center;justify-content:center;padding:6px 12px;border:1px solid rgba(239,68,68,0.35);border-radius:12px;color:#fca5a5;font-size:12px;font-weight:600;background:rgba(239,68,68,0.12);transition:all 0.3s;backdrop-filter:blur(10px);" onmouseover="this.style.background='rgba(239,68,68,0.2)';this.style.borderColor='rgba(239,68,68,0.5)';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(239,68,68,0.12)';this.style.borderColor='rgba(239,68,68,0.35)';this.style.transform=''">
+          <span style="font-size:13px;">🚪</span> Выйти
         </a>
       </div>`;
     navActions.innerHTML = html;
