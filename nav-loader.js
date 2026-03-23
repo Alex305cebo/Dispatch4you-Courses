@@ -1,5 +1,8 @@
 /**
- * nav-loader.js v2.1 - Fixed mobile menu display + cache bust
+ * nav-loader.js v4.0 - Complete responsive fix
+ * - Fixed dropdown behavior (closed by default)
+ * - Fixed mobile/desktop switching
+ * - Added proper cache busting
  */
 (function () {
     var isSubfolder = window.location.pathname.includes('/pages/');
