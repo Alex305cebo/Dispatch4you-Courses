@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Auth Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .log {
+            background: #000;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+        }
+
+        .error {
+            color: #ff0000;
+        }
+
+        .success {
+            color: #00ff00;
+        }
+
+        .info {
+            color: #00aaff;
+        }
+
+        button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #00cc00;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔍 Firebase Authentication Diagnostics</h1>
+
+    <div class="log">
+        <h3>Test Controls:</h3>
+        <button onclick="testEmailLogin()">Test Email Login</button>
+        <button onclick="testGooglePopup()">Test Google Popup</button>
+        <button onclick="testGoogleRedirect()">Test Google Redirect</button>
+        <button onclick="checkAuthState()">Check Auth State</button>
+        <button onclick="clearLogs()">Clear Logs</button>
+    </div>
+
+    <div class="log">
+        <h3>Test Credentials:</h3>
+        <input type="email" id="testEmail" placeholder="test@example.com" style="padding: 5px; width: 200px;">
+        <input type="password" id="testPassword" placeholder="password" style="padding: 5px; width: 200px;">
+    </div>
+
+    <div id="logs"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
+            authDomain: "dispatch4you-80e0f.firebaseapp.com",
+            projectId: "dispatch4you-80e0f",
+            storageBucket: "dispatch4you-80e0f.firebasestorage.app",
+            messagingSenderId: "349235354473",
+            appId: "1:349235354473:web:488aeb29211b02bb153bf8"
+        };
+
+        let app, auth, provider;
+
+        function log(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log ${type}`;
+            logEntry.innerHTML = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${message}`;
+            logs.insertBefore(logEntry, logs.firstChild);
+        }
+
+        window.clearLogs = function () {
+            document.getElementById('logs').innerHTML = '';
+        }
+
+        // Initialize Firebase
+        try {
+            log('🔄 Initializing Firebase...', 'info');
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            provider = new GoogleAuthProvider();
+            log('✅ Firebase initialized successfully', 'success');
+            log(`📍 Current domain: ${window.location.hostname}`, 'info');
+            log(`📍 Auth domain: ${firebaseConfig.authDomain}`, 'info');
+        } catch (error) {
+            log(`❌ Firebase initialization failed: ${error.message}`, 'error');
+            log(`Error code: ${error.code}`, 'error');
+        }
+
+        // Check for redirect result on page load
+        getRedirectResult(auth).then((result) => {
+            if (result && result.user) {
+                log('✅ Redirect result: User logged in', 'success');
+                log(`User: ${result.user.email}`, 'success');
+            } else {
+                log('ℹ️ No redirect result found', 'info');
+            }
+        }).catch((error) => {
+            log(`❌ Redirect result error: ${error.message}`, 'error');
+            log(`Error code: ${error.code}`, 'error');
+        });
+
+        // Monitor auth state
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                log(`✅ Auth state: User logged in as ${user.email}`, 'success');
+            } else {
+                log('ℹ️ Auth state: No user logged in', 'info');
+            }
+        });
+
+        // Test email login
+        window.testEmailLogin = async function () {
+            const email = document.getElementById('testEmail').value;
+            const password = document.getElementById('testPassword').value;
+
+            if (!email || !password) {
+                log('⚠️ Please enter email and password', 'error');
+                return;
+            }
+
+            log(`🔄 Attempting email login for: ${email}`, 'info');
+
+            try {
+                const result = await signInWithEmailAndPassword(auth, email, password);
+                log('✅ Email login successful!', 'success');
+                log(`User: ${result.user.email}`, 'success');
+                log(`UID: ${result.user.uid}`, 'success');
+            } catch (error) {
+                log(`❌ Email login failed: ${error.message}`, 'error');
+                log(`Error code: ${error.code}`, 'error');
+                log(`Full error: ${JSON.stringify(error, null, 2)}`, 'error');
+            }
+        }
+
+        // Test Google popup
+        window.testGooglePopup = async function () {
+            log('🔄 Attempting Google popup login...', 'info');
+
+            try {
+                const result = await signInWithPopup(auth, provider);
+                log('✅ Google popup login successful!', 'success');
+                log(`User: ${result.user.email}`, 'success');
+                log(`UID: ${result.user.uid}`, 'success');
+            } catch (error) {
+                log(`❌ Google popup failed: ${error.message}`, 'error');
+                log(`Error code: ${error.code}`, 'error');
+                log(`Full error: ${JSON.stringify(error, null, 2)}`, 'error');
+
+                if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
+                    log('💡 Popup was blocked. Try Google Redirect instead.', 'info');
+                }
+
+                if (error.code === 'auth/unauthorized-domain') {
+                    log('⚠️ CRITICAL: Domain not authorized in Firebase Console!', 'error');
+                    log(`Current domain: ${window.location.hostname}`, 'error');
+                    log('👉 Add this domain to Firebase Console > Authentication > Settings > Authorized domains', 'error');
+                }
+            }
+        }
+
+        // Test Google redirect
+        window.testGoogleRedirect = async function () {
+            log('🔄 Initiating Google redirect login...', 'info');
+            log('⏳ You will be redirected to Google...', 'info');
+
+            try {
+                await signInWithRedirect(auth, provider);
+            } catch (error) {
+                log(`❌ Google redirect failed: ${error.message}`, 'error');
+                log(`Error code: ${error.code}`, 'error');
+
+                if (error.code === 'auth/unauthorized-domain') {
+                    log('⚠️ CRITICAL: Domain not authorized in Firebase Console!', 'error');
+                    log(`Current domain: ${window.location.hostname}`, 'error');
+                    log('👉 Add this domain to Firebase Console > Authentication > Settings > Authorized domains', 'error');
+                }
+            }
+        }
+
+        // Check current auth state
+        window.checkAuthState = function () {
+            const user = auth.currentUser;
+            if (user) {
+                log('✅ Current user:', 'success');
+                log(`Email: ${user.email}`, 'success');
+                log(`UID: ${user.uid}`, 'success');
+                log(`Display Name: ${user.displayName || 'N/A'}`, 'success');
+                log(`Email Verified: ${user.emailVerified}`, 'success');
+            } else {
+                log('ℹ️ No user currently logged in', 'info');
+            }
+        }
+
+        // Log initial state
+        log('🚀 Diagnostic tool ready', 'success');
+        log('📝 Instructions:', 'info');
+        log('1. Enter test credentials (if testing email login)', 'info');
+        log('2. Click test buttons to diagnose issues', 'info');
+        log('3. Check logs for errors', 'info');
+    </script>
+</body>
+
+</html>
