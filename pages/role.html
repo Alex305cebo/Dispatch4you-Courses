@@ -6,106 +6,544 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Модуль 3: Роль диспетчера | Курсы Диспетчера</title>
-    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="../shared-styles.css">
+    <link rel="stylesheet" href="../dark-theme.css">
     <link rel="stylesheet" href="../shared-nav.css">
+    <link rel="stylesheet" href="../mobile-fix.css">
+    <link rel="stylesheet" href="../scroll-indicator.css">
+    <script>!function () { var t = localStorage.getItem('dispatcher-theme') || 'dark'; 'dark' === t && document.documentElement.setAttribute('data-theme', 'dark') }();</script>
+    <script src="../dark-mode.js"></script>
+    <script src="auth-check.js"></script>
     <style>
+        :root {
+            --primary: #06b6d4;
+            --secondary: #0ea5e9;
+            --accent: #f97316;
+            --primary-rgb: 6, 182, 212;
+        }
+
         * {
-            margin: 0;
-            padding: 0;
             box-sizing: border-box;
         }
 
         html {
             overflow-x: hidden;
             width: 100%;
+            max-width: 100vw;
             scroll-behavior: smooth;
         }
 
-        :root {
-            --primary: #06b6d4;
-            --secondary: #0ea5e9;
-            --accent: #f97316;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --bg-dark: #0a0e1a;
-            --bg-darker: #070b14;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --border: rgba(255, 255, 255, 0.15);
-        }
-
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--bg-darker);
-            color: var(--text-primary);
-            line-height: 1.6;
             overflow-x: hidden;
             width: 100%;
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
         }
 
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background:
-                radial-gradient(circle at 20% 30%, rgba(6, 182, 212, 0.2), transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(249, 115, 22, 0.15), transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(14, 165, 233, 0.1), transparent 70%);
-            z-index: -1;
-            pointer-events: none;
-        }
-
-        .container {
+        .wrap {
             max-width: 1100px;
             margin: 0 auto;
-            padding: 40px 20px;
+            padding: 0 20px;
         }
 
-        .page-header {
-            text-align: center;
-            margin-bottom: 60px;
+        .module-progress {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
         }
 
-        .page-badge {
-            display: inline-block;
-            padding: 8px 16px;
-            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(14, 165, 233, 0.2));
-            border: 1px solid rgba(6, 182, 212, 0.4);
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--primary);
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 16px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
-        .page-title {
-            font-size: 48px;
-            font-weight: 900;
-            background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 30%, #f97316 70%, #fb923c 100%);
+        .progress-text {
+            font-size: 14px;
+            color: var(--text-2);
+            font-weight: 600;
+        }
+
+        .progress-percentage {
+            font-size: 18px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #06b6d4, #0ea5e9);
+            border-radius: 20px;
+            transition: width 0.5s ease;
+        }
+
+        .doc-section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 24px;
+            scroll-margin-top: 80px;
+            transition: transform 0.2s ease;
+        }
+
+        .doc-section:hover {
+            transform: translateY(-2px);
+        }
+
+        .doc-section h2 {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 24px;
+            letter-spacing: -1px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #06b6d4, #0ea5e9);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 20px;
         }
 
-        .page-subtitle {
+        .doc-section h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 32px 0 16px;
+            color: #f1f5f9;
+        }
+
+        .doc-section p {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #e2e8f0;
+            margin-bottom: 16px;
+        }
+
+        .doc-section ul {
+            margin: 16px 0;
+            padding-left: 24px;
+        }
+
+        .doc-section li {
+            font-size: 15px;
+            line-height: 1.8;
+            color: #e2e8f0;
+            margin-bottom: 8px;
+        }
+
+        /* Интерактивные карточки */
+        .interactive-card {
+            background: rgba(var(--primary-rgb), .08);
+            border: 1px solid rgba(var(--primary-rgb), .2);
+            border-radius: 16px;
+            padding: 24px;
+            margin: 16px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .interactive-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #06b6d4, #0ea5e9);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .interactive-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(var(--primary-rgb), .4);
+            box-shadow: 0 12px 40px rgba(6, 182, 212, 0.25);
+        }
+
+        .interactive-card:hover::before {
+            opacity: 1;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .card-icon {
+            font-size: 32px;
+            filter: drop-shadow(0 2px 4px rgba(6, 182, 212, 0.3));
+        }
+
+        .card-title {
             font-size: 20px;
-            color: var(--text-secondary);
-            max-width: 700px;
-            margin: 0 auto;
+            font-weight: 700;
+            background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        /* Навигация */
+        .card-description {
+            font-size: 15px;
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+
+        /* Timeline стили */
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 32px;
+            position: relative;
+        }
+
+        .timeline-time {
+            min-width: 100px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #06b6d4;
+            text-align: right;
+        }
+
+        .timeline-content {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-content:hover {
+            background: rgba(6, 182, 212, 0.08);
+            border-color: rgba(6, 182, 212, 0.3);
+            transform: translateX(8px);
+        }
+
+        .timeline-content h4 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 8px;
+        }
+
+        .timeline-content p {
+            font-size: 14px;
+            color: #cbd5e1;
+            margin: 0;
+        }
+
+        /* Expandable секции */
+        .expand-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 32px;
+            margin: 24px 0;
+            background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 100%);
+            border: none;
+            border-radius: 16px;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 24px rgba(6, 182, 212, 0.4);
+        }
+
+        .expand-btn:hover {
+            background: linear-gradient(135deg, #0891b2 0%, #0284c7 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(6, 182, 212, 0.6);
+        }
+
+        .expand-btn .icon {
+            transition: transform 0.3s ease;
+            font-size: 20px;
+        }
+
+        .expand-btn.active .icon {
+            transform: rotate(180deg);
+        }
+
+        .expandable-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, opacity 0.3s ease;
+            opacity: 0;
+        }
+
+        .expandable-content.active {
+            max-height: 10000px;
+            opacity: 1;
+            margin: 24px 0;
+        }
+
+        .expandable-content .content-inner {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(167, 139, 250, 0.08) 100%);
+            border-left: 4px solid #667eea;
+            border-radius: 16px;
+            padding: 32px;
+        }
+
+        .info-highlight {
+            background: rgba(102, 126, 234, .08);
+            border-left: 4px solid #667eea;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .info-highlight h4 {
+            color: #a5b4fc;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .warning-highlight {
+            background: rgba(251, 146, 60, .08);
+            border-left: 4px solid #fb923c;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .warning-highlight h4 {
+            color: #fdba74;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .success-highlight {
+            background: rgba(52, 211, 153, .08);
+            border-left: 4px solid #34d399;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .success-highlight h4 {
+            color: #6ee7b7;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .stat-box {
+            background: rgba(var(--primary-rgb), .08);
+            border: 1px solid rgba(var(--primary-rgb), .2);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-4px);
+            border-color: rgba(var(--primary-rgb), .4);
+        }
+
+        .stat-box .number {
+            font-size: 36px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #06b6d4, #0ea5e9, #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .stat-box .label {
+            font-size: 13px;
+            color: #cbd5e1;
+            font-weight: 600;
+        }
+
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .fade-in-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .scale-in {
+            opacity: 0;
+            transform: scale(0.9);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .scale-in.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .complete-module-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 32px 0;
+        }
+
+        .complete-module-btn:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+        }
+
+        .scroll-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, rgba(167, 139, 250, 0.9), rgba(139, 92, 246, 0.9));
+            border: 2px solid rgba(167, 139, 250, 0.5);
+            border-radius: 50%;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+
+        .scroll-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .scroll-to-top:hover {
+            background: linear-gradient(135deg, rgba(167, 139, 250, 1), rgba(139, 92, 246, 1));
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+        }
+
+        .module-navigation {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin: 48px 0;
+        }
+
+        .nav-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px 24px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .nav-btn.next {
+            justify-content: flex-end;
+        }
+
+        .nav-btn .icon {
+            font-size: 24px;
+        }
+
+        .nav-btn .text {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .nav-btn .label {
+            font-size: 12px;
+            color: var(--text-2);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-btn .title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        @media (max-width: 768px) {
+            .doc-section {
+                padding: 24px 20px;
+            }
+
+            .module-navigation {
+                flex-direction: column;
+            }
+
+            .timeline-item {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .timeline-time {
+                text-align: left;
+            }
+        }
+
+        /* Сектор 00: Навигация */
         .sector-navigation {
             margin-bottom: 40px;
         }
@@ -222,12 +660,15 @@
         .section-header {
             font-size: 11px;
             font-weight: 800;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
             color: #06b6d4;
-            margin-bottom: 8px;
-            padding-bottom: 8px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin: 0 0 16px 0;
+            padding-bottom: 12px;
             border-bottom: 2px solid rgba(6, 182, 212, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .section-items {
@@ -237,88 +678,51 @@
         }
 
         .section-items a {
-            padding: 10px 16px;
-            color: var(--text-secondary);
+            padding: 12px 16px;
+            color: var(--text-secondary, #94a3b8);
             text-decoration: none;
-            border-radius: 8px;
             font-size: 14px;
             font-weight: 500;
-            transition: all 0.2s ease;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border: 1px solid transparent;
+            background: rgba(255, 255, 255, 0.02);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-items a::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
         }
 
         .section-items a:hover {
-            background: rgba(6, 182, 212, 0.1);
+            background: rgba(6, 182, 212, 0.08);
             color: #06b6d4;
-            border-color: rgba(6, 182, 212, 0.3);
+            border-color: rgba(6, 182, 212, 0.2);
             transform: translateX(4px);
         }
 
+        .section-items a:hover::before {
+            transform: scaleY(1);
+        }
+
         .section-items a.active {
-            background: rgba(6, 182, 212, 0.15);
+            background: rgba(6, 182, 212, 0.12);
             color: #06b6d4;
-            border-color: rgba(6, 182, 212, 0.4);
+            border-color: rgba(6, 182, 212, 0.3);
             font-weight: 600;
         }
 
-        /* Контент */
-        .content-section {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 20px;
-            padding: 40px;
-            margin-bottom: 30px;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-        }
-
-        .content-section:hover {
-            border-color: rgba(6, 182, 212, 0.3);
-            background: rgba(6, 182, 212, 0.05);
-        }
-
-        .content-section h2 {
-            font-size: 28px;
-            font-weight: 800;
-            margin-bottom: 20px;
-            background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 50%, #f97316 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .content-section p {
-            font-size: 16px;
-            line-height: 1.8;
-            color: var(--text-secondary);
-            margin-bottom: 16px;
-        }
-
-        .content-section ul {
-            list-style: none;
-            margin: 20px 0;
-        }
-
-        .content-section li {
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            color: var(--text-secondary);
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            font-size: 15px;
-        }
-
-        .content-section li:last-child {
-            border-bottom: none;
-        }
-
-        .content-section li::before {
-            content: '▸';
-            color: #06b6d4;
-            font-weight: 700;
-            flex-shrink: 0;
-            margin-top: 2px;
+        .section-items a.active::before {
+            transform: scaleY(1);
         }
 
         @media (max-width: 1024px) {
@@ -328,11 +732,7 @@
             }
         }
 
-        @media (max-width: 768px) {
-            .page-title {
-                font-size: 32px;
-            }
-
+        @media (max-width: 640px) {
             .navigation-grid {
                 grid-template-columns: 1fr;
                 gap: 20px;
@@ -340,15 +740,15 @@
             }
 
             .navigation-toggle {
-                padding: 18px 20px;
+                padding: 18px 24px;
             }
 
             .nav-title {
-                font-size: 16px;
+                font-size: 17px;
             }
 
-            .content-section {
-                padding: 24px 20px;
+            .nav-icon {
+                font-size: 24px;
             }
         }
     </style>
@@ -357,139 +757,946 @@
 <body>
     <div id="nav-placeholder"></div>
     <script src="../nav-loader.js"></script>
+    <div class="bg-grid"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
 
-    <div class="container">
-        <div class="page-header">
-            <div class="page-badge">📖 Модуль 3 из 15</div>
-            <h1 class="page-title">Роль диспетчера</h1>
-            <p class="page-subtitle">Обязанности, ежедневные задачи и навыки</p>
-        </div>
+    <section style="padding-top: 30px;">
+        <div class="wrap">
 
-        <!-- Навигация -->
-        <div class="sector-navigation">
-            <div class="navigation-block">
-                <button class="navigation-toggle" id="navigationToggle">
-                    <span class="nav-icon">📚</span>
-                    <span class="nav-title">Навигация по курсу</span>
-                    <span class="nav-arrow">▼</span>
-                </button>
+            <header class="page-header fade-in-up"
+                style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 250px;">
+                    <div class="page-badge">📖 Модуль 3</div>
+                    <h1 class="page-title" style="font-size: clamp(24px, 5vw, 36px); margin: 12px 0 8px;"><span>👔
+                            Роль диспетчера грузоперевозок</span></h1>
+                    <p class="page-subtitle" style="font-size: clamp(13px, 2.5vw, 15px); margin: 0;">Обязанности, навыки
+                        и типичный рабочий день профессионала</p>
+                </div>
 
-                <div class="navigation-content" id="navigationContent">
-                    <div class="navigation-grid">
-                        <div class="nav-section">
-                            <h4 class="section-header">📖 РАЗДЕЛЫ</h4>
-                            <div class="section-items">
-                                <a href="intro.html">Введение</a>
-                                <a href="glossary.html">Глоссарий</a>
-                                <a href="role.html" class="active">Роль</a>
-                                <a href="equipment.html">Оборудование</a>
-                                <a href="routes.html">Маршруты</a>
-                                <a href="loadboards.html">Load Boards</a>
-                                <a href="negotiation.html">Переговоры</a>
-                                <a href="brokers.html">Брокеры</a>
-                                <a href="docs.html">Документы</a>
-                                <a href="regulations.html">Законы</a>
-                                <a href="technology.html">TMS</a>
-                                <a href="communication.html">Коммуникация</a>
-                                <a href="problems.html">Проблемы</a>
-                                <a href="finances.html">Финансы</a>
-                                <a href="career.html">Карьера</a>
+                <div class="module-progress fade-in-up"
+                    style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(167, 139, 250, 0.08)); border: 1px solid rgba(167, 139, 250, 0.15); border-radius: 12px; padding: clamp(8px, 2vw, 10px) clamp(12px, 2.5vw, 14px); margin: 0; min-width: 200px;">
+                    <div class="progress-header" style="margin-bottom: 8px;">
+                        <span class="progress-text" style="font-size: clamp(11px, 2vw, 12px);">Модуль 3 из 15</span>
+                        <span class="progress-percentage"
+                            style="font-size: clamp(14px, 2.5vw, 16px); margin-left: 8px;">20%</span>
+                    </div>
+                    <div class="progress-bar-container" style="height: 6px;">
+                        <div class="progress-bar-fill" style="width: 20%"></div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- СЕКТОР 00: Навигация по курсу -->
+            <div class="sector-wrapper sector-navigation" style="margin-top: 30px;">
+                <div class="navigation-block">
+                    <button class="navigation-toggle" id="navigationToggle">
+                        <span class="nav-icon">📚</span>
+                        <span class="nav-title">Навигация по курсу</span>
+                        <span class="nav-arrow">▼</span>
+                    </button>
+
+                    <div class="navigation-content" id="navigationContent">
+                        <div class="navigation-grid">
+                            <div class="nav-section">
+                                <h4 class="section-header">📖 РАЗДЕЛЫ</h4>
+                                <div class="section-items">
+                                    <a href="intro.html">Введение</a>
+                                    <a href="glossary.html">Глоссарий</a>
+                                    <a href="role.html" class="active">Роль</a>
+                                    <a href="equipment.html">Оборудование</a>
+                                    <a href="routes.html">Маршруты</a>
+                                    <a href="load-finder.html">Load Boards</a>
+                                    <a href="negotiation.html">Переговоры</a>
+                                    <a href="brokers.html">Брокеры</a>
+                                    <a href="docs.html">Документы</a>
+                                    <a href="regulations.html">Законы</a>
+                                    <a href="technology.html">TMS</a>
+                                    <a href="communication.html">Коммуникация</a>
+                                    <a href="problems.html">Проблемы</a>
+                                    <a href="finances.html">Финансы</a>
+                                    <a href="career.html">Карьера</a>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="nav-section">
-                            <h4 class="section-header">📘 МОДУЛИ</h4>
-                            <div class="section-items">
-                                <a href="doc-module-1-complete.html">Индустрия</a>
-                                <a href="doc-module-2-complete.html">Термины</a>
-                                <a href="doc-module-3-complete.html">Диспетчер</a>
-                                <a href="doc-module-4-complete.html">Load Boards</a>
-                                <a href="doc-module-5-complete.html">Маршруты</a>
-                                <a href="doc-module-6-complete.html">Оборудование</a>
-                                <a href="doc-module-7-complete.html">Переговоры</a>
-                                <a href="doc-module-8-complete.html">Брокеры</a>
-                                <a href="doc-module-9-complete.html">CSA Scores</a>
-                                <a href="doc-module-10-complete.html">Грузы</a>
-                                <a href="doc-module-11-complete.html">Проблемы</a>
-                                <a href="doc-module-12-complete.html">Карьера</a>
+                            <div class="nav-section">
+                                <h4 class="section-header">📘 МОДУЛИ</h4>
+                                <div class="section-items">
+                                    <a href="doc-module-1-complete.html">Индустрия</a>
+                                    <a href="doc-module-2-complete.html">Термины</a>
+                                    <a href="doc-module-3-complete.html">Диспетчер</a>
+                                    <a href="doc-module-4-complete.html">Load Boards</a>
+                                    <a href="doc-module-5-complete.html">Маршруты</a>
+                                    <a href="doc-module-6-complete.html">Оборудование</a>
+                                    <a href="doc-module-7-complete.html">Переговоры</a>
+                                    <a href="doc-module-8-complete.html">Брокеры</a>
+                                    <a href="doc-module-9-complete.html">CSA Scores</a>
+                                    <a href="doc-module-10-complete.html">Грузы</a>
+                                    <a href="doc-module-11-complete.html">Проблемы</a>
+                                    <a href="doc-module-12-complete.html">Карьера</a>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="nav-section">
-                            <h4 class="section-header">🔥 ТЕСТЫ</h4>
-                            <div class="section-items">
-                                <a href="test-1.html">Основы рынка</a>
-                                <a href="test-2.html">FMCSA / DOT</a>
-                                <a href="test-3.html">HOS</a>
-                                <a href="test-4.html">Load Boards</a>
-                                <a href="test-5.html">Навигация</a>
-                                <a href="test-6.html">Типы грузов</a>
-                                <a href="test-7.html">Коммуникация</a>
-                                <a href="test-8.html">Rate / Docs</a>
-                                <a href="test-9.html">CSA Scores</a>
-                                <a href="test-10.html">Страхование</a>
-                                <a href="test-11.html">TMS / ELD</a>
-                                <a href="test-12.html">Профессионал</a>
+                            <div class="nav-section">
+                                <h4 class="section-header">🔥 ТЕСТЫ</h4>
+                                <div class="section-items">
+                                    <a href="test-1.html">Основы рынка</a>
+                                    <a href="test-2.html">FMCSA / DOT</a>
+                                    <a href="test-3.html">HOS</a>
+                                    <a href="test-4.html">Load Boards</a>
+                                    <a href="test-5.html">Навигация</a>
+                                    <a href="test-6.html">Типы грузов</a>
+                                    <a href="test-7.html">Коммуникация</a>
+                                    <a href="test-8.html">Rate / Docs</a>
+                                    <a href="test-9.html">CSA Scores</a>
+                                    <a href="test-10.html">Страхование</a>
+                                    <a href="test-11.html">TMS / ELD</a>
+                                    <a href="test-12.html">Профессионал</a>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="nav-section">
-                            <h4 class="section-header">⚡ ИНСТРУМЕНТЫ</h4>
-                            <div class="section-items">
-                                <a href="simulator.html">🎯 Симулятор</a>
-                                <a href="cases.html">💼 Кейсы</a>
-                                <a href="load-finder.html">🔍 Load Finder</a>
-                                <a href="dispatcher-cards.html">🃏 Карточки</a>
+                            <div class="nav-section">
+                                <h4 class="section-header">⚡ ИНСТРУМЕНТЫ</h4>
+                                <div class="section-items">
+                                    <a href="simulator.html">🎯 Симулятор</a>
+                                    <a href="cases.html">💼 Кейсы</a>
+                                    <a href="load-finder.html">🔍 Load Finder</a>
+                                    <a href="dispatcher-cards.html">🃏 Карточки</a>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Контент страницы -->
-        <div class="content-section">
-            <h2>🎯 Роль диспетчера</h2>
-            <p>Freight dispatcher — это ключевая фигура в логистической цепочке грузоперевозок. Диспетчер выступает
-                связующим звеном между водителями, брокерами, грузоотправителями и грузополучателями.</p>
-            <ul>
-                <li>Что такое freight dispatcher</li>
-                <li>Ежедневные задачи и обязанности</li>
-                <li>Взаимодействие с водителями и брокерами</li>
-                <li>Отличия от логиста и брокера</li>
-                <li>Карьерный путь: от новичка до эксперта</li>
-            </ul>
-        </div>
+            <!-- Основной контент -->
+            <section id="intro" class="doc-section fade-in-up">
+                <h2>👔 Кто такой диспетчер грузоперевозок?</h2>
 
-        <div class="content-section">
-            <h2>📋 Обязанности</h2>
-            <p>Основные задачи диспетчера включают поиск грузов, переговоры о ставках, координацию маршрутов и
-                решение возникающих проблем.</p>
-            <ul>
-                <li>Ежедневный поиск прибыльных грузов на load boards</li>
-                <li>Ведение переговоров с брокерами о ставках</li>
-                <li>Планирование оптимальных маршрутов для водителей</li>
-                <li>Контроль выполнения рейсов и решение проблем</li>
-                <li>Работа с документацией и отчетностью</li>
-            </ul>
-        </div>
+                <p>Freight Dispatcher (диспетчер грузоперевозок) — это профессионал, который координирует все аспекты
+                    перевозки грузов, выступая связующим звеном между водителями, брокерами, грузоотправителями и
+                    грузополучателями.</p>
 
-        <div class="content-section">
-            <h2>💼 Навыки</h2>
-            <p>Успешный диспетчер должен обладать широким набором профессиональных и личных качеств.</p>
-            <ul>
-                <li>Коммуникативные навыки для переговоров</li>
-                <li>Знание географии США и основных маршрутов</li>
-                <li>Умение работать с TMS и load boards</li>
-                <li>Стрессоустойчивость и многозадачность</li>
-                <li>Понимание правил DOT и FMCSA</li>
-                <li>Базовые знания английского языка</li>
-            </ul>
+                <div class="info-highlight">
+                    <h4>💡 Ключевая роль в логистике:</h4>
+                    <p>Диспетчер — это "мозг операции". Без диспетчера водитель не знает куда ехать, брокер не может
+                        организовать перевозку, а груз не доедет до получателя. Это профессия, которая держит всю
+                        индустрию грузоперевозок в движении.</p>
+                </div>
+
+                <h3>🎯 Основные функции диспетчера</h3>
+
+                <div class="stats-grid">
+                    <div class="stat-box scale-in">
+                        <div class="number">🔍</div>
+                        <div class="label">Поиск грузов</div>
+                    </div>
+                    <div class="stat-box scale-in">
+                        <div class="number">💬</div>
+                        <div class="label">Переговоры</div>
+                    </div>
+                    <div class="stat-box scale-in">
+                        <div class="number">🗺️</div>
+                        <div class="label">Планирование</div>
+                    </div>
+                    <div class="stat-box scale-in">
+                        <div class="number">📞</div>
+                        <div class="label">Координация</div>
+                    </div>
+                    <div class="stat-box scale-in">
+                        <div class="number">📄</div>
+                        <div class="label">Документация</div>
+                    </div>
+                    <div class="stat-box scale-in">
+                        <div class="number">🚨</div>
+                        <div class="label">Решение проблем</div>
+                    </div>
+                </div>
+
+                <h3>🔄 Отличия от других профессий</h3>
+
+                <div class="interactive-card">
+                    <div class="card-header">
+                        <div class="card-icon">🆚</div>
+                        <div class="card-title">Dispatcher vs Broker vs Logistics Coordinator</div>
+                    </div>
+                    <div class="card-description">
+                        <strong>Dispatcher:</strong> Работает на конкретного перевозчика (carrier), управляет его
+                        траками, ищет грузы для водителей.
+                        <br><br>
+                        <strong>Broker:</strong> Посредник между shippers и carriers, имеет broker authority (MC
+                        number), берет комиссию 15-30%.
+                        <br><br>
+                        <strong>Logistics Coordinator:</strong> Работает на shipper (грузоотправителя), организует
+                        отправку грузов, но не управляет траками напрямую.
+                    </div>
+                </div>
+            </section>
+
+            <section id="typical-day" class="doc-section fade-in-up">
+                <h2>⏰ Типичный день диспетчера</h2>
+
+                <p>Рабочий день диспетчера начинается рано и требует постоянной концентрации. Вот как выглядит типичный
+                    день опытного диспетчера, управляющего 5-8 траками:</p>
+
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-time">6:00 AM</div>
+                        <div class="timeline-content">
+                            <h4>🌅 Утренний check-in с водителями</h4>
+                            <p>Связываешься с каждым водителем: где находится, как спал, готов ли к работе. Проверяешь
+                                ETA до места загрузки/разгрузки. Если водитель опаздывает - сразу звонишь брокеру с
+                                обновлением.</p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-time">7:00 AM</div>
+                        <div class="timeline-content">
+                            <h4>📊 Анализ ситуации и планирование</h4>
+                            <p>Открываешь TMS систему, смотришь статус каждого трака. Кто сегодня освобождается? Где
+                                будет empty? Начинаешь планировать следующие грузы. Проверяешь fuel prices по маршрутам.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-time">8:00 AM</div>
+                        <div class="timeline-content">
+                            <h4>🔍 Поиск грузов на Load Boards</h4>
+                            <p>Заходишь на DAT, Truckstop, 123Loadboard. Ищешь грузы для траков, которые освобождаются
+                                сегодня-завтра. Фильтруешь по локации, типу оборудования, ставке. Сохраняешь интересные
+                                варианты.</p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-time">9:00 AM</div>
+                        <div class="timeline-content">
+                            <h4>💬 Звонки брокерам - переговоры о ставках</h4>
+                            <p>Начинаешь обзванивать брокеров по сохраненным грузам. "Hi, this is [Name] from [Company],
+                                calling about load #12345 from Chicago to Dallas. What's your best rate?" Торгуешься,
+                                пытаешься выбить на $0.10-0.20/милю больше.</p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-time">11:00 AM</div>
+                        <div class="timeline-content">
+                            <h4>✅ Booking грузов и отправка документов</h4>
+                            <p>Договорился о хороших ставках - букаешь грузы. Отправляешь брокеру W9, Certificate of
+                                Insurance, MC/DOT info. Получаешь Rate Confirmation, проверяешь все детали
+                                (pickup/delivery time, rate, detention policy).</p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-time">12:00 PM</div>
+                        <div class="timeline-content">
+                            <h4>🍔 Обед (но телефон всегда рядом)</h4>
+                            <p>Быстрый обед, но телефон не выключаешь. Водители могут позвонить с проблемой в любой
+                                момент. Проверяешь emails, отвечаешь брокерам.</p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-time">1:00 PM</div>
+                        <div class="timeline-content">
+                            <h4>📞 Check calls - обновления для брокеров</h4>
+                            <p>Звонишь брокерам с обновлениями: "Driver is 2 hours out from delivery", "Driver picked
+                                up, BOL #12345, heading to delivery". Брокеры любят проактивные обновления - это строит
+                                доверие.</p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-time">3:00 PM</div>
+                        <div class="timeline-content">
+                            <h4>🚨 Решение проблем</h4>
+                            <p>Водитель застрял в пробке? Breakdown? Груз не готов? Склад закрыт? Каждый день что-то
+                                идет не по плану. Твоя задача - быстро найти решение и минимизировать убытки.</p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-time">5:00 PM</div>
+                        <div class="timeline-content">
+                            <h4>📄 Работа с документами</h4>
+                            <p>Водители отправляют POD (Proof of Delivery) после разгрузки. Проверяешь, что все
+                                подписано правильно, отправляешь брокерам. Заполняешь invoices, обновляешь TMS.</p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-time">6:00 PM</div>
+                        <div class="timeline-content">
+                            <h4>🌙 Вечерний check-in</h4>
+                            <p>Связываешься с водителями: где остановились на ночь, все ли в порядке, готовы ли к
+                                завтрашнему дню. Планируешь завтрашние задачи. Проверяешь последние emails.</p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-time">7:00 PM</div>
+                        <div class="timeline-content">
+                            <h4>🏁 Конец рабочего дня</h4>
+                            <p>Закрываешь ноутбук, но телефон остается включенным. Если водитель попадет в аварию или
+                                breakdown ночью - он позвонит тебе. Это часть работы.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="warning-highlight">
+                    <h4>⚠️ Реальность профессии:</h4>
+                    <p>Это не 9-to-5 работа. Диспетчер должен быть доступен практически 24/7. Водители работают в разных
+                        часовых поясах, проблемы случаются в любое время. Но с опытом ты научишься оптимизировать
+                        процессы и делегировать задачи.</p>
+                </div>
+            </section>
+
+            <section id="responsibilities" class="doc-section fade-in-up">
+                <h2>📋 Детальные обязанности диспетчера</h2>
+
+                <p>Давайте разберем каждую обязанность подробно с примерами и лучшими практиками.</p>
+
+                <button class="expand-btn" onclick="toggleExpand(this)">
+                    <span class="icon">▼</span>
+                    <span>Развернуть полный список обязанностей с примерами</span>
+                </button>
+
+                <div class="expandable-content">
+                    <div class="content-inner">
+                        <h3>1️⃣ Поиск прибыльных грузов</h3>
+
+                        <h4>Где искать:</h4>
+                        <ul>
+                            <li><strong>Load Boards:</strong> DAT ($150/мес), Truckstop ($180/мес), 123Loadboard
+                                ($100/мес)</li>
+                            <li><strong>Direct broker contacts:</strong> Звонки напрямую брокерам, с которыми уже
+                                работал</li>
+                            <li><strong>Dedicated lanes:</strong> Постоянные маршруты от проверенных брокеров</li>
+                            <li><strong>Broker emails:</strong> Многие брокеры рассылают available loads по email</li>
+                        </ul>
+
+                        <h4>Критерии выбора груза:</h4>
+                        <ul>
+                            <li><strong>Rate:</strong> Минимум $1.80-2.00/миля для dry van, $2.20-2.50 для reefer</li>
+                            <li><strong>Deadhead:</strong> Не более 50-100 миль до pickup (10% от общего пробега)</li>
+                            <li><strong>Pickup/Delivery times:</strong> Реалистичные ли сроки? Есть ли appointment или
+                                FCFS?</li>
+                            <li><strong>Broker rating:</strong> Проверка через Carrier411, RTS Pro - минимум 3.5/5 звезд
+                            </li>
+                            <li><strong>Payment terms:</strong> Quick pay (1-5 дней) или standard (30 дней)?</li>
+                            <li><strong>Backhaul potential:</strong> Есть ли грузы обратно из точки delivery?</li>
+                        </ul>
+
+                        <h4>Пример поиска:</h4>
+                        <p
+                            style="background: rgba(0,0,0,0.3); padding: 16px; border-radius: 8px; font-family: monospace; font-size: 13px;">
+                            Трак освобождается в Dallas, TX завтра в 14:00.<br>
+                            Ищу на DAT: Origin: Dallas, TX (100 mile radius)<br>
+                            Equipment: Dry Van 53'<br>
+                            Pickup date: Tomorrow<br>
+                            Rate: $2.00+ per mile<br>
+                            <br>
+                            Нашел: Dallas, TX → Atlanta, GA, 800 миль, $2.20/миля<br>
+                            Deadhead: 45 миль<br>
+                            Broker: C.H. Robinson (A+ rating)<br>
+                            ✅ Отличный груз!
+                        </p>
+
+                        <h3>2️⃣ Переговоры с брокерами</h3>
+
+                        <h4>Скрипт звонка брокеру:</h4>
+                        <p style="background: rgba(0,0,0,0.3); padding: 16px; border-radius: 8px; font-size: 14px;">
+                            <strong>Ты:</strong> "Hi, this is [Your Name] from [Company Name], calling about load #12345
+                            from Dallas to Atlanta. Is it still available?"<br><br>
+                            <strong>Broker:</strong> "Yes, it's available. Rate is $1,760 all-in."<br><br>
+                            <strong>Ты:</strong> "I see it's 800 miles, so that's $2.20 per mile. My truck is in Dallas
+                            right now, can deliver on time. Can you do $1,900?" ($2.375/mile)<br><br>
+                            <strong>Broker:</strong> "Best I can do is $1,800."<br><br>
+                            <strong>Ты:</strong> "Let's meet in the middle - $1,850 and we have a deal. My driver has
+                            excellent safety record, always on time."<br><br>
+                            <strong>Broker:</strong> "Okay, $1,850. Send me your MC, DOT, and insurance."<br><br>
+                            <strong>Ты:</strong> "Perfect! Sending now. What's the pickup appointment time?"
+                        </p>
+
+                        <h4>Тактики переговоров:</h4>
+                        <ul>
+                            <li><strong>Знай свою минимальную ставку:</strong> Рассчитай cost per mile (топливо,
+                                страховка, износ) + желаемая прибыль</li>
+                            <li><strong>Подчеркивай преимущества:</strong> "My driver is already in the area", "We have
+                                excellent safety rating", "Can pick up today"</li>
+                            <li><strong>Будь готов отказаться:</strong> Если ставка слишком низкая - вежливо откажись.
+                                Брокер может перезвонить с лучшим предложением</li>
+                            <li><strong>Спрашивай про extras:</strong> "What about detention pay?", "Do you cover
+                                TONU?", "Any fuel advance available?"</li>
+                            <li><strong>Стройте отношения:</strong> Если брокер хороший - запомни его имя, добавь в
+                                контакты, звони ему напрямую в будущем</li>
+                        </ul>
+
+                        <h3>3️⃣ Планирование маршрутов</h3>
+
+                        <h4>Инструменты:</h4>
+                        <ul>
+                            <li><strong>Google Maps:</strong> Базовое планирование, проверка расстояний</li>
+                            <li><strong>PC*Miler:</strong> Профессиональный инструмент для траков ($30/мес), учитывает
+                                truck routes, tolls, fuel stops</li>
+                            <li><strong>Trucker Path:</strong> Мобильное приложение для водителей - показывает truck
+                                stops, parking, weigh stations</li>
+                            <li><strong>Weather apps:</strong> Weather.com, Weather Underground - проверка погоды по
+                                маршруту</li>
+                        </ul>
+
+                        <h4>Что учитывать при планировании:</h4>
+                        <ul>
+                            <li><strong>HOS (Hours of Service):</strong> Водитель может ехать максимум 11 часов в день,
+                                70 часов в неделю</li>
+                            <li><strong>Fuel stops:</strong> Планируй остановки на заправку каждые 400-500 миль</li>
+                            <li><strong>Rest breaks:</strong> 30-минутный break после 8 часов вождения (обязательно по
+                                закону)</li>
+                            <li><strong>Weather conditions:</strong> Снег, дождь, туман - добавляй extra time</li>
+                            <li><strong>Traffic patterns:</strong> Избегай rush hour в больших городах (LA, NYC,
+                                Chicago)</li>
+                            <li><strong>Weigh stations:</strong> Учитывай время на проезд через weigh stations</li>
+                        </ul>
+
+                        <h3>4️⃣ Координация с водителями</h3>
+
+                        <h4>Ежедневная коммуникация:</h4>
+                        <ul>
+                            <li><strong>Утренний check-in:</strong> "Good morning! How are you? Where are you now? Ready
+                                for today's pickup?"</li>
+                            <li><strong>Обновления ETA:</strong> "What's your ETA to pickup?" - спрашивай каждые 2-3
+                                часа</li>
+                            <li><strong>Подтверждение прибытия:</strong> "Let me know when you arrive at the shipper"
+                            </li>
+                            <li><strong>Статус загрузки:</strong> "How's loading going? Any issues?"</li>
+                            <li><strong>Вечерний check-in:</strong> "Where are you stopping for the night? Everything
+                                okay?"</li>
+                        </ul>
+
+                        <h4>Как работать с разными типами водителей:</h4>
+                        <ul>
+                            <li><strong>Опытные водители:</strong> Дай им больше свободы, они знают что делать. Просто
+                                проверяй статус 2-3 раза в день</li>
+                            <li><strong>Новички:</strong> Больше guidance, объясняй каждый шаг, будь терпеливым</li>
+                            <li><strong>Проблемные водители:</strong> Четкие инструкции, документируй все разговоры,
+                                будь строгим но справедливым</li>
+                            <li><strong>Owner-operators:</strong> Уважай их как бизнес-партнеров, обсуждай финансовые
+                                детали открыто</li>
+                        </ul>
+
+                        <h3>5️⃣ Работа с документацией</h3>
+
+                        <h4>Документы, которые ты отправляешь брокерам:</h4>
+                        <ul>
+                            <li><strong>W9 Form:</strong> Налоговая информация компании</li>
+                            <li><strong>Certificate of Insurance:</strong> Подтверждение страховки ($1M+ liability)</li>
+                            <li><strong>MC/DOT Authority:</strong> Копия operating authority</li>
+                            <li><strong>Carrier Packet:</strong> Иногда брокеры требуют заполнить их форму</li>
+                        </ul>
+
+                        <h4>Документы, которые ты получаешь:</h4>
+                        <ul>
+                            <li><strong>Rate Confirmation:</strong> Договор на груз - проверяй ВСЕ детали!</li>
+                            <li><strong>BOL (Bill of Lading):</strong> Водитель получает при загрузке</li>
+                            <li><strong>POD (Proof of Delivery):</strong> Водитель получает при разгрузке - отправь
+                                брокеру в течение 24 часов</li>
+                        </ul>
+
+                        <h4>Организация документов:</h4>
+                        <ul>
+                            <li>Создай папки в Google Drive или Dropbox для каждого груза</li>
+                            <li>Называй файлы понятно: "2024-03-22_CHRobinson_Load12345_RC.pdf"</li>
+                            <li>Храни все документы минимум 3 года (требование IRS)</li>
+                            <li>Используй TMS систему для автоматизации</li>
+                        </ul>
+
+                        <h3>6️⃣ Решение проблем</h3>
+
+                        <h4>Типичные проблемы и решения:</h4>
+
+                        <p><strong>Проблема:</strong> Водитель опаздывает на pickup</p>
+                        <p><strong>Решение:</strong> Сразу звони брокеру: "Hi, my driver is running 2 hours late due to
+                            traffic. New ETA is 16:00. Can the shipper accommodate?" Большинство брокеров понимают, если
+                            ты проактивно сообщаешь.</p>
+
+                        <p><strong>Проблема:</strong> Груз не готов к загрузке</p>
+                        <p><strong>Решение:</strong> Документируй время прибытия водителя (check-in time). Если ожидание
+                            > 2 часов - требуй detention pay. "My driver arrived at 10:00 AM, it's now 14:00. We need
+                            detention compensation."</p>
+
+                        <p><strong>Проблема:</strong> Breakdown в пути</p>
+                        <p><strong>Решение:</strong> 1) Узнай у водителя что случилось и сколько времени на ремонт. 2)
+                            Звони брокеру с обновлением. 3) Если ремонт > 24 часов - предложи брокеру перегрузить груз
+                            на другой трак (tonu situation).</p>
+
+                        <p><strong>Проблема:</strong> Брокер не платит</p>
+                        <p><strong>Решение:</strong> 1) Проверь что отправил все документы (POD, invoice). 2) Звони в
+                            accounting department брокера. 3) Если не помогает - отправь formal demand letter. 4)
+                            Последний вариант - подай жалобу в FMCSA или обратись к factoring company.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="skills" class="doc-section fade-in-up">
+                <h2>💪 Необходимые навыки и качества</h2>
+
+                <p>Успешный диспетчер должен обладать уникальной комбинацией hard и soft skills.</p>
+
+                <h3>🎓 Hard Skills (Технические навыки)</h3>
+
+                <div class="interactive-card">
+                    <div class="card-header">
+                        <div class="card-icon">💻</div>
+                        <div class="card-title">Работа с TMS системами</div>
+                    </div>
+                    <div class="card-description">
+                        <strong>Что это:</strong> Transportation Management System - программа для управления
+                        грузоперевозками.
+                        <br><br>
+                        <strong>Популярные TMS:</strong> Axon, McLeod, TMW Systems, Tailwind TMS, Rose Rocket
+                        <br><br>
+                        <strong>Что нужно уметь:</strong>
+                        <ul style="margin-top: 12px;">
+                            <li>Создавать и редактировать loads</li>
+                            <li>Назначать водителей на грузы</li>
+                            <li>Отслеживать статус доставки</li>
+                            <li>Генерировать invoices и reports</li>
+                            <li>Управлять документами (BOL, POD, RC)</li>
+                        </ul>
+                        <strong>Время обучения:</strong> 1-2 недели для базового уровня
+                    </div>
+                </div>
+
+                <div class="interactive-card">
+                    <div class="card-header">
+                        <div class="card-icon">🔍</div>
+                        <div class="card-title">Load Boards (DAT, Truckstop)</div>
+                    </div>
+                    <div class="card-description">
+                        <strong>Что это:</strong> Онлайн-платформы где брокеры публикуют available loads.
+                        <br><br>
+                        <strong>Что нужно уметь:</strong>
+                        <ul style="margin-top: 12px;">
+                            <li>Эффективно использовать фильтры поиска</li>
+                            <li>Быстро оценивать прибыльность груза</li>
+                            <li>Проверять рейтинг брокеров</li>
+                            <li>Сохранять и отслеживать интересные грузы</li>
+                            <li>Анализировать market rates по lanes</li>
+                        </ul>
+                        <strong>Время обучения:</strong> 2-3 недели практики
+                    </div>
+                </div>
+
+                <div class="interactive-card">
+                    <div class="card-header">
+                        <div class="card-icon">🗺️</div>
+                        <div class="card-title">География США</div>
+                    </div>
+                    <div class="card-description">
+                        <strong>Что нужно знать:</strong>
+                        <ul style="margin-top: 12px;">
+                            <li><strong>Штаты и крупные города:</strong> Все 50 штатов, топ-50 городов</li>
+                            <li><strong>Interstate highways:</strong> I-95, I-5, I-10, I-80, I-40 и другие major routes
+                            </li>
+                            <li><strong>Часовые пояса:</strong> EST, CST, MST, PST - критично для ETA</li>
+                            <li><strong>Расстояния:</strong> Примерные мили между major cities</li>
+                            <li><strong>Проблемные зоны:</strong> Горные перевалы, зоны с плохой погодой, congested
+                                areas</li>
+                        </ul>
+                        <strong>Совет:</strong> Используй Google Maps каждый день - через месяц запомнишь основные
+                        маршруты
+                    </div>
+                </div>
+
+                <div class="interactive-card">
+                    <div class="card-header">
+                        <div class="card-icon">📚</div>
+                        <div class="card-title">Знание регуляций (DOT, FMCSA, HOS)</div>
+                    </div>
+                    <div class="card-description">
+                        <strong>Основные правила, которые нужно знать:</strong>
+                        <ul style="margin-top: 12px;">
+                            <li><strong>HOS (Hours of Service):</strong> 11 часов вождения, 14 часов on-duty, 10 часов
+                                rest</li>
+                            <li><strong>Weight limits:</strong> 80,000 lbs максимум для interstate</li>
+                            <li><strong>ELD mandate:</strong> Электронные логбуки обязательны</li>
+                            <li><strong>CSA scores:</strong> Система оценки безопасности carriers</li>
+                            <li><strong>Insurance requirements:</strong> Минимум $750K-1M liability</li>
+                        </ul>
+                        <strong>Время обучения:</strong> 1-2 недели чтения + практика
+                    </div>
+                </div>
+
+                <h3>🤝 Soft Skills (Личные качества)</h3>
+
+                <div class="stats-grid">
+                    <div class="stat-box scale-in">
+                        <div class="number">💬</div>
+                        <div class="label">Коммуникация<br><small>80% работы - общение</small></div>
+                    </div>
+                    <div class="stat-box scale-in">
+                        <div class="number">🧘</div>
+                        <div class="label">Стрессоустойчивость<br><small>Проблемы каждый день</small></div>
+                    </div>
+                    <div class="stat-box scale-in">
+                        <div class="number">🎯</div>
+                        <div class="label">Многозадачность<br><small>10 траков одновременно</small></div>
+                    </div>
+                    <div class="stat-box scale-in">
+                        <div class="number">📊</div>
+                        <div class="label">Организованность<br><small>Документы, расписания</small></div>
+                    </div>
+                    <div class="stat-box scale-in">
+                        <div class="number">🚀</div>
+                        <div class="label">Проактивность<br><small>Предвидеть проблемы</small></div>
+                    </div>
+                    <div class="stat-box scale-in">
+                        <div class="number">🤝</div>
+                        <div class="label">Переговоры<br><small>Выбивать лучшие ставки</small></div>
+                    </div>
+                </div>
+
+                <button class="expand-btn" onclick="toggleExpand(this)">
+                    <span class="icon">▼</span>
+                    <span>Подробнее о каждом soft skill</span>
+                </button>
+
+                <div class="expandable-content">
+                    <div class="content-inner">
+                        <h4>💬 Коммуникативные навыки</h4>
+                        <p><strong>Почему важно:</strong> 80% работы диспетчера - это общение. Ты постоянно
+                            разговариваешь с водителями, брокерами, shippers, receivers.</p>
+                        <p><strong>Что нужно уметь:</strong></p>
+                        <ul>
+                            <li>Четко и ясно объяснять инструкции водителям</li>
+                            <li>Профессионально общаться с брокерами по телефону</li>
+                            <li>Писать грамотные emails</li>
+                            <li>Слушать и понимать проблемы других людей</li>
+                            <li>Разрешать конфликты дипломатично</li>
+                        </ul>
+                        <p><strong>Как развивать:</strong> Практика, практика, практика. Каждый звонок - это тренировка.
+                            Записывай свои звонки (с разрешения), слушай и анализируй.</p>
+
+                        <h4>🧘 Стрессоустойчивость</h4>
+                        <p><strong>Почему важно:</strong> Каждый день что-то идет не по плану. Водитель опаздывает,
+                            breakdown, груз не готов, брокер не отвечает.</p>
+                        <p><strong>Типичные стрессовые ситуации:</strong></p>
+                        <ul>
+                            <li>Водитель попал в аварию</li>
+                            <li>Груз отменили в последний момент (TONU)</li>
+                            <li>Брокер не платит уже 60 дней</li>
+                            <li>Все 5 траков одновременно имеют проблемы</li>
+                            <li>Водитель quit без предупреждения</li>
+                        </ul>
+                        <p><strong>Как справляться:</strong></p>
+                        <ul>
+                            <li>Глубокое дыхание - 5 секунд вдох, 5 секунд выдох</li>
+                            <li>Разбивай большую проблему на маленькие шаги</li>
+                            <li>Не принимай решения в эмоциях - сделай паузу</li>
+                            <li>Спорт, медитация, хобби вне работы</li>
+                            <li>Общайся с другими диспетчерами - они понимают</li>
+                        </ul>
+
+                        <h4>🎯 Многозадачность</h4>
+                        <p><strong>Почему важно:</strong> Ты управляешь 5-10 траками одновременно. Каждый трак - это
+                            отдельный проект с дедлайнами.</p>
+                        <p><strong>Типичная ситуация:</strong></p>
+                        <ul>
+                            <li>Водитель #1 звонит с breakdown</li>
+                            <li>Брокер #2 ждет обновление ETA</li>
+                            <li>Водитель #3 нужно найти следующий груз</li>
+                            <li>Email от водителя #4 с вопросом про detention</li>
+                            <li>Водитель #5 опаздывает на delivery</li>
+                        </ul>
+                        <p><strong>Как управлять:</strong></p>
+                        <ul>
+                            <li>Используй to-do lists и task managers (Trello, Asana)</li>
+                            <li>Приоритизируй: urgent vs important</li>
+                            <li>Делегируй когда возможно</li>
+                            <li>Автоматизируй рутинные задачи</li>
+                            <li>Не пытайся делать всё идеально - делай достаточно хорошо</li>
+                        </ul>
+
+                        <h4>📊 Организованность</h4>
+                        <p><strong>Почему важно:</strong> Ты работаешь с сотнями документов, десятками контактов,
+                            множеством дедлайнов.</p>
+                        <p><strong>Что нужно организовать:</strong></p>
+                        <ul>
+                            <li>Документы (BOL, POD, RC, invoices)</li>
+                            <li>Контакты (брокеры, водители, shippers)</li>
+                            <li>Расписания (pickup/delivery appointments)</li>
+                            <li>Финансы (ставки, расходы, invoices)</li>
+                            <li>Задачи (что нужно сделать сегодня/завтра)</li>
+                        </ul>
+                        <p><strong>Инструменты:</strong></p>
+                        <ul>
+                            <li>Google Drive / Dropbox для документов</li>
+                            <li>Google Calendar для appointments</li>
+                            <li>Excel / Google Sheets для финансов</li>
+                            <li>TMS система для всего вместе</li>
+                            <li>Notion / Evernote для заметок</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="types" class="doc-section fade-in-up">
+                <h2>🎭 Типы диспетчеров</h2>
+
+                <p>Существует несколько типов диспетчеров с разными обязанностями, условиями работы и доходом.</p>
+
+                <div class="interactive-card">
+                    <div class="card-header">
+                        <div class="card-icon">🏢</div>
+                        <div class="card-title">In-house Dispatcher (Штатный диспетчер)</div>
+                    </div>
+                    <div class="card-description">
+                        <strong>Кто это:</strong> Работаешь напрямую в транспортной компании как employee.
+                        <br><br>
+                        <strong>Обязанности:</strong>
+                        <ul style="margin-top: 12px;">
+                            <li>Управляешь флотом компании (5-20+ траков)</li>
+                            <li>Работаешь в офисе или remote</li>
+                            <li>Фиксированный график (обычно 8-10 часов/день)</li>
+                            <li>Отчитываешься перед dispatch manager или owner</li>
+                        </ul>
+                        <strong>Доход:</strong> $35,000-65,000/год (salary)
+                        <br>
+                        <strong>Плюсы:</strong> Стабильность, benefits (страховка, отпуск), меньше стресса
+                        <br>
+                        <strong>Минусы:</strong> Ограниченный потенциал дохода, зависимость от работодателя
+                    </div>
+                </div>
+
+                <div class="interactive-card">
+                    <div class="card-header">
+                        <div class="card-icon">💼</div>
+                        <div class="card-title">Independent Dispatcher (Независимый диспетчер)</div>
+                    </div>
+                    <div class="card-description">
+                        <strong>Кто это:</strong> Работаешь на себя, предоставляешь услуги owner-operators и малым
+                        флотам.
+                        <br><br>
+                        <strong>Обязанности:</strong>
+                        <ul style="margin-top: 12px;">
+                            <li>Находишь клиентов (owner-operators) самостоятельно</li>
+                            <li>Управляешь их траками за процент (5-10% от gross)</li>
+                            <li>Работаешь из дома, свой график</li>
+                            <li>Сам отвечаешь за все - нет начальника</li>
+                        </ul>
+                        <strong>Доход:</strong> $50,000-150,000+/год (зависит от количества траков)
+                        <br>
+                        <strong>Расчет:</strong> 5 траков × $200K gross × 7% = $70,000/год
+                        <br>
+                        <strong>Плюсы:</strong> Неограниченный потенциал дохода, свобода, работа из любой точки мира
+                        <br>
+                        <strong>Минусы:</strong> Нестабильность, нет benefits, нужно искать клиентов
+                    </div>
+                </div>
+
+                <div class="interactive-card">
+                    <div class="card-header">
+                        <div class="card-icon">🏆</div>
+                        <div class="card-title">Dispatch Service Owner (Владелец dispatch service)</div>
+                    </div>
+                    <div class="card-description">
+                        <strong>Кто это:</strong> Открыл свой dispatch service, нанял других диспетчеров, управляешь
+                        бизнесом.
+                        <br><br>
+                        <strong>Обязанности:</strong>
+                        <ul style="margin-top: 12px;">
+                            <li>Находишь клиентов (owner-operators, малые флоты)</li>
+                            <li>Нанимаешь и обучаешь диспетчеров</li>
+                            <li>Управляешь 20-100+ траками через команду</li>
+                            <li>Маркетинг, продажи, управление бизнесом</li>
+                        </ul>
+                        <strong>Доход:</strong> $100,000-500,000+/год
+                        <br>
+                        <strong>Расчет:</strong> 50 траков × $200K gross × 7% = $700K revenue. Минус зарплаты
+                        диспетчеров ($40K × 5 = $200K) = $500K profit
+                        <br>
+                        <strong>Плюсы:</strong> Масштабируемый бизнес, пассивный доход, можешь продать бизнес
+                        <br>
+                        <strong>Минусы:</strong> Высокий риск, нужен стартовый капитал, много ответственности
+                    </div>
+                </div>
+
+                <div class="success-highlight">
+                    <h4>🎯 Карьерный путь:</h4>
+                    <p><strong>Год 1-2:</strong> In-house dispatcher → Учишься, набираешь опыт, строишь контакты</p>
+                    <p><strong>Год 2-3:</strong> Independent dispatcher → Находишь 3-5 клиентов, работаешь на себя</p>
+                    <p><strong>Год 3-5:</strong> Масштабирование → Добавляешь больше клиентов, нанимаешь помощника</p>
+                    <p><strong>Год 5+:</strong> Dispatch Service Owner → Полноценный бизнес с командой</p>
+                </div>
+            </section>
+
+            <section id="tools" class="doc-section fade-in-up">
+                <h2>🛠️ Инструменты работы диспетчера</h2>
+
+                <p>Современный диспетчер использует множество инструментов для эффективной работы.</p>
+
+                <h3>💻 Основные инструменты:</h3>
+
+                <div class="stats-grid">
+                    <div class="stat-box scale-in">
+                        <div class="number">📊</div>
+                        <div class="label">TMS System<br><small>$50-200/мес</small></div>
+                    </div>
+                    <div class="stat-box scale-in">
+                        <div class="number">🔍</div>
+                        <div class="label">Load Boards<br><small>$100-180/мес</small></div>
+                    </div>
+                    <div class="stat-box scale-in">
+                        <div class="number">📞</div>
+                        <div class="label">VoIP Phone<br><small>$10-30/мес</small></div>
+                    </div>
+                    <div class="stat-box scale-in">
+                        <div class="number">🗺️</div>
+                        <div class="label">PC*Miler<br><small>$30/мес</small></div>
+                    </div>
+                    <div class="stat-box scale-in">
+                        <div class="number">✅</div>
+                        <div class="label">Carrier411<br><small>$30/мес</small></div>
+                    </div>
+                    <div class="stat-box scale-in">
+                        <div class="number">💰</div>
+                        <div class="label">Factoring<br><small>2-5% от invoice</small></div>
+                    </div>
+                </div>
+
+                <div class="info-highlight">
+                    <h4>💡 Минимальный набор для старта:</h4>
+                    <ul>
+                        <li><strong>Компьютер/ноутбук:</strong> Любой современный, Windows или Mac</li>
+                        <li><strong>Интернет:</strong> Минимум 10 Mbps, стабильное соединение</li>
+                        <li><strong>Телефон:</strong> Google Voice (бесплатно) или VoIP ($10-30/мес)</li>
+                        <li><strong>Load Board:</strong> DAT или Truckstop ($100-180/мес)</li>
+                        <li><strong>Email:</strong> Gmail (бесплатно)</li>
+                        <li><strong>Google Sheets:</strong> Для tracking (бесплатно)</li>
+                    </ul>
+                    <p><strong>Итого:</strong> $100-200/мес для старта. TMS можно добавить позже когда будет больше
+                        траков.</p>
+                </div>
+            </section>
+
+            <button class="complete-module-btn fade-in-up" onclick="completeModule(3)">
+                <span>✓</span>
+                <span>Завершить модуль и перейти к следующему</span>
+            </button>
+
+            <div class="module-navigation fade-in-up">
+                <a href="glossary.html" class="nav-btn">
+                    <span class="icon">←</span>
+                    <div class="text">
+                        <span class="label">Предыдущий модуль</span>
+                        <span class="title">📖 Глоссарий терминов</span>
+                    </div>
+                </a>
+                <a href="equipment.html" class="nav-btn next">
+                    <div class="text">
+                        <span class="label">Следующий модуль</span>
+                        <span class="title">🚚 Типы оборудования</span>
+                    </div>
+                    <span class="icon">→</span>
+                </a>
+            </div>
+
         </div>
-    </div>
+    </section>
+
+    <!-- Кнопка возврата наверх -->
+    <button id="scrollToTop" class="scroll-to-top" aria-label="Вернуться наверх">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+    </button>
 
     <script>
-        // Навигация
+        function initScrollAnimations() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => {
+                            entry.target.classList.add('visible');
+                        }, index * 100);
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in-up, .scale-in').forEach(el => {
+                observer.observe(el);
+            });
+        }
+
+        function toggleExpand(button) {
+            const content = button.nextElementSibling;
+            const icon = button.querySelector('.icon');
+            button.classList.toggle('active');
+            content.classList.toggle('active');
+            if (content.classList.contains('active')) {
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function completeModule(moduleNumber) {
+            let progress = JSON.parse(localStorage.getItem('courseProgress') || '{}');
+            progress[`module${moduleNumber}`] = true;
+            localStorage.setItem('courseProgress', JSON.stringify(progress));
+            const nextModules = ['intro', 'glossary', 'role', 'equipment', 'routes', 'loadboards',
+                'negotiation', 'brokers', 'docs', 'regulations', 'technology',
+                'communication', 'problems', 'finances', 'career'];
+            if (moduleNumber < 15) {
+                window.location.href = `${nextModules[moduleNumber]}.html`;
+            } else {
+                alert('Поздравляем! Вы завершили весь курс! 🎉');
+                window.location.href = '../index.html';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', function () {
+            initScrollAnimations();
+            initScrollToTop();
+            const progress = JSON.parse(localStorage.getItem('courseProgress') || '{}');
+            if (progress.module3) {
+                const btn = document.querySelector('.complete-module-btn');
+                btn.innerHTML = '<span>✓</span><span>Модуль завершен</span>';
+                btn.style.background = 'linear-gradient(135deg, #6b7280, #4b5563)';
+            }
+        });
+
+        function initScrollToTop() {
+            const scrollBtn = document.getElementById('scrollToTop');
+
+            window.addEventListener('scroll', function () {
+                if (window.pageYOffset > 300) {
+                    scrollBtn.classList.add('visible');
+                } else {
+                    scrollBtn.classList.remove('visible');
+                }
+            });
+
+            scrollBtn.addEventListener('click', function () {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        }
+    </script>
+
+    <script>
+        // Сектор 00: Навигация
         document.addEventListener('DOMContentLoaded', function () {
             const navigationToggle = document.getElementById('navigationToggle');
             const navigationContent = document.getElementById('navigationContent');
