@@ -1,5 +1,5 @@
 /**
- * nav-loader.js v2.0 - Fixed mobile menu display
+ * nav-loader.js v2.1 - Fixed mobile menu display + cache bust
  */
 (function () {
     var isSubfolder = window.location.pathname.includes('/pages/');
