@@ -1,9 +1,8 @@
 /**
- * nav-loader.js v5.0 - Unified design across all pages
- * - Compact buttons (7px 14px padding)
+ * nav-loader.js v5.1 - Extra compact design
+ * - Even smaller buttons (6px 12px padding)
+ * - Smaller font (12px)
  * - Consistent navbar height (64px)
- * - Unified animations and transitions
- * - Same appearance on all pages
  */
 (function () {
     var isSubfolder = window.location.pathname.includes('/pages/');

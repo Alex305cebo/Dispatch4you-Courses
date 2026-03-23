@@ -1,61 +1,48 @@
-# Скрипт для запуска локального веб-сервера
-# Использует встроенный PHP сервер (если установлен PHP)
-# Или Python SimpleHTTPServer
+# Скрипт для запуска локального сервера
+# Поддерживает Python и Node.js
 
-Write-Host "🚀 Запуск локального веб-сервера..." -ForegroundColor Cyan
+Write-Host "🚀 Запуск локального сервера..." -ForegroundColor Cyan
 Write-Host ""
 
-# Проверяем наличие PHP
-$phpExists = Get-Command php -ErrorAction SilentlyContinue
+# Проверяем Python
+$pythonExists = Get-Command python -ErrorAction SilentlyContinue
+$python3Exists = Get-Command python3 -ErrorAction SilentlyContinue
 
-if ($phpExists) {
-    Write-Host "✅ PHP найден! Запускаем PHP сервер..." -ForegroundColor Green
+# Проверяем Node.js
+$nodeExists = Get-Command node -ErrorAction SilentlyContinue
+$npxExists = Get-Command npx -ErrorAction SilentlyContinue
+
+if ($pythonExists) {
+    Write-Host "✅ Python найден" -ForegroundColor Green
+    Write-Host "📂 Запуск сервера на http://localhost:8000" -ForegroundColor Yellow
+    Write-Host "⚠️  Нажмите Ctrl+C для остановки" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "📍 Сервер будет доступен по адресу:" -ForegroundColor Yellow
-    Write-Host "   http://localhost:8000" -ForegroundColor White
+    python -m http.server 8000
+}
+elseif ($python3Exists) {
+    Write-Host "✅ Python3 найден" -ForegroundColor Green
+    Write-Host "📂 Запуск сервера на http://localhost:8000" -ForegroundColor Yellow
+    Write-Host "⚠️  Нажмите Ctrl+C для остановки" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "🔗 Откройте в браузере:" -ForegroundColor Yellow
-    Write-Host "   http://localhost:8000/modules" -ForegroundColor White
-    Write-Host "   http://localhost:8000/doc-module-1" -ForegroundColor White
-    Write-Host "   http://localhost:8000/simulator" -ForegroundColor White
+    python3 -m http.server 8000
+}
+elseif ($nodeExists -and $npxExists) {
+    Write-Host "✅ Node.js найден" -ForegroundColor Green
+    Write-Host "📂 Запуск сервера на http://localhost:8000" -ForegroundColor Yellow
+    Write-Host "⚠️  Нажмите Ctrl+C для остановки" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "⏹️  Для остановки нажмите Ctrl+C" -ForegroundColor Red
-    Write-Host ""
-    
-    # Запускаем PHP сервер
-    php -S localhost:8000
+    npx http-server -p 8000
 }
 else {
-    # Проверяем наличие Python
-    $pythonExists = Get-Command python -ErrorAction SilentlyContinue
-    
-    if ($pythonExists) {
-        Write-Host "✅ Python найден! Запускаем Python сервер..." -ForegroundColor Green
-        Write-Host ""
-        Write-Host "📍 Сервер будет доступен по адресу:" -ForegroundColor Yellow
-        Write-Host "   http://localhost:8000" -ForegroundColor White
-        Write-Host ""
-        Write-Host "⚠️  ВНИМАНИЕ: Python сервер НЕ поддерживает .htaccess!" -ForegroundColor Yellow
-        Write-Host "   Clean URLs работать не будут." -ForegroundColor Yellow
-        Write-Host "   Используйте прямые ссылки: /pages/modules-index.html" -ForegroundColor Yellow
-        Write-Host ""
-        Write-Host "⏹️  Для остановки нажмите Ctrl+C" -ForegroundColor Red
-        Write-Host ""
-        
-        # Запускаем Python сервер
-        python -m http.server 8000
-    }
-    else {
-        Write-Host "❌ Ошибка: Не найден ни PHP, ни Python!" -ForegroundColor Red
-        Write-Host ""
-        Write-Host "📥 Установите один из вариантов:" -ForegroundColor Yellow
-        Write-Host "   1. PHP: https://www.php.net/downloads" -ForegroundColor White
-        Write-Host "   2. Python: https://www.python.org/downloads/" -ForegroundColor White
-        Write-Host "   3. XAMPP (включает Apache + PHP): https://www.apachefriends.org/" -ForegroundColor White
-        Write-Host ""
-        Write-Host "💡 Или используйте VS Code расширение 'Live Server'" -ForegroundColor Cyan
-        Write-Host ""
-        
-        Read-Host "Нажмите Enter для выхода"
-    }
+    Write-Host "❌ Не найден Python или Node.js" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Установите один из:" -ForegroundColor Yellow
+    Write-Host "  1. Python: https://www.python.org/downloads/" -ForegroundColor Cyan
+    Write-Host "  2. Node.js: https://nodejs.org/" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Или используйте альтернативный метод:" -ForegroundColor Yellow
+    Write-Host "  - Откройте файлы напрямую в браузере (file://)" -ForegroundColor Cyan
+    Write-Host "  - Используйте VS Code Live Server расширение" -ForegroundColor Cyan
+    Write-Host ""
+    pause
 }
