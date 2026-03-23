@@ -1,8 +1,8 @@
-# PowerShell скрипт для обновления версий навигации во всех HTML файлах
+# PowerShell script for updating navigation versions in all HTML files
 
-Write-Host "🔄 Обновление версий навигации во всех HTML файлах..." -ForegroundColor Cyan
+Write-Host "Updating navigation to v5.0 (Unified Design)..." -ForegroundColor Cyan
 
-# Получаем все HTML файлы
+# Get all HTML files
 $htmlFiles = Get-ChildItem -Path . -Filter *.html -Recurse | Where-Object { 
     $_.FullName -notlike "*\node_modules\*" -and 
     $_.FullName -notlike "*\.git\*" -and
@@ -13,37 +13,37 @@ $htmlFiles = Get-ChildItem -Path . -Filter *.html -Recurse | Where-Object {
 $updatedCount = 0
 $totalFiles = $htmlFiles.Count
 
-Write-Host "📁 Найдено файлов: $totalFiles" -ForegroundColor Yellow
+Write-Host "Found files: $totalFiles" -ForegroundColor Yellow
 
 foreach ($file in $htmlFiles) {
     $content = Get-Content $file.FullName -Raw -Encoding UTF8
     $originalContent = $content
     $updated = $false
     
-    # Обновляем shared-nav.css
+    # Update shared-nav.css
     if ($content -match 'shared-nav\.css(\?v=[\d\.]+)?') {
-        $content = $content -replace 'shared-nav\.css(\?v=[\d\.]+)?', 'shared-nav.css?v=4.0'
+        $content = $content -replace 'shared-nav\.css(\?v=[\d\.]+)?', 'shared-nav.css?v=5.0'
         $updated = $true
     }
     
-    # Обновляем nav-loader.js
+    # Update nav-loader.js
     if ($content -match 'nav-loader\.js(\?v=[\d\.]+)?') {
-        $content = $content -replace 'nav-loader\.js(\?v=[\d\.]+)?', 'nav-loader.js?v=4.0'
+        $content = $content -replace 'nav-loader\.js(\?v=[\d\.]+)?', 'nav-loader.js?v=5.0'
         $updated = $true
     }
     
-    # Сохраняем если были изменения
+    # Save if changed
     if ($updated -and $content -ne $originalContent) {
         Set-Content -Path $file.FullName -Value $content -Encoding UTF8 -NoNewline
-        Write-Host "✅ Обновлён: $($file.Name)" -ForegroundColor Green
+        Write-Host "Updated: $($file.Name)" -ForegroundColor Green
         $updatedCount++
     }
 }
 
 Write-Host ""
-Write-Host "✨ Готово! Обновлено файлов: $updatedCount из $totalFiles" -ForegroundColor Green
+Write-Host "Done! Updated files: $updatedCount of $totalFiles" -ForegroundColor Green
 Write-Host ""
-Write-Host "📝 Следующие шаги:" -ForegroundColor Cyan
+Write-Host "Next steps:" -ForegroundColor Cyan
 Write-Host "1. git add ." -ForegroundColor White
-Write-Host "2. git commit -m '🔧 Fix: Обновлена навигация v4.0 - полная адаптивность'" -ForegroundColor White
+Write-Host "2. git commit -m 'Style: Navigation v5.0 - unified design'" -ForegroundColor White
 Write-Host "3. git push origin main" -ForegroundColor White

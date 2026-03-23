@@ -1,8 +1,9 @@
 /**
- * nav-loader.js v4.0 - Complete responsive fix
- * - Fixed dropdown behavior (closed by default)
- * - Fixed mobile/desktop switching
- * - Added proper cache busting
+ * nav-loader.js v5.0 - Unified design across all pages
+ * - Compact buttons (7px 14px padding)
+ * - Consistent navbar height (64px)
+ * - Unified animations and transitions
+ * - Same appearance on all pages
  */
 (function () {
     var isSubfolder = window.location.pathname.includes('/pages/');
