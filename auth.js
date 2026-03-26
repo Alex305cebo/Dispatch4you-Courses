@@ -63,6 +63,7 @@ window.authLogout = function (event) {
   if (event) event.preventDefault();
   localStorage.removeItem('authToken');
   localStorage.removeItem('user');
+  localStorage.removeItem('user_role');
   if (window._fbAuth) {
     import("https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js")
       .then(m => m.signOut(window._fbAuth)).catch(() => { });

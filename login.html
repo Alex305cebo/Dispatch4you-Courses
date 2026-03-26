@@ -355,7 +355,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, sendPasswordResetEmail, fetchSignInMethodsForEmail, linkWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
@@ -410,6 +410,12 @@
       };
       localStorage.setItem('user', JSON.stringify({ uid: user.uid, firstName, lastName, email: user.email }));
       try { await setDoc(doc(db, 'users', user.uid), userData, { merge: true }); } catch (e) { console.error(e); }
+      // Загружаем роль из Firestore
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        const role = snap.exists() ? (snap.data().accessRole || 'registered') : 'registered';
+        localStorage.setItem('user_role', role);
+      } catch (e) { localStorage.setItem('user_role', 'registered'); }
       const returnUrl = localStorage.getItem('returnUrl');
       localStorage.removeItem('returnUrl');
       window.location.href = returnUrl || 'dashboard.html';
