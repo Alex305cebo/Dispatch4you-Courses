@@ -1330,7 +1330,177 @@
             .strategy-grid {
                 grid-template-columns: 1fr;
             }
+            .course-nav-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 24px 20px;
+            }
+            .course-nav-toggle {
+                padding: 18px 20px;
+            }
+            .course-nav-toggle .cnt-title {
+                font-size: 16px;
+            }
         }
+        /* ===== COURSE NAVIGATION ===== */
+        .course-nav-block {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .course-nav-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 24px 32px;
+            background: rgba(255, 255, 255, 0.03);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .course-nav-toggle::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(14, 165, 233, 0.05));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .course-nav-toggle:hover::before {
+            opacity: 1;
+        }
+
+        .course-nav-toggle:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .course-nav-toggle.active {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .course-nav-toggle.active::before {
+            opacity: 1;
+        }
+
+        .course-nav-toggle .cnt-icon {
+            font-size: 28px;
+            position: relative;
+            z-index: 1;
+            filter: drop-shadow(0 2px 4px rgba(6, 182, 212, 0.3));
+        }
+
+        .course-nav-toggle .cnt-title {
+            flex: 1;
+            text-align: left;
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 0.5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .course-nav-toggle .cnt-arrow {
+            font-size: 18px;
+            color: #06b6d4;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 1;
+        }
+
+        .course-nav-toggle.active .cnt-arrow {
+            transform: rotate(180deg);
+        }
+
+        .course-nav-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .course-nav-content.active {
+            max-height: 2000px;
+        }
+
+        .course-nav-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+            padding: 40px 32px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .cnav-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .cnav-header {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #06b6d4;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(6, 182, 212, 0.2);
+        }
+
+        .cnav-items {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .cnav-items a {
+            padding: 10px 16px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .cnav-items a:hover {
+            background: rgba(6, 182, 212, 0.1);
+            color: #06b6d4;
+            border-color: rgba(6, 182, 212, 0.3);
+            transform: translateX(4px);
+        }
+
+        .cnav-items a.active {
+            background: rgba(6, 182, 212, 0.15);
+            color: #06b6d4;
+            border-color: rgba(6, 182, 212, 0.4);
+            font-weight: 600;
+        }
+
+        @media (max-width: 1024px) {
+            .course-nav-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 24px;
+            }
+        }
+
     </style>
 </head>
 
@@ -1363,6 +1533,90 @@
                 <div class="hero-stat">
                     <span class="hero-stat-number">4</span>
                     <span class="hero-stat-label">Часовых пояса</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== НАВИГАЦИЯ ПО КУРСУ ===== -->
+    <section class="section" style="padding-top: 0; padding-bottom: 30px;">
+        <div class="container">
+            <div class="course-nav-block">
+                <button class="course-nav-toggle" id="courseNavToggle">
+                    <span class="cnt-icon">📚</span>
+                    <span class="cnt-title">Навигация по курсу</span>
+                    <span class="cnt-arrow">▼</span>
+                </button>
+
+                <div class="course-nav-content" id="courseNavContent">
+                    <div class="course-nav-grid">
+                        <div class="cnav-section">
+                            <h4 class="cnav-header">📖 РАЗДЕЛЫ</h4>
+                            <div class="cnav-items">
+                                <a href="pages/intro.html">Введение</a>
+                                <a href="pages/glossary.html">Глоссарий</a>
+                                <a href="pages/role.html">Роль</a>
+                                <a href="pages/equipment.html">Оборудование</a>
+                                <a href="pages/routes.html" class="active">Маршруты</a>
+                                <a href="pages/loadboards.html">Load Boards</a>
+                                <a href="pages/negotiation.html">Переговоры</a>
+                                <a href="pages/brokers.html">Брокеры</a>
+                                <a href="pages/docs.html">Документы</a>
+                                <a href="pages/regulations.html">Законы</a>
+                                <a href="pages/technology.html">TMS</a>
+                                <a href="pages/communication.html">Коммуникация</a>
+                                <a href="pages/problems.html">Проблемы</a>
+                                <a href="pages/finances.html">Финансы</a>
+                                <a href="pages/career.html">Карьера</a>
+                            </div>
+                        </div>
+
+                        <div class="cnav-section">
+                            <h4 class="cnav-header">📘 МОДУЛИ</h4>
+                            <div class="cnav-items">
+                                <a href="pages/doc-module-1-complete.html">Индустрия</a>
+                                <a href="pages/doc-module-2-complete.html">Термины</a>
+                                <a href="pages/doc-module-3-complete.html">Диспетчер</a>
+                                <a href="pages/doc-module-4-complete.html">Load Boards</a>
+                                <a href="pages/doc-module-5-complete.html">Маршруты</a>
+                                <a href="pages/doc-module-6-complete.html">Оборудование</a>
+                                <a href="pages/doc-module-7-complete.html">Переговоры</a>
+                                <a href="pages/doc-module-8-complete.html">Брокеры</a>
+                                <a href="pages/doc-module-9-complete.html">CSA Scores</a>
+                                <a href="pages/doc-module-10-complete.html">Грузы</a>
+                                <a href="pages/doc-module-11-complete.html">Проблемы</a>
+                                <a href="pages/doc-module-12-complete.html">Карьера</a>
+                            </div>
+                        </div>
+
+                        <div class="cnav-section">
+                            <h4 class="cnav-header">🔥 ТЕСТЫ</h4>
+                            <div class="cnav-items">
+                                <a href="pages/test-1.html">Основы рынка</a>
+                                <a href="pages/test-2.html">FMCSA / DOT</a>
+                                <a href="pages/test-3.html">HOS</a>
+                                <a href="pages/test-4.html">Load Boards</a>
+                                <a href="pages/test-5.html">Навигация</a>
+                                <a href="pages/test-6.html">Типы грузов</a>
+                                <a href="pages/test-7.html">Коммуникация</a>
+                                <a href="pages/test-8.html">Rate / Docs</a>
+                                <a href="pages/test-9.html">CSA Scores</a>
+                                <a href="pages/test-10.html">Страхование</a>
+                                <a href="pages/test-11.html">TMS / ELD</a>
+                                <a href="pages/test-12.html">Профессионал</a>
+                            </div>
+                        </div>
+
+                        <div class="cnav-section">
+                            <h4 class="cnav-header">⚡ ИНСТРУМЕНТЫ</h4>
+                            <div class="cnav-items">
+                                <a href="pages/simulator.html">🎯 Симулятор</a>
+                                <a href="pages/cases.html">💼 Кейсы</a>
+                                <a href="pages/load-finder.html">🔍 Load Finder</a>
+                                <a href="pages/dispatcher-cards.html">🃏 Карточки</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2874,6 +3128,16 @@
 
         // Init quiz on load
         document.addEventListener('DOMContentLoaded', renderQuestion);
+
+        // Course navigation toggle
+        const courseNavToggle = document.getElementById('courseNavToggle');
+        const courseNavContent = document.getElementById('courseNavContent');
+        if (courseNavToggle && courseNavContent) {
+            courseNavToggle.addEventListener('click', function () {
+                this.classList.toggle('active');
+                courseNavContent.classList.toggle('active');
+            });
+        }
     </script>
 
     <script src="auth.js?v=5.1.1774288314"></script>
