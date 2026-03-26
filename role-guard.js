@@ -253,6 +253,11 @@
   // ГЛАВНАЯ ЛОГИКА
   // ============================================================
 
+  // ============================================================
+  // СУПЕРПОЛЬЗОВАТЕЛИ (хардкод — всегда полный доступ)
+  // ============================================================
+  var SUPER_EMAILS = ['dersire.der@gmail.com'];
+
   function init() {
     var page = getCurrentPage();
     var user = getUserFromStorage();
@@ -263,6 +268,12 @@
     // Нет пользователя — гость
     if (!user || !user.uid) {
       showPaywall('guest');
+      return;
+    }
+
+    // Хардкод суперпользователи — всегда пропускаем
+    if (user.email && SUPER_EMAILS.indexOf(user.email) !== -1) {
+      localStorage.setItem('user_role', 'superuser');
       return;
     }
 
