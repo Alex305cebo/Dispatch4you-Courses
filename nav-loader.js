@@ -121,7 +121,7 @@
 .site-footer{position:relative;z-index:1;margin-top:80px}
 .site-footer .footer-gradient-line{height:1px;background:linear-gradient(90deg,transparent 0%,rgba(6,182,212,.6) 30%,rgba(249,115,22,.5) 70%,transparent 100%)}
 .site-footer .footer-body{background:transparent;padding:72px 0 0}
-.site-footer .footer-inner{max-width:1140px;margin:0 auto;padding:0 40px}
+.site-footer .footer-inner{max-width:1000px;margin:0 auto;padding:0 40px}
 .site-footer .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:56px;padding-bottom:56px;border-bottom:1px solid rgba(255,255,255,.05)}
 .site-footer .footer-brand-desc{font-size:14px;color:#475569;line-height:1.75;margin-bottom:28px;max-width:240px}
 .site-footer .footer-email-btn{display:inline-flex;align-items:center;gap:10px;padding:11px 20px;background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.18);border-radius:12px;text-decoration:none;transition:all .3s ease}
