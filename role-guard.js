@@ -220,33 +220,31 @@
   // ============================================================
 
   function loadRoleFromFirestore(uid) {
-    // Используем Firebase SDK который уже загружен через firebase-auth-init.js
-    return import('https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js')
-      .then(function (mod) {
-        var getFirestore = mod.getFirestore;
-        var doc = mod.doc;
-        var getDoc = mod.getDoc;
-
-        var apps = null;
-        try {
-          // firebase-auth-init.js уже инициализировал app
-          var firebaseApp = window._fbAuth && window._fbAuth.app;
-          if (!firebaseApp) return 'registered'; // fallback
-          var db = getFirestore(firebaseApp);
-          return getDoc(doc(db, 'users', uid)).then(function (snap) {
-            if (snap.exists()) {
-              var role = snap.data().accessRole || 'registered';
-              localStorage.setItem('user_role', role);
-              return role;
-            }
-            return 'registered';
+    return import('https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js')
+      .then(function (appMod) {
+        return import('https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js')
+          .then(function (fsMod) {
+            var app = appMod.getApps().length ? appMod.getApps()[0] : appMod.initializeApp({
+              apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
+              authDomain: "dispatch4you-80e0f.firebaseapp.com",
+              projectId: "dispatch4you-80e0f",
+              storageBucket: "dispatch4you-80e0f.appspot.com",
+              messagingSenderId: "349235354473",
+              appId: "1:349235354473:web:488aeb29211b02bb153bf8"
+            });
+            var db = fsMod.getFirestore(app);
+            return fsMod.getDoc(fsMod.doc(db, 'users', uid)).then(function (snap) {
+              if (snap.exists()) {
+                var role = snap.data().accessRole || 'registered';
+                localStorage.setItem('user_role', role);
+                return role;
+              }
+              return 'registered';
+            });
           });
-        } catch (e) {
-          console.warn('RoleGuard: Firestore error', e);
-          return 'registered';
-        }
       })
-      .catch(function () {
+      .catch(function (e) {
+        console.warn('RoleGuard: Firestore error', e);
         return 'registered';
       });
   }
