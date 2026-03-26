@@ -1,0 +1,1706 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль 5: Переговоры с брокерами | DispatcherPro</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #f093fb;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary: #b8c5d6;
+            --text-muted: #8892aa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.1);
+            --audio-primary: #ff6b6b;
+            --audio-secondary: #4ecdc4;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
+            padding-top: 80px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1), transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(240, 147, 251, 0.1), transparent 50%);
+            animation: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 999;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 0;
+            transition: all 0.3s ease;
+            height: auto;
+            min-height: 60px;
+        }
+
+        .nav-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: translateY(-2px);
+        }
+
+        .logo-icon {
+            font-size: 16px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: clamp(11px, 1.1vw, 14px);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* Dropdown Navigation */
+        .nav-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .nav-dropdown .nav-link {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-dropdown .nav-link::before {
+            content: 'РІвЂ“С';
+            font-size: 8px;
+            transition: transform 0.3s ease;
+            margin-left: 4px;
+        }
+
+        .nav-dropdown .nav-link::after {
+            display: none;
+        }
+
+        .nav-dropdown:hover .nav-link::before {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 200px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 8px;
+            margin-top: 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            z-index: 1000;
+        }
+
+        .nav-dropdown:hover .dropdown-content {
+            display: flex;
+            flex-direction: column;
+            animation: fadeInDown 0.3s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-content a {
+            display: block;
+            padding: 10px 14px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .dropdown-content a:hover {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--text-primary);
+            transform: translateX(2px);
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-login {
+            padding: 6px 16px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .btn-login:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-signup {
+            padding: 6px 16px;
+            text-decoration: none;
+            color: white;
+            font-weight: 500;
+            font-size: 12px;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .btn-signup:hover {
+            background: rgba(99, 102, 241, 0.25);
+            border-color: rgba(99, 102, 241, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .mobile-menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 10px 19px;
+            z-index: 1001;
+            transition: all 0.3s ease;
+            margin-right: 0;
+        }
+
+        .mobile-menu-toggle:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .mobile-menu-toggle span {
+            width: 38px;
+            height: 2px;
+            background: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .mobile-menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -6px);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 85%;
+            max-width: 380px;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 100px 20px 32px;
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .mobile-menu.active {
+            right: 0;
+        }
+
+        .mobile-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+
+        .mobile-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .mobile-nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin-bottom: 32px;
+            width: 100%;
+        }
+
+        .mobile-nav-links .nav-link {
+            padding: 14px 16px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-size: 15px;
+        }
+
+        .mobile-nav-links .nav-link:hover {
+            background: rgba(99, 102, 241, 0.15);
+            transform: translateX(4px);
+        }
+
+        /* Mobile nav sections */
+        .mobile-nav-section {
+            margin: 0;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 0;
+            padding: 12px 0;
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            width: 100%;
+        }
+
+        .mobile-section-title {
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 4px;
+        }
+
+        .nav-link-sub {
+            padding: 10px 16px 10px 36px !important;
+            font-size: 14px;
+            position: relative;
+            margin: 0 !important;
+            border-radius: 0;
+            width: 100%;
+            display: block;
+        }
+
+        .nav-link-sub::before {
+            content: 'РІвЂ вЂ™';
+            position: absolute;
+            left: 16px;
+            color: var(--primary);
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        .nav-link-sub:hover::before {
+            opacity: 1;
+            transform: translateX(2px);
+        }
+
+        .mobile-nav-links>.nav-link:not(.nav-link-sub) {
+            font-weight: 600;
+            font-size: 15px;
+            margin: 0;
+            padding: 14px 16px;
+            width: 100%;
+            display: block;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .mobile-nav-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .mobile-menu-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            margin: 20px 0;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: flex;
+            }
+
+            .nav-links,
+            .nav-actions {
+                display: none;
+            }
+        }
+
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .content-block {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            gap: 20px;
+        }
+
+        .block-title {
+            flex: 1;
+            font-size: 1.8rem;
+            color: var(--primary);
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .audio-container {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .audio-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--audio-primary), var(--audio-secondary));
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .audio-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.5);
+        }
+
+        .audio-btn:active {
+            transform: scale(0.95);
+        }
+
+        .audio-btn .play-icon {
+            font-size: 24px;
+            color: white;
+            margin-left: 3px;
+        }
+
+        .audio-btn .pause-icon {
+            font-size: 20px;
+            color: white;
+            display: none;
+        }
+
+        .audio-btn.playing .play-icon {
+            display: none;
+        }
+
+        .audio-btn.playing .pause-icon {
+            display: block;
+        }
+
+        .audio-btn.playing {
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.7), 0 0 0 10px rgba(255, 107, 107, 0.1);
+            }
+
+            100% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+        }
+
+        .progress-ring {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            transform: rotate(-90deg);
+            z-index: 1;
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 5;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: var(--audio-primary);
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-dasharray: 201.06;
+            stroke-dashoffset: 201.06;
+            transition: stroke-dashoffset 0.1s ease;
+            filter: drop-shadow(0 0 4px rgba(255, 107, 107, 0.5));
+        }
+
+        .progress-ring-interactive {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            cursor: pointer;
+            z-index: 5;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        .progress-ring-interactive.seekable {
+            pointer-events: auto;
+            background: radial-gradient(circle, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.01) 60%, rgba(255, 255, 255, 0.01) 100%);
+        }
+
+        .audio-duration {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .audio-container:hover .audio-duration,
+        .audio-container.playing .audio-duration {
+            opacity: 1;
+        }
+
+        .mobile-progress-bar {
+            display: none;
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .mobile-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--audio-primary), var(--audio-secondary));
+            border-radius: 2px;
+            transition: width 0.1s ease;
+        }
+
+        .block-content {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .block-content h3 {
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            margin: 25px 0 15px 0;
+        }
+
+        .block-content h4 {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            margin: 20px 0 10px 0;
+        }
+
+        .block-content ul,
+        .block-content ol {
+            margin: 15px 0 15px 25px;
+        }
+
+        .block-content li {
+            margin-bottom: 8px;
+        }
+
+        .block-content strong {
+            color: var(--text-primary);
+        }
+
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .progress-info {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 10px auto;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .alert {
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            color: var(--text-primary);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: var(--warning);
+            color: var(--text-primary);
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 90px;
+            }
+
+            .header {
+                padding: 15px 0;
+                min-height: 70px;
+            }
+
+            .main {
+                padding: 20px 15px;
+            }
+
+            .content-block {
+                padding: 20px 15px;
+            }
+
+            .block-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .block-title {
+                font-size: 1.4rem;
+            }
+
+            .lesson-nav {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .nav-btn {
+                width: 100%;
+            }
+        }
+
+        /* Footer Styles */
+        .footer {
+            padding: 80px 0 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 80px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 32px;
+            margin-bottom: 48px;
+        }
+
+        .footer-section h4 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .footer-section p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .footer-section a {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 32px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <nav class="navbar">
+            <div class="container">
+                <div class="nav-content">
+                    <a href="../index.html" class="logo">
+                        <span class="logo-icon">🎓</span>
+                        <span class="logo-text">Курсы Диспетчера</span>
+                    </a>
+                    <div class="nav-links">
+                        <a href="../index.html" class="nav-link" data-short="Главная">Главная</a>
+                        <div class="nav-dropdown">
+                            <a href="../courses.html" class="nav-link" data-short="Курсы">Курсы</a>
+                            <div class="dropdown-content">
+                                <a href="documentation.html"
+                                    style="background: rgba(99,102,241,0.15); border-left: 3px solid #6366f1; font-weight: 700; color: #ffffff;">🎓
+                                    База знаний</a>
+                                <a href="../course.html">📖 Обзор курса</a>
+                                <a href="modules-index.html">📚 12 Модулей обучения</a>
+                                <a href="simulator.html">🎯 Симулятор переговоров</a>
+                                <a href="calls.html">📞 Примеры звонков</a>
+                                <a href="cases.html">💼 Практические кейсы</a>
+                                <a href="testing.html">✍️ Тестирование</a>
+                            </div>
+                        </div>
+                        <div class="nav-dropdown">
+                            <span class="nav-link" data-short="Инстр.">Инструменты</span>
+                            <div class="dropdown-content">
+                                <a href="analytics.html">📊 Статистика рынка</a>
+                                <a href="load-finder.html">🔍 Load Finder</a>
+                                <a href="dispatcher-cards.html">🃏 Dispatcher Cards</a>
+                                <a href="simulator.html">🎯 Dispatch Simulator</a>
+                            </div>
+                        </div>
+                        <div class="nav-dropdown">
+                            <span class="nav-link" data-short="Инфо">Информация</span>
+                            <div class="dropdown-content">
+                                <a href="../about.html">👥 О нас</a>
+                                <a href="../career.html">💼 Карьера</a>
+                                <a href="../faq.html">❓ FAQ</a>
+                                <a href="../help.html">🆘 Помощь</a>
+                                <a href="../contacts.html">📬 Контакты</a>
+                            </div>
+                        </div>
+                        <a href="../pricing.html" class="nav-link" data-short="Тарифы">Тарифы</a>
+                        <a href="../dashboard.html" class="nav-link" id="dashboardLink" style="display: none;"
+                            data-short="Кабинет">Личный кабинет</a>
+                    </div>
+                    <div class="nav-actions">
+                        <a href="../login.html" class="btn-login">Войти</a>
+                        <a href="../register.html" class="btn-signup">Регистрация</a>
+                    </div>
+                    <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                        <span></span><span></span><span></span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+        <div class="mobile-menu" id="mobileMenu">
+            <div class="mobile-nav-links">
+                <div class="mobile-nav-actions">
+                    <a href="../login.html" class="btn-login">Войти</a>
+                    <a href="../register.html" class="btn-signup">Регистрация</a>
+                </div>
+                <div class="mobile-menu-divider"></div>
+                <a href="../index.html" class="nav-link">🏠 Главная</a>
+                <a href="../dashboard.html" class="nav-link" id="dashboardLinkMobile" style="display: none;">👤 Личный
+                    кабинет</a>
+                <div class="mobile-nav-section">
+                    <div class="mobile-section-title">📚 КУРСЫ</div>
+                    <a href="documentation.html" class="nav-link nav-link-sub"
+                        style="color:#ffffff;border-left:3px solid #6366f1;padding-left:14px;background:rgba(99,102,241,0.1);border-radius:8px;margin-bottom:4px;">🎓
+                        База знаний</a>
+                    <a href="../courses.html" class="nav-link nav-link-sub">Все курсы</a>
+                    <a href="../course.html" class="nav-link nav-link-sub">📖 Обзор курса</a>
+                    <a href="modules-index.html" class="nav-link nav-link-sub">📚 12 Модулей обучения</a>
+                    <a href="simulator.html" class="nav-link nav-link-sub">🎯 Симулятор переговоров</a>
+                    <a href="calls.html" class="nav-link nav-link-sub">📞 Примеры звонков</a>
+                    <a href="cases.html" class="nav-link nav-link-sub">💼 Практические кейсы</a>
+                    <a href="testing.html" class="nav-link nav-link-sub">✍️ Тестирование</a>
+                </div>
+                <div class="mobile-nav-section">
+                    <div class="mobile-section-title">🛠️ ИНСТРУМЕНТЫ</div>
+                    <a href="analytics.html" class="nav-link nav-link-sub">📊 Статистика рынка</a>
+                    <a href="load-finder.html" class="nav-link nav-link-sub">🔍 Load Finder</a>
+                    <a href="dispatcher-cards.html" class="nav-link nav-link-sub">🃏 Dispatcher Cards</a>
+                    <a href="simulator.html" class="nav-link nav-link-sub">🎯 Dispatch Simulator</a>
+                </div>
+                <div class="mobile-nav-section">
+                    <div class="mobile-section-title">ℹ️ ИНФОРМАЦИЯ</div>
+                    <a href="../about.html" class="nav-link nav-link-sub">👥 О нас</a>
+                    <a href="../career.html" class="nav-link nav-link-sub">💼 Карьера</a>
+                    <a href="../faq.html" class="nav-link nav-link-sub">❓ FAQ</a>
+                    <a href="../help.html" class="nav-link nav-link-sub">🆘 Помощь</a>
+                    <a href="../contacts.html" class="nav-link nav-link-sub">📬 Контакты</a>
+                </div>
+                <a href="../pricing.html" class="nav-link">💰 Тарифы</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+
+        <!-- Block 1: Р С›РЎРѓР Р…Р С•Р Р†РЎвЂ№ Р С”Р С•Р СР СРЎС“Р Р…Р СР С”Р В°РЎвЂ Р СР С -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р С›РЎРѓР Р…Р С•Р Р†РЎвЂ№ Р С”Р С•Р СР СРЎС“Р Р…Р СР С”Р В°РЎвЂ Р СР С РЎРѓ
+                    Р В±РЎР‚Р С•Р С”Р ВµРЎР‚Р В°Р СР С</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio1')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio1')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio1')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р В­РЎвЂћРЎвЂћР ВµР С”РЎвЂљР СР Р†Р Р…Р В°РЎРЏ Р С”Р С•Р СР СРЎС“Р Р…Р СР С”Р В°РЎвЂ Р СРЎРЏ РЎРѓ
+                    Р В±РЎР‚Р С•Р С”Р ВµРЎР‚Р В°Р СР С РІР‚вЂќ Р С”Р В»РЎР‹РЎвЂЎР ВµР Р†Р С•Р в„– Р Р…Р В°Р Р†РЎвЂ№Р С”
+                    РЎС“РЎРѓР С—Р ВµРЎв‚¬Р Р…Р С•Р С–Р С• Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р В°. Р С›РЎвЂљ
+                    Р С”Р В°РЎвЂЎР ВµРЎРѓРЎвЂљР Р†Р В° Р С•Р В±РЎвЂ°Р ВµР Р…Р СРЎРЏ
+                    Р В·Р В°Р Р†Р СРЎРѓРЎРЏРЎвЂљ РЎРѓРЎвЂљР В°Р Р†Р С”Р С, РЎвЂЎР В°РЎРѓРЎвЂљР С•РЎвЂљР В°
+                    Р С–РЎР‚РЎС“Р В·Р С•Р Р† Р С Р ТР С•Р В»Р С–Р С•РЎРѓРЎР‚Р С•РЎвЂЎР Р…РЎвЂ№Р Вµ
+                    Р С•РЎвЂљР Р…Р С•РЎв‚¬Р ВµР Р…Р СРЎРЏ.</p>
+
+                <h3>Р СџР ВµРЎР‚Р Р†РЎвЂ№Р в„– Р С”Р С•Р Р…РЎвЂљР В°Р С”РЎвЂљ РЎРѓ Р В±РЎР‚Р С•Р С”Р ВµРЎР‚Р С•Р С</h3>
+                <ul>
+                    <li><strong>Р СџРЎР‚Р С•РЎвЂћР ВµРЎРѓРЎРѓР СР С•Р Р…Р В°Р В»РЎРЉР Р…Р С•Р Вµ
+                            Р С—РЎР‚Р ВµР ТРЎРѓРЎвЂљР В°Р Р†Р В»Р ВµР Р…Р СР Вµ</strong> РІР‚вЂќ
+                        Р Р…Р В°Р В·Р С•Р Р†Р СРЎвЂљР Вµ Р С”Р С•Р СР С—Р В°Р Р…Р СРЎР‹, MC#, РЎРѓР Р†Р С•Р Вµ
+                        Р СР СРЎРЏ</li>
+                    <li><strong>Р В§Р ВµРЎвЂљР С”Р В°РЎРЏ РЎвЂ Р ВµР В»РЎРЉ Р В·Р Р†Р С•Р Р…Р С”Р В°</strong> РІР‚вЂќ
+                        РЎС“Р С”Р В°Р В¶Р СРЎвЂљР Вµ Р С–РЎР‚РЎС“Р В·, Р Р…Р В° Р С”Р С•РЎвЂљР С•РЎР‚РЎвЂ№Р в„–
+                        Р В·Р Р†Р С•Р Р…Р СРЎвЂљР Вµ</li>
+                    <li><strong>Р вЂњР С•РЎвЂљР С•Р Р†Р Р…Р С•РЎРѓРЎвЂљРЎРЉ Р С”
+                            Р Р†Р С•Р С—РЎР‚Р С•РЎРѓР В°Р С</strong> РІР‚вЂќ Р СР СР ВµР в„–РЎвЂљР Вµ Р С—Р С•Р Т
+                        РЎР‚РЎС“Р С”Р С•Р в„– Р Р†РЎРѓР Вµ Р ТР В°Р Р…Р Р…РЎвЂ№Р Вµ Р С• Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р Вµ
+                        Р С Р С•Р В±Р С•РЎР‚РЎС“Р ТР С•Р Р†Р В°Р Р…Р СР С
+                    </li>
+                </ul>
+
+                <h3>Р СћР С•Р Р… Р С Р СР В°Р Р…Р ВµРЎР‚Р В° Р С•Р В±РЎвЂ°Р ВµР Р…Р СРЎРЏ</h3>
+                <ul>
+                    <li>Р Р€Р Р†Р ВµРЎР‚Р ВµР Р…Р Р…РЎвЂ№Р в„–, Р Р…Р С• Р Р…Р Вµ
+                        Р В°Р С–РЎР‚Р ВµРЎРѓРЎРѓР СР Р†Р Р…РЎвЂ№Р в„–</li>
+                    <li>Р вЂќРЎР‚РЎС“Р В¶Р ВµР В»РЎР‹Р В±Р Р…РЎвЂ№Р в„–, Р Р…Р С•
+                        Р С—РЎР‚Р С•РЎвЂћР ВµРЎРѓРЎРѓР СР С•Р Р…Р В°Р В»РЎРЉР Р…РЎвЂ№Р в„–</li>
+                    <li>Р вЂ™Р Р…Р СР СР В°РЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№Р в„– Р С” Р ТР ВµРЎвЂљР В°Р В»РЎРЏР С</li>
+                    <li>Р вЂњР С•РЎвЂљР С•Р Р†РЎвЂ№Р в„– Р С” Р С”Р С•Р СР С—РЎР‚Р С•Р СР СРЎРѓРЎРѓРЎС“</li>
+                </ul>
+
+                <div class="alert alert-info">
+                    <strong>СЂСџвЂ™РЋ Р РЋР С•Р Р†Р ВµРЎвЂљ:</strong> Р вЂ”Р В°Р С—Р СРЎРѓРЎвЂ№Р Р†Р В°Р в„–РЎвЂљР Вµ
+                    Р СР СР ВµР Р…Р В° Р В±РЎР‚Р С•Р С”Р ВµРЎР‚Р С•Р Р† Р С Р ТР ВµРЎвЂљР В°Р В»Р С
+                    РЎР‚Р В°Р В·Р С–Р С•Р Р†Р С•РЎР‚Р С•Р Р†. Р В­РЎвЂљР С• Р С—Р С•Р СР С•Р В¶Р ВµРЎвЂљ
+                    РЎРѓРЎвЂљРЎР‚Р С•Р СРЎвЂљРЎРЉ
+                    Р ТР С•Р В»Р С–Р С•РЎРѓРЎР‚Р С•РЎвЂЎР Р…РЎвЂ№Р Вµ Р С•РЎвЂљР Р…Р С•РЎв‚¬Р ВµР Р…Р СРЎРЏ.
+                </div>
+            </div>
+        </div>
+
+        <!-- Block 2: Р СћР ВµРЎвЂ¦Р Р…Р СР С”Р С Р С—Р ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚Р С•Р Р† -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р СћР ВµРЎвЂ¦Р Р…Р СР С”Р С Р С—Р ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚Р С•Р Р† Р С•
+                    РЎРѓРЎвЂљР В°Р Р†Р С”Р Вµ</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio2')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio2')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio2')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р СџР ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚РЎвЂ№ Р С• РЎРѓРЎвЂљР В°Р Р†Р С”Р Вµ РІР‚вЂќ РЎРЊРЎвЂљР С•
+                    Р СРЎРѓР С”РЎС“РЎРѓРЎРѓРЎвЂљР Р†Р С• Р В±Р В°Р В»Р В°Р Р…РЎРѓР В° Р СР ВµР В¶Р ТРЎС“
+                    Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉРЎР‹ Р С РЎР‚Р ВµР В°Р В»Р СРЎРѓРЎвЂљР СРЎвЂЎР Р…Р С•РЎРѓРЎвЂљРЎРЉРЎР‹.
+                    Р вЂ™Р В°Р В¶Р Р…Р С• Р В·Р Р…Р В°РЎвЂљРЎРЉ РЎР‚РЎвЂ№Р Р…Р С•Р С” Р С
+                    РЎС“Р СР ВµРЎвЂљРЎРЉ Р В°РЎР‚Р С–РЎС“Р СР ВµР Р…РЎвЂљР СРЎР‚Р С•Р Р†Р В°РЎвЂљРЎРЉ РЎРѓР Р†Р С•РЎР‹
+                    Р С—Р С•Р В·Р СРЎвЂ Р СРЎР‹.</p>
+
+                <h3>Р СџР С•Р ТР С–Р С•РЎвЂљР С•Р Р†Р С”Р В° Р С” Р С—Р ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚Р В°Р С</h3>
+                <ul>
+                    <li><strong>Р ВР В·РЎС“РЎвЂЎР СРЎвЂљР Вµ РЎР‚РЎвЂ№Р Р…Р С•Р С”</strong> РІР‚вЂќ
+                        Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚РЎРЉРЎвЂљР Вµ РЎРѓРЎР‚Р ВµР ТР Р…Р СР Вµ РЎРѓРЎвЂљР В°Р Р†Р С”Р С
+                        Р Р…Р В° Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР Вµ</li>
+                    <li><strong>Р вЂ”Р Р…Р В°Р в„–РЎвЂљР Вµ РЎРѓР Р†Р С•Р С РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТРЎвЂ№</strong>
+                        РІР‚вЂќ РЎР‚Р В°РЎРѓРЎРѓРЎвЂЎР СРЎвЂљР В°Р в„–РЎвЂљР Вµ Р СР СР Р…Р СР СР В°Р В»РЎРЉР Р…РЎС“РЎР‹
+                        Р С—РЎР‚Р СР ВµР СР В»Р ВµР СРЎС“РЎР‹ РЎРѓРЎвЂљР В°Р Р†Р С”РЎС“</li>
+                    <li><strong>Р С›Р С—РЎР‚Р ВµР ТР ВµР В»Р СРЎвЂљР Вµ РЎвЂ Р ВµР В»Р ВµР Р†РЎС“РЎР‹
+                            РЎРѓРЎвЂљР В°Р Р†Р С”РЎС“</strong> РІР‚вЂќ Р Р…Р В° 10-15% Р Р†РЎвЂ№РЎв‚¬Р Вµ
+                        Р СР СР Р…Р СР СРЎС“Р СР В°</li>
+                </ul>
+
+                <h3>Р РЋРЎвЂљРЎР‚Р В°РЎвЂљР ВµР С–Р СР С Р С—Р ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚Р С•Р Р†</h3>
+                <h4>СЂСџР‹Р‡ Р Р‡Р С”Р С•РЎР‚Р ВµР Р…Р СР Вµ (Anchoring)</h4>
+                <p>Р СџР ВµРЎР‚Р Р†РЎвЂ№Р С Р Р…Р В°Р В·РЎвЂ№Р Р†Р В°Р в„–РЎвЂљР Вµ РЎРѓР Р†Р С•РЎР‹
+                    Р В¶Р ВµР В»Р В°Р ВµР СРЎС“РЎР‹ РЎРѓРЎвЂљР В°Р Р†Р С”РЎС“. Р В­РЎвЂљР С•
+                    РЎРѓР С•Р В·Р ТР В°Р ВµРЎвЂљ "РЎРЏР С”Р С•РЎР‚РЎРЉ" Р ТР В»РЎРЏ
+                    Р С—Р ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚Р С•Р Р†.</p>
+                <p><em>Р СџРЎР‚Р СР СР ВµРЎР‚:</em> "We're looking for $2,800 for this load"</p>
+
+                <h4>СЂСџвЂ™В° Р С›Р В±Р С•РЎРѓР Р…Р С•Р Р†Р В°Р Р…Р СР Вµ РЎРѓРЎвЂљР В°Р Р†Р С”Р С</h4>
+                <ul>
+                    <li>Р В Р В°РЎРѓРЎРѓРЎвЂљР С•РЎРЏР Р…Р СР Вµ Р С Р Р†РЎР‚Р ВµР СРЎРЏ Р Р† Р С—РЎС“РЎвЂљР С</li>
+                    <li>Р СћР СР С— Р С–РЎР‚РЎС“Р В·Р В° Р С Р С•Р В±Р С•РЎР‚РЎС“Р ТР С•Р Р†Р В°Р Р…Р СРЎРЏ</li>
+                    <li>Р РЋРЎР‚Р С•РЎвЂЎР Р…Р С•РЎРѓРЎвЂљРЎРЉ Р ТР С•РЎРѓРЎвЂљР В°Р Р†Р С”Р С</li>
+                    <li>Р СћР ВµР С”РЎС“РЎвЂ°Р СР Вµ РЎР‚РЎвЂ№Р Р…Р С•РЎвЂЎР Р…РЎвЂ№Р Вµ РЎС“РЎРѓР В»Р С•Р Р†Р СРЎРЏ
+                    </li>
+                </ul>
+
+                <h4>СЂСџВ¤Сњ Р вЂ™РЎРѓРЎвЂљРЎР‚Р ВµРЎвЂЎР Р…Р С•Р Вµ Р С—РЎР‚Р ВµР ТР В»Р С•Р В¶Р ВµР Р…Р СР Вµ</h4>
+                <p>Р вЂўРЎРѓР В»Р С Р В±РЎР‚Р С•Р С”Р ВµРЎР‚ Р С—РЎР‚Р ВµР ТР В»Р В°Р С–Р В°Р ВµРЎвЂљ
+                    Р Р…Р СР В·Р С”РЎС“РЎР‹ РЎРѓРЎвЂљР В°Р Р†Р С”РЎС“, Р Р…Р Вµ
+                    Р С•РЎвЂљР С”Р В°Р В·РЎвЂ№Р Р†Р В°Р в„–РЎвЂљР ВµРЎРѓРЎРЉ РЎРѓРЎР‚Р В°Р В·РЎС“.
+                    Р РЋР ТР ВµР В»Р В°Р в„–РЎвЂљР Вµ Р Р†РЎРѓРЎвЂљРЎР‚Р ВµРЎвЂЎР Р…Р С•Р Вµ
+                    Р С—РЎР‚Р ВµР ТР В»Р С•Р В¶Р ВµР Р…Р СР Вµ.</p>
+                <p><em>Р СџРЎР‚Р СР СР ВµРЎР‚:</em> "I understand your budget, but can we meet in the middle at $2,600?"
+                </p>
+
+                <div class="alert alert-warning">
+                    <strong>РІС™В РїСРЏ Р вЂ™Р В°Р В¶Р Р…Р С•:</strong> Р СњР СР С”Р С•Р С–Р ТР В° Р Р…Р Вµ
+                    РЎРѓР С•Р С–Р В»Р В°РЎв‚¬Р В°Р в„–РЎвЂљР ВµРЎРѓРЎРЉ Р Р…Р В° РЎРѓРЎвЂљР В°Р Р†Р С”РЎС“
+                    Р Р…Р СР В¶Р Вµ Р Р†Р В°РЎв‚¬Р СРЎвЂ¦ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТР С•Р Р†. Р вЂєРЎС“РЎвЂЎРЎв‚¬Р Вµ
+                    Р С•РЎвЂљР С”Р В°Р В·Р В°РЎвЂљРЎРЉРЎРѓРЎРЏ
+                    Р С•РЎвЂљ Р С–РЎР‚РЎС“Р В·Р В°.
+                </div>
+            </div>
+        </div>
+
+        <!-- Block 3: Р вЂќР С•Р В»Р С–Р С•РЎРѓРЎР‚Р С•РЎвЂЎР Р…РЎвЂ№Р Вµ Р С•РЎвЂљР Р…Р С•РЎв‚¬Р ВµР Р…Р СРЎРЏ -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р СџР С•РЎРѓРЎвЂљРЎР‚Р С•Р ВµР Р…Р СР Вµ
+                    Р ТР С•Р В»Р С–Р С•РЎРѓРЎР‚Р С•РЎвЂЎР Р…РЎвЂ№РЎвЂ¦ Р С•РЎвЂљР Р…Р С•РЎв‚¬Р ВµР Р…Р СР в„–</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio3')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio3')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio3')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р СџР С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р Р…РЎвЂ№Р Вµ Р В±РЎР‚Р С•Р С”Р ВµРЎР‚РЎвЂ№ РІР‚вЂќ
+                    Р С•РЎРѓР Р…Р С•Р Р†Р В° РЎРѓРЎвЂљР В°Р В±Р СР В»РЎРЉР Р…Р С•Р С–Р С• Р В±Р СР В·Р Р…Р ВµРЎРѓР В°.
+                    Р С›Р Р…Р С Р ТР В°РЎР‹РЎвЂљ Р В»РЎС“РЎвЂЎРЎв‚¬Р СР Вµ РЎРѓРЎвЂљР В°Р Р†Р С”Р С,
+                    Р С—РЎР‚Р СР С•РЎР‚Р СРЎвЂљР ВµРЎвЂљ Р Р…Р В° Р С–РЎР‚РЎС“Р В·РЎвЂ№ Р С Р В±Р С•Р В»Р ВµР Вµ
+                    Р С–Р СР В±Р С”Р СР Вµ РЎС“РЎРѓР В»Р С•Р Р†Р СРЎРЏ.</p>
+
+                <h3>Р С™Р В°Р С” РЎРѓРЎвЂљР В°РЎвЂљРЎРЉ preferred carrier</h3>
+                <ul>
+                    <li><strong>Р СњР В°Р ТР ВµР В¶Р Р…Р С•РЎРѓРЎвЂљРЎРЉ</strong> РІР‚вЂќ Р Р†РЎРѓР ВµР С–Р ТР В°
+                        Р Р†РЎвЂ№Р С—Р С•Р В»Р Р…РЎРЏР в„–РЎвЂљР Вµ
+                        Р С•Р В±РЎРЏР В·Р В°РЎвЂљР ВµР В»РЎРЉРЎРѓРЎвЂљР Р†Р В° Р Р†Р С•Р Р†РЎР‚Р ВµР СРЎРЏ</li>
+                    <li><strong>Р С™Р С•Р СР СРЎС“Р Р…Р СР С”Р В°РЎвЂ Р СРЎРЏ</strong> РІР‚вЂќ
+                        Р ТР ВµРЎР‚Р В¶Р СРЎвЂљР Вµ Р В±РЎР‚Р С•Р С”Р ВµРЎР‚Р В° Р Р† Р С”РЎС“РЎР‚РЎРѓР Вµ
+                        РЎРѓРЎвЂљР В°РЎвЂљРЎС“РЎРѓР В° Р С–РЎР‚РЎС“Р В·Р В°</li>
+                    <li><strong>Р СџРЎР‚Р С•РЎвЂћР ВµРЎРѓРЎРѓР СР С•Р Р…Р В°Р В»Р СР В·Р С</strong> РІР‚вЂќ
+                        Р В±РЎвЂ№РЎРѓРЎвЂљРЎР‚Р С• Р С•РЎвЂљР Р†Р ВµРЎвЂЎР В°Р в„–РЎвЂљР Вµ Р Р…Р В°
+                        Р В·Р Р†Р С•Р Р…Р С”Р С Р С email</li>
+                    <li><strong>Р С™Р В°РЎвЂЎР ВµРЎРѓРЎвЂљР Р†Р С•</strong> РІР‚вЂќ
+                        Р ТР С•РЎРѓРЎвЂљР В°Р Р†Р В»РЎРЏР в„–РЎвЂљР Вµ Р С–РЎР‚РЎС“Р В· Р В±Р ВµР В·
+                        Р С—Р С•Р Р†РЎР‚Р ВµР В¶Р ТР ВµР Р…Р СР в„–</li>
+                </ul>
+
+                <h3>Р СџРЎР‚Р ВµР СР СРЎС“РЎвЂ°Р ВµРЎРѓРЎвЂљР Р†Р В° Р С—Р С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р Р…РЎвЂ№РЎвЂ¦
+                    Р С•РЎвЂљР Р…Р С•РЎв‚¬Р ВµР Р…Р СР в„–</h3>
+                <ul>
+                    <li>Р вЂР С•Р В»Р ВµР Вµ Р Р†РЎвЂ№РЎРѓР С•Р С”Р СР Вµ РЎРѓРЎвЂљР В°Р Р†Р С”Р С (Р Р…Р В° 5-10%
+                        Р Р†РЎвЂ№РЎв‚¬Р Вµ РЎР‚РЎвЂ№Р Р…Р С”Р В°)</li>
+                    <li>Р СџРЎР‚Р СР С•РЎР‚Р СРЎвЂљР ВµРЎвЂљР Р…РЎвЂ№Р в„– Р ТР С•РЎРѓРЎвЂљРЎС“Р С— Р С”
+                        Р С–РЎР‚РЎС“Р В·Р В°Р С</li>
+                    <li>Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р С•Р Вµ Р С•РЎвЂћР С•РЎР‚Р СР В»Р ВµР Р…Р СР Вµ
+                        Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р Р†</li>
+                    <li>Р вЂњР СР В±Р С”Р С•РЎРѓРЎвЂљРЎРЉ Р Р† Р С—Р ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚Р В°РЎвЂ¦</li>
+                    <li>Р В Р ВµР С”Р С•Р СР ВµР Р…Р ТР В°РЎвЂ Р СР С Р ТРЎР‚РЎС“Р С–Р СР С
+                        Р В±РЎР‚Р С•Р С”Р ВµРЎР‚Р В°Р С</li>
+                </ul>
+
+                <div class="alert alert-success">
+                    <strong>РІСљвЂ¦ Р вЂєРЎС“РЎвЂЎРЎв‚¬Р В°РЎРЏ Р С—РЎР‚Р В°Р С”РЎвЂљР СР С”Р В°:</strong>
+                    Р РЋР С•Р В·Р ТР В°Р в„–РЎвЂљР Вµ Р В±Р В°Р В·РЎС“ Р ТР В°Р Р…Р Р…РЎвЂ№РЎвЂ¦
+                    Р В±РЎР‚Р С•Р С”Р ВµРЎР‚Р С•Р Р† РЎРѓ Р СРЎРѓРЎвЂљР С•РЎР‚Р СР ВµР в„–
+                    РЎРѓР С•РЎвЂљРЎР‚РЎС“Р ТР Р…Р СРЎвЂЎР ВµРЎРѓРЎвЂљР Р†Р В°,
+                    Р С—РЎР‚Р ВµР ТР С—Р С•РЎвЂЎРЎвЂљР ВµР Р…Р СРЎРЏР СР С Р С Р С”Р С•Р Р…РЎвЂљР В°Р С”РЎвЂљР В°Р СР С.
+                </div>
+            </div>
+        </div>
+
+        <!-- Block 4: Rate Confirmations -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р В Р В°Р В±Р С•РЎвЂљР В° РЎРѓ Rate Confirmations</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio4')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio4')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio4')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Rate Confirmation (RC) РІР‚вЂќ РЎР‹РЎР‚Р СР ТР СРЎвЂЎР ВµРЎРѓР С”Р С
+                    Р С•Р В±РЎРЏР В·РЎвЂ№Р Р†Р В°РЎР‹РЎвЂ°Р СР в„– Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљ,
+                    Р С—Р С•Р ТРЎвЂљР Р†Р ВµРЎР‚Р В¶Р ТР В°РЎР‹РЎвЂ°Р СР в„– РЎС“РЎРѓР В»Р С•Р Р†Р СРЎРЏ
+                    Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·Р С”Р С.
+                    Р вЂ™Р Р…Р СР СР В°РЎвЂљР ВµР В»РЎРЉР Р…Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В° RC
+                    Р В·Р В°РЎвЂ°Р СРЎвЂ°Р В°Р ВµРЎвЂљ Р С•РЎвЂљ РЎРѓР С—Р С•РЎР‚Р С•Р Р† Р С
+                    Р Р…Р ВµР ТР С•Р С—Р В»Р В°РЎвЂљ.</p>
+
+                <h3>Р С›Р В±РЎРЏР В·Р В°РЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№Р Вµ РЎРЊР В»Р ВµР СР ВµР Р…РЎвЂљРЎвЂ№ RC</h3>
+                <ul>
+                    <li><strong>Р РЋРЎвЂљР В°Р Р†Р С”Р В°</strong> РІР‚вЂќ РЎвЂљР С•РЎвЂЎР Р…Р В°РЎРЏ РЎРѓРЎС“Р СР СР В°
+                        Р С•Р С—Р В»Р В°РЎвЂљРЎвЂ№</li>
+                    <li><strong>Pickup/Delivery</strong> РІР‚вЂќ Р В°Р ТРЎР‚Р ВµРЎРѓР В°, Р ТР В°РЎвЂљРЎвЂ№ Р С
+                        Р Р†РЎР‚Р ВµР СРЎРЏ</li>
+                    <li><strong>Commodity</strong> РІР‚вЂќ Р С•Р С—Р СРЎРѓР В°Р Р…Р СР Вµ Р С–РЎР‚РЎС“Р В·Р В° Р С
+                        Р Р†Р ВµРЎРѓ</li>
+                    <li><strong>Equipment</strong> РІР‚вЂќ РЎвЂљР СР С— РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚Р В°</li>
+                    <li><strong>Payment terms</strong> РІР‚вЂќ РЎРѓРЎР‚Р С•Р С”Р С Р С•Р С—Р В»Р В°РЎвЂљРЎвЂ№
+                        (Р С•Р В±РЎвЂ№РЎвЂЎР Р…Р С• 30 Р ТР Р…Р ВµР в„–)</li>
+                    <li><strong>Contact info</strong> РІР‚вЂќ РЎвЂљР ВµР В»Р ВµРЎвЂћР С•Р Р…РЎвЂ№ Р С email
+                        Р В±РЎР‚Р С•Р С”Р ВµРЎР‚Р В°</li>
+                </ul>
+
+                <h3>Р В§РЎвЂљР С• Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚РЎРЏРЎвЂљРЎРЉ Р Р† RC</h3>
+                <ul>
+                    <li>Р РЋР С•Р Р†Р С—Р В°Р ТР В°Р ВµРЎвЂљ Р В»Р С РЎРѓРЎвЂљР В°Р Р†Р С”Р В° РЎРѓ
+                        Р ТР С•Р С–Р С•Р Р†Р С•РЎР‚Р ВµР Р…Р Р…Р С•РЎРѓРЎвЂљРЎРЉРЎР‹</li>
+                    <li>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…РЎвЂ№Р Вµ Р В»Р С Р В°Р ТРЎР‚Р ВµРЎРѓР В° Р С Р Р†РЎР‚Р ВµР СРЎРЏ
+                    </li>
+                    <li>Р СњР ВµРЎвЂљ Р В»Р С РЎРѓР С”РЎР‚РЎвЂ№РЎвЂљРЎвЂ№РЎвЂ¦ Р Р†РЎвЂ№РЎвЂЎР ВµРЎвЂљР С•Р Р†
+                        (deductions)</li>
+                    <li>Р Р€Р С”Р В°Р В·Р В°Р Р…РЎвЂ№ Р В»Р С Р Р†РЎРѓР Вµ accessorial charges</li>
+                    <li>Р С™Р С•РЎР‚РЎР‚Р ВµР С”РЎвЂљР Р…РЎвЂ№ Р В»Р С payment terms</li>
+                </ul>
+
+                <div class="alert alert-warning">
+                    <strong>РІС™В РїСРЏ Р С™РЎР‚Р СРЎвЂљР СРЎвЂЎР Р…Р С•:</strong> Р СњР СР С”Р С•Р С–Р ТР В° Р Р…Р Вµ
+                    Р Р…Р В°РЎвЂЎР СР Р…Р В°Р в„–РЎвЂљР Вµ Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·Р С”РЎС“ Р В±Р ВµР В·
+                    Р С—Р С•Р ТР С—Р СРЎРѓР В°Р Р…Р Р…Р С•Р С–Р С• RC. Р В­РЎвЂљР С• Р Р†Р В°РЎв‚¬Р В°
+                    Р ВµР ТР СР Р…РЎРѓРЎвЂљР Р†Р ВµР Р…Р Р…Р В°РЎРЏ Р В·Р В°РЎвЂ°Р СРЎвЂљР В° Р Р†
+                    РЎРѓР В»РЎС“РЎвЂЎР В°Р Вµ РЎРѓР С—Р С•РЎР‚Р В°.
+                </div>
+            </div>
+        </div>
+
+        <!-- Block 5: Р СћР СР С—Р СРЎвЂЎР Р…РЎвЂ№Р Вµ Р С•РЎв‚¬Р СР В±Р С”Р С -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р СћР СР С—Р СРЎвЂЎР Р…РЎвЂ№Р Вµ Р С•РЎв‚¬Р СР В±Р С”Р С Р Р†
+                    Р С—Р ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚Р В°РЎвЂ¦</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio5')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio5')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio5')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р ВР В·Р В±Р ВµР С–Р В°Р в„–РЎвЂљР Вµ
+                    РЎР‚Р В°РЎРѓР С—РЎР‚Р С•РЎРѓРЎвЂљРЎР‚Р В°Р Р…Р ВµР Р…Р Р…РЎвЂ№РЎвЂ¦ Р С•РЎв‚¬Р СР В±Р С•Р С”,
+                    Р С”Р С•РЎвЂљР С•РЎР‚РЎвЂ№Р Вµ Р СР С•Р С–РЎС“РЎвЂљ РЎРѓРЎвЂљР С•Р СРЎвЂљРЎРЉ Р Р†Р В°Р С
+                    Р ТР ВµР Р…Р ВµР С– Р С РЎР‚Р ВµР С—РЎС“РЎвЂљР В°РЎвЂ Р СР С.</p>
+
+                <h3>СЂСџС™В« Р С›РЎв‚¬Р СР В±Р С”Р В° #1: Р РЋР В»Р СРЎв‚¬Р С”Р С•Р С Р В±РЎвЂ№РЎРѓРЎвЂљРЎР‚Р С•Р Вµ
+                    РЎРѓР С•Р С–Р В»Р В°РЎРѓР СР Вµ</h3>
+                <p>Р СњР Вµ РЎРѓР С•Р С–Р В»Р В°РЎв‚¬Р В°Р в„–РЎвЂљР ВµРЎРѓРЎРЉ Р Р…Р В° Р С—Р ВµРЎР‚Р Р†Р С•Р Вµ
+                    Р С—РЎР‚Р ВµР ТР В»Р С•Р В¶Р ВµР Р…Р СР Вµ Р В±РЎР‚Р С•Р С”Р ВµРЎР‚Р В°. Р вЂ™РЎРѓР ВµР С–Р ТР В°
+                    Р С—РЎР‚Р С•Р В±РЎС“Р в„–РЎвЂљР Вµ Р ТР С•Р С–Р С•Р Р†Р С•РЎР‚Р СРЎвЂљРЎРЉРЎРѓРЎРЏ Р С•
+                    Р В»РЎС“РЎвЂЎРЎв‚¬Р ВµР в„– РЎРѓРЎвЂљР В°Р Р†Р С”Р Вµ.</p>
+                <p><strong>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С•:</strong> "That's a bit low for us. Can you do $2,500?"
+                </p>
+
+                <h3>СЂСџС™В« Р С›РЎв‚¬Р СР В±Р С”Р В° #2: Р С’Р С–РЎР‚Р ВµРЎРѓРЎРѓР СР Р†Р Р…РЎвЂ№Р Вµ
+                    Р С—Р ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚РЎвЂ№</h3>
+                <p>Р вЂњРЎР‚РЎС“Р В±Р С•РЎРѓРЎвЂљРЎРЉ Р С Р ТР В°Р Р†Р В»Р ВµР Р…Р СР Вµ
+                    Р С•РЎвЂљРЎвЂљР В°Р В»Р С”Р СР Р†Р В°РЎР‹РЎвЂљ Р В±РЎР‚Р С•Р С”Р ВµРЎР‚Р С•Р Р†.
+                    Р вЂРЎС“Р ТРЎРЉРЎвЂљР Вµ Р Р…Р В°РЎРѓРЎвЂљР С•Р в„–РЎвЂЎР СР Р†РЎвЂ№, Р Р…Р С•
+                    Р Р†Р ВµР В¶Р В»Р СР Р†РЎвЂ№.</p>
+                <p><strong>Р СњР ВµР С—РЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С•:</strong> "That's ridiculous! I won't take less
+                    than $3,000!"</p>
+                <p><strong>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С•:</strong> "I understand your position, but our costs
+                    require at least $2,800."</p>
+
+                <h3>СЂСџС™В« Р С›РЎв‚¬Р СР В±Р С”Р В° #3: Р СњР ВµР В·Р Р…Р В°Р Р…Р СР Вµ РЎР‚РЎвЂ№Р Р…Р С”Р В°</h3>
+                <p>Р СћРЎР‚Р ВµР В±Р С•Р Р†Р В°Р Р…Р СР Вµ Р Р…Р ВµРЎР‚Р ВµР В°Р В»Р СРЎРѓРЎвЂљР СРЎвЂЎР Р…РЎвЂ№РЎвЂ¦
+                    РЎРѓРЎвЂљР В°Р Р†Р С•Р С” Р С—Р С•Р С”Р В°Р В·РЎвЂ№Р Р†Р В°Р ВµРЎвЂљ
+                    Р Р…Р ВµР С—РЎР‚Р С•РЎвЂћР ВµРЎРѓРЎРѓР СР С•Р Р…Р В°Р В»Р СР В·Р С.</p>
+                <p><strong>Р В Р ВµРЎв‚¬Р ВµР Р…Р СР Вµ:</strong> Р вЂўР В¶Р ВµР ТР Р…Р ВµР Р†Р Р…Р С•
+                    Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚РЎРЏР в„–РЎвЂљР Вµ РЎР‚РЎвЂ№Р Р…Р С•РЎвЂЎР Р…РЎвЂ№Р Вµ
+                    РЎРѓРЎвЂљР В°Р Р†Р С”Р С Р Р…Р В° Р Р†Р В°РЎв‚¬Р СРЎвЂ¦ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР В°РЎвЂ¦.</p>
+
+                <h3>СЂСџС™В« Р С›РЎв‚¬Р СР В±Р С”Р В° #4: Р С›РЎвЂљРЎРѓРЎС“РЎвЂљРЎРѓРЎвЂљР Р†Р СР Вµ
+                    Р В°Р В»РЎРЉРЎвЂљР ВµРЎР‚Р Р…Р В°РЎвЂљР СР Р†</h3>
+                <p>Р вЂўРЎРѓР В»Р С РЎС“ Р Р†Р В°РЎРѓ РЎвЂљР С•Р В»РЎРЉР С”Р С• Р С•Р ТР СР Р…
+                    Р Р†Р В°РЎР‚Р СР В°Р Р…РЎвЂљ Р С–РЎР‚РЎС“Р В·Р В°, Р Р†РЎвЂ№ Р Р† РЎРѓР В»Р В°Р В±Р С•Р в„–
+                    Р С—Р С•Р В·Р СРЎвЂ Р СР С Р ТР В»РЎРЏ Р С—Р ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚Р С•Р Р†.</p>
+                <p><strong>Р В Р ВµРЎв‚¬Р ВµР Р…Р СР Вµ:</strong> Р вЂ™РЎРѓР ВµР С–Р ТР В° Р СР СР ВµР в„–РЎвЂљР Вµ 2-3
+                    backup Р Р†Р В°РЎР‚Р СР В°Р Р…РЎвЂљР В° Р С–РЎР‚РЎС“Р В·Р С•Р Р†.</p>
+
+                <h3>СЂСџС™В« Р С›РЎв‚¬Р СР В±Р С”Р В° #5: Р ВР С–Р Р…Р С•РЎР‚Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ
+                    Р ТР ВµРЎвЂљР В°Р В»Р ВµР в„–</h3>
+                <p>Р СњР Вµ РЎС“РЎвЂљР С•РЎвЂЎР Р…Р СР Р† Р ТР ВµРЎвЂљР В°Р В»Р С Р С–РЎР‚РЎС“Р В·Р В°, Р Р†РЎвЂ№
+                    Р СР С•Р В¶Р ВµРЎвЂљР Вµ РЎРѓРЎвЂљР С•Р В»Р С”Р Р…РЎС“РЎвЂљРЎРЉРЎРѓРЎРЏ РЎРѓ
+                    Р Р…Р ВµР С•Р В¶Р СР ТР В°Р Р…Р Р…РЎвЂ№Р СР С Р С—РЎР‚Р С•Р В±Р В»Р ВµР СР В°Р СР С.</p>
+                <p><strong>Р вЂ™РЎРѓР ВµР С–Р ТР В° РЎРѓР С—РЎР‚Р В°РЎв‚¬Р СР Р†Р В°Р в„–РЎвЂљР Вµ:</strong></p>
+                <ul>
+                    <li>Р СћР С•РЎвЂЎР Р…Р С•Р Вµ Р Р†РЎР‚Р ВµР СРЎРЏ pickup Р С delivery</li>
+                    <li>Р СћРЎР‚Р ВµР В±Р С•Р Р†Р В°Р Р…Р СРЎРЏ Р С” Р С•Р В±Р С•РЎР‚РЎС“Р ТР С•Р Р†Р В°Р Р…Р СРЎР‹</li>
+                    <li>Р С›РЎРѓР С•Р В±Р ВµР Р…Р Р…Р С•РЎРѓРЎвЂљР С Р С–РЎР‚РЎС“Р В·Р В° (hazmat, overweight, etc.)
+                    </li>
+                    <li>Р вЂќР С•Р С—Р С•Р В»Р Р…Р СРЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№Р Вµ Р С•РЎРѓРЎвЂљР В°Р Р…Р С•Р Р†Р С”Р С
+                    </li>
+                </ul>
+
+                <div class="alert alert-info">
+                    <strong>СЂСџвЂ™РЋ Р РЋР С•Р Р†Р ВµРЎвЂљ:</strong> Р Р€РЎвЂЎР СРЎвЂљР ВµРЎРѓРЎРЉ Р Р…Р В°
+                    Р С•РЎв‚¬Р СР В±Р С”Р В°РЎвЂ¦. Р С’Р Р…Р В°Р В»Р СР В·Р СРЎР‚РЎС“Р в„–РЎвЂљР Вµ
+                    Р С”Р В°Р В¶Р ТРЎС“РЎР‹ Р Р…Р ВµРЎС“Р ТР В°РЎвЂЎР Р…РЎС“РЎР‹ РЎРѓР ТР ВµР В»Р С”РЎС“ Р С
+                    Р С”Р С•РЎР‚РЎР‚Р ВµР С”РЎвЂљР СРЎР‚РЎС“Р в„–РЎвЂљР Вµ
+                    Р С—Р С•Р ТРЎвЂ¦Р С•Р Т.
+                </div>
+            </div>
+        </div>
+
+        <!-- Block 6: Р СџРЎР‚Р С•РЎвЂћР ВµРЎРѓРЎРѓР СР С•Р Р…Р В°Р В»РЎРЉР Р…Р В°РЎРЏ РЎРЊРЎвЂљР СР С”Р В° -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р СџРЎР‚Р С•РЎвЂћР ВµРЎРѓРЎРѓР СР С•Р Р…Р В°Р В»РЎРЉР Р…Р В°РЎРЏ
+                    РЎРЊРЎвЂљР СР С”Р В°</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio6')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio6')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio6')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р В Р ВµР С—РЎС“РЎвЂљР В°РЎвЂ Р СРЎРЏ Р Р† Р СР Р…Р ТРЎС“РЎРѓРЎвЂљРЎР‚Р СР С РІР‚вЂќ Р Р†Р В°РЎв‚¬
+                    Р С–Р В»Р В°Р Р†Р Р…РЎвЂ№Р в„– Р В°Р С”РЎвЂљР СР Р†. Р В­РЎвЂљР СРЎвЂЎР Р…Р С•Р Вµ
+                    Р С—Р С•Р Р†Р ВµР ТР ВµР Р…Р СР Вµ Р С•РЎвЂљР С”РЎР‚РЎвЂ№Р Р†Р В°Р ВµРЎвЂљ Р ТР Р†Р ВµРЎР‚Р С Р С”
+                    Р В»РЎС“РЎвЂЎРЎв‚¬Р СР С Р Р†Р С•Р В·Р СР С•Р В¶Р Р…Р С•РЎРѓРЎвЂљРЎРЏР С.
+                </p>
+
+                <h3>Р СџРЎР‚Р СР Р…РЎвЂ Р СР С—РЎвЂ№ Р С—РЎР‚Р С•РЎвЂћР ВµРЎРѓРЎРѓР СР С•Р Р…Р В°Р В»РЎРЉР Р…Р С•Р в„–
+                    РЎРЊРЎвЂљР СР С”Р С</h3>
+
+                <h4>РІСљвЂ¦ Р В§Р ВµРЎРѓРЎвЂљР Р…Р С•РЎРѓРЎвЂљРЎРЉ</h4>
+                <ul>
+                    <li>Р СњР СР С”Р С•Р С–Р ТР В° Р Р…Р Вµ Р В»Р С–Р СРЎвЂљР Вµ Р С•
+                        Р Р†Р С•Р В·Р СР С•Р В¶Р Р…Р С•РЎРѓРЎвЂљРЎРЏРЎвЂ¦ Р Р†Р В°РЎв‚¬Р ВµР С–Р С•
+                        Р С•Р В±Р С•РЎР‚РЎС“Р ТР С•Р Р†Р В°Р Р…Р СРЎРЏ</li>
+                    <li>Р СњР Вµ РЎРѓР С”РЎР‚РЎвЂ№Р Р†Р В°Р в„–РЎвЂљР Вµ Р С—РЎР‚Р С•Р В±Р В»Р ВµР СРЎвЂ№ РЎРѓ
+                        Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР С Р СР В»Р С РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚Р С•Р С</li>
+                    <li>Р РЋР С•Р С•Р В±РЎвЂ°Р В°Р в„–РЎвЂљР Вµ Р С• Р В·Р В°Р ТР ВµРЎР‚Р В¶Р С”Р В°РЎвЂ¦
+                        Р В·Р В°РЎР‚Р В°Р Р…Р ВµР Вµ</li>
+                </ul>
+
+                <h4>РІСљвЂ¦ Р СњР В°Р ТР ВµР В¶Р Р…Р С•РЎРѓРЎвЂљРЎРЉ</h4>
+                <ul>
+                    <li>Р вЂ™РЎвЂ№Р С—Р С•Р В»Р Р…РЎРЏР в„–РЎвЂљР Вµ Р С•Р В±Р ВµРЎвЂ°Р В°Р Р…Р СРЎРЏ</li>
+                    <li>Р вЂўРЎРѓР В»Р С Р Р†Р В·РЎРЏР В»Р С Р С–РЎР‚РЎС“Р В· РІР‚вЂќ Р Р†Р ВµР В·Р СРЎвЂљР Вµ
+                        Р ВµР С–Р С•</li>
+                    <li>Р СњР Вµ Р С•РЎвЂљР СР ВµР Р…РЎРЏР в„–РЎвЂљР Вµ
+                        Р С—Р С•Р ТРЎвЂљР Р†Р ВµРЎР‚Р В¶Р ТР ВµР Р…Р Р…РЎвЂ№Р Вµ Р С–РЎР‚РЎС“Р В·РЎвЂ№ РЎР‚Р В°Р ТР С
+                        Р В»РЎС“РЎвЂЎРЎв‚¬Р ВµР в„– РЎРѓРЎвЂљР В°Р Р†Р С”Р С</li>
+                </ul>
+
+                <h4>РІСљвЂ¦ Р СџРЎР‚Р С•Р В·РЎР‚Р В°РЎвЂЎР Р…Р С•РЎРѓРЎвЂљРЎРЉ</h4>
+                <ul>
+                    <li>Р В§Р ВµРЎвЂљР С”Р С• Р С•Р В±РЎРѓРЎС“Р В¶Р ТР В°Р в„–РЎвЂљР Вµ Р Р†РЎРѓР Вµ
+                        РЎС“РЎРѓР В»Р С•Р Р†Р СРЎРЏ</li>
+                    <li>Р СњР Вµ РЎРѓР С”РЎР‚РЎвЂ№Р Р†Р В°Р в„–РЎвЂљР Вµ
+                        Р ТР С•Р С—Р С•Р В»Р Р…Р СРЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№Р Вµ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТРЎвЂ№</li>
+                    <li>Р вЂќР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР СРЎР‚РЎС“Р в„–РЎвЂљР Вµ Р Р†РЎРѓР Вµ
+                        Р ТР С•Р С–Р С•Р Р†Р С•РЎР‚Р ВµР Р…Р Р…Р С•РЎРѓРЎвЂљР С</li>
+                </ul>
+
+                <h4>РІСљвЂ¦ Р Р€Р Р†Р В°Р В¶Р ВµР Р…Р СР Вµ</h4>
+                <ul>
+                    <li>Р С›РЎвЂљР Р…Р С•РЎРѓР СРЎвЂљР ВµРЎРѓРЎРЉ Р С” Р В±РЎР‚Р С•Р С”Р ВµРЎР‚Р В°Р С Р С”Р В°Р С” Р С”
+                        Р С—Р В°РЎР‚РЎвЂљР Р…Р ВµРЎР‚Р В°Р С</li>
+                    <li>Р СњР Вµ Р СРЎРѓР С—Р С•Р В»РЎРЉР В·РЎС“Р в„–РЎвЂљР Вµ Р С–РЎР‚РЎС“Р В±Р С•РЎРѓРЎвЂљРЎРЉ
+                        Р СР В»Р С РЎС“Р С–РЎР‚Р С•Р В·РЎвЂ№</li>
+                    <li>Р В¦Р ВµР Р…Р СРЎвЂљР Вµ Р Р†РЎР‚Р ВµР СРЎРЏ Р ТРЎР‚РЎС“Р С–Р СРЎвЂ¦ Р В»РЎР‹Р ТР ВµР в„–</li>
+                </ul>
+
+                <h3>Р В§РЎвЂљР С• Р Р…Р ВµР ТР С•Р С—РЎС“РЎРѓРЎвЂљР СР СР С•</h3>
+                <ul>
+                    <li>РІСњРЉ Double brokering (Р С—Р ВµРЎР‚Р ВµР С—РЎР‚Р С•Р ТР В°Р В¶Р В° Р С–РЎР‚РЎС“Р В·Р В°)</li>
+                    <li>РІСњРЉ Р СџР С•Р ТР ТР ВµР В»Р С”Р В° Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р Р†</li>
+                    <li>РІСњРЉ Р ВРЎРѓР С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°Р Р…Р СР Вµ РЎвЂЎРЎС“Р В¶Р С•Р С–Р С• MC#</li>
+                    <li>РІСњРЉ Р РЃР В°Р Р…РЎвЂљР В°Р В¶ Р СР В»Р С РЎС“Р С–РЎР‚Р С•Р В·РЎвЂ№</li>
+                    <li>РІСњРЉ Р С›РЎвЂљР СР ВµР Р…Р В° Р С–РЎР‚РЎС“Р В·Р В° Р Р† Р С—Р С•РЎРѓР В»Р ВµР ТР Р…Р СР в„–
+                        Р СР С•Р СР ВµР Р…РЎвЂљ Р В±Р ВµР В· Р Р†Р ВµРЎРѓР С”Р С•Р в„– Р С—РЎР‚Р СРЎвЂЎР СР Р…РЎвЂ№</li>
+                </ul>
+
+                <div class="alert alert-success">
+                    <strong>РІСљвЂ¦ Р вЂ”Р С•Р В»Р С•РЎвЂљР С•Р Вµ Р С—РЎР‚Р В°Р Р†Р СР В»Р С•:</strong>
+                    Р С›РЎвЂљР Р…Р С•РЎРѓР СРЎвЂљР ВµРЎРѓРЎРЉ Р С” Р В±РЎР‚Р С•Р С”Р ВµРЎР‚Р В°Р С РЎвЂљР В°Р С”,
+                    Р С”Р В°Р С” РЎвЂ¦Р С•РЎвЂљР ВµР В»Р С Р В±РЎвЂ№, РЎвЂЎРЎвЂљР С•Р В±РЎвЂ№
+                    Р С•РЎвЂљР Р…Р С•РЎРѓР СР В»Р СРЎРѓРЎРЉ Р С”
+                    Р Р†Р В°Р С. Р В Р ВµР С—РЎС“РЎвЂљР В°РЎвЂ Р СРЎРЏ РЎРѓРЎвЂљРЎР‚Р С•Р СРЎвЂљРЎРѓРЎРЏ
+                    Р С–Р С•Р ТР В°Р СР С, Р В° РЎР‚Р В°Р В·РЎР‚РЎС“РЎв‚¬Р В°Р ВµРЎвЂљРЎРѓРЎРЏ Р В·Р В°
+                    Р СР СР Р…РЎС“РЎвЂљРЎвЂ№.
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="lesson-nav">
+            <a href="doc-module-4.html" class="nav-btn">
+                <span>РІвЂ С’</span>
+                <span>Р СџРЎР‚Р ВµР ТРЎвЂ№Р ТРЎС“РЎвЂ°Р СР в„– РЎС“РЎР‚Р С•Р С”</span>
+            </a>
+            <div class="progress-info">
+                <div>Р СљР С•Р ТРЎС“Р В»РЎРЉ 5 Р СР В· 12</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 42%"></div>
+                </div>
+                <div>42% Р В·Р В°Р Р†Р ВµРЎР‚РЎв‚¬Р ВµР Р…Р С•</div>
+            </div>
+            <a href="doc-module-6.html" class="nav-btn">
+                <span>Р РЋР В»Р ВµР ТРЎС“РЎР‹РЎвЂ°Р СР в„– РЎС“РЎР‚Р С•Р С”</span>
+                <span>РІвЂ вЂ™</span>
+            </a>
+        </nav>
+    </main>
+
+    <!-- Audio elements (hidden) -->
+    <audio id="audio1" preload="none">
+        <source src="../audio/module5-block1.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="audio2" preload="none">
+        <source src="../audio/module5-block2.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="audio3" preload="none">
+        <source src="../audio/module5-block3.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="audio4" preload="none">
+        <source src="../audio/module5-block4.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="audio5" preload="none">
+        <source src="../audio/module5-block5.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="audio6" preload="none">
+        <source src="../audio/module5-block6.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        let currentAudio = null;
+        let currentButton = null;
+        let currentContainer = null;
+        let progressUpdateInterval = null;
+
+        const audioDurations = {
+            'audio1': 180,
+            'audio2': 240,
+            'audio3': 200,
+            'audio4': 220,
+            'audio5': 210,
+            'audio6': 190
+        };
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateProgress(audioId, currentTime, duration) {
+            const container = document.querySelector(`[onclick*="${audioId}"]`).closest('.audio-container');
+            const progressRing = container.querySelector('.progress-ring-fill');
+            const mobileProgressFill = container.querySelector('.mobile-progress-fill');
+            const durationDisplay = container.querySelector('.audio-duration');
+
+            const progress = currentTime / duration;
+            const circumference = 2 * Math.PI * 32;
+            const offset = circumference - (progress * circumference);
+
+            if (progressRing) {
+                progressRing.style.strokeDashoffset = offset;
+            }
+
+            if (mobileProgressFill) {
+                mobileProgressFill.style.width = `${progress * 100}%`;
+            }
+
+            durationDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+        }
+
+        function seekAudioMobile(event, element, audioId) {
+            event.stopPropagation();
+            const audio = document.getElementById(audioId);
+            if (!audio || audio.paused) {
+                return;
+            }
+            const rect = element.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const progress = clickX / rect.width;
+            const duration = audioDurations[audioId];
+            const newTime = progress * duration;
+            updateProgress(audioId, newTime, duration);
+        }
+
+        function seekAudio(event, element, audioId) {
+            event.stopPropagation();
+            if (!element.classList.contains('seekable')) {
+                return;
+            }
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const x = event.clientX - centerX;
+            const y = event.clientY - centerY;
+            const distance = Math.sqrt(x * x + y * y);
+            const radius = rect.width / 2;
+            if (distance < radius * 0.55) {
+                return;
+            }
+            let angle = Math.atan2(x, -y) * (180 / Math.PI);
+            if (angle < 0) angle += 360;
+            const progress = angle / 360;
+            const duration = audioDurations[audioId];
+            const newTime = progress * duration;
+            updateProgress(audioId, newTime, duration);
+        }
+
+        function toggleAudio(button, audioId) {
+            const audio = document.getElementById(audioId);
+            const container = button.closest('.audio-container');
+            const interactiveRing = container.querySelector('.progress-ring-interactive');
+
+            if (currentAudio && currentAudio !== audio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                if (currentButton) {
+                    currentButton.classList.remove('playing');
+                }
+                if (currentContainer) {
+                    currentContainer.classList.remove('playing');
+                    const oldRing = currentContainer.querySelector('.progress-ring-interactive');
+                    oldRing.classList.remove('seekable');
+                }
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+            }
+
+            if (audio.paused) {
+                audio.play();
+                button.classList.add('playing');
+                container.classList.add('playing');
+                interactiveRing.classList.add('seekable');
+                currentAudio = audio;
+                currentButton = button;
+                currentContainer = container;
+
+                const duration = audioDurations[audioId];
+                let currentTime = 0;
+
+                progressUpdateInterval = setInterval(() => {
+                    if (currentTime < duration) {
+                        currentTime += 0.1;
+                        updateProgress(audioId, currentTime, duration);
+                    } else {
+                        clearInterval(progressUpdateInterval);
+                        button.classList.remove('playing');
+                        container.classList.remove('playing');
+                        interactiveRing.classList.remove('seekable');
+                        currentAudio = null;
+                        currentButton = null;
+                        currentContainer = null;
+                        updateProgress(audioId, 0, duration);
+                    }
+                }, 100);
+
+            } else {
+                audio.pause();
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+            }
+
+            audio.onended = function () {
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+                updateProgress(audioId, 0, audioDurations[audioId]);
+            };
+
+            audio.onerror = function () {
+                console.log('Audio file not found, but button still works for demo');
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            Object.keys(audioDurations).forEach(audioId => {
+                const duration = audioDurations[audioId];
+                updateProgress(audioId, 0, duration);
+            });
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+                e.preventDefault();
+                if (currentButton) {
+                    currentButton.click();
+                }
+            }
+        });
+
+        window.addEventListener('beforeunload', function () {
+            localStorage.setItem('module5-progress', '42');
+            localStorage.setItem('current-module', '5');
+        });
+
+        // Mobile Menu JavaScript
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+
+        if (mobileMenuToggle && mobileMenu && mobileMenuOverlay) {
+            mobileMenuToggle.addEventListener('click', function () {
+                mobileMenuToggle.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+                mobileMenuOverlay.classList.toggle('active');
+                document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+            });
+
+            mobileMenuOverlay.addEventListener('click', function () {
+                mobileMenuToggle.classList.remove('active');
+                mobileMenu.classList.remove('active');
+                mobileMenuOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+
+            // Close mobile menu when clicking on a link
+            document.querySelectorAll('.mobile-nav-links .nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (mobileMenu.classList.contains('active')) {
+                        mobileMenuToggle.classList.remove('active');
+                        mobileMenu.classList.remove('active');
+                        mobileMenuOverlay.classList.remove('active');
+                        document.body.style.overflow = '';
+                    }
+                });
+            });
+        }
+    </script>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Р В РЎв„ўР РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„–
+                        Р В РІР‚СњР В РЎвЂР РЋР С“Р В РЎвЂ”Р В Р’ВµР РЋРІР‚С™Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В Р’В°</h4>
+                    <p>Р В РЎСџР РЋР вЂљР В РЎвЂўР РЋРІР‚С›Р В Р’ВµР РЋР С“Р РЋР С“Р В РЎвЂР В РЎвЂўР В Р вЂ¦Р В Р’В°Р В Р’В»Р РЋР Р‰Р В Р вЂ¦Р В РЎвЂўР В Р’Вµ
+                        Р В РЎвЂўР В Р’В±Р РЋРЎвЂњР РЋРІР‚РЋР В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ
+                        Р В РўвЂР В РЎвЂР РЋР С“Р В РЎвЂ”Р В Р’ВµР РЋРІР‚С™Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В РЎвЂўР В Р вЂ 
+                        Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В Р’В·Р В РЎвЂўР В РЎвЂ”Р В Р’ВµР РЋР вЂљР В Р’ВµР В Р вЂ Р В РЎвЂўР В Р’В·Р В РЎвЂўР В РЎвЂќ
+                    </p>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Р В РЎвЂєР В Р’В±Р РЋРЎвЂњР РЋРІР‚РЋР В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ</h4>
+                    <a href="../courses.html">Р В РЎв„ўР РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„–</a>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Р В РЎСџР В РЎвЂўР В РўвЂР В РўвЂР В Р’ВµР РЋР вЂљР В Р’В¶Р В РЎвЂќР В Р’В°</h4>
+                    <a href="../faq.html">FAQ</a>
+                    <a
+                        href="../contacts.html">Р В РЎв„ўР В РЎвЂўР В Р вЂ¦Р РЋРІР‚С™Р В Р’В°Р В РЎвЂќР РЋРІР‚С™Р РЋРІР‚в„–</a>
+                    <a href="../help.html">Р В РЎСџР В РЎвЂўР В РЎВР В РЎвЂўР РЋРІР‚В°Р РЋР Р‰</a>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Р В РЎв„ўР В РЎвЂўР В РЎВР В РЎвЂ”Р В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР РЏ</h4>
+                    <a href="../about.html">Р В РЎвЂє Р В Р вЂ¦Р В Р’В°Р РЋР С“</a>
+                    <a href="../career.html">Р В РЎв„ўР В Р’В°Р РЋР вЂљР РЋР Р‰Р В Р’ВµР РЋР вЂљР В Р’В°</a>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2024 Р В РЎв„ўР РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„–
+                    Р В РІР‚СњР В РЎвЂР РЋР С“Р В РЎвЂ”Р В Р’ВµР РЋРІР‚С™Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В Р’В°.
+                    Р В РІР‚в„ўР РЋР С“Р В Р’Вµ Р В РЎвЂ”Р РЋР вЂљР В Р’В°Р В Р вЂ Р В Р’В°
+                    Р В Р’В·Р В Р’В°Р РЋРІР‚В°Р В РЎвЂР РЋРІР‚В°Р В Р’ВµР В Р вЂ¦Р РЋРІР‚в„–.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

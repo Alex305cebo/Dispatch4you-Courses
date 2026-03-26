@@ -1,0 +1,2436 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль 1: Введение в диспетчерство | DispatcherPro</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="stylesheet" href="../interactive-modules.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #f093fb;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary: #b8c5d6;
+            --text-muted: #8892aa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.1);
+            --audio-primary: #ff6b6b;
+            --audio-secondary: #4ecdc4;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 0;
+            background: rgba(7, 11, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            min-height: 80px;
+        }
+
+        /* Добавляем отступ для body чтобы контент не перекрывался навигацией */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
+            padding-top: 100px;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1), transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(240, 147, 251, 0.1), transparent 50%);
+            z-index: -1;
+        }
+
+
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateX(-3px);
+        }
+
+        .module-info {
+            text-align: center;
+        }
+
+        .module-number {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .module-title {
+            font-size: 18px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Content Blocks */
+        .content-block {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            gap: 20px;
+        }
+
+        .block-title {
+            flex: 1;
+            font-size: 1.8rem;
+            color: var(--primary);
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        /* Audio Play Button with Progress Ring */
+        .audio-container {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .audio-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--audio-primary), var(--audio-secondary));
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .audio-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.5);
+        }
+
+        .audio-btn:active {
+            transform: scale(0.95);
+        }
+
+        .audio-btn .play-icon {
+            font-size: 24px;
+            color: white;
+            margin-left: 3px;
+        }
+
+        .audio-btn .pause-icon {
+            font-size: 20px;
+            color: white;
+            display: none;
+        }
+
+        .audio-btn.playing .play-icon {
+            display: none;
+        }
+
+        .audio-btn.playing .pause-icon {
+            display: block;
+        }
+
+        .audio-btn.playing {
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.7), 0 0 0 10px rgba(255, 107, 107, 0.1);
+            }
+
+            100% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+        }
+
+        /* Progress Ring */
+        .progress-ring {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            transform: rotate(-90deg);
+            z-index: 1;
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 5;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: var(--audio-primary);
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-dasharray: 201.06;
+            /* 2 * π * 32 */
+            stroke-dashoffset: 201.06;
+            transition: stroke-dashoffset 0.1s ease;
+            filter: drop-shadow(0 0 4px rgba(255, 107, 107, 0.5));
+        }
+
+        /* Interactive Progress Ring */
+        .progress-ring-interactive {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            cursor: pointer;
+            z-index: 5;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        .progress-ring-interactive.seekable {
+            pointer-events: auto;
+            /* Создаем кольцо с прозрачным центром для клика */
+            background: radial-gradient(circle, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.01) 60%, rgba(255, 255, 255, 0.01) 100%);
+        }
+
+        /* На мобильных устройствах ПОЛНОСТЬЮ отключаем перемотку */
+        @media (max-width: 768px) {
+            .progress-ring-interactive {
+                pointer-events: none !important;
+                cursor: default !important;
+            }
+
+            .progress-ring-interactive.seekable {
+                pointer-events: none !important;
+                cursor: default !important;
+                background: none;
+            }
+        }
+
+        /* Hover эффект только на desktop */
+        @media (min-width: 769px) {
+            .progress-ring-interactive:hover .progress-ring-fill {
+                stroke-width: 7;
+                filter: drop-shadow(0 0 8px rgba(255, 107, 107, 0.8));
+            }
+        }
+
+        .progress-ring-interactive:hover+.audio-btn+.progress-ring-interactive+.audio-duration {
+            opacity: 1;
+        }
+
+        /* Audio Duration Display */
+        .audio-duration {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .audio-container:hover .audio-duration,
+        .audio-container.playing .audio-duration {
+            opacity: 1;
+        }
+
+        /* Mobile Progress Bar (под кнопкой) */
+        .mobile-progress-bar {
+            display: none;
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .mobile-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--audio-primary), var(--audio-secondary));
+            border-radius: 2px;
+            transition: width 0.1s ease;
+        }
+
+        /* Показываем полосу только на мобильных */
+        @media (max-width: 768px) {
+            .mobile-progress-bar {
+                display: block;
+            }
+
+            .audio-container.playing .mobile-progress-bar {
+                display: block;
+            }
+
+            /* Скрываем кольцо на мобильных */
+            .progress-ring,
+            .progress-ring-interactive {
+                display: none !important;
+            }
+
+            /* Сдвигаем время вниз */
+            .audio-duration {
+                bottom: -50px;
+            }
+        }
+
+        /* На desktop скрываем полосу, показываем кольцо */
+        @media (min-width: 769px) {
+            .mobile-progress-bar {
+                display: none !important;
+            }
+        }
+
+        /* Content */
+        .block-content {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .block-content h3 {
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            margin: 25px 0 15px 0;
+        }
+
+        .block-content h4 {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            margin: 20px 0 10px 0;
+        }
+
+        .block-content ul,
+        .block-content ol {
+            margin: 15px 0 15px 25px;
+        }
+
+        .block-content li {
+            margin-bottom: 8px;
+        }
+
+        .block-content strong {
+            color: var(--text-primary);
+        }
+
+        /* Navigation */
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .nav-btn.disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .nav-btn.disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .progress-info {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 10px auto;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* Mobile Responsive - Complete Coverage */
+        @media (max-width: 1200px) {
+            .nav {
+                padding: 0 15px;
+            }
+
+            .main {
+                max-width: 100%;
+                padding: 30px 15px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 90px;
+            }
+
+            .header {
+                padding: 15px 0;
+                min-height: 70px;
+            }
+
+            .nav {
+                padding: 0 15px;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .back-btn {
+                padding: 10px 16px;
+                font-size: 14px;
+                order: 1;
+                flex: 1;
+                min-width: 150px;
+            }
+
+            .module-info {
+                order: 2;
+                width: 100%;
+                margin-top: 10px;
+            }
+
+            .module-title {
+                font-size: 16px;
+            }
+
+            .module-number {
+                font-size: 12px;
+            }
+
+            .main {
+                padding: 20px 15px;
+            }
+
+            .content-block {
+                padding: 20px 15px;
+                margin-bottom: 20px;
+                border-radius: 12px;
+            }
+
+            .block-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                margin-bottom: 20px;
+            }
+
+            .block-title {
+                font-size: 1.4rem;
+                margin-bottom: 0;
+                line-height: 1.3;
+                width: 100%;
+            }
+
+            .audio-btn {
+                width: 70px;
+                height: 70px;
+                align-self: center;
+                margin: 0 auto;
+            }
+
+            .audio-container {
+                width: 70px;
+                height: 70px;
+                align-self: center;
+                margin: 0 auto;
+            }
+
+            .progress-ring {
+                width: 80px;
+                height: 80px;
+                top: -5px;
+                left: -5px;
+            }
+
+            .progress-ring-interactive {
+                width: 80px;
+                height: 80px;
+                top: -5px;
+                left: -5px;
+            }
+
+            .audio-btn .play-icon {
+                font-size: 28px;
+            }
+
+            .audio-btn .pause-icon {
+                font-size: 24px;
+            }
+
+            .block-content {
+                font-size: 15px;
+                line-height: 1.6;
+            }
+
+            .block-content h3 {
+                font-size: 1.2rem;
+                margin: 20px 0 12px 0;
+            }
+
+            .block-content h4 {
+                font-size: 1rem;
+                margin: 15px 0 8px 0;
+            }
+
+            .lesson-nav {
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px 15px;
+                margin-top: 30px;
+            }
+
+            .nav-btn {
+                width: 100%;
+                min-width: auto;
+                padding: 15px 20px;
+                font-size: 15px;
+            }
+
+            .progress-bar {
+                width: 100%;
+                max-width: 250px;
+            }
+
+            .progress-info {
+                order: 2;
+            }
+
+            .table-container {
+                font-size: 14px;
+                margin: 20px -15px;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+            }
+
+            th,
+            td {
+                padding: 12px 8px;
+                font-size: 13px;
+            }
+
+            .alert {
+                padding: 15px;
+                margin: 15px -15px;
+                border-radius: 0;
+                border-left: 4px solid;
+                border-right: none;
+                border-top: none;
+                border-bottom: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding-top: 80px;
+            }
+
+            .header {
+                padding: 15px 0;
+                min-height: 60px;
+            }
+
+            .nav {
+                padding: 0 10px;
+            }
+
+            .back-btn {
+                padding: 8px 12px;
+                font-size: 13px;
+                gap: 6px;
+            }
+
+            .module-title {
+                font-size: 14px;
+            }
+
+            .module-number {
+                font-size: 11px;
+            }
+
+            .main {
+                padding: 15px 10px;
+            }
+
+            .content-block {
+                padding: 15px 10px;
+                margin-bottom: 15px;
+            }
+
+            .block-title {
+                font-size: 1.2rem;
+                line-height: 1.2;
+            }
+
+            .audio-btn {
+                width: 80px;
+                height: 80px;
+            }
+
+            .audio-container {
+                width: 80px;
+                height: 80px;
+            }
+
+            .progress-ring {
+                width: 90px;
+                height: 90px;
+                top: -5px;
+                left: -5px;
+            }
+
+            .progress-ring-interactive {
+                width: 90px;
+                height: 90px;
+                top: -5px;
+                left: -5px;
+            }
+
+            .audio-btn .play-icon {
+                font-size: 32px;
+            }
+
+            .audio-btn .pause-icon {
+                font-size: 28px;
+            }
+
+            .block-content {
+                font-size: 14px;
+            }
+
+            .block-content h3 {
+                font-size: 1.1rem;
+            }
+
+            .block-content h4 {
+                font-size: 0.95rem;
+            }
+
+            .nav-btn {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+
+            .lesson-nav {
+                padding: 15px 10px;
+            }
+
+            .table-container {
+                margin: 15px -10px;
+            }
+
+            th,
+            td {
+                padding: 10px 6px;
+                font-size: 12px;
+            }
+
+            .alert {
+                padding: 12px;
+                margin: 15px -10px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            body {
+                padding-top: 70px;
+            }
+
+            .header {
+                padding: 12px 0;
+                min-height: 55px;
+            }
+
+            .nav {
+                padding: 0 8px;
+            }
+
+            .back-btn {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+
+            .main {
+                padding: 12px 8px;
+            }
+
+            .content-block {
+                padding: 12px 8px;
+            }
+
+            .block-title {
+                font-size: 1.1rem;
+            }
+
+            .audio-btn {
+                width: 75px;
+                height: 75px;
+            }
+
+            .audio-container {
+                width: 75px;
+                height: 75px;
+            }
+
+            .progress-ring {
+                width: 85px;
+                height: 85px;
+                top: -5px;
+                left: -5px;
+            }
+
+            .progress-ring-interactive {
+                width: 85px;
+                height: 85px;
+                top: -5px;
+                left: -5px;
+            }
+
+            .audio-btn .play-icon {
+                font-size: 30px;
+            }
+
+            .audio-btn .pause-icon {
+                font-size: 26px;
+            }
+
+            .block-content {
+                font-size: 13px;
+            }
+
+            .nav-btn {
+                padding: 10px 14px;
+                font-size: 13px;
+            }
+
+            .lesson-nav {
+                padding: 12px 8px;
+            }
+
+            .table-container {
+                margin: 12px -8px;
+            }
+
+            th,
+            td {
+                padding: 8px 4px;
+                font-size: 11px;
+            }
+
+            .alert {
+                padding: 10px;
+                margin: 12px -8px;
+                font-size: 13px;
+            }
+        }
+
+        /* Large screens optimization */
+        @media (min-width: 1400px) {
+            .main {
+                max-width: 1000px;
+            }
+
+            .content-block {
+                padding: 35px;
+            }
+
+            .block-title {
+                font-size: 2rem;
+            }
+
+            .block-content {
+                font-size: 17px;
+            }
+        }
+
+        /* Ultra-wide screens */
+        @media (min-width: 1920px) {
+            .main {
+                max-width: 1200px;
+            }
+
+            .content-block {
+                padding: 40px;
+            }
+        }
+
+        /* Navigation Styles from Main Site */
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 999;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 0;
+            transition: all 0.3s ease;
+        }
+
+        .nav-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: translateY(-2px);
+        }
+
+        .logo-icon {
+            font-size: 16px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: clamp(11px, 1.1vw, 14px);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .nav-link.active {
+            color: var(--primary);
+        }
+
+        .nav-link.active::after {
+            width: 100%;
+        }
+
+        /* Dropdown Navigation */
+        .nav-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .nav-dropdown .nav-link {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-dropdown .nav-link::before {
+            content: '▼';
+            font-size: 8px;
+            transition: transform 0.3s ease;
+            margin-left: 4px;
+        }
+
+        .nav-dropdown .nav-link::after {
+            display: none;
+        }
+
+        .nav-dropdown:hover .nav-link::before {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 200px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 8px;
+            margin-top: 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            z-index: 1000;
+        }
+
+        .nav-dropdown:hover .dropdown-content {
+            display: flex;
+            flex-direction: column;
+            animation: fadeInDown 0.3s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-content a {
+            display: block;
+            padding: 10px 14px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .dropdown-content a:hover {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--text-primary);
+            transform: translateX(2px);
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-login {
+            padding: 6px 16px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .btn-login:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-signup {
+            padding: 6px 16px;
+            text-decoration: none;
+            color: white;
+            font-weight: 500;
+            font-size: 12px;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .btn-signup:hover {
+            background: rgba(99, 102, 241, 0.25);
+            border-color: rgba(99, 102, 241, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .mobile-menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 10px 19px;
+            z-index: 1001;
+            transition: all 0.3s ease;
+            margin-right: 0;
+        }
+
+        .mobile-menu-toggle:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .mobile-menu-toggle span {
+            width: 38px;
+            height: 2px;
+            background: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .mobile-menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -6px);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 85%;
+            max-width: 380px;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 100px 20px 32px;
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .mobile-menu.active {
+            right: 0;
+        }
+
+        .mobile-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+
+        .mobile-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .mobile-nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin-bottom: 32px;
+            width: 100%;
+        }
+
+        .mobile-nav-links .nav-link {
+            padding: 14px 16px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-size: 15px;
+        }
+
+        .mobile-nav-links .nav-link:hover {
+            background: rgba(99, 102, 241, 0.15);
+            transform: translateX(4px);
+        }
+
+        .mobile-nav-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .mobile-menu-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 20px 0;
+        }
+
+        .mobile-nav-section {
+            margin: 0;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 0;
+            padding: 12px 0;
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            width: 100%;
+        }
+
+        .mobile-section-title {
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 4px;
+        }
+
+        .nav-link-sub {
+            padding: 10px 16px 10px 36px !important;
+            font-size: 14px;
+            color: var(--text-muted) !important;
+        }
+
+
+
+        /* Mobile Navigation Responsive */
+        @media (max-width: 1024px) {
+            .nav-links {
+                display: none;
+            }
+
+            .mobile-menu-toggle {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-content {
+                gap: 12px;
+            }
+
+            .navbar {
+                padding: 12px 0;
+            }
+
+            .nav-actions {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-content {
+                padding: 0 16px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .nav-content {
+                gap: 8px;
+            }
+
+            .nav-content {
+                padding: 0 12px;
+            }
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            color: var(--text-primary);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: var(--warning);
+            color: var(--text-primary);
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+            color: var(--text-primary);
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 25px 0;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        th,
+        td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        td {
+            color: var(--text-secondary);
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Sector Wrapper Styles */
+        .sector-wrapper {
+            position: relative;
+            margin-bottom: 60px;
+            padding: 40px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sector-number {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            font-size: 120px;
+            font-weight: 900;
+            color: rgba(102, 126, 234, 0.05);
+            z-index: 0;
+            pointer-events: none;
+            user-select: none;
+            line-height: 1;
+        }
+
+        .sector-wrapper .content-block,
+        .sector-wrapper .case-study-block,
+        .sector-wrapper .quick-check-block {
+            position: relative;
+            z-index: 1;
+            background: transparent;
+            border: none;
+            padding: 20px 0;
+        }
+
+        /* Remove separator between blocks */
+        .sector-wrapper .content-block:not(:first-of-type) {
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 1px dashed rgba(102, 126, 234, 0.15);
+        }
+
+        /* Block number label */
+        .block-number-label {
+            display: none;
+        }
+
+        /* Quiz Unlock Notice */
+        .quiz-unlock-notice {
+            text-align: center;
+            padding: 10px 0;
+            background: transparent;
+            border: none;
+            color: rgba(184, 197, 214, 0.7);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            opacity: 0.85;
+            letter-spacing: 0.3px;
+        }
+
+        /* Audio Completion Button */
+        .audio-completion-btn {
+            width: 100%;
+            padding: 18px 24px;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 800;
+            cursor: pointer;
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            letter-spacing: 0.5px;
+            filter: brightness(1.1) contrast(1.1);
+        }
+
+        .audio-completion-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.5);
+        }
+
+        .audio-completion-btn:active {
+            transform: translateY(0);
+        }
+
+        .audio-completion-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Hide old audio completion trigger */
+        .audio-completion-trigger {
+            display: none;
+        }
+
+        /* Quiz unlock success animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            to {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Mobile adjustments for sector number */
+        @media (max-width: 768px) {
+            .sector-number {
+                font-size: 80px;
+                top: 20px;
+                left: 20px;
+            }
+
+            .sector-wrapper {
+                padding: 30px 15px;
+                margin-bottom: 40px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sector-number {
+                font-size: 60px;
+                top: 15px;
+                left: 15px;
+            }
+
+            .sector-wrapper {
+                padding: 25px 10px;
+            }
+        }
+    </style>
+</head>
+
+<body data-module-id="module-1">
+    <!-- Header -->
+    <header class="header">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-content">
+                    <a href="../index.html" class="logo">
+                        <span class="logo-icon">🎓</span>
+                        <span class="logo-text">Курсы Диспетчера</span>
+                    </a>
+
+                    <div class="nav-links">
+                        <a href="../index.html" class="nav-link" data-short="Главная">Главная</a>
+
+                        <div class="nav-dropdown">
+                            <a href="../courses.html" class="nav-link" data-short="Курсы">Курсы</a>
+                            <div class="dropdown-content">
+                                <a href="../course.html">Обзор курса</a>
+                                <a href="modules-index.html">12 Модулей обучения</a>
+                                <a href="simulator.html">Симулятор переговоров</a>
+                                <a href="calls.html">Примеры звонков</a>
+                                <a href="cases.html">Практические кейсы</a>
+                                <a href="testing.html">Тестирование</a>
+                            </div>
+                        </div>
+
+                        <div class="nav-dropdown">
+                            <span class="nav-link" data-short="Инстр.">Инструменты</span>
+                            <div class="dropdown-content">
+                                <a href="analytics.html">📊 Статистика рынка</a>
+                                <a href="load-finder.html">Load Finder</a>
+                                <a href="dispatcher-cards.html">Dispatcher Cards</a>
+                                <a href="simulator.html">Dispatch Simulator</a>
+                            </div>
+                        </div>
+
+                        <div class="nav-dropdown">
+                            <span class="nav-link" data-short="Инфо">Информация</span>
+                            <div class="dropdown-content">
+                                <a href="../about.html">О нас</a>
+                                <a href="../career.html">Карьера</a>
+                                <a href="../faq.html">FAQ</a>
+                                <a href="../help.html">Помощь</a>
+                                <a href="../contacts.html">Контакты</a>
+                            </div>
+                        </div>
+
+                        <a href="modules-index.html" class="nav-link active" data-short="Докум.">Документация</a>
+                        <a href="../pricing.html" class="nav-link" data-short="Тарифы">Тарифы</a>
+                        <a href="../dashboard.html" class="nav-link" id="dashboardLink" style="display: none;"
+                            data-short="Кабинет">Личный кабинет</a>
+                    </div>
+
+                    <div class="nav-actions">
+                        <a href="../login.html" class="btn-login">Войти</a>
+                        <a href="../register.html" class="btn-signup">Регистрация</a>
+                    </div>
+
+                    <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Mobile Menu Overlay -->
+        <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+
+        <!-- Mobile Menu -->
+        <div class="mobile-menu" id="mobileMenu">
+            <div class="mobile-nav-links">
+                <div class="mobile-nav-actions">
+                    <a href="../login.html" class="btn-login">Войти</a>
+                    <a href="../register.html" class="btn-signup">Регистрация</a>
+                </div>
+
+                <div class="mobile-menu-divider"></div>
+
+                <a href="../index.html" class="nav-link">🏠 Главная</a>
+
+                <div class="mobile-nav-section">
+                    <div class="mobile-section-title">📚 КУРСЫ</div>
+                    <a href="../courses.html" class="nav-link nav-link-sub">Все курсы</a>
+                    <a href="../course.html" class="nav-link nav-link-sub">Обзор курса</a>
+                    <a href="modules-index.html" class="nav-link nav-link-sub">12 Модулей обучения</a>
+                    <a href="simulator.html" class="nav-link nav-link-sub">Симулятор переговоров</a>
+                    <a href="calls.html" class="nav-link nav-link-sub">Примеры звонков</a>
+                    <a href="cases.html" class="nav-link nav-link-sub">Практические кейсы</a>
+                    <a href="testing.html" class="nav-link nav-link-sub">Тестирование</a>
+                </div>
+
+                <div class="mobile-nav-section">
+                    <div class="mobile-section-title">🛠️ ИНСТРУМЕНТЫ</div>
+                    <a href="analytics.html" class="nav-link nav-link-sub">📊 Статистика рынка</a>
+                    <a href="load-finder.html" class="nav-link nav-link-sub">Load Finder</a>
+                    <a href="dispatcher-cards.html" class="nav-link nav-link-sub">Dispatcher Cards</a>
+                    <a href="simulator.html" class="nav-link nav-link-sub">Dispatch Simulator</a>
+                </div>
+
+                <div class="mobile-nav-section">
+                    <div class="mobile-section-title">ℹ️ ИНФОРМАЦИЯ</div>
+                    <a href="../about.html" class="nav-link nav-link-sub">О нас</a>
+                    <a href="../career.html" class="nav-link nav-link-sub">Карьера</a>
+                    <a href="../faq.html" class="nav-link nav-link-sub">FAQ</a>
+                    <a href="../help.html" class="nav-link nav-link-sub">Помощь</a>
+                    <a href="../contacts.html" class="nav-link nav-link-sub">Контакты</a>
+                </div>
+
+                <a href="modules-index.html" class="nav-link active">📄 Документация</a>
+                <a href="../pricing.html" class="nav-link">💰 Тарифы</a>
+                <a href="../dashboard.html" class="nav-link" id="dashboardLinkMobile" style="display: none;">👤 Личный
+                    кабинет</a>
+            </div>
+        </div>
+
+
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+
+        <!-- СЕКТОР 1: Роль диспетчера -->
+        <div class="sector-wrapper" data-sector="С1">
+            <div class="sector-number">С1</div>
+            <div class="content-block">
+                <div class="block-number-label">СЕКТОР 1</div>
+                <div class="block-header">
+                    <h2 class="block-title">Роль диспетчера в грузоперевозках</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio1')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio1')"></div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio1')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <p>Диспетчер — это связующее звено между водителями, брокерами, грузоотправителями и получателями.
+                        Основная задача — обеспечить эффективную и безопасную доставку грузов.</p>
+
+                    <h3>Ключевые функции диспетчера:</h3>
+                    <ul>
+                        <li><strong>Координация логистики</strong> — планирование маршрутов и оптимизация времени
+                            доставки
+                        </li>
+                        <li><strong>Коммуникация</strong> — постоянная связь с водителями, брокерами и клиентами</li>
+                        <li><strong>Решение проблем</strong> — быстрое реагирование на непредвиденные ситуации в пути
+                        </li>
+                        <li><strong>Документооборот</strong> — ведение всей необходимой документации и отчетности</li>
+                    </ul>
+
+                    <div class="alert alert-info">
+                        <strong>💡 Важно:</strong> Успешный диспетчер должен уметь работать в многозадачном режиме и
+                        принимать быстрые решения под давлением.
+                    </div>
+
+                    <!-- Audio Completion Trigger -->
+                    <button class="audio-completion-trigger" data-unlocks="quiz-1">
+                        🎧 Я закончил(а) слушать
+                    </button>
+                </div>
+            </div>
+
+            <!-- Case Study 1: Первый день работы -->
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Реальный кейс: Первый день диспетчера</h3>
+                </div>
+                <div class="case-study-content">
+                    <p>
+                        <strong>Ситуация:</strong> Вы только начали работать диспетчером в небольшой компании с 5
+                        грузовиками.
+                        Утром понедельника вам нужно:
+                    </p>
+                    <ul>
+                        <li>Проверить статус 3 активных грузов в пути</li>
+                        <li>Найти новый груз для водителя, который разгружается в Dallas сегодня вечером</li>
+                        <li>Решить проблему: один водитель опаздывает на 2 часа из-за пробки</li>
+                        <li>Ответить на 5 звонков от брокеров</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        💡 Вопрос: С чего вы начнете свой рабочий день? Какая задача самая приоритетная?
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Check 1 -->
+            <div class="quick-check-block locked" id="quiz-1" data-quiz-id="quiz-1-1" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+
+                <div class="quick-check-question">
+                    Какая задача должна быть выполнена в первую очередь?
+                </div>
+
+                <div class="quick-check-options">
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-1" id="quiz-1-a" value="a">
+                        <label for="quiz-1-a">Начать искать новый груз для водителя в Dallas</label>
+                    </div>
+
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-1" id="quiz-1-b" value="b">
+                        <label for="quiz-1-b">Связаться с получателем груза, где водитель опаздывает, и предупредить о
+                            задержке</label>
+                    </div>
+
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-1" id="quiz-1-c" value="c">
+                        <label for="quiz-1-c">Ответить на звонки от брокеров</label>
+                    </div>
+                </div>
+
+                <div class="quick-check-feedback">
+                    <strong>Правильно! ✓</strong>
+                    Коммуникация с получателем о задержке — это критически важная задача. Опоздание на 2 часа может
+                    сорвать
+                    их график разгрузки.
+                    Предупредив заранее, вы сохраните хорошие отношения и избежите штрафов. Остальные задачи важны, но
+                    не
+                    требуют немедленного действия.
+                </div>
+
+                <div class="quiz-unlock-notice">
+                    🔒 Разблокируется после прослушивания аудио
+                </div>
+
+                <button class="audio-completion-btn" data-unlocks="quiz-1" onclick="unlockQuiz('quiz-1')">
+                    🎧 Я закончил(а) слушать
+                </button>
+            </div>
+        </div>
+        <!-- END СЕКТОР 1 -->
+
+        <!-- СЕКТОР 2: Обязанности -->
+        <div class="sector-wrapper" data-sector="С2">
+            <div class="sector-number">С2</div>
+            <div class="content-block">
+                <div class="block-number-label">СЕКТОР 2</div>
+                <div class="block-header">
+                    <h2 class="block-title">Основные обязанности диспетчера</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio2')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio2')"></div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio2')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>Ежедневные задачи:</h3>
+
+                    <h4>🔍 Поиск и согласование грузов</h4>
+                    <ul>
+                        <li>Работа с load boards (DAT, Truckstop, 123loadboard)</li>
+                        <li>Переговоры с брокерами по ставкам</li>
+                        <li>Поиск прямых клиентов</li>
+                        <li>Анализ рентабельности маршрутов</li>
+                    </ul>
+
+                    <h4>🗺️ Планирование маршрутов</h4>
+                    <ul>
+                        <li>Оптимизация времени и расходов на топливо</li>
+                        <li>Учет ограничений по весу и габаритам</li>
+                        <li>Планирование отдыха водителей (HOS compliance)</li>
+                        <li>Поиск backhaul грузов для минимизации deadhead miles</li>
+                    </ul>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Время</th>
+                                    <th>Задача</th>
+                                    <th>Приоритет</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>6:00-8:00</td>
+                                    <td>Проверка статуса активных грузов</td>
+                                    <td>🔥 Высокий</td>
+                                </tr>
+                                <tr>
+                                    <td>8:00-12:00</td>
+                                    <td>Поиск новых грузов и переговоры</td>
+                                    <td>🔥 Высокий</td>
+                                </tr>
+                                <tr>
+                                    <td>12:00-17:00</td>
+                                    <td>Координация pickup/delivery</td>
+                                    <td>⚡ Средний</td>
+                                </tr>
+                                <tr>
+                                    <td>17:00-20:00</td>
+                                    <td>Планирование на завтра</td>
+                                    <td>📊 Низкий</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Audio Completion Trigger -->
+                    <button class="audio-completion-trigger" data-unlocks="quiz-2">
+                        🎧 Я закончил(а) слушать
+                    </button>
+                </div>
+            </div>
+
+            <!-- Case Study 2: Переговоры с брокером -->
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Реальный кейс: Переговоры о ставке</h3>
+                </div>
+                <div class="case-study-content">
+                    <p>
+                        <strong>Ситуация:</strong> Вы нашли груз на DAT Load Board: Chicago, IL → Dallas, TX,
+                        1,200 миль, 45,000 lbs. Брокер предлагает $2,400 ($2.00/mile).
+                    </p>
+                    <p>
+                        Вы знаете, что средняя ставка на этом маршруте сейчас $2.50/mile из-за высокого спроса.
+                        Дизель стоит $3.80/галлон, и ваш водитель получает 6 MPG (miles per gallon).
+                    </p>
+                    <div class="case-study-highlight">
+                        💡 Вопрос: Стоит ли брать этот груз? Какую контр-оффер вы предложите брокеру?
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Check 2 -->
+            <div class="quick-check-block locked" id="quiz-2" data-quiz-id="quiz-1-2" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+
+                <div class="quick-check-question">
+                    Какая минимальная ставка будет выгодной для этого груза, учитывая расходы на топливо?
+                </div>
+
+                <div class="quick-check-options">
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-2" id="quiz-2-a" value="a">
+                        <label for="quiz-2-a">$2,400 ($2.00/mile) - принять оригинальное предложение</label>
+                    </div>
+
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-2" id="quiz-2-b" value="b">
+                        <label for="quiz-2-b">$2,880 ($2.40/mile) - покрывает топливо + разумная прибыль</label>
+                    </div>
+
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-2" id="quiz-2-c" value="c">
+                        <label for="quiz-2-c">$3,600 ($3.00/mile) - максимальная ставка</label>
+                    </div>
+                </div>
+
+                <div class="quick-check-feedback">
+                    <strong>Правильно! ✓</strong>
+                    При 6 MPG и $3.80/галлон, топливо стоит ~$760 (1,200 миль ÷ 6 × $3.80).
+                    Ставка $2.40/mile ($2,880) покрывает топливо, износ, зарплату водителя и дает разумную прибыль.
+                    Это реалистичная контр-оффер, которую брокер может принять.
+                </div>
+
+                <div class="quiz-unlock-notice">
+                    🔒 Разблокируется после прослушивания аудио
+                </div>
+
+                <button class="audio-completion-btn" data-unlocks="quiz-2" onclick="unlockQuiz('quiz-2')">
+                    🎧 Я закончил(а) слушать
+                </button>
+            </div>
+        </div>
+        <!-- END СЕКТОР 2 -->
+
+        <!-- СЕКТОР 3: Необходимые навыки -->
+        <div class="sector-wrapper" data-sector="С3">
+            <div class="sector-number">С3</div>
+            <div class="content-block">
+                <div class="block-number-label">СЕКТОР 3</div>
+                <div class="block-header">
+                    <h2 class="block-title">Необходимые навыки и качества</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio3')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio3')"></div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio3')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>Технические навыки:</h3>
+                    <ul>
+                        <li><strong>Знание географии США</strong> — основные маршруты, штаты, города</li>
+                        <li><strong>Работа с TMS</strong> — Transportation Management Systems</li>
+                        <li><strong>Load boards</strong> — эффективный поиск грузов</li>
+                        <li><strong>DOT regulations</strong> — знание правил и требований</li>
+                    </ul>
+
+                    <h3>Личные качества:</h3>
+                    <ul>
+                        <li><strong>Коммуникабельность</strong> — умение вести переговоры</li>
+                        <li><strong>Стрессоустойчивость</strong> — работа в условиях дедлайнов</li>
+                        <li><strong>Многозадачность</strong> — управление несколькими грузами</li>
+                        <li><strong>Внимательность</strong> — контроль деталей и документов</li>
+                    </ul>
+
+                    <div class="alert alert-success">
+                        <strong>🎯 Цель модуля:</strong> После изучения этого модуля вы будете понимать роль диспетчера
+                        и
+                        основные требования к профессии.
+                    </div>
+
+                    <!-- Audio Completion Trigger -->
+                    <button class="audio-completion-trigger" data-unlocks="quiz-3">
+                        🎧 Я закончил(а) слушать
+                    </button>
+                </div>
+            </div>
+
+            <!-- Case Study 3: Стрессовая ситуация -->
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Реальный кейс: Пустой пробег (Deadhead)</h3>
+                </div>
+                <div class="case-study-content">
+                    <p>
+                        <strong>Ситуация:</strong> Ваш водитель только что разгрузился в Phoenix, AZ.
+                        Следующий груз находится в Los Angeles, CA (370 миль deadhead - пустой пробег).
+                    </p>
+                    <p>
+                        Груз: LA → Seattle, WA, 1,150 миль, $3,450 ($3.00/mile).
+                        Но вам нужно проехать 370 миль пустым до LA, чтобы забрать груз.
+                    </p>
+                    <div class="case-study-highlight">
+                        💡 Вопрос: Как deadhead miles влияют на реальную прибыльность этого груза?
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Check 3 -->
+            <div class="quick-check-block locked" id="quiz-3" data-quiz-id="quiz-1-3" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+
+                <div class="quick-check-question">
+                    Какая реальная ставка за милю для этого груза с учетом deadhead?
+                </div>
+
+                <div class="quick-check-options">
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-3" id="quiz-3-a" value="a">
+                        <label for="quiz-3-a">$3.00/mile - как указано в оффере</label>
+                    </div>
+
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-3" id="quiz-3-b" value="b">
+                        <label for="quiz-3-b">$2.27/mile - с учетом deadhead (370 + 1,150 = 1,520 миль)</label>
+                    </div>
+
+                    <div class="quick-check-option">
+                        <input type="radio" name="quiz-3" id="quiz-3-c" value="c">
+                        <label for="quiz-3-c">$2.50/mile - средняя ставка</label>
+                    </div>
+                </div>
+
+                <div class="quick-check-feedback">
+                    <strong>Правильно! ✓</strong>
+                    Общее расстояние: 370 (deadhead) + 1,150 (loaded) = 1,520 миль.
+                    Доход: $3,450 ÷ 1,520 миль = $2.27/mile реальная ставка.
+                    Всегда учитывайте deadhead miles при расчете прибыльности!
+                </div>
+
+                <div class="quiz-unlock-notice">
+                    🔒 Разблокируется после прослушивания аудио
+                </div>
+
+                <button class="audio-completion-btn" data-unlocks="quiz-3" onclick="unlockQuiz('quiz-3')">
+                    🎧 Я закончил(а) слушать
+                </button>
+            </div>
+        </div>
+        <!-- END СЕКТОР 3 -->
+
+        <!-- Navigation -->
+        <nav class="lesson-nav">
+            <a href="#" class="nav-btn disabled">
+                <span>←</span>
+                <span>Предыдущий урок</span>
+            </a>
+            <div class="progress-info">
+                <div>Модуль 1 из 10</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 10%"></div>
+                </div>
+                <div>10% завершено</div>
+            </div>
+            <a href="../doc-module-2" class="nav-btn">
+                <span>Следующий урок</span>
+                <span>→</span>
+            </a>
+        </nav>
+    </main>
+
+    <!-- Audio elements (hidden) -->
+    <audio id="audio1" preload="metadata">
+        <source src="file:///C:/Users/Administrator/Desktop/Cream Soda - На Сиреневой Луне.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="audio2" preload="none">
+        <source src="../audio/module1-block2.mp3" type="audio/mpeg">
+        <source src="../audio/module1-block2.ogg" type="audio/ogg">
+    </audio>
+    <audio id="audio3" preload="none">
+        <source src="../audio/module1-block3.mp3" type="audio/mpeg">
+        <source src="../audio/module1-block3.ogg" type="audio/ogg">
+    </audio>
+
+    <script>
+        let currentAudio = null;
+        let currentButton = null;
+        let currentContainer = null;
+        let progressUpdateInterval = null;
+
+        // Audio durations (in seconds) - will be updated from actual audio files
+        const audioDurations = {
+            'audio1': 0, // Will be loaded from actual file
+            'audio2': 240, // 4 minutes (simulated)
+            'audio3': 210  // 3.5 minutes (simulated)
+        };
+
+        // Load actual audio duration for audio1
+        document.addEventListener('DOMContentLoaded', function () {
+            const audio1 = document.getElementById('audio1');
+
+            audio1.addEventListener('loadedmetadata', function () {
+                if (audio1.duration && !isNaN(audio1.duration) && isFinite(audio1.duration)) {
+                    audioDurations['audio1'] = audio1.duration;
+                    updateProgress('audio1', 0, audio1.duration);
+                } else {
+                    // Fallback to simulated duration if file can't be loaded
+                    audioDurations['audio1'] = 180;
+                    updateProgress('audio1', 0, 180);
+                }
+            });
+
+            audio1.addEventListener('error', function () {
+                console.log('Could not load audio file, using simulated duration');
+                audioDurations['audio1'] = 180;
+                updateProgress('audio1', 0, 180);
+            });
+
+            // Initialize other audio durations
+            Object.keys(audioDurations).forEach(audioId => {
+                if (audioId !== 'audio1') {
+                    const duration = audioDurations[audioId];
+                    updateProgress(audioId, 0, duration);
+                }
+            });
+        });
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateProgress(audioId, currentTime, duration) {
+            const container = document.querySelector(`[onclick*="${audioId}"]`).closest('.audio-container');
+            const progressRing = container.querySelector('.progress-ring-fill');
+            const mobileProgressFill = container.querySelector('.mobile-progress-fill');
+            const durationDisplay = container.querySelector('.audio-duration');
+
+            const progress = currentTime / duration;
+            const circumference = 2 * Math.PI * 32; // radius = 32
+            const offset = circumference - (progress * circumference);
+
+            // Update ring progress (desktop)
+            if (progressRing) {
+                progressRing.style.strokeDashoffset = offset;
+            }
+
+            // Update mobile progress bar
+            if (mobileProgressFill) {
+                mobileProgressFill.style.width = `${progress * 100}%`;
+            }
+
+            durationDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+        }
+
+        function seekAudioMobile(event, element, audioId) {
+            event.stopPropagation();
+
+            const audio = document.getElementById(audioId);
+            if (!audio || audio.paused) {
+                return; // Only allow seeking when playing
+            }
+
+            const rect = element.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const progress = clickX / rect.width;
+            const duration = audioDurations[audioId];
+            const newTime = progress * duration;
+
+            // Update progress immediately
+            updateProgress(audioId, newTime, duration);
+
+            // Seek audio
+            if (audioId === 'audio1' && audio.duration) {
+                audio.currentTime = newTime;
+            }
+        }
+
+        function seekAudio(event, element, audioId) {
+            event.stopPropagation();
+
+            // Only allow seeking if audio is playing
+            if (!element.classList.contains('seekable')) {
+                return;
+            }
+
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const x = event.clientX - centerX;
+            const y = event.clientY - centerY;
+
+            // Calculate distance from center
+            const distance = Math.sqrt(x * x + y * y);
+            const radius = rect.width / 2;
+
+            // Only allow seeking if click is on the ring (outer 40% of radius)
+            // This prevents conflicts with the play button in the center
+            if (distance < radius * 0.55) {
+                // Click is too close to center, ignore it
+                return;
+            }
+
+            // Calculate angle from top (0 degrees)
+            let angle = Math.atan2(x, -y) * (180 / Math.PI);
+            if (angle < 0) angle += 360;
+
+            const progress = angle / 360;
+            const duration = audioDurations[audioId];
+            const newTime = progress * duration;
+
+            // Update progress ring immediately
+            updateProgress(audioId, newTime, duration);
+
+            // If audio is playing, seek to new position
+            const audio = document.getElementById(audioId);
+            if (audio && !audio.paused) {
+                if (audioId === 'audio1') {
+                    // Real audio seeking
+                    audio.currentTime = newTime;
+                } else {
+                    // For demo purposes, just update the visual progress
+                    // In real implementation, you would set audio.currentTime = newTime;
+                }
+            }
+        }
+
+        // Auto-unlock quiz when audio ends
+        function unlockQuizForAudio(audioId) {
+            // Map audio IDs to quiz IDs
+            const audioToQuizMap = {
+                'audio1': 'quiz-1',
+                'audio2': 'quiz-2',
+                'audio3': 'quiz-3'
+            };
+
+            const quizId = audioToQuizMap[audioId];
+            if (quizId) {
+                // Find the trigger button for this quiz
+                const triggerButton = document.querySelector(`[data-unlocks="${quizId}"]`);
+                if (triggerButton && !triggerButton.classList.contains('completed')) {
+                    // Simulate button click to unlock quiz
+                    triggerButton.click();
+                }
+            }
+        }
+
+        function toggleAudio(button, audioId) {
+            const audio = document.getElementById(audioId);
+            const container = button.closest('.audio-container');
+            const interactiveRing = container.querySelector('.progress-ring-interactive');
+
+            // Stop current audio if different
+            if (currentAudio && currentAudio !== audio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                if (currentButton) {
+                    currentButton.classList.remove('playing');
+                }
+                if (currentContainer) {
+                    currentContainer.classList.remove('playing');
+                    const oldRing = currentContainer.querySelector('.progress-ring-interactive');
+                    oldRing.classList.remove('seekable');
+                }
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+            }
+
+            if (audio.paused) {
+                audio.play();
+                button.classList.add('playing');
+                container.classList.add('playing');
+                interactiveRing.classList.add('seekable');
+                currentAudio = audio;
+                currentButton = button;
+                currentContainer = container;
+
+                // Start progress updates
+                const duration = audioDurations[audioId];
+
+                if (audioId === 'audio1') {
+                    // Use real audio progress for audio1
+                    progressUpdateInterval = setInterval(() => {
+                        if (audio.currentTime < audio.duration) {
+                            updateProgress(audioId, audio.currentTime, audio.duration);
+                        }
+                    }, 100);
+                } else {
+                    // Use simulated progress for other audio
+                    let currentTime = 0;
+                    progressUpdateInterval = setInterval(() => {
+                        if (currentTime < duration) {
+                            currentTime += 0.1;
+                            updateProgress(audioId, currentTime, duration);
+                        } else {
+                            // Audio ended
+                            clearInterval(progressUpdateInterval);
+                            button.classList.remove('playing');
+                            container.classList.remove('playing');
+                            interactiveRing.classList.remove('seekable');
+                            currentAudio = null;
+                            currentButton = null;
+                            currentContainer = null;
+
+                            // Reset progress
+                            updateProgress(audioId, 0, duration);
+
+                            // Auto-unlock quiz when simulated audio ends
+                            unlockQuizForAudio(audioId);
+                        }
+                    }, 100);
+                }
+
+            } else {
+                audio.pause();
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+            }
+
+            // Handle audio end
+            audio.onended = function () {
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+                updateProgress(audioId, 0, audioDurations[audioId]);
+
+                // Auto-unlock quiz when audio ends
+                unlockQuizForAudio(audioId);
+            };
+
+            // Handle audio error
+            audio.onerror = function () {
+                console.log('Audio file not found, but button still works for demo');
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+            };
+        }
+
+        // Initialize duration displays
+        document.addEventListener('DOMContentLoaded', function () {
+            Object.keys(audioDurations).forEach(audioId => {
+                const duration = audioDurations[audioId];
+                updateProgress(audioId, 0, duration);
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function (e) {
+            if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+                e.preventDefault();
+                if (currentButton) {
+                    currentButton.click();
+                }
+            }
+        });
+
+        // Auto-scroll to playing content
+        function scrollToPlaying() {
+            if (currentButton) {
+                currentButton.closest('.content-block').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }
+        }
+
+        // Progress tracking
+        window.addEventListener('beforeunload', function () {
+            localStorage.setItem('module1-progress', '10');
+            localStorage.setItem('current-module', '1');
+        });
+
+        // Mobile Menu JavaScript
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+
+        if (mobileMenuToggle && mobileMenu && mobileMenuOverlay) {
+            mobileMenuToggle.addEventListener('click', function () {
+                mobileMenuToggle.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+                mobileMenuOverlay.classList.toggle('active');
+                document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+            });
+
+            mobileMenuOverlay.addEventListener('click', function () {
+                mobileMenuToggle.classList.remove('active');
+                mobileMenu.classList.remove('active');
+                mobileMenuOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+
+            // Close mobile menu when clicking on a link
+            document.querySelectorAll('.mobile-nav-links .nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (mobileMenu.classList.contains('active')) {
+                        mobileMenuToggle.classList.remove('active');
+                        mobileMenu.classList.remove('active');
+                        mobileMenuOverlay.classList.remove('active');
+                        document.body.style.overflow = '';
+                    }
+                });
+            });
+        }
+
+        // Unlock Quiz Function
+        function unlockQuiz(quizId) {
+            const quizBlock = document.getElementById(quizId);
+            if (quizBlock) {
+                // Remove locked class and add visible class
+                quizBlock.classList.remove('locked');
+                quizBlock.classList.add('visible');
+
+                // Ensure quiz is fully visible
+                quizBlock.style.opacity = '1';
+                quizBlock.style.transform = 'translateY(0)';
+
+                // Hide unlock notice and button
+                const notice = quizBlock.querySelector('.quiz-unlock-notice');
+                const button = quizBlock.querySelector('.audio-completion-btn');
+
+                if (notice) notice.style.display = 'none';
+                if (button) button.style.display = 'none';
+
+                // Show success message
+                const successMsg = document.createElement('div');
+                successMsg.className = 'quiz-unlock-success';
+                successMsg.innerHTML = '✅ Quiz разблокирован! Можете отвечать на вопросы.';
+                successMsg.style.cssText = 'text-align: center; padding: 15px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; color: #10b981; margin-bottom: 20px; animation: fadeIn 0.5s ease;';
+
+                quizBlock.insertBefore(successMsg, quizBlock.firstChild);
+
+                // Remove success message after 3 seconds
+                setTimeout(() => {
+                    successMsg.style.animation = 'fadeOut 0.5s ease';
+                    setTimeout(() => successMsg.remove(), 500);
+                }, 3000);
+
+                // Smooth scroll to quiz
+                setTimeout(() => {
+                    quizBlock.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                }, 100);
+            }
+        }
+    </script>
+
+    <!-- Interactive Modules Script -->
+    <script src="../interactive-modules.js"></script>
+</body>
+
+</html>

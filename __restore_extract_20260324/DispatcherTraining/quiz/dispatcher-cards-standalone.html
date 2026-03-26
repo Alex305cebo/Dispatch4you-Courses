@@ -1,0 +1,557 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Dispatcher Cards - Тренажёр вопросов</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%0D%0A%20%20%3Cdefs%3E%0D%0A%20%20%20%20%3ClinearGradient%20id%3D%22capGradient%22%20x1%3D%220%25%22%20y1%3D%220%25%22%20x2%3D%22100%25%22%20y2%3D%22100%25%22%3E%0D%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20style%3D%22stop-color%3A%238B5CF6%3Bstop-opacity%3A1%22%20%2F%3E%0D%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20style%3D%22stop-color%3A%236366F1%3Bstop-opacity%3A1%22%20%2F%3E%0D%0A%20%20%20%20%3C%2FlinearGradient%3E%0D%0A%20%20%20%20%3ClinearGradient%20id%3D%22tasselGradient%22%20x1%3D%220%25%22%20y1%3D%220%25%22%20x2%3D%220%25%22%20y2%3D%22100%25%22%3E%0D%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20style%3D%22stop-color%3A%23FBBF24%3Bstop-opacity%3A1%22%20%2F%3E%0D%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20style%3D%22stop-color%3A%23F59E0B%3Bstop-opacity%3A1%22%20%2F%3E%0D%0A%20%20%20%20%3C%2FlinearGradient%3E%0D%0A%20%20%3C%2Fdefs%3E%0D%0A%20%20%0D%0A%20%20%3C!--%20Cap%20base%20(bottom%20part)%20--%3E%0D%0A%20%20%3Cellipse%20cx%3D%2250%22%20cy%3D%2255%22%20rx%3D%2235%22%20ry%3D%228%22%20fill%3D%22url(%23capGradient)%22%20opacity%3D%220.9%22%2F%3E%0D%0A%20%20%0D%0A%20%20%3C!--%20Cap%20top%20(flat%20board)%20--%3E%0D%0A%20%20%3Cpath%20d%3D%22M%2015%2045%20L%2050%2035%20L%2085%2045%20L%2050%2055%20Z%22%20fill%3D%22url(%23capGradient)%22%2F%3E%0D%0A%20%20%0D%0A%20%20%3C!--%20Cap%203D%20effect%20--%3E%0D%0A%20%20%3Cpath%20d%3D%22M%2050%2035%20L%2085%2045%20L%2085%2048%20L%2050%2058%20L%2050%2055%20Z%22%20fill%3D%22%236366F1%22%20opacity%3D%220.7%22%2F%3E%0D%0A%20%20%3Cpath%20d%3D%22M%2050%2035%20L%2015%2045%20L%2015%2048%20L%2050%2058%20L%2050%2055%20Z%22%20fill%3D%22%238B5CF6%22%20opacity%3D%220.8%22%2F%3E%0D%0A%20%20%0D%0A%20%20%3C!--%20Tassel%20string%20--%3E%0D%0A%20%20%3Cline%20x1%3D%2285%22%20y1%3D%2245%22%20x2%3D%2288%22%20y2%3D%2270%22%20stroke%3D%22url(%23tasselGradient)%22%20stroke-width%3D%222%22%2F%3E%0D%0A%20%20%0D%0A%20%20%3C!--%20Tassel%20--%3E%0D%0A%20%20%3Ccircle%20cx%3D%2288%22%20cy%3D%2272%22%20r%3D%224%22%20fill%3D%22url(%23tasselGradient)%22%2F%3E%0D%0A%20%20%3Cpath%20d%3D%22M%2088%2076%20L%2085%2082%20L%2088%2080%20L%2091%2082%20Z%22%20fill%3D%22%23F59E0B%22%2F%3E%0D%0A%3C%2Fsvg%3E%0D%0A">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon.svg">
+    <style>* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+}
+
+html {
+    height: -webkit-fill-available;
+}
+
+.container {
+    width: 100%;
+    max-width: 430px;
+    height: 100vh;
+    height: -webkit-fill-available;
+    background: rgba(15, 23, 42, 0.95);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+.header {
+    padding: 12px 16px;
+    background: rgba(15, 23, 42, 0.98);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.category {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+}
+
+.hint {
+    flex: 1;
+    text-align: center;
+    font-size: 11px;
+    color: #d8b4fe;
+    line-height: 1.3;
+}
+
+.counter {
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
+}
+
+.card-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+}
+
+.card {
+    width: 100%;
+    max-width: 350px;
+    height: 500px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+    border: 2px solid rgba(168, 85, 247, 0.3);
+    border-radius: 24px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.3s;
+    position: relative;
+    backdrop-filter: blur(10px);
+    overflow-y: auto;
+}
+
+@media (max-width: 430px) {
+    .container {
+        max-width: 100%;
+    }
+
+    .card-container {
+        padding: 12px;
+    }
+
+    .card {
+        max-width: 100%;
+        height: auto;
+        min-height: 400px;
+        max-height: calc(100vh - 180px);
+        padding: 24px 20px;
+    }
+
+    .question-text {
+        font-size: 18px;
+        margin-bottom: 16px;
+    }
+
+    .hint-text {
+        font-size: 13px;
+    }
+
+    .answer-text {
+        font-size: 14px;
+    }
+
+    .buttons {
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .btn {
+        padding: 14px;
+        font-size: 15px;
+    }
+}
+
+@media (max-height: 700px) {
+    .card {
+        height: auto;
+        min-height: 350px;
+        max-height: calc(100vh - 160px);
+        padding: 20px 16px;
+    }
+
+    .question-text {
+        font-size: 17px;
+        margin-bottom: 12px;
+    }
+
+    .hint-text {
+        font-size: 12px;
+    }
+
+    .answer-text {
+        font-size: 13px;
+    }
+}
+
+.card:hover {
+    transform: scale(1.02);
+}
+
+.card.flipped .card-front {
+    display: none;
+}
+
+.card.flipped .card-back {
+    display: block;
+}
+
+.card-front, .card-back {
+    width: 100%;
+}
+
+.card-back {
+    display: none;
+}
+
+.category-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    background: rgba(168, 85, 247, 0.2);
+    border: 1px solid rgba(168, 85, 247, 0.5);
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #a855f7;
+    margin-bottom: 20px;
+}
+
+.question-text {
+    font-size: 20px;
+    font-weight: 600;
+    color: white;
+    line-height: 1.5;
+    margin-bottom: 24px;
+}
+
+.hint-text {
+    font-size: 14px;
+    color: #cbd5e1;
+    line-height: 1.6;
+    font-style: italic;
+}
+
+.answer-text {
+    font-size: 15px;
+    color: #cbd5e1;
+    line-height: 1.7;
+    text-align: left;
+}
+
+.flip-hint {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.buttons {
+    padding: 20px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.btn {
+    flex: 1;
+    max-width: 140px;
+    padding: 16px;
+    border: none;
+    border-radius: 16px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: white;
+}
+
+.btn-no {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.btn-yes {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.results {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.results.show {
+    display: flex;
+}
+
+.results-content {
+    background: rgba(15, 23, 42, 0.98);
+    border: 2px solid rgba(168, 85, 247, 0.3);
+    border-radius: 24px;
+    padding: 40px;
+    max-width: 400px;
+    text-align: center;
+}
+
+.results-title {
+    font-size: 32px;
+    font-weight: 900;
+    color: white;
+    margin-bottom: 24px;
+}
+
+.results-score {
+    font-size: 48px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 16px;
+}
+
+.results-text {
+    font-size: 16px;
+    color: #cbd5e1;
+    margin-bottom: 32px;
+}
+
+.btn-restart {
+    padding: 16px 32px;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-restart:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(99, 102, 241, 0.4);
+}
+
+.loading {
+    text-align: center;
+    color: white;
+    font-size: 18px;
+}
+</style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="category">
+                <span id="categoryIcon">🎯</span>
+                <span id="categoryName">Загрузка</span>
+            </div>
+            <div class="hint" id="shortHint">💡 Подумайте над вопросом...</div>
+            <div class="counter">
+                <span id="currentIndex">1</span>/<span id="totalQuestions">30</span>
+            </div>
+        </div>
+
+        <div class="card-container">
+            <div class="card" id="card">
+                <div class="card-front">
+                    <div class="category-badge" id="categoryBadge">Законодательство</div>
+                    <div class="question-text" id="questionText">Загрузка вопроса...</div>
+                    <div class="hint-text" id="hintText">Подумайте над вопросом...</div>
+                    <div class="flip-hint">Нажмите для просмотра ответа</div>
+                </div>
+                <div class="card-back">
+                    <div class="category-badge" id="categoryBadgeBack">Законодательство</div>
+                    <div class="answer-text" id="answerText">Ответ загружается...</div>
+                    <div class="flip-hint">Нажмите чтобы вернуться</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="buttons">
+            <button class="btn btn-no" id="btnNo">❌ НЕТ</button>
+            <button class="btn btn-yes" id="btnYes">✅ ДА</button>
+        </div>
+    </div>
+
+    <div class="results" id="results">
+        <div class="results-content">
+            <div class="results-title">🎉 Результаты</div>
+            <div class="results-score" id="score">0/30</div>
+            <div class="results-text" id="resultsText">Отличная работа!</div>
+            <button class="btn-restart" id="btnRestart">🔄 Начать заново</button>
+        </div>
+    </div>
+
+    <script>
+        // Embedded questions data
+        const QUESTIONS_DATA = {
+  "questions": [
+    {
+      "id": 1,
+      "category": "Законодательство",
+      "text": "Разрешено ли водителю использовать Personal Conveyance (PC) для поездки домой после разгрузки?",
+      "shortHint": "Правила PC",
+      "hint": "Personal Conveyance — это статус для личных нужд водителя. Подумайте, считается ли путь домой после завершения рабочего цикла личной поездкой или продвижением к следующей загрузке.",
+      "analytics": "Правильный ответ: ДА. Водитель может использовать PC для поездки домой или к месту отдыха, если он полностью освобожден от рабочих обязанностей и это не делается для продвижения к следующей точке погрузки. PC не засчитывается в 14-часовое окно.",
+      "isCorrect": true
+    },
+    {
+      "id": 2,
+      "category": "Законодательство",
+      "text": "Может ли 30-минутный перерыв быть выполнен в статусе On-Duty?",
+      "shortHint": "Статусы отдыха",
+      "hint": "30-минутный перерыв обязателен после 8 часов вождения. Вспомните, какие статусы ELD считаются отдыхом: Off-Duty, Sleeper Berth, или On-Duty тоже подходит?",
+      "analytics": "Правильный ответ: НЕТ. Согласно правилам FMCSA, 30-минутный перерыв должен быть выполнен в статусе Off-Duty или Sleeper Berth. Любая рабочая активность (On-Duty) прерывает отдых и не засчитывается как обязательный перерыв.",
+      "isCorrect": false
+    }
+  ]
+}
+;
+        
+        // Modified app code for standalone
+        // State management
+class CardApp {
+  constructor() {
+    this.questions = [];
+    this.sessionQuestions = [];
+    this.currentIndex = 0;
+    this.correct = 0;
+    this.wrong = 0;
+    this.isFlipped = false;
+    
+    this.init();
+  }
+
+  async init() {
+    await this.loadQuestions();
+    this.setupEventListeners();
+    this.startSession();
+  }
+
+  async loadQuestions() {
+    try {
+      const response = Promise.resolve(QUESTIONS_DATA);
+      const data = await response.json();
+      this.questions = data.questions;
+    } catch (error) {
+      console.error('Failed to load questions:', error);
+      this.questions = [];
+    }
+  }
+
+  setupEventListeners() {
+    document.getElementById('card').addEventListener('click', () => this.flipCard());
+    document.getElementById('btnNo').addEventListener('click', () => this.answer(false));
+    document.getElementById('btnYes').addEventListener('click', () => this.answer(true));
+    document.getElementById('btnRestart').addEventListener('click', () => this.restart());
+  }
+
+  shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
+  getCategoryIcon(category) {
+    const icons = {
+      'Законодательство': '⚖️',
+      'Финансы': '💰',
+      'Переговоры': '🤝',
+      'Основы работы': '🚛',
+      'Безопасность': '🛡️',
+      'Документация': '📄',
+      'Проверка брокера': '🔍'
+    };
+    return icons[category] || '🎯';
+  }
+
+  startSession() {
+    this.currentIndex = 0;
+    this.correct = 0;
+    this.wrong = 0;
+    this.sessionQuestions = this.shuffleArray(this.questions).slice(0, 30);
+    this.showQuestion();
+  }
+
+  showQuestion() {
+    if (this.currentIndex >= this.sessionQuestions.length) {
+      this.showResults();
+      return;
+    }
+
+    const question = this.sessionQuestions[this.currentIndex];
+    const icon = this.getCategoryIcon(question.category);
+
+    document.getElementById('categoryIcon').textContent = icon;
+    document.getElementById('categoryName').textContent = question.category;
+    document.getElementById('shortHint').textContent = `💡 Наводка: ${question.shortHint}`;
+    document.getElementById('currentIndex').textContent = this.currentIndex + 1;
+    document.getElementById('totalQuestions').textContent = this.sessionQuestions.length;
+
+    document.getElementById('categoryBadge').textContent = question.category;
+    document.getElementById('categoryBadgeBack').textContent = question.category;
+    document.getElementById('questionText').textContent = question.text;
+    document.getElementById('hintText').textContent = question.hint;
+    document.getElementById('answerText').textContent = question.analytics;
+
+    this.isFlipped = false;
+    document.getElementById('card').classList.remove('flipped');
+  }
+
+  flipCard() {
+    this.isFlipped = !this.isFlipped;
+    document.getElementById('card').classList.toggle('flipped');
+  }
+
+  answer(userAnswer) {
+    const question = this.sessionQuestions[this.currentIndex];
+    
+    if (userAnswer === question.isCorrect) {
+      this.correct++;
+    } else {
+      this.wrong++;
+    }
+
+    this.currentIndex++;
+    this.showQuestion();
+  }
+
+  async showResults() {
+    try {
+      const response = // await fetch('/api/stats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          correct: this.correct,
+          wrong: this.wrong,
+          total: this.sessionQuestions.length
+        })
+      });
+      
+      const stats = await response.json();
+      
+      document.getElementById('score').textContent = `${stats.correct}/${stats.total}`;
+      document.getElementById('resultsText').textContent = stats.message;
+      document.getElementById('results').classList.add('show');
+    } catch (error) {
+      console.error('Failed to save stats:', error);
+    }
+  }
+
+  restart() {
+    document.getElementById('results').classList.remove('show');
+    this.startSession();
+  }
+}
+
+// Initialize app
+new CardApp();
+
+      </script>
+</body>
+</html>

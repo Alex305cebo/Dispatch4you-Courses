@@ -1,0 +1,1912 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль 6: Планирование маршрутов | DispatcherPro</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #f093fb;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary: #b8c5d6;
+            --text-muted: #8892aa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.1);
+            --audio-primary: #ff6b6b;
+            --audio-secondary: #4ecdc4;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
+            padding-top: 80px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1), transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(240, 147, 251, 0.1), transparent 50%);
+            animation: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 999;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 0;
+            transition: all 0.3s ease;
+            height: auto;
+            min-height: 60px;
+        }
+
+        .nav-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: translateY(-2px);
+        }
+
+        .logo-icon {
+            font-size: 16px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: clamp(11px, 1.1vw, 14px);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* Dropdown Navigation */
+        .nav-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .nav-dropdown .nav-link {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-dropdown .nav-link::before {
+            content: 'РІвЂ“С';
+            font-size: 8px;
+            transition: transform 0.3s ease;
+            margin-left: 4px;
+        }
+
+        .nav-dropdown .nav-link::after {
+            display: none;
+        }
+
+        .nav-dropdown:hover .nav-link::before {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 200px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 8px;
+            margin-top: 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            z-index: 1000;
+        }
+
+        .nav-dropdown:hover .dropdown-content {
+            display: flex;
+            flex-direction: column;
+            animation: fadeInDown 0.3s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-content a {
+            display: block;
+            padding: 10px 14px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .dropdown-content a:hover {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--text-primary);
+            transform: translateX(2px);
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-login {
+            padding: 6px 16px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .btn-login:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-signup {
+            padding: 6px 16px;
+            text-decoration: none;
+            color: white;
+            font-weight: 500;
+            font-size: 12px;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .btn-signup:hover {
+            background: rgba(99, 102, 241, 0.25);
+            border-color: rgba(99, 102, 241, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .mobile-menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 10px 19px;
+            z-index: 1001;
+            transition: all 0.3s ease;
+            margin-right: 0;
+        }
+
+        .mobile-menu-toggle:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .mobile-menu-toggle span {
+            width: 38px;
+            height: 2px;
+            background: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .mobile-menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -6px);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 85%;
+            max-width: 380px;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 100px 20px 32px;
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .mobile-menu.active {
+            right: 0;
+        }
+
+        .mobile-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+
+        .mobile-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .mobile-nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin-bottom: 32px;
+            width: 100%;
+        }
+
+        .mobile-nav-links .nav-link {
+            padding: 14px 16px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-size: 15px;
+        }
+
+        .mobile-nav-links .nav-link:hover {
+            background: rgba(99, 102, 241, 0.15);
+            transform: translateX(4px);
+        }
+
+        /* Mobile nav sections */
+        .mobile-nav-section {
+            margin: 0;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 0;
+            padding: 12px 0;
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            width: 100%;
+        }
+
+        .mobile-section-title {
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 4px;
+        }
+
+        .nav-link-sub {
+            padding: 10px 16px 10px 36px !important;
+            font-size: 14px;
+            position: relative;
+            margin: 0 !important;
+            border-radius: 0;
+            width: 100%;
+            display: block;
+        }
+
+        .nav-link-sub::before {
+            content: 'РІвЂ вЂ™';
+            position: absolute;
+            left: 16px;
+            color: var(--primary);
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        .nav-link-sub:hover::before {
+            opacity: 1;
+            transform: translateX(2px);
+        }
+
+        .mobile-nav-links>.nav-link:not(.nav-link-sub) {
+            font-weight: 600;
+            font-size: 15px;
+            margin: 0;
+            padding: 14px 16px;
+            width: 100%;
+            display: block;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .mobile-nav-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .mobile-menu-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            margin: 20px 0;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: flex;
+            }
+
+            .nav-links,
+            .nav-actions {
+                display: none;
+            }
+        }
+
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .content-block {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            gap: 20px;
+        }
+
+        .block-title {
+            flex: 1;
+            font-size: 1.8rem;
+            color: var(--primary);
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .audio-container {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .audio-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--audio-primary), var(--audio-secondary));
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .audio-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.5);
+        }
+
+        .audio-btn:active {
+            transform: scale(0.95);
+        }
+
+        .audio-btn .play-icon {
+            font-size: 24px;
+            color: white;
+            margin-left: 3px;
+        }
+
+        .audio-btn .pause-icon {
+            font-size: 20px;
+            color: white;
+            display: none;
+        }
+
+        .audio-btn.playing .play-icon {
+            display: none;
+        }
+
+        .audio-btn.playing .pause-icon {
+            display: block;
+        }
+
+        .audio-btn.playing {
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.7), 0 0 0 10px rgba(255, 107, 107, 0.1);
+            }
+
+            100% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+        }
+
+        .progress-ring {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            transform: rotate(-90deg);
+            z-index: 1;
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 5;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: var(--audio-primary);
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-dasharray: 201.06;
+            stroke-dashoffset: 201.06;
+            transition: stroke-dashoffset 0.1s ease;
+            filter: drop-shadow(0 0 4px rgba(255, 107, 107, 0.5));
+        }
+
+        .progress-ring-interactive {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            cursor: pointer;
+            z-index: 5;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        .progress-ring-interactive.seekable {
+            pointer-events: auto;
+            background: radial-gradient(circle, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.01) 60%, rgba(255, 255, 255, 0.01) 100%);
+        }
+
+        .audio-duration {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .audio-container:hover .audio-duration,
+        .audio-container.playing .audio-duration {
+            opacity: 1;
+        }
+
+        .mobile-progress-bar {
+            display: none;
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .mobile-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--audio-primary), var(--audio-secondary));
+            border-radius: 2px;
+            transition: width 0.1s ease;
+        }
+
+        .block-content {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .block-content h3 {
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            margin: 25px 0 15px 0;
+        }
+
+        .block-content h4 {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            margin: 20px 0 10px 0;
+        }
+
+        .block-content ul,
+        .block-content ol {
+            margin: 15px 0 15px 25px;
+        }
+
+        .block-content li {
+            margin-bottom: 8px;
+        }
+
+        .block-content strong {
+            color: var(--text-primary);
+        }
+
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .progress-info {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 10px auto;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .alert {
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            color: var(--text-primary);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: var(--warning);
+            color: var(--text-primary);
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 90px;
+            }
+
+            .header {
+                padding: 15px 0;
+                min-height: 70px;
+            }
+
+            .main {
+                padding: 20px 15px;
+            }
+
+            .content-block {
+                padding: 20px 15px;
+            }
+
+            .block-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .block-title {
+                font-size: 1.4rem;
+            }
+
+            .lesson-nav {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .nav-btn {
+                width: 100%;
+            }
+        }
+    
+        /* Footer Styles */
+        .footer {
+            padding: 80px 0 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 80px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 32px;
+            margin-bottom: 48px;
+        }
+
+        .footer-section h4 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .footer-section p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .footer-section a {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 32px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+        <header class="header">
+        <nav class="navbar">
+            <div class="container">
+                <div class="nav-content">
+                    <a href="../index.html" class="logo">
+                        <span class="logo-icon">🎓</span>
+                        <span class="logo-text">Курсы Диспетчера</span>
+                    </a>
+                    <div class="nav-links">
+                        <a href="../index.html" class="nav-link" data-short="Главная">Главная</a>
+                        <div class="nav-dropdown">
+                            <a href="../courses.html" class="nav-link" data-short="Курсы">Курсы</a>
+                            <div class="dropdown-content">
+                                <a href="documentation.html" style="background: rgba(99,102,241,0.15); border-left: 3px solid #6366f1; font-weight: 700; color: #ffffff;">🎓 База знаний</a>
+                                <a href="../course.html">📖 Обзор курса</a>
+                                <a href="modules-index.html">📚 12 Модулей обучения</a>
+                                <a href="simulator.html">🎯 Симулятор переговоров</a>
+                                <a href="calls.html">📞 Примеры звонков</a>
+                                <a href="cases.html">💼 Практические кейсы</a>
+                                <a href="testing.html">✍️ Тестирование</a>
+                            </div>
+                        </div>
+                        <div class="nav-dropdown">
+                            <span class="nav-link" data-short="Инстр.">Инструменты</span>
+                            <div class="dropdown-content">
+                                <a href="analytics.html">📊 Статистика рынка</a>
+                                <a href="load-finder.html">🔍 Load Finder</a>
+                                <a href="dispatcher-cards.html">🃏 Dispatcher Cards</a>
+                                <a href="simulator.html">🎯 Dispatch Simulator</a>
+                            </div>
+                        </div>
+                        <div class="nav-dropdown">
+                            <span class="nav-link" data-short="Инфо">Информация</span>
+                            <div class="dropdown-content">
+                                <a href="../about.html">👥 О нас</a>
+                                <a href="../career.html">💼 Карьера</a>
+                                <a href="../faq.html">❓ FAQ</a>
+                                <a href="../help.html">🆘 Помощь</a>
+                                <a href="../contacts.html">📬 Контакты</a>
+                            </div>
+                        </div>
+                        <a href="../pricing.html" class="nav-link" data-short="Тарифы">Тарифы</a>
+                        <a href="../dashboard.html" class="nav-link" id="dashboardLink" style="display: none;" data-short="Кабинет">Личный кабинет</a>
+                    </div>
+                    <div class="nav-actions">
+                        <a href="../login.html" class="btn-login">Войти</a>
+                        <a href="../register.html" class="btn-signup">Регистрация</a>
+                    </div>
+                    <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                        <span></span><span></span><span></span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+        <div class="mobile-menu" id="mobileMenu">
+            <div class="mobile-nav-links">
+                <div class="mobile-nav-actions">
+                    <a href="../login.html" class="btn-login">Войти</a>
+                    <a href="../register.html" class="btn-signup">Регистрация</a>
+                </div>
+                <div class="mobile-menu-divider"></div>
+                <a href="../index.html" class="nav-link">🏠 Главная</a>
+                <a href="../dashboard.html" class="nav-link" id="dashboardLinkMobile" style="display: none;">👤 Личный кабинет</a>
+                <div class="mobile-nav-section">
+                    <div class="mobile-section-title">�� КУРСЫ</div>
+                    <a href="documentation.html" class="nav-link nav-link-sub" style="color:#ffffff;border-left:3px solid #6366f1;padding-left:14px;background:rgba(99,102,241,0.1);border-radius:8px;margin-bottom:4px;">🎓 База знаний</a>
+                    <a href="../courses.html" class="nav-link nav-link-sub">Все курсы</a>
+                    <a href="../course.html" class="nav-link nav-link-sub">📖 Обзор курса</a>
+                    <a href="modules-index.html" class="nav-link nav-link-sub">📚 12 Модулей обучения</a>
+                    <a href="simulator.html" class="nav-link nav-link-sub">🎯 Симулятор переговоров</a>
+                    <a href="calls.html" class="nav-link nav-link-sub">📞 Примеры звонков</a>
+                    <a href="cases.html" class="nav-link nav-link-sub">💼 Практические кейсы</a>
+                    <a href="testing.html" class="nav-link nav-link-sub">✍️ Тестирование</a>
+                </div>
+                <div class="mobile-nav-section">
+                    <div class="mobile-section-title">🛠️ ИНСТРУМЕНТЫ</div>
+                    <a href="analytics.html" class="nav-link nav-link-sub">📊 Статистика рынка</a>
+                    <a href="load-finder.html" class="nav-link nav-link-sub">🔍 Load Finder</a>
+                    <a href="dispatcher-cards.html" class="nav-link nav-link-sub">🃏 Dispatcher Cards</a>
+                    <a href="simulator.html" class="nav-link nav-link-sub">🎯 Dispatch Simulator</a>
+                </div>
+                <div class="mobile-nav-section">
+                    <div class="mobile-section-title">ℹ️ ИНФОРМАЦИЯ</div>
+                    <a href="../about.html" class="nav-link nav-link-sub">�� О нас</a>
+                    <a href="../career.html" class="nav-link nav-link-sub">💼 Карьера</a>
+                    <a href="../faq.html" class="nav-link nav-link-sub">❓ FAQ</a>
+                    <a href="../help.html" class="nav-link nav-link-sub">🆘 Помощь</a>
+                    <a href="../contacts.html" class="nav-link nav-link-sub">📬 Контакты</a>
+                </div>
+                <a href="../pricing.html" class="nav-link">💰 Тарифы</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+
+        <!-- Block 1: Р С›РЎРѓР Р…Р С•Р Р†РЎвЂ№ Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СРЎРЏ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р† -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р С›РЎРѓР Р…Р С•Р Р†РЎвЂ№ Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СРЎРЏ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р†</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio1')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio1')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio1')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р В­РЎвЂћРЎвЂћР ВµР С”РЎвЂљР СР Р†Р Р…Р С•Р Вµ Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р† РІР‚вЂќ Р С•РЎРѓР Р…Р С•Р Р†Р В° Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•Р в„– РЎР‚Р В°Р В±Р С•РЎвЂљРЎвЂ№ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р В°. Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…РЎвЂ№Р в„– Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљ РЎРЊР С”Р С•Р Р…Р С•Р СР СРЎвЂљ
+                    Р Р†РЎР‚Р ВµР СРЎРЏ, РЎвЂљР С•Р С—Р В»Р СР Р†Р С• Р С РЎС“Р Р†Р ВµР В»Р СРЎвЂЎР СР Р†Р В°Р ВµРЎвЂљ Р ТР С•РЎвЂ¦Р С•Р ТРЎвЂ№.</p>
+
+                <h3>Р С™Р В»РЎР‹РЎвЂЎР ВµР Р†РЎвЂ№Р Вµ РЎвЂћР В°Р С”РЎвЂљР С•РЎР‚РЎвЂ№ Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СРЎРЏ</h3>
+                <h4>РІРЏВ° Р вЂ™РЎР‚Р ВµР СР ВµР Р…Р Р…РЎвЂ№Р Вµ Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СРЎРЏ</h4>
+                <ul>
+                    <li><strong>Hours of Service (HOS):</strong> Р ТР С•РЎРѓРЎвЂљРЎС“Р С—Р Р…РЎвЂ№Р Вµ РЎвЂЎР В°РЎРѓРЎвЂ№ Р Р†Р С•Р В¶Р ТР ВµР Р…Р СРЎРЏ</li>
+                    <li><strong>Pickup/Delivery windows:</strong> Р Р†РЎР‚Р ВµР СР ВµР Р…Р Р…РЎвЂ№Р Вµ Р С•Р С”Р Р…Р В° Р В·Р В°Р С–РЎР‚РЎС“Р В·Р С”Р С/Р Р†РЎвЂ№Р С–РЎР‚РЎС“Р В·Р С”Р С</li>
+                    <li><strong>Mandatory breaks:</strong> Р С•Р В±РЎРЏР В·Р В°РЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№Р Вµ Р С—Р ВµРЎР‚Р ВµРЎР‚РЎвЂ№Р Р†РЎвЂ№</li>
+                    <li><strong>Weekend restrictions:</strong> Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СРЎРЏ Р Р…Р В° Р Р†РЎвЂ№РЎвЂ¦Р С•Р ТР Р…РЎвЂ№Р Вµ</li>
+                </ul>
+
+                <h4>СЂСџвЂњРЊ Р вЂњР ВµР С•Р С–РЎР‚Р В°РЎвЂћР СРЎвЂЎР ВµРЎРѓР С”Р СР Вµ РЎвЂћР В°Р С”РЎвЂљР С•РЎР‚РЎвЂ№</h4>
+                <ul>
+                    <li><strong>Distance:</strong> Р С•Р В±РЎвЂ°Р ВµР Вµ РЎР‚Р В°РЎРѓРЎРѓРЎвЂљР С•РЎРЏР Р…Р СР Вµ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР В°</li>
+                    <li><strong>Terrain:</strong> Р С–Р С•РЎР‚РЎвЂ№, РЎР‚Р В°Р Р†Р Р…Р СР Р…РЎвЂ№ (Р Р†Р В»Р СРЎРЏР ВµРЎвЂљ Р Р…Р В° РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р Т РЎвЂљР С•Р С—Р В»Р СР Р†Р В°)</li>
+                    <li><strong>Weather conditions:</strong> Р С—Р С•Р С–Р С•Р ТР Р…РЎвЂ№Р Вµ РЎС“РЎРѓР В»Р С•Р Р†Р СРЎРЏ</li>
+                    <li><strong>Construction zones:</strong> Р В·Р С•Р Р…РЎвЂ№ РЎРѓРЎвЂљРЎР‚Р С•Р СРЎвЂљР ВµР В»РЎРЉРЎРѓРЎвЂљР Р†Р В°</li>
+                </ul>
+
+                <h4>СЂСџС™вЂє Р С›Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СРЎРЏ Р С•Р В±Р С•РЎР‚РЎС“Р ТР С•Р Р†Р В°Р Р…Р СРЎРЏ</h4>
+                <ul>
+                    <li><strong>Truck restrictions:</strong> Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СРЎРЏ Р ТР В»РЎРЏ Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р С•Р Р†</li>
+                    <li><strong>Bridge heights:</strong> Р Р†РЎвЂ№РЎРѓР С•РЎвЂљР В° Р СР С•РЎРѓРЎвЂљР С•Р Р†</li>
+                    <li><strong>Weight limits:</strong> Р Р†Р ВµРЎРѓР С•Р Р†РЎвЂ№Р Вµ Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СРЎРЏ</li>
+                    <li><strong>Hazmat routes:</strong> Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљРЎвЂ№ Р ТР В»РЎРЏ Р С•Р С—Р В°РЎРѓР Р…РЎвЂ№РЎвЂ¦ Р С–РЎР‚РЎС“Р В·Р С•Р Р†</li>
+                </ul>
+
+                <h3>Р В­РЎвЂљР В°Р С—РЎвЂ№ Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СРЎРЏ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР В°</h3>
+                <ol>
+                    <li><strong>Р С’Р Р…Р В°Р В»Р СР В· Р С–РЎР‚РЎС“Р В·Р В°:</strong> pickup/delivery Р В°Р ТРЎР‚Р ВµРЎРѓР В°, Р Р†РЎР‚Р ВµР СРЎРЏ, РЎвЂљРЎР‚Р ВµР В±Р С•Р Р†Р В°Р Р…Р СРЎРЏ</li>
+                    <li><strong>Р СџРЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В° HOS:</strong> Р ТР С•РЎРѓРЎвЂљРЎС“Р С—Р Р…РЎвЂ№Р Вµ РЎвЂЎР В°РЎРѓРЎвЂ№ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏ</li>
+                    <li><strong>Р вЂ™РЎвЂ№Р В±Р С•РЎР‚ Р С•Р С—РЎвЂљР СР СР В°Р В»РЎРЉР Р…Р С•Р С–Р С• Р С—РЎС“РЎвЂљР С:</strong> Р С”РЎР‚Р В°РЎвЂљРЎвЂЎР В°Р в„–РЎв‚¬Р СР в„– vs РЎРѓР В°Р СРЎвЂ№Р в„– Р В±РЎвЂ№РЎРѓРЎвЂљРЎР‚РЎвЂ№Р в„–</li>
+                    <li><strong>Р СџР В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ Р С•РЎРѓРЎвЂљР В°Р Р…Р С•Р Р†Р С•Р С”:</strong> РЎвЂљР С•Р С—Р В»Р СР Р†Р С•, Р С•РЎвЂљР ТРЎвЂ№РЎвЂ¦, Р ВµР ТР В°</li>
+                    <li><strong>Р В Р ВµР В·Р ВµРЎР‚Р Р†Р Р…Р С•Р Вµ Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ:</strong> Р В°Р В»РЎРЉРЎвЂљР ВµРЎР‚Р Р…Р В°РЎвЂљР СР Р†Р Р…РЎвЂ№Р Вµ Р Р†Р В°РЎР‚Р СР В°Р Р…РЎвЂљРЎвЂ№</li>
+                </ol>
+
+                <h3>Р СћР СР С—РЎвЂ№ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р†</h3>
+                <h4>СЂСџР‹Р‡ Point-to-Point</h4>
+                <p>Р СџРЎР‚Р С•РЎРѓРЎвЂљР С•Р в„– Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљ Р СР В· РЎвЂљР С•РЎвЂЎР С”Р С A Р Р† РЎвЂљР С•РЎвЂЎР С”РЎС“ B. Р РЋР В°Р СРЎвЂ№Р в„– РЎР‚Р В°РЎРѓР С—РЎР‚Р С•РЎРѓРЎвЂљРЎР‚Р В°Р Р…Р ВµР Р…Р Р…РЎвЂ№Р в„– РЎвЂљР СР С—.</p>
+
+                <h4>СЂСџвЂќвЂћ Round Trip</h4>
+                <p>Р СљР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљ РЎвЂљРЎС“Р ТР В° Р С Р С•Р В±РЎР‚Р В°РЎвЂљР Р…Р С• РЎРѓ Р С–РЎР‚РЎС“Р В·Р С•Р С Р Р† Р С•Р В±Р Вµ РЎРѓРЎвЂљР С•РЎР‚Р С•Р Р…РЎвЂ№. Р СљР В°Р С”РЎРѓР СР СР В°Р В»РЎРЉР Р…Р В°РЎРЏ РЎРЊРЎвЂћРЎвЂћР ВµР С”РЎвЂљР СР Р†Р Р…Р С•РЎРѓРЎвЂљРЎРЉ.</p>
+
+                <h4>СЂСџвЂњВ¦ Multi-Stop</h4>
+                <p>Р СњР ВµРЎРѓР С”Р С•Р В»РЎРЉР С”Р С• Р С•РЎРѓРЎвЂљР В°Р Р…Р С•Р Р†Р С•Р С” Р ТР В»РЎРЏ Р В·Р В°Р С–РЎР‚РЎС“Р В·Р С”Р С Р СР В»Р С Р Р†РЎвЂ№Р С–РЎР‚РЎС“Р В·Р С”Р С. Р СћРЎР‚Р ВµР В±РЎС“Р ВµРЎвЂљ Р ТР ВµРЎвЂљР В°Р В»РЎРЉР Р…Р С•Р С–Р С• Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СРЎРЏ.</p>
+
+                <h4>СЂСџРЉСџ Relay</h4>
+                <p>Р СџР ВµРЎР‚Р ВµР ТР В°РЎвЂЎР В° Р С–РЎР‚РЎС“Р В·Р В° Р ТРЎР‚РЎС“Р С–Р С•Р СРЎС“ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎР‹ Р Р† Р С—РЎР‚Р С•Р СР ВµР В¶РЎС“РЎвЂљР С•РЎвЂЎР Р…Р С•Р в„– РЎвЂљР С•РЎвЂЎР С”Р Вµ. Р вЂќР В»РЎРЏ РЎРѓРЎР‚Р С•РЎвЂЎР Р…РЎвЂ№РЎвЂ¦ Р ТР С•РЎРѓРЎвЂљР В°Р Р†Р С•Р С”.</p>
+
+                <div class="alert alert-info">
+                    <strong>СЂСџвЂ™РЋ Р СџРЎР‚Р СР Р…РЎвЂ Р СР С—:</strong> Р ТђР С•РЎР‚Р С•РЎв‚¬Р СР в„– Р С—Р В»Р В°Р Р… Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР В° РЎС“РЎвЂЎР СРЎвЂљРЎвЂ№Р Р†Р В°Р ВµРЎвЂљ Р Р†РЎРѓР Вµ Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СРЎРЏ Р С Р С•РЎРѓРЎвЂљР В°Р Р†Р В»РЎРЏР ВµРЎвЂљ Р В±РЎС“РЎвЂћР ВµРЎР‚Р Р…Р С•Р Вµ
+                    Р Р†РЎР‚Р ВµР СРЎРЏ Р ТР В»РЎРЏ Р Р…Р ВµР С—РЎР‚Р ВµР ТР Р†Р СР ТР ВµР Р…Р Р…РЎвЂ№РЎвЂ¦ РЎРѓР СРЎвЂљРЎС“Р В°РЎвЂ Р СР в„–.
+                </div>
+            </div>
+        </div>
+        <!-- Block 2: Р Р€РЎвЂЎР ВµРЎвЂљ Hours of Service (HOS) -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р Р€РЎвЂЎР ВµРЎвЂљ Hours of Service (HOS)</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio2')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio2')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio2')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>HOS Р С—РЎР‚Р В°Р Р†Р СР В»Р В° РІР‚вЂќ Р С•РЎРѓР Р…Р С•Р Р†Р Р…Р С•Р Вµ Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СР Вµ Р С—РЎР‚Р С Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР С Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р†. Р СњР В°РЎР‚РЎС“РЎв‚¬Р ВµР Р…Р СР Вµ HOS Р СР С•Р В¶Р ВµРЎвЂљ Р С—РЎР‚Р СР Р†Р ВµРЎРѓРЎвЂљР С Р С” РЎв‚¬РЎвЂљРЎР‚Р В°РЎвЂћР В°Р С
+                    Р С Р С•РЎРѓРЎвЂљР В°Р Р…Р С•Р Р†Р С”Р Вµ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏ.</p>
+
+                <h3>Р С›РЎРѓР Р…Р С•Р Р†Р Р…РЎвЂ№Р Вµ HOS Р С—РЎР‚Р В°Р Р†Р СР В»Р В° (Р Р…Р В°Р С—Р С•Р СР СР Р…Р В°Р Р…Р СР Вµ)</h3>
+                <ul>
+                    <li><strong>11-Hour Driving:</strong> Р СР В°Р С”РЎРѓР СР СРЎС“Р С 11 РЎвЂЎР В°РЎРѓР С•Р Р† Р Р†Р С•Р В¶Р ТР ВµР Р…Р СРЎРЏ</li>
+                    <li><strong>14-Hour Rule:</strong> Р Р…Р ВµР В»РЎРЉР В·РЎРЏ Р Р†Р С•Р ТР СРЎвЂљРЎРЉ Р С—Р С•РЎРѓР В»Р Вµ 14-Р С–Р С• РЎвЂЎР В°РЎРѓР В° РЎРѓР СР ВµР Р…РЎвЂ№</li>
+                    <li><strong>10-Hour Break:</strong> Р СР СР Р…Р СР СРЎС“Р С 10 РЎвЂЎР В°РЎРѓР С•Р Р† Р С•РЎвЂљР ТРЎвЂ№РЎвЂ¦Р В°</li>
+                    <li><strong>60/70-Hour Rule:</strong> Р Р…Р ВµР ТР ВµР В»РЎРЉР Р…РЎвЂ№Р Вµ Р В»Р СР СР СРЎвЂљРЎвЂ№</li>
+                </ul>
+
+                <h3>Р СџР В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ РЎРѓ РЎС“РЎвЂЎР ВµРЎвЂљР С•Р С HOS</h3>
+
+                <h4>СЂСџвЂњР‰ Р С’Р Р…Р В°Р В»Р СР В· Р ТР С•РЎРѓРЎвЂљРЎС“Р С—Р Р…Р С•Р С–Р С• Р Р†РЎР‚Р ВµР СР ВµР Р…Р С</h4>
+                <ol>
+                    <li><strong>Р СћР ВµР С”РЎС“РЎвЂ°Р СР в„– РЎРѓРЎвЂљР В°РЎвЂљРЎС“РЎРѓ:</strong> РЎРѓР С”Р С•Р В»РЎРЉР С”Р С• РЎвЂЎР В°РЎРѓР С•Р Р† РЎС“Р В¶Р Вµ Р С•РЎвЂљРЎР‚Р В°Р В±Р С•РЎвЂљР В°Р Р…Р С•</li>
+                    <li><strong>Р вЂќР С•РЎРѓРЎвЂљРЎС“Р С—Р Р…РЎвЂ№Р Вµ РЎвЂЎР В°РЎРѓРЎвЂ№:</strong> РЎРѓР С”Р С•Р В»РЎРЉР С”Р С• Р СР С•Р В¶Р Р…Р С• Р ВµРЎвЂ°Р Вµ Р Р†Р С•Р ТР СРЎвЂљРЎРЉ</li>
+                    <li><strong>Р вЂ™РЎР‚Р ВµР СРЎРЏ Р ТР С• Р С•Р В±РЎРЏР В·Р В°РЎвЂљР ВµР В»РЎРЉР Р…Р С•Р С–Р С• break:</strong> Р С”Р С•Р С–Р ТР В° Р Р…РЎС“Р В¶Р ВµР Р… Р С•РЎвЂљР ТРЎвЂ№РЎвЂ¦</li>
+                    <li><strong>Р СњР ВµР ТР ВµР В»РЎРЉР Р…РЎвЂ№Р в„– Р В»Р СР СР СРЎвЂљ:</strong> РЎРѓР С”Р С•Р В»РЎРЉР С”Р С• РЎвЂЎР В°РЎРѓР С•Р Р† Р С•РЎРѓРЎвЂљР В°Р В»Р С•РЎРѓРЎРЉ Р Р† Р Р…Р ВµР ТР ВµР В»Р Вµ</li>
+                </ol>
+
+                <h4>СЂСџвЂўС’ Р В Р В°РЎРѓРЎвЂЎР ВµРЎвЂљ Р Р†РЎР‚Р ВµР СР ВµР Р…Р С Р Р† Р С—РЎС“РЎвЂљР С</h4>
+                <ul>
+                    <li><strong>Driving time:</strong> РЎР‚Р В°РЎРѓРЎРѓРЎвЂљР С•РЎРЏР Р…Р СР Вµ Р“В· РЎРѓРЎР‚Р ВµР ТР Р…РЎРЏРЎРЏ РЎРѓР С”Р С•РЎР‚Р С•РЎРѓРЎвЂљРЎРЉ</li>
+                    <li><strong>Loading/Unloading:</strong> Р Р†РЎР‚Р ВµР СРЎРЏ Р Р…Р В° Р С—Р С•Р С–РЎР‚РЎС“Р В·Р С”РЎС“/Р Р†РЎвЂ№Р С–РЎР‚РЎС“Р В·Р С”РЎС“</li>
+                    <li><strong>Fuel stops:</strong> Р С•РЎРѓРЎвЂљР В°Р Р…Р С•Р Р†Р С”Р С Р Р…Р В° Р В·Р В°Р С—РЎР‚Р В°Р Р†Р С”РЎС“</li>
+                    <li><strong>Inspection time:</strong> Р Р†РЎР‚Р ВµР СРЎРЏ Р Р…Р В° Р С•РЎРѓР СР С•РЎвЂљРЎР‚ Р С–РЎР‚РЎС“Р В·Р В°</li>
+                </ul>
+
+                <h3>Р РЋРЎвЂљРЎР‚Р В°РЎвЂљР ВµР С–Р СР С Р С•Р С—РЎвЂљР СР СР СР В·Р В°РЎвЂ Р СР С HOS</h3>
+
+                <h4>РІРЏВ° Split Sleeper Berth</h4>
+                <p>Р В Р В°Р В·Р ТР ВµР В»Р ВµР Р…Р СР Вµ 10-РЎвЂЎР В°РЎРѓР С•Р Р†Р С•Р С–Р С• Р С•РЎвЂљР ТРЎвЂ№РЎвЂ¦Р В° Р Р…Р В° 8+2 Р СР В»Р С 7+3 РЎвЂЎР В°РЎРѓР В° Р ТР В»РЎРЏ Р С–Р СР В±Р С”Р С•РЎРѓРЎвЂљР С Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СРЎРЏ.</p>
+                <ul>
+                    <li>Р СљР СР Р…Р СР СРЎС“Р С 7 РЎвЂЎР В°РЎРѓР С•Р Р† Р Р† sleeper berth</li>
+                    <li>Р СљР СР Р…Р СР СРЎС“Р С 2 РЎвЂЎР В°РЎРѓР В° off-duty Р СР В»Р С sleeper</li>
+                    <li>Р СњР Вµ Р В·Р В°РЎРѓРЎвЂЎР СРЎвЂљРЎвЂ№Р Р†Р В°Р ВµРЎвЂљРЎРѓРЎРЏ Р Р† 14-РЎвЂЎР В°РЎРѓР С•Р Р†Р С•Р Вµ Р С•Р С”Р Р…Р С•</li>
+                </ul>
+
+                <h4>СЂСџС™вЂє Team Driving</h4>
+                <p>Р вЂќР Р†Р В° Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏ Р СР С•Р С–РЎС“РЎвЂљ Р С—Р С•Р С”РЎР‚РЎвЂ№Р Р†Р В°РЎвЂљРЎРЉ Р В±Р С•Р В»РЎРЉРЎв‚¬Р СР Вµ РЎР‚Р В°РЎРѓРЎРѓРЎвЂљР С•РЎРЏР Р…Р СРЎРЏ Р В±Р ВµР В· Р С•РЎРѓРЎвЂљР В°Р Р…Р С•Р Р†Р С•Р С” Р Р…Р В° Р С•РЎвЂљР ТРЎвЂ№РЎвЂ¦.</p>
+                <ul>
+                    <li>Р С›Р ТР СР Р… Р Р†Р С•Р ТР СРЎвЂљ, Р ТРЎР‚РЎС“Р С–Р С•Р в„– Р С•РЎвЂљР ТРЎвЂ№РЎвЂ¦Р В°Р ВµРЎвЂљ</li>
+                    <li>Р СљР С•Р В¶Р Р…Р С• Р С—Р С•Р С”РЎР‚РЎвЂ№РЎвЂљРЎРЉ ~1,100 Р СР СР В»РЎРЉ Р Р† Р ТР ВµР Р…РЎРЉ</li>
+                    <li>Р ВР ТР ВµР В°Р В»РЎРЉР Р…Р С• Р ТР В»РЎРЏ РЎРѓРЎР‚Р С•РЎвЂЎР Р…РЎвЂ№РЎвЂ¦ Р С–РЎР‚РЎС“Р В·Р С•Р Р†</li>
+                </ul>
+
+                <h4>СЂСџвЂњвЂ¦ Weekly Reset</h4>
+                <p>34-РЎвЂЎР В°РЎРѓР С•Р Р†Р С•Р в„– Р С•РЎвЂљР ТРЎвЂ№РЎвЂ¦ РЎРѓР В±РЎР‚Р В°РЎРѓРЎвЂ№Р Р†Р В°Р ВµРЎвЂљ Р Р…Р ВµР ТР ВµР В»РЎРЉР Р…РЎвЂ№Р в„– Р В»Р СР СР СРЎвЂљ 60/70 РЎвЂЎР В°РЎРѓР С•Р Р†.</p>
+                <ul>
+                    <li>Р вЂќР С•Р В»Р В¶Р ВµР Р… Р Р†Р С”Р В»РЎР‹РЎвЂЎР В°РЎвЂљРЎРЉ Р ТР Р†Р В° Р С—Р ВµРЎР‚Р СР С•Р ТР В° 1:00-5:00 AM</li>
+                    <li>Р СџР В»Р В°Р Р…Р СРЎР‚РЎС“Р в„–РЎвЂљР Вµ reset Р Р…Р В° Р Р†РЎвЂ№РЎвЂ¦Р С•Р ТР Р…РЎвЂ№Р Вµ</li>
+                    <li>Р СљР В°Р С”РЎРѓР СР СР СР В·Р СРЎР‚РЎС“Р ВµРЎвЂљ Р ТР С•РЎРѓРЎвЂљРЎС“Р С—Р Р…РЎвЂ№Р Вµ РЎвЂЎР В°РЎРѓРЎвЂ№ Р Р…Р В° Р Р…Р ВµР ТР ВµР В»РЎР‹</li>
+                </ul>
+
+                <h3>Р ВР Р…РЎРѓРЎвЂљРЎР‚РЎС“Р СР ВµР Р…РЎвЂљРЎвЂ№ Р ТР В»РЎРЏ Р С•РЎвЂљРЎРѓР В»Р ВµР В¶Р СР Р†Р В°Р Р…Р СРЎРЏ HOS</h3>
+                <ul>
+                    <li><strong>ELD РЎРѓР СРЎРѓРЎвЂљР ВµР СРЎвЂ№:</strong> Р В°Р Р†РЎвЂљР С•Р СР В°РЎвЂљР СРЎвЂЎР ВµРЎРѓР С”Р С•Р Вµ Р С•РЎвЂљРЎРѓР В»Р ВµР В¶Р СР Р†Р В°Р Р…Р СР Вµ</li>
+                    <li><strong>HOS Р С”Р В°Р В»РЎРЉР С”РЎС“Р В»РЎРЏРЎвЂљР С•РЎР‚РЎвЂ№:</strong> Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ Р ТР С•РЎРѓРЎвЂљРЎС“Р С—Р Р…Р С•Р С–Р С• Р Р†РЎР‚Р ВµР СР ВµР Р…Р С</li>
+                    <li><strong>Fleet management software:</strong> Р СР С•Р Р…Р СРЎвЂљР С•РЎР‚Р СР Р…Р С– Р Р†РЎРѓР ВµР С–Р С• Р В°Р Р†РЎвЂљР С•Р С—Р В°РЎР‚Р С”Р В°</li>
+                </ul>
+
+                <h3>Р СћР СР С—Р СРЎвЂЎР Р…РЎвЂ№Р Вµ Р С•РЎв‚¬Р СР В±Р С”Р С Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СРЎРЏ HOS</h3>
+                <ul>
+                    <li>РІСњРЉ Р СњР Вµ РЎС“РЎвЂЎР СРЎвЂљРЎвЂ№Р Р†Р В°РЎвЂљРЎРЉ Р Р†РЎР‚Р ВµР СРЎРЏ Р Р…Р В° loading/unloading</li>
+                    <li>РІСњРЉ Р вЂ”Р В°Р В±РЎвЂ№Р Р†Р В°РЎвЂљРЎРЉ Р С—РЎР‚Р С• mandatory 30-minute break</li>
+                    <li>РІСњРЉ Р СџР В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°РЎвЂљРЎРЉ delivery Р Р† Р С—Р С•РЎРѓР В»Р ВµР ТР Р…Р СР Вµ Р СР СР Р…РЎС“РЎвЂљРЎвЂ№ HOS</li>
+                    <li>РІСњРЉ Р СњР Вµ Р С•РЎРѓРЎвЂљР В°Р Р†Р В»РЎРЏРЎвЂљРЎРЉ Р В±РЎС“РЎвЂћР ВµРЎР‚Р Р…Р С•Р Вµ Р Р†РЎР‚Р ВµР СРЎРЏ Р ТР В»РЎРЏ Р В·Р В°Р ТР ВµРЎР‚Р В¶Р ВµР С”</li>
+                </ul>
+
+                <div class="alert alert-warning">
+                    <strong>РІС™В РїСРЏ Р С™РЎР‚Р СРЎвЂљР СРЎвЂЎР Р…Р С•:</strong> Р вЂ™РЎРѓР ВµР С–Р ТР В° Р С—Р В»Р В°Р Р…Р СРЎР‚РЎС“Р в„–РЎвЂљР Вµ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљ РЎРѓ Р В·Р В°Р С—Р В°РЎРѓР С•Р С Р Р†РЎР‚Р ВµР СР ВµР Р…Р С. Р вЂєРЎС“РЎвЂЎРЎв‚¬Р Вµ Р С—РЎР‚Р СР В±РЎвЂ№РЎвЂљРЎРЉ РЎР‚Р В°Р Р…РЎРЉРЎв‚¬Р Вµ, РЎвЂЎР ВµР С
+                    Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р СРЎвЂљРЎРЉ HOS Р С—РЎР‚Р В°Р Р†Р СР В»Р В°.
+                </div>
+            </div>
+        </div>
+        <!-- Block 3: Р С›Р С—РЎвЂљР СР СР СР В·Р В°РЎвЂ Р СРЎРЏ РЎвЂљР С•Р С—Р В»Р СР Р†Р Р…РЎвЂ№РЎвЂ¦ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТР С•Р Р† -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р С›Р С—РЎвЂљР СР СР СР В·Р В°РЎвЂ Р СРЎРЏ РЎвЂљР С•Р С—Р В»Р СР Р†Р Р…РЎвЂ№РЎвЂ¦ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТР С•Р Р†</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio3')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio3')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio3')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р СћР С•Р С—Р В»Р СР Р†Р С• РІР‚вЂќ Р С”РЎР‚РЎС“Р С—Р Р…Р ВµР в„–РЎв‚¬Р В°РЎРЏ РЎРѓРЎвЂљР В°РЎвЂљРЎРЉРЎРЏ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТР С•Р Р† Р Р† Р С–РЎР‚РЎС“Р В·Р С•Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·Р С”Р В°РЎвЂ¦ (25-30% Р С•РЎвЂљ Р С•Р В±РЎвЂ°Р СРЎвЂ¦ Р В·Р В°РЎвЂљРЎР‚Р В°РЎвЂљ). Р С›Р С—РЎвЂљР СР СР СР В·Р В°РЎвЂ Р СРЎРЏ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР В°
+                    Р СР С•Р В¶Р ВµРЎвЂљ РЎРѓРЎРЊР С”Р С•Р Р…Р С•Р СР СРЎвЂљРЎРЉ РЎРѓР С•РЎвЂљР Р…Р С Р ТР С•Р В»Р В»Р В°РЎР‚Р С•Р Р† Р Р…Р В° Р С”Р В°Р В¶Р ТР С•Р С РЎР‚Р ВµР в„–РЎРѓР Вµ.</p>
+
+                <h3>Р В¤Р В°Р С”РЎвЂљР С•РЎР‚РЎвЂ№, Р Р†Р В»Р СРЎРЏРЎР‹РЎвЂ°Р СР Вµ Р Р…Р В° РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р Т РЎвЂљР С•Р С—Р В»Р СР Р†Р В°</h3>
+
+                <h4>СЂСџвЂ”С”РїСРЏ Р вЂ™РЎвЂ№Р В±Р С•РЎР‚ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР В°</h4>
+                <ul>
+                    <li><strong>Р С™РЎР‚Р В°РЎвЂљРЎвЂЎР В°Р в„–РЎв‚¬Р СР в„– Р С—РЎС“РЎвЂљРЎРЉ</strong> РІР‚вЂќ Р Р…Р Вµ Р Р†РЎРѓР ВµР С–Р ТР В° РЎРѓР В°Р СРЎвЂ№Р в„– РЎРЊР С”Р С•Р Р…Р С•Р СР СРЎвЂЎР Р…РЎвЂ№Р в„–</li>
+                    <li><strong>Р вЂњР С•РЎР‚Р Р…РЎвЂ№Р Вµ Р ТР С•РЎР‚Р С•Р С–Р С</strong> РІР‚вЂќ РЎС“Р Р†Р ВµР В»Р СРЎвЂЎР СР Р†Р В°РЎР‹РЎвЂљ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р Т Р Р…Р В° 15-25%</li>
+                    <li><strong>Р вЂњР С•РЎР‚Р С•Р ТРЎРѓР С”Р СР Вµ Р С—РЎР‚Р С•Р В±Р С”Р С</strong> РІР‚вЂќ РЎвЂ¦Р С•Р В»Р С•РЎРѓРЎвЂљР С•Р в„– РЎвЂ¦Р С•Р Т РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТРЎС“Р ВµРЎвЂљ РЎвЂљР С•Р С—Р В»Р СР Р†Р С•</li>
+                    <li><strong>Interstate highways</strong> РІР‚вЂќ Р С•Р С—РЎвЂљР СР СР В°Р В»РЎРЉР Р…Р В°РЎРЏ РЎРѓР С”Р С•РЎР‚Р С•РЎРѓРЎвЂљРЎРЉ Р ТР В»РЎРЏ РЎРЊР С”Р С•Р Р…Р С•Р СР СР С</li>
+                </ul>
+
+                <h4>СЂСџС™вЂє Р ТђР В°РЎР‚Р В°Р С”РЎвЂљР ВµРЎР‚Р СРЎРѓРЎвЂљР СР С”Р С Р С–РЎР‚РЎС“Р В·Р В°</h4>
+                <ul>
+                    <li><strong>Р вЂ™Р ВµРЎРѓ Р С–РЎР‚РЎС“Р В·Р В°:</strong> Р С”Р В°Р В¶Р ТРЎвЂ№Р Вµ 1,000 lbs РЎС“Р Р†Р ВµР В»Р СРЎвЂЎР СР Р†Р В°РЎР‹РЎвЂљ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р Т Р Р…Р В° ~2%</li>
+                    <li><strong>Р С’РЎРЊРЎР‚Р С•Р ТР СР Р…Р В°Р СР СР С”Р В°:</strong> Р Р†РЎвЂ№РЎРѓР С•Р С”Р СР Вµ Р С–РЎР‚РЎС“Р В·РЎвЂ№ РЎРѓР С•Р В·Р ТР В°РЎР‹РЎвЂљ РЎРѓР С•Р С—РЎР‚Р С•РЎвЂљР СР Р†Р В»Р ВµР Р…Р СР Вµ</li>
+                    <li><strong>Reefer units:</strong> Р ТР С•Р С—Р С•Р В»Р Р…Р СРЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№Р в„– РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р Т 0.5-1 Р С–Р В°Р В»Р В»Р С•Р Р…/РЎвЂЎР В°РЎРѓ</li>
+                </ul>
+
+                <h4>СЂСџРЉВ¤РїСРЏ Р СџР С•Р С–Р С•Р ТР Р…РЎвЂ№Р Вµ РЎС“РЎРѓР В»Р С•Р Р†Р СРЎРЏ</h4>
+                <ul>
+                    <li><strong>Р вЂ™РЎРѓРЎвЂљРЎР‚Р ВµРЎвЂЎР Р…РЎвЂ№Р в„– Р Р†Р ВµРЎвЂљР ВµРЎР‚:</strong> РЎС“Р Р†Р ВµР В»Р СРЎвЂЎР СР Р†Р В°Р ВµРЎвЂљ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р Т Р Р…Р В° 10-15%</li>
+                    <li><strong>Р вЂќР С•Р В¶Р ТРЎРЉ/РЎРѓР Р…Р ВµР С–:</strong> РЎРѓР Р…Р СР В¶Р ВµР Р…Р СР Вµ РЎРѓР С”Р С•РЎР‚Р С•РЎРѓРЎвЂљР С, Р В±Р С•Р В»РЎРЉРЎв‚¬Р Вµ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р Т</li>
+                    <li><strong>Р В­Р С”РЎРѓРЎвЂљРЎР‚Р ВµР СР В°Р В»РЎРЉР Р…РЎвЂ№Р Вµ РЎвЂљР ВµР СР С—Р ВµРЎР‚Р В°РЎвЂљРЎС“РЎР‚РЎвЂ№:</strong> Р Р†Р В»Р СРЎРЏРЎР‹РЎвЂљ Р Р…Р В° РЎР‚Р В°Р В±Р С•РЎвЂљРЎС“ Р ТР Р†Р СР С–Р В°РЎвЂљР ВµР В»РЎРЏ</li>
+                </ul>
+
+                <h3>Р РЋРЎвЂљРЎР‚Р В°РЎвЂљР ВµР С–Р СР С РЎРЊР С”Р С•Р Р…Р С•Р СР СР С РЎвЂљР С•Р С—Р В»Р СР Р†Р В°</h3>
+
+                <h4>СЂСџвЂњРЊ Р СџР В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ Р В·Р В°Р С—РЎР‚Р В°Р Р†Р С•Р С”</h4>
+                <ul>
+                    <li><strong>Fuel networks:</strong> Р СРЎРѓР С—Р С•Р В»РЎРЉР В·РЎС“Р в„–РЎвЂљР Вµ РЎРѓР ВµРЎвЂљР С РЎРѓ РЎРѓР С”Р СР ТР С”Р В°Р СР С</li>
+                    <li><strong>Fuel cards:</strong> РЎРѓР С”Р СР ТР С”Р С 5-15 РЎвЂ Р ВµР Р…РЎвЂљР С•Р Р† Р В·Р В° Р С–Р В°Р В»Р В»Р С•Р Р…</li>
+                    <li><strong>State fuel taxes:</strong> Р В·Р В°Р С—РЎР‚Р В°Р Р†Р В»РЎРЏР в„–РЎвЂљР ВµРЎРѓРЎРЉ Р Р† РЎв‚¬РЎвЂљР В°РЎвЂљР В°РЎвЂ¦ РЎРѓ Р Р…Р СР В·Р С”Р СР СР С Р Р…Р В°Р В»Р С•Р С–Р В°Р СР С</li>
+                    <li><strong>Bulk stops:</strong> Р С—Р С•Р В»Р Р…Р В°РЎРЏ Р В·Р В°Р С—РЎР‚Р В°Р Р†Р С”Р В° Р ТР ВµРЎв‚¬Р ВµР Р†Р В»Р Вµ РЎвЂЎР В°РЎРѓРЎвЂљР СРЎвЂЎР Р…РЎвЂ№РЎвЂ¦</li>
+                </ul>
+
+                <h4>РІС™РЋ Р С›Р С—РЎвЂљР СР СР В°Р В»РЎРЉР Р…Р В°РЎРЏ РЎРѓР С”Р С•РЎР‚Р С•РЎРѓРЎвЂљРЎРЉ</h4>
+                <ul>
+                    <li><strong>55-65 mph:</strong> Р С•Р С—РЎвЂљР СР СР В°Р В»РЎРЉР Р…Р В°РЎРЏ РЎРѓР С”Р С•РЎР‚Р С•РЎРѓРЎвЂљРЎРЉ Р ТР В»РЎРЏ РЎРЊР С”Р С•Р Р…Р С•Р СР СР С</li>
+                    <li><strong>Р С™Р В°Р В¶Р ТРЎвЂ№Р Вµ 5 mph РЎРѓР Р†РЎвЂ№РЎв‚¬Р Вµ 65:</strong> +10% РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТР В° РЎвЂљР С•Р С—Р В»Р СР Р†Р В°</li>
+                    <li><strong>Cruise control:</strong> Р С—Р С•Р ТР ТР ВµРЎР‚Р В¶Р В°Р Р…Р СР Вµ Р С—Р С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р Р…Р С•Р в„– РЎРѓР С”Р С•РЎР‚Р С•РЎРѓРЎвЂљР С</li>
+                </ul>
+
+                <h3>Р ВР Р…РЎРѓРЎвЂљРЎР‚РЎС“Р СР ВµР Р…РЎвЂљРЎвЂ№ Р ТР В»РЎРЏ Р С•Р С—РЎвЂљР СР СР СР В·Р В°РЎвЂ Р СР С</h3>
+
+                <h4>СЂСџвЂњВ± Fuel-finding Р С—РЎР‚Р СР В»Р С•Р В¶Р ВµР Р…Р СРЎРЏ</h4>
+                <ul>
+                    <li><strong>GasBuddy:</strong> РЎвЂ Р ВµР Р…РЎвЂ№ Р Р…Р В° РЎвЂљР С•Р С—Р В»Р СР Р†Р С• Р Р† РЎР‚Р ВµР В°Р В»РЎРЉР Р…Р С•Р С Р Р†РЎР‚Р ВµР СР ВµР Р…Р С</li>
+                    <li><strong>Trucker Path:</strong> РЎРѓР С—Р ВµРЎвЂ Р СР В°Р В»РЎРЉР Р…Р С• Р ТР В»РЎРЏ Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р С•Р Р†</li>
+                    <li><strong>OOIDA:</strong> РЎвЂ Р ВµР Р…РЎвЂ№ Р С Р С•РЎвЂљР В·РЎвЂ№Р Р†РЎвЂ№ truck stops</li>
+                </ul>
+
+                <h4>СЂСџвЂ”С”РїСРЏ Route optimization software</h4>
+                <ul>
+                    <li><strong>PC*MILER:</strong> Р С—РЎР‚Р С•РЎвЂћР ВµРЎРѓРЎРѓР СР С•Р Р…Р В°Р В»РЎРЉР Р…Р С•Р Вµ Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р†</li>
+                    <li><strong>Rand McNally:</strong> РЎС“РЎвЂЎР ВµРЎвЂљ Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СР в„– Р ТР В»РЎРЏ Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р С•Р Р†</li>
+                    <li><strong>Google Maps (Truck mode):</strong> Р В±Р ВµРЎРѓР С—Р В»Р В°РЎвЂљР Р…Р В°РЎРЏ Р В°Р В»РЎРЉРЎвЂљР ВµРЎР‚Р Р…Р В°РЎвЂљР СР Р†Р В°</li>
+                </ul>
+
+                <h3>Р В Р В°РЎРѓРЎвЂЎР ВµРЎвЂљ РЎРЊР С”Р С•Р Р…Р С•Р СР СР С РЎвЂљР С•Р С—Р В»Р СР Р†Р В°</h3>
+
+                <h4>СЂСџвЂ™В° Р СџРЎР‚Р СР СР ВµРЎР‚ РЎРѓРЎР‚Р В°Р Р†Р Р…Р ВµР Р…Р СРЎРЏ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р†</h4>
+                <p><strong>Р СљР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљ A:</strong> 450 Р СР СР В»РЎРЉ, Р С–Р С•РЎР‚Р Р…Р В°РЎРЏ Р СР ВµРЎРѓРЎвЂљР Р…Р С•РЎРѓРЎвЂљРЎРЉ</p>
+                <ul>
+                    <li>Р В Р В°РЎРѓРЎвЂ¦Р С•Р Т: 450 Р“В· 6.5 MPG = 69 Р С–Р В°Р В»Р В»Р С•Р Р…Р С•Р Р†</li>
+                    <li>Р РЋРЎвЂљР С•Р СР СР С•РЎРѓРЎвЂљРЎРЉ: 69 Р“вЂ” $3.50 = $242</li>
+                </ul>
+
+                <p><strong>Р СљР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљ B:</strong> 480 Р СР СР В»РЎРЉ, РЎР‚Р В°Р Р†Р Р…Р СР Р…Р Р…Р В°РЎРЏ Р СР ВµРЎРѓРЎвЂљР Р…Р С•РЎРѓРЎвЂљРЎРЉ</p>
+                <ul>
+                    <li>Р В Р В°РЎРѓРЎвЂ¦Р С•Р Т: 480 Р“В· 7.5 MPG = 64 Р С–Р В°Р В»Р В»Р С•Р Р…Р В°</li>
+                    <li>Р РЋРЎвЂљР С•Р СР СР С•РЎРѓРЎвЂљРЎРЉ: 64 Р“вЂ” $3.50 = $224</li>
+                </ul>
+
+                <p><strong>Р В­Р С”Р С•Р Р…Р С•Р СР СРЎРЏ:</strong> $18 Р С—РЎР‚Р С Р Р†РЎвЂ№Р В±Р С•РЎР‚Р Вµ Р В±Р С•Р В»Р ВµР Вµ Р ТР В»Р СР Р…Р Р…Р С•Р С–Р С•, Р Р…Р С• РЎРЊР С”Р С•Р Р…Р С•Р СР СРЎвЂЎР Р…Р С•Р С–Р С• Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР В°</p>
+
+                <h3>Р РЋР С•Р Р†Р ВµРЎвЂљРЎвЂ№ Р С—Р С• РЎРЊР С”Р С•Р Р…Р С•Р СР СР С РЎвЂљР С•Р С—Р В»Р СР Р†Р В°</h3>
+                <ul>
+                    <li>СЂСџвЂўС’ Р ВР В·Р В±Р ВµР С–Р В°Р в„–РЎвЂљР Вµ rush hour Р Р† Р С”РЎР‚РЎС“Р С—Р Р…РЎвЂ№РЎвЂ¦ Р С–Р С•РЎР‚Р С•Р ТР В°РЎвЂ¦</li>
+                    <li>СЂСџРЏвЂќРїСРЏ Р СџР В»Р В°Р Р…Р СРЎР‚РЎС“Р в„–РЎвЂљР Вµ Р С–Р С•РЎР‚Р Р…РЎвЂ№Р Вµ Р С—Р ВµРЎР‚Р ВµР ВµР В·Р ТРЎвЂ№ Р Р…Р В° Р Р…Р С•РЎвЂЎР Р…Р С•Р Вµ Р Р†РЎР‚Р ВµР СРЎРЏ (Р СР ВµР Р…РЎРЉРЎв‚¬Р Вµ РЎвЂљРЎР‚Р В°РЎвЂћР СР С”Р В°)</li>
+                    <li>РІвЂєР… Р вЂ”Р В°Р С—РЎР‚Р В°Р Р†Р В»РЎРЏР в„–РЎвЂљР ВµРЎРѓРЎРЉ Р Р† РЎв‚¬РЎвЂљР В°РЎвЂљР В°РЎвЂ¦ РЎРѓ Р Р…Р СР В·Р С”Р СР СР С Р Р…Р В°Р В»Р С•Р С–Р В°Р СР С Р Р…Р В° РЎвЂљР С•Р С—Р В»Р СР Р†Р С•</li>
+                    <li>СЂСџРЉРЋРїСРЏ Р Р€РЎвЂЎР СРЎвЂљРЎвЂ№Р Р†Р В°Р в„–РЎвЂљР Вµ РЎвЂљР ВµР СР С—Р ВµРЎР‚Р В°РЎвЂљРЎС“РЎР‚РЎС“ РІР‚вЂќ РЎвЂ¦Р С•Р В»Р С•Р ТР Р…РЎвЂ№Р в„– Р ТР Р†Р СР С–Р В°РЎвЂљР ВµР В»РЎРЉ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТРЎС“Р ВµРЎвЂљ Р В±Р С•Р В»РЎРЉРЎв‚¬Р Вµ</li>
+                </ul>
+
+                <div class="alert alert-success">
+                    <strong>РІСљвЂ¦ Р В Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљ:</strong> Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С•Р Вµ Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР В° Р СР С•Р В¶Р ВµРЎвЂљ РЎРѓРЎРЊР С”Р С•Р Р…Р С•Р СР СРЎвЂљРЎРЉ 10-20% РЎвЂљР С•Р С—Р В»Р СР Р†Р В°, РЎвЂЎРЎвЂљР С•
+                    РЎРѓР С•РЎРѓРЎвЂљР В°Р Р†Р В»РЎРЏР ВµРЎвЂљ $50-100 Р Р…Р В° Р С”Р В°Р В¶Р ТР С•Р С РЎР‚Р ВµР в„–РЎРѓР Вµ.
+                </div>
+            </div>
+        </div>
+        <!-- Block 4: Р В Р В°Р В±Р С•РЎвЂљР В° РЎРѓ Р С–Р ВµР С•Р С–РЎР‚Р В°РЎвЂћР СР ВµР в„– Р РЋР РЃР С’ -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р В Р В°Р В±Р С•РЎвЂљР В° РЎРѓ Р С–Р ВµР С•Р С–РЎР‚Р В°РЎвЂћР СР ВµР в„– Р РЋР РЃР С’</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio4')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio4')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio4')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р вЂ”Р Р…Р В°Р Р…Р СР Вµ Р С–Р ВµР С•Р С–РЎР‚Р В°РЎвЂћР СР С Р РЋР РЃР С’ Р С”РЎР‚Р СРЎвЂљР СРЎвЂЎР ВµРЎРѓР С”Р С Р Р†Р В°Р В¶Р Р…Р С• Р ТР В»РЎРЏ РЎРЊРЎвЂћРЎвЂћР ВµР С”РЎвЂљР СР Р†Р Р…Р С•Р С–Р С• Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СРЎРЏ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р†. Р С™Р В°Р В¶Р ТРЎвЂ№Р в„– РЎР‚Р ВµР С–Р СР С•Р Р… Р СР СР ВµР ВµРЎвЂљ
+                    РЎРѓР Р†Р С•Р С Р С•РЎРѓР С•Р В±Р ВµР Р…Р Р…Р С•РЎРѓРЎвЂљР С, Р С”Р С•РЎвЂљР С•РЎР‚РЎвЂ№Р Вµ Р Р†Р В»Р СРЎРЏРЎР‹РЎвЂљ Р Р…Р В° Р Р†РЎР‚Р ВµР СРЎРЏ Р С РЎРѓРЎвЂљР С•Р СР СР С•РЎРѓРЎвЂљРЎРЉ Р ТР С•РЎРѓРЎвЂљР В°Р Р†Р С”Р С.</p>
+
+                <h3>Р С›РЎРѓР Р…Р С•Р Р†Р Р…РЎвЂ№Р Вµ РЎвЂљРЎР‚Р В°Р Р…РЎРѓР С—Р С•РЎР‚РЎвЂљР Р…РЎвЂ№Р Вµ Р С”Р С•РЎР‚Р СР ТР С•РЎР‚РЎвЂ№</h3>
+
+                <h4>СЂСџвЂєР€РїСРЏ Interstate Highway System</h4>
+                <ul>
+                    <li><strong>I-95:</strong> Р вЂ™Р С•РЎРѓРЎвЂљР С•РЎвЂЎР Р…Р С•Р Вµ Р С—Р С•Р В±Р ВµРЎР‚Р ВµР В¶РЎРЉР Вµ (Maine РІвЂ вЂ™ Florida)</li>
+                    <li><strong>I-10:</strong> Р В®Р В¶Р Р…РЎвЂ№Р в„– Р С”Р С•РЎР‚Р СР ТР С•РЎР‚ (California РІвЂ вЂ™ Florida)</li>
+                    <li><strong>I-80:</strong> Р РЋР ВµР Р†Р ВµРЎР‚Р Р…РЎвЂ№Р в„– Р С”Р С•РЎР‚Р СР ТР С•РЎР‚ (California РІвЂ вЂ™ New York)</li>
+                    <li><strong>I-40:</strong> Р В¦Р ВµР Р…РЎвЂљРЎР‚Р В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р С•РЎР‚Р СР ТР С•РЎР‚ (California РІвЂ вЂ™ North Carolina)</li>
+                    <li><strong>I-75:</strong> Р РЋР ВµР Р†Р ВµРЎР‚-Р В®Р С– (Michigan РІвЂ вЂ™ Florida)</li>
+                </ul>
+
+                <h4>СЂСџРЉСџ Major freight corridors</h4>
+                <ul>
+                    <li><strong>Chicago Hub:</strong> РЎвЂ Р ВµР Р…РЎвЂљРЎР‚ Р С—Р ВµРЎР‚Р ВµРЎРѓР ВµРЎвЂЎР ВµР Р…Р СРЎРЏ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р†</li>
+                    <li><strong>Texas Triangle:</strong> Dallas-Houston-San Antonio</li>
+                    <li><strong>California Central Valley:</strong> РЎРѓР ВµР В»РЎРЉРЎРѓР С”Р С•РЎвЂ¦Р С•Р В·РЎРЏР в„–РЎРѓРЎвЂљР Р†Р ВµР Р…Р Р…РЎвЂ№Р Вµ Р С–РЎР‚РЎС“Р В·РЎвЂ№</li>
+                    <li><strong>Northeast Megalopolis:</strong> Boston-NYC-Philadelphia-DC</li>
+                </ul>
+
+                <h3>Р В Р ВµР С–Р СР С•Р Р…Р В°Р В»РЎРЉР Р…РЎвЂ№Р Вµ Р С•РЎРѓР С•Р В±Р ВµР Р…Р Р…Р С•РЎРѓРЎвЂљР С</h3>
+
+                <h4>СЂСџРЏвЂќРїСРЏ Р вЂњР С•РЎР‚Р Р…РЎвЂ№Р Вµ РЎР‚Р ВµР С–Р СР С•Р Р…РЎвЂ№</h4>
+                <ul>
+                    <li><strong>Rocky Mountains:</strong> I-70, I-80 РЎвЂЎР ВµРЎР‚Р ВµР В· Colorado/Wyoming</li>
+                    <li><strong>Sierra Nevada:</strong> I-80 РЎвЂЎР ВµРЎР‚Р ВµР В· California</li>
+                    <li><strong>Appalachian Mountains:</strong> I-77, I-79 РЎвЂЎР ВµРЎР‚Р ВµР В· Virginia/West Virginia</li>
+                    <li><strong>Р С›РЎРѓР С•Р В±Р ВµР Р…Р Р…Р С•РЎРѓРЎвЂљР С:</strong> РЎвЂ Р ВµР С—Р С Р Р…Р В° Р С”Р С•Р В»Р ВµРЎРѓР В° Р В·Р СР СР С•Р в„–, Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СРЎРЏ РЎРѓР С”Р С•РЎР‚Р С•РЎРѓРЎвЂљР С</li>
+                </ul>
+
+                <h4>СЂСџРЉВµ Р СџРЎС“РЎРѓРЎвЂљРЎвЂ№Р Р…Р Р…РЎвЂ№Р Вµ РЎР‚Р ВµР С–Р СР С•Р Р…РЎвЂ№</h4>
+                <ul>
+                    <li><strong>Southwest Desert:</strong> Arizona, Nevada, Southern California</li>
+                    <li><strong>Р СџРЎР‚Р С•Р В±Р В»Р ВµР СРЎвЂ№:</strong> РЎРЊР С”РЎРѓРЎвЂљРЎР‚Р ВµР СР В°Р В»РЎРЉР Р…Р В°РЎРЏ Р В¶Р В°РЎР‚Р В° Р В»Р ВµРЎвЂљР С•Р С, Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р Р…РЎвЂ№Р Вµ services</li>
+                    <li><strong>Р СџР В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ:</strong> Р В±Р С•Р В»РЎРЉРЎв‚¬Р Вµ Р Р†Р С•Р ТРЎвЂ№, Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В° Р С”Р С•Р Р…Р ТР СРЎвЂ Р СР С•Р Р…Р ВµРЎР‚Р В°</li>
+                </ul>
+
+                <h4>РІСњвЂћРїСРЏ Р РЋР ВµР Р†Р ВµРЎР‚Р Р…РЎвЂ№Р Вµ РЎв‚¬РЎвЂљР В°РЎвЂљРЎвЂ№</h4>
+                <ul>
+                    <li><strong>Great Lakes region:</strong> Michigan, Wisconsin, Minnesota</li>
+                    <li><strong>Р вЂ”Р СР СР Р…Р СР Вµ РЎС“РЎРѓР В»Р С•Р Р†Р СРЎРЏ:</strong> РЎРѓР Р…Р ВµР С–, Р В»Р ВµР Т, Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СРЎРЏ Р ТР Р†Р СР В¶Р ВµР Р…Р СРЎРЏ</li>
+                    <li><strong>Seasonal restrictions:</strong> Р Р†Р ВµРЎРѓР ВµР Р…Р Р…Р СР Вµ Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СРЎРЏ Р С—Р С• Р Р†Р ВµРЎРѓРЎС“</li>
+                </ul>
+
+                <h3>Р СџРЎР‚Р С•Р В±Р В»Р ВµР СР Р…РЎвЂ№Р Вµ Р В·Р С•Р Р…РЎвЂ№ Р ТР В»РЎРЏ Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СРЎРЏ</h3>
+
+                <h4>СЂСџС™В§ Р СџР С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р Р…РЎвЂ№Р Вµ construction zones</h4>
+                <ul>
+                    <li><strong>I-95 РЎвЂЎР ВµРЎР‚Р ВµР В· NYC:</strong> Р С—Р С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р Р…РЎвЂ№Р Вµ Р С—РЎР‚Р С•Р В±Р С”Р С Р С РЎР‚Р ВµР СР С•Р Р…РЎвЂљ</li>
+                    <li><strong>I-405 Los Angeles:</strong> Р С•Р ТР Р…Р В° Р СР В· РЎРѓР В°Р СРЎвЂ№РЎвЂ¦ Р В·Р В°Р С–РЎР‚РЎС“Р В¶Р ВµР Р…Р Р…РЎвЂ№РЎвЂ¦ Р ТР С•РЎР‚Р С•Р С–</li>
+                    <li><strong>I-285 Atlanta:</strong> Р С”Р С•Р В»РЎРЉРЎвЂ Р ВµР Р†Р В°РЎРЏ Р ТР С•РЎР‚Р С•Р С–Р В° РЎРѓ Р С—РЎР‚Р С•Р В±Р С”Р В°Р СР С</li>
+                </ul>
+
+                <h4>СЂСџРЉвЂ° Major bridge/tunnel crossings</h4>
+                <ul>
+                    <li><strong>George Washington Bridge (NYC):</strong> Р Р†РЎвЂ№РЎРѓР С•Р С”Р СР Вµ РЎвЂљР В°РЎР‚Р СРЎвЂћРЎвЂ№, Р С—РЎР‚Р С•Р В±Р С”Р С</li>
+                    <li><strong>Bay Bridge (San Francisco):</strong> Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СРЎРЏ Р С—Р С• Р Р†РЎвЂ№РЎРѓР С•РЎвЂљР Вµ</li>
+                    <li><strong>Mackinac Bridge (Michigan):</strong> Р Р†Р ВµРЎвЂљРЎР‚Р С•Р Р†РЎвЂ№Р Вµ Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СРЎРЏ</li>
+                </ul>
+
+                <h4>РІвЂєвЂќ Truck restrictions</h4>
+                <ul>
+                    <li><strong>Parkways (NY, NJ):</strong> Р В·Р В°Р С—РЎР‚Р ВµРЎвЂ°Р ВµР Р…РЎвЂ№ Р ТР В»РЎРЏ Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р С•Р Р†</li>
+                    <li><strong>Downtown areas:</strong> Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СРЎРЏ Р С—Р С• Р Р†РЎР‚Р ВµР СР ВµР Р…Р С</li>
+                    <li><strong>Residential zones:</strong> Р В·Р В°Р С—РЎР‚Р ВµРЎвЂљ Р Р…Р В° Р Р…Р С•РЎвЂЎР Р…Р С•Р Вµ Р ТР Р†Р СР В¶Р ВµР Р…Р СР Вµ</li>
+                </ul>
+
+                <h3>Р РЋР ВµР В·Р С•Р Р…Р Р…РЎвЂ№Р Вµ РЎвЂћР В°Р С”РЎвЂљР С•РЎР‚РЎвЂ№</h3>
+
+                <h4>РІСњвЂћРїСРЏ Р вЂ”Р СР СР Р…Р СР Вµ Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СРЎРЏ</h4>
+                <ul>
+                    <li><strong>Chain laws:</strong> Р С•Р В±РЎРЏР В·Р В°РЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№Р Вµ РЎвЂ Р ВµР С—Р С Р Р† Р С–Р С•РЎР‚Р В°РЎвЂ¦</li>
+                    <li><strong>Weight restrictions:</strong> Р Р†Р ВµРЎРѓР ВµР Р…Р Р…Р СР Вµ Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СРЎРЏ Р Р† РЎРѓР ВµР Р†Р ВµРЎР‚Р Р…РЎвЂ№РЎвЂ¦ РЎв‚¬РЎвЂљР В°РЎвЂљР В°РЎвЂ¦</li>
+                    <li><strong>Weather delays:</strong> Р В·Р В°Р С”РЎР‚РЎвЂ№РЎвЂљР СР Вµ Р ТР С•РЎР‚Р С•Р С– Р СР В·-Р В·Р В° РЎРѓР Р…Р ВµР С–Р В°</li>
+                </ul>
+
+                <h4>СЂСџРЉР„РїСРЏ Р РЋР ВµР В·Р С•Р Р… РЎС“РЎР‚Р В°Р С–Р В°Р Р…Р С•Р Р†</h4>
+                <ul>
+                    <li><strong>Gulf Coast:</strong> Р СРЎР‹Р Р…РЎРЉ-Р Р…Р С•РЎРЏР В±РЎР‚РЎРЉ</li>
+                    <li><strong>Evacuation routes:</strong> Р СР В°РЎРѓРЎРѓР С•Р Р†РЎвЂ№Р Вµ РЎРЊР Р†Р В°Р С”РЎС“Р В°РЎвЂ Р СР С</li>
+                    <li><strong>Port closures:</strong> Р В·Р В°Р С”РЎР‚РЎвЂ№РЎвЂљР СР Вµ Р С—Р С•РЎР‚РЎвЂљР С•Р Р†</li>
+                </ul>
+
+                <h3>Р СџР С•Р В»Р ВµР В·Р Р…РЎвЂ№Р Вµ РЎР‚Р ВµРЎРѓРЎС“РЎР‚РЎРѓРЎвЂ№</h3>
+                <ul>
+                    <li><strong>511 systems:</strong> Р ТР С•РЎР‚Р С•Р В¶Р Р…Р В°РЎРЏ Р СР Р…РЎвЂћР С•РЎР‚Р СР В°РЎвЂ Р СРЎРЏ Р С—Р С• РЎв‚¬РЎвЂљР В°РЎвЂљР В°Р С</li>
+                    <li><strong>FHWA Freight Analysis:</strong> Р ТР В°Р Р…Р Р…РЎвЂ№Р Вµ Р С• Р С–РЎР‚РЎС“Р В·Р С•Р С—Р С•РЎвЂљР С•Р С”Р В°РЎвЂ¦</li>
+                    <li><strong>State DOT websites:</strong> Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СРЎРЏ Р С construction</li>
+                    <li><strong>Weather services:</strong> Р С—РЎР‚Р С•Р С–Р Р…Р С•Р В·РЎвЂ№ Р ТР В»РЎРЏ Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СРЎРЏ</li>
+                </ul>
+
+                <div class="alert alert-info">
+                    <strong>СЂСџвЂ™РЋ Р РЋР С•Р Р†Р ВµРЎвЂљ:</strong> Р ВР В·РЎС“РЎвЂЎР СРЎвЂљР Вµ Р С”Р В°РЎР‚РЎвЂљРЎС“ Р РЋР РЃР С’ Р С Р С•РЎРѓР Р…Р С•Р Р†Р Р…РЎвЂ№Р Вµ Interstate highways. Р вЂ”Р Р…Р В°Р Р…Р СР Вµ Р С–Р ВµР С•Р С–РЎР‚Р В°РЎвЂћР СР С
+                    Р С—Р С•Р СР С•Р В¶Р ВµРЎвЂљ Р В±РЎвЂ№РЎРѓРЎвЂљРЎР‚Р С• Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°РЎвЂљРЎРЉ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљРЎвЂ№ Р С Р Р…Р В°РЎвЂ¦Р С•Р ТР СРЎвЂљРЎРЉ Р В°Р В»РЎРЉРЎвЂљР ВµРЎР‚Р Р…Р В°РЎвЂљР СР Р†Р Р…РЎвЂ№Р Вµ Р С—РЎС“РЎвЂљР С.
+                </div>
+            </div>
+        </div>
+        <!-- Block 5: Р СџР В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ multi-stop Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р† -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р СџР В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ multi-stop Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р†</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio5')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio5')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio5')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Multi-stop Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљРЎвЂ№ РЎвЂљРЎР‚Р ВµР В±РЎС“РЎР‹РЎвЂљ РЎРѓР В»Р С•Р В¶Р Р…Р С•Р С–Р С• Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СРЎРЏ, Р Р…Р С• Р СР С•Р С–РЎС“РЎвЂљ Р В·Р Р…Р В°РЎвЂЎР СРЎвЂљР ВµР В»РЎРЉР Р…Р С• РЎС“Р Р†Р ВµР В»Р СРЎвЂЎР СРЎвЂљРЎРЉ Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљРЎРЉ Р В·Р В°
+                    РЎРѓРЎвЂЎР ВµРЎвЂљ Р С”Р С•Р Р…РЎРѓР С•Р В»Р СР ТР В°РЎвЂ Р СР С Р Р…Р ВµРЎРѓР С”Р С•Р В»РЎРЉР С”Р СРЎвЂ¦ Р С–РЎР‚РЎС“Р В·Р С•Р Р†.</p>
+
+                <h3>Р СћР СР С—РЎвЂ№ multi-stop Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р†</h3>
+
+                <h4>СЂСџвЂњВ¦ LTL Consolidation</h4>
+                <ul>
+                    <li><strong>Р СњР ВµРЎРѓР С”Р С•Р В»РЎРЉР С”Р С• Р Р…Р ВµР В±Р С•Р В»РЎРЉРЎв‚¬Р СРЎвЂ¦ Р С–РЎР‚РЎС“Р В·Р С•Р Р†</strong> Р Р† Р С•Р ТР Р…Р С•Р С РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚Р Вµ</li>
+                    <li><strong>Р В Р В°Р В·Р Р…РЎвЂ№Р Вµ pickup/delivery РЎвЂљР С•РЎвЂЎР С”Р С</strong></li>
+                    <li><strong>Р СљР В°Р С”РЎРѓР СР СР СР В·Р В°РЎвЂ Р СРЎРЏ Р В·Р В°Р С–РЎР‚РЎС“Р В·Р С”Р С</strong> РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚Р В°</li>
+                    <li><strong>Р РЋР В»Р С•Р В¶Р Р…Р В°РЎРЏ Р В»Р С•Р С–Р СРЎРѓРЎвЂљР СР С”Р В°</strong> Р Р…Р С• Р Р†РЎвЂ№РЎРѓР С•Р С”Р В°РЎРЏ Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉ</li>
+                </ul>
+
+                <h4>СЂСџРЏР„ Multi-pickup, Single delivery</h4>
+                <ul>
+                    <li>Р РЋР В±Р С•РЎР‚ Р С–РЎР‚РЎС“Р В·Р С•Р Р† РЎРѓ Р Р…Р ВµРЎРѓР С”Р С•Р В»РЎРЉР С”Р СРЎвЂ¦ РЎвЂљР С•РЎвЂЎР ВµР С”</li>
+                    <li>Р вЂќР С•РЎРѓРЎвЂљР В°Р Р†Р С”Р В° Р Р† Р С•Р ТР СР Р… РЎР‚Р В°РЎРѓР С—РЎР‚Р ВµР ТР ВµР В»Р СРЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№Р в„– РЎвЂ Р ВµР Р…РЎвЂљРЎР‚</li>
+                    <li>Р СћР СР С—Р СРЎвЂЎР Р…Р С• Р ТР В»РЎРЏ retail chains</li>
+                </ul>
+
+                <h4>СЂСџС™С™ Single pickup, Multi-delivery</h4>
+                <ul>
+                    <li>Р вЂ”Р В°Р С–РЎР‚РЎС“Р В·Р С”Р В° Р Р† Р С•Р ТР Р…Р С•Р С Р СР ВµРЎРѓРЎвЂљР Вµ</li>
+                    <li>Р В Р В°Р В·Р Р†Р С•Р В· Р С—Р С• Р Р…Р ВµРЎРѓР С”Р С•Р В»РЎРЉР С”Р СР С Р В°Р ТРЎР‚Р ВµРЎРѓР В°Р С</li>
+                    <li>Р СћР СР С—Р СРЎвЂЎР Р…Р С• Р ТР В»РЎРЏ food distribution</li>
+                </ul>
+
+                <h3>Р С’Р В»Р С–Р С•РЎР‚Р СРЎвЂљР С Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СРЎРЏ multi-stop</h3>
+
+                <h4>1РїСРЏРІС“Р€ Р С’Р Р…Р В°Р В»Р СР В· Р Р†РЎРѓР ВµРЎвЂ¦ Р С•РЎРѓРЎвЂљР В°Р Р…Р С•Р Р†Р С•Р С”</h4>
+                <ul>
+                    <li><strong>Р С’Р ТРЎР‚Р ВµРЎРѓР В°:</strong> РЎвЂљР С•РЎвЂЎР Р…РЎвЂ№Р Вµ Р С”Р С•Р С•РЎР‚Р ТР СР Р…Р В°РЎвЂљРЎвЂ№ Р Р†РЎРѓР ВµРЎвЂ¦ РЎвЂљР С•РЎвЂЎР ВµР С”</li>
+                    <li><strong>Р вЂ™РЎР‚Р ВµР СР ВµР Р…Р Р…РЎвЂ№Р Вµ Р С•Р С”Р Р…Р В°:</strong> pickup/delivery windows</li>
+                    <li><strong>Р СћРЎР‚Р ВµР В±Р С•Р Р†Р В°Р Р…Р СРЎРЏ:</strong> Р С•РЎРѓР С•Р В±Р ВµР Р…Р Р…Р С•РЎРѓРЎвЂљР С Р С”Р В°Р В¶Р ТР С•Р в„– Р С•РЎРѓРЎвЂљР В°Р Р…Р С•Р Р†Р С”Р С</li>
+                    <li><strong>Р СџРЎР‚Р СР С•РЎР‚Р СРЎвЂљР ВµРЎвЂљРЎвЂ№:</strong> Р С”Р В°Р С”Р СР Вµ Р С–РЎР‚РЎС“Р В·РЎвЂ№ Р С”РЎР‚Р СРЎвЂљР СРЎвЂЎР Р…РЎвЂ№ Р С—Р С• Р Р†РЎР‚Р ВµР СР ВµР Р…Р С</li>
+                </ul>
+
+                <h4>2РїСРЏРІС“Р€ Р С›Р С—РЎвЂљР СР СР СР В·Р В°РЎвЂ Р СРЎРЏ Р С—Р С•РЎРѓР В»Р ВµР ТР С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЉР Р…Р С•РЎРѓРЎвЂљР С</h4>
+                <ul>
+                    <li><strong>Р вЂњР ВµР С•Р С–РЎР‚Р В°РЎвЂћР СРЎвЂЎР ВµРЎРѓР С”Р В°РЎРЏ Р В»Р С•Р С–Р СР С”Р В°:</strong> Р СР СР Р…Р СР СР СР В·Р В°РЎвЂ Р СРЎРЏ deadhead</li>
+                    <li><strong>Р вЂ™РЎР‚Р ВµР СР ВµР Р…Р Р…РЎвЂ№Р Вµ Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СРЎРЏ:</strong> РЎРѓР С•Р В±Р В»РЎР‹Р ТР ВµР Р…Р СР Вµ Р Р†РЎРѓР ВµРЎвЂ¦ windows</li>
+                    <li><strong>FIFO Р С—РЎР‚Р СР Р…РЎвЂ Р СР С—:</strong> first in, first out Р ТР В»РЎРЏ Р В·Р В°Р С–РЎР‚РЎС“Р В·Р С”Р С</li>
+                    <li><strong>Weight distribution:</strong> РЎР‚Р В°РЎРѓР С—РЎР‚Р ВµР ТР ВµР В»Р ВµР Р…Р СР Вµ Р Р†Р ВµРЎРѓР В°</li>
+                </ul>
+
+                <h4>3РїСРЏРІС“Р€ Р В Р В°РЎРѓРЎвЂЎР ВµРЎвЂљ Р Р†РЎР‚Р ВµР СР ВµР Р…Р С</h4>
+                <ul>
+                    <li><strong>Driving time:</strong> Р СР ВµР В¶Р ТРЎС“ Р Р†РЎРѓР ВµР СР С РЎвЂљР С•РЎвЂЎР С”Р В°Р СР С</li>
+                    <li><strong>Loading time:</strong> Р Р†РЎР‚Р ВµР СРЎРЏ Р Р…Р В° Р С”Р В°Р В¶Р ТРЎС“РЎР‹ Р С•РЎРѓРЎвЂљР В°Р Р…Р С•Р Р†Р С”РЎС“</li>
+                    <li><strong>Buffer time:</strong> РЎР‚Р ВµР В·Р ВµРЎР‚Р Р† Р Р…Р В° Р В·Р В°Р ТР ВµРЎР‚Р В¶Р С”Р С</li>
+                    <li><strong>HOS compliance:</strong> РЎРѓР С•Р В±Р В»РЎР‹Р ТР ВµР Р…Р СР Вµ Р С—РЎР‚Р В°Р Р†Р СР В»</li>
+                </ul>
+
+                <h3>Р ВР Р…РЎРѓРЎвЂљРЎР‚РЎС“Р СР ВµР Р…РЎвЂљРЎвЂ№ Р ТР В»РЎРЏ multi-stop Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СРЎРЏ</h3>
+
+                <h4>СЂСџвЂ“ТђРїСРЏ Route optimization software</h4>
+                <ul>
+                    <li><strong>Route4Me:</strong> РЎРѓР С—Р ВµРЎвЂ Р СР В°Р В»Р СР В·Р СРЎР‚Р С•Р Р†Р В°Р Р…Р Р…Р С•Р Вµ Р СџР С› Р ТР В»РЎРЏ multi-stop</li>
+                    <li><strong>OptimoRoute:</strong> Р С•Р С—РЎвЂљР СР СР СР В·Р В°РЎвЂ Р СРЎРЏ РЎРѓ РЎС“РЎвЂЎР ВµРЎвЂљР С•Р С Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СР в„–</li>
+                    <li><strong>Workwave Route Manager:</strong> Р ТР В»РЎРЏ delivery routes</li>
+                </ul>
+
+                <h4>СЂСџвЂњВ± Mobile apps</h4>
+                <ul>
+                    <li><strong>Circuit:</strong> Р С—РЎР‚Р С•РЎРѓРЎвЂљР С•Р Вµ Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р†</li>
+                    <li><strong>MyRouteOnline:</strong> Р В±Р ВµРЎРѓР С—Р В»Р В°РЎвЂљР Р…Р В°РЎРЏ Р С•Р С—РЎвЂљР СР СР СР В·Р В°РЎвЂ Р СРЎРЏ</li>
+                    <li><strong>Google Maps (multiple stops):</strong> Р ТР С• 10 Р С•РЎРѓРЎвЂљР В°Р Р…Р С•Р Р†Р С•Р С”</li>
+                </ul>
+
+                <h3>Р С›РЎРѓР С•Р В±Р ВµР Р…Р Р…Р С•РЎРѓРЎвЂљР С Р Р†РЎвЂ№Р С—Р С•Р В»Р Р…Р ВµР Р…Р СРЎРЏ multi-stop</h3>
+
+                <h4>СЂСџвЂњвЂ№ Р вЂќР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р С•Р В±Р С•РЎР‚Р С•РЎвЂљ</h4>
+                <ul>
+                    <li><strong>Р С›РЎвЂљР ТР ВµР В»РЎРЉР Р…РЎвЂ№Р Вµ BOL</strong> Р ТР В»РЎРЏ Р С”Р В°Р В¶Р ТР С•Р С–Р С• Р С–РЎР‚РЎС“Р В·Р В°</li>
+                    <li><strong>Tracking numbers</strong> Р ТР В»РЎРЏ Р С”Р В°Р В¶Р ТР С•Р в„– Р С•РЎРѓРЎвЂљР В°Р Р…Р С•Р Р†Р С”Р С</li>
+                    <li><strong>Proof of delivery</strong> РЎРѓ Р С”Р В°Р В¶Р ТР С•Р в„– РЎвЂљР С•РЎвЂЎР С”Р С</li>
+                    <li><strong>Separate invoicing</strong> Р ТР В»РЎРЏ РЎР‚Р В°Р В·Р Р…РЎвЂ№РЎвЂ¦ Р С”Р В»Р СР ВµР Р…РЎвЂљР С•Р Р†</li>
+                </ul>
+
+                <h4>СЂСџС™вЂє Р вЂ”Р В°Р С–РЎР‚РЎС“Р В·Р С”Р В° РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚Р В°</h4>
+                <ul>
+                    <li><strong>LIFO loading:</strong> last in, first out</li>
+                    <li><strong>Weight distribution:</strong> РЎвЂљРЎРЏР В¶Р ВµР В»РЎвЂ№Р Вµ Р С–РЎР‚РЎС“Р В·РЎвЂ№ Р Р†Р С—Р ВµРЎР‚Р ВµР Т</li>
+                    <li><strong>Fragile items:</strong> Р В·Р В°РЎвЂ°Р СРЎвЂљР В° РЎвЂ¦РЎР‚РЎС“Р С—Р С”Р СРЎвЂ¦ Р С–РЎР‚РЎС“Р В·Р С•Р Р†</li>
+                    <li><strong>Separation:</strong> РЎР‚Р В°Р В·Р ТР ВµР В»Р ВµР Р…Р СР Вµ РЎР‚Р В°Р В·Р Р…РЎвЂ№РЎвЂ¦ Р С–РЎР‚РЎС“Р В·Р С•Р Р†</li>
+                </ul>
+
+                <h3>Р В Р В°РЎРѓРЎвЂЎР ВµРЎвЂљ Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљР С multi-stop</h3>
+
+                <h4>СЂСџвЂ™В° Р СџРЎР‚Р СР СР ВµРЎР‚ РЎР‚Р В°РЎРѓРЎвЂЎР ВµРЎвЂљР В°</h4>
+                <p><strong>3 Р С–РЎР‚РЎС“Р В·Р В° Р Р…Р В° Р С•Р ТР Р…Р С•Р С Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР Вµ:</strong></p>
+                <ul>
+                    <li>Р вЂњРЎР‚РЎС“Р В· A: $800 (200 Р СР СР В»РЎРЉ)</li>
+                    <li>Р вЂњРЎР‚РЎС“Р В· B: $600 (150 Р СР СР В»РЎРЉ)</li>
+                    <li>Р вЂњРЎР‚РЎС“Р В· C: $500 (100 Р СР СР В»РЎРЉ)</li>
+                    <li><strong>Р С›Р В±РЎвЂ°Р СР в„– Р ТР С•РЎвЂ¦Р С•Р Т:</strong> $1,900</li>
+                    <li><strong>Р С›Р В±РЎвЂ°Р ВµР Вµ РЎР‚Р В°РЎРѓРЎРѓРЎвЂљР С•РЎРЏР Р…Р СР Вµ:</strong> 450 Р СР СР В»РЎРЉ</li>
+                    <li><strong>RPM:</strong> $4.22/Р СР СР В»РЎРЏ</li>
+                </ul>
+
+                <h3>Р СџРЎР‚Р С•Р В±Р В»Р ВµР СРЎвЂ№ multi-stop Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р†</h3>
+                <ul>
+                    <li>РІСњРЉ <strong>Р вЂ”Р В°Р ТР ВµРЎР‚Р В¶Р С”Р С:</strong> Р С•Р ТР Р…Р В° Р В·Р В°Р ТР ВµРЎР‚Р В¶Р С”Р В° Р Р†Р В»Р СРЎРЏР ВµРЎвЂљ Р Р…Р В° Р Р†РЎРѓР Вµ Р С•РЎРѓРЎвЂљР В°Р Р…Р С•Р Р†Р С”Р С</li>
+                    <li>РІСњРЉ <strong>Р РЋР В»Р С•Р В¶Р Р…Р С•РЎРѓРЎвЂљРЎРЉ:</strong> Р В±Р С•Р В»РЎРЉРЎв‚¬Р Вµ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р Р† Р С Р С”Р С•Р С•РЎР‚Р ТР СР Р…Р В°РЎвЂ Р СР С</li>
+                    <li>РІСњРЉ <strong>HOS РЎР‚Р СРЎРѓР С”Р С:</strong> Р С—РЎР‚Р ВµР Р†РЎвЂ№РЎв‚¬Р ВµР Р…Р СР Вµ Р ТР С•РЎРѓРЎвЂљРЎС“Р С—Р Р…Р С•Р С–Р С• Р Р†РЎР‚Р ВµР СР ВµР Р…Р С</li>
+                    <li>РІСњРЉ <strong>Damage claims:</strong> РЎРѓР В»Р С•Р В¶Р Р…Р ВµР Вµ Р С•Р С—РЎР‚Р ВµР ТР ВµР В»Р СРЎвЂљРЎРЉ Р С•РЎвЂљР Р†Р ВµРЎвЂљРЎРѓРЎвЂљР Р†Р ВµР Р…Р Р…Р С•РЎРѓРЎвЂљРЎРЉ</li>
+                </ul>
+
+                <div class="alert alert-warning">
+                    <strong>РІС™В РїСРЏ Р вЂ™Р В°Р В¶Р Р…Р С•:</strong> Multi-stop Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљРЎвЂ№ РЎвЂљРЎР‚Р ВµР В±РЎС“РЎР‹РЎвЂљ Р С•Р С—РЎвЂ№РЎвЂљР Р…РЎвЂ№РЎвЂ¦ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„– Р С Р ТР ВµРЎвЂљР В°Р В»РЎРЉР Р…Р С•Р С–Р С• Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СРЎРЏ.
+                    Р СњР В°РЎвЂЎР СР Р…Р В°Р в„–РЎвЂљР Вµ РЎРѓ Р С—РЎР‚Р С•РЎРѓРЎвЂљРЎвЂ№РЎвЂ¦ 2-3 Р С•РЎРѓРЎвЂљР В°Р Р…Р С•Р Р†Р С•Р С”.
+                </div>
+            </div>
+        </div>
+        <!-- Block 6: Р ВРЎРѓР С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°Р Р…Р СР Вµ GPS Р С Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР Р…РЎвЂ№РЎвЂ¦ Р С—РЎР‚Р СР В»Р С•Р В¶Р ВµР Р…Р СР в„– -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р ВРЎРѓР С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°Р Р…Р СР Вµ GPS Р С Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР Р…РЎвЂ№РЎвЂ¦ Р С—РЎР‚Р СР В»Р С•Р В¶Р ВµР Р…Р СР в„–</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio6')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio6')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio6')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р РЋР С•Р Р†РЎР‚Р ВµР СР ВµР Р…Р Р…РЎвЂ№Р Вµ GPS Р С Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР Р…РЎвЂ№Р Вµ Р С—РЎР‚Р СР В»Р С•Р В¶Р ВµР Р…Р СРЎРЏ РІР‚вЂќ Р Р…Р ВµР В·Р В°Р СР ВµР Р…Р СР СРЎвЂ№Р Вµ Р СР Р…РЎРѓРЎвЂљРЎР‚РЎС“Р СР ВµР Р…РЎвЂљРЎвЂ№ Р ТР В»РЎРЏ Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СРЎРЏ Р С Р Р†РЎвЂ№Р С—Р С•Р В»Р Р…Р ВµР Р…Р СРЎРЏ
+                    Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р†. Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…РЎвЂ№Р в„– Р Р†РЎвЂ№Р В±Р С•РЎР‚ Р СР С•Р В¶Р ВµРЎвЂљ РЎРѓРЎРЊР С”Р С•Р Р…Р С•Р СР СРЎвЂљРЎРЉ Р Р†РЎР‚Р ВµР СРЎРЏ Р С Р ТР ВµР Р…РЎРЉР С–Р С.</p>
+
+                <h3>Р РЋР С—Р ВµРЎвЂ Р СР В°Р В»Р СР В·Р СРЎР‚Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№Р Вµ GPS Р ТР В»РЎРЏ Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р С•Р Р†</h3>
+
+                <h4>СЂСџС™вЂє Truck-specific GPS РЎС“РЎРѓРЎвЂљРЎР‚Р С•Р в„–РЎРѓРЎвЂљР Р†Р В°</h4>
+                <ul>
+                    <li><strong>Garmin dР”вЂњzl series:</strong> Р С—РЎР‚Р С•РЎвЂћР ВµРЎРѓРЎРѓР СР С•Р Р…Р В°Р В»РЎРЉР Р…РЎвЂ№Р Вµ GPS Р ТР В»РЎРЏ Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р С•Р Р†</li>
+                    <li><strong>Rand McNally TND series:</strong> РЎРѓ РЎС“РЎвЂЎР ВµРЎвЂљР С•Р С truck restrictions</li>
+                    <li><strong>TomTom Trucker series:</strong> Р ВµР Р†РЎР‚Р С•Р С—Р ВµР в„–РЎРѓР С”Р СР в„– Р С—РЎР‚Р С•Р СР В·Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЉ</li>
+                </ul>
+
+                <h4>РІСљвЂ¦ Р СџРЎР‚Р ВµР СР СРЎС“РЎвЂ°Р ВµРЎРѓРЎвЂљР Р†Р В° truck GPS</h4>
+                <ul>
+                    <li><strong>Truck routing:</strong> Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљРЎвЂ№ РЎРѓ РЎС“РЎвЂЎР ВµРЎвЂљР С•Р С Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СР в„–</li>
+                    <li><strong>Bridge heights:</strong> Р С—РЎР‚Р ВµР ТРЎС“Р С—РЎР‚Р ВµР В¶Р ТР ВµР Р…Р СРЎРЏ Р С• Р Р…Р СР В·Р С”Р СРЎвЂ¦ Р СР С•РЎРѓРЎвЂљР В°РЎвЂ¦</li>
+                    <li><strong>Weight restrictions:</strong> РЎС“РЎвЂЎР ВµРЎвЂљ Р Р†Р ВµРЎРѓР С•Р Р†РЎвЂ№РЎвЂ¦ Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СР в„–</li>
+                    <li><strong>Hazmat routing:</strong> Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљРЎвЂ№ Р ТР В»РЎРЏ Р С•Р С—Р В°РЎРѓР Р…РЎвЂ№РЎвЂ¦ Р С–РЎР‚РЎС“Р В·Р С•Р Р†</li>
+                    <li><strong>Truck stops:</strong> Р В±Р В°Р В·Р В° Р ТР В°Р Р…Р Р…РЎвЂ№РЎвЂ¦ Р В·Р В°Р С—РЎР‚Р В°Р Р†Р С•Р С” Р С РЎРѓРЎвЂљР С•РЎРЏР Р…Р С•Р С”</li>
+                </ul>
+
+                <h3>Р СљР С•Р В±Р СР В»РЎРЉР Р…РЎвЂ№Р Вµ Р С—РЎР‚Р СР В»Р С•Р В¶Р ВµР Р…Р СРЎРЏ</h3>
+
+                <h4>СЂСџвЂњВ± Р РЋР С—Р ВµРЎвЂ Р СР В°Р В»Р СР В·Р СРЎР‚Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№Р Вµ truck apps</h4>
+                <ul>
+                    <li><strong>Trucker Path:</strong> Р С”Р С•Р СР С—Р В»Р ВµР С”РЎРѓР Р…Р С•Р Вµ Р С—РЎР‚Р СР В»Р С•Р В¶Р ВµР Р…Р СР Вµ Р ТР В»РЎРЏ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„–</li>
+                    <li><strong>CoPilot Truck:</strong> GPS Р Р…Р В°Р Р†Р СР С–Р В°РЎвЂ Р СРЎРЏ Р ТР В»РЎРЏ Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р С•Р Р†</li>
+                    <li><strong>SmartTruckRoute:</strong> Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р†</li>
+                    <li><strong>BigRoad:</strong> HOS tracking + navigation</li>
+                </ul>
+
+                <h4>СЂСџвЂ”С”РїСРЏ Р Р€Р Р…Р СР Р†Р ВµРЎР‚РЎРѓР В°Р В»РЎРЉР Р…РЎвЂ№Р Вµ Р С—РЎР‚Р СР В»Р С•Р В¶Р ВµР Р…Р СРЎРЏ</h4>
+                <ul>
+                    <li><strong>Google Maps:</strong> Р В±Р ВµРЎРѓР С—Р В»Р В°РЎвЂљР Р…Р С•, Р Р…Р С• Р В±Р ВµР В· truck restrictions</li>
+                    <li><strong>Waze:</strong> real-time traffic, community reports</li>
+                    <li><strong>Apple Maps:</strong> Р ТР В»РЎРЏ iOS РЎС“РЎРѓРЎвЂљРЎР‚Р С•Р в„–РЎРѓРЎвЂљР Р†</li>
+                </ul>
+
+                <h3>Р В¤РЎС“Р Р…Р С”РЎвЂ Р СР С РЎРѓР С•Р Р†РЎР‚Р ВµР СР ВµР Р…Р Р…РЎвЂ№РЎвЂ¦ GPS Р С—РЎР‚Р СР В»Р С•Р В¶Р ВµР Р…Р СР в„–</h3>
+
+                <h4>СЂСџС™В¦ Real-time traffic</h4>
+                <ul>
+                    <li><strong>Live traffic data:</strong> Р В°Р С”РЎвЂљРЎС“Р В°Р В»РЎРЉР Р…Р В°РЎРЏ Р СР Р…РЎвЂћР С•РЎР‚Р СР В°РЎвЂ Р СРЎРЏ Р С• Р С—РЎР‚Р С•Р В±Р С”Р В°РЎвЂ¦</li>
+                    <li><strong>Alternative routes:</strong> Р С•Р В±РЎР‰Р ВµР В·Р Т Р В·Р В°РЎвЂљР С•РЎР‚Р С•Р Р†</li>
+                    <li><strong>ETA updates:</strong> Р С•Р В±Р Р…Р С•Р Р†Р В»Р ВµР Р…Р СР Вµ Р Р†РЎР‚Р ВµР СР ВµР Р…Р С Р С—РЎР‚Р СР В±РЎвЂ№РЎвЂљР СРЎРЏ</li>
+                </ul>
+
+                <h4>СЂСџС™В§ Road conditions</h4>
+                <ul>
+                    <li><strong>Construction zones:</strong> Р В·Р С•Р Р…РЎвЂ№ РЎРѓРЎвЂљРЎР‚Р С•Р СРЎвЂљР ВµР В»РЎРЉРЎРѓРЎвЂљР Р†Р В°</li>
+                    <li><strong>Road closures:</strong> Р В·Р В°Р С”РЎР‚РЎвЂ№РЎвЂљРЎвЂ№Р Вµ Р ТР С•РЎР‚Р С•Р С–Р С</li>
+                    <li><strong>Weather alerts:</strong> Р С—Р С•Р С–Р С•Р ТР Р…РЎвЂ№Р Вµ Р С—РЎР‚Р ВµР ТРЎС“Р С—РЎР‚Р ВµР В¶Р ТР ВµР Р…Р СРЎРЏ</li>
+                    <li><strong>Accident reports:</strong> РЎРѓР С•Р С•Р В±РЎвЂ°Р ВµР Р…Р СРЎРЏ Р С• Р вЂќР СћР Сџ</li>
+                </ul>
+
+                <h4>РІвЂєР… Points of Interest (POI)</h4>
+                <ul>
+                    <li><strong>Truck stops:</strong> Р В·Р В°Р С—РЎР‚Р В°Р Р†Р С”Р С Р ТР В»РЎРЏ Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р С•Р Р†</li>
+                    <li><strong>Rest areas:</strong> Р В·Р С•Р Р…РЎвЂ№ Р С•РЎвЂљР ТРЎвЂ№РЎвЂ¦Р В°</li>
+                    <li><strong>Weigh stations:</strong> Р Р†Р ВµРЎРѓР С•Р Р†РЎвЂ№Р Вµ РЎРѓРЎвЂљР В°Р Р…РЎвЂ Р СР С</li>
+                    <li><strong>Repair shops:</strong> РЎР‚Р ВµР СР С•Р Р…РЎвЂљР Р…РЎвЂ№Р Вµ Р СР В°РЎРѓРЎвЂљР ВµРЎР‚РЎРѓР С”Р СР Вµ</li>
+                </ul>
+
+                <h3>Р ВР Р…РЎвЂљР ВµР С–РЎР‚Р В°РЎвЂ Р СРЎРЏ РЎРѓ TMS РЎРѓР СРЎРѓРЎвЂљР ВµР СР В°Р СР С</h3>
+
+                <h4>СЂСџвЂќвЂ” API Р СР Р…РЎвЂљР ВµР С–РЎР‚Р В°РЎвЂ Р СРЎРЏ</h4>
+                <ul>
+                    <li><strong>Automatic routing:</strong> Р В°Р Р†РЎвЂљР С•Р СР В°РЎвЂљР СРЎвЂЎР ВµРЎРѓР С”Р С•Р Вµ Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ</li>
+                    <li><strong>Real-time tracking:</strong> Р С•РЎвЂљРЎРѓР В»Р ВµР В¶Р СР Р†Р В°Р Р…Р СР Вµ Р Р† РЎР‚Р ВµР В°Р В»РЎРЉР Р…Р С•Р С Р Р†РЎР‚Р ВµР СР ВµР Р…Р С</li>
+                    <li><strong>ETA updates:</strong> Р В°Р Р†РЎвЂљР С•Р СР В°РЎвЂљР СРЎвЂЎР ВµРЎРѓР С”Р С•Р Вµ Р С•Р В±Р Р…Р С•Р Р†Р В»Р ВµР Р…Р СР Вµ Р Р†РЎР‚Р ВµР СР ВµР Р…Р С</li>
+                    <li><strong>Geofencing:</strong> РЎС“Р Р†Р ВµР ТР С•Р СР В»Р ВµР Р…Р СРЎРЏ Р С• Р С—РЎР‚Р СР В±РЎвЂ№РЎвЂљР СР С/Р С•РЎвЂљР С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р СР С</li>
+                </ul>
+
+                <h4>СЂСџвЂњР‰ Fleet management</h4>
+                <ul>
+                    <li><strong>Route optimization:</strong> Р С•Р С—РЎвЂљР СР СР СР В·Р В°РЎвЂ Р СРЎРЏ Р ТР В»РЎРЏ Р Р†РЎРѓР ВµР С–Р С• Р В°Р Р†РЎвЂљР С•Р С—Р В°РЎР‚Р С”Р В°</li>
+                    <li><strong>Performance analytics:</strong> Р В°Р Р…Р В°Р В»Р СР В· РЎРЊРЎвЂћРЎвЂћР ВµР С”РЎвЂљР СР Р†Р Р…Р С•РЎРѓРЎвЂљР С Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р†</li>
+                    <li><strong>Fuel tracking:</strong> Р СР С•Р Р…Р СРЎвЂљР С•РЎР‚Р СР Р…Р С– РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТР В° РЎвЂљР С•Р С—Р В»Р СР Р†Р В°</li>
+                </ul>
+
+                <h3>Р вЂєРЎС“РЎвЂЎРЎв‚¬Р СР Вµ Р С—РЎР‚Р В°Р С”РЎвЂљР СР С”Р С Р СРЎРѓР С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°Р Р…Р СРЎРЏ GPS</h3>
+
+                <h4>РІС™в„ўРїСРЏ Р СњР В°РЎРѓРЎвЂљРЎР‚Р С•Р в„–Р С”Р В° Р С—РЎР‚Р С•РЎвЂћР СР В»РЎРЏ Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р В°</h4>
+                <ul>
+                    <li><strong>Dimensions:</strong> Р ТР В»Р СР Р…Р В°, РЎв‚¬Р СРЎР‚Р СР Р…Р В°, Р Р†РЎвЂ№РЎРѓР С•РЎвЂљР В° РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚Р В°</li>
+                    <li><strong>Weight:</strong> Р С•Р В±РЎвЂ°Р СР в„– Р Р†Р ВµРЎРѓ РЎРѓ Р С–РЎР‚РЎС“Р В·Р С•Р С</li>
+                    <li><strong>Hazmat class:</strong> Р С”Р В»Р В°РЎРѓРЎРѓ Р С•Р С—Р В°РЎРѓР Р…Р С•Р С–Р С• Р С–РЎР‚РЎС“Р В·Р В°</li>
+                    <li><strong>Axle count:</strong> Р С”Р С•Р В»Р СРЎвЂЎР ВµРЎРѓРЎвЂљР Р†Р С• Р С•РЎРѓР ВµР в„–</li>
+                </ul>
+
+                <h4>СЂСџвЂќвЂћ Р В Р ВµР С–РЎС“Р В»РЎРЏРЎР‚Р Р…Р С•Р Вµ Р С•Р В±Р Р…Р С•Р Р†Р В»Р ВµР Р…Р СР Вµ</h4>
+                <ul>
+                    <li><strong>Map updates:</strong> Р С•Р В±Р Р…Р С•Р Р†Р В»Р ВµР Р…Р СР Вµ Р С”Р В°РЎР‚РЎвЂљ</li>
+                    <li><strong>POI database:</strong> Р С•Р В±Р Р…Р С•Р Р†Р В»Р ВµР Р…Р СР Вµ РЎвЂљР С•РЎвЂЎР ВµР С” Р СР Р…РЎвЂљР ВµРЎР‚Р ВµРЎРѓР В°</li>
+                    <li><strong>Traffic data:</strong> Р С—Р С•Р ТР С—Р СРЎРѓР С”Р В° Р Р…Р В° traffic services</li>
+                </ul>
+
+                <h3>Р С›Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СРЎРЏ GPS Р Р…Р В°Р Р†Р СР С–Р В°РЎвЂ Р СР С</h3>
+                <ul>
+                    <li>РІСњРЉ <strong>Outdated maps:</strong> РЎС“РЎРѓРЎвЂљР В°РЎР‚Р ВµР Р†РЎв‚¬Р СР Вµ Р С”Р В°РЎР‚РЎвЂљРЎвЂ№</li>
+                    <li>РІСњРЉ <strong>Construction zones:</strong> Р Р…Р Вµ Р Р†РЎРѓР ВµР С–Р ТР В° Р В°Р С”РЎвЂљРЎС“Р В°Р В»РЎРЉР Р…Р В°РЎРЏ Р СР Р…РЎвЂћР С•РЎР‚Р СР В°РЎвЂ Р СРЎРЏ</li>
+                    <li>РІСњРЉ <strong>Local restrictions:</strong> Р СР ВµРЎРѓРЎвЂљР Р…РЎвЂ№Р Вµ Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СРЎРЏ</li>
+                    <li>РІСњРЉ <strong>Signal loss:</strong> Р С—Р С•РЎвЂљР ВµРЎР‚РЎРЏ РЎРѓР СР С–Р Р…Р В°Р В»Р В° Р Р† РЎвЂљРЎС“Р Р…Р Р…Р ВµР В»РЎРЏРЎвЂ¦/Р С–Р С•РЎР‚Р В°РЎвЂ¦</li>
+                </ul>
+
+                <h3>Р В Р ВµР В·Р ВµРЎР‚Р Р†Р Р…Р С•Р Вµ Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ</h3>
+                <ul>
+                    <li>СЂСџвЂњвЂ“ <strong>Paper atlas:</strong> Р В±РЎС“Р СР В°Р В¶Р Р…РЎвЂ№Р в„– Р В°РЎвЂљР В»Р В°РЎРѓ Р С”Р В°Р С” backup</li>
+                    <li>СЂСџвЂњС› <strong>Local contacts:</strong> Р С”Р С•Р Р…РЎвЂљР В°Р С”РЎвЂљРЎвЂ№ Р СР ВµРЎРѓРЎвЂљР Р…РЎвЂ№РЎвЂ¦ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р С•Р Р†</li>
+                    <li>СЂСџвЂ”С”РїСРЏ <strong>Multiple apps:</strong> Р Р…Р ВµРЎРѓР С”Р С•Р В»РЎРЉР С”Р С• Р С—РЎР‚Р СР В»Р С•Р В¶Р ВµР Р…Р СР в„– Р ТР В»РЎРЏ РЎРѓРЎР‚Р В°Р Р†Р Р…Р ВµР Р…Р СРЎРЏ</li>
+                    <li>СЂСџвЂњВ» <strong>CB radio:</strong> РЎРѓР Р†РЎРЏР В·РЎРЉ РЎРѓ Р ТРЎР‚РЎС“Р С–Р СР СР С Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏР СР С</li>
+                </ul>
+
+                <div class="alert alert-success">
+                    <strong>РІСљвЂ¦ Р В Р ВµР С”Р С•Р СР ВµР Р…Р ТР В°РЎвЂ Р СРЎРЏ:</strong> Р ВРЎРѓР С—Р С•Р В»РЎРЉР В·РЎС“Р в„–РЎвЂљР Вµ Р С”Р С•Р СР В±Р СР Р…Р В°РЎвЂ Р СРЎР‹ truck-specific GPS Р С real-time traffic apps
+                    Р ТР В»РЎРЏ Р СР В°Р С”РЎРѓР СР СР В°Р В»РЎРЉР Р…Р С•Р в„– РЎРЊРЎвЂћРЎвЂћР ВµР С”РЎвЂљР СР Р†Р Р…Р С•РЎРѓРЎвЂљР С Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СРЎРЏ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р†.
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="lesson-nav">
+            <a href="doc-module-5.html" class="nav-btn">
+                <span>РІвЂ С’</span>
+                <span>Р СџРЎР‚Р ВµР ТРЎвЂ№Р ТРЎС“РЎвЂ°Р СР в„– РЎС“РЎР‚Р С•Р С”</span>
+            </a>
+            <div class="progress-info">
+                <div>Р СљР С•Р ТРЎС“Р В»РЎРЉ 6 Р СР В· 12</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 50%"></div>
+                </div>
+                <div>50% Р В·Р В°Р Р†Р ВµРЎР‚РЎв‚¬Р ВµР Р…Р С•</div>
+            </div>
+            <a href="doc-module-7.html" class="nav-btn">
+                <span>Р РЋР В»Р ВµР ТРЎС“РЎР‹РЎвЂ°Р СР в„– РЎС“РЎР‚Р С•Р С”</span>
+                <span>РІвЂ вЂ™</span>
+            </a>
+        </nav>
+    </main>
+    <!-- Audio elements (hidden) -->
+    <audio id="audio1" preload="none">
+        <source src="../audio/module6-block1.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="audio2" preload="none">
+        <source src="../audio/module6-block2.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="audio3" preload="none">
+        <source src="../audio/module6-block3.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="audio4" preload="none">
+        <source src="../audio/module6-block4.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="audio5" preload="none">
+        <source src="../audio/module6-block5.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="audio6" preload="none">
+        <source src="../audio/module6-block6.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        let currentAudio = null;
+        let currentButton = null;
+        let currentContainer = null;
+        let progressUpdateInterval = null;
+
+        const audioDurations = {
+            'audio1': 210,
+            'audio2': 250,
+            'audio3': 230,
+            'audio4': 270,
+            'audio5': 240,
+            'audio6': 220
+        };
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateProgress(audioId, currentTime, duration) {
+            const container = document.querySelector(`[onclick*="${audioId}"]`).closest('.audio-container');
+            const progressRing = container.querySelector('.progress-ring-fill');
+            const mobileProgressFill = container.querySelector('.mobile-progress-fill');
+            const durationDisplay = container.querySelector('.audio-duration');
+
+            const progress = currentTime / duration;
+            const circumference = 2 * Math.PI * 32;
+            const offset = circumference - (progress * circumference);
+
+            if (progressRing) {
+                progressRing.style.strokeDashoffset = offset;
+            }
+
+            if (mobileProgressFill) {
+                mobileProgressFill.style.width = `${progress * 100}%`;
+            }
+
+            durationDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+        }
+        function seekAudioMobile(event, element, audioId) {
+            event.stopPropagation();
+            const audio = document.getElementById(audioId);
+            if (!audio || audio.paused) {
+                return;
+            }
+            const rect = element.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const progress = clickX / rect.width;
+            const duration = audioDurations[audioId];
+            const newTime = progress * duration;
+            updateProgress(audioId, newTime, duration);
+        }
+
+        function seekAudio(event, element, audioId) {
+            event.stopPropagation();
+            if (!element.classList.contains('seekable')) {
+                return;
+            }
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const x = event.clientX - centerX;
+            const y = event.clientY - centerY;
+            const distance = Math.sqrt(x * x + y * y);
+            const radius = rect.width / 2;
+            if (distance < radius * 0.55) {
+                return;
+            }
+            let angle = Math.atan2(x, -y) * (180 / Math.PI);
+            if (angle < 0) angle += 360;
+            const progress = angle / 360;
+            const duration = audioDurations[audioId];
+            const newTime = progress * duration;
+            updateProgress(audioId, newTime, duration);
+        }
+
+        function toggleAudio(button, audioId) {
+            const audio = document.getElementById(audioId);
+            const container = button.closest('.audio-container');
+            const interactiveRing = container.querySelector('.progress-ring-interactive');
+
+            if (currentAudio && currentAudio !== audio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                if (currentButton) {
+                    currentButton.classList.remove('playing');
+                }
+                if (currentContainer) {
+                    currentContainer.classList.remove('playing');
+                    const oldRing = currentContainer.querySelector('.progress-ring-interactive');
+                    oldRing.classList.remove('seekable');
+                }
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+            }
+
+            if (audio.paused) {
+                audio.play();
+                button.classList.add('playing');
+                container.classList.add('playing');
+                interactiveRing.classList.add('seekable');
+                currentAudio = audio;
+                currentButton = button;
+                currentContainer = container;
+
+                const duration = audioDurations[audioId];
+                let currentTime = 0;
+
+                progressUpdateInterval = setInterval(() => {
+                    if (currentTime < duration) {
+                        currentTime += 0.1;
+                        updateProgress(audioId, currentTime, duration);
+                    } else {
+                        clearInterval(progressUpdateInterval);
+                        button.classList.remove('playing');
+                        container.classList.remove('playing');
+                        interactiveRing.classList.remove('seekable');
+                        currentAudio = null;
+                        currentButton = null;
+                        currentContainer = null;
+                        updateProgress(audioId, 0, duration);
+                    }
+                }, 100);
+
+            } else {
+                audio.pause();
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+            }
+
+            audio.onended = function () {
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+                updateProgress(audioId, 0, audioDurations[audioId]);
+            };
+
+            audio.onerror = function () {
+                console.log('Audio file not found, but button still works for demo');
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            Object.keys(audioDurations).forEach(audioId => {
+                const duration = audioDurations[audioId];
+                updateProgress(audioId, 0, duration);
+            });
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+                e.preventDefault();
+                if (currentButton) {
+                    currentButton.click();
+                }
+            }
+        });
+
+        window.addEventListener('beforeunload', function () {
+            localStorage.setItem('module6-progress', '50');
+            localStorage.setItem('current-module', '6');
+        });
+
+        // Mobile Menu JavaScript
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+
+        if (mobileMenuToggle && mobileMenu && mobileMenuOverlay) {
+            mobileMenuToggle.addEventListener('click', function () {
+                mobileMenuToggle.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+                mobileMenuOverlay.classList.toggle('active');
+                document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+            });
+
+            mobileMenuOverlay.addEventListener('click', function () {
+                mobileMenuToggle.classList.remove('active');
+                mobileMenu.classList.remove('active');
+                mobileMenuOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+
+            // Close mobile menu when clicking on a link
+            document.querySelectorAll('.mobile-nav-links .nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (mobileMenu.classList.contains('active')) {
+                        mobileMenuToggle.classList.remove('active');
+                        mobileMenu.classList.remove('active');
+                        mobileMenuOverlay.classList.remove('active');
+                        document.body.style.overflow = '';
+                    }
+                });
+            });
+        }
+    </script>
+  
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>Р В РЎв„ўР РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„– Р В РІР‚СњР В РЎвЂР РЋР С“Р В РЎвЂ”Р В Р’ВµР РЋРІР‚С™Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В Р’В°</h4>
+          <p>Р В РЎСџР РЋР вЂљР В РЎвЂўР РЋРІР‚С›Р В Р’ВµР РЋР С“Р РЋР С“Р В РЎвЂР В РЎвЂўР В Р вЂ¦Р В Р’В°Р В Р’В»Р РЋР Р‰Р В Р вЂ¦Р В РЎвЂўР В Р’Вµ Р В РЎвЂўР В Р’В±Р РЋРЎвЂњР РЋРІР‚РЋР В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ Р В РўвЂР В РЎвЂР РЋР С“Р В РЎвЂ”Р В Р’ВµР РЋРІР‚С™Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В РЎвЂўР В Р вЂ  Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В Р’В·Р В РЎвЂўР В РЎвЂ”Р В Р’ВµР РЋР вЂљР В Р’ВµР В Р вЂ Р В РЎвЂўР В Р’В·Р В РЎвЂўР В РЎвЂќ</p>
+        </div>
+
+        <div class="footer-section">
+          <h4>Р В РЎвЂєР В Р’В±Р РЋРЎвЂњР РЋРІР‚РЋР В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ</h4>
+          <a href="../courses.html">Р В РЎв„ўР РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„–</a>
+        </div>
+
+        <div class="footer-section">
+          <h4>Р В РЎСџР В РЎвЂўР В РўвЂР В РўвЂР В Р’ВµР РЋР вЂљР В Р’В¶Р В РЎвЂќР В Р’В°</h4>
+          <a href="../faq.html">FAQ</a>
+          <a href="../contacts.html">Р В РЎв„ўР В РЎвЂўР В Р вЂ¦Р РЋРІР‚С™Р В Р’В°Р В РЎвЂќР РЋРІР‚С™Р РЋРІР‚в„–</a>
+          <a href="../help.html">Р В РЎСџР В РЎвЂўР В РЎВР В РЎвЂўР РЋРІР‚В°Р РЋР Р‰</a>
+        </div>
+
+        <div class="footer-section">
+          <h4>Р В РЎв„ўР В РЎвЂўР В РЎВР В РЎвЂ”Р В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР РЏ</h4>
+          <a href="../about.html">Р В РЎвЂє Р В Р вЂ¦Р В Р’В°Р РЋР С“</a>
+          <a href="../career.html">Р В РЎв„ўР В Р’В°Р РЋР вЂљР РЋР Р‰Р В Р’ВµР РЋР вЂљР В Р’В°</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2024 Р В РЎв„ўР РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„– Р В РІР‚СњР В РЎвЂР РЋР С“Р В РЎвЂ”Р В Р’ВµР РЋРІР‚С™Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В Р’В°. Р В РІР‚в„ўР РЋР С“Р В Р’Вµ Р В РЎвЂ”Р РЋР вЂљР В Р’В°Р В Р вЂ Р В Р’В° Р В Р’В·Р В Р’В°Р РЋРІР‚В°Р В РЎвЂР РЋРІР‚В°Р В Р’ВµР В Р вЂ¦Р РЋРІР‚в„–.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+
+</html>

@@ -1,0 +1,1815 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль 3: Типы оборудования и грузов | DispatcherPro</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #f093fb;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary: #b8c5d6;
+            --text-muted: #8892aa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.1);
+            --audio-primary: #ff6b6b;
+            --audio-secondary: #4ecdc4;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
+            padding-top: 80px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1), transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(240, 147, 251, 0.1), transparent 50%);
+            animation: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 999;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 0;
+            transition: all 0.3s ease;
+            height: auto;
+            min-height: 60px;
+        }
+
+        .nav-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: translateY(-2px);
+        }
+
+        .logo-icon {
+            font-size: 16px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: clamp(11px, 1.1vw, 14px);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* Dropdown Navigation */
+        .nav-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .nav-dropdown .nav-link {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-dropdown .nav-link::before {
+            content: 'РІвЂ“С';
+            font-size: 8px;
+            transition: transform 0.3s ease;
+            margin-left: 4px;
+        }
+
+        .nav-dropdown .nav-link::after {
+            display: none;
+        }
+
+        .nav-dropdown:hover .nav-link::before {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 200px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 8px;
+            margin-top: 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            z-index: 1000;
+        }
+
+        .nav-dropdown:hover .dropdown-content {
+            display: flex;
+            flex-direction: column;
+            animation: fadeInDown 0.3s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-content a {
+            display: block;
+            padding: 10px 14px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .dropdown-content a:hover {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--text-primary);
+            transform: translateX(2px);
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-login {
+            padding: 6px 16px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .btn-login:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-signup {
+            padding: 6px 16px;
+            text-decoration: none;
+            color: white;
+            font-weight: 500;
+            font-size: 12px;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .btn-signup:hover {
+            background: rgba(99, 102, 241, 0.25);
+            border-color: rgba(99, 102, 241, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .mobile-menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 10px 19px;
+            z-index: 1001;
+            transition: all 0.3s ease;
+            margin-right: 0;
+        }
+
+        .mobile-menu-toggle:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .mobile-menu-toggle span {
+            width: 38px;
+            height: 2px;
+            background: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .mobile-menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -6px);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 85%;
+            max-width: 380px;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 100px 20px 32px;
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .mobile-menu.active {
+            right: 0;
+        }
+
+        .mobile-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+
+        .mobile-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .mobile-nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin-bottom: 32px;
+            width: 100%;
+        }
+
+        .mobile-nav-links .nav-link {
+            padding: 14px 16px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-size: 15px;
+        }
+
+        .mobile-nav-links .nav-link:hover {
+            background: rgba(99, 102, 241, 0.15);
+            transform: translateX(4px);
+        }
+
+        /* Mobile nav sections */
+        .mobile-nav-section {
+            margin: 0;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 0;
+            padding: 12px 0;
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            width: 100%;
+        }
+
+        .mobile-section-title {
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 4px;
+        }
+
+        .nav-link-sub {
+            padding: 10px 16px 10px 36px !important;
+            font-size: 14px;
+            position: relative;
+            margin: 0 !important;
+            border-radius: 0;
+            width: 100%;
+            display: block;
+        }
+
+        .nav-link-sub::before {
+            content: 'РІвЂ вЂ™';
+            position: absolute;
+            left: 16px;
+            color: var(--primary);
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        .nav-link-sub:hover::before {
+            opacity: 1;
+            transform: translateX(2px);
+        }
+
+        .mobile-nav-links>.nav-link:not(.nav-link-sub) {
+            font-weight: 600;
+            font-size: 15px;
+            margin: 0;
+            padding: 14px 16px;
+            width: 100%;
+            display: block;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .mobile-nav-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .mobile-menu-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            margin: 20px 0;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: flex;
+            }
+
+            .nav-links,
+            .nav-actions {
+                display: none;
+            }
+        }
+
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .content-block {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            gap: 20px;
+        }
+
+        .block-title {
+            flex: 1;
+            font-size: 1.8rem;
+            color: var(--primary);
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .audio-container {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .audio-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--audio-primary), var(--audio-secondary));
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .audio-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.5);
+        }
+
+        .audio-btn:active {
+            transform: scale(0.95);
+        }
+
+        .audio-btn .play-icon {
+            font-size: 24px;
+            color: white;
+            margin-left: 3px;
+        }
+
+        .audio-btn .pause-icon {
+            font-size: 20px;
+            color: white;
+            display: none;
+        }
+
+        .audio-btn.playing .play-icon {
+            display: none;
+        }
+
+        .audio-btn.playing .pause-icon {
+            display: block;
+        }
+
+        .audio-btn.playing {
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.7), 0 0 0 10px rgba(255, 107, 107, 0.1);
+            }
+
+            100% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+        }
+
+        .progress-ring {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            transform: rotate(-90deg);
+            z-index: 1;
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 5;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: var(--audio-primary);
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-dasharray: 201.06;
+            stroke-dashoffset: 201.06;
+            transition: stroke-dashoffset 0.1s ease;
+            filter: drop-shadow(0 0 4px rgba(255, 107, 107, 0.5));
+        }
+
+        .progress-ring-interactive {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            cursor: pointer;
+            z-index: 5;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        .progress-ring-interactive.seekable {
+            pointer-events: auto;
+            background: radial-gradient(circle, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.01) 60%, rgba(255, 255, 255, 0.01) 100%);
+        }
+
+        .audio-duration {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .audio-container:hover .audio-duration,
+        .audio-container.playing .audio-duration {
+            opacity: 1;
+        }
+
+        .mobile-progress-bar {
+            display: none;
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .mobile-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--audio-primary), var(--audio-secondary));
+            border-radius: 2px;
+            transition: width 0.1s ease;
+        }
+
+        .block-content {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .block-content h3 {
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            margin: 25px 0 15px 0;
+        }
+
+        .block-content h4 {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            margin: 20px 0 10px 0;
+        }
+
+        .block-content ul,
+        .block-content ol {
+            margin: 15px 0 15px 25px;
+        }
+
+        .block-content li {
+            margin-bottom: 8px;
+        }
+
+        .block-content strong {
+            color: var(--text-primary);
+        }
+
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .progress-info {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 10px auto;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .alert {
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            color: var(--text-primary);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: var(--warning);
+            color: var(--text-primary);
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 90px;
+            }
+
+            .header {
+                padding: 15px 0;
+                min-height: 70px;
+            }
+
+            .main {
+                padding: 20px 15px;
+            }
+
+            .content-block {
+                padding: 20px 15px;
+            }
+
+            .block-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .block-title {
+                font-size: 1.4rem;
+            }
+
+            .lesson-nav {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .nav-btn {
+                width: 100%;
+            }
+        }
+
+        /* Footer Styles */
+        .footer {
+            padding: 80px 0 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 80px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 32px;
+            margin-bottom: 48px;
+        }
+
+        .footer-section h4 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .footer-section p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .footer-section a {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 32px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <nav class="navbar">
+            <div class="container">
+                <div class="nav-content">
+                    <a href="../index.html" class="logo">
+                        <span class="logo-icon">🎓</span>
+                        <span class="logo-text">Курсы Диспетчера</span>
+                    </a>
+                    <div class="nav-links">
+                        <a href="../index.html" class="nav-link" data-short="Главная">Главная</a>
+                        <div class="nav-dropdown">
+                            <a href="../courses.html" class="nav-link" data-short="Курсы">Курсы</a>
+                            <div class="dropdown-content">
+                                <a href="documentation.html"
+                                    style="background: rgba(99,102,241,0.15); border-left: 3px solid #6366f1; font-weight: 700; color: #ffffff;">🎓
+                                    База знаний</a>
+                                <a href="../course.html">📖 Обзор курса</a>
+                                <a href="modules-index.html">📚 12 Модулей обучения</a>
+                                <a href="simulator.html">🎯 Симулятор переговоров</a>
+                                <a href="calls.html">📞 Примеры звонков</a>
+                                <a href="cases.html">💼 Практические кейсы</a>
+                                <a href="testing.html">✍️ Тестирование</a>
+                            </div>
+                        </div>
+                        <div class="nav-dropdown">
+                            <span class="nav-link" data-short="Инстр.">Инструменты</span>
+                            <div class="dropdown-content">
+                                <a href="analytics.html">📊 Статистика рынка</a>
+                                <a href="load-finder.html">🔍 Load Finder</a>
+                                <a href="dispatcher-cards.html">🃏 Dispatcher Cards</a>
+                                <a href="simulator.html">🎯 Dispatch Simulator</a>
+                            </div>
+                        </div>
+                        <div class="nav-dropdown">
+                            <span class="nav-link" data-short="Инфо">Информация</span>
+                            <div class="dropdown-content">
+                                <a href="../about.html">👥 О нас</a>
+                                <a href="../career.html">💼 Карьера</a>
+                                <a href="../faq.html">❓ FAQ</a>
+                                <a href="../help.html">🆘 Помощь</a>
+                                <a href="../contacts.html">📬 Контакты</a>
+                            </div>
+                        </div>
+                        <a href="../pricing.html" class="nav-link" data-short="Тарифы">Тарифы</a>
+                        <a href="../dashboard.html" class="nav-link" id="dashboardLink" style="display: none;"
+                            data-short="Кабинет">Личный кабинет</a>
+                    </div>
+                    <div class="nav-actions">
+                        <a href="../login.html" class="btn-login">Войти</a>
+                        <a href="../register.html" class="btn-signup">Регистрация</a>
+                    </div>
+                    <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                        <span></span><span></span><span></span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+        <div class="mobile-menu" id="mobileMenu">
+            <div class="mobile-nav-links">
+                <div class="mobile-nav-actions">
+                    <a href="../login.html" class="btn-login">Войти</a>
+                    <a href="../register.html" class="btn-signup">Регистрация</a>
+                </div>
+                <div class="mobile-menu-divider"></div>
+                <a href="../index.html" class="nav-link">🏠 Главная</a>
+                <a href="../dashboard.html" class="nav-link" id="dashboardLinkMobile" style="display: none;">👤 Личный
+                    кабинет</a>
+                <div class="mobile-nav-section">
+                    <div class="mobile-section-title">📚 КУРСЫ</div>
+                    <a href="documentation.html" class="nav-link nav-link-sub"
+                        style="color:#ffffff;border-left:3px solid #6366f1;padding-left:14px;background:rgba(99,102,241,0.1);border-radius:8px;margin-bottom:4px;">🎓
+                        База знаний</a>
+                    <a href="../courses.html" class="nav-link nav-link-sub">Все курсы</a>
+                    <a href="../course.html" class="nav-link nav-link-sub">📖 Обзор курса</a>
+                    <a href="modules-index.html" class="nav-link nav-link-sub">📚 12 Модулей обучения</a>
+                    <a href="simulator.html" class="nav-link nav-link-sub">🎯 Симулятор переговоров</a>
+                    <a href="calls.html" class="nav-link nav-link-sub">📞 Примеры звонков</a>
+                    <a href="cases.html" class="nav-link nav-link-sub">💼 Практические кейсы</a>
+                    <a href="testing.html" class="nav-link nav-link-sub">✍️ Тестирование</a>
+                </div>
+                <div class="mobile-nav-section">
+                    <div class="mobile-section-title">🛠️ ИНСТРУМЕНТЫ</div>
+                    <a href="analytics.html" class="nav-link nav-link-sub">📊 Статистика рынка</a>
+                    <a href="load-finder.html" class="nav-link nav-link-sub">🔍 Load Finder</a>
+                    <a href="dispatcher-cards.html" class="nav-link nav-link-sub">🃏 Dispatcher Cards</a>
+                    <a href="simulator.html" class="nav-link nav-link-sub">🎯 Dispatch Simulator</a>
+                </div>
+                <div class="mobile-nav-section">
+                    <div class="mobile-section-title">ℹ️ ИНФОРМАЦИЯ</div>
+                    <a href="../about.html" class="nav-link nav-link-sub">👥 О нас</a>
+                    <a href="../career.html" class="nav-link nav-link-sub">💼 Карьера</a>
+                    <a href="../faq.html" class="nav-link nav-link-sub">❓ FAQ</a>
+                    <a href="../help.html" class="nav-link nav-link-sub">🆘 Помощь</a>
+                    <a href="../contacts.html" class="nav-link nav-link-sub">📬 Контакты</a>
+                </div>
+                <a href="../pricing.html" class="nav-link">💰 Тарифы</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+
+        <!-- Block 1: Р С›РЎРѓР Р…Р С•Р Р†Р Р…РЎвЂ№Р Вµ РЎвЂљР СР С—РЎвЂ№ РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚Р С•Р Р† -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р С›РЎРѓР Р…Р С•Р Р†Р Р…РЎвЂ№Р Вµ РЎвЂљР СР С—РЎвЂ№
+                    РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚Р С•Р Р†</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio1')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio1')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio1')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р СџР С•Р Р…Р СР СР В°Р Р…Р СР Вµ РЎвЂљР СР С—Р С•Р Р† Р С•Р В±Р С•РЎР‚РЎС“Р ТР С•Р Р†Р В°Р Р…Р СРЎРЏ
+                    РІР‚вЂќ Р С•РЎРѓР Р…Р С•Р Р†Р В° РЎС“РЎРѓР С—Р ВµРЎв‚¬Р Р…Р С•Р в„– РЎР‚Р В°Р В±Р С•РЎвЂљРЎвЂ№
+                    Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р В°. Р С™Р В°Р В¶Р ТРЎвЂ№Р в„– РЎвЂљР СР С—
+                    РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚Р В° Р С—РЎР‚Р ВµР ТР Р…Р В°Р В·Р Р…Р В°РЎвЂЎР ВµР Р…
+                    Р ТР В»РЎРЏ Р С•Р С—РЎР‚Р ВµР ТР ВµР В»Р ВµР Р…Р Р…РЎвЂ№РЎвЂ¦ Р С–РЎР‚РЎС“Р В·Р С•Р Р† Р С
+                    Р СР СР ВµР ВµРЎвЂљ РЎРѓР Р†Р С•Р С Р С•РЎРѓР С•Р В±Р ВµР Р…Р Р…Р С•РЎРѓРЎвЂљР С.</p>
+
+                <h3>Р С™Р В»Р В°РЎРѓРЎРѓР СРЎвЂћР СР С”Р В°РЎвЂ Р СРЎРЏ Р С—Р С• РЎвЂљР СР С—РЎС“ Р С–РЎР‚РЎС“Р В·Р В°
+                </h3>
+                <ul>
+                    <li><strong>Dry Van</strong> РІР‚вЂќ Р В·Р В°Р С”РЎР‚РЎвЂ№РЎвЂљРЎвЂ№Р Вµ
+                        РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚РЎвЂ№ Р ТР В»РЎРЏ РЎРѓРЎС“РЎвЂ¦Р СРЎвЂ¦ Р С–РЎР‚РЎС“Р В·Р С•Р Р†
+                    </li>
+                    <li><strong>Reefer</strong> РІР‚вЂќ РЎР‚Р ВµРЎвЂћРЎР‚Р СР В¶Р ВµРЎР‚Р В°РЎвЂљР С•РЎР‚РЎвЂ№
+                        Р ТР В»РЎРЏ
+                        РЎвЂљР ВµР СР С—Р ВµРЎР‚Р В°РЎвЂљРЎС“РЎР‚Р Р…Р С•-РЎвЂЎРЎС“Р Р†РЎРѓРЎвЂљР Р†Р СРЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№РЎвЂ¦
+                        Р С–РЎР‚РЎС“Р В·Р С•Р Р†</li>
+                    <li><strong>Flatbed</strong> РІР‚вЂќ Р С•РЎвЂљР С”РЎР‚РЎвЂ№РЎвЂљРЎвЂ№Р Вµ
+                        Р С—Р В»Р В°РЎвЂљРЎвЂћР С•РЎР‚Р СРЎвЂ№ Р ТР В»РЎРЏ
+                        Р Р…Р ВµР С–Р В°Р В±Р В°РЎР‚Р СРЎвЂљР Р…РЎвЂ№РЎвЂ¦ Р С–РЎР‚РЎС“Р В·Р С•Р Р†</li>
+                    <li><strong>Step Deck</strong> РІР‚вЂќ Р ТР Р†РЎС“РЎвЂ¦РЎС“РЎР‚Р С•Р Р†Р Р…Р ВµР Р†РЎвЂ№Р Вµ
+                        Р С—Р В»Р В°РЎвЂљРЎвЂћР С•РЎР‚Р СРЎвЂ№ Р ТР В»РЎРЏ Р Р†РЎвЂ№РЎРѓР С•Р С”Р СРЎвЂ¦
+                        Р С–РЎР‚РЎС“Р В·Р С•Р Р†</li>
+                    <li><strong>Tanker</strong> РІР‚вЂќ РЎвЂ Р СРЎРѓРЎвЂљР ВµРЎР‚Р Р…РЎвЂ№ Р ТР В»РЎРЏ
+                        Р В¶Р СР ТР С”Р СРЎвЂ¦ Р С–РЎР‚РЎС“Р В·Р С•Р Р†</li>
+                    <li><strong>Lowboy</strong> РІР‚вЂќ Р Р…Р СР В·Р С”Р С•РЎР‚Р В°Р СР Р…РЎвЂ№Р Вµ
+                        РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚РЎвЂ№ Р ТР В»РЎРЏ РЎвЂљРЎРЏР В¶Р ВµР В»Р С•Р в„–
+                        РЎвЂљР ВµРЎвЂ¦Р Р…Р СР С”Р С</li>
+                </ul>
+
+                <h3>Р РЋРЎвЂљР В°Р Р…Р ТР В°РЎР‚РЎвЂљР Р…РЎвЂ№Р Вµ РЎР‚Р В°Р В·Р СР ВµРЎР‚РЎвЂ№</h3>
+                <h4>СЂСџвЂњРЏ Р вЂќР В»Р СР Р…Р В° РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚Р С•Р Р†</h4>
+                <ul>
+                    <li><strong>48 РЎвЂћРЎС“РЎвЂљР С•Р Р†</strong> РІР‚вЂќ РЎРѓРЎвЂљР В°Р Р…Р ТР В°РЎР‚РЎвЂљ Р ТР В»РЎРЏ
+                        РЎР‚Р ВµР С–Р СР С•Р Р…Р В°Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·Р С•Р С”</li>
+                    <li><strong>53 РЎвЂћРЎС“РЎвЂљР В°</strong> РІР‚вЂќ Р Р…Р В°Р СР В±Р С•Р В»Р ВµР Вµ
+                        РЎР‚Р В°РЎРѓР С—РЎР‚Р С•РЎРѓРЎвЂљРЎР‚Р В°Р Р…Р ВµР Р…Р Р…РЎвЂ№Р в„– РЎР‚Р В°Р В·Р СР ВµРЎР‚</li>
+                    <li><strong>28-32 РЎвЂћРЎС“РЎвЂљР В°</strong> РІР‚вЂќ Р ТР В»РЎРЏ
+                        Р С–Р С•РЎР‚Р С•Р ТРЎРѓР С”Р СРЎвЂ¦ Р ТР С•РЎРѓРЎвЂљР В°Р Р†Р С•Р С” (Pup trailers)</li>
+                </ul>
+
+                <h4>РІС™вЂ“РїСРЏ Р вЂ™Р ВµРЎРѓР С•Р Р†РЎвЂ№Р Вµ Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СРЎРЏ</h4>
+                <ul>
+                    <li>Р СљР В°Р С”РЎРѓР СР СР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р Р†Р ВµРЎРѓ: 80,000 lbs (36,3
+                        РЎвЂљР С•Р Р…Р Р…РЎвЂ№)</li>
+                    <li>Р вЂ™Р ВµРЎРѓ РЎвЂљРЎР‚Р В°Р С”РЎвЂљР С•РЎР‚Р В° + РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚Р В°: ~34,000
+                        lbs</li>
+                    <li>Р СџР С•Р В»Р ВµР В·Р Р…Р В°РЎРЏ Р Р…Р В°Р С–РЎР‚РЎС“Р В·Р С”Р В°: ~46,000 lbs</li>
+                </ul>
+
+                <div class="alert alert-info">
+                    <strong>СЂСџвЂ™РЋ Р РЋР С•Р Р†Р ВµРЎвЂљ:</strong> Р вЂ™РЎРѓР ВµР С–Р ТР В°
+                    РЎС“РЎвЂљР С•РЎвЂЎР Р…РЎРЏР в„–РЎвЂљР Вµ РЎвЂљР СР С— РЎвЂљРЎР‚Р ВµР В±РЎС“Р ВµР СР С•Р С–Р С•
+                    Р С•Р В±Р С•РЎР‚РЎС“Р ТР С•Р Р†Р В°Р Р…Р СРЎРЏ Р С—РЎР‚Р С Р С—Р С•Р СРЎРѓР С”Р Вµ
+                    Р С–РЎР‚РЎС“Р В·Р С•Р Р†.
+                    Р СњР ВµР С—РЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…РЎвЂ№Р в„– Р Р†РЎвЂ№Р В±Р С•РЎР‚ Р СР С•Р В¶Р ВµРЎвЂљ
+                    Р С—РЎР‚Р СР Р†Р ВµРЎРѓРЎвЂљР С Р С” Р С•РЎвЂљР С”Р В°Р В·РЎС“ Р Р†
+                    Р В·Р В°Р С–РЎР‚РЎС“Р В·Р С”Р Вµ.
+                </div>
+            </div>
+        </div>
+        <!-- Block 2: Dry Van Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·Р С”Р С -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Dry Van Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·Р С”Р С</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio2')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio2')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio2')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Dry Van РІР‚вЂќ РЎРѓР В°Р СРЎвЂ№Р в„–
+                    РЎР‚Р В°РЎРѓР С—РЎР‚Р С•РЎРѓРЎвЂљРЎР‚Р В°Р Р…Р ВµР Р…Р Р…РЎвЂ№Р в„– РЎвЂљР СР С—
+                    РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚Р С•Р Р†, РЎРѓР С•РЎРѓРЎвЂљР В°Р Р†Р В»РЎРЏРЎР‹РЎвЂ°Р СР в„–
+                    Р С•Р С”Р С•Р В»Р С• 70% Р Р†РЎРѓР ВµРЎвЂ¦ Р С–РЎР‚РЎС“Р В·Р С•Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·Р С•Р С”
+                    Р Р† Р РЋР РЃР С’.
+                    Р СџРЎР‚Р С•РЎРѓРЎвЂљР С•РЎвЂљР В° РЎРЊР С”РЎРѓР С—Р В»РЎС“Р В°РЎвЂљР В°РЎвЂ Р СР С Р С
+                    РЎС“Р Р…Р СР Р†Р ВµРЎР‚РЎРѓР В°Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљРЎРЉ Р ТР ВµР В»Р В°РЎР‹РЎвЂљ Р СРЎвЂ¦
+                    Р С•РЎРѓР Р…Р С•Р Р†Р С•Р в„– Р В°Р Р†РЎвЂљР С•Р С—Р В°РЎР‚Р С”Р В°.</p>
+
+                <h3>Р ТђР В°РЎР‚Р В°Р С”РЎвЂљР ВµРЎР‚Р СРЎРѓРЎвЂљР СР С”Р С Dry Van</h3>
+                <ul>
+                    <li><strong>Р вЂ”Р В°Р С”РЎР‚РЎвЂ№РЎвЂљРЎвЂ№Р в„– Р С”РЎС“Р В·Р С•Р Р†</strong> РІР‚вЂќ
+                        Р В·Р В°РЎвЂ°Р СРЎвЂљР В° Р С•РЎвЂљ Р С—Р С•Р С–Р С•Р ТР Р…РЎвЂ№РЎвЂ¦
+                        РЎС“РЎРѓР В»Р С•Р Р†Р СР в„–</li>
+                    <li><strong>Р вЂ”Р В°Р ТР Р…РЎРЏРЎРЏ Р В·Р В°Р С–РЎР‚РЎС“Р В·Р С”Р В°</strong> РІР‚вЂќ
+                        РЎРѓРЎвЂљР В°Р Р…Р ТР В°РЎР‚РЎвЂљР Р…РЎвЂ№Р Вµ Р ТР Р†Р ВµРЎР‚Р С Р СР В»Р С roll-up</li>
+                    <li><strong>Р вЂР С•Р С”Р С•Р Р†РЎвЂ№Р Вµ Р ТР Р†Р ВµРЎР‚Р С</strong> РІР‚вЂќ
+                        Р С•Р С—РЎвЂ Р СР С•Р Р…Р В°Р В»РЎРЉР Р…Р С• Р ТР В»РЎРЏ РЎС“Р ТР С•Р В±РЎРѓРЎвЂљР Р†Р В°
+                        Р В·Р В°Р С–РЎР‚РЎС“Р В·Р С”Р С</li>
+                    <li><strong>Р вЂ™Р Р…РЎС“РЎвЂљРЎР‚Р ВµР Р…Р Р…Р СР Вµ РЎР‚Р В°Р В·Р СР ВµРЎР‚РЎвЂ№:</strong> 53' x
+                        8.5' x 9' (Р вЂќxР РЃxР вЂ™)</li>
+                </ul>
+
+                <h3>Р СћР СР С—Р СРЎвЂЎР Р…РЎвЂ№Р Вµ Р С–РЎР‚РЎС“Р В·РЎвЂ№ Р ТР В»РЎРЏ Dry Van</h3>
+                <h4>СЂСџвЂњВ¦ Р СџР С•РЎвЂљРЎР‚Р ВµР В±Р СРЎвЂљР ВµР В»РЎРЉРЎРѓР С”Р СР Вµ РЎвЂљР С•Р Р†Р В°РЎР‚РЎвЂ№
+                </h4>
+                <ul>
+                    <li>Р С›Р ТР ВµР В¶Р ТР В° Р С РЎвЂљР ВµР С”РЎРѓРЎвЂљР СР В»РЎРЉ</li>
+                    <li>Р В­Р В»Р ВµР С”РЎвЂљРЎР‚Р С•Р Р…Р СР С”Р В° Р С Р В±РЎвЂ№РЎвЂљР С•Р Р†Р В°РЎРЏ
+                        РЎвЂљР ВµРЎвЂ¦Р Р…Р СР С”Р В°</li>
+                    <li>Р СљР ВµР В±Р ВµР В»РЎРЉ Р С РЎвЂљР С•Р Р†Р В°РЎР‚РЎвЂ№ Р ТР В»РЎРЏ Р ТР С•Р СР В°</li>
+                    <li>Р ВР С–РЎР‚РЎС“РЎв‚¬Р С”Р С Р С РЎРѓР С—Р С•РЎР‚РЎвЂљР СР Р†Р Р…РЎвЂ№Р Вµ
+                        РЎвЂљР С•Р Р†Р В°РЎР‚РЎвЂ№</li>
+                </ul>
+
+                <h4>СЂСџРЏВ­ Р СџРЎР‚Р С•Р СРЎвЂ№РЎв‚¬Р В»Р ВµР Р…Р Р…РЎвЂ№Р Вµ Р С–РЎР‚РЎС“Р В·РЎвЂ№</h4>
+                <ul>
+                    <li>Р С’Р Р†РЎвЂљР С•Р В·Р В°Р С—РЎвЂЎР В°РЎРѓРЎвЂљР С</li>
+                    <li>Р РЋРЎвЂљРЎР‚Р С•Р СРЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№Р Вµ Р СР В°РЎвЂљР ВµРЎР‚Р СР В°Р В»РЎвЂ№
+                        (РЎРѓРЎС“РЎвЂ¦Р СР Вµ)</li>
+                    <li>Р Р€Р С—Р В°Р С”Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№Р Вµ РЎвЂ¦Р СР СР СР С”Р В°РЎвЂљРЎвЂ№</li>
+                    <li>Р вЂРЎС“Р СР В°Р С–Р В° Р С Р С”Р В°РЎР‚РЎвЂљР С•Р Р…</li>
+                </ul>
+
+                <h3>Р С›РЎРѓР С•Р В±Р ВµР Р…Р Р…Р С•РЎРѓРЎвЂљР С РЎР‚Р В°Р В±Р С•РЎвЂљРЎвЂ№ РЎРѓ Dry Van</h3>
+                <ul>
+                    <li><strong>Р СџРЎР‚Р С•РЎРѓРЎвЂљР В°РЎРЏ
+                            Р В·Р В°Р С–РЎР‚РЎС“Р В·Р С”Р В°/Р Р†РЎвЂ№Р С–РЎР‚РЎС“Р В·Р С”Р В°</strong> РІР‚вЂќ
+                        Р С•Р В±РЎвЂ№РЎвЂЎР Р…Р С• РЎРѓ dock</li>
+                    <li><strong>Р СљР СР Р…Р СР СР В°Р В»РЎРЉР Р…РЎвЂ№Р Вµ
+                            РЎвЂљРЎР‚Р ВµР В±Р С•Р Р†Р В°Р Р…Р СРЎРЏ</strong> РІР‚вЂќ
+                        РЎРѓРЎвЂљР В°Р Р…Р ТР В°РЎР‚РЎвЂљР Р…РЎвЂ№Р в„– CDL</li>
+                    <li><strong>Р вЂ™РЎвЂ№РЎРѓР С•Р С”Р В°РЎРЏ Р С”Р С•Р Р…Р С”РЎС“РЎР‚Р ВµР Р…РЎвЂ Р СРЎРЏ</strong>
+                        РІР‚вЂќ Р СР Р…Р С•Р С–Р С• Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·РЎвЂЎР СР С”Р С•Р Р†</li>
+                    <li><strong>Р РЋРЎвЂљР В°Р В±Р СР В»РЎРЉР Р…РЎвЂ№Р Вµ РЎРѓРЎвЂљР В°Р Р†Р С”Р С</strong> РІР‚вЂќ
+                        Р С—РЎР‚Р ВµР ТРЎРѓР С”Р В°Р В·РЎС“Р ВµР СРЎвЂ№Р в„– РЎР‚РЎвЂ№Р Р…Р С•Р С”</li>
+                </ul>
+
+                <div class="alert alert-success">
+                    <strong>РІСљвЂ¦ Р СџРЎР‚Р ВµР СР СРЎС“РЎвЂ°Р ВµРЎРѓРЎвЂљР Р†Р С•:</strong> Dry Van
+                    Р С–РЎР‚РЎС“Р В·РЎвЂ№ Р В»Р ВµР С–РЎвЂЎР Вµ Р Р†РЎРѓР ВµР С–Р С• Р Р…Р В°Р в„–РЎвЂљР С Р С
+                    Р С•Р Р…Р С Р С—Р С•Р ТРЎвЂ¦Р С•Р ТРЎРЏРЎвЂљ Р ТР В»РЎРЏ Р Р…Р В°РЎвЂЎР СР Р…Р В°РЎР‹РЎвЂ°Р СРЎвЂ¦
+                    Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р С•Р Р†.
+                </div>
+            </div>
+        </div>
+
+        <!-- Block 3: Reefer (РЎР‚Р ВµРЎвЂћРЎР‚Р СР В¶Р ВµРЎР‚Р В°РЎвЂљР С•РЎР‚РЎвЂ№) -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Reefer (РЎР‚Р ВµРЎвЂћРЎР‚Р СР В¶Р ВµРЎР‚Р В°РЎвЂљР С•РЎР‚РЎвЂ№)</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio3')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio3')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio3')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Reefer РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚РЎвЂ№ Р С•Р В±Р С•РЎР‚РЎС“Р ТР С•Р Р†Р В°Р Р…РЎвЂ№
+                    РЎвЂ¦Р С•Р В»Р С•Р ТР СР В»РЎРЉР Р…РЎвЂ№Р СР С РЎС“РЎРѓРЎвЂљР В°Р Р…Р С•Р Р†Р С”Р В°Р СР С
+                    Р ТР В»РЎРЏ Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·Р С”Р С
+                    РЎвЂљР ВµР СР С—Р ВµРЎР‚Р В°РЎвЂљРЎС“РЎР‚Р Р…Р С•-РЎвЂЎРЎС“Р Р†РЎРѓРЎвЂљР Р†Р СРЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№РЎвЂ¦
+                    Р С–РЎР‚РЎС“Р В·Р С•Р Р†. Р вЂР С•Р В»Р ВµР Вµ Р Р†РЎвЂ№РЎРѓР С•Р С”Р СР Вµ
+                    РЎРѓРЎвЂљР В°Р Р†Р С”Р С, Р Р…Р С• Р В±Р С•Р В»РЎРЉРЎв‚¬Р Вµ
+                    Р С•РЎвЂљР Р†Р ВµРЎвЂљРЎРѓРЎвЂљР Р†Р ВµР Р…Р Р…Р С•РЎРѓРЎвЂљР С.</p>
+
+                <h3>Р СћР ВµР СР С—Р ВµРЎР‚Р В°РЎвЂљРЎС“РЎР‚Р Р…РЎвЂ№Р Вµ РЎР‚Р ВµР В¶Р СР СРЎвЂ№</h3>
+                <ul>
+                    <li><strong>Frozen:</strong> -10Р’В°F Р ТР С• 0Р’В°F (-23Р’В°C Р ТР С• -18Р’В°C)</li>
+                    <li><strong>Fresh/Chilled:</strong> 32Р’В°F Р ТР С• 38Р’В°F (0Р’В°C Р ТР С• 3Р’В°C)</li>
+                    <li><strong>Produce:</strong> 34Р’В°F Р ТР С• 55Р’В°F (1Р’В°C Р ТР С• 13Р’В°C)</li>
+                    <li><strong>Pharmaceutical:</strong> РЎвЂљР С•РЎвЂЎР Р…РЎвЂ№Р Вµ
+                        РЎвЂљР ВµР СР С—Р ВµРЎР‚Р В°РЎвЂљРЎС“РЎР‚РЎвЂ№ Р С—Р С• РЎвЂљРЎР‚Р ВµР В±Р С•Р Р†Р В°Р Р…Р СРЎР‹
+                    </li>
+                </ul>
+
+                <h3>Р СћР СР С—Р СРЎвЂЎР Р…РЎвЂ№Р Вµ Р С–РЎР‚РЎС“Р В·РЎвЂ№</h3>
+                <h4>СЂСџТђВ© Р СљРЎРЏРЎРѓР С• Р С Р СР С•РЎР‚Р ВµР С—РЎР‚Р С•Р ТРЎС“Р С”РЎвЂљРЎвЂ№</h4>
+                <ul>
+                    <li>Р вЂ”Р В°Р СР С•РЎР‚Р С•Р В¶Р ВµР Р…Р Р…Р С•Р Вµ Р СРЎРЏРЎРѓР С• (-10Р’В°F)</li>
+                    <li>Р РЋР Р†Р ВµР В¶Р В°РЎРЏ РЎР‚РЎвЂ№Р В±Р В° (32Р’В°F)</li>
+                    <li>Р СџРЎвЂљР СРЎвЂ Р В° Р С РЎРЏР в„–РЎвЂ Р В° (35Р’В°F)</li>
+                </ul>
+
+                <h4>СЂСџТђВ¬ Р В¤РЎР‚РЎС“Р С”РЎвЂљРЎвЂ№ Р С Р С•Р Р†Р С•РЎвЂ°Р С</h4>
+                <ul>
+                    <li>Р Р‡Р В±Р В»Р С•Р С”Р С, РЎвЂ Р СРЎвЂљРЎР‚РЎС“РЎРѓР С•Р Р†РЎвЂ№Р Вµ (32-36Р’В°F)</li>
+                    <li>Р вЂєР СРЎРѓРЎвЂљР С•Р Р†РЎвЂ№Р Вµ Р С•Р Р†Р С•РЎвЂ°Р С (32Р’В°F)</li>
+                    <li>Р вЂР В°Р Р…Р В°Р Р…РЎвЂ№ (56-58Р’В°F)</li>
+                </ul>
+
+                <h4>СЂСџвЂ™Р‰ Р В¤Р В°РЎР‚Р СР В°РЎвЂ Р ВµР Р†РЎвЂљР СР С”Р В°</h4>
+                <ul>
+                    <li>Р вЂ™Р В°Р С”РЎвЂ Р СР Р…РЎвЂ№ (2-8Р’В°C)</li>
+                    <li>Р ВР Р…РЎРѓРЎС“Р В»Р СР Р… (2-8Р’В°C)</li>
+                    <li>Р вЂР СР С•Р В»Р С•Р С–Р СРЎвЂЎР ВµРЎРѓР С”Р СР Вµ Р С—РЎР‚Р ВµР С—Р В°РЎР‚Р В°РЎвЂљРЎвЂ№</li>
+                </ul>
+
+                <h3>Р С›РЎРѓР С•Р В±Р ВµР Р…Р Р…Р С•РЎРѓРЎвЂљР С Reefer Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·Р С•Р С”</h3>
+                <ul>
+                    <li><strong>Pre-cooling</strong> РІР‚вЂќ Р С•РЎвЂ¦Р В»Р В°Р В¶Р ТР ВµР Р…Р СР Вµ
+                        РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚Р В° Р ТР С• Р В·Р В°Р С–РЎР‚РЎС“Р В·Р С”Р С</li>
+                    <li><strong>Temperature logs</strong> РІР‚вЂќ Р Р†Р ВµР ТР ВµР Р…Р СР Вµ
+                        Р В·Р В°Р С—Р СРЎРѓР ВµР в„– РЎвЂљР ВµР СР С—Р ВµРЎР‚Р В°РЎвЂљРЎС“РЎР‚РЎвЂ№</li>
+                    <li><strong>Fuel surcharge</strong> РІР‚вЂќ Р ТР С•Р С—Р С•Р В»Р Р…Р СРЎвЂљР ВµР В»РЎРЉР Р…Р В°РЎРЏ
+                        Р С—Р В»Р В°РЎвЂљР В° Р В·Р В° РЎвЂљР С•Р С—Р В»Р СР Р†Р С• Р ТР В»РЎРЏ
+                        РЎР‚Р ВµРЎвЂћРЎС“РЎРѓРЎвЂљР В°Р Р…Р С•Р Р†Р С”Р С</li>
+                    <li><strong>Detention time</strong> РІР‚вЂќ РЎвЂЎР В°РЎРѓРЎвЂљР С•
+                        Р ТР В»Р СРЎвЂљР ВµР В»РЎРЉР Р…Р В°РЎРЏ
+                        Р В·Р В°Р С–РЎР‚РЎС“Р В·Р С”Р В°/Р Р†РЎвЂ№Р С–РЎР‚РЎС“Р В·Р С”Р В°</li>
+                </ul>
+
+                <div class="alert alert-warning">
+                    <strong>РІС™В РїСРЏ Р С™РЎР‚Р СРЎвЂљР СРЎвЂЎР Р…Р С•:</strong> Р СњР В°РЎР‚РЎС“РЎв‚¬Р ВµР Р…Р СР Вµ
+                    РЎвЂљР ВµР СР С—Р ВµРЎР‚Р В°РЎвЂљРЎС“РЎР‚Р Р…Р С•Р С–Р С• РЎР‚Р ВµР В¶Р СР СР В°
+                    Р СР С•Р В¶Р ВµРЎвЂљ Р С—РЎР‚Р СР Р†Р ВµРЎРѓРЎвЂљР С Р С” Р С—Р С•РЎР‚РЎвЂЎР Вµ Р С–РЎР‚РЎС“Р В·Р В°
+                    РЎРѓРЎвЂљР С•Р СР СР С•РЎРѓРЎвЂљРЎРЉРЎР‹ Р ТР ВµРЎРѓРЎРЏРЎвЂљР С”Р С РЎвЂљРЎвЂ№РЎРѓРЎРЏРЎвЂЎ
+                    Р ТР С•Р В»Р В»Р В°РЎР‚Р С•Р Р†.
+                </div>
+            </div>
+        </div>
+        <!-- Block 4: Flatbed Р С Step Deck -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Flatbed Р С Step Deck</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio4')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio4')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio4')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р С›РЎвЂљР С”РЎР‚РЎвЂ№РЎвЂљРЎвЂ№Р Вµ Р С—Р В»Р В°РЎвЂљРЎвЂћР С•РЎР‚Р СРЎвЂ№ Р ТР В»РЎРЏ
+                    Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·Р С”Р С Р Р…Р ВµР С–Р В°Р В±Р В°РЎР‚Р СРЎвЂљР Р…РЎвЂ№РЎвЂ¦,
+                    РЎвЂљРЎРЏР В¶Р ВµР В»РЎвЂ№РЎвЂ¦ Р С Р Р…Р ВµРЎРѓРЎвЂљР В°Р Р…Р ТР В°РЎР‚РЎвЂљР Р…РЎвЂ№РЎвЂ¦
+                    Р С–РЎР‚РЎС“Р В·Р С•Р Р†. Р СћРЎР‚Р ВµР В±РЎС“РЎР‹РЎвЂљ
+                    РЎРѓР С—Р ВµРЎвЂ Р СР В°Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦
+                    Р Р…Р В°Р Р†РЎвЂ№Р С”Р С•Р Р† Р С”РЎР‚Р ВµР С—Р В»Р ВµР Р…Р СРЎРЏ Р С Р В±Р С•Р В»Р ВµР Вµ
+                    Р Р†РЎвЂ№РЎРѓР С•Р С”Р С•Р в„– Р С”Р Р†Р В°Р В»Р СРЎвЂћР СР С”Р В°РЎвЂ Р СР С
+                    Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏ.</p>
+
+                <h3>Flatbed РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚РЎвЂ№</h3>
+                <h4>СЂСџвЂњС’ Р ТђР В°РЎР‚Р В°Р С”РЎвЂљР ВµРЎР‚Р СРЎРѓРЎвЂљР СР С”Р С</h4>
+                <ul>
+                    <li><strong>Р В Р В°Р В·Р СР ВµРЎР‚РЎвЂ№:</strong> 48' Р СР В»Р С 53' x 8.5'</li>
+                    <li><strong>Р вЂ™РЎвЂ№РЎРѓР С•РЎвЂљР В° Р С—Р В»Р В°РЎвЂљРЎвЂћР С•РЎР‚Р СРЎвЂ№:</strong> 5
+                        РЎвЂћРЎС“РЎвЂљР С•Р Р† Р С•РЎвЂљ Р В·Р ВµР СР В»Р С</li>
+                    <li><strong>Р вЂњРЎР‚РЎС“Р В·Р С•Р С—Р С•Р ТРЎР‰Р ВµР СР Р…Р С•РЎРѓРЎвЂљРЎРЉ:</strong> Р ТР С•
+                        48,000 lbs</li>
+                    <li><strong>Р СћР С•РЎвЂЎР С”Р С Р С”РЎР‚Р ВµР С—Р В»Р ВµР Р…Р СРЎРЏ:</strong>
+                        Р С”Р В°Р В¶Р ТРЎвЂ№Р Вµ 2 РЎвЂћРЎС“РЎвЂљР В° Р С—Р С• Р С—Р ВµРЎР‚Р СР СР ВµРЎвЂљРЎР‚РЎС“</li>
+                </ul>
+
+                <h4>СЂСџРЏвЂ”РїСРЏ Р СћР СР С—Р СРЎвЂЎР Р…РЎвЂ№Р Вµ Р С–РЎР‚РЎС“Р В·РЎвЂ№</h4>
+                <ul>
+                    <li>Р РЋРЎвЂљРЎР‚Р С•Р СРЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№Р Вµ Р СР В°РЎвЂљР ВµРЎР‚Р СР В°Р В»РЎвЂ№
+                        (Р С—Р СР В»Р С•Р СР В°РЎвЂљР ВµРЎР‚Р СР В°Р В»РЎвЂ№, РЎвЂљРЎР‚РЎС“Р В±РЎвЂ№)</li>
+                    <li>Р СљР ВµРЎвЂљР В°Р В»Р В»Р С•Р С—РЎР‚Р С•Р С”Р В°РЎвЂљ Р С РЎРѓРЎвЂљР В°Р В»РЎРЉР Р…РЎвЂ№Р Вµ
+                        Р С”Р С•Р Р…РЎРѓРЎвЂљРЎР‚РЎС“Р С”РЎвЂ Р СР С</li>
+                    <li>Р РЋРЎвЂљРЎР‚Р С•Р СРЎвЂљР ВµР В»РЎРЉР Р…Р В°РЎРЏ РЎвЂљР ВµРЎвЂ¦Р Р…Р СР С”Р В°</li>
+                    <li>Р СџРЎР‚Р С•Р СРЎвЂ№РЎв‚¬Р В»Р ВµР Р…Р Р…Р С•Р Вµ Р С•Р В±Р С•РЎР‚РЎС“Р ТР С•Р Р†Р В°Р Р…Р СР Вµ
+                    </li>
+                    <li>Р С™Р С•Р Р…РЎвЂљР ВµР в„–Р Р…Р ВµРЎР‚РЎвЂ№ Р С Р СР С•Р ТРЎС“Р В»РЎРЉР Р…РЎвЂ№Р Вµ
+                        Р ТР С•Р СР В°</li>
+                </ul>
+
+                <h3>Step Deck (Drop Deck) РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚РЎвЂ№</h3>
+                <h4>СЂСџвЂњРЏ Р С›РЎРѓР С•Р В±Р ВµР Р…Р Р…Р С•РЎРѓРЎвЂљР С Р С”Р С•Р Р…РЎРѓРЎвЂљРЎР‚РЎС“Р С”РЎвЂ Р СР С
+                </h4>
+                <ul>
+                    <li><strong>Р вЂ™Р ВµРЎР‚РЎвЂ¦Р Р…РЎРЏРЎРЏ Р С—Р В°Р В»РЎС“Р В±Р В°:</strong> 11-12
+                        РЎвЂћРЎС“РЎвЂљР С•Р Р† Р ТР В»Р СР Р…Р С•Р в„–</li>
+                    <li><strong>Р СњР СР В¶Р Р…РЎРЏРЎРЏ Р С—Р В°Р В»РЎС“Р В±Р В°:</strong> 37-42 РЎвЂћРЎС“РЎвЂљР В°
+                        Р ТР В»Р СР Р…Р С•Р в„–</li>
+                    <li><strong>Р вЂ™РЎвЂ№РЎРѓР С•РЎвЂљР В° Р Р…Р СР В¶Р Р…Р ВµР в„– Р С—Р В°Р В»РЎС“Р В±РЎвЂ№:</strong>
+                        3.5 РЎвЂћРЎС“РЎвЂљР В° Р С•РЎвЂљ Р В·Р ВµР СР В»Р С</li>
+                    <li><strong>Р СљР В°Р С”РЎРѓР СР СР В°Р В»РЎРЉР Р…Р В°РЎРЏ Р Р†РЎвЂ№РЎРѓР С•РЎвЂљР В°
+                            Р С–РЎР‚РЎС“Р В·Р В°:</strong> 10-11 РЎвЂћРЎС“РЎвЂљР С•Р Р†</li>
+                </ul>
+
+                <h4>СЂСџС™вЂє Р СџРЎР‚Р ВµР СР СРЎС“РЎвЂ°Р ВµРЎРѓРЎвЂљР Р†Р В° Step Deck</h4>
+                <ul>
+                    <li>Р СџР ВµРЎР‚Р ВµР Р†Р С•Р В·Р С”Р В° Р Р†РЎвЂ№РЎРѓР С•Р С”Р СРЎвЂ¦ Р С–РЎР‚РЎС“Р В·Р С•Р Р†
+                        Р В±Р ВµР В· oversize permits</li>
+                    <li>Р вЂєРЎС“РЎвЂЎРЎв‚¬Р В°РЎРЏ РЎС“РЎРѓРЎвЂљР С•Р в„–РЎвЂЎР СР Р†Р С•РЎРѓРЎвЂљРЎРЉ Р ТР В»РЎРЏ
+                        РЎвЂљРЎРЏР В¶Р ВµР В»РЎвЂ№РЎвЂ¦ Р С–РЎР‚РЎС“Р В·Р С•Р Р†</li>
+                    <li>Р вЂР С•Р В»Р ВµР Вµ Р В»Р ВµР С–Р С”Р В°РЎРЏ Р В·Р В°Р С–РЎР‚РЎС“Р В·Р С”Р В°
+                        РЎвЂљР ВµРЎвЂ¦Р Р…Р СР С”Р С</li>
+                </ul>
+
+                <h3>Р СћРЎР‚Р ВµР В±Р С•Р Р†Р В°Р Р…Р СРЎРЏ Р С” Р С”РЎР‚Р ВµР С—Р В»Р ВµР Р…Р СРЎР‹
+                    Р С–РЎР‚РЎС“Р В·Р В°</h3>
+                <ul>
+                    <li><strong>Chains:</strong> Р СР СР Р…Р СР СРЎС“Р С 4 РЎвЂ Р ВµР С—Р С Р ТР В»РЎРЏ
+                        Р В±Р С•Р В»РЎРЉРЎв‚¬Р СР Р…РЎРѓРЎвЂљР Р†Р В° Р С–РЎР‚РЎС“Р В·Р С•Р Р†</li>
+                    <li><strong>Straps:</strong> Р ТР В»РЎРЏ Р В»Р ВµР С–Р С”Р СРЎвЂ¦ Р С
+                        РЎвЂЎРЎС“Р Р†РЎРѓРЎвЂљР Р†Р СРЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ Р С–РЎР‚РЎС“Р В·Р С•Р Р†</li>
+                    <li><strong>Tarps:</strong> Р В·Р В°РЎвЂ°Р СРЎвЂљР В° Р С•РЎвЂљ Р С—Р С•Р С–Р С•Р ТР Р…РЎвЂ№РЎвЂ¦
+                        РЎС“РЎРѓР В»Р С•Р Р†Р СР в„–</li>
+                    <li><strong>Edge protectors:</strong> Р В·Р В°РЎвЂ°Р СРЎвЂљР В° РЎРѓРЎвЂљРЎР‚Р С•Р С— Р С•РЎвЂљ
+                        Р С•РЎРѓРЎвЂљРЎР‚РЎвЂ№РЎвЂ¦ Р С”РЎР‚Р В°Р ВµР Р†</li>
+                </ul>
+
+                <div class="alert alert-info">
+                    <strong>СЂСџвЂ™РЋ Р вЂ™Р В°Р В¶Р Р…Р С•:</strong> Flatbed Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·Р С”Р С
+                    РЎвЂљРЎР‚Р ВµР В±РЎС“РЎР‹РЎвЂљ Р В±Р С•Р В»РЎРЉРЎв‚¬Р Вµ Р Р†РЎР‚Р ВµР СР ВµР Р…Р С Р Р…Р В°
+                    Р В·Р В°Р С–РЎР‚РЎС“Р В·Р С”РЎС“/Р Р†РЎвЂ№Р С–РЎР‚РЎС“Р В·Р С”РЎС“ Р С
+                    Р С”РЎР‚Р ВµР С—Р В»Р ВµР Р…Р СР Вµ
+                    Р С–РЎР‚РЎС“Р В·Р В°, Р Р…Р С• Р С•Р В±РЎвЂ№РЎвЂЎР Р…Р С• Р СР СР ВµРЎР‹РЎвЂљ Р В±Р С•Р В»Р ВµР Вµ
+                    Р Р†РЎвЂ№РЎРѓР С•Р С”Р СР Вµ РЎРѓРЎвЂљР В°Р Р†Р С”Р С.
+                </div>
+            </div>
+        </div>
+
+        <!-- Block 5: Р РЋР С—Р ВµРЎвЂ Р СР В°Р В»Р СР В·Р СРЎР‚Р С•Р Р†Р В°Р Р…Р Р…Р С•Р Вµ Р С•Р В±Р С•РЎР‚РЎС“Р ТР С•Р Р†Р В°Р Р…Р СР Вµ -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р РЋР С—Р ВµРЎвЂ Р СР В°Р В»Р СР В·Р СРЎР‚Р С•Р Р†Р В°Р Р…Р Р…Р С•Р Вµ
+                    Р С•Р В±Р С•РЎР‚РЎС“Р ТР С•Р Р†Р В°Р Р…Р СР Вµ</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio5')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio5')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio5')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р РЋР С—Р ВµРЎвЂ Р СР В°Р В»Р СР В·Р СРЎР‚Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№Р Вµ
+                    РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚РЎвЂ№ Р ТР В»РЎРЏ РЎС“Р Р…Р СР С”Р В°Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦
+                    Р С–РЎР‚РЎС“Р В·Р С•Р Р†. Р СљР ВµР Р…РЎРЉРЎв‚¬Р Вµ Р С”Р С•Р Р…Р С”РЎС“РЎР‚Р ВµР Р…РЎвЂ Р СР С,
+                    Р Р…Р С• РЎвЂљРЎР‚Р ВµР В±РЎС“РЎР‹РЎвЂљ РЎРѓР С—Р ВµРЎвЂ Р СР В°Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦
+                    Р В·Р Р…Р В°Р Р…Р СР в„–
+                    Р С РЎР‚Р В°Р В·РЎР‚Р ВµРЎв‚¬Р ВµР Р…Р СР в„–.</p>
+
+                <h3>Lowboy РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚РЎвЂ№</h3>
+                <h4>СЂСџРЏвЂ”РїСРЏ Р ТђР В°РЎР‚Р В°Р С”РЎвЂљР ВµРЎР‚Р СРЎРѓРЎвЂљР СР С”Р С</h4>
+                <ul>
+                    <li><strong>Р вЂ™РЎвЂ№РЎРѓР С•РЎвЂљР В° Р С—Р В°Р В»РЎС“Р В±РЎвЂ№:</strong> 18-24
+                        Р ТРЎР‹Р в„–Р СР В° Р С•РЎвЂљ Р В·Р ВµР СР В»Р С</li>
+                    <li><strong>Р вЂњРЎР‚РЎС“Р В·Р С•Р С—Р С•Р ТРЎР‰Р ВµР СР Р…Р С•РЎРѓРЎвЂљРЎРЉ:</strong> 40-80
+                        РЎвЂљР С•Р Р…Р Р…</li>
+                    <li><strong>Р РЋРЎР‰Р ВµР СР Р…Р В°РЎРЏ РЎв‚¬Р ВµРЎРЏ</strong> Р ТР В»РЎРЏ
+                        Р В·Р В°Р С–РЎР‚РЎС“Р В·Р С”Р С РЎвЂљР ВµРЎвЂ¦Р Р…Р СР С”Р С</li>
+                </ul>
+                <h4>СЂСџС™Сљ Р СћР СР С—Р СРЎвЂЎР Р…РЎвЂ№Р Вµ Р С–РЎР‚РЎС“Р В·РЎвЂ№</h4>
+                <ul>
+                    <li>Р В­Р С”РЎРѓР С”Р В°Р Р†Р В°РЎвЂљР С•РЎР‚РЎвЂ№ Р С Р В±РЎС“Р В»РЎРЉР ТР С•Р В·Р ВµРЎР‚РЎвЂ№</li>
+                    <li>Р С™РЎР‚Р В°Р Р…РЎвЂ№ Р С Р С—Р С•Р ТРЎР‰Р ВµР СР Р…Р СР С”Р С</li>
+                    <li>Р СћРЎР‚Р В°Р Р…РЎРѓРЎвЂћР С•РЎР‚Р СР В°РЎвЂљР С•РЎР‚РЎвЂ№</li>
+                    <li>Р СџРЎР‚Р С•Р СРЎвЂ№РЎв‚¬Р В»Р ВµР Р…Р Р…РЎвЂ№Р Вµ Р С”Р С•РЎвЂљР В»РЎвЂ№</li>
+                </ul>
+
+                <h3>Tanker РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚РЎвЂ№</h3>
+                <h4>СЂСџвЂєСћРїСРЏ Р СћР СР С—РЎвЂ№ РЎвЂ Р СРЎРѓРЎвЂљР ВµРЎР‚Р Р…</h4>
+                <ul>
+                    <li><strong>Food grade:</strong> Р СР С•Р В»Р С•Р С”Р С•, РЎРѓР С•Р С”Р С,
+                        РЎР‚Р В°РЎРѓРЎвЂљР СРЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№Р Вµ Р СР В°РЎРѓР В»Р В°</li>
+                    <li><strong>Chemical:</strong> Р С—РЎР‚Р С•Р СРЎвЂ№РЎв‚¬Р В»Р ВµР Р…Р Р…РЎвЂ№Р Вµ
+                        РЎвЂ¦Р СР СР СР С”Р В°РЎвЂљРЎвЂ№</li>
+                    <li><strong>Petroleum:</strong> РЎвЂљР С•Р С—Р В»Р СР Р†Р С•,
+                        Р Р…Р ВµРЎвЂћРЎвЂљР ВµР С—РЎР‚Р С•Р ТРЎС“Р С”РЎвЂљРЎвЂ№</li>
+                    <li><strong>Dry bulk:</strong> РЎвЂ Р ВµР СР ВµР Р…РЎвЂљ, Р СРЎС“Р С”Р В°,
+                        Р С—Р В»Р В°РЎРѓРЎвЂљР СР С”Р С•Р Р†РЎвЂ№Р Вµ Р С–РЎР‚Р В°Р Р…РЎС“Р В»РЎвЂ№</li>
+                </ul>
+
+                <h3>Р С’Р Р†РЎвЂљР С•Р Р†Р С•Р В·РЎвЂ№ (Car Haulers)</h3>
+                <ul>
+                    <li><strong>2-level:</strong> Р ТР С• 9 Р В»Р ВµР С–Р С”Р С•Р Р†РЎвЂ№РЎвЂ¦
+                        Р В°Р Р†РЎвЂљР С•Р СР С•Р В±Р СР В»Р ВµР в„–</li>
+                    <li><strong>3-level:</strong> Р ТР С• 12 Р В»Р ВµР С–Р С”Р С•Р Р†РЎвЂ№РЎвЂ¦
+                        Р В°Р Р†РЎвЂљР С•Р СР С•Р В±Р СР В»Р ВµР в„–</li>
+                    <li><strong>Stinger:</strong> Р ТР В»РЎРЏ Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·Р С”Р С 1-2
+                        Р В±Р С•Р В»РЎРЉРЎв‚¬Р СРЎвЂ¦ Р В°Р Р†РЎвЂљР С•Р СР С•Р В±Р СР В»Р ВµР в„–</li>
+                </ul>
+
+                <h3>Р С™Р С•Р Р…Р ВµР в„–Р Р…Р ВµРЎР‚Р С•Р Р†Р С•Р В·РЎвЂ№</h3>
+                <ul>
+                    <li><strong>20' containers:</strong> РЎРѓРЎвЂљР В°Р Р…Р ТР В°РЎР‚РЎвЂљР Р…РЎвЂ№Р Вµ
+                        Р СР С•РЎР‚РЎРѓР С”Р СР Вµ Р С”Р С•Р Р…РЎвЂљР ВµР в„–Р Р…Р ВµРЎР‚РЎвЂ№</li>
+                    <li><strong>40' containers:</strong> Р ТР В»Р СР Р…Р Р…РЎвЂ№Р Вµ
+                        Р С”Р С•Р Р…РЎвЂљР ВµР в„–Р Р…Р ВµРЎР‚РЎвЂ№</li>
+                    <li><strong>Chassis:</strong> РЎРѓР С—Р ВµРЎвЂ Р СР В°Р В»РЎРЉР Р…Р В°РЎРЏ РЎР‚Р В°Р СР В°
+                        Р ТР В»РЎРЏ Р С”Р С•Р Р…РЎвЂљР ВµР в„–Р Р…Р ВµРЎР‚Р С•Р Р†</li>
+                    <li><strong>Intermodal:</strong> РЎР‚Р В°Р В±Р С•РЎвЂљР В° РЎРѓ Р С—Р С•РЎР‚РЎвЂљР В°Р СР С Р С
+                        Р В¶/Р Т</li>
+                </ul>
+
+                <div class="alert alert-success">
+                    <strong>РІСљвЂ¦ Р СџРЎР‚Р ВµР СР СРЎС“РЎвЂ°Р ВµРЎРѓРЎвЂљР Р†Р С•:</strong>
+                    Р РЋР С—Р ВµРЎвЂ Р СР В°Р В»Р СР В·Р СРЎР‚Р С•Р Р†Р В°Р Р…Р Р…Р С•Р Вµ
+                    Р С•Р В±Р С•РЎР‚РЎС“Р ТР С•Р Р†Р В°Р Р…Р СР Вµ Р С•Р В±РЎвЂ№РЎвЂЎР Р…Р С• Р СР СР ВµР ВµРЎвЂљ
+                    Р В±Р С•Р В»Р ВµР Вµ Р Р†РЎвЂ№РЎРѓР С•Р С”Р СР Вµ РЎРѓРЎвЂљР В°Р Р†Р С”Р С
+                    Р СР В·-Р В·Р В° Р СР ВµР Р…РЎРЉРЎв‚¬Р ВµР в„– Р С”Р С•Р Р…Р С”РЎС“РЎР‚Р ВµР Р…РЎвЂ Р СР С.
+                </div>
+            </div>
+        </div>
+        <!-- Block 6: Р вЂ™РЎвЂ№Р В±Р С•РЎР‚ Р С•Р В±Р С•РЎР‚РЎС“Р ТР С•Р Р†Р В°Р Р…Р СРЎРЏ Р С—Р С•Р Т Р С–РЎР‚РЎС“Р В· -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р вЂ™РЎвЂ№Р В±Р С•РЎР‚ Р С•Р В±Р С•РЎР‚РЎС“Р ТР С•Р Р†Р В°Р Р…Р СРЎРЏ
+                    Р С—Р С•Р Т Р С–РЎР‚РЎС“Р В·</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio6')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio6')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio6')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…РЎвЂ№Р в„– Р Р†РЎвЂ№Р В±Р С•РЎР‚
+                    Р С•Р В±Р С•РЎР‚РЎС“Р ТР С•Р Р†Р В°Р Р…Р СРЎРЏ РІР‚вЂќ Р С”Р В»РЎР‹РЎвЂЎ Р С”
+                    РЎС“РЎРѓР С—Р ВµРЎв‚¬Р Р…Р С•Р в„– Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·Р С”Р Вµ.
+                    Р СњР ВµР С—Р С•Р ТРЎвЂ¦Р С•Р ТРЎРЏРЎвЂ°Р СР в„– РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚ Р СР С•Р В¶Р ВµРЎвЂљ
+                    Р С—РЎР‚Р СР Р†Р ВµРЎРѓРЎвЂљР С Р С”
+                    Р С•РЎвЂљР С”Р В°Р В·РЎС“ Р Р† Р В·Р В°Р С–РЎР‚РЎС“Р В·Р С”Р Вµ Р СР В»Р С
+                    Р С—Р С•Р Р†РЎР‚Р ВµР В¶Р ТР ВµР Р…Р СРЎР‹ Р С–РЎР‚РЎС“Р В·Р В°.</p>
+
+                <h3>Р С’Р В»Р С–Р С•РЎР‚Р СРЎвЂљР С Р Р†РЎвЂ№Р В±Р С•РЎР‚Р В°
+                    Р С•Р В±Р С•РЎР‚РЎС“Р ТР С•Р Р†Р В°Р Р…Р СРЎРЏ</h3>
+
+                <h4>1РїСРЏРІС“Р€ Р С’Р Р…Р В°Р В»Р СР В· Р С–РЎР‚РЎС“Р В·Р В°</h4>
+                <ul>
+                    <li><strong>Р СћР СР С— РЎвЂљР С•Р Р†Р В°РЎР‚Р В°:</strong> РЎРѓРЎС“РЎвЂ¦Р С•Р в„–,
+                        Р В·Р В°Р СР С•РЎР‚Р С•Р В¶Р ВµР Р…Р Р…РЎвЂ№Р в„–, Р В¶Р СР ТР С”Р СР в„–,
+                        Р Р…Р ВµР С–Р В°Р В±Р В°РЎР‚Р СРЎвЂљР Р…РЎвЂ№Р в„–</li>
+                    <li><strong>Р В Р В°Р В·Р СР ВµРЎР‚РЎвЂ№:</strong> Р ТР В»Р СР Р…Р В°, РЎв‚¬Р СРЎР‚Р СР Р…Р В°,
+                        Р Р†РЎвЂ№РЎРѓР С•РЎвЂљР В°</li>
+                    <li><strong>Р вЂ™Р ВµРЎРѓ:</strong> Р С•Р В±РЎвЂ°Р СР в„– Р Р†Р ВµРЎРѓ Р С
+                        РЎР‚Р В°РЎРѓР С—РЎР‚Р ВµР ТР ВµР В»Р ВµР Р…Р СР Вµ Р Р…Р В°Р С–РЎР‚РЎС“Р В·Р С”Р С</li>
+                    <li><strong>Р Р€Р С—Р В°Р С”Р С•Р Р†Р С”Р В°:</strong> Р С—Р В°Р В»Р В»Р ВµРЎвЂљРЎвЂ№,
+                        Р С”Р С•РЎР‚Р С•Р В±Р С”Р С, Р Р…Р В°Р Р†Р В°Р В»Р С•Р С</li>
+                </ul>
+
+                <h4>2РїСРЏРІС“Р€ Р СћР ВµР СР С—Р ВµРЎР‚Р В°РЎвЂљРЎС“РЎР‚Р Р…РЎвЂ№Р Вµ
+                    РЎвЂљРЎР‚Р ВµР В±Р С•Р Р†Р В°Р Р…Р СРЎРЏ</h4>
+                <ul>
+                    <li><strong>Ambient:</strong> Р С”Р С•Р СР Р…Р В°РЎвЂљР Р…Р В°РЎРЏ
+                        РЎвЂљР ВµР СР С—Р ВµРЎР‚Р В°РЎвЂљРЎС“РЎР‚Р В° РІвЂ вЂ™ Dry Van</li>
+                    <li><strong>Chilled:</strong> 32-38Р’В°F РІвЂ вЂ™ Reefer</li>
+                    <li><strong>Frozen:</strong> Р Р…Р СР В¶Р Вµ 0Р’В°F РІвЂ вЂ™ Reefer</li>
+                    <li><strong>Controlled:</strong> РЎвЂљР С•РЎвЂЎР Р…Р В°РЎРЏ
+                        РЎвЂљР ВµР СР С—Р ВµРЎР‚Р В°РЎвЂљРЎС“РЎР‚Р В° РІвЂ вЂ™ Reefer РЎРѓ
+                        Р СР С•Р Р…Р СРЎвЂљР С•РЎР‚Р СР Р…Р С–Р С•Р С</li>
+                </ul>
+
+                <h4>3РїСРЏРІС“Р€ Р РЋР С—Р С•РЎРѓР С•Р В± Р В·Р В°Р С–РЎР‚РЎС“Р В·Р С”Р С</h4>
+                <ul>
+                    <li><strong>Dock loading:</strong> Dry Van, Reefer</li>
+                    <li><strong>Side loading:</strong> Flatbed, Step Deck</li>
+                    <li><strong>Top loading:</strong> Tanker, Hopper</li>
+                    <li><strong>Ramp loading:</strong> Lowboy, RGN</li>
+                </ul>
+
+                <h3>Р В§Р В°РЎРѓРЎвЂљРЎвЂ№Р Вµ Р С•РЎв‚¬Р СР В±Р С”Р С Р С—РЎР‚Р С Р Р†РЎвЂ№Р В±Р С•РЎР‚Р Вµ
+                    Р С•Р В±Р С•РЎР‚РЎС“Р ТР С•Р Р†Р В°Р Р…Р СРЎРЏ</h3>
+
+                <h4>РІСњРЉ Р СњР ВµР С—РЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р В°РЎРЏ Р Р†РЎвЂ№РЎРѓР С•РЎвЂљР В°</h4>
+                <p>Р вЂњРЎР‚РЎС“Р В· Р Р†РЎвЂ№РЎРѓР С•РЎвЂљР С•Р в„– 9'6" Р Р…Р Вµ
+                    Р С—Р С•Р СР ВµРЎРѓРЎвЂљР СРЎвЂљРЎРѓРЎРЏ Р Р† РЎРѓРЎвЂљР В°Р Р…Р ТР В°РЎР‚РЎвЂљР Р…РЎвЂ№Р в„– Dry
+                    Van (Р Р†Р Р…РЎС“РЎвЂљРЎР‚Р ВµР Р…Р Р…РЎРЏРЎРЏ Р Р†РЎвЂ№РЎРѓР С•РЎвЂљР В° 9'0")</p>
+
+                <h4>РІСњРЉ Р СџРЎР‚Р ВµР Р†РЎвЂ№РЎв‚¬Р ВµР Р…Р СР Вµ Р Р†Р ВµРЎРѓР В°</h4>
+                <p>Р СћРЎРЏР В¶Р ВµР В»РЎвЂ№Р Вµ Р С–РЎР‚РЎС“Р В·РЎвЂ№ РЎвЂљРЎР‚Р ВµР В±РЎС“РЎР‹РЎвЂљ
+                    Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р С РЎР‚Р В°РЎРѓР С—РЎР‚Р ВµР ТР ВµР В»Р ВµР Р…Р СРЎРЏ Р Р†Р ВµРЎРѓР В°
+                    Р С—Р С• Р С•РЎРѓРЎРЏР С</p>
+
+                <h4>РІСњРЉ Р ВР С–Р Р…Р С•РЎР‚Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ
+                    РЎвЂљР ВµР СР С—Р ВµРЎР‚Р В°РЎвЂљРЎС“РЎР‚РЎвЂ№</h4>
+                <p>Р СњР ВµР С”Р С•РЎвЂљР С•РЎР‚РЎвЂ№Р Вµ РЎвЂљР С•Р Р†Р В°РЎР‚РЎвЂ№ Р С—Р С•РЎР‚РЎвЂљРЎРЏРЎвЂљРЎРѓРЎРЏ
+                    Р ТР В°Р В¶Р Вµ Р С—РЎР‚Р С Р Р…Р ВµР В±Р С•Р В»РЎРЉРЎв‚¬Р СРЎвЂ¦
+                    Р С•РЎвЂљР С”Р В»Р С•Р Р…Р ВµР Р…Р СРЎРЏРЎвЂ¦ РЎвЂљР ВµР СР С—Р ВµРЎР‚Р В°РЎвЂљРЎС“РЎР‚РЎвЂ№</p>
+
+                <h4>РІСњРЉ Р СњР ВµРЎС“РЎвЂЎР ВµРЎвЂљ РЎРѓР С—Р С•РЎРѓР С•Р В±Р В° Р С”РЎР‚Р ВµР С—Р В»Р ВµР Р…Р СРЎРЏ
+                </h4>
+                <p>Р С™РЎР‚РЎС“Р С–Р В»РЎвЂ№Р Вµ РЎвЂљРЎР‚РЎС“Р В±РЎвЂ№ Р Р…Р В° Flatbed РЎвЂљРЎР‚Р ВµР В±РЎС“РЎР‹РЎвЂљ
+                    РЎРѓР С—Р ВµРЎвЂ Р СР В°Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ Р С”РЎР‚Р ВµР С—Р В»Р ВµР Р…Р СР в„–</p>
+
+                <h3>Р В§Р ВµР С”-Р В»Р СРЎРѓРЎвЂљ Р С—Р ВµРЎР‚Р ВµР Т
+                    Р С—Р С•Р ТРЎвЂљР Р†Р ВµРЎР‚Р В¶Р ТР ВµР Р…Р СР ВµР С Р С–РЎР‚РЎС“Р В·Р В°</h3>
+                <ul>
+                    <li>РІСљвЂ¦ Р СћР СР С— РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚Р В°
+                        РЎРѓР С•Р С•РЎвЂљР Р†Р ВµРЎвЂљРЎРѓРЎвЂљР Р†РЎС“Р ВµРЎвЂљ Р С–РЎР‚РЎС“Р В·РЎС“</li>
+                    <li>РІСљвЂ¦ Р В Р В°Р В·Р СР ВµРЎР‚РЎвЂ№ Р С–РЎР‚РЎС“Р В·Р В°
+                        Р С—Р С•Р СР ВµРЎвЂ°Р В°РЎР‹РЎвЂљРЎРѓРЎРЏ Р Р† РЎвЂљРЎР‚Р ВµР в„–Р В»Р ВµРЎР‚</li>
+                    <li>РІСљвЂ¦ Р вЂ™Р ВµРЎРѓ Р Р…Р Вµ Р С—РЎР‚Р ВµР Р†РЎвЂ№РЎв‚¬Р В°Р ВµРЎвЂљ Р В»Р СР СР СРЎвЂљРЎвЂ№
+                    </li>
+                    <li>РІСљвЂ¦ Р СћР ВµР СР С—Р ВµРЎР‚Р В°РЎвЂљРЎС“РЎР‚Р Р…РЎвЂ№Р в„– РЎР‚Р ВµР В¶Р СР С
+                        Р С—Р С•Р ТР ТР ВµРЎР‚Р В¶Р СР Р†Р В°Р ВµРЎвЂљРЎРѓРЎРЏ</li>
+                    <li>РІСљвЂ¦ Р вЂўРЎРѓРЎвЂљРЎРЉ Р Р…Р ВµР С•Р В±РЎвЂ¦Р С•Р ТР СР СРЎвЂ№Р Вµ
+                        РЎР‚Р В°Р В·РЎР‚Р ВµРЎв‚¬Р ВµР Р…Р СРЎРЏ (oversize, hazmat)</li>
+                    <li>РІСљвЂ¦ Р вЂ™Р С•Р ТР СРЎвЂљР ВµР В»РЎРЉ Р СР СР ВµР ВµРЎвЂљ Р Р…РЎС“Р В¶Р Р…РЎвЂ№Р Вµ
+                        endorsements</li>
+                    <li>РІСљвЂ¦ Р С›Р В±Р С•РЎР‚РЎС“Р ТР С•Р Р†Р В°Р Р…Р СР Вµ Р ТР В»РЎРЏ
+                        Р С”РЎР‚Р ВµР С—Р В»Р ВµР Р…Р СРЎРЏ Р ТР С•РЎРѓРЎвЂљРЎС“Р С—Р Р…Р С•</li>
+                </ul>
+
+                <div class="alert alert-warning">
+                    <strong>РІС™В РїСРЏ Р СџР С•Р СР Р…Р СРЎвЂљР Вµ:</strong> Р вЂєРЎС“РЎвЂЎРЎв‚¬Р Вµ
+                    Р С•РЎвЂљР С”Р В°Р В·Р В°РЎвЂљРЎРЉРЎРѓРЎРЏ Р С•РЎвЂљ Р С–РЎР‚РЎС“Р В·Р В°, РЎвЂЎР ВµР С
+                    Р Р†Р В·РЎРЏРЎвЂљРЎРЉ Р ВµР С–Р С• РЎРѓ Р Р…Р ВµР С—Р С•Р ТРЎвЂ¦Р С•Р ТРЎРЏРЎвЂ°Р СР С
+                    Р С•Р В±Р С•РЎР‚РЎС“Р ТР С•Р Р†Р В°Р Р…Р СР ВµР С.
+                    Р В­РЎвЂљР С• Р СР С•Р В¶Р ВµРЎвЂљ Р С—РЎР‚Р СР Р†Р ВµРЎРѓРЎвЂљР С Р С”
+                    РЎРѓР ВµРЎР‚РЎРЉР ВµР В·Р Р…РЎвЂ№Р С Р С—РЎР‚Р С•Р В±Р В»Р ВµР СР В°Р С Р С
+                    РЎвЂћР СР Р…Р В°Р Р…РЎРѓР С•Р Р†РЎвЂ№Р С Р С—Р С•РЎвЂљР ВµРЎР‚РЎРЏР С.
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="lesson-nav">
+            <a href="doc-module-2.html" class="nav-btn">
+                <span>РІвЂ С’</span>
+                <span>Р СџРЎР‚Р ВµР ТРЎвЂ№Р ТРЎС“РЎвЂ°Р СР в„– РЎС“РЎР‚Р С•Р С”</span>
+            </a>
+            <div class="progress-info">
+                <div>Р СљР С•Р ТРЎС“Р В»РЎРЉ 3 Р СР В· 12</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 25%"></div>
+                </div>
+                <div>25% Р В·Р В°Р Р†Р ВµРЎР‚РЎв‚¬Р ВµР Р…Р С•</div>
+            </div>
+            <a href="doc-module-4.html" class="nav-btn">
+                <span>Р РЋР В»Р ВµР ТРЎС“РЎР‹РЎвЂ°Р СР в„– РЎС“РЎР‚Р С•Р С”</span>
+                <span>РІвЂ вЂ™</span>
+            </a>
+        </nav>
+    </main>
+    <!-- Audio elements (hidden) -->
+    <audio id="audio1" preload="none">
+        <source src="../audio/module3-block1.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="audio2" preload="none">
+        <source src="../audio/module3-block2.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="audio3" preload="none">
+        <source src="../audio/module3-block3.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="audio4" preload="none">
+        <source src="../audio/module3-block4.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="audio5" preload="none">
+        <source src="../audio/module3-block5.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="audio6" preload="none">
+        <source src="../audio/module3-block6.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        let currentAudio = null;
+        let currentButton = null;
+        let currentContainer = null;
+        let progressUpdateInterval = null;
+
+        const audioDurations = {
+            'audio1': 200,
+            'audio2': 220,
+            'audio3': 250,
+            'audio4': 240,
+            'audio5': 210,
+            'audio6': 230
+        };
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateProgress(audioId, currentTime, duration) {
+            const container = document.querySelector(`[onclick*="${audioId}"]`).closest('.audio-container');
+            const progressRing = container.querySelector('.progress-ring-fill');
+            const mobileProgressFill = container.querySelector('.mobile-progress-fill');
+            const durationDisplay = container.querySelector('.audio-duration');
+
+            const progress = currentTime / duration;
+            const circumference = 2 * Math.PI * 32;
+            const offset = circumference - (progress * circumference);
+
+            if (progressRing) {
+                progressRing.style.strokeDashoffset = offset;
+            }
+
+            if (mobileProgressFill) {
+                mobileProgressFill.style.width = `${progress * 100}%`;
+            }
+
+            durationDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+        }
+
+        function seekAudioMobile(event, element, audioId) {
+            event.stopPropagation();
+            const audio = document.getElementById(audioId);
+            if (!audio || audio.paused) {
+                return;
+            }
+            const rect = element.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const progress = clickX / rect.width;
+            const duration = audioDurations[audioId];
+            const newTime = progress * duration;
+            updateProgress(audioId, newTime, duration);
+        }
+
+        function seekAudio(event, element, audioId) {
+            event.stopPropagation();
+            if (!element.classList.contains('seekable')) {
+                return;
+            }
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const x = event.clientX - centerX;
+            const y = event.clientY - centerY;
+            const distance = Math.sqrt(x * x + y * y);
+            const radius = rect.width / 2;
+            if (distance < radius * 0.55) {
+                return;
+            }
+            let angle = Math.atan2(x, -y) * (180 / Math.PI);
+            if (angle < 0) angle += 360;
+            const progress = angle / 360;
+            const duration = audioDurations[audioId];
+            const newTime = progress * duration;
+            updateProgress(audioId, newTime, duration);
+        }
+        function toggleAudio(button, audioId) {
+            const audio = document.getElementById(audioId);
+            const container = button.closest('.audio-container');
+            const interactiveRing = container.querySelector('.progress-ring-interactive');
+
+            if (currentAudio && currentAudio !== audio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                if (currentButton) {
+                    currentButton.classList.remove('playing');
+                }
+                if (currentContainer) {
+                    currentContainer.classList.remove('playing');
+                    const oldRing = currentContainer.querySelector('.progress-ring-interactive');
+                    oldRing.classList.remove('seekable');
+                }
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+            }
+
+            if (audio.paused) {
+                audio.play();
+                button.classList.add('playing');
+                container.classList.add('playing');
+                interactiveRing.classList.add('seekable');
+                currentAudio = audio;
+                currentButton = button;
+                currentContainer = container;
+
+                const duration = audioDurations[audioId];
+                let currentTime = 0;
+
+                progressUpdateInterval = setInterval(() => {
+                    if (currentTime < duration) {
+                        currentTime += 0.1;
+                        updateProgress(audioId, currentTime, duration);
+                    } else {
+                        clearInterval(progressUpdateInterval);
+                        button.classList.remove('playing');
+                        container.classList.remove('playing');
+                        interactiveRing.classList.remove('seekable');
+                        currentAudio = null;
+                        currentButton = null;
+                        currentContainer = null;
+                        updateProgress(audioId, 0, duration);
+                    }
+                }, 100);
+
+            } else {
+                audio.pause();
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+            }
+
+            audio.onended = function () {
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+                updateProgress(audioId, 0, audioDurations[audioId]);
+            };
+
+            audio.onerror = function () {
+                console.log('Audio file not found, but button still works for demo');
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            Object.keys(audioDurations).forEach(audioId => {
+                const duration = audioDurations[audioId];
+                updateProgress(audioId, 0, duration);
+            });
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+                e.preventDefault();
+                if (currentButton) {
+                    currentButton.click();
+                }
+            }
+        });
+
+        window.addEventListener('beforeunload', function () {
+            localStorage.setItem('module3-progress', '25');
+            localStorage.setItem('current-module', '3');
+        });
+
+        // Mobile Menu JavaScript
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+
+        if (mobileMenuToggle && mobileMenu && mobileMenuOverlay) {
+            mobileMenuToggle.addEventListener('click', function () {
+                mobileMenuToggle.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+                mobileMenuOverlay.classList.toggle('active');
+                document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+            });
+
+            mobileMenuOverlay.addEventListener('click', function () {
+                mobileMenuToggle.classList.remove('active');
+                mobileMenu.classList.remove('active');
+                mobileMenuOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+
+            // Close mobile menu when clicking on a link
+            document.querySelectorAll('.mobile-nav-links .nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (mobileMenu.classList.contains('active')) {
+                        mobileMenuToggle.classList.remove('active');
+                        mobileMenu.classList.remove('active');
+                        mobileMenuOverlay.classList.remove('active');
+                        document.body.style.overflow = '';
+                    }
+                });
+            });
+        }
+    </script>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Р В РЎв„ўР РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„–
+                        Р В РІР‚СњР В РЎвЂР РЋР С“Р В РЎвЂ”Р В Р’ВµР РЋРІР‚С™Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В Р’В°</h4>
+                    <p>Р В РЎСџР РЋР вЂљР В РЎвЂўР РЋРІР‚С›Р В Р’ВµР РЋР С“Р РЋР С“Р В РЎвЂР В РЎвЂўР В Р вЂ¦Р В Р’В°Р В Р’В»Р РЋР Р‰Р В Р вЂ¦Р В РЎвЂўР В Р’Вµ
+                        Р В РЎвЂўР В Р’В±Р РЋРЎвЂњР РЋРІР‚РЋР В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ
+                        Р В РўвЂР В РЎвЂР РЋР С“Р В РЎвЂ”Р В Р’ВµР РЋРІР‚С™Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В РЎвЂўР В Р вЂ 
+                        Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В Р’В·Р В РЎвЂўР В РЎвЂ”Р В Р’ВµР РЋР вЂљР В Р’ВµР В Р вЂ Р В РЎвЂўР В Р’В·Р В РЎвЂўР В РЎвЂќ
+                    </p>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Р В РЎвЂєР В Р’В±Р РЋРЎвЂњР РЋРІР‚РЋР В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ</h4>
+                    <a href="../courses.html">Р В РЎв„ўР РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„–</a>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Р В РЎСџР В РЎвЂўР В РўвЂР В РўвЂР В Р’ВµР РЋР вЂљР В Р’В¶Р В РЎвЂќР В Р’В°</h4>
+                    <a href="../faq.html">FAQ</a>
+                    <a
+                        href="../contacts.html">Р В РЎв„ўР В РЎвЂўР В Р вЂ¦Р РЋРІР‚С™Р В Р’В°Р В РЎвЂќР РЋРІР‚С™Р РЋРІР‚в„–</a>
+                    <a href="../help.html">Р В РЎСџР В РЎвЂўР В РЎВР В РЎвЂўР РЋРІР‚В°Р РЋР Р‰</a>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Р В РЎв„ўР В РЎвЂўР В РЎВР В РЎвЂ”Р В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР РЏ</h4>
+                    <a href="../about.html">Р В РЎвЂє Р В Р вЂ¦Р В Р’В°Р РЋР С“</a>
+                    <a href="../career.html">Р В РЎв„ўР В Р’В°Р РЋР вЂљР РЋР Р‰Р В Р’ВµР РЋР вЂљР В Р’В°</a>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2024 Р В РЎв„ўР РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„–
+                    Р В РІР‚СњР В РЎвЂР РЋР С“Р В РЎвЂ”Р В Р’ВµР РЋРІР‚С™Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В Р’В°.
+                    Р В РІР‚в„ўР РЋР С“Р В Р’Вµ Р В РЎвЂ”Р РЋР вЂљР В Р’В°Р В Р вЂ Р В Р’В°
+                    Р В Р’В·Р В Р’В°Р РЋРІР‚В°Р В РЎвЂР РЋРІР‚В°Р В Р’ВµР В Р вЂ¦Р РЋРІР‚в„–.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

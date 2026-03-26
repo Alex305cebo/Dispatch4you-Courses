@@ -1,0 +1,909 @@
+// СИМУЛЬ - База диалогов для обучения диспетчеров
+// Версия: 2.3
+// Дата: 2026-03-03
+// ПРАВИЛО: ВСЕГДА 3 варианта ответа в каждом шаге!
+
+const allScenarios = [
+    // ============================================
+    // ДИАЛОГ #0: Chicago IL → Miami FL (REEFER)
+    // Стиль: 🎓 Опытный брокер
+    // Расстояние: 1,380 миль
+    // ============================================
+    {
+        id: 0,
+        route: "Chicago IL → Miami FL",
+        distance: 1380,
+        equipment: "Reefer",
+        brokerStyle: "Опытный",
+        difficulty: "medium",
+
+        paths: {
+            // МАСТЕР ПУТЬ (8 шагов)
+            master: [
+                {
+                    brokerQuestion: "Yes, still available!\nThis is high-value produce load, needs experienced reefer carrier.\nWhat's your MC number and tell me about your reefer equipment?",
+                    dispatcherPrompt: "💎 Брокер ищет опытного перевозчика. Покажите свою экспертизу.",
+                    suggestions: [
+                        {
+                            text: "MC 445566, we specialize in temperature-controlled produce with 12 years experience.\n2023 Carrier reefer unit with multi-temp zones and real-time monitoring.\nDriver HACCP certified, currently empty in Chicago ready to load.",
+                            quality: "master",
+                            analytics: "Отлично! Показали специализацию, опыт и готовность."
+                        },
+                        {
+                            text: "MC 445566, we have 2023 Carrier reefer, 53ft trailer with temperature control.\nDriver is in Chicago now, ready for immediate pickup tomorrow morning.",
+                            quality: "good",
+                            analytics: "Хорошо, но не показали опыт с produce."
+                        },
+                        {
+                            text: "MC 445566, reefer trailer available in Chicago area, ready to go.",
+                            quality: "weak",
+                            analytics: "Слишком мало информации."
+                        }
+                    ]
+                },
+                {
+                    brokerResponse: "Perfect! Verified MC 445566 - 99% safety score, excellent produce history.\nThis is 44,000 lbs fresh strawberries, must maintain 34-36°F constant.\nPickup tomorrow 6 AM Chicago cold storage, delivery Miami in 48 hours.\nWith your experience, what rate are you looking at?",
+                    dispatcherPrompt: "💎 Брокер впечатлен и дал детали груза. Назовите обоснованную ставку.",
+                    suggestions: [
+                        { text: "For 1,380 miles with fresh produce and strict temperature control, I'm at $3,900 all-in.\nThat covers fuel, experienced driver, continuous temp monitoring, guaranteed delivery.\nMarket rate for this lane is $2.75-$3.00/mile.", quality: "master", analytics: "Отлично! Обоснованная ставка." },
+                        { text: "I'm looking at $3,750 for this load, that's $2.72/mile with all services.\nWe can handle the tight timeline and temperature requirements professionally.", quality: "good", analytics: "Хорошо, но ниже рынка." },
+                        { text: "I need $4,200 for this distance with reefer equipment and tight timeline.", quality: "aggressive", analytics: "Слишком высоко без обоснования." }
+                    ]
+                },
+                {
+                    brokerResponse: "I appreciate the detailed breakdown - that's what I need to hear.\nPosted rate is $3,450, but I have budget flexibility for reliable carrier.\nStrawberries are time-sensitive, shipper is very strict about temperature.\nCan you meet me at $3,700?",
+                    dispatcherPrompt: "💎 Брокер ценит профессионализм и идет навстречу. Торгуйтесь умно.",
+                    suggestions: [
+                        { text: "I understand the urgency and shipper requirements, meet me at $3,850.\nYou get 12 years produce experience, temp logs every 2 hours, my personal guarantee.\nThat's $2.79/mile - fair for the service level you need.", quality: "master", analytics: "Отлично! Обоснование ценности." },
+                        { text: "Can you do $3,800? That's my bottom line for this distance and requirements.\nWe'll provide all temp logs and updates you need throughout transit.", quality: "good", analytics: "Хорошо, но можно было лучше." },
+                        { text: "$3,700 works for us, let's book it and send rate confirmation now.", quality: "weak", analytics: "Сдались слишком быстро." }
+                    ]
+                },
+                {
+                    brokerResponse: "You make a strong case and I see you understand produce logistics.\nLet me call shipper about budget increase for $3,850.\nIf approved, do we have a deal with temp logs every 2 hours?",
+                    dispatcherPrompt: "💎 Брокер почти согласен. Подтвердите обязательства.",
+                    suggestions: [
+                        { text: "Absolutely, $3,850 and it's yours! You'll get temp logs every 2 hours via email.\nGPS tracking link and check calls every 6 hours included.\nI'll send NOA immediately, driver will pre-cool unit tonight to 34°F.", quality: "master", analytics: "Отлично! Подтвердили и проактивны." },
+                        { text: "$3,850 works, yes we'll provide temp logs every 2 hours as discussed.\nSend rate confirmation when ready, we'll handle everything on our end.", quality: "good", analytics: "Хорошо, подтвердили." },
+                        { text: "Deal at $3,850, send the paperwork over and we'll get started.", quality: "weak", analytics: "Слишком коротко." }
+                    ]
+                },
+                {
+                    brokerResponse: "Excellent! Shipper approved $3,850 based on your service commitment.\nSending rate con now, what's your factoring company?",
+                    dispatcherPrompt: "💎 Груз ваш! Дайте factoring информацию быстро.",
+                    suggestions: [
+                        { text: "Perfect! We work with RTS Financial, sending NOA to your email right now.\nDriver will contact shipper tonight to confirm 6 AM pickup.\nWhat's shipper contact number and exact address?", quality: "master", analytics: "Отлично! Проактивность." },
+                        { text: "Great! RTS Financial is our factoring company, NOA coming your way.\nShould arrive in your inbox within a few minutes, let me know if you need anything else.", quality: "good", analytics: "Хорошо." },
+                        { text: "RTS Financial, sending NOA now to your email address.", quality: "weak", analytics: "Слишком коротко." }
+                    ]
+                },
+                {
+                    brokerResponse: "Love the proactive approach! Shipper: Mike at 312-555-0145.\nAddress: 1234 Industrial Way, Chicago IL 60601, dock 7.\nThey're very particular - driver must arrive exactly at 6 AM, no delays.\nPre-cool confirmation required before arrival.",
+                    dispatcherPrompt: "💎 Брокер дал важные детали. Покажите что понимаете серьезность.",
+                    suggestions: [
+                        { text: "Understood - 6 AM sharp, no delays! Driver will pre-cool tonight, send temp confirmation by 10 PM.\nWill call Mike at 5:30 AM to confirm arrival at dock 7.\nHow long does loading typically take? Any special handling requirements?", quality: "master", analytics: "Отлично! Понимание требований." },
+                        { text: "Got it, 6 AM sharp at dock 7, will pre-cool tonight and send confirmation.\nHow long for loading? Any special instructions for handling strawberries?", quality: "good", analytics: "Хорошо." },
+                        { text: "Ok, 6 AM at dock 7, will pre-cool the unit tonight.", quality: "weak", analytics: "Слишком коротко." }
+                    ]
+                },
+                {
+                    brokerResponse: "Perfect! You clearly understand produce logistics.\nLoading takes 2-3 hours, they're very careful with strawberries, shipper covers $200 lumper.\nDelivery: Miami Fresh Distribution, 8901 Ocean Drive, receiver Carlos 305-555-0198.\nDelivery window 48 hours from pickup, FCFS.",
+                    dispatcherPrompt: "💎 Все основные детали получены. Уточните последние важные моменты.",
+                    suggestions: [
+                        { text: "Excellent, all noted! Two quick questions: any routing restrictions or preferred route?\nWhat's detention policy at delivery if they're backed up?\nAlso your 24/7 contact in case any issues on the road?", quality: "master", analytics: "Отлично! Планирование проблем." },
+                        { text: "Got it, all clear! Any routing restrictions I should know about?\nAnd who to call if any issues during transit? Want to have all contacts ready.", quality: "good", analytics: "Хорошо, базовые вопросы." },
+                        { text: "All clear, thank you for all the information provided.", quality: "weak", analytics: "Упущена возможность." }
+                    ]
+                },
+                {
+                    brokerResponse: "Great questions! Avoid I-10 through Louisiana - construction delays, take I-75 instead.\nDetention at delivery: $75/hour after 2 hours free time.\nMy cell 24/7: 312-555-9876, also shipper requires seal number photo before leaving.",
+                    dispatcherPrompt: "💎 Брокер дал все детали. Подтвердите возможности и завершите.",
+                    suggestions: [
+                        { text: "Absolutely! Driver will take seal photo and text it immediately after loading.\nWe'll route through I-75 to avoid I-10 construction as you suggested.\nI'll add your cell to driver's priority contact list, we're all set!", quality: "master", analytics: "Отлично! Подтвердили все." },
+                        { text: "Yes, driver can send seal photo right after loading, no problem.\nWe'll avoid I-10 and take I-75 as recommended, all set on our end.", quality: "good", analytics: "Хорошо." },
+                        { text: "Yes, we can do seal photo and avoid I-10 route.", quality: "weak", analytics: "Слишком коротко." }
+                    ]
+                },
+                {
+                    brokerResponse: "Perfect! I'm really impressed with your professionalism.\nThis is exactly the kind of carrier I need for my produce loads.\nI'll be sending you more opportunities - I have 3-4 Chicago to Florida lanes weekly.\nSafe travels!",
+                    outcome: {
+                        type: "success",
+                        quality: "master",
+                        rate: "$3,850",
+                        ratePerMile: "$2.79/mile",
+                        relationship: "Excellent - Preferred carrier, future loads guaranteed",
+                        feedback: "🏆 МАСТЕР УРОВЕНЬ!\n\n✅ Показали экспертизу с первого ответа\n✅ Получили на $400 больше posted rate\n✅ Обосновали ценность сервиса\n✅ Задали все правильные вопросы\n✅ Проактивная коммуникация\n✅ Построили долгосрочные отношения"
+                    }
+                }
+            ]
+        }
+    },
+
+    // ============================================
+    // ДИАЛОГ #1: Los Angeles CA → New York NY (DRY VAN)
+    // Стиль: 😊 Дружелюбный + 🎓 Опытный брокер
+    // Расстояние: 2,790 миль (LONG HAUL)
+    // БОЛЕЕ ПОДРОБНЫЙ И КАЧЕСТВЕННЫЙ ДИАЛОГ
+    // ============================================
+    {
+        id: 1,
+        route: "Los Angeles CA → New York NY",
+        distance: 2790,
+        equipment: "Dry Van",
+        brokerStyle: "Дружелюбный + Опытный",
+        difficulty: "hard",
+
+        paths: {
+            // МАСТЕР ПУТЬ (12 шагов) - самый подробный
+            master: [
+                {
+                    brokerQuestion: "Hey there! Yes, this load is still available and I'm glad you called.\nThis is a cross-country run, so I need a reliable team or experienced solo driver.\nWhat's your MC number, and tell me about your equipment and driver situation?",
+                    dispatcherPrompt: "💎 Брокер дружелюбный но серьезный. Покажите что готовы к long haul.",
+                    suggestions: [
+                        { text: "Good to hear! MC 778899, we run team drivers for cross-country lanes.\n2022 Freightliner with 53ft Great Dane dry van, swing doors, air ride suspension.\nTeam has 8 years OTR experience together, currently finishing delivery in LA, empty by tonight.", quality: "master", analytics: "Отлично! Показали team drivers и опыт." },
+                        { text: "MC 778899, we have 53ft dry van with experienced driver in LA area.\nTruck is 2022 model, well-maintained, ready for long haul cross-country.", quality: "good", analytics: "Хорошо, но не указали team или solo." },
+                        { text: "MC 778899, dry van available in Los Angeles, ready to go.", quality: "weak", analytics: "Слишком мало информации для long haul." }
+                    ]
+                },
+                {
+                    brokerResponse: "Excellent! Team drivers - that's exactly what I was hoping for.\nJust verified MC 778899, you guys have a solid 97% on-time delivery rate, impressive!\nThis is 42,000 lbs electronics equipment, high value cargo, needs careful handling.\nPickup tomorrow 8 AM at LA distribution center, delivery New York in 4 days max.\nWhat rate are you thinking for this cross-country run?",
+                    dispatcherPrompt: "💎 Брокер очень доволен team drivers. Назовите обоснованную ставку для long haul.",
+                    suggestions: [
+                        { text: "Thank you! For 2,790 miles cross-country with high-value electronics, I'm at $8,400 all-in.\nThat's $3.01/mile covering fuel, team drivers, insurance, and guaranteed 4-day delivery.\nMarket rate for this lane with teams is $2.90-$3.10/mile right now.", quality: "master", analytics: "Отлично! Детальное обоснование." },
+                        { text: "I appreciate that! For this distance with team drivers, I'm looking at $8,100.\nThat's $2.90/mile, covers all expenses and guarantees on-time delivery to New York.", quality: "good", analytics: "Хорошо, но можно было выше." },
+                        { text: "I need $9,000 for this cross-country haul with our team.", quality: "aggressive", analytics: "Слишком высоко без обоснования." }
+                    ]
+                },
+                {
+                    brokerResponse: "I really appreciate the detailed breakdown - shows you know the market.\nPosted rate is $7,500, that's $2.69/mile, but I have some flexibility here.\nCustomer is paying premium for reliable carrier because electronics are time-sensitive.\nThey've had issues with damaged cargo before, so they want experienced team.\nCan you work with $8,000? That's $2.87/mile.",
+                    dispatcherPrompt: "💎 Брокер объяснил ситуацию и предложил компромисс. Торгуйтесь умно.",
+                    suggestions: [
+                        { text: "I understand the customer's concerns about cargo safety, that's important.\nMeet me at $8,250 and you have my personal guarantee on this load.\nOur team specializes in high-value freight, we use extra straps and padding.\nThat's $2.96/mile - fair for the service level and peace of mind you need.", quality: "master", analytics: "Отлично! Обоснование ценности и гарантии." },
+                        { text: "I hear you on the customer concerns, can you do $8,150?\nThat's $2.92/mile, we'll take extra care with the electronics, guaranteed safe delivery.", quality: "good", analytics: "Хорошо, но можно было держаться $8,250." },
+                        { text: "$8,000 works for us, let's book it and move forward with this load.", quality: "weak", analytics: "Сдались слишком быстро, потеряли $250." }
+                    ]
+                },
+                {
+                    brokerResponse: "You know what, I like your confidence and the way you present your service.\nLet me call the customer about the extra $250 for the specialized handling.\nThey're really worried about cargo damage, so your extra straps and padding might sell them.\nIf they approve $8,250, we have a deal with the extra care you mentioned, correct?",
+                    dispatcherPrompt: "💎 Брокер продает вашу ценность клиенту! Подтвердите обязательства детально.",
+                    suggestions: [
+                        { text: "Absolutely, $8,250 and you have my word! Here's what we'll do:\nExtra 4 load locks, corner protectors, and blankets for all electronics.\nTeam will inspect cargo at pickup, take photos, document everything.\nYou'll get updates every 8 hours with location and ETA, plus photos at delivery.", quality: "master", analytics: "Отлично! Детальный план действий." },
+                        { text: "Yes, $8,250 confirmed with extra care as discussed, no problem.\nWe'll use additional securing equipment and handle everything carefully.\nYou'll get regular updates throughout the trip, guaranteed safe delivery.", quality: "good", analytics: "Хорошо, подтвердили." },
+                        { text: "Yes, deal at $8,250 with extra care for the electronics.", quality: "weak", analytics: "Слишком коротко для важного момента." }
+                    ]
+                },
+                {
+                    brokerResponse: "Perfect! Customer approved $8,250 - they loved hearing about the extra precautions.\nYou just earned yourself a preferred carrier status with this customer!\nSending rate con now, what's your factoring company so I can set up payment?",
+                    dispatcherPrompt: "💎 Отлично! Груз ваш и вы preferred carrier. Дайте factoring быстро.",
+                    suggestions: [
+                        { text: "Fantastic news! We work with Triumph Business Capital for factoring.\nSending NOA to your email right now, should arrive within 2 minutes.\nTeam will contact shipper tonight to coordinate 8 AM pickup tomorrow.\nWhat's shipper contact and exact address with dock number?", quality: "master", analytics: "Отлично! Проактивность и запрос деталей." },
+                        { text: "Great! Triumph Business Capital is our factoring company, sending NOA now.\nShould be in your inbox shortly, let me know when you receive it.\nWhat's the shipper contact information for tomorrow's pickup?", quality: "good", analytics: "Хорошо, проактивно." },
+                        { text: "Triumph Business Capital, sending NOA to your email now.", quality: "weak", analytics: "Слишком коротко." }
+                    ]
+                },
+                {
+                    brokerResponse: "Awesome! Shipper is Pacific Electronics Distribution, contact Tom at 310-555-0167.\nAddress: 5678 Commerce Parkway, Los Angeles CA 90001, dock 12.\nPickup window is 8 AM - 11 AM, loading takes about 3 hours.\nThey'll provide load locks, but bring your own straps and blankets as you mentioned.\nAny questions about the pickup process or special requirements?",
+                    dispatcherPrompt: "💎 Брокер дал детали pickup. Задайте важные вопросы о грузе и процессе.",
+                    suggestions: [
+                        { text: "Got it, all noted! Few questions: how is cargo packaged - palletized or crated?\nAny weight distribution requirements or special stacking instructions?\nDo they require specific securement photos before leaving?\nAlso, is there lumper fee or shipper loads?", quality: "master", analytics: "Отлично! Детальные вопросы о cargo handling." },
+                        { text: "Understood, dock 12, 8-11 AM window! Quick questions:\nHow is the cargo packaged? Any special handling instructions?\nWho covers lumper fee if there is one?", quality: "good", analytics: "Хорошо, базовые вопросы." },
+                        { text: "Got it, 8 AM at dock 12, we'll be there on time.", quality: "weak", analytics: "Упущена возможность уточнить детали." }
+                    ]
+                },
+                {
+                    brokerResponse: "Great questions - this is why customer approved the higher rate!\nCargo is palletized, 14 pallets total, each about 3,000 lbs.\nNo stacking above 2 pallets high, and keep heavier pallets at the front.\nYes, they require photos of securement before you leave - send to me and Tom.\nNo lumper fee, shipper loads with forklift, but you need to supervise placement.",
+                    dispatcherPrompt: "💎 Важные детали о cargo. Подтвердите понимание и спросите о delivery.",
+                    suggestions: [
+                        { text: "Perfect, all clear! 14 pallets, max 2 high, heavy ones forward, got it.\nWe'll supervise loading carefully and send securement photos to both of you.\nNow for delivery: what's the receiver info, delivery window, and any special requirements?\nAny appointment needed or FCFS? Detention policy if they're backed up?", quality: "master", analytics: "Отлично! Подтвердили и планируют delivery." },
+                        { text: "Understood, 14 pallets max 2 high, heavy forward, we'll supervise and send photos.\nWhat's the delivery address and receiver contact?\nAny appointment time or special delivery requirements?", quality: "good", analytics: "Хорошо, основные вопросы." },
+                        { text: "Got it, we'll supervise loading and send photos before leaving.", quality: "weak", analytics: "Не спросили о delivery." }
+                    ]
+                },
+                {
+                    brokerResponse: "Excellent attention to detail! Delivery is Empire Electronics Warehouse in Brooklyn.\nReceiver: Sarah at 718-555-0198, address: 9012 Industrial Avenue, Brooklyn NY 11220.\nDelivery window is 4 days from pickup, but earlier is better - they prefer morning deliveries.\nAppointment required, call Sarah 24 hours before arrival to schedule.\nDetention: $100/hour after 2 hours free time, unloading takes 2-3 hours usually.",
+                    dispatcherPrompt: "💎 Все детали delivery получены. Уточните последние важные моменты.",
+                    suggestions: [
+                        { text: "Perfect, all noted! Empire Electronics, Sarah 718-555-0198, Brooklyn.\nWe'll call 24 hours ahead for appointment, aim for morning delivery.\nLast questions: any routing restrictions or preferred route?\nWeather delays protocol? Your 24/7 contact for road issues?\nAny required check-in times during transit?", quality: "master", analytics: "Отлично! Планирование всех возможных ситуаций." },
+                        { text: "Got it, will call Sarah 24 hours before for appointment, morning delivery preferred.\nAny routing restrictions we should know about?\nWho to contact if any issues during the 4-day transit?", quality: "good", analytics: "Хорошо, важные вопросы." },
+                        { text: "Understood, will call Sarah 24 hours ahead for appointment time.", quality: "weak", analytics: "Упущены важные вопросы." }
+                    ]
+                },
+                {
+                    brokerResponse: "Love the thoroughness! No routing restrictions, but I recommend I-40 through the middle states.\nAvoid I-80 through Wyoming this time of year - weather can be unpredictable.\nFor weather delays, call me immediately and we'll work with receiver on new ETA.\nMy cell 24/7: 310-555-9999, also text me when you hit major checkpoints: Arizona, Texas, Tennessee.\nCustomer likes to know cargo is moving smoothly.",
+                    dispatcherPrompt: "💎 Брокер дал все детали и маршрут. Подтвердите план и завершите профессионально.",
+                    suggestions: [
+                        { text: "Excellent, all documented! We'll take I-40 route avoiding I-80 Wyoming as suggested.\nTeam will text you at Arizona, Texas, Tennessee checkpoints plus daily updates.\nI'm adding your cell to team's priority contacts for immediate communication.\nWeather delays - we'll notify you right away, no surprises.\nAnything else or are we all set to roll?", quality: "master", analytics: "Отлично! Полный план с подтверждением всех деталей." },
+                        { text: "Got it, I-40 route avoiding I-80, will text at checkpoints as requested.\nYour cell is saved for any issues, we'll keep you updated throughout.\nWeather delays - we'll call immediately, all clear on our end.", quality: "good", analytics: "Хорошо, подтвердили план." },
+                        { text: "Understood, I-40 route, will text at checkpoints and call if issues.", quality: "weak", analytics: "Слишком коротко." }
+                    ]
+                },
+                {
+                    brokerResponse: "Perfect! We're all set, and I have to say - this is the most professional conversation I've had all week!\nYou guys clearly know what you're doing, and that's why customer was happy to pay premium.\nI have 5-6 LA to East Coast lanes every week, you're now my go-to carrier for these.\nI'll be calling you first when loads come up, safe travels and keep me posted!",
+                    dispatcherPrompt: "💎 Брокер очень впечатлен! Завершите на высокой ноте для долгосрочных отношений.",
+                    suggestions: [
+                        { text: "Thank you so much! We really appreciate your trust and the opportunity.\nLooking forward to building a strong long-term partnership with you.\nYou'll get first text tomorrow at pickup with photos, then regular updates.\nFeel free to call anytime - we're here 24/7 to make your job easier!", quality: "master", analytics: "Отлично! Построение долгосрочных отношений." },
+                        { text: "Thank you! We appreciate the confidence and look forward to more loads.\nWill keep you updated throughout this trip, talk to you from the road!", quality: "good", analytics: "Хорошо, профессионально." },
+                        { text: "Thanks, we'll keep you posted during the trip.", quality: "weak", analytics: "Слишком коротко для важного момента." }
+                    ]
+                },
+                {
+                    brokerResponse: "Awesome! Talk soon, looking forward to working together!",
+                    outcome: {
+                        type: "success",
+                        quality: "master",
+                        rate: "$8,250",
+                        ratePerMile: "$2.96/mile",
+                        relationship: "Excellent - Preferred carrier, 5-6 weekly loads guaranteed",
+                        feedback: "🏆 МАСТЕР УРОВЕНЬ!\n\n✅ Показали team drivers - идеально для long haul\n✅ Получили на $750 больше posted rate\n✅ Обосновали ценность через extra care\n✅ Задали ВСЕ правильные вопросы о cargo, pickup, delivery, routing\n✅ Проактивная коммуникация на каждом шаге\n✅ Построили долгосрочное партнерство\n✅ Стали preferred carrier с гарантией 5-6 грузов в неделю\n\nЭто образцовый диалог!"
+                    }
+                }
+            ]
+        }
+    },
+
+    // ============================================
+// ============================================
+// ДИАЛОГ #2: Dallas TX → Atlanta GA (DRY VAN)
+// Стиль: 📋 Детальный + 👔 Профессиональный брокер
+// Расстояние: 780 миль (MEDIUM HAUL)
+// ДЕТАЛЬНЫЙ ДИАЛОГ С 20+ ШАГАМИ
+// ============================================
+{
+    id: 2,
+        route: "Dallas TX → Atlanta GA",
+            distance: 780,
+                equipment: "Dry Van",
+                    brokerStyle: "Детальный + Профессиональный",
+                        difficulty: "medium",
+
+                            initialMessage: "Good afternoon!\nThis is David from Lone Star Logistics.\nI'm calling about your Dallas to Atlanta dry van load.\nIs this still available?",
+
+                                paths: {
+        // МАСТЕР ПУТЬ (20 шагов)
+        master: [
+            {
+                brokerQuestion: "Good afternoon! Yes, load is available.\nThis is automotive parts load, requires experienced carrier with good safety record.\nWhat's your MC number and where is your driver currently located?",
+                dispatcherPrompt: "💎 Брокер профессиональный и детальный. Дайте полную информацию о MC и местоположении.",
+                suggestions: [
+                    {
+                        text: "MC 556677, we're based in Dallas and specialize in automotive freight.\nDriver just delivered in Fort Worth, empty trailer ready, 25 miles from Dallas.\nWe can pickup today or tomorrow morning, whatever works best.",
+                        quality: "master",
+                        analytics: "Отлично! Показали специализацию, близость и гибкость."
+                    },
+                    {
+                        text: "MC 556677, driver is in Dallas area with empty dry van.\nWe're ready for pickup, can be there within an hour if needed.",
+                        quality: "good",
+                        analytics: "Хорошо, но не показали специализацию."
+                    },
+                    {
+                        text: "MC 556677, we have a truck available in Dallas.",
+                        quality: "weak",
+                        analytics: "Слишком мало информации."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "Excellent! Just verified MC 556677 - 98% safety score, very good.\nAutomotive parts specialist, that's exactly what I need for this customer.\nTell me about your trailer - year, type of doors, and is it food grade or automotive dedicated?",
+                dispatcherPrompt: "💎 Брокер проверил MC и хочет детали трейлера. Покажите что оборудование подходит.",
+                suggestions: [
+                    {
+                        text: "2023 Great Dane 53ft dry van, swing doors for easy loading.\nAutomotive dedicated trailer, never hauls food or chemicals, always clean and swept.\nAir ride suspension to protect delicate parts during transit.",
+                        quality: "master",
+                        analytics: "Отлично! Детали трейлера и защита груза."
+                    },
+                    {
+                        text: "2023 Great Dane 53ft with swing doors, clean trailer ready to go.\nWe keep our trailers in excellent condition, regular maintenance.",
+                        quality: "good",
+                        analytics: "Хорошо, но не указали automotive dedicated."
+                    },
+                    {
+                        text: "53ft dry van, 2023 model, swing doors.",
+                        quality: "weak",
+                        analytics: "Слишком коротко."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "Perfect! Automotive dedicated with air ride - customer will love that.\nNow tell me about your truck and driver experience.\nWhat year is the truck, and how long has your driver been hauling automotive parts?",
+                dispatcherPrompt: "💎 Брокер хочет знать о траке и опыте водителя. Покажите надежность.",
+                suggestions: [
+                    {
+                        text: "2022 Freightliner Cascadia, well-maintained, all DOT requirements current.\nDriver has 10 years OTR experience, last 5 years exclusively automotive parts.\nClean driving record, no accidents, understands importance of careful handling.",
+                        quality: "master",
+                        analytics: "Отлично! Опыт водителя и безопасность."
+                    },
+                    {
+                        text: "2022 Freightliner, driver has 10 years experience in trucking.\nClean record, professional driver, always on time with deliveries.",
+                        quality: "good",
+                        analytics: "Хорошо, но не указали automotive опыт."
+                    },
+                    {
+                        text: "2022 Freightliner, experienced driver.",
+                        quality: "weak",
+                        analytics: "Слишком мало деталей."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "Excellent credentials! 10 years with 5 in automotive - that's the experience level I need.\nLet me give you the load details: 38,000 lbs automotive transmission parts, 12 pallets.\nPickup tomorrow 7 AM at Dallas Auto Parts Distribution, delivery Atlanta in 2 days.\nThis is JIT delivery - customer's production line depends on it, so timing is critical.\nCan you handle this timeline?",
+                dispatcherPrompt: "💎 Брокер дал детали груза и подчеркнул важность времени. Подтвердите возможности.",
+                suggestions: [
+                    {
+                        text: "Absolutely! 780 miles in 2 days is very manageable for us.\nDriver has 11 hours available on HOS, can make Atlanta in 12-13 hours driving time.\nWe understand JIT requirements - we've handled Toyota, Ford, GM parts before.\nNo delays, guaranteed on-time delivery.",
+                        quality: "master",
+                        analytics: "Отлично! HOS, опыт с JIT, гарантии."
+                    },
+                    {
+                        text: "Yes, we can definitely handle 2-day delivery to Atlanta.\nDriver is ready to go, we'll make sure it arrives on time.\n780 miles is no problem for us.",
+                        quality: "good",
+                        analytics: "Хорошо, но не показали понимание JIT."
+                    },
+                    {
+                        text: "Yes, we can do 2 days to Atlanta.",
+                        quality: "weak",
+                        analytics: "Слишком коротко."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "Great! You clearly understand JIT logistics, that's reassuring.\nNow let's talk rate - this is 780 miles, automotive parts, time-critical delivery.\nPosted rate is $2,100, that's $2.69/mile.\nWhat are your thoughts on this rate?",
+                dispatcherPrompt: "💎 Брокер назвал posted rate. Обоснуйте свою ставку выше рынка.",
+                suggestions: [
+                    {
+                        text: "For 780 miles with JIT automotive parts, I'm looking at $2,350 all-in.\nThat's $3.01/mile covering fuel, experienced automotive driver, air ride protection.\nMarket rate for automotive JIT is $2.90-$3.10/mile due to strict timing requirements.\nYou get guaranteed on-time delivery and 5 years automotive experience.",
+                        quality: "master",
+                        analytics: "Отлично! Обоснование через JIT и опыт."
+                    },
+                    {
+                        text: "I'm at $2,250 for this load, that's $2.88/mile.\nCovers all expenses and guarantees on-time delivery for your customer.",
+                        quality: "good",
+                        analytics: "Хорошо, но можно было выше."
+                    },
+                    {
+                        text: "$2,100 works for us, let's book it.",
+                        quality: "weak",
+                        analytics: "Сдались без торговли."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "I appreciate the detailed breakdown and you're right about JIT premium.\nLet me be transparent - customer's budget is tight at $2,100 posted.\nBut I see your value with automotive experience and air ride.\nCan you meet me at $2,250? That's $2.88/mile, fair compromise?",
+                dispatcherPrompt: "💎 Брокер предложил компромисс. Торгуйтесь умно, покажите дополнительную ценность.",
+                suggestions: [
+                    {
+                        text: "I understand budget constraints, let's find middle ground.\nI can do $2,300 and here's what you get for that extra $50:\nGPS tracking with hourly updates, photos at pickup and delivery.\nDirect driver cell phone for real-time communication.\nIf we're even 1 hour late, I'll refund $100 - that's my guarantee.\nThat's $2.95/mile for premium service and peace of mind.",
+                        quality: "master",
+                        analytics: "Отлично! Добавили ценность и гарантию."
+                    },
+                    {
+                        text: "Can you do $2,275? That's $2.92/mile, my bottom line.\nWe'll provide GPS tracking and guarantee on-time delivery.",
+                        quality: "good",
+                        analytics: "Хорошо, но можно было держаться $2,300."
+                    },
+                    {
+                        text: "$2,250 works, let's book it now.",
+                        quality: "weak",
+                        analytics: "Сдались слишком быстро."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "You know what, I really like your confidence and the guarantee you're offering.\nLet me call the customer about $2,300 with your premium service package.\nThe hourly updates and on-time guarantee might justify the extra cost to them.\nIf they approve, we have a deal with GPS tracking and your $100 late guarantee, correct?",
+                dispatcherPrompt: "💎 Брокер продает вашу ценность клиенту! Подтвердите все обязательства.",
+                suggestions: [
+                    {
+                        text: "Absolutely, $2,300 and you have my word! Here's exactly what you'll get:\nGPS tracking link sent to you and customer within 1 hour of pickup.\nHourly text updates with location and ETA during transit.\nPhotos of cargo at pickup (securement) and delivery (condition).\nDirect driver cell: he'll answer 24/7 for any questions.\nIf we're late, $100 refund automatically - no questions asked.",
+                        quality: "master",
+                        analytics: "Отлично! Детальный план сервиса."
+                    },
+                    {
+                        text: "Yes, $2,300 confirmed with GPS tracking and on-time guarantee.\nWe'll provide all updates and photos as discussed, guaranteed delivery.",
+                        quality: "good",
+                        analytics: "Хорошо, подтвердили."
+                    },
+                    {
+                        text: "Yes, deal at $2,300 with tracking and guarantee.",
+                        quality: "weak",
+                        analytics: "Слишком коротко."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "Perfect! Customer approved $2,300 - they loved the service package and guarantee.\nYou just earned preferred carrier status for their automotive lanes!\nSending rate con now, what's your factoring company?",
+                dispatcherPrompt: "💎 Отлично! Груз ваш. Дайте factoring быстро и проактивно.",
+                suggestions: [
+                    {
+                        text: "Fantastic! We work with Saint Johns Capital for factoring.\nSending NOA to your email right now, you'll have it in 2 minutes.\nDriver will call shipper tonight to confirm 7 AM pickup tomorrow.\nWhat's shipper contact name and phone number?",
+                        quality: "master",
+                        analytics: "Отлично! Проактивность."
+                    },
+                    {
+                        text: "Great! Saint Johns Capital is our factoring, NOA coming now.\nWhat's the shipper contact information for tomorrow?",
+                        quality: "good",
+                        analytics: "Хорошо."
+                    },
+                    {
+                        text: "Saint Johns Capital, sending NOA now.",
+                        quality: "weak",
+                        analytics: "Слишком коротко."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "Excellent! Shipper is Dallas Auto Parts Distribution, contact James at 214-555-0123.\nAddress: 4567 Industrial Boulevard, Dallas TX 75201, dock 5.\nPickup window 7 AM - 9 AM, loading takes 1-2 hours.\nThey're very organized, usually done in 90 minutes.\nAny questions about pickup location or process?",
+                dispatcherPrompt: "💎 Брокер дал pickup детали. Задайте важные вопросы о процессе и грузе.",
+                suggestions: [
+                    {
+                        text: "Got it, dock 5, 7-9 AM window! Few questions:\nIs there gate code or special check-in procedure?\nHow is cargo packaged - palletized or crated?\nDo they provide load locks or should we bring our own?\nAny special securement requirements for transmission parts?",
+                        quality: "master",
+                        analytics: "Отлично! Детальные вопросы."
+                    },
+                    {
+                        text: "Understood, dock 5, 7-9 AM! Quick questions:\nAny gate code? How is cargo packaged?\nDo we need to bring load locks?",
+                        quality: "good",
+                        analytics: "Хорошо, базовые вопросы."
+                    },
+                    {
+                        text: "Got it, 7 AM at dock 5.",
+                        quality: "weak",
+                        analytics: "Упущена возможность."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "Great questions! No gate code, just check in at guard shack with BOL.\nCargo is palletized, 12 pallets, each about 3,000 lbs, shrink-wrapped.\nThey provide 4 load locks, but bring 2 extra for safety - transmission parts are heavy.\nSecurement: load locks every 8 feet, no special requirements beyond that.\nIs there lumper fee or do they load?",
+                dispatcherPrompt: "💎 Брокер ответил на вопросы. Уточните про lumper и спросите о delivery.",
+                suggestions: [
+                    {
+                        text: "Perfect, all clear! We'll bring 2 extra load locks for total 6.\nUnderstood on securement every 8 feet for heavy transmission parts.\nNow for delivery: what's receiver info, delivery window, and appointment requirements?\nAlso, is there detention policy if they're backed up?",
+                        quality: "master",
+                        analytics: "Отлично! Подтвердили и планируют delivery."
+                    },
+                    {
+                        text: "Got it, we'll bring extra load locks and secure properly.\nWhat's the delivery address and receiver contact?\nAny appointment needed?",
+                        quality: "good",
+                        analytics: "Хорошо, основные вопросы."
+                    },
+                    {
+                        text: "Understood, we'll handle the securement.",
+                        quality: "weak",
+                        analytics: "Не спросили о delivery."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "No lumper fee, shipper loads with forklift, but driver should supervise.\nDelivery is Atlanta Automotive Assembly, receiver Mike at 404-555-0189.\nAddress: 7890 Assembly Drive, Atlanta GA 30301, dock 3.\nDelivery window is 2 days from pickup, but earlier is better - they prefer morning.\nAppointment required, call Mike 4 hours before arrival.\nDetention: $75/hour after 2 hours free time.",
+                dispatcherPrompt: "💎 Все детали delivery получены. Уточните последние важные моменты.",
+                suggestions: [
+                    {
+                        text: "Perfect, all noted! Atlanta Automotive Assembly, Mike 404-555-0189, dock 3.\nWe'll call 4 hours ahead, aim for morning delivery day after tomorrow.\nLast questions: any routing restrictions or preferred route?\nWhat's your 24/7 contact for updates or issues?\nAny special requirements at delivery - photos, paperwork, scale ticket?",
+                        quality: "master",
+                        analytics: "Отлично! Планирование всех деталей."
+                    },
+                    {
+                        text: "Got it, will call Mike 4 hours before arrival.\nAny routing restrictions?\nWho to contact if any issues during transit?",
+                        quality: "good",
+                        analytics: "Хорошо, важные вопросы."
+                    },
+                    {
+                        text: "Understood, will call 4 hours ahead.",
+                        quality: "weak",
+                        analytics: "Упущены важные вопросы."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "Excellent questions! No routing restrictions, I-20 East is fastest route.\nMy cell 24/7: 214-555-9999, text or call anytime.\nAt delivery: yes, they require photos of cargo condition before unloading.\nNo scale ticket needed, but keep your pickup weight ticket just in case.\nAlso, they're very strict about appointment time - if you're going to be late, call immediately.",
+                dispatcherPrompt: "💎 Брокер дал все детали. Подтвердите понимание и спросите про оборудование.",
+                suggestions: [
+                    {
+                        text: "Perfect, I-20 East route, your cell saved as priority contact.\nWe'll take photos before unloading and keep weight ticket.\nUnderstood on appointment strictness - we'll call if any delays.\nOne more question: do they require any special equipment at delivery?\nLiftgate, pallet jack, or anything else we should have ready?",
+                        quality: "master",
+                        analytics: "Отлично! Детальное планирование."
+                    },
+                    {
+                        text: "Got it, I-20 route, will take photos and keep weight ticket.\nWe'll call if any delays, all clear on our end.\nAny special equipment needed at delivery?",
+                        quality: "good",
+                        analytics: "Хорошо."
+                    },
+                    {
+                        text: "Understood, I-20 route, will take photos.",
+                        quality: "weak",
+                        analytics: "Слишком коротко."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "No special equipment needed, they have forklift for unloading.\nJust make sure driver has his own straps and load locks for securement.\nOh, and one important thing - customer requires GPS tracking link.\nCan you send me Macropoint or your tracking system link after pickup?",
+                dispatcherPrompt: "💎 Брокер спросил про GPS tracking. Подтвердите и предложите дополнительный сервис.",
+                suggestions: [
+                    {
+                        text: "Absolutely! We use Samsara GPS tracking system.\nI'll send you tracking link within 30 minutes of pickup.\nYou'll see real-time location, speed, and ETA updates automatically.\nAlso, I'll text you personally when driver leaves Dallas, crosses into Louisiana, and arrives in Atlanta.\nWant me to add customer to tracking link too?",
+                        quality: "master",
+                        analytics: "Отлично! Проактивный сервис."
+                    },
+                    {
+                        text: "Yes, we have GPS tracking, I'll send link after pickup.\nYou'll get real-time updates throughout the trip.",
+                        quality: "good",
+                        analytics: "Хорошо."
+                    },
+                    {
+                        text: "Yes, I'll send tracking link after pickup.",
+                        quality: "weak",
+                        analytics: "Слишком коротко."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "That would be perfect! Yes, please add customer to tracking link.\nThey love seeing real-time updates, makes them feel secure about their parts.\nYour proactive communication is exactly why I approved the higher rate.\nAnything else you need from me, or are we all set?",
+                dispatcherPrompt: "💎 Брокер очень доволен. Подтвердите все детали и спросите про будущие возможности.",
+                suggestions: [
+                    {
+                        text: "We're all set! Let me confirm everything:\nPickup tomorrow 7 AM dock 5, Dallas Auto Parts, James 214-555-0123.\nDelivery Atlanta Automotive Assembly dock 3, Mike 404-555-0189, call 4 hours ahead.\n$2,300 rate, Saint Johns factoring, NOA sent.\nGPS tracking link to you and customer within 30 minutes of pickup.\nOne last question: you mentioned this customer has multiple automotive lanes.\nIf we perform well, are there opportunities for regular weekly loads?",
+                        quality: "master",
+                        analytics: "Отлично! Подтвердили все и планируют будущее."
+                    },
+                    {
+                        text: "All set on our end! Pickup tomorrow 7 AM, delivery in 2 days.\nWe'll send tracking link and keep you updated throughout.\nLooking forward to working with you!",
+                        quality: "good",
+                        analytics: "Хорошо."
+                    },
+                    {
+                        text: "All set, we're ready to go.",
+                        quality: "weak",
+                        analytics: "Слишком коротко."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "Perfect summary! Yes, this customer has 3-4 Dallas to Atlanta lanes weekly.\nIf you deliver on time with good communication, you'll be my first call.\nThey also have Dallas to Detroit, Dallas to Charlotte routes.\nI'm adding you to my preferred carrier list right now.\nSafe travels and text me when driver picks up tomorrow!",
+                dispatcherPrompt: "💎 Отличные новости о будущих грузах! Завершите профессионально.",
+                suggestions: [
+                    {
+                        text: "That's fantastic! 3-4 weekly lanes is exactly what we're looking for.\nWe run Dallas to Southeast regularly, so Detroit and Charlotte work perfect for us.\nYou'll get first text tomorrow at pickup with photos.\nThank you for the opportunity and trust - we won't let you down!\nFeel free to call anytime, we're here 24/7 to make your job easier.",
+                        quality: "master",
+                        analytics: "Отлично! Построение партнерства."
+                    },
+                    {
+                        text: "Excellent! We'd love to handle those regular lanes.\nWill text you tomorrow at pickup, looking forward to working together!",
+                        quality: "good",
+                        analytics: "Хорошо."
+                    },
+                    {
+                        text: "Great, will text you tomorrow.",
+                        quality: "weak",
+                        analytics: "Слишком коротко."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "I really appreciate your professionalism and attention to detail.\nThis is exactly the kind of carrier I need for my automotive customers.\nTalk to you tomorrow, looking forward to a great partnership!",
+                outcome: {
+                    type: "success",
+                    quality: "master",
+                    rate: "$2,300",
+                    ratePerMile: "$2.95/mile",
+                    relationship: "Preferred carrier - 3-4 weekly loads guaranteed",
+                    dialogueTime: "12-15 minutes",
+                    questionsAsked: "15+ detailed questions",
+                    detailLevel: "very high",
+                    futureOpportunity: "partnership",
+                    weeklyLoads: "3-4 loads",
+                    feedback: `🏆 МАСТЕР УРОВЕНЬ!
+
+✅ ЧТО СДЕЛАНО ПРАВИЛЬНО:
+- Показали специализацию в automotive с первого ответа - повысило доверие брокера
+- Обосновали ставку через JIT требования и market rate - получили $200 больше posted rate
+- Добавили ценность через GPS tracking, hourly updates, и on-time guarantee - выделились среди конкурентов
+- Задали ВСЕ критические вопросы о pickup, delivery, securement, equipment - показали профессионализм
+- Проактивно предложили добавить customer к tracking link - дополнительный сервис
+- Подтвердили все детали в конце - избежали недопонимания
+- Спросили про будущие возможности - обеспечили 3-4 груза в неделю
+
+⚠️ ЧТО МОЖНО УЛУЧШИТЬ:
+- Можно было спросить про backhaul возможности из Atlanta
+- Можно было уточнить про insurance requirements заранее
+
+💡 КЛЮЧЕВОЙ УРОК:
+Детальная коммуникация + добавленная ценность (GPS, гарантии) = высокие ставки и долгосрочные отношения
+
+🎯 ПРИМЕНЕНИЕ В РЕАЛЬНОСТИ:
+Всегда показывайте специализацию, добавляйте ценность через сервис, задавайте детальные вопросы, и планируйте будущее сотрудничество. Брокеры платят больше за надежность и коммуникацию.`
+                }
+            }
+        ]
+    }
+},
+
+    // ============================================
+// ============================================
+// ДИАЛОГ #3: Phoenix AZ → Denver CO (DRY VAN)
+// Стиль: 🏃 Торопливый + ⏰ Занятой брокер
+// Расстояние: 820 миль (MEDIUM HAUL)
+// ПРОБЛЕМНАЯ СИТУАЦИЯ: Водитель далеко + Брокер отказывается от Factoring
+// 18+ ШАГОВ ДЛЯ МАСТЕР ПУТИ
+// ============================================
+{
+    id: 3,
+        route: "Phoenix AZ → Denver CO",
+            distance: 820,
+                equipment: "Dry Van",
+                    brokerStyle: "Торопливый + Занятой",
+                        difficulty: "hard",
+
+                            initialMessage: "Good morning!\nThis is Carlos from Southwest Transport Solutions.\nI'm calling about your Phoenix to Denver dry van load.\nIs this still available?",
+
+                                paths: {
+        // МАСТЕР ПУТЬ (18 шагов) - с проблемной ситуацией
+        master: [
+            {
+                brokerQuestion: "Yeah, available.\nMC? Location? Equipment?\nNeed to book fast, got 3 other carriers calling.",
+                dispatcherPrompt: "💎 Брокер очень торопится. Дайте всю информацию быстро и четко.",
+                suggestions: [
+                    {
+                        text: "MC 889900, driver currently in Albuquerque NM finishing delivery.\nEmpty by 2 PM today, 420 miles from Phoenix, can deadhead overnight.\n2023 Kenworth with 53ft Utility dry van, swing doors, air ride, food grade clean.\nDriver has 10 hours available after reset tonight.",
+                        quality: "master",
+                        analytics: "Отлично! Вся информация сразу, показали решение проблемы с расстоянием."
+                    },
+                    {
+                        text: "MC 889900, driver in Albuquerque area with 53ft dry van.\nCan be in Phoenix tomorrow morning for pickup, truck is ready.",
+                        quality: "good",
+                        analytics: "Хорошо, но не указали точное расстояние и HOS."
+                    },
+                    {
+                        text: "MC 889900, dry van available, can pickup tomorrow.",
+                        quality: "weak",
+                        analytics: "Слишком мало информации для торопливого брокера."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "Albuquerque? That's 420 miles deadhead!\nLoad picks up tomorrow 6 AM Phoenix, can't wait for long deadhead.\nOther carriers are closer, why should I wait for you?",
+                dispatcherPrompt: "💎 Брокер сомневается из-за расстояния. Убедите его что вы стоите ожидания.",
+                suggestions: [
+                    {
+                        text: "I understand the concern, but here's why we're worth it:\nDriver leaves Albuquerque today at 2 PM, arrives Phoenix by 8 PM tonight.\nThat's 10 hours before your 6 AM pickup - plenty of time.\nWe're food grade specialists, 98% on-time record, never missed a pickup.\nPlus, I'm willing to absorb $100 of deadhead cost to make this work.\nYou get experienced carrier, guaranteed on-time, for competitive rate.",
+                        quality: "master",
+                        analytics: "Отлично! Решили проблему, показали ценность, предложили компромисс."
+                    },
+                    {
+                        text: "Driver can be there tonight, plenty of time before 6 AM pickup.\nWe're reliable carrier, never late, and willing to work on rate.\nWe really want this load.",
+                        quality: "good",
+                        analytics: "Хорошо, но не так убедительно."
+                    },
+                    {
+                        text: "We can make it on time, no problem with deadhead.",
+                        quality: "weak",
+                        analytics: "Не убедили брокера."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "Okay, you got my attention with the on-time record and deadhead absorption.\nVerified MC 889900 - 98% safety score, good.\nLoad is 40,000 lbs paper products, 18 pallets, food grade trailer required.\nPickup tomorrow 6 AM Phoenix Paper Mill, delivery Denver in 2 days.\nRate is $1,800 all-in, that's $2.20/mile.\nYes or no? Got other calls waiting.",
+                dispatcherPrompt: "💎 Брокер торопится с решением. Ставка низкая, но нужно торговаться быстро.",
+                suggestions: [
+                    {
+                        text: "I appreciate the quick decision, but let's be fair on rate.\n820 miles with 420 deadhead = 1,240 total miles for us.\n$1,800 means we're at $1.45/mile actual - that's below operating costs.\nI need $2,050 to make this work, that's $2.50/mile on loaded miles.\nStill competitive, and you get guaranteed on-time delivery from proven carrier.\nCan you do $2,050?",
+                        quality: "master",
+                        analytics: "Отлично! Быстро объяснили математику и обосновали ставку."
+                    },
+                    {
+                        text: "$1,800 is too low with our deadhead situation.\nI need at least $2,000 to cover expenses and deadhead.\nCan you do $2,000?",
+                        quality: "good",
+                        analytics: "Хорошо, но не так детально."
+                    },
+                    {
+                        text: "$1,800 works, let's book it now.",
+                        quality: "weak",
+                        analytics: "Потеряли деньги, не учли deadhead."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "Look, I get the deadhead math, but that's your problem, not mine.\nPosted rate is $1,800, market rate for this lane is $2.15-$2.25/mile.\nI can go to $1,900, that's $2.32/mile - fair for the lane.\nTake it or I'm calling next carrier, decide now.",
+                dispatcherPrompt: "💎 Брокер давит на решение. Торгуйтесь умно но быстро.",
+                suggestions: [
+                    {
+                        text: "I understand the pressure, let's meet in the middle.\n$1,975 and we have a deal right now - that's $2.41/mile.\nYou get food grade specialist, 98% on-time record, guaranteed 6 AM pickup.\nI'll send NOA in 5 minutes, driver confirmed for tonight arrival.\nDeal?",
+                        quality: "master",
+                        analytics: "Отлично! Быстрый компромисс с подтверждением ценности."
+                    },
+                    {
+                        text: "Can you do $1,950? That's my bottom line.\nWe'll guarantee on-time pickup and delivery.",
+                        quality: "good",
+                        analytics: "Хорошо, но можно было получить больше."
+                    },
+                    {
+                        text: "$1,900 works, let's book it.",
+                        quality: "weak",
+                        analytics: "Сдались слишком быстро."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "Fine, $1,975, but only because of your on-time record.\nFactoring or quick pay? I can do quick pay 2% fee, money in 2 days.\nOr standard NET 30 days. Choose fast.",
+                dispatcherPrompt: "💎 ПРОБЛЕМА! Брокер не предложил factoring. Объясните что работаете только через factoring.",
+                suggestions: [
+                    {
+                        text: "I appreciate the offer, but we work exclusively through factoring company.\nOur factoring is TBS Factoring, they handle all our payments.\nDo you work with factoring companies?\nIf yes, I can send NOA immediately and we're all set.\nIf not, unfortunately we can't take the load - company policy, no exceptions.",
+                        quality: "master",
+                        analytics: "Отлично! Четко объяснили политику и дали выбор."
+                    },
+                    {
+                        text: "We only work through factoring, company policy.\nOur factoring is TBS Factoring.\nCan you work with factoring?",
+                        quality: "good",
+                        analytics: "Хорошо, но коротко."
+                    },
+                    {
+                        text: "Quick pay works for us, 2% fee is fine.",
+                        quality: "weak",
+                        analytics: "ОШИБКА! Нарушили правило - только factoring!"
+                    }
+                ]
+            },
+            {
+                brokerResponse: "Factoring? Ugh, I hate dealing with factoring companies.\nThey take forever to process, always asking for extra documents.\nCan't you just take quick pay this one time? 2% is nothing.",
+                dispatcherPrompt: "💎 Брокер сопротивляется factoring. Стойте на своем, но будьте вежливы.",
+                suggestions: [
+                    {
+                        text: "I completely understand your frustration with factoring companies.\nBut our company policy is strict - all payments through factoring, no exceptions.\nGood news: TBS Factoring is very efficient, they process in 24 hours.\nI'll send NOA right now, you'll have it in 2 minutes.\nThey rarely ask for extra documents if rate con is complete.\nI've worked with hundreds of brokers through TBS, never had issues.\nCan you work with this, or should I pass on the load?",
+                        quality: "master",
+                        analytics: "Отлично! Понимание + твердость + решение проблемы."
+                    },
+                    {
+                        text: "I understand, but company policy is factoring only.\nTBS Factoring is fast and efficient, no problems.\nCan you work with factoring or not?",
+                        quality: "good",
+                        analytics: "Хорошо, твердо."
+                    },
+                    {
+                        text: "Sorry, only factoring, company policy.",
+                        quality: "weak",
+                        analytics: "Слишком коротко, не убедили."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "Alright, fine! I'll work with TBS Factoring this time.\nBut if they give me any problems, I'm not using you again.\nSend NOA now, I need it in 2 minutes like you said.\nWhat's shipper info so I can send rate con?",
+                dispatcherPrompt: "💎 Брокер согласился! Быстро дайте factoring и запросите детали.",
+                suggestions: [
+                    {
+                        text: "Perfect! Sending NOA to your email right now, you'll have it in 90 seconds.\nTBS Factoring contact: 800-555-0100 if you need anything.\nFor shipper info: what's the exact address, contact name and phone?\nAlso dock number and any gate code?\nI'll have driver call shipper tonight to confirm 6 AM pickup.",
+                        quality: "master",
+                        analytics: "Отлично! Быстро и проактивно."
+                    },
+                    {
+                        text: "Sending NOA now to your email.\nWhat's shipper address and contact info?",
+                        quality: "good",
+                        analytics: "Хорошо."
+                    },
+                    {
+                        text: "NOA coming now, send me shipper info.",
+                        quality: "weak",
+                        analytics: "Слишком коротко."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "Phoenix Paper Mill, 3456 Industrial Way, Phoenix AZ 85001.\nContact Steve, 602-555-0145, dock 8.\nPickup window 6 AM - 8 AM, loading takes 2 hours.\nNo gate code, just check in at office.\nAny other questions? Need to move fast.",
+                dispatcherPrompt: "💎 Брокер дал pickup детали и торопится. Задайте критические вопросы быстро.",
+                suggestions: [
+                    {
+                        text: "Got it! Steve 602-555-0145, dock 8, 6-8 AM window.\nQuick questions: is cargo palletized? Do they provide load locks?\nAny special handling for paper products?\nWhat's delivery address and receiver contact?",
+                        quality: "master",
+                        analytics: "Отлично! Быстрые критические вопросы."
+                    },
+                    {
+                        text: "Understood, dock 8, 6-8 AM.\nHow is cargo packaged?\nWhat's delivery info?",
+                        quality: "good",
+                        analytics: "Хорошо, базовые вопросы."
+                    },
+                    {
+                        text: "Got it, 6 AM at dock 8.",
+                        quality: "weak",
+                        analytics: "Упущены важные вопросы."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "Palletized, 18 pallets, they provide 6 load locks.\nPaper is heavy, secure it well, no special handling.\nDelivery: Denver Distribution Center, 5678 Warehouse Road, Denver CO 80201.\nReceiver Lisa, 303-555-0167, dock 12.\nDelivery in 2 days, call 4 hours ahead for appointment.\nAnything else?",
+                dispatcherPrompt: "💎 Брокер дал delivery детали. Уточните последние важные моменты быстро.",
+                suggestions: [
+                    {
+                        text: "Perfect! Lisa 303-555-0167, dock 12, call 4 hours ahead.\nLast questions: detention policy? Your 24/7 contact?\nAny routing restrictions or preferred route?\nThat's all I need, we're ready to roll!",
+                        quality: "master",
+                        analytics: "Отлично! Быстрые финальные вопросы."
+                    },
+                    {
+                        text: "Got it, will call 4 hours ahead.\nDetention policy? Your contact number?",
+                        quality: "good",
+                        analytics: "Хорошо."
+                    },
+                    {
+                        text: "All clear, we're ready.",
+                        quality: "weak",
+                        analytics: "Упущены важные детали."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "Detention $75/hour after 2 hours free time.\nMy cell 602-555-9999, text only, don't call unless emergency.\nNo routing restrictions, I-17 to I-40 to I-25 is fastest.\nWe done? I got 5 other loads to book.",
+                dispatcherPrompt: "💎 Брокер очень торопится закончить. Подтвердите все и завершите быстро.",
+                suggestions: [
+                    {
+                        text: "We're done! Quick summary:\nDriver arrives Phoenix tonight, pickup 6 AM dock 8 tomorrow.\nDelivery Denver in 2 days, call Lisa 4 hours ahead.\n$1,975 rate, TBS Factoring, NOA sent.\nI'll text you when driver picks up tomorrow.\nThanks for working with factoring!",
+                        quality: "master",
+                        analytics: "Отлично! Быстрое подтверждение всех деталей."
+                    },
+                    {
+                        text: "All set! Pickup tomorrow 6 AM, delivery in 2 days.\nWill text you at pickup, thanks!",
+                        quality: "good",
+                        analytics: "Хорошо."
+                    },
+                    {
+                        text: "Done, thanks.",
+                        quality: "weak",
+                        analytics: "Слишком коротко."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "Good. Text me at pickup, don't forget.\nIf TBS Factoring gives me problems, you're off my list.\nOtherwise, I got more Phoenix to Denver loads weekly.\nGotta go, other line ringing.",
+                dispatcherPrompt: "💎 Брокер предупредил о factoring и упомянул будущие грузы. Заверьте его.",
+                suggestions: [
+                    {
+                        text: "Understood! TBS won't give you problems, I guarantee it.\nIf any issues, call me directly and I'll handle it.\nWe'd love those weekly Phoenix-Denver lanes.\nYou won't regret working with us - we'll prove it on this load.\nTalk to you tomorrow at pickup!",
+                        quality: "master",
+                        analytics: "Отлично! Заверили и показали интерес к будущему."
+                    },
+                    {
+                        text: "No problems with TBS, I promise.\nLooking forward to more loads, talk tomorrow!",
+                        quality: "good",
+                        analytics: "Хорошо."
+                    },
+                    {
+                        text: "Okay, talk tomorrow.",
+                        quality: "weak",
+                        analytics: "Слишком коротко."
+                    }
+                ]
+            },
+            {
+                brokerResponse: "Alright, we'll see how it goes. Later.",
+                outcome: {
+                    type: "success",
+                    quality: "master",
+                    rate: "$1,975",
+                    ratePerMile: "$2.41/mile",
+                    relationship: "Conditional - Prove yourself, then weekly loads possible",
+                    dialogueTime: "8-10 minutes",
+                    questionsAsked: "10+ quick critical questions",
+                    detailLevel: "high",
+                    futureOpportunity: "repeat",
+                    weeklyLoads: "2-3 loads if perform well",
+                    feedback: `🏆 МАСТЕР УРОВЕНЬ!
+
+✅ ЧТО СДЕЛАНО ПРАВИЛЬНО:
+- Решили проблему с deadhead (420 миль) - объяснили план прибытия вечером
+- Предложили абсорбировать $100 deadhead cost - показали гибкость
+- Быстро обосновали ставку через математику deadhead - получили $175 больше posted rate
+- СТОЯЛИ НА СВОЕМ с factoring - не нарушили правило компании несмотря на давление
+- Объяснили преимущества TBS Factoring - убедили брокера работать с factoring
+- Работали в темпе брокера - быстрые ответы, критические вопросы только
+- Заверили брокера что TBS не создаст проблем - построили доверие
+- Показали интерес к будущим грузам - открыли дверь для 2-3 weekly loads
+
+⚠️ ЧТО МОЖНО УЛУЧШИТЬ:
+- Можно было спросить про lumper fee
+- Можно было уточнить про weight distribution для тяжелой бумаги
+
+💡 КЛЮЧЕВОЙ УРОК:
+Даже с проблемами (deadhead, factoring resistance) можно получить груз через быстрое решение проблем и твердость в правилах компании
+
+🎯 ПРИМЕНЕНИЕ В РЕАЛЬНОСТИ:
+Когда водитель далеко - объясните план прибытия и предложите компромисс на deadhead. Когда брокер отказывается от factoring - будьте вежливы но тверды, объясните преимущества. Работайте в темпе брокера - торопливые брокеры ценят скорость и четкость.`
+                }
+            }
+        ]
+    }
+}
+];

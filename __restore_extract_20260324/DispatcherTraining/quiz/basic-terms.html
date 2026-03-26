@@ -1,0 +1,537 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📚 Основные термины - Тест</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #0a0e1a;
+  color: #ffffff;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.header h1 {
+  font-size: 36px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 20px 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #8b5cf6, #ec4899);
+  transition: width 0.3s;
+  width: 0%;
+}
+
+.question-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 40px;
+  margin-bottom: 30px;
+}
+
+.question-number {
+  color: #8b5cf6;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.question-text {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 32px;
+  line-height: 1.4;
+}
+
+.answers {
+  display: grid;
+  gap: 16px;
+}
+
+.answer-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  color: white;
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.answer-btn:hover {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.5);
+  transform: translateX(8px);
+}
+
+.answer-btn.correct {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: #22c55e;
+}
+
+.answer-btn.wrong {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+}
+
+.answer-btn.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.next-btn {
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  border: none;
+  border-radius: 12px;
+  padding: 16px 32px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: none;
+  margin: 20px auto;
+  transition: transform 0.3s;
+}
+
+.next-btn:hover {
+  transform: scale(1.05);
+}
+
+.result-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 60px 40px;
+  text-align: center;
+  display: none;
+}
+
+.result-score {
+  font-size: 72px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 20px;
+}
+
+.result-text {
+  font-size: 24px;
+  margin-bottom: 40px;
+  color: #94a3b8;
+}
+
+.result-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  color: white;
+  border: none;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .question-card {
+    padding: 24px;
+  }
+  
+  .question-text {
+    font-size: 20px;
+  }
+  
+  .result-card {
+    padding: 40px 24px;
+  }
+  
+  .result-score {
+    font-size: 56px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>📚 Основные термины</h1>
+    <p style="color: #94a3b8;">Тест на знание базовой терминологии</p>
+  </div>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress"></div>
+  </div>
+
+  <div id="quiz-container"></div>
+  
+  <button class="next-btn" id="next-btn">Следующий вопрос →</button>
+
+  <div class="result-card" id="result-card">
+    <div class="result-score" id="result-score"></div>
+    <div class="result-text" id="result-text"></div>
+    <div class="result-buttons">
+      <button class="btn btn-primary" onclick="location.reload()">🔄 Пройти снова</button>
+      <a href="index.html" class="btn btn-secondary">← Все тесты</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {
+    question: "Что означает термин BOL?",
+    answers: [
+      "Bill of Lading (Коносамент)",
+      "Book of Loads (Книга грузов)",
+      "Broker Online List",
+      "Basic Operation License"
+    ],
+    correct: 0
+  },
+  {
+    question: "Что такое Dry Van?",
+    answers: [
+      "Рефрижератор без охлаждения",
+      "Закрытый фургон без температурного контроля",
+      "Открытая платформа",
+      "Цистерна для жидкостей"
+    ],
+    correct: 1
+  },
+  {
+    question: "Что означает термин Deadhead?",
+    answers: [
+      "Груз с истекшим сроком годности",
+      "Поездка без груза",
+      "Отмененный заказ",
+      "Неисправный трейлер"
+    ],
+    correct: 1
+  },
+  {
+    question: "Что такое Rate Confirmation?",
+    answers: [
+      "Подтверждение оплаты",
+      "Документ с подтверждением ставки и условий перевозки",
+      "Рейтинг водителя",
+      "Подтверждение доставки"
+    ],
+    correct: 1
+  },
+  {
+    question: "Что означает MC Number?",
+    answers: [
+      "Motor Carrier Number - номер перевозчика",
+      "Main Contract Number",
+      "Maximum Capacity Number",
+      "Maintenance Certificate Number"
+    ],
+    correct: 0
+  },
+  {
+    question: "Что такое Reefer?",
+    answers: [
+      "Открытая платформа",
+      "Рефрижератор с температурным контролем",
+      "Цистерна",
+      "Контейнер"
+    ],
+    correct: 1
+  },
+  {
+    question: "Что означает термин Detention?",
+    answers: [
+      "Отмена груза",
+      "Плата за задержку при погрузке/разгрузке",
+      "Штраф за опоздание",
+      "Дополнительная страховка"
+    ],
+    correct: 1
+  },
+  {
+    question: "Что такое Flatbed?",
+    answers: [
+      "Закрытый фургон",
+      "Открытая платформа без бортов",
+      "Рефрижератор",
+      "Цистерна"
+    ],
+    correct: 1
+  },
+  {
+    question: "Что означает DOT?",
+    answers: [
+      "Department of Transportation",
+      "Driver Operation Test",
+      "Delivery On Time",
+      "Document of Transfer"
+    ],
+    correct: 0
+  },
+  {
+    question: "Что такое Lumper Fee?",
+    answers: [
+      "Плата за топливо",
+      "Плата за погрузку/разгрузку груза",
+      "Штраф за повреждение",
+      "Комиссия брокера"
+    ],
+    correct: 1
+  },
+  {
+    question: "Что означает термин TONU?",
+    answers: [
+      "Truck On New Use",
+      "Truck Ordered Not Used - заказанный, но не использованный грузовик",
+      "Total Operation Number Updated",
+      "Transport Order Number Unified"
+    ],
+    correct: 1
+  },
+  {
+    question: "Что такое Step Deck?",
+    answers: [
+      "Двухэтажный трейлер",
+      "Платформа с пониженной задней частью",
+      "Закрытый фургон",
+      "Рефрижератор"
+    ],
+    correct: 1
+  },
+  {
+    question: "Что означает термин Backhaul?",
+    answers: [
+      "Возврат груза отправителю",
+      "Груз на обратном пути",
+      "Отмена доставки",
+      "Дополнительная погрузка"
+    ],
+    correct: 1
+  },
+  {
+    question: "Что такое Power Only?",
+    answers: [
+      "Груз только с электроникой",
+      "Предоставление только тягача без трейлера",
+      "Экстренная доставка",
+      "Груз с батареями"
+    ],
+    correct: 1
+  },
+  {
+    question: "Что означает термин Layover?",
+    answers: [
+      "Перегрузка товара",
+      "Остановка водителя на ночь или выходные",
+      "Отмена рейса",
+      "Дополнительная страховка"
+    ],
+    correct: 1
+  },
+  {
+    question: "Что такое Hot Shot?",
+    answers: [
+      "Груз с высокой температурой",
+      "Срочная экспресс-доставка",
+      "Опасный груз",
+      "Груз с оружием"
+    ],
+    correct: 1
+  },
+  {
+    question: "Что означает LTL?",
+    answers: [
+      "Long Term Load",
+      "Less Than Truckload - частичная загрузка",
+      "Local Transport License",
+      "Limited Time Loading"
+    ],
+    correct: 1
+  },
+  {
+    question: "Что такое FTL?",
+    answers: [
+      "Fast Transport Line",
+      "Full Truckload - полная загрузка",
+      "Federal Transport Law",
+      "Freight Transfer License"
+    ],
+    correct: 1
+  },
+  {
+    question: "Что означает термин Accessorial Charges?",
+    answers: [
+      "Основная стоимость перевозки",
+      "Дополнительные сборы за услуги",
+      "Страховые взносы",
+      "Налоги"
+    ],
+    correct: 1
+  },
+  {
+    question: "Что такое Tanker?",
+    answers: [
+      "Закрытый фургон",
+      "Цистерна для жидких или газообразных грузов",
+      "Рефрижератор",
+      "Платформа"
+    ],
+    correct: 1
+  }
+];
+
+let currentQuestion = 0;
+let score = 0;
+let answered = false;
+
+function loadQuestion() {
+  answered = false;
+  const q = questions[currentQuestion];
+  const container = document.getElementById('quiz-container');
+  
+  container.innerHTML = `
+    <div class="question-card">
+      <div class="question-number">Вопрос ${currentQuestion + 1} из ${questions.length}</div>
+      <div class="question-text">${q.question}</div>
+      <div class="answers">
+        ${q.answers.map((answer, index) => `
+          <button class="answer-btn" onclick="checkAnswer(${index})">${answer}</button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  
+  updateProgress();
+  document.getElementById('next-btn').style.display = 'none';
+}
+
+function checkAnswer(selected) {
+  if (answered) return;
+  answered = true;
+  
+  const q = questions[currentQuestion];
+  const buttons = document.querySelectorAll('.answer-btn');
+  
+  buttons.forEach((btn, index) => {
+    btn.classList.add('disabled');
+    if (index === q.correct) {
+      btn.classList.add('correct');
+    }
+    if (index === selected && selected !== q.correct) {
+      btn.classList.add('wrong');
+    }
+  });
+  
+  if (selected === q.correct) {
+    score++;
+  }
+  
+  document.getElementById('next-btn').style.display = 'block';
+}
+
+function nextQuestion() {
+  currentQuestion++;
+  if (currentQuestion < questions.length) {
+    loadQuestion();
+  } else {
+    showResults();
+  }
+}
+
+function updateProgress() {
+  const progress = ((currentQuestion + 1) / questions.length) * 100;
+  document.getElementById('progress').style.width = progress + '%';
+}
+
+function showResults() {
+  document.getElementById('quiz-container').style.display = 'none';
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('progress').style.width = '100%';
+  
+  const percentage = Math.round((score / questions.length) * 100);
+  const resultCard = document.getElementById('result-card');
+  const resultScore = document.getElementById('result-score');
+  const resultText = document.getElementById('result-text');
+  
+  resultScore.textContent = percentage + '%';
+  
+  if (percentage >= 90) {
+    resultText.textContent = '🎉 Отлично! Вы отлично знаете терминологию!';
+  } else if (percentage >= 70) {
+    resultText.textContent = '👍 Хорошо! Но есть куда расти.';
+  } else if (percentage >= 50) {
+    resultText.textContent = '📚 Неплохо, но стоит повторить материал.';
+  } else {
+    resultText.textContent = '💪 Нужно больше практики!';
+  }
+  
+  resultCard.style.display = 'block';
+}
+
+document.getElementById('next-btn').addEventListener('click', nextQuestion);
+
+loadQuestion();
+</script>
+
+</body>
+</html>

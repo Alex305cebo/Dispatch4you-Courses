@@ -1,0 +1,2389 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль 8: Управление водителями | DispatcherPro</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="stylesheet" href="../interactive-modules.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #f093fb;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary: #b8c5d6;
+            --text-muted: #8892aa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.1);
+            --audio-primary: #ff6b6b;
+            --audio-secondary: #4ecdc4;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
+            padding-top: 100px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -10%;
+            left: -10%;
+            width: 120%;
+            height: 120%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1), transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(240, 147, 251, 0.1), transparent 50%);
+            animation: backgroundMove 20s ease infinite;
+            z-index: -1;
+        }
+
+        @keyframes backgroundMove {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            25% {
+                transform: translate(5%, 5%) scale(1.05);
+            }
+
+            50% {
+                transform: translate(-5%, 5%) scale(1.1);
+            }
+
+            75% {
+                transform: translate(5%, -5%) scale(1.05);
+            }
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 0;
+            background: rgba(7, 11, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            min-height: 80px;
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateX(-3px);
+        }
+
+        .module-info {
+            text-align: center;
+        }
+
+        .module-number {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .module-title {
+            font-size: 18px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .sector-wrapper {
+            position: relative;
+            margin-bottom: 60px;
+        }
+
+        .sector-number {
+            position: absolute;
+            left: -120px;
+            top: 30px;
+            font-size: 72px;
+            font-weight: 900;
+            color: rgba(102, 126, 234, 0.1);
+            line-height: 1;
+            user-select: none;
+        }
+
+        .content-block {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            transition: all 0.3s ease;
+        }
+
+        .content-block:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+
+        .block-title {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+            flex: 1;
+        }
+
+        .audio-container {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .audio-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--audio-primary), var(--audio-secondary));
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .audio-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.5);
+        }
+
+        .audio-btn .play-icon {
+            font-size: 24px;
+            color: white;
+            margin-left: 3px;
+        }
+
+        .audio-btn .pause-icon {
+            font-size: 20px;
+            color: white;
+            display: none;
+        }
+
+        .audio-btn.playing .play-icon {
+            display: none;
+        }
+
+        .audio-btn.playing .pause-icon {
+            display: block;
+        }
+
+        .audio-btn.playing {
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.7), 0 0 0 10px rgba(255, 107, 107, 0.1);
+            }
+
+            100% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+        }
+
+        .progress-ring {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            transform: rotate(-90deg);
+            z-index: 1;
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 5;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: var(--audio-primary);
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-dasharray: 201.06;
+            stroke-dashoffset: 201.06;
+            transition: stroke-dashoffset 0.1s ease;
+            filter: drop-shadow(0 0 4px rgba(255, 107, 107, 0.5));
+        }
+
+        .progress-ring-interactive {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            cursor: pointer;
+            z-index: 5;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        .progress-ring-interactive.seekable {
+            pointer-events: auto;
+            background: radial-gradient(circle, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.01) 60%, rgba(255, 255, 255, 0.01) 100%);
+        }
+
+        .audio-duration {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .audio-container:hover .audio-duration,
+        .audio-container.playing .audio-duration {
+            opacity: 1;
+        }
+
+        .mobile-progress-bar {
+            display: none;
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .mobile-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--audio-primary), var(--audio-secondary));
+            border-radius: 2px;
+            transition: width 0.1s ease;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-progress-bar {
+                display: block;
+            }
+
+            .progress-ring,
+            .progress-ring-interactive {
+                display: none !important;
+            }
+
+            .audio-duration {
+                bottom: -50px;
+            }
+        }
+
+        .block-content {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .block-content h3 {
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            margin: 25px 0 15px 0;
+        }
+
+        .block-content h4 {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            margin: 20px 0 10px 0;
+        }
+
+        .block-content ul,
+        .block-content ol {
+            margin: 15px 0 15px 25px;
+        }
+
+        .block-content li {
+            margin-bottom: 8px;
+        }
+
+        .block-content strong {
+            color: var(--text-primary);
+        }
+
+        .info-highlight {
+            background: rgba(102, 126, 234, 0.08);
+            border-left: 4px solid #667eea;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .warning-highlight {
+            background: rgba(251, 146, 60, 0.08);
+            border-left: 4px solid #fb923c;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .success-highlight {
+            background: rgba(52, 211, 153, 0.08);
+            border-left: 4px solid #34d399;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .case-study {
+            background: rgba(102, 126, 234, 0.08);
+            border-left: 4px solid #667eea;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 32px 0;
+        }
+
+        .case-study h4 {
+            color: #a5b4fc;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .quiz-block {
+            background: rgba(167, 139, 250, 0.08);
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            border-radius: 16px;
+            padding: 32px;
+            margin: 32px 0;
+        }
+
+        .quiz-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+
+        .quiz-question {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 18px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quiz-option:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+        }
+
+        .quiz-option.incorrect {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--danger);
+        }
+
+        .option-letter {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 50%;
+            font-weight: 700;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .option-text {
+            flex: 1;
+            color: var(--text-secondary);
+        }
+
+        .quiz-feedback {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--success);
+            border-radius: 8px;
+            color: var(--text-primary);
+        }
+
+        .quiz-feedback.show {
+            display: block;
+        }
+
+        /* Audio Completion Button */
+        .audio-completion-btn {
+            display: block;
+            width: 100%;
+            padding: 16px 24px;
+            margin: 30px 0 0 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .audio-completion-btn:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .audio-completion-btn.completed {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(52, 211, 153, 0.2));
+            border-color: var(--success);
+            cursor: default;
+        }
+
+        /* Case Study Block */
+        .case-study-block {
+            background: rgba(240, 147, 251, 0.05);
+            border: 1px solid rgba(240, 147, 251, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px 0 0 0;
+            transition: all 0.3s ease;
+        }
+
+        .case-study-block:hover {
+            background: rgba(240, 147, 251, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(240, 147, 251, 0.2);
+        }
+
+        .case-study-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .case-study-icon {
+            font-size: 32px;
+        }
+
+        .case-study-title {
+            font-size: 1.4rem;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .case-study-content p {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        .case-study-content ul {
+            margin: 15px 0 15px 25px;
+        }
+
+        .case-study-content li {
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .case-study-content strong {
+            color: var(--text-primary);
+        }
+
+        .case-study-highlight {
+            background: rgba(240, 147, 251, 0.1);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Quick Check Block */
+        .quick-check-block {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px 0 0 0;
+            transition: all 0.3s ease;
+            position: relative;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .quick-check-block.locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .quick-check-block.locked>* {
+            pointer-events: none;
+        }
+
+        .quick-check-block.locked .audio-completion-btn {
+            pointer-events: auto;
+            opacity: 1;
+            cursor: pointer;
+        }
+
+        .quick-check-block.locked::after {
+            content: '🔒 Прослушайте аудио';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px 30px;
+            border-radius: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: center;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        /* Unlocked state - explicitly set */
+        .quick-check-block:not(.locked) {
+            opacity: 1;
+            pointer-events: auto;
+            cursor: default;
+        }
+
+        .quick-check-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .quick-check-icon {
+            font-size: 32px;
+        }
+
+        .quick-check-title {
+            font-size: 1.4rem;
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .quick-check-content {
+            color: var(--text-secondary);
+        }
+
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .progress-info {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 10px auto;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            width: 42%;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 90px;
+            }
+
+            .header {
+                padding: 15px 0;
+                min-height: 70px;
+            }
+
+            .main {
+                padding: 20px 15px;
+            }
+
+            .sector-number {
+                display: none;
+            }
+
+            .content-block {
+                padding: 20px 15px;
+            }
+
+            .block-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .block-title {
+                font-size: 1.4rem;
+            }
+
+            .audio-container {
+                align-self: center;
+            }
+
+            .lesson-nav {
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px 15px;
+            }
+
+            .nav-btn {
+                width: 100%;
+            }
+
+            .progress-bar {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="modules-index.html" class="back-btn">
+                <span>←</span>
+                <span>Назад к модулям</span>
+            </a>
+            <div class="module-info">
+                <div class="module-number">Модуль 8 из 12</div>
+                <div class="module-title">Управление водителями</div>
+            </div>
+            <div style="width: 150px;"></div>
+        </nav>
+    </header>
+
+    <main class="main">
+
+        <!-- СЕКТОР 1: Найм и отбор водителей -->
+        <div class="sector-wrapper">
+            <div class="sector-number">01</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">👥 Найм и отбор водителей</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio1')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio1')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio1')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>👥 Почему найм водителей критически важен?</h3>
+                    <p><strong>Водитель</strong> - лицо вашей компании на дороге. Плохой водитель = потеря денег,
+                        репутации, и клиентов.</p>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Стоимость плохого найма:</h4>
+                        <ul>
+                            <li><strong>Turnover cost:</strong> $8,000-12,000 на замену одного водителя (реклама,
+                                обучение, downtime)</li>
+                            <li><strong>Accidents:</strong> Один accident = $50,000-500,000 убытка (ремонт, insurance,
+                                lawsuits)</li>
+                            <li><strong>CSA points:</strong> Violations снижают safety rating компании</li>
+                            <li><strong>Потеря грузов:</strong> Ненадежный водитель отказывается от груза в последний
+                                момент</li>
+                            <li><strong>Репутация:</strong> Плохое обслуживание = потеря постоянных клиентов</li>
+                        </ul>
+                    </div>
+
+                    <h3>📋 Требования к водителям (DOT/FMCSA)</h3>
+                    <div class="success-highlight">
+                        <h4>✅ Обязательные требования:</h4>
+                        <ul>
+                            <li><strong>Возраст:</strong> Минимум 21 год для interstate (18 для intrastate)</li>
+                            <li><strong>CDL License:</strong> Class A CDL (для semi-trucks)</li>
+                            <li><strong>Medical Certificate:</strong> DOT physical exam (действителен 2 года)</li>
+                            <li><strong>Clean MVR:</strong> Motor Vehicle Record без серьезных нарушений</li>
+                            <li><strong>Drug Test:</strong> Pre-employment drug screening (обязательно!)</li>
+                            <li><strong>Background Check:</strong> Проверка криминального прошлого</li>
+                            <li><strong>Employment History:</strong> Минимум 3 года работы (для insurance)</li>
+                        </ul>
+                    </div>
+
+                    <h3>🔍 Процесс найма водителя</h3>
+                    <ol>
+                        <li><strong>Реклама вакансии:</strong> Indeed, Craigslist, Facebook Groups, CDL schools</li>
+                        <li><strong>Screening резюме:</strong> Проверка опыта, CDL, gaps в работе</li>
+                        <li><strong>Телефонное интервью:</strong> 15-20 минут, базовые вопросы</li>
+                        <li><strong>Проверка MVR:</strong> Заказать Motor Vehicle Record ($10-30)</li>
+                        <li><strong>Проверка PSP:</strong> Pre-Employment Screening Program (FMCSA, $10)</li>
+                        <li><strong>Личное интервью:</strong> 30-60 минут, детальные вопросы</li>
+                        <li><strong>Drug test:</strong> Обязательный pre-employment screening</li>
+                        <li><strong>Road test:</strong> Проверка навыков вождения (backing, parking, highway)</li>
+                        <li><strong>Employment verification:</strong> Звонки предыдущим работодателям</li>
+                        <li><strong>Offer letter:</strong> Письменное предложение с условиями</li>
+                    </ol>
+
+                    <h3>❓ Ключевые вопросы на интервью</h3>
+                    <div class="info-highlight">
+                        <h4>💡 Что спрашивать:</h4>
+                        <ul>
+                            <li><strong>"Почему вы ушли с последней работы?"</strong> - Красный флаг если конфликты с
+                                dispatcher</li>
+                            <li><strong>"Сколько accidents/violations за последние 3 года?"</strong> - Проверьте MVR
+                            </li>
+                            <li><strong>"Какой ваш средний MPG?"</strong> - Хороший водитель знает свои показатели</li>
+                            <li><strong>"Как вы планируете маршрут?"</strong> - Проверка знания HOS, truck stops</li>
+                            <li><strong>"Что делаете если груз не готов?"</strong> - Проверка коммуникации</li>
+                            <li><strong>"Готовы ли к OTR (over-the-road)?"</strong> - 2-3 недели в дороге</li>
+                            <li><strong>"Какая ваша ожидаемая зарплата?"</strong> - Реалистичные ожидания?</li>
+                        </ul>
+                    </div>
+
+                    <h3>🚨 Красные флаги при найме</h3>
+                    <ul>
+                        <li>❌ <strong>Частая смена работы:</strong> 3+ работодателя за год - проблемный водитель</li>
+                        <li>❌ <strong>Gaps в employment:</strong> Длительные перерывы без объяснения</li>
+                        <li>❌ <strong>Плохие отзывы:</strong> Предыдущие работодатели не рекомендуют</li>
+                        <li>❌ <strong>Violations на MVR:</strong> DUI, reckless driving, suspended license</li>
+                        <li>❌ <strong>Нереалистичные ожидания:</strong> "Хочу $2,000/неделю гарантированно"</li>
+                        <li>❌ <strong>Плохая коммуникация:</strong> Не отвечает на звонки/emails вовремя</li>
+                        <li>❌ <strong>Negative attitude:</strong> Жалуется на всех предыдущих работодателей</li>
+                    </ul>
+
+                    <h3>💰 Структура оплаты водителей</h3>
+                    <div class="success-highlight">
+                        <h4>✅ Типы оплаты:</h4>
+                        <ul>
+                            <li><strong>Per Mile:</strong> $0.40-0.70/миля (стандарт для OTR)</li>
+                            <li><strong>Percentage:</strong> 25-30% от gross revenue (для owner-operators)</li>
+                            <li><strong>Hourly:</strong> $18-25/час (для local routes)</li>
+                            <li><strong>Flat Rate:</strong> $800-1,500/неделю (гарантированная зарплата)</li>
+                            <li><strong>Hybrid:</strong> Base + per mile bonus (например, $500/неделю + $0.10/миля)</li>
+                        </ul>
+                        <p><strong>Средняя зарплата OTR driver:</strong> $50,000-70,000/год ($1,000-1,400/неделю)</p>
+                    </div>
+                </div>
+                <p><strong>Плюсы:</strong> Минимальный deadhead, максимальная прибыль</p>
+                <p><strong>Минусы:</strong> Требует планирования и поиска backhaul</p>
+                <p><strong>Пример:</strong> LA → Phoenix ($1,800) + Phoenix → LA ($1,600) = $3,400 за 760 миль
+                </p>
+        </div>
+
+        </div>
+        </div>
+        </section>
+
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">💼</span>
+                <h3 class="case-study-title">Case Study: Плохой найм стоил $25,000</h3>
+            </div>
+            <div class="case-study-content">
+                <p><strong>Ситуация:</strong> Компания срочно нуждалась в водителе. Наняли кандидата без тщательной
+                    проверки.</p>
+                <p><strong>Что пропустили:</strong></p>
+                <ul>
+                    <li><strong>Не проверили MVR:</strong> У водителя было 2 DUI за последние 3 года</li>
+                    <li><strong>Не позвонили предыдущему работодателю:</strong> Его уволили за отказ от грузов</li>
+                    <li><strong>Пропустили drug test:</strong> "Сделаем позже" - никогда не сделали</li>
+                    <li><strong>Не проверили PSP:</strong> 5 violations за последний год</li>
+                </ul>
+                <p><strong>Последствия:</strong></p>
+                <ul>
+                    <li>Через 2 недели водитель отказался от груза в середине маршрута</li>
+                    <li>Через месяц попал в accident - $15,000 ремонт трака</li>
+                    <li>Insurance отказалась платить - водитель не прошел drug test</li>
+                    <li>DOT audit - штраф $5,000 за нарушение hiring procedures</li>
+                    <li>Потеря 2 постоянных клиентов из-за ненадежности</li>
+                </ul>
+                <div class="case-study-highlight">
+                    <strong>Итог:</strong> Total $25,000+ убытка + потеря репутации. Урок: НИКОГДА не пропускайте
+                    проверки при найме! $100 на MVR/PSP могли сэкономить $25,000.
+                </div>
+            </div>
+        </div>
+        </section>
+
+        <div class="quick-check-block locked" id="quiz-1" data-quiz-id="quiz-8-1" data-correct-answer="c">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">✅</span>
+                <h3 class="quick-check-title">Быстрая проверка</h3>
+            </div>
+            <div class="quick-check-content">
+                <p class="quiz-question"><strong>Вопрос:</strong> Что является обязательным при найме водителя?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" data-answer="a">
+                        <span class="option-letter">A</span>
+                        <span class="option-text">Минимум 5 лет опыта</span>
+                    </div>
+                    <div class="quiz-option" data-answer="b">
+                        <span class="option-letter">B</span>
+                        <span class="option-text">Собственный трак</span>
+                    </div>
+                    <div class="quiz-option" data-answer="c">
+                        <span class="option-letter">C</span>
+                        <span class="option-text">Pre-employment drug test</span>
+                    </div>
+                    <div class="quiz-option" data-answer="d">
+                        <span class="option-letter">D</span>
+                        <span class="option-text">Рекомендации от 5 работодателей</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback">
+                    <strong>Правильно! ✓</strong> Pre-employment drug test обязателен по федеральным правилам DOT/FMCSA.
+                    Также обязательны: CDL, DOT physical, MVR check, но drug test - критически важен!
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio1', 'quiz-1')">
+                🎧 Я закончил слушать этот блок
+            </button>
+        </div>
+        </div>
+
+        <!-- СЕКТОР 2: Мотивация и удержание -->
+        <div class="sector-wrapper">
+            <div class="sector-number">02</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">💪 Мотивация и удержание</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio2')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio2')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio2')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>📉 Проблема turnover в trucking индустрии</h3>
+                    <p><strong>Driver turnover rate</strong> в США: 80-95% в год! Это означает что компания теряет почти
+                        всех водителей каждый год.</p>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Почему водители уходят:</h4>
+                        <ul>
+                            <li><strong>Низкая зарплата:</strong> 45% - главная причина (ожидают $60K+, получают $45K)
+                            </li>
+                            <li><strong>Плохая коммуникация:</strong> 30% - dispatcher не отвечает, не слушает</li>
+                            <li><strong>Мало home time:</strong> 25% - 3-4 недели в дороге без перерыва</li>
+                            <li><strong>Плохие грузы:</strong> 20% - постоянные short hauls, низкие мили</li>
+                            <li><strong>Нет уважения:</strong> 18% - чувствуют себя "просто номером"</li>
+                            <li><strong>Проблемы с оборудованием:</strong> 15% - старые траки, частые поломки</li>
+                            <li><strong>Forced dispatch:</strong> 12% - заставляют брать невыгодные грузы</li>
+                        </ul>
+                        <p><strong>Стоимость замены водителя:</strong> $8,000-12,000 (реклама, обучение, downtime)</p>
+                    </div>
+
+                    <h3>💰 Стратегии удержания водителей</h3>
+
+                    <div class="success-highlight">
+                        <h4>✅ 1. Конкурентная оплата</h4>
+                        <ul>
+                            <li><strong>Market rate:</strong> Платите минимум на уровне рынка ($0.50-0.60/миля OTR)</li>
+                            <li><strong>Performance bonuses:</strong> $0.02-0.05/миля за safety, on-time delivery</li>
+                            <li><strong>Mileage bonuses:</strong> $100-300 за 2,500+ миль в неделю</li>
+                            <li><strong>Retention bonus:</strong> $500-1,000 каждые 6 месяцев работы</li>
+                            <li><strong>Referral bonus:</strong> $500-1,500 за приведенного водителя (после 90 дней)
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="success-highlight">
+                        <h4>✅ 2. Home Time Policy</h4>
+                        <ul>
+                            <li><strong>Guaranteed home time:</strong> 2-3 дня дома каждые 2-3 недели</li>
+                            <li><strong>Flexible scheduling:</strong> Водитель выбирает когда домой (в разумных
+                                пределах)</li>
+                            <li><strong>Local routes option:</strong> Для водителей с семьями - daily home time</li>
+                            <li><strong>Holiday priority:</strong> Rotation для major holidays (Thanksgiving, Christmas)
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="success-highlight">
+                        <h4>✅ 3. Recognition Programs</h4>
+                        <ul>
+                            <li><strong>Driver of the Month:</strong> $200-500 bonus + parking spot + recognition</li>
+                            <li><strong>Safety awards:</strong> Quarterly awards за 0 violations ($300-500)</li>
+                            <li><strong>Milestone recognition:</strong> 1 год, 3 года, 5 лет работы (bonus + gift)</li>
+                            <li><strong>Public recognition:</strong> Facebook posts, newsletter, company meetings</li>
+                        </ul>
+                    </div>
+
+                    <h3>🎁 Benefits и Perks</h3>
+                    <ul>
+                        <li><strong>Health Insurance:</strong> 50-100% покрытие для водителя (после 90 дней)</li>
+                        <li><strong>Paid Time Off:</strong> 1-2 недели vacation после года работы</li>
+                        <li><strong>Retirement Plan:</strong> 401(k) с company match 3-5%</li>
+                        <li><strong>Newer equipment:</strong> Траки не старше 3-5 лет</li>
+                        <li><strong>Rider policy:</strong> Разрешение брать пассажира (жена, друг)</li>
+                        <li><strong>Pet policy:</strong> Разрешение брать собаку в трак</li>
+                        <li><strong>Per diem:</strong> $50-75/день на еду (tax-free)</li>
+                    </ul>
+
+                    <h3>📞 Коммуникация и поддержка</h3>
+                    <div class="info-highlight">
+                        <h4>💡 Что ценят водители:</h4>
+                        <ul>
+                            <li><strong>Быстрые ответы:</strong> Dispatcher отвечает в течение 30 минут</li>
+                            <li><strong>Честность:</strong> Не обещайте то, что не можете выполнить</li>
+                            <li><strong>Уважение:</strong> "Спасибо за работу", "Отличная доставка"</li>
+                            <li><strong>Flexibility:</strong> Учитывайте личные обстоятельства (семья, здоровье)</li>
+                            <li><strong>Involvement:</strong> Спрашивайте мнение водителя о маршрутах, грузах</li>
+                            <li><strong>Transparency:</strong> Объясняйте почему груз платит меньше, почему задержка
+                            </li>
+                        </ul>
+                    </div>
+
+                    <h3>🚫 Что НЕ делать (убивает retention)</h3>
+                    <ul>
+                        <li>❌ <strong>Игнорировать звонки/texts:</strong> Водитель чувствует себя брошенным</li>
+                        <li>❌ <strong>Forced dispatch:</strong> "Бери груз или увольняйся" - водитель уйдет</li>
+                        <li>❌ <strong>Обещать и не выполнять:</strong> "Следующий груз будет лучше" (10 раз подряд)</li>
+                        <li>❌ <strong>Микроменеджмент:</strong> Звонить каждый час "Где ты?"</li>
+                        <li>❌ <strong>Не платить вовремя:</strong> Задержка зарплаты = instant quit</li>
+                        <li>❌ <strong>Blame game:</strong> Всегда винить водителя за проблемы</li>
+                    </ul>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: Retention program сэкономил $50,000/год</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Компания с 10 траками теряла 8-9 водителей каждый год (90% turnover).
+                        Стоимость замены: $10,000 × 8 = $80,000/год.</p>
+                    <p><strong>Что внедрили:</strong></p>
+                    <ul>
+                        <li><strong>Повысили ставку:</strong> $0.45 → $0.52/миля (+$140/неделю для водителя)</li>
+                        <li><strong>Performance bonus:</strong> $0.03/миля за 0 violations ($60-90/неделю extra)</li>
+                        <li><strong>Retention bonus:</strong> $1,000 каждые 6 месяцев</li>
+                        <li><strong>Home time guarantee:</strong> 3 дня дома каждые 3 недели (строго)</li>
+                        <li><strong>Newer trucks:</strong> Заменили 3 старых трака (2010-2012) на новые (2022-2023)</li>
+                        <li><strong>Weekly check-ins:</strong> Dispatcher звонит каждому водителю раз в неделю "Как
+                            дела? Что можем улучшить?"</li>
+                    </ul>
+                    <p><strong>Стоимость программы:</strong> $30,000/год (повышение зарплат + бонусы)</p>
+                    <p><strong>Результаты через год:</strong></p>
+                    <ul>
+                        <li>Turnover: 90% → 20% (потеряли только 2 водителей вместо 8-9)</li>
+                        <li>Стоимость замены: $80,000 → $20,000 (экономия $60,000)</li>
+                        <li>Минус стоимость программы: $60,000 - $30,000 = <strong>$30,000 чистой экономии</strong></li>
+                        <li>Бонус: Водители стали работать лучше (меньше violations, лучше on-time delivery)</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        <strong>Итог:</strong> Инвестиция $30K окупилась с прибылью $30K. Плюс счастливые водители =
+                        стабильный бизнес!
+                    </div>
+                </div>
+            </div>
+
+            </section>
+
+            <div class="quick-check-block locked" id="quiz-2" data-quiz-id="quiz-8-2" data-correct-answer="a">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Какая главная причина почему водители уходят?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">Низкая зарплата (45%)</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">Плохая коммуникация (30%)</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">Мало home time (25%)</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">Старые траки (15%)</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Низкая зарплата - главная причина turnover (45%). Водители ожидают
+                        $60K+/год, но часто получают $45-50K. Конкурентная оплата критична для retention!
+                    </div>
+                </div>
+
+                <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio2', 'quiz-2')">
+                    🎧 Я закончил слушать этот блок
+                </button>
+            </div>
+        </div>
+
+        <!-- СЕКТОР 3: Контроль производительности -->
+        <div class="sector-wrapper">
+            <div class="sector-number">03</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">📊 Контроль производительности</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio3')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio3')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio3')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>📊 Зачем контролировать производительность водителей?</h3>
+                    <p><strong>Контроль производительности</strong> - не микроменеджмент, а способ помочь водителям
+                        работать эффективнее и зарабатывать больше.</p>
+
+                    <div class="success-highlight">
+                        <h4>✅ Ключевые KPI для водителей:</h4>
+                        <ul>
+                            <li><strong>Miles per week:</strong> 2,000-2,500 миль (OTR driver)</li>
+                            <li><strong>On-time delivery:</strong> 95%+ (критично для репутации)</li>
+                            <li><strong>MPG (Miles Per Gallon):</strong> 6.0-7.0 (зависит от трака и груза)</li>
+                            <li><strong>Safety score:</strong> 0 violations, 0 accidents (CSA points)</li>
+                            <li><strong>Deadhead percentage:</strong>
+                                <10% (пустые мили)</li>
+                            <li><strong>Detention time:</strong> Минимизировать задержки на погрузке/разгрузке</li>
+                            <li><strong>Communication response:</strong> Отвечает на звонки/texts в течение 30 минут
+                            </li>
+                        </ul>
+                    </div>
+
+                    <h3>📱 Tracking системы</h3>
+
+                    <div class="info-highlight">
+                        <h4>💡 ELD (Electronic Logging Device):</h4>
+                        <ul>
+                            <li><strong>Что отслеживает:</strong> HOS, mileage, location, engine diagnostics</li>
+                            <li><strong>Популярные:</strong> KeepTruckin, Samsara, Omnitracs, Motive</li>
+                            <li><strong>Данные для dispatcher:</strong>
+                                <ul>
+                                    <li>Текущая локация водителя (real-time GPS)</li>
+                                    <li>Оставшиеся часы вождения (HOS clock)</li>
+                                    <li>Средний MPG за неделю/месяц</li>
+                                    <li>Harsh braking, speeding events</li>
+                                    <li>Idle time (сколько трак стоит с включенным двигателем)</li>
+                                </ul>
+                            </li>
+                            <li><strong>Стоимость:</strong> $20-40/месяц на трак</li>
+                        </ul>
+                    </div>
+
+                    <h3>📈 Performance Reviews</h3>
+                    <p><strong>Frequency:</strong> Ежемесячные или квартальные reviews (не реже 1 раза в 3 месяца)
+                    </p>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Что обсуждать на review:</h4>
+                        <ul>
+                            <li><strong>Positive feedback:</strong> Начните с хорошего - "Отличная работа с on-time
+                                delivery!"</li>
+                            <li><strong>Miles performance:</strong> "Ты сделал 2,300 миль на этой неделе, цель
+                                2,500.
+                                Что мешает?"</li>
+                            <li><strong>Safety:</strong> "0 violations за месяц - отлично! Продолжай в том же духе"
+                            </li>
+                            <li><strong>MPG:</strong> "Твой MPG 6.2, средний по компании 6.5. Попробуй снизить
+                                скорость
+                                до 62-65 mph"</li>
+                            <li><strong>Communication:</strong> "Иногда не отвечаешь на звонки 2-3 часа. Что
+                                происходит?"</li>
+                            <li><strong>Goals:</strong> "Какая твоя цель на следующий месяц? Как я могу помочь?"
+                            </li>
+                        </ul>
+                    </div>
+
+                    <h3>💬 Feedback процесс</h3>
+
+                    <div class="success-highlight">
+                        <h4>✅ Правильный feedback:</h4>
+                        <ul>
+                            <li><strong>Specific:</strong> "Ты опоздал на 3 часа на delivery в Chicago" (не "ты
+                                всегда
+                                опаздываешь")</li>
+                            <li><strong>Timely:</strong> Давайте feedback сразу, не ждите месяц</li>
+                            <li><strong>Constructive:</strong> "Давай планировать маршруты с 2-часовым buffer для
+                                трафика"</li>
+                            <li><strong>Two-way:</strong> Слушайте водителя - "Что случилось? Как можем избежать
+                                этого?"
+                            </li>
+                            <li><strong>Positive ratio:</strong> 3 позитивных комментария на 1 негативный</li>
+                        </ul>
+                    </div>
+
+                    <h3>🎯 Incentive programs на основе KPI</h3>
+                    <ul>
+                        <li><strong>Mileage bonus:</strong> $100-200 за 2,500+ миль в неделю</li>
+                        <li><strong>Safety bonus:</strong> $300-500 за квартал без violations</li>
+                        <li><strong>MPG bonus:</strong> $0.01-0.02/миля за MPG выше 6.5</li>
+                        <li><strong>On-time bonus:</strong> $50-100 за 100% on-time deliveries в месяц</li>
+                        <li><strong>Referral bonus:</strong> $1,000-1,500 за приведенного водителя</li>
+                    </ul>
+
+                    <h3>🚫 Что НЕ делать при контроле</h3>
+                    <ul>
+                        <li>❌ <strong>Микроменеджмент:</strong> Не звоните каждый час "Где ты?"</li>
+                        <li>❌ <strong>Public shaming:</strong> Не критикуйте водителя при других</li>
+                        <li>❌ <strong>Unrealistic expectations:</strong> Не требуйте 3,000 миль/неделю если это
+                            физически невозможно</li>
+                        <li>❌ <strong>Ignore context:</strong> Учитывайте обстоятельства (weather, traffic,
+                            breakdowns)
+                        </li>
+                        <li>❌ <strong>Only negative:</strong> Не фокусируйтесь только на проблемах, хвалите за
+                            успехи
+                        </li>
+                    </ul>
+
+                    <h3>📊 Dashboard для tracking</h3>
+                    <p><strong>Что должно быть на dispatcher dashboard:</strong></p>
+                    <ul>
+                        <li>Real-time location всех траков (GPS map)</li>
+                        <li>HOS status каждого водителя (сколько часов осталось)</li>
+                        <li>Weekly miles по каждому водителю</li>
+                        <li>Safety scores (violations, accidents)</li>
+                        <li>Average MPG по компании и по водителю</li>
+                        <li>On-time delivery percentage</li>
+                        <li>Revenue per driver (сколько заработал компании)</li>
+                    </ul>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: ELD tracking повысил производительность на 15%</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Компания с 8 траками не использовала ELD систему (работали на
+                        paper
+                        logs). Средние мили: 1,800/неделю на водителя.</p>
+                    <p><strong>Что внедрили:</strong> KeepTruckin ELD ($30/месяц на трак) с dashboard для
+                        dispatcher.
+                    </p>
+                    <p><strong>Что обнаружили через месяц:</strong></p>
+                    <ul>
+                        <li><strong>Excessive idle time:</strong> Водители оставляли трак включенным на 3-4
+                            часа/день
+                            (waste топлива $50-75/день)</li>
+                        <li><strong>Низкий MPG:</strong> 2 водителя ездили 70+ mph (MPG 5.5 вместо 6.5)</li>
+                        <li><strong>Плохое планирование:</strong> Водители теряли 2-3 часа/день на неэффективных
+                            маршрутах</li>
+                        <li><strong>HOS violations:</strong> 1 водитель регулярно превышал 11-hour limit (риск
+                            штрафов)
+                        </li>
+                    </ul>
+                    <p><strong>Действия dispatcher:</strong></p>
+                    <ul>
+                        <li>Обучение водителей: "Выключайте трак при остановках 10+ минут"</li>
+                        <li>Speed coaching: "Езжайте 62-65 mph для лучшего MPG"</li>
+                        <li>Route optimization: Помощь с планированием маршрутов</li>
+                        <li>HOS monitoring: Предупреждения когда часы заканчиваются</li>
+                    </ul>
+                    <p><strong>Результаты через 3 месяца:</strong></p>
+                    <ul>
+                        <li>Miles per week: 1,800 → 2,070 (+15%)</li>
+                        <li>MPG: 6.0 → 6.4 (экономия $200/трак/месяц на топливе)</li>
+                        <li>HOS violations: 0 (избежали штрафов $10,000+)</li>
+                        <li>Driver satisfaction: Выросла - водители зарабатывают больше</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        <strong>Итог:</strong> Инвестиция $240/месяц (8 траков × $30) окупилась за 2 недели.
+                        Экономия
+                        топлива + больше миль = <strong>$3,000+/месяц дополнительной прибыли!</strong>
+                    </div>
+                </div>
+            </div>
+
+            </section>
+
+            <div class="quick-check-block locked" id="quiz-3" data-quiz-id="quiz-8-3" data-correct-answer="a">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Какой целевой показатель miles per week для
+                        OTR
+                        водителя?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">2,000-2,500 миль</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">1,000-1,500 миль</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">3,000-3,500 миль</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">500-1,000 миль</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> 2,000-2,500 миль/неделю - реалистичный и прибыльный показатель
+                        для
+                        OTR водителя. Это позволяет водителю зарабатывать $1,000-1,500/неделю при ставке
+                        $0.50-0.60/миля.
+                    </div>
+                </div>
+
+                <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio3', 'quiz-3')">
+                    🎧 Я закончил слушать этот блок
+                </button>
+            </div>
+        </div>
+
+        <!-- СЕКТОР 4: Решение конфликтов -->
+        <div class="sector-wrapper">
+            <div class="sector-number">04</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🤝 Решение конфликтов</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio4')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio4')">
+                        </div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio4')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>⚠️ Типичные конфликты с водителями</h3>
+                    <p><strong>Конфликты неизбежны</strong> - важно уметь их решать быстро и справедливо, чтобы
+                        не
+                        потерять водителя.</p>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Топ-5 причин конфликтов:</h4>
+                        <ul>
+                            <li><strong>Pay disputes (40%):</strong> "Мне не доплатили", "Где мой detention
+                                pay?"</li>
+                            <li><strong>Load refusals (25%):</strong> "Я не поеду туда", "Это слишком далеко"
+                            </li>
+                            <li><strong>Home time issues (20%):</strong> "Обещали домой через 2 недели, прошло
+                                3"</li>
+                            <li><strong>Equipment problems (10%):</strong> "Трак постоянно ломается", "AC не
+                                работает"
+                            </li>
+                            <li><strong>Communication breakdown (5%):</strong> "Dispatcher не отвечает", "Меня
+                                не
+                                слушают"</li>
+                        </ul>
+                    </div>
+
+                    <h3>💰 Pay Disputes - как решать</h3>
+
+                    <div class="success-highlight">
+                        <h4>✅ Процесс resolution:</h4>
+                        <ol>
+                            <li><strong>Listen first:</strong> "Расскажи что случилось, я слушаю"</li>
+                            <li><strong>Check records:</strong> Проверьте settlement, rate confirmation,
+                                detention logs
+                            </li>
+                            <li><strong>Explain clearly:</strong> "Вот твой settlement: 2,300 миль × $0.55 =
+                                $1,265"
+                            </li>
+                            <li><strong>Acknowledge mistakes:</strong> Если ошибка - признайте: "Ты прав, мы
+                                пропустили
+                                detention $150"</li>
+                            <li><strong>Fix immediately:</strong> "Добавлю в следующий paycheck, получишь в
+                                пятницу"
+                            </li>
+                            <li><strong>Follow up:</strong> Позвоните в пятницу: "Получил? Все правильно?"</li>
+                        </ol>
+                    </div>
+
+                    <h3>🚫 Load Refusals - когда и как</h3>
+                    <p><strong>Водитель имеет право отказаться</strong> от груза в определенных ситуациях:</p>
+
+                    <div class="info-highlight">
+                        <h4>💡 Легитимные причины отказа:</h4>
+                        <ul>
+                            <li><strong>Safety concerns:</strong> Плохая погода (blizzard, ice storm), опасный
+                                груз</li>
+                            <li><strong>HOS violation:</strong> Недостаточно часов для доставки вовремя</li>
+                            <li><strong>Equipment mismatch:</strong> Груз требует reefer, у водителя dry van
+                            </li>
+                            <li><strong>Personal emergency:</strong> Семейная проблема, здоровье</li>
+                            <li><strong>Unreasonable load:</strong> 3,000 миль за 2 дня (физически невозможно)
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ НЕлегитимные причины:</h4>
+                        <ul>
+                            <li>❌ "Не хочу ехать в California" (без причины)</li>
+                            <li>❌ "Ставка низкая" (если уже согласился)</li>
+                            <li>❌ "Устал" (после 2 дней работы)</li>
+                            <li>❌ "Не нравится груз" (без объективной причины)</li>
+                        </ul>
+                        <p><strong>Действия:</strong> Verbal warning → Written warning → Termination (после 3
+                            отказов)
+                        </p>
+                    </div>
+
+                    <h3>🏠 Home Time Conflicts</h3>
+                    <p><strong>Проблема:</strong> Водитель ожидал домой, но dispatcher дает новый груз.</p>
+
+                    <div class="success-highlight">
+                        <h4>✅ Как избежать:</h4>
+                        <ul>
+                            <li><strong>Clear policy:</strong> "2-3 дня дома каждые 2-3 недели" (в письменном
+                                виде)</li>
+                            <li><strong>Advance planning:</strong> Спрашивайте за неделю: "Когда хочешь домой?"
+                            </li>
+                            <li><strong>Route accordingly:</strong> Планируйте грузы чтобы водитель был дома
+                                вовремя
+                            </li>
+                            <li><strong>Emergency flexibility:</strong> Если семейная проблема - отпустите
+                                немедленно
+                            </li>
+                            <li><strong>Keep promises:</strong> Если обещали домой в пятницу - обеспечьте это
+                            </li>
+                        </ul>
+                    </div>
+
+                    <h3>📋 Дисциплинарные меры</h3>
+                    <p><strong>Progressive discipline system:</strong> От предупреждения до увольнения</p>
+
+                    <ol>
+                        <li><strong>Verbal Warning:</strong> Устное предупреждение (документируйте в notes)</li>
+                        <li><strong>Written Warning:</strong> Письменное предупреждение (водитель подписывает)
+                        </li>
+                        <li><strong>Suspension:</strong> 1-3 дня без оплаты (для серьезных нарушений)</li>
+                        <li><strong>Final Warning:</strong> Последнее предупреждение перед увольнением</li>
+                        <li><strong>Termination:</strong> Увольнение (документируйте все шаги)</li>
+                    </ol>
+
+                    <h3>🚪 Termination - когда увольнять</h3>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Причины для немедленного увольнения:</h4>
+                        <ul>
+                            <li><strong>DUI/DWI:</strong> Вождение в нетрезвом виде - instant termination</li>
+                            <li><strong>Drug test failure:</strong> Положительный тест на наркотики</li>
+                            <li><strong>Theft:</strong> Кража груза, топлива, оборудования</li>
+                            <li><strong>Violence:</strong> Физическая агрессия, угрозы</li>
+                            <li><strong>Falsifying logs:</strong> Подделка HOS records</li>
+                            <li><strong>Abandoning load:</strong> Бросил груз в середине маршрута</li>
+                        </ul>
+                    </div>
+
+                    <h3>📞 Conflict Resolution Framework</h3>
+                    <div class="success-highlight">
+                        <h4>✅ 5-Step процесс:</h4>
+                        <ol>
+                            <li><strong>Listen actively:</strong> Дайте водителю высказаться полностью</li>
+                            <li><strong>Acknowledge feelings:</strong> "Я понимаю что ты расстроен"</li>
+                            <li><strong>Gather facts:</strong> Проверьте все данные, документы</li>
+                            <li><strong>Find solution together:</strong> "Как мы можем это решить?"</li>
+                            <li><strong>Follow up:</strong> Проверьте через неделю что проблема решена</li>
+                        </ol>
+                    </div>
+
+                    <h3>🚫 Что НЕ делать при конфликте</h3>
+                    <ul>
+                        <li>❌ <strong>Ignore the problem:</strong> Проблема не исчезнет сама</li>
+                        <li>❌ <strong>Get defensive:</strong> "Это не моя вина!" - не помогает</li>
+                        <li>❌ <strong>Make promises you can't keep:</strong> "Следующий груз будет лучше" (если
+                            не
+                            уверены)</li>
+                        <li>❌ <strong>Threaten immediately:</strong> "Делай или увольняйся" - последний вариант
+                        </li>
+                        <li>❌ <strong>Take it personally:</strong> Это бизнес, не личное</li>
+                    </ul>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Case Study: Конфликт из-за pay dispute решен за 24 часа</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Водитель звонит в пятницу вечером: "Мне недоплатили $300! Я не
+                        буду
+                        брать следующий груз пока не получу деньги!"</p>
+                    <p><strong>Проблема:</strong></p>
+                    <ul>
+                        <li><strong>Водитель утверждает:</strong> Ему должны $1,500 за неделю, получил только
+                            $1,200
+                        </li>
+                        <li><strong>Эмоции:</strong> Водитель расстроен, угрожает уволиться</li>
+                        <li><strong>Timing:</strong> Пятница вечер, следующий груз pickup в понедельник утром
+                        </li>
+                    </ul>
+                    <p><strong>Действия dispatcher:</strong></p>
+                    <ol>
+                        <li><strong>Listen first (5 минут):</strong> "Расскажи что случилось, я слушаю и
+                            разберусь"</li>
+                        <li><strong>Check records (10 минут):</strong> Проверил settlement, нашел ошибку -
+                            пропущен
+                            detention pay $150</li>
+                        <li><strong>Acknowledge mistake:</strong> "Ты прав, мы пропустили detention $150. Это
+                            моя
+                            ошибка,
+                            извини"</li>
+                        <li><strong>Explain other $150:</strong> "Остальные $150 - это fuel advance, который ты
+                            взял в
+                            среду. Вот квитанция"</li>
+                        <li><strong>Fix immediately:</strong> "Добавлю $150 detention в понедельник paycheck.
+                            Отправлю
+                            тебе скриншот прямо сейчас"</li>
+                        <li><strong>Follow up:</strong> Позвонил в понедельник: "Получил? Все правильно? Спасибо
+                            за
+                            терпение"</li>
+                    </ol>
+                    <div class="case-study-highlight">
+                        <strong>Результат:</strong> Конфликт решен за 24 часа. Водитель взял груз в понедельник,
+                        остался
+                        доволен. Урок: Быстрая реакция + честность + исправление ошибок = сохранение водителя!
+                    </div>
+                </div>
+            </div>
+
+            </section>
+
+            <div class="quick-check-block locked" id="quiz-4" data-quiz-id="quiz-8-4" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Какая главная причина конфликтов с
+                        водителями?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">Equipment problems (10%)</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">Pay disputes (40%)</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">Home time issues (20%)</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">Communication breakdown (5%)</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Pay disputes - главная причина конфликтов (40%). Водители
+                        часто
+                        спорят о detention pay, mileage, deductions. Быстрое решение критично для retention!
+                    </div>
+                </div>
+
+                <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio4', 'quiz-4')">
+                    🎧 Я закончил слушать этот блок
+                </button>
+            </div>
+        </div>
+
+        <!-- СЕКТОР 5: Коммуникация с водителями -->
+        <div class="sector-wrapper">
+            <div class="sector-number">05</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">📞 Коммуникация с водителями</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio5')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio5')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio5')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>📞 Почему коммуникация критична?</h3>
+                    <p><strong>Коммуникация</strong> - основа отношений dispatcher-driver. Плохая
+                        коммуникация = потеря
+                        водителя.</p>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Статистика:</h4>
+                        <ul>
+                            <li><strong>30% водителей уходят</strong> из-за плохой коммуникации с dispatcher
+                            </li>
+                            <li><strong>70% конфликтов</strong> можно избежать с правильной коммуникацией
+                            </li>
+                            <li><strong>Водители ожидают ответа</strong> в течение 30 минут (не 3 часа!)
+                            </li>
+                            <li><strong>Игнорирование звонков</strong> - топ-3 жалоба водителей на
+                                dispatcher</li>
+                        </ul>
+                    </div>
+
+                    <h3>📱 Инструменты коммуникации</h3>
+
+                    <div class="success-highlight">
+                        <h4>✅ Основные каналы:</h4>
+                        <ul>
+                            <li><strong>Phone calls:</strong> Для срочных вопросов, сложных ситуаций, личных
+                                разговоров
+                            </li>
+                            <li><strong>Text messages:</strong> Для быстрых updates, адресов, confirmation
+                            </li>
+                            <li><strong>ELD messaging:</strong> Для non-urgent updates пока водитель за
+                                рулем</li>
+                            <li><strong>Mobile apps:</strong> Для документов (rate con, BOL), load details,
+                                tracking
+                            </li>
+                            <li><strong>Email:</strong> Для официальных документов, settlements, важных
+                                уведомлений</li>
+                        </ul>
+                    </div>
+
+                    <h3>⏰ Frequency и Timing</h3>
+
+                    <div class="info-highlight">
+                        <h4>💡 Когда и как часто общаться:</h4>
+                        <ul>
+                            <li><strong>Morning check-in:</strong> 8-9 AM - "Доброе утро! Как дела? Готов к
+                                pickup?"
+                            </li>
+                            <li><strong>After pickup:</strong> Сразу после - "Груз забрал? Все в порядке с
+                                BOL?"</li>
+                            <li><strong>Mid-route update:</strong> 1 раз в день - "Как едешь? Все хорошо?"
+                            </li>
+                            <li><strong>Before delivery:</strong> За 2-3 часа - "ETA подтверждаешь?
+                                Consignee готов?"
+                            </li>
+                            <li><strong>After delivery:</strong> Сразу после - "Доставил? POD получил?
+                                Следующий груз
+                                готов"</li>
+                            <li><strong>Evening check-in:</strong> 6-7 PM - "Где остановился? Сколько часов
+                                осталось?"
+                            </li>
+                        </ul>
+                        <p><strong>Правило:</strong> Минимум 2-3 контакта в день, но не микроменеджмент!</p>
+                    </div>
+
+                    <h3>💬 Tone и Style</h3>
+
+                    <div class="success-highlight">
+                        <h4>✅ Правильный tone:</h4>
+                        <ul>
+                            <li><strong>Respectful:</strong> "Привет Джон" (не "Эй водитель")</li>
+                            <li><strong>Positive:</strong> "Отличная работа!" (не только критика)</li>
+                            <li><strong>Clear:</strong> "Pickup завтра в 8 AM" (не "Где-то утром")</li>
+                            <li><strong>Patient:</strong> Дайте водителю время ответить (он за рулем!)</li>
+                            <li><strong>Empathetic:</strong> "Понимаю что устал, давай найдем груз поближе к
+                                дому"</li>
+                        </ul>
+                    </div>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Неправильный tone:</h4>
+                        <ul>
+                            <li>❌ <strong>Aggressive:</strong> "Почему ты не ответил?!" (водитель был за
+                                рулем)</li>
+                            <li>❌ <strong>Dismissive:</strong> "Не важно, просто делай" (игнорирование
+                                concerns)</li>
+                            <li>❌ <strong>Vague:</strong> "Может быть завтра" (неопределенность)</li>
+                            <li>❌ <strong>Blaming:</strong> "Это твоя вина" (даже если правда)</li>
+                        </ul>
+                    </div>
+
+                    <h3>🚨 Emergency Communication</h3>
+                    <p><strong>Когда водитель должен звонить НЕМЕДЛЕННО:</strong></p>
+
+                    <ul>
+                        <li><strong>Accident:</strong> Любая авария - звонить сразу!</li>
+                        <li><strong>Breakdown:</strong> Трак сломался - нужен plan B</li>
+                        <li><strong>Delay:</strong> Опоздание 2+ часа - предупредить consignee</li>
+                        <li><strong>Load issues:</strong> Груз поврежден, не готов, неправильный</li>
+                        <li><strong>Weather:</strong> Опасные условия (blizzard, ice) - безопасность важнее
+                        </li>
+                        <li><strong>Personal emergency:</strong> Семейная проблема - нужна помощь</li>
+                    </ul>
+
+                    <h3>📋 Daily Check-ins Template</h3>
+
+                    <div class="info-highlight">
+                        <h4>💡 Утренний check-in (8-9 AM):</h4>
+                        <p><strong>Dispatcher:</strong> "Доброе утро [Имя]! Как спал? Готов к pickup в
+                            [город] в
+                            [время]?
+                            Адрес: [адрес]. Есть вопросы?"</p>
+                        <p><strong>Водитель:</strong> "Утро! Да, готов. ETA 10 AM. Все понятно."</p>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>💡 После pickup:</h4>
+                        <p><strong>Dispatcher:</strong> "Груз забрал? BOL подписан? Все правильно (вес,
+                            количество)?"
+                        </p>
+                        <p><strong>Водитель:</strong> "Да, все ок. 20 паллет, 40,000 lbs. Еду в [город]."
+                        </p>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>💡 Вечерний check-in (6-7 PM):</h4>
+                        <p><strong>Dispatcher:</strong> "Как день? Где остановился на ночь? Сколько часов
+                            driving
+                            осталось
+                            на завтра?"</p>
+                        <p><strong>Водитель:</strong> "Хорошо. Остановился в [truck stop]. Осталось 8 часов.
+                            Завтра
+                            доставлю."</p>
+                    </div>
+
+                    <h3>🚫 Что НЕ делать</h3>
+                    <ul>
+                        <li>❌ <strong>Игнорировать звонки:</strong> Водитель звонит - отвечайте в течение 30
+                            минут</li>
+                        <li>❌ <strong>Звонить каждый час:</strong> Микроменеджмент раздражает</li>
+                        <li>❌ <strong>Звонить ночью:</strong> Не звоните после 9 PM (кроме emergency)</li>
+                        <li>❌ <strong>Только критика:</strong> Хвалите за хорошую работу!</li>
+                        <li>❌ <strong>Обещать и не выполнять:</strong> "Следующий груз будет лучше" (10 раз
+                            подряд)</li>
+                        <li>❌ <strong>Не слушать:</strong> Водитель говорит проблему - слушайте и решайте
+                        </li>
+                    </ul>
+
+                    <h3>📊 Communication Best Practices</h3>
+                    <div class="success-highlight">
+                        <h4>✅ Золотые правила:</h4>
+                        <ol>
+                            <li><strong>Respond quickly:</strong> 30 минут максимум (даже если "Перезвоню
+                                через час")
+                            </li>
+                            <li><strong>Be proactive:</strong> Не ждите пока водитель позвонит - звоните
+                                сами</li>
+                            <li><strong>Use right channel:</strong> Срочное - звонок, несрочное - text/ELD
+                            </li>
+                            <li><strong>Confirm understanding:</strong> "Понял? Повтори адрес пожалуйста"
+                            </li>
+                            <li><strong>Document everything:</strong> Важные разговоры - записывайте в notes
+                            </li>
+                            <li><strong>Follow up:</strong> "Вчера говорили о проблеме, решилось?"</li>
+                            <li><strong>Say thank you:</strong> "Спасибо за отличную работу!" - мотивирует
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+        </div>
+        </section>
+
+        <!-- Case Study 5 -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">💼</span>
+                <h3 class="case-study-title">Реальный кейс: Эффективная коммуникация</h3>
+            </div>
+            <div class="case-study-content">
+                <p><strong>Ситуация:</strong> Dispatcher Sarah управляет 8 водителями. Один водитель (Mike)
+                    постоянно жалуется что она не отвечает на звонки вовремя.</p>
+                <div class="case-study-highlight">
+                    💡 Вопрос: Как улучшить коммуникацию?
+                </div>
+                <div class="case-study-solution">
+                    <h4>✅ Решение:</h4>
+                    <p><strong>Sarah внедрила систему:</strong></p>
+                    <ul>
+                        <li>Morning check-in в 8 AM с каждым водителем (5 минут)</li>
+                        <li>Быстрые ответы на texts в течение 30 минут</li>
+                        <li>Использование ELD messaging для non-urgent updates</li>
+                        <li>Evening check-in в 6 PM</li>
+                    </ul>
+                    <p><strong>Результат:</strong> Mike доволен, жалоб нет. Retention улучшился на 40%!</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="quick-check-block locked" id="quiz-5" data-quiz-id="quiz-8-5" data-correct-answer="a">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">✅</span>
+                <h3 class="quick-check-title">Быстрая проверка</h3>
+            </div>
+            <div class="quick-check-content">
+                <p class="quiz-question"><strong>Вопрос:</strong> Как часто нужно общаться с водителем в
+                    день?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" data-answer="a">
+                        <span class="option-letter">A</span>
+                        <span class="option-text">2-3 раза (morning, mid-route, evening)</span>
+                    </div>
+                    <div class="quiz-option" data-answer="b">
+                        <span class="option-letter">B</span>
+                        <span class="option-text">Каждый час (микроменеджмент)</span>
+                    </div>
+                    <div class="quiz-option" data-answer="c">
+                        <span class="option-letter">C</span>
+                        <span class="option-text">1 раз в день</span>
+                    </div>
+                    <div class="quiz-option" data-answer="d">
+                        <span class="option-letter">D</span>
+                        <span class="option-text">Только когда водитель звонит</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback">
+                    <strong>Правильно! ✓</strong> Оптимально 2-3 контакта в день: morning check-in,
+                    mid-route update, evening check-in. Это баланс между контролем и доверием.
+                </div>
+            </div>
+
+            <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio5', 'quiz-5')">
+                🎧 Я закончил слушать этот блок
+            </button>
+        </div>
+        </section>
+        </div>
+
+        <!-- СЕКТОР 6: Compliance и аудиты -->
+        <div class="sector-wrapper">
+            <div class="sector-number">06</div>
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">📋 Compliance и аудиты</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio6')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio6')">
+                        </div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio6')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>📋 Что такое Compliance?</h3>
+                    <p><strong>Compliance</strong> - соответствие всем федеральным и штатным регуляциям в trucking
+                        индустрии.</p>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Основные области compliance:</h4>
+                        <ul>
+                            <li><strong>DOT regulations:</strong> Hours of Service, vehicle maintenance, driver
+                                qualifications</li>
+                            <li><strong>FMCSA requirements:</strong> Safety ratings, inspections, insurance</li>
+                            <li><strong>Tax compliance:</strong> IFTA, IRP, UCR, 2290 Heavy Vehicle Use Tax</li>
+                            <li><strong>Employment laws:</strong> Driver classification, wages, benefits</li>
+                            <li><strong>Insurance requirements:</strong> Minimum $750K-$1M liability coverage</li>
+                        </ul>
+                    </div>
+
+                    <h3>🔍 Типы аудитов</h3>
+                    <ul>
+                        <li><strong>DOT Compliance Review:</strong> Проверка всех документов и процедур компании</li>
+                        <li><strong>Safety Audit:</strong> Проверка программ безопасности, training, maintenance</li>
+                        <li><strong>New Entrant Audit:</strong> Обязательная проверка новых компаний (первые 18 месяцев)
+                        </li>
+                        <li><strong>Focused Audit:</strong> Проверка конкретной проблемной области</li>
+                    </ul>
+
+                    <h3>💰 Штрафы за нарушения</h3>
+                    <div class="danger-highlight"
+                        style="background: rgba(239, 68, 68, 0.08); border-left: 4px solid #ef4444; border-radius: 12px; padding: 24px; margin: 24px 0;">
+                        <h4>Типичные штрафы:</h4>
+                        <ul>
+                            <li><strong>HOS violations:</strong> $1,000-11,000 для водителя, $11,000-16,000 для компании
+                            </li>
+                            <li><strong>Неправильные документы:</strong> $500-5,000 за каждый документ</li>
+                            <li><strong>Отсутствие insurance:</strong> $10,000+ и приостановка MC#</li>
+                            <li><strong>Maintenance violations:</strong> $1,000-25,000</li>
+                            <li><strong>Driver qualification issues:</strong> $2,500-10,000</li>
+                        </ul>
+                    </div>
+
+                    <h3>📂 Документы для аудита</h3>
+                    <p><strong>Что проверяют аудиторы:</strong></p>
+
+                    <div class="success-highlight">
+                        <h4>✅ Driver Qualification Files (DQ Files):</h4>
+                        <ul>
+                            <li><strong>Application for employment:</strong> Заполненная анкета водителя</li>
+                            <li><strong>MVR (Motor Vehicle Record):</strong> Не старше 30 дней при найме</li>
+                            <li><strong>Road test certificate:</strong> Или копия CDL</li>
+                            <li><strong>DOT physical:</strong> Действующий medical certificate</li>
+                            <li><strong>Drug test results:</strong> Pre-employment и random tests</li>
+                            <li><strong>Previous employment verification:</strong> За последние 3 года</li>
+                            <li><strong>Annual review:</strong> Ежегодная проверка MVR</li>
+                        </ul>
+                    </div>
+
+                    <h3>🚨 Частые ошибки при аудите</h3>
+                    <ul>
+                        <li>❌ <strong>Expired medical certificates:</strong> Водитель работает с просроченным DOT
+                            physical</li>
+                        <li>❌ <strong>Missing drug tests:</strong> Нет pre-employment или random test results</li>
+                        <li>❌ <strong>Incomplete DQ files:</strong> Отсутствуют документы в driver qualification files
+                        </li>
+                        <li>❌ <strong>No annual MVR review:</strong> Не проверяли MVR водителя в течение года</li>
+                        <li>❌ <strong>HOS violations:</strong> Водители превышают 11/14/70 hour rules</li>
+                        <li>❌ <strong>Maintenance records:</strong> Нет proof of inspections и repairs</li>
+                    </ul>
+
+                    <h3>✅ Как подготовиться к аудиту</h3>
+                    <div class="info-highlight">
+                        <h4>💡 Checklist за 2 недели до аудита:</h4>
+                        <ol>
+                            <li><strong>Week 1 - Driver files:</strong> Проверить все DQ files, обновить expired
+                                documents</li>
+                            <li><strong>Week 1 - Drug testing:</strong> Убедиться что все tests documented</li>
+                            <li><strong>Week 2 - Vehicle maintenance:</strong> Проверить inspection records за последний
+                                год</li>
+                            <li><strong>Week 2 - HOS compliance:</strong> Проверить ELD logs на violations</li>
+                            <li><strong>Week 2 - Insurance:</strong> Убедиться что coverage актуальный</li>
+                            <li><strong>Day before - Organization:</strong> Организовать все документы в папки</li>
+                        </ol>
+                    </div>
+
+                    <h3>🎯 Роль диспетчера в compliance</h3>
+                    <p><strong>Что должен делать dispatcher:</strong></p>
+
+                    <ul>
+                        <li><strong>Monitor HOS:</strong> Следить чтобы водители не превышали hours</li>
+                        <li><strong>Check medical cards:</strong> Напоминать водителям о renewal DOT physical</li>
+                        <li><strong>Verify insurance:</strong> Убедиться что у водителя есть valid insurance</li>
+                        <li><strong>Document everything:</strong> Сохранять все communications и documents</li>
+                        <li><strong>Report violations:</strong> Немедленно сообщать о нарушениях management</li>
+                    </ul>
+                </div>
+            </section>
+
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Реальный кейс: Успешный DOT Audit</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Компания:</strong> XYZ Trucking, 12 траков, 15 водителей</p>
+                    <p><strong>Ситуация:</strong> Получили уведомление о DOT Compliance Review через 2 недели.</p>
+                    <div class="case-study-highlight">
+                        💡 Проблема: Dispatcher никогда не проходил аудит раньше. Паника!
+                    </div>
+                    <div class="case-study-solution">
+                        <h4>✅ План действий:</h4>
+                        <p><strong>Неделя 1:</strong></p>
+                        <ul>
+                            <li>Проверили все 15 DQ files - нашли 3 expired medical certificates</li>
+                            <li>Отправили водителей на DOT physical немедленно</li>
+                            <li>Обновили MVR для 5 водителей (не проверяли год)</li>
+                            <li>Нашли 2 missing drug test results - запросили у клиники</li>
+                        </ul>
+                        <p><strong>Неделя 2:</strong></p>
+                        <ul>
+                            <li>Проверили vehicle maintenance records - все inspections documented</li>
+                            <li>Проверили ELD logs - нашли 2 HOS violations (исправили процедуры)</li>
+                            <li>Организовали все документы в labeled folders</li>
+                            <li>Подготовили answers на типичные вопросы аудитора</li>
+                        </ul>
+                        <p><strong>День аудита:</strong></p>
+                        <ul>
+                            <li>Все документы готовы и организованы</li>
+                            <li>Dispatcher уверенно отвечал на вопросы</li>
+                            <li>Аудитор нашел 0 critical violations</li>
+                        </ul>
+                    </div>
+                    <div class="case-study-highlight">
+                        <strong>Результат:</strong> Аудит пройден успешно! Safety rating остался "Satisfactory". 0
+                        штрафов. Dispatcher получил bonus $500 за отличную подготовку!
+                    </div>
+                </div>
+            </div>
+
+            <div class="quick-check-block locked" id="quiz-6" data-quiz-id="quiz-8-6" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Какой штраф за HOS violation для
+                        компании?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">$500-1,000</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">$11,000-16,000</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">$25,000+</span>
+                        </div>
+                        <div class="quiz-option" data-answer="d">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">Нет штрафа, только предупреждение</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> HOS violations для компании стоят $11,000-16,000 (для водителя
+                        $1,000-11,000). Это одни из самых дорогих нарушений в trucking индустрии.
+                    </div>
+                </div>
+
+                <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio6', 'quiz-6')">
+                    🎧 Я закончил слушать этот блок
+                </button>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="lesson-nav">
+            <a href="doc-module-7-complete.html" class="nav-btn">
+                <span>←</span>
+                <span>Предыдущий модуль</span>
+            </a>
+            <div class="progress-info">
+                <div>Модуль 8 из 12</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 67%;"></div>
+                </div>
+                <div>67% завершено</div>
+            </div>
+            <a href="doc-module-9-complete.html" class="nav-btn">
+                <span>Следующий модуль</span>
+                <span>→</span>
+            </a>
+        </div>
+    </main>
+
+    <script>
+        // Audio Management
+        const audioFiles = {
+            'audio1': '../audio/module-8-sector-1.mp3',
+            'audio2': '../audio/module-8-sector-2.mp3',
+            'audio3': '../audio/module-8-sector-3.mp3',
+            'audio4': '../audio/module-8-sector-4.mp3',
+            'audio5': '../audio/module-8-sector-5.mp3',
+            'audio6': '../audio/module-8-sector-6.mp3'
+        };
+
+        let currentAudio = null;
+        let currentAudioId = null;
+
+        function toggleAudio(button, audioId) {
+            const container = button.closest('.audio-container');
+
+            if (currentAudio && currentAudioId === audioId) {
+                if (currentAudio.paused) {
+                    currentAudio.play();
+                    button.classList.add('playing');
+                    container.classList.add('playing');
+                } else {
+                    currentAudio.pause();
+                    button.classList.remove('playing');
+                    container.classList.remove('playing');
+                }
+            } else {
+                if (currentAudio) {
+                    currentAudio.pause();
+                    const oldButton = document.querySelector('.audio-btn.playing');
+                    const oldContainer = oldButton?.closest('.audio-container');
+                    if (oldButton) oldButton.classList.remove('playing');
+                    if (oldContainer) oldContainer.classList.remove('playing');
+                }
+
+                alert(`Воспроизведение: ${audioFiles[audioId]}\n\nВ продакшене здесь будет реальный аудио-плеер с прогресс-кольцом.`);
+
+                currentAudio = new Audio(audioFiles[audioId]);
+                currentAudioId = audioId;
+
+                currentAudio.addEventListener('loadedmetadata', () => {
+                    updateDuration(container, currentAudio.duration);
+                });
+
+                currentAudio.addEventListener('timeupdate', () => {
+                    updateProgress(container, currentAudio.currentTime, currentAudio.duration);
+                });
+
+                currentAudio.addEventListener('ended', () => {
+                    button.classList.remove('playing');
+                    container.classList.remove('playing');
+                    resetProgress(container);
+                });
+
+                currentAudio.play();
+                button.classList.add('playing');
+                container.classList.add('playing');
+            }
+        }
+
+        function updateDuration(container, duration) {
+            const durationEl = container.querySelector('.audio-duration');
+            const minutes = Math.floor(duration / 60);
+            const seconds = Math.floor(duration % 60);
+            durationEl.textContent = `0:00 / ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function updateProgress(container, currentTime, duration) {
+            const progress = (currentTime / duration) * 100;
+            const circumference = 201.06;
+            const offset = circumference - (progress / 100) * circumference;
+
+            const progressRing = container.querySelector('.progress-ring-fill');
+            if (progressRing) {
+                progressRing.style.strokeDashoffset = offset;
+            }
+
+            const mobileBar = container.querySelector('.mobile-progress-fill');
+            if (mobileBar) {
+                mobileBar.style.width = `${progress}%`;
+            }
+
+            const durationEl = container.querySelector('.audio-duration');
+            const currentMinutes = Math.floor(currentTime / 60);
+            const currentSeconds = Math.floor(currentTime % 60);
+            const totalMinutes = Math.floor(duration / 60);
+            const totalSeconds = Math.floor(duration % 60);
+            durationEl.textContent = `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')} / ${totalMinutes}:${totalSeconds.toString().padStart(2, '0')}`;
+        }
+
+        function resetProgress(container) {
+            const progressRing = container.querySelector('.progress-ring-fill');
+            if (progressRing) {
+                progressRing.style.strokeDashoffset = 201.06;
+            }
+
+            const mobileBar = container.querySelector('.mobile-progress-fill');
+            if (mobileBar) {
+                mobileBar.style.width = '0%';
+            }
+        }
+
+        function seekAudio(event, audioId) {
+            if (!currentAudio || currentAudioId !== audioId) return;
+
+            const ring = event.currentTarget;
+            const rect = ring.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const angle = Math.atan2(event.clientY - centerY, event.clientX - centerX);
+            let degrees = angle * (180 / Math.PI) + 90;
+            if (degrees < 0) degrees += 360;
+
+            const progress = degrees / 360;
+            currentAudio.currentTime = progress * currentAudio.duration;
+        }
+
+        function seekAudioMobile(event, audioId) {
+            if (!currentAudio || currentAudioId !== audioId) return;
+
+            const bar = event.currentTarget;
+            const rect = bar.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const progress = clickX / rect.width;
+
+            currentAudio.currentTime = progress * currentAudio.duration;
+        }
+
+        // Audio Completion - Unlock Quiz
+        function markAudioComplete(button, audioId, quizId) {
+            // Mark button as completed
+            button.classList.add('completed');
+            button.textContent = '✅ Аудио прослушано';
+            button.disabled = true;
+
+            // Unlock quiz with animation
+            const quizBlock = document.getElementById(quizId);
+            if (quizBlock) {
+                // Remove locked class
+                quizBlock.classList.remove('locked');
+
+                // Ensure quiz is visible and interactive
+                quizBlock.style.opacity = '1';
+                quizBlock.style.pointerEvents = 'auto';
+
+                // Add unlock animation
+                quizBlock.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    quizBlock.style.transform = 'scale(1)';
+                }, 100);
+
+                // Scroll to quiz smoothly
+                setTimeout(() => {
+                    quizBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 200);
+            }
+        }
+
+        // Quiz Management - New approach with data-answer
+        document.addEventListener('DOMContentLoaded', () => {
+            const quizBlocks = document.querySelectorAll('.quick-check-block');
+
+            quizBlocks.forEach(quizBlock => {
+                const options = quizBlock.querySelectorAll('.quiz-option');
+                const correctAnswer = quizBlock.dataset.correctAnswer;
+                const feedback = quizBlock.querySelector('.quiz-feedback');
+
+                options.forEach(option => {
+                    option.addEventListener('click', () => {
+                        // Prevent multiple clicks
+                        if (quizBlock.classList.contains('answered')) return;
+                        if (quizBlock.classList.contains('locked')) return;
+
+                        quizBlock.classList.add('answered');
+
+                        const userAnswer = option.dataset.answer;
+                        const isCorrect = userAnswer === correctAnswer;
+
+                        // Disable all options
+                        options.forEach(opt => {
+                            opt.style.pointerEvents = 'none';
+                        });
+
+                        // Mark selected option
+                        if (isCorrect) {
+                            option.classList.add('correct');
+                        } else {
+                            option.classList.add('incorrect');
+                            // Show correct answer
+                            options.forEach(opt => {
+                                if (opt.dataset.answer === correctAnswer) {
+                                    opt.classList.add('correct');
+                                }
+                            });
+                        }
+
+                        // Show feedback
+                        if (feedback) {
+                            feedback.classList.add('show');
+                        }
+                    });
+                });
+            });
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.content-block').forEach(block => {
+            block.style.opacity = '0';
+            block.style.transform = 'translateY(20px)';
+            block.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(block);
+        });
+    </script>
+</body>
+
+</html>
