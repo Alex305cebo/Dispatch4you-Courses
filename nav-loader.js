@@ -22,7 +22,7 @@
                     <button class="nav-btn">Курсы <span class="arrow">▾</span></button>
                     <div class="dropdown">
                         <a href="{{BASE}}pages/documentation.html">📖 База знаний</a>
-                        <a href="{{BASE}}pages/doc-module-1-complete.html">🎓 Модули с тестами</a>
+                        <a href="{{BASE}}pages/modules-index.html">🎓 Модули с тестами</a>
                         <a href="{{BASE}}pages/simulator.html">🎯 Симулятор</a>
                         <a href="{{BASE}}pages/testing.html">✍️ Тестирование</a>
                         <a href="{{BASE}}pages/cases.html">💼 Кейсы</a>
@@ -69,7 +69,7 @@
             <div class="mob-acc-title">📚 Курсы <span class="mob-arr">▼</span></div>
             <div class="mob-acc-body">
                 <a href="{{BASE}}pages/documentation.html" class="mob-sub">📖 База знаний</a>
-                <a href="{{BASE}}pages/doc-module-1-complete.html" class="mob-sub">🎓 Модули с тестами</a>
+                <a href="{{BASE}}pages/modules-index.html" class="mob-sub">🎓 Модули с тестами</a>
                 <a href="{{BASE}}pages/simulator.html" class="mob-sub">🎯 Симулятор</a>
                 <a href="{{BASE}}pages/testing.html" class="mob-sub">✍️ Тестирование</a>
                 <a href="{{BASE}}pages/cases.html" class="mob-sub">💼 Кейсы</a>
