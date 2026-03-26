@@ -272,9 +272,13 @@
     }
 
     // Хардкод суперпользователи — всегда пропускаем
-    if (user.email && SUPER_EMAILS.indexOf(user.email) !== -1) {
-      localStorage.setItem('user_role', 'superuser');
-      return;
+    var userEmail = (user.email || '').toLowerCase().trim();
+    for (var i = 0; i < SUPER_EMAILS.length; i++) {
+      if (userEmail === SUPER_EMAILS[i].toLowerCase()) {
+        localStorage.setItem('user_role', 'superuser');
+        console.log('RoleGuard: superuser bypass for', userEmail);
+        return;
+      }
     }
 
     // Есть пользователь — проверяем кешированную роль
