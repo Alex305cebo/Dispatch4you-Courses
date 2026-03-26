@@ -44,6 +44,7 @@
     'pages/intro.html',
     'pages/home.html',
     'pages/modules-index.html',
+    'pages/analytics.html',
     'pages/doc-module-1-complete.html', // Модуль 1 — бесплатный
     'dashboard.html'
   ];
