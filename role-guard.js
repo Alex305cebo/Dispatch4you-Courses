@@ -269,24 +269,17 @@
     // Есть пользователь — проверяем кешированную роль
     var cachedRole = getRoleFromStorage();
 
-    if (cachedRole) {
-      // Быстрая проверка по кешу
-      if (!checkAccess(cachedRole, page)) {
-        showPaywall(cachedRole);
-      }
+    // Если кеш говорит "есть доступ" — пропускаем сразу
+    if (cachedRole && checkAccess(cachedRole, page)) {
+      // Всё ок, обновим роль в фоне
+      loadRoleFromFirestore(user.uid);
+      return;
     }
 
-    // Параллельно обновляем роль из Firestore
+    // Кеша нет или кеш блокирует — ждём ответ от Firestore
     loadRoleFromFirestore(user.uid).then(function (freshRole) {
       localStorage.setItem('user_role', freshRole);
-
-      // Если кеша не было — проверяем сейчас
-      if (!cachedRole && !checkAccess(freshRole, page)) {
-        showPaywall(freshRole);
-      }
-
-      // Если роль изменилась и доступ пропал — показываем paywall
-      if (cachedRole && cachedRole !== freshRole && !checkAccess(freshRole, page)) {
+      if (!checkAccess(freshRole, page)) {
         showPaywall(freshRole);
       }
     });
