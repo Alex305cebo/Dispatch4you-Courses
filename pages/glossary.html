@@ -198,8 +198,7 @@
             background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(14, 165, 233, 0.08));
             border: 1px solid rgba(6, 182, 212, 0.2);
             border-radius: 20px;
-            padding: clamp(20px, 4vw, 28px);
-            margin-bottom: 20px;
+            margin-bottom: 12px;
             transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
             position: relative;
             overflow: hidden;
@@ -219,8 +218,7 @@
         }
 
         .term-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 40px rgba(6, 182, 212, 0.25);
+            box-shadow: 0 8px 28px rgba(6, 182, 212, 0.2);
             border-color: rgba(6, 182, 212, 0.4);
             background: linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(14, 165, 233, 0.12));
         }
@@ -229,32 +227,87 @@
             opacity: 1;
         }
 
-        .term-card:active {
-            transform: translateY(0) scale(0.98);
+        .term-card.active {
+            border-color: rgba(6, 182, 212, 0.5);
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(14, 165, 233, 0.1));
+        }
+
+        .term-card.active::before {
+            opacity: 1;
+        }
+
+        /* Аккордеон: заголовок (всегда видно) */
+        .term-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: clamp(16px, 3vw, 22px) clamp(20px, 4vw, 28px);
+            gap: 12px;
+        }
+
+        .term-header-left {
+            flex: 1;
+            min-width: 0;
         }
 
         .term-card .term-name {
-            font-size: clamp(18px, 3vw, 22px);
+            font-size: clamp(16px, 2.8vw, 20px);
             font-weight: 900;
             background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 50%, #f97316 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 10px;
+            margin-bottom: 4px;
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
             letter-spacing: -0.5px;
             line-height: 1.3;
         }
 
         .term-card .term-full {
-            font-size: clamp(13px, 2vw, 14px);
+            font-size: clamp(12px, 1.8vw, 13px);
             color: #94a3b8;
             font-style: italic;
-            margin-bottom: 14px;
             font-weight: 500;
             letter-spacing: 0.3px;
+            margin: 0;
+        }
+
+        .term-arrow {
+            font-size: 18px;
+            color: #06b6d4;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(6, 182, 212, 0.1);
+            border-radius: 8px;
+        }
+
+        .term-card.active .term-arrow {
+            transform: rotate(180deg);
+            background: rgba(6, 182, 212, 0.2);
+        }
+
+        /* Аккордеон: тело (сворачивается) */
+        .term-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .term-card.active .term-body {
+            max-height: 2000px;
+        }
+
+        .term-body-inner {
+            padding: 0 clamp(20px, 4vw, 28px) clamp(16px, 3vw, 22px);
+            border-top: 1px solid rgba(6, 182, 212, 0.15);
         }
 
         .term-card .term-description {
@@ -262,11 +315,50 @@
             line-height: 1.75;
             color: #cbd5e1;
             font-weight: 400;
+            padding-top: 16px;
         }
 
         .term-card .term-description strong {
             color: #e2e8f0;
             font-weight: 700;
+        }
+
+        /* Заблокированный контент для registered */
+        .term-locked {
+            margin-top: 16px;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.08), rgba(251, 146, 60, 0.05));
+            border: 1px dashed rgba(249, 115, 22, 0.3);
+            border-radius: 12px;
+            text-align: center;
+            color: #fb923c;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .term-locked a {
+            color: #06b6d4;
+            text-decoration: underline;
+            font-weight: 700;
+        }
+
+        .term-locked a:hover {
+            color: #0ea5e9;
+        }
+
+        /* Скрытие подробностей для registered */
+        .term-details-locked {
+            display: none;
+        }
+
+        body.role-student .term-details-locked,
+        body.role-superuser .term-details-locked {
+            display: block;
+        }
+
+        body.role-student .term-locked,
+        body.role-superuser .term-locked {
+            display: none;
         }
 
         .category-badge {
@@ -838,7 +930,15 @@
             }
 
             .term-card {
-                padding: 20px;
+                border-radius: 16px;
+            }
+
+            .term-header {
+                padding: 14px 16px;
+            }
+
+            .term-body-inner {
+                padding: 0 16px 14px;
             }
         }
 
@@ -1275,11 +1375,14 @@
                 <p>Термины, которые вы будете использовать каждый день при общении с водителями и брокерами.</p>
 
                 <div id="E" class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         ETA
                         <span class="category-badge">Статус</span>
                     </div>
                     <div class="term-full">Estimated Time of Arrival</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Ожидаемое время прибытия</strong> водителя на загрузку или разгрузку. Один из самых
                         важных терминов в работе диспетчера.
@@ -1292,14 +1395,17 @@
                         </ul>
                         <strong>Важно:</strong> Всегда указывайте часовой пояс (EST, CST, MST, PST) при сообщении ETA!
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         FCFS
                         <span class="category-badge">Статус</span>
                     </div>
                     <div class="term-full">First Come First Served</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>"Первым пришел — первым обслужен"</strong>. Означает живую очередь на складе вместо
                         фиксированного времени (аппоинтмента).
@@ -1314,14 +1420,17 @@
                         <strong>Совет:</strong> При FCFS рекомендуйте водителю приезжать рано утром (6-7 AM) чтобы
                         избежать длинных очередей.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div id="O" class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         OTP / OTD
                         <span class="category-badge">Метрика</span>
                     </div>
                     <div class="term-full">On Time Pickup / On Time Delivery</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Показатели своевременности</strong> прибытия на загрузку и разгрузку. Критически важные
                         метрики для репутации.
@@ -1335,14 +1444,17 @@
                         <strong>Последствия низких показателей:</strong> Потеря доступа к лучшим грузам, снижение
                         ставок, разрыв контрактов.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div id="T" class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         TONU
                         <span class="category-badge">Компенсация</span>
                     </div>
                     <div class="term-full">Truck Order Not Used</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Компенсация за отмену груза</strong> брокером, когда трак уже приехал на место или был в
                         пути.
@@ -1357,14 +1469,17 @@
                         <strong>Важно:</strong> TONU должен быть прописан в rate confirmation! Без этого получить
                         компенсацию сложно.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div id="L" class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Layover
                         <span class="category-badge">Компенсация</span>
                     </div>
                     <div class="term-full">Layover Pay</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Оплата за вынужденный простой</strong> водителя (обычно более суток) по вине брокера или
                         клиента.
@@ -1379,14 +1494,17 @@
                         <br><strong>Совет:</strong> Всегда прописывайте layover в rate confirmation: "Layover: $300/day
                         after 24 hours"
                     </div>
-                </div>
+                </div></div></div>
 
                 <div id="D" class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Detention
                         <span class="category-badge">Компенсация</span>
                     </div>
                     <div class="term-full">Detention Pay</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Почасовая оплата за ожидание</strong> на складе сверх бесплатного времени (обычно первые
                         2 часа бесплатно).
@@ -1403,14 +1521,17 @@
                         <strong>Пример:</strong> Check-in в 10:00, выезд в 15:30 = 5.5 часов. Первые 2 часа бесплатно,
                         3.5 часа × $50 = $175 detention.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Deadhead
                         <span class="category-badge">Маршрут</span>
                     </div>
                     <div class="term-full">Deadhead Miles / Empty Miles</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>"Пустой пробег"</strong>. Расстояние, которое водитель проезжает без груза до места
                         следующей загрузки.
@@ -1426,7 +1547,7 @@
                         <strong>Пример:</strong> Груз платит $2.50/миля на 500 миль, но deadhead 100 миль. Реальная
                         ставка: ($2.50 × 500) / 600 = $2.08/миля.
                     </div>
-                </div>
+                </div></div></div>
             </section>
 
             <section id="documentation" class="doc-section fade-in-up">
@@ -1434,11 +1555,14 @@
                 <p>Основные документы, с которыми работает диспетчер ежедневно.</p>
 
                 <div id="B" class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         BOL
                         <span class="category-badge">Документ</span>
                     </div>
                     <div class="term-full">Bill of Lading</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Основной транспортный документ</strong> (накладная), выдаваемый при загрузке. Содержит
                         данные о весе, количестве паллет и адресах.
@@ -1455,14 +1579,17 @@
                         <strong>Важно:</strong> Водитель ОБЯЗАН проверить груз при загрузке и отметить любые повреждения
                         на BOL!
                     </div>
-                </div>
+                </div></div></div>
 
                 <div id="P" class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         POD
                         <span class="category-badge">Документ</span>
                     </div>
                     <div class="term-full">Proof of Delivery</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Подтверждение доставки</strong>. Это BOL, подписанный получателем при выгрузке.
                         <br><br>
@@ -1479,14 +1606,17 @@
                         <strong>Срок отправки:</strong> POD должен быть отправлен брокеру в течение 24-48 часов после
                         доставки.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div id="R" class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         RC
                         <span class="category-badge">Документ</span>
                     </div>
                     <div class="term-full">Rate Confirmation</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Договор между брокером и перевозчиком</strong> на конкретный груз с указанием стоимости
                         и условий.
@@ -1508,14 +1638,17 @@
                         </ul>
                         <strong>Важно:</strong> ВСЕГДА читайте RC перед подписанием! Проверяйте все условия.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div id="M" class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         MC Number
                         <span class="category-badge">Регистрация</span>
                     </div>
                     <div class="term-full">Motor Carrier Number</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Уникальный номер транспортной компании</strong>, разрешающий коммерческие перевозки
                         между штатами (interstate commerce).
@@ -1530,7 +1663,7 @@
                         <strong>Проверка MC:</strong> Всегда проверяйте MC number брокера перед бронированием груза!
                         Мошенники часто используют фальшивые MC.
                     </div>
-                </div>
+                </div></div></div>
             </section>
 
             <section id="regulations" class="doc-section fade-in-up">
@@ -1538,11 +1671,14 @@
                 <p>Федеральные правила и системы, которые регулируют индустрию грузоперевозок.</p>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         ELD
                         <span class="category-badge">Оборудование</span>
                     </div>
                     <div class="term-full">Electronic Logging Device</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Электронный логбук</strong>, устройство для автоматического учета рабочего времени
                         водителя.
@@ -1560,14 +1696,17 @@
                         <br><br>
                         <strong>Популярные ELD системы:</strong> KeepTruckin, Samsara, Omnitracs, Geotab, Motive.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div id="H" class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         HOS
                         <span class="category-badge">Правила</span>
                     </div>
                     <div class="term-full">Hours of Service</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Федеральные правила</strong>, ограничивающие количество часов, которые водитель может
                         провести за рулем.
@@ -1587,14 +1726,17 @@
                         <strong>Важно для диспетчера:</strong> Планируйте маршруты с учетом HOS! Нарушение = штрафы
                         $1,000-11,000.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         DOT
                         <span class="category-badge">Регулятор</span>
                     </div>
                     <div class="term-full">Department of Transportation</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Министерство транспорта США</strong>, основной регулятор индустрии грузоперевозок.
                         <br><br>
@@ -1612,14 +1754,17 @@
                         <strong>Проверка DOT:</strong> Используйте FMCSA SMS (Safety Measurement System) для проверки
                         safety rating компании.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         TMS
                         <span class="category-badge">Технология</span>
                     </div>
                     <div class="term-full">Transportation Management System</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Программное обеспечение</strong> для управления логистикой и отслеживания грузов.
                         <br><br>
@@ -1638,7 +1783,7 @@
                         <strong>Для диспетчера:</strong> Знание TMS - обязательный навык. Большинство компаний
                         используют TMS для всех операций.
                     </div>
-                </div>
+                </div></div></div>
             </section>
 
             <section id="cargo-types" class="doc-section fade-in-up">
@@ -1646,11 +1791,14 @@
                 <p>Классификация грузов и типов трейлеров, которые используются в индустрии.</p>
 
                 <div id="F" class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         FTL
                         <span class="category-badge">Тип груза</span>
                     </div>
                     <div class="term-full">Full Truckload</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Полная загрузка трака</strong> одним грузом от одного shipper к одному receiver.
                         <br><br>
@@ -1664,14 +1812,17 @@
                         </ul>
                         <strong>Типичные ставки FTL:</strong> $1.50-3.50/миля в зависимости от lane, сезона, типа груза.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         LTL
                         <span class="category-badge">Тип груза</span>
                     </div>
                     <div class="term-full">Less Than Truckload</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Частичная загрузка</strong>, когда в одном прицепе едут грузы от разных заказчиков.
                         <br><br>
@@ -1687,14 +1838,17 @@
                         <strong>Для диспетчера:</strong> LTL сложнее в управлении, но позволяет максимизировать
                         использование трака.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Dry Van
                         <span class="category-badge">Оборудование</span>
                     </div>
                     <div class="term-full">Dry Van Trailer</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Обычный закрытый прицеп</strong> (тентованный или цельнометаллический) для перевозки
                         сухих грузов.
@@ -1712,14 +1866,17 @@
                         <br><br>
                         <strong>Ставки:</strong> $1.50-2.50/миля (базовые ставки индустрии).
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Reefer
                         <span class="category-badge">Оборудование</span>
                     </div>
                     <div class="term-full">Refrigerated Trailer</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Рефрижератор</strong>, прицеп с холодильной установкой для перевозки скоропортящихся
                         грузов.
@@ -1739,14 +1896,17 @@
                         <br><br>
                         <strong>Важно:</strong> Всегда проверяйте температуру при загрузке и записывайте на BOL!
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Flatbed
                         <span class="category-badge">Оборудование</span>
                     </div>
                     <div class="term-full">Flatbed Trailer</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Открытая платформа</strong> для перевозки негабаритных или тяжелых грузов.
                         <br><br>
@@ -1766,18 +1926,21 @@
                         <strong>Для диспетчера:</strong> Flatbed требует специальных навыков водителя (крепление груза).
                         Не все водители работают с flatbed.
                     </div>
-                </div>
+                </div></div></div>
             </section>
 
             <section id="additional-terms" class="doc-section fade-in-up">
                 <h2>💼 Дополнительные важные термины</h2>
 
                 <div id="C" class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Carrier
                         <span class="category-badge">Участник</span>
                     </div>
                     <div class="term-full">Motor Carrier / Trucking Company</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Перевозчик</strong> - компания или owner-operator, владеющий траками и выполняющий
                         перевозки.
@@ -1789,14 +1952,17 @@
                             <li><strong>Fleet owner:</strong> Владелец нескольких траков</li>
                         </ul>
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Broker
                         <span class="category-badge">Участник</span>
                     </div>
                     <div class="term-full">Freight Broker</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Брокер</strong> - посредник между shippers (грузоотправителями) и carriers
                         (перевозчиками).
@@ -1812,14 +1978,17 @@
                         </ul>
                         <strong>Крупнейшие брокеры:</strong> C.H. Robinson, TQL, XPO Logistics, Coyote, Echo Global.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div id="A" class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Appointment
                         <span class="category-badge">Статус</span>
                     </div>
                     <div class="term-full">Scheduled Appointment</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Фиксированное время</strong> для загрузки или разгрузки на складе.
                         <br><br>
@@ -1831,14 +2000,17 @@
                         </ul>
                         <strong>Важно:</strong> Всегда подтверждайте appointment за 24 часа до прибытия!
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Backhaul
                         <span class="category-badge">Маршрут</span>
                     </div>
                     <div class="term-full">Return Load</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Обратный груз</strong> - груз на обратном пути после доставки основного груза.
                         <br><br>
@@ -1850,14 +2022,17 @@
                         </ul>
                         <strong>Совет:</strong> Всегда ищите backhaul перед тем как водитель доставит груз!
                     </div>
-                </div>
+                </div></div></div>
 
                 <div id="I" class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Invoice
                         <span class="category-badge">Документ</span>
                     </div>
                     <div class="term-full">Freight Invoice</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Счет на оплату</strong>, который carrier отправляет брокеру после доставки груза.
                         <br><br>
@@ -1873,7 +2048,7 @@
                         </ul>
                         <strong>Сроки оплаты:</strong> Обычно 30 дней (Net 30), Quick Pay 1-3 дня (с комиссией 3-5%).
                     </div>
-                </div>
+                </div></div></div>
             </section>
 
             <section id="financial-terms" class="doc-section fade-in-up">
@@ -1881,11 +2056,14 @@
                 <p>Термины, связанные с оплатой, расчетами и финансовыми операциями в индустрии.</p>
 
                 <div id="Q" class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Quick Pay
                         <span class="category-badge">Финансы</span>
                     </div>
                     <div class="term-full">Quick Payment Service</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Быстрая оплата</strong> от брокера за дополнительную комиссию вместо стандартных 30
                         дней.
@@ -1902,14 +2080,17 @@
                         <br><br>
                         <strong>Когда использовать:</strong> Если нужны срочные деньги на топливо или другие расходы.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Factoring
                         <span class="category-badge">Финансы</span>
                     </div>
                     <div class="term-full">Freight Factoring / Invoice Factoring</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Продажа инвойсов</strong> факторинговой компании для получения немедленной оплаты.
                         <br><br>
@@ -1932,14 +2113,17 @@
                         <strong>Плюсы:</strong> Стабильный cash flow, не нужно ждать 30 дней.
                         <br><strong>Минусы:</strong> Комиссия съедает прибыль, контракт обычно на 6-12 месяцев.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Net 30
                         <span class="category-badge">Финансы</span>
                     </div>
                     <div class="term-full">Net 30 Days Payment Terms</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Стандартный срок оплаты</strong> - 30 дней с момента доставки груза.
                         <br><br>
@@ -1953,14 +2137,17 @@
                         <strong>Важно:</strong> Всегда уточняйте payment terms перед бронированием груза! Записывайте в
                         rate confirmation.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         FSC
                         <span class="category-badge">Финансы</span>
                     </div>
                     <div class="term-full">Fuel Surcharge</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Топливная надбавка</strong> для компенсации колебаний цен на дизельное топливо.
                         <br><br>
@@ -1975,14 +2162,17 @@
                         <strong>Важно:</strong> FSC не всегда покрывает реальный рост цен на топливо. Всегда считайте
                         all-in rate!
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Accessorials
                         <span class="category-badge">Финансы</span>
                     </div>
                     <div class="term-full">Accessorial Charges</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Дополнительные сборы</strong> за услуги сверх стандартной доставки dock-to-dock.
                         <br><br>
@@ -2001,14 +2191,17 @@
                         <strong>Критически важно:</strong> ВСЕ accessorials должны быть прописаны в rate confirmation ДО
                         бронирования груза!
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Lumper Fee
                         <span class="category-badge">Финансы</span>
                     </div>
                     <div class="term-full">Lumper Service Fee</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Оплата за услуги разгрузки</strong> груза на складе третьей стороной (не водителем).
                         <br><br>
@@ -2025,14 +2218,17 @@
                         <strong>Важно:</strong> Всегда прописывайте в RC: "Lumper fees reimbursable with receipt". Без
                         этого брокер может отказать в возмещении!
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         RPM
                         <span class="category-badge">Финансы</span>
                     </div>
                     <div class="term-full">Rate Per Mile</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Ставка за милю</strong> - основная метрика прибыльности груза.
                         <br><br>
@@ -2054,14 +2250,17 @@
                             <li>Flatbed: $2.50-3.00/миля минимум</li>
                         </ul>
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         All-in Rate
                         <span class="category-badge">Финансы</span>
                     </div>
                     <div class="term-full">All-inclusive Rate</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Полная ставка</strong> включая все расходы и дополнительные сборы.
                         <br><br>
@@ -2083,7 +2282,7 @@
                         <br><br>
                         <strong>Совет:</strong> Всегда считайте all-in rate перед принятием груза!
                     </div>
-                </div>
+                </div></div></div>
             </section>
 
             <section id="operations-types" class="doc-section fade-in-up">
@@ -2092,11 +2291,14 @@
                 </p>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Drop and Hook
                         <span class="category-badge">Операция</span>
                     </div>
                     <div class="term-full">Drop & Hook / Drop-n-Hook</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Быстрая смена трейлера</strong> без ожидания загрузки или разгрузки.
                         <br><br>
@@ -2116,14 +2318,17 @@
                         </ul>
                         <strong>Ставки:</strong> Обычно на $50-150 ниже чем live load, но экономия времени компенсирует.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Live Load / Live Unload
                         <span class="category-badge">Операция</span>
                     </div>
                     <div class="term-full">Live Loading / Live Unloading</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Водитель ждет</strong> пока груз загружают или разгружают.
                         <br><br>
@@ -2144,14 +2349,17 @@
                         <strong>Когда неизбежно:</strong> Малые склады без yard для трейлеров, специальные грузы
                         требующие присутствия водителя.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Power Only
                         <span class="category-badge">Операция</span>
                     </div>
                     <div class="term-full">Power Only Load</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Carrier предоставляет только трак и водителя</strong>, трейлер принадлежит shipper или
                         брокеру.
@@ -2173,14 +2381,17 @@
                         <br><br>
                         <strong>Популярно у:</strong> Amazon Relay, крупных retailers с собственными трейлерами.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Team Load
                         <span class="category-badge">Операция</span>
                     </div>
                     <div class="term-full">Team Driver Load</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Груз требует двух водителей</strong>, которые работают посменно для непрерывного
                         движения.
@@ -2202,14 +2413,17 @@
                         <br><br>
                         <strong>Пример:</strong> LA → NYC (2,800 миль). Solo driver: 4-5 дней. Team: 2-3 дня.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Hazmat
                         <span class="category-badge">Специализация</span>
                     </div>
                     <div class="term-full">Hazardous Materials</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Опасные материалы</strong>, требующие специального разрешения и обучения.
                         <br><br>
@@ -2234,14 +2448,17 @@
                         </ul>
                         <strong>Ставки:</strong> На 20-40% выше обычных грузов ($2.50-4.00/миля).
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Oversized / Overweight
                         <span class="category-badge">Специализация</span>
                     </div>
                     <div class="term-full">Oversized or Overweight Load</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Негабаритные или перегруженные грузы</strong>, превышающие стандартные лимиты.
                         <br><br>
@@ -2264,14 +2481,17 @@
                         <strong>Типичные грузы:</strong> Строительное оборудование, дома (mobile homes), ветряные
                         турбины.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Reefer Load
                         <span class="category-badge">Специализация</span>
                     </div>
                     <div class="term-full">Refrigerated Load</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Рефрижераторный груз</strong> требующий поддержания определенной температуры.
                         <br><br>
@@ -2292,14 +2512,17 @@
                         <br><br>
                         <strong>Важно:</strong> Постоянный мониторинг температуры, дополнительный fuel расход.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Flatbed Load
                         <span class="category-badge">Оборудование</span>
                     </div>
                     <div class="term-full">Flatbed Trailer Load</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Открытая платформа</strong> для перевозки негабаритных и тяжелых грузов.
                         <br><br>
@@ -2321,14 +2544,17 @@
                         <strong>Плюсы:</strong> Высокие ставки, меньше конкуренции. <strong>Минусы:</strong> Физическая
                         работа с tarps.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Step Deck
                         <span class="category-badge">Оборудование</span>
                     </div>
                     <div class="term-full">Step Deck Trailer / Stepdeck</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Низкорамный трейлер</strong> с двумя уровнями для перевозки высоких грузов.
                         <br><br>
@@ -2350,14 +2576,17 @@
                         <br><br>
                         <strong>Преимущество:</strong> Можно возить грузы которые не влезают на обычный flatbed.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Hotshot
                         <span class="category-badge">Специализация</span>
                     </div>
                     <div class="term-full">Hotshot Trucking</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Срочная доставка малых грузов</strong> на пикапе (обычно Ford F-350, Ram 3500) с
                         трейлером.
@@ -2383,14 +2612,17 @@
                         <br><br>
                         <strong>Популярно в:</strong> Техас, Оклахома, Северная Дакота (нефтяная индустрия).
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         LTL
                         <span class="category-badge">Операция</span>
                     </div>
                     <div class="term-full">Less Than Truckload</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Частичная загрузка</strong> - несколько грузов от разных shipper в одном трейлере.
                         <br><br>
@@ -2422,14 +2654,17 @@
                         <strong>Для диспетчера:</strong> LTL сложнее в управлении, но позволяет максимизировать
                         использование трака и работать с малыми клиентами.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         FTL
                         <span class="category-badge">Операция</span>
                     </div>
                     <div class="term-full">Full Truckload</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Полная загрузка трейлера</strong> - весь трейлер для одного shipper.
                         <br><br>
@@ -2459,14 +2694,17 @@
                         <strong>Для диспетчера:</strong> FTL - стандарт для owner-operators. Проще управлять, выше
                         маржа, меньше headache с документацией.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Intermodal
                         <span class="category-badge">Операция</span>
                     </div>
                     <div class="term-full">Intermodal Transportation</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Комбинированная перевозка</strong> - контейнер перевозится траком, поездом и/или
                         кораблем.
@@ -2499,14 +2737,17 @@
                         <strong>Используется:</strong> Крупные retailers (Walmart, Target), производители для регулярных
                         shipments между заводами и distribution centers.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Drayage
                         <span class="category-badge">Операция</span>
                     </div>
                     <div class="term-full">Drayage Service</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Короткая перевозка контейнера</strong> - обычно от порта до склада или rail yard.
                         <br><br>
@@ -2541,14 +2782,17 @@
                         <strong>Для диспетчера:</strong> Drayage - специализированная ниша. Хорошие деньги для local
                         drivers, но требует знания port operations и документации.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Expedited Freight
                         <span class="category-badge">Специализация</span>
                     </div>
                     <div class="term-full">Expedited Shipping</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Срочная доставка</strong> - tight delivery window, часто требует team drivers.
                         <br><br>
@@ -2585,14 +2829,17 @@
                         <strong>Для диспетчера:</strong> Expedited - высокий stress, но отличные деньги. Нужно иметь
                         reliable drivers и быть готовым к emergency calls в любое время.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         White Glove Service
                         <span class="category-badge">Специализация</span>
                     </div>
                     <div class="term-full">White Glove Delivery</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Премиум доставка</strong> - включает inside delivery, unpacking, assembly, debris
                         removal.
@@ -2628,14 +2875,17 @@
                         <strong>Для диспетчера:</strong> White Glove - премиум сегмент. Требует надежных, аккуратных
                         drivers. Высокие ставки, но и высокая ответственность.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Conestoga
                         <span class="category-badge">Оборудование</span>
                     </div>
                     <div class="term-full">Conestoga Trailer</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Трейлер с раздвижной крышей</strong> - защита от погоды + загрузка сверху краном.
                         <br><br>
@@ -2669,14 +2919,17 @@
                         <strong>Для диспетчера:</strong> Conestoga - отличная ниша. Меньше конкуренции, хорошие ставки,
                         удобство для drivers (не нужно tarping).
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Tanker
                         <span class="category-badge">Оборудование</span>
                     </div>
                     <div class="term-full">Tanker Trailer</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Цистерна для жидкостей</strong> - молоко, топливо, химикаты.
                         <br><br>
@@ -2711,14 +2964,17 @@
                         <strong>Для диспетчера:</strong> Tanker - специализированная ниша. Требует certified drivers, но
                         предлагает стабильную работу и хорошие ставки.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Auto Transport
                         <span class="category-badge">Специализация</span>
                     </div>
                     <div class="term-full">Auto Hauler / Car Carrier</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Перевозка автомобилей</strong> - специальный двухуровневый трейлер для 7-10 машин.
                         <br><br>
@@ -2757,14 +3013,17 @@
                         <strong>Для диспетчера:</strong> Auto transport - специализированная ниша. Сезонный бизнес,
                         требует высокой страховки, но хорошие margins.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Livestock
                         <span class="category-badge">Специализация</span>
                     </div>
                     <div class="term-full">Livestock Transportation</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Перевозка животных</strong> - крупный рогатый скот, свиньи, лошади.
                         <br><br>
@@ -2808,7 +3067,7 @@
                         <strong>Для диспетчера:</strong> Livestock - непопулярная ниша из-за сложности и запаха. Но
                         стабильный спрос и меньше конкуренции. Требует специализированных drivers.
                     </div>
-                </div>
+                </div></div></div>
             </section>
 
             <section id="routes-planning" class="doc-section fade-in-up">
@@ -2816,11 +3075,14 @@
                 <p>Термины, связанные с планированием маршрутов и типами перевозок.</p>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Lane
                         <span class="category-badge">Маршрут</span>
                     </div>
                     <div class="term-full">Freight Lane / Shipping Lane</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Конкретный маршрут</strong> между двумя точками (городами или регионами).
                         <br><br>
@@ -2839,14 +3101,17 @@
                         </ul>
                         <strong>Совет:</strong> Изучите 3-5 основных lanes вашего региона досконально!
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Headhaul
                         <span class="category-badge">Маршрут</span>
                     </div>
                     <div class="term-full">Headhaul Lane</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Основной прибыльный маршрут</strong> с высоким спросом на грузы.
                         <br><br>
@@ -2865,14 +3130,17 @@
                         </ul>
                         <strong>Стратегия:</strong> Максимизируйте headhaul miles, минимизируйте backhaul/deadhead.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Round Trip
                         <span class="category-badge">Маршрут</span>
                     </div>
                     <div class="term-full">Round Trip Load</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Туда и обратно</strong> с грузами в обе стороны.
                         <br><br>
@@ -2891,14 +3159,17 @@
                         </ul>
                         <strong>Совет:</strong> Всегда ищите backhaul ДО того как водитель доставит первый груз!
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Relay
                         <span class="category-badge">Операция</span>
                     </div>
                     <div class="term-full">Relay Load / Driver Relay</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Передача груза</strong> другому водителю в промежуточной точке.
                         <br><br>
@@ -2917,14 +3188,17 @@
                         </ul>
                         <strong>Используется:</strong> Крупными carriers для long-haul грузов с regional drivers.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Dedicated Lane
                         <span class="category-badge">Маршрут</span>
                     </div>
                     <div class="term-full">Dedicated Freight Lane</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Постоянный маршрут</strong> с одним клиентом по контракту.
                         <br><br>
@@ -2941,14 +3215,17 @@
                         <strong>Плюсы:</strong> Стабильность, предсказуемость.
                         <br><strong>Минусы:</strong> Ставки ниже spot market, меньше гибкости.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Regional
                         <span class="category-badge">Тип работы</span>
                     </div>
                     <div class="term-full">Regional Trucking</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Работа в пределах одного региона</strong>, обычно водитель дома каждую ночь или каждые
                         2-3 дня.
@@ -2963,7 +3240,7 @@
                         <br><br>
                         <strong>Популярно у:</strong> Водителей с семьями, опытных водителей.
                     </div>
-                </div>
+                </div></div></div>
             </section>
 
             <section id="warehouse-operations" class="doc-section fade-in-up">
@@ -2971,11 +3248,14 @@
                 <p>Термины, связанные с работой на складах и погрузочных терминалах.</p>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Lumper
                         <span class="category-badge">Персонал</span>
                     </div>
                     <div class="term-full">Lumper Service / Unloader</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Рабочий на складе</strong>, который разгружает трак за плату (не водитель, не персонал
                         склада).
@@ -2992,14 +3272,17 @@
                         <strong>Популярные lumper companies:</strong> Nationwide Warehouse Services, Comdata Lumper
                         Services.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Dock
                         <span class="category-badge">Инфраструктура</span>
                     </div>
                     <div class="term-full">Loading Dock</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Погрузочная платформа</strong> на складе для загрузки/разгрузки траков.
                         <br><br>
@@ -3013,14 +3296,17 @@
                         <br><br>
                         <strong>Важно:</strong> Всегда уточняйте dock door number при check-in!
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Cross-dock
                         <span class="category-badge">Операция</span>
                     </div>
                     <div class="term-full">Cross-docking</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Перегрузка товара</strong> с одного трака на другой без хранения на складе.
                         <br><br>
@@ -3039,14 +3325,17 @@
                         </ul>
                         <strong>Используется:</strong> LTL carriers, distribution centers, consolidation terminals.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Yard
                         <span class="category-badge">Инфраструктура</span>
                     </div>
                     <div class="term-full">Truck Yard / Trailer Yard</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Территория для парковки</strong> траков и трейлеров.
                         <br><br>
@@ -3058,14 +3347,17 @@
                         </ul>
                         <strong>Yard management:</strong> Система отслеживания трейлеров в yard (номера, позиции).
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Check-in
                         <span class="category-badge">Процедура</span>
                     </div>
                     <div class="term-full">Warehouse Check-in</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Регистрация на складе</strong> по прибытию водителя.
                         <br><br>
@@ -3080,7 +3372,7 @@
                         <strong>Важно:</strong> Время check-in = начало отсчета для detention! Всегда записывайте точное
                         время.
                     </div>
-                </div>
+                </div></div></div>
             </section>
 
             <section id="safety-verification" class="doc-section fade-in-up">
@@ -3088,11 +3380,14 @@
                 <p>Инструменты и системы для проверки carriers, brokers и обеспечения безопасности.</p>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Carrier411
                         <span class="category-badge">Сервис</span>
                     </div>
                     <div class="term-full">Carrier411.com</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Платная платформа</strong> для проверки carriers и brokers (индустриальный стандарт).
                         <br><br>
@@ -3111,14 +3406,17 @@
                         <strong>Для диспетчера:</strong> ОБЯЗАТЕЛЬНО проверяйте каждого нового брокера через Carrier411
                         перед бронированием!
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         SAFER
                         <span class="category-badge">Сервис</span>
                     </div>
                     <div class="term-full">FMCSA SAFER System</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Бесплатная база данных FMCSA</strong> для проверки carriers и brokers.
                         <br><br>
@@ -3136,14 +3434,17 @@
                         <strong>Ограничения:</strong> Информация может быть устаревшей. Carrier411 более надежен для
                         проверки страховки.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         RTS Pro (Rmis)
                         <span class="category-badge">Сервис</span>
                     </div>
                     <div class="term-full">Rmis Transportation Services</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Система проверки страховки</strong> и authority в реальном времени.
                         <br><br>
@@ -3158,14 +3459,17 @@
                         <br><br>
                         <strong>Для carrier:</strong> Убедитесь что ваша страховка зарегистрирована в Rmis!
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         CSA Score
                         <span class="category-badge">Рейтинг</span>
                     </div>
                     <div class="term-full">Compliance, Safety, Accountability Score</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Рейтинг безопасности</strong> carrier от FMCSA.
                         <br><br>
@@ -3184,14 +3488,17 @@
                         <br><br>
                         <strong>Проверка:</strong> ai.fmcsa.dot.gov/SMS
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         COI
                         <span class="category-badge">Документ</span>
                     </div>
                     <div class="term-full">Certificate of Insurance</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Сертификат страхования</strong> подтверждающий наличие действующей страховки.
                         <br><br>
@@ -3210,14 +3517,17 @@
                         </ul>
                         <strong>Важно:</strong> Брокеры требуют COI перед первым грузом. Убедитесь что ваш COI актуален!
                     </div>
-                </div>
+                </div></div></div>
 
                 <div id="W" class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         W-9 Form
                         <span class="category-badge">Документ</span>
                     </div>
                     <div class="term-full">IRS Form W-9</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Налоговая форма</strong> с информацией о вашей компании для IRS.
                         <br><br>
@@ -3234,14 +3544,17 @@
                         <br><br>
                         <strong>Важно:</strong> Храните заполненный W-9 в PDF и отправляйте новым брокерам сразу!
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Cargo Insurance
                         <span class="category-badge">Страхование</span>
                     </div>
                     <div class="term-full">Cargo Insurance / Freight Insurance</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Страхование груза</strong> от повреждения, потери или кражи.
                         <br><br>
@@ -3255,14 +3568,17 @@
                         <br><br>
                         <strong>Важно:</strong> Всегда проверяйте груз при загрузке и отмечайте повреждения на BOL!
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Liability Insurance
                         <span class="category-badge">Страхование</span>
                     </div>
                     <div class="term-full">Auto Liability Insurance</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Страхование ответственности</strong> за ущерб третьим лицам.
                         <br><br>
@@ -3280,7 +3596,7 @@
                         </ul>
                         <strong>Стоимость:</strong> $12,000-20,000/год на трак (зависит от CSA score и claims history).
                     </div>
-                </div>
+                </div></div></div>
             </section>
 
             <section id="problems-situations" class="doc-section fade-in-up">
@@ -3288,11 +3604,14 @@
                 <p>Термины, связанные с проблемными ситуациями и их решением.</p>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Breakdown
                         <span class="category-badge">Проблема</span>
                     </div>
                     <div class="term-full">Truck Breakdown / Mechanical Failure</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Поломка трака</strong> в пути.
                         <br><br>
@@ -3307,14 +3626,17 @@
                         </ul>
                         <strong>Важно:</strong> Коммуникация с брокером критична! Чем раньше уведомите, тем лучше.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Cargo Claim
                         <span class="category-badge">Проблема</span>
                     </div>
                     <div class="term-full">Cargo Damage Claim</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Претензия за повреждение</strong> или потерю груза.
                         <br><br>
@@ -3335,14 +3657,17 @@
                         </ul>
                         <strong>Если claim подан:</strong> Cargo insurance покрывает, но может повысить премию.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Double Brokering
                         <span class="category-badge">МОШЕННИЧЕСТВО</span>
                     </div>
                     <div class="term-full">Illegal Double Brokering</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>НЕЗАКОННАЯ перепродажа груза</strong> другому брокеру или carrier без разрешения.
                         <br><br>
@@ -3364,14 +3689,17 @@
                         </ul>
                         <strong>НИКОГДА не занимайтесь double brokering!</strong>
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Fraud
                         <span class="category-badge">МОШЕННИЧЕСТВО</span>
                     </div>
                     <div class="term-full">Freight Fraud / Cargo Theft</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Мошенничество</strong> в индустрии грузоперевозок.
                         <br><br>
@@ -3393,14 +3721,17 @@
                             <li>Будьте осторожны с "слишком хорошими" ставками</li>
                         </ul>
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Load Cancellation
                         <span class="category-badge">Ситуация</span>
                     </div>
                     <div class="term-full">Load Cancellation / Cancelled Load</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Отмена груза</strong> брокером или shipper.
                         <br><br>
@@ -3420,14 +3751,17 @@
                         </ul>
                         <strong>Важно:</strong> TONU должен быть прописан в rate confirmation!
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Reschedule
                         <span class="category-badge">Ситуация</span>
                     </div>
                     <div class="term-full">Rescheduled Appointment</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Перенос времени</strong> загрузки или разгрузки.
                         <br><br>
@@ -3447,14 +3781,17 @@
                             <li>Если задержка большая - требовать layover pay</li>
                         </ul>
                     </div>
-                </div>
+                </div></div></div>
 
                 <div id="N" class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         No-show
                         <span class="category-badge">Проблема</span>
                     </div>
                     <div class="term-full">Driver No-show</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Водитель не появился</strong> на загрузке в назначенное время.
                         <br><br>
@@ -3473,14 +3810,17 @@
                             <li>Если проблема - уведомляйте брокера СРАЗУ!</li>
                         </ul>
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Rejected Load
                         <span class="category-badge">Ситуация</span>
                     </div>
                     <div class="term-full">Load Rejection</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Отказ от груза</strong> водителем или carrier.
                         <br><br>
@@ -3501,7 +3841,7 @@
                             <li>Требовать TONU если применимо</li>
                         </ul>
                     </div>
-                </div>
+                </div></div></div>
             </section>
 
             <section id="communication-terms" class="doc-section fade-in-up">
@@ -3509,11 +3849,14 @@
                 <p>Термины, связанные с общением между диспетчером, водителями и брокерами.</p>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Check Call
                         <span class="category-badge">Процесс</span>
                     </div>
                     <div class="term-full">Driver Check Call</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Звонок диспетчера водителю</strong> для проверки статуса и местоположения.
                         <br><br>
@@ -3534,14 +3877,17 @@
                             <li>"How many hours do you have left?" (HOS)</li>
                         </ul>
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Rate Negotiation
                         <span class="category-badge">Процесс</span>
                     </div>
                     <div class="term-full">Freight Rate Negotiation</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Переговоры о ставке</strong> с брокером для получения лучшей цены.
                         <br><br>
@@ -3564,14 +3910,17 @@
                             <li>"Let me check with my driver and call you back" (время подумать)</li>
                         </ul>
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Load Tender
                         <span class="category-badge">Процесс</span>
                     </div>
                     <div class="term-full">Load Tender / Freight Tender</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Предложение груза</strong> от брокера carrier.
                         <br><br>
@@ -3592,14 +3941,17 @@
                             <li>Weight (не overweight?)</li>
                         </ul>
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Confirmation Number
                         <span class="category-badge">Идентификатор</span>
                     </div>
                     <div class="term-full">Load Confirmation Number</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Номер подтверждения груза</strong> от брокера.
                         <br><br>
@@ -3616,14 +3968,17 @@
                         <strong>Важно:</strong> Всегда записывайте confirmation number и используйте в общении с
                         брокером!
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Reference Number
                         <span class="category-badge">Идентификатор</span>
                     </div>
                     <div class="term-full">Load Reference Number / PO Number</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Номер для отслеживания груза</strong> в системе shipper или receiver.
                         <br><br>
@@ -3642,7 +3997,7 @@
                         </ul>
                         <strong>Важно:</strong> Без правильного reference number могут не принять на складе!
                     </div>
-                </div>
+                </div></div></div>
             </section>
 
             <section id="additional-documents" class="doc-section fade-in-up">
@@ -3650,11 +4005,14 @@
                 <p>Другие важные термины, которые используются в ежедневной работе.</p>
 
                 <div id="S" class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Shipper
                         <span class="category-badge">Участник</span>
                     </div>
                     <div class="term-full">Shipper / Consignor</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Грузоотправитель</strong> - компания или лицо, которое отправляет груз.
                         <br><br>
@@ -3672,14 +4030,17 @@
                             <li>Contact person и phone</li>
                         </ul>
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Consignee
                         <span class="category-badge">Участник</span>
                     </div>
                     <div class="term-full">Consignee / Receiver</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Грузополучатель</strong> - компания или лицо, которое получает груз.
                         <br><br>
@@ -3692,14 +4053,17 @@
                         </ul>
                         <strong>Важно:</strong> Consignee должен подписать POD при получении груза!
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Commodity
                         <span class="category-badge">Описание</span>
                     </div>
                     <div class="term-full">Freight Commodity</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Тип товара</strong> - описание того, что перевозится.
                         <br><br>
@@ -3720,14 +4084,17 @@
                             <li>Некоторые commodities требуют специальных permits (hazmat)</li>
                         </ul>
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Weight Ticket
                         <span class="category-badge">Документ</span>
                     </div>
                     <div class="term-full">Certified Weight Ticket / Scale Ticket</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Квитанция взвешивания</strong> с сертифицированных весов.
                         <br><br>
@@ -3746,14 +4113,17 @@
                         </ul>
                         <strong>Что показывает:</strong> Gross weight, tare weight, net weight, дата, время, location.
                     </div>
-                </div>
+                </div></div></div>
 
                 <div class="term-card scale-in">
+                    <div class="term-header"><div class="term-header-left">
                     <div class="term-name">
                         Seal Number
                         <span class="category-badge">Безопасность</span>
                     </div>
                     <div class="term-full">Trailer Seal Number</div>
+                    </div><span class="term-arrow">▼</span></div>
+                    <div class="term-body"><div class="term-body-inner">
                     <div class="term-description">
                         <strong>Номер пломбы</strong> на дверях трейлера для защиты от несанкционированного доступа.
                         <br><br>
@@ -3773,7 +4143,7 @@
                         </ul>
                         <strong>Важно:</strong> ВСЕГДА проверяйте seal number при загрузке и записывайте в BOL!
                     </div>
-                </div>
+                </div></div></div>
             </section>
 
             <div class="success-highlight fade-in-up">
@@ -3828,7 +4198,7 @@
                 </a>
             </div>
 
-        </div>
+        </div></div></div>
     </section>
 
     <script>
@@ -3996,6 +4366,25 @@
                     navigationContent.classList.toggle('active');
                 });
             }
+        });
+    </script>
+
+    <script>
+        // Аккордеон для карточек терминов
+        document.addEventListener('DOMContentLoaded', function () {
+            // Клик по карточке — toggle
+            document.querySelectorAll('.term-card').forEach(function (card) {
+                var header = card.querySelector('.term-header');
+                if (header) {
+                    header.addEventListener('click', function () {
+                        card.classList.toggle('active');
+                    });
+                }
+            });
+
+            // Роль пользователя — добавляем класс на body
+            var role = localStorage.getItem('user_role') || 'guest';
+            document.body.classList.add('role-' + role);
         });
     </script>
 
