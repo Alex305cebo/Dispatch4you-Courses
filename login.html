@@ -445,17 +445,22 @@
         const cred = await signInWithEmailAndPassword(auth, email, password);
         await saveUserAndRedirect(cred.user);
       } catch (err) {
-        // Если пользователь не найден, проверяем есть ли аккаунт с Google
-        if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        console.error('Login error:', err.code, err.message);
+        // Если пользователь не найден или неверные данные
+        if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
           try {
             const methods = await fetchSignInMethodsForEmail(auth, email);
-            if (methods.includes('google.com')) {
-              showError('Этот email зарегистрирован через Google. Нажмите "Продолжить с Google" для входа.');
+            console.log('Sign-in methods for', email, ':', methods);
+            if (methods.includes('google.com') && !methods.includes('password')) {
+              showError('⚠️ Этот email зарегистрирован через Google. Нажмите "Продолжить с Google" для входа, или используйте "Забыли пароль?" чтобы установить пароль.');
+            } else if (methods.length === 0) {
+              showError('❌ Аккаунт с таким email не найден. Проверьте email или зарегистрируйтесь.');
             } else {
-              showError(translateError(err.code));
+              showError('❌ Неверный пароль. Попробуйте ещё раз или нажмите "Забыли пароль?"');
             }
           } catch (e) {
-            showError(translateError(err.code));
+            console.error('fetchSignInMethods error:', e);
+            showError('❌ Неверный email или пароль. Попробуйте ещё раз.');
           }
         } else {
           showError(translateError(err.code));
