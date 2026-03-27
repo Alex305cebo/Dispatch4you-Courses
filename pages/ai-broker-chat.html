@@ -4,7 +4,7 @@
     <script src="../site-protection.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🤖 AI Брокер — Чат-тренажёр | Курсы Диспетчера</title>
+    <title>🤖 AI Брокер — Голосовой тренажёр | Курсы Диспетчера</title>
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,205 +13,226 @@
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         html{overflow-x:hidden;width:100%;max-width:100vw}
-        :root{--primary:#06b6d4;--secondary:#0ea5e9;--accent:#f97316;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--bg-dark:#0a0e1a;--bg-darker:#070b14;--text-primary:#f1f5f9;--text-secondary:#94a3b8;--text-muted:#64748b;--chat-bg:#0d1117;--msg-user:#1a3a5c;--msg-broker:#1e293b;--msg-system:#172033}
-        body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg-darker);color:var(--text-primary);line-height:1.6;overflow-x:hidden;width:100%;max-width:100vw;margin:0;padding:0;height:100vh;display:flex;flex-direction:column}
+        :root{--primary:#06b6d4;--secondary:#0ea5e9;--accent:#f97316;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--bg-dark:#0a0e1a;--bg-darker:#070b14;--text-primary:#f1f5f9;--text-secondary:#94a3b8;--text-muted:#64748b}
+        body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg-darker);color:var(--text-primary);line-height:1.6;overflow-x:hidden;margin:0;padding:0;height:100vh}
         body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at 15% 25%,rgba(6,182,212,.1),transparent 50%),radial-gradient(circle at 85% 75%,rgba(249,115,22,.07),transparent 50%);z-index:-1;pointer-events:none}
 
-        /* ── LAYOUT ── */
-        .chat-app{display:flex;flex-direction:column;height:100vh;max-width:900px;margin:0 auto;width:100%;position:relative}
+        .app{display:flex;flex-direction:column;height:100vh;max-width:700px;margin:0 auto;width:100%}
 
         /* ── HEADER ── */
-        .chat-header{padding:90px 20px 16px;background:rgba(10,14,26,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(6,182,212,.15);flex-shrink:0;z-index:10}
-        .chat-header-inner{display:flex;align-items:center;justify-content:space-between;gap:12px}
-        .broker-info{display:flex;align-items:center;gap:14px}
-        .broker-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;position:relative}
-        .broker-avatar .status-dot{position:absolute;bottom:2px;right:2px;width:12px;height:12px;border-radius:50%;background:#ef4444;border:2px solid var(--bg-darker);transition:background .3s}
-        .broker-avatar .status-dot.online{background:var(--success)}
-        .broker-name{font-size:17px;font-weight:700;color:var(--text-primary)}
-        .broker-status{font-size:12px;color:var(--text-muted);margin-top:2px}
-        .header-actions{display:flex;gap:8px}
-        .header-btn{padding:8px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:var(--text-secondary);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
-        .header-btn:hover{background:rgba(6,182,212,.15);border-color:rgba(6,182,212,.3);color:var(--primary)}
-        .header-btn.danger{border-color:rgba(239,68,68,.3)}
-        .header-btn.danger:hover{background:rgba(239,68,68,.15);color:var(--danger)}
+        .hdr{padding:85px 20px 14px;background:rgba(10,14,26,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(6,182,212,.15);flex-shrink:0}
+        .hdr-inner{display:flex;align-items:center;justify-content:space-between}
+        .broker-info{display:flex;align-items:center;gap:12px}
+        .avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:20px;position:relative;flex-shrink:0}
+        .avatar .dot{position:absolute;bottom:1px;right:1px;width:11px;height:11px;border-radius:50%;background:#ef4444;border:2px solid var(--bg-darker);transition:background .3s}
+        .avatar .dot.on{background:var(--success)}
+        .b-name{font-size:16px;font-weight:700}
+        .b-status{font-size:11px;color:var(--text-muted);margin-top:1px}
+        .hdr-btns{display:flex;gap:6px}
+        .hdr-btn{padding:7px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:var(--text-secondary);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
+        .hdr-btn:hover{background:rgba(6,182,212,.15);color:var(--primary);border-color:rgba(6,182,212,.3)}
+        .hdr-btn.red{border-color:rgba(239,68,68,.2)}
+        .hdr-btn.red:hover{background:rgba(239,68,68,.15);color:var(--danger)}
 
-        /* ── SCENARIO PICKER ── */
-        .scenario-bar{padding:10px 20px;background:rgba(6,182,212,.05);border-bottom:1px solid rgba(6,182,212,.1);flex-shrink:0;display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch}
-        .scenario-bar::-webkit-scrollbar{height:4px}
-        .scenario-bar::-webkit-scrollbar-thumb{background:rgba(6,182,212,.3);border-radius:4px}
-        .scenario-chip{padding:6px 14px;border-radius:20px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text-secondary);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .2s;font-family:inherit}
-        .scenario-chip:hover,.scenario-chip.active{background:rgba(6,182,212,.15);border-color:rgba(6,182,212,.4);color:var(--primary)}
+        /* ── SCENARIO BAR ── */
+        .sc-bar{padding:8px 16px;border-bottom:1px solid rgba(6,182,212,.08);flex-shrink:0;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+        .sc-bar::-webkit-scrollbar{height:3px}
+        .sc-bar::-webkit-scrollbar-thumb{background:rgba(6,182,212,.2);border-radius:3px}
+        .sc-chip{padding:5px 12px;border-radius:18px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:var(--text-muted);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .2s;font-family:inherit}
+        .sc-chip:hover,.sc-chip.on{background:rgba(6,182,212,.12);border-color:rgba(6,182,212,.3);color:var(--primary)}
 
-        /* ── MESSAGES ── */
-        .chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
-        .chat-messages::-webkit-scrollbar{width:6px}
-        .chat-messages::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:6px}
+        /* ── VOICE AREA (main) ── */
+        .voice-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:16px;position:relative;overflow:hidden}
 
-        .message{max-width:80%;padding:12px 16px;border-radius:16px;font-size:15px;line-height:1.6;animation:msgIn .3s ease}
-        @keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-        .message.user{align-self:flex-end;background:linear-gradient(135deg,rgba(6,182,212,.25),rgba(14,165,233,.2));border:1px solid rgba(6,182,212,.2);border-bottom-right-radius:4px;color:var(--text-primary)}
-        .message.broker{align-self:flex-start;background:var(--msg-broker);border:1px solid rgba(255,255,255,.06);border-bottom-left-radius:4px;color:var(--text-primary)}
-        .message.system{align-self:center;background:var(--msg-system);border:1px solid rgba(6,182,212,.1);border-radius:12px;font-size:13px;color:var(--text-muted);text-align:center;max-width:90%;padding:10px 16px}
-        .message.coach{align-self:center;background:linear-gradient(135deg,rgba(249,115,22,.1),rgba(245,158,11,.1));border:1px solid rgba(249,115,22,.2);border-radius:12px;font-size:13px;color:var(--accent);max-width:90%;padding:10px 16px}
-        .message .time{font-size:10px;color:var(--text-muted);margin-top:6px;display:block}
-        .message.broker .sender{font-size:11px;font-weight:700;color:var(--primary);margin-bottom:4px;display:block}
+        /* Broker speaking animation */
+        .broker-speaking{width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,rgba(6,182,212,.2),rgba(249,115,22,.15));display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;transition:all .3s}
+        .broker-speaking.active{box-shadow:0 0 0 15px rgba(6,182,212,.1),0 0 0 30px rgba(6,182,212,.05);animation:pulse 1.5s infinite}
+        .broker-speaking.listening{box-shadow:0 0 0 15px rgba(16,185,129,.1),0 0 0 30px rgba(16,185,129,.05);animation:pulse 1.2s infinite;background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(6,182,212,.15))}
+        @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
 
-        .typing-indicator{align-self:flex-start;padding:12px 20px;background:var(--msg-broker);border:1px solid rgba(255,255,255,.06);border-radius:16px;border-bottom-left-radius:4px;display:none}
-        .typing-indicator.show{display:flex;gap:5px;align-items:center}
-        .typing-dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted);animation:typingBounce 1.4s infinite}
-        .typing-dot:nth-child(2){animation-delay:.2s}
-        .typing-dot:nth-child(3){animation-delay:.4s}
-        @keyframes typingBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+        .voice-status{font-size:14px;font-weight:600;color:var(--text-secondary);text-align:center;min-height:20px}
+        .voice-status.recording{color:var(--success)}
+        .voice-status.speaking{color:var(--primary)}
 
-        /* ── SUGGESTIONS ── */
-        .suggestions{padding:8px 20px;display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0}
-        .suggestion-btn{padding:8px 16px;border-radius:20px;border:1px solid rgba(6,182,212,.2);background:rgba(6,182,212,.08);color:var(--primary);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;font-family:inherit}
-        .suggestion-btn:hover{background:rgba(6,182,212,.2);border-color:rgba(6,182,212,.4)}
+        /* Live transcript */
+        .live-text{font-size:15px;color:var(--text-primary);text-align:center;max-width:90%;min-height:24px;opacity:.9;line-height:1.5}
+        .live-text.broker-txt{color:var(--primary);font-style:italic}
 
-        /* ── INPUT ── */
-        .chat-input-area{padding:12px 20px 20px;background:rgba(10,14,26,.95);backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,.06);flex-shrink:0;display:flex;gap:10px;align-items:flex-end}
-        .chat-input{flex:1;padding:12px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:var(--text-primary);font-size:15px;font-family:inherit;resize:none;max-height:120px;min-height:46px;line-height:1.5;outline:none;transition:border-color .2s}
-        .chat-input:focus{border-color:rgba(6,182,212,.4)}
-        .chat-input::placeholder{color:var(--text-muted)}
-        .send-btn{width:46px;height:46px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
-        .send-btn:hover{transform:scale(1.05);box-shadow:0 4px 15px rgba(6,182,212,.3)}
-        .send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+        /* ── MIC BUTTON ── */
+        .mic-btn{width:72px;height:72px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--success),#059669);color:#fff;font-size:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;box-shadow:0 4px 20px rgba(16,185,129,.3);position:relative;flex-shrink:0}
+        .mic-btn:hover{transform:scale(1.08)}
+        .mic-btn.recording{background:linear-gradient(135deg,var(--danger),#dc2626);box-shadow:0 4px 20px rgba(239,68,68,.3);animation:micPulse 1s infinite}
+        .mic-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;animation:none}
+        @keyframes micPulse{0%,100%{box-shadow:0 4px 20px rgba(239,68,68,.3)}50%{box-shadow:0 4px 30px rgba(239,68,68,.5)}}
 
-        /* ── WELCOME SCREEN ── */
-        .welcome-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center}
-        .welcome-icon{font-size:64px;margin-bottom:20px}
-        .welcome-title{font-size:28px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px}
-        .welcome-text{font-size:15px;color:var(--text-secondary);max-width:500px;line-height:1.7;margin-bottom:32px}
-        .welcome-scenarios{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:500px;width:100%}
-        .welcome-scenario{padding:16px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);cursor:pointer;transition:all .2s;text-align:left}
-        .welcome-scenario:hover{background:rgba(6,182,212,.1);border-color:rgba(6,182,212,.3);transform:translateY(-2px)}
-        .welcome-scenario .ws-icon{font-size:24px;margin-bottom:8px}
-        .welcome-scenario .ws-title{font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px}
-        .welcome-scenario .ws-desc{font-size:12px;color:var(--text-muted);line-height:1.5}
+        /* ── TRANSCRIPT LOG (compact) ── */
+        .transcript{max-height:180px;overflow-y:auto;width:100%;padding:0 16px;flex-shrink:0;border-top:1px solid rgba(255,255,255,.05)}
+        .transcript::-webkit-scrollbar{width:4px}
+        .transcript::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
+        .t-line{padding:6px 0;font-size:13px;line-height:1.5;border-bottom:1px solid rgba(255,255,255,.03);display:flex;gap:8px}
+        .t-line:last-child{border-bottom:none}
+        .t-who{font-weight:700;font-size:11px;min-width:50px;flex-shrink:0;padding-top:1px}
+        .t-who.you{color:var(--success)}
+        .t-who.broker{color:var(--primary)}
+        .t-txt{color:var(--text-secondary)}
+
+        /* ── HINTS PANEL ── */
+        .hints-panel{display:none;padding:10px 16px;background:rgba(249,115,22,.05);border-top:1px solid rgba(249,115,22,.15);flex-shrink:0;max-height:120px;overflow-y:auto}
+        .hints-panel.show{display:block}
+        .hints-title{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+        .hint-item{font-size:12px;color:var(--text-secondary);padding:3px 0;line-height:1.5;cursor:pointer;transition:color .2s}
+        .hint-item:hover{color:var(--accent)}
+        .hint-item::before{content:'💡 ';font-size:10px}
+
+        /* ── ANALYTICS PANEL ── */
+        .analytics{display:none;padding:14px 16px;background:rgba(6,182,212,.03);border-top:1px solid rgba(6,182,212,.1);flex-shrink:0}
+        .analytics.show{display:block}
+        .analytics-title{font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+        .analytics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+        .a-card{padding:10px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);text-align:center}
+        .a-val{font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .a-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+        .a-feedback{margin-top:10px;padding:10px;border-radius:8px;background:rgba(255,255,255,.03);font-size:12px;color:var(--text-secondary);line-height:1.6}
+        .a-feedback strong{color:var(--text-primary)}
+
+        /* ── BOTTOM CONTROLS ── */
+        .controls{padding:12px 16px 20px;display:flex;align-items:center;justify-content:center;gap:16px;flex-shrink:0;background:rgba(10,14,26,.95);border-top:1px solid rgba(255,255,255,.06)}
+
+        /* ── WELCOME ── */
+        .welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 20px;text-align:center}
+        .w-icon{font-size:56px;margin-bottom:16px}
+        .w-title{font-size:26px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px}
+        .w-text{font-size:14px;color:var(--text-secondary);max-width:420px;line-height:1.7;margin-bottom:24px}
+        .w-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:440px;width:100%}
+        .w-card{padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);cursor:pointer;transition:all .2s;text-align:left}
+        .w-card:hover{background:rgba(6,182,212,.08);border-color:rgba(6,182,212,.25);transform:translateY(-2px)}
+        .w-card-icon{font-size:22px;margin-bottom:6px}
+        .w-card-title{font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:3px}
+        .w-card-desc{font-size:11px;color:var(--text-muted);line-height:1.4}
 
         /* ── RESPONSIVE ── */
         @media(max-width:768px){
-            .chat-header{padding:75px 16px 12px}
-            .broker-avatar{width:40px;height:40px;font-size:18px}
-            .broker-name{font-size:15px}
-            .header-actions{gap:6px}
-            .header-btn{padding:6px 10px;font-size:11px}
-            .scenario-bar{padding:8px 16px}
-            .chat-messages{padding:16px}
-            .message{max-width:88%;font-size:14px;padding:10px 14px}
-            .suggestions{padding:6px 16px}
-            .chat-input-area{padding:10px 16px 16px}
-            .welcome-scenarios{grid-template-columns:1fr}
-            .welcome-title{font-size:24px}
+            .hdr{padding:75px 14px 10px}
+            .avatar{width:38px;height:38px;font-size:17px}
+            .b-name{font-size:14px}
+            .broker-speaking{width:100px;height:100px;font-size:40px}
+            .mic-btn{width:64px;height:64px;font-size:24px}
+            .analytics-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+            .a-val{font-size:18px}
+            .w-grid{grid-template-columns:1fr}
+            .w-title{font-size:22px}
         }
         @media(max-width:480px){
-            .chat-header{padding:70px 12px 10px}
-            .broker-avatar{width:36px;height:36px;font-size:16px}
-            .broker-name{font-size:14px}
-            .header-btn span.btn-text{display:none}
-            .chat-messages{padding:12px}
-            .message{max-width:92%;font-size:13px}
-            .chat-input-area{padding:8px 12px 14px}
-            .chat-input{font-size:14px;padding:10px 14px}
-            .send-btn{width:42px;height:42px}
-        }
-        @media(max-width:360px){
-            .chat-messages{padding:10px}
-            .message{max-width:95%;font-size:13px;padding:8px 12px}
+            .hdr{padding:68px 10px 8px}
+            .hdr-btn span.txt{display:none}
+            .broker-speaking{width:80px;height:80px;font-size:32px}
+            .mic-btn{width:58px;height:58px;font-size:22px}
+            .live-text{font-size:13px}
+            .transcript{max-height:140px}
         }
     </style>
 </head>
 <body>
     <div id="shared-nav-container"></div>
 
-    <div class="chat-app">
+    <div class="app">
         <!-- Header -->
-        <div class="chat-header">
-            <div class="chat-header-inner">
+        <div class="hdr">
+            <div class="hdr-inner">
                 <div class="broker-info">
-                    <div class="broker-avatar">
-                        🤖
-                        <span class="status-dot" id="statusDot"></span>
-                    </div>
+                    <div class="avatar">🤖<span class="dot" id="dot"></span></div>
                     <div>
-                        <div class="broker-name" id="brokerNameDisplay">AI Брокер — Mike</div>
-                        <div class="broker-status" id="brokerStatusText">Проверка подключения...</div>
+                        <div class="b-name" id="bName">AI Брокер — Mike</div>
+                        <div class="b-status" id="bStatus">Проверка...</div>
                     </div>
                 </div>
-                <div class="header-actions">
-                    <button class="header-btn" onclick="showHints()" title="Подсказки">💡 <span class="btn-text">Подсказки</span></button>
-                    <button class="header-btn danger" onclick="resetChat()" title="Новый чат">🔄 <span class="btn-text">Новый</span></button>
+                <div class="hdr-btns">
+                    <button class="hdr-btn" onclick="toggleHints()" id="hintsBtn">💡 <span class="txt">Подсказки</span></button>
+                    <button class="hdr-btn" onclick="toggleAnalytics()" id="analyticsBtn">📊 <span class="txt">Аналитика</span></button>
+                    <button class="hdr-btn red" onclick="resetAll()">🔄</button>
                 </div>
             </div>
         </div>
 
-        <!-- Scenario chips -->
-        <div class="scenario-bar" id="scenarioBar">
-            <button class="scenario-chip active" data-scenario="free">💬 Свободный чат</button>
-            <button class="scenario-chip" data-scenario="negotiate">💰 Торг за ставку</button>
-            <button class="scenario-chip" data-scenario="book">📋 Забронировать груз</button>
-            <button class="scenario-chip" data-scenario="problem">⚠️ Проблема с грузом</button>
-            <button class="scenario-chip" data-scenario="cold">📞 Холодный звонок</button>
-            <button class="scenario-chip" data-scenario="followup">🔄 Follow-up</button>
+        <!-- Scenarios -->
+        <div class="sc-bar" id="scBar">
+            <button class="sc-chip on" data-sc="free">💬 Свободный</button>
+            <button class="sc-chip" data-sc="negotiate">💰 Торг</button>
+            <button class="sc-chip" data-sc="book">📋 Букинг</button>
+            <button class="sc-chip" data-sc="problem">⚠️ Проблема</button>
+            <button class="sc-chip" data-sc="cold">📞 Холодный</button>
+            <button class="sc-chip" data-sc="followup">🔄 Follow-up</button>
         </div>
 
-        <!-- Welcome screen (shown before first message) -->
-        <div class="welcome-screen" id="welcomeScreen">
-            <div class="welcome-icon">🤖📞</div>
-            <div class="welcome-title">AI Брокер — Тренажёр</div>
-            <div class="welcome-text">Практикуйся в переговорах с AI-брокером. Он ведёт себя как настоящий — торгуется, задаёт вопросы, проверяет MC#. Выбери сценарий или начни свободный разговор.</div>
-            <div class="welcome-scenarios">
-                <div class="welcome-scenario" onclick="startScenario('negotiate')">
-                    <div class="ws-icon">💰</div>
-                    <div class="ws-title">Торг за ставку</div>
-                    <div class="ws-desc">Брокер предложит низкую ставку. Твоя задача — выторговать больше.</div>
+        <!-- Welcome -->
+        <div class="welcome" id="welcome">
+            <div class="w-icon">🎙️🤖</div>
+            <div class="w-title">Голосовой AI Брокер</div>
+            <div class="w-text">Говори голосом — брокер ответит голосом. В чате появится краткий текст диалога. После разговора — аналитика и оценка.</div>
+            <div class="w-grid">
+                <div class="w-card" onclick="startScenario('negotiate')">
+                    <div class="w-card-icon">💰</div>
+                    <div class="w-card-title">Торг за ставку</div>
+                    <div class="w-card-desc">Dallas→Atlanta, $1,750. Выторгуй больше.</div>
                 </div>
-                <div class="welcome-scenario" onclick="startScenario('book')">
-                    <div class="ws-icon">📋</div>
-                    <div class="ws-title">Забронировать груз</div>
-                    <div class="ws-desc">Пройди весь процесс: от звонка до rate confirmation.</div>
+                <div class="w-card" onclick="startScenario('book')">
+                    <div class="w-card-icon">📋</div>
+                    <div class="w-card-title">Забронировать груз</div>
+                    <div class="w-card-desc">Chicago→Miami reefer. Полный процесс.</div>
                 </div>
-                <div class="welcome-scenario" onclick="startScenario('problem')">
-                    <div class="ws-icon">⚠️</div>
-                    <div class="ws-title">Проблема с грузом</div>
-                    <div class="ws-desc">Водитель опаздывает / breakdown / damage. Сообщи брокеру.</div>
+                <div class="w-card" onclick="startScenario('problem')">
+                    <div class="w-card-icon">⚠️</div>
+                    <div class="w-card-title">Проблема с грузом</div>
+                    <div class="w-card-desc">Breakdown / delay. Сообщи брокеру.</div>
                 </div>
-                <div class="welcome-scenario" onclick="startScenario('cold')">
-                    <div class="ws-icon">📞</div>
-                    <div class="ws-title">Холодный звонок</div>
-                    <div class="ws-desc">Позвони брокеру впервые. Представь компанию и предложи услуги.</div>
+                <div class="w-card" onclick="startScenario('cold')">
+                    <div class="w-card-icon">📞</div>
+                    <div class="w-card-title">Холодный звонок</div>
+                    <div class="w-card-desc">Первый звонок. Представь компанию.</div>
                 </div>
-                <div class="welcome-scenario" onclick="startScenario('followup')">
-                    <div class="ws-icon">🔄</div>
-                    <div class="ws-title">Follow-up звонок</div>
-                    <div class="ws-desc">Перезвони брокеру с которым уже работал. Попроси новые грузы.</div>
+                <div class="w-card" onclick="startScenario('followup')">
+                    <div class="w-card-icon">🔄</div>
+                    <div class="w-card-title">Follow-up</div>
+                    <div class="w-card-desc">Перезвони. Попроси новые грузы.</div>
                 </div>
-                <div class="welcome-scenario" onclick="startScenario('free')">
-                    <div class="ws-icon">💬</div>
-                    <div class="ws-title">Свободный чат</div>
-                    <div class="ws-desc">Любая ситуация. Просто начни разговор как хочешь.</div>
+                <div class="w-card" onclick="startScenario('free')">
+                    <div class="w-card-icon">💬</div>
+                    <div class="w-card-title">Свободный чат</div>
+                    <div class="w-card-desc">Любая ситуация. Говори что хочешь.</div>
                 </div>
             </div>
         </div>
 
-        <!-- Chat messages -->
-        <div class="chat-messages" id="chatMessages" style="display:none">
+        <!-- Voice area (hidden until scenario starts) -->
+        <div class="voice-area" id="voiceArea" style="display:none">
+            <div class="broker-speaking" id="brokerCircle">🤖</div>
+            <div class="voice-status" id="voiceStatus">Нажми микрофон и говори</div>
+            <div class="live-text" id="liveText"></div>
         </div>
 
-        <!-- Typing indicator -->
-        <div class="typing-indicator" id="typingIndicator">
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
+        <!-- Transcript log -->
+        <div class="transcript" id="transcript" style="display:none"></div>
+
+        <!-- Hints -->
+        <div class="hints-panel" id="hintsPanel">
+            <div class="hints-title">💡 Подсказки</div>
+            <div id="hintsContent"></div>
         </div>
 
-        <!-- Quick suggestions -->
-        <div class="suggestions" id="suggestions" style="display:none"></div>
+        <!-- Analytics -->
+        <div class="analytics" id="analyticsPanel">
+            <div class="analytics-title">📊 Аналитика разговора</div>
+            <div class="analytics-grid">
+                <div class="a-card"><div class="a-val" id="aScore">—</div><div class="a-label">Оценка</div></div>
+                <div class="a-card"><div class="a-val" id="aMsgs">0</div><div class="a-label">Реплик</div></div>
+                <div class="a-card"><div class="a-val" id="aTime">0:00</div><div class="a-label">Время</div></div>
+            </div>
+            <div class="a-feedback" id="aFeedback" style="display:none"></div>
+        </div>
 
-        <!-- Input -->
-        <div class="chat-input-area">
-            <textarea class="chat-input" id="chatInput" placeholder="Напиши сообщение брокеру..." rows="1" onkeydown="handleKeyDown(event)" oninput="autoResize(this)"></textarea>
-            <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>➤</button>
+        <!-- Controls -->
+        <div class="controls" id="controls" style="display:none">
+            <button class="mic-btn" id="micBtn" onclick="toggleMic()">🎙️</button>
         </div>
     </div>
 
@@ -223,522 +244,464 @@
 <script>
 // ── CONFIG ──
 const _k = ['gsk_7b9aEN1PMQBKSKbw', 'GOyoWGdyb3FYcNiq4FWZScbJ4iZYYSYOF4Qh'];
-const GROQ_API_KEY = _k[0] + _k[1];
+const GROQ_KEY = _k[0] + _k[1];
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL = 'llama-3.3-70b-versatile';
 
 // ── STATE ──
-let chatHistory = [];
-let currentScenario = 'free';
-let brokerName = 'Mike';
-let aiStatus = 'unknown';
-let isWaiting = false;
+let history = [];
+let scenario = 'free';
+let broker = 'Mike';
+let aiOk = false;
+let isRecording = false;
+let isSpeaking = false;
+let recognition = null;
+let synth = window.speechSynthesis;
+let startTime = 0;
+let msgCount = 0;
+let timerInterval = null;
 
-// ── BROKER NAMES ──
-const BROKER_NAMES = ['Mike', 'Steve', 'Dave', 'Tom', 'Chris', 'Brian', 'Kevin', 'Jason', 'Mark', 'Jeff'];
+const NAMES = ['Mike','Steve','Dave','Tom','Chris','Brian','Kevin','Jason','Mark','Jeff'];
 
-// ── SCENARIO CONFIGS ──
-const SCENARIOS = {
+// ── SCENARIOS ──
+const SC = {
     free: {
         name: 'Свободный чат',
-        systemPrompt: `You are {NAME}, a real American freight broker at Apex Freight Solutions.
-You're at your desk, phone rings — it's a dispatcher/carrier calling you.
-
-BEHAVIOR:
-- Act like a REAL busy broker. Direct, professional, slightly rushed.
-- You handle loads across the US. You have loads available if asked.
-- If dispatcher asks about a specific lane — make up realistic load details (route, miles, equipment, rate, pickup time).
-- Negotiate rates realistically. Start low, move up slowly with justification.
-- Ask for MC# to verify carrier. Ask about equipment, insurance, experience.
-- Use real freight terms: MC, rate con, BOL, detention, TONU, deadhead, lumper, HOS, D2P.
-
-RESPONSE STYLE:
-- MAX 2-3 short sentences. Phone call pace.
-- No bullet points, no lists, no long paragraphs.
-- Sound natural: "Yeah", "Look", "Here's the deal", "I can work with that".
-
-OPENING: Answer the phone naturally: "{NAME}, Apex Freight."
-
-COACHING: If user writes "подскажи"/"hint"/"помоги"/"coach" → give a [COACH] tip in Russian about what to say next, then continue as broker.
-LANGUAGE: Match the user's language. If they speak Russian, respond in Russian but keep freight terms in English.`,
-        greeting: null
+        prompt: `You are {N}, a freight broker at Apex Freight Solutions. Phone rings — a dispatcher is calling.
+Be a REAL busy broker. Direct, professional, slightly rushed. Handle loads across the US.
+If asked about a lane — make up realistic load details. Negotiate realistically.
+Ask for MC#. Use real freight terms. MAX 2 short sentences. Phone call pace.
+COACHING: if user says "подскажи"/"hint" → give [HINT: tip in Russian], then continue as broker.
+LANGUAGE: Match user's language. Keep freight terms in English.`,
+        greet: '{N}, Apex Freight.',
+        hints: ['Представься: имя, компания, MC#','Спроси какие грузы есть','Упомяни оборудование и лейны','Используй DAT данные для торга']
     },
     negotiate: {
         name: 'Торг за ставку',
-        systemPrompt: `You are {NAME}, a freight broker at Summit Logistics.
-A dispatcher is calling about a load you posted.
-
-THE LOAD:
-- Route: Dallas TX → Atlanta GA (780 miles)
-- Equipment: 53' Dry Van
-- Commodity: Auto parts, 42,000 lbs
-- Pickup: Tomorrow 06:00 AM
-- Your opening offer: $1,750 total
-- Market rate: ~$2,100
-- Your absolute max: $2,200 — NEVER reveal this, NEVER exceed it
-
-NEGOTIATION RULES:
-- Start at $1,750. Say total amount, not per-mile.
-- HOLD your rate for at least 2 pushbacks before moving up.
-- Move $50-100 per round max. Require justification each time.
-- Use pressure: "I got 3 carriers on this", "Market's soft right now", "That's my best number".
-- NEVER accept first counter without pushback.
-- After 4+ rounds: "Final offer, take it or leave it."
-- If dispatcher gives good reasons (DAT data, fuel costs, deadhead) — move more.
-
-RESPONSE: MAX 2 sentences. Direct, professional, slightly tough.
-COACHING: "подскажи"/"hint" → [COACH] tip in Russian.
-LANGUAGE: Match user's language. Keep freight terms in English.`,
-        greeting: '{NAME}, Summit Logistics. What can I do for you?'
+        prompt: `You are {N}, broker at Summit Logistics. Dispatcher calls about your posted load.
+LOAD: Dallas TX → Atlanta GA, 780 mi, 53' Dry Van, Auto parts 42,000 lbs, pickup tomorrow 6AM.
+Your opening: $1,750 total. Market: ~$2,100. Your max: $2,200 — NEVER reveal or exceed.
+Start at $1,750. Hold for 2 pushbacks. Move $50-100/round with justification. Use pressure: "I got 3 carriers on this", "Market's soft". NEVER accept first counter. After 4 rounds: "Final offer."
+MAX 2 sentences. Direct, tough. COACHING: "подскажи" → [HINT: tip in Russian]. Match user's language.`,
+        greet: '{N}, Summit Logistics. What can I do for you?',
+        hints: ['Не соглашайся на первое предложение','Скажи "Can you do any better?"','Упомяни DAT: "$2.70/mi on this lane"','Посчитай расходы: fuel + deadhead','Предложи компромисс если застряли']
     },
     book: {
-        name: 'Забронировать груз',
-        systemPrompt: `You are {NAME}, a freight broker at National Freight Corp.
-A dispatcher is calling to book a load.
-
-THE LOAD:
-- Route: Chicago IL → Miami FL (1,380 miles)
-- Equipment: Reefer 53', temp 34°F
-- Commodity: Fresh produce, 38,000 lbs
-- Pickup: Tomorrow 04:00 AM at Sysco warehouse
-- Rate: $3,450 total (negotiable down to $3,100)
-- Delivery: Day after tomorrow by 6:00 PM
-
-BOOKING PROCESS (follow this flow):
-1. Answer phone → dispatcher introduces themselves
-2. Ask for MC# → verify (always say "MC checks out")
-3. Give load details: route, miles, commodity, temp, pickup time
-4. Negotiate rate if needed
-5. Rate agreed → ask for: driver name, truck#, trailer#, cell phone
-6. Confirm: "I'll send rate con to your email. What's the best email?"
-7. Remind: "Driver needs to check in 2 hours before pickup. Any questions?"
-
-RESPONSE: MAX 2-3 sentences. Professional, efficient.
-COACHING: "подскажи"/"hint" → [COACH] tip in Russian.
-LANGUAGE: Match user's language.`,
-        greeting: '{NAME}, National Freight. How can I help?'
+        name: 'Букинг груза',
+        prompt: `You are {N}, broker at National Freight Corp. Dispatcher calls to book a load.
+LOAD: Chicago IL → Miami FL, 1,380 mi, Reefer 53' temp 34°F, Fresh produce 38,000 lbs, pickup tomorrow 4AM Sysco warehouse. Rate: $3,450 (negotiable to $3,100). Delivery: day after tomorrow 6PM.
+FLOW: 1) Answer 2) Ask MC# 3) Give load details 4) Negotiate rate 5) Get driver info (name, truck#, trailer#, phone) 6) Ask email for rate con 7) Remind: check in 2hrs before pickup.
+MAX 2-3 sentences. Professional. COACHING: "подскажи" → [HINT: tip in Russian]. Match language.`,
+        greet: '{N}, National Freight. How can I help?',
+        hints: ['Имей MC# наготове','Спроси ВСЕ детали: pickup, delivery, commodity','Уточни detention policy и TONU','Дай данные водителя: имя, truck#, trailer#','Попроси rate confirmation на email']
     },
     problem: {
         name: 'Проблема с грузом',
-        systemPrompt: `You are {NAME}, a freight broker at CrossCountry Logistics.
-A dispatcher is calling about a problem with an active load you booked.
-
-THE LOAD (already in transit):
-- Route: Los Angeles CA → Denver CO (1,020 miles)
-- Driver: picked up yesterday, should deliver today by 5 PM
-- Commodity: Electronics, 40,000 lbs
-- Rate: $2,800 total
-
-YOUR REACTION TO PROBLEMS:
-- Delay/late: Frustrated but professional. "How late are we talking?" "I need to call the receiver." "This is gonna be a problem."
-- Breakdown: Concerned. "Where exactly? Can he get to a shop?" "I need an ETA on the repair." "Do we need to send another truck?"
-- Damage: Serious. "How bad? Take photos immediately." "Don't move anything." "I'm calling claims department."
-- General: Always ask for details, timeline, and what the plan is.
-
-BEHAVIOR:
-- You're stressed — your shipper is waiting. Show urgency.
-- Ask specific questions: ETA, location, what happened exactly.
-- Demand updates: "Keep me posted every hour." "I need to know the second he's rolling again."
-- If dispatcher handles it well → calm down. If not → get more frustrated.
-
-RESPONSE: MAX 2-3 sentences. Urgent, direct.
-COACHING: "подскажи"/"hint" → [COACH] tip in Russian.
-LANGUAGE: Match user's language.`,
-        greeting: '{NAME}, CrossCountry. What\'s going on?'
+        prompt: `You are {N}, broker at CrossCountry Logistics. Dispatcher calls about a problem with an active load.
+LOAD IN TRANSIT: LA CA → Denver CO, 1,020 mi, Electronics 40,000 lbs, $2,800. Should deliver today by 5PM.
+REACTIONS: Delay → frustrated "How late?" "I need to call receiver." Breakdown → "Where exactly? ETA on repair?" Damage → "How bad? Photos NOW. Don't move anything." Always demand details, timeline, plan. You're stressed — shipper is waiting.
+MAX 2-3 sentences. Urgent. COACHING: "подскажи" → [HINT: tip in Russian]. Match language.`,
+        greet: '{N}, CrossCountry. What\'s going on?',
+        hints: ['Сообщи СРАЗУ — не жди','Дай конкретику: где, что, ETA','Предложи решение, не просто проблему','Обещай обновления каждый час','Документируй: время, место, фото']
     },
     cold: {
         name: 'Холодный звонок',
-        systemPrompt: `You are {NAME}, a freight broker at Pacific Freight Group.
-You're busy at your desk. Phone rings — it's a dispatcher you've NEVER worked with before, cold-calling you.
-
-YOUR ATTITUDE:
-- Skeptical but open. You get 20+ cold calls a day.
-- You're busy: "Make it quick", "What do you got?"
-- Ask qualifying questions: MC#, how long in business, equipment type, lanes you cover, insurance
-- If dispatcher is professional and prepared → warm up, share info about your lanes
-- If dispatcher is vague or unprepared → lose interest fast: "Send me your packet, I'll take a look"
-- You DO have loads available if they prove themselves
-
-WHAT IMPRESSES YOU:
-- Knowing your lanes (you do a lot of Southeast and Midwest)
-- Having MC# ready
-- Mentioning specific equipment and availability
-- Professional tone, not desperate
-
-WHAT TURNS YOU OFF:
-- "Do you have any loads?" (too vague)
-- Not knowing their own MC#
-- Being pushy or desperate
-- Not having insurance info ready
-
-RESPONSE: MAX 2 sentences. Busy, slightly impatient but fair.
-COACHING: "подскажи"/"hint" → [COACH] tip in Russian.
-LANGUAGE: Match user's language.`,
-        greeting: '{NAME}, Pacific Freight. Yeah, go ahead.'
+        prompt: `You are {N}, broker at Pacific Freight Group. Busy. Phone rings — unknown dispatcher cold-calling.
+Skeptical but open. Get 20+ cold calls/day. "Make it quick." Ask: MC#, how long in business, equipment, lanes, insurance.
+If professional → warm up, share lanes (Southeast, Midwest). If vague → "Send me your packet, I'll look."
+MAX 2 sentences. Busy, slightly impatient. COACHING: "подскажи" → [HINT: tip in Russian]. Match language.`,
+        greet: '{N}, Pacific Freight. Yeah, go ahead.',
+        hints: ['Будь кратким — у брокера мало времени','Представься: имя, компания, MC#, оборудование','Скажи какие лейны покрываешь','Спроси "Do you have anything going to [city]?"','Предложи отправить carrier packet']
     },
     followup: {
-        name: 'Follow-up звонок',
-        systemPrompt: `You are {NAME}, a freight broker at Alliance Transport Solutions.
-A dispatcher you've worked with before is calling back. You did one load together last week — it went well, delivered on time.
-
-YOUR ATTITUDE:
-- Friendly, you remember them: "Hey, good to hear from you!"
-- You have 2-3 loads available this week
-- More willing to negotiate fairly since they proved reliable
-- Interested in building a regular relationship
-
-AVAILABLE LOADS:
-1. Houston TX → Nashville TN, 790 mi, Dry Van, $1,900, pickup Thursday
-2. Memphis TN → Charlotte NC, 630 mi, Dry Van, $1,500, pickup Friday
-3. Jacksonville FL → Atlanta GA, 350 mi, Reefer, $1,100, pickup Wednesday
-
-BEHAVIOR:
-- Share load info more freely than with a new carrier
-- Still negotiate but be more flexible (move $100-150 per round)
-- Ask about their truck availability and preferred lanes
-- Mention: "If this goes well, I can keep you busy on this lane"
-
-RESPONSE: MAX 2-3 sentences. Friendly, professional.
-COACHING: "подскажи"/"hint" → [COACH] tip in Russian.
-LANGUAGE: Match user's language.`,
-        greeting: 'Hey! {NAME} at Alliance Transport. Good to hear from you again. What\'s up?'
+        name: 'Follow-up',
+        prompt: `You are {N}, broker at Alliance Transport. Dispatcher you worked with before calls back. Last load went well.
+Friendly: "Hey, good to hear from you!" Have 2-3 loads: 1) Houston→Nashville 790mi DV $1,900 Thu 2) Memphis→Charlotte 630mi DV $1,500 Fri 3) Jacksonville→Atlanta 350mi Reefer $1,100 Wed.
+More flexible on rates. "If this goes well, I can keep you busy." MAX 2-3 sentences. Friendly. COACHING: "подскажи" → [HINT: tip in Russian]. Match language.`,
+        greet: 'Hey! {N} at Alliance Transport. Good to hear from you again!',
+        hints: ['Напомни о прошлом грузе','Спроси о доступных грузах','Покажи надёжность: on-time, communication','Предложи стать regular carrier']
     }
 };
 
-// ── QUICK SUGGESTIONS PER SCENARIO ──
-const QUICK_SUGGESTIONS = {
-    free: ['Hi, this is dispatch calling about available loads', 'Do you have anything going to Texas?', 'I have a truck available in Chicago'],
-    negotiate: ['Hi, I\'m calling about the Dallas to Atlanta load', 'What\'s the rate on that?', 'I can do $2,100 all-in'],
-    book: ['Hi, calling about the Chicago to Miami reefer load', 'Our MC is 123456', 'What\'s the rate and pickup time?'],
-    problem: ['Hey, I need to talk about the LA to Denver load', 'We have a situation with the driver', 'Driver had a breakdown on I-70'],
-    cold: ['Hi, this is Alex from Swift Dispatch. Got a minute?', 'We run 5 trucks, mostly Dry Van, Southeast lanes', 'Our MC is 987654, been in business 3 years'],
-    followup: ['Hey! Calling to check if you have anything this week', 'That last load went smooth, looking for more', 'I have a truck available Thursday in Houston']
-};
+// ── DOM ──
+const $ = id => document.getElementById(id);
+const welcome = $('welcome');
+const voiceArea = $('voiceArea');
+const transcriptEl = $('transcript');
+const controlsEl = $('controls');
+const micBtn = $('micBtn');
+const brokerCircle = $('brokerCircle');
+const voiceStatus = $('voiceStatus');
+const liveText = $('liveText');
+const hintsPanel = $('hintsPanel');
+const hintsContent = $('hintsContent');
+const analyticsPanel = $('analyticsPanel');
 
-// ── DOM REFS ──
-const chatMessages = document.getElementById('chatMessages');
-const welcomeScreen = document.getElementById('welcomeScreen');
-const chatInput = document.getElementById('chatInput');
-const sendBtn = document.getElementById('sendBtn');
-const typingIndicator = document.getElementById('typingIndicator');
-const suggestionsDiv = document.getElementById('suggestions');
-const statusDot = document.getElementById('statusDot');
-const brokerNameDisplay = document.getElementById('brokerNameDisplay');
-const brokerStatusText = document.getElementById('brokerStatusText');
-
-// ── INIT: TEST AI CONNECTION ──
+// ── INIT AI ──
 (async () => {
     try {
         const r = await fetch(GROQ_URL, {
             method: 'POST', mode: 'cors',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API_KEY}` },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_KEY}` },
             body: JSON.stringify({ model: MODEL, messages: [{ role: 'user', content: 'ping' }], max_tokens: 5 })
         });
-        if (r.ok) { setStatus('online'); }
-        else { setStatus('offline'); }
-    } catch (e) { setStatus('offline'); }
+        aiOk = r.ok;
+    } catch (e) { aiOk = false; }
+    $('dot').classList.toggle('on', aiOk);
+    $('bStatus').textContent = aiOk ? 'Онлайн — готов к разговору' : 'Офлайн — попробуйте позже';
 })();
 
-function setStatus(status) {
-    aiStatus = status;
-    statusDot.classList.toggle('online', status === 'online');
-    brokerStatusText.textContent = status === 'online' ? 'Онлайн — готов к разговору' : 'Офлайн — попробуйте позже';
+// ── SPEECH RECOGNITION SETUP ──
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = (e) => {
+        let interim = '', final = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+            if (e.results[i].isFinal) final += e.results[i][0].transcript;
+            else interim += e.results[i][0].transcript;
+        }
+        liveText.textContent = final || interim;
+        liveText.className = 'live-text';
+        if (final) {
+            stopRecording();
+            processUserMessage(final.trim());
+        }
+    };
+    recognition.onerror = (e) => {
+        console.log('Speech error:', e.error);
+        if (e.error === 'no-speech') {
+            voiceStatus.textContent = 'Не услышал. Нажми микрофон и говори.';
+        }
+        stopRecording();
+    };
+    recognition.onend = () => {
+        if (isRecording) stopRecording();
+    };
 }
 
-// ── INPUT HANDLING ──
-chatInput.addEventListener('input', () => {
-    sendBtn.disabled = !chatInput.value.trim();
+// ── SCENARIO CHIPS ──
+document.querySelectorAll('.sc-chip').forEach(c => {
+    c.addEventListener('click', () => startScenario(c.dataset.sc));
 });
 
-function autoResize(el) {
-    el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
-}
+function startScenario(sc) {
+    document.querySelectorAll('.sc-chip').forEach(c => c.classList.remove('on'));
+    const active = document.querySelector(`.sc-chip[data-sc="${sc}"]`);
+    if (active) active.classList.add('on');
 
-function handleKeyDown(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        if (chatInput.value.trim()) sendMessage();
-    }
-}
+    scenario = sc;
+    history = [];
+    msgCount = 0;
+    broker = NAMES[Math.floor(Math.random() * NAMES.length)];
+    $('bName').textContent = `AI Брокер — ${broker}`;
 
-// ── SCENARIO SELECTION ──
-document.querySelectorAll('.scenario-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-        const sc = chip.dataset.scenario;
-        startScenario(sc);
-    });
-});
+    welcome.style.display = 'none';
+    voiceArea.style.display = 'flex';
+    transcriptEl.style.display = 'block';
+    controlsEl.style.display = 'flex';
+    transcriptEl.innerHTML = '';
+    liveText.textContent = '';
+    analyticsPanel.classList.remove('show');
+    $('aFeedback').style.display = 'none';
 
-function startScenario(scenarioId) {
-    // Update chips
-    document.querySelectorAll('.scenario-chip').forEach(c => c.classList.remove('active'));
-    const activeChip = document.querySelector(`.scenario-chip[data-scenario="${scenarioId}"]`);
-    if (activeChip) activeChip.classList.add('active');
+    // Start timer
+    startTime = Date.now();
+    clearInterval(timerInterval);
+    timerInterval = setInterval(updateTimer, 1000);
+    $('aMsgs').textContent = '0';
+    $('aScore').textContent = '—';
+    $('aTime').textContent = '0:00';
 
-    currentScenario = scenarioId;
-    chatHistory = [];
-    brokerName = BROKER_NAMES[Math.floor(Math.random() * BROKER_NAMES.length)];
-    brokerNameDisplay.textContent = `AI Брокер — ${brokerName}`;
-
-    // Show chat, hide welcome
-    welcomeScreen.style.display = 'none';
-    chatMessages.style.display = 'flex';
-    chatMessages.innerHTML = '';
-
-    // System message
-    const sc = SCENARIOS[scenarioId];
-    addMessage('system', `📋 Сценарий: ${sc.name}. Ты — диспетчер, звонишь брокеру ${brokerName}. Напиши "подсказка" если нужна помощь.`);
+    // Show hints
+    updateHints(sc);
 
     // Broker greeting
-    if (sc.greeting) {
-        const greeting = sc.greeting.replace(/{NAME}/g, brokerName);
+    const s = SC[sc];
+    if (s.greet) {
+        const greet = s.greet.replace(/{N}/g, broker);
         setTimeout(() => {
-            addMessage('broker', greeting);
-            chatHistory.push({ role: 'assistant', content: greeting });
-        }, 800);
+            addTranscript('broker', greet);
+            history.push({ role: 'assistant', content: greet });
+            speakBroker(greet);
+        }, 600);
     }
 
-    // Show suggestions
-    showSuggestions(scenarioId);
-    chatInput.focus();
+    voiceStatus.textContent = 'Нажми 🎙️ и говори';
+
+    // Check if speech recognition is available
+    if (!recognition) {
+        voiceStatus.textContent = '⚠️ Браузер не поддерживает голос. Используй Chrome.';
+    }
 }
 
-// ── MESSAGES ──
-function addMessage(type, text) {
-    const div = document.createElement('div');
-    div.className = `message ${type}`;
-
-    const now = new Date();
-    const time = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-
-    if (type === 'broker') {
-        div.innerHTML = `<span class="sender">${brokerName}</span>${escapeHtml(text)}<span class="time">${time}</span>`;
-    } else if (type === 'user') {
-        div.innerHTML = `${escapeHtml(text)}<span class="time">${time} ✓</span>`;
-    } else if (type === 'coach') {
-        div.innerHTML = `💡 ${escapeHtml(text)}`;
+// ── MIC TOGGLE ──
+function toggleMic() {
+    if (isSpeaking) return; // don't interrupt broker
+    if (isRecording) {
+        recognition.stop();
+        stopRecording();
     } else {
-        div.innerHTML = text;
+        startRecording();
     }
-
-    chatMessages.appendChild(div);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-function escapeHtml(text) {
-    const d = document.createElement('div');
-    d.textContent = text;
-    return d.innerHTML;
+function startRecording() {
+    if (!recognition || isSpeaking) return;
+    isRecording = true;
+    micBtn.classList.add('recording');
+    brokerCircle.classList.remove('active');
+    brokerCircle.classList.add('listening');
+    voiceStatus.textContent = '🎙️ Слушаю...';
+    voiceStatus.className = 'voice-status recording';
+    liveText.textContent = '';
+    liveText.className = 'live-text';
+
+    try { recognition.start(); } catch(e) { /* already started */ }
 }
 
-// ── SUGGESTIONS ──
-function showSuggestions(scenarioId) {
-    const sugs = QUICK_SUGGESTIONS[scenarioId || currentScenario] || [];
-    if (!sugs.length) { suggestionsDiv.style.display = 'none'; return; }
-
-    suggestionsDiv.style.display = 'flex';
-    suggestionsDiv.innerHTML = sugs.map(s =>
-        `<button class="suggestion-btn" onclick="useSuggestion(this)">${s}</button>`
-    ).join('');
+function stopRecording() {
+    isRecording = false;
+    micBtn.classList.remove('recording');
+    brokerCircle.classList.remove('listening');
+    voiceStatus.className = 'voice-status';
 }
 
-function useSuggestion(btn) {
-    chatInput.value = btn.textContent;
-    sendBtn.disabled = false;
-    sendMessage();
-}
+// ── PROCESS USER MESSAGE ──
+async function processUserMessage(text) {
+    if (!text) return;
 
-// ── SEND MESSAGE ──
-async function sendMessage() {
-    const text = chatInput.value.trim();
-    if (!text || isWaiting) return;
+    addTranscript('you', text);
+    history.push({ role: 'user', content: text });
+    msgCount++;
+    $('aMsgs').textContent = msgCount;
 
-    // If welcome screen is showing, start free chat
-    if (welcomeScreen.style.display !== 'none') {
-        startScenario('free');
-        // Small delay to let UI update
-        await new Promise(r => setTimeout(r, 100));
-    }
+    voiceStatus.textContent = `${broker} думает...`;
+    voiceStatus.className = 'voice-status';
+    brokerCircle.classList.add('active');
+    micBtn.disabled = true;
 
-    // Add user message
-    addMessage('user', text);
-    chatInput.value = '';
-    chatInput.style.height = 'auto';
-    sendBtn.disabled = true;
-    suggestionsDiv.style.display = 'none';
+    const reply = await callAI(text);
 
-    // Add to history
-    chatHistory.push({ role: 'user', content: text });
-
-    // Show typing
-    isWaiting = true;
-    typingIndicator.classList.add('show');
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-
-    // Call AI
-    const reply = await callBrokerAI(text);
-
-    // Hide typing
-    typingIndicator.classList.remove('show');
-    isWaiting = false;
-
-    // Check for coach tag
-    if (reply.includes('[COACH]') || reply.includes('[COACH:')) {
-        const parts = reply.split(/\[COACH[:\]]/);
-        if (parts.length > 1) {
-            const coachText = parts[1].replace(/\].*/, '').trim();
-            const brokerText = parts[0].trim() || (parts[2] || '').trim();
-            if (coachText) addMessage('coach', coachText);
-            if (brokerText) {
-                addMessage('broker', brokerText);
-                chatHistory.push({ role: 'assistant', content: brokerText });
-            }
-        } else {
-            addMessage('broker', reply);
-            chatHistory.push({ role: 'assistant', content: reply });
+    // Check for hints
+    let brokerReply = reply;
+    if (reply.includes('[HINT:') || reply.includes('[HINT]')) {
+        const hintMatch = reply.match(/\[HINT:?\s*(.*?)\]/);
+        if (hintMatch) {
+            const hintText = hintMatch[1].trim();
+            brokerReply = reply.replace(/\[HINT:?\s*.*?\]/, '').trim();
+            // Show hint as a special transcript line
+            addTranscript('hint', hintText);
         }
-    } else {
-        addMessage('broker', reply);
-        chatHistory.push({ role: 'assistant', content: reply });
     }
 
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    addTranscript('broker', brokerReply);
+    history.push({ role: 'assistant', content: brokerReply });
+
+    // Speak broker response
+    await speakBroker(brokerReply);
+
+    brokerCircle.classList.remove('active');
+    micBtn.disabled = false;
+    voiceStatus.textContent = 'Нажми 🎙️ и говори';
 }
 
 // ── AI CALL ──
-async function callBrokerAI(userMessage) {
-    const sc = SCENARIOS[currentScenario];
-    const systemPrompt = sc.systemPrompt.replace(/{NAME}/g, brokerName);
+async function callAI(msg) {
+    const s = SC[scenario];
+    const sysPrompt = s.prompt.replace(/{N}/g, broker);
+    const messages = [{ role: 'system', content: sysPrompt }];
+    const recent = history.slice(-10);
+    for (const m of recent) messages.push({ role: m.role, content: m.content });
 
-    const messages = [
-        { role: 'system', content: systemPrompt }
-    ];
-
-    // Add last 10 messages for context
-    const recent = chatHistory.slice(-10);
-    for (const msg of recent) {
-        messages.push({ role: msg.role, content: msg.content });
-    }
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 8000);
 
     try {
         const res = await fetch(GROQ_URL, {
-            method: 'POST',
-            mode: 'cors',
-            signal: controller.signal,
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${GROQ_API_KEY}`
-            },
-            body: JSON.stringify({
-                model: MODEL,
-                messages: messages,
-                temperature: 0.85,
-                max_tokens: 150,
-                top_p: 0.9
-            })
+            method: 'POST', mode: 'cors', signal: ctrl.signal,
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_KEY}` },
+            body: JSON.stringify({ model: MODEL, messages, temperature: 0.85, max_tokens: 120, top_p: 0.9 })
         });
-
-        clearTimeout(timeout);
-
-        if (!res.ok) {
-            if (res.status === 429) { setStatus('rate_limited'); }
-            else { setStatus('offline'); }
-            return getFallback(userMessage);
-        }
-
+        clearTimeout(t);
+        if (!res.ok) return fallback();
         const data = await res.json();
-        setStatus('online');
-        return data.choices?.[0]?.message?.content || getFallback(userMessage);
-
+        $('dot').classList.add('on');
+        $('bStatus').textContent = 'Онлайн';
+        return data.choices?.[0]?.message?.content || fallback();
     } catch (e) {
-        clearTimeout(timeout);
-        setStatus('offline');
-        return getFallback(userMessage);
+        clearTimeout(t);
+        $('dot').classList.remove('on');
+        return fallback();
     }
 }
 
-// ── FALLBACK ──
-const FALLBACK_RESPONSES = [
-    "Yeah, let me pull that up. What's your MC number?",
-    "I hear you. Let me check what I got available.",
-    "Alright, give me a second here.",
-    "What lanes are you looking at?",
-    "I might have something. What equipment you running?",
-    "Let me see what I can do. Hold on.",
-    "That's a tough lane right now. Market's been soft.",
-    "I'll need to check with my shipper on that."
-];
-let fallbackIdx = 0;
+const FALLBACKS = ["Yeah, let me pull that up. What's your MC?","I hear you. Let me check.","What lanes are you looking at?","I might have something. What equipment?","Let me see what I can do.","That's a tough lane right now."];
+let fbIdx = 0;
+function fallback() { return FALLBACKS[fbIdx++ % FALLBACKS.length]; }
 
-function getFallback(msg) {
-    const resp = FALLBACK_RESPONSES[fallbackIdx % FALLBACK_RESPONSES.length];
-    fallbackIdx++;
-    return resp;
+// ── TEXT-TO-SPEECH ──
+function speakBroker(text) {
+    return new Promise(resolve => {
+        if (!synth) { resolve(); return; }
+        synth.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'en-US';
+        utter.rate = 1.05;
+        utter.pitch = 0.95;
+
+        // Try to pick a male English voice
+        const voices = synth.getVoices();
+        const maleVoice = voices.find(v => v.lang.startsWith('en') && /male|david|james|mark|daniel/i.test(v.name))
+            || voices.find(v => v.lang.startsWith('en-US'))
+            || voices.find(v => v.lang.startsWith('en'));
+        if (maleVoice) utter.voice = maleVoice;
+
+        isSpeaking = true;
+        brokerCircle.classList.add('active');
+        voiceStatus.textContent = `${broker} говорит...`;
+        voiceStatus.className = 'voice-status speaking';
+        liveText.textContent = text;
+        liveText.className = 'live-text broker-txt';
+
+        utter.onend = () => {
+            isSpeaking = false;
+            brokerCircle.classList.remove('active');
+            voiceStatus.textContent = 'Нажми 🎙️ и говори';
+            voiceStatus.className = 'voice-status';
+            liveText.textContent = '';
+            resolve();
+        };
+        utter.onerror = () => {
+            isSpeaking = false;
+            brokerCircle.classList.remove('active');
+            resolve();
+        };
+        synth.speak(utter);
+    });
+}
+
+// Preload voices
+if (synth) synth.onvoiceschanged = () => synth.getVoices();
+
+// ── TRANSCRIPT ──
+function addTranscript(who, text) {
+    const div = document.createElement('div');
+    div.className = 't-line';
+    if (who === 'hint') {
+        div.innerHTML = `<span class="t-who" style="color:var(--accent)">💡</span><span class="t-txt" style="color:var(--accent)">${esc(text)}</span>`;
+    } else {
+        const label = who === 'you' ? 'ВЫ' : broker.toUpperCase();
+        div.innerHTML = `<span class="t-who ${who}">${label}</span><span class="t-txt">${esc(text)}</span>`;
+    }
+    transcriptEl.appendChild(div);
+    transcriptEl.scrollTop = transcriptEl.scrollHeight;
+}
+
+function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+// ── TIMER ──
+function updateTimer() {
+    if (!startTime) return;
+    const s = Math.floor((Date.now() - startTime) / 1000);
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    $('aTime').textContent = `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
 // ── HINTS ──
-function showHints() {
-    const hints = {
-        free: [
-            'Представься: имя, компания, MC#',
-            'Спроси какие грузы есть на нужном лейне',
-            'Упомяни свой опыт и оборудование',
-            'Используй DAT данные для аргументации ставки'
-        ],
-        negotiate: [
-            'Не соглашайся на первое предложение — НИКОГДА',
-            'Спроси "Can you do any better on that?"',
-            'Упомяни DAT rate: "DAT shows $2.70/mi on this lane"',
-            'Посчитай свои расходы: fuel + deadhead + time',
-            'Если брокер не двигается — предложи компромисс'
-        ],
-        book: [
-            'Имей MC# наготове',
-            'Спроси ВСЕ детали: pickup time, delivery window, commodity, weight',
-            'Уточни: detention policy, lumper fees, TONU',
-            'Дай данные водителя: имя, truck#, trailer#, телефон',
-            'Попроси rate confirmation на email'
-        ],
-        problem: [
-            'Сообщи СРАЗУ — не жди',
-            'Дай конкретику: где водитель, что случилось, ETA',
-            'Предложи решение, не просто проблему',
-            'Обещай регулярные обновления',
-            'Документируй всё: время, место, фото'
-        ],
-        cold: [
-            'Будь кратким — у брокера мало времени',
-            'Представься: имя, компания, MC#, оборудование',
-            'Скажи какие лейны покрываешь',
-            'Спроси: "Do you have anything going to [city]?"',
-            'Предложи отправить carrier packet'
-        ],
-        followup: [
-            'Напомни о прошлом грузе: "Last load went great"',
-            'Спроси о доступных грузах на этой неделе',
-            'Покажи что ты надёжный: on-time, good communication',
-            'Предложи стать regular carrier на этом лейне'
-        ]
-    };
+function updateHints(sc) {
+    const hints = SC[sc]?.hints || [];
+    hintsContent.innerHTML = hints.map(h => `<div class="hint-item">${h}</div>`).join('');
+}
 
-    const list = hints[currentScenario] || hints.free;
-    addMessage('coach', '💡 Подсказки:\n' + list.map((h, i) => `${i + 1}. ${h}`).join('\n'));
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+function toggleHints() {
+    hintsPanel.classList.toggle('show');
+    if (hintsPanel.classList.contains('show')) analyticsPanel.classList.remove('show');
+}
+
+// ── ANALYTICS ──
+function toggleAnalytics() {
+    analyticsPanel.classList.toggle('show');
+    if (analyticsPanel.classList.contains('show')) {
+        hintsPanel.classList.remove('show');
+        if (msgCount >= 2) getAIAnalysis();
+    }
+}
+
+async function getAIAnalysis() {
+    if (history.length < 4) {
+        $('aFeedback').style.display = 'block';
+        $('aFeedback').innerHTML = 'Поговори ещё немного для анализа.';
+        return;
+    }
+
+    $('aFeedback').style.display = 'block';
+    $('aFeedback').innerHTML = 'Анализирую...';
+
+    const transcript = history.map(m => `${m.role === 'user' ? 'Dispatcher' : 'Broker'}: ${m.content}`).join('\n');
+    const prompt = `Analyze this dispatcher-broker phone conversation. Rate the dispatcher's performance.
+
+CONVERSATION:
+${transcript}
+
+Respond in Russian. Format EXACTLY like this:
+SCORE: [number 1-10]
+GOOD: [what dispatcher did well, 1-2 sentences]
+IMPROVE: [what to improve, 1-2 sentences]
+TIP: [one specific actionable tip]`;
+
+    try {
+        const res = await fetch(GROQ_URL, {
+            method: 'POST', mode: 'cors',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_KEY}` },
+            body: JSON.stringify({ model: MODEL, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 200 })
+        });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        const text = data.choices?.[0]?.message?.content || '';
+
+        const scoreMatch = text.match(/SCORE:\s*(\d+)/);
+        if (scoreMatch) $('aScore').textContent = scoreMatch[1] + '/10';
+
+        const goodMatch = text.match(/GOOD:\s*(.+?)(?=IMPROVE:|$)/s);
+        const improveMatch = text.match(/IMPROVE:\s*(.+?)(?=TIP:|$)/s);
+        const tipMatch = text.match(/TIP:\s*(.+)/s);
+
+        let html = '';
+        if (goodMatch) html += `<strong>✅ Хорошо:</strong> ${esc(goodMatch[1].trim())}<br>`;
+        if (improveMatch) html += `<strong>⚠️ Улучшить:</strong> ${esc(improveMatch[1].trim())}<br>`;
+        if (tipMatch) html += `<strong>💡 Совет:</strong> ${esc(tipMatch[1].trim())}`;
+        $('aFeedback').innerHTML = html || esc(text);
+    } catch (e) {
+        $('aFeedback').innerHTML = 'Не удалось получить анализ. Попробуй позже.';
+    }
 }
 
 // ── RESET ──
-function resetChat() {
-    chatHistory = [];
-    chatMessages.innerHTML = '';
-    chatMessages.style.display = 'none';
-    welcomeScreen.style.display = 'flex';
-    suggestionsDiv.style.display = 'none';
-    document.querySelectorAll('.scenario-chip').forEach(c => c.classList.remove('active'));
-    document.querySelector('.scenario-chip[data-scenario="free"]').classList.add('active');
-    currentScenario = 'free';
+function resetAll() {
+    synth.cancel();
+    if (recognition && isRecording) recognition.stop();
+    isRecording = false;
+    isSpeaking = false;
+    history = [];
+    msgCount = 0;
+    startTime = 0;
+    clearInterval(timerInterval);
+
+    welcome.style.display = 'flex';
+    voiceArea.style.display = 'none';
+    transcriptEl.style.display = 'none';
+    controlsEl.style.display = 'none';
+    hintsPanel.classList.remove('show');
+    analyticsPanel.classList.remove('show');
+    transcriptEl.innerHTML = '';
+
+    document.querySelectorAll('.sc-chip').forEach(c => c.classList.remove('on'));
+    document.querySelector('.sc-chip[data-sc="free"]').classList.add('on');
 }
 </script>
