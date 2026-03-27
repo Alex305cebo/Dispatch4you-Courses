@@ -1,5 +1,6 @@
 /**
- * nav-loader.js v5.1 - Extra compact design
+ * nav-loader.js v6.1 - 2026-03-26 force update
+ * - AI Broker button added
  * - Even smaller buttons (6px 12px padding)
  * - Smaller font (12px)
  * - Consistent navbar height (64px)
