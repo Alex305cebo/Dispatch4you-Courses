@@ -148,10 +148,17 @@ const chat=$('chat'),micBtn=$('micBtn'),textInput=$('textInput'),sendBtn=$('send
 
 // Speech Recognition
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-if(SR){recognition=new SR();recognition.continuous=false;recognition.interimResults=true;recognition.lang='en-US';
-recognition.onresult=e=>{let f='',i='';for(let x=e.resultIndex;x<e.results.length;x++){if(e.results[x].isFinal)f+=e.results[x][0].transcript;else i+=e.results[x][0].transcript}
-if(f){stopRec();showDraft(f.trim())}else if(i&&draftEl){draftEl.querySelector('.draft-text').textContent=i}};
-recognition.onerror=()=>stopRec();recognition.onend=()=>{if(isRec)stopRec()}}
+let silenceTimer=null, finalText='';
+if(SR){recognition=new SR();recognition.continuous=true;recognition.interimResults=true;recognition.lang='en-US';
+recognition.onresult=e=>{let f='',i='';for(let x=0;x<e.results.length;x++){if(e.results[x].isFinal)f+=e.results[x][0].transcript;else i+=e.results[x][0].transcript}
+finalText=f;const display=f+(i?' '+i:'');
+if(draftEl){draftEl.querySelector('.draft-text').textContent=display||'🎙️ Слушаю...'}
+// Reset silence timer on any speech
+clearTimeout(silenceTimer);
+silenceTimer=setTimeout(()=>{if(isRec&&finalText.trim()){stopRec();showDraft(finalText.trim())}},5000);
+};
+recognition.onerror=e=>{console.log('Speech error:',e.error);if(e.error!=='no-speech')stopRec()};
+recognition.onend=()=>{if(isRec){try{recognition.start()}catch(e){stopRec()}}}}
 
 // Scenario chips
 document.querySelectorAll('.sc').forEach(c=>c.addEventListener('click',()=>startScenario(c.dataset.s)));
@@ -164,12 +171,11 @@ function startScenario(s){
     chat.innerHTML='';draftEl=null;draftText='';
 }
 
-function toggleMic(){if(busy)return;isRec?stopRec():startRec()}
-function startRec(){if(!recognition||busy)return;isRec=true;micBtn.classList.add('rec');
-    // Create draft bubble immediately
-    draftText='';draftEl=document.createElement('div');draftEl.className='msg user';draftEl.innerHTML='<span class="draft-text" style="opacity:.6">🎙️ Слушаю...</span>';chat.appendChild(draftEl);chat.scrollTop=chat.scrollHeight;
+function toggleMic(){if(busy)return;if(isRec){clearTimeout(silenceTimer);stopRec();if(finalText.trim())showDraft(finalText.trim())}else{startRec()}}
+function startRec(){if(!recognition||busy)return;isRec=true;finalText='';micBtn.classList.add('rec');
+    draftText='';draftEl=document.createElement('div');draftEl.className='msg draft';draftEl.innerHTML='<span class="draft-text">🎙️ Слушаю...</span>';chat.appendChild(draftEl);chat.scrollTop=chat.scrollHeight;
     try{recognition.start()}catch(e){}}
-function stopRec(){isRec=false;micBtn.classList.remove('rec')}
+function stopRec(){isRec=false;micBtn.classList.remove('rec');clearTimeout(silenceTimer);try{recognition.stop()}catch(e){}}
 
 function showDraft(text){
     draftText=text;
