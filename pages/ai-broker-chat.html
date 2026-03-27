@@ -4,7 +4,7 @@
     <script src="../site-protection.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🤖 AI Брокер — Голосовой тренажёр | Курсы Диспетчера</title>
+    <title>🤖 AI Брокер — Голосовой чат | Курсы Диспетчера</title>
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,696 +12,276 @@
     <link rel="stylesheet" href="../shared-nav.css?v=6.0.1774800000">
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
-        html{overflow-x:hidden;width:100%;max-width:100vw}
-        :root{--primary:#06b6d4;--secondary:#0ea5e9;--accent:#f97316;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--bg-dark:#0a0e1a;--bg-darker:#070b14;--text-primary:#f1f5f9;--text-secondary:#94a3b8;--text-muted:#64748b}
-        body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg-darker);color:var(--text-primary);line-height:1.6;overflow-x:hidden;margin:0;padding:0;height:100vh}
-        body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at 15% 25%,rgba(6,182,212,.1),transparent 50%),radial-gradient(circle at 85% 75%,rgba(249,115,22,.07),transparent 50%);z-index:-1;pointer-events:none}
+        html{overflow-x:hidden}
+        :root{--primary:#06b6d4;--accent:#f97316;--success:#10b981;--danger:#ef4444;--bg:#070b14;--bg2:#0d1117;--card:#111827;--border:rgba(255,255,255,.06);--t1:#f1f5f9;--t2:#94a3b8;--t3:#64748b}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);margin:0;height:100vh;display:flex;flex-direction:column}
+        body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 15% 25%,rgba(6,182,212,.08),transparent 50%),radial-gradient(circle at 85% 75%,rgba(249,115,22,.05),transparent 50%);z-index:-1;pointer-events:none}
 
-        .app{display:flex;flex-direction:column;height:100vh;max-width:700px;margin:0 auto;width:100%}
+        .app{display:flex;flex-direction:column;height:100vh;max-width:760px;margin:0 auto;width:100%}
 
-        /* ── HEADER ── */
-        .hdr{padding:85px 20px 14px;background:rgba(10,14,26,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(6,182,212,.15);flex-shrink:0}
-        .hdr-inner{display:flex;align-items:center;justify-content:space-between}
-        .broker-info{display:flex;align-items:center;gap:12px}
-        .avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:20px;position:relative;flex-shrink:0}
-        .avatar .dot{position:absolute;bottom:1px;right:1px;width:11px;height:11px;border-radius:50%;background:#ef4444;border:2px solid var(--bg-darker);transition:background .3s}
-        .avatar .dot.on{background:var(--success)}
-        .b-name{font-size:16px;font-weight:700}
-        .b-status{font-size:11px;color:var(--text-muted);margin-top:1px}
+        /* HEADER */
+        .hdr{padding:80px 16px 12px;background:rgba(10,14,26,.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);flex-shrink:0;z-index:10}
+        .hdr-row{display:flex;align-items:center;justify-content:space-between}
+        .bi{display:flex;align-items:center;gap:10px}
+        .av{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:18px;position:relative;flex-shrink:0}
+        .av .dot{position:absolute;bottom:1px;right:1px;width:10px;height:10px;border-radius:50%;background:#ef4444;border:2px solid var(--bg);transition:.3s}
+        .av .dot.on{background:var(--success)}
+        .bn{font-size:15px;font-weight:700}.bs{font-size:11px;color:var(--t3);margin-top:1px}
         .hdr-btns{display:flex;gap:6px}
-        .hdr-btn{padding:7px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:var(--text-secondary);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
-        .hdr-btn:hover{background:rgba(6,182,212,.15);color:var(--primary);border-color:rgba(6,182,212,.3)}
-        .hdr-btn.red{border-color:rgba(239,68,68,.2)}
-        .hdr-btn.red:hover{background:rgba(239,68,68,.15);color:var(--danger)}
+        .hb{padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:var(--t2);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s}
+        .hb:hover{background:rgba(6,182,212,.12);color:var(--primary);border-color:rgba(6,182,212,.25)}
 
-        /* ── SCENARIO BAR ── */
-        .sc-bar{padding:8px 16px;border-bottom:1px solid rgba(6,182,212,.08);flex-shrink:0;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch}
-        .sc-bar::-webkit-scrollbar{height:3px}
-        .sc-bar::-webkit-scrollbar-thumb{background:rgba(6,182,212,.2);border-radius:3px}
-        .sc-chip{padding:5px 12px;border-radius:18px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:var(--text-muted);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .2s;font-family:inherit}
-        .sc-chip:hover,.sc-chip.on{background:rgba(6,182,212,.12);border-color:rgba(6,182,212,.3);color:var(--primary)}
+        /* SCENARIO BAR */
+        .sbar{padding:6px 16px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;gap:5px;overflow-x:auto}
+        .sbar::-webkit-scrollbar{height:0}
+        .sc{padding:4px 10px;border-radius:14px;border:1px solid rgba(255,255,255,.06);background:transparent;color:var(--t3);font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;transition:.2s}
+        .sc:hover,.sc.on{background:rgba(6,182,212,.1);border-color:rgba(6,182,212,.25);color:var(--primary)}
 
-        /* ── VOICE AREA (main) ── */
-        .voice-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:16px;position:relative;overflow:hidden}
+        /* CHAT */
+        .chat{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth}
+        .chat::-webkit-scrollbar{width:4px}
+        .chat::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:4px}
 
-        /* Broker speaking animation */
-        .broker-speaking{width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,rgba(6,182,212,.2),rgba(249,115,22,.15));display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;transition:all .3s}
-        .broker-speaking.active{box-shadow:0 0 0 15px rgba(6,182,212,.1),0 0 0 30px rgba(6,182,212,.05);animation:pulse 1.5s infinite}
-        .broker-speaking.listening{box-shadow:0 0 0 15px rgba(16,185,129,.1),0 0 0 30px rgba(16,185,129,.05);animation:pulse 1.2s infinite;background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(6,182,212,.15))}
-        @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+        .msg{max-width:82%;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.55;animation:fadeUp .25s ease}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .msg.user{align-self:flex-end;background:linear-gradient(135deg,rgba(6,182,212,.2),rgba(14,165,233,.15));border:1px solid rgba(6,182,212,.15);border-bottom-right-radius:4px}
+        .msg.broker{align-self:flex-start;background:var(--card);border:1px solid var(--border);border-bottom-left-radius:4px}
+        .msg.broker .who{font-size:11px;font-weight:700;color:var(--primary);margin-bottom:3px}
+        .msg.sys{align-self:center;background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.1);border-radius:10px;font-size:12px;color:var(--t3);text-align:center;max-width:90%;padding:8px 14px}
+        .msg .ts{font-size:9px;color:var(--t3);margin-top:4px;display:block;text-align:right}
+        .msg.broker .ts{text-align:left}
 
-        .voice-status{font-size:14px;font-weight:600;color:var(--text-secondary);text-align:center;min-height:20px}
-        .voice-status.recording{color:var(--success)}
-        .voice-status.speaking{color:var(--primary)}
+        /* IMPROVE BUTTON */
+        .improve-row{align-self:flex-end;max-width:82%;display:flex;gap:6px;animation:fadeUp .25s ease}
+        .improve-btn{padding:5px 12px;border-radius:10px;border:1px solid rgba(249,115,22,.2);background:rgba(249,115,22,.08);color:var(--accent);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s}
+        .improve-btn:hover{background:rgba(249,115,22,.18);border-color:rgba(249,115,22,.4)}
+        .send-draft-btn{padding:5px 12px;border-radius:10px;border:1px solid rgba(16,185,129,.2);background:rgba(16,185,129,.08);color:var(--success);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s}
+        .send-draft-btn:hover{background:rgba(16,185,129,.18);border-color:rgba(16,185,129,.4)}
 
-        /* Live transcript */
-        .live-text{font-size:15px;color:var(--text-primary);text-align:center;max-width:90%;min-height:24px;opacity:.9;line-height:1.5}
-        .live-text.broker-txt{color:var(--primary);font-style:italic}
+        /* IMPROVED MSG */
+        .msg.improved{align-self:flex-end;max-width:82%;background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.15);border-radius:12px;font-size:13px;color:var(--accent);padding:8px 12px}
+        .msg.improved .imp-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;opacity:.7}
 
-        /* ── MIC BUTTON ── */
-        .mic-btn{width:72px;height:72px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--success),#059669);color:#fff;font-size:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;box-shadow:0 4px 20px rgba(16,185,129,.3);position:relative;flex-shrink:0}
-        .mic-btn:hover{transform:scale(1.08)}
-        .mic-btn.recording{background:linear-gradient(135deg,var(--danger),#dc2626);box-shadow:0 4px 20px rgba(239,68,68,.3);animation:micPulse 1s infinite}
-        .mic-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;animation:none}
-        @keyframes micPulse{0%,100%{box-shadow:0 4px 20px rgba(239,68,68,.3)}50%{box-shadow:0 4px 30px rgba(239,68,68,.5)}}
+        /* TYPING */
+        .typing{align-self:flex-start;padding:10px 18px;background:var(--card);border:1px solid var(--border);border-radius:14px;border-bottom-left-radius:4px;display:none;gap:4px;align-items:center}
+        .typing.show{display:flex}
+        .td{width:7px;height:7px;border-radius:50%;background:var(--t3);animation:bounce 1.4s infinite}
+        .td:nth-child(2){animation-delay:.2s}.td:nth-child(3){animation-delay:.4s}
+        @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
 
-        /* ── TRANSCRIPT LOG (compact) ── */
-        .transcript{max-height:180px;overflow-y:auto;width:100%;padding:0 16px;flex-shrink:0;border-top:1px solid rgba(255,255,255,.05)}
-        .transcript::-webkit-scrollbar{width:4px}
-        .transcript::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
-        .t-line{padding:6px 0;font-size:13px;line-height:1.5;border-bottom:1px solid rgba(255,255,255,.03);display:flex;gap:8px}
-        .t-line:last-child{border-bottom:none}
-        .t-who{font-weight:700;font-size:11px;min-width:50px;flex-shrink:0;padding-top:1px}
-        .t-who.you{color:var(--success)}
-        .t-who.broker{color:var(--primary)}
-        .t-txt{color:var(--text-secondary)}
+        /* BROKER SPEAKING INDICATOR */
+        .speaking-indicator{align-self:flex-start;padding:6px 12px;border-radius:10px;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.12);font-size:11px;color:var(--primary);display:none;align-items:center;gap:6px}
+        .speaking-indicator.show{display:flex}
+        .speaking-indicator .wave{display:flex;gap:2px;align-items:center}
+        .speaking-indicator .wave span{width:3px;height:12px;background:var(--primary);border-radius:2px;animation:wave 1s infinite}
+        .speaking-indicator .wave span:nth-child(2){animation-delay:.15s;height:16px}
+        .speaking-indicator .wave span:nth-child(3){animation-delay:.3s;height:10px}
+        @keyframes wave{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1)}}
 
-        /* ── HINTS PANEL ── */
-        .hints-panel{display:none;padding:10px 16px;background:rgba(249,115,22,.05);border-top:1px solid rgba(249,115,22,.15);flex-shrink:0;max-height:120px;overflow-y:auto}
-        .hints-panel.show{display:block}
-        .hints-title{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
-        .hint-item{font-size:12px;color:var(--text-secondary);padding:3px 0;line-height:1.5;cursor:pointer;transition:color .2s}
-        .hint-item:hover{color:var(--accent)}
-        .hint-item::before{content:'💡 ';font-size:10px}
+        /* INPUT AREA */
+        .input-area{padding:10px 16px 18px;background:rgba(10,14,26,.97);border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;align-items:flex-end}
+        .mic-btn{width:48px;height:48px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--success),#059669);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;flex-shrink:0;box-shadow:0 2px 12px rgba(16,185,129,.25)}
+        .mic-btn:hover{transform:scale(1.06)}
+        .mic-btn.rec{background:linear-gradient(135deg,var(--danger),#dc2626);box-shadow:0 2px 12px rgba(239,68,68,.3);animation:micP 1s infinite}
+        @keyframes micP{0%,100%{box-shadow:0 2px 12px rgba(239,68,68,.3)}50%{box-shadow:0 2px 20px rgba(239,68,68,.5)}}
+        .mic-btn:disabled{opacity:.35;cursor:not-allowed;transform:none;animation:none}
+        .text-input{flex:1;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:var(--t1);font-size:14px;font-family:inherit;resize:none;min-height:42px;max-height:100px;outline:none;transition:.2s;line-height:1.4}
+        .text-input:focus{border-color:rgba(6,182,212,.3)}
+        .text-input::placeholder{color:var(--t3)}
+        .send-btn{width:42px;height:42px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--primary),#0ea5e9);color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;flex-shrink:0}
+        .send-btn:hover{transform:scale(1.05)}
+        .send-btn:disabled{opacity:.3;cursor:not-allowed;transform:none}
 
-        /* ── ANALYTICS PANEL ── */
-        .analytics{display:none;padding:14px 16px;background:rgba(6,182,212,.03);border-top:1px solid rgba(6,182,212,.1);flex-shrink:0}
-        .analytics.show{display:block}
-        .analytics-title{font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
-        .analytics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-        .a-card{padding:10px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);text-align:center}
-        .a-val{font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-        .a-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
-        .a-feedback{margin-top:10px;padding:10px;border-radius:8px;background:rgba(255,255,255,.03);font-size:12px;color:var(--text-secondary);line-height:1.6}
-        .a-feedback strong{color:var(--text-primary)}
-
-        /* ── BOTTOM CONTROLS ── */
-        .controls{padding:12px 16px 20px;display:flex;align-items:center;justify-content:center;gap:16px;flex-shrink:0;background:rgba(10,14,26,.95);border-top:1px solid rgba(255,255,255,.06)}
-
-        /* ── WELCOME ── */
-        .welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 20px;text-align:center}
-        .w-icon{font-size:56px;margin-bottom:16px}
-        .w-title{font-size:26px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px}
-        .w-text{font-size:14px;color:var(--text-secondary);max-width:420px;line-height:1.7;margin-bottom:24px}
-        .w-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:440px;width:100%}
-        .w-card{padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);cursor:pointer;transition:all .2s;text-align:left}
-        .w-card:hover{background:rgba(6,182,212,.08);border-color:rgba(6,182,212,.25);transform:translateY(-2px)}
-        .w-card-icon{font-size:22px;margin-bottom:6px}
-        .w-card-title{font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:3px}
-        .w-card-desc{font-size:11px;color:var(--text-muted);line-height:1.4}
-
-        /* ── RESPONSIVE ── */
-        @media(max-width:768px){
-            .hdr{padding:75px 14px 10px}
-            .avatar{width:38px;height:38px;font-size:17px}
-            .b-name{font-size:14px}
-            .broker-speaking{width:100px;height:100px;font-size:40px}
-            .mic-btn{width:64px;height:64px;font-size:24px}
-            .analytics-grid{grid-template-columns:repeat(3,1fr);gap:8px}
-            .a-val{font-size:18px}
-            .w-grid{grid-template-columns:1fr}
-            .w-title{font-size:22px}
-        }
-        @media(max-width:480px){
-            .hdr{padding:68px 10px 8px}
-            .hdr-btn span.txt{display:none}
-            .broker-speaking{width:80px;height:80px;font-size:32px}
-            .mic-btn{width:58px;height:58px;font-size:22px}
-            .live-text{font-size:13px}
-            .transcript{max-height:140px}
-        }
+        /* RESPONSIVE */
+        @media(max-width:768px){.hdr{padding:72px 12px 10px}.av{width:36px;height:36px;font-size:16px}.bn{font-size:14px}.msg{max-width:88%;font-size:13px}.input-area{padding:8px 12px 14px}}
+        @media(max-width:480px){.hdr{padding:66px 10px 8px}.hb .txt{display:none}.msg{max-width:92%;font-size:13px;padding:8px 12px}.mic-btn{width:42px;height:42px;font-size:18px}.text-input{font-size:13px;padding:8px 12px}}
     </style>
 </head>
 <body>
     <div id="shared-nav-container"></div>
-
     <div class="app">
-        <!-- Header -->
-        <div class="hdr">
-            <div class="hdr-inner">
-                <div class="broker-info">
-                    <div class="avatar">🤖<span class="dot" id="dot"></span></div>
-                    <div>
-                        <div class="b-name" id="bName">AI Брокер — Mike</div>
-                        <div class="b-status" id="bStatus">Проверка...</div>
-                    </div>
-                </div>
-                <div class="hdr-btns">
-                    <button class="hdr-btn" onclick="toggleHints()" id="hintsBtn">💡 <span class="txt">Подсказки</span></button>
-                    <button class="hdr-btn" onclick="toggleAnalytics()" id="analyticsBtn">📊 <span class="txt">Аналитика</span></button>
-                    <button class="hdr-btn red" onclick="resetAll()">🔄</button>
-                </div>
-            </div>
+        <div class="hdr"><div class="hdr-row">
+            <div class="bi"><div class="av">🤖<span class="dot" id="dot"></span></div><div><div class="bn" id="bName">AI Брокер — Mike</div><div class="bs" id="bStat">Проверка...</div></div></div>
+            <div class="hdr-btns"><button class="hb" onclick="showHints()">💡</button><button class="hb" onclick="getAnalysis()">📊</button><button class="hb" onclick="resetChat()">🔄</button></div>
+        </div></div>
+        <div class="sbar" id="sbar">
+            <button class="sc on" data-s="free">💬 Свободный</button>
+            <button class="sc" data-s="negotiate">💰 Торг</button>
+            <button class="sc" data-s="book">📋 Букинг</button>
+            <button class="sc" data-s="problem">⚠️ Проблема</button>
+            <button class="sc" data-s="cold">📞 Холодный</button>
+            <button class="sc" data-s="followup">🔄 Follow-up</button>
         </div>
-
-        <!-- Scenarios -->
-        <div class="sc-bar" id="scBar">
-            <button class="sc-chip on" data-sc="free">💬 Свободный</button>
-            <button class="sc-chip" data-sc="negotiate">💰 Торг</button>
-            <button class="sc-chip" data-sc="book">📋 Букинг</button>
-            <button class="sc-chip" data-sc="problem">⚠️ Проблема</button>
-            <button class="sc-chip" data-sc="cold">📞 Холодный</button>
-            <button class="sc-chip" data-sc="followup">🔄 Follow-up</button>
+        <div class="chat" id="chat">
+            <div class="msg sys">🎙️ Выбери сценарий и нажми микрофон — ты диспетчер, звонишь брокеру по поводу груза</div>
         </div>
-
-        <!-- Welcome -->
-        <div class="welcome" id="welcome">
-            <div class="w-icon">🎙️🤖</div>
-            <div class="w-title">Голосовой AI Брокер</div>
-            <div class="w-text">Говори голосом — брокер ответит голосом. В чате появится краткий текст диалога. После разговора — аналитика и оценка.</div>
-            <div class="w-grid">
-                <div class="w-card" onclick="startScenario('negotiate')">
-                    <div class="w-card-icon">💰</div>
-                    <div class="w-card-title">Торг за ставку</div>
-                    <div class="w-card-desc">Dallas→Atlanta, $1,750. Выторгуй больше.</div>
-                </div>
-                <div class="w-card" onclick="startScenario('book')">
-                    <div class="w-card-icon">📋</div>
-                    <div class="w-card-title">Забронировать груз</div>
-                    <div class="w-card-desc">Chicago→Miami reefer. Полный процесс.</div>
-                </div>
-                <div class="w-card" onclick="startScenario('problem')">
-                    <div class="w-card-icon">⚠️</div>
-                    <div class="w-card-title">Проблема с грузом</div>
-                    <div class="w-card-desc">Breakdown / delay. Сообщи брокеру.</div>
-                </div>
-                <div class="w-card" onclick="startScenario('cold')">
-                    <div class="w-card-icon">📞</div>
-                    <div class="w-card-title">Холодный звонок</div>
-                    <div class="w-card-desc">Первый звонок. Представь компанию.</div>
-                </div>
-                <div class="w-card" onclick="startScenario('followup')">
-                    <div class="w-card-icon">🔄</div>
-                    <div class="w-card-title">Follow-up</div>
-                    <div class="w-card-desc">Перезвони. Попроси новые грузы.</div>
-                </div>
-                <div class="w-card" onclick="startScenario('free')">
-                    <div class="w-card-icon">💬</div>
-                    <div class="w-card-title">Свободный чат</div>
-                    <div class="w-card-desc">Любая ситуация. Говори что хочешь.</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Voice area (hidden until scenario starts) -->
-        <div class="voice-area" id="voiceArea" style="display:none">
-            <div class="broker-speaking" id="brokerCircle">🤖</div>
-            <div class="voice-status" id="voiceStatus">Нажми микрофон и говори</div>
-            <div class="live-text" id="liveText"></div>
-        </div>
-
-        <!-- Transcript log -->
-        <div class="transcript" id="transcript" style="display:none"></div>
-
-        <!-- Hints -->
-        <div class="hints-panel" id="hintsPanel">
-            <div class="hints-title">💡 Подсказки</div>
-            <div id="hintsContent"></div>
-        </div>
-
-        <!-- Analytics -->
-        <div class="analytics" id="analyticsPanel">
-            <div class="analytics-title">📊 Аналитика разговора</div>
-            <div class="analytics-grid">
-                <div class="a-card"><div class="a-val" id="aScore">—</div><div class="a-label">Оценка</div></div>
-                <div class="a-card"><div class="a-val" id="aMsgs">0</div><div class="a-label">Реплик</div></div>
-                <div class="a-card"><div class="a-val" id="aTime">0:00</div><div class="a-label">Время</div></div>
-            </div>
-            <div class="a-feedback" id="aFeedback" style="display:none"></div>
-        </div>
-
-        <!-- Controls -->
-        <div class="controls" id="controls" style="display:none">
+        <div class="typing" id="typing"><div class="td"></div><div class="td"></div><div class="td"></div></div>
+        <div class="speaking-indicator" id="speakInd"><div class="wave"><span></span><span></span><span></span></div> Брокер говорит...</div>
+        <div class="input-area">
             <button class="mic-btn" id="micBtn" onclick="toggleMic()">🎙️</button>
+            <textarea class="text-input" id="textInput" placeholder="Или напиши текстом..." rows="1" oninput="autoH(this)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendText()}"></textarea>
+            <button class="send-btn" id="sendBtn" onclick="sendText()" disabled>➤</button>
         </div>
     </div>
-
     <script src="../nav-loader.js?v=6.0.1774800000"></script>
     <script src="../role-guard.js"></script>
 </body>
 </html>
 
 <script>
-// ── CONFIG ──
-const _k = ['gsk_7b9aEN1PMQBKSKbw', 'GOyoWGdyb3FYcNiq4FWZScbJ4iZYYSYOF4Qh'];
-const GROQ_KEY = _k[0] + _k[1];
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = 'llama-3.3-70b-versatile';
+const _k=['gsk_7b9aEN1PMQBKSKbw','GOyoWGdyb3FYcNiq4FWZScbJ4iZYYSYOF4Qh'];
+const GK=_k[0]+_k[1], GU='https://api.groq.com/openai/v1/chat/completions', MD='llama-3.3-70b-versatile';
+let hist=[],scen='free',broker='Mike',busy=false,isRec=false,recognition=null,synth=window.speechSynthesis,draftText='',draftEl=null;
+const NAMES=['Mike','Steve','Dave','Tom','Chris','Brian','Kevin','Jason','Mark','Jeff'];
 
-// ── STATE ──
-let history = [];
-let scenario = 'free';
-let broker = 'Mike';
-let aiOk = false;
-let isRecording = false;
-let isSpeaking = false;
-let recognition = null;
-let synth = window.speechSynthesis;
-let startTime = 0;
-let msgCount = 0;
-let timerInterval = null;
-
-const NAMES = ['Mike','Steve','Dave','Tom','Chris','Brian','Kevin','Jason','Mark','Jeff'];
-
-// ── SCENARIOS ──
-const SC = {
-    free: {
-        name: 'Свободный чат',
-        prompt: `You are {N}, a freight broker at Apex Freight Solutions. Phone rings — a dispatcher is calling.
-Be a REAL busy broker. Direct, professional, slightly rushed. Handle loads across the US.
-If asked about a lane — make up realistic load details. Negotiate realistically.
-Ask for MC#. Use real freight terms. MAX 2 short sentences. Phone call pace.
-COACHING: if user says "подскажи"/"hint" → give [HINT: tip in Russian], then continue as broker.
-LANGUAGE: Match user's language. Keep freight terms in English.`,
-        greet: '{N}, Apex Freight.',
-        hints: ['Представься: имя, компания, MC#','Спроси какие грузы есть','Упомяни оборудование и лейны','Используй DAT данные для торга']
-    },
-    negotiate: {
-        name: 'Торг за ставку',
-        prompt: `You are {N}, broker at Summit Logistics. Dispatcher calls about your posted load.
-LOAD: Dallas TX → Atlanta GA, 780 mi, 53' Dry Van, Auto parts 42,000 lbs, pickup tomorrow 6AM.
-Your opening: $1,750 total. Market: ~$2,100. Your max: $2,200 — NEVER reveal or exceed.
-Start at $1,750. Hold for 2 pushbacks. Move $50-100/round with justification. Use pressure: "I got 3 carriers on this", "Market's soft". NEVER accept first counter. After 4 rounds: "Final offer."
-MAX 2 sentences. Direct, tough. COACHING: "подскажи" → [HINT: tip in Russian]. Match user's language.`,
-        greet: '{N}, Summit Logistics. What can I do for you?',
-        hints: ['Не соглашайся на первое предложение','Скажи "Can you do any better?"','Упомяни DAT: "$2.70/mi on this lane"','Посчитай расходы: fuel + deadhead','Предложи компромисс если застряли']
-    },
-    book: {
-        name: 'Букинг груза',
-        prompt: `You are {N}, broker at National Freight Corp. Dispatcher calls to book a load.
-LOAD: Chicago IL → Miami FL, 1,380 mi, Reefer 53' temp 34°F, Fresh produce 38,000 lbs, pickup tomorrow 4AM Sysco warehouse. Rate: $3,450 (negotiable to $3,100). Delivery: day after tomorrow 6PM.
-FLOW: 1) Answer 2) Ask MC# 3) Give load details 4) Negotiate rate 5) Get driver info (name, truck#, trailer#, phone) 6) Ask email for rate con 7) Remind: check in 2hrs before pickup.
-MAX 2-3 sentences. Professional. COACHING: "подскажи" → [HINT: tip in Russian]. Match language.`,
-        greet: '{N}, National Freight. How can I help?',
-        hints: ['Имей MC# наготове','Спроси ВСЕ детали: pickup, delivery, commodity','Уточни detention policy и TONU','Дай данные водителя: имя, truck#, trailer#','Попроси rate confirmation на email']
-    },
-    problem: {
-        name: 'Проблема с грузом',
-        prompt: `You are {N}, broker at CrossCountry Logistics. Dispatcher calls about a problem with an active load.
-LOAD IN TRANSIT: LA CA → Denver CO, 1,020 mi, Electronics 40,000 lbs, $2,800. Should deliver today by 5PM.
-REACTIONS: Delay → frustrated "How late?" "I need to call receiver." Breakdown → "Where exactly? ETA on repair?" Damage → "How bad? Photos NOW. Don't move anything." Always demand details, timeline, plan. You're stressed — shipper is waiting.
-MAX 2-3 sentences. Urgent. COACHING: "подскажи" → [HINT: tip in Russian]. Match language.`,
-        greet: '{N}, CrossCountry. What\'s going on?',
-        hints: ['Сообщи СРАЗУ — не жди','Дай конкретику: где, что, ETA','Предложи решение, не просто проблему','Обещай обновления каждый час','Документируй: время, место, фото']
-    },
-    cold: {
-        name: 'Холодный звонок',
-        prompt: `You are {N}, broker at Pacific Freight Group. Busy. Phone rings — unknown dispatcher cold-calling.
-Skeptical but open. Get 20+ cold calls/day. "Make it quick." Ask: MC#, how long in business, equipment, lanes, insurance.
-If professional → warm up, share lanes (Southeast, Midwest). If vague → "Send me your packet, I'll look."
-MAX 2 sentences. Busy, slightly impatient. COACHING: "подскажи" → [HINT: tip in Russian]. Match language.`,
-        greet: '{N}, Pacific Freight. Yeah, go ahead.',
-        hints: ['Будь кратким — у брокера мало времени','Представься: имя, компания, MC#, оборудование','Скажи какие лейны покрываешь','Спроси "Do you have anything going to [city]?"','Предложи отправить carrier packet']
-    },
-    followup: {
-        name: 'Follow-up',
-        prompt: `You are {N}, broker at Alliance Transport. Dispatcher you worked with before calls back. Last load went well.
-Friendly: "Hey, good to hear from you!" Have 2-3 loads: 1) Houston→Nashville 790mi DV $1,900 Thu 2) Memphis→Charlotte 630mi DV $1,500 Fri 3) Jacksonville→Atlanta 350mi Reefer $1,100 Wed.
-More flexible on rates. "If this goes well, I can keep you busy." MAX 2-3 sentences. Friendly. COACHING: "подскажи" → [HINT: tip in Russian]. Match language.`,
-        greet: 'Hey! {N} at Alliance Transport. Good to hear from you again!',
-        hints: ['Напомни о прошлом грузе','Спроси о доступных грузах','Покажи надёжность: on-time, communication','Предложи стать regular carrier']
-    }
+const SC={
+free:{p:`You are {N}, freight broker at Apex Freight. Phone rings — dispatcher calling. Be REAL busy broker. Direct, professional. Handle loads across US. If asked about a lane — make up realistic details. Negotiate realistically. Ask for MC#. MAX 2-3 short sentences. Phone pace. Use freight terms. Match user's language. If "подскажи"/"hint" → [HINT: tip in Russian] then continue.`,g:'{N}, Apex Freight.',h:['Представься: имя, компания, MC#','Спроси какие грузы есть','Упомяни оборудование и лейны']},
+negotiate:{p:`You are {N}, broker at Summit Logistics. Dispatcher calls about your load. LOAD: Dallas TX→Atlanta GA, 780mi, 53' Dry Van, Auto parts 42K lbs, pickup tomorrow 6AM. Opening: $1,750. Market: ~$2,100. Max: $2,200 NEVER reveal/exceed. Hold 2 pushbacks. Move $50-100/round. Pressure: "I got 3 carriers", "Market's soft". NEVER accept first counter. After 4 rounds: "Final offer." MAX 2 sentences. Match language. "подскажи"→[HINT: tip in Russian].`,g:'{N}, Summit Logistics. What can I do for you?',h:['Не соглашайся на первое предложение','Скажи "Can you do any better?"','Упомяни DAT данные']},
+book:{p:`You are {N}, broker at National Freight. Dispatcher calls to book. LOAD: Chicago IL→Miami FL, 1380mi, Reefer 53' 34°F, Fresh produce 38K lbs, pickup tomorrow 4AM Sysco. Rate: $3,450 (min $3,100). FLOW: Answer→MC#→load details→negotiate→driver info→email for rate con→remind check-in 2hrs before. MAX 2-3 sentences. Match language. "подскажи"→[HINT: tip in Russian].`,g:'{N}, National Freight. How can I help?',h:['Имей MC# наготове','Спроси ВСЕ детали','Дай данные водителя']},
+problem:{p:`You are {N}, broker at CrossCountry. Dispatcher calls about problem with active load. LOAD IN TRANSIT: LA→Denver, 1020mi, Electronics 40K lbs, $2,800, deliver today 5PM. REACTIONS: Delay→frustrated. Breakdown→"Where? ETA repair?" Damage→"Photos NOW." Demand details, timeline, plan. Stressed — shipper waiting. MAX 2-3 sentences. Match language. "подскажи"→[HINT: tip in Russian].`,g:'{N}, CrossCountry. What\'s going on?',h:['Сообщи СРАЗУ','Дай конкретику: где, что, ETA','Предложи решение']},
+cold:{p:`You are {N}, broker at Pacific Freight. Busy. Unknown dispatcher cold-calling. Skeptical but open. 20+ cold calls/day. Ask: MC#, business age, equipment, lanes, insurance. If professional→warm up. If vague→"Send packet." MAX 2 sentences. Match language. "подскажи"→[HINT: tip in Russian].`,g:'{N}, Pacific Freight. Yeah, go ahead.',h:['Будь кратким','Представься: имя, MC#, оборудование','Скажи какие лейны']},
+followup:{p:`You are {N}, broker at Alliance Transport. Dispatcher worked with before calls back. Last load went well. Friendly. Have loads: Houston→Nashville 790mi $1,900 Thu, Memphis→Charlotte 630mi $1,500 Fri, Jacksonville→Atlanta 350mi Reefer $1,100 Wed. More flexible. "Keep you busy on this lane." MAX 2-3 sentences. Match language. "подскажи"→[HINT: tip in Russian].`,g:'Hey! {N} at Alliance. Good to hear from you!',h:['Напомни о прошлом грузе','Спроси о грузах','Предложи стать regular carrier']}
 };
 
-// ── DOM ──
-const $ = id => document.getElementById(id);
-const welcome = $('welcome');
-const voiceArea = $('voiceArea');
-const transcriptEl = $('transcript');
-const controlsEl = $('controls');
-const micBtn = $('micBtn');
-const brokerCircle = $('brokerCircle');
-const voiceStatus = $('voiceStatus');
-const liveText = $('liveText');
-const hintsPanel = $('hintsPanel');
-const hintsContent = $('hintsContent');
-const analyticsPanel = $('analyticsPanel');
+const $=id=>document.getElementById(id);
+const chat=$('chat'),micBtn=$('micBtn'),textInput=$('textInput'),sendBtn=$('sendBtn'),typingEl=$('typing'),speakInd=$('speakInd');
 
-// ── INIT AI ──
-(async () => {
-    try {
-        const r = await fetch(GROQ_URL, {
-            method: 'POST', mode: 'cors',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_KEY}` },
-            body: JSON.stringify({ model: MODEL, messages: [{ role: 'user', content: 'ping' }], max_tokens: 5 })
-        });
-        aiOk = r.ok;
-    } catch (e) { aiOk = false; }
-    $('dot').classList.toggle('on', aiOk);
-    $('bStatus').textContent = aiOk ? 'Онлайн — готов к разговору' : 'Офлайн — попробуйте позже';
-})();
+// Init AI
+(async()=>{try{const r=await fetch(GU,{method:'POST',mode:'cors',headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},body:JSON.stringify({model:MD,messages:[{role:'user',content:'ping'}],max_tokens:5})});$('dot').classList.toggle('on',r.ok);$('bStat').textContent=r.ok?'Онлайн':'Офлайн'}catch(e){$('bStat').textContent='Офлайн'}})();
 
-// ── SPEECH RECOGNITION SETUP ──
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-if (SpeechRecognition) {
-    recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
+// Speech Recognition
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(SR){recognition=new SR();recognition.continuous=false;recognition.interimResults=true;recognition.lang='en-US';
+recognition.onresult=e=>{let f='',i='';for(let x=e.resultIndex;x<e.results.length;x++){if(e.results[x].isFinal)f+=e.results[x][0].transcript;else i+=e.results[x][0].transcript}
+if(f){stopRec();showDraft(f.trim())}else if(i&&draftEl){draftEl.querySelector('.draft-text').textContent=i}};
+recognition.onerror=()=>stopRec();recognition.onend=()=>{if(isRec)stopRec()}}
 
-    recognition.onresult = (e) => {
-        let interim = '', final = '';
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-            if (e.results[i].isFinal) final += e.results[i][0].transcript;
-            else interim += e.results[i][0].transcript;
-        }
-        liveText.textContent = final || interim;
-        liveText.className = 'live-text';
-        if (final) {
-            stopRecording();
-            processUserMessage(final.trim());
-        }
-    };
-    recognition.onerror = (e) => {
-        console.log('Speech error:', e.error);
-        if (e.error === 'no-speech') {
-            voiceStatus.textContent = 'Не услышал. Нажми микрофон и говори.';
-        }
-        stopRecording();
-    };
-    recognition.onend = () => {
-        if (isRecording) stopRecording();
-    };
+// Scenario chips
+document.querySelectorAll('.sc').forEach(c=>c.addEventListener('click',()=>startScenario(c.dataset.s)));
+
+function startScenario(s){
+    document.querySelectorAll('.sc').forEach(c=>c.classList.remove('on'));
+    document.querySelector(`.sc[data-s="${s}"]`)?.classList.add('on');
+    scen=s;hist=[];broker=NAMES[Math.floor(Math.random()*NAMES.length)];
+    $('bName').textContent=`AI Брокер — ${broker}`;
+    chat.innerHTML='';draftEl=null;draftText='';
+    addMsg('sys',`📞 Сценарий: ${SC[s].g?.replace(/{N}/g,broker)?'Диспетчер звонит брокеру '+broker:'Свободный разговор'}. Нажми 🎙️ и говори.`);
+    if(SC[s].g){const g=SC[s].g.replace(/{N}/g,broker);setTimeout(()=>{addMsg('broker',g);hist.push({role:'assistant',content:g});speakText(g)},600)}
 }
 
-// ── SCENARIO CHIPS ──
-document.querySelectorAll('.sc-chip').forEach(c => {
-    c.addEventListener('click', () => startScenario(c.dataset.sc));
-});
+function toggleMic(){if(busy)return;isRec?stopRec():startRec()}
+function startRec(){if(!recognition||busy)return;isRec=true;micBtn.classList.add('rec');
+    // Create draft bubble immediately
+    draftText='';draftEl=document.createElement('div');draftEl.className='msg user';draftEl.innerHTML='<span class="draft-text" style="opacity:.6">🎙️ Слушаю...</span>';chat.appendChild(draftEl);chat.scrollTop=chat.scrollHeight;
+    try{recognition.start()}catch(e){}}
+function stopRec(){isRec=false;micBtn.classList.remove('rec')}
 
-function startScenario(sc) {
-    document.querySelectorAll('.sc-chip').forEach(c => c.classList.remove('on'));
-    const active = document.querySelector(`.sc-chip[data-sc="${sc}"]`);
-    if (active) active.classList.add('on');
-
-    scenario = sc;
-    history = [];
-    msgCount = 0;
-    broker = NAMES[Math.floor(Math.random() * NAMES.length)];
-    $('bName').textContent = `AI Брокер — ${broker}`;
-
-    welcome.style.display = 'none';
-    voiceArea.style.display = 'flex';
-    transcriptEl.style.display = 'block';
-    controlsEl.style.display = 'flex';
-    transcriptEl.innerHTML = '';
-    liveText.textContent = '';
-    analyticsPanel.classList.remove('show');
-    $('aFeedback').style.display = 'none';
-
-    // Start timer
-    startTime = Date.now();
-    clearInterval(timerInterval);
-    timerInterval = setInterval(updateTimer, 1000);
-    $('aMsgs').textContent = '0';
-    $('aScore').textContent = '—';
-    $('aTime').textContent = '0:00';
-
-    // Show hints
-    updateHints(sc);
-
-    // Broker greeting
-    const s = SC[sc];
-    if (s.greet) {
-        const greet = s.greet.replace(/{N}/g, broker);
-        setTimeout(() => {
-            addTranscript('broker', greet);
-            history.push({ role: 'assistant', content: greet });
-            speakBroker(greet);
-        }, 600);
-    }
-
-    voiceStatus.textContent = 'Нажми 🎙️ и говори';
-
-    // Check if speech recognition is available
-    if (!recognition) {
-        voiceStatus.textContent = '⚠️ Браузер не поддерживает голос. Используй Chrome.';
-    }
+function showDraft(text){
+    draftText=text;
+    if(draftEl){draftEl.innerHTML=esc(text)+`<span class="ts">${now()} — черновик</span>`;
+    // Add improve + send buttons
+    const row=document.createElement('div');row.className='improve-row';row.id='draftActions';
+    row.innerHTML=`<button class="improve-btn" onclick="improveDraft()">✨ Улучшить</button><button class="send-draft-btn" onclick="sendDraft()">➤ Отправить</button>`;
+    chat.appendChild(row);chat.scrollTop=chat.scrollHeight}
 }
 
-// ── MIC TOGGLE ──
-function toggleMic() {
-    if (isSpeaking) return; // don't interrupt broker
-    if (isRecording) {
-        recognition.stop();
-        stopRecording();
-    } else {
-        startRecording();
-    }
+async function improveDraft(){
+    if(!draftText)return;
+    const btn=document.querySelector('.improve-btn');if(btn)btn.textContent='⏳...';
+    const prompt=`You are a dispatcher coach. The dispatcher said this to a freight broker:\n"${draftText}"\n\nSuggest a better, more professional version in the SAME language. Just give the improved text, nothing else. Keep it short (1-2 sentences max).`;
+    try{
+        const r=await fetch(GU,{method:'POST',mode:'cors',headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},body:JSON.stringify({model:MD,messages:[{role:'user',content:prompt}],temperature:.5,max_tokens:100})});
+        const d=await r.json();const improved=d.choices?.[0]?.message?.content||draftText;
+        // Show improved version
+        const imp=document.createElement('div');imp.className='msg improved';imp.innerHTML=`<div class="imp-label">✨ Улучшенный вариант</div>${esc(improved)}`;
+        const actions=document.getElementById('draftActions');
+        if(actions)actions.before(imp);
+        // Update draft to use improved version
+        draftText=improved;if(draftEl)draftEl.innerHTML=esc(improved)+`<span class="ts">${now()} ✨</span>`;
+        // Update buttons
+        if(actions)actions.innerHTML=`<button class="send-draft-btn" onclick="sendDraft()">➤ Отправить улучшенный</button>`;
+        chat.scrollTop=chat.scrollHeight;
+    }catch(e){if(btn)btn.textContent='✨ Улучшить'}
 }
 
-function startRecording() {
-    if (!recognition || isSpeaking) return;
-    isRecording = true;
-    micBtn.classList.add('recording');
-    brokerCircle.classList.remove('active');
-    brokerCircle.classList.add('listening');
-    voiceStatus.textContent = '🎙️ Слушаю...';
-    voiceStatus.className = 'voice-status recording';
-    liveText.textContent = '';
-    liveText.className = 'live-text';
-
-    try { recognition.start(); } catch(e) { /* already started */ }
+function sendDraft(){
+    if(!draftText||busy)return;
+    // Finalize user message
+    if(draftEl)draftEl.innerHTML=esc(draftText)+`<span class="ts">${now()} ✓</span>`;
+    // Remove draft actions and improved msg
+    document.getElementById('draftActions')?.remove();
+    document.querySelectorAll('.msg.improved').forEach(e=>e.remove());
+    draftEl=null;
+    // Process
+    processMsg(draftText);draftText='';
 }
 
-function stopRecording() {
-    isRecording = false;
-    micBtn.classList.remove('recording');
-    brokerCircle.classList.remove('listening');
-    voiceStatus.className = 'voice-status';
+function sendText(){
+    const t=textInput.value.trim();if(!t||busy)return;
+    textInput.value='';textInput.style.height='auto';sendBtn.disabled=true;
+    addMsg('user',t);processMsg(t);
 }
 
-// ── PROCESS USER MESSAGE ──
-async function processUserMessage(text) {
-    if (!text) return;
-
-    addTranscript('you', text);
-    history.push({ role: 'user', content: text });
-    msgCount++;
-    $('aMsgs').textContent = msgCount;
-
-    voiceStatus.textContent = `${broker} думает...`;
-    voiceStatus.className = 'voice-status';
-    brokerCircle.classList.add('active');
-    micBtn.disabled = true;
-
-    const reply = await callAI(text);
-
-    // Check for hints
-    let brokerReply = reply;
-    if (reply.includes('[HINT:') || reply.includes('[HINT]')) {
-        const hintMatch = reply.match(/\[HINT:?\s*(.*?)\]/);
-        if (hintMatch) {
-            const hintText = hintMatch[1].trim();
-            brokerReply = reply.replace(/\[HINT:?\s*.*?\]/, '').trim();
-            // Show hint as a special transcript line
-            addTranscript('hint', hintText);
-        }
-    }
-
-    addTranscript('broker', brokerReply);
-    history.push({ role: 'assistant', content: brokerReply });
-
-    // Speak broker response
-    await speakBroker(brokerReply);
-
-    brokerCircle.classList.remove('active');
-    micBtn.disabled = false;
-    voiceStatus.textContent = 'Нажми 🎙️ и говори';
+async function processMsg(text){
+    hist.push({role:'user',content:text});busy=true;micBtn.disabled=true;sendBtn.disabled=true;
+    typingEl.classList.add('show');chat.scrollTop=chat.scrollHeight;
+    const reply=await callAI(text);
+    typingEl.classList.remove('show');
+    // Handle hints
+    let brokerReply=reply;
+    if(reply.includes('[HINT')){const m=reply.match(/\[HINT:?\s*(.*?)\]/);if(m){addMsg('sys','💡 '+m[1].trim());brokerReply=reply.replace(/\[HINT:?\s*.*?\]/,'').trim()}}
+    addMsg('broker',brokerReply);hist.push({role:'assistant',content:brokerReply});
+    await speakText(brokerReply);
+    busy=false;micBtn.disabled=false;sendBtn.disabled=!textInput.value.trim();
 }
 
-// ── AI CALL ──
-async function callAI(msg) {
-    const s = SC[scenario];
-    const sysPrompt = s.prompt.replace(/{N}/g, broker);
-    const messages = [{ role: 'system', content: sysPrompt }];
-    const recent = history.slice(-10);
-    for (const m of recent) messages.push({ role: m.role, content: m.content });
-
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 8000);
-
-    try {
-        const res = await fetch(GROQ_URL, {
-            method: 'POST', mode: 'cors', signal: ctrl.signal,
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_KEY}` },
-            body: JSON.stringify({ model: MODEL, messages, temperature: 0.85, max_tokens: 120, top_p: 0.9 })
-        });
-        clearTimeout(t);
-        if (!res.ok) return fallback();
-        const data = await res.json();
-        $('dot').classList.add('on');
-        $('bStatus').textContent = 'Онлайн';
-        return data.choices?.[0]?.message?.content || fallback();
-    } catch (e) {
-        clearTimeout(t);
-        $('dot').classList.remove('on');
-        return fallback();
-    }
+async function callAI(msg){
+    const sp=SC[scen].p.replace(/{N}/g,broker);
+    const msgs=[{role:'system',content:sp},...hist.slice(-10)];
+    const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),8000);
+    try{const r=await fetch(GU,{method:'POST',mode:'cors',signal:ctrl.signal,headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},body:JSON.stringify({model:MD,messages:msgs,temperature:.85,max_tokens:120,top_p:.9})});clearTimeout(t);if(!r.ok)return fb();const d=await r.json();$('dot').classList.add('on');return d.choices?.[0]?.message?.content||fb()}catch(e){clearTimeout(t);return fb()}
 }
+const FBS=["Yeah, let me pull that up. What's your MC?","I hear you. Let me check.","What lanes you looking at?","I might have something. What equipment?","Let me see what I can do."];let fi=0;function fb(){return FBS[fi++%FBS.length]}
 
-const FALLBACKS = ["Yeah, let me pull that up. What's your MC?","I hear you. Let me check.","What lanes are you looking at?","I might have something. What equipment?","Let me see what I can do.","That's a tough lane right now."];
-let fbIdx = 0;
-function fallback() { return FALLBACKS[fbIdx++ % FALLBACKS.length]; }
-
-// ── TEXT-TO-SPEECH ──
-function speakBroker(text) {
-    return new Promise(resolve => {
-        if (!synth) { resolve(); return; }
-        synth.cancel();
-        const utter = new SpeechSynthesisUtterance(text);
-        utter.lang = 'en-US';
-        utter.rate = 1.05;
-        utter.pitch = 0.95;
-
-        // Try to pick a male English voice
-        const voices = synth.getVoices();
-        const maleVoice = voices.find(v => v.lang.startsWith('en') && /male|david|james|mark|daniel/i.test(v.name))
-            || voices.find(v => v.lang.startsWith('en-US'))
-            || voices.find(v => v.lang.startsWith('en'));
-        if (maleVoice) utter.voice = maleVoice;
-
-        isSpeaking = true;
-        brokerCircle.classList.add('active');
-        voiceStatus.textContent = `${broker} говорит...`;
-        voiceStatus.className = 'voice-status speaking';
-        liveText.textContent = text;
-        liveText.className = 'live-text broker-txt';
-
-        utter.onend = () => {
-            isSpeaking = false;
-            brokerCircle.classList.remove('active');
-            voiceStatus.textContent = 'Нажми 🎙️ и говори';
-            voiceStatus.className = 'voice-status';
-            liveText.textContent = '';
-            resolve();
-        };
-        utter.onerror = () => {
-            isSpeaking = false;
-            brokerCircle.classList.remove('active');
-            resolve();
-        };
-        synth.speak(utter);
+function speakText(text){
+    return new Promise(resolve=>{
+        if(!synth){resolve();return}synth.cancel();
+        const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=1.05;u.pitch=.95;
+        const v=synth.getVoices();const mv=v.find(x=>x.lang.startsWith('en')&&/male|david|james|mark|daniel/i.test(x.name))||v.find(x=>x.lang.startsWith('en-US'))||v.find(x=>x.lang.startsWith('en'));
+        if(mv)u.voice=mv;
+        speakInd.classList.add('show');
+        u.onend=()=>{speakInd.classList.remove('show');resolve()};
+        u.onerror=()=>{speakInd.classList.remove('show');resolve()};
+        synth.speak(u);
     });
 }
+if(synth)synth.onvoiceschanged=()=>synth.getVoices();
 
-// Preload voices
-if (synth) synth.onvoiceschanged = () => synth.getVoices();
+function addMsg(type,text){
+    const d=document.createElement('div');d.className=`msg ${type}`;
+    const t=now();
+    if(type==='broker')d.innerHTML=`<div class="who">${broker}</div>${esc(text)}<span class="ts">${t}</span>`;
+    else if(type==='user')d.innerHTML=`${esc(text)}<span class="ts">${t} ✓</span>`;
+    else d.innerHTML=text;
+    chat.appendChild(d);chat.scrollTop=chat.scrollHeight;
+}
+function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
+function now(){const d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')}
+function autoH(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';sendBtn.disabled=!el.value.trim()}
 
-// ── TRANSCRIPT ──
-function addTranscript(who, text) {
-    const div = document.createElement('div');
-    div.className = 't-line';
-    if (who === 'hint') {
-        div.innerHTML = `<span class="t-who" style="color:var(--accent)">💡</span><span class="t-txt" style="color:var(--accent)">${esc(text)}</span>`;
-    } else {
-        const label = who === 'you' ? 'ВЫ' : broker.toUpperCase();
-        div.innerHTML = `<span class="t-who ${who}">${label}</span><span class="t-txt">${esc(text)}</span>`;
-    }
-    transcriptEl.appendChild(div);
-    transcriptEl.scrollTop = transcriptEl.scrollHeight;
+function showHints(){const h=SC[scen]?.h||[];addMsg('sys','💡 '+h.join(' • '));chat.scrollTop=chat.scrollHeight}
+
+async function getAnalysis(){
+    if(hist.length<4){addMsg('sys','📊 Поговори ещё немного для анализа.');return}
+    addMsg('sys','📊 Анализирую...');
+    const tr=hist.map(m=>`${m.role==='user'?'Dispatcher':'Broker'}: ${m.content}`).join('\n');
+    try{const r=await fetch(GU,{method:'POST',mode:'cors',headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},body:JSON.stringify({model:MD,messages:[{role:'user',content:`Analyze this dispatcher-broker call. Rate dispatcher 1-10. Respond in Russian, 3-4 sentences: score, what's good, what to improve.\n\n${tr}`}],temperature:.3,max_tokens:200})});
+    const d=await r.json();addMsg('sys','📊 '+( d.choices?.[0]?.message?.content||'Ошибка анализа'))}catch(e){addMsg('sys','📊 Ошибка анализа')}
+    chat.scrollTop=chat.scrollHeight;
 }
 
-function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+function resetChat(){synth?.cancel();if(recognition&&isRec)recognition.stop();isRec=false;busy=false;hist=[];draftText='';draftEl=null;chat.innerHTML='<div class="msg sys">🎙️ Выбери сценарий и нажми микрофон</div>';document.querySelectorAll('.sc').forEach(c=>c.classList.remove('on'));document.querySelector('.sc[data-s="free"]').classList.add('on');scen='free'}
 
-// ── TIMER ──
-function updateTimer() {
-    if (!startTime) return;
-    const s = Math.floor((Date.now() - startTime) / 1000);
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    $('aTime').textContent = `${m}:${sec.toString().padStart(2, '0')}`;
-}
-
-// ── HINTS ──
-function updateHints(sc) {
-    const hints = SC[sc]?.hints || [];
-    hintsContent.innerHTML = hints.map(h => `<div class="hint-item">${h}</div>`).join('');
-}
-
-function toggleHints() {
-    hintsPanel.classList.toggle('show');
-    if (hintsPanel.classList.contains('show')) analyticsPanel.classList.remove('show');
-}
-
-// ── ANALYTICS ──
-function toggleAnalytics() {
-    analyticsPanel.classList.toggle('show');
-    if (analyticsPanel.classList.contains('show')) {
-        hintsPanel.classList.remove('show');
-        if (msgCount >= 2) getAIAnalysis();
-    }
-}
-
-async function getAIAnalysis() {
-    if (history.length < 4) {
-        $('aFeedback').style.display = 'block';
-        $('aFeedback').innerHTML = 'Поговори ещё немного для анализа.';
-        return;
-    }
-
-    $('aFeedback').style.display = 'block';
-    $('aFeedback').innerHTML = 'Анализирую...';
-
-    const transcript = history.map(m => `${m.role === 'user' ? 'Dispatcher' : 'Broker'}: ${m.content}`).join('\n');
-    const prompt = `Analyze this dispatcher-broker phone conversation. Rate the dispatcher's performance.
-
-CONVERSATION:
-${transcript}
-
-Respond in Russian. Format EXACTLY like this:
-SCORE: [number 1-10]
-GOOD: [what dispatcher did well, 1-2 sentences]
-IMPROVE: [what to improve, 1-2 sentences]
-TIP: [one specific actionable tip]`;
-
-    try {
-        const res = await fetch(GROQ_URL, {
-            method: 'POST', mode: 'cors',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_KEY}` },
-            body: JSON.stringify({ model: MODEL, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 200 })
-        });
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        const text = data.choices?.[0]?.message?.content || '';
-
-        const scoreMatch = text.match(/SCORE:\s*(\d+)/);
-        if (scoreMatch) $('aScore').textContent = scoreMatch[1] + '/10';
-
-        const goodMatch = text.match(/GOOD:\s*(.+?)(?=IMPROVE:|$)/s);
-        const improveMatch = text.match(/IMPROVE:\s*(.+?)(?=TIP:|$)/s);
-        const tipMatch = text.match(/TIP:\s*(.+)/s);
-
-        let html = '';
-        if (goodMatch) html += `<strong>✅ Хорошо:</strong> ${esc(goodMatch[1].trim())}<br>`;
-        if (improveMatch) html += `<strong>⚠️ Улучшить:</strong> ${esc(improveMatch[1].trim())}<br>`;
-        if (tipMatch) html += `<strong>💡 Совет:</strong> ${esc(tipMatch[1].trim())}`;
-        $('aFeedback').innerHTML = html || esc(text);
-    } catch (e) {
-        $('aFeedback').innerHTML = 'Не удалось получить анализ. Попробуй позже.';
-    }
-}
-
-// ── RESET ──
-function resetAll() {
-    synth.cancel();
-    if (recognition && isRecording) recognition.stop();
-    isRecording = false;
-    isSpeaking = false;
-    history = [];
-    msgCount = 0;
-    startTime = 0;
-    clearInterval(timerInterval);
-
-    welcome.style.display = 'flex';
-    voiceArea.style.display = 'none';
-    transcriptEl.style.display = 'none';
-    controlsEl.style.display = 'none';
-    hintsPanel.classList.remove('show');
-    analyticsPanel.classList.remove('show');
-    transcriptEl.innerHTML = '';
-
-    document.querySelectorAll('.sc-chip').forEach(c => c.classList.remove('on'));
-    document.querySelector('.sc-chip[data-sc="free"]').classList.add('on');
-}
+// Auto-start free scenario
+startScenario('free');
 </script>
