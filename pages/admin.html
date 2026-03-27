@@ -3340,6 +3340,22 @@
         };
 
         window.deleteUser = async function (uid, name) {
+            // Первое подтверждение
+            if (!confirm(`⚠️ ВНИМАНИЕ!\n\nВы действительно хотите УДАЛИТЬ пользователя ${name}?\n\nЭто действие НЕОБРАТИМО!`)) {
+                return;
+            }
+
+            // Запрос пароля
+            const password = prompt('🔐 Для удаления введите пароль администратора:');
+            if (!password) {
+                window.toast('❌ Удаление отменено', 'e');
+                return;
+            }
+            if (password !== 'Delete.69008') {
+                window.toast('❌ Неверный пароль! Удаление отменено', 'e');
+                return;
+            }
+
             try {
                 await deleteDoc(doc(db, 'users', uid));
                 window.toast('🗑️ Пользователь ' + name + ' удалён', 's');
