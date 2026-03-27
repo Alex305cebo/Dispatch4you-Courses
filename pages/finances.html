@@ -121,6 +121,19 @@
         @media(max-width:480px){.container{padding:0 16px}.hero-stats{flex-direction:column;gap:16px}.calc-result-grid{grid-template-columns:1fr}}
         @media(max-width:360px){.glass-card{padding:20px}.quiz-card{padding:24px}}
         ::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:var(--bg-darker)}::-webkit-scrollbar-thumb{background:rgba(6,182,212,.3);border-radius:4px}
+.complete-module-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:20px 32px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:16px;font-size:18px;font-weight:700;cursor:pointer;transition:all .3s;margin:40px 0 24px;position:relative;overflow:hidden;font-family:inherit}
+.complete-module-btn:hover{background:linear-gradient(135deg,#059669,#047857);transform:translateY(-2px);box-shadow:0 8px 25px rgba(16,185,129,.3)}
+.module-navigation{display:flex;justify-content:space-between;gap:16px;margin-bottom:40px}
+.module-nav-btn{flex:1;display:flex;align-items:center;gap:12px;padding:16px 20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;text-decoration:none;color:#f1f5f9;transition:all .3s;position:relative;overflow:hidden}
+.module-nav-btn:hover{background:rgba(6,182,212,.12);border-color:#06b6d4;transform:translateY(-2px)}
+.module-nav-btn.next{justify-content:flex-end}
+.module-nav-btn .icon{font-size:24px;transition:transform .3s}
+.module-nav-btn:hover .icon{transform:translateX(-4px)}
+.module-nav-btn.next:hover .icon{transform:translateX(4px)}
+.module-nav-btn .text{display:flex;flex-direction:column;gap:2px}
+.module-nav-btn .label{font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.module-nav-btn .title{font-size:15px;font-weight:700;color:#f1f5f9}
+@media(max-width:768px){.module-navigation{flex-direction:column;gap:12px}}
     </style>
 </head>
 
@@ -167,11 +180,8 @@
                             <a href="doc-module-7-complete.html">Переговоры</a><a href="doc-module-8-complete.html">Брокеры</a><a href="doc-module-9-complete.html">CSA Scores</a>
                             <a href="doc-module-10-complete.html">Грузы</a><a href="doc-module-11-complete.html">Проблемы</a><a href="doc-module-12-complete.html">Карьера</a>
                         </div></div>
-                        <div class="cnav-section"><h4 class="cnav-header">🔥 ТЕСТЫ</h4><div class="cnav-items">
-                            <a href="testing.html">✍️ Все тесты</a>
-                        </div></div>
                         <div class="cnav-section"><h4 class="cnav-header">⚡ ИНСТРУМЕНТЫ</h4><div class="cnav-items">
-                            <a href="simulator.html">🎯 Симулятор</a><a href="cases.html">💼 Кейсы</a><a href="load-finder.html">🔍 Load Finder</a><a href="dispatcher-cards.html">🃏 Карточки</a>
+                            <a href="simulator.html">🎯 Симулятор</a><a href="testing.html">✍️ Тесты</a><a href="cases.html">💼 Кейсы</a><a href="load-finder.html">🔍 Load Finder</a><a href="dispatcher-cards.html">🃏 Карточки</a>
                         </div></div>
                     </div>
                 </div>
@@ -527,6 +537,11 @@
                 </div>
             </div>
         </div>
+        <button class="complete-module-btn" onclick="completeModule(14)"><span>✓</span><span>Завершить модуль и перейти к следующему</span></button>
+        <div class="module-navigation">
+            <a href="problems.html" class="module-nav-btn"><span class="icon">←</span><div class="text"><span class="label">Предыдущий модуль</span><span class="title">🔧 Проблемы</span></div></a>
+            <a href="career.html" class="module-nav-btn next"><div class="text"><span class="label">Следующий модуль</span><span class="title">🎯 Карьера</span></div><span class="icon">→</span></a>
+        </div>
     </section>
 
     <script>
@@ -599,6 +614,10 @@
         function showQScore(){document.getElementById('quizBody').style.display='none';document.getElementById('quizScore').classList.add('visible');document.getElementById('scoreNum').textContent=qScore+'/'+quizData.length;const p=Math.round(qScore/quizData.length*100);document.getElementById('scoreTxt').textContent=p===100?'Идеально! Вы финансовый гуру trucking.':p>=70?'Отличный результат!':p>=50?'Неплохо, повторите материал.':'Перечитайте модуль.';}
         function restartQuiz(){qIdx=0;qScore=0;document.getElementById('quizBody').style.display='';document.getElementById('quizScore').classList.remove('visible');renderQ();}
         document.addEventListener('DOMContentLoaded',renderQ);
+    </script>
+    <script>
+function completeModule(n){const p=JSON.parse(localStorage.getItem('courseProgress')||'{}');p['module'+n]=true;localStorage.setItem('courseProgress',JSON.stringify(p));const btn=document.querySelector('.complete-module-btn');btn.innerHTML='<span>✓</span><span>Модуль завершен!</span>';btn.style.background='linear-gradient(135deg,#6b7280,#4b5563)';btn.style.cursor='default';const next=document.querySelector('.module-nav-btn.next');if(next)setTimeout(()=>next.click(),1500)}
+document.addEventListener('DOMContentLoaded',function(){const n=document.querySelector('.complete-module-btn')?.onclick?.toString().match(/completeModule\((\d+)\)/);if(n){const p=JSON.parse(localStorage.getItem('courseProgress')||'{}');if(p['module'+n[1]]){const btn=document.querySelector('.complete-module-btn');btn.innerHTML='<span>✓</span><span>Модуль завершен</span>';btn.style.background='linear-gradient(135deg,#6b7280,#4b5563)';btn.style.cursor='default'}}});
     </script>
     <script src="../auth.js?v=5.1.1774288314"></script>
 </body>
