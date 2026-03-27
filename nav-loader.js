@@ -35,6 +35,7 @@
                         <a href="{{BASE}}pages/load-finder.html">🔍 Load Finder</a>
                         <a href="{{BASE}}pages/dispatcher-cards.html">🃏 Dispatcher Cards</a>
                         <a href="{{BASE}}pages/simulator.html">🎯 Dispatch Simulator</a>
+                        <a href="{{BASE}}pages/ai-broker-chat.html">🤖 AI Брокер</a>
                     </div>
                 </div>
                 <div class="nav-item">
@@ -82,6 +83,7 @@
                 <a href="{{BASE}}pages/load-finder.html" class="mob-sub">🔍 Load Finder</a>
                 <a href="{{BASE}}pages/dispatcher-cards.html" class="mob-sub">🃏 Dispatcher Cards</a>
                 <a href="{{BASE}}pages/simulator.html" class="mob-sub">🎯 Dispatch Simulator</a>
+                <a href="{{BASE}}pages/ai-broker-chat.html" class="mob-sub">🤖 AI Брокер</a>
             </div>
         </div>
         <div class="mob-acc">
