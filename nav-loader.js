@@ -258,7 +258,24 @@
                 e.preventDefault();
                 var wasOpen = item.classList.contains('open');
                 document.querySelectorAll('.nav-item.open').forEach(function (i) { i.classList.remove('open'); });
-                if (!wasOpen) item.classList.add('open');
+                if (!wasOpen) {
+                    item.classList.add('open');
+                    // Position dropdown under the button
+                    var dd = item.querySelector('.dropdown');
+                    if (dd) {
+                        var btnRect = btn.getBoundingClientRect();
+                        dd.style.position = 'fixed';
+                        dd.style.top = btnRect.bottom + 6 + 'px';
+                        dd.style.left = btnRect.left + 'px';
+                        dd.style.right = 'auto';
+                        // Prevent going off-screen right
+                        var ddWidth = dd.offsetWidth || 200;
+                        if (btnRect.left + ddWidth > window.innerWidth - 10) {
+                            dd.style.left = 'auto';
+                            dd.style.right = '10px';
+                        }
+                    }
+                }
                 return;
             }
             if (!e.target.closest('.nav-item')) {
