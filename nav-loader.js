@@ -38,6 +38,7 @@
                         <a href="{{BASE}}pages/ai-broker-chat.html">🤖 AI Брокер</a>
                     </div>
                 </div>
+                <a href="{{BASE}}pages/ai-broker-chat.html" class="nav-link nav-ai-btn">🤖 AI Брокер</a>
                 <div class="nav-item">
                     <button class="nav-btn">Информация <span class="arrow">▾</span></button>
                     <div class="dropdown">
@@ -66,6 +67,7 @@
             <a href="{{BASE}}register.html" class="btn-signup">Регистрация</a>
         </div>
         <a href="{{BASE}}index.html" class="mob-link">🏠 Главная</a>
+        <a href="{{BASE}}pages/ai-broker-chat.html" class="mob-link mob-ai-link">🤖 AI Брокер</a>
         <div class="mob-acc">
             <div class="mob-acc-title">📚 Курсы <span class="mob-arr">▼</span></div>
             <div class="mob-acc-body">
