@@ -73,7 +73,7 @@
 
         .page-header {
             text-align: center;
-            margin-bottom: 60px;
+            margin-bottom: 16px;
         }
 
         .page-title {
@@ -171,7 +171,7 @@
             overflow: hidden;
             opacity: 0;
             transition: all 0.5s ease, padding 0.5s ease;
-            grid-column: 1 / -1;
+            grid-column: auto;
         }
 
         .card-details.active,
@@ -181,22 +181,32 @@
             padding: 30px;
         }
 
-        .card-details h3 {
+        .card-details h3,
+        .card-details-inline h3 {
             color: #06b6d4;
             margin-bottom: 20px;
             font-size: 24px;
         }
 
-        .card-details p {
+        .card-details p,
+        .card-details-inline p {
             color: #cbd5e1;
             line-height: 1.8;
             margin-bottom: 15px;
+            text-align: left;
         }
 
-        .card-details ul {
+        .card-details ul,
+        .card-details-inline ul {
             color: #cbd5e1;
             line-height: 1.8;
             margin-left: 20px;
+            text-align: left;
+        }
+
+        .card-details-inline li {
+            margin-bottom: 8px;
+            text-align: left;
         }
 
         .close-details {
@@ -487,6 +497,9 @@
             margin-bottom: 10px;
             font-weight: 600;
         }
+
+        .scroll-indicator{display:none !important}
+        .scroll-arrow{display:none !important}
 
         .scroll-arrow {
             width: 24px;
@@ -1063,7 +1076,8 @@
 
         .navigation-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
             gap: 32px;
             padding: 40px 32px;
             background: rgba(255, 255, 255, 0.02);
@@ -1090,20 +1104,22 @@
         }
 
         .section-items {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
         }
 
         .section-items a {
-            padding: 12px 16px;
+            padding: 6px 14px;
             color: var(--text-secondary);
             text-decoration: none;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
-            border-radius: 12px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid transparent;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255,255,255,.08);
+            background: rgba(255,255,255,.02);
+            white-space: nowrap;
             background: rgba(255, 255, 255, 0.02);
             position: relative;
             overflow: hidden;
@@ -1996,12 +2012,13 @@
                 return;
             }
 
-            // Находим или создаем div для деталей
-            let detailsDiv = clickedCard.nextElementSibling;
+            // Находим или создаем div для деталей ПОСЛЕ grid контейнера
+            var gridParent = clickedCard.parentNode;
+            let detailsDiv = gridParent.nextElementSibling;
             if (!detailsDiv || !detailsDiv.classList.contains('card-details-inline')) {
                 detailsDiv = document.createElement('div');
                 detailsDiv.className = 'card-details-inline';
-                clickedCard.parentNode.insertBefore(detailsDiv, clickedCard.nextSibling);
+                gridParent.parentNode.insertBefore(detailsDiv, gridParent.nextSibling);
             }
 
             // Если кликнули на ту же карточку - закрываем
