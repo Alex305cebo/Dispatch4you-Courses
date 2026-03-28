@@ -2654,7 +2654,7 @@
                     <div class="sh">
                         <div class="st">История действий<span>Полная активность каждого студента</span></div>
                         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                            <select class="sel" id="actUserFilter" onchange="filterActivity()" autocomplete="off">
+                            <select class="sel" id="actUserFilter" onchange="filterActivity()" autocomplete="off" name="actUserFilter_noautofill">
                                 <option value="">Все пользователи</option>
                             </select>
                             <select class="sel" id="actTypeFilter" onchange="filterActivity()">
@@ -3113,7 +3113,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
@@ -3314,43 +3314,55 @@
                             // Нет xpHistory — генерируем синтетические события из stats
                             const stats = data.stats || {};
                             const xp = data.xp || 0;
-                            const lastLogin = data.lastDailyLogin || data.lastActivity;
-                            const baseTs = lastLogin ? new Date(lastLogin).toISOString() : new Date().toISOString();
+                            // Определяем дату последней активности
+                            let baseTs = new Date().toISOString();
+                            try {
+                                const raw = data.lastActivity || data.lastLogin || data.lastDailyLogin;
+                                if (raw) {
+                                    const d = raw.toDate ? raw.toDate() : new Date(raw);
+                                    if (!isNaN(d.getTime())) baseTs = d.toISOString();
+                                }
+                            } catch(e) {}
 
                             const syntheticMap = [
-                                { key: 'quizCorrect',   action: 'QUIZ_CORRECT',    xp: 10 },
-                                { key: 'moduleComplete',action: 'MODULE_COMPLETE',  xp: 50 },
-                                { key: 'quizComplete',  action: 'QUIZ_COMPLETE',    xp: 20 },
-                                { key: 'audioListened', action: 'AUDIO_LISTENED',   xp: 5  },
-                                { key: 'testPassed',    action: 'TEST_PASSED',      xp: 30 },
-                                { key: 'simulatorDone', action: 'SIMULATOR_DONE',   xp: 25 },
-                                { key: 'dailyLogin',    action: 'DAILY_LOGIN',      xp: 5  },
-                                { key: 'caseStudyRead', action: 'CASE_STUDY_READ',  xp: 8  },
+                                { key: 'quizCorrect',    action: 'QUIZ_CORRECT',   xp: 10 },
+                                { key: 'moduleComplete', action: 'MODULE_COMPLETE', xp: 50 },
+                                { key: 'quizComplete',   action: 'QUIZ_COMPLETE',  xp: 20 },
+                                { key: 'audioListened',  action: 'AUDIO_LISTENED', xp: 5  },
+                                { key: 'testPassed',     action: 'TEST_PASSED',    xp: 30 },
+                                { key: 'simulatorDone',  action: 'SIMULATOR_DONE', xp: 25 },
+                                { key: 'dailyLogin',     action: 'DAILY_LOGIN',    xp: 5  },
+                                { key: 'caseStudyRead',  action: 'CASE_STUDY_READ',xp: 8  },
                             ];
 
+                            let hasSomething = false;
                             syntheticMap.forEach(({ key, action, xp: evXp }) => {
                                 const count = stats[key] || 0;
                                 if (count > 0) {
-                                    // Добавляем одно суммарное событие
+                                    hasSomething = true;
                                     _allActivity.push({
-                                        uid: u.id,
-                                        userName: u.name,
-                                        userEmail: u.email,
-                                        userColor: u.color,
-                                        action,
-                                        xp: evXp * count,
-                                        label: ACT_LABELS[action]?.label || action,
-                                        ts: baseTs,
-                                        meta: { count, synthetic: true }
+                                        uid: u.id, userName: u.name, userEmail: u.email, userColor: u.color,
+                                        action, xp: evXp * count,
+                                        label: (ACT_LABELS[action] || {}).label || action,
+                                        ts: baseTs, meta: { count, synthetic: true }
                                     });
                                 }
                             });
 
-                            // Если вообще нет stats но есть XP — добавляем общую запись
-                            if (Object.keys(stats).length === 0 && xp > 0) {
+                            // Если нет stats но есть XP — добавляем общую запись
+                            if (!hasSomething && xp > 0) {
                                 _allActivity.push({
                                     uid: u.id, userName: u.name, userEmail: u.email, userColor: u.color,
                                     action: 'DAILY_LOGIN', xp, label: 'Накопленный XP',
+                                    ts: baseTs, meta: { synthetic: true }
+                                });
+                            }
+
+                            // Если вообще ничего — добавляем запись о регистрации
+                            if (!hasSomething && xp === 0) {
+                                _allActivity.push({
+                                    uid: u.id, userName: u.name, userEmail: u.email, userColor: u.color,
+                                    action: 'DAILY_LOGIN', xp: 0, label: 'Зарегистрирован',
                                     ts: baseTs, meta: { synthetic: true }
                                 });
                             }
@@ -4056,7 +4068,17 @@
             document.getElementById('pageTitle').innerHTML = (titles[page] || page) + '<span>' + new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + '</span>';
 
             // Загружаем историю при переходе на страницу
-            if (page === 'activity') loadActivityHistory();
+            if (page === 'activity') {
+                // Сначала сбрасываем фильтры
+                const s1 = document.getElementById('actUserFilter');
+                const s2 = document.getElementById('actTypeFilter');
+                const s3 = document.getElementById('actDateFilter');
+                if (s1) s1.value = '';
+                if (s2) s2.value = '';
+                if (s3) s3.value = '';
+                // Потом загружаем
+                loadActivityHistory();
+            }
 
             // Закрываем мобильное меню после выбора пункта
             if (window.innerWidth <= 768) {
