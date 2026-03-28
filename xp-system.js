@@ -24,16 +24,25 @@ const auth = getAuth(app);
 
 // ===== XP за каждое действие =====
 export const XP_ACTIONS = {
-    QUIZ_CORRECT: { xp: 10, label: '✅ Правильный ответ', key: 'quizCorrect' },
-    QUIZ_COMPLETE: { xp: 20, label: '📝 Квиз завершён', key: 'quizComplete' },
-    MODULE_COMPLETE: { xp: 50, label: '🎓 Модуль завершён', key: 'moduleComplete' },
-    SECTOR_COMPLETE: { xp: 15, label: '📖 Сектор прочитан', key: 'sectorComplete' },
-    AUDIO_LISTENED: { xp: 5, label: '🎧 Аудио прослушано', key: 'audioListened' },
-    TEST_PASSED: { xp: 30, label: '✍️ Тест пройден', key: 'testPassed' },
-    SIMULATOR_DONE: { xp: 25, label: '🎯 Симулятор завершён', key: 'simulatorDone' },
-    DAILY_LOGIN: { xp: 5, label: '🌅 Ежедневный вход', key: 'dailyLogin' },
-    CASE_STUDY_READ: { xp: 8, label: '💼 Кейс изучен', key: 'caseStudyRead' },
-    STREAK_BONUS: { xp: 15, label: '🔥 Бонус серии дней', key: 'streakBonus' },
+    QUIZ_CORRECT:      { xp: 10, label: '✅ Правильный ответ',      key: 'quizCorrect' },
+    QUIZ_COMPLETE:     { xp: 20, label: '📝 Квиз завершён',          key: 'quizComplete' },
+    MODULE_COMPLETE:   { xp: 50, label: '🎓 Модуль завершён',        key: 'moduleComplete' },
+    SECTOR_COMPLETE:   { xp: 15, label: '📖 Сектор прочитан',        key: 'sectorComplete' },
+    AUDIO_LISTENED:    { xp: 5,  label: '🎧 Аудио прослушано',       key: 'audioListened' },
+    TEST_PASSED:       { xp: 30, label: '✍️ Тест пройден',            key: 'testPassed' },
+    SIMULATOR_DONE:    { xp: 25, label: '🎯 Симулятор завершён',      key: 'simulatorDone' },
+    DAILY_LOGIN:       { xp: 5,  label: '🌅 Ежедневный вход',        key: 'dailyLogin' },
+    CASE_STUDY_READ:   { xp: 8,  label: '💼 Кейс изучен',            key: 'caseStudyRead' },
+    STREAK_BONUS:      { xp: 15, label: '🔥 Бонус серии дней',       key: 'streakBonus' },
+    GLOSSARY_VIEWED:   { xp: 3,  label: '📘 Глоссарий открыт',       key: 'glossaryViewed' },
+    LOADBOARD_USED:    { xp: 5,  label: '🔍 Load Board изучен',      key: 'loadboardUsed' },
+    BROKER_STUDIED:    { xp: 5,  label: '🤝 Брокеры изучены',        key: 'brokerStudied' },
+    NEGOTIATION_READ:  { xp: 5,  label: '💬 Переговоры изучены',     key: 'negotiationRead' },
+    FINANCE_READ:      { xp: 5,  label: '💰 Финансы изучены',        key: 'financeRead' },
+    CAREER_READ:       { xp: 5,  label: '🚀 Карьера изучена',        key: 'careerRead' },
+    AI_BROKER_USED:    { xp: 10, label: '🤖 AI Брокер использован',  key: 'aiBrokerUsed' },
+    PROFILE_COMPLETE:  { xp: 20, label: '👤 Профиль заполнен',       key: 'profileComplete' },
+    FIRST_QUIZ_WRONG:  { xp: 2,  label: '💪 Не сдаёмся!',           key: 'firstQuizWrong' },
 };
 
 // ===== Уровни (совпадают с ROLES в admin.html) =====

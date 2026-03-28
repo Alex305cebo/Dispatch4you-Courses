@@ -651,6 +651,54 @@
         display: none;
       }
     }
+
+    /* ===== ACHIEVEMENTS ===== */
+    .achieve-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 16px 12px;
+      text-align: center;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .achieve-card.unlocked {
+      border-color: rgba(99,102,241,0.35);
+      background: rgba(99,102,241,0.07);
+      box-shadow: 0 4px 20px rgba(99,102,241,0.15);
+    }
+    .achieve-card.unlocked:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 32px rgba(99,102,241,0.25);
+    }
+    .achieve-card.locked {
+      opacity: 0.45;
+      filter: grayscale(0.6);
+    }
+    .achieve-icon { font-size: 32px; margin-bottom: 8px; }
+    .achieve-name { font-size: 12px; font-weight: 700; color: #e2e8f0; margin-bottom: 4px; line-height: 1.3; }
+    .achieve-desc { font-size: 11px; color: #64748b; line-height: 1.4; }
+    .achieve-card.unlocked .achieve-desc { color: #94a3b8; }
+    .achieve-new-badge {
+      position: absolute; top: 8px; right: 8px;
+      background: linear-gradient(135deg,#f59e0b,#ef4444);
+      color: white; font-size: 9px; font-weight: 800;
+      padding: 2px 6px; border-radius: 8px; letter-spacing: 0.05em;
+    }
+    .achieve-xp-badge {
+      display: inline-block; margin-top: 6px;
+      background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.3);
+      color: #a5b4fc; font-size: 10px; font-weight: 700;
+      padding: 2px 8px; border-radius: 10px;
+    }
+
+    /* ===== XP TOAST ENHANCED ===== */
+    @keyframes achievePopIn {
+      0% { transform: scale(0.5) translateX(120%); opacity: 0; }
+      60% { transform: scale(1.08) translateX(0); opacity: 1; }
+      100% { transform: scale(1) translateX(0); opacity: 1; }
+    }
   </style>
   <link rel="stylesheet" href="shared-nav.css?v=6.0.1774800000">
 </head>
@@ -667,13 +715,47 @@
       <!-- Welcome Section -->
       <div class="dashboard-header">
         <div class="welcome-section">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+            <span style="background:linear-gradient(135deg,rgba(99,102,241,0.25),rgba(139,92,246,0.25));border:1px solid rgba(99,102,241,0.4);color:#a5b4fc;font-size:11px;font-weight:800;padding:4px 12px;border-radius:20px;letter-spacing:0.08em;text-transform:uppercase;">🎓 Студент</span>
+            <span id="trialBadge" style="display:none;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;">⏳ Пробный период</span>
+          </div>
           <h1 class="welcome-title">Добро пожаловать, <span id="userName">Студент</span>!</h1>
-          <p class="welcome-subtitle">Продолжайте обучение и достигайте новых высот</p>
+          <p class="welcome-subtitle" id="welcomeSubtitle">Продолжайте обучение и достигайте новых высот</p>
           <a id="adminPanelBtn" href="pages/admin.html"
-            style="display:none;margin-top:16px;padding:10px 24px;background:linear-gradient(135deg,#f59e0b,#ef4444);color:white;border-radius:12px;text-decoration:none;font-weight:700;font-size:14px;">⚡
-            Супер Админ Панель</a>
-        </div>
+            style="display:none;margin-top:16px;padding:10px 24px;background:linear-gradient(135deg,#f59e0b,#ef4444);color:white;border-radius:12px;text-decoration:none;font-weight:700;font-size:14px;">⚡ Супер Админ Панель</a>
 
+          <!-- Полезная инфа для студента -->
+          <div id="studentInfoGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:24px;">
+            <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:14px;padding:16px;display:flex;align-items:flex-start;gap:12px;">
+              <span style="font-size:22px;">📚</span>
+              <div>
+                <div style="font-size:12px;font-weight:700;color:#a5b4fc;margin-bottom:3px;">ПРОГРАММА</div>
+                <div style="font-size:13px;color:#e2e8f0;">15 модулей от основ до профессионала</div>
+              </div>
+            </div>
+            <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:14px;padding:16px;display:flex;align-items:flex-start;gap:12px;">
+              <span style="font-size:22px;">🎯</span>
+              <div>
+                <div style="font-size:12px;font-weight:700;color:#6ee7b7;margin-bottom:3px;">СЛЕДУЮЩИЙ ШАГ</div>
+                <div style="font-size:13px;color:#e2e8f0;" id="nextStepText">Начните с Модуля 1 — Индустрия</div>
+              </div>
+            </div>
+            <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:14px;padding:16px;display:flex;align-items:flex-start;gap:12px;">
+              <span style="font-size:22px;">⚡</span>
+              <div>
+                <div style="font-size:12px;font-weight:700;color:#fbbf24;margin-bottom:3px;">XP СЕГОДНЯ</div>
+                <div style="font-size:13px;color:#e2e8f0;" id="todayXPText">Войдите каждый день +5 XP</div>
+              </div>
+            </div>
+            <div style="background:rgba(236,72,153,0.08);border:1px solid rgba(236,72,153,0.2);border-radius:14px;padding:16px;display:flex;align-items:flex-start;gap:12px;">
+              <span style="font-size:22px;">🏆</span>
+              <div>
+                <div style="font-size:12px;font-weight:700;color:#f9a8d4;margin-bottom:3px;">АЧИВКИ</div>
+                <div style="font-size:13px;color:#e2e8f0;" id="achievementsText">Выполняйте задания — получайте награды</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- XP Block -->
@@ -708,6 +790,15 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Achievements Section -->
+      <div id="achievementsBlock" style="display:none;margin-bottom:32px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <h3 style="font-size:18px;font-weight:700;">🏅 Мои ачивки</h3>
+          <span id="achieveCount" style="font-size:13px;color:#94a3b8;"></span>
+        </div>
+        <div id="achievementsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;"></div>
       </div>
 
       <!-- Tabs -->
@@ -1017,6 +1108,105 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
+    // ===== ВСЕ АЧИВКИ =====
+    const ALL_ACHIEVEMENTS = [
+      // Вход и активность
+      { id: 'first_login',    icon: '🌅', name: 'Первый шаг',       desc: 'Первый вход в систему',          check: (xp,s,str) => xp >= 0 },
+      { id: 'streak_3',       icon: '🔥', name: '3 дня подряд',     desc: 'Серия входов 3 дня',             check: (xp,s,str) => str >= 3 },
+      { id: 'streak_7',       icon: '💥', name: 'Неделя!',          desc: 'Серия входов 7 дней',            check: (xp,s,str) => str >= 7 },
+      { id: 'streak_30',      icon: '🌟', name: 'Месяц!',           desc: 'Серия входов 30 дней',           check: (xp,s,str) => str >= 30 },
+      // XP
+      { id: 'xp_50',         icon: '⚡', name: 'Первые 50 XP',     desc: 'Набрать 50 XP',                  check: (xp) => xp >= 50 },
+      { id: 'xp_150',        icon: '🚀', name: '150 XP',           desc: 'Набрать 150 XP',                 check: (xp) => xp >= 150 },
+      { id: 'xp_300',        icon: '💎', name: '300 XP',           desc: 'Набрать 300 XP',                 check: (xp) => xp >= 300 },
+      { id: 'xp_500',        icon: '👑', name: '500 XP',           desc: 'Набрать 500 XP',                 check: (xp) => xp >= 500 },
+      { id: 'xp_1000',       icon: '🏆', name: '1000 XP',          desc: 'Набрать 1000 XP',                check: (xp) => xp >= 1000 },
+      // Квизы
+      { id: 'quiz_1',        icon: '✅', name: 'Первый ответ',     desc: 'Ответить правильно 1 раз',       check: (xp,s) => (s.quizCorrect||0) >= 1 },
+      { id: 'quiz_10',       icon: '🎯', name: '10 правильных',    desc: '10 правильных ответов',          check: (xp,s) => (s.quizCorrect||0) >= 10 },
+      { id: 'quiz_50',       icon: '🧠', name: 'Знаток',           desc: '50 правильных ответов',          check: (xp,s) => (s.quizCorrect||0) >= 50 },
+      { id: 'quiz_complete', icon: '📝', name: 'Квиз пройден',     desc: 'Завершить первый квиз',          check: (xp,s) => (s.quizComplete||0) >= 1 },
+      // Модули
+      { id: 'module_1',      icon: '📖', name: 'Первый модуль',    desc: 'Завершить 1 модуль',             check: (xp,s) => (s.moduleComplete||0) >= 1 },
+      { id: 'module_5',      icon: '📚', name: 'Пять модулей',     desc: 'Завершить 5 модулей',            check: (xp,s) => (s.moduleComplete||0) >= 5 },
+      { id: 'module_12',     icon: '🎓', name: 'Все модули!',      desc: 'Завершить все 12 модулей',       check: (xp,s) => (s.moduleComplete||0) >= 12 },
+      // Аудио
+      { id: 'audio_1',       icon: '🎧', name: 'Слушатель',        desc: 'Прослушать первое аудио',        check: (xp,s) => (s.audioListened||0) >= 1 },
+      { id: 'audio_10',      icon: '🎵', name: 'Меломан',          desc: 'Прослушать 10 аудио',            check: (xp,s) => (s.audioListened||0) >= 10 },
+      // Симулятор
+      { id: 'sim_1',         icon: '🎮', name: 'Симулятор',        desc: 'Пройти симулятор впервые',       check: (xp,s) => (s.simulatorDone||0) >= 1 },
+      { id: 'sim_5',         icon: '🕹️', name: 'Про-геймер',       desc: 'Пройти симулятор 5 раз',         check: (xp,s) => (s.simulatorDone||0) >= 5 },
+      // Тесты
+      { id: 'test_1',        icon: '✍️', name: 'Тест сдан',        desc: 'Пройти первый тест',             check: (xp,s) => (s.testPassed||0) >= 1 },
+      { id: 'test_5',        icon: '📋', name: 'Отличник',         desc: 'Пройти 5 тестов',                check: (xp,s) => (s.testPassed||0) >= 5 },
+      // Кейсы
+      { id: 'case_1',        icon: '💼', name: 'Аналитик',         desc: 'Изучить первый кейс',            check: (xp,s) => (s.caseStudyRead||0) >= 1 },
+      { id: 'case_5',        icon: '🗂️', name: 'Кейс-мастер',      desc: 'Изучить 5 кейсов',               check: (xp,s) => (s.caseStudyRead||0) >= 5 },
+      // Уровни
+      { id: 'level_3',       icon: '🎓', name: 'Студент',          desc: 'Достичь уровня Студент',         check: (xp) => xp >= 150 },
+      { id: 'level_4',       icon: '🚛', name: 'Диспетчер Jr',     desc: 'Достичь уровня Диспетчер Jr',    check: (xp) => xp >= 300 },
+      { id: 'level_5',       icon: '📋', name: 'Диспетчер',        desc: 'Достичь уровня Диспетчер',       check: (xp) => xp >= 500 },
+    ];
+
+    function getUnlockedAchievements(xp, stats, streak) {
+      return ALL_ACHIEVEMENTS.filter(a => a.check(xp, stats, streak));
+    }
+
+    function renderAchievements(xp, stats, streak) {
+      const grid = document.getElementById('achievementsGrid');
+      const block = document.getElementById('achievementsBlock');
+      const countEl = document.getElementById('achieveCount');
+      if (!grid) return;
+
+      const unlocked = getUnlockedAchievements(xp, stats, streak);
+      const prevUnlocked = JSON.parse(localStorage.getItem('unlocked_achievements') || '[]');
+      const newlyUnlocked = unlocked.map(a => a.id).filter(id => !prevUnlocked.includes(id));
+      localStorage.setItem('unlocked_achievements', JSON.stringify(unlocked.map(a => a.id)));
+
+      block.style.display = 'block';
+      countEl.textContent = `${unlocked.length} / ${ALL_ACHIEVEMENTS.length}`;
+
+      grid.innerHTML = ALL_ACHIEVEMENTS.map(a => {
+        const isUnlocked = unlocked.find(u => u.id === a.id);
+        const isNew = newlyUnlocked.includes(a.id);
+        return `<div class="achieve-card ${isUnlocked ? 'unlocked' : 'locked'}">
+          ${isNew ? '<span class="achieve-new-badge">NEW</span>' : ''}
+          <div class="achieve-icon">${a.icon}</div>
+          <div class="achieve-name">${a.name}</div>
+          <div class="achieve-desc">${a.desc}</div>
+          ${isUnlocked ? '<span class="achieve-xp-badge">✓ Получено</span>' : ''}
+        </div>`;
+      }).join('');
+
+      // Показываем тост для новых ачивок
+      newlyUnlocked.forEach((id, i) => {
+        const a = ALL_ACHIEVEMENTS.find(x => x.id === id);
+        if (a) setTimeout(() => showAchieveToast(a), i * 1200);
+      });
+    }
+
+    function showAchieveToast(achieve) {
+      const old = document.getElementById('achieve-toast');
+      if (old) old.remove();
+      const t = document.createElement('div');
+      t.id = 'achieve-toast';
+      t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;
+        background:linear-gradient(135deg,#1e1b4b,#0f172a);
+        border:1px solid rgba(139,92,246,0.5);border-radius:16px;padding:14px 18px;
+        display:flex;align-items:center;gap:12px;
+        box-shadow:0 8px 32px rgba(139,92,246,0.3);min-width:240px;
+        animation:achievePopIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;`;
+      t.innerHTML = `
+        <div style="font-size:32px;line-height:1">${achieve.icon}</div>
+        <div>
+          <div style="color:#fbbf24;font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:2px;">🏅 Новая ачивка!</div>
+          <div style="color:#f1f5f9;font-weight:700;font-size:14px">${achieve.name}</div>
+          <div style="color:#94a3b8;font-size:12px">${achieve.desc}</div>
+        </div>`;
+      document.body.appendChild(t);
+      setTimeout(() => { t.style.animation = 'xpSlideOut 0.4s ease forwards'; setTimeout(() => t.remove(), 400); }, 4000);
+    }
+
     function renderXPBlock(data, uid) {
       const xp = data.xp || 0;
       const level = getLevelByXP(xp);
@@ -1027,6 +1217,39 @@
       document.getElementById('xpBlock').style.display = 'flex';
       document.getElementById('xpLevelIcon').textContent = level.label.split(' ')[0];
       document.getElementById('xpLevelLabel').textContent = level.label.replace(/^\S+\s/, '');
+
+      // Обновляем welcome subtitle с уровнем
+      const subtitleEl = document.getElementById('welcomeSubtitle');
+      if (subtitleEl) subtitleEl.textContent = `Уровень: ${level.label} · ${xp} XP · Продолжайте обучение!`;
+
+      // Показываем пробный период если есть
+      try {
+        const u = JSON.parse(localStorage.getItem('user') || '{}');
+        if (u.trialActive && u.trialEndDate) {
+          const daysLeft = Math.max(0, Math.ceil((new Date(u.trialEndDate) - new Date()) / 86400000));
+          const badge = document.getElementById('trialBadge');
+          if (badge && daysLeft > 0) { badge.style.display = 'inline-block'; badge.textContent = `⏳ Пробный период: ${daysLeft} дн.`; }
+        }
+      } catch(e) {}
+
+      // Следующий шаг
+      const nextStepEl = document.getElementById('nextStepText');
+      if (nextStepEl) {
+        const m = stats.moduleComplete || 0;
+        nextStepEl.textContent = m === 0 ? 'Начните с Модуля 1 — Индустрия' :
+          m < 6 ? `Продолжите Модуль ${m + 1}` : m < 12 ? `Модуль ${m + 1} ждёт вас!` : '🎉 Все модули пройдены!';
+      }
+
+      // XP сегодня
+      const todayEl = document.getElementById('todayXPText');
+      if (todayEl) todayEl.textContent = streak > 0 ? `🔥 Серия ${streak} дней! Так держать!` : 'Войдите каждый день +5 XP';
+
+      // Ачивки
+      const achEl = document.getElementById('achievementsText');
+      if (achEl) {
+        const unlocked = getUnlockedAchievements(xp, stats, streak);
+        achEl.textContent = `${unlocked.length} из ${ALL_ACHIEVEMENTS.length} ачивок разблокировано`;
+      }
       document.getElementById('xpLevelNum').textContent = 'Уровень ' + level.level;
       document.getElementById('xpTotal').textContent = xp;
       document.getElementById('xpStreak').textContent = streak;
@@ -1045,6 +1268,9 @@
         document.getElementById('xpNextLabel').textContent = '👑 Максимальный уровень';
         document.getElementById('xpBarFill').style.width = '100%';
       }
+
+      // Рендерим ачивки
+      renderAchievements(xp, stats, streak);
     }
 
     async function loadLeaderboard(currentUid) {
