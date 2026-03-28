@@ -802,18 +802,23 @@
         </div>
       </div>
 
-      <!-- Achievements Section -->
+      <!-- Achievements Preview (18 штук на главной) -->
       <div id="achievementsBlock" style="display:none;margin-bottom:32px;">
         <div id="achievementsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;"></div>
+        <div style="text-align:center;margin-top:16px;">
+          <button id="showAllAchievesBtn" onclick="switchTab('achievements');document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab')[1].classList.add('active');" style="padding:10px 28px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.35);border-radius:12px;color:#a5b4fc;font-size:13px;font-weight:700;cursor:pointer;display:none;">
+            🏅 Показать все ачивки →
+          </button>
+        </div>
       </div>
 
       <!-- Tabs -->
       <div class="tabs">
         <button class="tab active" onclick="switchTab('courses')">Мои курсы</button>
-        <button class="tab" onclick="switchTab('profile')">Профиль</button>
+        <button class="tab" onclick="switchTab('achievements')">🏅 Ачивки</button>
         <button class="tab" onclick="switchTab('rating')">🏆 Рейтинг</button>
         <button class="tab" onclick="switchTab('certificates')">Сертификаты</button>
-        <button class="tab" onclick="switchTab('settings')">Настройки</button>
+        <button class="tab" onclick="switchTab('profile')">👤 Профиль</button>
       </div>
 
       <!-- Tab: My Courses -->
@@ -836,43 +841,114 @@
         <div class="courses-grid" id="modulesGrid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;"></div>
       </div>
 
-      <!-- Tab: Profile -->
+      <!-- Tab: Achievements (все ачивки) -->
+      <div id="tab-achievements" class="tab-content">
+        <div id="allAchievementsContainer">
+          <!-- Заполняется через renderAllAchievements() -->
+          <div style="text-align:center;padding:40px;color:#64748b;">Загрузка ачивок...</div>
+        </div>
+      </div>
+
+      <!-- Tab: Profile + Settings (объединено) -->
       <div id="tab-profile" class="tab-content">
-        <div class="profile-grid">
+        <div style="display:grid;grid-template-columns:280px 1fr;gap:24px;align-items:start;" class="profile-grid">
+
+          <!-- Левая колонка: аватар + статы -->
           <div class="profile-card">
-            <div class="profile-avatar">👤</div>
+            <div class="profile-avatar" id="profileAvatarIcon">👤</div>
             <h2 class="profile-name" id="profileName">Иван Иванов</h2>
             <p class="profile-email" id="profileEmail">ivan@example.com</p>
             <div class="profile-stats">
               <div class="profile-stat">
-                <div class="profile-stat-value">4</div>
-                <div class="profile-stat-label">Курсов</div>
+                <div class="profile-stat-value" id="profileModules">0</div>
+                <div class="profile-stat-label">Модулей</div>
               </div>
               <div class="profile-stat">
-                <div class="profile-stat-value">1</div>
-                <div class="profile-stat-label">Сертификатов</div>
+                <div class="profile-stat-value" id="profileXP">0</div>
+                <div class="profile-stat-label">XP</div>
+              </div>
+              <div class="profile-stat">
+                <div class="profile-stat-value" id="profileStreak">0</div>
+                <div class="profile-stat-label">🔥 Серия</div>
               </div>
             </div>
+            <!-- Уровень -->
+            <div id="profileLevelBadge" style="margin-top:16px;padding:8px 16px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:12px;font-size:13px;font-weight:700;color:#a5b4fc;text-align:center;"></div>
           </div>
-          <div class="settings-card">
-            <h3 style="font-size: 24px; font-weight: 700; margin-bottom: 24px;">Информация о профиле</h3>
-            <div class="form-group">
-              <label class="form-label">Имя</label>
-              <input type="text" class="form-input" id="firstName" value="Иван">
+
+          <!-- Правая колонка: форма + настройки -->
+          <div style="display:flex;flex-direction:column;gap:20px;">
+
+            <!-- Информация о профиле -->
+            <div class="settings-card">
+              <h3 style="font-size:18px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px;">👤 Информация о профиле</h3>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="form-group">
+                  <label class="form-label">Имя</label>
+                  <input type="text" class="form-input" id="firstName" value="Иван">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Фамилия</label>
+                  <input type="text" class="form-input" id="lastName" value="Иванов">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" id="email" value="ivan@example.com" disabled style="opacity:0.6;">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Телефон</label>
+                <input type="tel" class="form-input" id="phone" placeholder="+1 (555) 123-4567">
+              </div>
+              <button class="btn-save" onclick="saveProfile()">💾 Сохранить изменения</button>
             </div>
-            <div class="form-group">
-              <label class="form-label">Фамилия</label>
-              <input type="text" class="form-input" id="lastName" value="Иванов">
+
+            <!-- Смена пароля -->
+            <div class="settings-card">
+              <h3 style="font-size:18px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px;">🔐 Безопасность</h3>
+              <div class="form-group">
+                <label class="form-label">Текущий пароль</label>
+                <input type="password" class="form-input" id="currentPassword" placeholder="••••••••">
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="form-group">
+                  <label class="form-label">Новый пароль</label>
+                  <input type="password" class="form-input" id="newPassword" placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Подтвердите пароль</label>
+                  <input type="password" class="form-input" id="confirmPassword" placeholder="••••••••">
+                </div>
+              </div>
+              <button class="btn-save" onclick="changePassword()" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;">🔑 Изменить пароль</button>
             </div>
-            <div class="form-group">
-              <label class="form-label">Email</label>
-              <input type="email" class="form-input" id="email" value="ivan@example.com" disabled>
+
+            <!-- Уведомления -->
+            <div class="settings-card">
+              <h3 style="font-size:18px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px;">🔔 Уведомления</h3>
+              <div style="display:flex;flex-direction:column;gap:14px;">
+                <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:12px 16px;background:rgba(255,255,255,0.03);border-radius:12px;border:1px solid rgba(255,255,255,0.06);">
+                  <span style="font-size:14px;">📧 Email о новых курсах</span>
+                  <input type="checkbox" checked style="width:18px;height:18px;cursor:pointer;">
+                </label>
+                <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:12px 16px;background:rgba(255,255,255,0.03);border-radius:12px;border:1px solid rgba(255,255,255,0.06);">
+                  <span style="font-size:14px;">⏰ Напоминания об уроках</span>
+                  <input type="checkbox" checked style="width:18px;height:18px;cursor:pointer;">
+                </label>
+                <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:12px 16px;background:rgba(255,255,255,0.03);border-radius:12px;border:1px solid rgba(255,255,255,0.06);">
+                  <span style="font-size:14px;">📰 Новости платформы</span>
+                  <input type="checkbox" style="width:18px;height:18px;cursor:pointer;">
+                </label>
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">Телефон</label>
-              <input type="tel" class="form-input" placeholder="+1 (555) 123-4567">
+
+            <!-- Опасная зона -->
+            <div class="settings-card" style="border-color:rgba(239,68,68,0.2);">
+              <h3 style="font-size:18px;font-weight:700;margin-bottom:16px;color:#fca5a5;">⚠️ Опасная зона</h3>
+              <p style="font-size:13px;color:#64748b;margin-bottom:16px;">Выход из аккаунта на всех устройствах</p>
+              <button class="btn-save" onclick="authLogout(event)" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;">🚪 Выйти из аккаунта</button>
             </div>
-            <button class="btn-save" onclick="saveProfile()">Сохранить изменения</button>
+
           </div>
         </div>
       </div>
@@ -934,44 +1010,7 @@
         </div>
       </div>
 
-      <!-- Tab: Settings -->
-      <div id="tab-settings" class="tab-content">
-        <div class="settings-card" style="max-width: 600px;">
-          <h3 style="font-size: 24px; font-weight: 700; margin-bottom: 24px;">Настройки аккаунта</h3>
-
-          <div class="form-group">
-            <label class="form-label">Текущий пароль</label>
-            <input type="password" class="form-input" placeholder="••••••••">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Новый пароль</label>
-            <input type="password" class="form-input" placeholder="••••••••">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Подтвердите новый пароль</label>
-            <input type="password" class="form-input" placeholder="••••••••">
-          </div>
-          <button class="btn-save" onclick="changePassword()">Изменить пароль</button>
-
-          <hr style="margin: 40px 0; border: none; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-
-          <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">Уведомления</h3>
-          <div style="display: flex; flex-direction: column; gap: 16px;">
-            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
-              <input type="checkbox" checked style="width: 18px; height: 18px;">
-              <span>Email уведомления о новых курсах</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
-              <input type="checkbox" checked style="width: 18px; height: 18px;">
-              <span>Напоминания о незавершённых уроках</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
-              <input type="checkbox" style="width: 18px; height: 18px;">
-              <span>Новости и обновления платформы</span>
-            </label>
-          </div>
-        </div>
-      </div>
+      <!-- Tab: Settings — объединено с Профилем -->
 
     </div>
   </section>
@@ -1052,17 +1091,14 @@
 
     // Tab switching
     function switchTab(tabName) {
-      // Hide all tabs
-      document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
-      });
-      document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
-      });
-
-      // Show selected tab
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
       document.getElementById('tab-' + tabName).classList.add('active');
-      event.target.classList.add('active');
+      if (event && event.target) event.target.classList.add('active');
+      // При открытии вкладки ачивок — рендерим все
+      if (tabName === 'achievements' && typeof window.renderAllAchievements === 'function') {
+        window.renderAllAchievements('');
+      }
     }
 
     // Save profile
@@ -1289,6 +1325,9 @@
       const prevUnlocked = JSON.parse(localStorage.getItem('unlocked_achievements') || '[]');
       const newlyUnlocked = unlocked.map(a => a.id).filter(id => !prevUnlocked.includes(id));
       localStorage.setItem('unlocked_achievements', JSON.stringify(unlocked.map(a => a.id)));
+      window._unlockedIds = new Set(unlocked.map(a => a.id));
+      window._newlyUnlocked = new Set(newlyUnlocked);
+      window._allAchievements = ALL_ACHIEVEMENTS;
 
       block.style.display = 'block';
 
@@ -1299,64 +1338,37 @@
         epic:      { color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.35)', label: 'Эпическая' },
         legendary: { color: '#fbbf24', bg: 'rgba(251,191,36,0.12)',  border: 'rgba(251,191,36,0.4)',   label: '✨ Легендарная' },
       };
+      window._RARITY = RARITY;
 
-      // Получаем уникальные категории
-      const cats = [...new Set(ALL_ACHIEVEMENTS.map(a => a.cat))];
-
-      // Заголовок с фильтрами
-      const headerEl = block.querySelector('.achieve-header');
-      if (!headerEl) {
+      // Заголовок блока на главной
+      if (!block.querySelector('.achieve-header')) {
         const hdr = document.createElement('div');
         hdr.className = 'achieve-header';
-        hdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;';
+        hdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;';
         hdr.innerHTML = `
           <div style="display:flex;align-items:center;gap:12px;">
             <h3 style="font-size:18px;font-weight:700;">🏅 Мои ачивки</h3>
             <span id="achieveCount" style="font-size:13px;color:#94a3b8;"></span>
-          </div>
-          <div id="achieveCatFilter" style="display:flex;gap:6px;flex-wrap:wrap;">
-            <button onclick="filterAchieves('')" class="ach-filter-btn active" data-cat="" style="padding:4px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#e2e8f0;font-size:11px;font-weight:600;cursor:pointer;">Все</button>
-            ${cats.map(c => `<button onclick="filterAchieves('${c}')" class="ach-filter-btn" data-cat="${c}" style="padding:4px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#64748b;font-size:11px;font-weight:600;cursor:pointer;">${c}</button>`).join('')}
           </div>`;
         block.insertBefore(hdr, grid);
       }
 
-      countEl.textContent = `${unlocked.length} / ${ALL_ACHIEVEMENTS.length}`;
+      const countElReal = document.getElementById('achieveCount');
+      if (countElReal) countElReal.textContent = `${unlocked.length} / ${ALL_ACHIEVEMENTS.length}`;
 
-      window._allAchievements = ALL_ACHIEVEMENTS;
-      window._unlockedIds = new Set(unlocked.map(a => a.id));
-      window._newlyUnlocked = new Set(newlyUnlocked);
+      // Показываем первые 18 на главной
+      const preview = ALL_ACHIEVEMENTS.slice(0, 18);
+      grid.innerHTML = preview.map(a => buildAchieveCard(a, RARITY)).join('');
 
-      window.filterAchieves = function(cat) {
-        document.querySelectorAll('.ach-filter-btn').forEach(b => {
-          const isActive = b.getAttribute('data-cat') === cat;
-          b.style.background = isActive ? 'rgba(99,102,241,0.3)' : 'transparent';
-          b.style.borderColor = isActive ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.1)';
-          b.style.color = isActive ? '#a5b4fc' : '#64748b';
-        });
-        const list = cat ? window._allAchievements.filter(a => a.cat === cat) : window._allAchievements;
-        renderAchieveGrid(list);
-      };
-
-      function renderAchieveGrid(list) {
-        const r = RARITY;
-        grid.innerHTML = list.map(a => {
-          const isUnlocked = window._unlockedIds.has(a.id);
-          const isNew = window._newlyUnlocked.has(a.id);
-          const rar = r[a.rarity] || r.common;
-          return `<div class="achieve-card ${isUnlocked ? 'unlocked' : 'locked'}" title="${a.desc}" style="${isUnlocked ? `border-color:${rar.border};background:${rar.bg};` : ''}">
-            ${isNew ? '<span class="achieve-new-badge">NEW</span>' : ''}
-            <div class="achieve-icon">${a.icon}</div>
-            <div class="achieve-name">${a.name}</div>
-            <div class="achieve-desc">${a.desc}</div>
-            ${isUnlocked
-              ? `<span class="achieve-xp-badge" style="color:${rar.color};border-color:${rar.border};background:${rar.bg};">✓ ${rar.label}</span>`
-              : `<span class="achieve-xp-badge" style="color:#334155;border-color:rgba(255,255,255,0.05);background:transparent;">🔒 ${rar.label}</span>`}
-          </div>`;
-        }).join('');
+      // Кнопка "Показать все" если ачивок больше 18
+      const showAllBtn = document.getElementById('showAllAchievesBtn');
+      if (showAllBtn && ALL_ACHIEVEMENTS.length > 18) {
+        showAllBtn.style.display = 'inline-block';
+        showAllBtn.textContent = `🏅 Показать все ${ALL_ACHIEVEMENTS.length} ачивок →`;
       }
 
-      renderAchieveGrid(ALL_ACHIEVEMENTS);
+      // Рендерим вкладку ачивок
+      renderAllAchievements();
 
       // Тосты для новых ачивок
       newlyUnlocked.forEach((id, i) => {
@@ -1364,6 +1376,52 @@
         if (a) setTimeout(() => showAchieveToast(a), i * 1200);
       });
     }
+
+    function buildAchieveCard(a, RARITY) {
+      const isUnlocked = (window._unlockedIds || new Set()).has(a.id);
+      const isNew = (window._newlyUnlocked || new Set()).has(a.id);
+      const rar = RARITY[a.rarity] || RARITY.common;
+      return `<div class="achieve-card ${isUnlocked ? 'unlocked' : 'locked'}" title="${a.desc}" style="${isUnlocked ? `border-color:${rar.border};background:${rar.bg};` : ''}">
+        ${isNew ? '<span class="achieve-new-badge">NEW</span>' : ''}
+        <div class="achieve-icon">${a.icon}</div>
+        <div class="achieve-name">${a.name}</div>
+        <div class="achieve-desc">${a.desc}</div>
+        ${isUnlocked
+          ? `<span class="achieve-xp-badge" style="color:${rar.color};border-color:${rar.border};background:${rar.bg};">✓ ${rar.label}</span>`
+          : `<span class="achieve-xp-badge" style="color:#334155;border-color:rgba(255,255,255,0.05);background:transparent;">🔒 ${rar.label}</span>`}
+      </div>`;
+    }
+
+    function renderAllAchievements(filterCat) {
+      const container = document.getElementById('allAchievementsContainer');
+      if (!container) return;
+      const RARITY = window._RARITY || {
+        common:    { color: '#94a3b8', bg: 'rgba(148,163,184,0.1)',  border: 'rgba(148,163,184,0.25)', label: 'Обычная' },
+        rare:      { color: '#60a5fa', bg: 'rgba(96,165,250,0.1)',   border: 'rgba(96,165,250,0.3)',   label: 'Редкая' },
+        epic:      { color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.35)', label: 'Эпическая' },
+        legendary: { color: '#fbbf24', bg: 'rgba(251,191,36,0.12)',  border: 'rgba(251,191,36,0.4)',   label: '✨ Легендарная' },
+      };
+
+      const cats = [...new Set(ALL_ACHIEVEMENTS.map(a => a.cat))];
+      const unlocked = window._unlockedIds || new Set();
+      const list = filterCat ? ALL_ACHIEVEMENTS.filter(a => a.cat === filterCat) : ALL_ACHIEVEMENTS;
+
+      container.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h3 style="font-size:20px;font-weight:700;">🏅 Все ачивки</h3>
+            <p style="font-size:13px;color:#64748b;margin-top:4px;">${unlocked.size} из ${ALL_ACHIEVEMENTS.length} разблокировано</p>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;" id="allAchCatFilter">
+            <button onclick="renderAllAchievements('')" style="padding:5px 14px;border-radius:20px;border:1px solid rgba(99,102,241,0.5);background:rgba(99,102,241,0.2);color:#a5b4fc;font-size:11px;font-weight:700;cursor:pointer;">Все</button>
+            ${cats.map(c => `<button onclick="renderAllAchievements('${c}')" style="padding:5px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#64748b;font-size:11px;font-weight:600;cursor:pointer;">${c}</button>`).join('')}
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;">
+          ${list.map(a => buildAchieveCard(a, RARITY)).join('')}
+        </div>`;
+    }
+    window.renderAllAchievements = renderAllAchievements;
 
     function showAchieveToast(achieve) {
       const old = document.getElementById('achieve-toast');
@@ -1418,6 +1476,16 @@
       document.getElementById('xpQuizzes').textContent = stats.quizCorrect || 0;
       document.getElementById('xpModules').textContent = stats.moduleComplete || 0;
       document.getElementById('xpAudio').textContent = stats.audioListened || 0;
+
+      // Обновляем карточку профиля
+      const pm = document.getElementById('profileModules');
+      const px = document.getElementById('profileXP');
+      const ps = document.getElementById('profileStreak');
+      const pl = document.getElementById('profileLevelBadge');
+      if (pm) pm.textContent = stats.moduleComplete || 0;
+      if (px) px.textContent = xp;
+      if (ps) ps.textContent = streak;
+      if (pl) pl.textContent = level.label;
 
       // Рендерим сетку модулей
       try { if (typeof window.renderModulesGrid === 'function') window.renderModulesGrid(stats.moduleComplete || 0); } catch(e) { console.warn('renderModulesGrid error:', e); }
