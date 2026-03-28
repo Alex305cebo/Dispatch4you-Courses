@@ -1,15 +1,15 @@
 /**
- * nav-loader.js v6.1 - 2026-03-26 force update
- * - AI Broker button added
- * - Even smaller buttons (6px 12px padding)
- * - Smaller font (12px)
- * - Consistent navbar height (64px)
+ * nav-loader.js v6.2 - 2026-03-28 menu update
+ * - Removed: Главная, AI Брокер (standalone)
+ * - 3 tabs: Курсы / Инструменты / Информация
+ * - AI Брокер moved to Инструменты
+ * - FAQ renamed to Вопросы
  */
 (function () {
     var isSubfolder = window.location.pathname.includes('/pages/');
     var BASE = isSubfolder ? '../' : '';
 
-    var NAV_INLINE = `<!-- ЕДИНОЕ МЕНЮ САЙТА -->
+    var NAV_INLINE = `<!-- ЕДИНОЕ МЕНЮ САЙТА v6.2 -->
 <nav class="navbar">
     <div class="nav-container">
         <div class="nav-content">
@@ -18,36 +18,31 @@
                 <span class="logo-text">Курсы Диспетчера</span>
             </a>
             <div class="nav-links">
-                <a href="{{BASE}}index.html" class="nav-link">Главная</a>
                 <div class="nav-item">
                     <button class="nav-btn">Курсы <span class="arrow">▾</span></button>
                     <div class="dropdown">
+                        <a href="{{BASE}}pages/modules-index.html">🎓 Модули (1-12)</a>
                         <a href="{{BASE}}pages/documentation.html">📖 База знаний</a>
-                        <a href="{{BASE}}pages/modules-index.html">🎓 Модули с тестами</a>
-                        <a href="{{BASE}}pages/simulator.html">🎯 Симулятор</a>
-                        <a href="{{BASE}}pages/testing.html">✍️ Тестирование</a>
-                        <a href="{{BASE}}pages/cases.html">💼 Кейсы</a>
                     </div>
                 </div>
                 <div class="nav-item">
                     <button class="nav-btn">Инструменты <span class="arrow">▾</span></button>
                     <div class="dropdown">
-                        <a href="{{BASE}}pages/analytics.html">📊 Статистика рынка</a>
+                        <a href="{{BASE}}pages/simulator.html">🎯 Симулятор</a>
+                        <a href="{{BASE}}pages/testing.html">✍️ Тестирование</a>
+                        <a href="{{BASE}}pages/cases.html">💼 Кейсы</a>
                         <a href="{{BASE}}pages/load-finder.html">🔍 Load Finder</a>
                         <a href="{{BASE}}pages/dispatcher-cards.html">🃏 Dispatcher Cards</a>
-                        <a href="{{BASE}}pages/simulator.html">🎯 Dispatch Simulator</a>
                         <a href="{{BASE}}pages/ai-broker-chat.html">🤖 AI Брокер</a>
                     </div>
                 </div>
-                <a href="{{BASE}}pages/ai-broker-chat.html" class="nav-link nav-ai-btn">🤖 AI Брокер</a>
                 <div class="nav-item">
                     <button class="nav-btn">Информация <span class="arrow">▾</span></button>
                     <div class="dropdown">
                         <a href="{{BASE}}about.html">👥 О нас</a>
-                        <a href="{{BASE}}career.html">💼 Карьера</a>
-                        <a href="{{BASE}}faq.html">❓ FAQ</a>
+                        <a href="{{BASE}}faq.html">❓ Вопросы</a>
                         <a href="{{BASE}}contacts.html">📬 Контакты</a>
-                        <a href="{{BASE}}pricing.html">💰 Тарифы</a>
+                        <a href="{{BASE}}pricing.html">💰 Цены</a>
                     </div>
                 </div>
             </div>
@@ -67,25 +62,21 @@
             <a href="{{BASE}}login.html" class="btn-login">Войти</a>
             <a href="{{BASE}}register.html" class="btn-signup">Регистрация</a>
         </div>
-        <a href="{{BASE}}index.html" class="mob-link">🏠 Главная</a>
-        <a href="{{BASE}}pages/ai-broker-chat.html" class="mob-link mob-ai-link">🤖 AI Брокер</a>
         <div class="mob-acc">
             <div class="mob-acc-title">📚 Курсы <span class="mob-arr">▼</span></div>
             <div class="mob-acc-body">
+                <a href="{{BASE}}pages/modules-index.html" class="mob-sub">🎓 Модули (1-12)</a>
                 <a href="{{BASE}}pages/documentation.html" class="mob-sub">📖 База знаний</a>
-                <a href="{{BASE}}pages/modules-index.html" class="mob-sub">🎓 Модули с тестами</a>
-                <a href="{{BASE}}pages/simulator.html" class="mob-sub">🎯 Симулятор</a>
-                <a href="{{BASE}}pages/testing.html" class="mob-sub">✍️ Тестирование</a>
-                <a href="{{BASE}}pages/cases.html" class="mob-sub">💼 Кейсы</a>
             </div>
         </div>
         <div class="mob-acc">
             <div class="mob-acc-title">🛠️ Инструменты <span class="mob-arr">▼</span></div>
             <div class="mob-acc-body">
-                <a href="{{BASE}}pages/analytics.html" class="mob-sub">📊 Статистика рынка</a>
+                <a href="{{BASE}}pages/simulator.html" class="mob-sub">🎯 Симулятор</a>
+                <a href="{{BASE}}pages/testing.html" class="mob-sub">✍️ Тестирование</a>
+                <a href="{{BASE}}pages/cases.html" class="mob-sub">💼 Кейсы</a>
                 <a href="{{BASE}}pages/load-finder.html" class="mob-sub">🔍 Load Finder</a>
                 <a href="{{BASE}}pages/dispatcher-cards.html" class="mob-sub">🃏 Dispatcher Cards</a>
-                <a href="{{BASE}}pages/simulator.html" class="mob-sub">🎯 Dispatch Simulator</a>
                 <a href="{{BASE}}pages/ai-broker-chat.html" class="mob-sub">🤖 AI Брокер</a>
             </div>
         </div>
@@ -93,17 +84,16 @@
             <div class="mob-acc-title">ℹ️ Информация <span class="mob-arr">▼</span></div>
             <div class="mob-acc-body">
                 <a href="{{BASE}}about.html" class="mob-sub">👥 О нас</a>
-                <a href="{{BASE}}career.html" class="mob-sub">💼 Карьера</a>
-                <a href="{{BASE}}faq.html" class="mob-sub">❓ FAQ</a>
+                <a href="{{BASE}}faq.html" class="mob-sub">❓ Вопросы</a>
                 <a href="{{BASE}}contacts.html" class="mob-sub">📬 Контакты</a>
-                <a href="{{BASE}}pricing.html" class="mob-sub">💰 Тарифы</a>
+                <a href="{{BASE}}pricing.html" class="mob-sub">💰 Цены</a>
             </div>
         </div>
     </div>
 </div>`;
 
     function loadNav() {
-        fetch(BASE + 'nav.html?v=7.0')
+        fetch(BASE + 'nav.html?v=6.2')
             .then(function (r) { if (!r.ok) throw 0; return r.text(); })
             .then(function (html) { inject(html.replace(/\{\{BASE\}\}/g, BASE)); })
             .catch(function () { inject(NAV_INLINE.replace(/\{\{BASE\}\}/g, BASE)); });

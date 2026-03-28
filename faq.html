@@ -1,408 +1,194 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FAQ | Курсы Диспетчера</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-    rel="stylesheet">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вопросы и ответы | Курсы Диспетчера</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared-nav.css?v=6.2">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--p:#06b6d4;--s:#0ea5e9;--a:#f97316;--bg:#070b14;--card:rgba(255,255,255,.04);--border:rgba(255,255,255,.08);--t1:#f1f5f9;--t2:#94a3b8;--t3:#64748b}
+html{overflow-x:hidden;scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);line-height:1.6;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 20% 30%,rgba(6,182,212,.1),transparent 50%),radial-gradient(circle at 80% 70%,rgba(249,115,22,.07),transparent 50%);z-index:-1;pointer-events:none}
+.container{max-width:860px;margin:0 auto;padding:0 40px}
 
-    html {
-      overflow-x: hidden;
-      width: 100%;
-      max-width: 100vw;
-    }
+/* HERO */
+.hero{padding:120px 0 60px;text-align:center}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 20px;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.25);border-radius:50px;font-size:13px;font-weight:700;color:var(--p);text-transform:uppercase;letter-spacing:1px;margin-bottom:24px}
+.hero h1{font-size:clamp(36px,5vw,56px);font-weight:900;line-height:1.1;margin-bottom:16px}
+.grad{background:linear-gradient(135deg,#06b6d4,#0ea5e9,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{font-size:17px;color:var(--t2);max-width:560px;margin:0 auto 48px;line-height:1.7}
 
-    :root {
-      --primary: #6366f1;
-      --secondary: #8b5cf6;
-      --accent: #ec4899;
-      --bg-dark: #0f172a;
-      --bg-darker: #020617;
-      --text-primary: #f1f5f9;
-      --text-secondary: #ffffff;
-      --text-muted: #ffffff;
-    }
+/* CATEGORIES */
+.cats{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:48px}
+.cat-btn{padding:8px 18px;background:var(--card);border:1px solid var(--border);border-radius:50px;font-size:13px;font-weight:600;color:var(--t2);cursor:pointer;transition:all .2s}
+.cat-btn:hover,.cat-btn.active{background:rgba(6,182,212,.12);border-color:rgba(6,182,212,.35);color:var(--p)}
 
-    [data-theme="light"] {
-      --bg-dark: #ffffff;
-      --bg-darker: #f8fafc;
-      --text-primary: #0f172a;
-      --text-secondary: #ffffff;
-    }
+/* ACCORDION */
+.faq-list{display:flex;flex-direction:column;gap:12px;margin-bottom:60px}
+.faq-item{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:border-color .3s}
+.faq-item.open{border-color:rgba(6,182,212,.3)}
+.faq-q{display:flex;align-items:center;gap:16px;padding:22px 24px;cursor:pointer;user-select:none}
+.faq-q:hover{background:rgba(255,255,255,.02)}
+.faq-num{width:32px;height:32px;border-radius:8px;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--p);flex-shrink:0}
+.faq-q-text{flex:1;font-size:16px;font-weight:600;color:var(--t1)}
+.faq-arrow{font-size:12px;color:var(--t3);transition:transform .3s;flex-shrink:0}
+.faq-item.open .faq-arrow{transform:rotate(180deg);color:var(--p)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .35s ease,padding .3s}
+.faq-item.open .faq-a{max-height:300px}
+.faq-a-inner{padding:0 24px 22px 72px;font-size:15px;color:var(--t2);line-height:1.75}
+.faq-a-inner a{color:var(--p);text-decoration:none}
+.faq-a-inner a:hover{text-decoration:underline}
 
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg-darker);
-      color: var(--text-primary);
-      line-height: 1.6;
-      overflow-x: hidden;
-      width: 100%;
-      max-width: 100vw;
-      margin: 0;
-      padding: 0;
-    }
+/* HIGHLIGHT */
+.highlight-box{background:linear-gradient(135deg,rgba(6,182,212,.08),rgba(249,115,22,.05));border:1px solid rgba(6,182,212,.2);border-radius:20px;padding:40px;text-align:center;margin-bottom:60px}
+.highlight-box h3{font-size:22px;font-weight:800;margin-bottom:12px}
+.highlight-box p{font-size:15px;color:var(--t2);margin-bottom:24px}
+.btn-primary{display:inline-flex;align-items:center;gap:10px;padding:13px 28px;background:linear-gradient(135deg,var(--p),var(--s));color:#fff;border-radius:12px;font-weight:700;font-size:14px;text-decoration:none;transition:all .3s}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(6,182,212,.3)}
 
-    .container {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 0 32px;
-    }
-
-    .page-header {
-      padding: 140px 0 80px;
-      text-align: center;
-    }
-
-    .page-title {
-      font-size: clamp(48px, 6vw, 72px);
-      font-weight: 900;
-      margin-bottom: 24px;
-    }
-
-    .gradient-text {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .page-subtitle {
-      font-size: 20px;
-      color: var(--text-secondary);
-      max-width: 700px;
-      margin: 0 auto;
-    }
-
-    .content-section {
-      padding: 60px 0;
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
-    .faq-item {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      padding: 32px;
-      margin-bottom: 24px;
-      transition: all 0.3s;
-    }
-
-    .faq-item:hover {
-      border-color: rgba(99, 102, 241, 0.3);
-    }
-
-    .faq-question {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 16px;
-      color: var(--text-primary);
-    }
-
-    .faq-answer {
-      color: var(--text-secondary);
-      line-height: 1.8;
-    }
-
-    .footer {
-      padding: 80px 0 40px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      margin-top: 80px;
-    }
-
-    .footer-content {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 48px;
-      margin-bottom: 48px;
-    }
-
-    .footer-section h4 {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 20px;
-    }
-
-    .footer-section p {
-      color: var(--text-secondary);
-      font-size: 14px;
-      line-height: 1.7;
-    }
-
-    .footer-section a {
-      display: block;
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-size: 14px;
-      margin-bottom: 12px;
-      transition: all 0.3s ease;
-    }
-
-    .footer-section a:hover {
-      color: var(--primary);
-      transform: translateX(4px);
-    }
-
-    .footer-bottom {
-      text-align: center;
-      padding-top: 32px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      color: var(--text-muted);
-      font-size: 14px;
-    }
-
-    @media (max-width: 968px) {
-      .footer-content {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 40px;
-      }
-    }
-
-    @media (max-width: 568px) {
-      .footer {
-        padding: 40px 0 30px;
-        margin-top: 48px;
-      }
-
-      .footer-content {
-        display: grid !important;
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 20px !important;
-      }
-
-      .footer .container {
-        padding: 0 16px;
-      }
-
-      .footer-section {
-        text-align: center;
-      }
-
-      .footer-section:first-child {
-        grid-column: 1 / -1;
-        margin-bottom: 16px;
-        text-align: center;
-      }
-
-      .footer-section:first-child h4 {
-        font-size: 18px;
-        margin-bottom: 8px;
-      }
-
-      .footer-section:first-child p {
-        font-size: 13px;
-        line-height: 1.5;
-        max-width: 400px;
-        margin: 0 auto;
-      }
-
-      .footer-section h4 {
-        font-size: 14px;
-        margin-bottom: 12px;
-      }
-
-      .footer-section a {
-        margin-bottom: 8px;
-        font-size: 12px;
-      }
-
-      .footer-section p {
-        font-size: 12px;
-        line-height: 1.4;
-      }
-
-      .footer-section a:hover {
-        transform: translateX(0);
-      }
-
-      .footer-bottom {
-        font-size: 11px;
-        padding-top: 20px;
-      }
-    }
-
-    @media (max-width: 400px) {
-      .footer .container {
-        padding: 0 12px;
-      }
-
-      .footer-content {
-        grid-template-columns: 1fr !important;
-        gap: 24px !important;
-      }
-
-      .footer-section:first-child {
-        margin-bottom: 20px;
-      }
-
-      .footer-section h4 {
-        font-size: 16px;
-      }
-
-      .footer-section a {
-        font-size: 13px;
-      }
-    }
-
-    .footer-section a {
-      display: block;
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-size: 14px;
-      margin-bottom: 12px;
-      transition: all 0.3s;
-    }
-
-    .footer-section a:hover {
-      color: var(--primary);
-      transform: translateX(4px);
-    }
-
-    .footer-bottom {
-      text-align: center;
-      padding-top: 32px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      color: var(--text-muted);
-      font-size: 14px;
-    }
-
-    @media (max-width: 768px) {
-      .container {
-        padding: 0 24px;
-      }
-
-      .nav-links {
-        display: none;
-      }
-    }
-  </style>
-  <link rel="stylesheet" href="shared-nav.css?v=6.0.1774800000">
+@media(max-width:640px){.container{padding:0 20px}.hero{padding:100px 0 40px}.faq-a-inner{padding-left:24px}.faq-q{padding:18px 16px}.faq-a-inner{padding:0 16px 18px}}
+</style>
 </head>
-
 <body>
+<div id="nav-placeholder"></div>
+<script src="nav-loader.js?v=6.2"></script>
 
-  <div id="nav-placeholder"></div>
-  <script src="nav-loader.js?v=6.0.1774800000"></script>
-
-  <section class="page-header">
-    <div class="container">
-      <h1 class="page-title">
-        <span class="gradient-text">FAQ</span>
-      </h1>
-      <p class="page-subtitle">
-        Ответы на часто задаваемые вопросы
-      </p>
-    </div>
+<div class="container">
+  <section class="hero">
+    <div class="hero-badge">❓ Вопросы и ответы</div>
+    <h1>Всё что вы хотели<br><span class="grad">спросить о курсе</span></h1>
+    <p>Собрали ответы на самые частые вопросы. Не нашли свой — напишите нам в Telegram.</p>
   </section>
 
-  <section class="content-section">
-    <div class="container">
+  <div class="cats">
+    <button class="cat-btn active" onclick="filterFaq('all',this)">Все вопросы</button>
+    <button class="cat-btn" onclick="filterFaq('start',this)">🚀 Старт</button>
+    <button class="cat-btn" onclick="filterFaq('study',this)">📚 Обучение</button>
+    <button class="cat-btn" onclick="filterFaq('work',this)">💼 Работа</button>
+    <button class="cat-btn" onclick="filterFaq('money',this)">💰 Деньги</button>
+  </div>
 
-      <div class="faq-item">
-        <h3 class="faq-question">Сколько времени занимает обучение?</h3>
-        <p class="faq-answer">
-          Вы учитесь в своём темпе — можете проходить материалы быстрее или медленнее в зависимости от вашего графика.
-          Полная программа с углублённым изучением всех модулей доступна без ограничений по времени.
-        </p>
+  <div class="faq-list">
+
+    <div class="faq-item" data-cat="start">
+      <div class="faq-q" onclick="toggle(this)">
+        <div class="faq-num">01</div>
+        <div class="faq-q-text">Нужен ли опыт для начала обучения?</div>
+        <div class="faq-arrow">▼</div>
       </div>
-
-      <div class="faq-item">
-        <h3 class="faq-question">Нужен ли опыт работы для начала обучения?</h3>
-        <p class="faq-answer">
-          Нет, наши курсы разработаны для людей без опыта. Мы начинаем с самых основ
-          и постепенно переходим к более сложным темам.
-        </p>
-      </div>
-
-      <div class="faq-item">
-        <h3 class="faq-question">Какой уровень английского языка требуется?</h3>
-        <p class="faq-answer">
-          Для работы диспетчером необходим средний уровень английского (Intermediate).
-          Мы предоставляем материалы для улучшения профессионального английского.
-        </p>
-      </div>
-
-      <div class="faq-item">
-        <h3 class="faq-question">Помогаете ли вы с трудоустройством?</h3>
-        <p class="faq-answer">
-          Да, студенты премиум тарифа получают помощь в составлении резюме, подготовке
-          к собеседованиям и доступ к нашей базе вакансий от партнёров.
-        </p>
-      </div>
-
-      <div class="faq-item">
-        <h3 class="faq-question">Какая средняя зарплата диспетчера?</h3>
-        <p class="faq-answer">
-          Начинающие диспетчеры зарабатывают от $2,000-$3,000 в месяц. С опытом
-          зарплата может вырасти до $5,000-$7,000 и выше.
-        </p>
-      </div>
-
-      <div class="faq-item">
-        <h3 class="faq-question">Можно ли работать удалённо?</h3>
-        <p class="faq-answer">
-          Да, большинство диспетчеров работают удалённо. Вам понадобится только
-          компьютер, интернет и тихое место для работы.
-        </p>
-      </div>
-
-      <div class="faq-item">
-        <h3 class="faq-question">Есть ли пробный период?</h3>
-        <p class="faq-answer">
-          Да, вы можете начать с бесплатного тарифа и получить доступ к 3 базовым
-          модулям, чтобы понять, подходит ли вам эта профессия.
-        </p>
-      </div>
-
-      <div class="faq-item">
-        <h3 class="faq-question">Как проходит обучение?</h3>
-        <p class="faq-answer">
-          Обучение проходит онлайн в удобном для вас темпе. Вы получаете доступ к
-          видео-урокам, текстовым материалам, практическим заданиям и симулятору работы.
-        </p>
-      </div>
-
+      <div class="faq-a"><div class="faq-a-inner">Нет. Курс разработан с нуля — мы начинаем с самых основ индустрии грузоперевозок. Никакого предыдущего опыта не требуется.</div></div>
     </div>
-  </section>
 
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-content">
-        <div class="footer-section">
-          <h4>Курсы Диспетчера</h4>
-          <p>Профессиональное обучение диспетчеров грузоперевозок</p>
-        </div>
-        <div class="footer-section">
-          <h4>Обучение</h4>
-          <a href="courses.html">Курсы</a>
-        </div>
-        <div class="footer-section">
-          <h4>Поддержка</h4>
-          <a href="faq.html">FAQ</a>
-          <a href="contacts.html">Контакты</a>
-        </div>
-        <div class="footer-section">
-          <h4>Компания</h4>
-          <a href="about.html">О нас</a>
-
-          <a href="career.html">Карьера</a>
-        </div>
+    <div class="faq-item" data-cat="start">
+      <div class="faq-q" onclick="toggle(this)">
+        <div class="faq-num">02</div>
+        <div class="faq-q-text">Какой уровень английского нужен?</div>
+        <div class="faq-arrow">▼</div>
       </div>
-      <div class="footer-bottom">
-        <p>&copy; 2024 Курсы Диспетчера. Все права защищены.</p>
-      </div>
+      <div class="faq-a"><div class="faq-a-inner">Для старта обучения — базовый. Для работы диспетчером нужен Intermediate (B1-B2). В курсе есть материалы по профессиональному английскому для диспетчеров.</div></div>
     </div>
-  </footer>
 
-  <script src="auth.js?v=5.1.1774288314"></script>
+    <div class="faq-item" data-cat="start">
+      <div class="faq-q" onclick="toggle(this)">
+        <div class="faq-num">03</div>
+        <div class="faq-q-text">Есть ли бесплатный доступ?</div>
+        <div class="faq-arrow">▼</div>
+      </div>
+      <div class="faq-a"><div class="faq-a-inner">Да. Бесплатный тариф даёт доступ к первым 3 модулям, симулятору и базе знаний. Этого достаточно чтобы понять подходит ли вам эта профессия.</div></div>
+    </div>
 
+    <div class="faq-item" data-cat="study">
+      <div class="faq-q" onclick="toggle(this)">
+        <div class="faq-num">04</div>
+        <div class="faq-q-text">Сколько времени занимает обучение?</div>
+        <div class="faq-arrow">▼</div>
+      </div>
+      <div class="faq-a"><div class="faq-a-inner">Полная программа — 12 модулей по 45-55 минут каждый. При занятиях 1-2 часа в день можно пройти курс за 3-4 недели. Доступ без ограничений по времени.</div></div>
+    </div>
+
+    <div class="faq-item" data-cat="study">
+      <div class="faq-q" onclick="toggle(this)">
+        <div class="faq-num">05</div>
+        <div class="faq-q-text">Как проходит обучение?</div>
+        <div class="faq-arrow">▼</div>
+      </div>
+      <div class="faq-a"><div class="faq-a-inner">Онлайн, в своём темпе. Текстовые модули с интерактивными тестами, симулятор переговоров с брокерами, AI-тренажёр, реальные кейсы и практические задания.</div></div>
+    </div>
+
+    <div class="faq-item" data-cat="study">
+      <div class="faq-q" onclick="toggle(this)">
+        <div class="faq-num">06</div>
+        <div class="faq-q-text">Что такое симулятор переговоров?</div>
+        <div class="faq-arrow">▼</div>
+      </div>
+      <div class="faq-a"><div class="faq-a-inner">Интерактивный тренажёр где вы практикуете реальные звонки с брокерами. AI играет роль брокера, вы — диспетчера. Можно отрабатывать разные сценарии: торг по ставке, TONU, detention и другие.</div></div>
+    </div>
+
+    <div class="faq-item" data-cat="work">
+      <div class="faq-q" onclick="toggle(this)">
+        <div class="faq-num">07</div>
+        <div class="faq-q-text">Можно ли работать удалённо?</div>
+        <div class="faq-arrow">▼</div>
+      </div>
+      <div class="faq-a"><div class="faq-a-inner">Да, 100%. Диспетчер работает полностью удалённо. Нужен только компьютер, стабильный интернет и тихое место для звонков. Работать можно из любой страны.</div></div>
+    </div>
+
+    <div class="faq-item" data-cat="work">
+      <div class="faq-q" onclick="toggle(this)">
+        <div class="faq-num">08</div>
+        <div class="faq-q-text">Помогаете ли с трудоустройством?</div>
+        <div class="faq-arrow">▼</div>
+      </div>
+      <div class="faq-a"><div class="faq-a-inner">Да, студенты Pro и Premium тарифов получают помощь с резюме, подготовку к собеседованиям и доступ к базе вакансий от партнёров. Также помогаем найти первых клиентов-перевозчиков.</div></div>
+    </div>
+
+    <div class="faq-item" data-cat="money">
+      <div class="faq-q" onclick="toggle(this)">
+        <div class="faq-num">09</div>
+        <div class="faq-q-text">Сколько зарабатывает диспетчер?</div>
+        <div class="faq-arrow">▼</div>
+      </div>
+      <div class="faq-a"><div class="faq-a-inner">Начинающие: $1,500–$3,000/мес. С опытом 6-12 месяцев: $3,000–$5,000/мес. Опытные диспетчеры с несколькими перевозчиками: $5,000–$10,000+/мес. Доход зависит от количества грузовиков и ставок.</div></div>
+    </div>
+
+    <div class="faq-item" data-cat="money">
+      <div class="faq-q" onclick="toggle(this)">
+        <div class="faq-num">10</div>
+        <div class="faq-q-text">Как быстро можно выйти на доход?</div>
+        <div class="faq-arrow">▼</div>
+      </div>
+      <div class="faq-a"><div class="faq-a-inner">Большинство выпускников находят первого клиента в течение 1-2 месяцев после окончания курса. Первые $1,000–$2,000 реальны уже в первый месяц работы при наличии 1-2 перевозчиков.</div></div>
+    </div>
+
+  </div>
+
+  <div class="highlight-box">
+    <h3>Остались вопросы?</h3>
+    <p>Напишите нам в Telegram — ответим в течение нескольких часов</p>
+    <a href="contacts.html" class="btn-primary">Написать нам →</a>
+  </div>
+
+</div>
+
+<script>
+function toggle(btn) {
+  const item = btn.closest('.faq-item');
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+function filterFaq(cat, btn) {
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.faq-item').forEach(item => {
+    item.style.display = (cat === 'all' || item.dataset.cat === cat) ? '' : 'none';
+  });
+}
+</script>
+<script src="auth.js?v=6.2"></script>
 </body>
-
 </html>
