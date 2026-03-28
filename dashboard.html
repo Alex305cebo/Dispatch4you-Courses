@@ -699,6 +699,42 @@
       60% { transform: scale(1.08) translateX(0); opacity: 1; }
       100% { transform: scale(1) translateX(0); opacity: 1; }
     }
+
+    /* ===== RECOMMEND CARDS ===== */
+    .rec-card {
+      display: flex; flex-direction: column;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-bottom: 3px solid transparent;
+      border-radius: 14px; padding: 14px;
+      text-decoration: none; color: inherit;
+      transition: all 0.22s ease;
+      cursor: pointer; position: relative; overflow: hidden;
+    }
+    .rec-card:hover {
+      transform: translateY(-4px);
+      background: rgba(255,255,255,0.06);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .rec-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .rec-card-icon { font-size: 24px; }
+    .rec-card-xp {
+      font-size: 11px; font-weight: 800;
+      padding: 3px 8px; border-radius: 10px;
+      letter-spacing: 0.03em;
+    }
+    .rec-card-title { font-size: 13px; font-weight: 700; color: #f1f5f9; margin-bottom: 4px; line-height: 1.3; }
+    .rec-card-desc  { font-size: 11px; color: #64748b; line-height: 1.4; flex: 1; }
+    .rec-card-action {
+      margin-top: 10px; font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .rec-card-done {
+      position: absolute; top: 8px; right: 8px;
+      font-size: 10px; font-weight: 700; color: #6ee7b7;
+      background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25);
+      padding: 2px 7px; border-radius: 8px;
+    }
   </style>
   <link rel="stylesheet" href="shared-nav.css?v=6.0.1774800000">
 </head>
@@ -724,36 +760,10 @@
           <a id="adminPanelBtn" href="pages/admin.html"
             style="display:none;margin-top:16px;padding:10px 24px;background:linear-gradient(135deg,#f59e0b,#ef4444);color:white;border-radius:12px;text-decoration:none;font-weight:700;font-size:14px;">⚡ Супер Админ Панель</a>
 
-          <!-- Полезная инфа для студента -->
-          <div id="studentInfoGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:24px;">
-            <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:14px;padding:16px;display:flex;align-items:flex-start;gap:12px;">
-              <span style="font-size:22px;">📚</span>
-              <div>
-                <div style="font-size:12px;font-weight:700;color:#a5b4fc;margin-bottom:3px;">ПРОГРАММА</div>
-                <div style="font-size:13px;color:#e2e8f0;">15 модулей от основ до профессионала</div>
-              </div>
-            </div>
-            <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:14px;padding:16px;display:flex;align-items:flex-start;gap:12px;">
-              <span style="font-size:22px;">🎯</span>
-              <div>
-                <div style="font-size:12px;font-weight:700;color:#6ee7b7;margin-bottom:3px;">СЛЕДУЮЩИЙ ШАГ</div>
-                <div style="font-size:13px;color:#e2e8f0;" id="nextStepText">Начните с Модуля 1 — Индустрия</div>
-              </div>
-            </div>
-            <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:14px;padding:16px;display:flex;align-items:flex-start;gap:12px;">
-              <span style="font-size:22px;">⚡</span>
-              <div>
-                <div style="font-size:12px;font-weight:700;color:#fbbf24;margin-bottom:3px;">XP СЕГОДНЯ</div>
-                <div style="font-size:13px;color:#e2e8f0;" id="todayXPText">Войдите каждый день +5 XP</div>
-              </div>
-            </div>
-            <div style="background:rgba(236,72,153,0.08);border:1px solid rgba(236,72,153,0.2);border-radius:14px;padding:16px;display:flex;align-items:flex-start;gap:12px;">
-              <span style="font-size:22px;">🏆</span>
-              <div>
-                <div style="font-size:12px;font-weight:700;color:#f9a8d4;margin-bottom:3px;">АЧИВКИ</div>
-                <div style="font-size:13px;color:#e2e8f0;" id="achievementsText">Выполняйте задания — получайте награды</div>
-              </div>
-            </div>
+          <!-- Динамические карточки: что изучить дальше -->
+          <div id="studentInfoGrid" style="margin-top:24px;">
+            <div style="font-size:12px;font-weight:700;color:#64748b;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">⚡ Изучи это — получи больше всего XP</div>
+            <div id="recommendCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;"></div>
           </div>
         </div>
       </div>
@@ -1108,6 +1118,75 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
+    // ===== ВСЕ РЕСУРСЫ С XP ПОТЕНЦИАЛОМ =====
+    const ALL_RESOURCES = [
+      // Модули — самые ценные (50 XP каждый)
+      { id: 'mod1',  icon:'🏭', title:'Модуль 1 — Индустрия',    desc:'Основы грузоперевозок США',      url:'pages/doc-module-1-complete.html',  xp:50, color:'#6366f1', key:'moduleComplete', threshold:1,  action:'Начать →' },
+      { id: 'mod2',  icon:'📘', title:'Модуль 2 — Термины',      desc:'75+ профессиональных терминов',  url:'pages/doc-module-2-complete.html',  xp:50, color:'#6366f1', key:'moduleComplete', threshold:2,  action:'Изучить →' },
+      { id: 'mod3',  icon:'🧑‍💼', title:'Модуль 3 — Диспетчер',   desc:'Роль и обязанности диспетчера', url:'pages/doc-module-3-complete.html',  xp:50, color:'#6366f1', key:'moduleComplete', threshold:3,  action:'Изучить →' },
+      { id: 'mod4',  icon:'🔍', title:'Модуль 4 — Load Boards',  desc:'DAT, Truckstop, поиск грузов',   url:'pages/doc-module-4-complete.html',  xp:50, color:'#6366f1', key:'moduleComplete', threshold:4,  action:'Изучить →' },
+      { id: 'mod5',  icon:'🗺️', title:'Модуль 5 — Маршруты',     desc:'48 штатов, Interstate коридоры', url:'pages/doc-module-5-complete.html',  xp:50, color:'#6366f1', key:'moduleComplete', threshold:5,  action:'Изучить →' },
+      { id: 'mod6',  icon:'🚛', title:'Модуль 6 — Оборудование', desc:'Dry Van, Reefer, Flatbed',       url:'pages/doc-module-6-complete.html',  xp:50, color:'#6366f1', key:'moduleComplete', threshold:6,  action:'Изучить →' },
+      { id: 'mod7',  icon:'💬', title:'Модуль 7 — Переговоры',   desc:'10 техник + скрипты на англ.',  url:'pages/doc-module-7-complete.html',  xp:50, color:'#6366f1', key:'moduleComplete', threshold:7,  action:'Изучить →' },
+      { id: 'mod8',  icon:'🤝', title:'Модуль 8 — Брокеры',      desc:'Проверка, работа, факторинг',   url:'pages/doc-module-8-complete.html',  xp:50, color:'#6366f1', key:'moduleComplete', threshold:8,  action:'Изучить →' },
+      { id: 'mod9',  icon:'📊', title:'Модуль 9 — CSA Scores',   desc:'HOS, ELD, безопасность',        url:'pages/doc-module-9-complete.html',  xp:50, color:'#6366f1', key:'moduleComplete', threshold:9,  action:'Изучить →' },
+      { id: 'mod10', icon:'📦', title:'Модуль 10 — Грузы',       desc:'Типы грузов, особенности',      url:'pages/doc-module-10-complete.html', xp:50, color:'#6366f1', key:'moduleComplete', threshold:10, action:'Изучить →' },
+      { id: 'mod11', icon:'⚠️', title:'Модуль 11 — Проблемы',    desc:'Решение нештатных ситуаций',    url:'pages/doc-module-11-complete.html', xp:50, color:'#6366f1', key:'moduleComplete', threshold:11, action:'Изучить →' },
+      { id: 'mod12', icon:'🚀', title:'Модуль 12 — Карьера',     desc:'90-дневный план запуска',       url:'pages/doc-module-12-complete.html', xp:50, color:'#6366f1', key:'moduleComplete', threshold:12, action:'Изучить →' },
+      // Инструменты
+      { id: 'sim',   icon:'🎯', title:'Симулятор',               desc:'Реальные переговоры с брокером', url:'pages/simulator.html',              xp:25, color:'#10b981', key:'simulatorDone',  threshold:1,  action:'Запустить →' },
+      { id: 'test',  icon:'✍️', title:'Тестирование',            desc:'Проверь свои знания',            url:'pages/testing.html',                xp:30, color:'#f59e0b', key:'testPassed',     threshold:1,  action:'Пройти тест →' },
+      { id: 'cases', icon:'💼', title:'Кейсы',                   desc:'Реальные ситуации диспетчера',   url:'pages/cases.html',                  xp:8,  color:'#ec4899', key:'caseStudyRead',  threshold:1,  action:'Читать →' },
+      { id: 'gloss', icon:'📘', title:'Глоссарий',               desc:'75+ терминов с объяснениями',    url:'pages/glossary.html',               xp:3,  color:'#06b6d4', key:'glossaryViewed', threshold:1,  action:'Открыть →' },
+      { id: 'ai',    icon:'🤖', title:'AI Брокер',               desc:'Практика переговоров с AI',      url:'pages/ai-broker-chat.html',         xp:10, color:'#8b5cf6', key:'aiBrokerUsed',   threshold:1,  action:'Попробовать →' },
+      { id: 'cards', icon:'🃏', title:'Карточки',                desc:'Флэш-карточки для запоминания',  url:'pages/dispatcher-cards.html',       xp:5,  color:'#f97316', key:'audioListened',  threshold:1,  action:'Тренировать →' },
+    ];
+
+    function renderRecommendCards(stats, streak, xp) {
+      const grid = document.getElementById('recommendCards');
+      if (!grid) return;
+
+      // Определяем что НЕ сделано и сортируем по XP потенциалу (убывание)
+      const notDone = ALL_RESOURCES.filter(r => {
+        const done = stats[r.key] || 0;
+        return done < r.threshold;
+      }).sort((a, b) => b.xp - a.xp);
+
+      // Берём топ-4 незавершённых + 1-2 завершённых для контекста
+      const top = notDone.slice(0, 4);
+
+      if (top.length === 0) {
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:20px;color:#6ee7b7;font-weight:700;">🎉 Отлично! Вы изучили все основные ресурсы!</div>`;
+        return;
+      }
+
+      grid.innerHTML = top.map(r => `
+        <a href="${r.url}" class="rec-card" style="border-bottom-color:${r.color}40;--rc:${r.color};">
+          <div class="rec-card-top">
+            <span class="rec-card-icon">${r.icon}</span>
+            <span class="rec-card-xp" style="background:${r.color}20;color:${r.color};border:1px solid ${r.color}40;">+${r.xp} XP</span>
+          </div>
+          <div class="rec-card-title">${r.title}</div>
+          <div class="rec-card-desc">${r.desc}</div>
+          <div class="rec-card-action" style="color:${r.color};">${r.action}</div>
+        </a>
+      `).join('');
+
+      // Hover эффект с цветом
+      grid.querySelectorAll('.rec-card').forEach((card, i) => {
+        const color = top[i]?.color || '#6366f1';
+        card.addEventListener('mouseenter', () => {
+          card.style.borderColor = color + '60';
+          card.style.boxShadow = `0 10px 30px ${color}25`;
+        });
+        card.addEventListener('mouseleave', () => {
+          card.style.borderColor = 'rgba(255,255,255,0.08)';
+          card.style.borderBottomColor = color + '40';
+          card.style.boxShadow = '';
+        });
+      });
+    }
+
     // ===== ВСЕ АЧИВКИ =====
     const ALL_ACHIEVEMENTS = [
       // Вход и активность
@@ -1232,24 +1311,6 @@
         }
       } catch(e) {}
 
-      // Следующий шаг
-      const nextStepEl = document.getElementById('nextStepText');
-      if (nextStepEl) {
-        const m = stats.moduleComplete || 0;
-        nextStepEl.textContent = m === 0 ? 'Начните с Модуля 1 — Индустрия' :
-          m < 6 ? `Продолжите Модуль ${m + 1}` : m < 12 ? `Модуль ${m + 1} ждёт вас!` : '🎉 Все модули пройдены!';
-      }
-
-      // XP сегодня
-      const todayEl = document.getElementById('todayXPText');
-      if (todayEl) todayEl.textContent = streak > 0 ? `🔥 Серия ${streak} дней! Так держать!` : 'Войдите каждый день +5 XP';
-
-      // Ачивки
-      const achEl = document.getElementById('achievementsText');
-      if (achEl) {
-        const unlocked = getUnlockedAchievements(xp, stats, streak);
-        achEl.textContent = `${unlocked.length} из ${ALL_ACHIEVEMENTS.length} ачивок разблокировано`;
-      }
       document.getElementById('xpLevelNum').textContent = 'Уровень ' + level.level;
       document.getElementById('xpTotal').textContent = xp;
       document.getElementById('xpStreak').textContent = streak;
@@ -1271,6 +1332,8 @@
 
       // Рендерим ачивки
       renderAchievements(xp, stats, streak);
+      // Рендерим рекомендации
+      renderRecommendCards(stats, streak, xp);
     }
 
     async function loadLeaderboard(currentUid) {
