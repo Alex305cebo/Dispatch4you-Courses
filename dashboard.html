@@ -822,77 +822,22 @@
 
       <!-- Tab: My Courses -->
       <div id="tab-courses" class="tab-content active">
-        <div class="courses-grid">
 
-          <div class="course-card">
-            <div class="course-image">🚀</div>
-            <div class="course-content">
-              <h3 class="course-title">Основы диспетчирования</h3>
-              <div class="course-progress">
-                <div class="progress-label">
-                  <span>Прогресс</span>
-                  <span>100%</span>
-                </div>
-                <div class="progress-bar">
-                  <div class="progress-fill" style="width: 100%"></div>
-                </div>
-              </div>
-              <button class="btn-continue">Завершено ✓</button>
+        <!-- Прогресс по курсу -->
+        <div id="courseProgressBar" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:200px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+              <span style="font-size:14px;font-weight:700;">📚 Прогресс курса</span>
+              <span id="courseProgressPct" style="font-size:14px;font-weight:700;color:#818cf8;">0 / 12 модулей</span>
+            </div>
+            <div style="height:8px;background:rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;">
+              <div id="courseProgressFill" style="height:100%;background:linear-gradient(90deg,#6366f1,#a78bfa);border-radius:8px;transition:width 0.5s ease;width:0%;"></div>
             </div>
           </div>
-
-          <div class="course-card">
-            <div class="course-image">📋</div>
-            <div class="course-content">
-              <h3 class="course-title">FMCSA и DOT регуляции</h3>
-              <div class="course-progress">
-                <div class="progress-label">
-                  <span>Прогресс</span>
-                  <span>65%</span>
-                </div>
-                <div class="progress-bar">
-                  <div class="progress-fill" style="width: 65%"></div>
-                </div>
-              </div>
-              <button class="btn-continue">Продолжить →</button>
-            </div>
-          </div>
-
-          <div class="course-card">
-            <div class="course-image">💼</div>
-            <div class="course-content">
-              <h3 class="course-title">Работа с Load Boards</h3>
-              <div class="course-progress">
-                <div class="progress-label">
-                  <span>Прогресс</span>
-                  <span>30%</span>
-                </div>
-                <div class="progress-bar">
-                  <div class="progress-fill" style="width: 30%"></div>
-                </div>
-              </div>
-              <button class="btn-continue">Продолжить →</button>
-            </div>
-          </div>
-
-          <div class="course-card">
-            <div class="course-image">🎯</div>
-            <div class="course-content">
-              <h3 class="course-title">Тренажёр вопросов</h3>
-              <div class="course-progress">
-                <div class="progress-label">
-                  <span>Интерактивные карточки</span>
-                  <span>Новое!</span>
-                </div>
-                <div class="progress-bar">
-                  <div class="progress-fill" style="width: 0%"></div>
-                </div>
-              </div>
-              <button class="btn-continue" onclick="window.location.href='quiz-cards.html'">Начать тренировку →</button>
-            </div>
-          </div>
-
+          <a href="pages/modules-index.html" style="padding:10px 20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border-radius:12px;text-decoration:none;font-weight:700;font-size:14px;white-space:nowrap;">📖 Все модули →</a>
         </div>
+
+        <div class="courses-grid" id="modulesGrid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;"></div>
       </div>
 
       <!-- Tab: Profile -->
@@ -1057,6 +1002,56 @@
       document.getElementById('firstName').value = displayUser.firstName;
       document.getElementById('lastName').value = displayUser.lastName || '';
       document.getElementById('email').value = displayUser.email || '';
+    }
+
+    // Рендерим модули сразу (прогресс обновится после Firebase)
+    renderModulesGrid(0);
+
+    // ===== 12 МОДУЛЕЙ =====
+    const MODULES_DATA = [
+      { n:1,  icon:'🏭', title:'Индустрия',    desc:'Основы грузоперевозок США $940B',    url:'pages/doc-module-1-complete.html',  color:'#6366f1' },
+      { n:2,  icon:'📘', title:'Термины',      desc:'75+ профессиональных терминов',       url:'pages/doc-module-2-complete.html',  color:'#8b5cf6' },
+      { n:3,  icon:'🧑‍💼', title:'Диспетчер',   desc:'Роль, обязанности, инструменты',     url:'pages/doc-module-3-complete.html',  color:'#06b6d4' },
+      { n:4,  icon:'🔍', title:'Load Boards',  desc:'DAT, Truckstop, поиск грузов',       url:'pages/doc-module-4-complete.html',  color:'#10b981' },
+      { n:5,  icon:'🗺️', title:'Маршруты',     desc:'48 штатов, Interstate коридоры',     url:'pages/doc-module-5-complete.html',  color:'#f59e0b' },
+      { n:6,  icon:'🚛', title:'Оборудование', desc:'Dry Van, Reefer, Flatbed',           url:'pages/doc-module-6-complete.html',  color:'#f97316' },
+      { n:7,  icon:'💬', title:'Переговоры',   desc:'10 техник + скрипты на английском',  url:'pages/doc-module-7-complete.html',  color:'#ec4899' },
+      { n:8,  icon:'🤝', title:'Брокеры',      desc:'Проверка, работа, факторинг',        url:'pages/doc-module-8-complete.html',  color:'#ef4444' },
+      { n:9,  icon:'📊', title:'CSA Scores',   desc:'HOS, ELD, безопасность',             url:'pages/doc-module-9-complete.html',  color:'#a78bfa' },
+      { n:10, icon:'📦', title:'Грузы',        desc:'Типы грузов, особенности',           url:'pages/doc-module-10-complete.html', color:'#34d399' },
+      { n:11, icon:'⚠️', title:'Проблемы',     desc:'Решение нештатных ситуаций',         url:'pages/doc-module-11-complete.html', color:'#fbbf24' },
+      { n:12, icon:'🚀', title:'Карьера',      desc:'90-дневный план запуска',            url:'pages/doc-module-12-complete.html', color:'#818cf8' },
+    ];
+
+    function renderModulesGrid(completedCount) {
+      const grid = document.getElementById('modulesGrid');
+      if (!grid) return;
+      grid.innerHTML = MODULES_DATA.map(m => {
+        const done = m.n <= completedCount;
+        const current = m.n === completedCount + 1;
+        return `<div class="course-card" style="cursor:pointer;border-color:${done ? m.color+'40' : current ? m.color+'30' : 'rgba(255,255,255,0.08)'};background:${done ? m.color+'10' : 'rgba(255,255,255,0.03)'};" onclick="window.location.href='${m.url}'">
+          <div class="course-image" style="font-size:36px;position:relative;">
+            ${m.icon}
+            ${done ? '<span style="position:absolute;top:-4px;right:-4px;font-size:16px;">✅</span>' : ''}
+            ${current ? '<span style="position:absolute;top:-4px;right:-4px;font-size:14px;background:#6366f1;color:white;border-radius:8px;padding:1px 5px;font-size:10px;font-weight:700;">СЕЙЧАС</span>' : ''}
+          </div>
+          <div class="course-content">
+            <div style="font-size:11px;color:${m.color};font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em;">Модуль ${m.n}</div>
+            <h3 class="course-title" style="font-size:15px;margin-bottom:4px;">${m.title}</h3>
+            <p style="font-size:12px;color:#64748b;margin-bottom:12px;line-height:1.4;">${m.desc}</p>
+            <button class="btn-continue" style="background:${done ? 'rgba(16,185,129,0.15)' : current ? 'linear-gradient(135deg,'+m.color+','+m.color+'cc)' : 'rgba(255,255,255,0.05)'};color:${done ? '#6ee7b7' : '#fff'};border:1px solid ${done ? 'rgba(16,185,129,0.3)' : m.color+'40'};font-size:12px;padding:8px 14px;">
+              ${done ? '✅ Завершён' : current ? '▶ Продолжить' : '🔒 Начать'}
+            </button>
+          </div>
+        </div>`;
+      }).join('');
+
+      // Обновляем прогресс бар
+      const pct = Math.round((completedCount / 12) * 100);
+      const fill = document.getElementById('courseProgressFill');
+      const label = document.getElementById('courseProgressPct');
+      if (fill) fill.style.width = pct + '%';
+      if (label) label.textContent = `${completedCount} / 12 модулей (${pct}%)`;
     }
 
     // Tab switching
@@ -1317,6 +1312,9 @@
       document.getElementById('xpQuizzes').textContent = stats.quizCorrect || 0;
       document.getElementById('xpModules').textContent = stats.moduleComplete || 0;
       document.getElementById('xpAudio').textContent = stats.audioListened || 0;
+
+      // Рендерим сетку модулей
+      renderModulesGrid(stats.moduleComplete || 0);
 
       if (next) {
         const prevXP = level.minXP;
