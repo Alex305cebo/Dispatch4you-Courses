@@ -330,6 +330,33 @@
       <div class="error-msg" id="errorMsg"></div>
       <div class="success-msg" id="successMsg"></div>
 
+      <!-- ШАГ 2: Установка пароля после Google (скрыт по умолчанию) -->
+      <div id="step2" style="display:none;">
+        <div style="text-align:center;margin-bottom:20px;padding:16px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:12px;">
+          <div id="step2GoogleInfo" style="font-size:14px;color:#6ee7b7;font-weight:600;"></div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Установите пароль чтобы входить и через email</div>
+        </div>
+        <div class="form-group">
+          <label>Придумайте пароль</label>
+          <div class="password-wrapper">
+            <input type="password" id="googlePassword" placeholder="Минимум 8 символов" minlength="8">
+            <button type="button" class="toggle-password" id="toggleGooglePassword">👁️</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Подтвердите пароль</label>
+          <div class="password-wrapper">
+            <input type="password" id="googleConfirmPassword" placeholder="Повторите пароль" minlength="8">
+            <button type="button" class="toggle-password" id="toggleGoogleConfirmPassword">👁️</button>
+          </div>
+        </div>
+        <button type="button" class="btn" id="setPasswordBtn">Установить пароль и войти</button>
+        <div style="text-align:center;margin-top:12px;">
+          <a href="#" id="skipPasswordBtn" style="color:var(--text-muted);font-size:13px;text-decoration:none;">Пропустить — войти только через Google</a>
+        </div>
+      </div>
+
+      <div id="step1">
       <form id="registerForm">
         <div class="form-row">
           <div>
@@ -380,12 +407,13 @@
 
       <div class="bottom-link">Уже есть аккаунт? <a href="login.html">Войти</a></div>
       <div class="back"><a href="index.html">← Вернуться на главную</a></div>
+    </div> <!-- /step1 -->
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, updateProfile, linkWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -402,99 +430,69 @@
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
-    function saveUserToFirestore(user, firstName, lastName, phone = '', additionalData = {}) {
-      const userData = {
-        uid: user.uid, firstName, lastName,
-        email: user.email,
-        displayName: user.displayName || (firstName + ' ' + lastName),
-        photoURL: user.photoURL || '',
-        lastLogin: serverTimestamp(),
-        provider: user.providerData[0]?.providerId || 'password',
-        ...additionalData
-      };
-
-      // Роль доступа по умолчанию при регистрации
-      if (!additionalData.accessRole) {
-        userData.accessRole = 'registered';
-      }
-
-      // Добавляем телефон только если он указан
-      if (phone && phone.trim()) {
-        userData.phone = phone.trim();
-      }
-
-      return setDoc(doc(db, 'users', user.uid), userData, { merge: true });
-    }
-
     const errorMsg = document.getElementById('errorMsg');
     const successMsg = document.getElementById('successMsg');
 
-    function showError(msg) {
-      errorMsg.textContent = msg; errorMsg.style.display = 'block';
-      successMsg.style.display = 'none';
-    }
-    function showSuccess(msg) {
-      successMsg.textContent = msg; successMsg.style.display = 'block';
-      errorMsg.style.display = 'none';
-    }
+    function showError(msg) { errorMsg.textContent = msg; errorMsg.style.display = 'block'; successMsg.style.display = 'none'; }
+    function showSuccess(msg) { successMsg.textContent = msg; successMsg.style.display = 'block'; errorMsg.style.display = 'none'; }
     function translateError(code) {
       const map = {
         'auth/email-already-in-use': 'Этот email уже зарегистрирован.',
         'auth/invalid-email': 'Неверный формат email.',
         'auth/weak-password': 'Пароль слишком слабый. Минимум 8 символов.',
         'auth/network-request-failed': 'Ошибка сети. Проверьте интернет.',
+        'auth/credential-already-in-use': 'Этот пароль уже привязан к аккаунту.',
       };
       return map[code] || 'Ошибка: ' + code;
     }
 
-    // Email/Password registration
+    function trialData() {
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + 7);
+      return { trialActive: true, trialEndDate, subscriptionType: 'trial' };
+    }
+
+    async function saveUserToFirestore(user, firstName, lastName, phone = '', extra = {}) {
+      const data = {
+        uid: user.uid, firstName, lastName,
+        email: user.email,
+        displayName: user.displayName || (firstName + ' ' + lastName),
+        photoURL: user.photoURL || '',
+        lastLogin: serverTimestamp(),
+        provider: user.providerData.map(p => p.providerId).join(','),
+        accessRole: 'registered',
+        ...extra
+      };
+      if (phone && phone.trim()) data.phone = phone.trim();
+      return setDoc(doc(db, 'users', user.uid), data, { merge: true });
+    }
+
+    function saveLocalUser(user, firstName, lastName, extra = {}) {
+      localStorage.setItem('user', JSON.stringify({
+        uid: user.uid, firstName, lastName, email: user.email, ...extra
+      }));
+    }
+
+    // ─── ШАГ 1: Обычная регистрация email/password ───────────────────────────
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const firstName = document.getElementById('firstName').value.trim();
-      const lastName = document.getElementById('lastName').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const phone = document.getElementById('phone').value.trim();
-      const password = document.getElementById('password').value;
-      const confirm = document.getElementById('confirmPassword').value;
-      const btn = document.getElementById('submitBtn');
+      const lastName  = document.getElementById('lastName').value.trim();
+      const email     = document.getElementById('email').value.trim();
+      const phone     = document.getElementById('phone').value.trim();
+      const password  = document.getElementById('password').value;
+      const confirm   = document.getElementById('confirmPassword').value;
+      const btn       = document.getElementById('submitBtn');
 
       if (password !== confirm) { showError('Пароли не совпадают!'); return; }
-
       btn.disabled = true; btn.textContent = 'Создаём аккаунт...';
 
       try {
-        console.log('Registering:', email);
         const cred = await createUserWithEmailAndPassword(auth, email, password);
-        console.log('Registration success:', cred.user.uid);
         await updateProfile(cred.user, { displayName: firstName + ' ' + lastName });
-
-        // Calculate 7-day trial expiration
-        const trialEndDate = new Date();
-        trialEndDate.setDate(trialEndDate.getDate() + 7);
-
-        localStorage.setItem('user', JSON.stringify({
-          uid: cred.user.uid,
-          firstName,
-          lastName,
-          email,
-          phone,
-          trialActive: true,
-          trialEndDate: trialEndDate.toISOString(),
-          subscriptionType: 'trial'
-        }));
-
-        try {
-          await saveUserToFirestore(cred.user, firstName, lastName, phone, {
-            trialActive: true,
-            trialEndDate: trialEndDate,
-            subscriptionType: 'trial',
-            registrationDate: serverTimestamp()
-          });
-          console.log('✅ Firestore: пользователь сохранён с пробным периодом');
-        } catch (fsErr) {
-          console.error('❌ Firestore error:', fsErr.code, fsErr.message);
-        }
-
+        const td = trialData();
+        saveLocalUser(cred.user, firstName, lastName, { phone, ...td, trialEndDate: td.trialEndDate.toISOString() });
+        try { await saveUserToFirestore(cred.user, firstName, lastName, phone, { ...td, registrationDate: serverTimestamp() }); } catch(e) { console.error(e); }
         showSuccess('🎉 Аккаунт создан! Вам предоставлен бесплатный доступ на 7 дней!');
         setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
       } catch (err) {
@@ -503,72 +501,117 @@
       }
     });
 
-    // Google registration
+    // ─── ШАГ 1: Google — после входа показываем шаг 2 (установка пароля) ────
+    let _googleUser = null; // сохраняем пользователя между шагами
+
     document.getElementById('googleBtn').addEventListener('click', async () => {
       try {
         const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        const parts = (user.displayName || '').split(' ');
-        const firstName = parts[0] || user.email.split('@')[0];
-        const lastName = parts.slice(1).join(' ') || '';
-
-        // Calculate 7-day trial expiration
-        const trialEndDate = new Date();
-        trialEndDate.setDate(trialEndDate.getDate() + 7);
-
-        localStorage.setItem('user', JSON.stringify({
-          uid: user.uid,
-          firstName,
-          lastName,
-          email: user.email,
-          trialActive: true,
-          trialEndDate: trialEndDate.toISOString(),
-          subscriptionType: 'trial'
-        }));
-
-        try {
-          await saveUserToFirestore(user, firstName, lastName, '', {
-            trialActive: true,
-            trialEndDate: trialEndDate,
-            subscriptionType: 'trial',
-            registrationDate: serverTimestamp()
-          });
-          console.log('✅ Firestore: пользователь сохранён (Google) с пробным периодом');
-        } catch (fsErr) {
-          console.error('❌ Firestore error (Google):', fsErr.code, fsErr.message);
-        }
-        window.location.href = 'dashboard.html';
+        showGoogleStep2(result.user);
       } catch (err) {
-        if (err.code !== 'auth/popup-closed-by-user') showError(translateError(err.code));
+        if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
+          if (err.code === 'auth/popup-blocked') {
+            try { await signInWithRedirect(auth, provider); } catch(e) {}
+          }
+        } else {
+          showError(translateError(err.code));
+        }
       }
     });
 
-    // Toggle password visibility
-    document.getElementById('togglePassword').addEventListener('click', function () {
-      const passwordInput = document.getElementById('password');
-      const toggleBtn = this;
+    // Проверяем redirect result при загрузке (fallback для popup-blocked)
+    getRedirectResult(auth).then(result => {
+      if (result && result.user) showGoogleStep2(result.user);
+    }).catch(console.error);
 
-      if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        toggleBtn.textContent = '🙈';
-      } else {
-        passwordInput.type = 'password';
-        toggleBtn.textContent = '👁️';
+    function showGoogleStep2(user) {
+      _googleUser = user;
+      const parts = (user.displayName || '').split(' ');
+      const firstName = parts[0] || user.email.split('@')[0];
+      const lastName  = parts.slice(1).join(' ') || '';
+      _googleUser._firstName = firstName;
+      _googleUser._lastName  = lastName;
+
+      // Переключаем UI
+      document.getElementById('step1').style.display = 'none';
+      document.getElementById('step2').style.display = 'block';
+      document.getElementById('step2GoogleInfo').textContent =
+        `✅ Google: ${user.email} (${user.displayName || firstName})`;
+      errorMsg.style.display = 'none';
+      successMsg.style.display = 'none';
+    }
+
+    // ─── ШАГ 2: Установка пароля и привязка к Google-аккаунту ───────────────
+    document.getElementById('setPasswordBtn').addEventListener('click', async () => {
+      if (!_googleUser) return;
+      const password = document.getElementById('googlePassword').value;
+      const confirm  = document.getElementById('googleConfirmPassword').value;
+      const btn      = document.getElementById('setPasswordBtn');
+
+      if (password.length < 8) { showError('Пароль должен быть минимум 8 символов.'); return; }
+      if (password !== confirm) { showError('Пароли не совпадают!'); return; }
+
+      btn.disabled = true; btn.textContent = 'Сохраняем...';
+
+      try {
+        // Привязываем email/password credential к Google-аккаунту
+        const credential = EmailAuthProvider.credential(_googleUser.email, password);
+        await linkWithCredential(_googleUser, credential);
+
+        const td = trialData();
+        const firstName = _googleUser._firstName;
+        const lastName  = _googleUser._lastName;
+
+        saveLocalUser(_googleUser, firstName, lastName, { ...td, trialEndDate: td.trialEndDate.toISOString() });
+        try {
+          await saveUserToFirestore(_googleUser, firstName, lastName, '', {
+            ...td, registrationDate: serverTimestamp(),
+            providers: 'google.com,password'
+          });
+        } catch(e) { console.error(e); }
+
+        showSuccess('🎉 Пароль установлен! Теперь вы можете входить и через Google, и через email+пароль.');
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
+      } catch (err) {
+        console.error('linkWithCredential error:', err.code);
+        if (err.code === 'auth/provider-already-linked') {
+          // Уже привязан — просто идём дальше
+          finishGoogleRegistration();
+        } else if (err.code === 'auth/weak-password') {
+          showError('Пароль слишком слабый. Минимум 8 символов.');
+        } else {
+          showError(translateError(err.code));
+        }
+        btn.disabled = false; btn.textContent = 'Установить пароль и войти';
       }
     });
 
-    document.getElementById('toggleConfirmPassword').addEventListener('click', function () {
-      const confirmPasswordInput = document.getElementById('confirmPassword');
-      const toggleBtn = this;
+    async function finishGoogleRegistration() {
+      const td = trialData();
+      const firstName = _googleUser._firstName;
+      const lastName  = _googleUser._lastName;
+      saveLocalUser(_googleUser, firstName, lastName, { ...td, trialEndDate: td.trialEndDate.toISOString() });
+      try { await saveUserToFirestore(_googleUser, firstName, lastName, '', { ...td, registrationDate: serverTimestamp() }); } catch(e) {}
+      window.location.href = 'dashboard.html';
+    }
 
-      if (confirmPasswordInput.type === 'password') {
-        confirmPasswordInput.type = 'text';
-        toggleBtn.textContent = '🙈';
-      } else {
-        confirmPasswordInput.type = 'password';
-        toggleBtn.textContent = '👁️';
-      }
+    // Пропустить установку пароля
+    document.getElementById('skipPasswordBtn').addEventListener('click', async (e) => {
+      e.preventDefault();
+      if (!_googleUser) return;
+      await finishGoogleRegistration();
     });
+
+    // ─── Toggle password visibility ──────────────────────────────────────────
+    function togglePwd(inputId, btn) {
+      const inp = document.getElementById(inputId);
+      if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+      else { inp.type = 'password'; btn.textContent = '👁️'; }
+    }
+    document.getElementById('togglePassword').addEventListener('click', function() { togglePwd('password', this); });
+    document.getElementById('toggleConfirmPassword').addEventListener('click', function() { togglePwd('confirmPassword', this); });
+    document.getElementById('toggleGooglePassword').addEventListener('click', function() { togglePwd('googlePassword', this); });
+    document.getElementById('toggleGoogleConfirmPassword').addEventListener('click', function() { togglePwd('googleConfirmPassword', this); });
   </script>
 </body>
 
