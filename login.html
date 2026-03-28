@@ -352,6 +352,30 @@
     </div>
   </div>
 
+  <!-- Модал: установка пароля для Google-аккаунта -->
+  <div id="setPasswordModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#0f172a;border:1px solid rgba(99,102,241,0.3);border-radius:24px;padding:36px;max-width:420px;width:100%;position:relative;">
+      <button onclick="document.getElementById('setPasswordModal').style.display='none'" style="position:absolute;top:16px;right:16px;background:none;border:none;color:#64748b;font-size:20px;cursor:pointer;">✕</button>
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:40px;margin-bottom:8px;">🔑</div>
+        <h2 style="font-size:20px;font-weight:800;margin-bottom:6px;">Установить пароль</h2>
+        <p id="modalEmailInfo" style="font-size:13px;color:#94a3b8;"></p>
+      </div>
+      <div id="modalError" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:10px 14px;color:#fca5a5;font-size:13px;margin-bottom:14px;display:none;"></div>
+      <div id="modalSuccess" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:10px 14px;color:#6ee7b7;font-size:13px;margin-bottom:14px;display:none;"></div>
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Новый пароль</label>
+        <input type="password" id="modalPassword" placeholder="Минимум 8 символов" style="width:100%;padding:12px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:#f1f5f9;font-size:14px;font-family:Inter,sans-serif;">
+      </div>
+      <div style="margin-bottom:20px;">
+        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Подтвердите пароль</label>
+        <input type="password" id="modalConfirmPassword" placeholder="Повторите пароль" style="width:100%;padding:12px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:#f1f5f9;font-size:14px;font-family:Inter,sans-serif;">
+      </div>
+      <button id="modalSetPasswordBtn" style="width:100%;padding:14px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;">Сохранить пароль</button>
+      <p style="text-align:center;margin-top:14px;font-size:12px;color:#64748b;">Войдите через Google → установите пароль</p>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, sendPasswordResetEmail, fetchSignInMethodsForEmail, linkWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
@@ -528,20 +552,98 @@
       }
     });
 
-    // Forgot password
+    // Forgot password — умная логика
     document.getElementById('forgotLink').addEventListener('click', async (e) => {
       e.preventDefault();
       const email = document.getElementById('email').value.trim();
-      if (!email) { showError('Введите email для сброса пароля.'); return; }
+      if (!email) { showError('Введите email выше, затем нажмите "Забыли пароль?"'); return; }
+
       try {
+        // Пробуем отправить письмо сброса
         await sendPasswordResetEmail(auth, email);
-        resetMsg.textContent = 'Письмо для сброса пароля отправлено на ' + email;
-        resetMsg.style.display = 'block';
-        errorMsg.style.display = 'none';
+        showInfo('✅ Письмо отправлено на ' + email + '. Проверьте папку "Спам" если не видите.');
       } catch (err) {
-        showError(translateError(err.code));
+        console.error('resetPassword error:', err.code);
+
+        if (err.code === 'auth/user-not-found') {
+          // Аккаунт не существует вообще
+          showError('❌ Аккаунт с таким email не найден.');
+
+        } else if (err.code === 'auth/invalid-email') {
+          showError('❌ Неверный формат email.');
+
+        } else {
+          // Возможно Google-only аккаунт — предлагаем войти через Google и установить пароль
+          showError('⚠️ Не удалось отправить письмо. Если вы регистрировались через Google — войдите через Google и установите пароль.');
+          // Показываем кнопку входа через Google для установки пароля
+          errorMsg.innerHTML += `<br><br>
+            <button onclick="openSetPasswordModal('${email}')" style="background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);color:#a5b4fc;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">
+              🔑 Войти через Google и установить пароль
+            </button>`;
+        }
       }
     });
+
+    // Открываем модал установки пароля — сначала входим через Google
+    window.openSetPasswordModal = async function(emailHint) {
+      try {
+        const result = await signInWithPopup(auth, new GoogleAuthProvider());
+        const user = result.user;
+        document.getElementById('modalEmailInfo').textContent = 'Аккаунт: ' + user.email;
+        document.getElementById('setPasswordModal').style.display = 'flex';
+        document.getElementById('modalError').style.display = 'none';
+        document.getElementById('modalSuccess').style.display = 'none';
+        document.getElementById('modalPassword').value = '';
+        document.getElementById('modalConfirmPassword').value = '';
+
+        // Вешаем обработчик на кнопку сохранения
+        document.getElementById('modalSetPasswordBtn').onclick = async function() {
+          const pwd = document.getElementById('modalPassword').value;
+          const cpwd = document.getElementById('modalConfirmPassword').value;
+          const modalErr = document.getElementById('modalError');
+          const modalOk = document.getElementById('modalSuccess');
+
+          if (pwd.length < 8) { modalErr.textContent = 'Минимум 8 символов.'; modalErr.style.display = 'block'; return; }
+          if (pwd !== cpwd) { modalErr.textContent = 'Пароли не совпадают!'; modalErr.style.display = 'block'; return; }
+
+          this.disabled = true; this.textContent = 'Сохраняем...';
+          try {
+            // Привязываем email/password к Google-аккаунту
+            const { linkWithCredential, EmailAuthProvider } = await import("https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js");
+            const credential = EmailAuthProvider.credential(user.email, pwd);
+            await linkWithCredential(user, credential);
+            modalErr.style.display = 'none';
+            modalOk.textContent = '✅ Пароль установлен! Теперь можно входить через email+пароль.';
+            modalOk.style.display = 'block';
+            setTimeout(() => {
+              document.getElementById('setPasswordModal').style.display = 'none';
+              showInfo('✅ Пароль установлен для ' + user.email + '. Теперь войдите с ним.');
+            }, 2000);
+          } catch(linkErr) {
+            console.error('link error:', linkErr.code);
+            if (linkErr.code === 'auth/provider-already-linked') {
+              // Уже привязан — просто обновляем пароль
+              const { updatePassword } = await import("https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js");
+              try {
+                await updatePassword(user, pwd);
+                modalOk.textContent = '✅ Пароль обновлён!';
+                modalOk.style.display = 'block';
+                setTimeout(() => { document.getElementById('setPasswordModal').style.display = 'none'; }, 2000);
+              } catch(upErr) {
+                modalErr.textContent = 'Ошибка: ' + upErr.code; modalErr.style.display = 'block';
+              }
+            } else {
+              modalErr.textContent = 'Ошибка: ' + linkErr.code; modalErr.style.display = 'block';
+            }
+            this.disabled = false; this.textContent = 'Сохранить пароль';
+          }
+        };
+      } catch(googleErr) {
+        if (googleErr.code !== 'auth/popup-closed-by-user') {
+          showError('Ошибка входа через Google: ' + googleErr.code);
+        }
+      }
+    };
 
     // Toggle password visibility
     document.getElementById('togglePassword').addEventListener('click', function () {
