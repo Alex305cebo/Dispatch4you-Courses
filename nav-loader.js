@@ -103,7 +103,7 @@
 </div>`;
 
     function loadNav() {
-        fetch(BASE + 'nav.html')
+        fetch(BASE + 'nav.html?v=7.0')
             .then(function (r) { if (!r.ok) throw 0; return r.text(); })
             .then(function (html) { inject(html.replace(/\{\{BASE\}\}/g, BASE)); })
             .catch(function () { inject(NAV_INLINE.replace(/\{\{BASE\}\}/g, BASE)); });
