@@ -2881,6 +2881,27 @@
             }
         });
     </script>
+
+        // Добавляем кнопки разблокировки снаружи каждого заблокированного квиза
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.quick-check-block.locked').forEach(function(quiz) {
+                var quizId = quiz.id;
+                if (!quizId) return;
+                var innerBtn = quiz.querySelector('.audio-completion-btn');
+                if (!innerBtn) return;
+                var onclickAttr = innerBtn.getAttribute('onclick') || '';
+                var audioMatch = onclickAttr.match(/markAudioComplete\(this,\s*'(audio\d+)'/);
+                if (!audioMatch) return;
+                var audioId = audioMatch[1];
+                var btn = document.createElement('button');
+                btn.className = 'audio-completion-btn unlock-btn';
+                btn.setAttribute('data-quiz', quizId);
+                btn.innerHTML = '🔓 Я прослушал аудио — разблокировать квиз';
+                btn.style.cssText = 'margin-top:12px;width:100%;';
+                btn.onclick = function() { markAudioComplete(this, audioId, quizId); };
+                quiz.parentNode.insertBefore(btn, quiz);
+            });
+        });
 </body>
 
 <script>

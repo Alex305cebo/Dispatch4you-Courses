@@ -3376,28 +3376,48 @@
             button.textContent = '✅ Аудио прослушано';
             button.disabled = true;
 
+            // Также деактивируем дублирующую кнопку снаружи если есть
+            const outerBtn = document.querySelector(`.unlock-btn[data-quiz="${quizId}"]`);
+            if (outerBtn) { outerBtn.classList.add('completed'); outerBtn.textContent = '✅ Разблокировано'; outerBtn.disabled = true; }
+
             // Unlock quiz with animation
             const quizBlock = document.getElementById(quizId);
             if (quizBlock) {
-                // Remove locked class
                 quizBlock.classList.remove('locked');
-
-                // Ensure quiz is visible and interactive
                 quizBlock.style.opacity = '1';
                 quizBlock.style.pointerEvents = 'auto';
-
-                // Add unlock animation
                 quizBlock.style.transform = 'scale(0.98)';
-                setTimeout(() => {
-                    quizBlock.style.transform = 'scale(1)';
-                }, 100);
-
-                // Scroll to quiz smoothly
-                setTimeout(() => {
-                    quizBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 200);
+                setTimeout(() => { quizBlock.style.transform = 'scale(1)'; }, 100);
+                setTimeout(() => { quizBlock.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 200);
             }
         }
+
+        // Добавляем кнопки разблокировки снаружи каждого заблокированного квиза
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.quick-check-block.locked').forEach(function(quiz) {
+                const quizId = quiz.id;
+                if (!quizId) return;
+
+                // Ищем соответствующую кнопку внутри quiz-feedback чтобы получить audioId
+                const innerBtn = quiz.querySelector('.audio-completion-btn');
+                if (!innerBtn) return;
+                const onclickAttr = innerBtn.getAttribute('onclick') || '';
+                const audioMatch = onclickAttr.match(/markAudioComplete\(this,\s*'(audio\d+)'/);
+                if (!audioMatch) return;
+                const audioId = audioMatch[1];
+
+                // Создаём внешнюю кнопку
+                const btn = document.createElement('button');
+                btn.className = 'audio-completion-btn unlock-btn';
+                btn.setAttribute('data-quiz', quizId);
+                btn.innerHTML = '🔓 Я прослушал аудио — разблокировать квиз';
+                btn.style.cssText = 'margin-top:12px;width:100%;';
+                btn.onclick = function() { markAudioComplete(this, audioId, quizId); };
+
+                // Вставляем ПЕРЕД заблокированным квизом
+                quiz.parentNode.insertBefore(btn, quiz);
+            });
+        });
 
         // Mobile menu
         (function () {
