@@ -2077,6 +2077,7 @@
                 <div class="ni" onclick="nav('mailing',this)"><i class="fa fa-paper-plane"></i><span
                         class="nl">Рассылки</span></div>
                 <div class="ns">Система</div>
+                <div class="ni" onclick="nav('activity',this)"><i class="fa fa-history"></i><span class="nl">История действий</span><span class="bdg" id="bdg-activity" style="background:#6366f1">NEW</span></div>
                 <div class="ni" onclick="nav('notifications',this)"><i class="fa fa-bell"></i><span
                         class="nl">Уведомления</span><span class="bdg r">5</span></div>
                 <div class="ni" onclick="nav('logs',this)"><i class="fa fa-terminal"></i><span class="nl">Логи</span>
@@ -2648,6 +2649,83 @@
                     </div>
                 </div>
 
+                <!-- PAGE: ACTIVITY HISTORY -->
+                <div class="page" id="p-activity">
+                    <div class="sh">
+                        <div class="st">История действий<span>Полная активность каждого студента</span></div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <select class="sel" id="actUserFilter" onchange="filterActivity()">
+                                <option value="">Все пользователи</option>
+                            </select>
+                            <select class="sel" id="actTypeFilter" onchange="filterActivity()">
+                                <option value="">Все действия</option>
+                                <option value="QUIZ_CORRECT">✅ Правильный ответ</option>
+                                <option value="MODULE_COMPLETE">🎓 Модуль завершён</option>
+                                <option value="QUIZ_COMPLETE">📝 Квиз завершён</option>
+                                <option value="AUDIO_LISTENED">🎧 Аудио</option>
+                                <option value="TEST_PASSED">✍️ Тест</option>
+                                <option value="SIMULATOR_DONE">🎯 Симулятор</option>
+                                <option value="DAILY_LOGIN">🌅 Вход</option>
+                                <option value="CASE_STUDY_READ">💼 Кейс</option>
+                            </select>
+                            <input type="date" class="sel" id="actDateFilter" onchange="filterActivity()" style="color:#e2e8f0;background:var(--card2);">
+                            <button class="btn btn-s" onclick="clearActivityFilters()"><i class="fa fa-times"></i> Сбросить</button>
+                            <button class="btn btn-p" onclick="exportActivity()"><i class="fa fa-download"></i> Экспорт CSV</button>
+                        </div>
+                    </div>
+
+                    <!-- Сводная статистика -->
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px;" id="actSummary">
+                        <div class="sc"><div class="si" style="background:rgba(99,102,241,0.2)"><i class="fa fa-bolt" style="color:#818cf8"></i></div><div class="sv" id="act-total-events">—</div><div class="sl">Всего событий</div></div>
+                        <div class="sc"><div class="si" style="background:rgba(16,185,129,0.2)"><i class="fa fa-check" style="color:#10b981"></i></div><div class="sv" id="act-total-xp">—</div><div class="sl">XP начислено</div></div>
+                        <div class="sc"><div class="si" style="background:rgba(245,158,11,0.2)"><i class="fa fa-users" style="color:#f59e0b"></i></div><div class="sv" id="act-active-today">—</div><div class="sl">Активны сегодня</div></div>
+                        <div class="sc"><div class="si" style="background:rgba(239,68,68,0.2)"><i class="fa fa-graduation-cap" style="color:#ef4444"></i></div><div class="sv" id="act-modules-today">—</div><div class="sl">Модулей сегодня</div></div>
+                    </div>
+
+                    <!-- Таблица истории -->
+                    <div class="card" style="padding:0;overflow:hidden;">
+                        <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+                            <span style="font-weight:700;font-size:15px;">📋 Лента событий</span>
+                            <span id="actCount" style="font-size:12px;color:var(--muted);">Загрузка...</span>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%;border-collapse:collapse;" id="actTable">
+                                <thead>
+                                    <tr style="background:var(--card2);">
+                                        <th style="padding:12px 16px;text-align:left;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">ВРЕМЯ</th>
+                                        <th style="padding:12px 16px;text-align:left;font-size:12px;color:var(--muted);font-weight:600;">СТУДЕНТ</th>
+                                        <th style="padding:12px 16px;text-align:left;font-size:12px;color:var(--muted);font-weight:600;">ДЕЙСТВИЕ</th>
+                                        <th style="padding:12px 16px;text-align:left;font-size:12px;color:var(--muted);font-weight:600;">ДЕТАЛИ</th>
+                                        <th style="padding:12px 16px;text-align:right;font-size:12px;color:var(--muted);font-weight:600;">XP</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="actBody">
+                                    <tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted);">Загрузка истории...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div style="padding:16px 20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+                            <button class="btn btn-s" id="actLoadMore" onclick="loadMoreActivity()" style="display:none;"><i class="fa fa-chevron-down"></i> Загрузить ещё</button>
+                            <span id="actShown" style="font-size:12px;color:var(--muted);"></span>
+                        </div>
+                    </div>
+
+                    <!-- Детальный профиль студента -->
+                    <div id="actUserProfile" style="display:none;margin-top:24px;">
+                        <div class="card" style="padding:24px;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+                                <h3 style="font-size:18px;font-weight:700;" id="actProfileName">—</h3>
+                                <button class="btn btn-s" onclick="document.getElementById('actUserProfile').style.display='none';document.getElementById('actUserFilter').value='';filterActivity()"><i class="fa fa-times"></i></button>
+                            </div>
+                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;" id="actProfileStats"></div>
+                            <div>
+                                <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.05em;">📈 XP по дням (последние 14 дней)</div>
+                                <canvas id="actUserChart" height="80"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- PAGE: SETTINGS -->
                 <div class="page" id="p-settings">
                     <div class="sh">
@@ -3141,13 +3219,320 @@
             const searchEl = document.getElementById('usersSearchInput');
             if (searchEl) {
                 searchEl.value = '';
-                // Вешаем обработчик только сейчас — чтобы браузерный автофилл не успел сработать раньше
                 searchEl.addEventListener('input', function () { filterUsers(this.value); });
             }
 
             if (typeof window.renderUsers === 'function') window.renderUsers(users);
             if (typeof window.renderDashUsers === 'function') window.renderDashUsers();
+
+            // Заполняем фильтр пользователей в истории
+            const actUserSel = document.getElementById('actUserFilter');
+            if (actUserSel) {
+                users.forEach(u => {
+                    const opt = document.createElement('option');
+                    opt.value = u.id;
+                    opt.textContent = u.name + ' (' + u.email + ')';
+                    actUserSel.appendChild(opt);
+                });
+            }
         });
+
+        // ===== ACTIVITY HISTORY =====
+        let _allActivity = [];   // все события
+        let _actFiltered = [];   // после фильтров
+        let _actShown = 0;       // сколько показано
+        const ACT_PAGE = 50;     // строк за раз
+
+        const ACT_LABELS = {
+            QUIZ_CORRECT:      { icon: '✅', label: 'Правильный ответ',    color: '#10b981', xp: 10 },
+            QUIZ_CORRECT_FAST: { icon: '⚡', label: 'Быстрый ответ',       color: '#f59e0b', xp: 5  },
+            QUIZ_PERFECT:      { icon: '💯', label: 'Идеальный квиз',      color: '#6366f1', xp: 20 },
+            QUIZ_COMPLETE:     { icon: '📝', label: 'Квиз завершён',       color: '#818cf8', xp: 20 },
+            MODULE_COMPLETE:   { icon: '🎓', label: 'Модуль завершён',     color: '#6366f1', xp: 50 },
+            SECTOR_COMPLETE:   { icon: '📖', label: 'Сектор прочитан',     color: '#94a3b8', xp: 15 },
+            AUDIO_LISTENED:    { icon: '🎧', label: 'Аудио прослушано',    color: '#06b6d4', xp: 5  },
+            TEST_PASSED:       { icon: '✍️', label: 'Тест пройден',         color: '#f59e0b', xp: 30 },
+            SIMULATOR_DONE:    { icon: '🎯', label: 'Симулятор завершён',  color: '#ec4899', xp: 25 },
+            DAILY_LOGIN:       { icon: '🌅', label: 'Ежедневный вход',     color: '#64748b', xp: 5  },
+            CASE_STUDY_READ:   { icon: '💼', label: 'Кейс изучен',         color: '#f97316', xp: 8  },
+            STREAK_BONUS:      { icon: '🔥', label: 'Бонус серии',         color: '#ef4444', xp: 15 },
+            STREAK_7:          { icon: '🔥', label: 'Неделя подряд',       color: '#ef4444', xp: 50 },
+            STREAK_30:         { icon: '🌟', label: 'Месяц подряд',        color: '#fbbf24', xp: 200},
+            GLOSSARY_VIEWED:   { icon: '📘', label: 'Глоссарий',           color: '#06b6d4', xp: 3  },
+            LOADBOARD_USED:    { icon: '🔍', label: 'Load Board',          color: '#06b6d4', xp: 5  },
+            BROKER_STUDIED:    { icon: '🤝', label: 'Брокеры',             color: '#06b6d4', xp: 5  },
+            NEGOTIATION_READ:  { icon: '💬', label: 'Переговоры',          color: '#06b6d4', xp: 5  },
+            FINANCE_READ:      { icon: '💰', label: 'Финансы',             color: '#10b981', xp: 5  },
+            CAREER_READ:       { icon: '🚀', label: 'Карьера',             color: '#6366f1', xp: 5  },
+            AI_BROKER_USED:    { icon: '🤖', label: 'AI Брокер',           color: '#8b5cf6', xp: 10 },
+            PROFILE_COMPLETE:  { icon: '👤', label: 'Профиль заполнен',    color: '#94a3b8', xp: 20 },
+            DAILY_TASK_DONE:   { icon: '📋', label: 'Дневное задание',     color: '#10b981', xp: 25 },
+            SECRET_FOUND:      { icon: '🔮', label: 'Секретная ачивка',    color: '#a78bfa', xp: 30 },
+        };
+
+        window.loadActivityHistory = async function () {
+            const tbody = document.getElementById('actBody');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted);">⏳ Загружаем историю...</td></tr>';
+
+            try {
+                const users = window.USERS || [];
+                _allActivity = [];
+
+                // Собираем xpHistory из каждого пользователя
+                for (const u of users) {
+                    try {
+                        const snap = await getDoc(doc(db, 'users', u.id));
+                        if (!snap.exists()) continue;
+                        const data = snap.data();
+                        const history = data.xpHistory || [];
+                        history.forEach(ev => {
+                            _allActivity.push({
+                                uid: u.id,
+                                userName: u.name,
+                                userEmail: u.email,
+                                userColor: u.color,
+                                action: ev.action || 'UNKNOWN',
+                                xp: ev.xp || 0,
+                                label: ev.label || ev.action,
+                                ts: ev.ts || '',
+                                meta: ev
+                            });
+                        });
+                    } catch(e) { /* пропускаем пользователя без истории */ }
+                }
+
+                // Сортируем по времени (новые сверху)
+                _allActivity.sort((a, b) => new Date(b.ts) - new Date(a.ts));
+
+                // Обновляем сводку
+                updateActivitySummary();
+
+                // Применяем фильтры и рендерим
+                _actFiltered = [..._allActivity];
+                _actShown = 0;
+                renderActivityTable();
+
+            } catch(e) {
+                console.error('loadActivityHistory error:', e);
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#ef4444;">❌ Ошибка загрузки: ' + e.message + '</td></tr>';
+            }
+        };
+
+        function updateActivitySummary() {
+            const today = new Date().toDateString();
+            const totalXP = _allActivity.reduce((s, e) => s + (e.xp || 0), 0);
+            const activeToday = new Set(_allActivity.filter(e => new Date(e.ts).toDateString() === today).map(e => e.uid)).size;
+            const modulesToday = _allActivity.filter(e => e.action === 'MODULE_COMPLETE' && new Date(e.ts).toDateString() === today).length;
+
+            const el1 = document.getElementById('act-total-events');
+            const el2 = document.getElementById('act-total-xp');
+            const el3 = document.getElementById('act-active-today');
+            const el4 = document.getElementById('act-modules-today');
+            if (el1) el1.textContent = _allActivity.length.toLocaleString('ru-RU');
+            if (el2) el2.textContent = totalXP.toLocaleString('ru-RU') + ' XP';
+            if (el3) el3.textContent = activeToday;
+            if (el4) el4.textContent = modulesToday;
+        }
+
+        function renderActivityTable() {
+            const tbody = document.getElementById('actBody');
+            const countEl = document.getElementById('actCount');
+            const shownEl = document.getElementById('actShown');
+            const loadMoreBtn = document.getElementById('actLoadMore');
+            if (!tbody) return;
+
+            const slice = _actFiltered.slice(0, _actShown + ACT_PAGE);
+            _actShown = slice.length;
+
+            if (slice.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted);">Нет событий по выбранным фильтрам</td></tr>';
+                if (countEl) countEl.textContent = '0 событий';
+                if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+                return;
+            }
+
+            tbody.innerHTML = slice.map(ev => {
+                const info = ACT_LABELS[ev.action] || { icon: '❓', label: ev.label || ev.action, color: '#64748b', xp: ev.xp };
+                const dt = ev.ts ? new Date(ev.ts) : null;
+                const timeStr = dt ? dt.toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—';
+                const isToday = dt && dt.toDateString() === new Date().toDateString();
+
+                // Детали из meta
+                let details = '';
+                if (ev.meta.module) details = `Модуль ${ev.meta.module}`;
+                else if (ev.meta.score !== undefined) details = `Счёт: ${ev.meta.score}%`;
+                else if (ev.meta.taskId) details = `Задание: ${ev.meta.taskId}`;
+                else if (ev.meta.source) details = ev.meta.source;
+
+                return `<tr style="border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
+                    <td style="padding:12px 16px;white-space:nowrap;">
+                        <div style="font-size:12px;color:${isToday ? '#6ee7b7' : 'var(--muted)'};">${timeStr}</div>
+                        ${isToday ? '<div style="font-size:10px;color:#6ee7b7;font-weight:700;">СЕГОДНЯ</div>' : ''}
+                    </td>
+                    <td style="padding:12px 16px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:28px;height:28px;border-radius:50%;background:${ev.userColor || '#6366f1'}22;color:${ev.userColor || '#6366f1'};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;">${(ev.userName||'?')[0]}</div>
+                            <div>
+                                <div style="font-size:13px;font-weight:600;cursor:pointer;color:#e2e8f0;" onclick="showUserProfile('${ev.uid}')">${ev.userName}</div>
+                                <div style="font-size:11px;color:var(--muted);">${ev.userEmail}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="padding:12px 16px;">
+                        <span style="display:inline-flex;align-items:center;gap:6px;background:${info.color}18;border:1px solid ${info.color}35;color:${info.color};padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;">
+                            ${info.icon} ${info.label}
+                        </span>
+                    </td>
+                    <td style="padding:12px 16px;font-size:12px;color:var(--muted);">${details || '—'}</td>
+                    <td style="padding:12px 16px;text-align:right;">
+                        <span style="color:#818cf8;font-weight:700;font-size:13px;">+${ev.xp} XP</span>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            if (countEl) countEl.textContent = `${_actFiltered.length.toLocaleString('ru-RU')} событий`;
+            if (shownEl) shownEl.textContent = `Показано ${_actShown} из ${_actFiltered.length}`;
+            if (loadMoreBtn) loadMoreBtn.style.display = _actShown < _actFiltered.length ? 'inline-flex' : 'none';
+        }
+
+        window.loadMoreActivity = function() {
+            renderActivityTable();
+        };
+
+        window.filterActivity = function() {
+            const uid = document.getElementById('actUserFilter').value;
+            const type = document.getElementById('actTypeFilter').value;
+            const date = document.getElementById('actDateFilter').value;
+
+            _actFiltered = _allActivity.filter(ev => {
+                if (uid && ev.uid !== uid) return false;
+                if (type && ev.action !== type) return false;
+                if (date) {
+                    const evDate = ev.ts ? new Date(ev.ts).toISOString().split('T')[0] : '';
+                    if (evDate !== date) return false;
+                }
+                return true;
+            });
+
+            _actShown = 0;
+            renderActivityTable();
+
+            // Показываем профиль если выбран конкретный пользователь
+            if (uid) showUserProfile(uid);
+            else document.getElementById('actUserProfile').style.display = 'none';
+        };
+
+        window.clearActivityFilters = function() {
+            document.getElementById('actUserFilter').value = '';
+            document.getElementById('actTypeFilter').value = '';
+            document.getElementById('actDateFilter').value = '';
+            _actFiltered = [..._allActivity];
+            _actShown = 0;
+            renderActivityTable();
+            document.getElementById('actUserProfile').style.display = 'none';
+        };
+
+        window.showUserProfile = function(uid) {
+            const u = (window.USERS || []).find(x => x.id === uid);
+            if (!u) return;
+
+            // Устанавливаем фильтр на пользователя
+            const sel = document.getElementById('actUserFilter');
+            if (sel) sel.value = uid;
+            filterActivity();
+
+            const profileEl = document.getElementById('actUserProfile');
+            const nameEl = document.getElementById('actProfileName');
+            const statsEl = document.getElementById('actProfileStats');
+            if (!profileEl) return;
+
+            profileEl.style.display = 'block';
+            nameEl.textContent = u.name + ' — ' + u.email;
+
+            // Статистика пользователя
+            const userEvents = _allActivity.filter(e => e.uid === uid);
+            const totalXP = userEvents.reduce((s, e) => s + e.xp, 0);
+            const modules = userEvents.filter(e => e.action === 'MODULE_COMPLETE').length;
+            const quizzes = userEvents.filter(e => e.action === 'QUIZ_CORRECT').length;
+            const days = new Set(userEvents.map(e => e.ts ? new Date(e.ts).toDateString() : '')).size;
+            const lastAct = userEvents[0]?.ts ? new Date(userEvents[0].ts).toLocaleString('ru-RU') : '—';
+
+            statsEl.innerHTML = [
+                { icon: '⚡', val: totalXP + ' XP', lbl: 'Всего XP', c: '#818cf8' },
+                { icon: '🎓', val: modules, lbl: 'Модулей', c: '#6366f1' },
+                { icon: '✅', val: quizzes, lbl: 'Правильных', c: '#10b981' },
+                { icon: '📅', val: days, lbl: 'Активных дней', c: '#f59e0b' },
+                { icon: '🕐', val: lastAct, lbl: 'Последнее действие', c: '#94a3b8' },
+            ].map(s => `<div style="background:var(--card2);border-radius:12px;padding:14px;text-align:center;">
+                <div style="font-size:20px;margin-bottom:4px;">${s.icon}</div>
+                <div style="font-size:16px;font-weight:800;color:${s.c};">${s.val}</div>
+                <div style="font-size:11px;color:var(--muted);">${s.lbl}</div>
+            </div>`).join('');
+
+            // График XP по дням (14 дней)
+            const days14 = [];
+            const xpByDay = {};
+            for (let i = 13; i >= 0; i--) {
+                const d = new Date(); d.setDate(d.getDate() - i);
+                const key = d.toDateString();
+                days14.push(d.toLocaleDateString('ru-RU', { day:'2-digit', month:'2-digit' }));
+                xpByDay[key] = 0;
+            }
+            userEvents.forEach(e => {
+                if (!e.ts) return;
+                const key = new Date(e.ts).toDateString();
+                if (xpByDay[key] !== undefined) xpByDay[key] += e.xp;
+            });
+
+            const canvas = document.getElementById('actUserChart');
+            if (canvas) {
+                if (window._actUserChart) window._actUserChart.destroy();
+                window._actUserChart = new Chart(canvas, {
+                    type: 'bar',
+                    data: {
+                        labels: days14,
+                        datasets: [{
+                            label: 'XP',
+                            data: Object.values(xpByDay),
+                            backgroundColor: 'rgba(99,102,241,0.5)',
+                            borderColor: '#6366f1',
+                            borderRadius: 6,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                            y: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true }
+                        }
+                    }
+                });
+            }
+
+            profileEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+
+        window.exportActivity = function() {
+            const data = _actFiltered.length ? _actFiltered : _allActivity;
+            if (!data.length) { window.toast('Нет данных для экспорта', 'e'); return; }
+            const headers = ['Время', 'Пользователь', 'Email', 'Действие', 'Детали', 'XP'];
+            const rows = data.map(ev => {
+                const info = ACT_LABELS[ev.action] || { label: ev.action };
+                const dt = ev.ts ? new Date(ev.ts).toLocaleString('ru-RU') : '—';
+                const details = ev.meta.module ? `Модуль ${ev.meta.module}` : ev.meta.score !== undefined ? `Счёт: ${ev.meta.score}%` : '';
+                return [dt, ev.userName, ev.userEmail, info.label, details, ev.xp];
+            });
+            const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `activity-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.toast(`✅ Экспортировано ${data.length} событий`, 's');
+        };
 
         // ===== ADD USER (глобальная функция из module scope) =====
         window.addUser = async function () {
@@ -3611,8 +3996,11 @@
             if (p) p.classList.add('act');
             if (el) el.classList.add('act');
             else { document.querySelectorAll('.ni').forEach(n => { if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + page + "'")) n.classList.add('act'); }); }
-            const titles = { dashboard: 'Дашборд', users: 'Пользователи', analytics: 'Аналитика', payments: 'Платежи', modules: 'Модули', quizzes: 'Квизы', reviews: 'Отзывы', mailing: 'Рассылки', notifications: 'Уведомления', logs: 'Логи системы', settings: 'Настройки', security: 'Безопасность' };
-            document.getElementById('pageTitle').innerHTML = titles[page] + '<span>' + new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + '</span>';
+            const titles = { dashboard: 'Дашборд', users: 'Пользователи', analytics: 'Аналитика', payments: 'Платежи', modules: 'Модули', quizzes: 'Квизы', reviews: 'Отзывы', mailing: 'Рассылки', notifications: 'Уведомления', logs: 'Логи системы', activity: 'История действий', settings: 'Настройки', security: 'Безопасность' };
+            document.getElementById('pageTitle').innerHTML = (titles[page] || page) + '<span>' + new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + '</span>';
+
+            // Загружаем историю при переходе на страницу
+            if (page === 'activity') loadActivityHistory();
 
             // Закрываем мобильное меню после выбора пункта
             if (window.innerWidth <= 768) {
@@ -3684,7 +4072,7 @@
       <td><div style="display:flex;align-items:center;gap:8px"><div class="pm"><div class="pmf" style="width:${u.progress}%"></div></div><span style="font-size:12px">${u.progress}%</span></div></td>
       <td><span class="sb2 ${u.status === 'active' ? 's-act' : u.status === 'pending' ? 's-pen' : 's-ina'}">${u.status === 'active' ? 'Активен' : u.status === 'pending' ? 'Ожидает' : 'Неактивен'}</span></td>
       <td style="color:var(--muted);font-size:12px">${u.date}</td>
-      <td><div class="ta"><button class="ai" title="Статистика и рейтинг" onclick="openUserStats('${u.id}','${u.name}')" style="color:#a78bfa;font-size:16px;padding:8px 10px"><i class="fa fa-chart-line"></i></button><button class="ai" title="Просмотр" onclick="viewUser('${u.id}','${u.name}','${u.email}')"><i class="fa fa-eye"></i></button><button class="ai" title="Редактировать" onclick="openEditUser('${u.id}')"><i class="fa fa-edit"></i></button><button class="ai" title="Удалить" onclick="deleteUser('${u.id}','${u.name}')" style="color:#fca5a5"><i class="fa fa-trash"></i></button></div></td>
+      <td><div class="ta"><button class="ai" title="История действий" onclick="nav('activity',null);setTimeout(()=>showUserProfile('${u.id}'),300)" style="color:#6ee7b7;font-size:16px;padding:8px 10px"><i class="fa fa-history"></i></button><button class="ai" title="Статистика и рейтинг" onclick="openUserStats('${u.id}','${u.name}')" style="color:#a78bfa;font-size:16px;padding:8px 10px"><i class="fa fa-chart-line"></i></button><button class="ai" title="Просмотр" onclick="viewUser('${u.id}','${u.name}','${u.email}')"><i class="fa fa-eye"></i></button><button class="ai" title="Редактировать" onclick="openEditUser('${u.id}')"><i class="fa fa-edit"></i></button><button class="ai" title="Удалить" onclick="deleteUser('${u.id}','${u.name}')" style="color:#fca5a5"><i class="fa fa-trash"></i></button></div></td>
     </tr>`;
             }).join('');
         }
