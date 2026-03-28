@@ -1005,7 +1005,7 @@
     }
 
     // Рендерим модули сразу (прогресс обновится после Firebase)
-    renderModulesGrid(0);
+    if (typeof renderModulesGrid === 'function') renderModulesGrid(0);
 
     // ===== 12 МОДУЛЕЙ =====
     const MODULES_DATA = [
@@ -1023,7 +1023,7 @@
       { n:12, icon:'🚀', title:'Карьера',      desc:'90-дневный план запуска',            url:'pages/doc-module-12-complete.html', color:'#818cf8' },
     ];
 
-    function renderModulesGrid(completedCount) {
+    window.renderModulesGrid = function renderModulesGrid(completedCount) {
       const grid = document.getElementById('modulesGrid');
       if (!grid) return;
       grid.innerHTML = MODULES_DATA.map(m => {
@@ -1314,7 +1314,7 @@
       document.getElementById('xpAudio').textContent = stats.audioListened || 0;
 
       // Рендерим сетку модулей
-      renderModulesGrid(stats.moduleComplete || 0);
+      try { if (typeof window.renderModulesGrid === 'function') window.renderModulesGrid(stats.moduleComplete || 0); } catch(e) { console.warn('renderModulesGrid error:', e); }
 
       if (next) {
         const prevXP = level.minXP;
