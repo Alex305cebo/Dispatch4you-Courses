@@ -2654,7 +2654,7 @@
                     <div class="sh">
                         <div class="st">История действий<span>Полная активность каждого студента</span></div>
                         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                            <select class="sel" id="actUserFilter" onchange="filterActivity()">
+                            <select class="sel" id="actUserFilter" onchange="filterActivity()" autocomplete="off">
                                 <option value="">Все пользователи</option>
                             </select>
                             <select class="sel" id="actTypeFilter" onchange="filterActivity()">
@@ -3275,6 +3275,14 @@
             if (!tbody) return;
             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted);">⏳ Загружаем историю...</td></tr>';
 
+            // Сбрасываем фильтры при каждой загрузке
+            const actUserSel = document.getElementById('actUserFilter');
+            const actTypeSel = document.getElementById('actTypeFilter');
+            const actDateInp = document.getElementById('actDateFilter');
+            if (actUserSel) actUserSel.value = '';
+            if (actTypeSel) actTypeSel.value = '';
+            if (actDateInp) actDateInp.value = '';
+
             try {
                 const users = window.USERS || [];
                 _allActivity = [];
@@ -3286,20 +3294,68 @@
                         if (!snap.exists()) continue;
                         const data = snap.data();
                         const history = data.xpHistory || [];
-                        history.forEach(ev => {
-                            _allActivity.push({
-                                uid: u.id,
-                                userName: u.name,
-                                userEmail: u.email,
-                                userColor: u.color,
-                                action: ev.action || 'UNKNOWN',
-                                xp: ev.xp || 0,
-                                label: ev.label || ev.action,
-                                ts: ev.ts || '',
-                                meta: ev
+
+                        if (history.length > 0) {
+                            // Есть реальная история — используем её
+                            history.forEach(ev => {
+                                _allActivity.push({
+                                    uid: u.id,
+                                    userName: u.name,
+                                    userEmail: u.email,
+                                    userColor: u.color,
+                                    action: ev.action || 'UNKNOWN',
+                                    xp: ev.xp || 0,
+                                    label: ev.label || ev.action,
+                                    ts: ev.ts || '',
+                                    meta: ev
+                                });
                             });
-                        });
-                    } catch(e) { /* пропускаем пользователя без истории */ }
+                        } else {
+                            // Нет xpHistory — генерируем синтетические события из stats
+                            const stats = data.stats || {};
+                            const xp = data.xp || 0;
+                            const lastLogin = data.lastDailyLogin || data.lastActivity;
+                            const baseTs = lastLogin ? new Date(lastLogin).toISOString() : new Date().toISOString();
+
+                            const syntheticMap = [
+                                { key: 'quizCorrect',   action: 'QUIZ_CORRECT',    xp: 10 },
+                                { key: 'moduleComplete',action: 'MODULE_COMPLETE',  xp: 50 },
+                                { key: 'quizComplete',  action: 'QUIZ_COMPLETE',    xp: 20 },
+                                { key: 'audioListened', action: 'AUDIO_LISTENED',   xp: 5  },
+                                { key: 'testPassed',    action: 'TEST_PASSED',      xp: 30 },
+                                { key: 'simulatorDone', action: 'SIMULATOR_DONE',   xp: 25 },
+                                { key: 'dailyLogin',    action: 'DAILY_LOGIN',      xp: 5  },
+                                { key: 'caseStudyRead', action: 'CASE_STUDY_READ',  xp: 8  },
+                            ];
+
+                            syntheticMap.forEach(({ key, action, xp: evXp }) => {
+                                const count = stats[key] || 0;
+                                if (count > 0) {
+                                    // Добавляем одно суммарное событие
+                                    _allActivity.push({
+                                        uid: u.id,
+                                        userName: u.name,
+                                        userEmail: u.email,
+                                        userColor: u.color,
+                                        action,
+                                        xp: evXp * count,
+                                        label: ACT_LABELS[action]?.label || action,
+                                        ts: baseTs,
+                                        meta: { count, synthetic: true }
+                                    });
+                                }
+                            });
+
+                            // Если вообще нет stats но есть XP — добавляем общую запись
+                            if (Object.keys(stats).length === 0 && xp > 0) {
+                                _allActivity.push({
+                                    uid: u.id, userName: u.name, userEmail: u.email, userColor: u.color,
+                                    action: 'DAILY_LOGIN', xp, label: 'Накопленный XP',
+                                    ts: baseTs, meta: { synthetic: true }
+                                });
+                            }
+                        }
+                    } catch(e) { console.warn('Skip user', u.id, e.message); }
                 }
 
                 // Сортируем по времени (новые сверху)
@@ -3308,7 +3364,7 @@
                 // Обновляем сводку
                 updateActivitySummary();
 
-                // Применяем фильтры и рендерим
+                // Рендерим без фильтров
                 _actFiltered = [..._allActivity];
                 _actShown = 0;
                 renderActivityTable();
