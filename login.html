@@ -374,8 +374,26 @@
     const errorMsg = document.getElementById('errorMsg');
     const resetMsg = document.getElementById('resetMsg');
 
-    function showError(msg) { errorMsg.textContent = msg; errorMsg.style.display = 'block'; resetMsg.style.display = 'none'; }
+    function showError(msg, showSetPassword = false) {
+      errorMsg.innerHTML = msg;
+      if (showSetPassword) {
+        errorMsg.innerHTML += `<br><br><button onclick="sendPasswordReset()" style="background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);color:#a5b4fc;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;margin-top:4px;">📧 Отправить письмо для установки пароля</button>`;
+      }
+      errorMsg.style.display = 'block';
+      resetMsg.style.display = 'none';
+    }
     function showInfo(msg) { resetMsg.textContent = msg; resetMsg.style.display = 'block'; errorMsg.style.display = 'none'; }
+
+    window.sendPasswordReset = async function() {
+      const email = document.getElementById('email').value.trim();
+      if (!email) { showError('Введите email выше.'); return; }
+      try {
+        await sendPasswordResetEmail(auth, email);
+        showInfo('✅ Письмо отправлено на ' + email + '. Перейдите по ссылке в письме чтобы установить пароль.');
+      } catch (err) {
+        showError(translateError(err.code));
+      }
+    };
 
     function translateError(code) {
       const map = {
@@ -446,25 +464,42 @@
         await saveUserAndRedirect(cred.user);
       } catch (err) {
         console.error('Login error:', err.code, err.message);
-        // Если пользователь не найден или неверные данные
-        if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
+
+        if (err.code === 'auth/user-not-found') {
+          // Аккаунт точно не существует
+          showError('❌ Аккаунт с таким email не найден. Проверьте email или зарегистрируйтесь.');
+
+        } else if (err.code === 'auth/wrong-password') {
+          // Пароль неверный — аккаунт есть
+          showError('❌ Неверный пароль. Попробуйте ещё раз или нажмите "Забыли пароль?"');
+
+        } else if (err.code === 'auth/invalid-credential') {
+          // Firebase 11: этот код означает либо нет аккаунта, либо неверный пароль, либо аккаунт через Google
+          // Пробуем fetchSignInMethodsForEmail как подсказку (не как решение)
           try {
             const methods = await fetchSignInMethodsForEmail(auth, email);
-            console.log('Sign-in methods for', email, ':', methods);
-            if (methods.includes('google.com') && !methods.includes('password')) {
-              showError('⚠️ Этот email зарегистрирован через Google. Нажмите "Продолжить с Google" для входа, или используйте "Забыли пароль?" чтобы установить пароль.');
-            } else if (methods.length === 0) {
-              showError('❌ Аккаунт с таким email не найден. Проверьте email или зарегистрируйтесь.');
-            } else {
+            console.log('Sign-in methods:', methods);
+            if (methods.length > 0 && methods.includes('google.com') && !methods.includes('password')) {
+              showError('⚠️ Этот email зарегистрирован через Google. Нажмите "Продолжить с Google" ниже, или установите пароль:', true);
+            } else if (methods.length > 0) {
               showError('❌ Неверный пароль. Попробуйте ещё раз или нажмите "Забыли пароль?"');
+            } else {
+              // fetchSignInMethods вернул пустой массив — это баг Firebase 11, не доверяем ему
+              // Показываем нейтральное сообщение
+              showError('❌ Неверный email или пароль. Если вы регистрировались через Google — нажмите "Продолжить с Google".');
             }
           } catch (e) {
             console.error('fetchSignInMethods error:', e);
-            showError('❌ Неверный email или пароль. Попробуйте ещё раз.');
+            showError('❌ Неверный email или пароль. Если вы регистрировались через Google — нажмите "Продолжить с Google".');
           }
+
+        } else if (err.code === 'auth/invalid-email') {
+          showError('❌ Неверный формат email.');
+
         } else {
           showError(translateError(err.code));
         }
+
         btn.disabled = false; btn.textContent = 'Войти';
       }
     });
