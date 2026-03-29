@@ -39,7 +39,7 @@ window.updateAuthUI = function () {
           <div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;">
             <div style="display:flex;align-items:center;gap:4px;">
               <span style="font-weight:700;font-size:12px;color:#e0e7ff;line-height:1;">${fullName}</span>
-              <span style="font-size:9px;color:#fbbf24;font-weight:700;background:rgba(251,191,36,0.15);padding:1px 4px;border-radius:4px;border:1px solid rgba(251,191,36,0.3);">⚡ ${xp} XP</span>
+              <span id="nav-xp-badge" style="font-size:9px;color:#fbbf24;font-weight:700;background:rgba(251,191,36,0.15);padding:1px 4px;border-radius:4px;border:1px solid rgba(251,191,36,0.3);transition:all 0.3s;">⚡ ${xp} XP</span>
             </div>
             <span style="font-size:10px;color:#a5b4fc;font-weight:500;">Личный кабинет</span>
           </div>
@@ -90,7 +90,73 @@ window.authLogout = function (event) {
   }, 100);
 })();
 
-// Слушаем события обновления XP
-document.addEventListener('xpUpdated', function () {
-  window.updateAuthUI();
+// Слушаем события обновления XP — обновляем только бейдж с анимацией
+document.addEventListener('xpUpdated', function (e) {
+  const badge = document.getElementById('nav-xp-badge');
+  if (!badge) { window.updateAuthUI(); return; }
+
+  let newXP = 0;
+  try {
+    if (e.detail && e.detail.totalXP) {
+      newXP = e.detail.totalXP;
+    } else {
+      const xpData = JSON.parse(localStorage.getItem('xp_data') || '{}');
+      newXP = xpData.totalXP || 0;
+    }
+  } catch(err) {}
+
+  // Анимация: вспышка + счётчик
+  badge.style.transition = 'all 0.15s ease';
+  badge.style.transform = 'scale(1.4)';
+  badge.style.background = 'rgba(251,191,36,0.4)';
+  badge.style.borderColor = 'rgba(251,191,36,0.8)';
+  badge.style.color = '#fff';
+  badge.style.boxShadow = '0 0 12px rgba(251,191,36,0.6)';
+
+  // Анимируем число
+  const oldXP = parseInt(badge.textContent.replace(/\D/g,'')) || 0;
+  const diff = newXP - oldXP;
+  const steps = 20;
+  const stepVal = diff / steps;
+  let current = oldXP;
+  let step = 0;
+  const counter = setInterval(() => {
+    step++;
+    current += stepVal;
+    badge.textContent = '⚡ ' + Math.round(current) + ' XP';
+    if (step >= steps) {
+      clearInterval(counter);
+      badge.textContent = '⚡ ' + newXP + ' XP';
+    }
+  }, 30);
+
+  // Возврат к нормальному виду
+  setTimeout(() => {
+    badge.style.transform = 'scale(1)';
+    badge.style.background = 'rgba(251,191,36,0.15)';
+    badge.style.borderColor = 'rgba(251,191,36,0.3)';
+    badge.style.color = '#fbbf24';
+    badge.style.boxShadow = 'none';
+  }, 600);
+
+  // Показать +XP всплывашку над бейджем
+  if (e.detail && e.detail.totalXP) {
+    const gained = e.detail.totalXP - oldXP;
+    if (gained > 0) {
+      const pop = document.createElement('div');
+      pop.textContent = '+' + gained + ' XP';
+      pop.style.cssText = 'position:fixed;font-size:13px;font-weight:800;color:#fbbf24;pointer-events:none;z-index:99999;text-shadow:0 0 8px rgba(251,191,36,0.8);animation:xpPop 1.2s ease forwards;';
+      const rect = badge.getBoundingClientRect();
+      pop.style.left = rect.left + 'px';
+      pop.style.top = (rect.top - 10) + 'px';
+      if (!document.getElementById('xp-pop-style')) {
+        const s = document.createElement('style');
+        s.id = 'xp-pop-style';
+        s.textContent = '@keyframes xpPop{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-40px) scale(1.3)}}';
+        document.head.appendChild(s);
+      }
+      document.body.appendChild(pop);
+      setTimeout(() => pop.remove(), 1200);
+    }
+  }
 });
