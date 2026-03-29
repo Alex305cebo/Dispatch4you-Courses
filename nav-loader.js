@@ -67,13 +67,6 @@
             <div class="mob-acc-body">
                 <a href="{{BASE}}pages/documentation.html" class="mob-sub">📚 База знаний (15 Стр. Курсов)</a>
                 <a href="{{BASE}}pages/modules-index.html" class="mob-sub">🎯 Уроки с тестом (12 Модулей)</a>
-            </div>
-        </div>
-        <div class="mob-acc">
-            <div class="mob-acc-title">📚 Курс обучения <span class="mob-arr">▼</span></div>
-            <div class="mob-acc-body">
-                <a href="{{BASE}}pages/documentation.html" class="mob-sub">📚 База знаний (15 Стр. Курсов)</a>
-                <a href="{{BASE}}pages/modules-index.html" class="mob-sub">🎯 Уроки с тестом (12 Модулей)</a>
                 <a href="{{BASE}}pages/glossary.html" class="mob-sub">📖 Глоссарий терминов</a>
             </div>
         </div>
