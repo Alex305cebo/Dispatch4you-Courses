@@ -1277,7 +1277,7 @@
             </div>
 
             <!-- Quick Check 1 -->
-            <div class="quick-check-block locked" id="quiz-1" data-quiz-id="quiz-2-1" data-correct-answer="c">
+            <div class="quick-check-block" id="quiz-1" data-quiz-id="quiz-2-1" data-correct-answer="c">
                 <div class="quick-check-header">
                     <span class="quick-check-icon">✅</span>
                     <h3 class="quick-check-title">Быстрая проверка</h3>
@@ -1416,7 +1416,7 @@
             </div>
 
             <!-- Quick Check 2 -->
-            <div class="quick-check-block locked" id="quiz-2" data-quiz-id="quiz-2-2" data-correct-answer="a">
+            <div class="quick-check-block" id="quiz-2" data-quiz-id="quiz-2-2" data-correct-answer="a">
                 <div class="quick-check-header">
                     <span class="quick-check-icon">✅</span>
                     <h3 class="quick-check-title">Быстрая проверка</h3>
@@ -1571,7 +1571,7 @@
             </div>
 
             <!-- Quick Check 3 -->
-            <div class="quick-check-block locked" id="quiz-3" data-quiz-id="quiz-2-3" data-correct-answer="b">
+            <div class="quick-check-block" id="quiz-3" data-quiz-id="quiz-2-3" data-correct-answer="b">
                 <div class="quick-check-header">
                     <span class="quick-check-icon">✅</span>
                     <h3 class="quick-check-title">Быстрая проверка</h3>
@@ -1723,7 +1723,7 @@
             </div>
 
             <!-- Quick Check 4 -->
-            <div class="quick-check-block locked" id="quiz-4" data-quiz-id="quiz-2-4" data-correct-answer="b">
+            <div class="quick-check-block" id="quiz-4" data-quiz-id="quiz-2-4" data-correct-answer="b">
                 <div class="quick-check-header">
                     <span class="quick-check-icon">✅</span>
                     <h3 class="quick-check-title">Быстрая проверка</h3>
@@ -2000,7 +2000,7 @@
             document.querySelectorAll('.quiz-option').forEach(option => {
                 option.addEventListener('click', function () {
                     const quizBlock = this.closest('.quick-check-block');
-                    if (quizBlock.classList.contains('locked')) return;
+                    
 
                     const correctAnswer = quizBlock.dataset.correctAnswer;
                     const selectedAnswer = this.dataset.answer;
@@ -2043,25 +2043,7 @@
     </script>
 
 <script>
-        // Добавляем кнопки разблокировки снаружи каждого заблокированного квиза
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.quick-check-block.locked').forEach(function(quiz) {
-                var quizId = quiz.id;
-                if (!quizId) return;
-                var innerBtn = quiz.querySelector('.audio-completion-btn');
-                if (!innerBtn) return;
-                var onclickAttr = innerBtn.getAttribute('onclick') || '';
-                var audioMatch = onclickAttr.match(/markAudioComplete\(this,\s*'(audio\d+)'/);
-                if (!audioMatch) return;
-                var audioId = audioMatch[1];
-                var btn = document.createElement('button');
-                btn.className = 'audio-completion-btn unlock-btn';
-                btn.setAttribute('data-quiz', quizId);
-                btn.innerHTML = '🔓 Я прослушал аудио — разблокировать квиз';
-                btn.style.cssText = 'margin-top:12px;width:100%;';
-                btn.onclick = function() { markAudioComplete(this, audioId, quizId); };
-                quiz.parentNode.insertBefore(btn, quiz);
-            });
+        
         </script>
         });
 </body>
