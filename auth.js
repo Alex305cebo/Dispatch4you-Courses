@@ -67,7 +67,10 @@ function updateMobXP(xp, initials, animate) {
   const avatar = document.getElementById('mob-xp-avatar');
   const val = document.getElementById('mob-xp-val');
   if (!wrap || !val) return;
-  wrap.style.display = 'flex';
+  // Show only on mobile (≤1024px)
+  if (window.innerWidth <= 1024) {
+    wrap.style.display = 'flex';
+  }
   if (avatar) avatar.textContent = initials || '⚡';
   if (animate) {
     val.style.transition = 'all 0.15s';
@@ -213,4 +216,13 @@ document.addEventListener('xpUpdated', function (e) {
     try { const u = JSON.parse(localStorage.getItem('user')||'{}'); return (u.firstName||'')[0]+(u.lastName||'')[0]; } catch(e){return '';}
   })();
   updateMobXP(newXP, initials, true);
+});
+
+// Hide mob-xp-wrap on desktop resize
+window.addEventListener('resize', function() {
+  const wrap = document.getElementById('mob-xp-wrap');
+  if (!wrap) return;
+  if (window.innerWidth > 1024) {
+    wrap.style.display = 'none';
+  }
 });
