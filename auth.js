@@ -68,7 +68,7 @@ function updateMobXP(xp, initials, animate) {
   const val = document.getElementById('mob-xp-val');
   if (!wrap || !val) return;
   wrap.style.display = 'flex';
-  if (avatar) avatar.textContent = initials || '👤';
+  if (avatar) avatar.textContent = initials || '⚡';
   if (animate) {
     val.style.transition = 'all 0.15s';
     val.style.transform = 'scale(1.3)';
@@ -108,6 +108,35 @@ window.authLogout = function (event) {
     if (++n > 50) clearInterval(t);
   }, 100);
 })();
+
+// Показываем мобильный XP бейдж всегда — даже без логина
+function initMobXPBadge() {
+  let xp = 0;
+  let initials = '⚡';
+  try {
+    const xpData = JSON.parse(localStorage.getItem('xp_data') || '{}');
+    xp = xpData.totalXP || 0;
+  } catch(e) {}
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const f = user.firstName || '';
+    const l = user.lastName || '';
+    if (f || l) initials = (f[0]||'') + (l[0]||'');
+  } catch(e) {}
+  updateMobXP(xp, initials, false);
+}
+
+// Запускаем после загрузки nav
+document.addEventListener('navLoaded', initMobXPBadge, { once: true });
+// Polling fallback
+let _mobN = 0;
+const _mobT = setInterval(() => {
+  if (document.getElementById('mob-xp-wrap')) {
+    clearInterval(_mobT);
+    initMobXPBadge();
+  }
+  if (++_mobN > 50) clearInterval(_mobT);
+}, 100);
 
 // Слушаем события обновления XP — обновляем только бейдж с анимацией
 document.addEventListener('xpUpdated', function (e) {
