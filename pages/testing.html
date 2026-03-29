@@ -1159,17 +1159,14 @@
             if (_xpMod) {
                 if (isCorrect) {
                     _answerStreak++;
-                    if (elapsed < 5) {
-                        _xpMod.awardXP('QUIZ_CORRECT_FAST', { source: 'testing' });
-                    } else {
-                        _xpMod.awardXP('QUIZ_CORRECT', { source: 'testing' });
-                    }
+                    _xpMod.awardXPDelta(2, 'Правильный ответ');
                     // Streak milestones
                     if (_answerStreak === 5)  _showTestAchieve('🔥', 'Серия x5!', '5 правильных подряд', 'rgba(251,146,60,0.6)');
                     if (_answerStreak === 10) _showTestAchieve('⚡', 'Серия x10!', '10 правильных подряд', 'rgba(251,191,36,0.6)');
-                    if (_answerStreak === 20) { _showTestAchieve('💥', 'Серия x20!', 'Невероятно!', 'rgba(139,92,246,0.6)'); _xpMod.awardXP('QUIZ_ROUND_DONE'); }
+                    if (_answerStreak === 20) { _showTestAchieve('💥', 'Серия x20!', 'Невероятно!', 'rgba(139,92,246,0.6)'); _xpMod.awardXPDelta(10, 'Бонус серии x20'); }
                 } else {
                     _answerStreak = 0;
+                    _xpMod.awardXPDelta(-1, 'Неправильный ответ');
                 }
             }
             _answerStartTime = Date.now();
