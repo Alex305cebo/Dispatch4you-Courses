@@ -50,6 +50,9 @@ window.updateAuthUI = function () {
       </div>`;
     navActions.innerHTML = html;
     if (mobileNavActions) mobileNavActions.innerHTML = html;
+
+    // Update mobile XP badge
+    updateMobXP(xp, initials);
   }
 
   // УБИРАЕМ ПОКАЗ ССЫЛКИ "Личный кабинет" В МЕНЮ - она дублируется с блоком справа
@@ -58,6 +61,22 @@ window.updateAuthUI = function () {
   if (dl) dl.style.display = 'none'; // Всегда скрываем
   if (dlm) dlm.style.display = 'none'; // Всегда скрываем
 };
+
+function updateMobXP(xp, initials, animate) {
+  const wrap = document.getElementById('mob-xp-wrap');
+  const avatar = document.getElementById('mob-xp-avatar');
+  const val = document.getElementById('mob-xp-val');
+  if (!wrap || !val) return;
+  wrap.style.display = 'flex';
+  if (avatar) avatar.textContent = initials || '👤';
+  if (animate) {
+    val.style.transition = 'all 0.15s';
+    val.style.transform = 'scale(1.3)';
+    val.style.color = '#fff';
+    setTimeout(() => { val.style.transform = 'scale(1)'; val.style.color = '#fbbf24'; }, 500);
+  }
+  val.textContent = '⚡ ' + xp + ' XP';
+}
 
 window.authLogout = function (event) {
   if (event) event.preventDefault();
@@ -159,4 +178,10 @@ document.addEventListener('xpUpdated', function (e) {
       setTimeout(() => pop.remove(), 1200);
     }
   }
+
+  // Update mobile badge too
+  const initials = (() => {
+    try { const u = JSON.parse(localStorage.getItem('user')||'{}'); return (u.firstName||'')[0]+(u.lastName||'')[0]; } catch(e){return '';}
+  })();
+  updateMobXP(newXP, initials, true);
 });
