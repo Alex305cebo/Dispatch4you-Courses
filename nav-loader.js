@@ -19,10 +19,11 @@
             </a>
             <div class="nav-links">
                 <div class="nav-item">
-                    <button class="nav-btn">Курсы <span class="arrow">▾</span></button>
+                    <button class="nav-btn">Курс обучения <span class="arrow">▾</span></button>
                     <div class="dropdown">
-                        <a href="{{BASE}}pages/modules-index.html">🎓 Модули (1-12)</a>
-                        <a href="{{BASE}}pages/documentation.html">📖 База знаний</a>
+                        <a href="{{BASE}}pages/documentation.html">📚 База знаний (15 Стр. Курсов)</a>
+                        <a href="{{BASE}}pages/modules-index.html">🎯 Уроки с тестом (12 Модулей)</a>
+                        <a href="{{BASE}}pages/glossary.html">📖 Глоссарий терминов</a>
                     </div>
                 </div>
                 <div class="nav-item">
@@ -30,9 +31,8 @@
                     <div class="dropdown">
                         <a href="{{BASE}}pages/simulator.html">🎯 Симулятор</a>
                         <a href="{{BASE}}pages/testing.html">✍️ Тестирование</a>
-                        <a href="{{BASE}}pages/cases.html">💼 Кейсы</a>
+                        <a href="{{BASE}}pages/Trainer-Quiz.html">⚡ Тренировка</a>
                         <a href="{{BASE}}pages/load-finder.html">🔍 Load Finder</a>
-                        <a href="{{BASE}}pages/dispatcher-cards.html">🃏 Dispatcher Cards</a>
                         <a href="{{BASE}}pages/ai-broker-chat.html">🤖 AI Брокер</a>
                     </div>
                 </div>
@@ -63,10 +63,18 @@
             <a href="{{BASE}}register.html" class="btn-signup">Регистрация</a>
         </div>
         <div class="mob-acc">
-            <div class="mob-acc-title">📚 Курсы <span class="mob-arr">▼</span></div>
+            <div class="mob-acc-title">📚 Курс обучения <span class="mob-arr">▼</span></div>
             <div class="mob-acc-body">
-                <a href="{{BASE}}pages/modules-index.html" class="mob-sub">🎓 Модули (1-12)</a>
-                <a href="{{BASE}}pages/documentation.html" class="mob-sub">📖 База знаний</a>
+                <a href="{{BASE}}pages/documentation.html" class="mob-sub">📚 База знаний (15 Стр. Курсов)</a>
+                <a href="{{BASE}}pages/modules-index.html" class="mob-sub">🎯 Уроки с тестом (12 Модулей)</a>
+            </div>
+        </div>
+        <div class="mob-acc">
+            <div class="mob-acc-title">📚 Курс обучения <span class="mob-arr">▼</span></div>
+            <div class="mob-acc-body">
+                <a href="{{BASE}}pages/documentation.html" class="mob-sub">📚 База знаний (15 Стр. Курсов)</a>
+                <a href="{{BASE}}pages/modules-index.html" class="mob-sub">🎯 Уроки с тестом (12 Модулей)</a>
+                <a href="{{BASE}}pages/glossary.html" class="mob-sub">📖 Глоссарий терминов</a>
             </div>
         </div>
         <div class="mob-acc">
@@ -74,9 +82,8 @@
             <div class="mob-acc-body">
                 <a href="{{BASE}}pages/simulator.html" class="mob-sub">🎯 Симулятор</a>
                 <a href="{{BASE}}pages/testing.html" class="mob-sub">✍️ Тестирование</a>
-                <a href="{{BASE}}pages/cases.html" class="mob-sub">💼 Кейсы</a>
+                <a href="{{BASE}}pages/Trainer-Quiz.html" class="mob-sub">⚡ Тренировка</a>
                 <a href="{{BASE}}pages/load-finder.html" class="mob-sub">🔍 Load Finder</a>
-                <a href="{{BASE}}pages/dispatcher-cards.html" class="mob-sub">🃏 Dispatcher Cards</a>
                 <a href="{{BASE}}pages/ai-broker-chat.html" class="mob-sub">🤖 AI Брокер</a>
             </div>
         </div>
@@ -187,7 +194,7 @@
           <div class="footer-acc-body">
             <a href="{{BASE}}pages/modules-index.html" class="footer-link"><span class="link-icon">📚</span>12 Модулей</a>
             <a href="{{BASE}}pages/simulator.html" class="footer-link"><span class="link-icon">🎯</span>Симулятор</a>
-            <a href="{{BASE}}pages/dispatcher-cards.html" class="footer-link"><span class="link-icon">🃏</span>Карточки</a>
+            <a href="{{BASE}}pages/Trainer-Quiz.html" class="footer-link"><span class="link-icon">🎯</span>Тренажёр</a>
             <a href="{{BASE}}pages/documentation.html" class="footer-link"><span class="link-icon">📖</span>Документация</a>
             <a href="{{BASE}}pages/testing.html" class="footer-link"><span class="link-icon">✍️</span>Тестирование</a>
           </div>
@@ -258,11 +265,10 @@
                         dd.style.top = btnRect.bottom + 6 + 'px';
                         dd.style.left = btnRect.left + 'px';
                         dd.style.right = 'auto';
-                        // Prevent going off-screen right
-                        var ddWidth = dd.offsetWidth || 200;
+                        // Now dropdown is visible — measure real width
+                        var ddWidth = dd.getBoundingClientRect().width || 200;
                         if (btnRect.left + ddWidth > window.innerWidth - 10) {
-                            dd.style.left = 'auto';
-                            dd.style.right = '10px';
+                            dd.style.left = (btnRect.right - ddWidth) + 'px';
                         }
                     }
                 }

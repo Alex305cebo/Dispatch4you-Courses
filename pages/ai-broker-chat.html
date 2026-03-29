@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" style="background:#070b14">
 <head>
     <script src="../site-protection.js"></script>
     <meta charset="UTF-8">
@@ -13,14 +13,17 @@
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         html{overflow-x:hidden}
-        :root{--primary:#06b6d4;--accent:#f97316;--success:#10b981;--danger:#ef4444;--bg:#070b14;--bg2:#0d1117;--card:#111827;--border:rgba(255,255,255,.06);--t1:#f1f5f9;--t2:#94a3b8;--t3:#64748b}
-        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);margin:0;height:100vh;display:flex;flex-direction:column}
+        :root{--primary:#06b6d4;--accent:#f97316;--success:#10b981;--danger:#ef4444;--bg:#070b14;--bg2:#0d1117;--card:#111827;--border:rgba(255,255,255,.06);--t1:#f1f5f9;--t2:#94a3b8;--t3:#64748b;--nav:64px}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);margin:0;height:100vh;overflow:hidden;display:flex;flex-direction:column}
         body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 15% 25%,rgba(6,182,212,.08),transparent 50%),radial-gradient(circle at 85% 75%,rgba(249,115,22,.05),transparent 50%);z-index:-1;pointer-events:none}
 
-        .app{display:flex;flex-direction:column;height:100vh;max-width:760px;margin:0 auto;width:100%}
+        /* Nav placeholder */
+        #shared-nav-container{flex-shrink:0}
+
+        .app{display:flex;flex-direction:column;flex:1;max-width:800px;margin:0 auto;width:100%;min-height:0;overflow:hidden}
 
         /* HEADER */
-        .hdr{padding:64px 16px 6px;background:rgba(10,14,26,.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);flex-shrink:0;z-index:10}
+        .hdr{padding:8px 16px 6px;background:rgba(10,14,26,.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);flex-shrink:0;z-index:10}
         .hdr-row{display:flex;align-items:center;justify-content:space-between}
         .bi{display:flex;align-items:center;gap:8px}
         .av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:15px;position:relative;flex-shrink:0}
@@ -80,7 +83,13 @@
         @keyframes wave{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1)}}
 
         /* INPUT AREA */
-        .input-area{padding:8px 12px 12px;background:rgba(10,14,26,.97);border-top:1px solid var(--border);flex-shrink:0;display:flex;justify-content:center;align-items:center}
+        .input-area{padding:8px 12px 12px;background:rgba(10,14,26,.97);border-top:1px solid var(--border);flex-shrink:0;display:flex;justify-content:center;align-items:flex-end;gap:8px}
+        .text-input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:12px;padding:10px 14px;color:var(--t1);font-family:'Inter',sans-serif;font-size:14px;resize:none;outline:none;max-height:120px;line-height:1.5;transition:.2s}
+        .text-input:focus{border-color:rgba(6,182,212,.4);background:rgba(6,182,212,.04)}
+        .text-input::placeholder{color:var(--t3)}
+        .send-btn{width:40px;height:40px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--primary),#0ea5e9);color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.2s}
+        .send-btn:hover:not(:disabled){transform:scale(1.08)}
+        .send-btn:disabled{opacity:.35;cursor:not-allowed}
 
         /* DRAFT MESSAGE with inline send */
         .msg.draft{align-self:flex-end;max-width:85%;display:flex;align-items:flex-start;gap:8px;padding:10px 14px;border-radius:12px;background:linear-gradient(135deg,rgba(6,182,212,.15),rgba(14,165,233,.1));border:1px solid rgba(6,182,212,.2);border-bottom-right-radius:4px}
@@ -94,12 +103,102 @@
         .mic-btn:disabled{opacity:.35;cursor:not-allowed;transform:none;animation:none}
 
         /* RESPONSIVE */
-        @media(max-width:768px){.hdr{padding:58px 10px 5px}.av{width:30px;height:30px;font-size:13px}.bn{font-size:12px}.msg{max-width:88%;font-size:12px}.input-area{padding:5px 10px 8px}}
-        @media(max-width:480px){.hdr{padding:54px 8px 4px}.hb .txt{display:none}.msg{max-width:92%;font-size:12px;padding:6px 10px}.mic-btn{width:36px;height:36px;font-size:15px}.text-input{font-size:12px;padding:6px 10px}}
+        @media(max-width:768px){
+          .hdr{padding:6px 10px 5px}
+          .av{width:28px;height:28px;font-size:12px}
+          .bn{font-size:12px}
+          .msg{max-width:88%;font-size:13px}
+          .input-area{padding:5px 8px 8px}
+          .coach-panel{width:calc(100vw - 32px);right:16px;top:auto;bottom:70px;transform:none;max-height:50vh}
+          .coach-toggle{bottom:70px;right:8px;width:36px;height:36px;font-size:14px}
+          .sbar{padding:4px 8px}
+        }
+        @media(max-width:480px){
+          .hb .txt{display:none}
+          .msg{max-width:92%;font-size:12px;padding:6px 10px}
+          .mic-btn{width:34px;height:34px;font-size:14px}
+          .send-btn{width:34px;height:34px;font-size:14px}
+          .text-input{font-size:13px;padding:8px 10px}
+          .sc{font-size:11px;padding:4px 8px}
+        }
+        /* Hide footer on chat page */
+        footer,.footer-section,.site-footer{display:none!important}
+
+        /* ── PREP SCREEN ── */
+        .prep-screen{position:fixed;inset:0;background:rgba(7,11,20,.97);backdrop-filter:blur(20px);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+        .prep-card{background:linear-gradient(145deg,rgba(6,182,212,.08),rgba(14,165,233,.04));border:1px solid rgba(6,182,212,.2);border-radius:24px;max-width:560px;width:100%;padding:32px;animation:fadeInUp .4s ease}
+        @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        .prep-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--primary);margin-bottom:8px}
+        .prep-scenario{font-size:22px;font-weight:800;color:var(--t1);margin-bottom:20px;line-height:1.3}
+        .prep-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+        .prep-item{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px 14px}
+        .prep-item-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:4px}
+        .prep-item-val{font-size:14px;font-weight:700;color:var(--t1)}
+        .prep-steps{margin-bottom:24px}
+        .prep-step{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}
+        .prep-step-num{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0;margin-top:1px}
+        .prep-step-text{font-size:13px;color:var(--t2);line-height:1.5}
+        .prep-step-text b{color:var(--t1)}
+        .prep-start-btn{width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--primary),#0ea5e9);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:.2s}
+        .prep-start-btn:hover{opacity:.9;transform:translateY(-1px)}
+
+        /* ── AI COACH ── */
+        .coach-panel{position:fixed;right:16px;top:50%;transform:translateY(-50%);width:220px;background:rgba(13,17,23,.97);border:1px solid rgba(6,182,212,.15);border-radius:18px;padding:14px;z-index:200;display:none;flex-direction:column;gap:10px;max-height:60vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+        .coach-panel.show{display:flex}
+        .coach-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--primary);margin-bottom:2px}
+        .coach-score{display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:10px}
+        .coach-score-val{font-size:22px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .coach-score-lbl{font-size:11px;color:var(--t3)}
+        .coach-tip{background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.12);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--t2);line-height:1.6}
+        .coach-tip b{color:var(--t1);display:block;margin-bottom:3px;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+        .coach-phrase{background:rgba(249,115,22,.06);border:1px solid rgba(249,115,22,.15);border-radius:10px;padding:10px 12px;cursor:pointer;transition:.2s}
+        .coach-phrase:hover{background:rgba(249,115,22,.12)}
+        .coach-phrase-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:4px}
+        .coach-phrase-text{font-size:12px;color:var(--t1);font-style:italic;line-height:1.5}
+        .coach-toggle{position:fixed;right:16px;bottom:90px;width:40px;height:40px;border-radius:50%;border:1px solid rgba(6,182,212,.3);background:rgba(13,17,23,.95);color:var(--primary);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:201;transition:.2s;box-shadow:0 4px 16px rgba(0,0,0,.3)}
+        .coach-toggle:hover{background:rgba(6,182,212,.15)}
+
+        /* ── PHRASE HINTS ── */
+        .phrase-hints{padding:4px 12px 0;display:none;gap:6px;flex-wrap:wrap}
+        .phrase-hints.show{display:flex}
+        .ph{padding:5px 11px;border-radius:20px;border:1px solid rgba(6,182,212,.2);background:rgba(6,182,212,.06);color:var(--primary);font-size:11px;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap}
+        .ph:hover{background:rgba(6,182,212,.15)}
     </style>
 </head>
 <body>
     <div id="shared-nav-container"></div>
+
+    <!-- ── PREP SCREEN ── -->
+    <div class="prep-screen" id="prep-screen">
+      <div class="prep-card">
+        <div class="prep-title">📋 Подготовка к звонку</div>
+        <div class="prep-scenario" id="prep-scenario">Холодный звонок брокеру</div>
+        <div class="prep-grid" id="prep-grid">
+          <div class="prep-item"><div class="prep-item-label">Тип трейлера</div><div class="prep-item-val" id="prep-trailer">53' Dry Van</div></div>
+          <div class="prep-item"><div class="prep-item-label">Маршрут</div><div class="prep-item-val" id="prep-route">Chicago → Atlanta</div></div>
+          <div class="prep-item"><div class="prep-item-label">Целевая ставка</div><div class="prep-item-val" id="prep-rate">$2,100+</div></div>
+          <div class="prep-item"><div class="prep-item-label">Доступность</div><div class="prep-item-val" id="prep-avail">Сегодня, 2 PM</div></div>
+        </div>
+        <div class="prep-steps" id="prep-steps"></div>
+        <button class="prep-start-btn" onclick="startCall()">📞 Начать звонок</button>
+      </div>
+    </div>
+
+    <!-- ── AI COACH ── -->
+    <div class="coach-panel" id="coach-panel">
+      <div class="coach-title">🧠 AI Коуч</div>
+      <div class="coach-score">
+        <div class="coach-score-val" id="coach-score">—</div>
+        <div class="coach-score-lbl">оценка реплики</div>
+      </div>
+      <div class="coach-tip" id="coach-tip"><b>Совет</b>Начни диалог — получишь оценку</div>
+      <div class="coach-phrase" id="coach-phrase" onclick="usePhrase()" style="display:none">
+        <div class="coach-phrase-lbl">💬 Попробуй сказать</div>
+        <div class="coach-phrase-text" id="coach-phrase-text"></div>
+      </div>
+    </div>
+    <button class="coach-toggle" id="coach-toggle" onclick="toggleCoach()" title="AI Коуч">🧠</button>
+
     <div class="app">
         <div class="hdr"><div class="hdr-row">
             <div class="bi"><div class="av">🤖<span class="dot" id="dot"></span></div><div><div class="bn" id="bName">AI Брокер — Mike</div><div class="bs" id="bStat">Проверка...</div></div></div>
@@ -113,11 +212,16 @@
             <button class="sc" data-s="cold">📞 Холодный</button>
             <button class="sc" data-s="followup">🔄 Follow-up</button>
         </div>
+        <div class="phrase-hints" id="phrase-hints"></div>
         <div class="chat" id="chat"></div>
         <div class="typing" id="typing"><div class="td"></div><div class="td"></div><div class="td"></div></div>
         <div class="speaking-indicator" id="speakInd"><div class="wave"><span></span><span></span><span></span></div> Брокер говорит...</div>
         <div class="input-area">
             <button class="mic-btn" id="micBtn" onclick="toggleMic()">🎙️</button>
+            <textarea class="text-input" id="textInput" placeholder="Введи ответ брокеру..." rows="1"
+                oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px';document.getElementById('sendBtn').disabled=!this.value.trim();showPhraseHints(this.value)"
+                onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendText()}"></textarea>
+            <button class="send-btn" id="sendBtn" onclick="sendText()" disabled>➤</button>
         </div>
     </div>
     <script src="../nav-loader.js?v=6.2"></script>
@@ -145,124 +249,157 @@ let hist=[],scen='free',broker='Mike',busy=false,isRec=false,recognition=null,sy
 const NAMES=['Mike','Steve','Dave','Tom','Chris','Brian','Kevin','Jason','Mark','Jeff'];
 
 const SC={
-free:{p:`You are {N}, a professional freight broker at Apex Freight Solutions taking an inbound call from a dispatcher.
+free:{p:`You are {N}, a real freight broker at Apex Freight Solutions. You're at your desk, handling multiple calls. A dispatcher just called you.
 
-CRITICAL RULES:
-1. ALWAYS ask for MC# first before discussing any load details or rates. Say: "Before we go any further, can I get your MC number?"
-2. When they give MC#, confirm it: "MC checks out, you're good."
-3. Only AFTER MC verification, discuss loads and rates.
-4. You have loads available. When asked, provide realistic details: route, miles, equipment type, weight, commodity, pickup time, rate.
-5. Negotiate rates professionally. Start lower, move up with justification.
-6. Use real freight terminology: MC, rate con, BOL, detention, TONU, deadhead, lumper, HOS, D2P, all-in rate.
+WHO YOU ARE:
+- You've been a broker for 8 years. You know every trick in the book.
+- You're professional but direct. No small talk beyond 5 seconds.
+- You handle 60+ calls a day. You can tell in 30 seconds if someone is worth your time.
 
-PERSONALITY: Professional, direct, slightly busy. You handle 50+ calls a day. Not rude but efficient.
-RESPONSE: MAX 2-3 short sentences. Real phone call pace. No bullet points.
-LANGUAGE: Match the caller's language. If they speak English, respond in English. If Russian, respond in Russian but keep freight terms in English.
-COACHING: If user says "подскажи"/"hint"/"помоги" → respond with [HINT: practical tip in Russian], then continue as broker.`,
-g:null,h:['Представься: имя, компания, MC#','Спроси какие грузы есть','Упомяни оборудование и лейны']},
+HOW YOU BEHAVE:
+1. Pick up: "{N} speaking." — nothing more.
+2. Let THEM talk first. Don't volunteer information.
+3. ALWAYS ask MC# before anything: "What's your MC?" — short, direct.
+4. After MC: "Alright, what are you running and where are you at?"
+5. Only THEN discuss loads. Give ONE load at a time with real details.
+6. On rate: start $150-200 below what you'd accept. Hold firm for 2 rounds minimum.
+7. Use real broker phrases: "That's the best I can do on this one", "I got other carriers looking at it", "Let me check... yeah I got something"
+8. If they're vague or unprepared: "Look, I'm slammed right now. Send me your carrier packet."
+9. React naturally to what they say. Don't follow a script.
 
-negotiate:{p:`You are {N}, a senior freight broker at Summit Logistics. A dispatcher is calling about a load you posted on DAT.
+AVAILABLE LOADS TODAY:
+- Chicago IL → Nashville TN, 53' Dry Van, 38,000 lbs auto parts, pickup 3PM today, $1,650 total
+- Indianapolis IN → Atlanta GA, 53' Dry Van, 42,000 lbs retail goods, pickup tomorrow 6AM, $1,900 total  
+- Detroit MI → Dallas TX, 53' Dry Van, 44,000 lbs machinery, pickup tomorrow 8AM, $2,400 total
 
-THE LOAD:
-- Route: Dallas TX → Atlanta GA (780 miles)
-- Equipment: 53' Dry Van
+RESPONSE RULES:
+- MAX 2 sentences. Real phone call pace.
+- No bullet points. No lists. Just talk.
+- Sound like a real person, not a chatbot.
+- Use contractions: "I've got", "What's your", "Let me check"
+- Occasional filler: "Hang on...", "Yeah...", "Look..."
+- If they say "подскажи" or "hint" → [HINT: конкретный совет на русском], then continue as broker.`,
+h:['Представься кратко: имя, компания, MC#','Скажи что у тебя есть: оборудование, лейны, доступность','Не говори слишком много — дай брокеру говорить']},
+
+negotiate:{p:`You are {N}, a senior broker at Summit Logistics. You posted a load on DAT and a dispatcher is calling about it.
+
+THE LOAD (you know this cold):
+- Route: Dallas TX → Atlanta GA, 780 miles
+- Equipment: 53' Dry Van, no touch freight
 - Commodity: Auto parts, 42,000 lbs
-- Pickup: Tomorrow 06:00 AM, dock appointment
-- Your opening offer: $1,750 total
-- Market rate: ~$2,100 total
-- Your absolute maximum: $2,200 — NEVER reveal this, NEVER exceed it
+- Pickup: Tomorrow 6:00 AM sharp, dock appointment — CANNOT be late
+- Your opening number: $1,750 all-in
+- You'll go up to $2,150 max — but NEVER say this
+- Market rate on DAT: $2.05/mile (~$1,600) — you know this but won't admit it easily
 
-CRITICAL RULES:
-1. First thing: "Can I get your MC number real quick?" — verify before anything.
-2. After MC: give load details professionally.
-3. Start at $1,750 total. Always quote TOTAL, not per-mile.
-4. HOLD your rate for at least 2 pushbacks before moving up.
-5. Move only $50-100 per round. Require justification each time.
-6. Use pressure tactics: "I got 3 carriers calling on this one", "Market's been soft on this lane", "That's my best number."
-7. NEVER accept the first counter-offer without pushback.
-8. After 4+ rounds: "Look, that's my final number. Take it or leave it."
-9. If dispatcher mentions DAT data or fuel costs — acknowledge but still negotiate.
+HOW YOU NEGOTIATE:
+1. MC# first. Always.
+2. Give load details professionally.
+3. Quote $1,750. If they push back: "That's where I'm at on this one."
+4. Second pushback: "Look, I got two other carriers looking at this. What can you do?"
+5. Third pushback: move $75. "Alright, I can do $1,825. That's it."
+6. If they mention DAT: "DAT's a guide, not gospel. My shipper's rate is what it is."
+7. After $2,000: "That's my ceiling. Take it or I move to the next carrier."
+8. If they walk: "Alright, good luck out there." — let them go, don't chase.
 
-PERSONALITY: Tough but fair. Professional. You know your numbers.
-RESPONSE: MAX 2 sentences. Direct.
-COACHING: "подскажи" → [HINT: tip in Russian].`,
-g:null,h:['Не соглашайся на первое предложение','Скажи "Can you do any better?"','Упомяни DAT данные']},
+PERSONALITY: Confident, slightly aggressive negotiator. You've done this 1000 times.
+RESPONSE: MAX 2 sentences. No fluff.
+HINT trigger: [HINT: совет на русском].`,
+h:['Называй цену первым — якорь','Не соглашайся сразу — скажи "That\'s where I\'m at"','Упомяни DAT: "DAT shows $2.05/mile"']},
 
-book:{p:`You are {N}, a freight broker at National Freight Corp. A dispatcher is calling to book a load.
+book:{p:`You are {N}, a broker at National Freight Corp. A dispatcher is calling to book a specific load.
 
 THE LOAD:
-- Route: Chicago IL → Miami FL (1,380 miles)
-- Equipment: Reefer 53', temperature 34°F
-- Commodity: Fresh produce, 38,000 lbs
-- Pickup: Tomorrow 04:00 AM at Sysco warehouse, dock #7
-- Rate: $3,450 total (negotiable down to $3,100)
-- Delivery: Day after tomorrow by 6:00 PM sharp
+- Load #: NFC-2847
+- Route: Chicago IL → Miami FL, 1,380 miles
+- Equipment: Reefer 53', must maintain 34°F — CRITICAL, no exceptions
+- Commodity: Fresh produce (strawberries), 38,000 lbs
+- Pickup: Tomorrow 4:00 AM at Sysco Foods, 2200 W 35th St, Chicago IL 60632, dock #7
+- Delivery: Day after tomorrow by 5:00 PM at Sysco Miami, 8300 NW 53rd St, Miami FL 33166
+- Rate: $3,450 all-in (you can go down to $3,100 if pushed hard)
+- Special: Pre-cool trailer to 34°F before arrival. Driver needs food handler cert.
 
-BOOKING FLOW (follow strictly):
-1. Answer → ask for MC# immediately
-2. MC verified → give full load details
-3. Discuss rate if needed, negotiate
-4. Rate agreed → ask for: driver full name, truck number, trailer number, driver cell phone
-5. Ask: "What's the best email for the rate confirmation?"
-6. Remind: "Driver needs to check in 2 hours before pickup. Any questions?"
+BOOKING FLOW:
+1. MC# first.
+2. Confirm load details.
+3. Negotiate if needed.
+4. Collect: driver full name, truck #, trailer #, driver cell.
+5. "What email for the rate con?" — send within 30 min.
+6. "Driver needs to pre-cool to 34°F and check in 1 hour early. Any issues with that?"
 
-PERSONALITY: Professional, efficient, detail-oriented.
+PERSONALITY: Detail-oriented, professional. Produce loads are serious — you don't mess around.
 RESPONSE: MAX 2-3 sentences.
-COACHING: "подскажи" → [HINT: tip in Russian].`,
-g:null,h:['Имей MC# наготове','Спроси ВСЕ детали','Дай данные водителя']},
+HINT trigger: [HINT: совет на русском].`,
+h:['Имей MC# наготове','Дай данные водителя: имя, truck#, trailer#, телефон','Уточни email для rate con']},
 
-problem:{p:`You are {N}, a freight broker at CrossCountry Logistics. A dispatcher is calling about a problem with an active load you booked together.
+problem:{p:`You are {N}, a broker at CrossCountry Logistics. You have an active load in transit and a dispatcher is calling you. Something is wrong.
 
-THE LOAD (already in transit):
-- Route: Los Angeles CA → Denver CO (1,020 miles)
-- Driver picked up yesterday, should deliver TODAY by 5:00 PM
-- Commodity: Electronics, 40,000 lbs, high-value
-- Rate: $2,800 total
-- Receiver: Best Buy distribution center
+THE LOAD IN TRANSIT:
+- Load #: CCL-1193
+- Route: Los Angeles CA → Denver CO, 1,020 miles
+- Picked up yesterday 8AM
+- Must deliver TODAY by 5:00 PM — receiver is Best Buy DC, they close at 5PM sharp
+- Commodity: Consumer electronics, $180,000 value
+- Current time: 11:00 AM. Driver should be in Utah by now.
 
-YOUR REACTIONS:
-- Delay: Frustrated but professional. "How late are we talking? I need to call the receiver NOW."
-- Breakdown: Concerned. "Where exactly is he? Can he get to a shop? What's the ETA on repair?"
-- Damage: Very serious. "How bad is it? Tell the driver to take photos immediately. Don't move anything."
-- Any problem: ALWAYS demand specifics — location, timeline, plan of action.
+YOUR EMOTIONAL STATE: Stressed. This is a major account. If this load is late, you lose the shipper.
 
-PERSONALITY: Stressed but professional. Your shipper is a major account. Show urgency.
-RESPONSE: MAX 2-3 sentences. Urgent, direct.
-COACHING: "подскажи" → [HINT: tip in Russian].`,
-g:null,h:['Сообщи СРАЗУ','Дай конкретику: где, что, ETA','Предложи решение']},
+HOW YOU REACT:
+- Delay: "How late are we talking? I need to call the receiver right now. Give me his exact location."
+- Breakdown: "Where exactly? What's wrong with the truck? How long to fix? I need a backup plan NOW."
+- Accident: "Is the driver okay? Where? I'm calling our claims department. Don't move anything."
+- Weather: "I don't care about weather. What's the ETA? I need a number."
+- Any excuse: "I don't need reasons, I need solutions. What's your plan?"
 
-cold:{p:`You are {N}, a freight broker at Pacific Freight Group. You're busy at your desk. Phone rings — it's a dispatcher you've NEVER worked with, cold-calling you.
+ALWAYS demand: exact location (city/mile marker), realistic ETA, specific action plan.
+PERSONALITY: Under pressure, direct, no patience for vague answers.
+RESPONSE: MAX 2-3 sentences. Urgent.
+HINT trigger: [HINT: совет на русском].`,
+h:['Сообщи сразу: "I need to update you on load CCL-1193"','Дай точное местоположение водителя','Предложи конкретное решение — не просто "sorry"']},
 
-CRITICAL RULES:
-1. First thing you ask: "What's your MC number?" — non-negotiable.
-2. Then ask: "How long you been in business? What equipment you running?"
-3. You're skeptical. You get 20+ cold calls a day. Most are time-wasters.
-4. If dispatcher is professional, prepared, knows their lanes → warm up, share info about your available loads (Southeast and Midwest lanes).
-5. If dispatcher is vague, doesn't know their MC#, or sounds unprepared → "Look, send me your carrier packet to dispatch@pacificfreight.com, I'll take a look when I get a chance."
+cold:{p:`You are {N}, a broker at Pacific Freight Group. You're at your desk. Phone rings — unknown number. You pick up.
 
-WHAT IMPRESSES YOU: Knowing your lanes, having MC# ready, mentioning specific equipment and availability, professional tone.
-WHAT TURNS YOU OFF: "Do you have any loads?" (too vague), not knowing MC#, being pushy.
+YOUR MINDSET:
+- You get 25+ cold calls a day. 90% are a waste of time.
+- You'll give them 60 seconds to impress you. If they don't — you're off the phone.
+- You have real loads but you only work with carriers who prove they're professional.
 
-PERSONALITY: Busy, slightly impatient, but fair. Give respect if you get respect.
-RESPONSE: MAX 2 sentences.
-COACHING: "подскажи" → [HINT: tip in Russian].`,
-g:null,h:['Будь кратким','Представься: имя, MC#, оборудование','Скажи какие лейны']},
+HOW YOU FILTER:
+GOOD signs (you warm up): MC# ready, knows their lanes, specific equipment, professional tone, mentions safety rating
+BAD signs (you cut it short): "Do you have any loads?" (too vague), doesn't know MC#, says "we can run anything anywhere", sounds nervous or unprepared
 
-followup:{p:`You are {N}, a freight broker at Alliance Transport Solutions. A dispatcher you worked with before is calling back. You did one load together last week — Dallas to Memphis, delivered on time, no issues. Good experience.
+IF THEY'RE GOOD: "Alright, what lanes are you strong on? I might have something for you."
+IF THEY'RE BAD: "Look, I'm slammed. Send your carrier packet to dispatch@pacificfreight.com. I'll look when I get a chance." — and you're done.
+
+AVAILABLE LOADS (only share if they earn it):
+- Phoenix AZ → Dallas TX, Dry Van, $1,400, pickup Friday
+- Seattle WA → Los Angeles CA, Dry Van, $2,100, pickup Thursday
+
+PERSONALITY: Busy, skeptical, but fair. Respect earns respect.
+RESPONSE: MAX 1-2 sentences. Blunt.
+HINT trigger: [HINT: совет на русском].`,
+h:['Будь готов: MC#, оборудование, лейны, safety rating','Скажи конкретно: "We run Midwest dry van, 3 trucks, 99% on-time"','Не говори "we can run anything" — это красный флаг']},
+
+followup:{p:`You are {N}, a broker at Alliance Transport Solutions. A dispatcher you worked with is calling back. You did one load together — Dallas TX to Memphis TN last week. Driver was on time, no issues, good communication. You liked working with them.
+
+YOUR ATTITUDE: Friendly but still professional. You want to build a relationship but you're not going to give away the farm.
 
 AVAILABLE LOADS THIS WEEK:
-1. Houston TX → Nashville TN, 790 miles, Dry Van, $1,900 total, pickup Thursday 8AM
-2. Memphis TN → Charlotte NC, 630 miles, Dry Van, $1,500 total, pickup Friday 6AM  
-3. Jacksonville FL → Atlanta GA, 350 miles, Reefer 34°F, $1,100 total, pickup Wednesday 10AM
+1. Houston TX → Nashville TN, 790 miles, 53' Dry Van, 40,000 lbs retail, pickup Thursday 8AM, $1,900 total
+2. Memphis TN → Charlotte NC, 630 miles, 53' Dry Van, 38,000 lbs auto parts, pickup Friday 6AM, $1,500 total
+3. Jacksonville FL → Atlanta GA, 350 miles, Reefer 34°F, 22,000 lbs produce, pickup Wednesday 10AM, $1,100 total
 
-PERSONALITY: Friendly, you remember them. "Hey, good to hear from you! That Dallas load went smooth."
-- More willing to negotiate fairly since they proved reliable.
-- Interested in building a regular lane relationship.
-- "If this keeps going well, I can keep you busy 3-4 loads a week on these lanes."
+HOW YOU BEHAVE:
+- Warm greeting: "Hey! Good to hear from you. That Dallas load went smooth."
+- Still ask MC# (habit, even if you know them): "Just confirming — same MC as before?"
+- More flexible on rate: willing to move $100-150 more than with a new carrier
+- Hint at future business: "If this keeps going well, I can keep you busy 3-4 loads a week."
+- Ask about their capacity: "How many trucks you running right now?"
 
-RESPONSE: MAX 2-3 sentences. Friendly, professional.
-COACHING: "подскажи" → [HINT: tip in Russian].`,
-g:null,h:['Напомни о прошлом грузе','Спроси о грузах','Предложи стать regular carrier']}
+PERSONALITY: Friendly, building a relationship, but still a businessman.
+RESPONSE: MAX 2-3 sentences.
+HINT trigger: [HINT: совет на русском].`,
+h:['Напомни о прошлом грузе: "We hauled your Dallas-Memphis load last week"','Спроси о регулярных грузах: "Can you keep us busy weekly?"','Предложи стать preferred carrier']}
 };
 
 const $=id=>document.getElementById(id);
@@ -273,20 +410,40 @@ const chat=$('chat'),micBtn=$('micBtn'),textInput=$('textInput'),sendBtn=$('send
 
 // Speech Recognition
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-let silenceTimer=null, finalText='';
+let silenceTimer=null, finalText='', micPermission=false;
 if(SR){recognition=new SR();recognition.continuous=true;recognition.interimResults=true;recognition.lang='en-US';
 recognition.onresult=e=>{let f='',i='';for(let x=0;x<e.results.length;x++){if(e.results[x].isFinal)f+=e.results[x][0].transcript;else i+=e.results[x][0].transcript}
 finalText=f;const display=f+(i?' '+i:'');
 if(draftEl){draftEl.querySelector('.draft-text').textContent=display||'🎙️ Слушаю...'}
-// Reset silence timer on any speech
 clearTimeout(silenceTimer);
 silenceTimer=setTimeout(()=>{if(isRec&&finalText.trim()){stopRec();showDraft(finalText.trim())}},5000);
 };
 recognition.onerror=e=>{console.log('Speech error:',e.error);if(e.error!=='no-speech')stopRec()};
 recognition.onend=()=>{if(isRec){try{recognition.start()}catch(e){stopRec()}}}}
 
-// Scenario chips
-document.querySelectorAll('.sc').forEach(c=>c.addEventListener('click',()=>startScenario(c.dataset.s)));
+// Pre-request mic permission once on page load (silent)
+if(navigator.permissions){
+  navigator.permissions.query({name:'microphone'}).then(p=>{
+    if(p.state==='granted'){micPermission=true;}
+    else if(p.state==='prompt'){
+      // Show one-time tip
+      const tip=document.createElement('div');
+      tip.id='mic-tip';
+      tip.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3);border-radius:12px;padding:10px 18px;font-size:13px;color:#f1f5f9;z-index:999;text-align:center;backdrop-filter:blur(10px);max-width:320px;';
+      tip.innerHTML='🎙️ Нажми на микрофон и выбери <b>"Разрешить когда я на сайте"</b> — больше не будет спрашивать';
+      document.body.appendChild(tip);
+      setTimeout(()=>tip.remove(),7000);
+    }
+  }).catch(()=>{});
+}
+
+// Scenario chips — show prep screen first
+document.querySelectorAll('.sc').forEach(c=>c.addEventListener('click',()=>{
+  scen=c.dataset.s;
+  document.querySelectorAll('.sc').forEach(x=>x.classList.remove('on'));
+  c.classList.add('on');
+  showPrepScreen();
+}));
 
 function startScenario(s){
     document.querySelectorAll('.sc').forEach(c=>c.classList.remove('on'));
@@ -294,6 +451,38 @@ function startScenario(s){
     scen=s;hist=[];broker=NAMES[Math.floor(Math.random()*NAMES.length)];
     $('bName').textContent=`AI Брокер — ${broker}`;
     chat.innerHTML='';draftEl=null;draftText='';
+
+    // Dispatcher opening lines per scenario
+    const dispatcherOpeners={
+      free:`Hi ${broker}, this is Alex from Swift Dispatch. How are you doing today? I'm calling to check if you have any loads available for our 53' dry van — we're free today after 2 PM in the Chicago area.`,
+      negotiate:`Hi ${broker}, this is Alex from Swift Dispatch. I saw your load posting on DAT — Chicago to Atlanta, 44,000 lbs. I'm interested but I need to discuss the rate.`,
+      book:`Hi ${broker}, this is Alex from Swift Dispatch. I'm calling to confirm the booking on load #[номер]. I have a driver ready and want to go over the details.`,
+      problem:`Hi ${broker}, this is Alex from Swift Dispatch. I need to update you on load #[номер] — we have a situation and I want to let you know right away.`,
+      cold:`Hi, may I speak with the freight department? This is Alex from Swift Dispatch — we're a carrier specializing in Midwest lanes and I'd like to introduce our services.`,
+      followup:`Hi ${broker}, this is Alex from Swift Dispatch — we hauled your load from Chicago to Atlanta last week. I wanted to follow up and see how we did.`,
+    };
+
+    const dispMsg=dispatcherOpeners[s]||dispatcherOpeners.free;
+
+    // Show dispatcher message as a "coach suggestion" first
+    const hint=document.createElement('div');
+    hint.className='msg sys';
+    hint.style.cssText='background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.15);border-radius:12px;padding:12px 14px;font-size:13px;color:#94a3b8;line-height:1.6;margin-bottom:4px';
+    hint.innerHTML=`<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#06b6d4;margin-bottom:6px">📞 Твоя первая реплика (нажми чтобы использовать)</div>
+    <div style="color:#f1f5f9;cursor:pointer" onclick="useOpeningLine(this)">${esc(dispMsg)}</div>`;
+    chat.appendChild(hint);
+    chat.scrollTop=chat.scrollHeight;
+
+    // Pre-fill input with opening line
+    textInput.value=dispMsg;
+    textInput.dispatchEvent(new Event('input'));
+    textInput.focus();
+}
+
+function useOpeningLine(el){
+  textInput.value=el.textContent;
+  textInput.dispatchEvent(new Event('input'));
+  textInput.focus();
 }
 
 function toggleMic(){if(busy)return;if(isRec){clearTimeout(silenceTimer);stopRec();if(finalText.trim())showDraft(finalText.trim())}else{startRec()}}
@@ -360,13 +549,15 @@ async function processMsg(text){
     addMsg('broker',brokerReply);hist.push({role:'assistant',content:brokerReply});
     await speakText(brokerReply);
     busy=false;micBtn.disabled=false;sendBtn.disabled=!textInput.value.trim();
+    // AI Coach analysis
+    coachAnalyze(text, brokerReply);
 }
 
 async function callAI(msg){
     const sp=SC[scen].p.replace(/{N}/g,broker);
     const msgs=[{role:'system',content:sp},...hist.slice(-10)];
     const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),8000);
-    try{const r=await fetch(GU,{method:'POST',mode:'cors',signal:ctrl.signal,headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},body:JSON.stringify({model:MD,messages:msgs,temperature:.85,max_tokens:120,top_p:.9})});clearTimeout(t);if(!r.ok)return fb();const d=await r.json();$('dot').classList.add('on');return d.choices?.[0]?.message?.content||fb()}catch(e){clearTimeout(t);return fb()}
+    try{const r=await fetch(GU,{method:'POST',mode:'cors',signal:ctrl.signal,headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},body:JSON.stringify({model:MD,messages:msgs,temperature:.92,max_tokens:150,top_p:.95})});clearTimeout(t);if(!r.ok)return fb();const d=await r.json();$('dot').classList.add('on');return d.choices?.[0]?.message?.content||fb()}catch(e){clearTimeout(t);return fb()}
 }
 const FBS=["Yeah, let me pull that up. What's your MC?","I hear you. Let me check.","What lanes you looking at?","I might have something. What equipment?","Let me see what I can do."];let fi=0;function fb(){return FBS[fi++%FBS.length]}
 
@@ -407,8 +598,136 @@ async function getAnalysis(){
     chat.scrollTop=chat.scrollHeight;
 }
 
-function resetChat(){synth?.cancel();if(recognition&&isRec)recognition.stop();isRec=false;busy=false;hist=[];draftText='';draftEl=null;chat.innerHTML='';document.querySelectorAll('.sc').forEach(c=>c.classList.remove('on'));document.querySelector('.sc[data-s="free"]').classList.add('on');scen='free';broker=NAMES[Math.floor(Math.random()*NAMES.length)];$('bName').textContent=`AI Брокер — ${broker}`}
+function resetChat(){synth?.cancel();if(recognition&&isRec)recognition.stop();isRec=false;busy=false;hist=[];draftText='';draftEl=null;chat.innerHTML='';document.querySelectorAll('.sc').forEach(c=>c.classList.remove('on'));document.querySelector('.sc[data-s="free"]').classList.add('on');scen='free';broker=NAMES[Math.floor(Math.random()*NAMES.length)];$('bName').textContent=`AI Брокер — ${broker}`;showPrepScreen();}
 
-// Auto-start free scenario (empty chat)
+// ═══════════════════════════════════════════════
+// PREP SCREEN
+// ═══════════════════════════════════════════════
+const PREP_DATA={
+  free:{title:'Свободный разговор с брокером',trailer:"53' Dry Van",route:'Любой маршрут',rate:'По рынку',avail:'Уточни у водителя',
+    steps:[
+      {t:'Представься',d:'<b>"This is [Имя] from [Компания], how are you doing today?"</b>'},
+      {t:'Узнай о грузе',d:'<b>"Do you have any loads available for [дата]?"</b>'},
+      {t:'Уточни детали',d:'Origin, destination, weight, commodity, pickup time'},
+      {t:'Обсуди ставку',d:'Проверь DAT перед звонком. Называй чуть выше рынка'},
+    ]},
+  negotiate:{title:'Переговоры о ставке',trailer:"53' Dry Van",route:'Chicago → Atlanta',rate:'$2,100 (рынок $1,950)',avail:'Завтра, 8 AM',
+    steps:[
+      {t:'Якорная цена',d:'Называй первым: <b>"I need $2,100 all-in"</b>'},
+      {t:'Обоснуй',d:'<b>"DAT shows $2.05/mile average on this lane"</b>'},
+      {t:'Не сдавайся сразу',d:'На первый отказ: <b>"What\'s the best you can do?"</b>'},
+      {t:'Финальный торг',d:'Уступай не более $50-100. Ниже $1,900 — уходи'},
+    ]},
+  book:{title:'Букинг груза',trailer:"53' Reefer",route:'Dallas → Miami',rate:'$3,200 all-in',avail:'Сегодня, 3 PM',
+    steps:[
+      {t:'Подтверди детали',d:'Адрес pickup, delivery, contact names, hours'},
+      {t:'Запроси Rate Con',d:'<b>"Can you send the rate con to [email]?"</b>'},
+      {t:'Уточни требования',d:'Lumper? Detention policy? Special instructions?'},
+      {t:'Подтверди водителя',d:'Имя, номер телефона, номер трейлера'},
+    ]},
+  problem:{title:'Решение проблемы',trailer:'Любой',route:'В пути',rate:'Уже забронировано',avail:'Водитель в пути',
+    steps:[
+      {t:'Сообщи сразу',d:'<b>"I need to update you on load #[номер]"</b>'},
+      {t:'Объясни ситуацию',d:'Факты без эмоций. Что случилось, где водитель'},
+      {t:'Предложи решение',d:'Всегда приходи с планом Б'},
+      {t:'Зафиксируй',d:'Все договорённости — письменно на email'},
+    ]},
+  cold:{title:'Холодный звонок',trailer:"53' Dry Van",route:'Midwest lanes',rate:'Рыночная',avail:'Флот 3 грузовика',
+    steps:[
+      {t:'Открытие',d:'<b>"Hi, this is [Имя], I\'m a dispatcher looking to work with quality brokers"</b>'},
+      {t:'Ценностное предложение',d:'<b>"We specialize in Midwest lanes, 99% on-time delivery"</b>'},
+      {t:'Квалификация',d:'Спроси о типичных грузах, объёме, требованиях'},
+      {t:'Следующий шаг',d:'<b>"Can I send you our carrier packet?"</b>'},
+    ]},
+  followup:{title:'Follow-up звонок',trailer:'Уже работали',route:'Повторный контакт',rate:'Лучше прошлого',avail:'Готовы к работе',
+    steps:[
+      {t:'Напомни о себе',d:'<b>"Hi [Имя], this is [Твоё имя] — we hauled your load last week"</b>'},
+      {t:'Оцени прошлый опыт',d:'<b>"How was our service? Any feedback?"</b>'},
+      {t:'Предложи снова',d:'<b>"We have a truck available [дата] — do you have anything?"</b>'},
+      {t:'Строй отношения',d:'Цель — стать preferred carrier'},
+    ]},
+};
+
+function showPrepScreen(){
+  const d=PREP_DATA[scen]||PREP_DATA.free;
+  $('prep-scenario').textContent=d.title;
+  $('prep-trailer').textContent=d.trailer;
+  $('prep-route').textContent=d.route;
+  $('prep-rate').textContent=d.rate;
+  $('prep-avail').textContent=d.avail;
+  $('prep-steps').innerHTML=d.steps.map((s,i)=>`
+    <div class="prep-step">
+      <div class="prep-step-num">${i+1}</div>
+      <div class="prep-step-text"><b>${s.t}</b> — ${s.d}</div>
+    </div>`).join('');
+  $('prep-screen').style.display='flex';
+}
+
+function startCall(){
+  $('prep-screen').style.display='none';
+  startScenario(scen);
+}
+
+// ═══════════════════════════════════════════════
+// AI COACH
+// ═══════════════════════════════════════════════
+let coachVisible=false;
+function toggleCoach(){
+  coachVisible=!coachVisible;
+  $('coach-panel').classList.toggle('show',coachVisible);
+}
+
+function usePhrase(){
+  const t=$('coach-phrase-text').textContent;
+  if(t){textInput.value=t;textInput.dispatchEvent(new Event('input'));textInput.focus();}
+}
+
+async function coachAnalyze(userMsg, brokerMsg){
+  if(!coachVisible)return;
+  const prompt=`You are a dispatcher training coach. Analyze this dispatcher message in a call with broker.
+Dispatcher said: "${userMsg}"
+Broker responded: "${brokerMsg}"
+Reply in Russian with JSON: {"score":"A/B/C/D","tip":"short tip what to improve","phrase":"better phrase to use next time"}
+Keep tip under 60 chars, phrase under 80 chars. JSON only, no markdown.`;
+  try{
+    const r=await fetch(GU,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},
+      body:JSON.stringify({model:MD,messages:[{role:'user',content:prompt}],temperature:.5,max_tokens:150})});
+    const d=await r.json();
+    const txt=d.choices?.[0]?.message?.content||'{}';
+    const j=JSON.parse(txt.replace(/```json?|```/g,'').trim());
+    $('coach-score').textContent=j.score||'—';
+    $('coach-tip').innerHTML=`<b>Совет</b>${j.tip||'Хорошая работа!'}`;
+    if(j.phrase){$('coach-phrase').style.display='block';$('coach-phrase-text').textContent=j.phrase;}
+  }catch(e){$('coach-tip').innerHTML='<b>Совет</b>Продолжай практиковаться!';}
+}
+
+// ═══════════════════════════════════════════════
+// PHRASE HINTS
+// ═══════════════════════════════════════════════
+const PHRASES={
+  free:['This is [Name] from [Company]','Do you have loads available?','What\'s the rate?','Can you send the rate con?'],
+  negotiate:['DAT shows $2.05/mile','Best I can do is $2,100','What\'s your best number?','I have another offer at $2,050'],
+  book:['Can you send the rate con?','What are the pickup hours?','Driver name is [Name]','Is lumper required?'],
+  problem:['I need to update you','Driver is delayed by 2 hours','We\'re working on a solution','Can we extend the delivery window?'],
+  cold:['We specialize in Midwest lanes','99% on-time delivery','Can I send our carrier packet?','What lanes do you cover?'],
+  followup:['We hauled your load last week','How was our service?','We have a truck available','Looking forward to working together'],
+};
+
+function showPhraseHints(val){
+  const hints=$('phrase-hints');
+  if(!val||val.length>30){hints.classList.remove('show');return;}
+  const ph=PHRASES[scen]||PHRASES.free;
+  hints.innerHTML=ph.map(p=>`<button class="ph" onclick="insertPhrase('${p.replace(/'/g,"\\'")}')">${p}</button>`).join('');
+  hints.classList.add('show');
+}
+
+function insertPhrase(p){
+  textInput.value=p;textInput.dispatchEvent(new Event('input'));
+  $('phrase-hints').classList.remove('show');
+  textInput.focus();
+}
+
+// Auto-start — show prep screen first
 broker=NAMES[Math.floor(Math.random()*NAMES.length)];$('bName').textContent=`AI Брокер — ${broker}`;scen='free';
+showPrepScreen();
 </script>

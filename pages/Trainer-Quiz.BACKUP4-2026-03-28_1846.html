@@ -1,5 +1,5 @@
 ﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
-<html lang="ru" style="background:#070b14">
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -398,30 +398,37 @@ body::before{content:'';position:fixed;inset:0;background:
 .cp-section{width:100%}
 .cp-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;
   color:var(--t3);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.cp-section-count{background:rgba(255,255,255,.07);color:var(--t2);font-size:10px;
+  padding:2px 8px;border-radius:10px;font-weight:700;letter-spacing:0}
 
-/* B: Dialog box */
-.dialog-box{background:rgba(255,255,255,.03);border:1px solid var(--b);
-  border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
-.dialog-empty{font-size:13px;color:var(--t3);text-align:center;padding:8px 0}
-.dialog-line{display:flex;gap:10px;align-items:flex-start}
-.dialog-line.broker .dl-bubble{background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.15);border-radius:0 12px 12px 12px}
-.dialog-line.dispatcher .dl-bubble{background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.12);border-radius:12px 0 12px 12px;margin-left:auto}
-.dialog-line.dispatcher{flex-direction:row-reverse}
-.dl-who{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
-  color:var(--t3);white-space:nowrap;padding-top:4px;min-width:60px}
-.dialog-line.dispatcher .dl-who{text-align:right}
-.dl-bubble{padding:9px 13px;max-width:85%;font-size:13px;color:var(--t1);line-height:1.6}
-.dl-highlight{color:var(--p);font-weight:700}
-.dialog-note{font-size:11px;color:var(--t3);font-style:italic;
-  border-top:1px solid var(--b);padding-top:8px;margin-top:2px;line-height:1.5}
+/* SRS upcoming list */
+.srs-list{display:flex;flex-direction:column;gap:6px}
+.srs-item{display:flex;align-items:center;gap:10px;padding:9px 12px;
+  background:rgba(255,255,255,.03);border:1px solid var(--b);border-radius:11px;
+  cursor:pointer;transition:.2s}
+.srs-item:hover{background:rgba(6,182,212,.07);border-color:rgba(6,182,212,.2)}
+.srs-item-term{flex:1;font-size:13px;font-weight:700;color:var(--t1)}
+.srs-item-cat{font-size:10px;color:var(--t3);font-weight:600}
+.srs-item-when{font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap}
+.srs-when-now{background:rgba(239,68,68,.15);color:#ef4444}
+.srs-when-soon{background:rgba(245,158,11,.12);color:#f59e0b}
+.srs-when-later{background:rgba(100,116,139,.12);color:var(--t3)}
+.srs-empty{font-size:13px;color:var(--t3);text-align:center;padding:12px;
+  background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.15);border-radius:11px}
 
-/* D: Category progress */
-.cat-progress-list{display:flex;flex-direction:column;gap:7px}
-.cat-prog-item{display:flex;align-items:center;gap:10px}
-.cat-prog-name{font-size:12px;font-weight:600;color:var(--t2);min-width:90px;white-space:nowrap}
-.cat-prog-bar{flex:1;background:rgba(255,255,255,.06);border-radius:4px;height:6px;overflow:hidden}
-.cat-prog-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--p),var(--a));transition:width .6s ease}
-.cat-prog-pct{font-size:11px;font-weight:700;color:var(--t3);min-width:30px;text-align:right}
+/* Category mini-cards grid */
+.cat-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px}
+.cc-item{padding:10px 12px;background:rgba(255,255,255,.03);border:1px solid var(--b);
+  border-radius:11px;cursor:pointer;transition:.2s;position:relative}
+.cc-item:hover{background:rgba(6,182,212,.07);border-color:rgba(6,182,212,.2);transform:translateY(-1px)}
+.cc-item.cc-current{border-color:rgba(6,182,212,.4);background:rgba(6,182,212,.1)}
+.cc-item.cc-easy{border-color:rgba(16,185,129,.2)}
+.cc-item.cc-hard{border-color:rgba(239,68,68,.15)}
+.cc-term{font-size:12px;font-weight:700;color:var(--t1);margin-bottom:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-diff{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px}
+.cc-diff.easy{color:#10b981}.cc-diff.medium{color:#f59e0b}.cc-diff.hard{color:#ef4444}
+.cc-status{position:absolute;top:7px;right:8px;font-size:11px}
 
 /* ── QUIZ MODE ── */
 .quiz-wrap{width:100%;max-width:600px;padding-top:20px}
@@ -741,18 +748,19 @@ body::before{content:'';position:fixed;inset:0;background:
           <div class="prog-wrap"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
         </div>
 
-        <!-- ── B: ПРИМЕР ДИАЛОГА ── -->
-        <div class="cp-section" style="margin-top:20px">
-          <div class="cp-section-title">💬 Пример в реальном разговоре</div>
-          <div class="dialog-box" id="dialog-box">
-            <div class="dialog-empty">Переверни карточку чтобы увидеть пример</div>
-          </div>
+        <!-- ── СЛЕДУЮЩИЕ НА ПОВТОРЕНИЕ ── -->
+        <div class="cp-section" id="srs-upcoming" style="margin-top:20px">
+          <div class="cp-section-title">🔁 Следующие на повторение</div>
+          <div class="srs-list" id="srs-list"></div>
         </div>
 
-        <!-- ── D: ПРОГРЕСС ПО КАТЕГОРИЯМ ── -->
-        <div class="cp-section" style="margin-top:16px">
-          <div class="cp-section-title">📊 Прогресс по категориям</div>
-          <div class="cat-progress-list" id="cat-progress-list"></div>
+        <!-- ── КАРТОЧКИ ЭТОЙ КАТЕГОРИИ ── -->
+        <div class="cp-section" id="cat-cards-section" style="margin-top:16px">
+          <div class="cp-section-title">
+            <span id="cat-cards-label">📚 Карточки категории</span>
+            <span class="cp-section-count" id="cat-cards-count"></span>
+          </div>
+          <div class="cat-cards-grid" id="cat-cards-grid"></div>
         </div>
 
       </div>
@@ -1546,26 +1554,19 @@ function showCard(){
   const sr=document.getElementById('skip-row');
   if(cb)cb.style.display='none';
   if(sr)sr.style.display='flex';
-  // reset dialog
-  const box=document.getElementById('dialog-box');
-  if(box)box.innerHTML='<div class="dialog-empty">Переверни карточку чтобы увидеть пример</div>';
   updateProgress();
-  updateCardPanelSections(null);
+  updateCardPanelSections();
 }
 
 function revealCard(){
   if(cardFlipped)return;
   cardFlipped=true;
   document.getElementById('card3d').classList.add('flip');
+  // показать кнопки уверенности
   const cb=document.getElementById('confidence-btns');
   const sr=document.getElementById('skip-row');
-  if(cb)cb.style.display='block';
-  if(sr)sr.style.display='none';
-  // показать диалог для текущей карточки
-  if(filteredCards.length){
-    const c=filteredCards[cardIndex%filteredCards.length];
-    renderDialog(c.id);
-  }
+  if(cb){cb.style.display='block';}
+  if(sr){sr.style.display='none';}
 }
 
 function flipCard(){revealCard();}
@@ -2110,67 +2111,75 @@ function matchClick(id,type,el){
 }
 
 // ═══════════════════════════════════════════════
-// DIALOG + CATEGORY PROGRESS
+// SRS UPCOMING + CATEGORY CARDS
 // ═══════════════════════════════════════════════
-
-// Диалоги для каждой карточки (по id)
-const DIALOGS={
-  c1:[{who:'broker',text:'Do you have your <span class="dl-highlight">MC Number</span> handy?'},{who:'dispatcher',text:'Yes, our MC is 123456. You can verify it on SAFER.com.'}],
-  c2:[{who:'broker',text:'What\'s your <span class="dl-highlight">DOT Number</span>?'},{who:'dispatcher',text:'DOT 987654 — it\'s active and in good standing.'}],
-  c3:[{who:'dispatcher',text:'Can you send the <span class="dl-highlight">Rate Con</span> before driver picks up?'},{who:'broker',text:'Sending it now. Please sign and return within 30 minutes.'}],
-  c4:[{who:'broker',text:'Driver needs a signed <span class="dl-highlight">BOL</span> at pickup.'},{who:'dispatcher',text:'Understood. Driver will get it signed and send a photo immediately.'}],
-  c5:[{who:'broker',text:'We need the <span class="dl-highlight">POD</span> within 24 hours of delivery.'},{who:'dispatcher',text:'Got it. Driver will send the signed POD as soon as he delivers.'}],
-  c6:[{who:'dispatcher',text:'Driver has been waiting 4 hours. We\'re claiming <span class="dl-highlight">detention</span>.'},{who:'broker',text:'Free time is 2 hours. I\'ll approve $75/hr for the extra 2 hours.'}],
-  c7:[{who:'dispatcher',text:'Shipper cancelled after we confirmed. We need <span class="dl-highlight">TONU</span>.'},{who:'broker',text:'Understood. I\'ll process the truck order not used fee — 15% of the rate.'}],
-  c8:[{who:'broker',text:'How much <span class="dl-highlight">deadhead</span> to the pickup?'},{who:'dispatcher',text:'About 80 miles empty. We need to factor that into the rate.'}],
-  c9:[{who:'broker',text:'Receiver requires a <span class="dl-highlight">lumper</span> — $150.'},{who:'dispatcher',text:'Who covers it? It\'s not in the rate con. Need written confirmation.'}],
-  c10:[{who:'broker',text:'Can driver make it by 6 AM? What\'s his <span class="dl-highlight">HOS</span>?'},{who:'dispatcher',text:'He has 8 hours left on his clock. 6 AM works, no problem.'}],
-  c11:[{who:'broker',text:'Does your driver have an <span class="dl-highlight">ELD</span>?'},{who:'dispatcher',text:'Yes, we use KeepTruckin. ELD shows 9 hours available right now.'}],
-  c12:[{who:'broker',text:'Is your carrier registered with <span class="dl-highlight">FMCSA</span>?'},{who:'dispatcher',text:'Yes, active authority, insurance on file, all FMCSA compliant.'}],
-  c13:[{who:'dispatcher',text:'I checked <span class="dl-highlight">DAT</span> — market rate on this lane is $2.10/mile.'},{who:'broker',text:'Our system shows $1.90. Can you meet us in the middle at $2.00?'}],
-  c21:[{who:'broker',text:'Best I can do is $1,800 all-in.'},{who:'dispatcher',text:'That\'s below market. My <span class="dl-highlight">counter offer</span> is $2,100 — DAT shows $2.15 average.'}],
-  c23:[{who:'broker',text:'What\'s your rate for Chicago to Atlanta?'},{who:'dispatcher',text:'$2,400. That\'s our number. <span class="dl-highlight">Anchor price</span> — we can discuss from there.'}],
-};
-
-const DEFAULT_DIALOG=[
-  {who:'broker',text:'What\'s your rate for this load?'},
-  {who:'dispatcher',text:'Let me check the market rate and get back to you in 5 minutes.'},
-];
-
-function renderDialog(cardId){
-  const box=document.getElementById('dialog-box');
-  if(!box)return;
-  const lines=DIALOGS[cardId]||DEFAULT_DIALOG;
-  const card=CARDS.find(c=>c.id===cardId);
-  const note=card&&card.ex?`<div class="dialog-note">💡 ${card.ex}</div>`:'';
-  box.innerHTML=lines.map(l=>`
-    <div class="dialog-line ${l.who}">
-      <div class="dl-who">${l.who==='broker'?'Брокер':'Диспетчер'}</div>
-      <div class="dl-bubble">${l.text}</div>
-    </div>`).join('')+note;
-}
-
-function renderCatProgress(){
+function renderSrsUpcoming(){
   const s=getState();
-  const list=document.getElementById('cat-progress-list');
+  const now=Date.now();
+  const list=document.getElementById('srs-list');
   if(!list)return;
-  const cats=[...new Set(CARDS.map(c=>c.cat))];
-  list.innerHTML=cats.map(cat=>{
-    const catCards=CARDS.filter(c=>c.cat===cat);
-    const studied=catCards.filter(c=>s.srs&&s.srs[c.id]&&s.srs[c.id].interval>=3).length;
-    const pct=Math.round(studied/catCards.length*100);
-    const color=pct>=80?'#10b981':pct>=40?'#f59e0b':'#06b6d4';
-    return`<div class="cat-prog-item">
-      <div class="cat-prog-name">${cat}</div>
-      <div class="cat-prog-bar"><div class="cat-prog-fill" style="width:${pct}%;background:${color}"></div></div>
-      <div class="cat-prog-pct">${pct}%</div>
+  // карточки у которых есть SRS данные, сортируем по next
+  const withSrs=CARDS
+    .filter(c=>s.srs&&s.srs[c.id])
+    .map(c=>({...c,srs:s.srs[c.id]}))
+    .sort((a,b)=>a.srs.next-b.srs.next)
+    .slice(0,5);
+  if(!withSrs.length){
+    list.innerHTML='<div class="srs-empty">✅ Нет запланированных повторений — изучи карточки!</div>';
+    return;
+  }
+  list.innerHTML=withSrs.map(c=>{
+    const diff=c.srs.next-now;
+    let whenClass,whenText;
+    if(diff<=0){whenClass='srs-when-now';whenText='Сейчас!';}
+    else if(diff<86400000){const h=Math.ceil(diff/3600000);whenClass='srs-when-soon';whenText='через '+h+'ч';}
+    else{const d=Math.ceil(diff/86400000);whenClass='srs-when-later';whenText='через '+d+'д';}
+    return`<div class="srs-item" onclick="jumpToCard('${c.id}')">
+      <div>
+        <div class="srs-item-term">${c.term}</div>
+        <div class="srs-item-cat">${c.cat}</div>
+      </div>
+      <span class="srs-item-when ${whenClass}">${whenText}</span>
     </div>`;
   }).join('');
 }
 
-function updateCardPanelSections(cardId){
-  if(cardId)renderDialog(cardId);
-  renderCatProgress();
+function renderCatCards(){
+  const s=getState();
+  const grid=document.getElementById('cat-cards-grid');
+  const label=document.getElementById('cat-cards-label');
+  const count=document.getElementById('cat-cards-count');
+  if(!grid)return;
+  const currentCard=filteredCards[cardIndex%Math.max(filteredCards.length,1)];
+  const cat=currentCard?currentCard.cat:null;
+  const catCards=cat?CARDS.filter(c=>c.cat===cat):CARDS.slice(0,12);
+  if(label)label.textContent='📚 '+(cat?'Категория: '+cat:'Все карточки');
+  if(count)count.textContent=catCards.length;
+  grid.innerHTML=catCards.map(c=>{
+    const isCurrent=currentCard&&c.id===currentCard.id;
+    const srs=s.srs&&s.srs[c.id];
+    let statusIcon='';
+    if(srs){
+      if(srs.interval>=7)statusIcon='😎';
+      else if(srs.interval>=3)statusIcon='🤔';
+      else statusIcon='😰';
+    }
+    return`<div class="cc-item ${isCurrent?'cc-current':''} cc-${c.diff}" onclick="jumpToCard('${c.id}')">
+      <div class="cc-term">${c.term}</div>
+      <div class="cc-diff ${c.diff}">${c.diff==='easy'?'лёгкая':c.diff==='medium'?'средняя':'сложная'}</div>
+      ${statusIcon?`<span class="cc-status">${statusIcon}</span>`:''}
+    </div>`;
+  }).join('');
+}
+
+function jumpToCard(id){
+  const idx=filteredCards.findIndex(c=>c.id===id);
+  if(idx>=0){cardIndex=idx;showCard();renderCatCards();}
+}
+
+function updateCardPanelSections(){
+  renderSrsUpcoming();
+  renderCatCards();
 }
 
 // ═══════════════════════════════════════════════
@@ -2182,7 +2191,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   initCases();
   updateHeroNums();
   initTips();
-  updateCardPanelSections(null);
+  updateCardPanelSections();
   // XP award via xp-system if available
   const PAGE_KEY='xp_page_trainer_quiz';
   if(!localStorage.getItem(PAGE_KEY)){
