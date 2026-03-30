@@ -494,7 +494,7 @@
         saveLocalUser(cred.user, firstName, lastName, { phone, ...td, trialEndDate: td.trialEndDate.toISOString() });
         try { await saveUserToFirestore(cred.user, firstName, lastName, phone, { ...td, registrationDate: serverTimestamp() }); } catch(e) { console.error(e); }
         showSuccess('🎉 Аккаунт создан! Вам предоставлен бесплатный доступ на 7 дней!');
-        setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
+        setTimeout(() => { window.location.href = 'dashboard.html?welcome=1'; }, 2000);
       } catch (err) {
         showError(translateError(err.code));
         btn.disabled = false; btn.textContent = 'Создать аккаунт';
@@ -571,7 +571,7 @@
         } catch(e) { console.error(e); }
 
         showSuccess('🎉 Пароль установлен! Теперь вы можете входить и через Google, и через email+пароль.');
-        setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
+        setTimeout(() => { window.location.href = 'dashboard.html?welcome=1'; }, 2000);
       } catch (err) {
         console.error('linkWithCredential error:', err.code);
         if (err.code === 'auth/provider-already-linked') {
@@ -592,7 +592,7 @@
       const lastName  = _googleUser._lastName;
       saveLocalUser(_googleUser, firstName, lastName, { ...td, trialEndDate: td.trialEndDate.toISOString() });
       try { await saveUserToFirestore(_googleUser, firstName, lastName, '', { ...td, registrationDate: serverTimestamp() }); } catch(e) {}
-      window.location.href = 'dashboard.html';
+      window.location.href = 'dashboard.html?welcome=1';
     }
 
     // Пропустить установку пароля
