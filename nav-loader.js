@@ -114,12 +114,11 @@
         // чтобы position:fixed работал корректно без влияния родителей
         var mobMenu = document.getElementById('mobMenu');
         var mobOverlay = document.getElementById('mobOverlay');
-        if (mobMenu && mobMenu.parentElement !== document.body) {
-            document.body.appendChild(mobOverlay || mobMenu);
-            document.body.appendChild(mobMenu);
-        }
         if (mobOverlay && mobOverlay.parentElement !== document.body) {
             document.body.appendChild(mobOverlay);
+        }
+        if (mobMenu && mobMenu.parentElement !== document.body) {
+            document.body.appendChild(mobMenu);
         }
 
         initMenu();
