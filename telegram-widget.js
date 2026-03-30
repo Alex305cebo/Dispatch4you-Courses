@@ -157,6 +157,9 @@
         .telegram-nav-btn.desktop {
           display: none;
         }
+        .telegram-nav-btn.mobile-logo {
+          display: none !important;
+        }
       }
 
       @media (min-width: 769px) {
