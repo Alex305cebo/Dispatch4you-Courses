@@ -20,8 +20,13 @@ const app = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
 window._fbAuth = auth;
 
+// Флаг — первый вызов onAuthStateChanged это восстановление сессии
+// Firebase может вернуть null пока токен ещё не проверен
+let authInitialized = false;
+
 onAuthStateChanged(auth, (firebaseUser) => {
     if (firebaseUser) {
+        authInitialized = true;
         const parts = (firebaseUser.displayName || '').split(' ');
         const firstName = parts[0] || firebaseUser.email.split('@')[0];
         const lastName = parts.slice(1).join(' ') || '';
@@ -32,7 +37,23 @@ onAuthStateChanged(auth, (firebaseUser) => {
             email: firebaseUser.email
         }));
     } else {
-        localStorage.removeItem('user');
+        // Удаляем user только если Firebase точно подтвердил что сессии нет
+        // и это не первый быстрый null при инициализации
+        if (authInitialized) {
+            localStorage.removeItem('user');
+        } else {
+            // Первый вызов с null — Firebase ещё восстанавливает сессию
+            // Ждём немного и проверяем снова
+            setTimeout(() => {
+                if (!auth.currentUser) {
+                    localStorage.removeItem('user');
+                    if (typeof window.updateAuthUI === 'function') {
+                        window.updateAuthUI();
+                    }
+                }
+            }, 2000);
+        }
+        authInitialized = true;
     }
 
     // Обновляем навбар — nav может ещё не быть в DOM

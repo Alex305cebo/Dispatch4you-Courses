@@ -57,6 +57,7 @@
         }
 
         body::after {
+            display: none !important; /* grid removed */
             content: '';
             position: fixed;
             top: 0;
@@ -1117,8 +1118,29 @@
         // XP & achievement tracking
         let _answerStreak = 0;
         let _answerStartTime = Date.now();
-        let _xpMod = null;
-        import('../xp-system.js').then(m => { _xpMod = m; });
+
+        function _showXPToast(delta) {
+            const isPos = delta > 0;
+            const el = document.createElement('div');
+            el.style.cssText = 'position:fixed;right:24px;bottom:24px;z-index:99999;'
+                + 'background:linear-gradient(135deg,' + (isPos ? '#052e16,#0f172a' : '#450a0a,#0f172a') + ');'
+                + 'border:1px solid ' + (isPos ? 'rgba(34,197,94,0.6)' : 'rgba(239,68,68,0.6)') + ';'
+                + 'border-radius:12px;padding:10px 16px;display:flex;align-items:center;gap:10px;'
+                + 'min-width:140px;box-shadow:0 4px 20px rgba(0,0,0,0.5);'
+                + 'animation:xpToastIn 0.3s ease forwards;';
+            el.innerHTML = '<div style="font-size:20px">' + (isPos ? '⚡' : '💔') + '</div>'
+                + '<div style="color:' + (isPos ? '#4ade80' : '#f87171') + ';font-weight:800;font-size:15px">'
+                + (isPos ? '+' : '') + delta + ' XP</div>';
+            if (!document.getElementById('xpToastStyle')) {
+                const s = document.createElement('style');
+                s.id = 'xpToastStyle';
+                s.textContent = '@keyframes xpToastIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}'
+                    + '@keyframes xpToastOut{to{transform:translateX(120%);opacity:0}}';
+                document.head.appendChild(s);
+            }
+            document.body.appendChild(el);
+            setTimeout(() => { el.style.animation = 'xpToastOut 0.3s ease forwards'; setTimeout(() => el.remove(), 300); }, 1500);
+        }
 
         function _showTestAchieve(icon, title, desc, color) {
             const el = document.createElement('div');
@@ -1156,18 +1178,17 @@
             const elapsed = (Date.now() - _answerStartTime) / 1000;
 
             // XP per answer
-            if (_xpMod) {
-                if (isCorrect) {
-                    _answerStreak++;
-                    _xpMod.awardXPDelta(2, 'Правильный ответ');
-                    // Streak milestones
-                    if (_answerStreak === 5)  _showTestAchieve('🔥', 'Серия x5!', '5 правильных подряд', 'rgba(251,146,60,0.6)');
-                    if (_answerStreak === 10) _showTestAchieve('⚡', 'Серия x10!', '10 правильных подряд', 'rgba(251,191,36,0.6)');
-                    if (_answerStreak === 20) { _showTestAchieve('💥', 'Серия x20!', 'Невероятно!', 'rgba(139,92,246,0.6)'); _xpMod.awardXPDelta(10, 'Бонус серии x20'); }
-                } else {
-                    _answerStreak = 0;
-                    _xpMod.awardXPDelta(-1, 'Неправильный ответ');
-                }
+            if (isCorrect) {
+                _answerStreak++;
+                _showXPToast(2);
+                import('../xp-system.js').then(m => m.awardXPDelta(2, 'Правильный ответ'));
+                if (_answerStreak === 5)  _showTestAchieve('🔥', 'Серия x5!', '5 правильных подряд', 'rgba(251,146,60,0.6)');
+                if (_answerStreak === 10) _showTestAchieve('⚡', 'Серия x10!', '10 правильных подряд', 'rgba(251,191,36,0.6)');
+                if (_answerStreak === 20) { _showTestAchieve('💥', 'Серия x20!', 'Невероятно!', 'rgba(139,92,246,0.6)'); import('../xp-system.js').then(m => m.awardXPDelta(10, 'Бонус серии x20')); }
+            } else {
+                _answerStreak = 0;
+                _showXPToast(-1);
+                import('../xp-system.js').then(m => m.awardXPDelta(-1, 'Неправильный ответ'));
             }
             _answerStartTime = Date.now();
 
@@ -1214,21 +1235,22 @@
             document.getElementById('scoreText').textContent = pct + '%';
 
             // XP за тест + ачивки по итогу
-            if (answered > 0 && _xpMod) {
-                _xpMod.awardXP('TEST_PASSED', { score: pct, correct: cor, total: answered });
-                if (pct === 100) {
-                    _xpMod.awardXP('QUIZ_PERFECT');
-                    setTimeout(() => _showTestAchieve('💯', 'Идеальный результат!', '100% правильных ответов', 'rgba(16,185,129,0.6)'), 800);
-                } else if (pct >= 90) {
-                    setTimeout(() => _showTestAchieve('🏆', 'Отличный результат!', '90%+ правильных ответов', 'rgba(251,191,36,0.6)'), 800);
-                }
-                // Первый тест
+            if (answered > 0) {
+                import('../xp-system.js').then(m => {
+                    m.awardXP('TEST_PASSED', { score: pct, correct: cor, total: answered });
+                    if (pct === 100) {
+                        m.awardXP('QUIZ_PERFECT');
+                        setTimeout(() => _showTestAchieve('💯', 'Идеальный результат!', '100% правильных ответов', 'rgba(16,185,129,0.6)'), 800);
+                    } else if (pct >= 90) {
+                        setTimeout(() => _showTestAchieve('🏆', 'Отличный результат!', '90%+ правильных ответов', 'rgba(251,191,36,0.6)'), 800);
+                    }
+                });
                 const testsKey = 'testing_completed_count';
                 const done = (parseInt(localStorage.getItem(testsKey) || '0')) + 1;
                 localStorage.setItem(testsKey, done);
                 if (done === 1) setTimeout(() => _showTestAchieve('🎓', 'Первый тест!', 'Вы прошли первое тестирование', 'rgba(99,102,241,0.6)'), 1600);
-                if (done === 5) { setTimeout(() => _showTestAchieve('📚', 'Постоянный студент', '5 тестов пройдено', 'rgba(99,102,241,0.6)'), 1600); _xpMod.awardXP('QUIZ_ROUND_DONE'); }
-                if (done === 10) { setTimeout(() => _showTestAchieve('🧠', 'Знаток!', '10 тестов пройдено', 'rgba(139,92,246,0.6)'), 1600); _xpMod.awardXP('MODULE_MARATHON'); }
+                if (done === 5) { setTimeout(() => _showTestAchieve('📚', 'Постоянный студент', '5 тестов пройдено', 'rgba(99,102,241,0.6)'), 1600); import('../xp-system.js').then(m => m.awardXP('QUIZ_ROUND_DONE')); }
+                if (done === 10) { setTimeout(() => _showTestAchieve('🧠', 'Знаток!', '10 тестов пройдено', 'rgba(139,92,246,0.6)'), 1600); import('../xp-system.js').then(m => m.awardXP('MODULE_MARATHON')); }
             }
             document.getElementById('cor').textContent = cor;
             document.getElementById('inc').textContent = incorrect;

@@ -254,3 +254,43 @@ export async function checkDailyLogin() {
 }
 
 onAuthStateChanged(auth, (user) => { if (user) checkDailyLogin(); });
+
+export async function awardXPDelta(delta, label) {
+    const user = auth.currentUser;
+    if (!user || delta === 0) return;
+    const userRef = doc(db, 'users', user.uid);
+    try {
+        const snap = await getDoc(userRef);
+        const data = snap.exists() ? snap.data() : {};
+        const currentXP = data.xp || 0;
+        const newXP = Math.max(0, currentXP + delta);
+        const actualDelta = newXP - currentXP;
+        if (actualDelta === 0) return;
+        const oldLevel = getLevelByXP(currentXP);
+        const newLevel = getLevelByXP(newXP);
+        const leveledUp = newLevel.level > oldLevel.level && newLevel.level < 10;
+        const weekKey = getWeekKey();
+        await updateDoc(userRef, {
+            xp: increment(actualDelta),
+            ['weeklyXP.' + weekKey]: increment(actualDelta),
+            lastActivity: serverTimestamp(),
+            xpHistory: arrayUnion({ action: 'DELTA', xp: actualDelta, label, ts: new Date().toISOString() })
+        });
+        const xpData = { totalXP: newXP, level: newLevel.level, levelLabel: newLevel.label, lastUpdated: new Date().toISOString() };
+        localStorage.setItem('xp_data', JSON.stringify(xpData));
+        document.dispatchEvent(new CustomEvent('xpUpdated', { detail: xpData }));
+        const isPos = actualDelta > 0;
+        const icon = isPos ? 'lightning' : 'broken_heart';
+        const color = isPos ? '#4ade80' : '#f87171';
+        const border = isPos ? 'rgba(34,197,94,0.5)' : 'rgba(239,68,68,0.5)';
+        const bg = isPos ? '#052e16,#0f172a' : '#450a0a,#0f172a';
+        const sign = isPos ? '+' : '';
+        const emoji = isPos ? '\u26A1' : '\uD83D\uDC94';
+        showToast(
+            '<div style="font-size:22px">' + emoji + '</div><div><div style="color:' + color + ';font-weight:800;font-size:14px">' + sign + actualDelta + ' XP</div><div style="color:#94a3b8;font-size:11px">' + label + '</div></div>',
+            'border:1px solid ' + border + ';background:linear-gradient(135deg,' + bg + ');',
+            2000, 'xpSlideIn 0.4s ease'
+        );
+        if (leveledUp) showXPToast(actualDelta, label, newLevel);
+    } catch(e) { console.error('awardXPDelta error:', e); }
+}
