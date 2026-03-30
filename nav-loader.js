@@ -109,6 +109,19 @@
         var ph = document.getElementById('nav-placeholder');
         if (ph) ph.innerHTML = html;
         else document.body.insertAdjacentHTML('afterbegin', html);
+
+        // Переносим mob-menu и mob-overlay прямо в body
+        // чтобы position:fixed работал корректно без влияния родителей
+        var mobMenu = document.getElementById('mobMenu');
+        var mobOverlay = document.getElementById('mobOverlay');
+        if (mobMenu && mobMenu.parentElement !== document.body) {
+            document.body.appendChild(mobOverlay || mobMenu);
+            document.body.appendChild(mobMenu);
+        }
+        if (mobOverlay && mobOverlay.parentElement !== document.body) {
+            document.body.appendChild(mobOverlay);
+        }
+
         initMenu();
         highlightActive();
         injectFooter();
