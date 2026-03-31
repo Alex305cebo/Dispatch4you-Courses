@@ -225,13 +225,16 @@
 <!-- Admin guard -->
 <script>
 (function() {
+  const ADMIN_EMAILS = ['dersire.der@gmail.com'];
   function check() {
     try {
       const user = JSON.parse(localStorage.getItem('user') || 'null');
-      const role = localStorage.getItem('user_role') || (user && user.role) || '';
       if (!user) { window.location.href = '../login.html'; return; }
-      if (role !== 'admin' && role !== 'superadmin') {
-        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;"><div style="font-size:48px;">🔒</div><p style="color:#64748b;font-size:16px;">Доступ только для администраторов</p><a href="../index.html" style="color:#06b6d4;font-size:14px;">← На главную</a></div>';
+      const email = (user.email || '').toLowerCase();
+      const role = parseInt(user.role) || 0;
+      // Пускаем если email совпадает с админским ИЛИ role >= 9
+      if (!ADMIN_EMAILS.includes(email) && role < 9) {
+        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;background:#070b14;"><div style="font-size:48px;">🔒</div><p style="color:#64748b;font-size:16px;">Доступ только для администраторов</p><a href="../index.html" style="color:#06b6d4;font-size:14px;">← На главную</a></div>';
       }
     } catch(e) {}
   }
