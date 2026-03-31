@@ -1,5 +1,5 @@
 /**
- * nav-loader.js v7.2 — Auto-open first mobile menu section + XP badge
+ * nav-loader.js v7.3 — Auto-open first mobile menu section + XP badge with auth state
  * Loads nav.html, injects into #nav-placeholder, handles mobile menu
  */
 (function () {
@@ -8,7 +8,7 @@
 
     // ── Load nav HTML ──────────────────────────────────────────────
     function loadNav() {
-        fetch(BASE + 'nav.html?v=7.2')
+        fetch(BASE + 'nav.html?v=7.3')
             .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
             .then(function (html) { inject(html.replace(/\{\{BASE\}\}/g, BASE)); })
             .catch(function () { inject(NAV_INLINE.replace(/\{\{BASE\}\}/g, BASE)); });
@@ -72,27 +72,33 @@
             user = JSON.parse(localStorage.getItem('currentUser') || 'null');
         } catch (e) {}
 
-        if (!user) return; // Not logged in
-
         var wrap = document.getElementById('mob-xp-wrap');
         var avatar = document.getElementById('mob-xp-avatar');
         var xpVal = document.getElementById('mob-xp-val');
+        var mobActions = document.querySelector('.mob-actions');
 
         if (!wrap) return;
 
-        // Show the badge
-        wrap.style.display = 'flex';
+        if (user) {
+            // User is logged in - show XP badge, hide login/register buttons in mobile menu
+            wrap.style.display = 'flex';
+            if (mobActions) mobActions.style.display = 'none';
 
-        // Set user initials or avatar
-        if (avatar) {
-            var initials = (user.name || user.email || 'U').substring(0, 2).toUpperCase();
-            avatar.textContent = initials;
-        }
+            // Set user initials or avatar
+            if (avatar) {
+                var initials = (user.name || user.email || 'U').substring(0, 2).toUpperCase();
+                avatar.textContent = initials;
+            }
 
-        // Set XP value
-        if (xpVal) {
-            var xp = user.xp || 0;
-            xpVal.textContent = '⚡ ' + xp + ' XP';
+            // Set XP value
+            if (xpVal) {
+                var xp = user.xp || 0;
+                xpVal.textContent = '⚡ ' + xp + ' XP';
+            }
+        } else {
+            // User is not logged in - hide XP badge, show login/register buttons
+            wrap.style.display = 'none';
+            if (mobActions) mobActions.style.display = 'flex';
         }
     }
 
