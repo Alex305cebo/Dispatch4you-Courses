@@ -1,8 +1,6 @@
 /**
- * firebase-auth-init.js
- * Подключать как <script type="module" src="firebase-auth-init.js"></script>
- * на всех страницах где нужно отображение пользователя в навбаре.
- * Инициализирует Firebase Auth, пишет user в localStorage, обновляет навбар.
+ * firebase-auth-init.js v2.1
+ * Не обновляет UI до получения окончательного ответа от Firebase Auth.
  */
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
@@ -20,13 +18,22 @@ const app = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
 window._fbAuth = auth;
 
-// Флаг — первый вызов onAuthStateChanged это восстановление сессии
-// Firebase может вернуть null пока токен ещё не проверен
-let authInitialized = false;
+let firstCall = true;
+
+function triggerUI() {
+    if (typeof window.updateAuthUI === 'function') {
+        if (document.querySelector('.nav-actions')) {
+            window.updateAuthUI();
+        } else {
+            document.addEventListener('navLoaded', window.updateAuthUI, { once: true });
+        }
+    }
+}
 
 onAuthStateChanged(auth, (firebaseUser) => {
     if (firebaseUser) {
-        authInitialized = true;
+        // Пользователь залогинен — сохраняем и обновляем UI
+        firstCall = false;
         const parts = (firebaseUser.displayName || '').split(' ');
         const firstName = parts[0] || firebaseUser.email.split('@')[0];
         const lastName = parts.slice(1).join(' ') || '';
@@ -36,32 +43,24 @@ onAuthStateChanged(auth, (firebaseUser) => {
             lastName,
             email: firebaseUser.email
         }));
+        triggerUI();
     } else {
-        // Удаляем user только если Firebase точно подтвердил что сессии нет
-        // и это не первый быстрый null при инициализации
-        if (authInitialized) {
-            localStorage.removeItem('user');
-        } else {
-            // Первый вызов с null — Firebase ещё восстанавливает сессию
-            // Ждём немного и проверяем снова
+        if (firstCall) {
+            // Первый вызов с null — Firebase ещё не восстановил сессию
+            // Не трогаем localStorage и не обновляем UI
+            // Ждём повторного вызова от Firebase
+            firstCall = false;
+            // Если через 3 секунды Firebase так и не вернул пользователя — значит реально не залогинен
             setTimeout(() => {
                 if (!auth.currentUser) {
                     localStorage.removeItem('user');
-                    if (typeof window.updateAuthUI === 'function') {
-                        window.updateAuthUI();
-                    }
+                    triggerUI();
                 }
-            }, 2000);
-        }
-        authInitialized = true;
-    }
-
-    // Обновляем навбар — nav может ещё не быть в DOM
-    if (typeof window.updateAuthUI === 'function') {
-        if (document.querySelector('.nav-actions')) {
-            window.updateAuthUI();
+            }, 3000);
         } else {
-            document.addEventListener('navLoaded', window.updateAuthUI, { once: true });
+            // Повторный null — пользователь вышел
+            localStorage.removeItem('user');
+            triggerUI();
         }
     }
 });
