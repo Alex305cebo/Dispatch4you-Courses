@@ -294,24 +294,38 @@
         });
 
         var burger = document.getElementById('burgerBtn');
-        var mobMenu = document.getElementById('mobMenu');
-        var mobOverlay = document.getElementById('mobOverlay');
-        var mobClose = document.getElementById('mobClose');
+        // mobMenu, mobOverlay, mobClose теперь ищутся динамически в openMob/closeMob
 
         function openMob() {
-            mobMenu && mobMenu.classList.add('active');
-            mobOverlay && mobOverlay.classList.add('active');
+            var m = document.getElementById('mobMenu');
+            var o = document.getElementById('mobOverlay');
+            if (m) m.classList.add('active');
+            if (o) o.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
         function closeMob() {
-            mobMenu && mobMenu.classList.remove('active');
-            mobOverlay && mobOverlay.classList.remove('active');
+            var m = document.getElementById('mobMenu');
+            var o = document.getElementById('mobOverlay');
+            if (m) m.classList.remove('active');
+            if (o) o.classList.remove('active');
             document.body.style.overflow = '';
         }
 
-        if (burger) burger.addEventListener('click', openMob);
-        if (mobClose) mobClose.addEventListener('click', closeMob);
-        if (mobOverlay) mobOverlay.addEventListener('click', closeMob);
+        // Переназначаем burger каждый раз свежим getElementById
+        var burger = document.getElementById('burgerBtn');
+        var mobClose = document.getElementById('mobClose');
+
+        if (burger) {
+            burger.onclick = openMob;
+        }
+        if (mobClose) {
+            mobClose.onclick = closeMob;
+        }
+
+        // Overlay закрывает меню
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.id === 'mobOverlay') closeMob();
+        });
 
         document.querySelectorAll('.mob-acc-title').forEach(function (t) {
             t.addEventListener('click', function () { this.parentElement.classList.toggle('open'); });
