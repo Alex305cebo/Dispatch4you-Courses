@@ -11,8 +11,30 @@
         fetch(BASE + 'nav.html?v=7.0')
             .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
             .then(function (html) { inject(html.replace(/\{\{BASE\}\}/g, BASE)); })
-            .catch(function () { console.warn('nav.html not found'); });
+            .catch(function () { inject(NAV_INLINE.replace(/\{\{BASE\}\}/g, BASE)); });
     }
+
+    var NAV_INLINE = `<nav class="navbar"><div class="nav-container"><div class="nav-content">
+<a href="{{BASE}}index.html" class="logo"><span class="logo-icon">🎓</span><span class="logo-text">Курсы Диспетчера</span></a>
+<div class="nav-links">
+  <div class="nav-item"><button class="nav-btn">Курс обучения <span class="arrow">▾</span></button><div class="dropdown"><a href="{{BASE}}pages/documentation.html">📚 База знаний (15 Стр. Курсов)</a><a href="{{BASE}}pages/modules-index.html">✍️ Тесты знаний (12 Модулей)</a><a href="{{BASE}}pages/glossary.html">📖 Глоссарий</a></div></div>
+  <div class="nav-item"><button class="nav-btn">Инструменты <span class="arrow">▾</span></button><div class="dropdown"><a href="{{BASE}}pages/simulator.html">🎯 Симулятор</a><a href="{{BASE}}pages/testing.html">✍️ Тестирование</a><a href="{{BASE}}pages/Trainer-Quiz.html">⚡ Тренировка</a><a href="{{BASE}}pages/load-finder.html">🔍 Load Finder</a><a href="{{BASE}}pages/ai-broker-chat.html">🤖 AI Брокер</a></div></div>
+  <div class="nav-item"><button class="nav-btn">Информация <span class="arrow">▾</span></button><div class="dropdown"><a href="{{BASE}}about.html">👥 О нас</a><a href="{{BASE}}faq.html">❓ Вопросы</a><a href="{{BASE}}contacts.html">📬 Контакты</a><a href="{{BASE}}pricing.html">💰 Цены</a></div></div>
+</div>
+<div class="nav-actions"><a href="{{BASE}}login.html" class="btn-login">Войти</a><a href="{{BASE}}register.html" class="btn-signup">Регистрация</a></div>
+<div class="mob-xp-wrap" id="mob-xp-wrap" style="display:none"><a href="{{BASE}}dashboard.html" class="mob-xp-badge" id="mob-xp-badge"><span class="mob-xp-avatar" id="mob-xp-avatar">👤</span><span class="mob-xp-val" id="mob-xp-val">⚡ 0 XP</span></a></div>
+<button class="burger" id="burgerBtn"><span></span><span></span><span></span></button>
+</div></div></nav>
+<div class="mob-overlay" id="mobOverlay"></div>
+<div class="mob-menu" id="mobMenu">
+  <div class="mob-header"><span>📚 Меню</span><button id="mobClose">✕</button></div>
+  <div class="mob-body">
+    <div class="mob-actions"><a href="{{BASE}}login.html" class="btn-login">Войти</a><a href="{{BASE}}register.html" class="btn-signup">Регистрация</a></div>
+    <div class="mob-acc"><div class="mob-acc-title">📚 Курс обучения <span class="mob-arr">▼</span></div><div class="mob-acc-body"><a href="{{BASE}}pages/documentation.html" class="mob-sub">📚 База знаний (15 Стр. Курсов)</a><a href="{{BASE}}pages/modules-index.html" class="mob-sub">✍️ Тесты знаний (12 Модулей)</a><a href="{{BASE}}pages/glossary.html" class="mob-sub">📖 Глоссарий</a></div></div>
+    <div class="mob-acc"><div class="mob-acc-title">🛠️ Инструменты <span class="mob-arr">▼</span></div><div class="mob-acc-body"><a href="{{BASE}}pages/simulator.html" class="mob-sub">🎯 Симулятор</a><a href="{{BASE}}pages/testing.html" class="mob-sub">✍️ Тестирование</a><a href="{{BASE}}pages/Trainer-Quiz.html" class="mob-sub">⚡ Тренировка</a><a href="{{BASE}}pages/load-finder.html" class="mob-sub">🔍 Load Finder</a><a href="{{BASE}}pages/ai-broker-chat.html" class="mob-sub">🤖 AI Брокер</a></div></div>
+    <div class="mob-acc"><div class="mob-acc-title">ℹ️ Информация <span class="mob-arr">▼</span></div><div class="mob-acc-body"><a href="{{BASE}}about.html" class="mob-sub">👥 О нас</a><a href="{{BASE}}faq.html" class="mob-sub">❓ Вопросы</a><a href="{{BASE}}contacts.html" class="mob-sub">📬 Контакты</a><a href="{{BASE}}pricing.html" class="mob-sub">💰 Цены</a></div></div>
+  </div>
+</div>`;
 
     // ── Inject HTML and init ───────────────────────────────────────
     function inject(html) {
