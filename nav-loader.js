@@ -302,17 +302,11 @@
             mobMenu && mobMenu.classList.add('active');
             mobOverlay && mobOverlay.classList.add('active');
             document.body.style.overflow = 'hidden';
-            // Опускаем navbar под меню когда оно открыто
-            var navbar = document.querySelector('.navbar');
-            if (navbar) navbar.style.zIndex = '99998';
         }
         function closeMob() {
             mobMenu && mobMenu.classList.remove('active');
             mobOverlay && mobOverlay.classList.remove('active');
             document.body.style.overflow = '';
-            // Возвращаем navbar
-            var navbar = document.querySelector('.navbar');
-            if (navbar) navbar.style.zIndex = '';
         }
 
         if (burger) burger.addEventListener('click', openMob);
