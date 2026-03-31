@@ -110,16 +110,19 @@
         if (ph) ph.innerHTML = html;
         else document.body.insertAdjacentHTML('afterbegin', html);
 
-        // Переносим mob-menu и mob-overlay прямо в body
-        // чтобы position:fixed работал корректно без влияния родителей
-        var mobMenu = document.getElementById('mobMenu');
+        // Переносим mob-menu и mob-overlay прямо в body ДО initMenu
+        // чтобы position:fixed работал корректно и события привязались к правильным элементам
         var mobOverlay = document.getElementById('mobOverlay');
+        var mobMenu = document.getElementById('mobMenu');
         if (mobOverlay && mobOverlay.parentElement !== document.body) {
             document.body.appendChild(mobOverlay);
         }
         if (mobMenu && mobMenu.parentElement !== document.body) {
             document.body.appendChild(mobMenu);
         }
+
+        // Сбрасываем флаг чтобы initMenu мог привязать события к перенесённым элементам
+        window._navInited = false;
 
         initMenu();
         highlightActive();
