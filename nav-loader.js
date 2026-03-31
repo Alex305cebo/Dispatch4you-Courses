@@ -1,5 +1,5 @@
 /**
- * nav-loader.js v7.1 — Auto-open first mobile menu section
+ * nav-loader.js v7.2 — Auto-open first mobile menu section + XP badge
  * Loads nav.html, injects into #nav-placeholder, handles mobile menu
  */
 (function () {
@@ -8,7 +8,7 @@
 
     // ── Load nav HTML ──────────────────────────────────────────────
     function loadNav() {
-        fetch(BASE + 'nav.html?v=7.1')
+        fetch(BASE + 'nav.html?v=7.2')
             .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
             .then(function (html) { inject(html.replace(/\{\{BASE\}\}/g, BASE)); })
             .catch(function () { inject(NAV_INLINE.replace(/\{\{BASE\}\}/g, BASE)); });
@@ -57,10 +57,43 @@
         initDesktopMenu();
         initMobileMenu();
         highlightActive();
+        initXPBadge();
         injectFooter();
 
         document.dispatchEvent(new Event('navLoaded'));
         if (typeof window.updateAuthUI === 'function') window.updateAuthUI();
+    }
+
+    // ── XP Badge for mobile ───────────────────────────────────────
+    function initXPBadge() {
+        // Check if user is logged in
+        var user = null;
+        try {
+            user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+        } catch (e) {}
+
+        if (!user) return; // Not logged in
+
+        var wrap = document.getElementById('mob-xp-wrap');
+        var avatar = document.getElementById('mob-xp-avatar');
+        var xpVal = document.getElementById('mob-xp-val');
+
+        if (!wrap) return;
+
+        // Show the badge
+        wrap.style.display = 'flex';
+
+        // Set user initials or avatar
+        if (avatar) {
+            var initials = (user.name || user.email || 'U').substring(0, 2).toUpperCase();
+            avatar.textContent = initials;
+        }
+
+        // Set XP value
+        if (xpVal) {
+            var xp = user.xp || 0;
+            xpVal.textContent = '⚡ ' + xp + ' XP';
+        }
     }
 
     // ── Desktop dropdown ──────────────────────────────────────────
