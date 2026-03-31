@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
@@ -7,296 +7,78 @@
   <link rel="stylesheet" href="../shared-nav.css?v=6.3">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Inter', -apple-system, sans-serif;
-      background: #070b14;
-      color: #f1f5f9;
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-    }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: #070b14; color: #f1f5f9; min-height: 100vh; -webkit-font-smoothing: antialiased; }
     .page-wrap { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
-
-    /* Header */
-    .page-header {
-      margin-bottom: 48px;
-      padding-bottom: 32px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
-    .page-header h1 {
-      font-size: 32px; font-weight: 900; color: #f1f5f9;
-      letter-spacing: -0.03em; margin-bottom: 8px;
-    }
+    .page-header { margin-bottom: 48px; padding-bottom: 32px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .page-header h1 { font-size: 32px; font-weight: 900; color: #f1f5f9; letter-spacing: -0.03em; margin-bottom: 8px; }
     .page-header p { font-size: 15px; color: #64748b; }
-    .header-meta {
-      display: flex; gap: 24px; margin-top: 20px; flex-wrap: wrap;
-    }
-    .meta-stat {
-      display: flex; align-items: center; gap: 8px;
-      padding: 8px 16px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 10px; font-size: 13px; color: #94a3b8;
-    }
+    .header-meta { display: flex; gap: 16px; margin-top: 20px; flex-wrap: wrap; }
+    .meta-stat { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; font-size: 13px; color: #94a3b8; }
     .meta-stat strong { color: #f1f5f9; font-size: 18px; font-weight: 800; }
-
-    /* Progress bar */
     .progress-wrap { margin-bottom: 48px; }
-    .progress-label {
-      display: flex; justify-content: space-between;
-      font-size: 13px; color: #64748b; margin-bottom: 10px;
-    }
-    .progress-bar {
-      height: 6px; background: rgba(255,255,255,0.06);
-      border-radius: 6px; overflow: hidden;
-    }
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #06b6d4, #0ea5e9);
-      border-radius: 6px;
-      transition: width 0.5s ease;
-    }
-
-    /* Block */
+    .progress-label { display: flex; justify-content: space-between; font-size: 13px; color: #64748b; margin-bottom: 10px; }
+    .progress-bar { height: 6px; background: rgba(255,255,255,0.06); border-radius: 6px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #06b6d4, #0ea5e9); border-radius: 6px; transition: width 0.5s ease; }
     .block { margin-bottom: 56px; }
-    .block-title {
-      display: flex; align-items: center; gap: 12px;
-      font-size: 13px; font-weight: 700; color: #06b6d4;
-      text-transform: uppercase; letter-spacing: 1.5px;
-      margin-bottom: 20px;
-    }
-    .block-title::after {
-      content: ''; flex: 1; height: 1px;
-      background: rgba(6,182,212,0.15);
-    }
-    .block-num {
-      width: 24px; height: 24px; border-radius: 6px;
-      background: rgba(6,182,212,0.15);
-      border: 1px solid rgba(6,182,212,0.3);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 800; color: #06b6d4;
-    }
-
-    /* Cards grid */
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 16px;
-    }
-
-    /* Card */
-    .lesson-card {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 16px;
-      padding: 20px;
-      cursor: pointer;
-      transition: all 0.25s ease;
-      position: relative;
-      overflow: hidden;
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    .lesson-card.visible {
-      opacity: 1; transform: translateY(0);
-      transition: opacity 0.4s ease, transform 0.4s ease, background 0.25s, border-color 0.25s;
-    }
-    .lesson-card:hover {
-      background: rgba(255,255,255,0.06);
-      border-color: rgba(255,255,255,0.12);
-      transform: translateY(-2px);
-    }
-    .lesson-card.done {
-      background: rgba(16,185,129,0.06);
-      border-color: rgba(16,185,129,0.25);
-    }
-    .lesson-card.done:hover {
-      background: rgba(16,185,129,0.1);
-      border-color: rgba(16,185,129,0.4);
-    }
-    .lesson-card.in-progress {
-      background: rgba(245,158,11,0.06);
-      border-color: rgba(245,158,11,0.25);
-    }
-    .lesson-card.in-progress:hover {
-      background: rgba(245,158,11,0.1);
-    }
-
-    /* Card top */
-    .card-top {
-      display: flex; justify-content: space-between;
-      align-items: flex-start; margin-bottom: 12px;
-    }
-    .card-num {
-      font-size: 11px; font-weight: 700; color: #475569;
-      letter-spacing: 0.5px;
-    }
-    .card-status {
-      display: flex; align-items: center; gap: 6px;
-      padding: 4px 10px; border-radius: 20px;
-      font-size: 11px; font-weight: 700;
-      transition: all 0.2s;
-      user-select: none;
-    }
-    .status-pending {
-      background: rgba(255,255,255,0.05);
-      color: #475569; border: 1px solid rgba(255,255,255,0.08);
-    }
-    .status-progress {
-      background: rgba(245,158,11,0.12);
-      color: #f59e0b; border: 1px solid rgba(245,158,11,0.3);
-    }
-    .status-done {
-      background: rgba(16,185,129,0.12);
-      color: #10b981; border: 1px solid rgba(16,185,129,0.3);
-    }
-
-    /* Card content */
+    .block-title { display: flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 700; color: #06b6d4; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px; }
+    .block-title::after { content: ''; flex: 1; height: 1px; background: rgba(6,182,212,0.15); }
+    .block-num { width: 24px; height: 24px; border-radius: 6px; background: rgba(6,182,212,0.15); border: 1px solid rgba(6,182,212,0.3); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: #06b6d4; }
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+    .lesson-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 20px; cursor: pointer; transition: all 0.25s ease; position: relative; opacity: 0; transform: translateY(20px); }
+    .lesson-card.visible { opacity: 1; transform: translateY(0); transition: opacity 0.4s ease, transform 0.4s ease, background 0.25s, border-color 0.25s; }
+    .lesson-card:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12); transform: translateY(-2px); }
+    .lesson-card.done { background: rgba(16,185,129,0.06); border-color: rgba(16,185,129,0.25); }
+    .lesson-card.in-progress { background: rgba(245,158,11,0.06); border-color: rgba(245,158,11,0.25); }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .card-num { font-size: 11px; font-weight: 700; color: #475569; letter-spacing: 0.5px; }
+    .card-status { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .status-pending { background: rgba(255,255,255,0.05); color: #475569; border: 1px solid rgba(255,255,255,0.08); }
+    .status-progress { background: rgba(245,158,11,0.12); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+    .status-done { background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
     .card-icon { font-size: 28px; margin-bottom: 10px; display: block; }
-    .card-title {
-      font-size: 15px; font-weight: 700; color: #e2e8f0;
-      margin-bottom: 6px; line-height: 1.4;
-    }
-    .card-desc {
-      font-size: 13px; color: #64748b; line-height: 1.6;
-      margin-bottom: 14px;
-    }
-    .card-tags {
-      display: flex; flex-wrap: wrap; gap: 6px;
-    }
-    .tag {
-      padding: 3px 8px; border-radius: 6px;
-      font-size: 11px; font-weight: 600;
-      background: rgba(255,255,255,0.05);
-      color: #475569; border: 1px solid rgba(255,255,255,0.06);
-    }
-
-    /* Card footer */
-    .card-footer {
-      margin-top: 16px; padding-top: 14px;
-      border-top: 1px solid rgba(255,255,255,0.05);
-      display: flex; gap: 8px;
-    }
-    .btn-status {
-      flex: 1; padding: 8px 10px;
-      border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(255,255,255,0.04);
-      color: #64748b; font-size: 12px; font-weight: 600;
-      cursor: pointer; transition: all 0.2s;
-      text-align: center;
-    }
+    .card-title { font-size: 15px; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; line-height: 1.4; }
+    .card-desc { font-size: 13px; color: #64748b; line-height: 1.6; margin-bottom: 14px; }
+    .card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; background: rgba(255,255,255,0.05); color: #475569; border: 1px solid rgba(255,255,255,0.06); }
+    .card-footer { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; gap: 8px; }
+    .btn-status { flex: 1; padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: #64748b; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center; }
     .btn-status:hover { background: rgba(255,255,255,0.08); color: #94a3b8; }
-    .btn-status.active-progress {
-      background: rgba(245,158,11,0.12);
-      border-color: rgba(245,158,11,0.3);
-      color: #f59e0b;
-    }
-    .btn-status.active-done {
-      background: rgba(16,185,129,0.12);
-      border-color: rgba(16,185,129,0.3);
-      color: #10b981;
-    }
-
-    /* Note */
+    .btn-status.active-progress { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.3); color: #f59e0b; }
+    .btn-status.active-done { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.3); color: #10b981; }
     .card-note-wrap { margin-top: 10px; }
-    .card-note {
-      width: 100%; background: rgba(0,0,0,0.2);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 8px; padding: 8px 10px;
-      color: #94a3b8; font-size: 12px; resize: none;
-      font-family: inherit; outline: none;
-      transition: border-color 0.2s;
-    }
+    .card-note { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 8px 10px; color: #94a3b8; font-size: 12px; resize: none; font-family: inherit; outline: none; transition: border-color 0.2s; }
     .card-note:focus { border-color: rgba(6,182,212,0.3); }
     .card-note::placeholder { color: #334155; }
 
-    @media (max-width: 768px) {
-      .cards-grid { grid-template-columns: 1fr; }
-      .page-header h1 { font-size: 24px; }
-    }
-
-    /* ===== MODAL ===== */
-    .modal-backdrop {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
-      z-index: 99999; align-items: center; justify-content: center;
-      padding: 20px;
-    }
+    /* MODAL */
+    .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); z-index: 99999; align-items: center; justify-content: center; padding: 20px; }
     .modal-backdrop.open { display: flex; }
-    .modal {
-      background: #0d1424;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 20px;
-      width: 100%; max-width: 680px;
-      max-height: 88vh; overflow: hidden;
-      display: flex; flex-direction: column;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
-    }
-    .modal-head {
-      padding: 24px 28px 20px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      display: flex; justify-content: space-between; align-items: flex-start;
-      flex-shrink: 0;
-    }
+    .modal { background: #0d1424; border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; width: 100%; max-width: 680px; max-height: 88vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 24px 80px rgba(0,0,0,0.6); }
+    .modal-head { padding: 24px 28px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; }
     .modal-head-left { flex: 1; }
     .modal-lesson-num { font-size: 11px; font-weight: 700; color: #06b6d4; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
     .modal-title { font-size: 20px; font-weight: 800; color: #f1f5f9; line-height: 1.3; }
-    .modal-close {
-      width: 32px; height: 32px; border-radius: 8px;
-      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-      color: #64748b; font-size: 16px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s; flex-shrink: 0; margin-left: 16px;
-    }
+    .modal-close { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #64748b; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; margin-left: 16px; }
     .modal-close:hover { background: rgba(239,68,68,0.15); color: #ef4444; border-color: rgba(239,68,68,0.3); }
     .modal-body { overflow-y: auto; padding: 24px 28px; flex: 1; }
     .modal-section { margin-bottom: 28px; }
-    .modal-section-title {
-      font-size: 11px; font-weight: 700; color: #475569;
-      text-transform: uppercase; letter-spacing: 1.2px;
-      margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
-    }
+    .modal-section-title { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
     .modal-section-title::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.05); }
-
-    /* Steps */
-    .step-item {
-      display: flex; gap: 14px; align-items: flex-start;
-      padding: 12px 14px; border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.05);
-      background: rgba(255,255,255,0.02);
-      margin-bottom: 8px; cursor: pointer;
-      transition: all 0.2s;
-    }
+    .step-item { display: flex; gap: 14px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); margin-bottom: 8px; cursor: pointer; transition: all 0.2s; }
     .step-item:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
     .step-item.checked { background: rgba(16,185,129,0.07); border-color: rgba(16,185,129,0.2); }
-    .step-check {
-      width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0;
-      border: 2px solid rgba(255,255,255,0.15);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; transition: all 0.2s; margin-top: 1px;
-    }
-    .step-item.checked .step-check {
-      background: #10b981; border-color: #10b981; color: #fff;
-    }
+    .step-check { width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0; border: 2px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.2s; margin-top: 1px; color: #fff; }
+    .step-item.checked .step-check { background: #10b981; border-color: #10b981; }
     .step-content { flex: 1; }
     .step-label { font-size: 14px; font-weight: 600; color: #e2e8f0; line-height: 1.4; margin-bottom: 3px; }
     .step-item.checked .step-label { color: #64748b; text-decoration: line-through; }
     .step-hint { font-size: 12px; color: #475569; line-height: 1.5; }
+    .modal-prog-label { font-size: 12px; color: #475569; margin-bottom: 8px; }
+    .modal-prog-bar { height: 4px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; margin-bottom: 20px; }
+    .modal-prog-fill { height: 100%; background: linear-gradient(90deg, #10b981, #06b6d4); border-radius: 4px; transition: width 0.3s ease; }
 
-    /* Modal progress */
-    .modal-progress-bar {
-      height: 4px; background: rgba(255,255,255,0.06);
-      border-radius: 4px; overflow: hidden; margin-bottom: 20px;
-    }
-    .modal-progress-fill {
-      height: 100%; background: linear-gradient(90deg, #10b981, #06b6d4);
-      border-radius: 4px; transition: width 0.3s ease;
-    }
-    .modal-progress-label { font-size: 12px; color: #475569; margin-bottom: 8px; }
-
-    @media (max-width: 600px) {
-      .modal { border-radius: 16px; }
-      .modal-head, .modal-body { padding: 18px 20px; }
-    }
+    @media (max-width: 768px) { .cards-grid { grid-template-columns: 1fr; } .page-header h1 { font-size: 24px; } }
+    @media (max-width: 600px) { .modal { border-radius: 16px; } .modal-head, .modal-body { padding: 18px 20px; } }
   </style>
 </head>
 <body>
@@ -306,7 +88,6 @@
 <script src="../firebase-auth-init.js" type="module"></script>
 <script src="../auth.js"></script>
 
-<!-- Admin guard -->
 <script>
 (function() {
   const ADMIN_EMAILS = ['dersire.der@gmail.com'];
@@ -316,9 +97,8 @@
       if (!user) { window.location.href = '../login.html'; return; }
       const email = (user.email || '').toLowerCase();
       const role = parseInt(user.role) || 0;
-      // Пускаем если email совпадает с админским ИЛИ role >= 9
       if (!ADMIN_EMAILS.includes(email) && role < 9) {
-        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;background:#070b14;"><div style="font-size:48px;">🔒</div><p style="color:#64748b;font-size:16px;">Доступ только для администраторов</p><a href="../index.html" style="color:#06b6d4;font-size:14px;">← На главную</a></div>';
+        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;background:#070b14;"><div style="font-size:48px">🔒</div><p style="color:#64748b;font-size:16px">Доступ только для администраторов</p><a href="../index.html" style="color:#06b6d4;font-size:14px">← На главную</a></div>';
       }
     } catch(e) {}
   }
@@ -328,533 +108,442 @@
 </script>
 
 <div class="page-wrap">
-
-  <!-- Header -->
   <div class="page-header">
     <h1>📋 Трекер уроков диспетчера</h1>
-    <p>Отмечай прогресс студента по каждому уроку. Данные сохраняются в Firebase.</p>
+    <p>Нажми на карточку чтобы открыть детальные шаги урока. Данные сохраняются в Firebase.</p>
     <div class="header-meta">
-      <div class="meta-stat"><strong id="stat-done">0</strong> пройдено</div>
-      <div class="meta-stat"><strong id="stat-progress">0</strong> в процессе</div>
-      <div class="meta-stat"><strong id="stat-pending">0</strong> не начато</div>
-      <div class="meta-stat"><strong>21</strong> всего уроков</div>
+      <div class="meta-stat"><strong id="stat-done">0</strong>&nbsp;пройдено</div>
+      <div class="meta-stat"><strong id="stat-progress">0</strong>&nbsp;в процессе</div>
+      <div class="meta-stat"><strong id="stat-pending">0</strong>&nbsp;не начато</div>
+      <div class="meta-stat"><strong>21</strong>&nbsp;всего уроков</div>
     </div>
   </div>
-
-  <!-- Progress -->
   <div class="progress-wrap">
-    <div class="progress-label">
-      <span>Общий прогресс курса</span>
-      <span id="progress-pct">0%</span>
-    </div>
+    <div class="progress-label"><span>Общий прогресс</span><span id="progress-pct">0%</span></div>
     <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
   </div>
 
-  <!-- BLOCK 1 -->
   <div class="block">
     <div class="block-title"><div class="block-num">1</div>Основы профессии</div>
     <div class="cards-grid">
-
-      <div class="lesson-card" data-id="1">
-        <div class="card-top">
-          <span class="card-num">УРОК 01</span>
-          <span class="card-status status-pending">⬜ Не начато</span>
-        </div>
-        <span class="card-icon">🚛</span>
-        <div class="card-title">Кто такой диспетчер США</div>
-        <div class="card-desc">Роль диспетчера в цепочке грузоперевозок. Чем отличается от брокера и экспедитора. Как работает удалённо. Реальный доход: $3,000–$6,000/мес.</div>
-        <div class="card-tags"><span class="tag">Введение</span><span class="tag">Карьера</span></div>
-        <div class="card-footer">
-          <button class="btn-status" data-action="in-progress">🔄 В процессе</button>
-          <button class="btn-status" data-action="done">✅ Пройдено</button>
-        </div>
-        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка по уроку..."></textarea></div>
-      </div>
-
-      <div class="lesson-card" data-id="2">
-        <div class="card-top">
-          <span class="card-num">УРОК 02</span>
-          <span class="card-status status-pending">⬜ Не начато</span>
-        </div>
-        <span class="card-icon">🇺🇸</span>
-        <div class="card-title">Рынок грузоперевозок США</div>
-        <div class="card-desc">Структура рынка: shipper → broker → carrier. Объём рынка $800 млрд. Почему диспетчер нужен перевозчику. Как устроена логистическая цепочка.</div>
-        <div class="card-tags"><span class="tag">Рынок</span><span class="tag">Структура</span></div>
-        <div class="card-footer">
-          <button class="btn-status" data-action="in-progress">🔄 В процессе</button>
-          <button class="btn-status" data-action="done">✅ Пройдено</button>
-        </div>
-        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка по уроку..."></textarea></div>
-      </div>
-
-      <div class="lesson-card" data-id="3">
-        <div class="card-top">
-          <span class="card-num">УРОК 03</span>
-          <span class="card-status status-pending">⬜ Не начато</span>
-        </div>
-        <span class="card-icon">👥</span>
-        <div class="card-title">Carrier vs Broker vs Dispatcher</div>
-        <div class="card-desc">Детальное разграничение ролей. Carrier — владелец трака. Broker — посредник с лицензией. Dispatcher — агент перевозчика без лицензии MC. Юридические отличия.</div>
-        <div class="card-tags"><span class="tag">Роли</span><span class="tag">Юридика</span></div>
-        <div class="card-footer">
-          <button class="btn-status" data-action="in-progress">🔄 В процессе</button>
-          <button class="btn-status" data-action="done">✅ Пройдено</button>
-        </div>
-        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка по уроку..."></textarea></div>
-      </div>
-
-      <div class="lesson-card" data-id="4">
-        <div class="card-top">
-          <span class="card-num">УРОК 04</span>
-          <span class="card-status status-pending">⬜ Не начато</span>
-        </div>
-        <span class="card-icon">🚚</span>
-        <div class="card-title">Типы оборудования</div>
-        <div class="card-desc">Dry Van, Reefer, Flatbed, Step Deck, RGN, Box Truck. Для каких грузов каждый тип. Ограничения по весу и габаритам. Что влияет на ставку.</div>
-        <div class="card-tags"><span class="tag">Оборудование</span><span class="tag">Грузы</span></div>
-        <div class="card-footer">
-          <button class="btn-status" data-action="in-progress">🔄 В процессе</button>
-          <button class="btn-status" data-action="done">✅ Пройдено</button>
-        </div>
-        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка по уроку..."></textarea></div>
-      </div>
-
-      <div class="lesson-card" data-id="5">
-        <div class="card-top">
-          <span class="card-num">УРОК 05</span>
-          <span class="card-status status-pending">⬜ Не начато</span>
-        </div>
-        <span class="card-icon">📖</span>
-        <div class="card-title">Базовые термины и глоссарий</div>
-        <div class="card-desc">MC number, DOT, FMCSA, BOL, POD, Rate Con, Detention, TONU, Lumper, Deadhead, All-in rate, RPM, Factoring, Quick Pay. Обязательный словарь диспетчера.</div>
-        <div class="card-tags"><span class="tag">Термины</span><span class="tag">Глоссарий</span></div>
-        <div class="card-footer">
-          <button class="btn-status" data-action="in-progress">🔄 В процессе</button>
-          <button class="btn-status" data-action="done">✅ Пройдено</button>
-        </div>
-        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка по уроку..."></textarea></div>
-      </div>
-
+      <div class="lesson-card" data-id="1"><div class="card-top"><span class="card-num">УРОК 01</span><span class="card-status status-pending">⬜ Не начато</span></div><span class="card-icon">🚛</span><div class="card-title">Кто такой диспетчер США</div><div class="card-desc">Роль диспетчера в цепочке грузоперевозок. Чем отличается от брокера. Удалённая работа. Доход $3,000–$6,000/мес.</div><div class="card-tags"><span class="tag">Введение</span><span class="tag">Карьера</span></div><div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div><div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div></div>
+      <div class="lesson-card" data-id="2"><div class="card-top"><span class="card-num">УРОК 02</span><span class="card-status status-pending">⬜ Не начато</span></div><span class="card-icon">🇺🇸</span><div class="card-title">Рынок грузоперевозок США</div><div class="card-desc">Структура: shipper → broker → carrier. Объём $800 млрд. Роль диспетчера в цепочке.</div><div class="card-tags"><span class="tag">Рынок</span><span class="tag">Структура</span></div><div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div><div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div></div>
+      <div class="lesson-card" data-id="3"><div class="card-top"><span class="card-num">УРОК 03</span><span class="card-status status-pending">⬜ Не начато</span></div><span class="card-icon">👥</span><div class="card-title">Carrier vs Broker vs Dispatcher</div><div class="card-desc">Разграничение ролей. Carrier — владелец трака. Broker — лицензированный посредник. Dispatcher — агент без MC.</div><div class="card-tags"><span class="tag">Роли</span><span class="tag">Юридика</span></div><div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div><div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div></div>
+      <div class="lesson-card" data-id="4"><div class="card-top"><span class="card-num">УРОК 04</span><span class="card-status status-pending">⬜ Не начато</span></div><span class="card-icon">🚚</span><div class="card-title">Типы оборудования</div><div class="card-desc">Dry Van, Reefer, Flatbed, Step Deck, RGN, Box Truck. Для каких грузов. Ограничения по весу. Влияние на ставку.</div><div class="card-tags"><span class="tag">Оборудование</span><span class="tag">Грузы</span></div><div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div><div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div></div>
+      <div class="lesson-card" data-id="5"><div class="card-top"><span class="card-num">УРОК 05</span><span class="card-status status-pending">⬜ Не начато</span></div><span class="card-icon">📖</span><div class="card-title">Базовые термины и глоссарий</div><div class="card-desc">MC, DOT, BOL, POD, Rate Con, Detention, TONU, Lumper, Deadhead, RPM, Factoring. Обязательный словарь.</div><div class="card-tags"><span class="tag">Термины</span><span class="tag">Глоссарий</span></div><div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div><div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div></div>
     </div>
   </div>
 
-  <!-- BLOCK 2 -->
   <div class="block">
     <div class="block-title"><div class="block-num">2</div>Поиск и анализ грузов</div>
     <div class="cards-grid">
-
-      <div class="lesson-card" data-id="6">
-        <div class="card-top">
-          <span class="card-num">УРОК 06</span>
-          <span class="card-status status-pending">⬜ Не начато</span>
-        </div>
-        <span class="card-icon">🔍</span>
-        <div class="card-title">Load Board — поиск грузов</div>
-        <div class="card-desc">DAT, Truckstop, 123Loadboard — сравнение платформ. Регистрация и настройка фильтров. Как читать листинг: origin, destination, weight, dims, posted rate, age of post.</div>
-        <div class="card-tags"><span class="tag">Load Board</span><span class="tag">DAT</span><span class="tag">Практика</span></div>
-        <div class="card-footer">
-          <button class="btn-status" data-action="in-progress">🔄 В процессе</button>
-          <button class="btn-status" data-action="done">✅ Пройдено</button>
-        </div>
-        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка по уроку..."></textarea></div>
-      </div>
-
-      <div class="lesson-card" data-id="7">
-        <div class="card-top">
-          <span class="card-num">УРОК 07</span>
-          <span class="card-status status-pending">⬜ Не начато</span>
-        </div>
-        <span class="card-icon">📊</span>
-        <div class="card-title">Расчёт выгодности груза</div>
-        <div class="card-desc">Формула RPM (rate per mile). Учёт deadhead miles. Fuel cost, tolls, driver pay. Минимальная рентабельная ставка. Практический расчёт на реальных примерах.</div>
-        <div class="card-tags"><span class="tag">Финансы</span><span class="tag">RPM</span><span class="tag">Расчёт</span></div>
-        <div class="card-footer">
-          <button class="btn-status" data-action="in-progress">🔄 В процессе</button>
-          <button class="btn-status" data-action="done">✅ Пройдено</button>
-        </div>
-        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка по уроку..."></textarea></div>
-      </div>
-
-      <div class="lesson-card" data-id="8">
-        <div class="card-top">
-          <span class="card-num">УРОК 08</span>
-          <span class="card-status status-pending">⬜ Не начато</span>
-        </div>
-        <span class="card-icon">🗺️</span>
-        <div class="card-title">Анализ маршрутов и рынка ставок</div>
-        <div class="card-desc">Горячие и холодные рынки по штатам. Сезонность ставок. Как выбрать маршрут с хорошим backhaul. DAT Rate View — анализ исторических ставок по лейнам.</div>
-        <div class="card-tags"><span class="tag">Маршруты</span><span class="tag">Ставки</span><span class="tag">Стратегия</span></div>
-        <div class="card-footer">
-          <button class="btn-status" data-action="in-progress">🔄 В процессе</button>
-          <button class="btn-status" data-action="done">✅ Пройдено</button>
-        </div>
-        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка по уроку..."></textarea></div>
-      </div>
-
-      <div class="lesson-card" data-id="9">
-        <div class="card-top">
-          <span class="card-num">УРОК 09</span>
-          <span class="card-status status-pending">⬜ Не начато</span>
-        </div>
-        <span class="card-icon">🔎</span>
-        <div class="card-title">Проверка брокера перед звонком</div>
-        <div class="card-desc">FMCSA Safer System — проверка MC/DOT брокера. Credit score брокера на DAT. Признаки мошеннических брокеров (double brokering). Как не попасть на неплательщика.</div>
-        <div class="card-tags"><span class="tag">Безопасность</span><span class="tag">FMCSA</span><span class="tag">Проверка</span></div>
-        <div class="card-footer">
-          <button class="btn-status" data-action="in-progress">🔄 В процессе</button>
-          <button class="btn-status" data-action="done">✅ Пройдено</button>
-        </div>
-        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка по уроку..."></textarea></div>
-      </div>
-
+      <div class="lesson-card" data-id="6"><div class="card-top"><span class="card-num">УРОК 06</span><span class="card-status status-pending">⬜ Не начато</span></div><span class="card-icon">🔍</span><div class="card-title">Load Board — поиск грузов</div><div class="card-desc">DAT, Truckstop, 123Loadboard. Фильтры, листинг: origin, destination, weight, posted rate.</div><div class="card-tags"><span class="tag">Load Board</span><span class="tag">DAT</span></div><div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div><div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div></div>
+      <div class="lesson-card" data-id="7"><div class="card-top"><span class="card-num">УРОК 07</span><span class="card-status status-pending">⬜ Не начато</span></div><span class="card-icon">📊</span><div class="card-title">Расчёт выгодности груза</div><div class="card-desc">RPM (rate per mile). Deadhead miles. Fuel cost, tolls. Минимальная рентабельная ставка.</div><div class="card-tags"><span class="tag">Финансы</span><span class="tag">RPM</span></div><div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div><div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div></div>
+      <div class="lesson-card" data-id="8"><div class="card-top"><span class="card-num">УРОК 08</span><span class="card-status status-pending">⬜ Не начато</span></div><span class="card-icon">🗺️</span><div class="card-title">Анализ маршрутов и ставок</div><div class="card-desc">Горячие/холодные рынки. Сезонность. Backhaul. DAT Rate View — исторические ставки по лейнам.</div><div class="card-tags"><span class="tag">Маршруты</span><span class="tag">Стратегия</span></div><div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div><div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div></div>
+      <div class="lesson-card" data-id="9"><div class="card-top"><span class="card-num">УРОК 09</span><span class="card-status status-pending">⬜ Не начато</span></div><span class="card-icon">🔎</span><div class="card-title">Проверка брокера</div><div class="card-desc">FMCSA Safer System. Credit score на DAT. Признаки мошенников (double brokering). Как не попасть на неплательщика.</div><div class="card-tags"><span class="tag">Безопасность</span><span class="tag">FMCSA</span></div><div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div><div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div></div>
     </div>
   </div>
 
-  <!-- BLOCK 3 -->
   <div class="block">
     <div class="block-title"><div class="block-num">3</div>Букинг груза</div>
     <div class="cards-grid">
-
-      <div class="lesson-card" data-id="10">
-        <div class="card-top">
-          <span class="card-num">УРОК 10</span>
-          <span class="card-status status-pending">⬜ Не начато</span>
-        </div>
-        <span class="card-icon">📋</span>
-        <div class="card-title">Подготовка к звонку брокеру</div>
-        <div class="card-desc">Что нужно знать до звонка: MC carrier, тип трейлера, дата и локация. Как представиться. Что уточнить: pick up time, delivery date, dims, weight, special instructions.</div>
-        <div class="card-tags"><span class="tag">Подготовка</span><span class="tag">Звонок</span></div>
-        <div class="card-footer">
-          <button class="btn-status" data-action="in-progress">🔄 В процессе</button>
-          <button class="btn-status" data-action="done">✅ Пройдено</button>
-        </div>
-        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка по уроку..."></textarea></div>
-      </div>
-
-      <div class="lesson-card" data-id="11">
-        <div class="card-top">
-          <span class="card-num">УРОК 11</span>
-          <span class="card-status status-pending">⬜ Не начато</span>
-        </div>
-        <span class="card-icon">📞</span>
-        <div class="card-title">Скрипт телефонного звонка</div>
-        <div class="card-desc">Полный скрипт от приветствия до подтверждения. "Hi, this is [name], calling about load #[num]..." Как держать инициативу. Типичные ответы брокера и как реагировать.</div>
-        <div class="card-tags"><span class="tag">Скрипт</span><span class="tag">Практика</span><span class="tag">Английский</span></div>
-        <div class="card-footer">
-          <button class="btn-status" data-action="in-progress">🔄 В процессе</button>
-          <button class="btn-status" data-action="done">✅ Пройдено</button>
-        </div>
-        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка по уроку..."></textarea></div>
-      </div>
-
-      <div class="lesson-card" data-id="12">
-        <div class="card-top">
-          <span class="card-num">УРОК 12</span>
-          <span class="card-status status-pending">⬜ Не начато</span>
-        </div>
-        <span class="card-icon">💬</span>
-        <div class="card-title">Переговоры по ставке</div>
-        <div class="card-desc">Техники торга: anchoring, counter-offer, silence. Фразы: "The posted rate doesn't work for us", "We need X to make it work". Когда соглашаться, когда уходить.</div>
-        <div class="card-tags"><span class="tag">Переговоры</span><span class="tag">Ставка</span><span class="tag">Техники</span></div>
-        <div class="card-footer">
-          <button class="btn-status" data-action="in-progress">🔄 В процессе</button>
-          <button class="btn-status" data-action="done">✅ Пройдено</button>
-        </div>
-        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка по уроку..."></textarea></div>
-      </div>
-
-      <div class="lesson-card" data-id="13">
-        <div class="card-top">
-          <span class="card-num">УРОК 13</span>
-          <span class="card-status status-pending">⬜ Не начато</span>
-        </div>
-        <span class="card-icon">✉️</span>
-        <div class="card-title">Email брокеру — подтверждение букинга</div>
-        <div class="card-desc">Шаблон confirmation email после звонка. Subject line, структура письма, обязательные поля: load #, rate, pick up/delivery, driver info. Зачем нужен письменный след.</div>
-        <div class="card-tags"><span class="tag">Email</span><span class="tag">Шаблон</span><span class="tag">Документация</span></div>
-        <div class="card-footer">
-          <button class="btn-status" data-action="in-progress">🔄 В процессе</button>
-          <button class="btn-status" data-action="done">✅ Пройдено</button>
-        </div>
-        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка по уроку..."></textarea></div>
-      </div>
-
-      <div class="lesson-card" data-id="14">
-        <div class="card-top">
-          <span class="card-num">УРОК 14</span>
-          <span class="card-status status-pending">⬜ Не начато</span>
-        </div>
-        <span class="card-icon">📄</span>
-        <div class="card-title">Rate Con — структура и проверка</div>
-        <div class="card-desc">Что должно быть в Rate Con: load #, rate, addresses, dates, MC carrier, special instructions. Как проверить на ошибки. Что делать если данные не совпадают. Подписание и отправка.</div>
-        <div class="card-tags"><span class="tag">Rate Con</span><span class="tag">Документы</span><span class="tag">Проверка</span></div>
-        <div class="card-footer">
-          <button class="btn-status" data-action="in-progress">🔄 В процессе</button>
-          <button class="btn-status" data-action="done">✅ Пройдено</button>
-        </div>
-        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка по уроку..."></textarea></div>
-      </div>
-
-      <div class="lesson-card" data-id="15">
-        <div class="card-top">
-          <span class="card-num">УРОК 15</span>
-          <span class="card-status status-pending">⬜ Не начато</span>
-        </div>
-        <span class="card-icon">🤝</span>
-        <div class="card-title">Передача груза водителю</div>
-        <div class="card-desc">Что передать водителю: Rate Con, адрес загрузки, время, контакт на складе, инструкции (appointment, lumper, seal). Как объяснить маршрут. Что водитель должен взять с собой.</div>
-        <div class="card-tags"><span class="tag">Водитель</span><span class="tag">Инструктаж</span></div>
-        <div class="card-footer">
-          <button class="btn-status" data-action="in-progress">🔄 В процессе</button>
-          <button class="btn-status" data-action="done">✅ Пройдено</button>
-        </div>
-        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка по уроку..."></textarea></div>
-      </div>
-
+      <div class="lesson-card" data-id="10"><div class="card-top"><span class="card-num">УРОК 10</span><span class="card-status status-pending">⬜ Не начато</span></div><span class="card-icon">📋</span><div class="card-title">Подготовка к звонку брокеру</div><div class="card-desc">MC carrier, тип трейлера, дата, локация. Что уточнить: pick up time, delivery date, dims, weight.</div><div class="card-tags"><span class="tag">Подготовка</span><span class="tag">Звонок</span></div><div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div><div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div></div>
+      <div class="lesson-card" data-id="11"><div class="card-top"><span class="card-num">УРОК 11</span><span class="card-status status-pending">⬜ Не начато</span></div><span class="card-icon">📞</span><div class="card-title">Скрипт телефонного звонка</div><div class="card-desc">Полный скрипт от приветствия до подтверждения. Как держать инициативу. Типичные ответы брокера.</div><div class="card-tags"><span class="tag">Скрипт</span><span class="tag">Практика</span></div><div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div><div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div></div>
+      <div class="lesson-card" data-id="12"><div class="card-top"><span class="card-num">УРОК 12</span><span class="card-status status-pending">⬜ Не начато</span></div><span class="card-icon">💬</span><div class="card-title">Переговоры по ставке</div><div class="card-desc">Anchoring, counter-offer, silence. "The posted rate doesn't work for us." Когда соглашаться, когда уходить.</div><div class="card-tags"><span class="tag">Переговоры</span><span class="tag">Техники</span></div><div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div><div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div></div>
+      <div class="lesson-card" data-id="13"><div class="card-top"><span class="card-num">УРОК 13</span><span class="card-status status-pending">⬜ Не начато</span></div><span class="card-icon">✉️</span><div class="card-title">Email брокеру — букинг</div><div class="card-desc">Шаблон confirmation email. Subject line, load #, rate, pick up/delivery, driver info. Письменный след.</div><div class="card-tags"><span class="tag">Email</span><span class="tag">Шаблон</span></div><div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div><div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div></div>
+      <div class="lesson-card" data-id="14"><div class="card-top"><span class="card-num">УРОК 14</span><span class="card-status status-pending">⬜ Не начато</span></div><span class="card-icon">📄</span><div class="card-title">Rate Con — структура и проверка</div><div class="card-desc">Обязательные поля: load #, rate, addresses, dates, MC. Проверка на ошибки. Подписание и отправка.</div><div class="card-tags"><span class="tag">Rate Con</span><span class="tag">Документы</span></div><div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div><div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div></div>
+      <div class="lesson-card" data-id="15"><div class="card-top"><span class="card-num">УРОК 15</span><span class="card-status status-pending">⬜ Не начато</span></div><span class="card-icon">🤝</span><div class="card-title">Передача груза водителю</div><div class="card-desc">Rate Con, адрес, время, контакт склада, инструкции (appointment, lumper, seal). Инструктаж водителя.</div><div class="card-tags"><span class="tag">Водитель</span><span class="tag">Инструктаж</span></div><div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div><div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div></div>
     </div>
   </div>
 
-  <!-- BLOCK 4 -->
   <div class="block">
     <div class="block-title"><div class="block-num">4</div>Документы, контроль и финансы</div>
     <div class="cards-grid">
-
-      <div class="lesson-card" data-id="16">
-        <div class="card-top">
-          <span class="card-num">УРОК 16</span>
-          <span class="card-status status-pending">⬜ Не начато</span>
-        </div>
-        <span class="card-icon">📃</span>
-        <div class="card-title">BOL — Bill of Lading</div>
-        <div class="card-desc">Что такое BOL, кто его выдаёт. Обязательные поля: shipper, consignee, commodity, weight, pieces. Чистый vs повреждённый BOL. Что делать если водитель потерял BOL.</div>
-        <div class="card-tags"><span class="tag">BOL</span><span class="tag">Документы</span></div>
-        <div class="card-footer">
-          <button class="btn-status" data-action="in-progress">🔄 В процессе</button>
-          <button class="btn-status" data-action="done">✅ Пройдено</button>
-        </div>
-        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка по уроку..."></textarea></div>
-      </div>
-
-      <div class="lesson-card" data-id="17">
-        <div class="card-top">
-          <span class="card-num">УРОК 17</span>
-          <span class="card-status status-pending">⬜ Не начато</span>
-        </div>
-        <span class="card-icon">✅</span>
-        <div class="card-title">POD — Proof of Delivery</div>
-        <div class="card-desc">Что такое POD и когда нужен. Как водитель получает подпись. Как отправить POD брокеру. Сроки отправки. Почему без POD нет оплаты. Электронный vs бумажный POD.</div>
-        <div class="card-tags"><span class="tag">POD</span><span class="tag">Доставка</span><span class="tag">Оплата</span></div>
-        <div class="card-footer">
-          <button class="btn-status" data-action="in-progress">🔄 В процессе</button>
-          <button class="btn-status" data-action="done">✅ Пройдено</button>
-        </div>
-        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка по уроку..."></textarea></div>
-      </div>
-
-      <div class="lesson-card" data-id="18">
-        <div class="card-top">
-          <span class="card-num">УРОК 18</span>
-          <span class="card-status status-pending">⬜ Не начато</span>
-        </div>
-        <span class="card-icon">⏱️</span>
-        <div class="card-title">Detention, TONU, Lumper</div>
-        <div class="card-desc">Detention: когда начисляется (2+ часа), как фиксировать время, как выставить брокеру. TONU (Truck Order Not Used): когда применяется, минимальная компенсация. Lumper: кто платит, как возместить.</div>
-        <div class="card-tags"><span class="tag">Detention</span><span class="tag">TONU</span><span class="tag">Lumper</span></div>
-        <div class="card-footer">
-          <button class="btn-status" data-action="in-progress">🔄 В процессе</button>
-          <button class="btn-status" data-action="done">✅ Пройдено</button>
-        </div>
-        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка по уроку..."></textarea></div>
-      </div>
-
-      <div class="lesson-card" data-id="19">
-        <div class="card-top">
-          <span class="card-num">УРОК 19</span>
-          <span class="card-status status-pending">⬜ Не начато</span>
-        </div>
-        <span class="card-icon">📡</span>
-        <div class="card-title">Check calls — контроль в пути</div>
-        <div class="card-desc">Что такое check call и зачем он нужен. Частота: при загрузке, в пути, за 2 часа до доставки. Macropoint и Trucker Tools — автоматическое отслеживание. Как сообщать брокеру об обновлениях.</div>
-        <div class="card-tags"><span class="tag">Check Call</span><span class="tag">Отслеживание</span></div>
-        <div class="card-footer">
-          <button class="btn-status" data-action="in-progress">🔄 В процессе</button>
-          <button class="btn-status" data-action="done">✅ Пройдено</button>
-        </div>
-        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка по уроку..."></textarea></div>
-      </div>
-
-      <div class="lesson-card" data-id="20">
-        <div class="card-top">
-          <span class="card-num">УРОК 20</span>
-          <span class="card-status status-pending">⬜ Не начато</span>
-        </div>
-        <span class="card-icon">🚨</span>
-        <div class="card-title">Проблемные ситуации</div>
-        <div class="card-desc">Водитель опаздывает на загрузку — алгоритм действий. Авария в пути. Брокер отменяет груз после подписания Rate Con. Груз повреждён. Водитель отказывается ехать. Как защитить carrier.</div>
-        <div class="card-tags"><span class="tag">Проблемы</span><span class="tag">Кризис</span><span class="tag">Решения</span></div>
-        <div class="card-footer">
-          <button class="btn-status" data-action="in-progress">🔄 В процессе</button>
-          <button class="btn-status" data-action="done">✅ Пройдено</button>
-        </div>
-        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка по уроку..."></textarea></div>
-      </div>
-
-      <div class="lesson-card" data-id="21">
-        <div class="card-top">
-          <span class="card-num">УРОК 21</span>
-          <span class="card-status status-pending">⬜ Не начато</span>
-        </div>
-        <span class="card-icon">💰</span>
-        <div class="card-title">Финансы диспетчера</div>
-        <div class="card-desc">Как выставить инвойс брокеру. Net 30 vs Quick Pay (2–3%). Factoring companies — что это и когда выгодно. Dispatcher fee: фиксированный % (5–10%) или flat rate. Как вести учёт доходов.</div>
-        <div class="card-tags"><span class="tag">Финансы</span><span class="tag">Инвойс</span><span class="tag">Factoring</span></div>
-        <div class="card-footer">
-          <button class="btn-status" data-action="in-progress">🔄 В процессе</button>
-          <button class="btn-status" data-action="done">✅ Пройдено</button>
-        </div>
-        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка по уроку..."></textarea></div>
-      </div>
-
+      <div class="lesson-card" data-id="16"><div class="card-top"><span class="card-num">УРОК 16</span><span class="card-status status-pending">⬜ Не начато</span></div><span class="card-icon">📃</span><div class="card-title">BOL — Bill of Lading</div><div class="card-desc">Кто выдаёт. Поля: shipper, consignee, commodity, weight. Чистый vs повреждённый BOL.</div><div class="card-tags"><span class="tag">BOL</span><span class="tag">Документы</span></div><div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div><div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div></div>
+      <div class="lesson-card" data-id="17"><div class="card-top"><span class="card-num">УРОК 17</span><span class="card-status status-pending">⬜ Не начато</span></div><span class="card-icon">✅</span><div class="card-title">POD — Proof of Delivery</div><div class="card-desc">Когда нужен. Как водитель получает подпись. Сроки отправки брокеру. Без POD — нет оплаты.</div><div class="card-tags"><span class="tag">POD</span><span class="tag">Оплата</span></div><div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div><div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div></div>
+      <div class="lesson-card" data-id="18"><div class="card-top"><span class="card-num">УРОК 18</span><span class="card-status status-pending">⬜ Не начато</span></div><span class="card-icon">⏱️</span><div class="card-title">Detention, TONU, Lumper</div><div class="card-desc">Detention: 2+ часа, фиксация времени, выставление брокеру. TONU: компенсация. Lumper: кто платит.</div><div class="card-tags"><span class="tag">Detention</span><span class="tag">TONU</span></div><div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div><div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div></div>
+      <div class="lesson-card" data-id="19"><div class="card-top"><span class="card-num">УРОК 19</span><span class="card-status status-pending">⬜ Не начато</span></div><span class="card-icon">📡</span><div class="card-title">Check calls — контроль в пути</div><div class="card-desc">Частота: загрузка, в пути, за 2 часа до доставки. Macropoint, Trucker Tools. Обновления брокеру.</div><div class="card-tags"><span class="tag">Check Call</span><span class="tag">Отслеживание</span></div><div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div><div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div></div>
+      <div class="lesson-card" data-id="20"><div class="card-top"><span class="card-num">УРОК 20</span><span class="card-status status-pending">⬜ Не начато</span></div><span class="card-icon">🚨</span><div class="card-title">Проблемные ситуации</div><div class="card-desc">Опоздание водителя. Авария. Брокер отменяет груз. Повреждение груза. Алгоритм действий в каждом случае.</div><div class="card-tags"><span class="tag">Проблемы</span><span class="tag">Кризис</span></div><div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div><div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div></div>
+      <div class="lesson-card" data-id="21"><div class="card-top"><span class="card-num">УРОК 21</span><span class="card-status status-pending">⬜ Не начато</span></div><span class="card-icon">💰</span><div class="card-title">Финансы диспетчера</div><div class="card-desc">Инвойс брокеру. Net 30 vs Quick Pay. Factoring. Dispatcher fee 5–10%. Учёт доходов.</div><div class="card-tags"><span class="tag">Финансы</span><span class="tag">Инвойс</span></div><div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div><div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div></div>
     </div>
   </div>
+</div>
 
+<!-- Modal -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-head-left">
+        <div class="modal-lesson-num" id="modal-lesson-num"></div>
+        <div class="modal-title" id="modal-title"></div>
+      </div>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-prog-label" id="modal-prog-label">Выполнено 0 из 0 шагов</div>
+      <div class="modal-prog-bar"><div class="modal-prog-fill" id="modal-prog-fill" style="width:0%"></div></div>
+      <div class="modal-section">
+        <div class="modal-section-title">👨‍🏫 Действия преподавателя</div>
+        <div id="modal-teacher-steps"></div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">🎓 Задания студента</div>
+        <div id="modal-student-steps"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script type="module">
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
-  authDomain: "dispatch4you-80e0f.firebaseapp.com",
-  projectId: "dispatch4you-80e0f",
-  storageBucket: "dispatch4you-80e0f.appspot.com",
-  messagingSenderId: "349235354473",
-  appId: "1:349235354473:web:488aeb29211b02bb153bf8"
-};
-
-const app = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
+const FB = { apiKey:"AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI", authDomain:"dispatch4you-80e0f.firebaseapp.com", projectId:"dispatch4you-80e0f", storageBucket:"dispatch4you-80e0f.appspot.com", messagingSenderId:"349235354473", appId:"1:349235354473:web:488aeb29211b02bb153bf8" };
+const app = getApps().length ? getApps()[0] : initializeApp(FB);
 const auth = getAuth(app);
 const db = getFirestore(app);
+let uid = null, lessonData = {};
 
-let currentUid = null;
-let lessonData = {}; // { "1": { status: "done", note: "..." }, ... }
+const LESSONS = {
+  "1": { title:"Кто такой диспетчер США", teacher:[
+    {label:"Объяснить роль диспетчера в цепочке грузоперевозок", hint:"Shipper → Broker → Carrier. Диспетчер работает на стороне Carrier."},
+    {label:"Показать реальный пример рабочего дня диспетчера", hint:"Утро: проверка Load Board, звонки брокерам, букинг грузов."},
+    {label:"Разобрать схему заработка: % от груза или flat fee", hint:"Обычно 5–10% от ставки или $50–150 за груз."},
+    {label:"Ответить на вопросы студента о профессии"}
+  ], student:[
+    {label:"Своими словами объяснить кто такой диспетчер", hint:"Без подсказок — проверка понимания."},
+    {label:"Назвать 3 отличия диспетчера от брокера"},
+    {label:"Рассчитать примерный доход при 10 грузах в неделю по $1500"}
+  ]},
+  "2": { title:"Рынок грузоперевозок США", teacher:[
+    {label:"Нарисовать схему: Shipper → Broker → Carrier → Dispatcher"},
+    {label:"Объяснить почему рынок $800 млрд и почему он стабилен"},
+    {label:"Показать карту основных торговых коридоров США", hint:"I-95, I-10, I-80 — главные маршруты."},
+    {label:"Объяснить сезонность: когда ставки выше/ниже"}
+  ], student:[
+    {label:"Нарисовать цепочку участников рынка по памяти"},
+    {label:"Назвать 3 причины почему диспетчер нужен перевозчику"},
+    {label:"Объяснить что происходит со ставками в Q4 (октябрь–декабрь)"}
+  ]},
+  "3": { title:"Carrier vs Broker vs Dispatcher", teacher:[
+    {label:"Объяснить что такое MC number и зачем он нужен"},
+    {label:"Разобрать юридический статус диспетчера — нет лицензии MC"},
+    {label:"Показать пример Dispatcher Agreement (договор с carrier)"},
+    {label:"Объяснить ответственность каждой стороны при потере груза"}
+  ], student:[
+    {label:"Объяснить разницу между broker и dispatcher своими словами"},
+    {label:"Ответить: может ли диспетчер работать без договора с carrier?"},
+    {label:"Назвать что будет если диспетчер забукает груз без MC carrier"}
+  ]},
+  "4": { title:"Типы оборудования", teacher:[
+    {label:"Показать фото каждого типа трейлера: Dry Van, Reefer, Flatbed"},
+    {label:"Объяснить ограничения: 48,000 lbs payload, 53 ft длина"},
+    {label:"Разобрать какие грузы идут на каком типе трейлера"},
+    {label:"Объяснить почему Reefer платит больше чем Dry Van"}
+  ], student:[
+    {label:"Назвать тип трейлера для: замороженные продукты, стройматериалы, автомобили"},
+    {label:"Объяснить что такое payload и как он влияет на груз"},
+    {label:"Ответить: почему Flatbed сложнее в работе чем Dry Van?"}
+  ]},
+  "5": { title:"Базовые термины и глоссарий", teacher:[
+    {label:"Разобрать 15 ключевых терминов с примерами", hint:"MC, DOT, BOL, POD, Rate Con, Detention, TONU, Lumper, Deadhead, RPM, All-in, Factoring, Quick Pay, Layover, Tarping."},
+    {label:"Показать где каждый термин встречается в реальной работе"},
+    {label:"Провести мини-тест: называть термин — студент объясняет"}
+  ], student:[
+    {label:"Написать определение каждого из 15 терминов"},
+    {label:"Составить предложение с каждым термином на английском"},
+    {label:"Пройти устный тест без подсказок — 10 из 15 правильно"}
+  ]},
+  "6": { title:"Load Board — поиск грузов", teacher:[
+    {label:"Открыть DAT и показать интерфейс в реальном времени"},
+    {label:"Объяснить каждое поле листинга: origin, dest, weight, dims, rate, age"},
+    {label:"Показать как настроить фильтры под конкретный трак"},
+    {label:"Объяснить разницу между DAT и Truckstop по функционалу"},
+    {label:"Показать как проверить историю брокера прямо в DAT"}
+  ], student:[
+    {label:"Самостоятельно найти 5 грузов под Dry Van 53ft из Чикаго"},
+    {label:"Для каждого груза записать: ставку, мили, RPM, дату"},
+    {label:"Выбрать лучший груз и объяснить почему"}
+  ]},
+  "7": { title:"Расчёт выгодности груза", teacher:[
+    {label:"Объяснить формулу RPM = total rate / total miles"},
+    {label:"Показать расчёт с учётом deadhead: (rate) / (deadhead + loaded miles)"},
+    {label:"Разобрать пример: $1400 / 800 miles = $1.75/mile — хорошо или нет?"},
+    {label:"Объяснить минимальный RPM для разных типов трейлеров", hint:"Dry Van: $2.00+, Reefer: $2.50+, Flatbed: $2.20+"}
+  ], student:[
+    {label:"Рассчитать RPM для 3 реальных грузов с Load Board"},
+    {label:"Определить выгодный ли груз: $1200, 650 miles, 80 deadhead miles"},
+    {label:"Назвать минимальную ставку для Dry Van на 500 миль"}
+  ]},
+  "8": { title:"Анализ маршрутов и ставок", teacher:[
+    {label:"Показать карту горячих рынков: CA, TX, FL, IL, NY"},
+    {label:"Объяснить понятие backhaul — обратный груз"},
+    {label:"Показать DAT Rate View — как читать исторические ставки"},
+    {label:"Разобрать стратегию: как строить маршруты для максимального дохода"}
+  ], student:[
+    {label:"Найти маршрут с хорошим backhaul из Лос-Анджелеса"},
+    {label:"Объяснить почему из Калифорнии ставки выше чем из Среднего Запада"},
+    {label:"Составить план маршрута на неделю для одного трака"}
+  ]},
+  "9": { title:"Проверка брокера", teacher:[
+    {label:"Показать FMCSA Safer System — как проверить MC/DOT брокера"},
+    {label:"Объяснить что такое credit score брокера на DAT (1-5 звёзд)"},
+    {label:"Разобрать признаки double brokering — мошенничество"},
+    {label:"Показать как проверить страховку брокера (Surety Bond $75,000)"}
+  ], student:[
+    {label:"Проверить 3 реальных брокера через FMCSA Safer System"},
+    {label:"Назвать 5 признаков мошеннического брокера"},
+    {label:"Ответить: что делать если Rate Con пришёл от другой компании?"}
+  ]},
+  "10": { title:"Подготовка к звонку брокеру", teacher:[
+    {label:"Объяснить что нужно знать ДО звонка: MC, тип трейлера, дата, локация"},
+    {label:"Показать как правильно представиться: имя, компания, MC"},
+    {label:"Разобрать список вопросов для уточнения деталей груза"},
+    {label:"Объяснить как вести записи во время звонка"}
+  ], student:[
+    {label:"Составить чек-лист подготовки к звонку"},
+    {label:"Написать скрипт представления на английском"},
+    {label:"Назвать 8 вопросов которые нужно задать брокеру"}
+  ]},
+  "11": { title:"Скрипт телефонного звонка", teacher:[
+    {label:"Разыграть звонок: преподаватель — брокер, студент — диспетчер"},
+    {label:"Разобрать каждую фразу скрипта и объяснить зачем она"},
+    {label:"Показать как реагировать на 'rate is firm' и 'load is taken'"},
+    {label:"Провести 3 раунда ролевой игры с разными сценариями"}
+  ], student:[
+    {label:"Провести звонок по скрипту без подсказок"},
+    {label:"Правильно подтвердить букинг: load #, rate, pick up, delivery"},
+    {label:"Попросить Rate Con на email во время звонка"}
+  ]},
+  "12": { title:"Переговоры по ставке", teacher:[
+    {label:"Объяснить технику anchoring — называть высокую ставку первым"},
+    {label:"Разобрать counter-offer: как отвечать на низкую ставку брокера"},
+    {label:"Показать технику silence — молчание после называния цены"},
+    {label:"Объяснить когда уходить от переговоров"}
+  ], student:[
+    {label:"Провести переговоры: брокер предлагает $1200, нужно получить $1500"},
+    {label:"Использовать минимум 2 техники переговоров"},
+    {label:"Назвать фразу для отказа от груза если ставка не устраивает"}
+  ]},
+  "13": { title:"Email брокеру — букинг", teacher:[
+    {label:"Показать шаблон confirmation email с разбором каждого поля"},
+    {label:"Объяснить зачем нужен письменный след после звонка"},
+    {label:"Разобрать subject line: 'Booking Confirmation – Load #XXX'"},
+    {label:"Показать что делать если Rate Con не пришёл в течение часа"}
+  ], student:[
+    {label:"Написать confirmation email по итогам ролевого звонка"},
+    {label:"Проверить email на наличие всех обязательных полей"},
+    {label:"Написать follow-up email если Rate Con не пришёл"}
+  ]},
+  "14": { title:"Rate Con — структура и проверка", teacher:[
+    {label:"Показать реальный Rate Con и разобрать каждое поле"},
+    {label:"Объяснить что проверять: ставка, адреса, даты, MC carrier"},
+    {label:"Разобрать что делать если в Rate Con ошибка"},
+    {label:"Показать как подписать и отправить Rate Con брокеру"}
+  ], student:[
+    {label:"Найти ошибки в специально подготовленном Rate Con с ошибками"},
+    {label:"Назвать 6 обязательных полей Rate Con"},
+    {label:"Объяснить что будет если отправить водителя без подписанного Rate Con"}
+  ]},
+  "15": { title:"Передача груза водителю", teacher:[
+    {label:"Разобрать полный список что передать водителю перед рейсом"},
+    {label:"Объяснить как объяснить маршрут и особые инструкции"},
+    {label:"Показать как сообщить об appointment на складе"},
+    {label:"Объяснить что делать если водитель не понимает инструкции"}
+  ], student:[
+    {label:"Составить инструктаж водителя для конкретного груза"},
+    {label:"Объяснить водителю что такое lumper и кто платит"},
+    {label:"Написать сообщение водителю с адресом и временем загрузки"}
+  ]},
+  "16": { title:"BOL — Bill of Lading", teacher:[
+    {label:"Показать реальный BOL и разобрать все поля"},
+    {label:"Объяснить разницу между чистым и повреждённым BOL"},
+    {label:"Разобрать что делать если водитель подписал BOL с повреждениями"},
+    {label:"Объяснить как BOL связан с оплатой"}
+  ], student:[
+    {label:"Назвать 5 обязательных полей BOL"},
+    {label:"Объяснить что значит 'clean BOL' и почему это важно"},
+    {label:"Ответить: что делать если водитель потерял BOL?"}
+  ]},
+  "17": { title:"POD — Proof of Delivery", teacher:[
+    {label:"Объяснить что такое POD и когда его нужно отправить брокеру"},
+    {label:"Показать как водитель получает подпись получателя"},
+    {label:"Разобрать сроки: обычно 24–48 часов после доставки"},
+    {label:"Объяснить что будет если POD не отправить вовремя"}
+  ], student:[
+    {label:"Объяснить процесс получения POD своими словами"},
+    {label:"Написать email брокеру с прикреплённым POD"},
+    {label:"Ответить: может ли брокер задержать оплату без POD?"}
+  ]},
+  "18": { title:"Detention, TONU, Lumper", teacher:[
+    {label:"Объяснить Detention: 2 часа free time, потом $50–75/час"},
+    {label:"Показать как фиксировать время прибытия и отправления"},
+    {label:"Разобрать TONU: когда применяется, минимум $150–200"},
+    {label:"Объяснить Lumper: кто платит, как возместить через брокера"}
+  ], student:[
+    {label:"Рассчитать detention за 5 часов ожидания на складе"},
+    {label:"Написать email брокеру с требованием detention pay"},
+    {label:"Объяснить разницу между TONU и detention"}
+  ]},
+  "19": { title:"Check calls — контроль в пути", teacher:[
+    {label:"Объяснить зачем нужны check calls и как часто делать"},
+    {label:"Показать Macropoint — как подключить и отслеживать"},
+    {label:"Разобрать что сообщать брокеру при каждом check call"},
+    {label:"Объяснить что делать если водитель не отвечает на звонки"}
+  ], student:[
+    {label:"Написать скрипт check call брокеру на английском"},
+    {label:"Назвать 4 момента когда нужно делать check call"},
+    {label:"Объяснить что такое ETA и как его сообщать брокеру"}
+  ]},
+  "20": { title:"Проблемные ситуации", teacher:[
+    {label:"Разобрать сценарий: водитель опаздывает на 3 часа — алгоритм"},
+    {label:"Разобрать сценарий: авария в пути — кому звонить первым"},
+    {label:"Разобрать сценарий: брокер отменяет груз после Rate Con"},
+    {label:"Разобрать сценарий: груз повреждён при загрузке"}
+  ], student:[
+    {label:"Разыграть сценарий: звонок брокеру об опоздании водителя"},
+    {label:"Написать email брокеру при отмене груза с требованием TONU"},
+    {label:"Назвать порядок действий при ДТП водителя"}
+  ]},
+  "21": { title:"Финансы диспетчера", teacher:[
+    {label:"Показать как выставить инвойс брокеру после доставки"},
+    {label:"Объяснить Net 30 vs Quick Pay: скидка 2–3% за быструю оплату"},
+    {label:"Разобрать Factoring: продажа инвойса за 97% сразу"},
+    {label:"Объяснить как рассчитать dispatcher fee: % или flat rate"}
+  ], student:[
+    {label:"Рассчитать dispatcher fee 8% от груза $1800"},
+    {label:"Объяснить когда выгоден Quick Pay а когда Net 30"},
+    {label:"Составить простую таблицу учёта доходов за неделю"}
+  ]}
+};
 
-// Load data from Firestore
-async function loadData(uid) {
-  try {
-    const ref = doc(db, 'lesson_tracker', uid);
-    const snap = await getDoc(ref);
-    if (snap.exists()) lessonData = snap.data().lessons || {};
-  } catch(e) { console.warn('Load error:', e); }
+async function loadData(u) {
+  try { const s = await getDoc(doc(db,'lesson_tracker',u)); if(s.exists()) lessonData = s.data().lessons||{}; } catch(e){}
   applyAll();
 }
-
-// Save to Firestore
 async function saveData() {
-  if (!currentUid) return;
-  try {
-    await setDoc(doc(db, 'lesson_tracker', currentUid), { lessons: lessonData }, { merge: true });
-  } catch(e) { console.warn('Save error:', e); }
+  if(!uid) return;
+  try { await setDoc(doc(db,'lesson_tracker',uid),{lessons:lessonData},{merge:true}); } catch(e){}
 }
-
-// Apply all saved states to cards
 function applyAll() {
   document.querySelectorAll('.lesson-card').forEach(card => {
-    const id = card.dataset.id;
-    const data = lessonData[id] || {};
-    if (data.status) applyStatus(card, data.status);
-    if (data.note) card.querySelector('.card-note').value = data.note;
+    const d = lessonData[card.dataset.id]||{};
+    if(d.status) applyStatus(card, d.status);
+    if(d.note) card.querySelector('.card-note').value = d.note;
   });
   updateStats();
 }
-
 function applyStatus(card, status) {
-  card.classList.remove('done', 'in-progress');
-  const statusEl = card.querySelector('.card-status');
-  const btns = card.querySelectorAll('.btn-status');
-
-  btns.forEach(b => b.classList.remove('active-progress', 'active-done'));
-
-  if (status === 'done') {
-    card.classList.add('done');
-    statusEl.className = 'card-status status-done';
-    statusEl.textContent = '✅ Пройдено';
-    btns[1].classList.add('active-done');
-  } else if (status === 'in-progress') {
-    card.classList.add('in-progress');
-    statusEl.className = 'card-status status-progress';
-    statusEl.textContent = '🔄 В процессе';
-    btns[0].classList.add('active-progress');
-  } else {
-    statusEl.className = 'card-status status-pending';
-    statusEl.textContent = '⬜ Не начато';
-  }
+  card.classList.remove('done','in-progress');
+  const el = card.querySelector('.card-status');
+  card.querySelectorAll('.btn-status').forEach(b=>b.classList.remove('active-progress','active-done'));
+  if(status==='done'){card.classList.add('done');el.className='card-status status-done';el.textContent='✅ Пройдено';card.querySelectorAll('.btn-status')[1].classList.add('active-done');}
+  else if(status==='in-progress'){card.classList.add('in-progress');el.className='card-status status-progress';el.textContent='🔄 В процессе';card.querySelectorAll('.btn-status')[0].classList.add('active-progress');}
+  else{el.className='card-status status-pending';el.textContent='⬜ Не начато';}
 }
-
 function updateStats() {
   const cards = document.querySelectorAll('.lesson-card');
-  let done = 0, progress = 0, pending = 0;
-  cards.forEach(card => {
-    const id = card.dataset.id;
-    const s = (lessonData[id] || {}).status;
-    if (s === 'done') done++;
-    else if (s === 'in-progress') progress++;
-    else pending++;
-  });
-  document.getElementById('stat-done').textContent = done;
-  document.getElementById('stat-progress').textContent = progress;
-  document.getElementById('stat-pending').textContent = pending;
-  const pct = Math.round((done / cards.length) * 100);
-  document.getElementById('progress-pct').textContent = pct + '%';
-  document.getElementById('progress-fill').style.width = pct + '%';
+  let done=0,prog=0,pend=0;
+  cards.forEach(c=>{const s=(lessonData[c.dataset.id]||{}).status;if(s==='done')done++;else if(s==='in-progress')prog++;else pend++;});
+  document.getElementById('stat-done').textContent=done;
+  document.getElementById('stat-progress').textContent=prog;
+  document.getElementById('stat-pending').textContent=pend;
+  const pct=Math.round(done/cards.length*100);
+  document.getElementById('progress-pct').textContent=pct+'%';
+  document.getElementById('progress-fill').style.width=pct+'%';
 }
 
-// Event delegation for status buttons
+// Status buttons
 document.addEventListener('click', function(e) {
   const btn = e.target.closest('.btn-status');
-  if (!btn) return;
+  if(!btn) return;
+  e.stopPropagation();
   const card = btn.closest('.lesson-card');
   const id = card.dataset.id;
   const action = btn.dataset.action;
-  const current = (lessonData[id] || {}).status;
-  // Toggle off if same
-  const newStatus = current === action ? 'pending' : action;
-  lessonData[id] = { ...(lessonData[id] || {}), status: newStatus };
-  applyStatus(card, newStatus);
+  const cur = (lessonData[id]||{}).status;
+  const ns = cur===action?'pending':action;
+  lessonData[id] = {...(lessonData[id]||{}), status:ns};
+  applyStatus(card, ns);
   updateStats();
   saveData();
 });
 
-// Save notes on blur
+// Notes
 document.addEventListener('blur', function(e) {
-  if (!e.target.classList.contains('card-note')) return;
+  if(!e.target.classList.contains('card-note')) return;
   const card = e.target.closest('.lesson-card');
   const id = card.dataset.id;
-  lessonData[id] = { ...(lessonData[id] || {}), note: e.target.value };
+  lessonData[id] = {...(lessonData[id]||{}), note:e.target.value};
   saveData();
 }, true);
 
-// Auth
-onAuthStateChanged(auth, user => {
-  if (user) {
-    currentUid = user.uid;
-    loadData(user.uid);
-  }
+// Open modal on card click
+document.addEventListener('click', function(e) {
+  if(e.target.closest('.btn-status')||e.target.closest('.card-note')) return;
+  const card = e.target.closest('.lesson-card');
+  if(!card) return;
+  openModal(card.dataset.id);
 });
 
+function openModal(id) {
+  const lesson = LESSONS[id];
+  if(!lesson) return;
+  const steps = (lessonData[id]||{}).steps||{};
+  document.getElementById('modal-lesson-num').textContent = 'УРОК '+String(id).padStart(2,'0');
+  document.getElementById('modal-title').textContent = lesson.title;
+  document.getElementById('modal-teacher-steps').innerHTML = lesson.teacher.map((s,i)=>{
+    const checked = steps['t'+i];
+    return `<div class="step-item${checked?' checked':''}" data-lid="${id}" data-role="t" data-idx="${i}"><div class="step-check">${checked?'✓':''}</div><div class="step-content"><div class="step-label">${s.label}</div>${s.hint?`<div class="step-hint">${s.hint}</div>`:''}</div></div>`;
+  }).join('');
+  document.getElementById('modal-student-steps').innerHTML = lesson.student.map((s,i)=>{
+    const checked = steps['s'+i];
+    return `<div class="step-item${checked?' checked':''}" data-lid="${id}" data-role="s" data-idx="${i}"><div class="step-check">${checked?'✓':''}</div><div class="step-content"><div class="step-label">${s.label}</div>${s.hint?`<div class="step-hint">${s.hint}</div>`:''}</div></div>`;
+  }).join('');
+  updateModalProg(id, lesson);
+  document.getElementById('modalBackdrop').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function updateModalProg(id, lesson) {
+  const steps = (lessonData[id]||{}).steps||{};
+  const total = lesson.teacher.length + lesson.student.length;
+  const done = Object.values(steps).filter(Boolean).length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById('modal-prog-label').textContent = `Выполнено ${done} из ${total} шагов`;
+  document.getElementById('modal-prog-fill').style.width = pct+'%';
+}
+
+function closeModal() {
+  document.getElementById('modalBackdrop').classList.remove('open');
+  document.body.style.overflow='';
+}
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modalBackdrop').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+
+// Step toggle
+document.addEventListener('click', function(e) {
+  const step = e.target.closest('.step-item[data-lid]');
+  if(!step) return;
+  const id=step.dataset.lid, role=step.dataset.role, idx=step.dataset.idx, key=role+idx;
+  if(!lessonData[id]) lessonData[id]={};
+  if(!lessonData[id].steps) lessonData[id].steps={};
+  lessonData[id].steps[key] = !lessonData[id].steps[key];
+  step.classList.toggle('checked', lessonData[id].steps[key]);
+  step.querySelector('.step-check').textContent = lessonData[id].steps[key]?'✓':'';
+  updateModalProg(id, LESSONS[id]);
+  saveData();
+});
+
+// Auth
+onAuthStateChanged(auth, user => { if(user){uid=user.uid;loadData(uid);} });
+
 // Scroll animation
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach((entry, i) => {
-    if (entry.isIntersecting) {
-      setTimeout(() => entry.target.classList.add('visible'), i * 60);
-      observer.unobserve(entry.target);
-    }
-  });
-}, { threshold: 0.1 });
-
-document.querySelectorAll('.lesson-card').forEach(card => observer.observe(card));
+const obs = new IntersectionObserver((entries)=>{
+  entries.forEach((e,i)=>{ if(e.isIntersecting){setTimeout(()=>e.target.classList.add('visible'),i*60);obs.unobserve(e.target);} });
+},{threshold:0.1});
+document.querySelectorAll('.lesson-card').forEach(c=>obs.observe(c));
 </script>
-
 </body>
 </html>
