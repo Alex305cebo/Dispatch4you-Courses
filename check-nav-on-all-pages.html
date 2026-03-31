@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Проверка навигации на всех страницах</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #0a0e1a;
+            color: #e2e8f0;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 30px;
+        }
+        .status {
+            padding: 20px;
+            background: rgba(6,182,212,0.1);
+            border: 1px solid rgba(6,182,212,0.3);
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+        .results {
+            display: grid;
+            gap: 12px;
+        }
+        .page-item {
+            padding: 16px 20px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .page-name {
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+        .page-status {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .status-ok {
+            background: rgba(16,185,129,0.2);
+            color: #10b981;
+            border: 1px solid rgba(16,185,129,0.3);
+        }
+        .status-error {
+            background: rgba(239,68,68,0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239,68,68,0.3);
+        }
+        .status-warning {
+            background: rgba(245,158,11,0.2);
+            color: #f59e0b;
+            border: 1px solid rgba(245,158,11,0.3);
+        }
+        .details {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 8px;
+        }
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Проверка навигации</h1>
+        <p class="subtitle">Автоматическая проверка всех HTML страниц</p>
+        
+        <button onclick="checkAllPages()">▶️ Запустить проверку</button>
+        
+        <div id="status" class="status" style="display:none">
+            <div id="statusText">Проверка...</div>
+        </div>
+        
+        <div id="results" class="results"></div>
+    </div>
+
+    <script>
+        const pagesToCheck = [
+            'index.html',
+            'about.html',
+            'contacts.html',
+            'faq.html',
+            'pricing.html',
+            'career.html',
+            'dashboard.html',
+            'pages/testing.html',
+            'pages/modules-index.html',
+            'pages/documentation.html',
+            'pages/glossary.html',
+            'pages/simulator.html',
+            'pages/Trainer-Quiz.html'
+        ];
+
+        async function checkAllPages() {
+            const statusDiv = document.getElementById('status');
+            const statusText = document.getElementById('statusText');
+            const resultsDiv = document.getElementById('results');
+            
+            statusDiv.style.display = 'block';
+            resultsDiv.innerHTML = '';
+            
+            let checked = 0;
+            let ok = 0;
+            let errors = 0;
+            
+            for (const page of pagesToCheck) {
+                statusText.textContent = `Проверка ${checked + 1}/${pagesToCheck.length}: ${page}`;
+                
+                try {
+                    const response = await fetch(page);
+                    const html = await response.text();
+                    
+                    const hasPlaceholder = html.includes('id="nav-placeholder"');
+                    const hasNavLoader = html.includes('nav-loader.js');
+                    const hasSharedNav = html.includes('shared-nav.css');
+                    const cssVersion = html.match(/shared-nav\.css\?v=([\d.]+)/)?.[1] || 'не найдена';
+                    
+                    let status = 'ok';
+                    let statusText = '✅ OK';
+                    let details = '';
+                    
+                    if (!hasPlaceholder && !html.includes('<nav class="navbar">')) {
+                        status = 'error';
+                        statusText = '❌ Нет меню';
+                        details = 'Отсутствует #nav-placeholder и встроенное меню';
+                        errors++;
+                    } else if (!hasNavLoader && !html.includes('<nav class="navbar">')) {
+                        status = 'warning';
+                        statusText = '⚠️ Нет nav-loader.js';
+                        details = 'Меню может не загрузиться';
+                    } else if (!hasSharedNav) {
+                        status = 'warning';
+                        statusText = '⚠️ Нет CSS';
+                        details = 'Отсутствует shared-nav.css';
+                    } else if (cssVersion !== '7.0') {
+                        status = 'warning';
+                        statusText = `⚠️ Старая версия CSS: ${cssVersion}`;
+                        details = 'Рекомендуется обновить до v7.0';
+                    } else {
+                        ok++;
+                        details = `CSS v${cssVersion}, nav-loader подключен`;
+                    }
+                    
+                    resultsDiv.innerHTML += `
+                        <div class="page-item">
+                            <div>
+                                <div class="page-name">${page}</div>
+                                <div class="details">${details}</div>
+                            </div>
+                            <div class="page-status status-${status}">${statusText}</div>
+                        </div>
+                    `;
+                } catch (error) {
+                    errors++;
+                    resultsDiv.innerHTML += `
+                        <div class="page-item">
+                            <div>
+                                <div class="page-name">${page}</div>
+                                <div class="details">Ошибка: ${error.message}</div>
+                            </div>
+                            <div class="page-status status-error">❌ Ошибка</div>
+                        </div>
+                    `;
+                }
+                
+                checked++;
+            }
+            
+            statusText.innerHTML = `
+                ✅ Проверка завершена!<br>
+                Проверено: ${checked} страниц<br>
+                OK: ${ok} | Ошибки: ${errors} | Предупреждения: ${checked - ok - errors}
+            `;
+        }
+    </script>
+</body>
+</html>

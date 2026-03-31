@@ -1,5 +1,5 @@
 /**
- * nav-loader.js v7.0 — Clean rewrite
+ * nav-loader.js v7.1 — Auto-open first mobile menu section
  * Loads nav.html, injects into #nav-placeholder, handles mobile menu
  */
 (function () {
@@ -8,7 +8,7 @@
 
     // ── Load nav HTML ──────────────────────────────────────────────
     function loadNav() {
-        fetch(BASE + 'nav.html?v=7.0')
+        fetch(BASE + 'nav.html?v=7.1')
             .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
             .then(function (html) { inject(html.replace(/\{\{BASE\}\}/g, BASE)); })
             .catch(function () { inject(NAV_INLINE.replace(/\{\{BASE\}\}/g, BASE)); });
@@ -128,6 +128,14 @@
         if (menu) menu.classList.add('active');
         if (overlay) overlay.classList.add('active');
         document.body.style.overflow = 'hidden';
+        
+        // Автоматически раскрываем первую секцию "Курс обучения"
+        setTimeout(function() {
+            var firstAccordion = document.querySelector('.mob-acc');
+            if (firstAccordion && !firstAccordion.classList.contains('open')) {
+                firstAccordion.classList.add('open');
+            }
+        }, 100);
     }
 
     function closeMenu() {
