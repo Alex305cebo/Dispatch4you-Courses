@@ -71,96 +71,12 @@
         initDesktopMenu();
         initMobileMenu();
         highlightActive();
-        initXPBadge();
         injectFooter();
 
         document.dispatchEvent(new Event('navLoaded'));
-        // Немедленно обновляем UI из localStorage
+        // Применяем auth UI после загрузки nav
         if (typeof window.updateAuthUI === 'function') {
             window.updateAuthUI();
-        } else {
-            // firebase-auth-init ещё не загружен — быстрая проверка localStorage
-            try {
-                var u = JSON.parse(localStorage.getItem('user') || 'null');
-                if (u) {
-                    var ma = document.getElementById('mob-actions');
-                    var mp = document.getElementById('mob-profile-card');
-                    if (ma) ma.style.display = 'none';
-                    if (mp) {
-                        mp.style.display = 'block';
-                        var nameEl = document.getElementById('mob-profile-name');
-                        var emailEl = document.getElementById('mob-profile-email');
-                        var xpEl = document.getElementById('mob-profile-xp');
-                        if (nameEl) nameEl.textContent = [u.firstName, u.lastName].filter(Boolean).join(' ');
-                        if (emailEl) emailEl.textContent = u.email || '';
-                        if (xpEl) {
-                            var xp = 0;
-                            try { xp = JSON.parse(localStorage.getItem('xp_data') || '{}').totalXP || 0; } catch(ex) {}
-                            xpEl.textContent = '⚡ ' + xp + ' XP';
-                        }
-                        var avatarEl = document.getElementById('mob-profile-avatar');
-                        if (avatarEl) {
-                            var initials = ((u.firstName||'')[0]+(u.lastName||'')[0]).toUpperCase()||'👤';
-                            if (u.photoURL) {
-                                avatarEl.innerHTML = '<img src="'+u.photoURL+'" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">';
-                                avatarEl.style.background = 'none';
-                            } else {
-                                avatarEl.textContent = initials;
-                            }
-                        }
-                    }
-                    var mobWrap = document.getElementById('mob-xp-wrap');
-                    if (mobWrap) {
-                        mobWrap.style.display = 'flex';
-                        var mobAvatar = document.getElementById('mob-xp-avatar');
-                        var mobVal = document.getElementById('mob-xp-val');
-                        if (mobAvatar && u.firstName) mobAvatar.textContent = ((u.firstName||'')[0]+(u.lastName||'')[0]).toUpperCase();
-                        if (mobVal) {
-                            var xp2 = 0;
-                            try { xp2 = JSON.parse(localStorage.getItem('xp_data') || '{}').totalXP || 0; } catch(ex) {}
-                            mobVal.textContent = '⚡ ' + xp2 + ' XP';
-                        }
-                    }
-                }
-            } catch(e) {}
-        }
-    }
-
-    // ── XP Badge for mobile ───────────────────────────────────────
-    function initXPBadge() {
-        // Check if user is logged in
-        var user = null;
-        try {
-            user = JSON.parse(localStorage.getItem('currentUser') || 'null');
-        } catch (e) {}
-
-        var wrap = document.getElementById('mob-xp-wrap');
-        var avatar = document.getElementById('mob-xp-avatar');
-        var xpVal = document.getElementById('mob-xp-val');
-        var mobActions = document.querySelector('.mob-actions');
-
-        if (!wrap) return;
-
-        if (user) {
-            // User is logged in - show XP badge, hide login/register buttons in mobile menu
-            wrap.style.display = 'flex';
-            if (mobActions) mobActions.style.display = 'none';
-
-            // Set user initials or avatar
-            if (avatar) {
-                var initials = (user.name || user.email || 'U').substring(0, 2).toUpperCase();
-                avatar.textContent = initials;
-            }
-
-            // Set XP value
-            if (xpVal) {
-                var xp = user.xp || 0;
-                xpVal.textContent = '⚡ ' + xp + ' XP';
-            }
-        } else {
-            // User is not logged in - hide XP badge, show login/register buttons
-            wrap.style.display = 'none';
-            if (mobActions) mobActions.style.display = 'flex';
         }
     }
 
@@ -340,14 +256,14 @@
     }
 
     // ── Start ─────────────────────────────────────────────────────
-    // Load Firebase Auth first — on ALL pages via nav-loader
+    // Load Firebase Auth FIRST — synchronously before nav
     (function loadFirebaseAuth() {
-        // Avoid double-loading
         if (document.querySelector('script[src*="firebase-auth-init"]')) return;
         var s = document.createElement('script');
         s.type = 'module';
-        s.src = BASE + 'firebase-auth-init.js?v=3.0';
-        document.head.appendChild(s);
+        s.src = BASE + 'firebase-auth-init.js?v=3.1';
+        // Загружаем немедленно
+        document.head.insertBefore(s, document.head.firstChild);
     })();
 
     if (document.readyState === 'loading') {

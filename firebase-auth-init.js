@@ -1,19 +1,13 @@
 /**
- * firebase-auth-init.js v3.0
- * Google Sign-In Popup — работает на всех страницах через nav-loader.js
+ * firebase-auth-init.js v4.0
+ * Простая надёжная авторизация через Google
+ * Загружается на всех страницах через nav-loader.js
  */
-import {
-    initializeApp, getApps
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import {
-    getAuth, onAuthStateChanged, signOut,
-    GoogleAuthProvider, signInWithPopup
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-import {
-    getFirestore, doc, getDoc
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
-const FIREBASE_CONFIG = {
+const CFG = {
     apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
     authDomain: "dispatch4you-80e0f.firebaseapp.com",
     projectId: "dispatch4you-80e0f",
@@ -22,168 +16,123 @@ const FIREBASE_CONFIG = {
     appId: "1:349235354473:web:488aeb29211b02bb153bf8"
 };
 
-const app = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
+const app = getApps().length ? getApps()[0] : initializeApp(CFG);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
-provider.setCustomParameters({ prompt: 'select_account' });
+const gProvider = new GoogleAuthProvider();
+gProvider.setCustomParameters({ prompt: 'select_account' });
 
 window._fbAuth = auth;
 
-// ── НЕМЕДЛЕННОЕ обновление UI из localStorage (без ожидания Firebase) ──
-(function immediateUIUpdate() {
-    function tryUpdate() {
-        const navActions = document.querySelector('.nav-actions') || document.getElementById('nav-actions-desktop');
-        if (navActions) {
-            const user = (() => { try { return JSON.parse(localStorage.getItem('user')); } catch(e) { return null; } })();
-            updateNavUI(user);
-        } else {
-            // Nav ещё не загружен — ждём
-            document.addEventListener('navLoaded', () => {
-                const user = (() => { try { return JSON.parse(localStorage.getItem('user')); } catch(e) { return null; } })();
-                updateNavUI(user);
-            }, { once: true });
-        }
-    }
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', tryUpdate);
-    } else {
-        tryUpdate();
-    }
-})();
-
-// ── Google Sign-In Popup ──────────────────────────────────────────
-window.signInWithGoogle = async function () {
+// ── Глобальные функции ────────────────────────────────────────────
+window.signInWithGoogle = async () => {
     try {
-        showAuthLoading(true);
-        await signInWithPopup(auth, provider);
-        // onAuthStateChanged сам обновит UI
-    } catch (err) {
-        showAuthLoading(false);
-        if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-            console.error('Google Sign-In error:', err.message);
+        await signInWithPopup(auth, gProvider);
+    } catch(e) {
+        if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') {
+            console.error('Google sign-in:', e.code);
         }
     }
 };
 
-// ── Sign Out ──────────────────────────────────────────────────────
-window.authLogout = async function (e) {
+window.authLogout = async (e) => {
     if (e) e.preventDefault();
-    try {
-        await signOut(auth);
-        localStorage.removeItem('user');
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user_role');
-        updateNavUI(null);
-    } catch (err) {
-        console.error('Sign out error:', err);
-    }
+    await signOut(auth).catch(() => {});
+    localStorage.removeItem('user');
+    localStorage.removeItem('xp_data');
+    applyUI(null);
 };
 
-// ── Auth State Listener ───────────────────────────────────────────
-let initialized = false;
+// ── Шаг 1: Мгновенно показываем из localStorage ───────────────────
+function applyFromCache() {
+    try {
+        const u = JSON.parse(localStorage.getItem('user') || 'null');
+        applyUI(u);
+    } catch(e) {}
+}
 
-onAuthStateChanged(auth, async (firebaseUser) => {
-    if (firebaseUser) {
-        const parts = (firebaseUser.displayName || '').trim().split(' ');
-        const firstName = parts[0] || firebaseUser.email.split('@')[0];
-        const lastName = parts.slice(1).join(' ') || '';
-        const userData = {
-            uid: firebaseUser.uid,
-            firstName,
-            lastName,
-            email: firebaseUser.email,
-            photoURL: firebaseUser.photoURL || null
+// ── Шаг 2: Firebase подтверждает и обновляет ─────────────────────
+onAuthStateChanged(auth, async (fbUser) => {
+    if (fbUser) {
+        const parts = (fbUser.displayName || '').trim().split(' ');
+        const user = {
+            uid: fbUser.uid,
+            firstName: parts[0] || fbUser.email.split('@')[0],
+            lastName: parts.slice(1).join(' ') || '',
+            email: fbUser.email,
+            photoURL: fbUser.photoURL || null
         };
-        localStorage.setItem('user', JSON.stringify(userData));
-        initialized = true;
+        localStorage.setItem('user', JSON.stringify(user));
 
-        // Читаем XP из Firestore и кешируем
+        // Читаем XP из Firestore
+        let xp = 0;
         try {
-            const snap = await getDoc(doc(db, 'users', firebaseUser.uid));
-            if (snap.exists()) {
-                const data = snap.data();
-                const xp = data.xp || 0;
-                const xpData = {
-                    totalXP: xp,
-                    level: data.role || 1,
-                    lastUpdated: new Date().toISOString()
-                };
-                localStorage.setItem('xp_data', JSON.stringify(xpData));
-            }
-        } catch(e) {}
-
-        updateNavUI(userData);
-    } else {
-        if (!initialized) {
-            // Первый вызов — Firebase ещё восстанавливает сессию
-            // Если в localStorage есть user — уже показали его, просто ждём подтверждения
-            initialized = true;
-            setTimeout(() => {
-                if (!auth.currentUser) {
-                    localStorage.removeItem('user');
-                    updateNavUI(null);
-                }
-            }, 1500); // уменьшили с 2000 до 1500
-        } else {
-            localStorage.removeItem('user');
-            updateNavUI(null);
+            const snap = await getDoc(doc(db, 'users', fbUser.uid));
+            if (snap.exists()) xp = snap.data().xp || 0;
+            localStorage.setItem('xp_data', JSON.stringify({ totalXP: xp }));
+        } catch(e) {
+            try { xp = JSON.parse(localStorage.getItem('xp_data') || '{}').totalXP || 0; } catch(e2) {}
         }
+
+        applyUI(user, xp);
+    } else {
+        // Firebase говорит — не залогинен
+        localStorage.removeItem('user');
+        applyUI(null);
     }
 });
 
-// ── Update Navbar UI ──────────────────────────────────────────────
-function updateNavUI(user) {
-    const navActions = document.querySelector('.nav-actions') || document.getElementById('nav-actions-desktop');
+// ── Применяем UI ──────────────────────────────────────────────────
+function applyUI(user, xpOverride) {
+    const isPages = window.location.pathname.includes('/pages/');
+    const base = isPages ? '../' : '';
+    const dashHref = base + 'dashboard.html';
 
+    // Получаем XP
+    let xp = xpOverride !== undefined ? xpOverride : 0;
+    if (xpOverride === undefined) {
+        try { xp = JSON.parse(localStorage.getItem('xp_data') || '{}').totalXP || 0; } catch(e) {}
+    }
+
+    // Ждём nav если ещё не загружен
+    const navActions = document.getElementById('nav-actions-desktop') || document.querySelector('.nav-actions');
     if (!navActions) {
-        document.addEventListener('navLoaded', () => updateNavUI(user), { once: true });
+        document.addEventListener('navLoaded', () => applyUI(user, xpOverride), { once: true });
         return;
     }
 
-    const isPages = window.location.pathname.includes('/pages/');
-    const dashHref = isPages ? '../dashboard.html' : 'dashboard.html';
-
     if (user) {
-        const initials = ((user.firstName || '')[0] + (user.lastName || '')[0]).toUpperCase() || '👤';
+        const initials = ((user.firstName||'')[0] + (user.lastName||'')[0]).toUpperCase() || '?';
         const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ');
-        let xp = 0;
-        try { xp = JSON.parse(localStorage.getItem('xp_data') || '{}').totalXP || 0; } catch (e) {}
+        const avatarHTML = user.photoURL
+            ? `<img src="${user.photoURL}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" onerror="this.outerHTML='<div style=width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff>${initials}</div>'">`
+            : `<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;">${initials}</div>`;
 
-        // ── Desktop navbar ──
+        // Desktop
         navActions.innerHTML = `
-            <a href="${dashHref}" style="display:flex;align-items:center;gap:8px;padding:6px 14px;
-                background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.15));
-                border:1px solid rgba(99,102,241,.35);border-radius:12px;text-decoration:none;
-                transition:all .3s;backdrop-filter:blur(10px);"
-                onmouseover="this.style.background='linear-gradient(135deg,rgba(99,102,241,.25),rgba(139,92,246,.25))';this.style.transform='translateY(-2px)'"
-                onmouseout="this.style.background='linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.15))';this.style.transform=''">
-                ${user.photoURL
-                    ? `<img src="${user.photoURL}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'">`
-                    : `<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;">${initials}</div>`
-                }
+            <a href="${dashHref}" style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.15));border:1px solid rgba(99,102,241,.35);border-radius:12px;text-decoration:none;transition:all .2s;"
+               onmouseover="this.style.background='linear-gradient(135deg,rgba(99,102,241,.25),rgba(139,92,246,.25))'"
+               onmouseout="this.style.background='linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.15))'">
+                ${avatarHTML}
                 <div style="display:flex;flex-direction:column;gap:1px;">
                     <span style="font-size:12px;font-weight:700;color:#e0e7ff;">${fullName}</span>
                     <span id="nav-xp-badge" style="font-size:10px;color:#fbbf24;font-weight:700;">⚡ ${xp} XP</span>
                 </div>
             </a>
-            <button onclick="authLogout(event)" style="padding:6px 12px;border:1px solid rgba(239,68,68,.35);
-                border-radius:12px;color:#fca5a5;font-size:12px;font-weight:600;
-                background:rgba(239,68,68,.12);cursor:pointer;transition:all .3s;font-family:inherit;"
-                onmouseover="this.style.background='rgba(239,68,68,.2)';this.style.transform='translateY(-2px)'"
-                onmouseout="this.style.background='rgba(239,68,68,.12)';this.style.transform=''">
+            <button onclick="authLogout(event)" style="padding:6px 12px;border:1px solid rgba(239,68,68,.35);border-radius:12px;color:#fca5a5;font-size:12px;font-weight:600;background:rgba(239,68,68,.12);cursor:pointer;font-family:inherit;"
+                onmouseover="this.style.background='rgba(239,68,68,.2)'" onmouseout="this.style.background='rgba(239,68,68,.12)'">
                 🚪 Выйти
             </button>`;
 
-        // ── Mobile navbar badge — всегда виден ──
+        // Mobile navbar badge
         const mobWrap = document.getElementById('mob-xp-wrap');
-        const mobAvatar = document.getElementById('mob-xp-avatar');
-        const mobVal = document.getElementById('mob-xp-val');
         if (mobWrap) {
             mobWrap.style.display = 'flex';
+            const mobAvatar = document.getElementById('mob-xp-avatar');
+            const mobVal = document.getElementById('mob-xp-val');
             if (mobAvatar) {
                 if (user.photoURL) {
-                    mobAvatar.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.textContent='${initials}'">`;
+                    mobAvatar.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
                 } else {
                     mobAvatar.textContent = initials;
                 }
@@ -191,41 +140,33 @@ function updateNavUI(user) {
             if (mobVal) mobVal.textContent = '⚡ ' + xp + ' XP';
         }
 
-        // ── Mobile menu profile card ──
+        // Mobile menu profile card
         const mobProfile = document.getElementById('mob-profile-card');
         const mobActions = document.getElementById('mob-actions');
         if (mobProfile) {
             mobProfile.style.display = 'block';
-            const nameEl = document.getElementById('mob-profile-name');
-            const emailEl = document.getElementById('mob-profile-email');
-            const avatarEl = document.getElementById('mob-profile-avatar');
-            const dashEl = document.getElementById('mob-profile-dash');
-            const xpEl = document.getElementById('mob-profile-xp');
-            if (nameEl) nameEl.textContent = fullName;
-            if (emailEl) emailEl.textContent = user.email || '';
-            if (xpEl) xpEl.textContent = '⚡ ' + xp + ' XP';
-            if (avatarEl) {
+            const el = (id) => document.getElementById(id);
+            if (el('mob-profile-name')) el('mob-profile-name').textContent = fullName;
+            if (el('mob-profile-email')) el('mob-profile-email').textContent = user.email || '';
+            if (el('mob-profile-xp')) el('mob-profile-xp').textContent = '⚡ ' + xp + ' XP';
+            if (el('mob-profile-dash')) el('mob-profile-dash').href = dashHref;
+            const av = el('mob-profile-avatar');
+            if (av) {
                 if (user.photoURL) {
-                    avatarEl.innerHTML = `<img src="${user.photoURL}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;" onerror="this.parentElement.textContent='${initials}'">`;
-                    avatarEl.style.background = 'none';
-                    avatarEl.style.padding = '0';
+                    av.innerHTML = `<img src="${user.photoURL}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">`;
+                    av.style.background = 'none';
                 } else {
-                    avatarEl.textContent = initials;
+                    av.textContent = initials;
                 }
             }
-            if (dashEl) dashEl.href = dashHref;
         }
         if (mobActions) mobActions.style.display = 'none';
 
     } else {
-        // ── Не залогинен — Google кнопка ──
+        // Не залогинен
         navActions.innerHTML = `
-            <button onclick="signInWithGoogle()" id="google-signin-btn" style="display:flex;align-items:center;gap:8px;
-                padding:8px 16px;background:#fff;border:none;border-radius:12px;
-                font-size:14px;font-weight:600;color:#1f2937;cursor:pointer;
-                transition:all .3s;box-shadow:0 2px 8px rgba(0,0,0,.2);font-family:inherit;"
-                onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0,0,0,.25)'"
-                onmouseout="this.style.transform='';this.style.boxShadow='0 2px 8px rgba(0,0,0,.2)'">
+            <button onclick="signInWithGoogle()" style="display:flex;align-items:center;gap:8px;padding:8px 16px;background:#fff;border:none;border-radius:12px;font-size:14px;font-weight:600;color:#1f2937;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.2);font-family:inherit;"
+                onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
                 <svg width="18" height="18" viewBox="0 0 48 48">
                     <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
                     <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
@@ -235,15 +176,8 @@ function updateNavUI(user) {
                 Войти через Google
             </button>`;
 
-        // Мобильный badge — показываем только XP без имени
         const mobWrap = document.getElementById('mob-xp-wrap');
-        const mobAvatar = document.getElementById('mob-xp-avatar');
-        const mobVal = document.getElementById('mob-xp-val');
-        if (mobWrap) {
-            // Показываем кнопку входа вместо XP
-            mobWrap.style.display = 'none';
-        }
-
+        if (mobWrap) mobWrap.style.display = 'none';
         const mobProfile = document.getElementById('mob-profile-card');
         const mobActions = document.getElementById('mob-actions');
         if (mobProfile) mobProfile.style.display = 'none';
@@ -251,39 +185,20 @@ function updateNavUI(user) {
     }
 }
 
-// ── Loading state ─────────────────────────────────────────────────
-function showAuthLoading(show) {
-    const btn = document.getElementById('google-signin-btn');
-    if (!btn) return;
-    if (show) {
-        btn.disabled = true;
-        btn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid #ccc;border-top-color:#4285F4;border-radius:50%;animation:spin .6s linear infinite;"></span> Входим...';
-        if (!document.getElementById('spin-style')) {
-            const s = document.createElement('style');
-            s.id = 'spin-style';
-            s.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
-            document.head.appendChild(s);
-        }
-    } else {
-        btn.disabled = false;
-    }
-}
+// ── Запуск ────────────────────────────────────────────────────────
+// Сразу из кеша
+applyFromCache();
 
-// ── XP update listener ────────────────────────────────────────────
+// Совместимость
+window.updateAuthUI = applyFromCache;
+
+// XP обновление
 document.addEventListener('xpUpdated', (e) => {
-    const badge = document.getElementById('nav-xp-badge');
-    if (!badge) return;
     const xp = e.detail?.totalXP || 0;
-    badge.textContent = '⚡ ' + xp + ' XP';
-    badge.style.transition = 'all .2s';
-    badge.style.color = '#fff';
-    setTimeout(() => { badge.style.color = '#fbbf24'; }, 500);
+    const badge = document.getElementById('nav-xp-badge');
+    if (badge) badge.textContent = '⚡ ' + xp + ' XP';
     const mobVal = document.getElementById('mob-xp-val');
     if (mobVal) mobVal.textContent = '⚡ ' + xp + ' XP';
+    const mobXp = document.getElementById('mob-profile-xp');
+    if (mobXp) mobXp.textContent = '⚡ ' + xp + ' XP';
 });
-
-// Совместимость со старым auth.js
-window.updateAuthUI = () => {
-    const user = (() => { try { return JSON.parse(localStorage.getItem('user')); } catch(e) { return null; } })();
-    updateNavUI(user);
-};
