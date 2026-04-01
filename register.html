@@ -1,618 +1,301 @@
 ﻿<!DOCTYPE html>
 <html lang="ru" style="background:#070b14">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Регистрация | Курсы Диспетчера</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--primary:#06b6d4;--accent:#f97316;--bg:#070b14;--border:rgba(255,255,255,.1)}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;overflow-x:hidden}
+    body::before{content:'';position:fixed;inset:0;pointer-events:none;
+      background:radial-gradient(circle at 25% 40%,rgba(6,182,212,.12),transparent 55%),
+                radial-gradient(circle at 75% 70%,rgba(249,115,22,.1),transparent 55%)}
+
+    .wrap{position:relative;z-index:1;width:100%;max-width:420px}
+
+    .card{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:28px;padding:44px 40px;backdrop-filter:blur(20px)}
+
+    .logo{text-align:center;margin-bottom:32px}
+    .logo-icon{font-size:52px;display:block;margin-bottom:10px}
+    .logo-name{font-size:22px;font-weight:800;background:linear-gradient(135deg,#06b6d4,#0ea5e9,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+    .title{font-size:26px;font-weight:800;text-align:center;margin-bottom:6px}
+    .sub{text-align:center;color:#94a3b8;font-size:14px;margin-bottom:32px}
+
+    /* GOOGLE BTN */
+    .btn-google{
+      width:100%;padding:15px;background:#fff;border:none;border-radius:14px;
+      color:#1f2937;font-size:15px;font-weight:700;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;gap:10px;
+      transition:all .25s;box-shadow:0 4px 16px rgba(0,0,0,.25);font-family:inherit
     }
+    .btn-google:hover{transform:translateY(-3px);box-shadow:0 10px 32px rgba(0,0,0,.35)}
+    .btn-google:active{transform:translateY(-1px)}
+    .btn-google:disabled{opacity:.7;cursor:not-allowed;transform:none}
+    .btn-google .spinner{width:18px;height:18px;border:2px solid #ddd;border-top-color:#4285F4;border-radius:50%;animation:spin .6s linear infinite;display:none}
+    .btn-google.loading .spinner{display:block}
+    .btn-google.loading .g-logo{display:none}
+    @keyframes spin{to{transform:rotate(360deg)}}
 
-    :root {
-      --primary: #6366f1;
-      --secondary: #8b5cf6;
-      --bg-darker: #020617;
-      --text-primary: #f1f5f9;
-      --text-secondary: #94a3b8;
-      --text-muted: #64748b;
+    /* DIVIDER */
+    .divider{display:flex;align-items:center;gap:12px;margin:24px 0}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.08)}
+    .divider span{font-size:12px;color:#475569;white-space:nowrap}
+
+    /* EMAIL SECTION */
+    .email-section{display:none}
+    .email-section.open{display:block}
+
+    .form-group{margin-bottom:14px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+    label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#e2e8f0}
+    input[type=text],input[type=email],input[type=password]{
+      width:100%;padding:13px 14px;background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.1);border-radius:12px;
+      color:#fff;font-family:'Inter',sans-serif;font-size:14px;transition:all .2s
     }
+    input:focus{outline:none;border-color:var(--primary);background:rgba(6,182,212,.08);box-shadow:0 0 0 3px rgba(6,182,212,.12)}
+    input::placeholder{color:#475569}
 
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg-darker);
-      color: var(--text-primary);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 0;
-      overflow-x: hidden;
+    .pw-wrap{position:relative}
+    .pw-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#475569;font-size:18px;padding:4px;transition:color .2s}
+    .pw-toggle:hover{color:#94a3b8}
+
+    .btn-email{
+      width:100%;padding:14px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);
+      color:#fff;border:none;border-radius:12px;font-weight:700;font-size:15px;
+      cursor:pointer;transition:all .25s;font-family:inherit;margin-top:4px
     }
+    .btn-email:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(6,182,212,.35)}
+    .btn-email:disabled{opacity:.6;cursor:not-allowed;transform:none}
 
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background: radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+    /* TOGGLE */
+    .toggle-email{
+      width:100%;padding:12px;background:transparent;
+      border:1px solid rgba(255,255,255,.1);border-radius:12px;
+      color:#94a3b8;font-size:13px;font-weight:600;cursor:pointer;
+      transition:all .2s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px
     }
+    .toggle-email:hover{border-color:rgba(255,255,255,.2);color:#e2e8f0;background:rgba(255,255,255,.04)}
 
-    .container {
-      position: relative;
-      z-index: 1;
-      max-width: 480px;
-      width: 100%;
-      padding: 0 24px;
-    }
+    /* MESSAGES */
+    .msg{border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:16px;display:none;line-height:1.5}
+    .msg.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#fca5a5}
+    .msg.success{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:#6ee7b7}
 
-    .card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 32px;
-      padding: 48px;
-      backdrop-filter: blur(20px);
-    }
+    /* BOTTOM */
+    .bottom{text-align:center;margin-top:24px;color:#64748b;font-size:14px}
+    .bottom a{color:var(--primary);font-weight:700;text-decoration:none}
+    .bottom a:hover{text-decoration:underline}
+    .back{text-align:center;margin-top:12px}
+    .back a{color:#475569;font-size:13px;text-decoration:none;transition:color .2s}
+    .back a:hover{color:#94a3b8}
 
-    .logo {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-
-    .logo-icon {
-      font-size: 56px;
-    }
-
-    .logo-text {
-      font-size: 24px;
-      font-weight: 800;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    h1 {
-      font-size: 28px;
-      font-weight: 800;
-      text-align: center;
-      margin-bottom: 6px;
-    }
-
-    .subtitle {
-      text-align: center;
-      color: var(--text-secondary);
-      margin-bottom: 28px;
-      font-size: 14px;
-    }
-
-    .form-group {
-      margin-bottom: 16px;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 600;
-      font-size: 13px;
-    }
-
-    input {
-      width: 100%;
-      padding: 13px 14px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      color: var(--text-primary);
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      transition: all 0.3s;
-    }
-
-    .password-wrapper {
-      position: relative;
-    }
-
-    .password-wrapper input {
-      padding-right: 45px;
-    }
-
-    .toggle-password {
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 20px;
-      padding: 5px;
-      opacity: 0.6;
-      transition: opacity 0.3s;
-    }
-
-    .toggle-password:hover {
-      opacity: 1;
-    }
-
-    input:focus {
-      outline: none;
-      border-color: var(--primary);
-      background: rgba(255, 255, 255, 0.08);
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-    }
-
-    input::placeholder {
-      color: var(--text-muted);
-    }
-
-    .checkbox-group {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-
-    .checkbox-group input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-      margin-top: 3px;
-      flex-shrink: 0;
-    }
-
-    .checkbox-group label {
-      font-size: 13px;
-      color: var(--text-secondary);
-      font-weight: 400;
-    }
-
-    .checkbox-group label a {
-      color: var(--primary);
-      text-decoration: none;
-      font-weight: 600;
-    }
-
-    .btn {
-      width: 100%;
-      padding: 15px;
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-weight: 700;
-      font-size: 15px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 24px rgba(99, 102, 241, 0.4);
-    }
-
-    .btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .divider {
-      text-align: center;
-      margin: 24px 0;
-      position: relative;
-    }
-
-    .divider::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    .divider span {
-      background: #020617;
-      padding: 0 14px;
-      position: relative;
-      color: var(--text-muted);
-      font-size: 13px;
-    }
-
-    .btn-google {
-      width: 100%;
-      padding: 13px;
-      background: white;
-      border: none;
-      border-radius: 12px;
-      color: #1f2937;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      transition: all 0.3s;
-    }
-
-    .btn-google:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-    }
-
-    .btn-google img {
-      width: 20px;
-      height: 20px;
-    }
-
-    .bottom-link {
-      text-align: center;
-      margin-top: 24px;
-      color: var(--text-secondary);
-      font-size: 14px;
-    }
-
-    .bottom-link a {
-      color: var(--primary);
-      text-decoration: none;
-      font-weight: 700;
-    }
-
-    .back {
-      text-align: center;
-      margin-top: 16px;
-    }
-
-    .back a {
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 13px;
-    }
-
-    .error-msg {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      border-radius: 10px;
-      padding: 12px 14px;
-      color: #fca5a5;
-      font-size: 13px;
-      margin-bottom: 16px;
-      display: none;
-    }
-
-    .success-msg {
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      border-radius: 10px;
-      padding: 12px 14px;
-      color: #6ee7b7;
-      font-size: 13px;
-      margin-bottom: 16px;
-      display: none;
-    }
-
-    @media (max-width: 480px) {
-      .card {
-        padding: 32px 20px;
-      }
-
-      .form-row {
-        grid-template-columns: 1fr;
-      }
+    @media(max-width:480px){
+      .card{padding:32px 24px;border-radius:24px}
+      .title{font-size:22px}
+      .form-row{grid-template-columns:1fr}
     }
   </style>
 </head>
-
 <body>
-  <div class="container">
+  <div class="wrap">
     <div class="card">
+
       <div class="logo">
-        <div class="logo-icon">🎓</div>
-        <div class="logo-text">Курсы Диспетчера</div>
-      </div>
-      <h1>Регистрация</h1>
-      <p class="subtitle">Создайте аккаунт и начните обучение</p>
-
-      <div class="error-msg" id="errorMsg"></div>
-      <div class="success-msg" id="successMsg"></div>
-
-      <!-- ШАГ 2: Установка пароля после Google (скрыт по умолчанию) -->
-      <div id="step2" style="display:none;">
-        <div style="text-align:center;margin-bottom:20px;padding:16px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:12px;">
-          <div id="step2GoogleInfo" style="font-size:14px;color:#6ee7b7;font-weight:600;"></div>
-          <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Установите пароль чтобы входить и через email</div>
-        </div>
-        <div class="form-group">
-          <label>Придумайте пароль</label>
-          <div class="password-wrapper">
-            <input type="password" id="googlePassword" placeholder="Минимум 8 символов" minlength="8">
-            <button type="button" class="toggle-password" id="toggleGooglePassword">👁️</button>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Подтвердите пароль</label>
-          <div class="password-wrapper">
-            <input type="password" id="googleConfirmPassword" placeholder="Повторите пароль" minlength="8">
-            <button type="button" class="toggle-password" id="toggleGoogleConfirmPassword">👁️</button>
-          </div>
-        </div>
-        <button type="button" class="btn" id="setPasswordBtn">Установить пароль и войти</button>
-        <div style="text-align:center;margin-top:12px;">
-          <a href="#" id="skipPasswordBtn" style="color:var(--text-muted);font-size:13px;text-decoration:none;">Пропустить — войти только через Google</a>
-        </div>
+        <span class="logo-icon">🚛</span>
+        <span class="logo-name">Курсы Диспетчера</span>
       </div>
 
-      <div id="step1">
-      <form id="registerForm">
-        <div class="form-row">
-          <div>
-            <label>Имя</label>
-            <input type="text" id="firstName" placeholder="Иван" required>
-          </div>
-          <div>
-            <label>Фамилия</label>
-            <input type="text" id="lastName" placeholder="Иванов" required>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="email" placeholder="your@email.com" required>
-        </div>
-        <div class="form-group">
-          <label>Номер телефона <span style="color: var(--text-muted); font-weight: 400;">(необязательно)</span></label>
-          <input type="tel" id="phone" placeholder="+1 (555) 123-4567">
-        </div>
-        <div class="form-group">
-          <label>Пароль</label>
-          <div class="password-wrapper">
-            <input type="password" id="password" placeholder="Минимум 8 символов" required minlength="8">
-            <button type="button" class="toggle-password" id="togglePassword">👁️</button>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Подтвердите пароль</label>
-          <div class="password-wrapper">
-            <input type="password" id="confirmPassword" placeholder="Повторите пароль" required minlength="8">
-            <button type="button" class="toggle-password" id="toggleConfirmPassword">👁️</button>
-          </div>
-        </div>
-        <div class="checkbox-group">
-          <input type="checkbox" id="terms" required>
-          <label for="terms">Я согласен с <a href="#">условиями использования</a> и <a href="#">политикой
-              конфиденциальности</a></label>
-        </div>
-        <button type="submit" class="btn" id="submitBtn">Создать аккаунт</button>
-      </form>
+      <h1 class="title">Создать аккаунт</h1>
+      <p class="sub">Начните обучение прямо сейчас</p>
 
-      <div class="divider"><span>или</span></div>
+      <div class="msg error"   id="msgError"></div>
+      <div class="msg success" id="msgSuccess"></div>
 
+      <!-- GOOGLE — главная кнопка -->
       <button class="btn-google" id="googleBtn">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-        Продолжить с Google
+        <div class="spinner"></div>
+        <svg class="g-logo" width="20" height="20" viewBox="0 0 48 48">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        <span>Зарегистрироваться через Google</span>
       </button>
 
-      <div class="bottom-link">Уже есть аккаунт? <a href="login.html">Войти</a></div>
-      <div class="back"><a href="index.html">← Вернуться на главную</a></div>
-    </div> <!-- /step1 -->
+      <div class="divider"><span>или зарегистрируйтесь с паролем</span></div>
+
+      <!-- TOGGLE EMAIL FORM -->
+      <button class="toggle-email" id="toggleEmailBtn" onclick="toggleEmail()">
+        ✉️ Регистрация через Email
+      </button>
+
+      <!-- EMAIL FORM — скрыт по умолчанию -->
+      <div class="email-section" id="emailSection">
+        <form id="registerForm" style="margin-top:16px">
+          <div class="form-row">
+            <div>
+              <label>Имя</label>
+              <input type="text" id="firstName" placeholder="Иван" autocomplete="given-name" required>
+            </div>
+            <div>
+              <label>Фамилия</label>
+              <input type="text" id="lastName" placeholder="Иванов" autocomplete="family-name" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="email" placeholder="your@email.com" autocomplete="email" required>
+          </div>
+          <div class="form-group">
+            <label>Пароль</label>
+            <div class="pw-wrap">
+              <input type="password" id="password" placeholder="Минимум 8 символов" autocomplete="new-password" required>
+              <button type="button" class="pw-toggle" id="pwToggle1">👁</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Подтвердите пароль</label>
+            <div class="pw-wrap">
+              <input type="password" id="confirmPassword" placeholder="Повторите пароль" autocomplete="new-password" required>
+              <button type="button" class="pw-toggle" id="pwToggle2">👁</button>
+            </div>
+          </div>
+          <button type="submit" class="btn-email" id="submitBtn">Создать аккаунт</button>
+        </form>
+      </div>
+
+      <div class="bottom">Уже есть аккаунт? <a href="login.html">Войти</a></div>
+      <div class="back"><a href="index.html">← На главную</a></div>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, updateProfile, linkWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import {
+      getAuth, createUserWithEmailAndPassword, updateProfile,
+      signInWithPopup, signInWithRedirect, getRedirectResult,
+      GoogleAuthProvider
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
-    const firebaseConfig = {
+    const app = initializeApp({
       apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
       authDomain: "dispatch4you-80e0f.firebaseapp.com",
       projectId: "dispatch4you-80e0f",
-      storageBucket: "dispatch4you-80e0f.firebasestorage.app",
+      storageBucket: "dispatch4you-80e0f.appspot.com",
       messagingSenderId: "349235354473",
       appId: "1:349235354473:web:488aeb29211b02bb153bf8"
-    };
-
-    const app = initializeApp(firebaseConfig);
+    });
     const auth = getAuth(app);
-    const db = getFirestore(app);
-    const provider = new GoogleAuthProvider();
+    const db   = getFirestore(app);
+    const gProvider = new GoogleAuthProvider();
+    gProvider.setCustomParameters({ prompt: 'select_account' });
 
-    const errorMsg = document.getElementById('errorMsg');
-    const successMsg = document.getElementById('successMsg');
+    const msgError   = document.getElementById('msgError');
+    const msgSuccess = document.getElementById('msgSuccess');
 
-    function showError(msg) { errorMsg.textContent = msg; errorMsg.style.display = 'block'; successMsg.style.display = 'none'; }
-    function showSuccess(msg) { successMsg.textContent = msg; successMsg.style.display = 'block'; errorMsg.style.display = 'none'; }
-    function translateError(code) {
-      const map = {
-        'auth/email-already-in-use': 'Этот email уже зарегистрирован.',
-        'auth/invalid-email': 'Неверный формат email.',
-        'auth/weak-password': 'Пароль слишком слабый. Минимум 8 символов.',
-        'auth/network-request-failed': 'Ошибка сети. Проверьте интернет.',
-        'auth/credential-already-in-use': 'Этот пароль уже привязан к аккаунту.',
-      };
-      return map[code] || 'Ошибка: ' + code;
+    function showErr(t) { msgError.textContent = t; msgError.style.display = 'block'; msgSuccess.style.display = 'none'; }
+    function showOk(t)  { msgSuccess.textContent = t; msgSuccess.style.display = 'block'; msgError.style.display = 'none'; }
+
+    const ERRORS = {
+      'auth/email-already-in-use': '❌ Этот email уже зарегистрирован. Попробуйте войти.',
+      'auth/invalid-email':        '❌ Неверный формат email.',
+      'auth/weak-password':        '❌ Пароль слишком простой. Минимум 8 символов.',
+      'auth/network-request-failed': '🌐 Ошибка сети. Проверьте интернет.',
+      'auth/popup-blocked':        '🚫 Браузер заблокировал popup.',
+    };
+    const err = code => ERRORS[code] || '❌ Ошибка: ' + code;
+
+    async function saveAndRedirect(user, firstName, lastName) {
+      const parts = firstName ? [firstName, lastName] : (user.displayName || '').trim().split(' ');
+      const fn = parts[0] || user.email.split('@')[0];
+      const ln = parts[1] || '';
+      localStorage.setItem('user', JSON.stringify({ uid: user.uid, firstName: fn, lastName: ln, email: user.email, photoURL: user.photoURL || '' }));
+      localStorage.setItem('user_role', 'registered');
+      try {
+        await setDoc(doc(db, 'users', user.uid), {
+          uid: user.uid, firstName: fn, lastName: ln,
+          email: user.email, photoURL: user.photoURL || '',
+          createdAt: serverTimestamp(), lastLogin: serverTimestamp(),
+          accessRole: 'registered',
+          provider: user.providerData[0]?.providerId || 'unknown'
+        }, { merge: true });
+      } catch(e) {}
+      window.location.href = 'dashboard.html?welcome=1';
     }
 
-    function trialData() {
-      const trialEndDate = new Date();
-      trialEndDate.setDate(trialEndDate.getDate() + 7);
-      return { trialActive: true, trialEndDate, subscriptionType: 'trial' };
-    }
+    // Redirect result
+    getRedirectResult(auth).then(r => { if (r?.user) saveAndRedirect(r.user); }).catch(() => {});
 
-    async function saveUserToFirestore(user, firstName, lastName, phone = '', extra = {}) {
-      const data = {
-        uid: user.uid, firstName, lastName,
-        email: user.email,
-        displayName: user.displayName || (firstName + ' ' + lastName),
-        photoURL: user.photoURL || '',
-        lastLogin: serverTimestamp(),
-        provider: user.providerData.map(p => p.providerId).join(','),
-        accessRole: 'registered',
-        ...extra
-      };
-      if (phone && phone.trim()) data.phone = phone.trim();
-      return setDoc(doc(db, 'users', user.uid), data, { merge: true });
-    }
+    // Google
+    document.getElementById('googleBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('googleBtn');
+      btn.classList.add('loading'); btn.disabled = true;
+      try {
+        const r = await signInWithPopup(auth, gProvider);
+        await saveAndRedirect(r.user);
+      } catch(e) {
+        btn.classList.remove('loading'); btn.disabled = false;
+        if (e.code === 'auth/popup-blocked') {
+          await signInWithRedirect(auth, gProvider);
+        } else if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') {
+          showErr(err(e.code));
+        }
+      }
+    });
 
-    function saveLocalUser(user, firstName, lastName, extra = {}) {
-      localStorage.setItem('user', JSON.stringify({
-        uid: user.uid, firstName, lastName, email: user.email, ...extra
-      }));
-    }
-
-    // ─── ШАГ 1: Обычная регистрация email/password ───────────────────────────
-    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    // Email registration
+    document.getElementById('registerForm').addEventListener('submit', async e => {
       e.preventDefault();
       const firstName = document.getElementById('firstName').value.trim();
       const lastName  = document.getElementById('lastName').value.trim();
       const email     = document.getElementById('email').value.trim();
-      const phone     = document.getElementById('phone').value.trim();
-      const password  = document.getElementById('password').value;
-      const confirm   = document.getElementById('confirmPassword').value;
+      const pwd       = document.getElementById('password').value;
+      const cpwd      = document.getElementById('confirmPassword').value;
       const btn       = document.getElementById('submitBtn');
 
-      if (password !== confirm) { showError('Пароли не совпадают!'); return; }
-      btn.disabled = true; btn.textContent = 'Создаём аккаунт...';
+      if (!firstName) { showErr('❌ Введите имя.'); return; }
+      if (pwd.length < 8) { showErr('❌ Пароль минимум 8 символов.'); return; }
+      if (pwd !== cpwd) { showErr('❌ Пароли не совпадают.'); return; }
 
+      btn.disabled = true; btn.textContent = 'Создаём аккаунт...';
       try {
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(cred.user, { displayName: firstName + ' ' + lastName });
-        const td = trialData();
-        saveLocalUser(cred.user, firstName, lastName, { phone, ...td, trialEndDate: td.trialEndDate.toISOString() });
-        try { await saveUserToFirestore(cred.user, firstName, lastName, phone, { ...td, registrationDate: serverTimestamp() }); } catch(e) { console.error(e); }
-        showSuccess('🎉 Аккаунт создан! Вам предоставлен бесплатный доступ на 7 дней!');
-        setTimeout(() => { window.location.href = 'dashboard.html?welcome=1'; }, 2000);
-      } catch (err) {
-        showError(translateError(err.code));
+        const cred = await createUserWithEmailAndPassword(auth, email, pwd);
+        await updateProfile(cred.user, { displayName: `${firstName} ${lastName}`.trim() });
+        await saveAndRedirect(cred.user, firstName, lastName);
+      } catch(e) {
+        showErr(err(e.code));
         btn.disabled = false; btn.textContent = 'Создать аккаунт';
       }
     });
 
-    // ─── ШАГ 1: Google — после входа показываем шаг 2 (установка пароля) ────
-    let _googleUser = null; // сохраняем пользователя между шагами
-
-    document.getElementById('googleBtn').addEventListener('click', async () => {
-      try {
-        const result = await signInWithPopup(auth, provider);
-        showGoogleStep2(result.user);
-      } catch (err) {
-        if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
-          if (err.code === 'auth/popup-blocked') {
-            try { await signInWithRedirect(auth, provider); } catch(e) {}
-          }
-        } else {
-          showError(translateError(err.code));
-        }
-      }
+    // Password toggles
+    document.getElementById('pwToggle1').addEventListener('click', function() {
+      const inp = document.getElementById('password');
+      const show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      this.textContent = show ? '🙈' : '👁';
     });
-
-    // Проверяем redirect result при загрузке (fallback для popup-blocked)
-    getRedirectResult(auth).then(result => {
-      if (result && result.user) showGoogleStep2(result.user);
-    }).catch(console.error);
-
-    function showGoogleStep2(user) {
-      _googleUser = user;
-      const parts = (user.displayName || '').split(' ');
-      const firstName = parts[0] || user.email.split('@')[0];
-      const lastName  = parts.slice(1).join(' ') || '';
-      _googleUser._firstName = firstName;
-      _googleUser._lastName  = lastName;
-
-      // Переключаем UI
-      document.getElementById('step1').style.display = 'none';
-      document.getElementById('step2').style.display = 'block';
-      document.getElementById('step2GoogleInfo').textContent =
-        `✅ Google: ${user.email} (${user.displayName || firstName})`;
-      errorMsg.style.display = 'none';
-      successMsg.style.display = 'none';
-    }
-
-    // ─── ШАГ 2: Установка пароля и привязка к Google-аккаунту ───────────────
-    document.getElementById('setPasswordBtn').addEventListener('click', async () => {
-      if (!_googleUser) return;
-      const password = document.getElementById('googlePassword').value;
-      const confirm  = document.getElementById('googleConfirmPassword').value;
-      const btn      = document.getElementById('setPasswordBtn');
-
-      if (password.length < 8) { showError('Пароль должен быть минимум 8 символов.'); return; }
-      if (password !== confirm) { showError('Пароли не совпадают!'); return; }
-
-      btn.disabled = true; btn.textContent = 'Сохраняем...';
-
-      try {
-        // Привязываем email/password credential к Google-аккаунту
-        const credential = EmailAuthProvider.credential(_googleUser.email, password);
-        await linkWithCredential(_googleUser, credential);
-
-        const td = trialData();
-        const firstName = _googleUser._firstName;
-        const lastName  = _googleUser._lastName;
-
-        saveLocalUser(_googleUser, firstName, lastName, { ...td, trialEndDate: td.trialEndDate.toISOString() });
-        try {
-          await saveUserToFirestore(_googleUser, firstName, lastName, '', {
-            ...td, registrationDate: serverTimestamp(),
-            providers: 'google.com,password'
-          });
-        } catch(e) { console.error(e); }
-
-        showSuccess('🎉 Пароль установлен! Теперь вы можете входить и через Google, и через email+пароль.');
-        setTimeout(() => { window.location.href = 'dashboard.html?welcome=1'; }, 2000);
-      } catch (err) {
-        console.error('linkWithCredential error:', err.code);
-        if (err.code === 'auth/provider-already-linked') {
-          // Уже привязан — просто идём дальше
-          finishGoogleRegistration();
-        } else if (err.code === 'auth/weak-password') {
-          showError('Пароль слишком слабый. Минимум 8 символов.');
-        } else {
-          showError(translateError(err.code));
-        }
-        btn.disabled = false; btn.textContent = 'Установить пароль и войти';
-      }
+    document.getElementById('pwToggle2').addEventListener('click', function() {
+      const inp = document.getElementById('confirmPassword');
+      const show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      this.textContent = show ? '🙈' : '👁';
     });
+  </script>
 
-    async function finishGoogleRegistration() {
-      const td = trialData();
-      const firstName = _googleUser._firstName;
-      const lastName  = _googleUser._lastName;
-      saveLocalUser(_googleUser, firstName, lastName, { ...td, trialEndDate: td.trialEndDate.toISOString() });
-      try { await saveUserToFirestore(_googleUser, firstName, lastName, '', { ...td, registrationDate: serverTimestamp() }); } catch(e) {}
-      window.location.href = 'dashboard.html?welcome=1';
+  <script>
+    function toggleEmail() {
+      const sec = document.getElementById('emailSection');
+      const btn = document.getElementById('toggleEmailBtn');
+      const open = sec.classList.toggle('open');
+      btn.textContent = open ? '✕ Скрыть форму' : '✉️ Регистрация через Email';
     }
-
-    // Пропустить установку пароля
-    document.getElementById('skipPasswordBtn').addEventListener('click', async (e) => {
-      e.preventDefault();
-      if (!_googleUser) return;
-      await finishGoogleRegistration();
-    });
-
-    // ─── Toggle password visibility ──────────────────────────────────────────
-    function togglePwd(inputId, btn) {
-      const inp = document.getElementById(inputId);
-      if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
-      else { inp.type = 'password'; btn.textContent = '👁️'; }
-    }
-    document.getElementById('togglePassword').addEventListener('click', function() { togglePwd('password', this); });
-    document.getElementById('toggleConfirmPassword').addEventListener('click', function() { togglePwd('confirmPassword', this); });
-    document.getElementById('toggleGooglePassword').addEventListener('click', function() { togglePwd('googlePassword', this); });
-    document.getElementById('toggleGoogleConfirmPassword').addEventListener('click', function() { togglePwd('googleConfirmPassword', this); });
   </script>
 </body>
-
 </html>
