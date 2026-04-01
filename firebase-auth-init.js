@@ -26,6 +26,28 @@ provider.setCustomParameters({ prompt: 'select_account' });
 
 window._fbAuth = auth;
 
+// ── НЕМЕДЛЕННОЕ обновление UI из localStorage (без ожидания Firebase) ──
+(function immediateUIUpdate() {
+    function tryUpdate() {
+        const navActions = document.querySelector('.nav-actions') || document.getElementById('nav-actions-desktop');
+        if (navActions) {
+            const user = (() => { try { return JSON.parse(localStorage.getItem('user')); } catch(e) { return null; } })();
+            updateNavUI(user);
+        } else {
+            // Nav ещё не загружен — ждём
+            document.addEventListener('navLoaded', () => {
+                const user = (() => { try { return JSON.parse(localStorage.getItem('user')); } catch(e) { return null; } })();
+                updateNavUI(user);
+            }, { once: true });
+        }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', tryUpdate);
+    } else {
+        tryUpdate();
+    }
+})();
+
 // ── Google Sign-In Popup ──────────────────────────────────────────
 window.signInWithGoogle = async function () {
     try {
@@ -74,14 +96,15 @@ onAuthStateChanged(auth, (firebaseUser) => {
         updateNavUI(userData);
     } else {
         if (!initialized) {
-            // Первый вызов — Firebase ещё восстанавливает сессию, ждём
+            // Первый вызов — Firebase ещё восстанавливает сессию
+            // Если в localStorage есть user — уже показали его, просто ждём подтверждения
             initialized = true;
             setTimeout(() => {
                 if (!auth.currentUser) {
                     localStorage.removeItem('user');
                     updateNavUI(null);
                 }
-            }, 2000);
+            }, 1500); // уменьшили с 2000 до 1500
         } else {
             localStorage.removeItem('user');
             updateNavUI(null);

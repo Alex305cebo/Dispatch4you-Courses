@@ -74,7 +74,34 @@
         injectFooter();
 
         document.dispatchEvent(new Event('navLoaded'));
-        if (typeof window.updateAuthUI === 'function') window.updateAuthUI();
+        // Немедленно обновляем UI из localStorage
+        if (typeof window.updateAuthUI === 'function') {
+            window.updateAuthUI();
+        } else {
+            // firebase-auth-init ещё не загружен — быстрая проверка localStorage
+            try {
+                var u = JSON.parse(localStorage.getItem('user') || 'null');
+                if (u) {
+                    var ma = document.getElementById('mob-actions');
+                    var mp = document.getElementById('mob-profile-card');
+                    if (ma) ma.style.display = 'none';
+                    if (mp) {
+                        mp.style.display = 'block';
+                        var nameEl = document.getElementById('mob-profile-name');
+                        var emailEl = document.getElementById('mob-profile-email');
+                        if (nameEl) nameEl.textContent = [u.firstName, u.lastName].filter(Boolean).join(' ');
+                        if (emailEl) emailEl.textContent = u.email || '';
+                        var avatarEl = document.getElementById('mob-profile-avatar');
+                        if (avatarEl) {
+                            var initials = ((u.firstName||'')[0]+(u.lastName||'')[0]).toUpperCase()||'👤';
+                            avatarEl.textContent = initials;
+                        }
+                    }
+                    var mobWrap = document.getElementById('mob-xp-wrap');
+                    if (mobWrap) mobWrap.style.display = 'flex';
+                }
+            } catch(e) {}
+        }
     }
 
     // ── XP Badge for mobile ───────────────────────────────────────
