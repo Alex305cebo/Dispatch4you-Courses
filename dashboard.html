@@ -1600,30 +1600,9 @@
       if (fLast) fLast.value = lastName;
       if (fEmail) fEmail.value = email;
 
-      // Навигация — ждём загрузки nav-loader если нужно
-      const html = `
-          <a href="dashboard.html" style="display:flex;align-items:center;gap:8px;padding:8px 16px;background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.2));border:1px solid rgba(99,102,241,0.4);border-radius:10px;color:#c4b5fd;font-weight:700;font-size:14px;text-decoration:none;">
-            <span style="font-size:16px;">👤</span> ${firstName}
-          </a>
-          <button onclick="window.fbSignOut()" style="padding:8px 14px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;color:#fca5a5;font-size:13px;cursor:pointer;font-weight:600;">Выйти</button>
-        `;
-
-      function updateNavAuth() {
-        const navActions = document.querySelector('.nav-actions');
-        const mobileNavActions = document.querySelector('.mobile-nav-actions');
-        if (navActions) navActions.innerHTML = html;
-        if (mobileNavActions) mobileNavActions.innerHTML = html;
-      }
-
-      // Если nav уже загружен — обновляем сразу, иначе ждём события
-      if (document.querySelector('.nav-actions')) {
-        updateNavAuth();
-      } else {
-        document.addEventListener('navLoaded', updateNavAuth, { once: true });
-        // Fallback через 1 сек если событие не пришло
-        setTimeout(updateNavAuth, 1000);
-      }
-      localStorage.setItem('user', JSON.stringify({ uid: firebaseUser.uid, firstName, lastName, email }));
+      // Сохраняем в localStorage — firebase-auth-init.js обновит navbar
+      localStorage.setItem('user', JSON.stringify({ uid: firebaseUser.uid, firstName, lastName, email, photoURL: firebaseUser.photoURL || '' }));
+      if (typeof window.updateAuthUI === 'function') window.updateAuthUI();
 
       // Кнопка админа
       if (email.trim().toLowerCase() === SUPER_ADMIN) {

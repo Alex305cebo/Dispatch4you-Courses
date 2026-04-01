@@ -88,16 +88,22 @@ function applyUI(user, xpOverride) {
     const base = isPages ? '../' : '';
     const dashHref = base + 'dashboard.html';
 
-    // Получаем XP
     let xp = xpOverride !== undefined ? xpOverride : 0;
     if (xpOverride === undefined) {
         try { xp = JSON.parse(localStorage.getItem('xp_data') || '{}').totalXP || 0; } catch(e) {}
     }
 
-    // Ждём nav если ещё не загружен
+    // Ждём nav если ещё не загружен — polling каждые 50ms до 3 сек
     const navActions = document.getElementById('nav-actions-desktop') || document.querySelector('.nav-actions');
     if (!navActions) {
-        document.addEventListener('navLoaded', () => applyUI(user, xpOverride), { once: true });
+        let attempts = 0;
+        const poll = setInterval(() => {
+            const el = document.getElementById('nav-actions-desktop') || document.querySelector('.nav-actions');
+            if (el || ++attempts > 60) {
+                clearInterval(poll);
+                if (el) applyUI(user, xpOverride);
+            }
+        }, 50);
         return;
     }
 
