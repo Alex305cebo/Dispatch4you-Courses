@@ -1,9 +1,9 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+﻿import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
-    authDomain: "dispatch4you-80e0f.firebaseapp.com",
+    authDomain: "dispatch4you.com",
     projectId: "dispatch4you-80e0f",
     storageBucket: "dispatch4you-80e0f.firebasestorage.app",
     messagingSenderId: "349235354473",
