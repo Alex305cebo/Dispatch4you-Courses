@@ -129,23 +129,23 @@ function applyUI(user, xpOverride) {
         const initials = ((user.firstName||'')[0] + (user.lastName||'')[0]).toUpperCase() || '?';
         const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ');
         const avatarHTML = user.photoURL
-            ? `<img src="${user.photoURL}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" onerror="this.outerHTML='<div style=width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff>${initials}</div>'">`
-            : `<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;">${initials}</div>`;
+            ? `<img src="${user.photoURL}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(99,102,241,.5);" onerror="this.outerHTML='<div style=width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;border:2px solid rgba(99,102,241,.5)>${initials}</div>'">`
+            : `<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;border:2px solid rgba(99,102,241,.5);">${initials}</div>`;
 
-        // Desktop
+        // Desktop — профиль + выйти в одном стиле
         navActions.innerHTML = `
-            <a href="${dashHref}" style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.15));border:1px solid rgba(99,102,241,.35);border-radius:12px;text-decoration:none;transition:all .2s;"
-               onmouseover="this.style.background='linear-gradient(135deg,rgba(99,102,241,.25),rgba(139,92,246,.25))'"
-               onmouseout="this.style.background='linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.15))'">
+            <a href="${dashHref}" style="display:flex;align-items:center;gap:10px;padding:7px 14px;background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.12));border:1px solid rgba(99,102,241,.3);border-radius:14px;text-decoration:none;transition:all .2s;"
+               onmouseover="this.style.background='linear-gradient(135deg,rgba(99,102,241,.22),rgba(139,92,246,.22))';this.style.borderColor='rgba(99,102,241,.5)'"
+               onmouseout="this.style.background='linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.12))';this.style.borderColor='rgba(99,102,241,.3)'">
                 ${avatarHTML}
-                <div style="display:flex;flex-direction:column;gap:1px;">
-                    <span style="font-size:12px;font-weight:700;color:#e0e7ff;">${fullName}</span>
-                    <span id="nav-xp-badge" style="font-size:10px;color:#fbbf24;font-weight:700;">⚡ ${xp} XP</span>
+                <div style="display:flex;flex-direction:column;gap:2px;">
+                    <span style="font-size:13px;font-weight:700;color:#e0e7ff;line-height:1;">${fullName}</span>
+                    <span id="nav-xp-badge" style="font-size:11px;color:#fbbf24;font-weight:700;line-height:1;">⚡ ${xp} XP</span>
                 </div>
             </a>
-            <button onclick="authLogout(event)" style="padding:6px 12px;border:1px solid rgba(239,68,68,.35);border-radius:12px;color:#fca5a5;font-size:12px;font-weight:600;background:rgba(239,68,68,.12);cursor:pointer;font-family:inherit;"
-                onmouseover="this.style.background='rgba(239,68,68,.2)'" onmouseout="this.style.background='rgba(239,68,68,.12)'">
-                🚪 Выйти
+            <button onclick="authLogout(event)" style="padding:7px 14px;border:1px solid rgba(239,68,68,.3);border-radius:14px;color:#fca5a5;font-size:13px;font-weight:600;background:rgba(239,68,68,.08);cursor:pointer;font-family:inherit;transition:all .2s;"
+                onmouseover="this.style.background='rgba(239,68,68,.18)';this.style.borderColor='rgba(239,68,68,.5)'" onmouseout="this.style.background='rgba(239,68,68,.08)';this.style.borderColor='rgba(239,68,68,.3)'">
+                Выйти
             </button>`;
 
         // Mobile navbar badge
