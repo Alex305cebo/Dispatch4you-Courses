@@ -1610,9 +1610,14 @@
         if (btn) btn.style.display = 'inline-block';
       }
     } else {
-      // Не авторизован — редиректим на логин
-      localStorage.removeItem('user');
-      window.location.href = 'login.html';
+      // Не авторизован — проверяем localStorage перед редиректом
+      // (Firebase может не работать на localhost/file://)
+      const cachedUser = (() => { try { return JSON.parse(localStorage.getItem('user')); } catch(e) { return null; } })();
+      if (!cachedUser) {
+        localStorage.removeItem('user');
+        window.location.href = 'login.html';
+      }
+      // Если есть кеш — ждём Firebase подтверждения (уже показали данные из кеша)
     }
   });
 
