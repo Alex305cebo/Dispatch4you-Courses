@@ -204,16 +204,12 @@
         // Divider
         + '  <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
         + '    <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>'
-        + '    <span style="font-size:12px;color:#475569;">или</span>'
+        + '    <span style="font-size:12px;color:#475569;">или через email</span>'
         + '    <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>'
         + '  </div>'
-        // Email buttons
-        + '  <div style="display:flex;gap:10px;margin-bottom:20px;">'
-        + '    <a href="' + base + 'login.html" style="flex:1;padding:12px;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.3);border-radius:12px;color:#67e8f9;font-size:14px;font-weight:600;text-decoration:none;text-align:center;transition:all .2s;"'
-        + '      onmouseover="this.style.background=\'rgba(6,182,212,.2)\'" onmouseout="this.style.background=\'rgba(6,182,212,.1)\'">✉️ Войти</a>'
-        + '    <a href="' + base + 'register.html" style="flex:1;padding:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:12px;color:#e2e8f0;font-size:14px;font-weight:600;text-decoration:none;text-align:center;transition:all .2s;"'
-        + '      onmouseover="this.style.background=\'rgba(255,255,255,.1)\'" onmouseout="this.style.background=\'rgba(255,255,255,.05)\'">📝 Регистрация</a>'
-        + '  </div>'
+        // Single email button
+        + '  <a href="' + base + 'login.html" style="display:block;width:100%;padding:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:12px;color:#e2e8f0;font-size:14px;font-weight:600;text-decoration:none;text-align:center;transition:all .2s;margin-bottom:20px;box-sizing:border-box;"'
+        + '  onmouseover="this.style.background=\'rgba(255,255,255,.1)\'" onmouseout="this.style.background=\'rgba(255,255,255,.05)\'">✉️ Войти / Зарегистрироваться через Email</a>'
         // Security note
         + '  <p style="font-size:11px;color:#475569;line-height:1.5;margin-bottom:16px;">🔒 Мы не храним пароли. Авторизация через Google и Firebase.</p>'
         // Bottom links
