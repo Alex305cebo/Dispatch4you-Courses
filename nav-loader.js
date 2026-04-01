@@ -256,16 +256,6 @@
     }
 
     // ── Start ─────────────────────────────────────────────────────
-    // Load Firebase Auth FIRST — synchronously before nav
-    (function loadFirebaseAuth() {
-        if (document.querySelector('script[src*="firebase-auth-init"]')) return;
-        var s = document.createElement('script');
-        s.type = 'module';
-        s.src = BASE + 'firebase-auth-init.js?v=3.1';
-        // Загружаем немедленно
-        document.head.insertBefore(s, document.head.firstChild);
-    })();
-
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', loadNav);
     } else {

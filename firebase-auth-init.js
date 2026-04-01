@@ -52,8 +52,11 @@ function applyFromCache() {
 }
 
 // ── Шаг 2: Firebase подтверждает и обновляет ─────────────────────
+let fbInitialized = false;
+
 onAuthStateChanged(auth, async (fbUser) => {
     if (fbUser) {
+        fbInitialized = true;
         const parts = (fbUser.displayName || '').trim().split(' ');
         const user = {
             uid: fbUser.uid,
@@ -76,9 +79,24 @@ onAuthStateChanged(auth, async (fbUser) => {
 
         applyUI(user, xp);
     } else {
-        // Firebase говорит — не залогинен
-        localStorage.removeItem('user');
-        applyUI(null);
+        if (!fbInitialized) {
+            // Первый вызов null — Firebase ещё восстанавливает сессию
+            // НЕ трогаем localStorage, уже показали из кеша
+            fbInitialized = true;
+            // Через 3 сек если Firebase так и не вернул пользователя — значит реально не залогинен
+            setTimeout(() => {
+                if (!auth.currentUser) {
+                    localStorage.removeItem('user');
+                    localStorage.removeItem('xp_data');
+                    applyUI(null);
+                }
+            }, 3000);
+        } else {
+            // Повторный null — пользователь вышел
+            localStorage.removeItem('user');
+            localStorage.removeItem('xp_data');
+            applyUI(null);
+        }
     }
 });
 
