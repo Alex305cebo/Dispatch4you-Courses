@@ -22,7 +22,7 @@
   <div class="nav-item"><button class="nav-btn">Информация <span class="arrow">▾</span></button><div class="dropdown"><a href="{{BASE}}about.html">👥 О нас</a><a href="{{BASE}}faq.html">❓ Вопросы</a><a href="{{BASE}}contacts.html">📬 Контакты</a><a href="{{BASE}}pricing.html">💰 Цены</a></div></div>
 </div>
 <div class="nav-actions" id="nav-actions-desktop"></div>
-<div class="mob-xp-wrap" id="mob-xp-wrap"><a href="{{BASE}}dashboard.html" class="mob-xp-badge" id="mob-xp-badge"><span class="mob-xp-avatar" id="mob-xp-avatar">👤</span><span class="mob-xp-val" id="mob-xp-val">⚡ 0 XP</span></a></div>
+<div class="mob-xp-wrap" id="mob-xp-wrap" style="display:none"><a href="{{BASE}}dashboard.html" class="mob-xp-badge" id="mob-xp-badge"><span class="mob-xp-avatar" id="mob-xp-avatar">👤</span><span class="mob-xp-val" id="mob-xp-val">⚡ 0 XP</span></a></div>
 <button class="burger" id="burgerBtn"><span></span><span></span><span></span></button>
 </div></div></nav>
 <div class="mob-overlay" id="mobOverlay"></div>
