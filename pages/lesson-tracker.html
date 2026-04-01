@@ -480,10 +480,19 @@ async function loadData(targetUid) {
 
 async function saveData() {
   const targetUid = getStorageKey();
-  if (!targetUid) return;
+  if (!targetUid) {
+    console.warn('saveData: no targetUid, uid=', uid, 'selectedStudentUid=', selectedStudentUid);
+    return;
+  }
   try {
+    console.log('Saving to lesson_tracker/', targetUid, lessonData);
     await setDoc(doc(db, 'lesson_tracker', targetUid), { lessons: lessonData }, { merge: true });
-  } catch(e) { console.warn('Save error:', e); }
+    console.log('Saved OK');
+    showSaveIndicator();
+  } catch(e) {
+    console.error('Save error:', e);
+    showSaveError(e.message);
+  }
 }
 
 // Переключение студента
@@ -617,11 +626,42 @@ document.addEventListener('click', function(e) {
 onAuthStateChanged(auth, user => {
   if(user) {
     uid = user.uid;
+    console.log('Auth OK, uid=', uid);
     loadStudents();
-    // Не загружаем данные пока не выбран студент
     document.getElementById('studentLoading').style.display = 'inline';
+  } else {
+    console.warn('Not authenticated');
   }
 });
+
+function showSaveIndicator() {
+  let el = document.getElementById('save-indicator');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'save-indicator';
+    el.style.cssText = 'position:fixed;bottom:24px;right:24px;background:rgba(16,185,129,.9);color:#fff;padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;transition:opacity .3s;';
+    document.body.appendChild(el);
+  }
+  el.textContent = '✅ Сохранено';
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.opacity = '0'; }, 2000);
+}
+
+function showSaveError(msg) {
+  let el = document.getElementById('save-indicator');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'save-indicator';
+    el.style.cssText = 'position:fixed;bottom:24px;right:24px;padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;';
+    document.body.appendChild(el);
+  }
+  el.style.background = 'rgba(239,68,68,.9)';
+  el.textContent = '❌ Ошибка: ' + (msg || 'не сохранено');
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.opacity = '0'; }, 4000);
+}
 
 // Scroll animation
 const obs = new IntersectionObserver((entries)=>{
