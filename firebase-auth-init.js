@@ -9,7 +9,7 @@ import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11
 
 const CFG = {
     apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
-    authDomain: "dispatch4you.com",
+    authDomain: "dispatch4you-80e0f.firebaseapp.com",
     projectId: "dispatch4you-80e0f",
     storageBucket: "dispatch4you-80e0f.appspot.com",
     messagingSenderId: "349235354473",

@@ -265,7 +265,7 @@
           .then(function (fsMod) {
             var app = appMod.getApps().length ? appMod.getApps()[0] : appMod.initializeApp({
               apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
-              authDomain: "dispatch4you.com",
+              authDomain: "dispatch4you-80e0f.firebaseapp.com",
               projectId: "dispatch4you-80e0f",
               storageBucket: "dispatch4you-80e0f.appspot.com",
               messagingSenderId: "349235354473",
