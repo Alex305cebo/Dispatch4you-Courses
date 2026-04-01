@@ -190,7 +190,7 @@
     if (isGuest) {
       // Гость — форма входа прямо в overlay
       overlay.innerHTML = ''
-        + '<div style="max-width:420px;width:100%;background:linear-gradient(135deg,rgba(15,23,42,0.99),rgba(20,30,55,0.99));border:1.5px solid rgba(6,182,212,0.25);border-radius:24px;padding:40px 36px;text-align:center;box-shadow:0 25px 80px rgba(0,0,0,0.7);">'
+        + '<div id="paywall-card" style="max-width:420px;width:100%;background:linear-gradient(135deg,rgba(15,23,42,0.99),rgba(20,30,55,0.99));border:1.5px solid rgba(6,182,212,0.25);border-radius:24px;padding:40px 36px;text-align:center;box-shadow:0 25px 80px rgba(0,0,0,0.7);position:relative;">'
         + '  <div style="font-size:48px;margin-bottom:16px;">🎓</div>'
         + '  <h2 style="font-size:24px;font-weight:800;color:#ffffff;margin-bottom:8px;">Войдите для доступа</h2>'
         + '  <p style="font-size:14px;color:#94a3b8;line-height:1.6;margin-bottom:28px;">Бесплатная регистрация открывает доступ к материалам курса</p>'
@@ -215,9 +215,14 @@
         + '      onmouseover="this.style.background=\'rgba(255,255,255,.1)\'" onmouseout="this.style.background=\'rgba(255,255,255,.05)\'">📝 Регистрация</a>'
         + '  </div>'
         // Security note
-        + '  <p style="font-size:11px;color:#475569;line-height:1.5;">🔒 Мы не храним пароли. Авторизация через Google и Firebase.</p>'
-        + '  <a href="' + base + 'index.html" style="display:inline-block;margin-top:14px;font-size:12px;color:#475569;text-decoration:none;transition:color .2s;"'
-        + '    onmouseover="this.style.color=\'#94a3b8\'" onmouseout="this.style.color=\'#475569\'">← На главную</a>'
+        + '  <p style="font-size:11px;color:#475569;line-height:1.5;margin-bottom:16px;">🔒 Мы не храним пароли. Авторизация через Google и Firebase.</p>'
+        // Bottom links
+        + '  <div style="display:flex;justify-content:center;gap:20px;">'
+        + '    <button onclick="history.back()" style="background:none;border:none;cursor:pointer;font-size:12px;color:#475569;font-family:inherit;transition:color .2s;padding:0;"'
+        + '      onmouseover="this.style.color=\'#94a3b8\'" onmouseout="this.style.color=\'#475569\'">← Назад</button>'
+        + '    <a href="' + base + 'index.html" style="font-size:12px;color:#475569;text-decoration:none;transition:color .2s;"'
+        + '      onmouseover="this.style.color=\'#94a3b8\'" onmouseout="this.style.color=\'#475569\'">🏠 На главную</a>'
+        + '  </div>'
         + '</div>';
     } else {
       // Зарегистрирован но нет доступа — апгрейд
@@ -232,6 +237,20 @@
     }
 
     document.body.appendChild(overlay);
+
+    // Закрытие по клику вне карточки (только для гостей — не блокируем контент)
+    if (isGuest) {
+      overlay.addEventListener('click', function(e) {
+        if (!e.target.closest('#paywall-card')) {
+          overlay.style.opacity = '0';
+          overlay.style.transition = 'opacity .2s';
+          setTimeout(function() {
+            overlay.remove();
+            document.body.style.overflow = '';
+          }, 200);
+        }
+      });
+    }
   }
 
   function getBasePath() {
