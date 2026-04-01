@@ -1,4 +1,22 @@
 <!-- ЕДИНОЕ МЕНЮ САЙТА v7.4 -->
+<script>
+// Fallback — если firebase-auth-init.js ещё не загрузился
+if (!window.signInWithGoogle) {
+    window.signInWithGoogle = function() {
+        // Ждём загрузки Firebase или редиректим на login
+        var attempts = 0;
+        var check = setInterval(function() {
+            if (window._fbAuth && window.signInWithPopup) {
+                clearInterval(check);
+                // Firebase загружен — вызываем настоящую функцию
+            } else if (++attempts > 20) {
+                clearInterval(check);
+                window.location.href = (window.location.pathname.includes('/pages/') ? '../' : '') + 'login.html';
+            }
+        }, 100);
+    };
+}
+</script>
 <nav class="navbar">
     <div class="nav-container">
         <div class="nav-content">
