@@ -174,46 +174,59 @@
   }
 
   // ============================================================
-  // PAYWALL — показываем красивое окно "нет доступа"
+  // PAYWALL — встроенная форма входа/регистрации
   // ============================================================
 
   function showPaywall(role) {
     var isGuest = !role || role === 'guest';
-    var isRegistered = role === 'registered';
+    var base = getBasePath();
 
-    var title = isGuest
-      ? 'Войдите для доступа'
-      : 'Контент доступен студентам';
-
-    var message = isGuest
-      ? 'Эта страница доступна только зарегистрированным пользователям. Войдите или создайте аккаунт.'
-      : 'Этот материал доступен только студентам курса. Оформите подписку для полного доступа ко всем материалам.';
-
-    var btnPrimary = isGuest
-      ? { text: 'Войти', href: getBasePath() + 'login.html' }
-      : { text: 'Оформить подписку', href: getBasePath() + 'pricing.html' };
-
-    var btnSecondary = isGuest
-      ? { text: 'Регистрация', href: getBasePath() + 'register.html' }
-      : { text: 'На главную', href: getBasePath() + 'index.html' };
-
-    // Скрываем основной контент
     document.body.style.overflow = 'hidden';
 
     var overlay = document.createElement('div');
     overlay.id = 'role-guard-paywall';
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(2,6,23,0.95);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(10px);';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(2,6,23,0.96);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(12px);';
 
-    overlay.innerHTML = ''
-      + '<div style="max-width:480px;width:100%;background:linear-gradient(135deg,rgba(15,23,42,0.98),rgba(30,41,59,0.98));border:2px solid rgba(6,182,212,0.3);border-radius:24px;padding:48px 40px;text-align:center;box-shadow:0 25px 80px rgba(0,0,0,0.6);">'
-      + '  <div style="font-size:64px;margin-bottom:24px;">' + (isGuest ? '🔒' : '⭐') + '</div>'
-      + '  <h2 style="font-size:28px;font-weight:800;color:#f1f5f9;margin-bottom:16px;">' + title + '</h2>'
-      + '  <p style="font-size:16px;color:#94a3b8;line-height:1.7;margin-bottom:32px;">' + message + '</p>'
-      + '  <div style="display:flex;flex-direction:column;gap:12px;">'
-      + '    <a href="' + btnPrimary.href + '" style="display:block;padding:16px 32px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);color:white;text-decoration:none;border-radius:14px;font-weight:700;font-size:16px;transition:all 0.3s;box-shadow:0 8px 24px rgba(6,182,212,0.4);">' + btnPrimary.text + '</a>'
-      + '    <a href="' + btnSecondary.href + '" style="display:block;padding:14px 32px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#94a3b8;text-decoration:none;border-radius:14px;font-weight:600;font-size:15px;transition:all 0.3s;">' + btnSecondary.text + '</a>'
-      + '  </div>'
-      + '</div>';
+    if (isGuest) {
+      // Гость — форма входа прямо в overlay
+      overlay.innerHTML = ''
+        + '<div style="max-width:420px;width:100%;background:linear-gradient(135deg,rgba(15,23,42,0.99),rgba(20,30,55,0.99));border:1.5px solid rgba(6,182,212,0.25);border-radius:24px;padding:40px 36px;text-align:center;box-shadow:0 25px 80px rgba(0,0,0,0.7);">'
+        + '  <div style="font-size:48px;margin-bottom:16px;">🎓</div>'
+        + '  <h2 style="font-size:24px;font-weight:800;color:#ffffff;margin-bottom:8px;">Войдите для доступа</h2>'
+        + '  <p style="font-size:14px;color:#94a3b8;line-height:1.6;margin-bottom:28px;">Бесплатная регистрация открывает доступ к материалам курса</p>'
+        // Google
+        + '  <button onclick="window.signInWithGoogle&&window.signInWithGoogle()" style="width:100%;padding:14px;background:#fff;border:none;border-radius:12px;color:#1f2937;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;transition:all .2s;box-shadow:0 4px 16px rgba(0,0,0,.25);font-family:inherit;"'
+        + '    onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'">'
+        + '    <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>'
+        + '    Войти через Google'
+        + '  </button>'
+        // Divider
+        + '  <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
+        + '    <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>'
+        + '    <span style="font-size:12px;color:#475569;">или</span>'
+        + '    <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>'
+        + '  </div>'
+        // Email buttons
+        + '  <div style="display:flex;gap:10px;margin-bottom:20px;">'
+        + '    <a href="' + base + 'login.html" style="flex:1;padding:12px;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.3);border-radius:12px;color:#67e8f9;font-size:14px;font-weight:600;text-decoration:none;text-align:center;transition:all .2s;"'
+        + '      onmouseover="this.style.background=\'rgba(6,182,212,.2)\'" onmouseout="this.style.background=\'rgba(6,182,212,.1)\'">✉️ Войти</a>'
+        + '    <a href="' + base + 'register.html" style="flex:1;padding:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:12px;color:#e2e8f0;font-size:14px;font-weight:600;text-decoration:none;text-align:center;transition:all .2s;"'
+        + '      onmouseover="this.style.background=\'rgba(255,255,255,.1)\'" onmouseout="this.style.background=\'rgba(255,255,255,.05)\'">📝 Регистрация</a>'
+        + '  </div>'
+        // Security note
+        + '  <p style="font-size:11px;color:#475569;line-height:1.5;">🔒 Мы не храним пароли. Авторизация через Google и Firebase.</p>'
+        + '</div>';
+    } else {
+      // Зарегистрирован но нет доступа — апгрейд
+      overlay.innerHTML = ''
+        + '<div style="max-width:440px;width:100%;background:linear-gradient(135deg,rgba(15,23,42,0.99),rgba(20,30,55,0.99));border:1.5px solid rgba(245,158,11,0.3);border-radius:24px;padding:40px 36px;text-align:center;box-shadow:0 25px 80px rgba(0,0,0,0.7);">'
+        + '  <div style="font-size:48px;margin-bottom:16px;">⭐</div>'
+        + '  <h2 style="font-size:24px;font-weight:800;color:#ffffff;margin-bottom:8px;">Контент для студентов</h2>'
+        + '  <p style="font-size:14px;color:#94a3b8;line-height:1.6;margin-bottom:28px;">Этот материал доступен только студентам курса. Оформите подписку для полного доступа.</p>'
+        + '  <a href="' + base + 'pricing.html" style="display:block;padding:16px;background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;text-decoration:none;border-radius:14px;font-weight:700;font-size:16px;margin-bottom:12px;box-shadow:0 8px 24px rgba(245,158,11,.4);">🚀 Оформить подписку</a>'
+        + '  <a href="' + base + 'index.html" style="display:block;padding:13px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#94a3b8;text-decoration:none;border-radius:14px;font-size:14px;font-weight:600;">← На главную</a>'
+        + '</div>';
+    }
 
     document.body.appendChild(overlay);
   }
