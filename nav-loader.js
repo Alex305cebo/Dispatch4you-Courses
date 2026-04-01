@@ -21,15 +21,28 @@
   <div class="nav-item"><button class="nav-btn">Инструменты <span class="arrow">▾</span></button><div class="dropdown"><a href="{{BASE}}pages/simulator.html">🎯 Симулятор</a><a href="{{BASE}}pages/testing.html">✍️ Тестирование</a><a href="{{BASE}}pages/Trainer-Quiz.html">⚡ Тренировка</a><a href="{{BASE}}pages/load-finder.html">🔍 Load Finder</a><a href="{{BASE}}pages/ai-broker-chat.html">🤖 AI Брокер</a></div></div>
   <div class="nav-item"><button class="nav-btn">Информация <span class="arrow">▾</span></button><div class="dropdown"><a href="{{BASE}}about.html">👥 О нас</a><a href="{{BASE}}faq.html">❓ Вопросы</a><a href="{{BASE}}contacts.html">📬 Контакты</a><a href="{{BASE}}pricing.html">💰 Цены</a></div></div>
 </div>
-<div class="nav-actions"><a href="{{BASE}}login.html" class="btn-login">Войти</a><a href="{{BASE}}register.html" class="btn-signup">Регистрация</a></div>
-<div class="mob-xp-wrap" id="mob-xp-wrap" style="display:none"><a href="{{BASE}}dashboard.html" class="mob-xp-badge" id="mob-xp-badge"><span class="mob-xp-avatar" id="mob-xp-avatar">👤</span><span class="mob-xp-val" id="mob-xp-val">⚡ 0 XP</span></a></div>
+<div class="nav-actions" id="nav-actions-desktop"></div>
+<div class="mob-xp-wrap" id="mob-xp-wrap"><a href="{{BASE}}dashboard.html" class="mob-xp-badge" id="mob-xp-badge"><span class="mob-xp-avatar" id="mob-xp-avatar">👤</span><span class="mob-xp-val" id="mob-xp-val">⚡ 0 XP</span></a></div>
 <button class="burger" id="burgerBtn"><span></span><span></span><span></span></button>
 </div></div></nav>
 <div class="mob-overlay" id="mobOverlay"></div>
 <div class="mob-menu" id="mobMenu">
   <div class="mob-header"><span>📚 Меню</span><button id="mobClose">✕</button></div>
   <div class="mob-body">
-    <div class="mob-actions"><a href="{{BASE}}login.html" class="btn-login">Войти</a><a href="{{BASE}}register.html" class="btn-signup">Регистрация</a></div>
+    <div id="mob-profile-card" style="display:none;margin-bottom:12px;padding:16px;background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.15));border:1px solid rgba(99,102,241,.3);border-radius:16px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <div id="mob-profile-avatar" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0;">👤</div>
+        <div>
+          <div id="mob-profile-name" style="font-size:15px;font-weight:700;color:#e0e7ff;"></div>
+          <div id="mob-profile-email" style="font-size:12px;color:#a5b4fc;"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <a id="mob-profile-dash" href="{{BASE}}dashboard.html" style="flex:1;padding:10px;background:rgba(99,102,241,.2);border:1px solid rgba(99,102,241,.35);border-radius:10px;color:#a5b4fc;font-size:13px;font-weight:600;text-decoration:none;text-align:center;">👤 Кабинет</a>
+        <button onclick="authLogout(event)" style="flex:1;padding:10px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:10px;color:#fca5a5;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">🚪 Выйти</button>
+      </div>
+    </div>
+    <div class="mob-actions" id="mob-actions"><a href="{{BASE}}login.html" class="btn-login">Войти</a><a href="{{BASE}}register.html" class="btn-signup">Регистрация</a></div>
     <div class="mob-acc"><div class="mob-acc-title">📚 Курс обучения <span class="mob-arr">▼</span></div><div class="mob-acc-body"><a href="{{BASE}}pages/documentation.html" class="mob-sub">📚 База знаний (15 Стр. Курсов)</a><a href="{{BASE}}pages/modules-index.html" class="mob-sub">✍️ Тесты знаний (12 Модулей)</a><a href="{{BASE}}pages/glossary.html" class="mob-sub">📖 Глоссарий</a></div></div>
     <div class="mob-acc"><div class="mob-acc-title">🛠️ Инструменты <span class="mob-arr">▼</span></div><div class="mob-acc-body"><a href="{{BASE}}pages/simulator.html" class="mob-sub">🎯 Симулятор</a><a href="{{BASE}}pages/testing.html" class="mob-sub">✍️ Тестирование</a><a href="{{BASE}}pages/Trainer-Quiz.html" class="mob-sub">⚡ Тренировка</a><a href="{{BASE}}pages/load-finder.html" class="mob-sub">🔍 Load Finder</a><a href="{{BASE}}pages/ai-broker-chat.html" class="mob-sub">🤖 AI Брокер</a></div></div>
     <div class="mob-acc"><div class="mob-acc-title">ℹ️ Информация <span class="mob-arr">▼</span></div><div class="mob-acc-body"><a href="{{BASE}}about.html" class="mob-sub">👥 О нас</a><a href="{{BASE}}faq.html" class="mob-sub">❓ Вопросы</a><a href="{{BASE}}contacts.html" class="mob-sub">📬 Контакты</a><a href="{{BASE}}pricing.html" class="mob-sub">💰 Цены</a></div></div>

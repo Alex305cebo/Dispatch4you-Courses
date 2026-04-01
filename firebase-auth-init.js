@@ -91,25 +91,23 @@ onAuthStateChanged(auth, (firebaseUser) => {
 
 // ── Update Navbar UI ──────────────────────────────────────────────
 function updateNavUI(user) {
-    const navActions = document.querySelector('.nav-actions');
-    const mobActions = document.querySelector('.mob-actions');
+    const navActions = document.querySelector('.nav-actions') || document.getElementById('nav-actions-desktop');
 
     if (!navActions) {
-        // Nav ещё не загружен — ждём
         document.addEventListener('navLoaded', () => updateNavUI(user), { once: true });
         return;
     }
 
+    const isPages = window.location.pathname.includes('/pages/');
+    const dashHref = isPages ? '../dashboard.html' : 'dashboard.html';
+
     if (user) {
         const initials = ((user.firstName || '')[0] + (user.lastName || '')[0]).toUpperCase() || '👤';
         const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ');
-        const isPages = window.location.pathname.includes('/pages/');
-        const dashHref = isPages ? '../dashboard.html' : 'dashboard.html';
-
         let xp = 0;
         try { xp = JSON.parse(localStorage.getItem('xp_data') || '{}').totalXP || 0; } catch (e) {}
 
-        // Desktop navbar
+        // ── Desktop navbar ──
         navActions.innerHTML = `
             <a href="${dashHref}" style="display:flex;align-items:center;gap:8px;padding:6px 14px;
                 background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.15));
@@ -128,24 +126,54 @@ function updateNavUI(user) {
             </a>
             <button onclick="authLogout(event)" style="padding:6px 12px;border:1px solid rgba(239,68,68,.35);
                 border-radius:12px;color:#fca5a5;font-size:12px;font-weight:600;
-                background:rgba(239,68,68,.12);cursor:pointer;transition:all .3s;
-                font-family:inherit;"
+                background:rgba(239,68,68,.12);cursor:pointer;transition:all .3s;font-family:inherit;"
                 onmouseover="this.style.background='rgba(239,68,68,.2)';this.style.transform='translateY(-2px)'"
                 onmouseout="this.style.background='rgba(239,68,68,.12)';this.style.transform=''">
                 🚪 Выйти
             </button>`;
 
-        // Mobile menu — скрыть Войти/Регистрация, показать XP
-        if (mobActions) mobActions.style.display = 'none';
+        // ── Mobile navbar badge — всегда виден ──
         const mobWrap = document.getElementById('mob-xp-wrap');
         const mobAvatar = document.getElementById('mob-xp-avatar');
         const mobVal = document.getElementById('mob-xp-val');
-        if (mobWrap) mobWrap.style.display = 'flex';
-        if (mobAvatar) mobAvatar.textContent = initials;
-        if (mobVal) mobVal.textContent = '⚡ ' + xp + ' XP';
+        if (mobWrap) {
+            mobWrap.style.display = 'flex';
+            if (mobAvatar) {
+                if (user.photoURL) {
+                    mobAvatar.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.textContent='${initials}'">`;
+                } else {
+                    mobAvatar.textContent = initials;
+                }
+            }
+            if (mobVal) mobVal.textContent = '⚡ ' + xp + ' XP';
+        }
+
+        // ── Mobile menu profile card ──
+        const mobProfile = document.getElementById('mob-profile-card');
+        const mobActions = document.getElementById('mob-actions');
+        if (mobProfile) {
+            mobProfile.style.display = 'block';
+            const nameEl = document.getElementById('mob-profile-name');
+            const emailEl = document.getElementById('mob-profile-email');
+            const avatarEl = document.getElementById('mob-profile-avatar');
+            const dashEl = document.getElementById('mob-profile-dash');
+            if (nameEl) nameEl.textContent = fullName;
+            if (emailEl) emailEl.textContent = user.email || '';
+            if (avatarEl) {
+                if (user.photoURL) {
+                    avatarEl.innerHTML = `<img src="${user.photoURL}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;" onerror="this.textContent='${initials}'">`;
+                    avatarEl.style.background = 'none';
+                    avatarEl.style.padding = '0';
+                } else {
+                    avatarEl.textContent = initials;
+                }
+            }
+            if (dashEl) dashEl.href = dashHref;
+        }
+        if (mobActions) mobActions.style.display = 'none';
 
     } else {
-        // Не залогинен — показываем кнопку Google
+        // ── Не залогинен — Google кнопка ──
         navActions.innerHTML = `
             <button onclick="signInWithGoogle()" id="google-signin-btn" style="display:flex;align-items:center;gap:8px;
                 padding:8px 16px;background:#fff;border:none;border-radius:12px;
@@ -162,9 +190,19 @@ function updateNavUI(user) {
                 Войти через Google
             </button>`;
 
-        if (mobActions) mobActions.style.display = 'flex';
+        // Мобильный badge — показываем только XP без имени
         const mobWrap = document.getElementById('mob-xp-wrap');
-        if (mobWrap) mobWrap.style.display = 'none';
+        const mobAvatar = document.getElementById('mob-xp-avatar');
+        const mobVal = document.getElementById('mob-xp-val');
+        if (mobWrap) {
+            // Показываем кнопку входа вместо XP
+            mobWrap.style.display = 'none';
+        }
+
+        const mobProfile = document.getElementById('mob-profile-card');
+        const mobActions = document.getElementById('mob-actions');
+        if (mobProfile) mobProfile.style.display = 'none';
+        if (mobActions) mobActions.style.display = 'flex';
     }
 }
 
