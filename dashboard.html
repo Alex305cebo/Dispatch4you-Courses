@@ -1645,43 +1645,118 @@
 </script>
 
 <!-- Welcome overlay with countdown -->
-<div id="welcomeOverlay" style="display:none;position:fixed;inset:0;z-index:999999;background:rgba(7,11,20,0.97);backdrop-filter:blur(20px);display:none;align-items:center;justify-content:center;flex-direction:column;">
-  <div style="text-align:center;padding:40px;">
-    <div style="font-size:64px;margin-bottom:24px;">🎉</div>
-    <h1 id="welcomeName" style="font-size:32px;font-weight:900;color:#fff;margin-bottom:12px;">Добро пожаловать!</h1>
-    <p style="font-size:16px;color:#94a3b8;margin-bottom:40px;">Вы успешно вошли в систему</p>
-    <div style="width:80px;height:80px;margin:0 auto 24px;border-radius:50%;background:linear-gradient(135deg,#06b6d4,#0ea5e9);display:flex;align-items:center;justify-content:center;">
-      <span id="welcomeCount" style="font-size:36px;font-weight:900;color:#fff;">3</span>
-    </div>
-    <p style="font-size:14px;color:#64748b;">Переход на главную через <span id="welcomeCountText">3</span> сек...</p>
+<div id="welcomeOverlay" style="display:none;position:fixed;inset:0;z-index:999999;background:rgba(7,11,20,0.97);backdrop-filter:blur(20px);align-items:center;justify-content:center;flex-direction:column;">
+  <style>
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+    @keyframes ringProgress{from{stroke-dashoffset:220}to{stroke-dashoffset:0}}
+
+    #welcomeOverlay .w-inner{text-align:center;padding:40px 24px;animation:fadeInUp .5s ease both}
+    #welcomeOverlay .w-emoji{font-size:64px;display:block;margin-bottom:20px;animation:fadeInUp .5s ease .1s both}
+    #welcomeOverlay .w-title{font-size:clamp(24px,5vw,36px);font-weight:900;color:#fff;margin-bottom:8px;animation:fadeInUp .5s ease .2s both}
+    #welcomeOverlay .w-sub{font-size:16px;color:#94a3b8;margin-bottom:40px;animation:fadeInUp .5s ease .3s both}
+
+    #welcomeCircleBtn{
+      width:100px;height:100px;border-radius:50%;
+      background:linear-gradient(135deg,#06b6d4,#0ea5e9);
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;border:none;font-family:inherit;
+      position:relative;margin:0 auto 20px;
+      transition:transform .2s,box-shadow .2s;
+      animation:fadeInUp .5s ease .4s both, pulse 2s ease 1s infinite;
+      box-shadow:0 8px 32px rgba(6,182,212,.4);
+    }
+    #welcomeCircleBtn:hover{
+      transform:scale(1.12) !important;
+      box-shadow:0 16px 48px rgba(6,182,212,.6) !important;
+      animation:none !important;
+    }
+    #welcomeCircleBtn:active{transform:scale(1.05) !important}
+
+    #welcomeCircleBtn .ring{
+      position:absolute;inset:-6px;border-radius:50%;
+    }
+    #welcomeCircleBtn .ring circle{
+      fill:none;stroke:rgba(255,255,255,.25);stroke-width:3;
+    }
+    #welcomeCircleBtn .ring .progress{
+      stroke:#fff;stroke-linecap:round;
+      stroke-dasharray:220;stroke-dashoffset:220;
+      transform:rotate(-90deg);transform-origin:50% 50%;
+      transition:stroke-dashoffset 1s linear;
+    }
+    #welcomeCircleBtn .count-num{
+      font-size:40px;font-weight:900;color:#fff;
+      position:relative;z-index:1;line-height:1;
+    }
+
+    #welcomeOverlay .w-hint{
+      font-size:13px;color:#475569;
+      animation:fadeInUp .5s ease .5s both;
+    }
+    #welcomeOverlay .w-hint span{color:#94a3b8}
+  </style>
+
+  <div class="w-inner">
+    <span class="w-emoji">🎉</span>
+    <h1 class="w-title" id="welcomeName">Добро пожаловать!</h1>
+    <p class="w-sub">Вы успешно вошли в систему</p>
+
+    <button id="welcomeCircleBtn" onclick="goHome()" title="Перейти на главную">
+      <svg class="ring" viewBox="0 0 112 112">
+        <circle cx="56" cy="56" r="35"/>
+        <circle class="progress" id="welcomeRing" cx="56" cy="56" r="35"/>
+      </svg>
+      <span class="count-num" id="welcomeCount">3</span>
+    </button>
+
+    <p class="w-hint">Нажмите чтобы перейти сразу · или подождите <span id="welcomeCountText">3</span> сек</p>
   </div>
 </div>
 
 <script>
 (function() {
   var params = new URLSearchParams(window.location.search);
-  if (params.get('welcome') === '1') {
-    var overlay = document.getElementById('welcomeOverlay');
-    overlay.style.display = 'flex';
+  if (params.get('welcome') !== '1') return;
 
-    // Показываем имя пользователя
-    try {
-      var user = JSON.parse(localStorage.getItem('user') || '{}');
-      var name = user.firstName || '';
-      if (name) document.getElementById('welcomeName').textContent = 'Добро пожаловать, ' + name + '!';
-    } catch(e) {}
+  var overlay = document.getElementById('welcomeOverlay');
+  overlay.style.display = 'flex';
 
-    var count = 3;
-    var interval = setInterval(function() {
-      count--;
-      document.getElementById('welcomeCount').textContent = count;
-      document.getElementById('welcomeCountText').textContent = count;
-      if (count <= 0) {
-        clearInterval(interval);
-        window.location.href = 'index.html';
-      }
-    }, 1000);
-  }
+  // Имя пользователя
+  try {
+    var user = JSON.parse(localStorage.getItem('user') || '{}');
+    var name = user.firstName || '';
+    if (name) document.getElementById('welcomeName').textContent = 'Добро пожаловать, ' + name + '!';
+  } catch(e) {}
+
+  // Прогресс кольца: 220 = полный круг (2πr ≈ 220 при r=35)
+  var total = 3;
+  var count = total;
+  var ring = document.getElementById('welcomeRing');
+  var full = 220;
+
+  // Запускаем анимацию кольца
+  setTimeout(function() {
+    ring.style.strokeDashoffset = '0';
+    ring.style.transition = 'stroke-dashoffset ' + total + 's linear';
+  }, 50);
+
+  var interval = setInterval(function() {
+    count--;
+    document.getElementById('welcomeCount').textContent = count;
+    document.getElementById('welcomeCountText').textContent = count;
+    if (count <= 0) {
+      clearInterval(interval);
+      goHome();
+    }
+  }, 1000);
+
+  window.goHome = function() {
+    clearInterval(interval);
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity .3s ease';
+    setTimeout(function() { window.location.href = 'index.html'; }, 300);
+  };
 })();
 </script>
 
