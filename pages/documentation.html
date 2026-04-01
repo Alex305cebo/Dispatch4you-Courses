@@ -35,8 +35,8 @@
             --danger: #ef4444;
             --bg-dark: #0a0e1a;
             --bg-darker: #070b14;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
+            --text-primary: #ffffff;
+            --text-secondary:#e2e8f0;
             --border: rgba(255, 255, 255, 0.15);
         }
 
@@ -94,7 +94,7 @@
         .page-subtitle {
             animation: fadeInUp 1s ease 0.4s both;
             font-size: 20px;
-            color: var(--text-secondary);
+            color:#e2e8f0;
             max-width: 700px;
             margin: 0 auto;
         }
@@ -134,7 +134,7 @@
         .doc-section p {
             font-size: 17px;
             line-height: 1.8;
-            color: var(--text-secondary);
+            color:#e2e8f0;
             margin-bottom: 20px;
         }
 
@@ -294,7 +294,7 @@
 
         .level-header p {
             font-size: 15px;
-            color: var(--text-secondary);
+            color:#e2e8f0;
             margin: 0;
         }
 
@@ -420,7 +420,7 @@
 
         .module-card p {
             font-size: 14px;
-            color: var(--text-secondary);
+            color:#e2e8f0;
             margin-bottom: 16px;
             line-height: 1.5;
             flex: 1;
@@ -542,7 +542,7 @@
 
         .scroll-indicator-text {
             font-size: 12px;
-            color: var(--text-secondary);
+            color:#e2e8f0;
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 10px;
@@ -620,7 +620,7 @@
 
         .stat-box .label {
             font-size: 14px;
-            color: var(--text-secondary);
+            color:#e2e8f0;
             font-weight: 600;
         }
 
@@ -1111,7 +1111,7 @@
 
         /* Сектор 00: Навигация */
         .sector-navigation {
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
 
         .navigation-block {
@@ -1140,37 +1140,23 @@
         .navigation-toggle::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(14, 165, 233, 0.05));
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(6,182,212,0.1), rgba(14,165,233,0.05));
             opacity: 0;
             transition: opacity 0.3s ease;
         }
 
-        .navigation-toggle:hover::before {
-            opacity: 1;
-        }
-
-        .navigation-toggle:hover {
-            background: rgba(255, 255, 255, 0.05);
-            transform: translateY(-2px);
-        }
-
-        .navigation-toggle.active {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .navigation-toggle.active::before {
-            opacity: 1;
-        }
+        .navigation-toggle:hover::before { opacity: 1; }
+        .navigation-toggle:hover { background: rgba(255,255,255,0.05); transform: translateY(-2px); }
+        .navigation-toggle.active { background: rgba(255,255,255,0.05); }
+        .navigation-toggle.active::before { opacity: 1; }
+        .navigation-toggle.active .nav-arrow { transform: rotate(180deg); }
 
         .nav-icon {
             font-size: 28px;
-            position: relative;
-            z-index: 1;
-            filter: drop-shadow(0 2px 4px rgba(6, 182, 212, 0.3));
+            position: relative; z-index: 1;
+            filter: drop-shadow(0 2px 4px rgba(6,182,212,0.3));
         }
 
         .nav-title {
@@ -1183,20 +1169,14 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             letter-spacing: 0.5px;
-            position: relative;
-            z-index: 1;
+            position: relative; z-index: 1;
         }
 
         .nav-arrow {
             font-size: 18px;
             color: #06b6d4;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            z-index: 1;
-        }
-
-        .navigation-toggle.active .nav-arrow {
-            transform: rotate(180deg);
+            position: relative; z-index: 1;
         }
 
         .navigation-content {
@@ -1205,16 +1185,13 @@
             transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .navigation-content.active {
-            max-height: 2000px;
-        }
+        .navigation-content.active { max-height: 2000px; }
 
         .navigation-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
+            grid-template-columns: 2fr 2fr 1.5fr;
             gap: 32px;
-            padding: 40px 32px;
+            padding: 32px;
             background: rgba(255, 255, 255, 0.02);
         }
 
@@ -1227,98 +1204,108 @@
         .section-header {
             font-size: 11px;
             font-weight: 800;
-            color: #06b6d4;
-            letter-spacing: 1.5px;
+            letter-spacing: 0.1em;
             text-transform: uppercase;
-            margin: 0 0 16px 0;
-            padding-bottom: 12px;
+            color: #06b6d4;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
             border-bottom: 2px solid rgba(6, 182, 212, 0.2);
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
+
+        .section-arrow { display: none; }
 
         .section-items {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 6px;
+            grid-template-rows: repeat(8, auto);
+            grid-auto-flow: column;
+            gap: 8px;
+            counter-reset: nav-counter;
+        }
+
+        .nav-section:last-child .section-items {
+            grid-template-columns: 1fr 1fr;
         }
 
         .section-items a {
-            padding: 6px 14px;
-            color: var(--text-secondary);
+            padding: 10px 12px;
+            color:#e2e8f0;
             text-decoration: none;
+            border-radius: 10px;
             font-size: 13px;
             font-weight: 500;
-            border-radius: 10px;
             transition: all 0.2s ease;
-            border: 1px solid rgba(255,255,255,.08);
-            background: rgba(255,255,255,.02);
-            white-space: nowrap;
-            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255,255,255,0.08);
+            background: linear-gradient(135deg, rgba(6,182,212,0.05), rgba(14,165,233,0.03));
+            display: flex;
+            align-items: center;
+            gap: 2px;
             position: relative;
             overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            min-height: 44px;
         }
 
         .section-items a::before {
+            counter-increment: nav-counter;
+            content: counter(nav-counter);
+            font-size: 8px;
+            font-weight: 600;
+            color: rgba(6, 182, 212, 0.5);
+            min-width: 10px;
+            text-align: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            margin-left: -4px;
+        }
+
+        .section-items a::after {
             content: '';
             position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            width: 3px;
-            background: linear-gradient(135deg, #06b6d4, #0ea5e9);
-            transform: scaleY(0);
-            transition: transform 0.3s ease;
+            left: 0; top: 0;
+            height: 100%; width: 3px;
+            background: linear-gradient(180deg, #06b6d4, #0ea5e9);
+            opacity: 0;
+            transition: opacity 0.2s ease;
         }
 
         .section-items a:hover {
-            background: rgba(6, 182, 212, 0.08);
-            color: #06b6d4;
-            border-color: rgba(6, 182, 212, 0.2);
-            transform: translateX(4px);
+            background: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(14,165,233,0.1));
+            color: #67e8f9;
+            border-color: rgba(6,182,212,0.3);
+            transform: translateX(3px);
+            box-shadow: 0 4px 12px rgba(6,182,212,0.2);
         }
 
-        .section-items a:hover::before {
-            transform: scaleY(1);
-        }
+        .section-items a:hover::before { color: #06b6d4; }
+        .section-items a:hover::after { opacity: 1; }
 
         .section-items a.active {
-            background: rgba(6, 182, 212, 0.12);
-            color: #06b6d4;
-            border-color: rgba(6, 182, 212, 0.3);
+            background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(99,102,241,0.15));
+            color: #67e8f9;
+            border-color: rgba(6,182,212,0.5);
             font-weight: 600;
+            box-shadow: 0 0 0 1px rgba(6,182,212,0.2) inset, 0 4px 16px rgba(6,182,212,0.25);
         }
 
-        .section-items a.active::before {
-            transform: scaleY(1);
-        }
+        .section-items a.active::before { color: #06b6d4; }
+        .section-items a.active::after { opacity: 1; }
 
         @media (max-width: 1024px) {
-            .navigation-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 24px;
-            }
+            .navigation-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
         }
 
         @media (max-width: 640px) {
-            .navigation-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-                padding: 24px 20px;
-            }
-
-            .navigation-toggle {
-                padding: 18px 24px;
-            }
-
-            .nav-title {
-                font-size: 17px;
-            }
-
-            .nav-icon {
-                font-size: 24px;
-            }
+            .navigation-grid { grid-template-columns: 1fr; gap: 20px; padding: 24px 20px; }
+            .section-items { grid-template-columns: 1fr 1fr; }
+            .section-items a { padding: 8px 8px; font-size: 11px; min-height: 40px; line-height: 1.2; gap: 6px; }
+            .navigation-toggle { padding: 18px 20px; }
+            .nav-title { font-size: 16px; }
+            .section-header { cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; }
+            .section-header .section-arrow { display: inline-block; font-size: 12px; color: #06b6d4; transition: transform 0.3s ease; margin-left: 8px; }
+            .nav-section.collapsed .section-arrow { transform: rotate(-90deg); }
+            .nav-section.collapsed .section-items { display: none; }
         }
     </style>
 </head>
@@ -1385,50 +1372,50 @@
                 <div class="navigation-content" id="navigationContent">
                     <div class="navigation-grid">
                         <div class="nav-section">
-                            <h4 class="section-header">📖 РАЗДЕЛЫ<span class="section-arrow">▼</span></h4>
+                            <h4 class="section-header">▪ РАЗДЕЛЫ<span class="section-arrow">▼</span></h4>
                             <div class="section-items">
-                                <a href="intro.html" class="active">Введение</a>
-                                <a href="glossary.html">Глоссарий</a>
-                                <a href="role.html">Роль</a>
-                                <a href="equipment.html">Оборудование</a>
-                                <a href="routes.html">Маршруты</a>
-                                <a href="loadboards.html">Load Boards</a>
-                                <a href="negotiation.html">Переговоры</a>
-                                <a href="brokers.html">Брокеры</a>
-                                <a href="docs.html">Документы</a>
-                                <a href="regulations.html">Законы</a>
-                                <a href="technology.html">TMS</a>
-                                <a href="communication.html">Коммуникация</a>
-                                <a href="problems.html">Проблемы</a>
-                                <a href="finances.html">Финансы</a>
-                                <a href="career.html">Карьера</a>
+                                <a href="intro.html" class="active">📋 Введение</a>
+                                <a href="glossary.html">📖 Глоссарий</a>
+                                <a href="role.html">👤 Роль</a>
+                                <a href="equipment.html">🚛 Оборудование</a>
+                                <a href="routes.html">🗺 Маршруты</a>
+                                <a href="loadboards.html">📡 Load Boards</a>
+                                <a href="negotiation.html">🤝 Переговоры</a>
+                                <a href="brokers.html">💼 Брокеры</a>
+                                <a href="docs.html">📄 Документы</a>
+                                <a href="regulations.html">⚖️ Законы</a>
+                                <a href="technology.html">🖥 TMS</a>
+                                <a href="communication.html">📞 Коммуникация</a>
+                                <a href="problems.html">⚠️ Проблемы</a>
+                                <a href="finances.html">💰 Финансы</a>
+                                <a href="career.html">📈 Карьера</a>
                             </div>
                         </div>
 
                         <div class="nav-section">
-                            <h4 class="section-header">📘 МОДУЛИ<span class="section-arrow">▼</span></h4>
+                            <h4 class="section-header">▪ МОДУЛИ<span class="section-arrow">▼</span></h4>
                             <div class="section-items">
-                                <a href="doc-module-1-complete.html">Индустрия</a>
-                                <a href="doc-module-2-complete.html">Термины</a>
-                                <a href="doc-module-3-complete.html">Диспетчер</a>
-                                <a href="doc-module-4-complete.html">Load Boards</a>
-                                <a href="doc-module-5-complete.html">Маршруты</a>
-                                <a href="doc-module-6-complete.html">Оборудование</a>
-                                <a href="doc-module-7-complete.html">Переговоры</a>
-                                <a href="doc-module-8-complete.html">Брокеры</a>
-                                <a href="doc-module-9-complete.html">CSA Scores</a>
-                                <a href="doc-module-10-complete.html">Грузы</a>
-                                <a href="doc-module-11-complete.html">Проблемы</a>
-                                <a href="doc-module-12-complete.html">Карьера</a>
+                                <a href="doc-module-1-complete.html">🏭 Индустрия</a>
+                                <a href="doc-module-2-complete.html">📖 Термины</a>
+                                <a href="doc-module-3-complete.html">👤 Диспетчер</a>
+                                <a href="doc-module-4-complete.html">📡 Load Boards</a>
+                                <a href="doc-module-5-complete.html">🗺 Маршруты</a>
+                                <a href="doc-module-6-complete.html">🚛 Оборудование</a>
+                                <a href="doc-module-7-complete.html">🤝 Переговоры</a>
+                                <a href="doc-module-8-complete.html">💼 Брокеры</a>
+                                <a href="doc-module-9-complete.html">📊 CSA Scores</a>
+                                <a href="doc-module-10-complete.html">📦 Грузы</a>
+                                <a href="doc-module-11-complete.html">⚠️ Проблемы</a>
+                                <a href="doc-module-12-complete.html">📈 Карьера</a>
                             </div>
                         </div>
 
                         <div class="nav-section">
-                            <h4 class="section-header">⚡ ИНСТРУМЕНТЫ<span class="section-arrow">▼</span></h4>
+                            <h4 class="section-header">▪ ИНСТРУМЕНТЫ<span class="section-arrow">▼</span></h4>
                             <div class="section-items">
-                                <a href="simulator.html">🎯 Симулятор</a>
-                                <a href="testing.html">✍️ Тесты</a>
-                                <a href="cases.html">💼 Кейсы</a>
+                                <a href="simulator.html">🎮 Симулятор</a>
+                                <a href="testing.html">📝 Тесты</a>
+                                <a href="cases.html">🗂 Кейсы</a>
                                 <a href="load-finder.html">🔍 Load Finder</a>
                                 <a href="dispatcher-cards.html">🃏 Карточки</a>
                             </div>
@@ -2288,6 +2275,7 @@
 <script src="../course-navigation.js"></script>
 <link rel="stylesheet" href="../scroll-to-top.css">
 <script src="../scroll-to-top.js"></script>
+
 </body>
 
 </html>
