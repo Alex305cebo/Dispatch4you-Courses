@@ -9,6 +9,9 @@ import {
     getAuth, onAuthStateChanged, signOut,
     GoogleAuthProvider, signInWithPopup
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import {
+    getFirestore, doc, getDoc
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
 const FIREBASE_CONFIG = {
     apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
@@ -21,6 +24,7 @@ const FIREBASE_CONFIG = {
 
 const app = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
+const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ prompt: 'select_account' });
 
@@ -79,7 +83,7 @@ window.authLogout = async function (e) {
 // ── Auth State Listener ───────────────────────────────────────────
 let initialized = false;
 
-onAuthStateChanged(auth, (firebaseUser) => {
+onAuthStateChanged(auth, async (firebaseUser) => {
     if (firebaseUser) {
         const parts = (firebaseUser.displayName || '').trim().split(' ');
         const firstName = parts[0] || firebaseUser.email.split('@')[0];
@@ -93,6 +97,22 @@ onAuthStateChanged(auth, (firebaseUser) => {
         };
         localStorage.setItem('user', JSON.stringify(userData));
         initialized = true;
+
+        // Читаем XP из Firestore и кешируем
+        try {
+            const snap = await getDoc(doc(db, 'users', firebaseUser.uid));
+            if (snap.exists()) {
+                const data = snap.data();
+                const xp = data.xp || 0;
+                const xpData = {
+                    totalXP: xp,
+                    level: data.role || 1,
+                    lastUpdated: new Date().toISOString()
+                };
+                localStorage.setItem('xp_data', JSON.stringify(xpData));
+            }
+        } catch(e) {}
+
         updateNavUI(userData);
     } else {
         if (!initialized) {
@@ -180,11 +200,13 @@ function updateNavUI(user) {
             const emailEl = document.getElementById('mob-profile-email');
             const avatarEl = document.getElementById('mob-profile-avatar');
             const dashEl = document.getElementById('mob-profile-dash');
+            const xpEl = document.getElementById('mob-profile-xp');
             if (nameEl) nameEl.textContent = fullName;
             if (emailEl) emailEl.textContent = user.email || '';
+            if (xpEl) xpEl.textContent = '⚡ ' + xp + ' XP';
             if (avatarEl) {
                 if (user.photoURL) {
-                    avatarEl.innerHTML = `<img src="${user.photoURL}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;" onerror="this.textContent='${initials}'">`;
+                    avatarEl.innerHTML = `<img src="${user.photoURL}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;" onerror="this.parentElement.textContent='${initials}'">`;
                     avatarEl.style.background = 'none';
                     avatarEl.style.padding = '0';
                 } else {

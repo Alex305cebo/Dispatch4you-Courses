@@ -32,9 +32,10 @@
     <div id="mob-profile-card" style="display:none;margin-bottom:12px;padding:16px;background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.15));border:1px solid rgba(99,102,241,.3);border-radius:16px;">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
         <div id="mob-profile-avatar" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0;">👤</div>
-        <div>
-          <div id="mob-profile-name" style="font-size:15px;font-weight:700;color:#e0e7ff;"></div>
-          <div id="mob-profile-email" style="font-size:12px;color:#a5b4fc;"></div>
+        <div style="flex:1;min-width:0;">
+          <div id="mob-profile-name" style="font-size:15px;font-weight:700;color:#e0e7ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+          <div id="mob-profile-email" style="font-size:12px;color:#a5b4fc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+          <div id="mob-profile-xp" style="font-size:11px;color:#fbbf24;font-weight:700;margin-top:2px;">⚡ 0 XP</div>
         </div>
       </div>
       <div style="display:flex;gap:8px;">
@@ -89,16 +90,37 @@
                         mp.style.display = 'block';
                         var nameEl = document.getElementById('mob-profile-name');
                         var emailEl = document.getElementById('mob-profile-email');
+                        var xpEl = document.getElementById('mob-profile-xp');
                         if (nameEl) nameEl.textContent = [u.firstName, u.lastName].filter(Boolean).join(' ');
                         if (emailEl) emailEl.textContent = u.email || '';
+                        if (xpEl) {
+                            var xp = 0;
+                            try { xp = JSON.parse(localStorage.getItem('xp_data') || '{}').totalXP || 0; } catch(ex) {}
+                            xpEl.textContent = '⚡ ' + xp + ' XP';
+                        }
                         var avatarEl = document.getElementById('mob-profile-avatar');
                         if (avatarEl) {
                             var initials = ((u.firstName||'')[0]+(u.lastName||'')[0]).toUpperCase()||'👤';
-                            avatarEl.textContent = initials;
+                            if (u.photoURL) {
+                                avatarEl.innerHTML = '<img src="'+u.photoURL+'" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">';
+                                avatarEl.style.background = 'none';
+                            } else {
+                                avatarEl.textContent = initials;
+                            }
                         }
                     }
                     var mobWrap = document.getElementById('mob-xp-wrap');
-                    if (mobWrap) mobWrap.style.display = 'flex';
+                    if (mobWrap) {
+                        mobWrap.style.display = 'flex';
+                        var mobAvatar = document.getElementById('mob-xp-avatar');
+                        var mobVal = document.getElementById('mob-xp-val');
+                        if (mobAvatar && u.firstName) mobAvatar.textContent = ((u.firstName||'')[0]+(u.lastName||'')[0]).toUpperCase();
+                        if (mobVal) {
+                            var xp2 = 0;
+                            try { xp2 = JSON.parse(localStorage.getItem('xp_data') || '{}').totalXP || 0; } catch(ex) {}
+                            mobVal.textContent = '⚡ ' + xp2 + ' XP';
+                        }
+                    }
                 }
             } catch(e) {}
         }
