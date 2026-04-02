@@ -582,7 +582,26 @@ const TranscriptDisplay={
 };
 
 // Init AI
-(async()=>{try{const r=await fetch(GU,{method:'POST',mode:'cors',headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},body:JSON.stringify({model:MD,messages:[{role:'user',content:'ping'}],max_tokens:5})});$('dot').classList.toggle('on',r.ok);$('bStat').textContent=r.ok?'Онлайн':'Офлайн'}catch(e){$('bStat').textContent='Офлайн'}})();
+(async()=>{
+  try{
+    console.log('[AI] Testing connection to Groq API...');
+    const r=await fetch(GU,{method:'POST',mode:'cors',headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},body:JSON.stringify({model:MD,messages:[{role:'user',content:'ping'}],max_tokens:5})});
+    console.log('[AI] Test response status:', r.status);
+    if(!r.ok){
+      const errorText = await r.text();
+      console.error('[AI] Test failed:', r.status, errorText);
+    }
+    $('dot').classList.toggle('on',r.ok);
+    $('bStat').textContent=r.ok?'Онлайн':'Офлайн';
+    if(!r.ok){
+      showNotification('⚠️ AI брокер недоступен. Проверьте подключение.','warning');
+    }
+  }catch(e){
+    console.error('[AI] Connection test failed:', e);
+    $('bStat').textContent='Офлайн';
+    showNotification('❌ Не удалось подключиться к AI. Проверьте интернет.','error');
+  }
+})();
 
 // Speech Recognition
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -805,22 +824,27 @@ async function callAI(msg){
     const msgs=[{role:'system',content:sp},...hist.slice(-10)];
     const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),8000);
     try{
+        console.log('[AI] Sending request to Groq API...');
         const r=await fetch(GU,{method:'POST',mode:'cors',signal:ctrl.signal,headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},body:JSON.stringify({model:MD,messages:msgs,temperature:.92,max_tokens:150,top_p:.95})});
         clearTimeout(t);
+        console.log('[AI] Response status:', r.status);
         if(!r.ok){
-            console.error('AI API error:',r.status,r.statusText);
+            const errorText = await r.text();
+            console.error('[AI] API error:', r.status, r.statusText, errorText);
             $('dot').classList.remove('on');
             throw new Error(`API_ERROR_${r.status}`);
         }
         const d=await r.json();
+        console.log('[AI] Response received:', d);
         $('dot').classList.add('on');
         if(!d.choices?.[0]?.message?.content){
+            console.error('[AI] Empty response:', d);
             throw new Error('EMPTY_RESPONSE');
         }
         return d.choices[0].message.content;
     }catch(e){
         clearTimeout(t);
-        console.error('AI call failed:',e);
+        console.error('[AI] Call failed:', e);
         $('dot').classList.remove('on');
         // Show error to user instead of fallback
         if(e.name==='AbortError'){
@@ -832,8 +856,11 @@ async function callAI(msg){
         }else if(e.message.includes('API_ERROR_401')){
             showNotification('🔒 Ошибка авторизации AI. Обратитесь к администратору.','error');
             throw new Error('AUTH_ERROR');
+        }else if(e.message.includes('Failed to fetch')){
+            showNotification('🌐 Ошибка сети. Проверьте подключение к интернету.','error');
+            throw new Error('NETWORK_ERROR');
         }else{
-            showNotification('❌ Ошибка AI. Попробуйте ещё раз.','error');
+            showNotification('❌ Ошибка AI: ' + e.message,'error');
             throw new Error('AI_ERROR');
         }
     }
