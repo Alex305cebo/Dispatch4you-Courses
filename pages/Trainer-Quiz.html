@@ -36,81 +36,112 @@ body::before{content:'';position:fixed;inset:0;background:
 
 /* ── BANNER CARDS ── */
 .banner-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:8px 0}
-.banner-card{position:relative;border-radius:20px;padding:24px 22px;cursor:pointer;
-  overflow:hidden;transition:all .35s cubic-bezier(.4,0,.2,1);
-  border:1px solid transparent;min-height:140px;
-  display:flex;flex-direction:column;justify-content:space-between}
-.banner-card::before{content:'';position:absolute;inset:0;border-radius:20px;opacity:0;
-  transition:opacity .3s;pointer-events:none}
-.banner-card:hover{transform:translateY(-4px)}
+.banner-card{position:relative;border-radius:22px;padding:22px 20px;cursor:pointer;
+  overflow:hidden;transition:all .4s cubic-bezier(.4,0,.2,1);
+  border:2px solid transparent;min-height:150px;
+  display:flex;flex-direction:column;justify-content:space-between;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+/* Анимированная светящаяся рамка */
+.banner-card::before{content:'';position:absolute;inset:-2px;border-radius:24px;padding:2px;
+  background:conic-gradient(from var(--angle,0deg),transparent 40%,var(--glow) 50%,transparent 60%);
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+  opacity:0;transition:opacity .4s;pointer-events:none;animation:bannerGlow 4s linear infinite}
 .banner-card:hover::before{opacity:1}
+.banner-card.on::before{opacity:.6}
+@property --angle{syntax:'<angle>';initial-value:0deg;inherits:false}
+@keyframes bannerGlow{from{--angle:0deg}to{--angle:360deg}}
+/* Стрелка "нажми" */
+.banner-card::after{content:'→';position:absolute;bottom:18px;right:20px;
+  font-size:22px;font-weight:900;color:var(--glow);opacity:.15;
+  transition:all .35s cubic-bezier(.4,0,.2,1);z-index:2}
+.banner-card:hover::after{opacity:.7;transform:translateX(6px)}
+.banner-card.on::after{opacity:.4}
+/* Hover подъём + тень */
+.banner-card:hover{transform:translateY(-6px) scale(1.01)}
+.banner-card:active{transform:translateY(-2px) scale(.99);transition-duration:.1s}
 .banner-card.on{transform:translateY(0)}
 
-/* Cards banner — cyan/blue theme */
-.banner-cards{
-  background:linear-gradient(145deg,rgba(6,182,212,.12) 0%,rgba(99,102,241,.08) 50%,rgba(6,182,212,.04) 100%);
-  border-color:rgba(6,182,212,.2);
-  box-shadow:0 4px 24px rgba(6,182,212,.06)}
-.banner-cards::before{background:radial-gradient(circle at 90% 10%,rgba(6,182,212,.15),transparent 60%)}
-.banner-cards::after{content:'📚';position:absolute;top:-10px;right:-10px;font-size:80px;opacity:.06;
-  pointer-events:none;transform:rotate(12deg)}
-.banner-cards.on{border-color:rgba(6,182,212,.4);
-  box-shadow:0 8px 32px rgba(6,182,212,.15),0 0 0 1px rgba(6,182,212,.1) inset}
-.banner-cards:hover{border-color:rgba(6,182,212,.35);box-shadow:0 8px 32px rgba(6,182,212,.12)}
+/* Карточки — cyan/indigo */
+.banner-cards{--glow:#06b6d4;
+  background:linear-gradient(160deg,rgba(6,182,212,.14) 0%,rgba(99,102,241,.08) 40%,rgba(15,22,35,.95) 100%);
+  border-color:rgba(6,182,212,.25);
+  box-shadow:0 4px 20px rgba(6,182,212,.08),0 0 0 1px rgba(6,182,212,.06) inset}
+.banner-cards.on{border-color:rgba(6,182,212,.45);
+  box-shadow:0 8px 40px rgba(6,182,212,.18),0 0 0 1px rgba(6,182,212,.12) inset,
+  0 0 60px -10px rgba(6,182,212,.1)}
+.banner-cards:hover{border-color:rgba(6,182,212,.4);
+  box-shadow:0 12px 40px rgba(6,182,212,.2),0 0 80px -10px rgba(6,182,212,.12)}
 
-/* Cases banner — orange/purple theme */
-.banner-cases{
-  background:linear-gradient(145deg,rgba(249,115,22,.1) 0%,rgba(168,85,247,.08) 50%,rgba(249,115,22,.03) 100%);
-  border-color:rgba(249,115,22,.18);
-  box-shadow:0 4px 24px rgba(249,115,22,.05)}
-.banner-cases::before{background:radial-gradient(circle at 90% 10%,rgba(249,115,22,.12),transparent 60%)}
-.banner-cases::after{content:'💼';position:absolute;top:-10px;right:-10px;font-size:80px;opacity:.06;
-  pointer-events:none;transform:rotate(-8deg)}
-.banner-cases.on{border-color:rgba(249,115,22,.4);
-  box-shadow:0 8px 32px rgba(249,115,22,.15),0 0 0 1px rgba(249,115,22,.1) inset}
-.banner-cases:hover{border-color:rgba(249,115,22,.3);box-shadow:0 8px 32px rgba(249,115,22,.1)}
+/* Кейсы — orange/purple */
+.banner-cases{--glow:#f97316;
+  background:linear-gradient(160deg,rgba(249,115,22,.12) 0%,rgba(168,85,247,.08) 40%,rgba(15,22,35,.95) 100%);
+  border-color:rgba(249,115,22,.2);
+  box-shadow:0 4px 20px rgba(249,115,22,.06),0 0 0 1px rgba(249,115,22,.05) inset}
+.banner-cases.on{border-color:rgba(249,115,22,.45);
+  box-shadow:0 8px 40px rgba(249,115,22,.18),0 0 0 1px rgba(249,115,22,.12) inset,
+  0 0 60px -10px rgba(249,115,22,.1)}
+.banner-cases:hover{border-color:rgba(249,115,22,.4);
+  box-shadow:0 12px 40px rgba(249,115,22,.2),0 0 80px -10px rgba(249,115,22,.12)}
 
-.banner-top{display:flex;align-items:center;gap:12px;margin-bottom:12px;position:relative;z-index:1}
-.banner-icon{font-size:32px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))}
+/* Фоновый эмодзи-декор */
+.banner-deco{position:absolute;top:-8px;right:-8px;font-size:72px;opacity:.05;
+  pointer-events:none;z-index:0}
+
+.banner-top{display:flex;align-items:center;gap:12px;margin-bottom:10px;position:relative;z-index:1}
+.banner-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  font-size:24px;flex-shrink:0;position:relative}
+.banner-cards .banner-icon{background:linear-gradient(135deg,rgba(6,182,212,.2),rgba(99,102,241,.15));
+  border:1px solid rgba(6,182,212,.3);box-shadow:0 4px 12px rgba(6,182,212,.15)}
+.banner-cases .banner-icon{background:linear-gradient(135deg,rgba(249,115,22,.2),rgba(168,85,247,.15));
+  border:1px solid rgba(249,115,22,.25);box-shadow:0 4px 12px rgba(249,115,22,.12)}
+/* Пульсация иконки */
+.banner-card:hover .banner-icon{animation:bannerPulse 1.5s ease infinite}
+@keyframes bannerPulse{0%,100%{box-shadow:0 4px 12px rgba(6,182,212,.15)}
+  50%{box-shadow:0 4px 20px rgba(6,182,212,.35)}}
+.banner-cases:hover .banner-icon{animation-name:bannerPulseOrange}
+@keyframes bannerPulseOrange{0%,100%{box-shadow:0 4px 12px rgba(249,115,22,.12)}
+  50%{box-shadow:0 4px 20px rgba(249,115,22,.3)}}
+
 .banner-title{font-size:18px;font-weight:900;color:var(--t1);letter-spacing:-.3px;line-height:1.2}
 .banner-subtitle{font-size:11px;color:var(--t3);font-weight:600;margin-top:2px}
 
-.banner-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;position:relative;z-index:1}
-.banner-stat{text-align:center;padding:6px 4px;background:rgba(255,255,255,.03);
-  border:1px solid rgba(255,255,255,.06);border-radius:10px}
+.banner-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px;position:relative;z-index:1}
+.banner-stat{text-align:center;padding:5px 3px;background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.05);border-radius:10px;transition:all .2s}
+.banner-card:hover .banner-stat{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.08)}
 .banner-stat-val{font-size:16px;font-weight:900;line-height:1.2}
-.banner-stat-lbl{font-size:9px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
+.banner-stat-lbl{font-size:8px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
 
 .banner-prog-wrap{display:flex;align-items:center;gap:10px;position:relative;z-index:1}
 .banner-prog-bar-full{flex:1;height:6px;background:rgba(255,255,255,.06);border-radius:6px;overflow:hidden;
-  box-shadow:inset 0 1px 2px rgba(0,0,0,.15)}
-.banner-prog-fill{height:100%;border-radius:6px;transition:width .6s ease}
-.banner-cards .banner-prog-fill{background:linear-gradient(90deg,var(--p),#6366f1)}
-.banner-cases .banner-prog-fill{background:linear-gradient(90deg,#f97316,#a855f7)}
-.banner-prog-pct{font-size:13px;font-weight:900;min-width:32px;text-align:right}
-.banner-cards .banner-prog-pct{color:var(--p)}
-.banner-cases .banner-prog-pct{color:#f97316}
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.2)}
+.banner-prog-fill{height:100%;border-radius:6px;transition:width .6s ease;position:relative}
+.banner-cards .banner-prog-fill{background:linear-gradient(90deg,#06b6d4,#6366f1);
+  box-shadow:0 0 8px rgba(6,182,212,.4)}
+.banner-cases .banner-prog-fill{background:linear-gradient(90deg,#f97316,#a855f7);
+  box-shadow:0 0 8px rgba(249,115,22,.4)}
+.banner-prog-pct{font-size:14px;font-weight:900;min-width:32px;text-align:right}
+.banner-cards .banner-prog-pct{background:linear-gradient(135deg,#06b6d4,#6366f1);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.banner-cases .banner-prog-pct{background:linear-gradient(135deg,#f97316,#a855f7);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 
-.banner-count{font-size:13px;font-weight:800;padding:4px 12px;border-radius:20px;
-  min-width:32px;text-align:center}
-.banner-cards .banner-count{background:linear-gradient(135deg,var(--p),var(--s));color:#fff;
-  box-shadow:0 2px 8px rgba(6,182,212,.4)}
-.banner-cases .banner-count{background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;
-  box-shadow:0 2px 8px rgba(249,115,22,.4)}
-
-.banner-stats-link{text-align:center;padding:6px 0 0}
-.banner-stats-btn{background:none;border:none;color:var(--t3);font-size:12px;font-weight:600;
-  cursor:pointer;font-family:inherit;transition:.2s;padding:4px 12px}
-.banner-stats-btn:hover{color:var(--p)}
+.banner-stats-link{text-align:center;padding:8px 0 0}
+.banner-stats-btn{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
+  border-radius:20px;color:var(--t3);font-size:12px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:.2s;padding:6px 18px}
+.banner-stats-btn:hover{background:rgba(6,182,212,.08);border-color:rgba(6,182,212,.2);color:var(--p)}
 
 @media(max-width:768px){
   .banner-row{grid-template-columns:1fr;gap:10px}
   .banner-card{min-height:auto;padding:16px 14px}
   .banner-title{font-size:16px}
-  .banner-icon{font-size:26px}
+  .banner-icon{width:40px;height:40px;font-size:20px;border-radius:12px}
   .banner-stats-row{gap:4px}
   .banner-stat-val{font-size:14px}
-  .banner-stat{padding:5px 3px}
+  .banner-stat{padding:4px 2px}
+  .banner-card::after{font-size:18px;bottom:14px;right:14px}
 }
 
 .tb{
@@ -1122,6 +1153,7 @@ body::before{content:'';position:fixed;inset:0;background:
 <div class="tabs-sticky">
   <div class="banner-row">
     <div class="banner-card banner-cards on" onclick="tab('cards')" id="t-cards">
+      <div class="banner-deco">📚</div>
       <div class="banner-top">
         <div class="banner-icon">🧠</div>
         <div>
@@ -1141,6 +1173,7 @@ body::before{content:'';position:fixed;inset:0;background:
       </div>
     </div>
     <div class="banner-card banner-cases" onclick="tab('cases')" id="t-cases">
+      <div class="banner-deco">💼</div>
       <div class="banner-top">
         <div class="banner-icon">💬</div>
         <div>
