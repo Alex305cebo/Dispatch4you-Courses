@@ -186,6 +186,12 @@ function applyUI(user, xpOverride) {
         }
         if (mobActions) mobActions.style.display = 'none';
 
+        // Show stats icon for all logged-in users
+        const statsIcon = document.getElementById('nav-stats-icon');
+        if (statsIcon) statsIcon.style.display = 'flex';
+        const mobStatsLink = document.getElementById('mob-stats-link');
+        if (mobStatsLink) mobStatsLink.style.display = '';
+
     } else {
         // Не залогинен
         navActions.innerHTML = `
@@ -206,6 +212,12 @@ function applyUI(user, xpOverride) {
         const mobActions = document.getElementById('mob-actions');
         if (mobProfile) mobProfile.style.display = 'none';
         if (mobActions) mobActions.style.display = 'flex';
+
+        // Hide stats icon when not logged in
+        const statsIcon = document.getElementById('nav-stats-icon');
+        if (statsIcon) statsIcon.style.display = 'none';
+        const mobStatsLink = document.getElementById('mob-stats-link');
+        if (mobStatsLink) mobStatsLink.style.display = 'none';
     }
 }
 

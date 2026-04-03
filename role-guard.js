@@ -53,6 +53,7 @@
     'pages/home.html',
     'pages/modules-index.html',
     'pages/analytics.html',
+    'pages/users-stats.html',
     'pages/doc-module-1-complete.html', // Модуль 1 — бесплатный
     'dashboard.html'
   ];

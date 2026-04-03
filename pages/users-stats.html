@@ -157,6 +157,7 @@ body::before{content:'';position:fixed;inset:0;background:
 .error-box button{margin-top:12px;padding:8px 20px;border-radius:8px;border:none;
   background:var(--primary);color:#fff;font-weight:700;cursor:pointer;font-family:inherit}
 .no-access{text-align:center;padding:80px 20px;color:var(--muted);font-size:16px}
+.lb-me{background:rgba(102,126,234,.08);border:1px solid rgba(102,126,234,.15);border-radius:10px}
 
 /* Responsive */
 @media(max-width:1024px){
@@ -230,8 +231,8 @@ body::before{content:'';position:fixed;inset:0;background:
     </div>
   </div>
 
-  <!-- Controls -->
-  <div class="ctrl">
+  <!-- Controls (admin only) -->
+  <div class="ctrl admin-only">
     <div class="ctrl-srch"><span class="ctrl-srch-ic">🔍</span>
       <input type="text" id="search-input" placeholder="Поиск по имени или email..." oninput="applyFilters()">
     </div>
@@ -249,14 +250,17 @@ body::before{content:'';position:fixed;inset:0;background:
     <button class="btn-csv" id="csv-btn" onclick="exportCSV()" disabled>📥 CSV</button>
   </div>
 
-  <!-- User Cards -->
-  <div class="uc-grid" id="users-grid"></div>
+  <!-- User Cards (admin only) -->
+  <div class="uc-grid admin-only" id="users-grid"></div>
+
+  <!-- My Stats Card (regular users) -->
+  <div id="my-stats-card" style="display:none"></div>
 </div>
 
 <!-- Loading -->
 <div id="loading-state" class="loading"><div class="spinner"></div>Загрузка данных...</div>
 <div id="error-state" class="error-box" style="display:none">❌ Ошибка загрузки<br><button onclick="loadData()">Повторить</button></div>
-<div id="no-access" class="no-access" style="display:none">🔒 Нет доступа. Только для администраторов.</div>
+<div id="no-access" class="no-access" style="display:none">🔒 Нет доступа. Войдите в аккаунт.</div>
 
 <!-- Modal -->
 <div class="modal-ov" id="modal-overlay" onclick="if(event.target===this)closeModal()">
@@ -290,19 +294,24 @@ let filteredUsers=[];
 let actChart=null;
 let chartPeriod=7;
 let lbCrit='xp';
+let isSuperuser=false;
+let currentUserId=null;
 
 // ═══ AUTH CHECK ═══
 onAuthStateChanged(auth,async(user)=>{
   if(!user){document.getElementById('loading-state').style.display='none';document.getElementById('no-access').style.display='block';return;}
+  currentUserId=user.uid;
   try{
     const{doc:docRef,getDoc:getDocFn}=await import("https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js");
     const uDoc=await getDocFn(docRef(db,'users',user.uid));
     const role=uDoc.exists()?uDoc.data().role:0;
-    if(role<10&&user.email!=='alex305cebo@gmail.com'){
-      document.getElementById('loading-state').style.display='none';
-      document.getElementById('no-access').style.display='block';return;
-    }
+    isSuperuser=(role>=10||user.email==='alex305cebo@gmail.com');
   }catch(e){console.error(e);}
+  // Показываем/скрываем admin-only элементы
+  document.querySelectorAll('.admin-only').forEach(el=>{el.style.display=isSuperuser?'':'none';});
+  if(!isSuperuser){
+    document.querySelector('.hero p').textContent='Общая статистика и рейтинг платформы';
+  }
   loadData();
 });
 
@@ -353,7 +362,9 @@ window.loadData=async function(){
     LEVELS.forEach(l=>{sel.innerHTML+=`<option value="${l.level}">${l.label}</option>`;});
     document.getElementById('loading-state').style.display='none';
     document.getElementById('main-content').style.display='block';
-    renderOverview();renderChart();renderLeaderboard();applyFilters();
+    renderOverview();renderChart();renderLeaderboard();
+    if(isSuperuser){applyFilters();}
+    renderMyStats();
   }catch(e){
     console.error(e);
     document.getElementById('loading-state').style.display='none';
@@ -425,10 +436,13 @@ function renderLeaderboard(){
   document.getElementById('leaderboard').innerHTML=sorted.map((u,i)=>{
     const val=lbCrit==='xp'?u.xp+' XP':lbCrit==='streak'?u.loginStreak+'🔥':
       Math.round((u.courseProgress/15+u.moduleProgress/12+u.caseProgress/50+u.cardProgress/80)/4*100)+'%';
-    return`<div class="lb-row" onclick="openModal('${u.id}')">
+    const displayName=isSuperuser?u.name:(u.id===currentUserId?u.name+'  ⭐':(u.name.split(' ')[0]||(u.name||'?').charAt(0).toUpperCase()));
+    const clickAttr=isSuperuser?`onclick="openModal('${u.id}')"`:u.id===currentUserId?`onclick="openModal('${u.id}')"`:'';
+    const isMe=u.id===currentUserId?' lb-me':'';
+    return`<div class="lb-row${isMe}" ${clickAttr} ${!clickAttr?'style="cursor:default"':''}>
       <div class="lb-rank">${i<3?medals[i]:(i+1)}</div>
-      <div class="lb-av">${u.photoURL?`<img src="${u.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:(u.name||'?')[0].toUpperCase()}</div>
-      <div class="lb-name">${u.name}</div>
+      <div class="lb-av">${u.photoURL&&isSuperuser?`<img src="${u.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:(u.name||'?')[0].toUpperCase()}</div>
+      <div class="lb-name">${displayName}</div>
       <span class="role-badge role-${u.role}">${u.level.label}</span>
       <div class="lb-val">${val}</div>
     </div>`;
@@ -504,8 +518,81 @@ function renderCards(){
   }).join('');
 }
 
+// ═══ MY STATS (regular users) ═══
+function renderMyStats(){
+  if(isSuperuser){document.getElementById('my-stats-card').style.display='none';return;}
+  const me=allUsers.find(u=>u.id===currentUserId);
+  const card=document.getElementById('my-stats-card');
+  if(!me){card.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted)">Ваш профиль не найден</div>';card.style.display='block';return;}
+  const bars=[
+    {lbl:'Курс',val:me.courseProgress,max:15,color:'#667eea'},
+    {lbl:'Модули',val:me.moduleProgress,max:12,color:'#10b981'},
+    {lbl:'Кейсы',val:me.caseProgress,max:50,color:'#f59e0b'},
+    {lbl:'Карточки',val:me.cardProgress,max:80,color:'#ec4899'}
+  ];
+  const nextXP=me.nextLevel?me.nextLevel.minXP:me.xp;
+  const prevXP=me.level.minXP;
+  const progPct=nextXP>prevXP?Math.round((me.xp-prevXP)/(nextXP-prevXP)*100):100;
+  // Find my rank
+  const sorted=[...allUsers].sort((a,b)=>b.xp-a.xp);
+  const myRank=sorted.findIndex(u=>u.id===currentUserId)+1;
+  card.style.display='block';
+  card.innerHTML=`
+    <div style="background:var(--card);border:1px solid rgba(102,126,234,.2);border-radius:16px;padding:20px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+        <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;flex-shrink:0;overflow:hidden">
+          ${me.photoURL?`<img src="${me.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:((me.name||'?')[0].toUpperCase())}
+        </div>
+        <div style="flex:1">
+          <div style="font-size:18px;font-weight:800;color:var(--t1)">${me.name}</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+            <span class="role-badge role-${me.role}">${me.level.label}</span>
+            <span style="font-size:13px;font-weight:800;color:var(--warn)">⚡${me.xp} XP</span>
+            <span style="font-size:12px;color:var(--muted)">· Место #${myRank} из ${allUsers.length}</span>
+          </div>
+        </div>
+        <button onclick="openModal('${me.id}')" style="padding:8px 16px;border-radius:10px;border:1px solid rgba(102,126,234,.3);background:rgba(102,126,234,.1);color:var(--primary);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:.2s">Подробнее</button>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span style="font-size:11px;color:var(--muted)">До ${me.nextLevel?me.nextLevel.label:'MAX'}</span>
+          <span style="font-size:11px;color:var(--muted);margin-left:auto">${me.nextLevel?me.xp+'/'+me.nextLevel.minXP+' XP':'MAX'}</span>
+        </div>
+        <div style="height:6px;background:rgba(255,255,255,.06);border-radius:6px;overflow:hidden">
+          <div style="height:100%;width:${progPct}%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:6px"></div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
+        <div style="text-align:center;padding:10px 6px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px">
+          <div style="font-size:18px;font-weight:900;color:var(--t1)">🔥${me.loginStreak}</div><div style="font-size:9px;color:var(--muted);margin-top:2px;font-weight:600">Streak</div>
+        </div>
+        <div style="text-align:center;padding:10px 6px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px">
+          <div style="font-size:18px;font-weight:900;color:var(--ok)">${me.accuracy}%</div><div style="font-size:9px;color:var(--muted);margin-top:2px;font-weight:600">Точность</div>
+        </div>
+        <div style="text-align:center;padding:10px 6px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px">
+          <div style="font-size:18px;font-weight:900;color:var(--t1)">${me.totalAnswers}</div><div style="font-size:9px;color:var(--muted);margin-top:2px;font-weight:600">Ответов</div>
+        </div>
+        <div style="text-align:center;padding:10px 6px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px">
+          <div style="font-size:18px;font-weight:900;color:var(--t1)">${me.maxStreak}</div><div style="font-size:9px;color:var(--muted);margin-top:2px;font-weight:600">Макс streak</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${bars.map(b=>{const pct=b.max?Math.round(b.val/b.max*100):0;
+          return`<div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;color:var(--muted);width:70px;flex-shrink:0;font-weight:600">${b.lbl}</span>
+            <div style="flex:1;height:6px;background:rgba(255,255,255,.06);border-radius:6px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:${b.color};border-radius:6px"></div>
+            </div>
+            <span style="font-size:11px;color:var(--t3);width:40px;text-align:right;font-weight:600">${b.val}/${b.max}</span>
+          </div>`;}).join('')}
+      </div>
+    </div>`;
+}
+
 // ═══ MODAL ═══
 window.openModal=function(id){
+  // Regular users can only view their own profile
+  if(!isSuperuser&&id!==currentUserId)return;
   const u=allUsers.find(x=>x.id===id);if(!u)return;
   const fmtDate=d=>d?d.toLocaleDateString('ru',{day:'numeric',month:'short',year:'numeric'}):'-';
   const fmtTime=d=>d?d.toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'-';
