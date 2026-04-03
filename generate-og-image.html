@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Generate OG Image</title></head>
+<body style="background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;">
+<canvas id="c" width="1200" height="630"></canvas>
+<script>
+const c=document.getElementById('c');
+const ctx=c.getContext('2d');
+
+// Background
+const bg=ctx.createLinearGradient(0,0,1200,630);
+bg.addColorStop(0,'#070b14');
+bg.addColorStop(0.5,'#0d1117');
+bg.addColorStop(1,'#070b14');
+ctx.fillStyle=bg;
+ctx.fillRect(0,0,1200,630);
+
+// Top accent line
+const accent=ctx.createLinearGradient(0,0,1200,0);
+accent.addColorStop(0,'#06b6d4');
+accent.addColorStop(0.5,'#8b5cf6');
+accent.addColorStop(1,'#f97316');
+ctx.fillStyle=accent;
+ctx.fillRect(0,0,1200,4);
+ctx.fillRect(0,626,1200,4);
+
+// Glow circles
+ctx.beginPath();
+ctx.arc(150,315,200,0,Math.PI*2);
+ctx.fillStyle='rgba(6,182,212,0.06)';
+ctx.fill();
+
+ctx.beginPath();
+ctx.arc(1050,315,250,0,Math.PI*2);
+ctx.fillStyle='rgba(249,115,22,0.04)';
+ctx.fill();
+
+// Emoji + Title
+ctx.textAlign='center';
+ctx.font='900 64px Inter,Arial,sans-serif';
+ctx.fillStyle='#ffffff';
+ctx.fillText('🚛  Курсы Диспетчера',600,220);
+
+// Subtitle
+ctx.font='700 40px Inter,Arial,sans-serif';
+ctx.fillStyle='#06b6d4';
+ctx.fillText('Грузоперевозки США',600,300);
+
+// Description
+ctx.font='500 22px Inter,Arial,sans-serif';
+ctx.fillStyle='#94a3b8';
+ctx.fillText('Обучение с нуля · Практика на реальных кейсах',600,380);
+ctx.fillText('Поддержка до первой работы',600,415);
+
+// Domain pill
+ctx.beginPath();
+ctx.roundRect(440,475,320,50,25);
+ctx.fillStyle='rgba(6,182,212,0.15)';
+ctx.fill();
+ctx.strokeStyle='#06b6d4';
+ctx.lineWidth=1.5;
+ctx.stroke();
+
+ctx.font='700 20px Inter,Arial,sans-serif';
+ctx.fillStyle='#06b6d4';
+ctx.fillText('dispatch4you.com',600,507);
+
+// Download link
+const link=document.createElement('a');
+link.download='og-image.png';
+link.href=c.toDataURL('image/png');
+link.textContent='⬇️ Скачать og-image.png';
+link.style.cssText='display:block;text-align:center;margin:20px;color:#06b6d4;font-size:20px;font-family:sans-serif;';
+document.body.appendChild(link);
+link.click();
+</script>
+</body>
+</html>
