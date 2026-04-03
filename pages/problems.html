@@ -208,6 +208,11 @@
                 height: 45px;
             }
         }
+
+        /* Принудительный чёрный цвет текста в документах */
+        #detention-log p, #detention-log strong, #detention-log td, #detention-log th,
+        #tonu-letter p, #tonu-letter strong, #tonu-letter td, #tonu-letter th { color: #000 !important; }
+        .rc-field:hover { box-shadow: 0 2px 8px rgba(6,182,212,0.15) !important; border-color: #06b6d4 !important; }
     </style>
     <script type="module" src="../firebase-auth-init.js?v=4.0"></script>
 </head>
@@ -408,6 +413,58 @@
                     4) Водитель фиксирует время начала загрузки/разгрузки и время отъезда. 
                     5) Отправьте detention invoice с timestamps и фото.</p>
                     <div class="pc-solution">✅ Предотвращение: Уточняйте detention policy ДО букинга. Прописывайте в Rate Con. Планируйте appointments, избегайте FCFS (First Come First Served).</div>
+                    <!-- ИНТЕРАКТИВНЫЙ ДОКУМЕНТ: DETENTION LOG -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:16px;">
+                        <div>
+                            <h4 style="font-size:14px;font-weight:700;color:var(--text-primary);margin:0 0 8px 0;">📋 Что фиксировать</h4>
+                            <div class="rc-field" data-section="Время прибытия" data-tooltip="Момент прибытия на объект.<br><br>Водитель делает фото с GPS timestamp сразу при въезде. Это точка отсчёта detention clock. Без этого фото — брокер может оспорить время." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:all 0.2s ease;position:relative;">
+                                <p style="font-size:12px;font-weight:600;color:#06b6d4;margin:0 0 2px 0;">✓ Время прибытия</p>
+                                <p style="font-size:11px;color:#e2e8f0;margin:0;line-height:1.4;">Фото + GPS timestamp при въезде на объект.</p>
+                            </div>
+                            <div class="rc-field" data-section="Free Time" data-tooltip="Бесплатное время ожидания.<br><br>Обычно 2 часа. После этого начинается billable detention. Проверь в Rate Con — там должна быть указана ставка и free time." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:all 0.2s ease;position:relative;">
+                                <p style="font-size:12px;font-weight:600;color:#06b6d4;margin:0 0 2px 0;">✓ Free Time (2 часа)</p>
+                                <p style="font-size:11px;color:#e2e8f0;margin:0;line-height:1.4;">После 2 ч — уведоми брокера письменно.</p>
+                            </div>
+                            <div class="rc-field" data-section="Уведомление брокера" data-tooltip="Письменное уведомление брокера о detention.<br><br>Отправь email/текст: 'Driver in detention at [facility]. Arrived [time]. Detention clock started.' Без уведомления — брокер скажет что не знал." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:all 0.2s ease;position:relative;">
+                                <p style="font-size:12px;font-weight:600;color:#06b6d4;margin:0 0 2px 0;">✓ Уведомить брокера</p>
+                                <p style="font-size:11px;color:#e2e8f0;margin:0;line-height:1.4;">Email/текст с временем прибытия и началом clock.</p>
+                            </div>
+                            <div class="rc-field" data-section="Время отъезда" data-tooltip="Момент выезда с объекта.<br><br>Фото + GPS timestamp при выезде. Это конец detention clock. Разница между прибытием и отъездом минус free time = billable hours." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:all 0.2s ease;position:relative;">
+                                <p style="font-size:12px;font-weight:600;color:#06b6d4;margin:0 0 2px 0;">✓ Время отъезда</p>
+                                <p style="font-size:11px;color:#e2e8f0;margin:0;line-height:1.4;">Фото + GPS timestamp при выезде.</p>
+                            </div>
+                            <div style="background:linear-gradient(135deg,rgba(6,182,212,0.15),rgba(14,165,233,0.1));border:2px solid rgba(6,182,212,0.3);border-radius:8px;padding:8px 10px;margin-top:6px;">
+                                <p style="font-size:11px;font-weight:600;color:var(--primary);margin:0 0 2px 0;">💡 Нажми на любой пункт →</p>
+                                <p style="font-size:10px;color:#e2e8f0;margin:0;line-height:1.4;">или на поле в документе справа</p>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="background:rgba(255,255,255,0.05);border:2px solid rgba(6,182,212,0.2);border-radius:10px;overflow:hidden;">
+                                <div style="padding:14px;background:#fff;font-family:Arial,Helvetica,sans-serif;color:#000;">
+                                    <p style="font-size:14px;font-weight:900;color:#000;margin:0 0 2px 0;border-bottom:2px solid #000;padding-bottom:6px;">DETENTION LOG</p>
+                                    <p style="font-size:9px;color:#666;margin:0 0 10px 0;">Load RC-2026-45678 | ABC Warehouse, Chicago IL</p>
+                                    <div class="rc-field" data-section="Arrival Time" data-tooltip="Время прибытия водителя на объект.<br><br>Это начало отсчёта. Фото с timestamp обязательно. Без него брокер может оспорить время прибытия." style="border:1px solid #000;padding:8px;margin-bottom:8px;cursor:pointer;position:relative;transition:all 0.2s;">
+                                        <span style="position:absolute;top:4px;right:4px;font-size:9px;color:#06b6d4;opacity:0.6;">ⓘ</span>
+                                        <table style="width:100%;font-size:10px;color:#000;border-collapse:collapse;">
+                                            <tr><td style="padding:2px 0;font-weight:700;">Arrived:</td><td>08:00 AM CT — 03/28/2026</td></tr>
+                                            <tr><td style="padding:2px 0;font-weight:700;">Free time ends:</td><td>10:00 AM CT</td></tr>
+                                            <tr><td style="padding:2px 0;font-weight:700;">Loading started:</td><td>10:15 AM CT</td></tr>
+                                            <tr><td style="padding:2px 0;font-weight:700;">Departed:</td><td>11:30 AM CT</td></tr>
+                                        </table>
+                                    </div>
+                                    <div class="rc-field" data-section="Billable Detention" data-tooltip="Расчёт суммы к оплате.<br><br>Billable time = (Departed - Arrived) - Free Time. Умножь на ставку из Rate Con. Отправь invoice брокеру с этим расчётом и фото." style="border:1px solid #f59e0b;padding:8px;background:#fffbeb;cursor:pointer;position:relative;transition:all 0.2s;">
+                                        <span style="position:absolute;top:4px;right:4px;font-size:9px;color:#06b6d4;opacity:0.6;">ⓘ</span>
+                                        <p style="font-size:9px;font-weight:700;color:#92400e;margin:0 0 4px 0;">DETENTION CALCULATION</p>
+                                        <table style="width:100%;font-size:10px;color:#000;border-collapse:collapse;">
+                                            <tr><td style="padding:2px 0;">Total wait time:</td><td style="font-weight:700;">3.5 hrs</td></tr>
+                                            <tr><td style="padding:2px 0;">Free time:</td><td>2.0 hrs</td></tr>
+                                            <tr><td style="padding:2px 0;font-weight:700;color:#ef4444;">Billable:</td><td style="font-weight:900;color:#ef4444;">1.5 hrs × $75 = $112.50</td></tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="glass-card problem-card"><span class="pc-severity sev-med">🟡 Серьёзная</span>
@@ -419,7 +476,42 @@
                     «Per our Rate Confirmation, TONU fee of $[amount] applies. Invoice attached.» 
                     4) Если брокер отказывается — escalate через факторинговую компанию или подайте claim.</p>
                     <div class="pc-solution">✅ Предотвращение: ВСЕГДА прописывайте TONU в Rate Con ($200-350). Без TONU clause — получить деньги почти невозможно.</div>
-                </div>
+                    <!-- ИНТЕРАКТИВНЫЙ ДОКУМЕНТ: TONU LETTER -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:16px;">
+                        <div>
+                            <h4 style="font-size:14px;font-weight:700;color:var(--text-primary);margin:0 0 8px 0;">📋 Что нужно для TONU claim</h4>
+                            <div class="rc-field" data-section="TONU Clause в Rate Con" data-tooltip="Пункт об оплате при отмене в Rate Con.<br><br>Без этого пункта получить TONU почти невозможно. ВСЕГДА требуй включить TONU clause перед подписанием Rate Con." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:all 0.2s ease;position:relative;">
+                                <p style="font-size:12px;font-weight:600;color:#06b6d4;margin:0 0 2px 0;">✓ TONU Clause в Rate Con</p>
+                                <p style="font-size:11px;color:#e2e8f0;margin:0;line-height:1.4;">Есть пункт TONU с суммой? Без него — нет денег.</p>
+                            </div>
+                            <div class="rc-field" data-section="Доказательство dispatch" data-tooltip="Подтверждение что водитель был dispatched.<br><br>Скриншот сообщения брокера, email с подтверждением, запись звонка. Это доказывает что водитель уже выехал когда груз отменили." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:all 0.2s ease;position:relative;">
+                                <p style="font-size:12px;font-weight:600;color:#06b6d4;margin:0 0 2px 0;">✓ Доказательство dispatch</p>
+                                <p style="font-size:11px;color:#e2e8f0;margin:0;line-height:1.4;">Скриншот/email подтверждения что водитель выехал.</p>
+                            </div>
+                            <div class="rc-field" data-section="Момент отмены" data-tooltip="Когда именно брокер отменил груз.<br><br>Скриншот сообщения с временем. Важно доказать что отмена произошла ПОСЛЕ dispatch водителя." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:all 0.2s ease;position:relative;">
+                                <p style="font-size:12px;font-weight:600;color:#06b6d4;margin:0 0 2px 0;">✓ Момент отмены</p>
+                                <p style="font-size:11px;color:#e2e8f0;margin:0;line-height:1.4;">Скриншот с временем отмены от брокера.</p>
+                            </div>
+                            <div style="background:linear-gradient(135deg,rgba(6,182,212,0.15),rgba(14,165,233,0.1));border:2px solid rgba(6,182,212,0.3);border-radius:8px;padding:8px 10px;margin-top:6px;">
+                                <p style="font-size:11px;font-weight:600;color:var(--primary);margin:0 0 2px 0;">💡 Нажми на любой пункт →</p>
+                                <p style="font-size:10px;color:#e2e8f0;margin:0;line-height:1.4;">или на поле в документе справа</p>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="background:rgba(255,255,255,0.05);border:2px solid rgba(6,182,212,0.2);border-radius:10px;overflow:hidden;">
+                                <div style="padding:14px;background:#fffbeb;font-family:Arial,Helvetica,sans-serif;color:#000;">
+                                    <div class="rc-field" data-section="TONU Claim Letter" data-tooltip="Письменное требование оплаты TONU.<br><br>Отправь email брокеру с этим текстом. Приложи Rate Con и подтверждение dispatch. Сохрани всю переписку." style="border:2px solid #f59e0b;padding:10px;cursor:pointer;position:relative;transition:all 0.2s;background:#fffbeb;">
+                                        <span style="position:absolute;top:4px;right:4px;font-size:9px;color:#06b6d4;opacity:0.6;">ⓘ</span>
+                                        <p style="font-size:9px;font-weight:700;color:#92400e;margin:0 0 6px 0;border-bottom:1px solid #fcd34d;padding-bottom:4px;">TONU CLAIM — Load RC-2026-45678</p>
+                                        <p style="font-size:10px;color:#000;margin:0 0 3px 0;"><strong style="color:#000;">To:</strong> TQL Freight Solutions</p>
+                                        <p style="font-size:10px;color:#000;margin:0 0 6px 0;"><strong style="color:#000;">Re:</strong> TONU Fee — Load cancelled after dispatch</p>
+                                        <p style="font-size:10px;color:#000;margin:0 0 6px 0;line-height:1.5;">Driver dispatched at 07:30 AM. Load cancelled at 09:15 AM after driver was en route. Per Rate Confirmation, TONU = <strong style="color:#000;">$250.00</strong></p>
+                                        <p style="font-size:9px;color:#f59e0b;font-weight:700;margin:0;">→ Attach: Rate Con + dispatch confirmation</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                 <div class="glass-card problem-card"><span class="pc-severity sev-med">🟡 Серьёзная</span>
                     <h3>💸 Broker не платит</h3>
@@ -831,6 +923,68 @@ document.addEventListener('DOMContentLoaded',function(){const n=document.querySe
   import { awardXP } from '../xp-system.js';
   const K = 'xp_problems_v1';
   if (!localStorage.getItem(K)) awardXP('SECTOR_COMPLETE').then(r => r && localStorage.setItem(K,'1')).catch(()=>{});
+</script>
+
+<!-- Tooltip для интерактивных документов -->
+<div id="rc-tooltip" style="display:none;position:fixed;background:#1e293b;color:#fff;padding:14px 18px;border-radius:8px;max-width:300px;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,0.4);font-size:13px;line-height:1.6;pointer-events:none;"></div>
+<script>
+(function() {
+    const tooltip = document.getElementById('rc-tooltip');
+    const isMobile = () => window.innerWidth <= 768;
+    let activeField = null;
+    function getFields(){ return document.querySelectorAll('.rc-field'); }
+    function closeTip(field){
+        tooltip.style.display='none';
+        if(field) field.style.background = field.closest('[style*="background:#fff"]') ? '' : 'rgba(255,255,255,0.04)';
+        activeField = null;
+    }
+    function positionNearMouse(e){
+        const offset=15, pad=10;
+        tooltip.style.transform='none';
+        const tw=tooltip.offsetWidth, th=tooltip.offsetHeight;
+        const vw=window.innerWidth, vh=window.innerHeight;
+        let x=e.clientX+offset, y=e.clientY+offset;
+        if(x+tw>vw-pad) x=e.clientX-tw-offset;
+        if(y+th>vh-pad) y=e.clientY-th-offset;
+        if(x<pad) x=pad;
+        if(y<pad) y=pad;
+        tooltip.style.left=x+'px'; tooltip.style.top=y+'px';
+    }
+    function initFields(){
+        getFields().forEach(function(field){
+            const isDoc = !!field.closest('[style*="background:#fff"]');
+            const hoverBg = isDoc ? '#e8f4fd' : 'rgba(6,182,212,0.15)';
+            const defaultBg = isDoc ? '' : 'rgba(255,255,255,0.04)';
+            field.addEventListener('mouseenter', function(e){
+                if(isMobile()) return;
+                const s=this.getAttribute('data-section'), t=this.getAttribute('data-tooltip');
+                if(!t) return;
+                tooltip.innerHTML = s ? '<div style="font-weight:700;font-size:14px;margin-bottom:6px;color:#67e8f9;">'+s+'</div><div>'+t+'</div>' : t;
+                tooltip.style.display='block'; tooltip.style.transform='none'; tooltip.style.position='fixed';
+                positionNearMouse(e); this.style.background=hoverBg;
+            });
+            field.addEventListener('mousemove', function(e){ if(!isMobile()&&tooltip.style.display==='block') positionNearMouse(e); });
+            field.addEventListener('mouseleave', function(){ if(!isMobile()){ tooltip.style.display='none'; this.style.background=defaultBg; } });
+            field.addEventListener('click', function(e){
+                e.stopPropagation();
+                const s=this.getAttribute('data-section'), t=this.getAttribute('data-tooltip');
+                if(!t) return;
+                if(activeField===this){ closeTip(this); return; }
+                if(activeField) closeTip(activeField);
+                tooltip.innerHTML = s ? '<div style="font-weight:700;font-size:16px;margin-bottom:8px;color:#67e8f9;">'+s+'</div><div style="font-size:15px;line-height:1.7;">'+t+'</div>' : '<div style="font-size:15px;line-height:1.7;">'+t+'</div>';
+                tooltip.style.display='block'; tooltip.style.position='fixed';
+                if(isMobile()){ tooltip.style.left='50%'; tooltip.style.top='50%'; tooltip.style.transform='translate(-50%,-50%)'; tooltip.style.maxWidth='85%'; tooltip.style.padding='20px 24px'; }
+                else { tooltip.style.transform='none'; positionNearMouse(e); }
+                this.style.background=hoverBg; activeField=this;
+            });
+        });
+    }
+    document.addEventListener('click', function(e){ if(isMobile()&&!e.target.closest('#rc-tooltip')){ closeTip(activeField); } else if(!isMobile()&&!e.target.closest('.rc-field')&&!e.target.closest('#rc-tooltip')){ closeTip(activeField); } });
+    window.addEventListener('scroll', function(){ if(isMobile()) closeTip(activeField); }, {passive:true});
+    document.addEventListener('touchstart', function(e){ if(isMobile()&&!e.target.closest('.rc-field')&&!e.target.closest('#rc-tooltip')) closeTip(activeField); }, {passive:true});
+    document.addEventListener('DOMContentLoaded', initFields);
+    initFields();
+})();
 </script>
 </body>
 </html>
