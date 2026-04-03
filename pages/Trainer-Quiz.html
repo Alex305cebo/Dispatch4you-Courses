@@ -94,19 +94,19 @@ body::before{content:'';position:fixed;inset:0;background:
 
 @media(max-width:768px){
   .banner-row{grid-template-columns:1fr 1fr;gap:6px;padding:2px 0}
-  .banner-card{padding:8px 8px 6px;border-radius:12px}
-  .banner-top{gap:5px;margin-bottom:4px}
-  .banner-title{font-size:12px}
-  .banner-subtitle{font-size:7px}
-  .banner-icon{width:26px;height:26px;font-size:13px;border-radius:8px}
-  .banner-stats-row{gap:2px;margin-bottom:4px}
-  .banner-stat-val{font-size:11px}
-  .banner-stat-lbl{font-size:6px}
-  .banner-stat{padding:2px 1px;border-radius:5px}
+  .banner-card{padding:8px 10px 6px;border-radius:12px}
+  .banner-top{gap:7px;margin-bottom:4px}
+  .banner-title{font-size:14px}
+  .banner-subtitle{font-size:8px}
+  .banner-icon{width:28px;height:28px;font-size:14px;border-radius:8px}
+  .banner-stats-row{gap:3px;margin-bottom:4px}
+  .banner-stat-val{font-size:14px}
+  .banner-stat-lbl{font-size:8px}
+  .banner-stat{padding:3px 3px;border-radius:6px}
   .banner-prog-wrap{margin-bottom:1px}
   .banner-prog-bar-full{height:3px}
-  .banner-prog-pct{font-size:9px;min-width:20px}
-  .banner-card::after{font-size:7px;margin-top:2px;padding:2px 0}
+  .banner-prog-pct{font-size:11px;min-width:22px}
+  .banner-card::after{font-size:8px;margin-top:2px;padding:2px 0}
 }
 
 .tb{
@@ -909,15 +909,32 @@ body::before{content:'';position:fixed;inset:0;background:
   .tabs-sticky{top:64px}
 }
 @media(max-width:768px){
-  .wrap{padding:0 8px}
+  .wrap{padding:0 10px}
   .tabs-sticky{padding:2px 0 0}
-  .hero{padding:4px 0;flex-direction:column;align-items:center;text-align:center;gap:4px;
+  .hero{padding:4px 0 4px;flex-direction:column;align-items:center;text-align:center;gap:4px;
     border-bottom:none;margin-bottom:0}
-  .hero-left{flex-direction:column;align-items:center;gap:4px}
-  .hero-icon{font-size:20px}
-  .hero-title{font-size:14px}
-  .hero-sub{font-size:9px;margin:0}
-  .hero-nums{gap:3px;justify-content:center}.hn{padding:3px 7px}.hn-v{font-size:14px}.hn-l{font-size:7px}
+  .hero-left{flex-direction:column;align-items:center;gap:3px}
+  .hero-icon{font-size:24px}
+  .hero-title{font-size:19px}
+  .hero-sub{font-size:11px;margin:0}
+  .hero-nums{gap:5px;justify-content:center}
+  .hn{padding:4px 10px;border-radius:8px}
+  .hn-v{font-size:18px}
+  .hn-l{font-size:8px;letter-spacing:.5px;margin-top:1px}
+  .banner-row{padding:2px 0;gap:6px}
+  .banner-card{padding:8px 10px 6px;border-radius:12px}
+  .banner-top{gap:7px;margin-bottom:4px}
+  .banner-title{font-size:14px}
+  .banner-subtitle{font-size:8px}
+  .banner-icon{width:28px;height:28px;font-size:14px;border-radius:8px}
+  .banner-stats-row{gap:3px;margin-bottom:4px}
+  .banner-stat{padding:3px 3px;border-radius:6px}
+  .banner-stat-val{font-size:14px}
+  .banner-stat-lbl{font-size:8px;letter-spacing:.3px}
+  .banner-prog-wrap{margin-bottom:1px}
+  .banner-prog-bar-full{height:3px}
+  .banner-prog-pct{font-size:11px;min-width:22px}
+  .banner-card::after{font-size:8px;margin-top:2px;padding:2px 0}
   .study-layout{grid-template-columns:1fr;gap:0}
   .study-col-left,.study-col-right{display:none}
   .study-col-center{padding-top:0}
@@ -932,7 +949,6 @@ body::before{content:'';position:fixed;inset:0;background:
   #card-panel .qz-prog{order:11;margin-top:0}
   #card-panel .qz-results{order:1}
   #card-panel .cp-section{order:12;margin-top:6px}
-  .banner-row{padding:2px 0;gap:6px}
   .qz-card-scene{margin-bottom:6px}
   .qz-opts{margin-bottom:6px}
   .scene{height:260px}
@@ -1107,6 +1123,10 @@ body::before{content:'';position:fixed;inset:0;background:
   .cs-messages{min-height:220px;max-height:350px;padding:12px}
   .cs-choice{padding:12px 14px;font-size:13px}
   .cs-results{padding:28px 16px}
+  /* Compact category filters on mobile */
+  #p-cases .toolbar{margin-bottom:10px}
+  #p-cases .fg{gap:4px}
+  #p-cases .fb{padding:5px 10px;font-size:11px;border-radius:7px}
 }
 </style>
 
@@ -1460,16 +1480,7 @@ body::before{content:'';position:fixed;inset:0;background:
   <!-- CASE LIST VIEW -->
   <div id="case-list-view">
     <div class="toolbar">
-      <div class="srch"><span class="srch-ic">🔍</span>
-        <input type="text" id="ksrch" placeholder="Поиск по кейсам..." oninput="filterCases()">
-      </div>
       <div class="fg" id="kcat-filters"></div>
-      <div class="fg">
-        <button class="fb on" onclick="kdiff('all')" id="kd-all">Все</button>
-        <button class="fb" onclick="kdiff('easy')" id="kd-easy">Лёгкие</button>
-        <button class="fb" onclick="kdiff('medium')" id="kd-med">Средние</button>
-        <button class="fb" onclick="kdiff('hard')" id="kd-hard">Сложные</button>
-      </div>
     </div>
     <div class="prog-row"><span id="kprog-txt">Изучено: 0 из 0</span><span id="kprog-pct">0%</span></div>
     <div class="prog-wrap"><div class="prog-fill" id="kprog-fill" style="width:0%"></div></div>
@@ -2129,6 +2140,7 @@ function tab(name){
   document.getElementById('p-'+name).classList.add('on');
   if(name==='stats')renderStats();
   updateBannerProgress();
+  try{localStorage.setItem('trainer_active_tab',name);}catch(e){}
 }
 
 function updateBannerProgress(){
@@ -2243,9 +2255,9 @@ let quizLevel=0; // 0=easy, 1=medium, 2=hard
 let quizTimer=null;
 let quizTimeLeft=0;
 const QUIZ_LEVELS=[
-  {name:'Лёгкий',count:16,color:'#10b981',bg:'rgba(16,185,129,.08)',border:'rgba(16,185,129,.25)',icon:'🟢',time:0},
-  {name:'Нормальный',count:12,color:'#f59e0b',bg:'rgba(245,158,11,.08)',border:'rgba(245,158,11,.25)',icon:'🟡',time:35},
-  {name:'Сложный',count:8,color:'#ef4444',bg:'rgba(239,68,68,.08)',border:'rgba(239,68,68,.25)',icon:'🔴',time:15}
+  {name:'Лёгкий',count:16,color:'#10b981',bg:'rgba(16,185,129,.08)',border:'rgba(16,185,129,.25)',icon:'🟢',time:0,timeStart:25,timeEnd:18},
+  {name:'Нормальный',count:12,color:'#f59e0b',bg:'rgba(245,158,11,.08)',border:'rgba(245,158,11,.25)',icon:'🟡',time:0,timeStart:20,timeEnd:16},
+  {name:'Сложный',count:8,color:'#ef4444',bg:'rgba(239,68,68,.08)',border:'rgba(239,68,68,.25)',icon:'🔴',time:0,timeStart:16,timeEnd:12}
 ];
 
 // ═══ SESSION PERSISTENCE ═══
@@ -2259,6 +2271,7 @@ function saveQuizSession(){
       wrongCount:quizSession.wrongCount,
       streak:quizSession.streak,
       maxStreak:quizSession.maxStreak,
+      timeouts:quizSession.timeouts||0,
       cardIds:quizSession.cards.map(c=>c.id),
       ts:Date.now()
     };
@@ -2282,7 +2295,8 @@ function loadQuizSession(){
       correctCount:data.correctCount||0,
       wrongCount:data.wrongCount||0,
       streak:data.streak||0,
-      maxStreak:data.maxStreak||0
+      maxStreak:data.maxStreak||0,
+      timeouts:data.timeouts||0
     };
   }catch(e){return null;}
 }
@@ -2552,7 +2566,7 @@ function startQuizLevel(level){
     cards=[...cards,...extra].slice(0,lv.count);
   }
 
-  quizSession={cards,currentIndex:0,correctCount:0,wrongCount:0,streak:0,maxStreak:0};
+  quizSession={cards,currentIndex:0,correctCount:0,wrongCount:0,streak:0,maxStreak:0,timeouts:0};
   quizAnswered=false;
   saveQuizSession();
   updateLevelUI();
@@ -2605,7 +2619,8 @@ function showCard(){
       correctCount:saved.correctCount,
       wrongCount:saved.wrongCount,
       streak:saved.streak,
-      maxStreak:saved.maxStreak
+      maxStreak:saved.maxStreak,
+      timeouts:saved.timeouts||0
     };
     quizAnswered=false;
     updateLevelUI();
@@ -2672,13 +2687,19 @@ function showQuizQuestion(){
   updateProgress();
   const box=document.getElementById('dialog-box');
   if(box)box.innerHTML='<div class="dialog-empty">Ответь на вопрос чтобы увидеть пример</div>';
-  // Timer
+  // Timer — progressive: timeStart on first card → timeEnd on last card
   const timerWrap=document.getElementById('qz-timer-wrap');
   const timerFill=document.getElementById('qz-timer-fill');
   const timerText=document.getElementById('qz-timer-text');
-  if(lv.time>0){
+  const hasTimer=lv.timeStart&&lv.timeStart>0;
+  if(hasTimer){
+    // Calculate progressive time for this card
+    const totalCards=sess.cards.length;
+    const idx=sess.currentIndex;
+    const t=totalCards>1?Math.round(lv.timeStart-(lv.timeStart-lv.timeEnd)*(idx/(totalCards-1))):lv.timeStart;
+    const cardTime=Math.max(t,lv.timeEnd);
     timerWrap.style.display='flex';
-    quizTimeLeft=lv.time;
+    quizTimeLeft=cardTime;
     timerFill.style.width='100%';
     timerFill.className='qz-timer-fill';
     timerText.textContent=quizTimeLeft;
@@ -2686,7 +2707,7 @@ function showQuizQuestion(){
     quizTimer=setInterval(()=>{
       quizTimeLeft--;
       if(quizTimeLeft<0)quizTimeLeft=0;
-      const pct=Math.round(quizTimeLeft/lv.time*100);
+      const pct=Math.round(quizTimeLeft/cardTime*100);
       timerFill.style.width=pct+'%';
       timerText.textContent=quizTimeLeft;
       // Danger state at ≤5 seconds
@@ -2726,6 +2747,65 @@ function quizTimeUp(){
   s.xp=(s.xp||0)+1;
   s.srs[card.id]=srs;s.totalAnswers=(s.totalAnswers||0)+1;
   setState(s);
+
+  // Timeout penalty logic
+  sess.timeouts=(sess.timeouts||0)+1;
+  let rollbackMsg='';
+
+  if(quizLevel===2){
+    // Сложный: проигрыш с первого раза — начать сначала
+    rollbackMsg='💀 Сложный уровень — начинаем сначала!';
+    saveQuizSession();
+    // Show feedback then restart
+    document.getElementById('quiz-streak').textContent=`🔥 ${sess.streak}`;
+    document.getElementById('quiz-correct-cnt').textContent=`✅ ${sess.correctCount}`;
+    document.getElementById('quiz-wrong-cnt').textContent=`❌ ${sess.wrongCount}`;
+    const fb=document.getElementById('quiz-feedback');
+    fb.style.display='block';
+    fb.className='qz-fb qz-fb-err';
+    document.getElementById('quiz-fb-icon').textContent='💀';
+    document.getElementById('quiz-fb-title').textContent='Время вышло — Проигрыш!';
+    document.getElementById('quiz-fb-title').style.color='#f87171';
+    document.getElementById('quiz-fb-text').innerHTML=`Правильный ответ: <strong style="color:#34d399">${card.term}</strong><br>${card.def}<br><br><span style="color:#ef4444;font-weight:700">${rollbackMsg}</span>`;
+    const exEl=document.getElementById('quiz-fb-example');
+    if(card.ex){exEl.textContent=card.ex;exEl.style.display='block';}else exEl.style.display='none';
+    document.getElementById('quiz-next-row').style.display='block';
+    // Override next button to restart level
+    const nextBtn=document.getElementById('quiz-next-btn');
+    if(nextBtn){
+      nextBtn.onclick=function(){startQuizLevel(2);nextBtn.onclick=function(){quizNext();};};
+    }
+    showToast('💀','Проигрыш!','Сложный уровень — сначала');
+    if(typeof renderDialog==='function')renderDialog(card.id);
+    if(typeof renderCatProgress==='function')renderCatProgress();
+    updateHeroNums();updateProgress();
+    // Scroll feedback into center view
+    setTimeout(()=>{fb.scrollIntoView({behavior:'smooth',block:'center'});},100);
+    return;
+  }
+
+  // Лёгкий и Нормальный: откат
+  if(sess.timeouts===1){
+    // Первый таймаут — откат на 4 шага
+    const rollback=Math.min(4,sess.currentIndex);
+    sess.currentIndex=Math.max(0,sess.currentIndex-rollback);
+    rollbackMsg=`⏪ Откат на ${rollback} ${rollback===1?'шаг':rollback<5?'шага':'шагов'} назад!`;
+  } else {
+    // Второй+ таймаут
+    if(quizLevel===1){
+      // Нормальный: откат на 5 шагов или в начало
+      sess.currentIndex=0;
+      sess.timeouts=0;
+      rollbackMsg='⏪ Откат в начало нормального уровня!';
+    } else {
+      // Лёгкий: откат на 5 шагов
+      const rollback=Math.min(5,sess.currentIndex);
+      sess.currentIndex=Math.max(0,sess.currentIndex-rollback);
+      sess.timeouts=0;
+      rollbackMsg=`⏪ Откат на ${rollback} ${rollback===1?'шаг':rollback<5?'шага':'шагов'} назад!`;
+    }
+  }
+
   saveQuizSession();
   document.getElementById('quiz-streak').textContent=`🔥 ${sess.streak}`;
   document.getElementById('quiz-correct-cnt').textContent=`✅ ${sess.correctCount}`;
@@ -2737,14 +2817,16 @@ function quizTimeUp(){
   document.getElementById('quiz-fb-icon').textContent='⏰';
   document.getElementById('quiz-fb-title').textContent='Время вышло!';
   document.getElementById('quiz-fb-title').style.color='#f87171';
-  document.getElementById('quiz-fb-text').innerHTML=`Правильный ответ: <strong style="color:#34d399">${card.term}</strong><br>${card.def}`;
+  document.getElementById('quiz-fb-text').innerHTML=`Правильный ответ: <strong style="color:#34d399">${card.term}</strong><br>${card.def}<br><br><span style="color:#f59e0b;font-weight:700">${rollbackMsg}</span>`;
   const exEl=document.getElementById('quiz-fb-example');
   if(card.ex){exEl.textContent=card.ex;exEl.style.display='block';}else exEl.style.display='none';
   document.getElementById('quiz-next-row').style.display='block';
-  showToast('⏰','Время!','Не успел — '+card.term);
+  showToast('⏰','Время!',rollbackMsg);
   if(typeof renderDialog==='function')renderDialog(card.id);
   if(typeof renderCatProgress==='function')renderCatProgress();
   updateHeroNums();updateProgress();
+  // Scroll feedback into center view
+  setTimeout(()=>{fb.scrollIntoView({behavior:'smooth',block:'center'});},100);
 }
 
 function quizAnswer(idx){
@@ -2807,6 +2889,8 @@ function quizAnswer(idx){
     setTimeout(()=>{quizNext();},1200);
   } else {
     document.getElementById('quiz-next-row').style.display='block';
+    // Scroll feedback into center view
+    setTimeout(()=>{fb.scrollIntoView({behavior:'smooth',block:'center'});},100);
   }
   if(typeof renderDialog==='function')renderDialog(card.id);
   if(typeof renderCatProgress==='function')renderCatProgress();
@@ -2979,13 +3063,19 @@ function initCases(){
 }
 
 function filterCases(){
-  const q=document.getElementById('ksrch').value.toLowerCase();
   const s=getState();
-  const filtered=CASES.filter(c=>{
-    if(caseDiff!=='all'&&c.diff!==caseDiff)return false;
+  let filtered=CASES.filter(c=>{
     if(caseCat!=='all'&&c.cat!==caseCat)return false;
-    if(q&&!c.title.toLowerCase().includes(q)&&!c.desc.toLowerCase().includes(q)&&!c.cat.toLowerCase().includes(q))return false;
     return true;
+  });
+  // Randomize order (seeded by day so it stays consistent within a session)
+  const day=new Date().toDateString();
+  let seed=0;for(let i=0;i<day.length;i++)seed+=day.charCodeAt(i);
+  const rng=(s)=>{s=Math.imul(s^(s>>>16),0x45d9f3b);s=Math.imul(s^(s>>>13),0x45d9f3b);return(s^(s>>>16))>>>0;};
+  filtered=[...filtered].sort((a,b)=>{
+    const ha=rng(seed+a.id.length+a.id.charCodeAt(0));
+    const hb=rng(seed+b.id.length+b.id.charCodeAt(0));
+    return ha-hb;
   });
   const g=document.getElementById('cases-grid');
   if(!filtered.length){g.innerHTML='<div class="empty"><div class="ei">🔍</div><p>Ничего не найдено</p></div>';return;}
@@ -3018,12 +3108,6 @@ function updateCasesProgress(filtered,s){
   document.getElementById('kprog-pct').textContent=pct+'%';
 }
 
-function kdiff(d){
-  caseDiff=d;
-  document.querySelectorAll('[id^="kd-"]').forEach(b=>b.classList.remove('on'));
-  document.getElementById('kd-'+d).classList.add('on');
-  filterCases();
-}
 function kcat(c){
   caseCat=c;
   document.querySelectorAll('[id^="kc-"]').forEach(b=>b.classList.remove('on'));
@@ -3839,6 +3923,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   initTips();
   updateCardPanelSections(null);
   updateBannerProgress();
+  // Restore last active tab
+  try{
+    const savedTab=localStorage.getItem('trainer_active_tab');
+    if(savedTab&&document.getElementById('p-'+savedTab)){tab(savedTab);}
+  }catch(e){}
   // Load xp-system and make awardXP globally available
   import('../xp-system.js').then(m=>{
     window._awardXP=m.awardXP;
