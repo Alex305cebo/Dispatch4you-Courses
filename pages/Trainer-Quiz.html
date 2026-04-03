@@ -608,16 +608,13 @@ body::before{content:'';position:fixed;inset:0;background:
 .quiz-srs-hint{font-size:11px;color:var(--t3);text-align:center;margin-top:8px;min-height:18px}
 
 /* ═══ NEW QUIZ CARD DESIGN ═══ */
-/* Stats bar — polished */
-.qz-stats{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
-.qz-stats-left{display:flex;align-items:center;gap:6px}
-.qz-counter{font-size:13px;font-weight:700;color:var(--t2);background:rgba(255,255,255,.05);
-  padding:6px 16px;border-radius:20px;border:1px solid rgba(255,255,255,.08);
-  backdrop-filter:blur(8px)}
-.qz-stats-right{display:flex;gap:6px;align-items:center}
-.qz-pill{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:800;
-  padding:6px 14px;border-radius:20px;border:1px solid var(--b);background:rgba(255,255,255,.03);
-  backdrop-filter:blur(8px);transition:all .2s}
+/* Stats pills — в топбаре */
+.qz-counter{font-size:12px;font-weight:700;color:var(--t2);background:rgba(255,255,255,.05);
+  padding:4px 10px;border-radius:16px;border:1px solid rgba(255,255,255,.08);
+  white-space:nowrap;font-variant-numeric:tabular-nums}
+.qz-pill{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:800;
+  padding:4px 8px;border-radius:16px;border:1px solid var(--b);background:rgba(255,255,255,.03);
+  white-space:nowrap}
 .qz-pill-fire{color:var(--warn);border-color:rgba(245,158,11,.25);
   background:linear-gradient(135deg,rgba(245,158,11,.08),rgba(249,115,22,.04));
   box-shadow:0 2px 8px rgba(245,158,11,.08)}
@@ -802,22 +799,25 @@ body::before{content:'';position:fixed;inset:0;background:
   background:linear-gradient(135deg,var(--p),#a855f7);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 
-/* Level progress bar — единый блок */
-.qz-levels{display:flex;align-items:stretch;margin-bottom:14px;
+/* Level + Stats — единый топбар */
+.qz-topbar{display:flex;align-items:stretch;gap:0;margin-bottom:14px;
   background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
-  border-radius:14px;overflow:hidden;position:relative}
-.qz-level{flex:1;padding:10px 8px 8px;text-align:center;position:relative;
+  border-radius:14px;overflow:hidden}
+.qz-topbar-levels{display:flex;flex:1;min-width:0}
+.qz-level{flex:1;padding:8px 6px 6px;text-align:center;position:relative;
   transition:all .3s;cursor:default;border-right:1px solid rgba(255,255,255,.06)}
-.qz-level:last-child{border-right:none}
-.qz-level-name{font-size:11px;font-weight:800;margin-bottom:4px}
-.qz-level-count{font-size:9px;font-weight:600;opacity:.5;margin-bottom:6px}
-.qz-level-bar{height:4px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden}
-.qz-level-fill{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.qz-level-name{font-size:11px;font-weight:800;margin-bottom:3px;white-space:nowrap}
+.qz-level-count{font-size:9px;font-weight:600;opacity:.5;margin-bottom:4px}
+.qz-level-bar{height:3px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;margin:0 4px}
+.qz-level-fill{height:100%;border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1)}
 .qz-level.qz-lv-active{background:rgba(255,255,255,.05)}
 .qz-level.qz-lv-active::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
   background:linear-gradient(90deg,transparent,currentColor,transparent)}
 .qz-level.qz-lv-done{background:rgba(16,185,129,.05)}
 .qz-level.qz-lv-done .qz-level-fill{background:#10b981;box-shadow:0 0 6px rgba(16,185,129,.4)}
+
+.qz-topbar-right{display:flex;align-items:center;gap:5px;padding:6px 10px;flex-shrink:0;
+  border-left:1px solid rgba(255,255,255,.06)}
 
 /* Mobile */
 @media(max-width:768px){
@@ -825,8 +825,9 @@ body::before{content:'';position:fixed;inset:0;background:
   .qz-card{padding:24px 18px 22px}
   .qz-def{font-size:clamp(16px,4.5vw,22px)}
   .qz-opt{padding:16px 14px;font-size:16px}
-  .qz-stats{gap:5px}
-  .qz-pill{font-size:12px;padding:4px 10px}
+  .qz-topbar{flex-direction:column}
+  .qz-topbar-right{border-left:none;border-top:1px solid rgba(255,255,255,.06);justify-content:center;padding:5px 8px}
+  .qz-pill{font-size:11px;padding:3px 7px}
   .qz-results-grid{gap:10px}
   .qz-result-card{padding:14px 18px;min-width:80px}
 }
@@ -1238,15 +1239,11 @@ body::before{content:'';position:fixed;inset:0;background:
 
       <!-- ── КВИЗ-КАРТОЧКИ (REDESIGNED) ── -->
       <div id="card-panel">
-        <!-- Индикатор уровней -->
-        <div class="qz-levels" id="level-badges"></div>
-
-        <!-- Stats bar -->
-        <div class="qz-stats">
-          <div class="qz-stats-left">
-            <span class="qz-counter" id="quiz-counter">1 / 80</span>
-          </div>
-          <div class="qz-stats-right">
+        <!-- Уровни + статистика — один блок -->
+        <div class="qz-topbar">
+          <div class="qz-topbar-levels" id="level-badges"></div>
+          <div class="qz-topbar-right">
+            <span class="qz-counter" id="quiz-counter">1 / 16</span>
             <span class="qz-pill qz-pill-fire" id="quiz-streak">🔥 0</span>
             <span class="qz-pill qz-pill-ok" id="quiz-correct-cnt">✅ 0</span>
             <span class="qz-pill qz-pill-err" id="quiz-wrong-cnt">❌ 0</span>
