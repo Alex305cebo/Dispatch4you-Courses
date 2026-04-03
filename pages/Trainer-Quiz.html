@@ -802,17 +802,22 @@ body::before{content:'';position:fixed;inset:0;background:
   background:linear-gradient(135deg,var(--p),#a855f7);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 
-/* Level badges redesign */
-.qz-levels{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
-.qz-level{padding:8px 12px;border-radius:12px;text-align:center;
-  border:1px solid var(--b);background:rgba(255,255,255,.02);
-  transition:all .3s;position:relative;overflow:hidden}
-.qz-level.qz-lv-active{box-shadow:0 0 16px rgba(6,182,212,.15)}
-.qz-level.qz-lv-active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+/* Level progress bar — единый блок */
+.qz-levels{display:flex;align-items:stretch;margin-bottom:14px;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
+  border-radius:14px;overflow:hidden;position:relative}
+.qz-level{flex:1;padding:10px 8px 8px;text-align:center;position:relative;
+  transition:all .3s;cursor:default;border-right:1px solid rgba(255,255,255,.06)}
+.qz-level:last-child{border-right:none}
+.qz-level-name{font-size:11px;font-weight:800;margin-bottom:4px}
+.qz-level-count{font-size:9px;font-weight:600;opacity:.5;margin-bottom:6px}
+.qz-level-bar{height:4px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden}
+.qz-level-fill{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.qz-level.qz-lv-active{background:rgba(255,255,255,.05)}
+.qz-level.qz-lv-active::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
   background:linear-gradient(90deg,transparent,currentColor,transparent)}
-.qz-level.qz-lv-done{border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.06)}
-.qz-level-name{font-size:12px;font-weight:800}
-.qz-level-count{font-size:10px;font-weight:500;opacity:.6}
+.qz-level.qz-lv-done{background:rgba(16,185,129,.05)}
+.qz-level.qz-lv-done .qz-level-fill{background:#10b981;box-shadow:0 0 6px rgba(16,185,129,.4)}
 
 /* Mobile */
 @media(max-width:768px){
@@ -2592,11 +2597,17 @@ function updateLevelUI(){
       const done=i<quizLevel;
       const cls=done?'qz-level qz-lv-done':active?'qz-level qz-lv-active':'qz-level';
       const clr=done?'#10b981':active?l.color:'var(--t3)';
-      const bc=done?'rgba(16,185,129,.3)':active?l.border:'var(--b)';
-      const bg=done?'rgba(16,185,129,.06)':active?l.bg:'rgba(255,255,255,.02)';
-      return `<div class="${cls}" style="color:${clr};border-color:${bc};background:${bg}">
+      // Прогресс внутри уровня
+      let pct=0;
+      if(done){pct=100;}
+      else if(active&&quizSession.cards.length>0){
+        pct=Math.round(quizSession.currentIndex/quizSession.cards.length*100);
+      }
+      const fillColor=done?'#10b981':l.color;
+      return `<div class="${cls}" style="color:${clr}">
         <div class="qz-level-name">${l.icon} ${l.name}${done?' ✅':''}</div>
-        <div class="qz-level-count">${l.count} карт.</div>
+        <div class="qz-level-count">${done?l.count+'/'+l.count:active?quizSession.currentIndex+'/'+l.count:'0/'+l.count}</div>
+        <div class="qz-level-bar"><div class="qz-level-fill" style="width:${pct}%;background:${fillColor}${active?';box-shadow:0 0 6px '+fillColor+'66':''}"></div></div>
       </div>`;
     }).join('');
   }
