@@ -873,6 +873,146 @@ body::before{content:'';position:fixed;inset:0;background:
   .tb-label{font-size:11px}
   .tb-ico{font-size:14px}
 }
+
+/* ═══ CHAT SIMULATOR ═══ */
+.cs-topbar{display:flex;align-items:center;gap:12px;padding:12px 0;
+  border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:16px}
+.cs-back{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  border-radius:10px;padding:8px 16px;color:var(--t2);font-size:13px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:.2s;flex-shrink:0}
+.cs-back:hover{background:rgba(6,182,212,.1);border-color:rgba(6,182,212,.25);color:var(--p)}
+.cs-topbar-info{flex:1;min-width:0}
+.cs-topbar-title{font-size:15px;font-weight:800;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cs-topbar-cat{font-size:11px;color:var(--p);font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.cs-topbar-stars{font-size:18px;flex-shrink:0;opacity:.4}
+
+.cs-phone{max-width:520px;margin:0 auto;
+  background:linear-gradient(180deg,rgba(15,22,35,.95),rgba(7,11,20,.98));
+  border:1px solid rgba(6,182,212,.15);border-radius:24px;
+  overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.04) inset}
+.cs-phone-header{display:flex;align-items:center;gap:10px;padding:14px 18px;
+  background:linear-gradient(135deg,rgba(6,182,212,.08),rgba(99,102,241,.05));
+  border-bottom:1px solid rgba(255,255,255,.06)}
+.cs-avatar{width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,rgba(6,182,212,.2),rgba(99,102,241,.15));
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+  border:2px solid rgba(6,182,212,.3)}
+.cs-contact-name{font-size:14px;font-weight:700;color:var(--t1)}
+.cs-contact-status{font-size:10px;color:#10b981;font-weight:600}
+
+.cs-messages{padding:16px;min-height:280px;max-height:420px;overflow-y:auto;
+  display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+.cs-messages::-webkit-scrollbar{width:3px}
+.cs-messages::-webkit-scrollbar-thumb{background:rgba(6,182,212,.2);border-radius:3px}
+
+/* Message bubbles */
+.cs-msg{max-width:82%;animation:csMsgIn .35s cubic-bezier(.16,1,.3,1) both;opacity:0}
+@keyframes csMsgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.cs-msg-them{align-self:flex-start}
+.cs-msg-you{align-self:flex-end}
+.cs-msg-bubble{padding:10px 14px;font-size:13px;line-height:1.6;font-weight:500;
+  position:relative;word-wrap:break-word}
+.cs-msg-them .cs-msg-bubble{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);
+  border-radius:4px 16px 16px 16px;color:var(--t1)}
+.cs-msg-you .cs-msg-bubble{
+  background:linear-gradient(135deg,rgba(6,182,212,.18),rgba(99,102,241,.12));
+  border:1px solid rgba(6,182,212,.25);border-radius:16px 4px 16px 16px;color:#e0f2fe}
+.cs-msg-who{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+  margin-bottom:3px;padding:0 4px}
+.cs-msg-them .cs-msg-who{color:var(--t3)}
+.cs-msg-you .cs-msg-who{color:rgba(6,182,212,.7);text-align:right}
+.cs-msg-time{font-size:9px;color:var(--t3);margin-top:3px;padding:0 4px;opacity:.6}
+.cs-msg-you .cs-msg-time{text-align:right}
+
+/* System/narrator messages */
+.cs-msg-system{align-self:center;max-width:90%;text-align:center}
+.cs-msg-system .cs-msg-bubble{background:rgba(249,115,22,.06);border:1px solid rgba(249,115,22,.15);
+  border-radius:12px;color:var(--a);font-size:12px;font-weight:600;font-style:italic}
+
+/* Typing indicator */
+.cs-typing{align-self:flex-start;display:flex;gap:4px;padding:10px 16px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);
+  border-radius:4px 16px 16px 16px;animation:csMsgIn .3s ease both}
+.cs-typing-dot{width:6px;height:6px;border-radius:50%;background:var(--t3);
+  animation:csTyping 1.2s ease infinite}
+.cs-typing-dot:nth-child(2){animation-delay:.2s}
+.cs-typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes csTyping{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}
+
+/* Choice buttons */
+.cs-choices{max-width:520px;margin:12px auto 0;display:flex;flex-direction:column;gap:8px}
+.cs-choice{padding:14px 18px;border-radius:14px;
+  border:1px solid rgba(6,182,212,.2);
+  background:linear-gradient(135deg,rgba(6,182,212,.06),rgba(99,102,241,.03));
+  color:var(--t1);font-size:14px;font-weight:600;line-height:1.5;
+  cursor:pointer;font-family:inherit;transition:all .25s cubic-bezier(.4,0,.2,1);
+  text-align:left;position:relative;overflow:hidden}
+.cs-choice::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 0% 50%,rgba(6,182,212,.1),transparent 70%);
+  opacity:0;transition:opacity .3s}
+.cs-choice:hover{border-color:rgba(6,182,212,.4);transform:translateY(-2px);
+  box-shadow:0 4px 16px rgba(6,182,212,.12)}
+.cs-choice:hover::before{opacity:1}
+.cs-choice:active{transform:translateY(0) scale(.98)}
+.cs-choice.cs-correct{border-color:rgba(16,185,129,.5);
+  background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(16,185,129,.05));
+  color:#34d399;box-shadow:0 0 16px rgba(16,185,129,.15)}
+.cs-choice.cs-wrong{border-color:rgba(239,68,68,.4);
+  background:linear-gradient(135deg,rgba(239,68,68,.1),rgba(239,68,68,.04));
+  color:#f87171;opacity:.7}
+.cs-choice.cs-dim{opacity:.3;pointer-events:none}
+.cs-choice-label{font-size:10px;font-weight:800;color:var(--p);text-transform:uppercase;
+  letter-spacing:1px;margin-bottom:2px}
+
+/* Insight popup */
+.cs-insight{max-width:520px;margin:10px auto 0;display:flex;align-items:flex-start;gap:10px;
+  padding:12px 16px;border-radius:14px;
+  background:linear-gradient(135deg,rgba(245,158,11,.08),rgba(249,115,22,.04));
+  border:1px solid rgba(245,158,11,.2);animation:csMsgIn .4s ease both}
+.cs-insight-icon{font-size:20px;flex-shrink:0}
+.cs-insight-text{font-size:13px;color:var(--t1);line-height:1.6;font-weight:500}
+
+/* Results screen */
+.cs-results{max-width:520px;margin:0 auto;text-align:center;padding:40px 24px;
+  animation:csMsgIn .5s ease both}
+.cs-results-icon{font-size:56px;margin-bottom:12px;
+  animation:csBounce .6s cubic-bezier(.16,1,.3,1)}
+@keyframes csBounce{0%{transform:scale(0)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+.cs-results-title{font-size:24px;font-weight:900;color:var(--t1);margin-bottom:12px}
+.cs-results-stars{font-size:32px;margin-bottom:16px;letter-spacing:4px}
+.cs-results-score{font-size:14px;color:var(--t2);line-height:1.7;margin-bottom:16px;
+  background:rgba(255,255,255,.03);border:1px solid var(--b);border-radius:14px;padding:14px 18px}
+.cs-results-tip{font-size:13px;color:var(--a);line-height:1.6;margin-bottom:20px;
+  background:rgba(249,115,22,.06);border:1px solid rgba(249,115,22,.15);
+  border-radius:12px;padding:12px 16px;text-align:left}
+.cs-results-btns{display:flex;gap:10px;justify-content:center}
+.cs-btn-retry{padding:12px 24px;border-radius:12px;border:1px solid rgba(6,182,212,.25);
+  background:rgba(6,182,212,.08);color:var(--p);font-size:14px;font-weight:700;
+  cursor:pointer;font-family:inherit;transition:.2s}
+.cs-btn-retry:hover{background:rgba(6,182,212,.15);transform:translateY(-2px)}
+.cs-btn-next{padding:12px 24px;border-radius:12px;border:none;
+  background:linear-gradient(135deg,var(--p),#6366f1);color:#fff;font-size:14px;font-weight:700;
+  cursor:pointer;font-family:inherit;transition:.2s;
+  box-shadow:0 4px 16px rgba(6,182,212,.3)}
+.cs-btn-next:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(6,182,212,.4)}
+
+/* Cases grid — updated card style */
+.kc{position:relative;overflow:hidden;cursor:pointer;transition:all .3s cubic-bezier(.4,0,.2,1)}
+.kc .kc-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);
+  width:48px;height:48px;border-radius:50%;
+  background:linear-gradient(135deg,var(--p),#6366f1);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;color:#fff;transition:all .3s;opacity:0;
+  box-shadow:0 4px 20px rgba(6,182,212,.4)}
+.kc:hover .kc-play{transform:translate(-50%,-50%) scale(1);opacity:1}
+.kc:hover{transform:translateY(-4px)}
+
+@media(max-width:768px){
+  .cs-phone{border-radius:18px;margin:0 -4px}
+  .cs-messages{min-height:220px;max-height:350px;padding:12px}
+  .cs-choice{padding:12px 14px;font-size:13px}
+  .cs-results{padding:28px 16px}
+}
 </style>
 
 
@@ -1199,23 +1339,75 @@ body::before{content:'';position:fixed;inset:0;background:
 
   </div>
 </div>
-<!-- ═══ PANEL: CASES ═══ -->
+<!-- ═══ PANEL: CASES (Chat Simulator) ═══ -->
 <div class="panel" id="p-cases">
-  <div class="toolbar">
-    <div class="srch"><span class="srch-ic">🔍</span>
-      <input type="text" id="ksrch" placeholder="Поиск по кейсам..." oninput="filterCases()">
+
+  <!-- CASE LIST VIEW -->
+  <div id="case-list-view">
+    <div class="toolbar">
+      <div class="srch"><span class="srch-ic">🔍</span>
+        <input type="text" id="ksrch" placeholder="Поиск по кейсам..." oninput="filterCases()">
+      </div>
+      <div class="fg" id="kcat-filters"></div>
+      <div class="fg">
+        <button class="fb on" onclick="kdiff('all')" id="kd-all">Все</button>
+        <button class="fb" onclick="kdiff('easy')" id="kd-easy">Лёгкие</button>
+        <button class="fb" onclick="kdiff('medium')" id="kd-med">Средние</button>
+        <button class="fb" onclick="kdiff('hard')" id="kd-hard">Сложные</button>
+      </div>
     </div>
-    <div class="fg" id="kcat-filters"></div>
-    <div class="fg">
-      <button class="fb on" onclick="kdiff('all')" id="kd-all">Все</button>
-      <button class="fb" onclick="kdiff('easy')" id="kd-easy">Лёгкие</button>
-      <button class="fb" onclick="kdiff('medium')" id="kd-med">Средние</button>
-      <button class="fb" onclick="kdiff('hard')" id="kd-hard">Сложные</button>
+    <div class="prog-row"><span id="kprog-txt">Изучено: 0 из 0</span><span id="kprog-pct">0%</span></div>
+    <div class="prog-wrap"><div class="prog-fill" id="kprog-fill" style="width:0%"></div></div>
+    <div class="cases-grid" id="cases-grid"></div>
+  </div>
+
+  <!-- CHAT SIMULATOR VIEW -->
+  <div id="case-chat-view" style="display:none">
+    <!-- Top bar -->
+    <div class="cs-topbar">
+      <button class="cs-back" onclick="exitCaseChat()">← Назад</button>
+      <div class="cs-topbar-info">
+        <div class="cs-topbar-title" id="cs-title">—</div>
+        <div class="cs-topbar-cat" id="cs-cat">—</div>
+      </div>
+      <div class="cs-topbar-stars" id="cs-stars">⭐⭐⭐</div>
+    </div>
+
+    <!-- Chat area -->
+    <div class="cs-phone">
+      <div class="cs-phone-header">
+        <div class="cs-avatar" id="cs-avatar">👤</div>
+        <div>
+          <div class="cs-contact-name" id="cs-contact">Брокер</div>
+          <div class="cs-contact-status">онлайн</div>
+        </div>
+      </div>
+      <div class="cs-messages" id="cs-messages"></div>
+    </div>
+
+    <!-- Choice buttons -->
+    <div class="cs-choices" id="cs-choices"></div>
+
+    <!-- Tip/insight popup -->
+    <div class="cs-insight" id="cs-insight" style="display:none">
+      <div class="cs-insight-icon">💡</div>
+      <div class="cs-insight-text" id="cs-insight-text"></div>
+    </div>
+
+    <!-- Results screen -->
+    <div class="cs-results" id="cs-results" style="display:none">
+      <div class="cs-results-icon" id="cs-res-icon">🏆</div>
+      <div class="cs-results-title" id="cs-res-title">Отлично!</div>
+      <div class="cs-results-stars" id="cs-res-stars"></div>
+      <div class="cs-results-score" id="cs-res-score"></div>
+      <div class="cs-results-tip" id="cs-res-tip"></div>
+      <div class="cs-results-btns">
+        <button class="cs-btn-retry" onclick="replayCase()">🔄 Пройти заново</button>
+        <button class="cs-btn-next" onclick="exitCaseChat()">📋 К списку</button>
+      </div>
     </div>
   </div>
-  <div class="prog-row"><span id="kprog-txt">Изучено: 0 из 0</span><span id="kprog-pct">0%</span></div>
-  <div class="prog-wrap"><div class="prog-fill" id="kprog-fill" style="width:0%"></div></div>
-  <div class="cases-grid" id="cases-grid"></div>
+
 </div>
 
 <!-- ═══ PANEL: STATS ═══ -->
@@ -2648,7 +2840,9 @@ function filterCases(){
   if(!filtered.length){g.innerHTML='<div class="empty"><div class="ei">🔍</div><p>Ничего не найдено</p></div>';return;}
   g.innerHTML=filtered.map(c=>{
     const read=s.readCases.includes(c.id);
+    const hasStory=CASE_STORIES[c.id];
     return`<div class="kc ${read?'read':''}" onclick="openCase('${c.id}')">
+      ${hasStory?'<div class="kc-play">▶</div>':''}
       <div class="kc-head">
         <div class="kc-ico">${c.ico}</div>
         <div><div class="kc-cat">${c.cat}</div><div class="kc-title">${c.title}</div></div>
@@ -2657,7 +2851,7 @@ function filterCases(){
       <div class="kc-foot">
         <span class="diff-badge d-${c.diff}">${c.diff==='easy'?'Лёгкий':c.diff==='medium'?'Средний':'Сложный'}</span>
         <span class="kc-xp">+${c.xp} XP</span>
-        ${read?'<span class="kc-read">✅ Изучено</span>':''}
+        ${read?'<span class="kc-read">✅ Пройдено</span>':''}
       </div>
     </div>`;
   }).join('');
@@ -2691,23 +2885,29 @@ function kcat(c){
 function openCase(id){
   const c=CASES.find(x=>x.id===id);if(!c)return;
   currentCaseId=id;
-  const s=getState();
-  document.getElementById('m-ico').textContent=c.ico;
-  document.getElementById('m-cat').textContent=c.cat+' · '+{easy:'Лёгкий',medium:'Средний',hard:'Сложный'}[c.diff];
-  document.getElementById('m-title').textContent=c.title;
-  document.getElementById('m-sit').textContent=c.sit;
-  document.getElementById('m-steps').innerHTML=c.steps.map((st,i)=>
-    `<div class="step"><div class="sn">${i+1}</div><div class="sc"><div class="sa">${st.a}</div><div class="sd">${st.d}</div></div></div>`
-  ).join('');
-  const tip=document.getElementById('m-tip');
-  const tipTxt=document.getElementById('m-tip-txt');
-  if(c.tip){tip.style.display='block';tipTxt.textContent=c.tip;}
-  else tip.style.display='none';
-  const btn=document.getElementById('m-mark-btn');
-  btn.style.display='block';
-  if(s.readCases.includes(id)){btn.textContent='✅ Уже изучено';btn.disabled=true;}
-  else{btn.textContent='✅ Изучено';btn.disabled=false;}
-  document.getElementById('modal-ov').classList.add('open');
+  const story=CASE_STORIES[id];
+  if(story){
+    startCaseChat(id);
+  } else {
+    // Fallback: old modal for cases without stories
+    const s=getState();
+    document.getElementById('m-ico').textContent=c.ico;
+    document.getElementById('m-cat').textContent=c.cat+' · '+{easy:'Лёгкий',medium:'Средний',hard:'Сложный'}[c.diff];
+    document.getElementById('m-title').textContent=c.title;
+    document.getElementById('m-sit').textContent=c.sit;
+    document.getElementById('m-steps').innerHTML=c.steps.map((st,i)=>
+      `<div class="step"><div class="sn">${i+1}</div><div class="sc"><div class="sa">${st.a}</div><div class="sd">${st.d}</div></div></div>`
+    ).join('');
+    const tip=document.getElementById('m-tip');
+    const tipTxt=document.getElementById('m-tip-txt');
+    if(c.tip){tip.style.display='block';tipTxt.textContent=c.tip;}
+    else tip.style.display='none';
+    const btn=document.getElementById('m-mark-btn');
+    btn.style.display='block';
+    if(s.readCases.includes(id)){btn.textContent='✅ Уже изучено';btn.disabled=true;}
+    else{btn.textContent='✅ Изучено';btn.disabled=false;}
+    document.getElementById('modal-ov').classList.add('open');
+  }
 }
 
 function markCase(){
@@ -3040,6 +3240,371 @@ function matchClick(id,type,el){
       },400);
     }
   }
+}
+
+// ═══════════════════════════════════════════════
+// CHAT SIMULATOR ENGINE
+// ═══════════════════════════════════════════════
+let csState={caseId:null,stepIdx:0,score:0,maxScore:0};
+
+const CASE_STORIES={
+k1:{
+  contact:'Mike — TQL Logistics',avatar:'📞',
+  nodes:[
+    {msgs:[{who:'sys',text:'📱 Входящий звонок от брокера...'},
+           {who:'them',text:'Hey, I got a load for you. Chicago to Atlanta, 780 miles. $1,500 all-in. Interested?'}],
+     choices:[
+       {text:'Sure, send me the rate con',score:0,next:1,feedback:'Принял без торга — потерял $300–500.'},
+       {text:'What\'s the pickup and delivery window?',score:2,next:2,feedback:'Правильно! Сначала детали, потом цена.'},
+       {text:'$1,500? That\'s way too low, no thanks',score:0,next:3,feedback:'Слишком резко — потерял возможность.'}
+     ],insight:'💡 Всегда уточняй детали перед обсуждением ставки — это показывает профессионализм.'},
+    {msgs:[{who:'them',text:'Great, I\'ll send it over. Pickup tomorrow 8 AM.'}],
+     choices:null,end:true,endScore:0},
+    {msgs:[{who:'them',text:'Pickup tomorrow 8 AM, delivery next day by 5 PM. Dry van, 42,000 lbs, no hazmat.'}],
+     choices:[
+       {text:'DAT shows $2.10/mile on this lane. I need at least $1,900.',score:2,next:4,feedback:'Отлично! Данные DAT — твой главный аргумент.'},
+       {text:'I can do $1,700',score:1,next:5,feedback:'Ниже рынка — можно было больше.'},
+       {text:'I\'ll take the $1,500',score:0,next:1,feedback:'Ниже рынка. Всегда торгуйся.'}
+     ],insight:'💡 DAT показывает среднюю $2.10/mile = $1,638 минимум. Проси больше.'},
+    {msgs:[{who:'them',text:'Alright, good luck finding something better. Call me if you change your mind.'}],
+     choices:null,end:true,endScore:0},
+    {msgs:[{who:'them',text:'$1,900 is too high. Best I can do is $1,750.'}],
+     choices:[
+       {text:'I can do $1,800 if you need it moved today. Final offer.',score:2,next:6,feedback:'Идеальный компромисс с дедлайном.'},
+       {text:'Meet me at $1,850 and we have a deal.',score:1,next:7,feedback:'Хорошо, но мог закрыть быстрее.'},
+       {text:'OK, $1,750 works',score:0,next:5,feedback:'Мог получить больше — не сдавайся так быстро.'}
+     ],insight:'💡 "If you need it moved today" — создаёт urgency и оправдывает цену.'},
+    {msgs:[{who:'them',text:'OK, $1,700 works. I\'ll send the rate con.'},
+           {who:'sys',text:'Ставка: $1,700. Ниже рынка, но груз забукан.'}],
+     choices:null,end:true,endScore:1},
+    {msgs:[{who:'them',text:'Deal. $1,800. Sending rate con now.'},
+           {who:'sys',text:'🎉 Ставка: $1,800 — отличный результат!'}],
+     choices:null,end:true,endScore:3},
+    {msgs:[{who:'them',text:'Hmm... $1,825 and you got a deal.'},
+           {who:'you',text:'Done. Send the rate con.'},
+           {who:'sys',text:'Ставка: $1,825. Хороший результат!'}],
+     choices:null,end:true,endScore:2}
+  ]
+},
+k2:{
+  contact:'Водитель Иван',avatar:'🚛',
+  nodes:[
+    {msgs:[{who:'sys',text:'📱 Срочный звонок от водителя...'},
+           {who:'them',text:'Boss, truck broke down on I-80, mile marker 312. Engine light came on, won\'t start. I got reefer load — frozen products.'}],
+     choices:[
+       {text:'Спокойно, Иван. Разберёмся. Какая температура в рефрижераторе?',score:2,next:1,feedback:'Правильно — успокоил и запросил критичную информацию.'},
+       {text:'Как это случилось?! Ты проверял грузовик перед рейсом?',score:0,next:2,feedback:'Обвинения не помогут. Сначала реши проблему.'},
+       {text:'Сейчас позвоню брокеру, жди',score:1,next:3,feedback:'Брокеру нужно звонить, но сначала узнай детали.'}
+     ],insight:'💡 Первый шаг — успокоить водителя и собрать информацию. Паника = плохие решения.'},
+    {msgs:[{who:'them',text:'Reefer is still running, temp is 34°F. But engine is dead. I\'m on the shoulder.'}],
+     choices:[
+       {text:'Хорошо, рефрижератор работает — время есть. Ищу буксир рядом с тобой. Звоню брокеру через 5 минут.',score:2,next:4,feedback:'Идеально — план действий, приоритеты расставлены.'},
+       {text:'Попробуй завести ещё раз',score:0,next:5,feedback:'Водитель не механик. Нужен профессионал.'}
+     ],insight:'💡 Reefer работает отдельно от двигателя — это даёт время на решение.'},
+    {msgs:[{who:'them',text:'I did the pre-trip! Everything was fine this morning. Look, I need help here, not blame.'}],
+     choices:[
+       {text:'Ты прав, извини. Давай решать. Какая температура в рефрижераторе?',score:1,next:1,feedback:'Хорошо что исправился. Но потерял время.'},
+       {text:'Ладно, ищу буксир. Жди.',score:0,next:3,feedback:'Не узнал критичную информацию о температуре.'}
+     ]},
+    {msgs:[{who:'sys',text:'Ты звонишь брокеру...'},
+           {who:'you',text:'Driver broke down on I-80 mile 312. Working on solution. Will update in 30 min.'},
+           {who:'them',text:'OK thanks for the heads up. Keep me posted. What\'s the ETA impact?'}],
+     choices:[
+       {text:'Reefer is running, cargo is safe. Estimating 2-3 hour delay. Will confirm once tow truck arrives.',score:2,next:4,feedback:'Профессионально — дал статус, оценку, план.'},
+       {text:'I don\'t know yet, I\'ll call you back',score:0,next:6,feedback:'Брокер хочет конкретику, не неопределённость.'}
+     ],insight:'💡 Брокеры прощают поломки. Они не прощают молчание и отсутствие плана.'},
+    {msgs:[{who:'sys',text:'Ты нашёл буксир — ETA 45 минут. Позвонил брокеру с апдейтом.'},
+           {who:'them',text:'Thanks for staying on top of it. Appreciate the updates.'},
+           {who:'sys',text:'🎉 Ситуация под контролем. Груз доставлен с задержкой 3 часа.'}],
+     choices:null,end:true,endScore:3},
+    {msgs:[{who:'them',text:'That\'s not gonna help. I need a mechanic, not a restart.'},
+           {who:'sys',text:'Потерял время. Нужно было сразу искать помощь.'}],
+     choices:[
+       {text:'Понял. Ищу ближайший сервис и буксир.',score:1,next:4,feedback:'Лучше поздно чем никогда.'}
+     ]},
+    {msgs:[{who:'them',text:'I need more than that. What\'s the plan?'},
+           {who:'sys',text:'Брокер недоволен — нет конкретики.'}],
+     choices:[
+       {text:'Tow truck is on the way, ETA 45 min. Reefer running, cargo safe. Will update in 30.',score:1,next:4,feedback:'Исправился, но первое впечатление уже испорчено.'}
+     ]}
+  ]
+},
+k5:{
+  contact:'Accounting — Swift Logistics',avatar:'💰',
+  nodes:[
+    {msgs:[{who:'sys',text:'Прошло 45 дней после доставки. Оплата $2,800 не получена. POD отправлен.'},
+           {who:'sys',text:'Ты звонишь в бухгалтерию брокера...'},
+           {who:'them',text:'Swift Logistics accounting, how can I help you?'}],
+     choices:[
+       {text:'Hi, this is [Name] from [Company]. I\'m calling about invoice #1247, $2,800, delivered 45 days ago. Can you check the status?',score:2,next:1,feedback:'Профессионально — все данные сразу.'},
+       {text:'Where\'s my money? It\'s been 45 days!',score:0,next:2,feedback:'Агрессия не поможет. Бухгалтерия — не враг.'},
+       {text:'Hi, I have an unpaid invoice...',score:1,next:3,feedback:'Слишком расплывчато — нужны конкретные данные.'}
+     ],insight:'💡 Всегда называй номер инвойса, сумму и дату доставки — это ускоряет процесс.'},
+    {msgs:[{who:'them',text:'Let me check... Invoice #1247, yes I see it. It\'s in the queue. Should be processed this week.'}],
+     choices:[
+       {text:'Can you give me a specific date? Our terms were Net 30 and it\'s been 45 days.',score:2,next:4,feedback:'Отлично — вежливо но твёрдо.'},
+       {text:'OK, thanks. I\'ll wait.',score:0,next:5,feedback:'Без конкретной даты — будешь ждать ещё месяц.'}
+     ],insight:'💡 "In the queue" = стандартная отговорка. Всегда проси конкретную дату.'},
+    {msgs:[{who:'them',text:'Sir, I understand your frustration but I need an invoice number to look anything up.'}],
+     choices:[
+       {text:'Sorry about that. Invoice #1247, $2,800, delivered March 15th.',score:1,next:1,feedback:'Исправился, но первое впечатление подпорчено.'}
+     ]},
+    {msgs:[{who:'them',text:'OK, what\'s the invoice number and amount?'}],
+     choices:[
+       {text:'Invoice #1247, $2,800, delivered March 15th. POD was sent same day.',score:1,next:1,feedback:'Хорошо, но мог дать всё сразу.'}
+     ]},
+    {msgs:[{who:'them',text:'I can confirm payment will go out this Friday, March 28th.'},
+           {who:'you',text:'Thank you. Can you send me a confirmation email?'},
+           {who:'them',text:'Sure, I\'ll send it today.'},
+           {who:'sys',text:'🎉 Оплата подтверждена на пятницу. Email-подтверждение запрошено.'}],
+     choices:null,end:true,endScore:3},
+    {msgs:[{who:'sys',text:'Прошла ещё неделя. Оплаты нет. Теперь нужно эскалировать.'}],
+     choices:[
+       {text:'Звоню снова и прошу супервайзера',score:1,next:4,feedback:'Правильно, но потерял неделю.'}
+     ]}
+  ]
+},
+k7:{
+  contact:'Broker — CH Robinson',avatar:'📞',
+  nodes:[
+    {msgs:[{who:'sys',text:'Ты делаешь холодный звонок новому брокеру...'},
+           {who:'them',text:'CH Robinson, this is Sarah. How can I help you?'}],
+     choices:[
+       {text:'Hi Sarah, this is [Name] from [Company], MC 123456. I run dry vans Midwest to Southeast. Got anything moving this week?',score:2,next:1,feedback:'Идеально — кратко, по делу, с MC номером.'},
+       {text:'Hi, I\'m a carrier looking for loads. Do you have anything available?',score:0,next:2,feedback:'Слишком общо. Брокер не знает что ты можешь.'},
+       {text:'Hi Sarah, my name is [Name]. I\'ve been in trucking for 5 years and I wanted to introduce my company...',score:0,next:3,feedback:'Слишком длинно. Брокер занят — сразу к делу.'}
+     ],insight:'💡 Холодный звонок = 15 секунд. Имя, MC, оборудование, маршрут, вопрос.'},
+    {msgs:[{who:'them',text:'Hey! Yeah actually I have a load going Chicago to Atlanta, pickup Thursday. 53\' dry van. Interested?'}],
+     choices:[
+       {text:'Absolutely. What\'s the rate and weight?',score:2,next:4,feedback:'Прямо к делу — показывает опыт.'},
+       {text:'Maybe. Tell me more about it.',score:1,next:4,feedback:'Нормально, но "maybe" звучит неуверенно.'}
+     ]},
+    {msgs:[{who:'them',text:'What equipment do you run? What lanes?'}],
+     choices:[
+       {text:'53\' dry van, Midwest to Southeast primarily. Truck available Thursday in Chicago.',score:1,next:1,feedback:'Хорошо, но мог дать эту информацию сразу.'}
+     ]},
+    {msgs:[{who:'them',text:'OK... what\'s your MC number and what do you run?'},
+           {who:'sys',text:'Брокер теряет интерес — ты не дал конкретики.'}],
+     choices:[
+       {text:'MC 123456, 53\' dry van. Truck in Chicago, available Thursday.',score:1,next:1,feedback:'Спас ситуацию, но первое впечатление слабое.'}
+     ]},
+    {msgs:[{who:'them',text:'$1,850 all-in, 42,000 lbs. Pickup Thursday 8 AM.'},
+           {who:'you',text:'Works for me. Can I get your direct email for future loads?'},
+           {who:'them',text:'Sure — sarah.j@chrobinson.com. Send me your carrier packet.'},
+           {who:'sys',text:'🎉 Первый груз забукан + прямой контакт брокера получен!'}],
+     choices:null,end:true,endScore:3}
+  ]
+},
+k9:{
+  contact:'Unknown Broker',avatar:'🔍',
+  nodes:[
+    {msgs:[{who:'sys',text:'Незнакомый брокер предлагает $2,500 Dallas → Miami. Звучит хорошо. Но ты никогда с ним не работал.'},
+           {who:'them',text:'Hey, I got a hot load. Dallas to Miami, $2,500. Need it picked up today. You in?'}],
+     choices:[
+       {text:'Sounds good. What\'s your MC number? I need to verify before we proceed.',score:2,next:1,feedback:'Правильно — всегда проверяй перед букингом.'},
+       {text:'$2,500? I\'m in! Send the rate con.',score:0,next:4,feedback:'Опасно! Не проверил брокера — рискуешь не получить оплату.'},
+       {text:'That rate seems too high. What\'s the catch?',score:1,next:2,feedback:'Хороший инстинкт, но лучше проверить через SAFER.'}
+     ],insight:'💡 Слишком высокая ставка + давление "нужно сегодня" = красные флаги.'},
+    {msgs:[{who:'them',text:'MC 987654. We\'re a legit operation, been in business 2 years.'},
+           {who:'sys',text:'Ты проверяешь на SAFER.fmcsa.dot.gov...'},
+           {who:'sys',text:'⚠️ MC активный, но страховка истекла 2 недели назад. Bond активный.'}],
+     choices:[
+       {text:'Your insurance shows expired on SAFER. I can\'t book until that\'s updated.',score:2,next:3,feedback:'Отлично — нашёл проблему, защитил себя.'},
+       {text:'Looks good on SAFER. Let\'s do it.',score:0,next:4,feedback:'Не заметил истёкшую страховку — опасно!'}
+     ],insight:'💡 Проверяй: активная лицензия + действующая страховка + bond. Все три.'},
+    {msgs:[{who:'them',text:'No catch, just need it moved fast. So are you in or not?'}],
+     choices:[
+       {text:'Give me your MC number first. I verify every new broker.',score:2,next:1,feedback:'Правильный подход — не поддался давлению.'},
+       {text:'OK, send the rate con',score:0,next:4,feedback:'Поддался давлению — рискованно.'}
+     ]},
+    {msgs:[{who:'them',text:'Oh, we just switched providers. It\'ll be updated tomorrow.'},
+           {who:'you',text:'I understand, but I can\'t move a load without valid insurance on file. Call me when it\'s updated.'},
+           {who:'sys',text:'🎉 Правильное решение. 5 минут проверки могут сэкономить тысячи.'}],
+     choices:null,end:true,endScore:3},
+    {msgs:[{who:'sys',text:'⚠️ Ты забукал груз без проверки. Через 30 дней — оплаты нет. Брокер не отвечает на звонки.'},
+           {who:'sys',text:'Потеря: $2,500 + топливо + время водителя. Урок усвоен.'}],
+     choices:null,end:true,endScore:0}
+  ]
+}
+};
+
+// Chat engine
+let csCurrentCase=null;
+let csNodeIdx=0;
+let csScore=0;
+let csMaxScore=0;
+let csMsgQueue=[];
+let csAnimating=false;
+
+function startCaseChat(id){
+  const c=CASES.find(x=>x.id===id);
+  const story=CASE_STORIES[id];
+  if(!c||!story)return;
+  csCurrentCase=id;csNodeIdx=0;csScore=0;csMaxScore=0;
+  // Count max possible score
+  story.nodes.forEach(n=>{if(n.choices){const mx=Math.max(...n.choices.map(ch=>ch.score));csMaxScore+=mx;}});
+  // Setup UI
+  document.getElementById('case-list-view').style.display='none';
+  document.getElementById('case-chat-view').style.display='block';
+  document.getElementById('cs-title').textContent=c.title;
+  document.getElementById('cs-cat').textContent=c.cat+' · '+{easy:'Лёгкий',medium:'Средний',hard:'Сложный'}[c.diff];
+  document.getElementById('cs-contact').textContent=story.contact;
+  document.getElementById('cs-avatar').textContent=story.avatar;
+  document.getElementById('cs-stars').textContent='⭐⭐⭐';
+  document.getElementById('cs-messages').innerHTML='';
+  document.getElementById('cs-choices').innerHTML='';
+  document.getElementById('cs-insight').style.display='none';
+  document.getElementById('cs-results').style.display='none';
+  document.getElementById('cs-messages').parentElement.style.display='';
+  playNode(0);
+}
+
+function playNode(idx){
+  const story=CASE_STORIES[csCurrentCase];
+  if(!story||idx>=story.nodes.length)return;
+  csNodeIdx=idx;
+  const node=story.nodes[idx];
+  document.getElementById('cs-choices').innerHTML='';
+  document.getElementById('cs-insight').style.display='none';
+  // Queue messages
+  showMessagesSequence(node.msgs,()=>{
+    if(node.end){
+      csScore+=(node.endScore||0);
+      setTimeout(()=>showCaseResults(),600);
+    } else if(node.choices){
+      showChoices(node);
+    }
+  });
+}
+
+function showMessagesSequence(msgs,callback){
+  const container=document.getElementById('cs-messages');
+  let i=0;
+  function next(){
+    if(i>=msgs.length){if(callback)callback();return;}
+    const m=msgs[i];i++;
+    // Show typing indicator for "them" messages
+    if(m.who==='them'){
+      const typing=document.createElement('div');
+      typing.className='cs-typing';
+      typing.innerHTML='<div class="cs-typing-dot"></div><div class="cs-typing-dot"></div><div class="cs-typing-dot"></div>';
+      container.appendChild(typing);
+      container.scrollTop=container.scrollHeight;
+      setTimeout(()=>{
+        typing.remove();
+        addMessage(m);
+        setTimeout(next,400);
+      },800+Math.random()*600);
+    } else {
+      addMessage(m);
+      setTimeout(next,m.who==='sys'?600:300);
+    }
+  }
+  next();
+}
+
+function addMessage(m){
+  const container=document.getElementById('cs-messages');
+  const div=document.createElement('div');
+  const cls=m.who==='them'?'cs-msg cs-msg-them':m.who==='you'?'cs-msg cs-msg-you':'cs-msg cs-msg-system';
+  div.className=cls;
+  const whoLabel=m.who==='them'?'':'';
+  div.innerHTML=`<div class="cs-msg-bubble">${m.text}</div>`;
+  container.appendChild(div);
+  // Trigger animation
+  requestAnimationFrame(()=>{div.style.animationDelay='0s';});
+  container.scrollTop=container.scrollHeight;
+}
+
+function showChoices(node){
+  const container=document.getElementById('cs-choices');
+  container.innerHTML=node.choices.map((ch,i)=>
+    `<button class="cs-choice" onclick="pickChoice(${csNodeIdx},${i})">${ch.text}</button>`
+  ).join('');
+}
+
+function pickChoice(nodeIdx,choiceIdx){
+  const story=CASE_STORIES[csCurrentCase];
+  const node=story.nodes[nodeIdx];
+  const choice=node.choices[choiceIdx];
+  csScore+=choice.score;
+  // Highlight chosen, dim others
+  const btns=document.querySelectorAll('.cs-choice');
+  btns.forEach((btn,i)=>{
+    btn.style.pointerEvents='none';
+    if(i===choiceIdx){
+      btn.classList.add(choice.score>=2?'cs-correct':'cs-wrong');
+    } else {
+      btn.classList.add('cs-dim');
+    }
+  });
+  // Add your message to chat
+  addMessage({who:'you',text:choice.text});
+  // Show feedback as system message
+  if(choice.feedback){
+    setTimeout(()=>{
+      addMessage({who:'sys',text:(choice.score>=2?'✅ ':'⚠️ ')+choice.feedback});
+    },500);
+  }
+  // Show insight
+  if(node.insight){
+    setTimeout(()=>{
+      const ins=document.getElementById('cs-insight');
+      ins.style.display='flex';
+      document.getElementById('cs-insight-text').textContent=node.insight.replace('💡 ','');
+    },900);
+  }
+  // Advance to next node
+  setTimeout(()=>{
+    document.getElementById('cs-choices').innerHTML='';
+    document.getElementById('cs-insight').style.display='none';
+    playNode(choice.next);
+  },choice.score>=2?1800:2200);
+}
+
+function showCaseResults(){
+  const c=CASES.find(x=>x.id===csCurrentCase);
+  if(!c)return;
+  const pct=csMaxScore>0?Math.round(csScore/csMaxScore*100):0;
+  const stars=pct>=80?3:pct>=50?2:pct>0?1:0;
+  const starStr='⭐'.repeat(stars)+'☆'.repeat(3-stars);
+  const titles=['Попробуй ещё раз','Неплохо!','Хорошая работа!','Отлично!'];
+  const icons=['😅','🙂','👍','🏆'];
+  // Hide chat, show results
+  document.getElementById('cs-messages').parentElement.style.display='none';
+  document.getElementById('cs-choices').innerHTML='';
+  document.getElementById('cs-insight').style.display='none';
+  const res=document.getElementById('cs-results');
+  res.style.display='block';
+  document.getElementById('cs-res-icon').textContent=icons[stars];
+  document.getElementById('cs-res-title').textContent=titles[stars];
+  document.getElementById('cs-res-stars').textContent=starStr;
+  document.getElementById('cs-res-score').innerHTML=`Результат: <strong>${csScore}</strong> из <strong>${csMaxScore}</strong> баллов<br>Точность: <strong>${pct}%</strong>`;
+  document.getElementById('cs-res-tip').textContent=c.tip||'';
+  document.getElementById('cs-topbar-stars').textContent=starStr;
+  // Mark as read & award XP
+  const s=getState();
+  if(!s.readCases.includes(csCurrentCase)){
+    s.readCases.push(csCurrentCase);
+    const xpAmount=Math.round(c.xp*(0.5+pct/200));
+    s.xp=(s.xp||0)+xpAmount;
+    setState(s);
+    checkAchievements(s);
+    updateHeroNums();
+    if(window._awardXP)try{window._awardXP('CASE_STUDY_READ');}catch(e){}
+    showToast(c.ico,'+'+xpAmount+' XP','Кейс пройден!');
+    filterCases();
+  }
+}
+
+function replayCase(){
+  if(csCurrentCase)startCaseChat(csCurrentCase);
+}
+
+function exitCaseChat(){
+  document.getElementById('case-chat-view').style.display='none';
+  document.getElementById('case-list-view').style.display='block';
+  csCurrentCase=null;
 }
 
 // ═══════════════════════════════════════════════
