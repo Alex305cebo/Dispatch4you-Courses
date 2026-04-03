@@ -1869,6 +1869,7 @@ function cdiff(d){
   cardDiff=d;
   document.querySelectorAll('[id^="cd-"]').forEach(b=>b.classList.remove('on'));
   document.getElementById('cd-'+d).classList.add('on');
+  clearQuizSession();
   filterCards();
 }
 function ccat(c){
@@ -1877,6 +1878,7 @@ function ccat(c){
   const id=c==='all'?'cc-all':'cc-'+c.replace(/\s/g,'_');
   const el=document.getElementById(id);
   if(el)el.classList.add('on');
+  clearQuizSession();
   filterCards();
 }
 function cmode(m){
@@ -1908,6 +1910,48 @@ const QUIZ_LEVELS=[
   {name:'Нормальный',count:12,color:'#f59e0b',bg:'rgba(245,158,11,.08)',border:'rgba(245,158,11,.25)',icon:'🟡',time:35},
   {name:'Сложный',count:8,color:'#ef4444',bg:'rgba(239,68,68,.08)',border:'rgba(239,68,68,.25)',icon:'🔴',time:15}
 ];
+
+// ═══ SESSION PERSISTENCE ═══
+const SESS_KEY='trainer_quiz_session';
+function saveQuizSession(){
+  try{
+    const data={
+      level:quizLevel,
+      currentIndex:quizSession.currentIndex,
+      correctCount:quizSession.correctCount,
+      wrongCount:quizSession.wrongCount,
+      streak:quizSession.streak,
+      maxStreak:quizSession.maxStreak,
+      cardIds:quizSession.cards.map(c=>c.id),
+      ts:Date.now()
+    };
+    localStorage.setItem(SESS_KEY,JSON.stringify(data));
+  }catch(e){}
+}
+function loadQuizSession(){
+  try{
+    const raw=localStorage.getItem(SESS_KEY);
+    if(!raw)return null;
+    const data=JSON.parse(raw);
+    // Expire after 4 hours
+    if(Date.now()-data.ts>4*3600000)return null;
+    // Restore cards from IDs
+    const cards=data.cardIds.map(id=>CARDS.find(c=>c.id===id)).filter(Boolean);
+    if(!cards.length)return null;
+    return {
+      level:data.level||0,
+      cards,
+      currentIndex:data.currentIndex||0,
+      correctCount:data.correctCount||0,
+      wrongCount:data.wrongCount||0,
+      streak:data.streak||0,
+      maxStreak:data.maxStreak||0
+    };
+  }catch(e){return null;}
+}
+function clearQuizSession(){
+  try{localStorage.removeItem(SESS_KEY);}catch(e){}
+}
 
 function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
@@ -2173,6 +2217,7 @@ function startQuizLevel(level){
 
   quizSession={cards,currentIndex:0,correctCount:0,wrongCount:0,streak:0,maxStreak:0};
   quizAnswered=false;
+  saveQuizSession();
   updateLevelUI();
   showQuizQuestion();
 }
@@ -2207,7 +2252,24 @@ function updateLevelUI(){
 
 function showCard(){
   if(!CARDS.length)return;
-  startQuizLevel(0);
+  // Try to restore saved session
+  const saved=loadQuizSession();
+  if(saved&&saved.cards.length>0&&saved.currentIndex<saved.cards.length){
+    quizLevel=saved.level;
+    quizSession={
+      cards:saved.cards,
+      currentIndex:saved.currentIndex,
+      correctCount:saved.correctCount,
+      wrongCount:saved.wrongCount,
+      streak:saved.streak,
+      maxStreak:saved.maxStreak
+    };
+    quizAnswered=false;
+    updateLevelUI();
+    showQuizQuestion();
+  } else {
+    startQuizLevel(0);
+  }
 }
 
 function showQuizQuestion(){
@@ -2321,6 +2383,7 @@ function quizTimeUp(){
   s.xp=(s.xp||0)+1;
   s.srs[card.id]=srs;s.totalAnswers=(s.totalAnswers||0)+1;
   setState(s);
+  saveQuizSession();
   document.getElementById('quiz-streak').textContent=`🔥 ${sess.streak}`;
   document.getElementById('quiz-correct-cnt').textContent=`✅ ${sess.correctCount}`;
   document.getElementById('quiz-wrong-cnt').textContent=`❌ ${sess.wrongCount}`;
@@ -2379,6 +2442,7 @@ function quizAnswer(idx){
   }
   s.srs[card.id]=srs;s.totalAnswers=(s.totalAnswers||0)+1;if(isCorrect)s.correctAnswers=(s.correctAnswers||0)+1;
   setState(s);
+  saveQuizSession();
   document.getElementById('quiz-streak').textContent=`🔥 ${sess.streak}`;
   document.getElementById('quiz-correct-cnt').textContent=`✅ ${sess.correctCount}`;
   document.getElementById('quiz-wrong-cnt').textContent=`❌ ${sess.wrongCount}`;
@@ -2408,11 +2472,13 @@ function quizAnswer(idx){
 
 function quizNext(){
   quizSession.currentIndex++;
+  saveQuizSession();
   showQuizQuestion();
 }
 
 function showLevelComplete(){
   clearInterval(quizTimer);quizTimer=null;
+  clearQuizSession();
   const timerWrap=document.getElementById('qz-timer-wrap');
   if(timerWrap)timerWrap.style.display='none';
   const lv=QUIZ_LEVELS[quizLevel];
@@ -2539,6 +2605,7 @@ function shuffleCards(){
 function resetSession(){
   cardIndex=0;
   cardStreak=0;
+  clearQuizSession();
   filterCards();
   document.getElementById('fc-streak').textContent='0';
   showToast('🔄','Сброс','Сессия сброшена');
