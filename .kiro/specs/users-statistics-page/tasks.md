@@ -27,7 +27,7 @@
     - Использовать optional chaining и fallback-значения для отсутствующих полей
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [ ] 2. Checkpoint — Проверить базовую структуру
+- [x] 2. Checkpoint — Проверить базовую структуру
   - Убедиться что страница открывается, role-guard работает, данные загружаются из Firestore
   - Ensure all tests pass, ask the user if questions arise.
 
@@ -38,7 +38,7 @@
     - Стилизовать карточки по паттерну `.sc` из admin.html: тёмный фон, цветная полоска, иконка, значение крупным шрифтом
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 11.2_
 
-  - [ ]* 3.2 Write property test for overview stats calculation
+  - [x] 3.2 Write property test for overview stats calculation
     - **Property 2: Корректность расчёта overview-статистик**
     - **Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.5, 3.6**
 
@@ -50,7 +50,7 @@
     - Обработать случай когда Chart.js не загрузился — текст «График недоступен»
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
 
-  - [ ]* 3.4 Write property test for activity chart data
+  - [ ] 3.4 Write property test for activity chart data
     - **Property 3: Корректность данных графика активности**
     - **Validates: Requirements 4.1**
 
@@ -62,7 +62,7 @@
     - Использовать CSS-классы role-1...role-10 для бейджей уровней
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 12.5_
 
-  - [ ]* 4.2 Write property test for leaderboard sorting
+  - [ ] 4.2 Write property test for leaderboard sorting
     - **Property 4: Корректность сортировки лидерборда**
     - **Validates: Requirements 5.1, 5.3**
 
@@ -76,7 +76,7 @@
     - Добавить обработчик клика для открытия модального окна профиля
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9, 6.10, 11.3_
 
-  - [ ]* 4.4 Write property test for user card data completeness
+  - [ ] 4.4 Write property test for user card data completeness
     - **Property 5: Полнота данных карточки пользователя**
     - **Validates: Requirements 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9**
 
@@ -101,15 +101,15 @@
     - Фильтрация по имени/email в реальном времени (по мере ввода)
     - _Requirements: 7.2, 7.5, 8.6_
 
-  - [ ]* 6.3 Write property test for text search
+  - [ ] 6.3 Write property test for text search
     - **Property 6: Корректность текстового поиска**
     - **Validates: Requirements 7.2**
 
-  - [ ]* 6.4 Write property test for activity filter
+  - [ ] 6.4 Write property test for activity filter
     - **Property 7: Корректность фильтрации по активности**
     - **Validates: Requirements 7.4, 7.5**
 
-  - [ ]* 6.5 Write property test for user sorting
+  - [ ] 6.5 Write property test for user sorting
     - **Property 8: Корректность сортировки пользователей**
     - **Validates: Requirements 8.1, 8.2, 8.3, 8.4, 8.5, 8.6**
 
@@ -133,11 +133,11 @@
     - Обработать пустой xpHistory — текст «Нет данных» вместо графика
     - _Requirements: 9.9_
 
-  - [ ]* 7.3 Write property test for XP chart data
+  - [ ] 7.3 Write property test for XP chart data
     - **Property 12: Корректность подготовки данных XP-графика**
     - **Validates: Requirements 9.9**
 
-  - [ ]* 7.4 Write property test for modal data completeness
+  - [ ] 7.4 Write property test for modal data completeness
     - **Property 9: Полнота данных модального окна профиля**
     - **Validates: Requirements 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8**
 
@@ -156,7 +156,7 @@
     - Обработка ошибок через try/catch
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
 
-  - [ ]* 9.2 Write property test for CSV export
+  - [ ] 9.2 Write property test for CSV export
     - **Property 10: Корректность CSV-экспорта (round-trip)**
     - **Validates: Requirements 10.2, 10.3, 10.4, 10.5**
 
@@ -172,11 +172,11 @@
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 11.7_
 
 - [ ] 10. Реализовать property-тесты для метрик и доступа
-  - [ ]* 10.1 Write property test for derived metrics calculation
+  - [ ] 10.1 Write property test for derived metrics calculation
     - **Property 1: Корректность расчёта производных метрик**
     - **Validates: Requirements 2.2, 2.5**
 
-  - [ ]* 10.2 Write property test for non-superuser access blocking
+  - [ ] 10.2 Write property test for non-superuser access blocking
     - **Property 11: Блокировка доступа для не-superuser ролей**
     - **Validates: Requirements 1.2**
 

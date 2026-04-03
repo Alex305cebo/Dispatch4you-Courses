@@ -1,11 +1,11 @@
 // Pure business logic extracted from pages/users-stats.html for testing
 
 const LEVELS = [
-  {level:1,minXP:0,label:'🌱 Новичок'},{level:2,minXP:50,label:'📖 Стажёр'},
-  {level:3,minXP:150,label:'🎓 Студент'},{level:4,minXP:300,label:'🚛 Диспетчер Jr'},
-  {level:5,minXP:500,label:'📋 Диспетчер'},{level:6,minXP:800,label:'⭐ Диспетчер Sr'},
-  {level:7,minXP:1200,label:'🏆 Эксперт'},{level:8,minXP:1800,label:'💎 Наставник'},
-  {level:9,minXP:2500,label:'🔥 Модератор'},{level:10,minXP:9999,label:'👑 Администратор'}
+  {level:1,minXP:0,label:'🔰 Стажёр'},{level:2,minXP:50,label:'📡 Оператор'},
+  {level:3,minXP:150,label:'🗺️ Навигатор'},{level:4,minXP:300,label:'🚛 Дальнобой'},
+  {level:5,minXP:500,label:'📋 Диспетчер'},{level:6,minXP:800,label:'⚡ Координатор'},
+  {level:7,minXP:1200,label:'🎯 Логист'},{level:8,minXP:1800,label:'💎 Наставник'},
+  {level:9,minXP:2500,label:'🦅 Ветеран'},{level:10,minXP:9999,label:'👑 Администратор'}
 ];
 
 function getLevelByXP(xp) { let c=LEVELS[0]; for(const l of LEVELS){if(xp>=l.minXP)c=l;else break;} return c; }
