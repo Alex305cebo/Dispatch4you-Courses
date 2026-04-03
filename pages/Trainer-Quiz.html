@@ -553,6 +553,7 @@ body::before{content:'';position:fixed;inset:0;background:
   .modal{border-radius:16px}.mh{padding:18px 18px 0}.mb{padding:14px 18px 18px}.mf{padding:0 18px 18px}
   .ib-facts{grid-template-columns:repeat(2,1fr)}
   .ib-links-grid{grid-template-columns:repeat(2,1fr)}
+  #quiz-options{grid-template-columns:1fr !important}
 }
 @media(max-width:480px){
   .tabs{gap:4px}
@@ -696,65 +697,66 @@ body::before{content:'';position:fixed;inset:0;background:
     <!-- ЦЕНТРАЛЬНАЯ КОЛОНКА — переключаемый контент -->
     <div class="study-col-center" id="center-col">
 
-      <!-- ── КАРТОЧКИ (Reveal + уверенность) ── -->
+      <!-- ── КВИЗ-КАРТОЧКИ ── -->
       <div id="card-panel">
-        <p class="flip-hint" id="card-hint-txt">👆 Нажми на карточку чтобы увидеть определение</p>
-
-        <!-- Карточка с переворотом -->
-        <div class="scene" onclick="revealCard()" id="scene">
-          <div class="card3d" id="card3d">
-            <div class="face front">
-              <div class="f-cat" id="f-cat">—</div>
-              <div class="f-term" id="f-term">Загрузка...</div>
-              <div class="f-hint" id="f-hint"></div>
-              <div class="reveal-prompt">Нажми чтобы увидеть →</div>
-            </div>
-            <div class="face back">
-              <div class="f-cat" id="f-cat2">—</div>
-              <div class="f-def" id="f-def">—</div>
-              <div class="f-ex" id="f-ex" style="display:none"></div>
-            </div>
+        <!-- Строка прогресса сверху -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+          <span style="font-size:13px;color:var(--t3);font-weight:600" id="quiz-counter">1 / 80</span>
+          <div style="display:flex;gap:12px;align-items:center">
+            <span style="font-size:13px;font-weight:700;color:var(--warn)" id="quiz-streak">🔥 0 подряд</span>
+            <span style="font-size:13px;color:var(--ok);font-weight:600" id="quiz-correct-cnt">✅ 0</span>
+            <span style="font-size:13px;color:var(--err);font-weight:600" id="quiz-wrong-cnt">❌ 0</span>
           </div>
         </div>
 
-        <!-- Кнопки уверенности — скрыты до переворота -->
-        <div class="confidence-btns" id="confidence-btns" style="display:none">
-          <div class="conf-label">Насколько уверен?</div>
-          <div class="conf-row">
-            <button class="conf-btn conf-hard" onclick="rateCard(1)">
-              <span class="conf-ico">😰</span>
-              <span class="conf-title">Сложно</span>
-              <span class="conf-sub">повторить завтра</span>
-            </button>
-            <button class="conf-btn conf-ok" onclick="rateCard(3)">
-              <span class="conf-ico">🤔</span>
-              <span class="conf-title">Нормально</span>
-              <span class="conf-sub">через 3 дня</span>
-            </button>
-            <button class="conf-btn conf-easy" onclick="rateCard(7)">
-              <span class="conf-ico">😎</span>
-              <span class="conf-title">Легко</span>
-              <span class="conf-sub">через 7 дней</span>
-            </button>
-          </div>
+        <!-- Карточка-вопрос -->
+        <div id="quiz-question-card" style="background:linear-gradient(145deg,rgba(6,182,212,.08),rgba(14,165,233,.04));border:1px solid rgba(6,182,212,.2);border-radius:20px;padding:32px 36px;text-align:center;margin-bottom:16px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--p);margin-bottom:14px;opacity:.85" id="q-cat">ТЕРМИНЫ</div>
+          <div style="font-size:clamp(16px,2.5vw,20px);color:var(--t1);line-height:1.6;font-weight:500;margin-bottom:12px" id="q-def">Загрузка...</div>
+          <div style="font-size:13px;color:var(--t3);font-style:italic" id="q-hint"></div>
         </div>
 
-        <!-- Кнопка "Пропустить" до переворота -->
-        <div class="skip-row" id="skip-row">
-          <button class="ans-btn ans-skip" onclick="nextCard()">⏭ Пропустить</button>
+        <!-- 3 варианта ответа -->
+        <div id="quiz-options" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+          <button class="qopt" id="qopt-0" onclick="quizAnswer(0)" style="padding:16px 12px;background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.1);border-radius:14px;color:var(--t1);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;text-align:center">—</button>
+          <button class="qopt" id="qopt-1" onclick="quizAnswer(1)" style="padding:16px 12px;background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.1);border-radius:14px;color:var(--t1);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;text-align:center">—</button>
+          <button class="qopt" id="qopt-2" onclick="quizAnswer(2)" style="padding:16px 12px;background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.1);border-radius:14px;color:var(--t1);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;text-align:center">—</button>
         </div>
 
-        <!-- Прогресс -->
-        <div style="width:100%;max-width:500px;margin-top:14px">
+        <!-- Обратная связь (скрыта до ответа) -->
+        <div id="quiz-feedback" style="display:none;padding:16px 20px;border-radius:14px;margin-bottom:14px;font-size:14px;line-height:1.7">
+          <div id="quiz-fb-text"></div>
+          <div id="quiz-fb-example" style="margin-top:10px;font-size:13px;color:var(--t2);font-style:italic;background:rgba(255,255,255,.04);border-radius:10px;padding:12px 14px;display:none"></div>
+        </div>
+
+        <!-- Кнопка Далее (скрыта до ответа) -->
+        <div id="quiz-next-row" style="display:none;text-align:center;margin-bottom:14px">
+          <button onclick="quizNext()" style="padding:12px 32px;background:linear-gradient(135deg,var(--p),var(--s));border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s">Далее →</button>
+        </div>
+
+        <!-- Прогресс-бар -->
+        <div style="width:100%;margin-top:10px">
           <div class="prog-row"><span id="prog-txt">Изучено: 0 из 0</span><span id="prog-pct">0%</span></div>
           <div class="prog-wrap"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
         </div>
 
-        <!-- ── B: ПРИМЕР ДИАЛОГА ── -->
+        <!-- Экран результатов (скрыт) -->
+        <div id="quiz-results" style="display:none;text-align:center;padding:40px 20px">
+          <div style="font-size:48px;margin-bottom:16px">🎉</div>
+          <div style="font-size:24px;font-weight:800;color:var(--t1);margin-bottom:8px">Сессия завершена!</div>
+          <div style="display:flex;gap:20px;justify-content:center;margin:20px 0;flex-wrap:wrap">
+            <div style="text-align:center"><div style="font-size:32px;font-weight:900;color:var(--ok)" id="res-correct">0</div><div style="font-size:11px;color:var(--t3);text-transform:uppercase">Правильных</div></div>
+            <div style="text-align:center"><div style="font-size:32px;font-weight:900;color:var(--err)" id="res-wrong">0</div><div style="font-size:11px;color:var(--t3);text-transform:uppercase">Неправильных</div></div>
+            <div style="text-align:center"><div style="font-size:32px;font-weight:900;color:var(--warn)" id="res-streak">0</div><div style="font-size:11px;color:var(--t3);text-transform:uppercase">Макс. серия</div></div>
+          </div>
+          <button onclick="quizRestart()" style="padding:12px 28px;background:linear-gradient(135deg,var(--p),var(--s));border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">🔄 Начать заново</button>
+        </div>
+
+        <!-- Диалог-пример -->
         <div class="cp-section" style="margin-top:20px">
           <div class="cp-section-title">💬 Пример в реальном разговоре</div>
           <div class="dialog-box" id="dialog-box">
-            <div class="dialog-empty">Переверни карточку чтобы увидеть пример</div>
+            <div class="dialog-empty">Ответь на вопрос чтобы увидеть пример</div>
           </div>
         </div>
 
@@ -1424,7 +1426,7 @@ const SK='trainer_v2';
 function loadState(){
   try{return JSON.parse(localStorage.getItem(SK))||{};}catch(e){return{};}
 }
-function saveState(s){localStorage.setItem(SK,JSON.stringify(s));}
+function saveState(s){try{localStorage.setItem(SK,JSON.stringify(s));}catch(e){console.warn('localStorage unavailable');}}
 function getState(){
   const d=loadState();
   return {
@@ -1527,117 +1529,211 @@ function cmode(m){
   else{const cp=document.getElementById('card-panel');if(cp)cp.style.display='block';filterCards();}
 }
 
+// ═══ QUIZ ENGINE ═══
+const SRS_INTERVALS=[1,3,7,14,30];
+let quizSession={cards:[],currentIndex:0,correctCount:0,wrongCount:0,streak:0,maxStreak:0};
+let currentQuestion=null;
+let quizAnswered=false;
+
+function pickDistractors(correctCard,allCards){
+  const pool=allCards.filter(c=>c.id!==correctCard.id);
+  const same=pool.filter(c=>c.cat===correctCard.cat);
+  const other=pool.filter(c=>c.cat!==correctCard.cat);
+  let d1,d2;
+  if(same.length>=1){
+    d1=same[Math.floor(Math.random()*same.length)];
+    const pool2=pool.filter(c=>c.id!==d1.id);
+    d2=pool2[Math.floor(Math.random()*pool2.length)];
+  } else {
+    d1=pool[Math.floor(Math.random()*pool.length)];
+    const pool2=pool.filter(c=>c.id!==d1.id);
+    d2=pool2[Math.floor(Math.random()*pool2.length)];
+  }
+  return [d1,d2];
+}
+
+function buildQuizQuestion(card,allCards){
+  const distractors=pickDistractors(card,allCards);
+  const options=[
+    {term:card.term,cardId:card.id,isCorrect:true},
+    {term:distractors[0].term,cardId:distractors[0].id,isCorrect:false},
+    {term:distractors[1].term,cardId:distractors[1].id,isCorrect:false}
+  ];
+  // shuffle
+  for(let i=options.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[options[i],options[j]]=[options[j],options[i]];}
+  return {card,options};
+}
+
+function initQuizSession(cards){
+  const s=getState();
+  // SRS sort: overdue first
+  const now=Date.now();
+  cards.sort((a,b)=>{
+    const srsA=s.srs&&s.srs[a.id]?s.srs[a.id].next||0:0;
+    const srsB=s.srs&&s.srs[b.id]?s.srs[b.id].next||0:0;
+    const overdueA=srsA<now?0:1;
+    const overdueB=srsB<now?0:1;
+    return overdueA-overdueB;
+  });
+  quizSession={cards,currentIndex:0,correctCount:0,wrongCount:0,streak:0,maxStreak:0};
+  quizAnswered=false;
+}
+
 function showCard(){
   if(!filteredCards.length){
-    document.getElementById('f-term').textContent='Нет карточек';
-    document.getElementById('f-cat').textContent='—';
-    document.getElementById('f-hint').textContent='Измени фильтры';
-    document.getElementById('f-def').textContent='—';
-    document.getElementById('f-ex').style.display='none';
+    document.getElementById('q-def').textContent='Нет карточек. Измени фильтры.';
+    document.getElementById('q-cat').textContent='—';
+    document.getElementById('q-hint').textContent='';
+    document.querySelectorAll('.qopt').forEach(b=>{b.textContent='—';b.disabled=true;});
     return;
   }
-  const c=filteredCards[cardIndex%filteredCards.length];
-  cardFlipped=false;
-  document.getElementById('card3d').classList.remove('flip');
-  document.getElementById('f-cat').textContent=c.cat;
-  document.getElementById('f-cat2').textContent=c.cat;
-  document.getElementById('f-term').textContent=c.term;
-  document.getElementById('f-hint').textContent=c.hint?'('+c.hint+')':'';
-  document.getElementById('f-def').textContent=c.def;
-  const ex=document.getElementById('f-ex');
-  if(c.ex){ex.textContent=c.ex;ex.style.display='block';}
-  else ex.style.display='none';
-  document.getElementById('fc-ctr').textContent=`${(cardIndex%filteredCards.length)+1} / ${filteredCards.length}`;
-  // reset confidence UI
-  const cb=document.getElementById('confidence-btns');
-  const sr=document.getElementById('skip-row');
-  if(cb)cb.style.display='none';
-  if(sr)sr.style.display='flex';
-  // reset dialog
-  const box=document.getElementById('dialog-box');
-  if(box)box.innerHTML='<div class="dialog-empty">Переверни карточку чтобы увидеть пример</div>';
-  updateProgress();
-  updateCardPanelSections(null);
-  autoResizeCard();
+  initQuizSession([...filteredCards]);
+  showQuizQuestion();
 }
 
-function revealCard(){
-  if(cardFlipped)return;
-  cardFlipped=true;
-  document.getElementById('card3d').classList.add('flip');
-  const cb=document.getElementById('confidence-btns');
-  const sr=document.getElementById('skip-row');
-  if(cb)cb.style.display='block';
-  if(sr)sr.style.display='none';
-  // авто-высота для обратной стороны
-  setTimeout(()=>autoResizeCard(),100);
-  // показать диалог для текущей карточки
-  if(filteredCards.length){
-    const c=filteredCards[cardIndex%filteredCards.length];
-    renderDialog(c.id);
-  }
-}
-
-function flipCard(){revealCard();}
-
-function autoResizeCard(){
-  const scene=document.getElementById('scene');
-  const front=scene.querySelector('.front');
-  const back=scene.querySelector('.back');
-  if(!scene||!front||!back)return;
-  // Temporarily make faces position:relative to measure natural height
-  const faces=[front,back];
-  let maxH=0;
-  faces.forEach(f=>{
-    f.style.position='relative';
-    f.style.visibility='visible';
-    const h=f.scrollHeight;
-    if(h>maxH)maxH=h;
-    f.style.position='';
-    f.style.visibility='';
+function showQuizQuestion(){
+  const sess=quizSession;
+  if(sess.currentIndex>=sess.cards.length){showQuizResults();return;}
+  quizAnswered=false;
+  const card=sess.cards[sess.currentIndex];
+  // Use full CARDS for distractors if filtered pool is too small
+  const pool=filteredCards.length>=3?filteredCards:CARDS;
+  currentQuestion=buildQuizQuestion(card,pool);
+  // Update UI
+  document.getElementById('q-cat').textContent=card.cat;
+  document.getElementById('q-def').textContent=card.def;
+  document.getElementById('q-hint').textContent=card.hint?'💡 '+card.hint:'';
+  // Options
+  currentQuestion.options.forEach((opt,i)=>{
+    const btn=document.getElementById('qopt-'+i);
+    btn.textContent=opt.term;
+    btn.disabled=false;
+    btn.style.background='rgba(255,255,255,.04)';
+    btn.style.borderColor='rgba(255,255,255,.1)';
+    btn.style.color='var(--t1)';
+    btn.style.opacity='1';
   });
-  // Add some padding
-  maxH=Math.max(maxH+20,200);
-  scene.style.height=maxH+'px';
+  // Hide feedback & next
+  document.getElementById('quiz-feedback').style.display='none';
+  document.getElementById('quiz-next-row').style.display='none';
+  document.getElementById('quiz-results').style.display='none';
+  document.getElementById('quiz-question-card').style.display='block';
+  document.getElementById('quiz-options').style.display='grid';
+  // Update counters
+  document.getElementById('quiz-counter').textContent=`${sess.currentIndex+1} / ${sess.cards.length}`;
+  document.getElementById('quiz-streak').textContent=`🔥 ${sess.streak} подряд`;
+  document.getElementById('quiz-correct-cnt').textContent=`✅ ${sess.correctCount}`;
+  document.getElementById('quiz-wrong-cnt').textContent=`❌ ${sess.wrongCount}`;
+  // Progress
+  updateProgress();
+  // Reset dialog
+  const box=document.getElementById('dialog-box');
+  if(box)box.innerHTML='<div class="dialog-empty">Ответь на вопрос чтобы увидеть пример</div>';
 }
-window.addEventListener('resize',()=>{if(typeof autoResizeCard==='function')autoResizeCard();});
 
-function rateCard(days){
-  if(!filteredCards.length)return;
-  const c=filteredCards[cardIndex%filteredCards.length];
+function quizAnswer(idx){
+  if(quizAnswered)return;
+  quizAnswered=true;
+  const sess=quizSession;
+  const card=sess.cards[sess.currentIndex];
+  const selected=currentQuestion.options[idx];
+  const isCorrect=selected.isCorrect;
   const s=getState();
   if(!s.srs)s.srs={};
-  const srs=s.srs[c.id]||{reps:0};
-  srs.reps=(srs.reps||0)+1;
-  srs.interval=days;
-  srs.next=Date.now()+days*86400000;
-  s.srs[c.id]=srs;
-  // обновляем known/unknown на основе уверенности
-  if(days>=7){
-    if(!s.known.includes(c.id))s.known.push(c.id);
-    s.unknown=s.unknown.filter(x=>x!==c.id);
-    cardStreak++;s.streak=cardStreak;
-    if(cardStreak>s.maxStreak)s.maxStreak=cardStreak;
+  const srs=s.srs[card.id]||{reps:0,interval:1,next:0};
+  // Highlight options
+  currentQuestion.options.forEach((opt,i)=>{
+    const btn=document.getElementById('qopt-'+i);
+    btn.disabled=true;
+    if(opt.isCorrect){
+      btn.style.background='rgba(16,185,129,.2)';
+      btn.style.borderColor='rgba(16,185,129,.5)';
+      btn.style.color='#10b981';
+    } else if(i===idx&&!isCorrect){
+      btn.style.background='rgba(239,68,68,.2)';
+      btn.style.borderColor='rgba(239,68,68,.5)';
+      btn.style.color='#ef4444';
+    } else {
+      btn.style.opacity='0.4';
+    }
+  });
+  // Update SRS
+  if(isCorrect){
+    srs.reps=(srs.reps||0)+1;
+    srs.interval=SRS_INTERVALS[Math.min(srs.reps,4)];
+    srs.next=Date.now()+srs.interval*86400000;
+    sess.correctCount++;
+    sess.streak++;
+    if(sess.streak>sess.maxStreak)sess.maxStreak=sess.streak;
+    if(!s.known.includes(card.id))s.known.push(card.id);
+    s.unknown=s.unknown.filter(x=>x!==card.id);
     s.xp=(s.xp||0)+10;
-    showToast('😎','+10 XP','Отлично! Через '+days+' дней');
-  } else if(days>=3){
-    s.xp=(s.xp||0)+5;
-    cardStreak=0;s.streak=0;
-    showToast('🤔','+5 XP','Через '+days+' дня');
+    if(typeof awardXP==='function')try{awardXP('QUIZ_CORRECT');}catch(e){}
+    showToast('✅','+10 XP','Правильно! '+card.term);
   } else {
-    if(!s.unknown.includes(c.id))s.unknown.push(c.id);
-    s.known=s.known.filter(x=>x!==c.id);
-    cardStreak=0;s.streak=0;
+    srs.reps=0;
+    srs.interval=1;
+    srs.next=Date.now()+86400000;
+    sess.wrongCount++;
+    sess.streak=0;
+    if(!s.unknown.includes(card.id))s.unknown.push(card.id);
+    s.known=s.known.filter(x=>x!==card.id);
     s.xp=(s.xp||0)+2;
-    showToast('😰','+2 XP','Повторим завтра');
   }
+  s.srs[card.id]=srs;
   s.totalAnswers=(s.totalAnswers||0)+1;
-  if(days>=3)s.correctAnswers=(s.correctAnswers||0)+1;
+  if(isCorrect)s.correctAnswers=(s.correctAnswers||0)+1;
   setState(s);
-  checkAchievements(s);
+  // Update counters
+  document.getElementById('quiz-streak').textContent=`🔥 ${sess.streak} подряд`;
+  document.getElementById('quiz-correct-cnt').textContent=`✅ ${sess.correctCount}`;
+  document.getElementById('quiz-wrong-cnt').textContent=`❌ ${sess.wrongCount}`;
+  // Show feedback
+  const fb=document.getElementById('quiz-feedback');
+  fb.style.display='block';
+  fb.style.background=isCorrect?'rgba(16,185,129,.08)':'rgba(239,68,68,.08)';
+  fb.style.border=isCorrect?'1px solid rgba(16,185,129,.2)':'1px solid rgba(239,68,68,.2)';
+  document.getElementById('quiz-fb-text').innerHTML=isCorrect
+    ?`<span style="color:#10b981;font-weight:700">✅ Правильно!</span> <strong>${card.term}</strong> — ${card.def}`
+    :`<span style="color:#ef4444;font-weight:700">❌ Неправильно.</span> Правильный ответ: <strong>${card.term}</strong> — ${card.def}`;
+  const exEl=document.getElementById('quiz-fb-example');
+  if(card.ex){exEl.textContent=card.ex;exEl.style.display='block';}
+  else exEl.style.display='none';
+  // Show next button
+  document.getElementById('quiz-next-row').style.display='block';
+  // Show dialog
+  if(typeof renderDialog==='function')renderDialog(card.id);
   updateHeroNums();
-  document.getElementById('fc-streak').textContent=cardStreak;
-  nextCard();
+  updateProgress();
+}
+
+function quizNext(){
+  quizSession.currentIndex++;
+  showQuizQuestion();
+}
+
+function showQuizResults(){
+  document.getElementById('quiz-question-card').style.display='none';
+  document.getElementById('quiz-options').style.display='none';
+  document.getElementById('quiz-feedback').style.display='none';
+  document.getElementById('quiz-next-row').style.display='none';
+  const r=document.getElementById('quiz-results');
+  r.style.display='block';
+  document.getElementById('res-correct').textContent=quizSession.correctCount;
+  document.getElementById('res-wrong').textContent=quizSession.wrongCount;
+  document.getElementById('res-streak').textContent=quizSession.maxStreak;
+}
+
+function quizRestart(){
+  cardIndex=0;
+  filterCards();
+}
+
+// Keep old function names working
+function revealCard(){}
+function flipCard(){}
+function rateCard(){}
+function autoResizeCard(){}
 }
 
 // mark() заменена на rateCard() — оставляем для совместимости
