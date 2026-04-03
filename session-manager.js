@@ -326,6 +326,28 @@ class SessionManager {
    * 
    * Validates: Requirement 5.5
    */
+  /**
+   * Mark a session as interrupted (page closed/refreshed mid-session)
+   * Called from beforeunload handler — must be synchronous-friendly
+   * 
+   * @param {string} sessionId - Session ID to mark as interrupted
+   * @returns {Promise<void>}
+   */
+  async markSessionInterrupted(sessionId) {
+    if (!sessionId) return;
+    try {
+      const sessionRef = doc(this.db, 'brokerSessions', sessionId);
+      await updateDoc(sessionRef, {
+        status: 'interrupted',
+        interruptedAt: Timestamp.now()
+      });
+      console.log('[SessionManager] Session marked as interrupted:', sessionId);
+    } catch (error) {
+      console.error('[SessionManager] Error marking session interrupted:', error);
+      // Silently ignore — page is closing
+    }
+  }
+
   async getUserSessions(limitCount = 10) {
     try {
       // Validate limit
