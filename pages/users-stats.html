@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ru" style="background:#070b14">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📊 Статистика пользователей — Курсы Диспетчера</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared-nav.css?v=7.6">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#070b14;--bg2:#0f0f1e;--card:#12162a;--card2:#1a1e35;
+  --border:rgba(255,255,255,.07);--primary:#667eea;--secondary:#764ba2;
+  --accent:#f093fb;--ok:#10b981;--warn:#f59e0b;--err:#ef4444;--info:#3b82f6;
+  --text:#e2e8f0;--muted:#64748b;--t1:#ffffff;--t2:#e2e8f0;--t3:#94a3b8
+}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:
+  radial-gradient(ellipse at 15% 20%,rgba(102,126,234,.08),transparent 55%),
+  radial-gradient(ellipse at 85% 80%,rgba(118,75,162,.06),transparent 55%);
+  z-index:-1;pointer-events:none}
+.wrap{max-width:1300px;margin:0 auto;padding:0 20px}
+
+/* Hero */
+.hero{padding:16px 0 12px;text-align:center;border-bottom:1px solid var(--border);margin-bottom:20px}
+.hero h1{font-size:24px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--accent));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{font-size:13px;color:var(--muted);margin-top:4px}
+
+/* Overview Cards */
+.ov-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px}
+.ov-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;
+  position:relative;overflow:hidden}
+.ov-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0}
+.ov-card:nth-child(1)::before{background:var(--primary)}.ov-card:nth-child(2)::before{background:var(--ok)}
+.ov-card:nth-child(3)::before{background:var(--info)}.ov-card:nth-child(4)::before{background:var(--warn)}
+.ov-card:nth-child(5)::before{background:var(--accent)}.ov-card:nth-child(6)::before{background:var(--err)}
+.ov-ico{font-size:22px;margin-bottom:4px}
+.ov-val{font-size:24px;font-weight:900;color:var(--t1);line-height:1.1}
+.ov-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;font-weight:600}
+
+/* 2-col: Chart + Leaderboard */
+.mid-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.sec-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;overflow:hidden}
+.sec-title{font-size:13px;font-weight:800;color:var(--t2);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sec-tabs{display:flex;gap:4px;margin-left:auto}
+.sec-tab{padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;
+  color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s}
+.sec-tab.on{background:rgba(102,126,234,.15);border-color:rgba(102,126,234,.3);color:var(--primary)}
+
+/* Leaderboard */
+.lb-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;transition:.2s;cursor:pointer}
+.lb-row:hover{background:rgba(255,255,255,.04)}
+.lb-rank{width:24px;font-size:14px;font-weight:900;text-align:center;flex-shrink:0}
+.lb-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:800;flex-shrink:0;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff}
+.lb-name{font-size:13px;font-weight:600;color:var(--t1);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-val{font-size:13px;font-weight:800;color:var(--primary);min-width:50px;text-align:right}
+
+/* Controls */
+.ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.ctrl-srch{flex:1;min-width:180px;position:relative}
+.ctrl-srch input{width:100%;padding:9px 12px 9px 34px;background:rgba(255,255,255,.04);border:1px solid var(--border);
+  border-radius:10px;color:var(--t1);font-size:13px;font-family:inherit;outline:none;transition:.2s}
+.ctrl-srch input:focus{border-color:rgba(102,126,234,.4)}
+.ctrl-srch input::placeholder{color:var(--muted)}
+.ctrl-srch-ic{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none}
+.ctrl select{padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;
+  color:var(--t2);font-size:12px;font-family:inherit;cursor:pointer;outline:none}
+.ctrl-count{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
+.btn-csv{padding:8px 16px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--ok),#059669);
+  color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:.2s;white-space:nowrap}
+.btn-csv:hover{opacity:.85;transform:translateY(-1px)}
+.btn-csv:disabled{opacity:.4;cursor:not-allowed;transform:none}
+</style>
+
+<style>
+/* User Cards Grid */
+.uc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.uc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;cursor:pointer;
+  transition:all .25s;position:relative;overflow:hidden}
+.uc:hover{border-color:rgba(102,126,234,.3);transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.uc-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.uc-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:800;flex-shrink:0;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;
+  overflow:hidden}
+.uc-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.uc-info{flex:1;min-width:0}
+.uc-name{font-size:13px;font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.uc-email{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.uc-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.role-badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700}
+.role-1{background:rgba(148,163,184,.15);color:#e2e8f0}
+.role-2{background:rgba(100,116,139,.15);color:#e2e8f0}
+.role-3{background:rgba(34,197,94,.15);color:#4ade80}
+.role-4{background:rgba(20,184,166,.15);color:#2dd4bf}
+.role-5{background:rgba(59,130,246,.15);color:#60a5fa}
+.role-6{background:rgba(99,102,241,.15);color:#818cf8}
+.role-7{background:rgba(168,85,247,.15);color:#c084fc}
+.role-8{background:rgba(236,72,153,.15);color:#f472b6}
+.role-9{background:rgba(245,158,11,.15);color:#fbbf24}
+.role-10{background:rgba(239,68,68,.15);color:#f87171}
+.uc-xp{font-size:11px;font-weight:800;color:var(--warn)}
+.uc-bars{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.uc-bar{display:flex;align-items:center;gap:6px}
+.uc-bar-lbl{font-size:9px;color:var(--muted);width:52px;flex-shrink:0;font-weight:600}
+.uc-bar-track{flex:1;height:4px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden}
+.uc-bar-fill{height:100%;border-radius:4px;transition:width .5s}
+.uc-bar-val{font-size:9px;color:var(--t3);width:28px;text-align:right;font-weight:600;flex-shrink:0}
+.uc-foot{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--muted)}
+.uc-streak{color:var(--warn);font-weight:700}
+.uc-acc{color:var(--ok);font-weight:700}
+
+/* Modal */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(10px);z-index:1000;
+  display:flex;align-items:center;justify-content:center;padding:16px;
+  opacity:0;pointer-events:none;transition:.3s}
+.modal-ov.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid rgba(102,126,234,.2);border-radius:20px;
+  max-width:700px;width:100%;max-height:88vh;overflow-y:auto;
+  transform:scale(.95);transition:.3s}
+.modal-ov.open .modal{transform:scale(1)}
+.modal::-webkit-scrollbar{width:4px}
+.modal::-webkit-scrollbar-thumb{background:rgba(102,126,234,.3);border-radius:4px}
+.modal-head{padding:20px 20px 0;display:flex;align-items:center;gap:14px}
+.modal-av{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;
+  flex-shrink:0;overflow:hidden}
+.modal-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.modal-info{flex:1}
+.modal-name{font-size:18px;font-weight:800;color:var(--t1)}
+.modal-email{font-size:12px;color:var(--muted)}
+.modal-close{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,.04);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t2);font-size:16px;flex-shrink:0;transition:.2s}
+.modal-close:hover{background:rgba(239,68,68,.15);color:#ef4444}
+.modal-body{padding:16px 20px 20px}
+.modal-section{margin-bottom:14px}
+.modal-sec-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px}
+.modal-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.modal-stat{text-align:center;padding:10px 6px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px}
+.modal-stat-val{font-size:18px;font-weight:900;color:var(--t1);line-height:1}
+.modal-stat-lbl{font-size:9px;color:var(--muted);margin-top:2px;font-weight:600}
+.modal-progress-list{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.modal-progress-item{font-size:11px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,.03);
+  border:1px solid var(--border);display:flex;align-items:center;gap:4px}
+.modal-progress-item.done{border-color:rgba(16,185,129,.25);background:rgba(16,185,129,.06)}
+.modal-progress-item .check{font-size:10px}
+
+/* Loading */
+.loading{text-align:center;padding:60px 20px;color:var(--muted)}
+.loading .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--primary);
+  border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-box{text-align:center;padding:40px;color:var(--err)}
+.error-box button{margin-top:12px;padding:8px 20px;border-radius:8px;border:none;
+  background:var(--primary);color:#fff;font-weight:700;cursor:pointer;font-family:inherit}
+.no-access{text-align:center;padding:80px 20px;color:var(--muted);font-size:16px}
+
+/* Responsive */
+@media(max-width:1024px){
+  .ov-grid{grid-template-columns:repeat(3,1fr)}
+  .uc-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:768px){
+  .wrap{padding:0 10px}
+  .ov-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+  .mid-row{grid-template-columns:1fr;gap:10px}
+  .uc-grid{grid-template-columns:1fr}
+  .ctrl{flex-direction:column;align-items:stretch;gap:6px}
+  .ctrl-srch{min-width:auto}
+  .modal{border-radius:16px;max-height:95vh}
+  .modal-stats{grid-template-columns:repeat(2,1fr)}
+  .modal-progress-list{grid-template-columns:repeat(2,1fr)}
+  .hero h1{font-size:20px}
+}
+@media(max-width:480px){
+  .ov-grid{grid-template-columns:1fr 1fr;gap:6px}
+  .ov-val{font-size:20px}
+  .modal-stats{grid-template-columns:repeat(2,1fr)}
+  .modal-progress-list{grid-template-columns:1fr}
+}
+</style>
+
+<script type="module" src="../firebase-auth-init.js?v=4.0"></script>
+<script src="../role-guard.js"></script>
+</head>
+<body>
+<div id="nav-placeholder"></div>
+<script src="../nav-loader.js?v=7.4"></script>
+
+<div class="wrap" id="main-content" style="display:none">
+  <!-- Hero -->
+  <div class="hero">
+    <h1>📊 Статистика пользователей</h1>
+    <p>Аналитика и прогресс всех студентов платформы</p>
+  </div>
+
+  <!-- Overview -->
+  <div class="ov-grid" id="overview-grid">
+    <div class="ov-card"><div class="ov-ico">👥</div><div class="ov-val" id="ov-total">—</div><div class="ov-lbl">Всего</div></div>
+    <div class="ov-card"><div class="ov-ico">🟢</div><div class="ov-val" id="ov-7d">—</div><div class="ov-lbl">Активных 7д</div></div>
+    <div class="ov-card"><div class="ov-ico">📊</div><div class="ov-val" id="ov-30d">—</div><div class="ov-lbl">Активных 30д</div></div>
+    <div class="ov-card"><div class="ov-ico">⚡</div><div class="ov-val" id="ov-xp">—</div><div class="ov-lbl">Средний XP</div></div>
+    <div class="ov-card"><div class="ov-ico">📚</div><div class="ov-val" id="ov-prog">—</div><div class="ov-lbl">Ср. прогресс</div></div>
+    <div class="ov-card"><div class="ov-ico">🔥</div><div class="ov-val" id="ov-streak">—</div><div class="ov-lbl">Ср. streak</div></div>
+  </div>
+
+  <!-- Chart + Leaderboard -->
+  <div class="mid-row">
+    <div class="sec-card">
+      <div class="sec-title">📈 Активность
+        <div class="sec-tabs">
+          <button class="sec-tab on" onclick="setChartPeriod(7)">7д</button>
+          <button class="sec-tab" onclick="setChartPeriod(30)">30д</button>
+        </div>
+      </div>
+      <canvas id="activity-chart" height="180"></canvas>
+    </div>
+    <div class="sec-card">
+      <div class="sec-title">🏆 Лидерборд
+        <div class="sec-tabs">
+          <button class="sec-tab on" onclick="setLbCrit('xp')">XP</button>
+          <button class="sec-tab" onclick="setLbCrit('streak')">Streak</button>
+          <button class="sec-tab" onclick="setLbCrit('progress')">Прогресс</button>
+        </div>
+      </div>
+      <div id="leaderboard"></div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="ctrl">
+    <div class="ctrl-srch"><span class="ctrl-srch-ic">🔍</span>
+      <input type="text" id="search-input" placeholder="Поиск по имени или email..." oninput="applyFilters()">
+    </div>
+    <select id="filter-level" onchange="applyFilters()"><option value="">Все уровни</option></select>
+    <select id="filter-activity" onchange="applyFilters()">
+      <option value="">Все</option><option value="7d">Активные 7д</option>
+      <option value="30d">Активные 30д</option><option value="inactive">Неактивные</option>
+    </select>
+    <select id="sort-by" onchange="applyFilters()">
+      <option value="xp-desc">XP ↓</option><option value="xp-asc">XP ↑</option>
+      <option value="activity">Активность</option><option value="progress">Прогресс</option>
+      <option value="registered">Регистрация</option><option value="streak">Streak</option>
+    </select>
+    <span class="ctrl-count" id="result-count"></span>
+    <button class="btn-csv" id="csv-btn" onclick="exportCSV()" disabled>📥 CSV</button>
+  </div>
+
+  <!-- User Cards -->
+  <div class="uc-grid" id="users-grid"></div>
+</div>
+
+<!-- Loading -->
+<div id="loading-state" class="loading"><div class="spinner"></div>Загрузка данных...</div>
+<div id="error-state" class="error-box" style="display:none">❌ Ошибка загрузки<br><button onclick="loadData()">Повторить</button></div>
+<div id="no-access" class="no-access" style="display:none">🔒 Нет доступа. Только для администраторов.</div>
+
+<!-- Modal -->
+<div class="modal-ov" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<script type="module">
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+const CFG={apiKey:"AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",authDomain:"dispatch4you-80e0f.firebaseapp.com",
+  projectId:"dispatch4you-80e0f",storageBucket:"dispatch4you-80e0f.appspot.com",
+  messagingSenderId:"349235354473",appId:"1:349235354473:web:488aeb29211b02bb153bf8"};
+const app=getApps().length?getApps()[0]:initializeApp(CFG);
+const db=getFirestore(app);
+const auth=getAuth(app);
+
+const LEVELS=[
+  {level:1,minXP:0,label:'🌱 Новичок'},{level:2,minXP:50,label:'📖 Стажёр'},
+  {level:3,minXP:150,label:'🎓 Студент'},{level:4,minXP:300,label:'🚛 Диспетчер Jr'},
+  {level:5,minXP:500,label:'📋 Диспетчер'},{level:6,minXP:800,label:'⭐ Диспетчер Sr'},
+  {level:7,minXP:1200,label:'🏆 Эксперт'},{level:8,minXP:1800,label:'💎 Наставник'},
+  {level:9,minXP:2500,label:'🔥 Модератор'},{level:10,minXP:9999,label:'👑 Администратор'}
+];
+function getLvl(xp){let c=LEVELS[0];for(const l of LEVELS){if(xp>=l.minXP)c=l;else break;}return c;}
+function getNext(xp){for(const l of LEVELS){if(xp<l.minXP)return l;}return null;}
+
+let allUsers=[];
+let filteredUsers=[];
+let actChart=null;
+let chartPeriod=7;
+let lbCrit='xp';
+
+// ═══ AUTH CHECK ═══
+onAuthStateChanged(auth,async(user)=>{
+  if(!user){document.getElementById('loading-state').style.display='none';document.getElementById('no-access').style.display='block';return;}
+  try{
+    const{doc:docRef,getDoc:getDocFn}=await import("https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js");
+    const uDoc=await getDocFn(docRef(db,'users',user.uid));
+    const role=uDoc.exists()?uDoc.data().role:0;
+    if(role<10&&user.email!=='alex305cebo@gmail.com'){
+      document.getElementById('loading-state').style.display='none';
+      document.getElementById('no-access').style.display='block';return;
+    }
+  }catch(e){console.error(e);}
+  loadData();
+});
+
+// ═══ LOAD DATA ═══
+window.loadData=async function(){
+  document.getElementById('loading-state').style.display='block';
+  document.getElementById('error-state').style.display='none';
+  document.getElementById('main-content').style.display='none';
+  try{
+    const snap=await getDocs(collection(db,'users'));
+    allUsers=[];
+    snap.forEach(d=>{
+      const data=d.data();
+      const xp=data.xp||0;
+      const stats=data.stats||{};
+      const ts=data.trainerStats||{};
+      const lvl=getLvl(xp);
+      const next=getNext(xp);
+      const totalAns=(stats.totalAnswers||0)+(ts.totalAnswers||0);
+      const correctAns=(stats.correctAnswers||0)+(ts.correctAnswers||0);
+      const knownCards=(ts.known||[]).length||(stats.knownCards||0);
+      const readCases=(ts.readCases||[]).length||(stats.readCases||0);
+      let la=null;
+      try{la=data.lastActivity?.toDate?data.lastActivity.toDate():data.lastActivity?new Date(data.lastActivity):null;}catch(e){}
+      let ca=null;
+      try{ca=data.createdAt?.toDate?data.createdAt.toDate():data.createdAt?new Date(data.createdAt):null;}catch(e){}
+      allUsers.push({
+        id:d.id,
+        name:data.displayName||data.firstName&&data.lastName?`${data.firstName} ${data.lastName}`:data.email||d.id,
+        email:data.email||'',
+        photoURL:data.photoURL||null,
+        xp,role:data.role||1,level:lvl,nextLevel:next,
+        courseProgress:stats.completedLessons?.length||stats.lessonsRead||0,
+        moduleProgress:stats.completedModules?.length||stats.moduleComplete||0,
+        caseProgress:readCases,
+        cardProgress:knownCards,
+        accuracy:totalAns>0?Math.round(correctAns/totalAns*100):0,
+        totalAnswers:totalAns,
+        loginStreak:data.loginStreak||0,
+        maxStreak:data.maxStreak||data.loginStreak||0,
+        lastActivity:la,createdAt:ca,
+        xpHistory:data.xpHistory||[]
+      });
+    });
+    // Populate level filter
+    const sel=document.getElementById('filter-level');
+    sel.innerHTML='<option value="">Все уровни</option>';
+    LEVELS.forEach(l=>{sel.innerHTML+=`<option value="${l.level}">${l.label}</option>`;});
+    document.getElementById('loading-state').style.display='none';
+    document.getElementById('main-content').style.display='block';
+    renderOverview();renderChart();renderLeaderboard();applyFilters();
+  }catch(e){
+    console.error(e);
+    document.getElementById('loading-state').style.display='none';
+    document.getElementById('error-state').style.display='block';
+  }
+};
+
+// ═══ OVERVIEW ═══
+function renderOverview(){
+  const now=Date.now();
+  const d7=7*864e5,d30=30*864e5;
+  const a7=allUsers.filter(u=>u.lastActivity&&(now-u.lastActivity.getTime())<d7).length;
+  const a30=allUsers.filter(u=>u.lastActivity&&(now-u.lastActivity.getTime())<d30).length;
+  const avgXP=allUsers.length?Math.round(allUsers.reduce((s,u)=>s+u.xp,0)/allUsers.length):0;
+  const avgProg=allUsers.length?Math.round(allUsers.reduce((s,u)=>s+(u.courseProgress/15*100),0)/allUsers.length):0;
+  const avgStr=allUsers.length?(allUsers.reduce((s,u)=>s+u.loginStreak,0)/allUsers.length).toFixed(1):0;
+  document.getElementById('ov-total').textContent=allUsers.length;
+  document.getElementById('ov-7d').textContent=a7;
+  document.getElementById('ov-30d').textContent=a30;
+  document.getElementById('ov-xp').textContent=avgXP;
+  document.getElementById('ov-prog').textContent=avgProg+'%';
+  document.getElementById('ov-streak').textContent=avgStr;
+}
+
+// ═══ ACTIVITY CHART ═══
+window.setChartPeriod=function(p){
+  chartPeriod=p;
+  document.querySelectorAll('.sec-card:first-child .sec-tab').forEach(b=>b.classList.remove('on'));
+  event.target.classList.add('on');
+  renderChart();
+};
+function renderChart(){
+  if(typeof Chart==='undefined')return;
+  const now=new Date();const labels=[];const data=[];
+  for(let i=chartPeriod-1;i>=0;i--){
+    const d=new Date(now);d.setDate(d.getDate()-i);
+    const ds=d.toLocaleDateString('ru',{day:'numeric',month:'short'});
+    labels.push(ds);
+    const dayStart=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime();
+    const dayEnd=dayStart+864e5;
+    data.push(allUsers.filter(u=>u.lastActivity&&u.lastActivity.getTime()>=dayStart&&u.lastActivity.getTime()<dayEnd).length);
+  }
+  if(actChart)actChart.destroy();
+  actChart=new Chart(document.getElementById('activity-chart'),{
+    type:'line',data:{labels,datasets:[{data,borderColor:'#667eea',backgroundColor:'rgba(102,126,234,.1)',
+      fill:true,tension:.4,pointRadius:3,pointBackgroundColor:'#667eea',borderWidth:2}]},
+    options:{responsive:true,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a1e35',titleColor:'#e2e8f0',bodyColor:'#e2e8f0',borderColor:'#667eea',borderWidth:1}},
+      scales:{x:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}},
+        y:{beginAtZero:true,ticks:{color:'#64748b',font:{size:10},stepSize:1},grid:{color:'rgba(255,255,255,.04)'}}}}
+  });
+}
+
+// ═══ LEADERBOARD ═══
+window.setLbCrit=function(c){
+  lbCrit=c;
+  document.querySelectorAll('.sec-card:last-child .sec-tab').forEach(b=>b.classList.remove('on'));
+  event.target.classList.add('on');
+  renderLeaderboard();
+};
+function renderLeaderboard(){
+  const sorted=[...allUsers].sort((a,b)=>{
+    if(lbCrit==='xp')return b.xp-a.xp;
+    if(lbCrit==='streak')return b.loginStreak-a.loginStreak;
+    const pa=(a.courseProgress/15+a.moduleProgress/12+a.caseProgress/50+a.cardProgress/80)/4*100;
+    const pb=(b.courseProgress/15+b.moduleProgress/12+b.caseProgress/50+b.cardProgress/80)/4*100;
+    return pb-pa;
+  }).slice(0,10);
+  const medals=['🥇','🥈','🥉'];
+  document.getElementById('leaderboard').innerHTML=sorted.map((u,i)=>{
+    const val=lbCrit==='xp'?u.xp+' XP':lbCrit==='streak'?u.loginStreak+'🔥':
+      Math.round((u.courseProgress/15+u.moduleProgress/12+u.caseProgress/50+u.cardProgress/80)/4*100)+'%';
+    return`<div class="lb-row" onclick="openModal('${u.id}')">
+      <div class="lb-rank">${i<3?medals[i]:(i+1)}</div>
+      <div class="lb-av">${u.photoURL?`<img src="${u.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:(u.name||'?')[0].toUpperCase()}</div>
+      <div class="lb-name">${u.name}</div>
+      <span class="role-badge role-${u.role}">${u.level.label}</span>
+      <div class="lb-val">${val}</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══ FILTER & SORT ═══
+window.applyFilters=function(){
+  const q=(document.getElementById('search-input').value||'').toLowerCase();
+  const lvl=document.getElementById('filter-level').value;
+  const act=document.getElementById('filter-activity').value;
+  const sort=document.getElementById('sort-by').value;
+  const now=Date.now();
+  filteredUsers=allUsers.filter(u=>{
+    if(q&&!u.name.toLowerCase().includes(q)&&!u.email.toLowerCase().includes(q))return false;
+    if(lvl&&u.level.level!==+lvl)return false;
+    if(act==='7d'&&(!u.lastActivity||now-u.lastActivity.getTime()>7*864e5))return false;
+    if(act==='30d'&&(!u.lastActivity||now-u.lastActivity.getTime()>30*864e5))return false;
+    if(act==='inactive'&&u.lastActivity&&now-u.lastActivity.getTime()<30*864e5)return false;
+    return true;
+  });
+  filteredUsers.sort((a,b)=>{
+    if(sort==='xp-desc')return b.xp-a.xp;
+    if(sort==='xp-asc')return a.xp-b.xp;
+    if(sort==='activity')return(b.lastActivity?.getTime()||0)-(a.lastActivity?.getTime()||0);
+    if(sort==='streak')return b.loginStreak-a.loginStreak;
+    if(sort==='registered')return(b.createdAt?.getTime()||0)-(a.createdAt?.getTime()||0);
+    const pa=(a.courseProgress/15+a.moduleProgress/12+a.caseProgress/50+a.cardProgress/80)/4;
+    const pb=(b.courseProgress/15+b.moduleProgress/12+b.caseProgress/50+b.cardProgress/80)/4;
+    return pb-pa;
+  });
+  document.getElementById('result-count').textContent=`Показано ${filteredUsers.length} из ${allUsers.length}`;
+  document.getElementById('csv-btn').disabled=!filteredUsers.length;
+  renderCards();
+};
+
+// ═══ USER CARDS ═══
+function renderCards(){
+  const g=document.getElementById('users-grid');
+  if(!filteredUsers.length){g.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">Пользователи не найдены</div>';return;}
+  g.innerHTML=filteredUsers.map(u=>{
+    const bars=[
+      {lbl:'Курс',val:u.courseProgress,max:15,color:'#667eea'},
+      {lbl:'Модули',val:u.moduleProgress,max:12,color:'#10b981'},
+      {lbl:'Кейсы',val:u.caseProgress,max:50,color:'#f59e0b'},
+      {lbl:'Карточки',val:u.cardProgress,max:80,color:'#ec4899'}
+    ];
+    const fmtDate=d=>d?d.toLocaleDateString('ru',{day:'numeric',month:'short'}):'-';
+    return`<div class="uc" onclick="openModal('${u.id}')">
+      <div class="uc-top">
+        <div class="uc-av">${u.photoURL?`<img src="${u.photoURL}">`:(u.name||'?')[0].toUpperCase()}</div>
+        <div class="uc-info">
+          <div class="uc-name">${u.name}</div>
+          <div class="uc-email">${u.email}</div>
+        </div>
+      </div>
+      <div class="uc-meta">
+        <span class="role-badge role-${u.role}">${u.level.label}</span>
+        <span class="uc-xp">⚡${u.xp} XP</span>
+      </div>
+      <div class="uc-bars">
+        ${bars.map(b=>{const pct=b.max?Math.round(b.val/b.max*100):0;
+          return`<div class="uc-bar"><span class="uc-bar-lbl">${b.lbl}</span>
+            <div class="uc-bar-track"><div class="uc-bar-fill" style="width:${pct}%;background:${b.color}"></div></div>
+            <span class="uc-bar-val">${b.val}/${b.max}</span></div>`;}).join('')}
+      </div>
+      <div class="uc-foot">
+        <span class="uc-streak">🔥 ${u.loginStreak}д</span>
+        <span class="uc-acc">🎯 ${u.accuracy}%</span>
+        <span>${fmtDate(u.lastActivity)}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══ MODAL ═══
+window.openModal=function(id){
+  const u=allUsers.find(x=>x.id===id);if(!u)return;
+  const fmtDate=d=>d?d.toLocaleDateString('ru',{day:'numeric',month:'short',year:'numeric'}):'-';
+  const fmtTime=d=>d?d.toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'-';
+  const nextXP=u.nextLevel?u.nextLevel.minXP:u.xp;
+  const prevXP=u.level.minXP;
+  const progPct=nextXP>prevXP?Math.round((u.xp-prevXP)/(nextXP-prevXP)*100):100;
+  const lessons=['Введение','Глоссарий','Роль','Оборудование','Маршруты','Load Boards','Переговоры','Брокеры','Документы','Законы','TMS','Коммуникация','Проблемы','Финансы','Карьера'];
+  const modules=['Индустрия','Термины','Диспетчер','Load Boards','Маршруты','Оборудование','Переговоры','Брокеры','CSA','Грузы','Проблемы','Карьера'];
+
+  document.getElementById('modal-content').innerHTML=`
+    <div class="modal-head">
+      <div class="modal-av">${u.photoURL?`<img src="${u.photoURL}">`:(u.name||'?')[0].toUpperCase()}</div>
+      <div class="modal-info">
+        <div class="modal-name">${u.name}</div>
+        <div class="modal-email">${u.email} · Рег: ${fmtDate(u.createdAt)}</div>
+      </div>
+      <div class="modal-close" onclick="closeModal()">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section">
+        <div class="modal-sec-title">📊 Основные метрики</div>
+        <div class="modal-stats">
+          <div class="modal-stat"><div class="modal-stat-val" style="color:var(--warn)">⚡${u.xp}</div><div class="modal-stat-lbl">XP</div></div>
+          <div class="modal-stat"><div class="modal-stat-val">${u.level.label.split(' ')[0]}</div><div class="modal-stat-lbl">Ур. ${u.level.level}</div></div>
+          <div class="modal-stat"><div class="modal-stat-val" style="color:var(--ok)">${u.accuracy}%</div><div class="modal-stat-lbl">Точность</div></div>
+          <div class="modal-stat"><div class="modal-stat-val" style="color:#f97316">🔥${u.loginStreak}</div><div class="modal-stat-lbl">Streak</div></div>
+        </div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+          <div style="flex:1;height:6px;background:rgba(255,255,255,.06);border-radius:6px;overflow:hidden">
+            <div style="height:100%;width:${progPct}%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:6px"></div>
+          </div>
+          <span style="font-size:10px;color:var(--muted)">${u.nextLevel?u.xp+'/'+u.nextLevel.minXP+' XP':'MAX'}</span>
+        </div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-sec-title">📚 Курс (${u.courseProgress}/15)</div>
+        <div class="modal-progress-list">
+          ${lessons.map((l,i)=>`<div class="modal-progress-item ${i<u.courseProgress?'done':''}"><span class="check">${i<u.courseProgress?'✅':'⬜'}</span>${l}</div>`).join('')}
+        </div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-sec-title">📝 Модули (${u.moduleProgress}/12)</div>
+        <div class="modal-progress-list">
+          ${modules.map((m,i)=>`<div class="modal-progress-item ${i<u.moduleProgress?'done':''}"><span class="check">${i<u.moduleProgress?'✅':'⬜'}</span>${m}</div>`).join('')}
+        </div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-stats" style="grid-template-columns:repeat(4,1fr)">
+          <div class="modal-stat"><div class="modal-stat-val">${u.caseProgress}</div><div class="modal-stat-lbl">Кейсов/50</div></div>
+          <div class="modal-stat"><div class="modal-stat-val">${u.cardProgress}</div><div class="modal-stat-lbl">Карточек/80</div></div>
+          <div class="modal-stat"><div class="modal-stat-val">${u.totalAnswers}</div><div class="modal-stat-lbl">Ответов</div></div>
+          <div class="modal-stat"><div class="modal-stat-val">${u.maxStreak}</div><div class="modal-stat-lbl">Макс streak</div></div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px">
+        Последняя активность: ${fmtTime(u.lastActivity)}
+      </div>
+      ${u.xpHistory.length?`<div class="modal-section" style="margin-top:12px">
+        <div class="modal-sec-title">📈 Динамика XP</div>
+        <canvas id="xp-mini-chart" height="120"></canvas>
+      </div>`:''}
+    </div>`;
+  document.getElementById('modal-overlay').classList.add('open');
+  if(u.xpHistory.length)renderXPChart(u.xpHistory);
+};
+window.closeModal=function(){document.getElementById('modal-overlay').classList.remove('open');};
+
+function renderXPChart(history){
+  if(typeof Chart==='undefined')return;
+  const sorted=[...history].sort((a,b)=>new Date(a.ts)-new Date(b.ts));
+  let cum=0;const labels=[];const data=[];
+  sorted.forEach(h=>{cum+=h.xp;labels.push(new Date(h.ts).toLocaleDateString('ru',{day:'numeric',month:'short'}));data.push(cum);});
+  new Chart(document.getElementById('xp-mini-chart'),{
+    type:'line',data:{labels,datasets:[{data,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.1)',
+      fill:true,tension:.4,pointRadius:1,borderWidth:2}]},
+    options:{responsive:true,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#64748b',font:{size:9},maxTicksLimit:6},grid:{display:false}},
+        y:{ticks:{color:'#64748b',font:{size:9}},grid:{color:'rgba(255,255,255,.04)'}}}}
+  });
+}
+
+// ═══ CSV EXPORT ═══
+window.exportCSV=function(){
+  if(!filteredUsers.length)return;
+  const fmtD=d=>d?d.toLocaleDateString('ru'):'';
+  const hdr='Имя,Email,Уровень,XP,Курс %,Модули %,Кейсы %,Карточки %,Streak,Точность %,Последняя активность,Регистрация';
+  const rows=filteredUsers.map(u=>[
+    `"${u.name}"`,`"${u.email}"`,`"${u.level.label}"`,u.xp,
+    Math.round(u.courseProgress/15*100),Math.round(u.moduleProgress/12*100),
+    Math.round(u.caseProgress/50*100),Math.round(u.cardProgress/80*100),
+    u.loginStreak,u.accuracy,fmtD(u.lastActivity),fmtD(u.createdAt)
+  ].join(','));
+  const csv='\uFEFF'+hdr+'\n'+rows.join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  const d=new Date().toISOString().slice(0,10);
+  a.download=`users-stats-${d}.csv`;
+  a.click();URL.revokeObjectURL(a.href);
+};
+</script>
+</body>
+</html>

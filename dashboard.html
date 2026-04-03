@@ -1148,6 +1148,22 @@
 
     // ===== ВСЕ РЕСУРСЫ С XP ПОТЕНЦИАЛОМ =====
     const ALL_RESOURCES = [
+      // 15 уроков курса (база знаний) — 30 XP каждый
+      { id: 'les1',  icon:'📖', title:'Урок 1 — Введение',        desc:'Знакомство с профессией',         url:'pages/intro.html',           xp:30, color:'#06b6d4', key:'lessonViewed', threshold:1,  action:'Читать →' },
+      { id: 'les2',  icon:'📚', title:'Урок 2 — Глоссарий',       desc:'Основные термины индустрии',      url:'pages/glossary.html',        xp:30, color:'#0ea5e9', key:'lessonViewed', threshold:2,  action:'Читать →' },
+      { id: 'les3',  icon:'🧑‍💼', title:'Урок 3 — Роль диспетчера', desc:'Обязанности и навыки',            url:'pages/role.html',            xp:30, color:'#8b5cf6', key:'lessonViewed', threshold:3,  action:'Читать →' },
+      { id: 'les4',  icon:'🚛', title:'Урок 4 — Оборудование',    desc:'Типы трейлеров и грузовиков',     url:'pages/equipment.html',       xp:30, color:'#f97316', key:'lessonViewed', threshold:4,  action:'Читать →' },
+      { id: 'les5',  icon:'🗺️', title:'Урок 5 — Маршруты',        desc:'Lanes, deadhead, backhaul',       url:'pages/routes.html',          xp:30, color:'#10b981', key:'lessonViewed', threshold:5,  action:'Читать →' },
+      { id: 'les6',  icon:'🔍', title:'Урок 6 — Load Boards',     desc:'DAT, Truckstop, 123Loadboard',    url:'pages/loadboards.html',      xp:30, color:'#6366f1', key:'lessonViewed', threshold:6,  action:'Читать →' },
+      { id: 'les7',  icon:'💬', title:'Урок 7 — Переговоры',      desc:'Техники и скрипты',               url:'pages/negotiation.html',     xp:30, color:'#ec4899', key:'lessonViewed', threshold:7,  action:'Читать →' },
+      { id: 'les8',  icon:'🤝', title:'Урок 8 — Брокеры',         desc:'Проверка и работа с брокерами',   url:'pages/brokers.html',         xp:30, color:'#ef4444', key:'lessonViewed', threshold:8,  action:'Читать →' },
+      { id: 'les9',  icon:'📄', title:'Урок 9 — Документы',       desc:'Rate Con, BOL, POD, Invoice',     url:'pages/docs.html',            xp:30, color:'#a78bfa', key:'lessonViewed', threshold:9,  action:'Читать →' },
+      { id: 'les10', icon:'⚖️', title:'Урок 10 — Законы',         desc:'FMCSA, HOS, ELD, CSA',            url:'pages/regulations.html',     xp:30, color:'#fbbf24', key:'lessonViewed', threshold:10, action:'Читать →' },
+      { id: 'les11', icon:'💻', title:'Урок 11 — TMS',            desc:'Технологии и софт',               url:'pages/technology.html',      xp:30, color:'#34d399', key:'lessonViewed', threshold:11, action:'Читать →' },
+      { id: 'les12', icon:'📞', title:'Урок 12 — Коммуникация',   desc:'Общение с водителями и брокерами',url:'pages/communication.html',   xp:30, color:'#f472b6', key:'lessonViewed', threshold:12, action:'Читать →' },
+      { id: 'les13', icon:'⚠️', title:'Урок 13 — Проблемы',       desc:'Решение нештатных ситуаций',      url:'pages/problems.html',        xp:30, color:'#fb923c', key:'lessonViewed', threshold:13, action:'Читать →' },
+      { id: 'les14', icon:'💰', title:'Урок 14 — Финансы',        desc:'Расчёты, факторинг, оплата',      url:'pages/finances.html',        xp:30, color:'#4ade80', key:'lessonViewed', threshold:14, action:'Читать →' },
+      { id: 'les15', icon:'🚀', title:'Урок 15 — Карьера',        desc:'Запуск карьеры диспетчера',       url:'pages/career.html',          xp:30, color:'#818cf8', key:'lessonViewed', threshold:15, action:'Читать →' },
       // Модули — самые ценные (50 XP каждый)
       { id: 'mod1',  icon:'🏭', title:'Модуль 1 — Индустрия',    desc:'Основы грузоперевозок США',      url:'pages/doc-module-1-complete.html',  xp:50, color:'#6366f1', key:'moduleComplete', threshold:1,  action:'Начать →' },
       { id: 'mod2',  icon:'📘', title:'Модуль 2 — Термины',      desc:'75+ профессиональных терминов',  url:'pages/doc-module-2-complete.html',  xp:50, color:'#6366f1', key:'moduleComplete', threshold:2,  action:'Изучить →' },
@@ -1174,14 +1190,22 @@
       const grid = document.getElementById('recommendCards');
       if (!grid) return;
 
-      // Определяем что НЕ сделано и сортируем по XP потенциалу (убывание)
+      // Определяем что НЕ сделано
       const notDone = ALL_RESOURCES.filter(r => {
         const done = stats[r.key] || 0;
         return done < r.threshold;
-      }).sort((a, b) => b.xp - a.xp);
+      });
 
-      // Берём топ-4 незавершённых + 1-2 завершённых для контекста
-      const top = notDone.slice(0, 4);
+      // Рандомизируем (стабильно в течение сессии)
+      const seed = Date.now() % 86400000; // меняется раз в день
+      const shuffled = [...notDone].sort((a, b) => {
+        const ha = (seed * 31 + a.id.charCodeAt(0) * 17 + a.id.length * 7) % 1000;
+        const hb = (seed * 31 + b.id.charCodeAt(0) * 17 + b.id.length * 7) % 1000;
+        return ha - hb;
+      });
+
+      // Берём топ-6 рандомных незавершённых
+      const top = shuffled.slice(0, 6);
 
       if (top.length === 0) {
         grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:20px;color:#6ee7b7;font-weight:700;">🎉 Отлично! Вы изучили все основные ресурсы!</div>`;
