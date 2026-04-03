@@ -1680,11 +1680,17 @@ function quizAnswer(idx){
   fb.style.background=isCorrect?'rgba(16,185,129,.08)':'rgba(239,68,68,.08)';
   fb.style.border=isCorrect?'1px solid rgba(16,185,129,.2)':'1px solid rgba(239,68,68,.2)';
   document.getElementById('quiz-fb-text').innerHTML=isCorrect
-    ?`<span style="color:#10b981;font-weight:700">✅ Правильно!</span> <strong>${card.term}</strong> — ${card.def}`
+    ?`<span style="color:#10b981;font-weight:700">✅ Правильно!</span> <strong>${card.term}</strong>`
     :`<span style="color:#ef4444;font-weight:700">❌ Неправильно.</span> Правильный ответ: <strong>${card.term}</strong> — ${card.def}`;
   const exEl=document.getElementById('quiz-fb-example');
-  if(card.ex){exEl.textContent=card.ex;exEl.style.display='block';}else exEl.style.display='none';
-  document.getElementById('quiz-next-row').style.display='block';
+  if(!isCorrect&&card.ex){exEl.textContent=card.ex;exEl.style.display='block';}else exEl.style.display='none';
+  // Auto-advance on correct, show "Далее" on wrong
+  if(isCorrect){
+    document.getElementById('quiz-next-row').style.display='none';
+    setTimeout(()=>{quizNext();},1200);
+  } else {
+    document.getElementById('quiz-next-row').style.display='block';
+  }
   if(typeof renderDialog==='function')renderDialog(card.id);
   updateHeroNums();updateProgress();
 }
