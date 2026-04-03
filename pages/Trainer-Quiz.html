@@ -1692,6 +1692,7 @@ function quizAnswer(idx){
     document.getElementById('quiz-next-row').style.display='block';
   }
   if(typeof renderDialog==='function')renderDialog(card.id);
+  if(typeof renderCatProgress==='function')renderCatProgress();
   updateHeroNums();updateProgress();
 }
 
@@ -2283,7 +2284,7 @@ function renderCatProgress(){
   const cats=[...new Set(CARDS.map(c=>c.cat))];
   list.innerHTML=cats.map(cat=>{
     const catCards=CARDS.filter(c=>c.cat===cat);
-    const studied=catCards.filter(c=>s.srs&&s.srs[c.id]&&s.srs[c.id].interval>=3).length;
+    const studied=catCards.filter(c=>s.known.includes(c.id)).length;
     const pct=Math.round(studied/catCards.length*100);
     const color=pct>=80?'#10b981':pct>=40?'#f59e0b':'#06b6d4';
     return`<div class="cat-prog-item">
