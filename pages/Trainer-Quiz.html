@@ -34,6 +34,75 @@ body::before{content:'';position:fixed;inset:0;background:
   margin:0}
 .tabs{display:flex;gap:12px;align-items:stretch;justify-content:center}
 
+/* ── BANNER CARDS ── */
+.banner-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:8px 0}
+.banner-card{position:relative;border-radius:20px;padding:24px 22px;cursor:pointer;
+  overflow:hidden;transition:all .35s cubic-bezier(.4,0,.2,1);
+  border:1px solid transparent;min-height:140px;
+  display:flex;flex-direction:column;justify-content:space-between}
+.banner-card::before{content:'';position:absolute;inset:0;border-radius:20px;opacity:0;
+  transition:opacity .3s;pointer-events:none}
+.banner-card:hover{transform:translateY(-4px)}
+.banner-card:hover::before{opacity:1}
+.banner-card.on{transform:translateY(0)}
+
+/* Cards banner — cyan/blue theme */
+.banner-cards{
+  background:linear-gradient(145deg,rgba(6,182,212,.12) 0%,rgba(99,102,241,.08) 50%,rgba(6,182,212,.04) 100%);
+  border-color:rgba(6,182,212,.2);
+  box-shadow:0 4px 24px rgba(6,182,212,.06)}
+.banner-cards::before{background:radial-gradient(circle at 90% 10%,rgba(6,182,212,.15),transparent 60%)}
+.banner-cards::after{content:'📚';position:absolute;top:-10px;right:-10px;font-size:80px;opacity:.06;
+  pointer-events:none;transform:rotate(12deg)}
+.banner-cards.on{border-color:rgba(6,182,212,.4);
+  box-shadow:0 8px 32px rgba(6,182,212,.15),0 0 0 1px rgba(6,182,212,.1) inset}
+.banner-cards:hover{border-color:rgba(6,182,212,.35);box-shadow:0 8px 32px rgba(6,182,212,.12)}
+
+/* Cases banner — orange/purple theme */
+.banner-cases{
+  background:linear-gradient(145deg,rgba(249,115,22,.1) 0%,rgba(168,85,247,.08) 50%,rgba(249,115,22,.03) 100%);
+  border-color:rgba(249,115,22,.18);
+  box-shadow:0 4px 24px rgba(249,115,22,.05)}
+.banner-cases::before{background:radial-gradient(circle at 90% 10%,rgba(249,115,22,.12),transparent 60%)}
+.banner-cases::after{content:'💼';position:absolute;top:-10px;right:-10px;font-size:80px;opacity:.06;
+  pointer-events:none;transform:rotate(-8deg)}
+.banner-cases.on{border-color:rgba(249,115,22,.4);
+  box-shadow:0 8px 32px rgba(249,115,22,.15),0 0 0 1px rgba(249,115,22,.1) inset}
+.banner-cases:hover{border-color:rgba(249,115,22,.3);box-shadow:0 8px 32px rgba(249,115,22,.1)}
+
+.banner-top{display:flex;align-items:center;gap:12px;margin-bottom:12px;position:relative;z-index:1}
+.banner-icon{font-size:32px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))}
+.banner-title{font-size:20px;font-weight:900;color:var(--t1);letter-spacing:-.3px}
+.banner-count{font-size:13px;font-weight:800;padding:4px 12px;border-radius:20px;
+  min-width:32px;text-align:center}
+.banner-cards .banner-count{background:linear-gradient(135deg,var(--p),var(--s));color:#fff;
+  box-shadow:0 2px 8px rgba(6,182,212,.4)}
+.banner-cases .banner-count{background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;
+  box-shadow:0 2px 8px rgba(249,115,22,.4)}
+
+.banner-bottom{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1}
+.banner-desc{font-size:12px;color:var(--t3);font-weight:500;line-height:1.5}
+.banner-progress{display:flex;align-items:center;gap:8px}
+.banner-prog-bar{width:80px;height:5px;background:rgba(255,255,255,.08);border-radius:5px;overflow:hidden}
+.banner-prog-fill{height:100%;border-radius:5px;transition:width .5s ease}
+.banner-cards .banner-prog-fill{background:linear-gradient(90deg,var(--p),var(--s))}
+.banner-cases .banner-prog-fill{background:linear-gradient(90deg,#f97316,#a855f7)}
+.banner-prog-pct{font-size:12px;font-weight:800;min-width:28px}
+.banner-cards .banner-prog-pct{color:var(--p)}
+.banner-cases .banner-prog-pct{color:#f97316}
+
+.banner-stats-link{text-align:center;padding:6px 0 0}
+.banner-stats-btn{background:none;border:none;color:var(--t3);font-size:12px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:.2s;padding:4px 12px}
+.banner-stats-btn:hover{color:var(--p)}
+
+@media(max-width:768px){
+  .banner-row{grid-template-columns:1fr;gap:10px}
+  .banner-card{min-height:110px;padding:18px 16px}
+  .banner-title{font-size:17px}
+  .banner-icon{font-size:26px}
+}
+
 .tb{
   display:flex;align-items:center;gap:10px;
   padding:14px 36px;
@@ -1039,25 +1108,41 @@ body::before{content:'';position:fixed;inset:0;background:
   </div>
 </div>
 
-<!-- STICKY TABS -->
+<!-- BANNER CARDS -->
 <div class="tabs-sticky">
-  <div class="tabs">
-    <button class="tb on" onclick="tab('cards')" id="t-cards">
-      <span class="tb-ico">📚</span>
-      <span class="tb-label">Карточки</span>
-      <span class="cnt" id="cnt-cards">80</span>
-    </button>
-    <button class="tb" onclick="tab('cases')" id="t-cases">
-      <span class="tb-ico">💼</span>
-      <span class="tb-label">Кейсы</span>
-      <span class="cnt" id="cnt-cases">50</span>
-    </button>
-    <button class="tb" onclick="tab('stats')" id="t-stats">
-      <span class="tb-ico">📊</span>
-      <span class="tb-label">Статистика</span>
-    </button>
+  <div class="banner-row">
+    <div class="banner-card banner-cards on" onclick="tab('cards')" id="t-cards">
+      <div class="banner-top">
+        <div class="banner-icon">🧠</div>
+        <div class="banner-title">Карточки</div>
+        <div class="banner-count" id="cnt-cards">80</div>
+      </div>
+      <div class="banner-bottom">
+        <div class="banner-desc">Термины, переговоры, документы</div>
+        <div class="banner-progress">
+          <div class="banner-prog-bar"><div class="banner-prog-fill" id="bn-cards-fill" style="width:0%"></div></div>
+          <div class="banner-prog-pct" id="bn-cards-pct">0%</div>
+        </div>
+      </div>
+    </div>
+    <div class="banner-card banner-cases" onclick="tab('cases')" id="t-cases">
+      <div class="banner-top">
+        <div class="banner-icon">�</div>
+        <div class="banner-title">Кейсы</div>
+        <div class="banner-count" id="cnt-cases">50</div>
+      </div>
+      <div class="banner-bottom">
+        <div class="banner-desc">Интерактивные чат-истории</div>
+        <div class="banner-progress">
+          <div class="banner-prog-bar"><div class="banner-prog-fill" id="bn-cases-fill" style="width:0%"></div></div>
+          <div class="banner-prog-pct" id="bn-cases-pct">0%</div>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="tabs-line"></div>
+  <div class="banner-stats-link">
+    <button class="banner-stats-btn" onclick="tab('stats')" id="t-stats">📊 Статистика</button>
+  </div>
 </div>
 
 <!-- ═══ PANEL: CARDS ═══ -->
@@ -2007,11 +2092,29 @@ initFirebaseSync();
 // TABS
 // ═══════════════════════════════════════════════
 function tab(name){
-  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.banner-card').forEach(b=>b.classList.remove('on'));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
-  document.getElementById('t-'+name).classList.add('on');
+  const el=document.getElementById('t-'+name);
+  if(el)el.classList.add('on');
   document.getElementById('p-'+name).classList.add('on');
   if(name==='stats')renderStats();
+  updateBannerProgress();
+}
+
+function updateBannerProgress(){
+  const s=getState();
+  // Cards progress
+  const cardsPct=CARDS.length?Math.round(s.known.length/CARDS.length*100):0;
+  const cf=document.getElementById('bn-cards-fill');
+  const cp=document.getElementById('bn-cards-pct');
+  if(cf)cf.style.width=cardsPct+'%';
+  if(cp)cp.textContent=cardsPct+'%';
+  // Cases progress
+  const casesPct=CASES.length?Math.round(s.readCases.length/CASES.length*100):0;
+  const kf=document.getElementById('bn-cases-fill');
+  const kp=document.getElementById('bn-cases-pct');
+  if(kf)kf.style.width=casesPct+'%';
+  if(kp)kp.textContent=casesPct+'%';
 }
 
 // ═══════════════════════════════════════════════
@@ -2998,6 +3101,7 @@ function updateHeroNums(){
   document.getElementById('h-cards').textContent=CARDS.length;
   document.getElementById('h-cases').textContent=CASES.length;
   updateSideStats();
+  if(typeof updateBannerProgress==='function')updateBannerProgress();
 }
 
 function checkDayStreak(){
@@ -3688,6 +3792,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   updateHeroNums();
   initTips();
   updateCardPanelSections(null);
+  updateBannerProgress();
   // Load xp-system and make awardXP globally available
   import('../xp-system.js').then(m=>{
     window._awardXP=m.awardXP;
