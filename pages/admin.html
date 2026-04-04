@@ -2392,6 +2392,21 @@
                                     <option>Модуль 5</option>
                                 </select>
                             </div>
+                            <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;" id="toggle-filters">
+                                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);transition:all .2s;font-size:12px;color:#94a3b8;font-weight:600;user-select:none;" onmouseover="this.style.borderColor='rgba(99,102,241,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+                                    <input type="checkbox" id="toggle-hide-bots" onchange="applyToggleFilters()" style="accent-color:#6366f1;width:14px;height:14px;cursor:pointer;">
+                                    🤖 Скрыть ботов
+                                </label>
+                                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);transition:all .2s;font-size:12px;color:#94a3b8;font-weight:600;user-select:none;" onmouseover="this.style.borderColor='rgba(16,185,129,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+                                    <input type="checkbox" id="toggle-active-only" onchange="applyToggleFilters()" style="accent-color:#10b981;width:14px;height:14px;cursor:pointer;">
+                                    🟢 Только активные 7д
+                                </label>
+                                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);transition:all .2s;font-size:12px;color:#94a3b8;font-weight:600;user-select:none;" onmouseover="this.style.borderColor='rgba(236,72,153,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+                                    <input type="checkbox" id="toggle-with-xp" onchange="applyToggleFilters()" style="accent-color:#ec4899;width:14px;height:14px;cursor:pointer;">
+                                    ⚡ С опытом (XP > 0)
+                                </label>
+                                <span id="toggle-count" style="font-size:11px;color:#64748b;font-weight:600;margin-left:auto;"></span>
+                            </div>
                             <div style="display:flex;gap:8px;">
                                 <button class="btn btn-o btn-sm" onclick="sortByXP()" title="Сортировать по XP"><i
                                         class="fa fa-star"></i> ⚡ Рейтинг</button>
@@ -4243,8 +4258,37 @@
             filteredUsers = USERS.filter(u => u.name.toLowerCase().includes(q.toLowerCase()) || u.email.toLowerCase().includes(q.toLowerCase()));
             renderUsers(filteredUsers);
         }
-        function filterByStatus(s) { filteredUsers = s ? USERS.filter(u => u.status === s) : [...USERS]; renderUsers(filteredUsers); }
-        function filterByModule(m) { filteredUsers = m ? USERS.filter(u => u.module === m) : [...USERS]; renderUsers(filteredUsers); }
+        function filterByStatus(s) { filteredUsers = s ? USERS.filter(u => u.status === s) : [...USERS]; applyToggleFilters(); }
+        function filterByModule(m) { filteredUsers = m ? USERS.filter(u => u.module === m) : [...USERS]; applyToggleFilters(); }
+        window.applyToggleFilters = function() {
+            const hideBots = document.getElementById('toggle-hide-bots')?.checked;
+            const activeOnly = document.getElementById('toggle-active-only')?.checked;
+            const withXP = document.getElementById('toggle-with-xp')?.checked;
+            let base = filteredUsers.length ? filteredUsers : [...USERS];
+            // Re-filter from USERS if no status/module filter active
+            const statusSel = document.querySelector('.sel');
+            if (!statusSel || !statusSel.value) base = [...USERS];
+            if (hideBots) base = base.filter(u => !u.isBot);
+            if (activeOnly) {
+                const now = Date.now();
+                base = base.filter(u => {
+                    if (!u.date || u.date === '-') return false;
+                    try {
+                        const parts = u.date.split('.');
+                        if (parts.length === 3) {
+                            const d = new Date(parts[2], parts[1]-1, parts[0]);
+                            return (now - d.getTime()) < 7 * 86400000;
+                        }
+                    } catch(e) {}
+                    return false;
+                });
+            }
+            if (withXP) base = base.filter(u => (u.xp || 0) > 0);
+            filteredUsers = base;
+            const countEl = document.getElementById('toggle-count');
+            if (countEl) countEl.textContent = 'Показано: ' + filteredUsers.length + ' из ' + USERS.length;
+            renderUsers(filteredUsers);
+        };
         function sortByXP() { filteredUsers = [...(filteredUsers.length ? filteredUsers : USERS)].sort((a, b) => (b.xp || 0) - (a.xp || 0)); renderUsers(filteredUsers); }
         function selectAll(cb) { document.querySelectorAll('#usersBody input[type=checkbox]').forEach(c => c.checked = cb.checked); }
         // ===== EXPORT FUNCTIONS =====
