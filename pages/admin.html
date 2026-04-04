@@ -2002,14 +2002,16 @@
 
     <!-- Auth Guard: проверка через localStorage -->
     <script>
-        const ADMIN_EMAIL = 'dersire.der@gmail.com';
-
         function initAdminPanel() {
             const _u = localStorage.getItem('user');
             let _userData = null;
             try { _userData = _u ? JSON.parse(_u) : null; } catch (e) { }
 
-            if (!_userData || (_userData.email || '').toLowerCase() !== ADMIN_EMAIL) {
+            // Проверяем роль из localStorage (записывается role-guard.js из Firestore accessRole)
+            const userRole = (localStorage.getItem('user_role') || '').toLowerCase();
+            const isSuperuser = userRole === 'superuser';
+
+            if (!_userData || !isSuperuser) {
                 document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#020617;font-family:Inter,sans-serif;color:#ffffff;flex-direction:column;gap:16px;"><div style="font-size:64px">🔒</div><h1 style="font-size:28px;font-weight:800">Доступ запрещён</h1><p style="color:#e2e8f0">Только для супер-администратора</p><a href="../dashboard.html" style="margin-top:8px;padding:12px 28px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border-radius:12px;text-decoration:none;font-weight:600">← Вернуться</a></div>`;
             } else {
                 const panel = document.getElementById('adminPanel');
