@@ -6,7 +6,7 @@
 (function () {
   'use strict';
 
-  var STORAGE_KEY = 'onboarding_done_v2';
+  var STORAGE_KEY = 'onboarding_done_v3';
   var isMobile = function () { return window.innerWidth <= 768; };
 
   // ── Утилиты для desktop dropdown ─────────────────────────────
