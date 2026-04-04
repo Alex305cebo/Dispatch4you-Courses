@@ -6,7 +6,7 @@
 (function () {
   'use strict';
 
-  var STORAGE_KEY = 'onboarding_done_v4';
+  var STORAGE_KEY = 'onboarding_done_v5';
   var isMobile = function () { return window.innerWidth <= 768; };
 
   // ── Утилиты для desktop dropdown ─────────────────────────────
@@ -69,10 +69,10 @@
       prepare: null,
       cleanup: null
     },
-    // 2. Курс обучения — кнопка в навбаре / раздел в mob-menu
+    // 2. Курс обучения
     {
       desktopTarget: '.nav-item .nav-btn',
-      mobileTarget: '.mob-acc:nth-child(1) .mob-acc-title',
+      mobileTarget: '.mob-acc .mob-acc-title',
       title: '📚 Курс обучения',
       text: 'Нажми чтобы открыть базу знаний — 15 страниц курса, глоссарий и материалы диспетчера.',
       position: 'bottom',
@@ -85,7 +85,7 @@
     // 3. Тесты знаний — 12 Модулей
     {
       desktopTarget: '.nav-item .dropdown [href*="modules-index"]',
-      mobileTarget: '.mob-acc:nth-child(1) [href*="modules-index"]',
+      mobileTarget: '.mob-body [href*="modules-index"]',
       title: '✍️ Тесты знаний — 12 Модулей',
       text: 'Проверь себя — 12 модулей с тестами. Каждый тест даёт XP и подтверждает твои знания.',
       position: 'bottom',
@@ -98,7 +98,7 @@
     // 4. Симулятор
     {
       desktopTarget: '.nav-item:nth-child(2) .dropdown [href*="simulator"]',
-      mobileTarget: '.mob-acc:nth-child(2) [href*="simulator"]',
+      mobileTarget: '.mob-body [href*="simulator"]',
       title: '🤖 Симулятор переговоров',
       text: 'Практикуй реальные звонки с AI-брокером. Самый важный инструмент для отработки навыков.',
       position: 'bottom',
@@ -111,7 +111,7 @@
     // 5. Тестирование
     {
       desktopTarget: '.nav-item:nth-child(2) .dropdown [href*="testing"]',
-      mobileTarget: '.mob-acc:nth-child(2) [href*="testing"]',
+      mobileTarget: '.mob-body [href*="testing"]',
       title: '✍️ Тестирование',
       text: 'Пройди тесты по всем темам курса. Проверяй знания и зарабатывай XP.',
       position: 'bottom',
@@ -124,7 +124,7 @@
     // 6. Тренировка
     {
       desktopTarget: '.nav-item:nth-child(2) .dropdown [href*="Trainer-Quiz"]',
-      mobileTarget: '.mob-acc:nth-child(2) [href*="Trainer-Quiz"]',
+      mobileTarget: '.mob-body [href*="Trainer-Quiz"]',
       title: '⚡ Тренировка',
       text: 'Быстрые блиц-вопросы для закрепления материала. Тренируйся каждый день.',
       position: 'bottom',
@@ -137,7 +137,7 @@
     // 7. Load Finder
     {
       desktopTarget: '.nav-item:nth-child(2) .dropdown [href*="load-finder"]',
-      mobileTarget: '.mob-acc:nth-child(2) [href*="load-finder"]',
+      mobileTarget: '.mob-body [href*="load-finder"]',
       title: '🔍 Load Finder',
       text: 'Ищи грузы как настоящий диспетчер. Практика работы с лоадбордами.',
       position: 'bottom',
