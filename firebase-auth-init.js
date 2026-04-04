@@ -241,6 +241,17 @@ window.updateAuthUI = applyFromCache;
 // Повторно применяем после загрузки навигации (nav.html через fetch)
 document.addEventListener('navLoaded', applyFromCache);
 
+// Повторная проверка роли — role-guard.js может обновить localStorage позже
+setTimeout(() => {
+    const role = localStorage.getItem('user_role');
+    const adminLink = document.getElementById('nav-admin-link');
+    const mobAdminLink = document.getElementById('mob-admin-link');
+    if (role === 'superuser') {
+        if (adminLink) adminLink.style.display = '';
+        if (mobAdminLink) mobAdminLink.style.display = '';
+    }
+}, 2000);
+
 // XP обновление
 document.addEventListener('xpUpdated', (e) => {
     const xp = e.detail?.totalXP || 0;

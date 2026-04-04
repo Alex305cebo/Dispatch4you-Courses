@@ -1630,8 +1630,9 @@
       localStorage.setItem('user', JSON.stringify({ uid: firebaseUser.uid, firstName, lastName, email, photoURL: firebaseUser.photoURL || '' }));
       if (typeof window.updateAuthUI === 'function') window.updateAuthUI();
 
-      // Кнопка админа
-      if (email.trim().toLowerCase() === SUPER_ADMIN) {
+      // Кнопка админа — показываем для superuser по роли из Firestore
+      const userRole = localStorage.getItem('user_role');
+      if (email.trim().toLowerCase() === SUPER_ADMIN || userRole === 'superuser') {
         const btn = document.getElementById('adminPanelBtn');
         if (btn) btn.style.display = 'inline-block';
       }
