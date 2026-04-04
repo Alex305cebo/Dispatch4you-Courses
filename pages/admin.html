@@ -4258,16 +4258,18 @@
             filteredUsers = USERS.filter(u => u.name.toLowerCase().includes(q.toLowerCase()) || u.email.toLowerCase().includes(q.toLowerCase()));
             renderUsers(filteredUsers);
         }
-        function filterByStatus(s) { filteredUsers = s ? USERS.filter(u => u.status === s) : [...USERS]; applyToggleFilters(); }
-        function filterByModule(m) { filteredUsers = m ? USERS.filter(u => u.module === m) : [...USERS]; applyToggleFilters(); }
+        function filterByStatus(s) { applyToggleFilters(); }
+        function filterByModule(m) { applyToggleFilters(); }
         window.applyToggleFilters = function() {
             const hideBots = document.getElementById('toggle-hide-bots')?.checked;
             const activeOnly = document.getElementById('toggle-active-only')?.checked;
             const withXP = document.getElementById('toggle-with-xp')?.checked;
-            let base = filteredUsers.length ? filteredUsers : [...USERS];
-            // Re-filter from USERS if no status/module filter active
-            const statusSel = document.querySelector('.sel');
-            if (!statusSel || !statusSel.value) base = [...USERS];
+            const sels = document.querySelectorAll('.sel');
+            const statusVal = sels[0]?.value || '';
+            const moduleVal = sels[1]?.value || '';
+            let base = [...USERS];
+            if (statusVal) base = base.filter(u => u.status === statusVal);
+            if (moduleVal) base = base.filter(u => u.module === moduleVal);
             if (hideBots) base = base.filter(u => !u.isBot);
             if (activeOnly) {
                 const now = Date.now();
