@@ -188,6 +188,18 @@ function applyUI(user, xpOverride) {
 
         // Stats icon always visible — no toggle needed
 
+        // Admin link — show for superusers only
+        const role = localStorage.getItem('user_role');
+        const adminLink = document.getElementById('nav-admin-link');
+        const mobAdminLink = document.getElementById('mob-admin-link');
+        if (role === 'superuser') {
+            if (adminLink) adminLink.style.display = '';
+            if (mobAdminLink) mobAdminLink.style.display = '';
+        } else {
+            if (adminLink) adminLink.style.display = 'none';
+            if (mobAdminLink) mobAdminLink.style.display = 'none';
+        }
+
     } else {
         // Не залогинен
         navActions.innerHTML = `
@@ -210,6 +222,12 @@ function applyUI(user, xpOverride) {
         if (mobActions) mobActions.style.display = 'flex';
 
         // Stats icon always visible — no toggle needed
+
+        // Hide admin link when logged out
+        const adminLink2 = document.getElementById('nav-admin-link');
+        const mobAdminLink2 = document.getElementById('mob-admin-link');
+        if (adminLink2) adminLink2.style.display = 'none';
+        if (mobAdminLink2) mobAdminLink2.style.display = 'none';
     }
 }
 
