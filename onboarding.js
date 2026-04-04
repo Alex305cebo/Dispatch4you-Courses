@@ -6,7 +6,7 @@
 (function () {
   'use strict';
 
-  var STORAGE_KEY = 'onboarding_done_v3';
+  var STORAGE_KEY = 'onboarding_done_v4';
   var isMobile = function () { return window.innerWidth <= 768; };
 
   // ── Утилиты для desktop dropdown ─────────────────────────────
@@ -200,6 +200,18 @@
     .nav-item.onb-forced-open{z-index:999994!important;position:relative}\
     .nav-item.onb-forced-open .dropdown{display:flex!important;flex-direction:column!important;z-index:999994!important}\
     #mobMenu.active{z-index:999994!important}\
+    @media(max-width:768px){\
+      #onb-tooltip{padding:18px 20px;max-width:88vw;min-width:260px;border-radius:16px}\
+      #onb-step-badge{font-size:12px;margin-bottom:8px}\
+      #onb-title{font-size:18px;margin-bottom:8px}\
+      #onb-text{font-size:14px;line-height:1.6;margin-bottom:16px}\
+      .onb-dot{width:7px;height:7px}\
+      .onb-dot.active{width:20px;border-radius:4px}\
+      #onb-dots{gap:5px;margin-bottom:4px}\
+      #onb-back{padding:8px 14px;font-size:13px;border-radius:10px}\
+      #onb-next{padding:8px 18px;font-size:13px;border-radius:10px}\
+      #onb-actions{gap:8px}\
+    }\
   ';
 
   var currentStep = 0;
@@ -297,9 +309,26 @@
       if (step.position === 'center' || !target) {
         highlightEl.style.display = 'none';
         centerTooltip();
+      } else if (isMobile() && target) {
+        // На мобильном: сначала скроллим к элементу, потом позиционируем
+        var mobBody = document.querySelector('.mob-body');
+        if (mobBody && mobBody.contains(target)) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        // Ждём завершения скролла, потом позиционируем
+        setTimeout(function () {
+          var rect = target.getBoundingClientRect();
+          if (rect.width === 0 && rect.height === 0) {
+            highlightEl.style.display = 'none';
+            centerTooltip();
+            return;
+          }
+          var pad = 6;
+          highlightEl.style.cssText = 'position:fixed;top:' + (rect.top - pad) + 'px;left:' + (rect.left - pad) + 'px;width:' + (rect.width + pad * 2) + 'px;height:' + (rect.height + pad * 2) + 'px;border-radius:10px;box-shadow:0 0 0 4px rgba(6,182,212,0.8),0 0 0 9999px rgba(0,0,0,0.6);pointer-events:none;transition:all .35s cubic-bezier(.4,0,.2,1);z-index:999992;display:block';
+          positionTooltip(rect, step.position);
+        }, 400);
       } else {
         var rect = target.getBoundingClientRect();
-        // Проверяем что элемент видим (не нулевые размеры)
         if (rect.width === 0 && rect.height === 0) {
           highlightEl.style.display = 'none';
           centerTooltip();
@@ -308,14 +337,6 @@
         var pad = 6;
         highlightEl.style.cssText = 'position:fixed;top:' + (rect.top - pad) + 'px;left:' + (rect.left - pad) + 'px;width:' + (rect.width + pad * 2) + 'px;height:' + (rect.height + pad * 2) + 'px;border-radius:10px;box-shadow:0 0 0 4px rgba(6,182,212,0.8),0 0 0 9999px rgba(0,0,0,0.6);pointer-events:none;transition:all .35s cubic-bezier(.4,0,.2,1);z-index:999992;display:block';
         positionTooltip(rect, step.position);
-      }
-
-      // На мобильном скроллим mob-menu к элементу
-      if (isMobile() && target) {
-        var mobBody = document.querySelector('.mob-body');
-        if (mobBody && mobBody.contains(target)) {
-          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
       }
     }, 100);
   }
