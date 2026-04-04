@@ -2377,13 +2377,13 @@
                             <div class="tfilters">
                                 <input class="fi" id="usersSearchInput" type="text" autocomplete="off"
                                     placeholder="🔍 Поиск по имени или email...">
-                                <select class="sel" onchange="filterByStatus(this.value)">
+                                <select class="sel" id="filter-status-sel" onchange="applyToggleFilters()">
                                     <option value="">Все статусы</option>
                                     <option value="active">Активные</option>
                                     <option value="pending">Ожидают</option>
                                     <option value="inactive">Неактивные</option>
                                 </select>
-                                <select class="sel" onchange="filterByModule(this.value)">
+                                <select class="sel" id="filter-module-sel" onchange="applyToggleFilters()">
                                     <option value="">Все модули</option>
                                     <option>Модуль 1</option>
                                     <option>Модуль 2</option>
@@ -4254,20 +4254,19 @@
             }).join('');
         }
         function filterUsers(q) {
-            if (!q || q.trim() === '') { filteredUsers = [...USERS]; renderUsers(filteredUsers); return; }
-            filteredUsers = USERS.filter(u => u.name.toLowerCase().includes(q.toLowerCase()) || u.email.toLowerCase().includes(q.toLowerCase()));
-            renderUsers(filteredUsers);
+            applyToggleFilters();
         }
         function filterByStatus(s) { applyToggleFilters(); }
         function filterByModule(m) { applyToggleFilters(); }
         window.applyToggleFilters = function() {
-            const hideBots = document.getElementById('toggle-hide-bots')?.checked;
-            const activeOnly = document.getElementById('toggle-active-only')?.checked;
-            const withXP = document.getElementById('toggle-with-xp')?.checked;
-            const sels = document.querySelectorAll('.sel');
-            const statusVal = sels[0]?.value || '';
-            const moduleVal = sels[1]?.value || '';
-            let base = [...USERS];
+            const hideBots = document.getElementById('toggle-hide-bots')?.checked || false;
+            const activeOnly = document.getElementById('toggle-active-only')?.checked || false;
+            const withXP = document.getElementById('toggle-with-xp')?.checked || false;
+            const statusVal = document.getElementById('filter-status-sel')?.value || '';
+            const moduleVal = document.getElementById('filter-module-sel')?.value || '';
+            const searchQ = (document.getElementById('usersSearchInput')?.value || '').toLowerCase().trim();
+            let base = [...(window.USERS || [])];
+            if (searchQ) base = base.filter(u => u.name.toLowerCase().includes(searchQ) || u.email.toLowerCase().includes(searchQ));
             if (statusVal) base = base.filter(u => u.status === statusVal);
             if (moduleVal) base = base.filter(u => u.module === moduleVal);
             if (hideBots) base = base.filter(u => !u.isBot);
@@ -4288,7 +4287,7 @@
             if (withXP) base = base.filter(u => (u.xp || 0) > 0);
             filteredUsers = base;
             const countEl = document.getElementById('toggle-count');
-            if (countEl) countEl.textContent = 'Показано: ' + filteredUsers.length + ' из ' + USERS.length;
+            if (countEl) countEl.textContent = 'Показано: ' + filteredUsers.length + ' из ' + (window.USERS||[]).length;
             renderUsers(filteredUsers);
         };
         function sortByXP() { filteredUsers = [...(filteredUsers.length ? filteredUsers : USERS)].sort((a, b) => (b.xp || 0) - (a.xp || 0)); renderUsers(filteredUsers); }
