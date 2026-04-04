@@ -1041,38 +1041,57 @@
     }
 
     // Рендерим модули сразу (прогресс обновится после Firebase)
-    if (typeof renderModulesGrid === 'function') renderModulesGrid(0);
+    if (typeof renderModulesGrid === 'function') renderModulesGrid(0, 0);
 
     // ===== 12 МОДУЛЕЙ =====
     const MODULES_DATA = [
-      { n:1,  icon:'🏭', title:'Индустрия',    desc:'Основы грузоперевозок США $940B',    url:'pages/doc-module-1-complete.html',  color:'#6366f1' },
-      { n:2,  icon:'📘', title:'Термины',      desc:'75+ профессиональных терминов',       url:'pages/doc-module-2-complete.html',  color:'#8b5cf6' },
-      { n:3,  icon:'🧑‍💼', title:'Диспетчер',   desc:'Роль, обязанности, инструменты',     url:'pages/doc-module-3-complete.html',  color:'#06b6d4' },
-      { n:4,  icon:'🔍', title:'Load Boards',  desc:'DAT, Truckstop, поиск грузов',       url:'pages/doc-module-4-complete.html',  color:'#10b981' },
-      { n:5,  icon:'🗺️', title:'Маршруты',     desc:'48 штатов, Interstate коридоры',     url:'pages/doc-module-5-complete.html',  color:'#f59e0b' },
-      { n:6,  icon:'🚛', title:'Оборудование', desc:'Dry Van, Reefer, Flatbed',           url:'pages/doc-module-6-complete.html',  color:'#f97316' },
-      { n:7,  icon:'💬', title:'Переговоры',   desc:'10 техник + скрипты на английском',  url:'pages/doc-module-7-complete.html',  color:'#ec4899' },
-      { n:8,  icon:'🤝', title:'Брокеры',      desc:'Проверка, работа, факторинг',        url:'pages/doc-module-8-complete.html',  color:'#ef4444' },
-      { n:9,  icon:'📊', title:'CSA Scores',   desc:'HOS, ELD, безопасность',             url:'pages/doc-module-9-complete.html',  color:'#a78bfa' },
-      { n:10, icon:'📦', title:'Грузы',        desc:'Типы грузов, особенности',           url:'pages/doc-module-10-complete.html', color:'#34d399' },
-      { n:11, icon:'⚠️', title:'Проблемы',     desc:'Решение нештатных ситуаций',         url:'pages/doc-module-11-complete.html', color:'#fbbf24' },
-      { n:12, icon:'🚀', title:'Карьера',      desc:'90-дневный план запуска',            url:'pages/doc-module-12-complete.html', color:'#818cf8' },
+      { n:1,  type:'lesson', icon:'📖', title:'Введение',        desc:'Знакомство с профессией',         url:'pages/intro.html',           color:'#06b6d4' },
+      { n:1,  type:'module', icon:'🏭', title:'Индустрия',       desc:'Основы грузоперевозок США $940B',  url:'pages/doc-module-1-complete.html',  color:'#6366f1' },
+      { n:2,  type:'lesson', icon:'📚', title:'Глоссарий',       desc:'Основные термины индустрии',       url:'pages/glossary.html',        color:'#0ea5e9' },
+      { n:2,  type:'module', icon:'📘', title:'Термины',         desc:'75+ профессиональных терминов',    url:'pages/doc-module-2-complete.html',  color:'#8b5cf6' },
+      { n:3,  type:'lesson', icon:'🧑‍💼', title:'Роль диспетчера', desc:'Обязанности и навыки',            url:'pages/role.html',            color:'#8b5cf6' },
+      { n:3,  type:'module', icon:'🧑‍💼', title:'Диспетчер',      desc:'Роль, обязанности, инструменты',  url:'pages/doc-module-3-complete.html',  color:'#06b6d4' },
+      { n:4,  type:'lesson', icon:'🚛', title:'Оборудование',    desc:'Типы трейлеров и грузовиков',     url:'pages/equipment.html',       color:'#f97316' },
+      { n:4,  type:'module', icon:'🔍', title:'Load Boards',     desc:'DAT, Truckstop, поиск грузов',    url:'pages/doc-module-4-complete.html',  color:'#10b981' },
+      { n:5,  type:'lesson', icon:'🗺️', title:'Маршруты',        desc:'Lanes, deadhead, backhaul',       url:'pages/routes.html',          color:'#10b981' },
+      { n:5,  type:'module', icon:'🗺️', title:'Маршруты',        desc:'48 штатов, Interstate коридоры',  url:'pages/doc-module-5-complete.html',  color:'#f59e0b' },
+      { n:6,  type:'lesson', icon:'🔍', title:'Load Boards',     desc:'DAT, Truckstop, 123Loadboard',    url:'pages/loadboards.html',      color:'#6366f1' },
+      { n:6,  type:'module', icon:'🚛', title:'Оборудование',    desc:'Dry Van, Reefer, Flatbed',        url:'pages/doc-module-6-complete.html',  color:'#f97316' },
+      { n:7,  type:'lesson', icon:'💬', title:'Переговоры',      desc:'Техники и скрипты',               url:'pages/negotiation.html',     color:'#ec4899' },
+      { n:7,  type:'module', icon:'💬', title:'Переговоры',      desc:'10 техник + скрипты на английском',url:'pages/doc-module-7-complete.html',  color:'#ec4899' },
+      { n:8,  type:'lesson', icon:'🤝', title:'Брокеры',         desc:'Проверка и работа с брокерами',   url:'pages/brokers.html',         color:'#ef4444' },
+      { n:8,  type:'module', icon:'🤝', title:'Брокеры',         desc:'Проверка, работа, факторинг',     url:'pages/doc-module-8-complete.html',  color:'#ef4444' },
+      { n:9,  type:'lesson', icon:'📄', title:'Документы',       desc:'Rate Con, BOL, POD, Invoice',     url:'pages/docs.html',            color:'#a78bfa' },
+      { n:9,  type:'module', icon:'📊', title:'CSA Scores',      desc:'HOS, ELD, безопасность',          url:'pages/doc-module-9-complete.html',  color:'#a78bfa' },
+      { n:10, type:'lesson', icon:'⚖️', title:'Законы',          desc:'FMCSA, HOS, ELD, CSA',            url:'pages/regulations.html',     color:'#fbbf24' },
+      { n:10, type:'module', icon:'📦', title:'Грузы',           desc:'Типы грузов, особенности',        url:'pages/doc-module-10-complete.html', color:'#34d399' },
+      { n:11, type:'lesson', icon:'💻', title:'TMS',             desc:'Технологии и софт',               url:'pages/technology.html',      color:'#34d399' },
+      { n:11, type:'module', icon:'⚠️', title:'Проблемы',        desc:'Решение нештатных ситуаций',      url:'pages/doc-module-11-complete.html', color:'#fbbf24' },
+      { n:12, type:'lesson', icon:'📞', title:'Коммуникация',    desc:'Общение с водителями и брокерами',url:'pages/communication.html',   color:'#f472b6' },
+      { n:12, type:'module', icon:'🚀', title:'Карьера',         desc:'90-дневный план запуска',          url:'pages/doc-module-12-complete.html', color:'#818cf8' },
+      { n:13, type:'lesson', icon:'⚠️', title:'Проблемы',        desc:'Решение нештатных ситуаций',      url:'pages/problems.html',        color:'#fb923c' },
+      { n:14, type:'lesson', icon:'💰', title:'Финансы',         desc:'Расчёты, факторинг, оплата',      url:'pages/finances.html',        color:'#4ade80' },
+      { n:15, type:'lesson', icon:'🚀', title:'Карьера',         desc:'Запуск карьеры диспетчера',       url:'pages/career.html',          color:'#818cf8' },
     ];
 
-    window.renderModulesGrid = function renderModulesGrid(completedCount) {
+    window.renderModulesGrid = function renderModulesGrid(completedCount, lessonsCount) {
       const grid = document.getElementById('modulesGrid');
       if (!grid) return;
-      grid.innerHTML = MODULES_DATA.map(m => {
-        const done = m.n <= completedCount;
-        const current = m.n === completedCount + 1;
+      const lc = lessonsCount || 0;
+      grid.innerHTML = MODULES_DATA.map((m, idx) => {
+        const isLesson = m.type === 'lesson';
+        const done = isLesson ? (m.n <= lc) : (m.n <= completedCount);
+        const current = isLesson ? (m.n === lc + 1) : (m.n === completedCount + 1);
+        const label = isLesson ? `Урок ${m.n}` : `Модуль ${m.n}`;
+        const labelColor = isLesson ? '#06b6d4' : m.color;
         return `<div class="course-card" style="cursor:pointer;border-color:${done ? m.color+'40' : current ? m.color+'30' : 'rgba(255,255,255,0.08)'};background:${done ? m.color+'10' : 'rgba(255,255,255,0.03)'};" onclick="window.location.href='${m.url}'">
           <div class="course-image" style="font-size:36px;position:relative;">
             ${m.icon}
             ${done ? '<span style="position:absolute;top:-4px;right:-4px;font-size:16px;">✅</span>' : ''}
-            ${current ? '<span style="position:absolute;top:-4px;right:-4px;font-size:14px;background:#6366f1;color:white;border-radius:8px;padding:1px 5px;font-size:10px;font-weight:700;">СЕЙЧАС</span>' : ''}
+            ${current ? '<span style="position:absolute;top:-4px;right:-4px;font-size:14px;background:'+m.color+';color:white;border-radius:8px;padding:1px 5px;font-size:10px;font-weight:700;">СЕЙЧАС</span>' : ''}
           </div>
           <div class="course-content">
-            <div style="font-size:11px;color:${m.color};font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em;">Модуль ${m.n}</div>
+            <div style="font-size:11px;color:${labelColor};font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em;">${label}</div>
             <h3 class="course-title" style="font-size:15px;margin-bottom:4px;">${m.title}</h3>
             <p style="font-size:12px;color:#64748b;margin-bottom:12px;line-height:1.4;">${m.desc}</p>
             <button class="btn-continue" style="background:${done ? 'rgba(16,185,129,0.15)' : current ? 'linear-gradient(135deg,'+m.color+','+m.color+'cc)' : 'rgba(255,255,255,0.05)'};color:${done ? '#6ee7b7' : '#fff'};border:1px solid ${done ? 'rgba(16,185,129,0.3)' : m.color+'40'};font-size:12px;padding:8px 14px;">
@@ -1082,12 +1101,14 @@
         </div>`;
       }).join('');
 
-      // Обновляем прогресс бар
-      const pct = Math.round((completedCount / 12) * 100);
+      // Обновляем прогресс бар (модули + уроки)
+      const totalItems = MODULES_DATA.length;
+      const doneItems = MODULES_DATA.filter(m => m.type === 'lesson' ? m.n <= lc : m.n <= completedCount).length;
+      const pct = Math.round((doneItems / totalItems) * 100);
       const fill = document.getElementById('courseProgressFill');
-      const label = document.getElementById('courseProgressPct');
+      const label2 = document.getElementById('courseProgressPct');
       if (fill) fill.style.width = pct + '%';
-      if (label) label.textContent = `${completedCount} / 12 модулей (${pct}%)`;
+      if (label2) label2.textContent = `${doneItems} / ${totalItems} пройдено (${pct}%)`;
     }
 
     // Tab switching
@@ -1514,7 +1535,7 @@
       if (pl) pl.textContent = level.label;
 
       // Рендерим сетку модулей
-      try { if (typeof window.renderModulesGrid === 'function') window.renderModulesGrid(stats.moduleComplete || 0); } catch(e) { console.warn('renderModulesGrid error:', e); }
+      try { if (typeof window.renderModulesGrid === 'function') window.renderModulesGrid(stats.moduleComplete || 0, stats.lessonsRead || 0); } catch(e) { console.warn('renderModulesGrid error:', e); }
 
       if (next) {
         const prevXP = level.minXP;
