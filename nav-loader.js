@@ -8,7 +8,7 @@
 
     // ── Load nav HTML ──────────────────────────────────────────────
     function loadNav() {
-        fetch(BASE + 'nav.html?v=7.4')
+        fetch(BASE + 'nav.html?v=7.5')
             .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
             .then(function (html) { inject(html.replace(/\{\{BASE\}\}/g, BASE)); })
             .catch(function () { inject(NAV_INLINE.replace(/\{\{BASE\}\}/g, BASE)); });
@@ -21,7 +21,7 @@
   <div class="nav-item"><button class="nav-btn">Инструменты <span class="arrow">▾</span></button><div class="dropdown"><a href="{{BASE}}pages/simulator.html">🎯 Симулятор</a><a href="{{BASE}}pages/testing.html">✍️ Тестирование</a><a href="{{BASE}}pages/Trainer-Quiz.html">⚡ Тренировка</a><a href="{{BASE}}pages/load-finder.html">🔍 Load Finder</a><a href="{{BASE}}pages/ai-broker-chat.html">🤖 AI Брокер</a><a href="{{BASE}}pages/users-stats.html" id="mob-stats-link" style="display:none">📊 Статистика</a></div></div>
   <div class="nav-item"><button class="nav-btn">Информация <span class="arrow">▾</span></button><div class="dropdown"><a href="{{BASE}}about.html">👥 О нас</a><a href="{{BASE}}faq.html">❓ Вопросы</a><a href="{{BASE}}contacts.html">📬 Контакты</a><a href="{{BASE}}pricing.html">💰 Цены</a></div></div>
 </div>
-<a href="{{BASE}}pages/users-stats.html" class="nav-stats-icon" id="nav-stats-icon" style="display:none" title="Статистика пользователей">📊</a>
+<a href="{{BASE}}pages/users-stats.html" class="nav-stats-icon" id="nav-stats-icon" title="Статистика пользователей"><i class="fa fa-chart-bar"></i></a>
 <div class="nav-actions" id="nav-actions-desktop"></div>
 <div class="mob-xp-wrap" id="mob-xp-wrap" style="display:none"><a href="{{BASE}}dashboard.html" class="mob-xp-badge" id="mob-xp-badge"><span class="mob-xp-avatar" id="mob-xp-avatar">👤</span><span class="mob-xp-val" id="mob-xp-val">⚡ 0 XP</span></a></div>
 <button class="burger" id="burgerBtn"><span></span><span></span><span></span></button>
