@@ -228,6 +228,9 @@ applyFromCache();
 // Совместимость
 window.updateAuthUI = applyFromCache;
 
+// Повторно применяем после загрузки навигации (nav.html через fetch)
+document.addEventListener('navLoaded', applyFromCache);
+
 // XP обновление
 document.addEventListener('xpUpdated', (e) => {
     const xp = e.detail?.totalXP || 0;
