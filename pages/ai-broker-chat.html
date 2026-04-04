@@ -20,10 +20,10 @@
         /* Nav placeholder */
         #shared-nav-container{flex-shrink:0}
 
-        .app{display:flex;flex-direction:column;flex:1;max-width:800px;margin:0 auto;width:100%;min-height:0;overflow:hidden}
+        .app{display:flex;flex-direction:column;flex:1;max-width:100%;margin:0 auto;width:100%;min-height:0;overflow:hidden}
 
         /* HEADER */
-        .hdr{padding:8px 16px 6px;background:rgba(10,14,26,.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);flex-shrink:0;z-index:10}
+        .hdr{padding:8px 16px 6px;background:rgba(10,14,26,.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);flex-shrink:0;z-index:10;display:none}
         .hdr-row{display:flex;align-items:center;justify-content:space-between}
         .bi{display:flex;align-items:center;gap:8px}
         .av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:15px;position:relative;flex-shrink:0}
@@ -35,7 +35,7 @@
         .hb:hover{background:rgba(6,182,212,.12);color:var(--primary);border-color:rgba(6,182,212,.25)}
 
         /* SCENARIO BAR */
-        .sbar{padding:4px 12px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;gap:4px;overflow-x:auto}
+        .sbar{padding:4px 12px;border-bottom:1px solid var(--border);flex-shrink:0;display:none;gap:4px;overflow-x:auto}
         .sbar::-webkit-scrollbar{height:0}
         .sc{padding:5px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.06);background:transparent;color:var(--t3);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;transition:.2s}
         .sc:hover,.sc.on{background:rgba(6,182,212,.1);border-color:rgba(6,182,212,.25);color:var(--primary)}
@@ -45,8 +45,8 @@
         .chat::-webkit-scrollbar{width:3px}
         .chat::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
 
-        .msg{max-width:82%;padding:10px 14px;border-radius:12px;font-size:15px;line-height:1.55;animation:fadeUp .2s ease}
-        @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .msg{max-width:82%;padding:10px 14px;border-radius:12px;font-size:15px;line-height:1.55;animation:fadeUp .3s cubic-bezier(.4,0,.2,1)}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
         .msg.user{align-self:flex-end;background:linear-gradient(135deg,rgba(6,182,212,.2),rgba(14,165,233,.15));border:1px solid rgba(6,182,212,.15);border-bottom-right-radius:4px}
         .msg.broker{align-self:flex-start;background:var(--card);border:1px solid var(--border);border-bottom-left-radius:4px}
         .msg.broker .who{font-size:11px;font-weight:700;color:var(--primary);margin-bottom:3px}
@@ -94,6 +94,53 @@
         @keyframes micP{0%,100%{box-shadow:0 2px 8px rgba(239,68,68,.25)}50%{box-shadow:0 2px 16px rgba(239,68,68,.4)}}
         .mic-btn:disabled{opacity:.35;cursor:not-allowed;transform:none;animation:none}
 
+        /* ── APP LAYOUT ── */
+        .app-layout{display:flex;justify-content:center;align-items:center;flex:1;min-height:0;overflow:hidden;padding:20px;transition:all .5s cubic-bezier(.4,0,.2,1)}
+        .app-layout.dialog-active .transcript-panel{display:flex;width:420px;flex-shrink:0;animation:slideInLeft .5s cubic-bezier(.4,0,.2,1)}
+        .app-layout.dialog-active .voice-chat-widget{max-width:420px;animation:slideRight .5s cubic-bezier(.4,0,.2,1)}
+        @keyframes slideInLeft{from{opacity:0;transform:translateX(-30px);width:0}to{opacity:1;transform:translateX(0);width:420px}}
+        @keyframes slideRight{from{transform:translateX(-15px)}to{transform:translateX(0)}}
+
+        /* ── VOICE CHAT WIDGET ── */
+        .voice-chat-widget{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 32px;max-width:480px;width:100%;background:rgba(17,24,39,.6);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);border-radius:20px;transition:all .5s cubic-bezier(.4,0,.2,1)}
+        .app-layout.dialog-active .voice-chat-widget{border-radius:0 20px 20px 0;border-left:none;height:440px}
+
+        /* ── MIC CONTAINER & PULSE RING ── */
+        .vcw-mic-container{position:relative;width:80px;height:80px;margin-bottom:24px;display:flex;align-items:center;justify-content:center}
+        .vcw-mic-container .mic-btn{width:56px;height:56px;font-size:22px;position:relative;z-index:2}
+        .pulse-ring{position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(16,185,129,.4);animation:pulseGreen 2s ease-in-out infinite;z-index:1}
+        .pulse-ring::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:1px solid rgba(16,185,129,.2);animation:pulseGreen 2s ease-in-out infinite .5s}
+        @keyframes pulseGreen{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.25);opacity:0}}
+        .vcw-mic-container.recording .pulse-ring{border-color:rgba(239,68,68,.4);animation-name:pulseRed}
+        .vcw-mic-container.recording .pulse-ring::after{border-color:rgba(239,68,68,.2);animation-name:pulseRed}
+        @keyframes pulseRed{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.2);opacity:0}}
+
+        /* ── WIDGET TEXT & FEATURES ── */
+        .vcw-title{font-size:24px;font-weight:800;color:var(--t1);margin-bottom:8px}
+        .vcw-subtitle{font-size:14px;color:var(--t3);margin-bottom:32px;line-height:1.5;max-width:300px}
+        .vcw-features{display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px}
+        .vcw-feature{display:flex;align-items:center;gap:12px;text-align:left}
+        .vcw-feature-icon{font-size:18px;flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--success)}
+        .vcw-feature-text{font-size:14px;color:var(--t2);font-weight:500}
+
+        /* ── WIDGET STATUS ── */
+        .vcw-status{min-height:24px;margin-top:16px;font-size:13px;color:var(--t3);display:flex;align-items:center;gap:6px}
+        .vcw-status .wave{display:flex;gap:2px;align-items:center}
+        .vcw-status .wave span{width:3px;height:12px;background:var(--primary);border-radius:2px;animation:wave 1s infinite}
+        .vcw-status .wave span:nth-child(2){animation-delay:.15s;height:16px}
+        .vcw-status .wave span:nth-child(3){animation-delay:.3s;height:10px}
+
+        /* ── TRANSCRIPT PANEL ── */
+        .transcript-panel{display:none;flex-direction:column;background:rgba(17,24,39,.6);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);border-right:1px solid rgba(255,255,255,.04);border-radius:20px 0 0 20px;overflow:hidden;min-height:0;height:440px}
+        .app-layout.dialog-active .transcript-panel{display:flex}
+        .transcript-panel-header{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:8px;flex-shrink:0;text-transform:uppercase;letter-spacing:1px}
+        .transcript-panel-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px;scroll-behavior:smooth}
+        .transcript-panel-messages::-webkit-scrollbar{width:3px}
+        .transcript-panel-messages::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
+        .transcript-panel-messages .msg{max-width:95%;font-size:14px}
+        .transcript-panel-interim{padding:8px 12px;font-size:13px;color:#94a3b8;font-style:italic;min-height:0;flex-shrink:0;border-top:1px solid var(--border);display:none}
+        .transcript-panel-interim.show{display:block}
+
         /* RESPONSIVE */
         /* Tablet (768-1024px) */
         @media(max-width:1024px){
@@ -102,6 +149,8 @@
           .msg{font-size:14px;padding:9px 12px}
           .feedback-card{max-width:90%;padding:28px}
           .prep-card{max-width:90%;padding:28px}
+          .app-layout.dialog-active .transcript-panel{width:340px;height:380px}
+          .app-layout.dialog-active .voice-chat-widget{max-width:380px;height:380px}
         }
 
         /* Mobile (< 768px) */
@@ -124,6 +173,22 @@
           /* Phrase hints */
           .phrase-hints{padding:4px 10px 0}
           .ph{font-size:10px;padding:4px 9px}
+
+          /* Voice Chat Widget responsive */
+          .app-layout{flex-direction:column;padding:10px}
+          .app-layout.dialog-active .voice-chat-widget{max-width:100%;height:auto;border-radius:16px 16px 0 0;border:1px solid rgba(255,255,255,.08);border-bottom:none;order:1;animation:none}
+          .app-layout.dialog-active .transcript-panel{width:100%;height:auto;flex:1;min-height:0;border-radius:0 0 16px 16px;border:1px solid rgba(255,255,255,.08);border-top:none;order:2;max-height:none;animation:slideDown .4s ease}
+          @keyframes slideDown{from{opacity:0;max-height:0}to{opacity:1;max-height:50vh}}
+          .voice-chat-widget{padding:24px 20px;max-width:100%}
+          .vcw-title{font-size:20px}
+          .vcw-subtitle{font-size:13px;margin-bottom:20px}
+          .vcw-mic-container{width:64px;height:64px;margin-bottom:16px}
+          .vcw-mic-container .mic-btn{width:46px;height:46px;font-size:18px}
+          .vcw-features{gap:8px}
+          .vcw-feature-text{font-size:13px}
+          .transcript-panel{border-radius:0;border:none;max-height:35vh}
+          .app-layout.dialog-active .transcript-panel{border-radius:0}
+          .transcript-panel-messages .msg{font-size:13px}
         }
 
         /* Small Mobile (< 480px) */
@@ -166,6 +231,17 @@
           /* Phrase hints */
           .phrase-hints{padding:3px 8px 0;gap:4px}
           .ph{font-size:10px;padding:4px 8px}
+
+          /* Voice Chat Widget responsive */
+          .voice-chat-widget{padding:20px 16px}
+          .vcw-title{font-size:18px}
+          .vcw-subtitle{font-size:12px;margin-bottom:16px}
+          .vcw-mic-container{width:56px;height:56px;margin-bottom:12px}
+          .vcw-mic-container .mic-btn{width:40px;height:40px;font-size:16px}
+          .vcw-feature-icon{width:24px;height:24px;font-size:15px}
+          .vcw-feature-text{font-size:12px}
+          .vcw-status{font-size:11px}
+          .transcript-panel-messages .msg{font-size:12px}
         }
 
         /* Extra Small Mobile (< 360px) */
@@ -209,6 +285,16 @@
           /* Phrase hints */
           .phrase-hints{padding:2px 6px 0;gap:3px}
           .ph{font-size:9px;padding:3px 7px}
+
+          /* Voice Chat Widget responsive */
+          .voice-chat-widget{padding:16px 12px}
+          .vcw-title{font-size:16px}
+          .vcw-subtitle{font-size:11px;margin-bottom:12px}
+          .vcw-mic-container{width:48px;height:48px;margin-bottom:10px}
+          .vcw-mic-container .mic-btn{width:36px;height:36px;font-size:14px}
+          .vcw-feature-text{font-size:11px}
+          .vcw-status{font-size:10px}
+          .transcript-panel-messages .msg{font-size:11px}
         }
         /* Hide footer on chat page */
         footer,.footer-section,.site-footer{display:none!important}
@@ -508,7 +594,7 @@
         }
 
         /* ── PREP SCREEN ── */
-        .prep-screen{position:fixed;inset:0;background:rgba(7,11,20,.97);backdrop-filter:blur(20px);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+        .prep-screen{position:fixed;inset:0;background:rgba(7,11,20,.97);backdrop-filter:blur(20px);z-index:500;display:none;align-items:center;justify-content:center;padding:20px}
         .prep-card{background:linear-gradient(145deg,rgba(6,182,212,.08),rgba(14,165,233,.04));border:1px solid rgba(6,182,212,.2);border-radius:24px;max-width:560px;width:100%;padding:32px;animation:fadeInUp .4s ease}
         @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
         .prep-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--primary);margin-bottom:8px}
@@ -744,18 +830,29 @@
             <button class="sc" data-s="followup" role="tab" aria-selected="false" aria-label="Follow-up звонок">🔄 Follow-up</button>
         </div>
         <div class="phrase-hints" id="phrase-hints"></div>
-        <div class="chat" id="chat" role="log" aria-live="polite" aria-label="История диалога с брокером"></div>
-        <div class="typing" id="typing" role="status" aria-live="polite" aria-label="Брокер печатает"><div class="td"></div><div class="td"></div><div class="td"></div></div>
-        <div class="speaking-indicator" id="speakInd" role="status" aria-live="polite" aria-label="Брокер говорит"><div class="wave"><span></span><span></span><span></span></div> Брокер говорит...</div>
-        
-        <!-- Transcript Display Component -->
-        <div class="transcript-display" id="transcriptDisplay" role="status" aria-live="polite" aria-label="Транскрипт вашей речи">
-            <div class="transcript-interim" id="transcriptInterim"></div>
-            <div class="transcript-final" id="transcriptFinal"></div>
-        </div>
-        
-        <div class="input-area">
-            <button class="mic-btn" id="micBtn" onclick="toggleMic()" aria-label="Активировать микрофон" aria-pressed="false">🎙️</button>
+        <div class="app-layout" id="appLayout">
+            <!-- Transcript Panel (hidden until dialog starts) -->
+            <div class="transcript-panel" id="transcriptPanel">
+                <div class="transcript-panel-header">💬 Транскрипт диалога</div>
+                <div class="transcript-panel-messages" id="chat" role="log" aria-live="polite" aria-label="Транскрипт диалога с брокером"></div>
+                <div class="transcript-panel-interim" id="transcriptInterim"></div>
+            </div>
+
+            <!-- Voice Chat Widget -->
+            <div class="voice-chat-widget" id="voiceChatWidget">
+                <div class="vcw-mic-container" id="vcwMicContainer">
+                    <div class="pulse-ring"></div>
+                    <button class="mic-btn" id="micBtn" onclick="toggleMic()" aria-label="Начать запись" aria-pressed="false" role="button">🎙️</button>
+                </div>
+                <div class="vcw-title">Voice Chat</div>
+                <div class="vcw-subtitle">Have natural, hands-free conversations with AI.</div>
+                <div class="vcw-status" id="vcwStatus"></div>
+                <div class="vcw-features">
+                    <div class="vcw-feature"><div class="vcw-feature-icon">🎙️</div><div class="vcw-feature-text">Speak naturally, get instant responses</div></div>
+                    <div class="vcw-feature"><div class="vcw-feature-icon">🔊</div><div class="vcw-feature-text">Choose from multiple AI voices</div></div>
+                    <div class="vcw-feature"><div class="vcw-feature-icon">✋</div><div class="vcw-feature-text">Fully hands-free interaction</div></div>
+                </div>
+            </div>
         </div>
     </div>
     <script src="../nav-loader.js?v=7.4"></script>
@@ -766,8 +863,8 @@
 import SessionManager from '../session-manager.js';
 
 // Global session manager and session ID
-let sessionManager = null;
-let currentSessionId = null;
+window.sessionManager = null;
+window.currentSessionId = null;
 
 // Initialize SessionManager when user is authenticated
 (async function initSessionManager() {
@@ -783,12 +880,12 @@ let currentSessionId = null;
     // Check if user is authenticated
     const user = auth.currentUser;
     if (user) {
-      sessionManager = new SessionManager(user.uid);
+      window.sessionManager = new SessionManager(user.uid);
     } else {
       // Wait for auth state change
       auth.onAuthStateChanged((user) => {
-        if (user && !sessionManager) {
-          sessionManager = new SessionManager(user.uid);
+        if (user && !window.sessionManager) {
+          window.sessionManager = new SessionManager(user.uid);
         }
       });
     }
@@ -815,193 +912,117 @@ let currentSessionId = null;
 const _k=['gsk_7b9aEN1PMQBKSKbw','GOyoWGdyb3FYcNiq4FWZScbJ4iZYYSYOF4Qh'];
 const GK=_k[0]+_k[1], GU='https://api.groq.com/openai/v1/chat/completions', MD='llama-3.3-70b-versatile';
 let hist=[],scen='free',broker='Mike',busy=false,isRec=false,recognition=null,synth=window.speechSynthesis;
+let widgetState='idle',dialogActive=false;
+var sessionManager=null,currentSessionId=null;
 const NAMES=['Mike','Steve','Dave','Tom','Chris','Brian','Kevin','Jason','Mark','Jeff'];
 
+const BROKER_PROMPT=`You are {N}, a freight broker in the United States. A dispatcher or carrier is calling you on the phone right now.
+
+IMPORTANT — THIS IS A PHONE CONVERSATION:
+- You speak ONE short sentence at a time, then WAIT for them to respond
+- Never give long speeches. Real phone calls are back-and-forth, like ping-pong
+- After you say something, STOP. Let them talk next
+- If they ask a question, answer it briefly, then ask ONE question back
+- Maximum 1-2 sentences per response. Period.
+
+YOUR NATURAL BEHAVIOR:
+- You pick up: "{N}." or "This is {N}." — that's it
+- You always verify MC number early in the call — "What's your MC?"
+- You ask about their equipment, location, availability — one thing at a time
+- You share load details only after vetting: origin, destination, miles, weight, commodity, pickup time, rate
+- You negotiate rates based on miles, deadhead, market, time windows — you start lower than your max
+- You use natural broker language: "Let me see what I got", "What can you do on that?", "That's where I'm at", "I got a couple guys looking at it", "Send me your packet"
+- You use contractions and fillers naturally: "yeah", "hang on", "look", "alright"
+- If they are vague or unprofessional, you politely cut it short
+- If they negotiate well with data, you respect that
+
+SCENARIO: {SCENARIO_CONTEXT}
+
+ABSOLUTE RULES:
+- ONE to TWO sentences maximum. Then stop and wait.
+- Sound human. Not a chatbot. Not an essay writer.
+- React to what they ACTUALLY said. Don't repeat yourself.
+- Never use bullet points, lists, or markdown formatting.
+- Never break character.
+- If they say "подскажи" or "hint" → [HINT: practical tip in Russian], then continue as broker.`;
+
+const SC_CONTEXT={
+free:'General call. A dispatcher is calling you looking for loads. You have several loads available across different lanes. Vet them first, then share what you have. Loads today: Chicago-Nashville 53 dry van 38k lbs $1,650; Indy-Atlanta 53 dry van 42k lbs $1,900; Detroit-Dallas 53 dry van 44k lbs $2,400.',
+negotiate:'A dispatcher is calling about a load you posted on DAT. Dallas TX to Atlanta GA, 780 miles, 53 dry van, auto parts 42k lbs, pickup tomorrow 6AM dock appointment. Your starting rate is $1,750 all-in. You can go up to $2,150 max but fight for every dollar. Market shows about $2.05/mile on this lane.',
+book:'A dispatcher wants to book a load. Chicago IL to Miami FL, 1,380 miles, reefer 53 at 34°F, fresh strawberries 38k lbs, pickup tomorrow 4AM Sysco Foods dock 7, delivery day after by 5PM. Rate $3,450 (can go to $3,100). You need: driver name, truck number, trailer number, driver cell, email for rate con. Pre-cool required.',
+problem:'You have an active load in transit: LA to Denver, 1,020 miles, consumer electronics worth $180k. Picked up yesterday, must deliver today by 5PM. A dispatcher is calling you — something went wrong. You are stressed because this is a major account. You need exact location, realistic ETA, and a concrete action plan. No excuses.',
+cold:'Unknown number calling. You get 25+ cold calls daily. Give them 60 seconds to prove they are professional. Good signs: MC ready, knows their lanes, specific equipment. Bad signs: vague questions, no MC, "we run anything anywhere". You have loads: Phoenix-Dallas dry van $1,400 Friday; Seattle-LA dry van $2,100 Thursday.',
+followup:'A dispatcher you worked with before is calling back. You did Dallas-Memphis together last week — driver was on time, good communication. You are friendly but still professional. You have loads this week: Houston-Nashville 790mi $1,900; Memphis-Charlotte 630mi $1,500; Jacksonville-Atlanta reefer $1,100. You want to build the relationship.'
+};
+
 const SC={
-free:{p:`You are {N}, a real freight broker at Apex Freight Solutions. You're at your desk, handling multiple calls. A dispatcher just called you.
-
-WHO YOU ARE:
-- You've been a broker for 8 years. You know every trick in the book.
-- You're professional but direct. No small talk beyond 5 seconds.
-- You handle 60+ calls a day. You can tell in 30 seconds if someone is worth your time.
-
-HOW YOU BEHAVE:
-1. Pick up: "{N} speaking." — nothing more.
-2. Let THEM talk first. Don't volunteer information.
-3. ALWAYS ask MC# before anything: "What's your MC?" — short, direct.
-4. After MC: "Alright, what are you running and where are you at?"
-5. Only THEN discuss loads. Give ONE load at a time with real details.
-6. On rate: start $150-200 below what you'd accept. Hold firm for 2 rounds minimum.
-7. Use real broker phrases: "That's the best I can do on this one", "I got other carriers looking at it", "Let me check... yeah I got something"
-8. If they're vague or unprepared: "Look, I'm slammed right now. Send me your carrier packet."
-9. React naturally to what they say. Don't follow a script.
-
-AVAILABLE LOADS TODAY:
-- Chicago IL → Nashville TN, 53' Dry Van, 38,000 lbs auto parts, pickup 3PM today, $1,650 total
-- Indianapolis IN → Atlanta GA, 53' Dry Van, 42,000 lbs retail goods, pickup tomorrow 6AM, $1,900 total  
-- Detroit MI → Dallas TX, 53' Dry Van, 44,000 lbs machinery, pickup tomorrow 8AM, $2,400 total
-
-RESPONSE RULES:
-- MAX 2 sentences. Real phone call pace.
-- No bullet points. No lists. Just talk.
-- Sound like a real person, not a chatbot.
-- Use contractions: "I've got", "What's your", "Let me check"
-- Occasional filler: "Hang on...", "Yeah...", "Look..."
-- If they say "подскажи" or "hint" → [HINT: конкретный совет на русском], then continue as broker.`,
-h:['Представься кратко: имя, компания, MC#','Скажи что у тебя есть: оборудование, лейны, доступность','Не говори слишком много — дай брокеру говорить']},
-
-negotiate:{p:`You are {N}, a senior broker at Summit Logistics. You posted a load on DAT and a dispatcher is calling about it.
-
-THE LOAD (you know this cold):
-- Route: Dallas TX → Atlanta GA, 780 miles
-- Equipment: 53' Dry Van, no touch freight
-- Commodity: Auto parts, 42,000 lbs
-- Pickup: Tomorrow 6:00 AM sharp, dock appointment — CANNOT be late
-- Your opening number: $1,750 all-in
-- You'll go up to $2,150 max — but NEVER say this
-- Market rate on DAT: $2.05/mile (~$1,600) — you know this but won't admit it easily
-
-HOW YOU NEGOTIATE:
-1. MC# first. Always.
-2. Give load details professionally.
-3. Quote $1,750. If they push back: "That's where I'm at on this one."
-4. Second pushback: "Look, I got two other carriers looking at this. What can you do?"
-5. Third pushback: move $75. "Alright, I can do $1,825. That's it."
-6. If they mention DAT: "DAT's a guide, not gospel. My shipper's rate is what it is."
-7. After $2,000: "That's my ceiling. Take it or I move to the next carrier."
-8. If they walk: "Alright, good luck out there." — let them go, don't chase.
-
-PERSONALITY: Confident, slightly aggressive negotiator. You've done this 1000 times.
-RESPONSE: MAX 2 sentences. No fluff.
-HINT trigger: [HINT: совет на русском].`,
-h:['Называй цену первым — якорь','Не соглашайся сразу — скажи "That\'s where I\'m at"','Упомяни DAT: "DAT shows $2.05/mile"']},
-
-book:{p:`You are {N}, a broker at National Freight Corp. A dispatcher is calling to book a specific load.
-
-THE LOAD:
-- Load #: NFC-2847
-- Route: Chicago IL → Miami FL, 1,380 miles
-- Equipment: Reefer 53', must maintain 34°F — CRITICAL, no exceptions
-- Commodity: Fresh produce (strawberries), 38,000 lbs
-- Pickup: Tomorrow 4:00 AM at Sysco Foods, 2200 W 35th St, Chicago IL 60632, dock #7
-- Delivery: Day after tomorrow by 5:00 PM at Sysco Miami, 8300 NW 53rd St, Miami FL 33166
-- Rate: $3,450 all-in (you can go down to $3,100 if pushed hard)
-- Special: Pre-cool trailer to 34°F before arrival. Driver needs food handler cert.
-
-BOOKING FLOW:
-1. MC# first.
-2. Confirm load details.
-3. Negotiate if needed.
-4. Collect: driver full name, truck #, trailer #, driver cell.
-5. "What email for the rate con?" — send within 30 min.
-6. "Driver needs to pre-cool to 34°F and check in 1 hour early. Any issues with that?"
-
-PERSONALITY: Detail-oriented, professional. Produce loads are serious — you don't mess around.
-RESPONSE: MAX 2-3 sentences.
-HINT trigger: [HINT: совет на русском].`,
-h:['Имей MC# наготове','Дай данные водителя: имя, truck#, trailer#, телефон','Уточни email для rate con']},
-
-problem:{p:`You are {N}, a broker at CrossCountry Logistics. You have an active load in transit and a dispatcher is calling you. Something is wrong.
-
-THE LOAD IN TRANSIT:
-- Load #: CCL-1193
-- Route: Los Angeles CA → Denver CO, 1,020 miles
-- Picked up yesterday 8AM
-- Must deliver TODAY by 5:00 PM — receiver is Best Buy DC, they close at 5PM sharp
-- Commodity: Consumer electronics, $180,000 value
-- Current time: 11:00 AM. Driver should be in Utah by now.
-
-YOUR EMOTIONAL STATE: Stressed. This is a major account. If this load is late, you lose the shipper.
-
-HOW YOU REACT:
-- Delay: "How late are we talking? I need to call the receiver right now. Give me his exact location."
-- Breakdown: "Where exactly? What's wrong with the truck? How long to fix? I need a backup plan NOW."
-- Accident: "Is the driver okay? Where? I'm calling our claims department. Don't move anything."
-- Weather: "I don't care about weather. What's the ETA? I need a number."
-- Any excuse: "I don't need reasons, I need solutions. What's your plan?"
-
-ALWAYS demand: exact location (city/mile marker), realistic ETA, specific action plan.
-PERSONALITY: Under pressure, direct, no patience for vague answers.
-RESPONSE: MAX 2-3 sentences. Urgent.
-HINT trigger: [HINT: совет на русском].`,
-h:['Сообщи сразу: "I need to update you on load CCL-1193"','Дай точное местоположение водителя','Предложи конкретное решение — не просто "sorry"']},
-
-cold:{p:`You are {N}, a broker at Pacific Freight Group. You're at your desk. Phone rings — unknown number. You pick up.
-
-YOUR MINDSET:
-- You get 25+ cold calls a day. 90% are a waste of time.
-- You'll give them 60 seconds to impress you. If they don't — you're off the phone.
-- You have real loads but you only work with carriers who prove they're professional.
-
-HOW YOU FILTER:
-GOOD signs (you warm up): MC# ready, knows their lanes, specific equipment, professional tone, mentions safety rating
-BAD signs (you cut it short): "Do you have any loads?" (too vague), doesn't know MC#, says "we can run anything anywhere", sounds nervous or unprepared
-
-IF THEY'RE GOOD: "Alright, what lanes are you strong on? I might have something for you."
-IF THEY'RE BAD: "Look, I'm slammed. Send your carrier packet to dispatch@pacificfreight.com. I'll look when I get a chance." — and you're done.
-
-AVAILABLE LOADS (only share if they earn it):
-- Phoenix AZ → Dallas TX, Dry Van, $1,400, pickup Friday
-- Seattle WA → Los Angeles CA, Dry Van, $2,100, pickup Thursday
-
-PERSONALITY: Busy, skeptical, but fair. Respect earns respect.
-RESPONSE: MAX 1-2 sentences. Blunt.
-HINT trigger: [HINT: совет на русском].`,
-h:['Будь готов: MC#, оборудование, лейны, safety rating','Скажи конкретно: "We run Midwest dry van, 3 trucks, 99% on-time"','Не говори "we can run anything" — это красный флаг']},
-
-followup:{p:`You are {N}, a broker at Alliance Transport Solutions. A dispatcher you worked with is calling back. You did one load together — Dallas TX to Memphis TN last week. Driver was on time, no issues, good communication. You liked working with them.
-
-YOUR ATTITUDE: Friendly but still professional. You want to build a relationship but you're not going to give away the farm.
-
-AVAILABLE LOADS THIS WEEK:
-1. Houston TX → Nashville TN, 790 miles, 53' Dry Van, 40,000 lbs retail, pickup Thursday 8AM, $1,900 total
-2. Memphis TN → Charlotte NC, 630 miles, 53' Dry Van, 38,000 lbs auto parts, pickup Friday 6AM, $1,500 total
-3. Jacksonville FL → Atlanta GA, 350 miles, Reefer 34°F, 22,000 lbs produce, pickup Wednesday 10AM, $1,100 total
-
-HOW YOU BEHAVE:
-- Warm greeting: "Hey! Good to hear from you. That Dallas load went smooth."
-- Still ask MC# (habit, even if you know them): "Just confirming — same MC as before?"
-- More flexible on rate: willing to move $100-150 more than with a new carrier
-- Hint at future business: "If this keeps going well, I can keep you busy 3-4 loads a week."
-- Ask about their capacity: "How many trucks you running right now?"
-
-PERSONALITY: Friendly, building a relationship, but still a businessman.
-RESPONSE: MAX 2-3 sentences.
-HINT trigger: [HINT: совет на русском].`,
-h:['Напомни о прошлом грузе: "We hauled your Dallas-Memphis load last week"','Спроси о регулярных грузах: "Can you keep us busy weekly?"','Предложи стать preferred carrier']}
+free:{p:BROKER_PROMPT,ctx:'free',h:['Представься: имя, компания, MC#','Скажи что у тебя есть: оборудование, лейны','Дай брокеру говорить']},
+negotiate:{p:BROKER_PROMPT,ctx:'negotiate',h:['Называй цену первым','Обоснуй: DAT, мили, дедхед','Не сдавайся сразу']},
+book:{p:BROKER_PROMPT,ctx:'book',h:['MC# наготове','Данные водителя: имя, truck#, trailer#','Email для rate con']},
+problem:{p:BROKER_PROMPT,ctx:'problem',h:['Сообщи сразу о проблеме','Точное местоположение','Предложи решение']},
+cold:{p:BROKER_PROMPT,ctx:'cold',h:['MC#, оборудование, лейны, safety rating','Будь конкретен','Не говори "we run anything"']},
+followup:{p:BROKER_PROMPT,ctx:'followup',h:['Напомни о прошлом грузе','Спроси о регулярных грузах','Предложи стать preferred carrier']}
 };
 
 const $=id=>document.getElementById(id);
-const chat=$('chat'),micBtn=$('micBtn'),typingEl=$('typing'),speakInd=$('speakInd');
-const transcriptDisplay=$('transcriptDisplay'),transcriptInterim=$('transcriptInterim'),transcriptFinal=$('transcriptFinal');
+const chat=$('chat'),micBtn=$('micBtn');
 
 // TranscriptDisplay Component Methods
 const TranscriptDisplay={
   showInterim(text){
-    if(!text||text.trim()===''){
-      transcriptInterim.textContent='';
-      transcriptDisplay.classList.remove('show');
-      return;
-    }
-    transcriptInterim.textContent=text;
-    transcriptFinal.textContent='';
-    transcriptDisplay.classList.add('show');
+    const el=$('transcriptInterim');
+    if(!el)return;
+    if(!text||text.trim()===''){el.textContent='';el.classList.remove('show');return;}
+    el.textContent=text;
+    el.classList.add('show');
   },
   showFinal(text){
-    if(!text||text.trim()===''){
-      this.clear();
-      return;
-    }
-    transcriptInterim.textContent='';
-    transcriptFinal.textContent=text;
-    transcriptDisplay.classList.add('show');
+    const el=$('transcriptInterim');
+    if(!el)return;
+    el.textContent='';
+    el.classList.remove('show');
   },
   clear(){
-    transcriptInterim.textContent='';
-    transcriptFinal.textContent='';
-    transcriptDisplay.classList.remove('show');
+    const el=$('transcriptInterim');
+    if(!el)return;
+    el.textContent='';
+    el.classList.remove('show');
   }
 };
+
+// Widget State Management
+function updateWidgetState(state){
+  widgetState=state;
+  const mc=$('vcwMicContainer'),st=$('vcwStatus'),mb=$('micBtn');
+  if(!mc||!st||!mb)return;
+  mc.classList.remove('recording');
+  switch(state){
+    case 'idle':
+      st.innerHTML='';
+      mb.disabled=false;
+      mb.setAttribute('aria-label','Начать запись');
+      mb.setAttribute('aria-pressed','false');
+      break;
+    case 'recording':
+      mc.classList.add('recording');
+      st.innerHTML='<span style="color:var(--danger)">● Слушаю...</span>';
+      mb.setAttribute('aria-label','Остановить запись');
+      mb.setAttribute('aria-pressed','true');
+      break;
+    case 'processing':
+      st.innerHTML='<span style="color:var(--t3)">⏳ Обработка...</span>';
+      mb.disabled=true;
+      mb.setAttribute('aria-label','Микрофон заблокирован');
+      mb.setAttribute('aria-pressed','false');
+      break;
+    case 'speaking':
+      st.innerHTML='<div class="wave"><span></span><span></span><span></span></div> Брокер говорит...';
+      mb.disabled=true;
+      mb.setAttribute('aria-label','Микрофон заблокирован');
+      mb.setAttribute('aria-pressed','false');
+      break;
+  }
+}
 
 // Init AI
 (async()=>{
@@ -1040,13 +1061,12 @@ if(!SR){
   showNotification('🎙️ Голосовой ввод не поддерживается в этом браузере. Используйте Chrome, Edge или Safari.','warning');
 }
 
-if(SR){recognition=new SR();recognition.continuous=true;recognition.interimResults=true;recognition.lang='en-US';
+if(SR){recognition=new SR();recognition.continuous=false;recognition.interimResults=true;recognition.lang='en-US';
 recognition.onresult=e=>{
-  let finalTranscript='';
   let interimTranscript='';
+  let finalTranscript='';
   
-  // Separate interim and final results
-  for(let i=0;i<e.results.length;i++){
+  for(let i=e.resultIndex;i<e.results.length;i++){
     const transcript=e.results[i][0].transcript;
     if(e.results[i].isFinal){
       finalTranscript+=transcript;
@@ -1055,32 +1075,39 @@ recognition.onresult=e=>{
     }
   }
   
-  // Show interim text in real-time (gray color, word-by-word)
+  // Show what user is saying in real-time
   if(interimTranscript.trim()){
-    TranscriptDisplay.showInterim(interimTranscript);
+    TranscriptDisplay.showInterim(finalText+interimTranscript);
   }
   
-  // Show final text (white color) and auto-send after pause
+  // When a phrase is finalized, accumulate it
   if(finalTranscript.trim()){
     finalText+=finalTranscript+' ';
-    TranscriptDisplay.showFinal(finalText);
+    TranscriptDisplay.showInterim(finalText);
     
-    // Clear any existing auto-send timer
-    if(autoSendTimer){
-      clearTimeout(autoSendTimer);
-    }
+    // Reset auto-send timer on each new phrase
+    if(autoSendTimer) clearTimeout(autoSendTimer);
     
-    // Auto-send after 1.5 seconds of silence (no new final results)
     if(isRec&&finalText.trim()){
       autoSendTimer=setTimeout(()=>{
         if(isRec&&finalText.trim()){
-          stopRec();
-          processMsg(finalText.trim());
+          const msg=finalText.trim();
           finalText='';
+          isRec=false;
+          micBtn.classList.remove('rec');
+          updateWidgetState('idle');
+          try{recognition.stop();}catch(ex){}
           TranscriptDisplay.clear();
+          processMsg(msg);
         }
-      },1500);
+      },2500);
     }
+  }
+};
+recognition.onend=()=>{
+  // If still recording, restart to keep listening (non-continuous mode ends after each phrase)
+  if(isRec&&!busy){
+    try{recognition.start();}catch(e){}
   }
 };
 recognition.onerror=e=>{
@@ -1103,6 +1130,7 @@ recognition.onerror=e=>{
       // Microphone permission blocked
       console.error('[Speech Recognition] Microphone permission denied');
       stopRec();
+      updateWidgetState('idle');
       showNotification('🎙️ Доступ к микрофону заблокирован. Нажмите на иконку замка в адресной строке и разрешите доступ к микрофону.','error');
       break;
       
@@ -1110,6 +1138,7 @@ recognition.onerror=e=>{
       // No microphone found or hardware issue
       console.error('[Speech Recognition] Audio capture failed - no microphone');
       stopRec();
+      updateWidgetState('idle');
       showNotification('🎙️ Микрофон не найден. Проверьте подключение микрофона и попробуйте снова.','error');
       break;
       
@@ -1117,18 +1146,21 @@ recognition.onerror=e=>{
       // Network error (speech recognition service unavailable)
       console.error('[Speech Recognition] Network error');
       stopRec();
+      updateWidgetState('idle');
       showNotification('🌐 Ошибка сети. Проверьте подключение к интернету и попробуйте снова.','error');
       break;
       
     case 'aborted':
       // Recognition was aborted (usually by user or system)
       stopRec();
+      updateWidgetState('idle');
       break;
       
     case 'service-not-allowed':
       // Speech recognition service not allowed (usually HTTPS issue)
       console.error('[Speech Recognition] Service not allowed - check HTTPS');
       stopRec();
+      updateWidgetState('idle');
       showNotification('🔒 Голосовой ввод требует HTTPS соединение. Используйте безопасное подключение.','error');
       break;
       
@@ -1136,11 +1168,11 @@ recognition.onerror=e=>{
       // Unknown error
       console.error('[Speech Recognition] Unknown error:', e.error);
       stopRec();
+      updateWidgetState('idle');
       showNotification('❌ Ошибка распознавания речи. Попробуйте снова.','error');
   }
 };
-recognition.onend=()=>{if(isRec){try{recognition.start()}catch(e){stopRec()}}}}
-
+}
 // Check if page is opened via file:// protocol
 if(window.location.protocol==='file:'){
   // Show warning about file:// protocol limitations
@@ -1169,7 +1201,7 @@ if(navigator.permissions){
   }).catch(()=>{});
 }
 
-// Scenario chips — show prep screen first
+// Scenario chips — start scenario directly (no prep screen)
 document.querySelectorAll('.sc').forEach(c=>c.addEventListener('click',()=>{
   scen=c.dataset.s;
   document.querySelectorAll('.sc').forEach(x=>{
@@ -1178,7 +1210,7 @@ document.querySelectorAll('.sc').forEach(c=>c.addEventListener('click',()=>{
   });
   c.classList.add('on');
   c.setAttribute('aria-selected', 'true');
-  showPrepScreen();
+  startScenario(scen);
 }));
 
 async function startScenario(s){
@@ -1194,6 +1226,12 @@ async function startScenario(s){
     scen=s;hist=[];broker=NAMES[Math.floor(Math.random()*NAMES.length)];
     $('bName').textContent=`AI Брокер — ${broker}`;
     chat.innerHTML='';
+    dialogActive=true;
+    const al=$('appLayout');if(al)al.classList.add('dialog-active');
+    // Show header and scenario bar when dialog starts
+    const hdr=document.querySelector('.hdr');if(hdr)hdr.style.display='';
+    const sbar=$('sbar');if(sbar)sbar.style.display='flex';
+    updateWidgetState('idle');
 
     // Start new session in Firestore
     if (sessionManager) {
@@ -1209,34 +1247,10 @@ async function startScenario(s){
       currentSessionId = null;
     }
 
-    // Dispatcher opening lines per scenario
-    const dispatcherOpeners={
-      free:`Hi ${broker}, this is Alex from Swift Dispatch. How are you doing today? I'm calling to check if you have any loads available for our 53' dry van — we're free today after 2 PM in the Chicago area.`,
-      negotiate:`Hi ${broker}, this is Alex from Swift Dispatch. I saw your load posting on DAT — Chicago to Atlanta, 44,000 lbs. I'm interested but I need to discuss the rate.`,
-      book:`Hi ${broker}, this is Alex from Swift Dispatch. I'm calling to confirm the booking on load #[номер]. I have a driver ready and want to go over the details.`,
-      problem:`Hi ${broker}, this is Alex from Swift Dispatch. I need to update you on load #[номер] — we have a situation and I want to let you know right away.`,
-      cold:`Hi, may I speak with the freight department? This is Alex from Swift Dispatch — we're a carrier specializing in Midwest lanes and I'd like to introduce our services.`,
-      followup:`Hi ${broker}, this is Alex from Swift Dispatch — we hauled your load from Chicago to Atlanta last week. I wanted to follow up and see how we did.`,
-    };
-
-    const dispMsg=dispatcherOpeners[s]||dispatcherOpeners.free;
-
-    // Show dispatcher message as a "coach suggestion" first
-    const hint=document.createElement('div');
-    hint.className='msg sys';
-    hint.style.cssText='background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.15);border-radius:12px;padding:12px 14px;font-size:13px;color:#e2e8f0;line-height:1.6;margin-bottom:4px';
-    hint.innerHTML=`<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#06b6d4;margin-bottom:6px">📞 Твоя первая реплика (используй голос)</div>
-    <div style="color:#ffffff">${esc(dispMsg)}</div>`;
-    chat.appendChild(hint);
-    chat.scrollTop=chat.scrollHeight;
+    // Chat starts clean — no pre-generated messages
 }
 
-function useOpeningLine(el){
-  // Text input removed - opening line functionality disabled
-  // User must use voice interface
-}
-
-function toggleMic(){if(busy)return;if(isRec){stopRec()}else{startRec()}}
+function toggleMic(){if(busy)return;if(!dialogActive){startScenario(scen);setTimeout(()=>startRec(),500);return;}if(isRec){stopRec()}else{startRec()}}
 function startRec(){
   if(!recognition){
     console.error('[Speech Recognition] Recognition not initialized');
@@ -1245,32 +1259,36 @@ function startRec(){
   }
   if(busy)return;
   
+  // Stop any existing recognition first
+  try{recognition.abort();}catch(e){}
+  
   isRec=true;
   finalText='';
   TranscriptDisplay.clear();
   micBtn.classList.add('rec');
   micBtn.setAttribute('aria-pressed', 'true');
   micBtn.setAttribute('aria-label', 'Деактивировать микрофон');
+  updateWidgetState('recording');
   
-  try{
-    recognition.start();
-  }catch(e){
-    console.error('[Speech Recognition] Failed to start:', e);
-    // If already started, this is normal - ignore
-    if(e.name==='InvalidStateError'){
-      // Already started, continuing
-    }else{
-      // Other errors - show notification
-      stopRec();
-      showNotification('❌ Не удалось запустить распознавание речи. Попробуйте снова.','error');
+  // Small delay to ensure clean restart
+  setTimeout(()=>{
+    try{
+      recognition.start();
+    }catch(e){
+      console.error('[Speech Recognition] Failed to start:', e);
+      if(e.name!=='InvalidStateError'){
+        stopRec();
+        showNotification('❌ Не удалось запустить распознавание речи. Попробуйте снова.','error');
+      }
     }
-  }
+  },100);
 }
 function stopRec(){
     isRec=false;
     micBtn.classList.remove('rec');
     micBtn.setAttribute('aria-pressed', 'false');
     micBtn.setAttribute('aria-label', 'Активировать микрофон');
+    updateWidgetState('idle');
     
     // Clear auto-send timer
     if(autoSendTimer){
@@ -1278,22 +1296,22 @@ function stopRec(){
       autoSendTimer=null;
     }
     
-    // If there's accumulated text, send it now
-    if(finalText.trim()){
-      processMsg(finalText.trim());
-      finalText='';
-    }
-    
     try{recognition.stop()}catch(e){}
+    finalText='';
+    TranscriptDisplay.clear();
 }
 
 async function processMsg(text){
+    // Ignore empty or whitespace-only messages
+    if(!text||!text.trim())return;
+    text=text.trim();
     // Clear transcript display after message is sent
     TranscriptDisplay.clear();
     // Add user message to chat
     addMsg('user',text);
     hist.push({role:'user',content:text});busy=true;micBtn.disabled=true;
-    typingEl.classList.add('show');chat.scrollTop=chat.scrollHeight;
+    updateWidgetState('processing');
+    chat.scrollTop=chat.scrollHeight;
     
     // Save user message to Firestore (Task 8.2)
     if (sessionManager && currentSessionId) {
@@ -1310,7 +1328,6 @@ async function processMsg(text){
     
     try{
         const reply=await callAI(text);
-        typingEl.classList.remove('show');
         // Handle hints
         let brokerReply=reply;
         if(reply.includes('[HINT')){const m=reply.match(/\[HINT:?\s*(.*?)\]/);if(m){addMsg('sys','💡 '+m[1].trim());brokerReply=reply.replace(/\[HINT:?\s*.*?\]/,'').trim()}}
@@ -1329,23 +1346,32 @@ async function processMsg(text){
             }
         }
         
+        updateWidgetState('speaking');
         await speakText(brokerReply);
+        // Small pause before auto-restart mic so user can think
+        busy=false;micBtn.disabled=false;
+        updateWidgetState('idle');
+        setTimeout(()=>{if(!isRec&&!busy&&dialogActive)startRec();},800);
     }catch(e){
-        typingEl.classList.remove('show');
+        updateWidgetState('idle');
         // Error already shown to user via showNotification in callAI
         // Remove last user message from history since AI didn't respond
         hist.pop();
+        // Auto-restart recording on error too
+        busy=false;micBtn.disabled=false;
+        setTimeout(()=>{if(!isRec&&!busy&&dialogActive)startRec();},800);
     }
     
     busy=false;micBtn.disabled=false;
+    if(widgetState!=='idle')updateWidgetState('idle');
 }
 
 async function callAI(msg){
-    const sp=SC[scen].p.replace(/{N}/g,broker);
+    const sp=SC[scen].p.replace(/{N}/g,broker).replace('{SCENARIO_CONTEXT}',SC_CONTEXT[SC[scen].ctx]||SC_CONTEXT.free);
     const msgs=[{role:'system',content:sp},...hist.slice(-10)];
     const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),8000);
     try{
-        const r=await fetch(GU,{method:'POST',mode:'cors',signal:ctrl.signal,headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},body:JSON.stringify({model:MD,messages:msgs,temperature:.92,max_tokens:150,top_p:.95})});
+        const r=await fetch(GU,{method:'POST',mode:'cors',signal:ctrl.signal,headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},body:JSON.stringify({model:MD,messages:msgs,temperature:.92,max_tokens:80,top_p:.95})});
         clearTimeout(t);
         if(!r.ok){
             const errorText = await r.text();
@@ -1390,9 +1416,8 @@ function speakText(text){
         const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=1.05;u.pitch=.95;
         const v=synth.getVoices();const mv=v.find(x=>x.lang.startsWith('en')&&/male|david|james|mark|daniel/i.test(x.name))||v.find(x=>x.lang.startsWith('en-US'))||v.find(x=>x.lang.startsWith('en'));
         if(mv)u.voice=mv;
-        speakInd.classList.add('show');
-        u.onend=()=>{speakInd.classList.remove('show');resolve()};
-        u.onerror=()=>{speakInd.classList.remove('show');resolve()};
+        u.onend=()=>{resolve()};
+        u.onerror=()=>{resolve()};
         synth.speak(u);
     });
 }
@@ -1449,7 +1474,7 @@ async function getAnalysis(){
     chat.scrollTop=chat.scrollHeight;
 }
 
-function resetChat(){synth?.cancel();if(recognition&&isRec)recognition.stop();isRec=false;busy=false;hist=[];chat.innerHTML='';document.querySelectorAll('.sc').forEach(c=>{c.classList.remove('on');c.setAttribute('aria-selected','false')});const freeBtn=document.querySelector('.sc[data-s="free"]');if(freeBtn){freeBtn.classList.add('on');freeBtn.setAttribute('aria-selected','true')}scen='free';broker=NAMES[Math.floor(Math.random()*NAMES.length)];$('bName').textContent=`AI Брокер — ${broker}`;showPrepScreen();}
+function resetChat(){synth?.cancel();if(recognition&&isRec)recognition.stop();isRec=false;busy=false;hist=[];chat.innerHTML='';dialogActive=false;const al=$('appLayout');if(al)al.classList.remove('dialog-active');updateWidgetState('idle');const ti=$('transcriptInterim');if(ti){ti.textContent='';ti.classList.remove('show');}document.querySelectorAll('.sc').forEach(c=>{c.classList.remove('on');c.setAttribute('aria-selected','false')});const freeBtn=document.querySelector('.sc[data-s="free"]');if(freeBtn){freeBtn.classList.add('on');freeBtn.setAttribute('aria-selected','true')}scen='free';broker=NAMES[Math.floor(Math.random()*NAMES.length)];$('bName').textContent=`AI Брокер — ${broker}`;const hdr=document.querySelector('.hdr');if(hdr)hdr.style.display='none';const sbar=$('sbar');if(sbar)sbar.style.display='none';}
 
 // ═══════════════════════════════════════════════
 // PREP SCREEN
@@ -1521,9 +1546,8 @@ async function startCall(){
 
 
 
-// Auto-start — show prep screen first
+// Auto-start — just set broker name, no prep screen on load
 broker=NAMES[Math.floor(Math.random()*NAMES.length)];$('bName').textContent=`AI Брокер — ${broker}`;scen='free';
-showPrepScreen();
 
 // ═══════════════════════════════════════════════
 // FEEDBACK MODAL FUNCTIONS

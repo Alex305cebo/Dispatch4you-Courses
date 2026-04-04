@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Load Finder - Детальная информация</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .search-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+        }
+
+        .search-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            display: block;
+        }
+
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        .btn-search, .btn-random {
+            grid-column: 1 / -1;
+            padding: 15px;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn-search {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .btn-random {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        .results-header {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .load-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .load-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #f0f0f0;
+        }
+
+        .load-id-source {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .load-id {
+            font-size: 14px;
+            color: #999;
+            font-weight: 600;
+        }
+
+        .load-source {
+            display: inline-block;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .route {
+            font-size: 32px;
+            font-weight: 900;
+            color: #333;
+        }
+
+        .route-arrow {
+            color: #667eea;
+            margin: 0 15px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: #667eea;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 25px 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        .load-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .detail-label {
+            font-size: 13px;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .company-section {
+            background: linear-gradient(135deg, #e8f4f8, #f0e8f8);
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .company-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .company-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .company-label {
+            font-size: 12px;
+            color: #667eea;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .company-value {
+            font-size: 20px;
+            font-weight: 800;
+            color: #333;
+        }
+
+        .broker-phone {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .broker-phone:hover {
+            text-decoration: underline;
+        }
+
+        .no-results, .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚛 Load Finder</h1>
+            <p>Реальные грузы с детальной информацией</p>
+        </div>
+
+        <div class="search-card">
+            <form id="searchForm" class="search-form">
+                <div class="form-group">
+                    <label for="originState">Штат</label>
+                    <select id="originState" required>
+                        <option value="AZ" selected>Arizona (AZ)</option>
+                        <option value="CA">California (CA)</option>
+                        <option value="TX">Texas (TX)</option>
+                        <option value="FL">Florida (FL)</option>
+                        <option value="IL">Illinois (IL)</option>
+                        <option value="NY">New York (NY)</option>
+                        <option value="GA">Georgia (GA)</option>
+                        <option value="NC">North Carolina (NC)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="equipmentType">Тип трейлера</label>
+                    <select id="equipmentType" required>
+                        <option value="Dry Van" selected>Dry Van</option>
+                        <option value="Reefer">Reefer</option>
+                        <option value="Flatbed">Flatbed</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-search">🔍 Найти грузы</button>
+                <button type="button" class="btn-random" onclick="randomSearch()">🎲 Случайный поиск</button>
+            </form>
+        </div>
+
+        <div id="resultsSection" style="display: none;">
+            <div class="results-header">
+                Найдено: <span id="resultsCount">0</span> грузов
+            </div>
+            <div id="loadsList"></div>
+        </div>
+
+        <div id="noResults" class="no-results" style="display: none;">
+            <div>📦</div>
+            <h2>Грузы не найдены</h2>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            <div>⏳ Поиск реальных грузов...</div>
+        </div>
+    </div>
+
+    <script>
+        const searchForm = document.getElementById('searchForm');
+        const resultsSection = document.getElementById('resultsSection');
+        const loadsList = document.getElementById('loadsList');
+        const resultsCount = document.getElementById('resultsCount');
+        const noResults = document.getElementById('noResults');
+        const loading = document.getElementById('loading');
+
+        searchForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            console.log('🔍 Форма отправлена!');
+            
+            loading.style.display = 'block';
+            resultsSection.style.display = 'none';
+            noResults.style.display = 'none';
+
+            const filters = {
+                origin_state: document.getElementById('originState').value,
+                equipment_type: document.getElementById('equipmentType').value
+            };
+
+            console.log('📦 Отправляем данные:', filters);
+
+            try {
+                console.log('🌐 Отправляем запрос на /api/search...');
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(filters)
+                });
+
+                console.log('📥 Получен ответ:', response.status);
+                const data = await response.json();
+                console.log('📊 Данные:', data);
+                
+                loading.style.display = 'none';
+
+                if (data.success && data.loads.length > 0) {
+                    console.log('✅ Найдено грузов:', data.loads.length);
+                    displayLoads(data.loads);
+                } else {
+                    console.log('⚠️ Грузы не найдены');
+                    noResults.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('❌ Ошибка:', error);
+                loading.style.display = 'none';
+                alert('Ошибка при поиске грузов: ' + error.message);
+            }
+        });
+
+        function displayLoads(loads) {
+            resultsSection.style.display = 'block';
+            resultsCount.textContent = loads.length;
+            
+            loadsList.innerHTML = loads.map(load => `
+                <div class="load-card">
+                    <div class="load-header">
+                        <div class="load-id-source">
+                            <div class="load-id">Load ID: #${load.id}</div>
+                            <span class="load-source">📡 ${load.source}</span>
+                        </div>
+                        <div class="route">
+                            ${load.origin.split(',')[0]}
+                            <span class="route-arrow">→</span>
+                            ${load.destination.split(',')[0]}
+                        </div>
+                    </div>
+
+                    <div class="section-title">📦 LOAD DETAILS</div>
+                    <div class="load-details">
+                        <div class="detail-item">
+                            <div class="detail-label">📅 Pickup Date</div>
+                            <div class="detail-value">${load.pickup_date}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">📍 Origin</div>
+                            <div class="detail-value">${load.origin}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">📍 Destination</div>
+                            <div class="detail-value">${load.destination}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">🚛 Equipment Type</div>
+                            <div class="detail-value">${load.equipment}</div>
+                        </div>
+                    </div>
+
+                    <div class="section-title">🏢 COMPANY INFORMATION</div>
+                    <div class="company-section">
+                        <div class="company-info">
+                            <div class="company-item">
+                                <div class="company-label">Broker / Carrier</div>
+                                <div class="company-value">${load.broker}</div>
+                            </div>
+                            <div class="company-item">
+                                <div class="company-label">Contact Phone</div>
+                                <a href="tel:${load.phone}" class="broker-phone">
+                                    📞 ${load.phone}
+                                </a>
+                            </div>
+                            <div class="company-item">
+                                <div class="company-label">Data Source</div>
+                                <div class="company-value">${load.source}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function randomSearch() {
+            const states = ['AZ', 'CA', 'TX', 'FL', 'IL', 'NY', 'GA', 'NC'];
+            const equipment = ['Dry Van', 'Reefer', 'Flatbed'];
+            
+            document.getElementById('originState').value = states[Math.floor(Math.random() * states.length)];
+            document.getElementById('equipmentType').value = equipment[Math.floor(Math.random() * equipment.length)];
+            
+            searchForm.dispatchEvent(new Event('submit'));
+        }
+    </script>
+</body>
+</html>
