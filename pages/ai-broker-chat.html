@@ -1118,12 +1118,12 @@ function updateWidgetState(state){
     $('dot').classList.toggle('on',r.ok);
     $('bStat').textContent=r.ok?'Онлайн':'Офлайн';
     if(!r.ok){
-      showNotification('⚠️ AI брокер недоступен. Проверьте подключение.','warning');
+      showNotification('📞 Брокер офлайн. Попробуйте позже.','warning');
     }
   }catch(e){
     console.error('[AI] Connection test failed:', e);
     $('bStat').textContent='Офлайн';
-    showNotification('❌ Не удалось подключиться к AI. Проверьте интернет.','error');
+    showNotification('📞 Нет связи с брокером. Проверьте интернет.','error');
   }
 })();
 
@@ -1481,19 +1481,19 @@ async function callAI(msg){
         $('dot').classList.remove('on');
         // Show error to user instead of fallback
         if(e.name==='AbortError'){
-            showNotification('⏱️ AI не ответил вовремя. Попробуйте ещё раз.','error');
+            showNotification('📞 Брокер на другой линии. Перезвоните через минуту.','warning');
             throw new Error('AI_TIMEOUT');
         }else if(e.message.includes('API_ERROR_429')){
-            showNotification('⚠️ Слишком много запросов. Подождите минуту.','warning');
+            showNotification('📞 Линия занята. Попробуйте перезвонить через минуту.','warning');
             throw new Error('RATE_LIMIT');
         }else if(e.message.includes('API_ERROR_401')){
-            showNotification('🔒 Ошибка авторизации AI. Обратитесь к администратору.','error');
+            showNotification('📞 Брокер недоступен. Проверьте подключение.','error');
             throw new Error('AUTH_ERROR');
         }else if(e.message.includes('Failed to fetch')){
-            showNotification('🌐 Ошибка сети. Проверьте подключение к интернету.','error');
+            showNotification('📞 Нет связи. Проверьте интернет.','error');
             throw new Error('NETWORK_ERROR');
         }else{
-            showNotification('❌ Ошибка AI: ' + e.message,'error');
+            showNotification('📞 Брокер не ответил. Попробуйте ещё раз.','error');
             throw new Error('AI_ERROR');
         }
     }
@@ -1608,14 +1608,17 @@ function now(){const d=new Date();return d.getHours().toString().padStart(2,'0')
 function autoH(){}
 
 function showNotification(message,type='info'){
+    // Remove existing notifications first
+    document.querySelectorAll('.app-notification').forEach(n=>n.remove());
     const notification=document.createElement('div');
-    notification.style.cssText=`position:fixed;top:80px;left:50%;transform:translateX(-50%);background:${type==='error'?'rgba(239,68,68,.15)':type==='warning'?'rgba(249,115,22,.15)':'rgba(6,182,212,.15)'};border:1px solid ${type==='error'?'rgba(239,68,68,.3)':type==='warning'?'rgba(249,115,22,.3)':'rgba(6,182,212,.3)'};border-radius:12px;padding:12px 20px;font-size:14px;color:#ffffff;z-index:9999;text-align:center;backdrop-filter:blur(10px);max-width:90%;box-shadow:0 4px 12px rgba(0,0,0,.3);animation:slideDown .3s ease`;
+    notification.className='app-notification';
+    notification.style.cssText=`position:fixed;top:12px;right:12px;background:${type==='error'?'rgba(239,68,68,.2)':type==='warning'?'rgba(249,115,22,.2)':'rgba(6,182,212,.2)'};border:1px solid ${type==='error'?'rgba(239,68,68,.3)':type==='warning'?'rgba(249,115,22,.3)':'rgba(6,182,212,.3)'};border-radius:12px;padding:10px 16px;font-size:12px;color:#ffffff;z-index:9999;text-align:left;backdrop-filter:blur(16px);max-width:300px;box-shadow:0 4px 16px rgba(0,0,0,.4);animation:slideDown .3s ease`;
     notification.textContent=message;
     document.body.appendChild(notification);
     setTimeout(()=>{
         notification.style.animation='slideUp .3s ease';
         setTimeout(()=>notification.remove(),300);
-    },5000);
+    },3000);
 }
 
 function showHints(){const h=SC[scen]?.h||[];addMsg('sys','💡 '+h.join(' • '));chat.scrollTop=chat.scrollHeight}
@@ -1886,17 +1889,17 @@ async function endSession() {
     
     // Handle specific errors
     if (error.message === 'AI_TIMEOUT') {
-      showNotification('⏱️ Анализ занял слишком много времени. Попробуйте ещё раз.', 'error');
+      showNotification('📞 Брокер на линии. Перезвоните позже.', 'error');
     } else if (error.message === 'RATE_LIMIT') {
-      showNotification('⚠️ Слишком много запросов. Подождите минуту.', 'warning');
+      showNotification('📞 Линия занята. Подождите минуту.', 'warning');
     } else if (error.message === 'AUTH_ERROR') {
-      showNotification('🔒 Ошибка авторизации AI. Обратитесь к администратору.', 'error');
+      showNotification('📞 Брокер недоступен.', 'error');
     } else if (error.message === 'PARSE_ERROR') {
-      showNotification('⚠️ Ошибка обработки результатов. Попробуйте ещё раз.', 'error');
+      showNotification('📞 Ошибка анализа. Попробуйте ещё раз.', 'error');
     } else if (error.message === 'EMPTY_TRANSCRIPT') {
-      showNotification('📊 Недостаточно данных для анализа. Поговорите ещё немного.', 'warning');
+      showNotification('📞 Поговорите ещё немного для анализа.', 'warning');
     } else {
-      showNotification('❌ Ошибка при анализе сессии. Попробуйте ещё раз.', 'error');
+      showNotification('📞 Ошибка. Попробуйте ещё раз.', 'error');
     }
     
     // Re-enable mic button
