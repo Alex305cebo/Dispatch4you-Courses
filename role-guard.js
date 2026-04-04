@@ -296,7 +296,7 @@
   // ============================================================
   // СУПЕРПОЛЬЗОВАТЕЛИ (хардкод — всегда полный доступ)
   // ============================================================
-  var SUPER_EMAILS = ['dersire.der@gmail.com'];
+  var SUPER_EMAILS = ['dersire.der@gmail.com', 'cebotarigg@gmail.com', 'mihail.ce89@gmail.com'];
 
   function init() {
     var page = getCurrentPage();
