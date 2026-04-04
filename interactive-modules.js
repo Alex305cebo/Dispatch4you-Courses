@@ -6,6 +6,16 @@
 (function () {
     'use strict';
 
+    // Auto-detect module ID from URL (doc-module-3.html → module-3)
+    function detectModuleId() {
+        var bodyId = document.body.dataset.moduleId;
+        if (bodyId) return bodyId;
+        var match = window.location.pathname.match(/doc-module-(\d+)/);
+        if (match) return 'module-' + match[1];
+        return 'module-1';
+    }
+    var CURRENT_MODULE_ID = detectModuleId();
+
     // Initialize all interactive components
     function initInteractiveModules() {
         initQuickChecks();
@@ -157,7 +167,7 @@
         if (!quizId) return;
 
         const progress = JSON.parse(localStorage.getItem('moduleProgress') || '{}');
-        const moduleId = document.body.dataset.moduleId || 'module-1';
+        const moduleId = CURRENT_MODULE_ID;
 
         if (!progress[moduleId]) {
             progress[moduleId] = {};
@@ -197,7 +207,7 @@
 
     // Load saved progress on page load
     function loadSavedProgress() {
-        const moduleId = document.body.dataset.moduleId || 'module-1';
+        const moduleId = CURRENT_MODULE_ID;
         const progress = JSON.parse(localStorage.getItem('moduleProgress') || '{}');
         const moduleProgress = progress[moduleId] || {};
 
