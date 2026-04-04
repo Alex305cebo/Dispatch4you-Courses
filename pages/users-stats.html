@@ -51,12 +51,26 @@ body::before{content:'';position:fixed;inset:0;background:
 .sec-tab.on{background:rgba(102,126,234,.15);border-color:rgba(102,126,234,.3);color:var(--primary)}
 
 /* Chart type buttons */
-.chart-type-btns{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
-.ct-btn{padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:transparent;
-  color:var(--muted);font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .25s;white-space:nowrap}
-.ct-btn:hover{border-color:rgba(102,126,234,.3);color:var(--t2);background:rgba(102,126,234,.06)}
-.ct-btn.active{background:linear-gradient(135deg,rgba(102,126,234,.15),rgba(118,75,162,.12));
-  border-color:rgba(102,126,234,.4);color:var(--primary);box-shadow:0 0 12px rgba(102,126,234,.15)}
+.chart-type-btns{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.ct-btn{padding:7px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);
+  color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .3s cubic-bezier(.4,0,.2,1);white-space:nowrap;
+  position:relative;overflow:hidden}
+.ct-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent,rgba(255,255,255,.04));opacity:0;transition:opacity .3s}
+.ct-btn:hover{border-color:rgba(102,126,234,.25);color:var(--t2);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.ct-btn:hover::before{opacity:1}
+.ct-btn.active{background:linear-gradient(135deg,rgba(102,126,234,.18),rgba(118,75,162,.14));
+  border-color:rgba(102,126,234,.45);color:#a5b4fc;box-shadow:0 0 20px rgba(102,126,234,.15),inset 0 1px 0 rgba(255,255,255,.06)}
+.ct-btn.active::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;background:linear-gradient(90deg,transparent,var(--primary),transparent);border-radius:2px}
+
+/* Chart card premium */
+#chart-card{position:relative;overflow:hidden}
+#chart-card::before{content:'';position:absolute;top:-50%;right:-30%;width:300px;height:300px;
+  background:radial-gradient(circle,rgba(102,126,234,.06),transparent 70%);pointer-events:none;transition:all .5s}
+.chart-summary{display:flex;gap:12px;margin-bottom:12px;padding:10px 14px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px}
+.chart-stat{flex:1;text-align:center}
+.chart-stat-val{font-size:18px;font-weight:900;line-height:1}
+.chart-stat-lbl{font-size:9px;color:var(--muted);margin-top:2px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.chart-canvas-wrap{position:relative;border-radius:10px;padding:4px;background:rgba(255,255,255,.01);border:1px solid rgba(255,255,255,.04)}
 
 /* Leaderboard */
 .lb-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;transition:.2s;cursor:pointer}
@@ -228,6 +242,7 @@ body::before{content:'';position:fixed;inset:0;background:
         <div class="sec-tabs" id="chart-period-tabs">
           <button class="sec-tab on" onclick="setChartPeriod(7)">7д</button>
           <button class="sec-tab" onclick="setChartPeriod(30)">30д</button>
+          <button class="sec-tab" onclick="setChartPeriod(90)">90д</button>
         </div>
       </div>
       <div class="chart-type-btns" id="chart-type-btns">
@@ -236,7 +251,13 @@ body::before{content:'';position:fixed;inset:0;background:
         <button class="ct-btn" data-type="newusers" onclick="setChartType('newusers')">🆕 Новые</button>
         <button class="ct-btn" data-type="lessons" onclick="setChartType('lessons')">📚 Уроки</button>
       </div>
-      <div style="position:relative">
+      <div class="chart-summary" id="chart-summary">
+        <div class="chart-stat"><div class="chart-stat-val" id="cs-max" style="color:#667eea">—</div><div class="chart-stat-lbl">Макс</div></div>
+        <div class="chart-stat"><div class="chart-stat-val" id="cs-avg" style="color:#10b981">—</div><div class="chart-stat-lbl">Среднее</div></div>
+        <div class="chart-stat"><div class="chart-stat-val" id="cs-total" style="color:#f59e0b">—</div><div class="chart-stat-lbl">Всего</div></div>
+        <div class="chart-stat"><div class="chart-stat-val" id="cs-trend" style="color:#ec4899">—</div><div class="chart-stat-lbl">Тренд</div></div>
+      </div>
+      <div class="chart-canvas-wrap">
         <canvas id="activity-chart" height="200"></canvas>
       </div>
     </div>
@@ -413,10 +434,10 @@ function renderOverview(){
 let chartType='activity';
 
 const CHART_CFG={
-  activity:{icon:'📈',label:'Активность',color:'#667eea',bgColor:'rgba(102,126,234,.12)',yLabel:'Пользователей'},
-  xp:{icon:'⚡',label:'XP рост',color:'#f59e0b',bgColor:'rgba(245,158,11,.12)',yLabel:'Средний XP'},
-  newusers:{icon:'🆕',label:'Новые пользователи',color:'#10b981',bgColor:'rgba(16,185,129,.12)',yLabel:'Регистраций'},
-  lessons:{icon:'📚',label:'Уроки пройдены',color:'#ec4899',bgColor:'rgba(236,72,153,.12)',yLabel:'Уроков'}
+  activity:{icon:'📈',label:'Активность',color:'#667eea',color2:'#818cf8',yLabel:'Пользователей'},
+  xp:{icon:'⚡',label:'XP рост',color:'#f59e0b',color2:'#fbbf24',yLabel:'Средний XP'},
+  newusers:{icon:'🆕',label:'Новые пользователи',color:'#10b981',color2:'#34d399',yLabel:'Регистраций'},
+  lessons:{icon:'📚',label:'Уроки пройдены',color:'#ec4899',color2:'#f472b6',yLabel:'Уроков'}
 };
 
 window.setChartType=function(t){
@@ -425,6 +446,10 @@ window.setChartType=function(t){
   const cfg=CHART_CFG[t];
   document.getElementById('chart-icon').textContent=cfg.icon;
   document.getElementById('chart-label').textContent=cfg.label;
+  // Glow effect on card
+  const card=document.getElementById('chart-card');
+  card.style.borderColor=cfg.color+'40';
+  setTimeout(()=>{card.style.borderColor='';},800);
   renderChart();
 };
 
@@ -435,6 +460,7 @@ window.setChartPeriod=function(p){
   event.target.classList.add('on');
   renderChart();
 };
+
 function renderChart(){
   if(typeof Chart==='undefined')return;
   const now=new Date();const labels=[];const data=[];
@@ -442,7 +468,7 @@ function renderChart(){
 
   for(let i=chartPeriod-1;i>=0;i--){
     const d=new Date(now);d.setDate(d.getDate()-i);
-    const ds=d.toLocaleDateString('ru',{day:'numeric',month:'short'});
+    const ds=chartPeriod>30?d.toLocaleDateString('ru',{day:'numeric',month:'short'}):d.toLocaleDateString('ru',{day:'numeric',month:'short'});
     labels.push(ds);
     const dayStart=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime();
     const dayEnd=dayStart+864e5;
@@ -460,45 +486,114 @@ function renderChart(){
     }
   }
 
+  // Update summary
+  const maxV=Math.max(...data,0);
+  const avgV=data.length?Math.round(data.reduce((a,b)=>a+b,0)/data.length):0;
+  const totalV=data.reduce((a,b)=>a+b,0);
+  const half=Math.floor(data.length/2);
+  const firstHalf=data.slice(0,half).reduce((a,b)=>a+b,0)/(half||1);
+  const secondHalf=data.slice(half).reduce((a,b)=>a+b,0)/((data.length-half)||1);
+  const trendPct=firstHalf>0?Math.round((secondHalf-firstHalf)/firstHalf*100):0;
+  document.getElementById('cs-max').textContent=maxV;
+  document.getElementById('cs-max').style.color=cfg.color;
+  document.getElementById('cs-avg').textContent=avgV;
+  document.getElementById('cs-total').textContent=totalV;
+  document.getElementById('cs-trend').textContent=(trendPct>=0?'+':'')+trendPct+'%';
+  document.getElementById('cs-trend').style.color=trendPct>=0?'#10b981':'#ef4444';
+
   if(actChart)actChart.destroy();
-  actChart=new Chart(document.getElementById('activity-chart'),{
+
+  // Create gradient fill
+  const ctx=document.getElementById('activity-chart').getContext('2d');
+  const gradient=ctx.createLinearGradient(0,0,0,200);
+  gradient.addColorStop(0,cfg.color+'30');
+  gradient.addColorStop(0.5,cfg.color+'10');
+  gradient.addColorStop(1,cfg.color+'00');
+
+  actChart=new Chart(ctx,{
     type:'line',
     data:{labels,datasets:[{
       data,
       borderColor:cfg.color,
-      backgroundColor:cfg.bgColor,
-      fill:true,tension:.4,
-      pointRadius:4,pointHoverRadius:7,
+      backgroundColor:gradient,
+      fill:true,tension:.45,
+      pointRadius:chartPeriod>30?2:5,
+      pointHoverRadius:chartPeriod>30?5:9,
       pointBackgroundColor:cfg.color,
-      pointBorderColor:'#0f0f1e',pointBorderWidth:2,
-      pointHoverBackgroundColor:'#fff',pointHoverBorderColor:cfg.color,pointHoverBorderWidth:3,
-      borderWidth:2.5
+      pointBorderColor:'#12162a',pointBorderWidth:2,
+      pointHoverBackgroundColor:'#fff',
+      pointHoverBorderColor:cfg.color,pointHoverBorderWidth:3,
+      borderWidth:3,
+      // Shadow glow via plugin
+      shadowColor:cfg.color,
+      shadowBlur:15
     }]},
+    plugins:[{
+      id:'glowLine',
+      beforeDatasetsDraw(chart){
+        const meta=chart.getDatasetMeta(0);
+        if(!meta.data.length)return;
+        const c=chart.ctx;
+        c.save();
+        c.shadowColor=cfg.color+'60';
+        c.shadowBlur=12;
+        c.shadowOffsetY=4;
+        c.beginPath();
+        meta.data.forEach((pt,i)=>{
+          if(i===0)c.moveTo(pt.x,pt.y);
+          else{
+            const prev=meta.data[i-1];
+            const cpx=(prev.x+pt.x)/2;
+            c.bezierCurveTo(cpx,prev.y,cpx,pt.y,pt.x,pt.y);
+          }
+        });
+        c.strokeStyle=cfg.color+'40';
+        c.lineWidth=6;
+        c.stroke();
+        c.restore();
+      }
+    }],
     options:{
       responsive:true,
-      animation:{duration:600,easing:'easeOutQuart'},
+      animation:{
+        duration:900,
+        easing:'easeOutQuart',
+        delay(ctx2){return ctx2.type==='data'?ctx2.dataIndex*50:0;}
+      },
       interaction:{mode:'index',intersect:false},
       plugins:{
         legend:{display:false},
         tooltip:{
-          backgroundColor:'rgba(15,15,30,.95)',titleColor:'#e2e8f0',bodyColor:'#e2e8f0',
-          borderColor:cfg.color,borderWidth:1,
-          padding:10,cornerRadius:10,
+          backgroundColor:'rgba(12,14,30,.95)',
+          titleColor:'#e2e8f0',bodyColor:'#fff',
+          borderColor:cfg.color+'80',borderWidth:1,
+          padding:{top:10,bottom:10,left:14,right:14},
+          cornerRadius:12,
           displayColors:false,
-          titleFont:{weight:'700',size:12},
-          bodyFont:{size:13,weight:'600'},
+          titleFont:{weight:'700',size:11,family:'Inter'},
+          bodyFont:{size:15,weight:'800',family:'Inter'},
           callbacks:{
-            label:function(ctx){return cfg.yLabel+': '+ctx.parsed.y}
+            title(items){return items[0].label},
+            label(ctx2){return cfg.yLabel+': '+ctx2.parsed.y}
           }
         }
       },
       scales:{
-        x:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}},
-        y:{beginAtZero:true,ticks:{color:'#64748b',font:{size:10},stepSize:chartType==='xp'?100:1},grid:{color:'rgba(255,255,255,.04)'}}
+        x:{
+          ticks:{color:'#475569',font:{size:10,weight:'600'},maxTicksLimit:chartPeriod>30?10:chartPeriod},
+          grid:{color:'rgba(255,255,255,.03)',drawBorder:false},
+          border:{display:false}
+        },
+        y:{
+          beginAtZero:true,
+          ticks:{color:'#475569',font:{size:10,weight:'600'},padding:8},
+          grid:{color:'rgba(255,255,255,.04)',drawBorder:false},
+          border:{display:false}
+        }
       }
     }
   });
-}
+}}
 
 // ═══ LEADERBOARD ═══
 window.setLbCrit=function(c){
