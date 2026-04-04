@@ -8,7 +8,7 @@
 
     // ── Load nav HTML ──────────────────────────────────────────────
     function loadNav() {
-        fetch(BASE + 'nav.html?v=7.5')
+        fetch(BASE + 'nav.html?v=7.6')
             .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
             .then(function (html) { inject(html.replace(/\{\{BASE\}\}/g, BASE)); })
             .catch(function () { inject(NAV_INLINE.replace(/\{\{BASE\}\}/g, BASE)); });
@@ -18,8 +18,9 @@
 <a href="{{BASE}}index.html" class="logo"><span class="logo-icon">🎓</span><span class="logo-text">Курсы Диспетчера</span></a>
 <div class="nav-links">
   <div class="nav-item"><button class="nav-btn">Курс обучения <span class="arrow">▾</span></button><div class="dropdown"><a href="{{BASE}}pages/documentation.html">📚 База знаний (15 Стр. Курсов)</a><a href="{{BASE}}pages/modules-index.html">✍️ Тесты знаний (12 Модулей)</a><a href="{{BASE}}pages/glossary.html">📖 Глоссарий</a></div></div>
-  <div class="nav-item"><button class="nav-btn">Инструменты <span class="arrow">▾</span></button><div class="dropdown"><a href="{{BASE}}pages/simulator.html">🎯 Симулятор</a><a href="{{BASE}}pages/testing.html">✍️ Тестирование</a><a href="{{BASE}}pages/Trainer-Quiz.html">⚡ Тренировка</a><a href="{{BASE}}pages/load-finder.html">🔍 Load Finder</a><a href="{{BASE}}pages/ai-broker-chat.html">🤖 AI Брокер</a><a href="{{BASE}}pages/users-stats.html">📊 Статистика</a></div></div>
+  <div class="nav-item"><button class="nav-btn">Инструменты <span class="arrow">▾</span></button><div class="dropdown"><a href="{{BASE}}pages/simulator.html">🎯 Симулятор</a><a href="{{BASE}}pages/testing.html">✍️ Тестирование</a><a href="{{BASE}}pages/Trainer-Quiz.html">⚡ Тренировка</a><a href="{{BASE}}pages/load-finder.html">🔍 Load Finder</a><a href="{{BASE}}pages/ai-broker-chat.html">🤖 AI Брокер</a></div></div>
   <div class="nav-item"><button class="nav-btn">Информация <span class="arrow">▾</span></button><div class="dropdown"><a href="{{BASE}}about.html">👥 О нас</a><a href="{{BASE}}faq.html">❓ Вопросы</a><a href="{{BASE}}contacts.html">📬 Контакты</a><a href="{{BASE}}pricing.html">💰 Цены</a></div></div>
+  <a href="{{BASE}}pages/users-stats.html" class="nav-btn" style="text-decoration:none;color:#94a3b8;">📊 Статистика</a>
 </div>
 <a href="{{BASE}}pages/users-stats.html" class="nav-stats-icon" id="nav-stats-icon" title="Статистика пользователей"><i class="fa fa-chart-bar"></i></a>
 <div class="nav-actions" id="nav-actions-desktop"></div>
