@@ -1306,7 +1306,7 @@ async function startScenario(s){
       selectedBtn.classList.add('on');
       selectedBtn.setAttribute('aria-selected', 'true');
     }
-    scen=s;hist=[];broker=NAMES[Math.floor(Math.random()*NAMES.length)];
+    scen=s;hist=[];turnCount=0;coachState='start';broker=NAMES[Math.floor(Math.random()*NAMES.length)];
     $('bName').textContent=`AI Брокер — ${broker}`;
     chat.innerHTML='';
     dialogActive=true;
@@ -1420,7 +1420,7 @@ async function processMsg(text){
         addMsg('broker',brokerReply);hist.push({role:'assistant',content:brokerReply});
         
         // Update Say This prompt based on broker's response
-        updateSayThis(brokerReply);
+        updateSayThis(brokerReply,text);
         
         // Save broker message to Firestore (Task 8.2)
         if (sessionManager && currentSessionId) {
@@ -2458,50 +2458,125 @@ window.renderHistoryItem = function(session) {
 };
 
 // ═══════════════════════════════════════════════
-// SAY THIS — Prompt updater for student
+// SAY THIS — Smart prompt updater for student
 // ═══════════════════════════════════════════════
 let coachState='start';
+let turnCount=0;
 
-const SAY_THIS_PROMPTS={
-  start:'Hi, this is Alex from Swift Dispatch. I\'m calling about the load you posted on DAT.',
-  mc_asked:'Our MC number is 1-2-3-4-5-6-7. We\'re based out of Chicago, running 53-foot dry vans.',
-  load_offered:'What\'s the rate on that? And what\'s the pickup time?',
-  negotiating:'DAT shows about two dollars and five cents per mile on this lane. I need at least that to make it work with my deadhead.',
-  booking:'Driver is John Smith, truck number 4-5-2-1, trailer 8-8-3-4. Please send the rate con to dispatch at swift dispatch dot com.',
-  problem:'I need to update you on the load. The driver is currently at mile marker 280 on I-70 in Utah. We\'re looking at about a 2-hour delay due to weather.',
-  followup:'Hey, this is Alex from Swift Dispatch. We hauled your Dallas to Memphis load last week. I wanted to check if you have anything else this week.'
+const SAY_THIS={
+  start:[
+    'Hi, this is Alex from Swift Dispatch. I\'m calling about the load you posted on DAT.',
+    'Hello, this is Alex with Swift Dispatch. How are you doing today? I\'m looking for loads heading south.',
+    'Hi there, Alex from Swift Dispatch. I saw your posting on DAT and wanted to check availability.'
+  ],
+  mc:[
+    'Our MC number is 1-2-3-4-5-6-7. We\'re based out of Chicago.',
+    'MC 1-2-3-4-5-6-7. Clean safety record, been in business 3 years.',
+    'Yes, MC 1-2-3-4-5-6-7. We run 53-foot dry vans, mostly Midwest and Southeast lanes.'
+  ],
+  equipment:[
+    'We\'re running a 53-foot dry van. Currently empty in Chicago, available today.',
+    'I\'ve got a 53 dry van, driver is ready to go. What do you have available?',
+    'Dry van, 53 foot. My driver just delivered in Chicago and he\'s looking for a backhaul.'
+  ],
+  rate_ask:[
+    'What\'s the rate on that load?',
+    'What are you paying on that? And what\'s the pickup window?',
+    'Sounds good. What\'s the all-in rate?'
+  ],
+  rate_counter:[
+    'I appreciate that, but I need at least two dollars a mile to cover my costs with the deadhead.',
+    'DAT is showing about two-oh-five per mile on this lane. Can you come up a little?',
+    'That\'s a bit low for me. I\'ve got 80 miles deadhead to get there. Can you do better?'
+  ],
+  rate_accept:[
+    'Alright, I can work with that. Let\'s book it.',
+    'That works for me. Let me get you the driver info.',
+    'Deal. I\'ll take it. What do you need from me to get this booked?'
+  ],
+  booking:[
+    'Driver is John Smith, truck number 4-5-2-1, trailer 8-8-3-4. His cell is 3-1-2-5-5-5-0-1-2-3.',
+    'Please send the rate con to dispatch at swift dispatch dot com.',
+    'What\'s the detention policy? And is there a lumper fee at delivery?'
+  ],
+  problem_report:[
+    'I need to update you on the load. We have a situation.',
+    'The driver is at mile marker 280 on I-70. We\'re looking at about a 2-hour delay.',
+    'Here\'s my plan — I can have the driver push through and deliver by 7 PM. Will the receiver accept that?'
+  ],
+  followup:[
+    'Hey, this is Alex from Swift Dispatch. We hauled your Dallas to Memphis load last week.',
+    'Everything went smooth on that last load. Do you have anything else this week?',
+    'Can you keep us busy? We\'d love to be your go-to carrier on these lanes.'
+  ],
+  general:[
+    'Can you tell me more about that load?',
+    'What\'s the commodity? And is it no-touch freight?',
+    'When does it need to deliver? And what\'s the receiver hours?'
+  ]
 };
 
-function updateSayThis(brokerMsg){
+function pickRandom(arr){return arr[Math.floor(Math.random()*arr.length)];}
+
+function updateSayThis(brokerMsg,userMsg){
   const bl=(brokerMsg||'').toLowerCase();
-  const msgCount=hist.length;
+  const ul=(userMsg||'').toLowerCase();
+  turnCount++;
   let newState=coachState;
   let newText='';
 
-  if(msgCount<=2) newState='start';
-  else if(/mc\s*#|mc number|what'?s your mc/i.test(bl)) newState='mc_asked';
-  else if(/rate con|driver name|truck number|trailer|book|email/i.test(bl)) newState='booking';
-  else if(/rate|price|\$|per mile|rpm|all.in|what can you do/i.test(bl)&&msgCount>3) newState='negotiating';
-  else if(/load|freight|commodity|pickup|delivery|dry van|reefer|flatbed|miles/i.test(bl)) newState='load_offered';
-  else if(/delay|breakdown|late|accident|problem|issue|eta/i.test(bl)) newState='problem';
-
-  newText=SAY_THIS_PROMPTS[newState]||SAY_THIS_PROMPTS.start;
-  
-  if(newState!==coachState||msgCount<=2){
-    coachState=newState;
-    const el=$('sayThisText');
-    if(el&&typeof gsap!=='undefined'){
-      gsap.to(el,{opacity:0,y:-6,duration:0.2,ease:'power2.in',onComplete:()=>{
-        el.textContent=newText;
-        gsap.fromTo(el,{opacity:0,y:8},{opacity:1,y:0,duration:0.35,ease:'back.out(1.2)'});
-      }});
-    }else if(el){
-      el.textContent=newText;
+  // Smart detection based on broker's last message
+  if(/mc\s*#|mc number|what'?s your mc|authority|verify/i.test(bl)){
+    newState='mc';
+  }else if(/what.*(equipment|trailer|truck|running|type)|dry van|reefer|flatbed/i.test(bl)&&turnCount<=4){
+    newState='equipment';
+  }else if(/rate con|driver.*(name|info)|truck number|trailer number|book|email|cell.*phone/i.test(bl)){
+    newState='booking';
+  }else if(/\$\s*[\d,]+|rate.*\$|pay.*\$|all.in/i.test(bl)&&!/what.*rate/i.test(ul)){
+    // Broker offered a rate — decide if we counter or accept
+    const rateMatch=bl.match(/\$\s*([\d,]+)/);
+    if(rateMatch){
+      const offered=parseInt(rateMatch[1].replace(',',''));
+      const miles=parseInt(($('liMiles')||{}).textContent)||380;
+      const rpm=offered/miles;
+      newState=rpm>=2.0?'rate_accept':'rate_counter';
+    }else{
+      newState='rate_counter';
     }
+  }else if(/what.*rate|rate.*expect|what can you do|how much/i.test(bl)){
+    newState='rate_ask';
+  }else if(/load|freight|commodity|pickup|delivery|miles|origin|destination/i.test(bl)&&turnCount>2){
+    newState='general';
+  }else if(/delay|breakdown|late|accident|problem|issue|eta|where.*driver/i.test(bl)){
+    newState='problem_report';
+  }else if(/good to hear|last.*load|worked.*together|how.*service/i.test(bl)){
+    newState='followup';
   }
 
-  // Also update load info card from broker message
+  // Only update if state changed or it's a new turn
+  newText=pickRandom(SAY_THIS[newState]||SAY_THIS.general);
+
+  const el=$('sayThisText');
+  if(el&&typeof gsap!=='undefined'){
+    gsap.to(el,{opacity:0,y:-8,duration:0.2,ease:'power2.in',onComplete:()=>{
+      el.textContent=newText;
+      gsap.fromTo(el,{opacity:0,y:10},{opacity:1,y:0,duration:0.4,ease:'back.out(1.3)'});
+    }});
+  }else if(el){
+    el.textContent=newText;
+  }
+
+  coachState=newState;
+
+  // Also update load info from broker message
   parseLoadInfo(bl);
+
+  // Update load info badge based on scenario
+  const badge=$('loadInfoBadge');
+  if(badge){
+    const badges={free:'📦 Груз с DAT Loadboard',negotiate:'💰 Переговоры о ставке',book:'📋 Букинг груза',problem:'⚠️ Груз в пути',cold:'📞 Холодный звонок',followup:'🔄 Повторный контакт'};
+    badge.textContent=badges[scen]||badges.free;
+  }
 }
 
 function parseLoadInfo(text){
