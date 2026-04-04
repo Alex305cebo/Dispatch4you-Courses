@@ -461,135 +461,60 @@ window.setChartPeriod=function(p){
   renderChart();
 };
 
+function getChartData(type,days,offset){
+  const now=new Date();const r=[];
+  for(let i=days-1;i>=0;i--){
+    const d=new Date(now);d.setDate(d.getDate()-i-offset);
+    const s=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime(),e=s+864e5;
+    if(type==='activity')r.push(allUsers.filter(u=>u.lastActivity&&u.lastActivity.getTime()>=s&&u.lastActivity.getTime()<e).length);
+    else if(type==='xp'){const a=allUsers.filter(u=>u.lastActivity&&u.lastActivity.getTime()>=s&&u.lastActivity.getTime()<e);r.push(a.length?Math.round(a.reduce((x,u)=>x+u.xp,0)/a.length):0);}
+    else if(type==='newusers')r.push(allUsers.filter(u=>u.createdAt&&u.createdAt.getTime()>=s&&u.createdAt.getTime()<e).length);
+    else{const a=allUsers.filter(u=>u.lastActivity&&u.lastActivity.getTime()>=s&&u.lastActivity.getTime()<e);r.push(a.reduce((x,u)=>x+u.courseProgress,0));}
+  }return r;
+}
 function renderChart(){
   if(typeof Chart==='undefined')return;
-  const now=new Date();const labels=[];const data=[];
-  const cfg=CHART_CFG[chartType];
-
-  for(let i=chartPeriod-1;i>=0;i--){
-    const d=new Date(now);d.setDate(d.getDate()-i);
-    const ds=chartPeriod>30?d.toLocaleDateString('ru',{day:'numeric',month:'short'}):d.toLocaleDateString('ru',{day:'numeric',month:'short'});
-    labels.push(ds);
-    const dayStart=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime();
-    const dayEnd=dayStart+864e5;
-
-    if(chartType==='activity'){
-      data.push(allUsers.filter(u=>u.lastActivity&&u.lastActivity.getTime()>=dayStart&&u.lastActivity.getTime()<dayEnd).length);
-    } else if(chartType==='xp'){
-      const active=allUsers.filter(u=>u.lastActivity&&u.lastActivity.getTime()>=dayStart&&u.lastActivity.getTime()<dayEnd);
-      data.push(active.length?Math.round(active.reduce((s,u)=>s+u.xp,0)/active.length):0);
-    } else if(chartType==='newusers'){
-      data.push(allUsers.filter(u=>u.createdAt&&u.createdAt.getTime()>=dayStart&&u.createdAt.getTime()<dayEnd).length);
-    } else if(chartType==='lessons'){
-      const active=allUsers.filter(u=>u.lastActivity&&u.lastActivity.getTime()>=dayStart&&u.lastActivity.getTime()<dayEnd);
-      data.push(active.reduce((s,u)=>s+u.courseProgress,0));
-    }
-  }
-
-  // Update summary
-  const maxV=Math.max(...data,0);
-  const avgV=data.length?Math.round(data.reduce((a,b)=>a+b,0)/data.length):0;
-  const totalV=data.reduce((a,b)=>a+b,0);
-  const half=Math.floor(data.length/2);
-  const firstHalf=data.slice(0,half).reduce((a,b)=>a+b,0)/(half||1);
-  const secondHalf=data.slice(half).reduce((a,b)=>a+b,0)/((data.length-half)||1);
-  const trendPct=firstHalf>0?Math.round((secondHalf-firstHalf)/firstHalf*100):0;
-  document.getElementById('cs-max').textContent=maxV;
-  document.getElementById('cs-max').style.color=cfg.color;
-  document.getElementById('cs-avg').textContent=avgV;
-  document.getElementById('cs-total').textContent=totalV;
+  const now=new Date();const labels=[];const cfg=CHART_CFG[chartType];
+  for(let i=chartPeriod-1;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);labels.push(d.toLocaleDateString('ru',{day:'numeric',month:'short'}));}
+  const data=getChartData(chartType,chartPeriod,0);
+  const prev=getChartData(chartType,chartPeriod,chartPeriod);
+  const maxV=Math.max(...data,0),avgV=data.length?Math.round(data.reduce((a,b)=>a+b,0)/data.length):0,totalV=data.reduce((a,b)=>a+b,0);
+  const prevT=prev.reduce((a,b)=>a+b,0),trendPct=prevT>0?Math.round((totalV-prevT)/prevT*100):0;
+  document.getElementById('cs-max').textContent=maxV;document.getElementById('cs-max').style.color=cfg.color;
+  document.getElementById('cs-avg').textContent=avgV;document.getElementById('cs-total').textContent=totalV;
   document.getElementById('cs-trend').textContent=(trendPct>=0?'+':'')+trendPct+'%';
   document.getElementById('cs-trend').style.color=trendPct>=0?'#10b981':'#ef4444';
-
   if(actChart)actChart.destroy();
-
-  // Create gradient fill
   const ctx=document.getElementById('activity-chart').getContext('2d');
-  const gradient=ctx.createLinearGradient(0,0,0,200);
-  gradient.addColorStop(0,cfg.color+'30');
-  gradient.addColorStop(0.5,cfg.color+'10');
-  gradient.addColorStop(1,cfg.color+'00');
-
-  actChart=new Chart(ctx,{
-    type:'line',
-    data:{labels,datasets:[{
-      data,
-      borderColor:cfg.color,
-      backgroundColor:gradient,
-      fill:true,tension:.45,
-      pointRadius:chartPeriod>30?2:5,
-      pointHoverRadius:chartPeriod>30?5:9,
-      pointBackgroundColor:cfg.color,
-      pointBorderColor:'#12162a',pointBorderWidth:2,
-      pointHoverBackgroundColor:'#fff',
-      pointHoverBorderColor:cfg.color,pointHoverBorderWidth:3,
-      borderWidth:3,
-      // Shadow glow via plugin
-      shadowColor:cfg.color,
-      shadowBlur:15
-    }]},
-    plugins:[{
-      id:'glowLine',
-      beforeDatasetsDraw(chart){
-        const meta=chart.getDatasetMeta(0);
-        if(!meta.data.length)return;
-        const c=chart.ctx;
-        c.save();
-        c.shadowColor=cfg.color+'60';
-        c.shadowBlur=12;
-        c.shadowOffsetY=4;
-        c.beginPath();
-        meta.data.forEach((pt,i)=>{
-          if(i===0)c.moveTo(pt.x,pt.y);
-          else{
-            const prev=meta.data[i-1];
-            const cpx=(prev.x+pt.x)/2;
-            c.bezierCurveTo(cpx,prev.y,cpx,pt.y,pt.x,pt.y);
-          }
-        });
-        c.strokeStyle=cfg.color+'40';
-        c.lineWidth=6;
-        c.stroke();
-        c.restore();
-      }
-    }],
-    options:{
-      responsive:true,
-      animation:{
-        duration:900,
-        easing:'easeOutQuart',
-        delay(ctx2){return ctx2.type==='data'?ctx2.dataIndex*50:0;}
-      },
+  const g=ctx.createLinearGradient(0,0,0,220);g.addColorStop(0,cfg.color+'25');g.addColorStop(0.6,cfg.color+'08');g.addColorStop(1,'transparent');
+  actChart=new Chart(ctx,{type:'line',
+    data:{labels,datasets:[
+      {label:'Текущий',data,borderColor:cfg.color,backgroundColor:g,fill:true,tension:.4,borderWidth:2.5,
+        pointRadius:chartPeriod>30?0:4,pointHoverRadius:7,pointBackgroundColor:cfg.color,
+        pointBorderColor:'#12162a',pointBorderWidth:2,pointHoverBackgroundColor:'#fff',pointHoverBorderColor:cfg.color,pointHoverBorderWidth:3},
+      {label:'Пред. период',data:prev,borderColor:'#ec489960',backgroundColor:'transparent',fill:false,
+        tension:.4,borderWidth:1.5,borderDash:[6,4],pointRadius:0,pointHoverRadius:4,
+        pointHoverBackgroundColor:'#ec4899',pointHoverBorderColor:'#12162a'}
+    ]},
+    plugins:[{id:'glow',beforeDatasetsDraw(ch){
+      const m=ch.getDatasetMeta(0);if(!m.data.length)return;const c=ch.ctx;c.save();
+      c.shadowColor=cfg.color+'50';c.shadowBlur=14;c.shadowOffsetY=3;c.beginPath();
+      m.data.forEach((pt,i)=>{if(i===0)c.moveTo(pt.x,pt.y);else{const p=m.data[i-1];const cx=(p.x+pt.x)/2;c.bezierCurveTo(cx,p.y,cx,pt.y,pt.x,pt.y);}});
+      c.strokeStyle=cfg.color+'35';c.lineWidth=8;c.stroke();c.restore();
+    }}],
+    options:{responsive:true,maintainAspectRatio:true,
+      animation:{duration:1200,easing:'easeInOutQuart'},
+      transitions:{active:{animation:{duration:300}}},
       interaction:{mode:'index',intersect:false},
-      plugins:{
-        legend:{display:false},
-        tooltip:{
-          backgroundColor:'rgba(12,14,30,.95)',
-          titleColor:'#e2e8f0',bodyColor:'#fff',
-          borderColor:cfg.color+'80',borderWidth:1,
-          padding:{top:10,bottom:10,left:14,right:14},
-          cornerRadius:12,
-          displayColors:false,
-          titleFont:{weight:'700',size:11,family:'Inter'},
-          bodyFont:{size:15,weight:'800',family:'Inter'},
-          callbacks:{
-            title(items){return items[0].label},
-            label(ctx2){return cfg.yLabel+': '+ctx2.parsed.y}
-          }
-        }
-      },
+      plugins:{legend:{display:false},
+        tooltip:{backgroundColor:'rgba(10,12,28,.96)',titleColor:'#94a3b8',bodyColor:'#fff',
+          borderColor:cfg.color+'60',borderWidth:1,padding:{top:10,bottom:10,left:14,right:14},
+          cornerRadius:12,displayColors:true,boxWidth:8,boxHeight:8,boxPadding:4,
+          titleFont:{weight:'600',size:11,family:'Inter'},bodyFont:{size:13,weight:'700',family:'Inter'},
+          callbacks:{title(it){return it[0].label},label(c2){return(c2.datasetIndex===0?cfg.yLabel:'Пред.')+': '+c2.parsed.y}}}},
       scales:{
-        x:{
-          ticks:{color:'#475569',font:{size:10,weight:'600'},maxTicksLimit:chartPeriod>30?10:chartPeriod},
-          grid:{color:'rgba(255,255,255,.03)',drawBorder:false},
-          border:{display:false}
-        },
-        y:{
-          beginAtZero:true,
-          ticks:{color:'#475569',font:{size:10,weight:'600'},padding:8},
-          grid:{color:'rgba(255,255,255,.04)',drawBorder:false},
-          border:{display:false}
-        }
+        x:{ticks:{color:'#475569',font:{size:10,weight:'500'},maxTicksLimit:chartPeriod>30?8:chartPeriod},grid:{color:'rgba(255,255,255,.03)',drawBorder:false},border:{display:false}},
+        y:{beginAtZero:true,ticks:{color:'#475569',font:{size:10,weight:'500'},padding:8},grid:{color:'rgba(255,255,255,.04)',drawBorder:false},border:{display:false}}
       }
     }
   });
