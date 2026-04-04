@@ -77,12 +77,27 @@
 
         document.dispatchEvent(new Event('navLoaded'));
 
-        // Подключаем трекер прогресса тестов на страницах модулей
-        if (window.location.pathname.match(/doc-module-\d+/)) {
-            var qs = document.createElement('script');
-            qs.src = BASE + 'quiz-progress-tracker.js?v=1.0';
-            document.body.appendChild(qs);
-        }
+        // Трекер прогресса тестов на страницах модулей
+        (function() {
+            var m = window.location.pathname.match(/doc-module-(\d+)/);
+            if (!m) return;
+            var mid = 'module-' + m[1];
+            function gp() { try { return JSON.parse(localStorage.getItem('moduleProgress')||'{}'); } catch(e) { return {}; } }
+            document.addEventListener('click', function(e) {
+                var opt = e.target.closest('.quiz-option');
+                if (!opt) return;
+                var qb = opt.closest('.quick-check-block');
+                if (!qb) return;
+                var qid = qb.getAttribute('data-quiz-id') || qb.id;
+                if (!qid) return;
+                var ca = qb.getAttribute('data-correct-answer');
+                var sa = opt.getAttribute('data-answer');
+                var p = gp();
+                if (!p[mid]) p[mid] = {};
+                p[mid][qid] = { completed: true, correct: sa === ca, ts: Date.now() };
+                localStorage.setItem('moduleProgress', JSON.stringify(p));
+            }, true);
+        })();
         // Применяем auth UI после загрузки nav
         if (typeof window.updateAuthUI === 'function') {
             window.updateAuthUI();
