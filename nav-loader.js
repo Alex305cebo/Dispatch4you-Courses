@@ -76,6 +76,13 @@
         injectFooter();
 
         document.dispatchEvent(new Event('navLoaded'));
+
+        // Подключаем трекер прогресса тестов на страницах модулей
+        if (window.location.pathname.match(/doc-module-\d+/)) {
+            var qs = document.createElement('script');
+            qs.src = BASE + 'quiz-progress-tracker.js?v=1.0';
+            document.body.appendChild(qs);
+        }
         // Применяем auth UI после загрузки nav
         if (typeof window.updateAuthUI === 'function') {
             window.updateAuthUI();
