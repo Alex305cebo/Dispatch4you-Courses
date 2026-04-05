@@ -12,6 +12,13 @@
         rel="stylesheet">
     <link rel="stylesheet" href="../shared-nav.css?v=7.6">
     <link rel="stylesheet" href="../shared-styles.css?v=2.0">
+    <link rel="stylesheet" href="../dark-theme.css">
+    <link rel="stylesheet" href="../mobile-fix.css">
+    <link rel="stylesheet" href="../scroll-indicator.css">
+    <link rel="stylesheet" href="../lesson-audio.css?v=3">
+    <script>!function () { var t = localStorage.getItem('dispatcher-theme') || 'dark'; 'dark' === t && document.documentElement.setAttribute('data-theme', 'dark') }();</script>
+    <script src="../dark-mode.js"></script>
+    <script src="auth-check.js"></script>
     <style>
         :root {
             --primary: #06b6d4;
@@ -176,8 +183,8 @@
         /* ── STATS ── */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
             margin: 28px 0;
         }
 
@@ -185,8 +192,8 @@
             backdrop-filter: blur(20px);
             border: 1.5px solid rgba(6, 182, 212, 0.3);
             border-bottom: 3px solid rgba(6, 182, 212, 0.5);
-            border-radius: 16px;
-            padding: 24px 16px;
+            border-radius: 12px;
+            padding: 14px 8px;
             text-align: center;
             transition: all 0.25s ease;
             cursor: pointer;
@@ -202,20 +209,66 @@
         }
 
         .stat-box .number {
-            font-size: clamp(22px, 3.5vw, 32px);
+            font-size: clamp(18px, 2.5vw, 24px);
             font-weight: 900;
             background: linear-gradient(135deg, #06b6d4, #0ea5e9, #f97316);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
 
         .stat-box .label {
-            font-size: clamp(10px, 1.8vw, 12px);
+            font-size: clamp(9px, 1.5vw, 11px);
             color:#e2e8f0;
             font-weight: 600;
             line-height: 1.3;
+        }
+
+        /* ── CARD DETAIL PANEL ── */
+        .card-detail-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease;
+            opacity: 0;
+            margin-top: 0;
+            border-radius: 12px;
+        }
+        .card-detail-panel.open {
+            max-height: 800px;
+            opacity: 1;
+            margin-top: 14px;
+        }
+        .card-detail-inner {
+            padding: 18px 20px;
+            border: 1.5px solid rgba(6,182,212,0.25);
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(6,182,212,0.06), rgba(14,165,233,0.04));
+        }
+        .card-detail-inner h4 {
+            display: flex; align-items: center; justify-content: space-between;
+            color: #06b6d4; font-size: 15px; margin: 0 0 10px 0;
+        }
+        .card-detail-inner .cdp-close {
+            background: rgba(6,182,212,0.15); border: 1px solid rgba(6,182,212,0.3);
+            color: #06b6d4; padding: 4px 10px; border-radius: 6px; cursor: pointer;
+            font-size: 12px; font-weight: 600; transition: background 0.2s;
+        }
+        .card-detail-inner .cdp-close:hover { background: rgba(6,182,212,0.3); }
+        .card-detail-inner p, .card-detail-inner li {
+            font-size: 13px; color: #cbd5e1; line-height: 1.6; margin: 0 0 6px 0;
+        }
+        .card-detail-inner ul { margin: 6px 0 10px 16px; padding: 0; }
+        .card-detail-inner li { margin-bottom: 4px; }
+        .card-detail-inner strong { color: #e2e8f0; }
+        .card-detail-inner h5 {
+            color: #06b6d4; font-size: 13px; margin: 12px 0 6px 0; font-weight: 700;
+        }
+
+        .stat-box.active {
+            border-color: #06b6d4 !important;
+            background: linear-gradient(135deg, rgba(6,182,212,0.18), rgba(14,165,233,0.1)) !important;
+            box-shadow: 0 4px 20px rgba(6,182,212,0.3) !important;
         }
 
         /* ── HIGHLIGHTS ── */
@@ -550,7 +603,7 @@
             padding: 0 20px;
         }
 
-        .nav-btn {
+        .page-nav-btn {
             flex: 1;
             display: flex;
             align-items: center;
@@ -564,34 +617,34 @@
             transition: all 0.3s ease;
         }
 
-        .nav-btn:hover {
+        .page-nav-btn:hover {
             background: rgba(102, 126, 234, 0.1);
             border-color: #667eea;
             transform: translateY(-2px);
         }
 
-        .nav-btn.next {
+        .page-nav-btn.next {
             justify-content: flex-end;
         }
 
-        .nav-btn .icon {
+        .page-nav-btn .icon {
             font-size: 24px;
         }
 
-        .nav-btn .text {
+        .page-nav-btn .text {
             display: flex;
             flex-direction: column;
             gap: 4px;
         }
 
-        .nav-btn .label {
+        .page-nav-btn .label {
             font-size: 12px;
             color: var(--text-2);
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
-        .nav-btn .title {
+        .page-nav-btn .title {
             font-size: 16px;
             font-weight: 700;
         }
@@ -599,7 +652,7 @@
         @media (max-width: 1024px) {
             .wrap { padding: 0 24px; }
             .doc-section { padding: 36px 28px; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
         }
 
         @media (max-width: 768px) {
@@ -608,7 +661,7 @@
             .doc-section h2 { font-size: 24px; }
             .doc-section h3 { font-size: 18px; }
             .doc-section p, .doc-section li { font-size: 15px; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
             .module-navigation { flex-direction: column; }
             .timeline-item { flex-direction: column; gap: 8px; }
             .timeline-time { text-align: left; }
@@ -620,8 +673,8 @@
             .doc-section h2 { font-size: 20px; }
             .doc-section h3 { font-size: 16px; }
             .doc-section p, .doc-section li { font-size: 14px; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-            .stat-box { padding: 16px 10px; }
+            .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+            .stat-box { padding: 10px 6px; }
         }
 
         @media (max-width: 360px) {
@@ -1019,7 +1072,16 @@
 
             <!-- СЕКЦИЯ 1: Кто такой диспетчер -->
             <section id="intro" class="doc-section fade-in-up">
-                <h2>👔 Кто такой диспетчер грузоперевозок?</h2>
+                <div class="section-audio-wrap">
+                    <h2>👔 Кто такой диспетчер грузоперевозок?</h2>
+                    <div class="la-container">
+                        <svg class="la-ring" viewBox="0 0 70 70"><circle class="la-ring-bg" cx="35" cy="35" r="32"></circle><circle class="la-ring-fill" cx="35" cy="35" r="32"></circle></svg>
+                        <button class="la-btn" onclick="laToggle(this, 'role-audio-1')" aria-label="Прослушать"><span class="la-play">▶</span><span class="la-pause">⏸</span></button>
+                        <div class="la-seek" onclick="laSeek(event, 'role-audio-1')"></div>
+                        <div class="la-time">0:00</div>
+                        <div class="la-mobile-bar" onclick="laSeekMobile(event, 'role-audio-1')"><div class="la-mobile-fill"></div></div>
+                    </div>
+                </div>
 
                 <p>Freight Dispatcher (диспетчер грузоперевозок) — это профессионал, который координирует все аспекты
                     перевозки грузов, выступая связующим звеном между водителями, брокерами, грузоотправителями и
@@ -1065,17 +1127,12 @@
                     </div>
                 </div>
 
-                <!-- Детальная информация (скрыта по умолчанию) -->
-                <div id="function-details"
-                    style="display: none; margin-top: 25px; background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(167, 139, 250, 0.08)); border: 2px solid rgba(167, 139, 250, 0.3); border-radius: 16px; padding: 30px;">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h4 id="function-detail-title" style="color: #a78bfa; font-size: 24px; margin: 0;"></h4>
-                        <button onclick="closeFunctionDetails()"
-                            style="background: rgba(167, 139, 250, 0.2); border: 1px solid rgba(167, 139, 250, 0.4); color: #a78bfa; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">✕
-                            Закрыть</button>
+                <!-- Детальная информация (плавное раскрытие) -->
+                <div id="function-details" class="card-detail-panel">
+                    <div class="card-detail-inner">
+                        <h4><span id="function-detail-title"></span><button class="cdp-close" onclick="closeFunctionDetails()">✕</button></h4>
+                        <div id="function-detail-content"></div>
                     </div>
-                    <div id="function-detail-content" style="color:#e2e8f0; line-height: 1.8;"></div>
                 </div>
 
                 <h3>🔄 Отличия от других профессий</h3>
@@ -1100,127 +1157,80 @@
 
             <!-- СЕКЦИЯ 2: Типичный день диспетчера -->
             <section id="typical-day" class="doc-section fade-in-up">
-                <h2>⏰ Типичный день диспетчера</h2>
+                <div class="section-audio-wrap">
+                    <h2>⏰ Типичный день диспетчера</h2>
+                    <div class="la-container">
+                        <svg class="la-ring" viewBox="0 0 70 70"><circle class="la-ring-bg" cx="35" cy="35" r="32"></circle><circle class="la-ring-fill" cx="35" cy="35" r="32"></circle></svg>
+                        <button class="la-btn" onclick="laToggle(this, 'role-audio-2')" aria-label="Прослушать"><span class="la-play">▶</span><span class="la-pause">⏸</span></button>
+                        <div class="la-seek" onclick="laSeek(event, 'role-audio-2')"></div>
+                        <div class="la-time">0:00</div>
+                        <div class="la-mobile-bar" onclick="laSeekMobile(event, 'role-audio-2')"><div class="la-mobile-fill"></div></div>
+                    </div>
+                </div>
 
                 <p>Рабочий день диспетчера начинается рано и требует постоянной концентрации. Вот как выглядит типичный
                     день опытного диспетчера, управляющего 5-8 траками в 2024 году:</p>
 
                 <!-- Компактный timeline -->
-                <div class="timeline">
-                    <div class="timeline-item">
-                        <div class="timeline-time">6:00 AM</div>
-                        <div class="timeline-content">
-                            <h4>🌅 Утренний check-in</h4>
-                            <p>Связь с водителями, проверка статуса и ETA</p>
-                        </div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0;">
+                    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(6,182,212,0.2);border-radius:8px;padding:10px 12px;">
+                        <div style="font-size:11px;color:#06b6d4;font-weight:700;margin-bottom:4px;">6:00 AM</div>
+                        <div style="font-size:13px;font-weight:600;color:#e2e8f0;">🌅 Утренний check-in</div>
+                        <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Связь с водителями, ETA</div>
                     </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-time">7:00 AM</div>
-                        <div class="timeline-content">
-                            <h4>📊 Анализ и планирование</h4>
-                            <p>Работа с TMS, планирование грузов</p>
-                        </div>
+                    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(6,182,212,0.2);border-radius:8px;padding:10px 12px;">
+                        <div style="font-size:11px;color:#06b6d4;font-weight:700;margin-bottom:4px;">7:00 AM</div>
+                        <div style="font-size:13px;font-weight:600;color:#e2e8f0;">📊 Анализ и TMS</div>
+                        <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Статус траков, планирование</div>
                     </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-time">8:00 AM</div>
-                        <div class="timeline-content">
-                            <h4>🔍 Поиск грузов</h4>
-                            <p>Load boards, фильтрация, анализ ставок</p>
-                        </div>
+                    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(6,182,212,0.2);border-radius:8px;padding:10px 12px;">
+                        <div style="font-size:11px;color:#06b6d4;font-weight:700;margin-bottom:4px;">8:00 AM</div>
+                        <div style="font-size:13px;font-weight:600;color:#e2e8f0;">🔍 Поиск грузов</div>
+                        <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Load boards, ставки $2.20+</div>
                     </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-time">9:00 AM</div>
-                        <div class="timeline-content">
-                            <h4>💬 Переговоры</h4>
-                            <p>Звонки брокерам, торг за ставки</p>
-                        </div>
+                    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(6,182,212,0.2);border-radius:8px;padding:10px 12px;">
+                        <div style="font-size:11px;color:#06b6d4;font-weight:700;margin-bottom:4px;">9:00 AM</div>
+                        <div style="font-size:13px;font-weight:600;color:#e2e8f0;">💬 Переговоры</div>
+                        <div style="font-size:11px;color:#94a3b8;margin-top:2px;">40-60 звонков, торг за ставки</div>
                     </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-time">11:00 AM</div>
-                        <div class="timeline-content">
-                            <h4>✅ Booking грузов</h4>
-                            <p>Оформление, документы, подтверждения</p>
-                        </div>
+                    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(6,182,212,0.2);border-radius:8px;padding:10px 12px;">
+                        <div style="font-size:11px;color:#06b6d4;font-weight:700;margin-bottom:4px;">11:00 AM</div>
+                        <div style="font-size:13px;font-weight:600;color:#e2e8f0;">✅ Booking</div>
+                        <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Документы, Rate Confirmation</div>
                     </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-time">12:00 PM</div>
-                        <div class="timeline-content">
-                            <h4>🍔 Обед</h4>
-                            <p>Быстрый перерыв, телефон всегда рядом</p>
-                        </div>
+                    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(6,182,212,0.2);border-radius:8px;padding:10px 12px;">
+                        <div style="font-size:11px;color:#06b6d4;font-weight:700;margin-bottom:4px;">1:00 PM</div>
+                        <div style="font-size:13px;font-weight:600;color:#e2e8f0;">📞 Check calls</div>
+                        <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Обновления для брокеров</div>
                     </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-time">1:00 PM</div>
-                        <div class="timeline-content">
-                            <h4>📞 Check calls</h4>
-                            <p>Обновления для брокеров, tracking</p>
-                        </div>
+                    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(6,182,212,0.2);border-radius:8px;padding:10px 12px;">
+                        <div style="font-size:11px;color:#06b6d4;font-weight:700;margin-bottom:4px;">3:00 PM</div>
+                        <div style="font-size:13px;font-weight:600;color:#e2e8f0;">🚨 Проблемы</div>
+                        <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Пробки, breakdown, задержки</div>
                     </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-time">3:00 PM</div>
-                        <div class="timeline-content">
-                            <h4>🚨 Решение проблем</h4>
-                            <p>Пробки, breakdown, задержки на складах</p>
-                        </div>
+                    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(6,182,212,0.2);border-radius:8px;padding:10px 12px;">
+                        <div style="font-size:11px;color:#06b6d4;font-weight:700;margin-bottom:4px;">5:00 PM</div>
+                        <div style="font-size:13px;font-weight:600;color:#e2e8f0;">📄 Документы</div>
+                        <div style="font-size:11px;color:#94a3b8;margin-top:2px;">POD, invoices, статусы</div>
                     </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-time">4:00 PM</div>
-                        <div class="timeline-content">
-                            <h4>🔄 Планирование</h4>
-                            <p>Поиск грузов на завтра, анализ lanes</p>
-                        </div>
+                    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(6,182,212,0.2);border-radius:8px;padding:10px 12px;">
+                        <div style="font-size:11px;color:#06b6d4;font-weight:700;margin-bottom:4px;">6:00 PM</div>
+                        <div style="font-size:13px;font-weight:600;color:#e2e8f0;">🌙 Вечерний check-in</div>
+                        <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Водители, план на завтра</div>
                     </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-time">5:00 PM</div>
-                        <div class="timeline-content">
-                            <h4>📄 Документы</h4>
-                            <p>POD, invoices, обновление статусов</p>
-                        </div>
+                    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(6,182,212,0.2);border-radius:8px;padding:10px 12px;">
+                        <div style="font-size:11px;color:#06b6d4;font-weight:700;margin-bottom:4px;">7:00 PM</div>
+                        <div style="font-size:13px;font-weight:600;color:#e2e8f0;">📊 Отчёт дня</div>
+                        <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Итоги, финансы, daily report</div>
                     </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-time">6:00 PM</div>
-                        <div class="timeline-content">
-                            <h4>🌙 Вечерний check-in</h4>
-                            <p>Связь с водителями, планирование завтра</p>
-                        </div>
-                    </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-time">7:00 PM</div>
-                        <div class="timeline-content">
-                            <h4>📊 Отчет дня</h4>
-                            <p>Подведение итогов, финансы, daily report</p>
-                        </div>
-                    </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-time">8:00 PM</div>
-                        <div class="timeline-content">
-                            <h4>🏁 Конец дня</h4>
-                            <p>Телефон остается включенным для emergency</p>
-                        </div>
+                    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,107,107,0.25);border-radius:8px;padding:10px 12px;">
+                        <div style="font-size:11px;color:#f87171;font-weight:700;margin-bottom:4px;">8:00 PM</div>
+                        <div style="font-size:13px;font-weight:600;color:#e2e8f0;">🏁 Конец дня</div>
+                        <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Телефон включён для emergency</div>
                     </div>
                 </div>
 
-                <!-- Кнопка для развертывания детального описания -->
-                <button class="expand-btn" onclick="toggleExpand(this)" style="margin-top: 2rem;">
-                    <span class="icon">▼</span>
-                    <span>Развернуть детальное описание каждого часа</span>
-                </button>
-
-                <!-- Детальное описание в expandable секции -->
-                <div class="expandable-content">
-                    <div class="content-inner">
+                <div class="content-inner">
                         <div class="detail-section">
                             <h3>🌅 6:00 AM - Утренний check-in с водителями</h3>
                             <p>Связываешься с каждым водителем: где находится, как спал, готов ли к работе. Проверяешь
@@ -1315,7 +1325,6 @@
                                 в
                                 месяц.</p>
                         </div>
-                    </div>
                 </div>
 
                 <div class="warning-highlight">
@@ -1329,18 +1338,22 @@
 
             <!-- СЕКЦИЯ 3: Детальные обязанности -->
             <section id="responsibilities" class="doc-section fade-in-up">
-                <h2>📋 Детальные обязанности диспетчера</h2>
+                <div class="section-audio-wrap">
+                    <h2>📋 Детальные обязанности диспетчера</h2>
+                    <div class="la-container">
+                        <svg class="la-ring" viewBox="0 0 70 70"><circle class="la-ring-bg" cx="35" cy="35" r="32"></circle><circle class="la-ring-fill" cx="35" cy="35" r="32"></circle></svg>
+                        <button class="la-btn" onclick="laToggle(this, 'role-audio-3')" aria-label="Прослушать"><span class="la-play">▶</span><span class="la-pause">⏸</span></button>
+                        <div class="la-seek" onclick="laSeek(event, 'role-audio-3')"></div>
+                        <div class="la-time">0:00</div>
+                        <div class="la-mobile-bar" onclick="laSeekMobile(event, 'role-audio-3')"><div class="la-mobile-fill"></div></div>
+                    </div>
+                </div>
 
                 <p>Давайте разберем каждую обязанность подробно с примерами из реальной практики 2024 года и лучшими
                     практиками от опытных диспетчеров.</p>
 
-                <button class="expand-btn" onclick="toggleExpand(this)">
-                    <span class="icon">▼</span>
-                    <span>Развернуть полный список обязанностей с примерами</span>
-                </button>
 
-                <div class="expandable-content">
-                    <div class="content-inner">
+                <div class="content-inner">
                         <h3>1️⃣ Поиск прибыльных грузов</h3>
 
                         <h4>Где искать в 2024:</h4>
@@ -1574,13 +1587,21 @@
                             3) Если отказывается - найди replacement driver срочно (через driver agencies, $500-1000
                             fee). 4) Информируй брокера о ситуации. 5) В крайнем случае - организуй tow truck до
                             ближайшего терминала и перегрузку на другой трак.</p>
-                    </div>
                 </div>
             </section>
 
             <!-- СЕКЦИЯ 4: Необходимые навыки -->
             <section id="skills" class="doc-section fade-in-up">
-                <h2>💪 Необходимые навыки и качества</h2>
+                <div class="section-audio-wrap">
+                    <h2>💪 Необходимые навыки и качества</h2>
+                    <div class="la-container">
+                        <svg class="la-ring" viewBox="0 0 70 70"><circle class="la-ring-bg" cx="35" cy="35" r="32"></circle><circle class="la-ring-fill" cx="35" cy="35" r="32"></circle></svg>
+                        <button class="la-btn" onclick="laToggle(this, 'role-audio-4')" aria-label="Прослушать"><span class="la-play">▶</span><span class="la-pause">⏸</span></button>
+                        <div class="la-seek" onclick="laSeek(event, 'role-audio-4')"></div>
+                        <div class="la-time">0:00</div>
+                        <div class="la-mobile-bar" onclick="laSeekMobile(event, 'role-audio-4')"><div class="la-mobile-fill"></div></div>
+                    </div>
+                </div>
 
                 <p>Успешный диспетчер должен обладать уникальной комбинацией hard и soft skills. По данным исследований
                     2024 года, топ-диспетчеры зарабатывают на 40-60% больше благодаря развитым навыкам.</p>
@@ -1720,17 +1741,12 @@
                     </div>
                 </div>
 
-                <!-- Детальная информация о soft skills (скрыта по умолчанию) -->
-                <div id="soft-skill-details"
-                    style="display: none; margin-top: 25px; background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(14, 165, 233, 0.08)); border: 2px solid rgba(6, 182, 212, 0.3); border-radius: 16px; padding: 30px;">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h4 id="soft-skill-detail-title" style="color: #06b6d4; font-size: 24px; margin: 0;"></h4>
-                        <button onclick="closeSoftSkillDetails()"
-                            style="background: rgba(6, 182, 212, 0.2); border: 1px solid rgba(6, 182, 212, 0.4); color: #06b6d4; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">✕
-                            Закрыть</button>
+                <!-- Детальная информация о soft skills (плавное раскрытие) -->
+                <div id="soft-skill-details" class="card-detail-panel">
+                    <div class="card-detail-inner">
+                        <h4><span id="soft-skill-detail-title"></span><button class="cdp-close" onclick="closeSoftSkillDetails()">✕</button></h4>
+                        <div id="soft-skill-detail-content"></div>
                     </div>
-                    <div id="soft-skill-detail-content" style="color:#e2e8f0; line-height: 1.8;"></div>
                 </div>
 
                 <button class="expand-btn" onclick="toggleExpand(this)">
@@ -1873,7 +1889,16 @@
 
             <!-- СЕКЦИЯ 5: Типы диспетчеров -->
             <section id="types" class="doc-section fade-in-up">
-                <h2>🎭 Типы диспетчеров и доходы (2024)</h2>
+                <div class="section-audio-wrap">
+                    <h2>🎭 Типы диспетчеров и доходы (2024)</h2>
+                    <div class="la-container">
+                        <svg class="la-ring" viewBox="0 0 70 70"><circle class="la-ring-bg" cx="35" cy="35" r="32"></circle><circle class="la-ring-fill" cx="35" cy="35" r="32"></circle></svg>
+                        <button class="la-btn" onclick="laToggle(this, 'role-audio-5')" aria-label="Прослушать"><span class="la-play">▶</span><span class="la-pause">⏸</span></button>
+                        <div class="la-seek" onclick="laSeek(event, 'role-audio-5')"></div>
+                        <div class="la-time">0:00</div>
+                        <div class="la-mobile-bar" onclick="laSeekMobile(event, 'role-audio-5')"><div class="la-mobile-fill"></div></div>
+                    </div>
+                </div>
 
                 <p>Существует несколько типов диспетчеров с разными обязанностями, условиями работы и доходом. Выбор
                     зависит от твоих целей, опыта и готовности к риску.</p>
@@ -2030,7 +2055,16 @@
 
             <!-- СЕКЦИЯ 6: Инструменты работы -->
             <section id="tools" class="doc-section fade-in-up">
-                <h2>🛠️ Инструменты работы диспетчера (2024)</h2>
+                <div class="section-audio-wrap">
+                    <h2>🛠️ Инструменты работы диспетчера (2024)</h2>
+                    <div class="la-container">
+                        <svg class="la-ring" viewBox="0 0 70 70"><circle class="la-ring-bg" cx="35" cy="35" r="32"></circle><circle class="la-ring-fill" cx="35" cy="35" r="32"></circle></svg>
+                        <button class="la-btn" onclick="laToggle(this, 'role-audio-6')" aria-label="Прослушать"><span class="la-play">▶</span><span class="la-pause">⏸</span></button>
+                        <div class="la-seek" onclick="laSeek(event, 'role-audio-6')"></div>
+                        <div class="la-time">0:00</div>
+                        <div class="la-mobile-bar" onclick="laSeekMobile(event, 'role-audio-6')"><div class="la-mobile-fill"></div></div>
+                    </div>
+                </div>
 
                 <p>Современный диспетчер использует множество инструментов для эффективной работы. Вот актуальные цены и
                     рекомендации на 2024 год.</p>
@@ -2067,17 +2101,12 @@
                     </div>
                 </div>
 
-                <!-- Детальная информация об инструментах (скрыта по умолчанию) -->
-                <div id="tool-details"
-                    style="display: none; margin-top: 25px; background: linear-gradient(135deg, rgba(249, 115, 22, 0.08), rgba(251, 146, 60, 0.08)); border: 2px solid rgba(249, 115, 22, 0.3); border-radius: 16px; padding: 30px;">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h4 id="tool-detail-title" style="color: #f97316; font-size: 24px; margin: 0;"></h4>
-                        <button onclick="closeToolDetails()"
-                            style="background: rgba(249, 115, 22, 0.2); border: 1px solid rgba(249, 115, 22, 0.4); color: #f97316; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">✕
-                            Закрыть</button>
+                <!-- Детальная информация об инструментах (плавное раскрытие) -->
+                <div id="tool-details" class="card-detail-panel">
+                    <div class="card-detail-inner">
+                        <h4><span id="tool-detail-title"></span><button class="cdp-close" onclick="closeToolDetails()">✕</button></h4>
+                        <div id="tool-detail-content"></div>
                     </div>
-                    <div id="tool-detail-content" style="color:#e2e8f0; line-height: 1.8;"></div>
                 </div>
 
                 <div class="info-highlight">
@@ -2103,17 +2132,21 @@
 
             <!-- СЕКЦИЯ 7: Реальные кейсы -->
             <section id="cases" class="doc-section fade-in-up">
-                <h2>🚨 Реальные кейсы из практики</h2>
+                <div class="section-audio-wrap">
+                    <h2>🚨 Реальные кейсы из практики</h2>
+                    <div class="la-container">
+                        <svg class="la-ring" viewBox="0 0 70 70"><circle class="la-ring-bg" cx="35" cy="35" r="32"></circle><circle class="la-ring-fill" cx="35" cy="35" r="32"></circle></svg>
+                        <button class="la-btn" onclick="laToggle(this, 'role-audio-7')" aria-label="Прослушать"><span class="la-play">▶</span><span class="la-pause">⏸</span></button>
+                        <div class="la-seek" onclick="laSeek(event, 'role-audio-7')"></div>
+                        <div class="la-time">0:00</div>
+                        <div class="la-mobile-bar" onclick="laSeekMobile(event, 'role-audio-7')"><div class="la-mobile-fill"></div></div>
+                    </div>
+                </div>
 
                 <p>Давайте разберем 3 реальных кейса из практики диспетчеров в 2024 году с пошаговыми решениями.</p>
 
-                <button class="expand-btn" onclick="toggleExpand(this)">
-                    <span class="icon">▼</span>
-                    <span>Посмотреть детальные кейсы с решениями</span>
-                </button>
 
-                <div class="expandable-content">
-                    <div class="content-inner">
+                <div class="content-inner">
                         <h3>Кейс #1: Breakdown в пути - Engine Failure</h3>
 
                         <h4>Ситуация:</h4>
@@ -2292,7 +2325,6 @@
                         <p><strong>Результат:</strong> Груз доставлен вовремя. Broker сохранил доверие. Extra cost
                             $1,100 но избежал TONU ($2,400 loss) и bad reputation. Майк больше не работает с тобой.
                             Lesson learned: всегда имей backup drivers!</p>
-                    </div>
                 </div>
             </section>
 
@@ -2302,14 +2334,14 @@
             </button>
 
             <div class="module-navigation fade-in-up">
-                <a href="glossary.html" class="nav-btn">
+                <a href="glossary.html" class="page-nav-btn">
                     <span class="icon">←</span>
                     <div class="text">
                         <span class="label">Предыдущий модуль</span>
                         <span class="title">📖 Глоссарий терминов</span>
                     </div>
                 </a>
-                <a href="equipment.html" class="nav-btn next">
+                <a href="equipment.html" class="page-nav-btn next">
                     <div class="text">
                         <span class="label">Следующий модуль</span>
                         <span class="title">🚚 Типы оборудования</span>
@@ -2771,49 +2803,89 @@
         // Показать детали функции
         function showFunctionDetails(functionType) {
             const details = functionDetails[functionType];
-            if (details) {
-                document.getElementById('function-detail-title').textContent = details.title;
-                document.getElementById('function-detail-content').innerHTML = details.content;
-                document.getElementById('function-details').style.display = 'block';
-                document.getElementById('function-details').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            const panel = document.getElementById('function-details');
+            if (!details) return;
+            // toggle
+            const isOpen = panel.classList.contains('open');
+            const isSame = panel.dataset.current === functionType;
+            document.querySelectorAll('.function-card').forEach(c => c.classList.remove('active'));
+            if (isOpen && isSame) {
+                panel.classList.remove('open');
+                panel.dataset.current = '';
+                return;
             }
+            document.querySelector(`.function-card[data-function="${functionType}"]`).classList.add('active');
+            document.getElementById('function-detail-title').textContent = details.title;
+            document.getElementById('function-detail-content').innerHTML = details.content;
+            panel.dataset.current = functionType;
+            panel.classList.add('open');
+            setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
         }
 
         // Закрыть детали функции
         function closeFunctionDetails() {
-            document.getElementById('function-details').style.display = 'none';
+            const panel = document.getElementById('function-details');
+            panel.classList.remove('open');
+            panel.dataset.current = '';
+            document.querySelectorAll('.function-card').forEach(c => c.classList.remove('active'));
         }
 
         // Показать детали soft skill
         function showSoftSkillDetails(skillType) {
             const details = softSkillDetails[skillType];
-            if (details) {
-                document.getElementById('soft-skill-detail-title').textContent = details.title;
-                document.getElementById('soft-skill-detail-content').innerHTML = details.content;
-                document.getElementById('soft-skill-details').style.display = 'block';
-                document.getElementById('soft-skill-details').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            const panel = document.getElementById('soft-skill-details');
+            if (!details) return;
+            const isOpen = panel.classList.contains('open');
+            const isSame = panel.dataset.current === skillType;
+            document.querySelectorAll('.soft-skill-card').forEach(c => c.classList.remove('active'));
+            if (isOpen && isSame) {
+                panel.classList.remove('open');
+                panel.dataset.current = '';
+                return;
             }
+            document.querySelector(`.soft-skill-card[data-skill="${skillType}"]`).classList.add('active');
+            document.getElementById('soft-skill-detail-title').textContent = details.title;
+            document.getElementById('soft-skill-detail-content').innerHTML = details.content;
+            panel.dataset.current = skillType;
+            panel.classList.add('open');
+            setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
         }
 
         // Закрыть детали soft skill
         function closeSoftSkillDetails() {
-            document.getElementById('soft-skill-details').style.display = 'none';
+            const panel = document.getElementById('soft-skill-details');
+            panel.classList.remove('open');
+            panel.dataset.current = '';
+            document.querySelectorAll('.soft-skill-card').forEach(c => c.classList.remove('active'));
         }
 
         // Показать детали инструмента
         function showToolDetails(toolType) {
             const details = toolDetails[toolType];
-            if (details) {
-                document.getElementById('tool-detail-title').textContent = details.title;
-                document.getElementById('tool-detail-content').innerHTML = details.content;
-                document.getElementById('tool-details').style.display = 'block';
-                document.getElementById('tool-details').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            const panel = document.getElementById('tool-details');
+            if (!details) return;
+            const isOpen = panel.classList.contains('open');
+            const isSame = panel.dataset.current === toolType;
+            document.querySelectorAll('.tool-card').forEach(c => c.classList.remove('active'));
+            if (isOpen && isSame) {
+                panel.classList.remove('open');
+                panel.dataset.current = '';
+                return;
             }
+            document.querySelector(`.tool-card[data-tool="${toolType}"]`).classList.add('active');
+            document.getElementById('tool-detail-title').textContent = details.title;
+            document.getElementById('tool-detail-content').innerHTML = details.content;
+            panel.dataset.current = toolType;
+            panel.classList.add('open');
+            setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
         }
 
         // Закрыть детали инструмента
         function closeToolDetails() {
-            document.getElementById('tool-details').style.display = 'none';
+            const panel = document.getElementById('tool-details');
+            panel.classList.remove('open');
+            panel.dataset.current = '';
+            document.querySelectorAll('.tool-card').forEach(c => c.classList.remove('active'));
         }
 
         // Инициализация при загрузке
@@ -2855,7 +2927,17 @@
             }
         });
     </script>
-    <link rel="stylesheet" href="../course-navigation.css">
+        <!-- Audio Elements -->
+    <audio id="role-audio-1" src="../audio/role-section-1.mp3" data-duration="84" preload="metadata"></audio>
+    <audio id="role-audio-2" src="../audio/role-section-2.mp3" data-duration="121" preload="metadata"></audio>
+    <audio id="role-audio-3" src="../audio/role-section-3.mp3" data-duration="191" preload="metadata"></audio>
+    <audio id="role-audio-4" src="../audio/role-section-4.mp3" data-duration="188" preload="metadata"></audio>
+    <audio id="role-audio-5" src="../audio/role-section-5.mp3" data-duration="165" preload="metadata"></audio>
+    <audio id="role-audio-6" src="../audio/role-section-6.mp3" data-duration="148" preload="metadata"></audio>
+    <audio id="role-audio-7" src="../audio/role-section-7.mp3" data-duration="177" preload="metadata"></audio>
+    <script src="../lesson-audio.js?v=3"></script>
+
+<link rel="stylesheet" href="../course-navigation.css">
     <script src="../course-navigation.js"></script>
     <link rel="stylesheet" href="../scroll-to-top.css">
     <script src="../scroll-to-top.js"></script>

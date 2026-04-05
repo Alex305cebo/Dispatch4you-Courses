@@ -1,0 +1,281 @@
+/* ===== LESSON AUDIO PLAYER (как в 12 модулях) ===== */
+
+/* Обёртка: заголовок + кнопка аудио */
+.section-audio-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+.section-audio-wrap h2 {
+    margin-bottom: 0 !important;
+    flex: 1;
+    min-width: 0;
+}
+
+/* Контейнер кнопки */
+.la-container {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    flex-shrink: 0;
+}
+
+/* Кнопка play/pause */
+.la-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+    z-index: 2;
+    position: relative;
+}
+.la-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 35px rgba(255, 107, 107, 0.5);
+}
+.la-btn .la-play {
+    font-size: 24px;
+    color: white;
+    display: block;
+}
+.la-btn .la-pause {
+    font-size: 20px;
+    color: white;
+    display: none;
+}
+.la-btn.playing .la-play { display: none; }
+.la-btn.playing .la-pause { display: block; }
+.la-btn.playing {
+    animation: laPulse 2s ease infinite;
+}
+@keyframes laPulse {
+    0%, 100% { box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3); }
+    50% { box-shadow: 0 4px 25px rgba(255, 107, 107, 0.6); }
+}
+
+/* SVG кольцо прогресса */
+.la-ring {
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    width: 70px;
+    height: 70px;
+    transform: rotate(-90deg);
+    z-index: 1;
+    pointer-events: none;
+}
+.la-ring-bg {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.1);
+    stroke-width: 4;
+}
+.la-ring-fill {
+    fill: none;
+    stroke: #ff6b6b;
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-dasharray: 201.06;
+    stroke-dashoffset: 201.06;
+    transition: stroke-dashoffset 0.1s ease;
+}
+
+/* Кликабельная зона для перемотки по кольцу — только когда играет */
+.la-seek {
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 3;
+    display: none;
+    pointer-events: none;
+}
+.la-container.playing .la-seek {
+    display: block;
+    pointer-events: auto;
+}
+
+/* Кнопка поверх seek — клик по центру всегда идёт на кнопку */
+.la-btn {
+    z-index: 4 !important;
+}
+
+/* Время */
+.la-time {
+    position: absolute;
+    bottom: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: #94a3b8;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    font-weight: 500;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.la-container:hover .la-time,
+.la-container.playing .la-time {
+    opacity: 1;
+}
+
+/* Мобильный прогресс-бар */
+.la-mobile-bar {
+    display: none;
+    position: absolute;
+    bottom: -32px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    cursor: pointer;
+    overflow: hidden;
+}
+.la-mobile-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+    border-radius: 2px;
+    transition: width 0.1s ease;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .la-container { width: 50px; height: 50px; }
+    .la-btn { width: 50px; height: 50px; }
+    .la-btn .la-play { font-size: 20px; }
+    .la-btn .la-pause { font-size: 16px; }
+    .la-ring { width: 60px; height: 60px; }
+    .la-seek { width: 60px; height: 60px; }
+    .la-mobile-bar { display: block; }
+    .section-audio-wrap { flex-wrap: wrap; }
+}
+
+@media (max-width: 480px) {
+    .la-container { width: 44px; height: 44px; }
+    .la-btn { width: 44px; height: 44px; }
+    .la-btn .la-play { font-size: 18px; }
+    .la-btn .la-pause { font-size: 14px; }
+    .la-ring { width: 54px; height: 54px; }
+    .la-seek { width: 54px; height: 54px; }
+}
+
+/* ===== FIXED AUDIO BAR ===== */
+
+/* Fixed bar — снизу, на горизонтальной позиции кнопки в секции */
+.la-fixed-bar {
+    position: fixed;
+    bottom: 80px;
+    right: max(calc((100vw - 1100px) / 2 + 30px), 30px);
+    top: auto;
+    z-index: 8500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.la-fixed-bar.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+@media (max-width: 768px)  {
+    .la-fixed-bar {
+        right: auto;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        bottom: 70px;
+    }
+    .la-fixed-bar.visible {
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* Счётчик аудио под кнопкой: отдельная строка под временем */
+.la-counter {
+    position: absolute;
+    bottom: -36px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    letter-spacing: 0.3px;
+}
+.la-container:hover .la-counter,
+.la-container.playing .la-counter,
+.la-fixed-slot .la-counter {
+    opacity: 1;
+}
+
+/* Слот для .la-container */
+.la-fixed-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Стрелки */
+.la-arrow {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.09);
+    color: #64748b;
+    font-size: 20px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    padding: 0;
+    flex-shrink: 0;
+    font-family: sans-serif;
+}
+.la-arrow:hover {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.09);
+    color: #64748b;
+    transform: none;
+}
+.la-arrow.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Время всегда видно когда в fixed */
+.la-fixed-slot .la-time {
+    opacity: 1 !important;
+}
+
+@media (max-width: 480px) {
+    .la-fixed-bar { padding: 5px 8px; gap: 6px; }
+    .la-arrow { width: 22px; height: 22px; font-size: 17px; }
+}
