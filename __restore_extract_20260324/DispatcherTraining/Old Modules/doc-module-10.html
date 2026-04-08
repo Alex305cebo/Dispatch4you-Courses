@@ -1,0 +1,2189 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль 10: Технологии и программное обеспечение | DispatcherPro</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="stylesheet" href="../interactive-modules.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #f093fb;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary: #b8c5d6;
+            --text-muted: #8892aa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.1);
+            --audio-primary: #ff6b6b;
+            --audio-secondary: #4ecdc4;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 0;
+            background: rgba(7, 11, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            min-height: 80px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
+            padding-top: 100px;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1), transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(240, 147, 251, 0.1), transparent 50%);
+            animation: none;
+            z-index: -1;
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateX(-3px);
+        }
+
+        .module-info {
+            text-align: center;
+        }
+
+        .module-number {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .module-title {
+            font-size: 18px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Content Blocks */
+        .content-block {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            gap: 20px;
+        }
+
+        .block-title {
+            flex: 1;
+            font-size: 1.8rem;
+            color: var(--primary);
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        /* Audio Play Button with Progress Ring */
+        .audio-container {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .audio-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--audio-primary), var(--audio-secondary));
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .audio-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.5);
+        }
+
+        .audio-btn:active {
+            transform: scale(0.95);
+        }
+
+        .audio-btn .play-icon {
+            font-size: 24px;
+            color: white;
+            margin-left: 3px;
+        }
+
+        .audio-btn .pause-icon {
+            font-size: 20px;
+            color: white;
+            display: none;
+        }
+
+        .audio-btn.playing .play-icon {
+            display: none;
+        }
+
+        .audio-btn.playing .pause-icon {
+            display: block;
+        }
+
+        .audio-btn.playing {
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.7), 0 0 0 10px rgba(255, 107, 107, 0.1);
+            }
+
+            100% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+        }
+
+        /* Progress Ring */
+        .progress-ring {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            transform: rotate(-90deg);
+            z-index: 1;
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 5;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: var(--audio-primary);
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-dasharray: 201.06;
+            stroke-dashoffset: 201.06;
+            transition: stroke-dashoffset 0.1s ease;
+            filter: drop-shadow(0 0 4px rgba(255, 107, 107, 0.5));
+        }
+
+        /* Interactive Progress Ring */
+        .progress-ring-interactive {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            cursor: pointer;
+            z-index: 5;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        .progress-ring-interactive.seekable {
+            pointer-events: auto;
+            background: radial-gradient(circle, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.01) 60%, rgba(255, 255, 255, 0.01) 100%);
+        }
+
+        /* Audio Duration Display */
+        .audio-duration {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .audio-container:hover .audio-duration,
+        .audio-container.playing .audio-duration {
+            opacity: 1;
+        }
+
+        /* Mobile Progress Bar */
+        .mobile-progress-bar {
+            display: none;
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .mobile-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--audio-primary), var(--audio-secondary));
+            border-radius: 2px;
+            transition: width 0.1s ease;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-progress-bar {
+                display: block;
+            }
+
+            .progress-ring,
+            .progress-ring-interactive {
+                display: none !important;
+            }
+
+            .audio-duration {
+                bottom: -50px;
+            }
+        }
+
+        /* Content */
+        .block-content {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .block-content h3 {
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            margin: 25px 0 15px 0;
+        }
+
+        .block-content h4 {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            margin: 20px 0 10px 0;
+        }
+
+        .block-content ul,
+        .block-content ol {
+            margin: 15px 0 15px 25px;
+        }
+
+        .block-content li {
+            margin-bottom: 8px;
+        }
+
+        .block-content strong {
+            color: var(--text-primary);
+        }
+
+        /* Navigation */
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .nav-btn.disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .nav-btn.disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .progress-info {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 10px auto;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            color: var(--text-primary);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: var(--warning);
+            color: var(--text-primary);
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+            color: var(--text-primary);
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--danger);
+            color: var(--text-primary);
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 25px 0;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        th,
+        td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        td {
+            color: var(--text-secondary);
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Calculator Styles */
+        .calculator-block {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid var(--border);
+        }
+
+        .calculator-title {
+            color: var(--primary);
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .calc-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .calc-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .calc-input label {
+            min-width: 120px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .calc-input input {
+            flex: 1;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .calc-input input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .calc-result {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 15px;
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding-top: 90px;
+            }
+
+            .main {
+                padding: 20px 15px;
+            }
+
+            .content-block {
+                padding: 20px 15px;
+                margin-bottom: 20px;
+            }
+
+            .block-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .block-title {
+                font-size: 1.4rem;
+            }
+
+            .audio-container {
+                align-self: center;
+                margin: 0 auto;
+            }
+
+            .lesson-nav {
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px 15px;
+            }
+
+            .nav-btn {
+                width: 100%;
+                min-width: auto;
+            }
+
+            .calc-input {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .calc-input label {
+                min-width: auto;
+            }
+
+            .calc-input input {
+                width: 100%;
+            }
+        }
+    
+        /* Footer Styles */
+        .footer {
+            padding: 80px 0 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 80px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 32px;
+            margin-bottom: 48px;
+        }
+
+        .footer-section h4 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .footer-section p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .footer-section a {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 32px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body data-module-id="module-10">
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <a href="modules-index.html" class="back-btn">
+                <span>РІвЂ С’</span>
+                <span>Р С™ Р СР С•Р ТРЎС“Р В»РЎРЏР С</span>
+            </a>
+            <div class="module-info">
+                <div class="module-number">Р СљР С›Р вЂќР Р€Р вЂєР В¬ 10</div>
+                <div class="module-title">Р В¤Р СР Р…Р В°Р Р…РЎРѓРЎвЂ№ Р С РЎР‚Р В°РЎРѓРЎвЂЎР ВµРЎвЂљРЎвЂ№</div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Block 1: Р С›РЎРѓР Р…Р С•Р Р†РЎвЂ№ РЎвЂћР СР Р…Р В°Р Р…РЎРѓР С•Р Р† Р Р† trucking -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р С›РЎРѓР Р…Р С•Р Р†РЎвЂ№ РЎвЂћР СР Р…Р В°Р Р…РЎРѓР С•Р Р† Р Р† trucking Р СР Р…Р ТРЎС“РЎРѓРЎвЂљРЎР‚Р СР С</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio1')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio1')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio1')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р СџР С•Р Р…Р СР СР В°Р Р…Р СР Вµ РЎвЂћР СР Р…Р В°Р Р…РЎРѓР С•Р Р†РЎвЂ№РЎвЂ¦ Р В°РЎРѓР С—Р ВµР С”РЎвЂљР С•Р Р† trucking Р В±Р СР В·Р Р…Р ВµРЎРѓР В° Р С”РЎР‚Р СРЎвЂљР СРЎвЂЎР ВµРЎРѓР С”Р С Р Р†Р В°Р В¶Р Р…Р С• Р ТР В»РЎРЏ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р С•Р Р†. Р С›РЎвЂљ Р С—РЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…РЎвЂ№РЎвЂ¦
+                    РЎР‚Р В°РЎРѓРЎвЂЎР ВµРЎвЂљР С•Р Р† Р В·Р В°Р Р†Р СРЎРѓР СРЎвЂљ Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљРЎРЉ Р С”Р В°Р В¶Р ТР С•Р С–Р С• Р С–РЎР‚РЎС“Р В·Р В°.</p>
+
+                <h3>Р С™Р В»РЎР‹РЎвЂЎР ВµР Р†РЎвЂ№Р Вµ РЎвЂћР СР Р…Р В°Р Р…РЎРѓР С•Р Р†РЎвЂ№Р Вµ Р С—Р С•Р С”Р В°Р В·Р В°РЎвЂљР ВµР В»Р С:</h3>
+                <ul>
+                    <li><strong>Revenue per mile (RPM)</strong> РІР‚вЂќ Р ТР С•РЎвЂ¦Р С•Р Т РЎРѓ Р СР СР В»Р С</li>
+                    <li><strong>Cost per mile (CPM)</strong> РІР‚вЂќ РЎРѓРЎвЂљР С•Р СР СР С•РЎРѓРЎвЂљРЎРЉ Р СР СР В»Р С</li>
+                    <li><strong>Profit margin</strong> РІР‚вЂќ Р СР В°РЎР‚Р В¶Р В° Р С—РЎР‚Р СР В±РЎвЂ№Р В»Р С</li>
+                    <li><strong>Operating ratio</strong> РІР‚вЂќ Р С•Р С—Р ВµРЎР‚Р В°РЎвЂ Р СР С•Р Р…Р Р…РЎвЂ№Р в„– Р С”Р С•РЎРЊРЎвЂћРЎвЂћР СРЎвЂ Р СР ВµР Р…РЎвЂљ</li>
+                    <li><strong>Deadhead percentage</strong> РІР‚вЂќ Р С—РЎР‚Р С•РЎвЂ Р ВµР Р…РЎвЂљ Р С—РЎС“РЎРѓРЎвЂљР С•Р С–Р С• Р С—РЎР‚Р С•Р В±Р ВµР С–Р В°</li>
+                    <li><strong>Fuel efficiency (MPG)</strong> РІР‚вЂќ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р Т РЎвЂљР С•Р С—Р В»Р СР Р†Р В°</li>
+                </ul>
+
+                <h3>Р С›РЎРѓР Р…Р С•Р Р†Р Р…РЎвЂ№Р Вµ РЎРѓРЎвЂљР В°РЎвЂљРЎРЉР С РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТР С•Р Р†:</h3>
+                <ul>
+                    <li><strong>Fuel costs</strong> РІР‚вЂќ РЎвЂљР С•Р С—Р В»Р СР Р†Р С• (25-30% Р С•РЎвЂљ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТР С•Р Р†)</li>
+                    <li><strong>Driver wages</strong> РІР‚вЂќ Р В·Р В°РЎР‚Р С—Р В»Р В°РЎвЂљР В° Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„– (25-35%)</li>
+                    <li><strong>Truck payments</strong> РІР‚вЂќ Р С—Р В»Р В°РЎвЂљР ВµР В¶Р С Р В·Р В° Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С” (10-15%)</li>
+                    <li><strong>Insurance</strong> РІР‚вЂќ РЎРѓРЎвЂљРЎР‚Р В°РЎвЂ¦Р С•Р Р†Р В°Р Р…Р СР Вµ (5-10%)</li>
+                    <li><strong>Maintenance & repairs</strong> РІР‚вЂќ Р СћР С› Р С РЎР‚Р ВµР СР С•Р Р…РЎвЂљ (8-12%)</li>
+                    <li><strong>Permits & licenses</strong> РІР‚вЂќ РЎР‚Р В°Р В·РЎР‚Р ВµРЎв‚¬Р ВµР Р…Р СРЎРЏ Р С Р В»Р СРЎвЂ Р ВµР Р…Р В·Р СР С (2-3%)</li>
+                </ul>
+
+                <div class="calculator-block">
+                    <div class="calculator-title">СЂСџвЂ™В° Р С™Р В°Р В»РЎРЉР С”РЎС“Р В»РЎРЏРЎвЂљР С•РЎР‚ Р В±Р В°Р В·Р С•Р Р†Р С•Р в„– Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљР С</div>
+                    <div class="calc-input-group">
+                        <div class="calc-input">
+                            <label>Р вЂќР С•РЎвЂ¦Р С•Р Т Р В·Р В° Р С–РЎР‚РЎС“Р В·:</label>
+                            <input type="number" id="revenue" placeholder="3000" oninput="calculateProfit()">
+                            <span>$</span>
+                        </div>
+                        <div class="calc-input">
+                            <label>Р В Р В°РЎРѓРЎРѓРЎвЂљР С•РЎРЏР Р…Р СР Вµ:</label>
+                            <input type="number" id="miles" placeholder="1000" oninput="calculateProfit()">
+                            <span>Р СР СР В»РЎРЉ</span>
+                        </div>
+                        <div class="calc-input">
+                            <label>Р В Р В°РЎРѓРЎвЂ¦Р С•Р ТРЎвЂ№ Р Р…Р В° Р СР СР В»РЎР‹:</label>
+                            <input type="number" id="cpm" placeholder="1.85" step="0.01" oninput="calculateProfit()">
+                            <span>$/Р СР СР В»РЎРЏ</span>
+                        </div>
+                    </div>
+                    <div class="calc-result" id="profitResult">
+                        Р вЂ™Р Р†Р ВµР ТР СРЎвЂљР Вµ Р ТР В°Р Р…Р Р…РЎвЂ№Р Вµ Р ТР В»РЎРЏ РЎР‚Р В°РЎРѓРЎвЂЎР ВµРЎвЂљР В° Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљР С
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>СЂСџвЂњР‰ Р ВР Р…Р ТРЎС“РЎРѓРЎвЂљРЎР‚Р СР В°Р В»РЎРЉР Р…РЎвЂ№Р Вµ РЎРѓРЎвЂљР В°Р Р…Р ТР В°РЎР‚РЎвЂљРЎвЂ№:</strong> Р РЋРЎР‚Р ВµР ТР Р…Р СР в„– RPM Р Р† Р СР Р…Р ТРЎС“РЎРѓРЎвЂљРЎР‚Р СР С: $2.50-3.50/Р СР СР В»РЎРЏ. Р РЋРЎР‚Р ВµР ТР Р…Р СР в„– CPM:
+                    $1.75-2.25/Р СР СР В»РЎРЏ. Р В¦Р ВµР В»Р ВµР Р†Р В°РЎРЏ Р СР В°РЎР‚Р В¶Р В°: 10-15%.
+                </div>
+
+                <!-- Audio Completion Trigger -->
+                <button class="audio-completion-trigger" data-unlocks="quiz-1">
+                    СЂСџР‹В§ Р Р‡ Р В·Р В°Р С”Р С•Р Р…РЎвЂЎР СР В»(Р В°) РЎРѓР В»РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ
+                </button>
+            </div>
+        </div>
+        <!-- Case Study 1: Р С’Р Р…Р В°Р В»Р СР В· Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљР С Р С–РЎР‚РЎС“Р В·Р В° -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">СЂСџвЂ™С</span>
+                <h3 class="case-study-title">Р В Р ВµР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р ВµР в„–РЎРѓ: Р С’Р Р…Р В°Р В»Р СР В· Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљР С Р С–РЎР‚РЎС“Р В·Р В°</h3>
+            </div>
+            <div class="case-study-content">
+                <p>
+                    <strong>Р РЋР СРЎвЂљРЎС“Р В°РЎвЂ Р СРЎРЏ:</strong> Р вЂќР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚ Р С—Р С•Р В»РЎС“РЎвЂЎР СР В» Р ТР Р†Р В° Р С—РЎР‚Р ВµР ТР В»Р С•Р В¶Р ВµР Р…Р СРЎРЏ Р С–РЎР‚РЎС“Р В·Р С•Р Р†:
+                </p>
+                <ul>
+                    <li><strong>Р вЂњРЎР‚РЎС“Р В· A:</strong> Chicago РІвЂ вЂ™ Atlanta, 650 Р СР СР В»РЎРЉ, $2,600 ($4.00/Р СР СР В»РЎРЏ)</li>
+                    <li><strong>Р вЂњРЎР‚РЎС“Р В· B:</strong> Chicago РІвЂ вЂ™ Memphis, 530 Р СР СР В»РЎРЉ, $1,800 ($3.40/Р СР СР В»РЎРЏ)</li>
+                </ul>
+                <p>CPM Р С”Р С•Р СР С—Р В°Р Р…Р СР С: $1.95/Р СР СР В»РЎРЏ. Р ВР В· Atlanta Р ВµРЎРѓРЎвЂљРЎРЉ backhaul Р В·Р В° $1,200 (400 Р СР СР В»РЎРЉ). Р ВР В· Memphis backhaul Р Р…Р ВµРЎвЂљ.</p>
+                <div class="case-study-highlight">
+                    СЂСџвЂ™РЋ Р вЂ™Р С•Р С—РЎР‚Р С•РЎРѓ: Р С™Р В°Р С”Р С•Р в„– Р С–РЎР‚РЎС“Р В· Р Р†РЎвЂ№Р С–Р С•Р ТР Р…Р ВµР Вµ РЎРѓ РЎС“РЎвЂЎР ВµРЎвЂљР С•Р С Р Р†РЎРѓР ВµРЎвЂ¦ РЎвЂћР В°Р С”РЎвЂљР С•РЎР‚Р С•Р Р†? Р В Р В°РЎРѓРЎРѓРЎвЂЎР СРЎвЂљР В°Р в„–РЎвЂљР Вµ Р С•Р В±РЎвЂ°РЎС“РЎР‹ Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљРЎРЉ.
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Check 1 -->
+        <div class="quick-check-block locked" id="quiz-1" data-quiz-id="quiz-10-1" data-correct-answer="b">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">РІСљвЂ¦</span>
+                <h3 class="quick-check-title">Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</h3>
+            </div>
+
+            <div class="quick-check-question">
+                Р С™Р В°Р С”Р В°РЎРЏ РЎРѓРЎвЂљР В°РЎвЂљРЎРЉРЎРЏ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТР С•Р Р† Р С•Р В±РЎвЂ№РЎвЂЎР Р…Р С• РЎРѓР С•РЎРѓРЎвЂљР В°Р Р†Р В»РЎРЏР ВµРЎвЂљ Р Р…Р В°Р СР В±Р С•Р В»РЎРЉРЎв‚¬Р СР в„– Р С—РЎР‚Р С•РЎвЂ Р ВµР Р…РЎвЂљ Р Р† trucking?
+            </div>
+
+            <div class="quick-check-options">
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-1" id="quiz-1-a" value="a">
+                    <label for="quiz-1-a">Fuel costs (РЎвЂљР С•Р С—Р В»Р СР Р†Р С•) РІР‚вЂќ 25-30%</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-1" id="quiz-1-b" value="b">
+                    <label for="quiz-1-b">Driver wages (Р В·Р В°РЎР‚Р С—Р В»Р В°РЎвЂљР В° Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„–) РІР‚вЂќ 25-35%</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-1" id="quiz-1-c" value="c">
+                    <label for="quiz-1-c">Insurance (РЎРѓРЎвЂљРЎР‚Р В°РЎвЂ¦Р С•Р Р†Р В°Р Р…Р СР Вµ) РІР‚вЂќ 5-10%</label>
+                </div>
+            </div>
+
+            <div class="quick-check-feedback">
+                <strong>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С•! РІСљвЂњ</strong>
+                Driver wages (Р В·Р В°РЎР‚Р С—Р В»Р В°РЎвЂљР В° Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„–) Р С•Р В±РЎвЂ№РЎвЂЎР Р…Р С• РЎРѓР С•РЎРѓРЎвЂљР В°Р Р†Р В»РЎРЏР ВµРЎвЂљ 25-35% Р С•РЎвЂљ Р С•Р В±РЎвЂ°Р СРЎвЂ¦ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТР С•Р Р†, РЎвЂЎРЎвЂљР С• Р ТР ВµР В»Р В°Р ВµРЎвЂљ Р ВµР Вµ Р С”РЎР‚РЎС“Р С—Р Р…Р ВµР в„–РЎв‚¬Р ВµР в„–
+                РЎРѓРЎвЂљР В°РЎвЂљРЎРЉР ВµР в„– РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТР С•Р Р† Р Р† trucking.
+            </div>
+        </div>
+        <!-- Block 2: Р В Р В°РЎРѓРЎвЂЎР ВµРЎвЂљ РЎРѓРЎвЂљР С•Р СР СР С•РЎРѓРЎвЂљР С Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·Р С”Р С Р С РЎвЂ Р ВµР Р…Р С•Р С•Р В±РЎР‚Р В°Р В·Р С•Р Р†Р В°Р Р…Р СР Вµ -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р В Р В°РЎРѓРЎвЂЎР ВµРЎвЂљ РЎРѓРЎвЂљР С•Р СР СР С•РЎРѓРЎвЂљР С Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·Р С”Р С Р С РЎвЂ Р ВµР Р…Р С•Р С•Р В±РЎР‚Р В°Р В·Р С•Р Р†Р В°Р Р…Р СР Вµ</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio2')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio2')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio2')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С•Р Вµ РЎвЂ Р ВµР Р…Р С•Р С•Р В±РЎР‚Р В°Р В·Р С•Р Р†Р В°Р Р…Р СР Вµ РІР‚вЂќ Р С”Р В»РЎР‹РЎвЂЎ Р С” Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљР С. Р вЂќР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚ Р ТР С•Р В»Р В¶Р ВµР Р… РЎС“Р СР ВµРЎвЂљРЎРЉ Р В±РЎвЂ№РЎРѓРЎвЂљРЎР‚Р С• РЎР‚Р В°РЎРѓРЎРѓРЎвЂЎР СРЎвЂљР В°РЎвЂљРЎРЉ
+                    Р СР СР Р…Р СР СР В°Р В»РЎРЉР Р…РЎС“РЎР‹ Р С—РЎР‚Р СР ВµР СР В»Р ВµР СРЎС“РЎР‹ РЎРѓРЎвЂљР В°Р Р†Р С”РЎС“.</p>
+
+                <h3>Р СљР ВµРЎвЂљР С•Р ТРЎвЂ№ РЎвЂ Р ВµР Р…Р С•Р С•Р В±РЎР‚Р В°Р В·Р С•Р Р†Р В°Р Р…Р СРЎРЏ:</h3>
+                <ul>
+                    <li><strong>Cost-plus pricing</strong> РІР‚вЂќ CPM + Р СР В°РЎР‚Р В¶Р В° Р С—РЎР‚Р СР В±РЎвЂ№Р В»Р С</li>
+                    <li><strong>Market-based pricing</strong> РІР‚вЂќ Р Р…Р В° Р С•РЎРѓР Р…Р С•Р Р†Р Вµ РЎР‚РЎвЂ№Р Р…Р С•РЎвЂЎР Р…РЎвЂ№РЎвЂ¦ РЎРѓРЎвЂљР В°Р Р†Р С•Р С”</li>
+                    <li><strong>Value-based pricing</strong> РІР‚вЂќ Р Р…Р В° Р С•РЎРѓР Р…Р С•Р Р†Р Вµ РЎвЂ Р ВµР Р…Р Р…Р С•РЎРѓРЎвЂљР С Р ТР В»РЎРЏ Р С”Р В»Р СР ВµР Р…РЎвЂљР В°</li>
+                    <li><strong>Competitive pricing</strong> РІР‚вЂќ Р С”Р С•Р Р…Р С”РЎС“РЎР‚Р ВµР Р…РЎвЂљР Р…Р С•Р Вµ РЎвЂ Р ВµР Р…Р С•Р С•Р В±РЎР‚Р В°Р В·Р С•Р Р†Р В°Р Р…Р СР Вµ</li>
+                </ul>
+
+                <h3>Р В¤Р В°Р С”РЎвЂљР С•РЎР‚РЎвЂ№, Р Р†Р В»Р СРЎРЏРЎР‹РЎвЂ°Р СР Вµ Р Р…Р В° РЎвЂ Р ВµР Р…РЎС“:</h3>
+                <ul>
+                    <li><strong>Distance</strong> РІР‚вЂќ РЎР‚Р В°РЎРѓРЎРѓРЎвЂљР С•РЎРЏР Р…Р СР Вµ Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·Р С”Р С</li>
+                    <li><strong>Fuel prices</strong> РІР‚вЂќ РЎвЂ Р ВµР Р…РЎвЂ№ Р Р…Р В° РЎвЂљР С•Р С—Р В»Р СР Р†Р С•</li>
+                    <li><strong>Seasonality</strong> РІР‚вЂќ РЎРѓР ВµР В·Р С•Р Р…Р Р…Р С•РЎРѓРЎвЂљРЎРЉ РЎРѓР С—РЎР‚Р С•РЎРѓР В°</li>
+                    <li><strong>Lane balance</strong> РІР‚вЂќ Р В±Р В°Р В»Р В°Р Р…РЎРѓ Р С–РЎР‚РЎС“Р В·Р С•Р С—Р С•РЎвЂљР С•Р С”Р С•Р Р†</li>
+                    <li><strong>Cargo type</strong> РІР‚вЂќ РЎвЂљР СР С— Р С–РЎР‚РЎС“Р В·Р В° (hazmat, oversized)</li>
+                    <li><strong>Urgency</strong> РІР‚вЂќ РЎРѓРЎР‚Р С•РЎвЂЎР Р…Р С•РЎРѓРЎвЂљРЎРЉ Р ТР С•РЎРѓРЎвЂљР В°Р Р†Р С”Р С</li>
+                </ul>
+
+                <div class="calculator-block">
+                    <div class="calculator-title">СЂСџВ§В® Р С™Р В°Р В»РЎРЉР С”РЎС“Р В»РЎРЏРЎвЂљР С•РЎР‚ Р СР СР Р…Р СР СР В°Р В»РЎРЉР Р…Р С•Р в„– РЎРѓРЎвЂљР В°Р Р†Р С”Р С</div>
+                    <div class="calc-input-group">
+                        <div class="calc-input">
+                            <label>Р вЂР В°Р В·Р С•Р Р†РЎвЂ№Р в„– CPM:</label>
+                            <input type="number" id="baseCPM" placeholder="1.85" step="0.01"
+                                oninput="calculateMinRate()">
+                            <span>$/Р СР СР В»РЎРЏ</span>
+                        </div>
+                        <div class="calc-input">
+                            <label>Р В¦Р ВµР В»Р ВµР Р†Р В°РЎРЏ Р СР В°РЎР‚Р В¶Р В°:</label>
+                            <input type="number" id="targetMargin" placeholder="15" oninput="calculateMinRate()">
+                            <span>%</span>
+                        </div>
+                        <div class="calc-input">
+                            <label>Р В Р В°РЎРѓРЎРѓРЎвЂљР С•РЎРЏР Р…Р СР Вµ:</label>
+                            <input type="number" id="distance" placeholder="800" oninput="calculateMinRate()">
+                            <span>Р СР СР В»РЎРЉ</span>
+                        </div>
+                        <div class="calc-input">
+                            <label>Deadhead miles:</label>
+                            <input type="number" id="deadhead" placeholder="0" oninput="calculateMinRate()">
+                            <span>Р СР СР В»РЎРЉ</span>
+                        </div>
+                    </div>
+                    <div class="calc-result" id="minRateResult">
+                        Р вЂ™Р Р†Р ВµР ТР СРЎвЂљР Вµ Р ТР В°Р Р…Р Р…РЎвЂ№Р Вµ Р ТР В»РЎРЏ РЎР‚Р В°РЎРѓРЎвЂЎР ВµРЎвЂљР В° Р СР СР Р…Р СР СР В°Р В»РЎРЉР Р…Р С•Р в„– РЎРѓРЎвЂљР В°Р Р†Р С”Р С
+                    </div>
+                </div>
+
+                <h3>Р В¤Р С•РЎР‚Р СРЎС“Р В»Р В° РЎР‚Р В°РЎРѓРЎвЂЎР ВµРЎвЂљР В° Р СР СР Р…Р СР СР В°Р В»РЎРЉР Р…Р С•Р в„– РЎРѓРЎвЂљР В°Р Р†Р С”Р С:</h3>
+                <div class="alert alert-info">
+                    <strong>Р СљР СР Р…Р СР СР В°Р В»РЎРЉР Р…Р В°РЎРЏ РЎРѓРЎвЂљР В°Р Р†Р С”Р В° = (CPM Р“вЂ” (Loaded Miles + Deadhead Miles)) Р“вЂ” (1 + Р СљР В°РЎР‚Р В¶Р В°%)</strong><br>
+                    Р СџРЎР‚Р СР СР ВµРЎР‚: ($1.85 Р“вЂ” (800 + 100)) Р“вЂ” 1.15 = $1,911 Р СР СР Р…Р СР СРЎС“Р С Р В·Р В° Р С–РЎР‚РЎС“Р В·
+                </div>
+
+                <!-- Audio Completion Trigger -->
+                <button class="audio-completion-trigger" data-unlocks="quiz-2">
+                    СЂСџР‹В§ Р Р‡ Р В·Р В°Р С”Р С•Р Р…РЎвЂЎР СР В»(Р В°) РЎРѓР В»РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ
+                </button>
+            </div>
+        </div>
+        <!-- Case Study 2: Р СџР ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚РЎвЂ№ Р С• РЎРѓРЎвЂљР В°Р Р†Р С”Р Вµ -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">СЂСџвЂ™С</span>
+                <h3 class="case-study-title">Р В Р ВµР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р ВµР в„–РЎРѓ: Р СџР ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚РЎвЂ№ Р С• РЎРѓРЎвЂљР В°Р Р†Р С”Р Вµ РЎРѓ Р В±РЎР‚Р С•Р С”Р ВµРЎР‚Р С•Р С</h3>
+            </div>
+            <div class="case-study-content">
+                <p>
+                    <strong>Р РЋР СРЎвЂљРЎС“Р В°РЎвЂ Р СРЎРЏ:</strong> Р вЂРЎР‚Р С•Р С”Р ВµРЎР‚ Р С—РЎР‚Р ВµР ТР В»Р В°Р С–Р В°Р ВµРЎвЂљ Р С–РЎР‚РЎС“Р В· Los Angeles РІвЂ вЂ™ Phoenix, 370 Р СР СР В»РЎРЉ Р В·Р В° $1,200
+                    ($3.24/Р СР СР В»РЎРЏ).
+                </p>
+                <p>
+                    Р вЂ™Р В°РЎв‚¬Р С РЎР‚Р В°РЎРѓРЎвЂЎР ВµРЎвЂљРЎвЂ№: CPM = $1.90, РЎвЂ Р ВµР В»Р ВµР Р†Р В°РЎРЏ Р СР В°РЎР‚Р В¶Р В° = 12%, Р Р…Р ВµРЎвЂљ backhaul Р СР В· Phoenix (200 Р СР СР В»РЎРЉ deadhead Р ТР С•
+                    РЎРѓР В»Р ВµР ТРЎС“РЎР‹РЎвЂ°Р ВµР С–Р С• Р С–РЎР‚РЎС“Р В·Р В°).
+                </p>
+                <div class="case-study-highlight">
+                    СЂСџвЂ™РЋ Р вЂ™Р С•Р С—РЎР‚Р С•РЎРѓ: Р СџРЎР‚Р СР Р…Р СР СР В°РЎвЂљРЎРЉ Р В»Р С Р С–РЎР‚РЎС“Р В· Р С—Р С• Р С—РЎР‚Р ВµР ТР В»Р С•Р В¶Р ВµР Р…Р Р…Р С•Р в„– РЎРѓРЎвЂљР В°Р Р†Р С”Р Вµ? Р С™Р В°Р С”РЎС“РЎР‹ Р С”Р С•Р Р…РЎвЂљРЎР‚-РЎРѓРЎвЂљР В°Р Р†Р С”РЎС“ Р С—РЎР‚Р ВµР ТР В»Р С•Р В¶Р СРЎвЂљРЎРЉ?
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Check 2 -->
+        <div class="quick-check-block locked" id="quiz-2" data-quiz-id="quiz-10-2" data-correct-answer="c">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">РІСљвЂ¦</span>
+                <h3 class="quick-check-title">Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</h3>
+            </div>
+
+            <div class="quick-check-question">
+                Р СџРЎР‚Р С CPM $1.85 Р С РЎвЂ Р ВµР В»Р ВµР Р†Р С•Р в„– Р СР В°РЎР‚Р В¶Р Вµ 15%, Р С”Р В°Р С”Р В°РЎРЏ Р СР СР Р…Р СР СР В°Р В»РЎРЉР Р…Р В°РЎРЏ РЎРѓРЎвЂљР В°Р Р†Р С”Р В° Р В·Р В° 600 Р СР СР В»РЎРЉ?
+            </div>
+
+            <div class="quick-check-options">
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-2" id="quiz-2-a" value="a">
+                    <label for="quiz-2-a">$1,110 ($1.85 Р“вЂ” 600)</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-2" id="quiz-2-b" value="b">
+                    <label for="quiz-2-b">$1,200 (Р С•Р С”РЎР‚РЎС“Р С–Р В»Р ВµР Р…Р Р…Р С•)</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-2" id="quiz-2-c" value="c">
+                    <label for="quiz-2-c">$1,277 ($1.85 Р“вЂ” 600 Р“вЂ” 1.15)</label>
+                </div>
+            </div>
+
+            <div class="quick-check-feedback">
+                <strong>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С•! РІСљвЂњ</strong>
+                $1.85 Р“вЂ” 600 Р СР СР В»РЎРЉ Р“вЂ” 1.15 (Р СР В°РЎР‚Р В¶Р В° 15%) = $1,277 РІР‚вЂќ Р СР СР Р…Р СР СР В°Р В»РЎРЉР Р…Р В°РЎРЏ Р С—РЎР‚Р СР ВµР СР В»Р ВµР СР В°РЎРЏ РЎРѓРЎвЂљР В°Р Р†Р С”Р В° Р ТР В»РЎРЏ Р С—Р С•Р С”РЎР‚РЎвЂ№РЎвЂљР СРЎРЏ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТР С•Р Р† Р С
+                Р С—Р С•Р В»РЎС“РЎвЂЎР ВµР Р…Р СРЎРЏ РЎвЂ Р ВµР В»Р ВµР Р†Р С•Р в„– Р С—РЎР‚Р СР В±РЎвЂ№Р В»Р С.
+            </div>
+        </div>
+        <!-- Block 3: Р Р€Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р СР Вµ РЎвЂљР С•Р С—Р В»Р СР Р†Р Р…РЎвЂ№Р СР С РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТР В°Р СР С -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р Р€Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р СР Вµ РЎвЂљР С•Р С—Р В»Р СР Р†Р Р…РЎвЂ№Р СР С РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТР В°Р СР С</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio3')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio3')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio3')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р СћР С•Р С—Р В»Р СР Р†Р С• РІР‚вЂќ Р Р†РЎвЂљР С•РЎР‚Р В°РЎРЏ Р С—Р С• Р Р†Р ВµР В»Р СРЎвЂЎР СР Р…Р Вµ РЎРѓРЎвЂљР В°РЎвЂљРЎРЉРЎРЏ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТР С•Р Р† (25-30%). Р В­РЎвЂћРЎвЂћР ВµР С”РЎвЂљР СР Р†Р Р…Р С•Р Вµ РЎС“Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р СР Вµ РЎвЂљР С•Р С—Р В»Р СР Р†Р Р…РЎвЂ№Р СР С РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТР В°Р СР С
+                    Р СР С•Р В¶Р ВµРЎвЂљ Р В·Р Р…Р В°РЎвЂЎР СРЎвЂљР ВµР В»РЎРЉР Р…Р С• Р С—Р С•Р Р†РЎвЂ№РЎРѓР СРЎвЂљРЎРЉ Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљРЎРЉ.</p>
+
+                <h3>Р РЋРЎвЂљРЎР‚Р В°РЎвЂљР ВµР С–Р СР С РЎРЊР С”Р С•Р Р…Р С•Р СР СР С РЎвЂљР С•Р С—Р В»Р СР Р†Р В°:</h3>
+                <ul>
+                    <li><strong>Fuel network optimization</strong> РІР‚вЂќ Р СРЎРѓР С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°Р Р…Р СР Вµ РЎРѓР ВµРЎвЂљР ВµР Р†РЎвЂ№РЎвЂ¦ Р С”Р В°РЎР‚РЎвЂљ (Pilot, TA, Loves)</li>
+                    <li><strong>Route optimization</strong> РІР‚вЂќ Р С•Р С—РЎвЂљР СР СР СР В·Р В°РЎвЂ Р СРЎРЏ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р†</li>
+                    <li><strong>Fuel efficiency training</strong> РІР‚вЂќ Р С•Р В±РЎС“РЎвЂЎР ВµР Р…Р СР Вµ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„– РЎРЊР С”Р С•Р Р…Р С•Р СР СРЎвЂЎР Р…Р С•Р СРЎС“ Р Р†Р С•Р В¶Р ТР ВµР Р…Р СРЎР‹</li>
+                    <li><strong>Fuel surcharge management</strong> РІР‚вЂќ РЎС“Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р СР Вµ РЎвЂљР С•Р С—Р В»Р СР Р†Р Р…РЎвЂ№Р СР С Р ТР С•Р С—Р В»Р В°РЎвЂљР В°Р СР С</li>
+                    <li><strong>Fuel price monitoring</strong> РІР‚вЂќ Р СР С•Р Р…Р СРЎвЂљР С•РЎР‚Р СР Р…Р С– РЎвЂ Р ВµР Р… Р Р…Р В° РЎвЂљР С•Р С—Р В»Р СР Р†Р С•</li>
+                </ul>
+
+                <h3>Fuel surcharge РЎР‚Р В°РЎРѓРЎвЂЎР ВµРЎвЂљРЎвЂ№:</h3>
+                <ul>
+                    <li><strong>Base fuel price</strong> РІР‚вЂќ Р В±Р В°Р В·Р С•Р Р†Р В°РЎРЏ РЎвЂ Р ВµР Р…Р В° РЎвЂљР С•Р С—Р В»Р СР Р†Р В° (Р С•Р В±РЎвЂ№РЎвЂЎР Р…Р С• $1.20-1.30)</li>
+                    <li><strong>Current fuel price</strong> РІР‚вЂќ РЎвЂљР ВµР С”РЎС“РЎвЂ°Р В°РЎРЏ РЎвЂ Р ВµР Р…Р В°</li>
+                    <li><strong>Truck MPG</strong> РІР‚вЂќ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р Т РЎвЂљР С•Р С—Р В»Р СР Р†Р В° Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р В°</li>
+                    <li><strong>Surcharge formula</strong> РІР‚вЂќ РЎвЂћР С•РЎР‚Р СРЎС“Р В»Р В° Р ТР С•Р С—Р В»Р В°РЎвЂљРЎвЂ№</li>
+                </ul>
+
+                <div class="calculator-block">
+                    <div class="calculator-title">РІвЂєР… Р С™Р В°Р В»РЎРЉР С”РЎС“Р В»РЎРЏРЎвЂљР С•РЎР‚ fuel surcharge</div>
+                    <div class="calc-input-group">
+                        <div class="calc-input">
+                            <label>Р СћР ВµР С”РЎС“РЎвЂ°Р В°РЎРЏ РЎвЂ Р ВµР Р…Р В° РЎвЂљР С•Р С—Р В»Р СР Р†Р В°:</label>
+                            <input type="number" id="currentFuelPrice" placeholder="3.85" step="0.01"
+                                oninput="calculateFuelSurcharge()">
+                            <span>$/Р С–Р В°Р В»Р В»Р С•Р Р…</span>
+                        </div>
+                        <div class="calc-input">
+                            <label>Р вЂР В°Р В·Р С•Р Р†Р В°РЎРЏ РЎвЂ Р ВµР Р…Р В°:</label>
+                            <input type="number" id="baseFuelPrice" placeholder="1.25" step="0.01"
+                                oninput="calculateFuelSurcharge()">
+                            <span>$/Р С–Р В°Р В»Р В»Р С•Р Р…</span>
+                        </div>
+                        <div class="calc-input">
+                            <label>MPG Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р В°:</label>
+                            <input type="number" id="truckMPG" placeholder="6.5" step="0.1"
+                                oninput="calculateFuelSurcharge()">
+                            <span>Р СР СР В»РЎРЉ/Р С–Р В°Р В»Р В»Р С•Р Р…</span>
+                        </div>
+                        <div class="calc-input">
+                            <label>Р В Р В°РЎРѓРЎРѓРЎвЂљР С•РЎРЏР Р…Р СР Вµ:</label>
+                            <input type="number" id="fuelDistance" placeholder="1000"
+                                oninput="calculateFuelSurcharge()">
+                            <span>Р СР СР В»РЎРЉ</span>
+                        </div>
+                    </div>
+                    <div class="calc-result" id="fuelSurchargeResult">
+                        Р вЂ™Р Р†Р ВµР ТР СРЎвЂљР Вµ Р ТР В°Р Р…Р Р…РЎвЂ№Р Вµ Р ТР В»РЎРЏ РЎР‚Р В°РЎРѓРЎвЂЎР ВµРЎвЂљР В° fuel surcharge
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fuel Network</th>
+                                <th>Р РЋРЎР‚Р ВµР ТР Р…РЎРЏРЎРЏ РЎРѓР С”Р СР ТР С”Р В°</th>
+                                <th>Р СџР С•Р С”РЎР‚РЎвЂ№РЎвЂљР СР Вµ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Pilot Flying J</td>
+                                <td>$0.10-0.25/Р С–Р В°Р В»Р В»Р С•Р Р…</td>
+                                <td>750+ Р В»Р С•Р С”Р В°РЎвЂ Р СР в„–</td>
+                            </tr>
+                            <tr>
+                                <td>TA/Petro</td>
+                                <td>$0.08-0.22/Р С–Р В°Р В»Р В»Р С•Р Р…</td>
+                                <td>600+ Р В»Р С•Р С”Р В°РЎвЂ Р СР в„–</td>
+                            </tr>
+                            <tr>
+                                <td>Love's</td>
+                                <td>$0.05-0.20/Р С–Р В°Р В»Р В»Р С•Р Р…</td>
+                                <td>550+ Р В»Р С•Р С”Р В°РЎвЂ Р СР в„–</td>
+                            </tr>
+                            <tr>
+                                <td>Speedway</td>
+                                <td>$0.03-0.15/Р С–Р В°Р В»Р В»Р С•Р Р…</td>
+                                <td>400+ Р В»Р С•Р С”Р В°РЎвЂ Р СР в„–</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-success">
+                    <strong>СЂСџвЂ™РЋ Р РЋР С•Р Р†Р ВµРЎвЂљ:</strong> Р В­Р С”Р С•Р Р…Р С•Р СР СРЎРЏ $0.15/Р С–Р В°Р В»Р В»Р С•Р Р… Р С—РЎР‚Р С 6.5 MPG = $0.023/Р СР СР В»РЎРЏ. Р СњР В° 100,000 Р СР СР В»РЎРЉ Р Р† Р С–Р С•Р Т
+                    РЎРЊРЎвЂљР С• $2,300 РЎРЊР С”Р С•Р Р…Р С•Р СР СР С!
+                </div>
+
+                <!-- Audio Completion Trigger -->
+                <button class="audio-completion-trigger" data-unlocks="quiz-3">
+                    СЂСџР‹В§ Р Р‡ Р В·Р В°Р С”Р С•Р Р…РЎвЂЎР СР В»(Р В°) РЎРѓР В»РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ
+                </button>
+            </div>
+        </div>
+        <!-- Case Study 3: Fuel surcharge Р С—Р ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚РЎвЂ№ -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">СЂСџвЂ™С</span>
+                <h3 class="case-study-title">Р В Р ВµР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р ВµР в„–РЎРѓ: Р СџР ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚РЎвЂ№ Р С• fuel surcharge</h3>
+            </div>
+            <div class="case-study-content">
+                <p>
+                    <strong>Р РЋР СРЎвЂљРЎС“Р В°РЎвЂ Р СРЎРЏ:</strong> Р С™Р В»Р СР ВµР Р…РЎвЂљ Р С—РЎР‚Р ВµР ТР В»Р В°Р С–Р В°Р ВµРЎвЂљ Р С”Р С•Р Р…РЎвЂљРЎР‚Р В°Р С”РЎвЂљ Р Р…Р В° $2.80/Р СР СР В»РЎРЏ Р В±Р ВµР В· fuel surcharge. Р СћР ВµР С”РЎС“РЎвЂ°Р В°РЎРЏ РЎвЂ Р ВµР Р…Р В°
+                    Р ТР СР В·Р ВµР В»РЎРЏ $4.20/Р С–Р В°Р В»Р В»Р С•Р Р….
+                </p>
+                <p>
+                    Р вЂ™Р В°РЎв‚¬Р С Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р С: 6.2 MPG РЎРѓРЎР‚Р ВµР ТР Р…Р СР в„– РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р Т. Р вЂР В°Р В·Р С•Р Р†Р В°РЎРЏ РЎвЂ Р ВµР Р…Р В° Р Р† Р С”Р С•Р Р…РЎвЂљРЎР‚Р В°Р С”РЎвЂљР Вµ: $1.30/Р С–Р В°Р В»Р В»Р С•Р Р…. Р С™Р В»Р СР ВµР Р…РЎвЂљ Р С•РЎвЂљР С”Р В°Р В·РЎвЂ№Р Р†Р В°Р ВµРЎвЂљРЎРѓРЎРЏ
+                    Р С•РЎвЂљ fuel surcharge.
+                </p>
+                <div class="case-study-highlight">
+                    СЂСџвЂ™РЋ Р вЂ™Р С•Р С—РЎР‚Р С•РЎРѓ: Р С™Р В°Р С”РЎС“РЎР‹ Р СР СР Р…Р СР СР В°Р В»РЎРЉР Р…РЎС“РЎР‹ РЎРѓРЎвЂљР В°Р Р†Р С”РЎС“ Р В·Р В°Р С—РЎР‚Р С•РЎРѓР СРЎвЂљРЎРЉ, РЎвЂЎРЎвЂљР С•Р В±РЎвЂ№ Р С”Р С•Р СР С—Р ВµР Р…РЎРѓР СРЎР‚Р С•Р Р†Р В°РЎвЂљРЎРЉ Р С•РЎвЂљРЎРѓРЎС“РЎвЂљРЎРѓРЎвЂљР Р†Р СР Вµ fuel surcharge?
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Check 3 -->
+        <div class="quick-check-block locked" id="quiz-3" data-quiz-id="quiz-10-3" data-correct-answer="b">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">РІСљвЂ¦</span>
+                <h3 class="quick-check-title">Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</h3>
+            </div>
+
+            <div class="quick-check-question">
+                Р СџРЎР‚Р С РЎвЂ Р ВµР Р…Р Вµ РЎвЂљР С•Р С—Р В»Р СР Р†Р В° $4.00/Р С–Р В°Р В»Р В»Р С•Р Р…, Р В±Р В°Р В·Р С•Р Р†Р С•Р в„– РЎвЂ Р ВµР Р…Р Вµ $1.25 Р С MPG 6.5, Р С”Р В°Р С”Р С•Р в„– fuel surcharge Р Р…Р В° 500 Р СР СР В»РЎРЉ?
+            </div>
+
+            <div class="quick-check-options">
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-3" id="quiz-3-a" value="a">
+                    <label for="quiz-3-a">$150 (Р С—РЎР‚Р С•РЎРѓРЎвЂљР С•Р в„– РЎР‚Р В°РЎРѓРЎвЂЎР ВµРЎвЂљ)</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-3" id="quiz-3-b" value="b">
+                    <label for="quiz-3-b">$211 (($4.00-$1.25) Р“В· 6.5 Р“вЂ” 500)</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-3" id="quiz-3-c" value="c">
+                    <label for="quiz-3-c">$300 (Р В·Р В°Р Р†РЎвЂ№РЎв‚¬Р ВµР Р…Р Р…РЎвЂ№Р в„– РЎР‚Р В°РЎРѓРЎвЂЎР ВµРЎвЂљ)</label>
+                </div>
+            </div>
+
+            <div class="quick-check-feedback">
+                <strong>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С•! РІСљвЂњ</strong>
+                Fuel surcharge = (Р СћР ВµР С”РЎС“РЎвЂ°Р В°РЎРЏ РЎвЂ Р ВµР Р…Р В° - Р вЂР В°Р В·Р С•Р Р†Р В°РЎРЏ РЎвЂ Р ВµР Р…Р В°) Р“В· MPG Р“вЂ” Р СљР СР В»Р С = ($4.00 - $1.25) Р“В· 6.5 Р“вЂ” 500 = $211.
+            </div>
+        </div>
+        <!-- Block 4: Р С’Р Р…Р В°Р В»Р СР В· Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљР С Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р† Р С Р С”Р В»Р СР ВµР Р…РЎвЂљР С•Р Р† -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р С’Р Р…Р В°Р В»Р СР В· Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљР С Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р† Р С Р С”Р В»Р СР ВµР Р…РЎвЂљР С•Р Р†</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio4')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio4')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio4')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р В Р ВµР С–РЎС“Р В»РЎРЏРЎР‚Р Р…РЎвЂ№Р в„– Р В°Р Р…Р В°Р В»Р СР В· Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљР С Р С—Р С•Р СР С•Р С–Р В°Р ВµРЎвЂљ Р Р†РЎвЂ№РЎРЏР Р†Р СРЎвЂљРЎРЉ РЎРѓР В°Р СРЎвЂ№Р Вµ Р Р†РЎвЂ№Р С–Р С•Р ТР Р…РЎвЂ№Р Вµ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљРЎвЂ№ Р С Р С”Р В»Р СР ВµР Р…РЎвЂљР С•Р Р†, Р В° РЎвЂљР В°Р С”Р В¶Р Вµ
+                    Р С•Р С—РЎвЂљР СР СР СР В·Р СРЎР‚Р С•Р Р†Р В°РЎвЂљРЎРЉ Р С•Р С—Р ВµРЎР‚Р В°РЎвЂ Р СР С.</p>
+
+                <h3>Р С™Р В»РЎР‹РЎвЂЎР ВµР Р†РЎвЂ№Р Вµ Р СР ВµРЎвЂљРЎР‚Р СР С”Р С Р ТР В»РЎРЏ Р В°Р Р…Р В°Р В»Р СР В·Р В°:</h3>
+                <ul>
+                    <li><strong>Revenue per loaded mile</strong> РІР‚вЂќ Р ТР С•РЎвЂ¦Р С•Р Т РЎРѓ Р В·Р В°Р С–РЎР‚РЎС“Р В¶Р ВµР Р…Р Р…Р С•Р в„– Р СР СР В»Р С</li>
+                    <li><strong>Total revenue per mile</strong> РІР‚вЂќ Р С•Р В±РЎвЂ°Р СР в„– Р ТР С•РЎвЂ¦Р С•Р Т РЎРѓ Р СР СР В»Р С (Р Р†Р С”Р В»РЎР‹РЎвЂЎР В°РЎРЏ deadhead)</li>
+                    <li><strong>Profit margin by lane</strong> РІР‚вЂќ Р СР В°РЎР‚Р В¶Р В° Р С—Р С• Р Р…Р В°Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р СРЎРЏР С</li>
+                    <li><strong>Customer profitability</strong> РІР‚вЂќ Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљРЎРЉ Р С”Р В»Р СР ВµР Р…РЎвЂљР С•Р Р†</li>
+                    <li><strong>Seasonal trends</strong> РІР‚вЂќ РЎРѓР ВµР В·Р С•Р Р…Р Р…РЎвЂ№Р Вµ РЎвЂљРЎР‚Р ВµР Р…Р ТРЎвЂ№</li>
+                </ul>
+
+                <h3>Р С’Р Р…Р В°Р В»Р СР В· Р С—Р С• Р Р…Р В°Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р СРЎРЏР С (lanes):</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Р СњР В°Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р СР Вµ</th>
+                                <th>Avg RPM</th>
+                                <th>Deadhead %</th>
+                                <th>Profit Margin</th>
+                                <th>Р В Р ВµР в„–РЎвЂљР СР Р…Р С–</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>CA РІвЂ вЂ™ TX</td>
+                                <td>$3.20</td>
+                                <td>8%</td>
+                                <td>18%</td>
+                                <td>СЂСџвЂќТђ Р С›РЎвЂљР В»Р СРЎвЂЎР Р…Р С•</td>
+                            </tr>
+                            <tr>
+                                <td>FL РІвЂ вЂ™ NY</td>
+                                <td>$2.85</td>
+                                <td>15%</td>
+                                <td>12%</td>
+                                <td>РІСљвЂ¦ Р ТђР С•РЎР‚Р С•РЎв‚¬Р С•</td>
+                            </tr>
+                            <tr>
+                                <td>WA РІвЂ вЂ™ CO</td>
+                                <td>$2.40</td>
+                                <td>25%</td>
+                                <td>5%</td>
+                                <td>РІС™В РїСРЏ Р РЋР В»Р В°Р В±Р С•</td>
+                            </tr>
+                            <tr>
+                                <td>ND РІвЂ вЂ™ MT</td>
+                                <td>$2.10</td>
+                                <td>40%</td>
+                                <td>-2%</td>
+                                <td>РІСњРЉ Р Р€Р В±РЎвЂ№РЎвЂљР С•Р С”</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Р В¤Р В°Р С”РЎвЂљР С•РЎР‚РЎвЂ№ Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљР С Р С”Р В»Р СР ВµР Р…РЎвЂљР С•Р Р†:</h3>
+                <ul>
+                    <li><strong>Payment terms</strong> РІР‚вЂќ РЎС“РЎРѓР В»Р С•Р Р†Р СРЎРЏ Р С•Р С—Р В»Р В°РЎвЂљРЎвЂ№ (Quick Pay vs Net 30)</li>
+                    <li><strong>Load consistency</strong> РІР‚вЂќ РЎРѓРЎвЂљР В°Р В±Р СР В»РЎРЉР Р…Р С•РЎРѓРЎвЂљРЎРЉ Р С–РЎР‚РЎС“Р В·Р С•Р С—Р С•РЎвЂљР С•Р С”Р В°</li>
+                    <li><strong>Detention time</strong> РІР‚вЂќ Р Р†РЎР‚Р ВµР СРЎРЏ Р С—РЎР‚Р С•РЎРѓРЎвЂљР С•РЎРЏ</li>
+                    <li><strong>Accessorial charges</strong> РІР‚вЂќ Р ТР С•Р С—Р С•Р В»Р Р…Р СРЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№Р Вµ РЎРѓР В±Р С•РЎР‚РЎвЂ№</li>
+                    <li><strong>Claims history</strong> РІР‚вЂќ Р СРЎРѓРЎвЂљР С•РЎР‚Р СРЎРЏ Р С—РЎР‚Р ВµРЎвЂљР ВµР Р…Р В·Р СР в„–</li>
+                </ul>
+
+                <div class="calculator-block">
+                    <div class="calculator-title">СЂСџвЂњР‰ Р С™Р В°Р В»РЎРЉР С”РЎС“Р В»РЎРЏРЎвЂљР С•РЎР‚ Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљР С Р С”Р В»Р СР ВµР Р…РЎвЂљР В°</div>
+                    <div class="calc-input-group">
+                        <div class="calc-input">
+                            <label>Р СљР ВµРЎРѓРЎРЏРЎвЂЎР Р…РЎвЂ№Р в„– Р ТР С•РЎвЂ¦Р С•Р Т:</label>
+                            <input type="number" id="monthlyRevenue" placeholder="50000"
+                                oninput="calculateCustomerProfit()">
+                            <span>$</span>
+                        </div>
+                        <div class="calc-input">
+                            <label>Р СљР ВµРЎРѓРЎРЏРЎвЂЎР Р…РЎвЂ№Р Вµ Р СР СР В»Р С:</label>
+                            <input type="number" id="monthlyMiles" placeholder="20000"
+                                oninput="calculateCustomerProfit()">
+                            <span>Р СР СР В»РЎРЉ</span>
+                        </div>
+                        <div class="calc-input">
+                            <label>Deadhead %:</label>
+                            <input type="number" id="deadheadPercent" placeholder="12"
+                                oninput="calculateCustomerProfit()">
+                            <span>%</span>
+                        </div>
+                        <div class="calc-input">
+                            <label>Detention hours:</label>
+                            <input type="number" id="detentionHours" placeholder="8"
+                                oninput="calculateCustomerProfit()">
+                            <span>РЎвЂЎР В°РЎРѓР С•Р Р†</span>
+                        </div>
+                    </div>
+                    <div class="calc-result" id="customerProfitResult">
+                        Р вЂ™Р Р†Р ВµР ТР СРЎвЂљР Вµ Р ТР В°Р Р…Р Р…РЎвЂ№Р Вµ Р ТР В»РЎРЏ Р В°Р Р…Р В°Р В»Р СР В·Р В° Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљР С Р С”Р В»Р СР ВµР Р…РЎвЂљР В°
+                    </div>
+                </div>
+
+                <div class="alert alert-warning">
+                    <strong>РІС™В РїСРЏ Р вЂ™Р Р…Р СР СР В°Р Р…Р СР Вµ:</strong> Р С™Р В»Р СР ВµР Р…РЎвЂљРЎвЂ№ РЎРѓ detention Р В±Р С•Р В»Р ВµР Вµ 15% Р С•РЎвЂљ Р С•Р В±РЎвЂ°Р ВµР С–Р С• Р Р†РЎР‚Р ВµР СР ВµР Р…Р С Р С deadhead Р В±Р С•Р В»Р ВµР Вµ 20%
+                    РЎвЂљРЎР‚Р ВµР В±РЎС“РЎР‹РЎвЂљ Р С—Р ВµРЎР‚Р ВµРЎРѓР СР С•РЎвЂљРЎР‚Р В° РЎРѓРЎвЂљР В°Р Р†Р С•Р С”.
+                </div>
+
+                <!-- Audio Completion Trigger -->
+                <button class="audio-completion-trigger" data-unlocks="quiz-4">
+                    СЂСџР‹В§ Р Р‡ Р В·Р В°Р С”Р С•Р Р…РЎвЂЎР СР В»(Р В°) РЎРѓР В»РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ
+                </button>
+            </div>
+        </div>
+        <!-- Case Study 4: Р С’Р Р…Р В°Р В»Р СР В· РЎС“Р В±РЎвЂ№РЎвЂљР С•РЎвЂЎР Р…Р С•Р С–Р С• Р С”Р В»Р СР ВµР Р…РЎвЂљР В° -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">СЂСџвЂ™С</span>
+                <h3 class="case-study-title">Р В Р ВµР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р ВµР в„–РЎРѓ: Р С’Р Р…Р В°Р В»Р СР В· РЎС“Р В±РЎвЂ№РЎвЂљР С•РЎвЂЎР Р…Р С•Р С–Р С• Р С”Р В»Р СР ВµР Р…РЎвЂљР В°</h3>
+            </div>
+            <div class="case-study-content">
+                <p>
+                    <strong>Р РЋР СРЎвЂљРЎС“Р В°РЎвЂ Р СРЎРЏ:</strong> Р С™Р В»Р СР ВµР Р…РЎвЂљ ABC Corp Р ТР В°Р ВµРЎвЂљ 15% Р С•РЎвЂљ Р С•Р В±РЎвЂ°Р ВµР С–Р С• Р С•Р В±РЎР‰Р ВµР СР В°, Р Р…Р С• Р С—Р С•Р С”Р В°Р В·Р В°РЎвЂљР ВµР В»Р С Р Р†РЎвЂ№Р В·РЎвЂ№Р Р†Р В°РЎР‹РЎвЂљ
+                    Р Р†Р С•Р С—РЎР‚Р С•РЎРѓРЎвЂ№:
+                </p>
+                <ul>
+                    <li>Р РЋРЎР‚Р ВµР ТР Р…РЎРЏРЎРЏ РЎРѓРЎвЂљР В°Р Р†Р С”Р В°: $2.60/Р СР СР В»РЎРЏ</li>
+                    <li>Deadhead: 28% (Р Р†РЎвЂ№РЎРѓР С•Р С”Р СР в„– Р С—Р С•Р С”Р В°Р В·Р В°РЎвЂљР ВµР В»РЎРЉ)</li>
+                    <li>Detention: 4 РЎвЂЎР В°РЎРѓР В° Р Р† РЎРѓРЎР‚Р ВµР ТР Р…Р ВµР С Р Р…Р В° Р С–РЎР‚РЎС“Р В·</li>
+                    <li>Payment terms: Net 45 Р ТР Р…Р ВµР в„–</li>
+                    <li>3 claims Р В·Р В° Р С—Р С•РЎРѓР В»Р ВµР ТР Р…Р СР Вµ 6 Р СР ВµРЎРѓРЎРЏРЎвЂ Р ВµР Р†</li>
+                </ul>
+                <div class="case-study-highlight">
+                    СЂСџвЂ™РЋ Р вЂ™Р С•Р С—РЎР‚Р С•РЎРѓ: Р РЋРЎвЂљР С•Р СРЎвЂљ Р В»Р С Р С—РЎР‚Р С•Р ТР С•Р В»Р В¶Р В°РЎвЂљРЎРЉ РЎР‚Р В°Р В±Р С•РЎвЂљР В°РЎвЂљРЎРЉ РЎРѓ РЎРЊРЎвЂљР СР С Р С”Р В»Р СР ВµР Р…РЎвЂљР С•Р С? Р С™Р В°Р С”Р СР Вµ РЎС“РЎРѓР В»Р С•Р Р†Р СРЎРЏ Р С—Р ВµРЎР‚Р ВµРЎРѓР СР С•РЎвЂљРЎР‚Р ВµРЎвЂљРЎРЉ?
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Check 4 -->
+        <div class="quick-check-block locked" id="quiz-4" data-quiz-id="quiz-10-4" data-correct-answer="c">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">РІСљвЂ¦</span>
+                <h3 class="quick-check-title">Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</h3>
+            </div>
+
+            <div class="quick-check-question">
+                Р С™Р В°Р С”Р С•Р в„– РЎвЂћР В°Р С”РЎвЂљР С•РЎР‚ Р СњР вЂў Р Р†Р В»Р СРЎРЏР ВµРЎвЂљ Р Р…Р В°Р С—РЎР‚РЎРЏР СРЎС“РЎР‹ Р Р…Р В° Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљРЎРЉ Р С”Р В»Р СР ВµР Р…РЎвЂљР В°?
+            </div>
+
+            <div class="quick-check-options">
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-4" id="quiz-4-a" value="a">
+                    <label for="quiz-4-a">Detention time (Р Р†РЎР‚Р ВµР СРЎРЏ Р С—РЎР‚Р С•РЎРѓРЎвЂљР С•РЎРЏ)</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-4" id="quiz-4-b" value="b">
+                    <label for="quiz-4-b">Payment terms (РЎС“РЎРѓР В»Р С•Р Р†Р СРЎРЏ Р С•Р С—Р В»Р В°РЎвЂљРЎвЂ№)</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-4" id="quiz-4-c" value="c">
+                    <label for="quiz-4-c">Р В¦Р Р†Р ВµРЎвЂљ Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р С•Р Р† Р С”Р С•Р СР С—Р В°Р Р…Р СР С</label>
+                </div>
+            </div>
+
+            <div class="quick-check-feedback">
+                <strong>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С•! РІСљвЂњ</strong>
+                Р В¦Р Р†Р ВµРЎвЂљ Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р С•Р Р† Р Р…Р Вµ Р Р†Р В»Р СРЎРЏР ВµРЎвЂљ Р Р…Р В° Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљРЎРЉ. Р С™Р В»РЎР‹РЎвЂЎР ВµР Р†РЎвЂ№Р Вµ РЎвЂћР В°Р С”РЎвЂљР С•РЎР‚РЎвЂ№: РЎРѓРЎвЂљР В°Р Р†Р С”Р С, detention, deadhead, payment terms,
+                claims.
+            </div>
+        </div>
+        <!-- Block 5: Р Р€Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р СР Вµ Р ТР ВµР Р…Р ВµР В¶Р Р…РЎвЂ№Р СР С Р С—Р С•РЎвЂљР С•Р С”Р В°Р СР С Р С РЎвЂћР В°Р С”РЎвЂљР С•РЎР‚Р СР Р…Р С– -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р Р€Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р СР Вµ Р ТР ВµР Р…Р ВµР В¶Р Р…РЎвЂ№Р СР С Р С—Р С•РЎвЂљР С•Р С”Р В°Р СР С Р С РЎвЂћР В°Р С”РЎвЂљР С•РЎР‚Р СР Р…Р С–</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio5')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio5')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio5')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р Р€Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р СР Вµ cash flow Р С”РЎР‚Р СРЎвЂљР СРЎвЂЎР ВµРЎРѓР С”Р С Р Р†Р В°Р В¶Р Р…Р С• Р Р† trucking. Р вЂќР В»Р СРЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№Р Вµ payment terms Р СР С•Р С–РЎС“РЎвЂљ РЎРѓР С•Р В·Р ТР В°РЎвЂљРЎРЉ Р С—РЎР‚Р С•Р В±Р В»Р ВµР СРЎвЂ№ РЎРѓ
+                    Р В»Р СР С”Р Р†Р СР ТР Р…Р С•РЎРѓРЎвЂљРЎРЉРЎР‹.</p>
+
+                <h3>Р СџРЎР‚Р С•Р В±Р В»Р ВµР СРЎвЂ№ РЎРѓ Р ТР ВµР Р…Р ВµР В¶Р Р…РЎвЂ№Р СР С Р С—Р С•РЎвЂљР С•Р С”Р В°Р СР С:</h3>
+                <ul>
+                    <li><strong>Net 30-60 payment terms</strong> РІР‚вЂќ Р ТР С•Р В»Р С–Р СР Вµ РЎРѓРЎР‚Р С•Р С”Р С Р С•Р С—Р В»Р В°РЎвЂљРЎвЂ№</li>
+                    <li><strong>Immediate expenses</strong> РІР‚вЂќ Р Р…Р ВµР СР ВµР ТР В»Р ВµР Р…Р Р…РЎвЂ№Р Вµ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТРЎвЂ№ (РЎвЂљР С•Р С—Р В»Р СР Р†Р С•, Р В·Р В°РЎР‚Р С—Р В»Р В°РЎвЂљРЎвЂ№)</li>
+                    <li><strong>Seasonal fluctuations</strong> РІР‚вЂќ РЎРѓР ВµР В·Р С•Р Р…Р Р…РЎвЂ№Р Вµ Р С”Р С•Р В»Р ВµР В±Р В°Р Р…Р СРЎРЏ</li>
+                    <li><strong>Bad debt risk</strong> РІР‚вЂќ РЎР‚Р СРЎРѓР С” Р Р…Р ВµР С—Р В»Р В°РЎвЂљР ВµР В¶Р ВµР в„–</li>
+                    <li><strong>Growth financing</strong> РІР‚вЂќ РЎвЂћР СР Р…Р В°Р Р…РЎРѓР СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ РЎР‚Р С•РЎРѓРЎвЂљР В°</li>
+                </ul>
+
+                <h3>Р В Р ВµРЎв‚¬Р ВµР Р…Р СРЎРЏ Р ТР В»РЎРЏ cash flow:</h3>
+                <ul>
+                    <li><strong>Factoring</strong> РІР‚вЂќ Р С—РЎР‚Р С•Р ТР В°Р В¶Р В° Р ТР ВµР В±Р СРЎвЂљР С•РЎР‚РЎРѓР С”Р С•Р в„– Р В·Р В°Р ТР С•Р В»Р В¶Р ВµР Р…Р Р…Р С•РЎРѓРЎвЂљР С</li>
+                    <li><strong>Quick Pay programs</strong> РІР‚вЂќ Р С—РЎР‚Р С•Р С–РЎР‚Р В°Р СР СРЎвЂ№ Р В±РЎвЂ№РЎРѓРЎвЂљРЎР‚Р С•Р в„– Р С•Р С—Р В»Р В°РЎвЂљРЎвЂ№</li>
+                    <li><strong>Credit lines</strong> РІР‚вЂќ Р С”РЎР‚Р ВµР ТР СРЎвЂљР Р…РЎвЂ№Р Вµ Р В»Р СР Р…Р СР С</li>
+                    <li><strong>Invoice financing</strong> РІР‚вЂќ РЎвЂћР СР Р…Р В°Р Р…РЎРѓР СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ Р С—Р С•Р Т Р СР Р…Р Р†Р С•Р в„–РЎРѓРЎвЂ№</li>
+                </ul>
+
+                <h3>Factoring: Р С”Р В°Р С” РЎРЊРЎвЂљР С• РЎР‚Р В°Р В±Р С•РЎвЂљР В°Р ВµРЎвЂљ</h3>
+                <ol>
+                    <li>Р вЂќР С•РЎРѓРЎвЂљР В°Р Р†Р В»РЎРЏР ВµРЎвЂљР Вµ Р С–РЎР‚РЎС“Р В· Р С Р С—Р С•Р В»РЎС“РЎвЂЎР В°Р ВµРЎвЂљР Вµ POD</li>
+                    <li>Р С›РЎвЂљР С—РЎР‚Р В°Р Р†Р В»РЎРЏР ВµРЎвЂљР Вµ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљРЎвЂ№ РЎвЂћР В°Р С”РЎвЂљР С•РЎР‚Р СР Р…Р С–Р С•Р Р†Р С•Р в„– Р С”Р С•Р СР С—Р В°Р Р…Р СР С</li>
+                    <li>Р СџР С•Р В»РЎС“РЎвЂЎР В°Р ВµРЎвЂљР Вµ 90-95% Р С•РЎвЂљ РЎРѓРЎС“Р СР СРЎвЂ№ Р СР Р…Р Р†Р С•Р в„–РЎРѓР В° Р Р† РЎвЂљР ВµРЎвЂЎР ВµР Р…Р СР Вµ 24 РЎвЂЎР В°РЎРѓР С•Р Р†</li>
+                    <li>Р В¤Р В°Р С”РЎвЂљР С•РЎР‚Р СР Р…Р С–Р С•Р Р†Р В°РЎРЏ Р С”Р С•Р СР С—Р В°Р Р…Р СРЎРЏ РЎРѓР С•Р В±Р СРЎР‚Р В°Р ВµРЎвЂљ Р С•Р С—Р В»Р В°РЎвЂљРЎС“ РЎРѓ Р С”Р В»Р СР ВµР Р…РЎвЂљР В°</li>
+                    <li>Р СџР С•Р В»РЎС“РЎвЂЎР В°Р ВµРЎвЂљР Вµ Р С•РЎРѓРЎвЂљР В°Р Р†РЎв‚¬Р СР ВµРЎРѓРЎРЏ 5-10% Р СР СР Р…РЎС“РЎРѓ Р С”Р С•Р СР СРЎРѓРЎРѓР СРЎРЏ</li>
+                </ol>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Factoring Company</th>
+                                <th>Advance Rate</th>
+                                <th>Fee Range</th>
+                                <th>Р С›РЎРѓР С•Р В±Р ВµР Р…Р Р…Р С•РЎРѓРЎвЂљР С</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>OTR Capital</td>
+                                <td>95%</td>
+                                <td>1.5-3.5%</td>
+                                <td>Fuel advances, No setup fee</td>
+                            </tr>
+                            <tr>
+                                <td>RTS Financial</td>
+                                <td>90-95%</td>
+                                <td>2.0-4.0%</td>
+                                <td>Same-day funding</td>
+                            </tr>
+                            <tr>
+                                <td>Triumph Business Capital</td>
+                                <td>92%</td>
+                                <td>1.8-3.8%</td>
+                                <td>Fuel card program</td>
+                            </tr>
+                            <tr>
+                                <td>Porter Freight Funding</td>
+                                <td>95%</td>
+                                <td>1.2-3.2%</td>
+                                <td>Low rates, good service</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="calculator-block">
+                    <div class="calculator-title">СЂСџвЂ™С– Р С™Р В°Р В»РЎРЉР С”РЎС“Р В»РЎРЏРЎвЂљР С•РЎР‚ РЎРѓРЎвЂљР С•Р СР СР С•РЎРѓРЎвЂљР С РЎвЂћР В°Р С”РЎвЂљР С•РЎР‚Р СР Р…Р С–Р В°</div>
+                    <div class="calc-input-group">
+                        <div class="calc-input">
+                            <label>Р РЋРЎС“Р СР СР В° Р СР Р…Р Р†Р С•Р в„–РЎРѓР В°:</label>
+                            <input type="number" id="invoiceAmount" placeholder="3000" oninput="calculateFactoring()">
+                            <span>$</span>
+                        </div>
+                        <div class="calc-input">
+                            <label>Advance rate:</label>
+                            <input type="number" id="advanceRate" placeholder="95" oninput="calculateFactoring()">
+                            <span>%</span>
+                        </div>
+                        <div class="calc-input">
+                            <label>Factoring fee:</label>
+                            <input type="number" id="factoringFee" placeholder="2.5" step="0.1"
+                                oninput="calculateFactoring()">
+                            <span>%</span>
+                        </div>
+                    </div>
+                    <div class="calc-result" id="factoringResult">
+                        Р вЂ™Р Р†Р ВµР ТР СРЎвЂљР Вµ Р ТР В°Р Р…Р Р…РЎвЂ№Р Вµ Р ТР В»РЎРЏ РЎР‚Р В°РЎРѓРЎвЂЎР ВµРЎвЂљР В° РЎРѓРЎвЂљР С•Р СР СР С•РЎРѓРЎвЂљР С РЎвЂћР В°Р С”РЎвЂљР С•РЎР‚Р СР Р…Р С–Р В°
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>СЂСџвЂ™РЋ Р РЋР С•Р Р†Р ВµРЎвЂљ:</strong> Р В¤Р В°Р С”РЎвЂљР С•РЎР‚Р СР Р…Р С– РЎРѓРЎвЂљР С•Р СРЎвЂљ Р СРЎРѓР С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљРЎРЉ, Р ВµРЎРѓР В»Р С РЎРѓРЎвЂљР С•Р СР СР С•РЎРѓРЎвЂљРЎРЉ (2-4%) Р СР ВµР Р…РЎРЉРЎв‚¬Р Вµ Р С—Р С•РЎвЂљР ВµРЎР‚РЎРЉ Р С•РЎвЂљ
+                    Р В·Р В°Р ТР ВµРЎР‚Р В¶Р ВµР С” Р С•Р С—Р В»Р В°РЎвЂљРЎвЂ№ Р С РЎС“Р С—РЎС“РЎвЂ°Р ВµР Р…Р Р…РЎвЂ№РЎвЂ¦ Р Р†Р С•Р В·Р СР С•Р В¶Р Р…Р С•РЎРѓРЎвЂљР ВµР в„–.
+                </div>
+
+                <!-- Audio Completion Trigger -->
+                <button class="audio-completion-trigger" data-unlocks="quiz-5">
+                    СЂСџР‹В§ Р Р‡ Р В·Р В°Р С”Р С•Р Р…РЎвЂЎР СР В»(Р В°) РЎРѓР В»РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ
+                </button>
+            </div>
+        </div>
+        <!-- Case Study 5: Р вЂ™РЎвЂ№Р В±Р С•РЎР‚ РЎвЂћР В°Р С”РЎвЂљР С•РЎР‚Р СР Р…Р С–Р В° -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">СЂСџвЂ™С</span>
+                <h3 class="case-study-title">Р В Р ВµР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р ВµР в„–РЎРѓ: Р вЂ™РЎвЂ№Р В±Р С•РЎР‚ РЎвЂћР В°Р С”РЎвЂљР С•РЎР‚Р СР Р…Р С–Р С•Р Р†Р С•Р в„– Р С”Р С•Р СР С—Р В°Р Р…Р СР С</h3>
+            </div>
+            <div class="case-study-content">
+                <p>
+                    <strong>Р РЋР СРЎвЂљРЎС“Р В°РЎвЂ Р СРЎРЏ:</strong> Р С™Р С•Р СР С—Р В°Р Р…Р СРЎРЏ РЎР‚Р В°РЎРѓРЎРѓР СР В°РЎвЂљРЎР‚Р СР Р†Р В°Р ВµРЎвЂљ Р ТР Р†Р В° Р С—РЎР‚Р ВµР ТР В»Р С•Р В¶Р ВµР Р…Р СРЎРЏ РЎвЂћР В°Р С”РЎвЂљР С•РЎР‚Р СР Р…Р С–Р В°:
+                </p>
+                <ul>
+                    <li><strong>Р С™Р С•Р СР С—Р В°Р Р…Р СРЎРЏ A:</strong> 95% advance, 1.8% fee, $50 setup fee</li>
+                    <li><strong>Р С™Р С•Р СР С—Р В°Р Р…Р СРЎРЏ B:</strong> 90% advance, 2.2% fee, no setup fee, fuel advances</li>
+                </ul>
+                <p>Р СљР ВµРЎРѓРЎРЏРЎвЂЎР Р…РЎвЂ№Р в„– Р С•Р В±РЎР‰Р ВµР С: $150,000. Р РЋРЎР‚Р ВµР ТР Р…Р СР в„– Р СР Р…Р Р†Р С•Р в„–РЎРѓ: $2,500. Р СњРЎС“Р В¶Р Р…РЎвЂ№ Р В»Р С fuel advances?</p>
+                <div class="case-study-highlight">
+                    СЂСџвЂ™РЋ Р вЂ™Р С•Р С—РЎР‚Р С•РЎРѓ: Р С™Р В°Р С”Р С•Р Вµ Р С—РЎР‚Р ВµР ТР В»Р С•Р В¶Р ВµР Р…Р СР Вµ Р Р†РЎвЂ№Р С–Р С•Р ТР Р…Р ВµР Вµ? Р С™Р В°Р С”Р СР Вµ РЎвЂћР В°Р С”РЎвЂљР С•РЎР‚РЎвЂ№ Р С”РЎР‚Р С•Р СР Вµ РЎвЂ Р ВµР Р…РЎвЂ№ Р Р†Р В°Р В¶Р Р…Р С• РЎС“РЎвЂЎР ВµРЎРѓРЎвЂљРЎРЉ?
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Check 5 -->
+        <div class="quick-check-block locked" id="quiz-5" data-quiz-id="quiz-10-5" data-correct-answer="b">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">РІСљвЂ¦</span>
+                <h3 class="quick-check-title">Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</h3>
+            </div>
+
+            <div class="quick-check-question">
+                Р СџРЎР‚Р С Р СР Р…Р Р†Р С•Р в„–РЎРѓР Вµ $2,000, advance rate 95% Р С fee 2.5%, РЎРѓР С”Р С•Р В»РЎРЉР С”Р С• Р С—Р С•Р В»РЎС“РЎвЂЎР СРЎвЂљР Вµ РЎРѓРЎР‚Р В°Р В·РЎС“?
+            </div>
+
+            <div class="quick-check-options">
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-5" id="quiz-5-a" value="a">
+                    <label for="quiz-5-a">$1,900 (95% Р С•РЎвЂљ РЎРѓРЎС“Р СР СРЎвЂ№)</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-5" id="quiz-5-b" value="b">
+                    <label for="quiz-5-b">$1,850 (95% Р СР СР Р…РЎС“РЎРѓ fee РЎРѓ Р С•Р В±РЎвЂ°Р ВµР в„– РЎРѓРЎС“Р СР СРЎвЂ№)</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-5" id="quiz-5-c" value="c">
+                    <label for="quiz-5-c">$1,950 (Р В±Р ВµР В· РЎС“РЎвЂЎР ВµРЎвЂљР В° fee)</label>
+                </div>
+            </div>
+
+            <div class="quick-check-feedback">
+                <strong>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С•! РІСљвЂњ</strong>
+                Advance: $2,000 Р“вЂ” 95% = $1,900. Fee: $2,000 Р“вЂ” 2.5% = $50. Р С™ Р С—Р С•Р В»РЎС“РЎвЂЎР ВµР Р…Р СРЎР‹ РЎРѓРЎР‚Р В°Р В·РЎС“: $1,900 - $50 = $1,850.
+            </div>
+        </div>
+        <!-- Block 6: Р В¤Р СР Р…Р В°Р Р…РЎРѓР С•Р Р†Р С•Р Вµ Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ Р С Р В±РЎР‹Р ТР В¶Р ВµРЎвЂљР СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р В¤Р СР Р…Р В°Р Р…РЎРѓР С•Р Р†Р С•Р Вµ Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ Р С Р В±РЎР‹Р ТР В¶Р ВµРЎвЂљР СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio6')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio6')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio6')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р В­РЎвЂћРЎвЂћР ВµР С”РЎвЂљР СР Р†Р Р…Р С•Р Вµ РЎвЂћР СР Р…Р В°Р Р…РЎРѓР С•Р Р†Р С•Р Вµ Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ Р С—Р С•Р СР С•Р С–Р В°Р ВµРЎвЂљ Р С—РЎР‚Р ВµР ТР Р†Р СР ТР ВµРЎвЂљРЎРЉ Р С—РЎР‚Р С•Р В±Р В»Р ВµР СРЎвЂ№, Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°РЎвЂљРЎРЉ РЎР‚Р С•РЎРѓРЎвЂљ Р С Р С—РЎР‚Р СР Р…Р СР СР В°РЎвЂљРЎРЉ
+                    Р С•Р В±Р С•РЎРѓР Р…Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№Р Вµ РЎР‚Р ВµРЎв‚¬Р ВµР Р…Р СРЎРЏ.</p>
+
+                <h3>Р С™Р В»РЎР‹РЎвЂЎР ВµР Р†РЎвЂ№Р Вµ РЎРЊР В»Р ВµР СР ВµР Р…РЎвЂљРЎвЂ№ РЎвЂћР СР Р…Р В°Р Р…РЎРѓР С•Р Р†Р С•Р С–Р С• Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СРЎРЏ:</h3>
+                <ul>
+                    <li><strong>Revenue forecasting</strong> РІР‚вЂќ Р С—РЎР‚Р С•Р С–Р Р…Р С•Р В·Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ Р ТР С•РЎвЂ¦Р С•Р ТР С•Р Р†</li>
+                    <li><strong>Expense budgeting</strong> РІР‚вЂќ Р В±РЎР‹Р ТР В¶Р ВµРЎвЂљР СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТР С•Р Р†</li>
+                    <li><strong>Cash flow projections</strong> РІР‚вЂќ Р С—РЎР‚Р С•Р С–Р Р…Р С•Р В· Р ТР ВµР Р…Р ВµР В¶Р Р…РЎвЂ№РЎвЂ¦ Р С—Р С•РЎвЂљР С•Р С”Р С•Р Р†</li>
+                    <li><strong>Capital expenditure planning</strong> РІР‚вЂќ Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ Р С”Р В°Р С—Р СРЎвЂљР В°Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ Р В·Р В°РЎвЂљРЎР‚Р В°РЎвЂљ</li>
+                    <li><strong>Scenario analysis</strong> РІР‚вЂќ Р В°Р Р…Р В°Р В»Р СР В· РЎРѓРЎвЂ Р ВµР Р…Р В°РЎР‚Р СР ВµР Р†</li>
+                </ul>
+
+                <h3>Р СљР ВµРЎРѓРЎРЏРЎвЂЎР Р…РЎвЂ№Р в„– Р В±РЎР‹Р ТР В¶Р ВµРЎвЂљ trucking Р С”Р С•Р СР С—Р В°Р Р…Р СР С:</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Р РЋРЎвЂљР В°РЎвЂљРЎРЉРЎРЏ</th>
+                                <th>Р вЂРЎР‹Р ТР В¶Р ВµРЎвЂљ</th>
+                                <th>Р В¤Р В°Р С”РЎвЂљ</th>
+                                <th>Р С›РЎвЂљР С”Р В»Р С•Р Р…Р ВµР Р…Р СР Вµ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Р вЂќР С›Р ТђР С›Р вЂќР В«</strong></td>
+                                <td><strong>$180,000</strong></td>
+                                <td><strong>$175,000</strong></td>
+                                <td><strong>-$5,000</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Driver wages</td>
+                                <td>$54,000</td>
+                                <td>$52,500</td>
+                                <td>+$1,500</td>
+                            </tr>
+                            <tr>
+                                <td>Fuel costs</td>
+                                <td>$45,000</td>
+                                <td>$48,000</td>
+                                <td>-$3,000</td>
+                            </tr>
+                            <tr>
+                                <td>Truck payments</td>
+                                <td>$18,000</td>
+                                <td>$18,000</td>
+                                <td>$0</td>
+                            </tr>
+                            <tr>
+                                <td>Insurance</td>
+                                <td>$12,000</td>
+                                <td>$12,500</td>
+                                <td>-$500</td>
+                            </tr>
+                            <tr>
+                                <td>Maintenance</td>
+                                <td>$15,000</td>
+                                <td>$18,500</td>
+                                <td>-$3,500</td>
+                            </tr>
+                            <tr>
+                                <td>Other expenses</td>
+                                <td>$8,000</td>
+                                <td>$7,200</td>
+                                <td>+$800</td>
+                            </tr>
+                            <tr>
+                                <td><strong>NET PROFIT</strong></td>
+                                <td><strong>$28,000</strong></td>
+                                <td><strong>$18,300</strong></td>
+                                <td><strong>-$9,700</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>KPI Р ТР В»РЎРЏ РЎвЂћР СР Р…Р В°Р Р…РЎРѓР С•Р Р†Р С•Р С–Р С• Р С”Р С•Р Р…РЎвЂљРЎР‚Р С•Р В»РЎРЏ:</h3>
+                <ul>
+                    <li><strong>Operating Ratio</strong> РІР‚вЂќ (Р В Р В°РЎРѓРЎвЂ¦Р С•Р ТРЎвЂ№ Р“В· Р вЂќР С•РЎвЂ¦Р С•Р ТРЎвЂ№) Р“вЂ” 100%</li>
+                    <li><strong>Profit Margin</strong> РІР‚вЂќ (Р СџРЎР‚Р СР В±РЎвЂ№Р В»РЎРЉ Р“В· Р вЂќР С•РЎвЂ¦Р С•Р ТРЎвЂ№) Р“вЂ” 100%</li>
+                    <li><strong>Revenue per truck per month</strong> РІР‚вЂќ Р ТР С•РЎвЂ¦Р С•Р Т Р Р…Р В° Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”</li>
+                    <li><strong>Cost per mile</strong> РІР‚вЂќ РЎРѓРЎвЂљР С•Р СР СР С•РЎРѓРЎвЂљРЎРЉ Р СР СР В»Р С</li>
+                    <li><strong>Days Sales Outstanding (DSO)</strong> РІР‚вЂќ РЎРѓРЎР‚Р ВµР ТР Р…Р СР в„– Р С—Р ВµРЎР‚Р СР С•Р Т РЎРѓР В±Р С•РЎР‚Р В° Р ТР ВµР В±Р СРЎвЂљР С•РЎР‚Р С”Р С</li>
+                </ul>
+
+                <div class="calculator-block">
+                    <div class="calculator-title">СЂСџвЂњв‚¬ Р С™Р В°Р В»РЎРЉР С”РЎС“Р В»РЎРЏРЎвЂљР С•РЎР‚ Operating Ratio</div>
+                    <div class="calc-input-group">
+                        <div class="calc-input">
+                            <label>Р СљР ВµРЎРѓРЎРЏРЎвЂЎР Р…РЎвЂ№Р Вµ Р ТР С•РЎвЂ¦Р С•Р ТРЎвЂ№:</label>
+                            <input type="number" id="monthlyRevenue2" placeholder="180000"
+                                oninput="calculateOperatingRatio()">
+                            <span>$</span>
+                        </div>
+                        <div class="calc-input">
+                            <label>Р СљР ВµРЎРѓРЎРЏРЎвЂЎР Р…РЎвЂ№Р Вµ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТРЎвЂ№:</label>
+                            <input type="number" id="monthlyExpenses" placeholder="152000"
+                                oninput="calculateOperatingRatio()">
+                            <span>$</span>
+                        </div>
+                    </div>
+                    <div class="calc-result" id="operatingRatioResult">
+                        Р вЂ™Р Р†Р ВµР ТР СРЎвЂљР Вµ Р ТР В°Р Р…Р Р…РЎвЂ№Р Вµ Р ТР В»РЎРЏ РЎР‚Р В°РЎРѓРЎвЂЎР ВµРЎвЂљР В° Operating Ratio
+                    </div>
+                </div>
+
+                <div class="alert alert-success">
+                    <strong>СЂСџР‹Р‡ Р В¦Р ВµР В»РЎРЉ Р СР С•Р ТРЎС“Р В»РЎРЏ:</strong> Р СћР ВµР С—Р ВµРЎР‚РЎРЉ Р Р†РЎвЂ№ Р С—Р С•Р Р…Р СР СР В°Р ВµРЎвЂљР Вµ РЎвЂћР СР Р…Р В°Р Р…РЎРѓР С•Р Р†РЎвЂ№Р Вµ Р В°РЎРѓР С—Р ВµР С”РЎвЂљРЎвЂ№ trucking Р В±Р СР В·Р Р…Р ВµРЎРѓР В°, РЎС“Р СР ВµР ВµРЎвЂљР Вµ
+                    РЎР‚Р В°РЎРѓРЎРѓРЎвЂЎР СРЎвЂљРЎвЂ№Р Р†Р В°РЎвЂљРЎРЉ Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљРЎРЉ Р С РЎС“Р С—РЎР‚Р В°Р Р†Р В»РЎРЏРЎвЂљРЎРЉ Р ТР ВµР Р…Р ВµР В¶Р Р…РЎвЂ№Р СР С Р С—Р С•РЎвЂљР С•Р С”Р В°Р СР С. Р В­РЎвЂљР С Р В·Р Р…Р В°Р Р…Р СРЎРЏ Р С—Р С•Р СР С•Р С–РЎС“РЎвЂљ Р С—РЎР‚Р СР Р…Р СР СР В°РЎвЂљРЎРЉ Р С•Р В±Р С•РЎРѓР Р…Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№Р Вµ
+                    РЎР‚Р ВµРЎв‚¬Р ВµР Р…Р СРЎРЏ.
+                </div>
+
+                <!-- Audio Completion Trigger -->
+                <button class="audio-completion-trigger" data-unlocks="quiz-6">
+                    СЂСџР‹В§ Р Р‡ Р В·Р В°Р С”Р С•Р Р…РЎвЂЎР СР В»(Р В°) РЎРѓР В»РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ
+                </button>
+            </div>
+        </div>
+        <!-- Case Study 6: Р В¤Р СР Р…Р В°Р Р…РЎРѓР С•Р Р†РЎвЂ№Р в„– Р С”РЎР‚Р СР В·Р СРЎРѓ -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">СЂСџвЂ™С</span>
+                <h3 class="case-study-title">Р В Р ВµР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р ВµР в„–РЎРѓ: Р В¤Р СР Р…Р В°Р Р…РЎРѓР С•Р Р†РЎвЂ№Р в„– Р С”РЎР‚Р СР В·Р СРЎРѓ Р С”Р С•Р СР С—Р В°Р Р…Р СР С</h3>
+            </div>
+            <div class="case-study-content">
+                <p>
+                    <strong>Р РЋР СРЎвЂљРЎС“Р В°РЎвЂ Р СРЎРЏ:</strong> Р С™Р С•Р СР С—Р В°Р Р…Р СРЎРЏ РЎРѓРЎвЂљР С•Р В»Р С”Р Р…РЎС“Р В»Р В°РЎРѓРЎРЉ РЎРѓ РЎвЂћР СР Р…Р В°Р Р…РЎРѓР С•Р Р†РЎвЂ№Р СР С Р С—РЎР‚Р С•Р В±Р В»Р ВµР СР В°Р СР С:
+                </p>
+                <ul>
+                    <li>Operating Ratio Р Р†РЎвЂ№РЎР‚Р С•РЎРѓ Р ТР С• 98% (Р В±РЎвЂ№Р В»Р С• 85%)</li>
+                    <li>Cash flow Р С•РЎвЂљРЎР‚Р СРЎвЂ Р В°РЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№Р в„– 3 Р СР ВµРЎРѓРЎРЏРЎвЂ Р В° Р С—Р С•Р ТРЎР‚РЎРЏР Т</li>
+                    <li>Р вЂќР Р†Р В° Р С”РЎР‚РЎС“Р С—Р Р…РЎвЂ№РЎвЂ¦ Р С”Р В»Р СР ВµР Р…РЎвЂљР В° Р В·Р В°Р ТР ВµРЎР‚Р В¶Р СР Р†Р В°РЎР‹РЎвЂљ Р С•Р С—Р В»Р В°РЎвЂљРЎС“ Р Р…Р В° 60+ Р ТР Р…Р ВµР в„–</li>
+                    <li>Р В¦Р ВµР Р…РЎвЂ№ Р Р…Р В° РЎвЂљР С•Р С—Р В»Р СР Р†Р С• Р Р†РЎвЂ№РЎР‚Р С•РЎРѓР В»Р С Р Р…Р В° 25%</li>
+                    <li>Р СњРЎС“Р В¶Р Р…Р С• РЎРѓРЎР‚Р С•РЎвЂЎР Р…Р С• Р Р…Р В°Р в„–РЎвЂљР С $50,000 Р ТР В»РЎРЏ Р С—Р С•Р С”РЎР‚РЎвЂ№РЎвЂљР СРЎРЏ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТР С•Р Р†</li>
+                </ul>
+                <div class="case-study-highlight">
+                    СЂСџвЂ™РЋ Р вЂ™Р С•Р С—РЎР‚Р С•РЎРѓ: Р С™Р В°Р С”Р СР Вµ РЎРЊР С”РЎРѓРЎвЂљРЎР‚Р ВµР Р…Р Р…РЎвЂ№Р Вµ Р СР ВµРЎР‚РЎвЂ№ Р С—РЎР‚Р ВµР ТР С—РЎР‚Р СР Р…РЎРЏРЎвЂљРЎРЉ? Р С™Р В°Р С” Р Р†Р С•РЎРѓРЎРѓРЎвЂљР В°Р Р…Р С•Р Р†Р СРЎвЂљРЎРЉ РЎвЂћР СР Р…Р В°Р Р…РЎРѓР С•Р Р†РЎС“РЎР‹ РЎРѓРЎвЂљР В°Р В±Р СР В»РЎРЉР Р…Р С•РЎРѓРЎвЂљРЎРЉ?
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Check 6 -->
+        <div class="quick-check-block locked" id="quiz-6" data-quiz-id="quiz-10-6" data-correct-answer="a">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">РІСљвЂ¦</span>
+                <h3 class="quick-check-title">Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</h3>
+            </div>
+
+            <div class="quick-check-question">
+                Р СџРЎР‚Р С Р ТР С•РЎвЂ¦Р С•Р ТР В°РЎвЂ¦ $200,000 Р С РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТР В°РЎвЂ¦ $170,000, Р С”Р В°Р С”Р С•Р в„– Operating Ratio?
+            </div>
+
+            <div class="quick-check-options">
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-6" id="quiz-6-a" value="a">
+                    <label for="quiz-6-a">85% ($170,000 Р“В· $200,000)</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-6" id="quiz-6-b" value="b">
+                    <label for="quiz-6-b">15% (Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉ Р С•РЎвЂљ Р ТР С•РЎвЂ¦Р С•Р ТР С•Р Р†)</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-6" id="quiz-6-c" value="c">
+                    <label for="quiz-6-c">118% (Р Р…Р ВµР С—РЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…РЎвЂ№Р в„– РЎР‚Р В°РЎРѓРЎвЂЎР ВµРЎвЂљ)</label>
+                </div>
+            </div>
+
+            <div class="quick-check-feedback">
+                <strong>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С•! РІСљвЂњ</strong>
+                Operating Ratio = Р В Р В°РЎРѓРЎвЂ¦Р С•Р ТРЎвЂ№ Р“В· Р вЂќР С•РЎвЂ¦Р С•Р ТРЎвЂ№ Р“вЂ” 100% = $170,000 Р“В· $200,000 Р“вЂ” 100% = 85%. Р В§Р ВµР С Р Р…Р СР В¶Р Вµ, РЎвЂљР ВµР С Р В»РЎС“РЎвЂЎРЎв‚¬Р Вµ.
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="lesson-nav">
+            <a href="doc-module-9.html" class="nav-btn">
+                <span>РІвЂ С’</span>
+                <span>Р СџРЎР‚Р ВµР ТРЎвЂ№Р ТРЎС“РЎвЂ°Р СР в„– РЎС“РЎР‚Р С•Р С”</span>
+            </a>
+            <div class="progress-info">
+                <div>Р СљР С•Р ТРЎС“Р В»РЎРЉ 10 Р СР В· 12</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 83%"></div>
+                </div>
+                <div>83% Р В·Р В°Р Р†Р ВµРЎР‚РЎв‚¬Р ВµР Р…Р С•</div>
+            </div>
+            <a href="doc-module-11.html" class="nav-btn">
+                <span>Р РЋР В»Р ВµР ТРЎС“РЎР‹РЎвЂ°Р СР в„– РЎС“РЎР‚Р С•Р С”</span>
+                <span>РІвЂ вЂ™</span>
+            </a>
+        </nav>
+    </main>
+    <!-- Audio elements (hidden) -->
+    <audio id="audio1" preload="metadata">
+        <source src="../audio/module10-block1.mp3" type="audio/mpeg">
+        <source src="../audio/module10-block1.ogg" type="audio/ogg">
+    </audio>
+    <audio id="audio2" preload="none">
+        <source src="../audio/module10-block2.mp3" type="audio/mpeg">
+        <source src="../audio/module10-block2.ogg" type="audio/ogg">
+    </audio>
+    <audio id="audio3" preload="none">
+        <source src="../audio/module10-block3.mp3" type="audio/mpeg">
+        <source src="../audio/module10-block3.ogg" type="audio/ogg">
+    </audio>
+    <audio id="audio4" preload="none">
+        <source src="../audio/module10-block4.mp3" type="audio/mpeg">
+        <source src="../audio/module10-block4.ogg" type="audio/ogg">
+    </audio>
+    <audio id="audio5" preload="none">
+        <source src="../audio/module10-block5.mp3" type="audio/mpeg">
+        <source src="../audio/module10-block5.ogg" type="audio/ogg">
+    </audio>
+    <audio id="audio6" preload="none">
+        <source src="../audio/module10-block6.mp3" type="audio/mpeg">
+        <source src="../audio/module10-block6.ogg" type="audio/ogg">
+    </audio>
+
+    <script>
+        let currentAudio = null;
+        let currentButton = null;
+        let currentContainer = null;
+        let progressUpdateInterval = null;
+
+        // Audio durations (in seconds)
+        const audioDurations = {
+            'audio1': 0, // Will be loaded from actual file
+            'audio2': 280, // 4.7 minutes (simulated)
+            'audio3': 260, // 4.3 minutes (simulated)
+            'audio4': 290, // 4.8 minutes (simulated)
+            'audio5': 270, // 4.5 minutes (simulated)
+            'audio6': 250  // 4.2 minutes (simulated)
+        };
+
+        // Calculator functions
+        function calculateProfit() {
+            const revenue = parseFloat(document.getElementById('revenue').value) || 0;
+            const miles = parseFloat(document.getElementById('miles').value) || 0;
+            const cpm = parseFloat(document.getElementById('cpm').value) || 0;
+
+            if (revenue && miles && cpm) {
+                const totalCost = miles * cpm;
+                const profit = revenue - totalCost;
+                const rpm = revenue / miles;
+                const margin = (profit / revenue) * 100;
+
+                document.getElementById('profitResult').innerHTML = `
+                    <strong>Р В Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљ:</strong><br>
+                    RPM: $${rpm.toFixed(2)}/Р СР СР В»РЎРЏ<br>
+                    Р С›Р В±РЎвЂ°Р СР Вµ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТРЎвЂ№: $${totalCost.toLocaleString()}<br>
+                    Р СџРЎР‚Р СР В±РЎвЂ№Р В»РЎРЉ: $${profit.toLocaleString()}<br>
+                    Р СљР В°РЎР‚Р В¶Р В°: ${margin.toFixed(1)}%
+                `;
+            }
+        }
+
+        function calculateMinRate() {
+            const baseCPM = parseFloat(document.getElementById('baseCPM').value) || 0;
+            const targetMargin = parseFloat(document.getElementById('targetMargin').value) || 0;
+            const distance = parseFloat(document.getElementById('distance').value) || 0;
+            const deadhead = parseFloat(document.getElementById('deadhead').value) || 0;
+
+            if (baseCPM && targetMargin && distance) {
+                const totalMiles = distance + deadhead;
+                const totalCost = totalMiles * baseCPM;
+                const minRevenue = totalCost * (1 + targetMargin / 100);
+                const minRPM = minRevenue / distance;
+
+                document.getElementById('minRateResult').innerHTML = `
+                    <strong>Р СљР СР Р…Р СР СР В°Р В»РЎРЉР Р…Р В°РЎРЏ РЎРѓРЎвЂљР В°Р Р†Р С”Р В°:</strong><br>
+                    Р С›Р В±РЎвЂ°Р СР Вµ Р СР СР В»Р С: ${totalMiles.toLocaleString()}<br>
+                    Р С›Р В±РЎвЂ°Р СР Вµ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТРЎвЂ№: $${totalCost.toLocaleString()}<br>
+                    Р СљР СР Р…Р СР СР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р ТР С•РЎвЂ¦Р С•Р Т: $${minRevenue.toLocaleString()}<br>
+                    Р СљР СР Р…Р СР СР В°Р В»РЎРЉР Р…Р В°РЎРЏ RPM: $${minRPM.toFixed(2)}/Р СР СР В»РЎРЏ
+                `;
+            }
+        }
+
+        function calculateFuelSurcharge() {
+            const currentPrice = parseFloat(document.getElementById('currentFuelPrice').value) || 0;
+            const basePrice = parseFloat(document.getElementById('baseFuelPrice').value) || 0;
+            const mpg = parseFloat(document.getElementById('truckMPG').value) || 0;
+            const distance = parseFloat(document.getElementById('fuelDistance').value) || 0;
+
+            if (currentPrice && basePrice && mpg && distance) {
+                const priceDiff = currentPrice - basePrice;
+                const surchargePerMile = priceDiff / mpg;
+                const totalSurcharge = surchargePerMile * distance;
+
+                document.getElementById('fuelSurchargeResult').innerHTML = `
+                    <strong>Fuel Surcharge:</strong><br>
+                    Р В Р В°Р В·Р Р…Р СРЎвЂ Р В° Р Р† РЎвЂ Р ВµР Р…Р Вµ: $${priceDiff.toFixed(2)}/Р С–Р В°Р В»Р В»Р С•Р Р…<br>
+                    Р вЂќР С•Р С—Р В»Р В°РЎвЂљР В° Р В·Р В° Р СР СР В»РЎР‹: $${surchargePerMile.toFixed(3)}/Р СР СР В»РЎРЏ<br>
+                    Р С›Р В±РЎвЂ°Р В°РЎРЏ Р ТР С•Р С—Р В»Р В°РЎвЂљР В°: $${totalSurcharge.toFixed(0)}<br>
+                    Р В­Р С”Р С•Р Р…Р С•Р СР СРЎРЏ Р Р…Р В° РЎРѓР ВµРЎвЂљР С: ~$${(totalSurcharge * 0.1).toFixed(0)}
+                `;
+            }
+        }
+
+        function calculateCustomerProfit() {
+            const monthlyRevenue = parseFloat(document.getElementById('monthlyRevenue').value) || 0;
+            const monthlyMiles = parseFloat(document.getElementById('monthlyMiles').value) || 0;
+            const deadheadPercent = parseFloat(document.getElementById('deadheadPercent').value) || 0;
+            const detentionHours = parseFloat(document.getElementById('detentionHours').value) || 0;
+
+            if (monthlyRevenue && monthlyMiles) {
+                const rpm = monthlyRevenue / monthlyMiles;
+                const loadedMiles = monthlyMiles * (1 - deadheadPercent / 100);
+                const loadedRPM = monthlyRevenue / loadedMiles;
+                const detentionCost = detentionHours * 25; // $25/hour detention cost
+
+                let rating = "СЂСџвЂќТђ Р С›РЎвЂљР В»Р СРЎвЂЎР Р…РЎвЂ№Р в„–";
+                if (deadheadPercent > 20 || detentionHours > 15) rating = "РІС™В РїСРЏ Р СћРЎР‚Р ВµР В±РЎС“Р ВµРЎвЂљ Р Р†Р Р…Р СР СР В°Р Р…Р СРЎРЏ";
+                if (deadheadPercent > 30 || detentionHours > 25) rating = "РІСњРЉ Р СџРЎР‚Р С•Р В±Р В»Р ВµР СР Р…РЎвЂ№Р в„–";
+
+                document.getElementById('customerProfitResult').innerHTML = `
+                    <strong>Р С’Р Р…Р В°Р В»Р СР В· Р С”Р В»Р СР ВµР Р…РЎвЂљР В°:</strong><br>
+                    RPM (Р С•Р В±РЎвЂ°Р СР в„–): $${rpm.toFixed(2)}/Р СР СР В»РЎРЏ<br>
+                    RPM (loaded): $${loadedRPM.toFixed(2)}/Р СР СР В»РЎРЏ<br>
+                    Р СџР С•РЎвЂљР ВµРЎР‚Р С Р С•РЎвЂљ detention: $${detentionCost}/Р СР ВµРЎРѓРЎРЏРЎвЂ <br>
+                    Р В Р ВµР в„–РЎвЂљР СР Р…Р С–: ${rating}
+                `;
+            }
+        }
+
+        function calculateFactoring() {
+            const invoiceAmount = parseFloat(document.getElementById('invoiceAmount').value) || 0;
+            const advanceRate = parseFloat(document.getElementById('advanceRate').value) || 0;
+            const factoringFee = parseFloat(document.getElementById('factoringFee').value) || 0;
+
+            if (invoiceAmount && advanceRate && factoringFee) {
+                const advance = invoiceAmount * (advanceRate / 100);
+                const fee = invoiceAmount * (factoringFee / 100);
+                const immediatePayment = advance - fee;
+                const reserve = invoiceAmount - advance;
+                const netReceived = invoiceAmount - fee;
+
+                document.getElementById('factoringResult').innerHTML = `
+                    <strong>Р В Р В°РЎРѓРЎвЂЎР ВµРЎвЂљ РЎвЂћР В°Р С”РЎвЂљР С•РЎР‚Р СР Р…Р С–Р В°:</strong><br>
+                    Р РЋРЎР‚Р В°Р В·РЎС“ Р С” Р С—Р С•Р В»РЎС“РЎвЂЎР ВµР Р…Р СРЎР‹: $${immediatePayment.toLocaleString()}<br>
+                    Р В Р ВµР В·Р ВµРЎР‚Р Р† (Р С—Р С•Р В·Р В¶Р Вµ): $${reserve.toLocaleString()}<br>
+                    Р С™Р С•Р СР СРЎРѓРЎРѓР СРЎРЏ: $${fee.toLocaleString()}<br>
+                    Р ВРЎвЂљР С•Р С–Р С• Р С—Р С•Р В»РЎС“РЎвЂЎР СРЎвЂљР Вµ: $${netReceived.toLocaleString()}
+                `;
+            }
+        }
+
+        function calculateOperatingRatio() {
+            const revenue = parseFloat(document.getElementById('monthlyRevenue2').value) || 0;
+            const expenses = parseFloat(document.getElementById('monthlyExpenses').value) || 0;
+
+            if (revenue && expenses) {
+                const operatingRatio = (expenses / revenue) * 100;
+                const profitMargin = ((revenue - expenses) / revenue) * 100;
+
+                let status = "СЂСџвЂќТђ Р С›РЎвЂљР В»Р СРЎвЂЎР Р…Р С•";
+                if (operatingRatio > 85) status = "РІСљвЂ¦ Р ТђР С•РЎР‚Р С•РЎв‚¬Р С•";
+                if (operatingRatio > 90) status = "РІС™В РїСРЏ Р вЂ™Р Р…Р СР СР В°Р Р…Р СР Вµ";
+                if (operatingRatio > 95) status = "РІСњРЉ Р С™РЎР‚Р СРЎвЂљР СРЎвЂЎР Р…Р С•";
+
+                document.getElementById('operatingRatioResult').innerHTML = `
+                    <strong>Р В¤Р СР Р…Р В°Р Р…РЎРѓР С•Р Р†РЎвЂ№Р Вµ Р С—Р С•Р С”Р В°Р В·Р В°РЎвЂљР ВµР В»Р С:</strong><br>
+                    Operating Ratio: ${operatingRatio.toFixed(1)}%<br>
+                    Profit Margin: ${profitMargin.toFixed(1)}%<br>
+                    Р РЋРЎвЂљР В°РЎвЂљРЎС“РЎРѓ: ${status}
+                `;
+            }
+        }
+        // Audio functions
+        document.addEventListener('DOMContentLoaded', function () {
+            const audio1 = document.getElementById('audio1');
+
+            audio1.addEventListener('loadedmetadata', function () {
+                if (audio1.duration && !isNaN(audio1.duration) && isFinite(audio1.duration)) {
+                    audioDurations['audio1'] = audio1.duration;
+                    updateProgress('audio1', 0, audio1.duration);
+                } else {
+                    audioDurations['audio1'] = 280;
+                    updateProgress('audio1', 0, 280);
+                }
+            });
+
+            audio1.addEventListener('error', function () {
+                console.log('Could not load audio file, using simulated duration');
+                audioDurations['audio1'] = 280;
+                updateProgress('audio1', 0, 280);
+            });
+
+            // Initialize other audio durations
+            Object.keys(audioDurations).forEach(audioId => {
+                if (audioId !== 'audio1') {
+                    const duration = audioDurations[audioId];
+                    updateProgress(audioId, 0, duration);
+                }
+            });
+        });
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateProgress(audioId, currentTime, duration) {
+            const container = document.querySelector(`[onclick*="${audioId}"]`).closest('.audio-container');
+            const progressRing = container.querySelector('.progress-ring-fill');
+            const mobileProgressFill = container.querySelector('.mobile-progress-fill');
+            const durationDisplay = container.querySelector('.audio-duration');
+
+            const progress = currentTime / duration;
+            const circumference = 2 * Math.PI * 32;
+            const offset = circumference - (progress * circumference);
+
+            if (progressRing) {
+                progressRing.style.strokeDashoffset = offset;
+            }
+
+            if (mobileProgressFill) {
+                mobileProgressFill.style.width = `${progress * 100}%`;
+            }
+
+            durationDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+        }
+
+        function seekAudioMobile(event, element, audioId) {
+            event.stopPropagation();
+
+            const audio = document.getElementById(audioId);
+            if (!audio || audio.paused) {
+                return;
+            }
+
+            const rect = element.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const progress = clickX / rect.width;
+            const duration = audioDurations[audioId];
+            const newTime = progress * duration;
+
+            updateProgress(audioId, newTime, duration);
+
+            if (audioId === 'audio1' && audio.duration) {
+                audio.currentTime = newTime;
+            }
+        }
+
+        function seekAudio(event, element, audioId) {
+            event.stopPropagation();
+
+            if (!element.classList.contains('seekable')) {
+                return;
+            }
+
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const x = event.clientX - centerX;
+            const y = event.clientY - centerY;
+
+            const distance = Math.sqrt(x * x + y * y);
+            const radius = rect.width / 2;
+
+            if (distance < radius * 0.55) {
+                return;
+            }
+
+            let angle = Math.atan2(x, -y) * (180 / Math.PI);
+            if (angle < 0) angle += 360;
+
+            const progress = angle / 360;
+            const duration = audioDurations[audioId];
+            const newTime = progress * duration;
+
+            updateProgress(audioId, newTime, duration);
+
+            const audio = document.getElementById(audioId);
+            if (audio && !audio.paused) {
+                if (audioId === 'audio1') {
+                    audio.currentTime = newTime;
+                }
+            }
+        }
+
+        // Auto-unlock quiz when audio ends
+        function unlockQuizForAudio(audioId) {
+            const audioToQuizMap = {
+                'audio1': 'quiz-1',
+                'audio2': 'quiz-2',
+                'audio3': 'quiz-3',
+                'audio4': 'quiz-4',
+                'audio5': 'quiz-5',
+                'audio6': 'quiz-6'
+            };
+
+            const quizId = audioToQuizMap[audioId];
+            if (quizId) {
+                const triggerButton = document.querySelector(`[data-unlocks="${quizId}"]`);
+                if (triggerButton && !triggerButton.classList.contains('completed')) {
+                    triggerButton.click();
+                }
+            }
+        }
+        function toggleAudio(button, audioId) {
+            const audio = document.getElementById(audioId);
+            const container = button.closest('.audio-container');
+            const interactiveRing = container.querySelector('.progress-ring-interactive');
+
+            // Stop current audio if different
+            if (currentAudio && currentAudio !== audio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                if (currentButton) {
+                    currentButton.classList.remove('playing');
+                }
+                if (currentContainer) {
+                    currentContainer.classList.remove('playing');
+                    const oldRing = currentContainer.querySelector('.progress-ring-interactive');
+                    oldRing.classList.remove('seekable');
+                }
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+            }
+
+            if (audio.paused) {
+                audio.play();
+                button.classList.add('playing');
+                container.classList.add('playing');
+                interactiveRing.classList.add('seekable');
+                currentAudio = audio;
+                currentButton = button;
+                currentContainer = container;
+
+                const duration = audioDurations[audioId];
+
+                if (audioId === 'audio1') {
+                    progressUpdateInterval = setInterval(() => {
+                        if (audio.currentTime < audio.duration) {
+                            updateProgress(audioId, audio.currentTime, audio.duration);
+                        }
+                    }, 100);
+                } else {
+                    let currentTime = 0;
+                    progressUpdateInterval = setInterval(() => {
+                        if (currentTime < duration) {
+                            currentTime += 0.1;
+                            updateProgress(audioId, currentTime, duration);
+                        } else {
+                            clearInterval(progressUpdateInterval);
+                            button.classList.remove('playing');
+                            container.classList.remove('playing');
+                            interactiveRing.classList.remove('seekable');
+                            currentAudio = null;
+                            currentButton = null;
+                            currentContainer = null;
+                            updateProgress(audioId, 0, duration);
+                            unlockQuizForAudio(audioId);
+                        }
+                    }, 100);
+                }
+
+            } else {
+                audio.pause();
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+            }
+
+            audio.onended = function () {
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+                updateProgress(audioId, 0, audioDurations[audioId]);
+                unlockQuizForAudio(audioId);
+            };
+
+            audio.onerror = function () {
+                console.log('Audio file not found, but button still works for demo');
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+            };
+        }
+
+        // Initialize duration displays
+        document.addEventListener('DOMContentLoaded', function () {
+            Object.keys(audioDurations).forEach(audioId => {
+                const duration = audioDurations[audioId];
+                updateProgress(audioId, 0, duration);
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function (e) {
+            if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+                e.preventDefault();
+                if (currentButton) {
+                    currentButton.click();
+                }
+            }
+        });
+
+        // Progress tracking
+        window.addEventListener('beforeunload', function () {
+            localStorage.setItem('module10-progress', '83');
+            localStorage.setItem('current-module', '10');
+        });
+    </script>
+
+    <!-- Interactive Modules Script -->
+    <script src="../interactive-modules.js"></script>
+  
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>Р В РЎв„ўР РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„– Р В РІР‚СњР В РЎвЂР РЋР С“Р В РЎвЂ”Р В Р’ВµР РЋРІР‚С™Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В Р’В°</h4>
+          <p>Р В РЎСџР РЋР вЂљР В РЎвЂўР РЋРІР‚С›Р В Р’ВµР РЋР С“Р РЋР С“Р В РЎвЂР В РЎвЂўР В Р вЂ¦Р В Р’В°Р В Р’В»Р РЋР Р‰Р В Р вЂ¦Р В РЎвЂўР В Р’Вµ Р В РЎвЂўР В Р’В±Р РЋРЎвЂњР РЋРІР‚РЋР В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ Р В РўвЂР В РЎвЂР РЋР С“Р В РЎвЂ”Р В Р’ВµР РЋРІР‚С™Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В РЎвЂўР В Р вЂ  Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В Р’В·Р В РЎвЂўР В РЎвЂ”Р В Р’ВµР РЋР вЂљР В Р’ВµР В Р вЂ Р В РЎвЂўР В Р’В·Р В РЎвЂўР В РЎвЂќ</p>
+        </div>
+
+        <div class="footer-section">
+          <h4>Р В РЎвЂєР В Р’В±Р РЋРЎвЂњР РЋРІР‚РЋР В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ</h4>
+          <a href="../courses.html">Р В РЎв„ўР РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„–</a>
+        </div>
+
+        <div class="footer-section">
+          <h4>Р В РЎСџР В РЎвЂўР В РўвЂР В РўвЂР В Р’ВµР РЋР вЂљР В Р’В¶Р В РЎвЂќР В Р’В°</h4>
+          <a href="../faq.html">FAQ</a>
+          <a href="../contacts.html">Р В РЎв„ўР В РЎвЂўР В Р вЂ¦Р РЋРІР‚С™Р В Р’В°Р В РЎвЂќР РЋРІР‚С™Р РЋРІР‚в„–</a>
+          <a href="../help.html">Р В РЎСџР В РЎвЂўР В РЎВР В РЎвЂўР РЋРІР‚В°Р РЋР Р‰</a>
+        </div>
+
+        <div class="footer-section">
+          <h4>Р В РЎв„ўР В РЎвЂўР В РЎВР В РЎвЂ”Р В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР РЏ</h4>
+          <a href="../about.html">Р В РЎвЂє Р В Р вЂ¦Р В Р’В°Р РЋР С“</a>
+          <a href="../career.html">Р В РЎв„ўР В Р’В°Р РЋР вЂљР РЋР Р‰Р В Р’ВµР РЋР вЂљР В Р’В°</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2024 Р В РЎв„ўР РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„– Р В РІР‚СњР В РЎвЂР РЋР С“Р В РЎвЂ”Р В Р’ВµР РЋРІР‚С™Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В Р’В°. Р В РІР‚в„ўР РЋР С“Р В Р’Вµ Р В РЎвЂ”Р РЋР вЂљР В Р’В°Р В Р вЂ Р В Р’В° Р В Р’В·Р В Р’В°Р РЋРІР‚В°Р В РЎвЂР РЋРІР‚В°Р В Р’ВµР В Р вЂ¦Р РЋРІР‚в„–.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+
+</html>

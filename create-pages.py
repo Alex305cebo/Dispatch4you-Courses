@@ -1,0 +1,163 @@
+import os
+
+pages = [
+    (3,  "role.html",          "👔", "Роль диспетчера",           "Обязанности, ежедневная работа и навыки",
+     ["Кто такой freight dispatcher", "Ежедневные задачи и рутина", "Необходимые навыки и качества",
+      "Отличие от брокера и агента", "Карьерный путь: от новичка до эксперта"]),
+    (4,  "equipment.html",     "🚚", "Оборудование и грузы",       "Типы траков, прицепов и грузов",
+     ["Dry Van — стандартный закрытый трак", "Reefer — рефрижератор для скоропортящихся грузов",
+      "Flatbed — платформа для негабаритных грузов", "Step Deck, Lowboy, Tanker", "Классификация грузов и ограничения"]),
+    (5,  "routes.html",        "🗺️", "География и маршруты",       "Планирование маршрутов по США",
+     ["Регионы и штаты США для диспетчера", "Как планировать маршрут", "Deadhead — пустой пробег и как его минимизировать",
+      "Fuel stops, rest areas, weigh stations", "Инструменты: PC*Miler, Google Maps, Rand McNally"]),
+    (6,  "loadboards.html",    "💻", "Load Boards",                 "DAT, Truckstop, 123Loadboard — работа с биржами грузов",
+     ["Что такое Load Board и зачем он нужен", "DAT — крупнейшая биржа грузов США",
+      "Truckstop.com — функции и поиск", "123Loadboard — для начинающих", "Как читать листинг: rate, miles, equipment, pickup/delivery"]),
+    (7,  "negotiation.html",   "📞", "Переговоры и бронирование",   "Как договариваться о лучших ставках",
+     ["Психология переговоров с брокерами", "Как узнать рыночную ставку (DAT Rate View)",
+      "Скрипты для первого звонка брокеру", "Работа с возражениями и контрпредложения",
+      "Когда соглашаться, когда отказывать"]),
+    (8,  "brokers.html",       "🛡️", "Проверка брокеров",           "Верификация, факторинг и построение отношений",
+     ["Как проверить брокера через FMCSA", "Credit check — проверка платёжеспособности",
+      "Факторинг: что это и когда использовать", "Топ брокеры рынка: CH Robinson, Echo, Coyote",
+      "Построение долгосрочных отношений с брокерами"]),
+    (9,  "docs.html",          "📄", "Документация",                "Rate Confirmation, BOL, POD и другие документы",
+     ["Rate Confirmation — разбор каждого пункта", "Bill of Lading (BOL) — заполнение и проверка",
+      "Proof of Delivery (POD)", "Lumper receipts и detention документы",
+      "Как хранить и организовывать документы"]),
+    (10, "regulations.html",   "⚖️", "Законодательство",            "FMCSA, DOT, HOS и регуляции индустрии",
+     ["FMCSA — Federal Motor Carrier Safety Administration", "Hours of Service (HOS) — правила рабочего времени",
+      "ELD — электронные логбуки (обязательны с 2017)", "DOT inspections — что проверяют",
+      "CSA scores — система оценки безопасности перевозчика"]),
+    (11, "technology.html",    "💻", "TMS и технологии",            "Программы и инструменты современного диспетчера",
+     ["TMS — Transportation Management System", "ELD устройства и интеграция с TMS",
+      "GPS tracking платформы: Samsara, KeepTruckin", "Автоматизация: email шаблоны, CRM",
+      "AI инструменты для поиска грузов и анализа ставок"]),
+    (12, "communication.html", "📱", "Коммуникация",                "Профессиональное общение с водителями, брокерами, шипперами",
+     ["Профессиональный английский для диспетчера", "Email шаблоны для брокеров",
+      "Телефонные скрипты: pickup, delivery, проблемы", "Работа с конфликтными ситуациями",
+      "Культурные особенности делового общения в США"]),
+    (13, "problems.html",      "🚨", "Решение проблем",             "Типичные ситуации и алгоритмы действий",
+     ["Водитель опаздывает на pickup — что делать", "Груз повреждён при доставке",
+      "Брокер не выходит на связь или не платит", "Водитель сломался в пути",
+      "Отмена груза в последний момент — права и действия"]),
+    (14, "finances.html",      "💰", "Финансы и расчеты",           "Комиссии, расходы, налоги и планирование",
+     ["Как рассчитать комиссию диспетчера (8-12%)", "Структура расходов перевозчика",
+      "Факторинг и управление cash flow", "Налоги для self-employed диспетчера в США",
+      "Финансовое планирование и масштабирование"]),
+    (15, "career.html",        "💼", "Карьера и практики",          "Трудоустройство, бизнес и профессиональный рост",
+     ["Где искать работу диспетчером (Indeed, LinkedIn, Facebook groups)", "Как составить резюме без опыта",
+      "Собственный диспетчерский бизнес — с чего начать", "Масштабирование: найм субдиспетчеров",
+      "Реальный доход: $50K-150K+ — путь от новичка"]),
+]
+
+template = '''<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Раздел {num}: {name} | Курсы Диспетчера</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../shared-nav.css">
+    <style>
+        *{{margin:0;padding:0;box-sizing:border-box;}}
+        :root{{--primary:#667eea;--bg:#070b14;--card:rgba(255,255,255,0.03);--text:#f1f5f9;--muted:#94a3b8;--border:rgba(255,255,255,0.08);}}
+        body{{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding-top:80px;}}
+        body::before{{content:'';position:fixed;inset:0;background:radial-gradient(circle at 20% 30%,rgba(102,126,234,0.07),transparent 60%),radial-gradient(circle at 80% 70%,rgba(118,75,162,0.07),transparent 60%);z-index:-1;pointer-events:none;}}
+        .wrap{{max-width:900px;margin:0 auto;padding:40px 24px 80px;}}
+        .breadcrumb{{font-size:13px;color:var(--muted);margin-bottom:32px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}}
+        .breadcrumb a{{color:var(--muted);text-decoration:none;transition:color .2s;}}
+        .breadcrumb a:hover{{color:var(--text);}}
+        .breadcrumb span{{color:#475569;}}
+        .hero{{margin-bottom:40px;}}
+        .section-badge{{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;background:rgba(99,102,241,0.12);color:#a78bfa;border:1px solid rgba(99,102,241,0.25);margin-bottom:16px;}}
+        .section-icon{{font-size:52px;margin-bottom:12px;display:block;}}
+        .section-num{{font-size:13px;color:#475569;margin-bottom:6px;}}
+        h1{{font-size:clamp(26px,5vw,40px);font-weight:800;margin-bottom:10px;background:linear-gradient(135deg,#f1f5f9,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}}
+        .section-desc{{font-size:16px;color:var(--muted);max-width:600px;}}
+        .card{{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:20px;transition:border-color .2s;}}
+        .card:hover{{border-color:rgba(99,102,241,0.3);}}
+        .card h2{{font-size:17px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}}
+        .topic-list{{list-style:none;}}
+        .topic-list li{{padding:11px 0;border-bottom:1px solid var(--border);color:var(--muted);display:flex;align-items:flex-start;gap:10px;font-size:15px;}}
+        .topic-list li:last-child{{border-bottom:none;}}
+        .topic-list li::before{{content:'→';color:#6366f1;font-weight:700;flex-shrink:0;margin-top:2px;}}
+        .nav-btns{{display:flex;gap:12px;margin-top:40px;flex-wrap:wrap;}}
+        .btn{{padding:11px 22px;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none;transition:all .2s;display:inline-flex;align-items:center;gap:6px;}}
+        .btn-prev{{background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid var(--border);}}
+        .btn-prev:hover{{background:rgba(255,255,255,0.09);color:var(--text);}}
+        .btn-next{{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;}}
+        .btn-next:hover{{opacity:.88;transform:translateY(-1px);}}
+        .btn-all{{background:rgba(99,102,241,0.12);color:#a78bfa;border:1px solid rgba(99,102,241,0.25);}}
+        .btn-all:hover{{background:rgba(99,102,241,0.2);}}
+        @media(max-width:600px){{.wrap{{padding:24px 16px 60px;}}}}
+    </style>
+</head>
+<body>
+    <div id="nav-placeholder" style="position:sticky;top:0;z-index:99999;"></div>
+    <script src="../nav-loader.js"></script>
+    <div class="wrap">
+        <nav class="breadcrumb">
+            <a href="../index.html">Главная</a>
+            <span>›</span>
+            <a href="documentation.html">Программа курса</a>
+            <span>›</span>
+            Раздел {num}: {name}
+        </nav>
+        <div class="hero">
+            <div class="section-badge">📚 Раздел {num} из 15</div>
+            <span class="section-icon">{icon}</span>
+            <h1>{name}</h1>
+            <p class="section-desc">{desc}</p>
+        </div>
+        <div class="card">
+            <h2>📋 Темы раздела</h2>
+            <ul class="topic-list">
+{topics}
+            </ul>
+        </div>
+        <div class="card">
+            <h2>🎯 Результат</h2>
+            <ul class="topic-list">
+                <li>Практические навыки применимые с первого дня работы</li>
+                <li>Реальные примеры и кейсы из индустрии США</li>
+                <li>Шаблоны и чек-листы для ежедневной работы</li>
+            </ul>
+        </div>
+        <div class="nav-btns">
+            {prev}
+            <a href="documentation.html" class="btn btn-all">📚 Все разделы</a>
+            {next}
+        </div>
+    </div>
+</body>
+</html>'''
+
+prev_files = {3:'intro.html', 4:'role.html', 5:'equipment.html', 6:'routes.html',
+              7:'loadboards.html', 8:'negotiation.html', 9:'brokers.html', 10:'docs.html',
+              11:'regulations.html', 12:'technology.html', 13:'communication.html',
+              14:'problems.html', 15:'finances.html'}
+next_files = {3:'equipment.html', 4:'routes.html', 5:'loadboards.html', 6:'negotiation.html',
+              7:'brokers.html', 8:'docs.html', 9:'regulations.html', 10:'technology.html',
+              11:'communication.html', 12:'problems.html', 13:'finances.html', 14:'career.html'}
+prev_names = {3:'Глоссарий', 4:'Роль диспетчера', 5:'Оборудование', 6:'Маршруты',
+              7:'Load Boards', 8:'Переговоры', 9:'Брокеры', 10:'Документация',
+              11:'Законодательство', 12:'Технологии', 13:'Коммуникация',
+              14:'Решение проблем', 15:'Финансы'}
+next_names = {3:'Оборудование', 4:'Маршруты', 5:'Load Boards', 6:'Переговоры',
+              7:'Брокеры', 8:'Документация', 9:'Законодательство', 10:'Технологии',
+              11:'Коммуникация', 12:'Решение проблем', 13:'Финансы', 14:'Карьера'}
+
+for num, fname, icon, name, desc, topics_list in pages:
+    topics = '\n'.join(f'                <li>{t}</li>' for t in topics_list)
+    prev_btn = f'<a href="{prev_files[num]}" class="btn btn-prev">← {prev_names[num]}</a>' if num in prev_files else ''
+    next_btn = f'<a href="{next_files[num]}" class="btn btn-next">{next_names[num]} →</a>' if num in next_files else ''
+    html = template.format(num=num, icon=icon, name=name, desc=desc, topics=topics, prev=prev_btn, next=next_btn)
+    path = f'pages/{fname}'
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(html)
+    print(f'Created: {path}')
+
+print('Done!')

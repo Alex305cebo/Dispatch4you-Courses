@@ -1,0 +1,1615 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль 2: Регулирование и законодательство | DispatcherPro</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="stylesheet" href="../interactive-modules.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #f093fb;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary: #b8c5d6;
+            --text-muted: #8892aa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.1);
+            --audio-primary: #ff6b6b;
+            --audio-secondary: #4ecdc4;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
+            padding-top: 100px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -10%;
+            left: -10%;
+            width: 120%;
+            height: 120%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1), transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(240, 147, 251, 0.1), transparent 50%);
+            animation: backgroundMove 20s ease infinite;
+            z-index: -1;
+        }
+
+        @keyframes backgroundMove {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            25% {
+                transform: translate(5%, 5%) scale(1.05);
+            }
+
+            50% {
+                transform: translate(-5%, 5%) scale(1.1);
+            }
+
+            75% {
+                transform: translate(5%, -5%) scale(1.05);
+            }
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 0;
+            background: rgba(7, 11, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            min-height: 80px;
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateX(-3px);
+        }
+
+        .module-info {
+            text-align: center;
+        }
+
+        .module-number {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .module-title {
+            font-size: 18px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .sector-wrapper {
+            position: relative;
+            margin-bottom: 60px;
+        }
+
+        .sector-number {
+            position: absolute;
+            left: -120px;
+            top: 30px;
+            font-size: 72px;
+            font-weight: 900;
+            color: rgba(102, 126, 234, 0.1);
+            line-height: 1;
+            z-index: 0;
+        }
+
+        .content-block {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            gap: 20px;
+        }
+
+        .block-title {
+            flex: 1;
+            font-size: 1.8rem;
+            color: var(--primary);
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .audio-container {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .audio-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--audio-primary), var(--audio-secondary));
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .audio-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.5);
+        }
+
+        .audio-btn .play-icon {
+            font-size: 24px;
+            color: white;
+            margin-left: 3px;
+        }
+
+        .audio-btn .pause-icon {
+            font-size: 20px;
+            color: white;
+            display: none;
+        }
+
+        .audio-btn.playing .play-icon {
+            display: none;
+        }
+
+        .audio-btn.playing .pause-icon {
+            display: block;
+        }
+
+        .audio-btn.playing {
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.7), 0 0 0 10px rgba(255, 107, 107, 0.1);
+            }
+
+            100% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+        }
+
+        .progress-ring {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            transform: rotate(-90deg);
+            z-index: 1;
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 5;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: var(--audio-primary);
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-dasharray: 201.06;
+            stroke-dashoffset: 201.06;
+            transition: stroke-dashoffset 0.1s ease;
+            filter: drop-shadow(0 0 4px rgba(255, 107, 107, 0.5));
+        }
+
+        .progress-ring-interactive {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            cursor: pointer;
+            z-index: 5;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        .progress-ring-interactive.seekable {
+            pointer-events: auto;
+            background: radial-gradient(circle, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.01) 60%, rgba(255, 255, 255, 0.01) 100%);
+        }
+
+        .audio-duration {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .audio-container:hover .audio-duration,
+        .audio-container.playing .audio-duration {
+            opacity: 1;
+        }
+
+        .mobile-progress-bar {
+            display: none;
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .mobile-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--audio-primary), var(--audio-secondary));
+            border-radius: 2px;
+            transition: width 0.1s ease;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-progress-bar {
+                display: block;
+            }
+
+            .progress-ring,
+            .progress-ring-interactive {
+                display: none !important;
+            }
+
+            .audio-duration {
+                bottom: -50px;
+            }
+        }
+
+        .block-content {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .block-content h3 {
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            margin: 25px 0 15px 0;
+        }
+
+        .block-content h4 {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            margin: 20px 0 10px 0;
+        }
+
+        .block-content ul,
+        .block-content ol {
+            margin: 15px 0 15px 25px;
+        }
+
+        .block-content li {
+            margin-bottom: 8px;
+        }
+
+        .block-content strong {
+            color: var(--text-primary);
+        }
+
+        .info-highlight {
+            background: rgba(102, 126, 234, 0.08);
+            border-left: 4px solid #667eea;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .info-highlight h4 {
+            color: #a5b4fc;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .warning-highlight {
+            background: rgba(251, 146, 60, 0.08);
+            border-left: 4px solid #fb923c;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .warning-highlight h4 {
+            color: #fdba74;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .success-highlight {
+            background: rgba(52, 211, 153, 0.08);
+            border-left: 4px solid #34d399;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .success-highlight h4 {
+            color: #6ee7b7;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .audio-completion-btn {
+            display: block;
+            width: 100%;
+            padding: 16px 24px;
+            margin: 30px 0 0 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .audio-completion-btn:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .audio-completion-btn.completed {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(52, 211, 153, 0.2));
+            border-color: var(--success);
+            cursor: default;
+        }
+
+        .case-study-block {
+            background: rgba(240, 147, 251, 0.05);
+            border: 1px solid rgba(240, 147, 251, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px 0;
+            transition: all 0.3s ease;
+        }
+
+        .case-study-block:hover {
+            background: rgba(240, 147, 251, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(240, 147, 251, 0.2);
+        }
+
+        .case-study-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .case-study-icon {
+            font-size: 32px;
+        }
+
+        .case-study-title {
+            font-size: 1.4rem;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .case-study-content p {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        .case-study-content ul {
+            margin: 15px 0 15px 25px;
+        }
+
+        .case-study-content li {
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .case-study-highlight {
+            background: rgba(240, 147, 251, 0.1);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .case-study-solution {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--success);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .case-study-solution h4 {
+            color: var(--success);
+            margin-bottom: 10px;
+        }
+
+        .quick-check-block {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px 0;
+            transition: all 0.3s ease;
+            position: relative;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .quick-check-block.locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .quick-check-block.locked>* {
+            pointer-events: none;
+        }
+
+        .quick-check-block.locked .audio-completion-btn {
+            pointer-events: auto;
+            opacity: 1;
+            cursor: pointer;
+        }
+
+        .quick-check-block.locked::after {
+            content: '🔒 Прослушайте аудио';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px 30px;
+            border-radius: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: center;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        /* Unlocked state - explicitly set */
+        .quick-check-block:not(.locked) {
+            opacity: 1;
+            pointer-events: auto;
+            cursor: default;
+        }
+
+        .quick-check-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .quick-check-icon {
+            font-size: 32px;
+        }
+
+        .quick-check-title {
+            font-size: 1.4rem;
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .quick-check-content {
+            color: var(--text-secondary);
+        }
+
+        .quiz-question {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quiz-option:hover {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+        }
+
+        .quiz-option.incorrect {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--danger);
+        }
+
+        .option-letter {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 50%;
+            font-weight: 700;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .option-text {
+            flex: 1;
+            color: var(--text-secondary);
+        }
+
+        .quiz-feedback {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--success);
+            border-radius: 8px;
+            color: var(--text-primary);
+        }
+
+        .quiz-feedback.show {
+            display: block;
+        }
+
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .progress-info {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 10px auto;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            width: 17%;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 90px;
+            }
+
+            .header {
+                padding: 15px 0;
+                min-height: 70px;
+            }
+
+            .main {
+                padding: 20px 15px;
+            }
+
+            .sector-number {
+                display: none;
+            }
+
+            .content-block {
+                padding: 20px 15px;
+            }
+
+            .block-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .block-title {
+                font-size: 1.4rem;
+            }
+
+            .audio-container {
+                align-self: center;
+            }
+
+            .lesson-nav {
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px 15px;
+            }
+
+            .nav-btn {
+                width: 100%;
+            }
+
+            .progress-bar {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="modules-index.html" class="back-btn">
+                <span>←</span>
+                <span>Назад к модулям</span>
+            </a>
+            <div class="module-info">
+                <div class="module-number">Модуль 2 из 12</div>
+                <div class="module-title">Регулирование и законодательство</div>
+            </div>
+            <div style="width: 150px;"></div>
+        </nav>
+    </header>
+
+    <main class="main">
+
+        <!-- СЕКТОР 1: FMCSA -->
+        <div class="sector-wrapper">
+            <div class="sector-number">01</div>
+
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">📋 FMCSA (Federal Motor Carrier Safety Administration)</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio1')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio1')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio1')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <p>
+                        FMCSA — федеральное агентство, регулирующее коммерческие грузоперевозки в США.
+                        Все диспетчеры должны знать основные требования для обеспечения compliance и избежания штрафов.
+                    </p>
+
+                    <h3>Основные функции FMCSA:</h3>
+                    <ul>
+                        <li><strong>Безопасность</strong> — установление стандартов безопасности для коммерческих
+                            перевозок</li>
+                        <li><strong>Лицензирование</strong> — выдача разрешений и лицензий перевозчикам (DOT, MC
+                            Authority)</li>
+                        <li><strong>Контроль</strong> — проведение инспекций и аудитов транспортных компаний</li>
+                        <li><strong>Штрафы</strong> — наложение санкций за нарушения (до $16,000 для компании)</li>
+                    </ul>
+
+                    <h3>Ключевые требования:</h3>
+                    <ul>
+                        <li><strong>DOT Number</strong> — обязателен для всех коммерческих перевозчиков</li>
+                        <li><strong>MC Authority</strong> — разрешение на межштатные перевозки ($300)</li>
+                        <li><strong>Insurance</strong> — минимум $750K liability, $100K cargo</li>
+                        <li><strong>Safety Rating</strong> — Satisfactory, Conditional, Unsatisfactory</li>
+                    </ul>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Штрафы за нарушения:</h4>
+                        <ul>
+                            <li>Нарушение HOS: до $16,000 для компании, $5,500 для водителя</li>
+                            <li>Отсутствие ELD: $2,000-10,000</li>
+                            <li>Неправильные документы: $1,000-5,000</li>
+                            <li>Превышение веса: $100-10,000 в зависимости от перегруза</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>💡 Как проверить брокера:</h4>
+                        <p>Используйте FMCSA SAFER System: <strong>safer.fmcsa.dot.gov</strong></p>
+                        <ul>
+                            <li>Введите MC Number брокера</li>
+                            <li>Проверьте статус: Active, Authorized</li>
+                            <li>Проверьте Bond: минимум $75,000</li>
+                            <li>Проверьте дату регистрации (избегайте новых брокеров)</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Case Study 1 -->
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Реальный кейс: Проверка брокера</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Брокер предлагает груз CA→NY за $4,500 (отличная ставка!).
+                        Но вы никогда не работали с ним раньше. MC Number: MC-123456.</p>
+                    <ul>
+                        <li>Компания зарегистрирована 2 месяца назад</li>
+                        <li>Bond: $75,000 (минимум)</li>
+                        <li>Нет отзывов на Load Boards</li>
+                        <li>Брокер торопит: "Нужно решение сейчас!"</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        💡 Вопрос: Брать груз или нет? Какие красные флаги?
+                    </div>
+                    <div class="case-study-solution">
+                        <h4>✅ Решение:</h4>
+                        <p><strong>НЕ БРАТЬ!</strong> Красные флаги:</p>
+                        <ol>
+                            <li>Новая компания (2 месяца) - высокий риск мошенничества</li>
+                            <li>Минимальный Bond - может не заплатить</li>
+                            <li>Нет отзывов - никто не работал с ними</li>
+                            <li>Торопит - тактика мошенников</li>
+                        </ol>
+                        <p><strong>Правило:</strong> Работайте только с брокерами старше 6 месяцев и с положительными
+                            отзывами.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Check 1 -->
+            <div class="quick-check-block locked" id="quiz-1" data-quiz-id="quiz-2-1" data-correct-answer="c">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Какой максимальный штраф для компании за нарушение
+                        HOS?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">$5,500</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">$10,000</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">$16,000</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Максимальный штраф для компании за нарушение HOS составляет
+                        $16,000, для водителя - $5,500.
+                    </div>
+                    <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio1', 'quiz-1')">
+                        🎧 Я закончил слушать этот блок
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- СЕКТОР 2: DOT Requirements -->
+        <div class="sector-wrapper">
+            <div class="sector-number">02</div>
+
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">🚛 DOT Requirements (Требования DOT)</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio2')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio2')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio2')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <h3>Обязательные документы и разрешения:</h3>
+
+                    <h4>📋 DOT Number</h4>
+                    <ul>
+                        <li>Обязателен для всех коммерческих перевозчиков</li>
+                        <li>Уникальный идентификационный номер (7-8 цифр)</li>
+                        <li>Должен быть указан на транспортном средстве (обе стороны)</li>
+                        <li>Бесплатная регистрация на fmcsa.dot.gov</li>
+                    </ul>
+
+                    <h4>🚛 MC Authority (Motor Carrier Authority)</h4>
+                    <ul>
+                        <li>Разрешение на межштатные перевозки</li>
+                        <li>Требуется для работы с грузами</li>
+                        <li>Стоимость получения: $300</li>
+                        <li>Срок получения: 20-30 дней после подачи</li>
+                    </ul>
+
+                    <h4>📄 Process Agent</h4>
+                    <ul>
+                        <li>Представитель в каждом штате работы</li>
+                        <li>Обязательно для межштатных перевозок</li>
+                        <li>Стоимость: $50-100 за штат в год</li>
+                        <li>Можно использовать сервисы (например, Nationwide Process Agent)</li>
+                    </ul>
+
+                    <h4>💰 Insurance Requirements</h4>
+                    <ul>
+                        <li><strong>Liability Insurance:</strong> минимум $750,000 (general freight)</li>
+                        <li><strong>Cargo Insurance:</strong> минимум $100,000</li>
+                        <li><strong>Hazmat:</strong> $5,000,000 (если перевозите опасные грузы)</li>
+                    </ul>
+
+                    <div class="info-highlight">
+                        <h4>💡 Совет:</h4>
+                        <p>Ведите точный учет всех документов и сроков их действия. Просроченные разрешения могут
+                            привести к:</p>
+                        <ul>
+                            <li>Остановке операций</li>
+                            <li>Штрафам до $25,000</li>
+                            <li>Потере MC Authority</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Case Study 2 -->
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Реальный кейс: Просроченная страховка</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Пятница, 16:00. Водитель на погрузке в Texas.
+                        Shipper требует Certificate of Insurance (COI). Вы проверяете - страховка истекла вчера!</p>
+                    <ul>
+                        <li>Груз стоит $3,500, уже забронирован</li>
+                        <li>Страховая компания закрыта до понедельника</li>
+                        <li>Shipper не отпустит груз без COI</li>
+                        <li>Брокер звонит каждые 10 минут</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        💡 Вопрос: Что делать? Можно ли как-то загрузиться?
+                    </div>
+                    <div class="case-study-solution">
+                        <h4>✅ Решение:</h4>
+                        <p><strong>НЕТ, загружаться НЕЛЬЗЯ!</strong></p>
+                        <ol>
+                            <li><strong>Немедленно звоним страховой:</strong> Многие работают 24/7 emergency line</li>
+                            <li><strong>Если не отвечают:</strong> Ищем временную страховку (Temporary Insurance)</li>
+                            <li><strong>Если невозможно:</strong> Честно говорим брокеру, отменяем груз</li>
+                            <li><strong>Урок:</strong> Настройте напоминания за 30 дней до истечения всех документов!
+                            </li>
+                        </ol>
+                        <p><strong>Последствия работы без страховки:</strong> Штраф $25,000 + потеря MC Authority +
+                            личная ответственность за ущерб.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Check 2 -->
+            <div class="quick-check-block locked" id="quiz-2" data-quiz-id="quiz-2-2" data-correct-answer="a">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Какой минимальный Liability Insurance требуется
+                        для general freight?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">$750,000</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">$1,000,000</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">$5,000,000</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Минимальный Liability Insurance для general freight составляет
+                        $750,000. $5M требуется только для hazmat.
+                    </div>
+                    <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio2', 'quiz-2')">
+                        🎧 Я закончил слушать этот блок
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- СЕКТОР 3: Hours of Service -->
+        <div class="sector-wrapper">
+            <div class="sector-number">03</div>
+
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">⏰ Hours of Service (HOS) Rules</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio3')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio3')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio3')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <p>
+                        Правила рабочего времени водителей — критически важны для диспетчера.
+                        Нарушение HOS может привести к серьезным штрафам и потере лицензии.
+                    </p>
+
+                    <h3>Основные правила HOS:</h3>
+
+                    <h4>🕐 11-Hour Driving Rule</h4>
+                    <p>Максимум <strong>11 часов вождения</strong> после 10 часов отдыха подряд.</p>
+                    <p><em>Пример:</em> Водитель отдыхал с 22:00 до 08:00 (10 часов). Может водить до 19:00.</p>
+
+                    <h4>⏰ 14-Hour Rule</h4>
+                    <p>Нельзя водить после <strong>14-го часа</strong> с момента выхода на смену (включая перерывы).</p>
+                    <p><em>Пример:</em> Начал смену в 08:00. Должен закончить вождение до 22:00, даже если водил только
+                        8 часов.</p>
+
+                    <h4>📅 60/70-Hour Rule</h4>
+                    <ul>
+                        <li><strong>60 часов</strong> — максимум за 7 дней подряд (если компания работает 7 дней в
+                            неделю)</li>
+                        <li><strong>70 часов</strong> — максимум за 8 дней подряд (если компания работает 8 дней в
+                            неделю)</li>
+                    </ul>
+
+                    <h4>😴 34-Hour Restart</h4>
+                    <p>Сброс недельного лимита после <strong>34 часов отдыха подряд</strong>.</p>
+                    <p><em>Пример:</em> Водитель отдыхал с субботы 18:00 до понедельника 04:00 (34 часа). Счетчик
+                        обнулился.</p>
+
+                    <h4>🛑 30-Minute Break Rule</h4>
+                    <p>Обязательный <strong>30-минутный перерыв</strong> после 8 часов вождения.</p>
+
+                    <div class="warning-highlight">
+                        <h4>🚫 Критично:</h4>
+                        <p>Диспетчер несет ответственность за соблюдение HOS. Всегда проверяйте доступные часы перед
+                            назначением груза!</p>
+                        <ul>
+                            <li>Используйте ELD систему для мониторинга</li>
+                            <li>Планируйте маршруты с учетом HOS</li>
+                            <li>Не давите на водителя нарушать правила</li>
+                        </ul>
+                    </div>
+
+                    <div class="success-highlight">
+                        <h4>✅ Как рассчитать доступные часы:</h4>
+                        <ol>
+                            <li>Проверьте когда водитель начал смену</li>
+                            <li>Добавьте 14 часов = deadline для окончания вождения</li>
+                            <li>Проверьте сколько уже проехал (макс 11 часов)</li>
+                            <li>Проверьте недельный лимит (60/70 часов)</li>
+                        </ol>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Case Study 3 -->
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Реальный кейс: HOS Violation</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Водитель John везет груз из Chicago в Atlanta (700 миль, ~11 часов).
+                        Он начал смену в 06:00, сейчас 18:00, проехал 550 миль. До доставки осталось 150 миль (2.5
+                        часа).</p>
+                    <ul>
+                        <li>14-hour deadline: 20:00 (через 2 часа)</li>
+                        <li>Driving hours: 10 часов (осталось 1 час)</li>
+                        <li>Delivery appointment: 21:00</li>
+                        <li>Брокер звонит: "Нужно успеть, иначе штраф $500!"</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        💡 Вопрос: Может ли водитель доехать? Что делать?
+                    </div>
+                    <div class="case-study-solution">
+                        <h4>✅ Решение:</h4>
+                        <p><strong>НЕТ, доехать не может!</strong></p>
+                        <p><strong>Расчет:</strong></p>
+                        <ul>
+                            <li>До 14-hour deadline: 2 часа</li>
+                            <li>До driving limit: 1 час</li>
+                            <li>Нужно ехать: 2.5 часа</li>
+                        </ul>
+                        <p><strong>Действия:</strong></p>
+                        <ol>
+                            <li>Немедленно звоним брокеру: "Driver is out of hours, need to reschedule"</li>
+                            <li>Предлагаем доставку завтра утром (после 10-hour break)</li>
+                            <li>Водитель останавливается на ближайшем truck stop</li>
+                            <li>Документируем все в ELD</li>
+                        </ol>
+                        <p><strong>Последствия нарушения:</strong> Штраф $16,000 + Out of Service order + CSA points.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Check 3 -->
+            <div class="quick-check-block locked" id="quiz-3" data-quiz-id="quiz-2-3" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Сколько часов отдыха нужно для 34-Hour Restart?
+                    </p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">24 часа</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">34 часа подряд</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">48 часов</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> Для 34-Hour Restart нужно 34 часа отдыха подряд, после чего
+                        недельный счетчик обнуляется.
+                    </div>
+                    <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio3', 'quiz-3')">
+                        🎧 Я закончил слушать этот блок
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- СЕКТОР 4: ELD Mandate -->
+        <div class="sector-wrapper">
+            <div class="sector-number">04</div>
+
+            <section class="content-block">
+                <div class="block-header">
+                    <h2 class="block-title">📱 ELD Mandate (Electronic Logging Device)</h2>
+                    <div class="audio-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                            <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                        </svg>
+                        <button class="audio-btn" onclick="toggleAudio(this, 'audio4')">
+                            <span class="play-icon">▶</span>
+                            <span class="pause-icon">⏸</span>
+                        </button>
+                        <div class="progress-ring-interactive seekable" onclick="seekAudio(event, 'audio4')"></div>
+                        <div class="audio-duration">0:00 / 0:00</div>
+                        <div class="mobile-progress-bar" onclick="seekAudioMobile(event, 'audio4')">
+                            <div class="mobile-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block-content">
+                    <p>
+                        С декабря 2017 года все коммерческие водители обязаны использовать ELD для автоматического
+                        отслеживания рабочего времени. Бумажные логи (paper logs) больше не разрешены.
+                    </p>
+
+                    <h3>Что такое ELD?</h3>
+                    <p>
+                        Electronic Logging Device — электронное устройство, подключенное к двигателю трака,
+                        которое автоматически записывает:
+                    </p>
+                    <ul>
+                        <li>Время вождения</li>
+                        <li>Время отдыха</li>
+                        <li>Местоположение (GPS)</li>
+                        <li>Пробег</li>
+                        <li>Статус двигателя (on/off)</li>
+                    </ul>
+
+                    <h3>Популярные ELD системы:</h3>
+                    <ul>
+                        <li><strong>KeepTruckin (Motive):</strong> $20-35/месяц, самая популярная</li>
+                        <li><strong>Samsara:</strong> $25-40/месяц, продвинутая аналитика</li>
+                        <li><strong>Omnitracs:</strong> $30-50/месяц, для больших флотов</li>
+                        <li><strong>Geotab:</strong> $25-45/месяц, интеграция с TMS</li>
+                    </ul>
+
+                    <h3>Преимущества ELD для диспетчера:</h3>
+                    <ul>
+                        <li><strong>Real-time tracking:</strong> Видите где трак в любой момент</li>
+                        <li><strong>Автоматический HOS:</strong> Система сама считает доступные часы</li>
+                        <li><strong>Alerts:</strong> Предупреждения о нарушениях</li>
+                        <li><strong>IFTA reports:</strong> Автоматические отчеты по топливу</li>
+                        <li><strong>Proof of delivery:</strong> GPS подтверждение доставки</li>
+                    </ul>
+
+                    <div class="warning-highlight">
+                        <h4>⚠️ Штрафы за отсутствие ELD:</h4>
+                        <ul>
+                            <li>Первое нарушение: $2,000</li>
+                            <li>Повторное нарушение: $5,000-10,000</li>
+                            <li>Out of Service order (трак не может двигаться)</li>
+                            <li>CSA points (влияет на Safety Rating)</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-highlight">
+                        <h4>💡 Как выбрать ELD:</h4>
+                        <ol>
+                            <li>Проверьте что система FMCSA-certified</li>
+                            <li>Убедитесь в простоте использования для водителей</li>
+                            <li>Проверьте интеграцию с вашей TMS</li>
+                            <li>Сравните цены (обычно $20-40/месяц за трак)</li>
+                            <li>Читайте отзывы других диспетчеров</li>
+                        </ol>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Case Study 4 -->
+            <div class="case-study-block">
+                <div class="case-study-header">
+                    <span class="case-study-icon">💼</span>
+                    <h3 class="case-study-title">Реальный кейс: ELD Malfunction</h3>
+                </div>
+                <div class="case-study-content">
+                    <p><strong>Ситуация:</strong> Водитель Mike звонит в панике: "ELD не работает! Экран черный, не
+                        включается.
+                        Я на погрузке, shipper требует ELD logs."</p>
+                    <ul>
+                        <li>Трак в 500 милях от офиса</li>
+                        <li>Груз уже загружен, нужно ехать</li>
+                        <li>ELD не реагирует на перезагрузку</li>
+                        <li>Delivery завтра утром</li>
+                    </ul>
+                    <div class="case-study-highlight">
+                        💡 Вопрос: Может ли водитель ехать? Что делать с логами?
+                    </div>
+                    <div class="case-study-solution">
+                        <h4>✅ Решение:</h4>
+                        <p><strong>ДА, может ехать!</strong> ELD Malfunction Exception:</p>
+                        <ol>
+                            <li><strong>Документируем:</strong> Водитель записывает в ELD "Malfunction" + время</li>
+                            <li><strong>Paper logs:</strong> Водитель ведет бумажные логи (разрешено до 8 дней)</li>
+                            <li><strong>Уведомляем:</strong> Звоним в ELD support для ремонта</li>
+                            <li><strong>Ремонт:</strong> Заказываем новое устройство или ремонт (обычно 2-3 дня)</li>
+                        </ol>
+                        <p><strong>Важно:</strong> Сохраните все paper logs и документацию о malfunction.
+                            Это защитит от штрафов при roadside inspection.</p>
+                        <p><strong>Backup план:</strong> Всегда имейте запасное ELD устройство в офисе ($200-300).</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Check 4 -->
+            <div class="quick-check-block locked" id="quiz-4" data-quiz-id="quiz-2-4" data-correct-answer="b">
+                <div class="quick-check-header">
+                    <span class="quick-check-icon">✅</span>
+                    <h3 class="quick-check-title">Быстрая проверка</h3>
+                </div>
+                <div class="quick-check-content">
+                    <p class="quiz-question"><strong>Вопрос:</strong> Сколько дней можно использовать paper logs при ELD
+                        malfunction?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">3 дня</span>
+                        </div>
+                        <div class="quiz-option" data-answer="b">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">8 дней</span>
+                        </div>
+                        <div class="quiz-option" data-answer="c">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">14 дней</span>
+                        </div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <strong>Правильно! ✓</strong> При ELD malfunction разрешено использовать paper logs до 8 дней,
+                        пока устройство не будет отремонтировано.
+                    </div>
+                    <button class="audio-completion-btn" onclick="markAudioComplete(this, 'audio4', 'quiz-4')">
+                        🎧 Я закончил слушать этот блок
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Module Test Button -->
+        <div style="text-align: center; margin: 50px 0 30px 0;">
+            <a href="testing.html?module=2"
+                style="display: inline-flex; align-items: center; gap: 12px; padding: 18px 36px; background: linear-gradient(135deg, #10b981, #059669); color: white; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 18px; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); transition: all 0.3s ease;">
+                <span style="font-size: 24px;">✅</span>
+                <span>Пройти тест по модулю 2</span>
+            </a>
+            <p style="color: var(--text-muted); font-size: 14px; margin-top: 12px;">Проверьте свои знания по
+                регулированию и законодательству</p>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="lesson-nav">
+            <a href="doc-module-1-complete.html" class="nav-btn">
+                <span>←</span>
+                <span>Предыдущий модуль</span>
+            </a>
+            <div class="progress-info">
+                <div>Модуль 2 из 12</div>
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+            </div>
+            <a href="doc-module-3.html" class="nav-btn">
+                <span>Следующий модуль</span>
+                <span>→</span>
+            </a>
+        </nav>
+
+    </main>
+
+    <!-- Audio Elements -->
+    <audio id="audio1" src="../audio/module-2-sector-1.mp3"></audio>
+    <audio id="audio2" src="../audio/module-2-sector-2.mp3"></audio>
+    <audio id="audio3" src="../audio/module-2-sector-3.mp3"></audio>
+    <audio id="audio4" src="../audio/module-2-sector-4.mp3"></audio>
+    <script>
+        const audioDurations = {
+            'audio1': 200,
+            'audio2': 220,
+            'audio3': 240,
+            'audio4': 210
+        };
+
+        let currentAudio = null;
+        let currentButton = null;
+        let currentContainer = null;
+        let progressUpdateInterval = null;
+
+        function updateProgress(audioId, currentTime, duration) {
+            const container = document.querySelector(`button[onclick*="${audioId}"]`)?.closest('.audio-container');
+            if (!container) return;
+
+            const progressRingFill = container.querySelector('.progress-ring-fill');
+            const durationDisplay = container.querySelector('.audio-duration');
+            const mobileProgressFill = container.querySelector('.mobile-progress-fill');
+
+            const circumference = 2 * Math.PI * 32;
+            const progress = currentTime / duration;
+            const offset = circumference - (progress * circumference);
+
+            if (progressRingFill) {
+                progressRingFill.style.strokeDashoffset = offset;
+            }
+
+            if (mobileProgressFill) {
+                mobileProgressFill.style.width = `${progress * 100}%`;
+            }
+
+            if (durationDisplay) {
+                durationDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+            }
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function seekAudio(event, audioId) {
+            const ring = event.currentTarget;
+            const rect = ring.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const angle = Math.atan2(event.clientY - centerY, event.clientX - centerX);
+            let progress = (angle + Math.PI / 2) / (2 * Math.PI);
+            if (progress < 0) progress += 1;
+
+            const audio = document.getElementById(audioId);
+            const duration = audioDurations[audioId];
+            const newTime = progress * duration;
+
+            if (audio && !audio.paused) {
+                audio.currentTime = newTime;
+                updateProgress(audioId, newTime, duration);
+            }
+        }
+
+        function seekAudioMobile(event, audioId) {
+            const bar = event.currentTarget;
+            const rect = bar.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const progress = clickX / rect.width;
+
+            const audio = document.getElementById(audioId);
+            const duration = audioDurations[audioId];
+            const newTime = progress * duration;
+
+            if (audio && !audio.paused) {
+                audio.currentTime = newTime;
+                updateProgress(audioId, newTime, duration);
+            }
+        }
+
+        function toggleAudio(button, audioId) {
+            const audio = document.getElementById(audioId);
+            const container = button.closest('.audio-container');
+            const interactiveRing = container.querySelector('.progress-ring-interactive');
+
+            if (currentAudio && currentAudio !== audio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                if (currentButton) currentButton.classList.remove('playing');
+                if (currentContainer) currentContainer.classList.remove('playing');
+                if (progressUpdateInterval) clearInterval(progressUpdateInterval);
+            }
+
+            if (audio.paused) {
+                audio.play().catch(() => {
+                    let currentTime = 0;
+                    const duration = audioDurations[audioId];
+
+                    button.classList.add('playing');
+                    container.classList.add('playing');
+                    currentAudio = audio;
+                    currentButton = button;
+                    currentContainer = container;
+
+                    progressUpdateInterval = setInterval(() => {
+                        if (currentTime < duration) {
+                            currentTime += 0.1;
+                            updateProgress(audioId, currentTime, duration);
+                        } else {
+                            clearInterval(progressUpdateInterval);
+                            button.classList.remove('playing');
+                            container.classList.remove('playing');
+                            currentAudio = null;
+                            currentButton = null;
+                            currentContainer = null;
+                            updateProgress(audioId, 0, duration);
+                        }
+                    }, 100);
+                });
+
+                button.classList.add('playing');
+                container.classList.add('playing');
+                currentAudio = audio;
+                currentButton = button;
+                currentContainer = container;
+
+                progressUpdateInterval = setInterval(() => {
+                    if (audio.currentTime < audio.duration) {
+                        updateProgress(audioId, audio.currentTime, audio.duration);
+                    }
+                }, 100);
+            } else {
+                audio.pause();
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                if (progressUpdateInterval) clearInterval(progressUpdateInterval);
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+            }
+        }
+
+        function markAudioComplete(button, audioId, quizId) {
+            // Mark button as completed
+            button.classList.add('completed');
+            button.textContent = '✅ Блок прослушан';
+            button.disabled = true;
+
+            // Unlock quiz with animation
+            const quizBlock = document.getElementById(quizId);
+            if (quizBlock) {
+                // Remove locked class
+                quizBlock.classList.remove('locked');
+
+                // Ensure quiz is visible and interactive
+                quizBlock.style.opacity = '1';
+                quizBlock.style.pointerEvents = 'auto';
+
+                // Add unlock animation
+                quizBlock.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    quizBlock.style.transform = 'scale(1)';
+                }, 100);
+
+                // Scroll to quiz smoothly
+                setTimeout(() => {
+                    quizBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 200);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            Object.keys(audioDurations).forEach(audioId => {
+                const duration = audioDurations[audioId];
+                updateProgress(audioId, 0, duration);
+            });
+
+            document.querySelectorAll('.quiz-option').forEach(option => {
+                option.addEventListener('click', function () {
+                    const quizBlock = this.closest('.quick-check-block');
+                    if (quizBlock.classList.contains('locked')) return;
+
+                    const correctAnswer = quizBlock.dataset.correctAnswer;
+                    const selectedAnswer = this.dataset.answer;
+                    const allOptions = quizBlock.querySelectorAll('.quiz-option');
+                    const feedback = quizBlock.querySelector('.quiz-feedback');
+
+                    allOptions.forEach(opt => {
+                        opt.style.pointerEvents = 'none';
+                        if (opt.dataset.answer === correctAnswer) {
+                            opt.classList.add('correct');
+                        } else if (opt === this && selectedAnswer !== correctAnswer) {
+                            opt.classList.add('incorrect');
+                        }
+                    });
+
+                    if (feedback) {
+                        feedback.classList.add('show');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

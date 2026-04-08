@@ -1,0 +1,637 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dispatcher Training � Hero</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #f093fb;
+            --black: #07070f;
+            --white: #ffffff;
+            --pale: rgba(255, 255, 255, 0.55);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--black);
+            font-family: 'Montserrat', 'Inter', system-ui, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* -- NAV -- */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            padding: 0 32px;
+            background: rgba(7, 7, 15, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(102, 126, 234, 0.15);
+        }
+
+        .nav-logo {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--white);
+            text-decoration: none;
+            letter-spacing: 0.04em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-logo span {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            margin: 0 auto;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--white);
+        }
+
+        .nav-cta {
+            padding: 10px 22px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: 50px;
+            letter-spacing: 0.04em;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.35);
+            white-space: nowrap;
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.55);
+        }
+
+        /* -- HERO -- */
+        .hero {
+            position: relative;
+            min-height: calc(100vh - 64px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Ambient glow background */
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 70% 50% at 50% -10%, rgba(102, 126, 234, 0.22) 0%, transparent 65%),
+                radial-gradient(ellipse 50% 40% at 85% 90%, rgba(118, 75, 162, 0.18) 0%, transparent 55%),
+                radial-gradient(ellipse 40% 30% at 10% 70%, rgba(240, 147, 251, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        /* Subtle dot grid */
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgba(102, 126, 234, 0.12) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+
+        /* -- CENTER CONTENT -- */
+        .hero-center {
+            position: relative;
+            z-index: 10;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 60px 24px 40px;
+            gap: 20px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 18px;
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(193, 184, 238, 0.9);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .badge-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: blink 2s ease infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.4;
+                transform: scale(1.3);
+            }
+        }
+
+        /* THE BIG TITLE */
+        .hero-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(64px, 13vw, 180px);
+            font-weight: 900;
+            line-height: 0.92;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg,
+                    #a5b4fc 0%,
+                    #c4b5fd 20%,
+                    #f0abfc 38%,
+                    #ffffff 52%,
+                    #e0e7ff 65%,
+                    #818cf8 80%,
+                    #a5b4fc 100%);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 8s ease infinite;
+            user-select: none;
+        }
+
+        @keyframes shimmer {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        .hero-tagline {
+            font-size: clamp(14px, 2vw, 18px);
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.45);
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+
+        .hero-desc {
+            font-size: clamp(15px, 1.8vw, 17px);
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.55);
+            max-width: 520px;
+            line-height: 1.7;
+            font-family: 'Inter', sans-serif;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 8px;
+        }
+
+        .btn-main {
+            padding: 14px 32px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 700;
+            border-radius: 14px;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            letter-spacing: 0.02em;
+        }
+
+        .btn-main:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 48px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-ghost {
+            padding: 14px 32px;
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(10px);
+            transition: background 0.2s, border-color 0.2s, transform 0.2s;
+            letter-spacing: 0.02em;
+        }
+
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+        }
+
+        /* -- STATS ROW -- */
+        .hero-stats {
+            display: flex;
+            gap: 40px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-top: 4px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* -- BOTTOM SECTION -- */
+        .hero-bottom {
+            position: relative;
+            z-index: 10;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        /* 3 glass cards */
+        .feature-cards {
+            display: flex;
+        }
+
+        .feature-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 24px 28px;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
+            cursor: pointer;
+            transition: background 0.25s;
+            text-decoration: none;
+            min-width: 120px;
+        }
+
+        .feature-card:nth-child(1) {
+            border-left: 3px solid #4f46e5;
+        }
+
+        .feature-card:nth-child(2) {
+            border-left: 3px solid var(--primary);
+        }
+
+        .feature-card:nth-child(3) {
+            border-left: 3px solid var(--accent);
+        }
+
+        .feature-card:hover {
+            background: rgba(102, 126, 234, 0.12);
+        }
+
+        .feature-icon {
+            font-size: 28px;
+            line-height: 1;
+        }
+
+        .feature-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--white);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .feature-sub {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            text-transform: none;
+            letter-spacing: 0;
+            white-space: nowrap;
+        }
+
+        /* Scroll strip */
+        .module-strip {
+            padding: 20px 24px;
+            background: rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(20px);
+            overflow: hidden;
+        }
+
+        .strip-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.3);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .module-scroll {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            overscroll-behavior-x: contain;
+            padding-bottom: 4px;
+        }
+
+        .module-scroll::-webkit-scrollbar {
+            height: 2px;
+        }
+
+        .module-scroll::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .module-scroll::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .module-chip {
+            flex-shrink: 0;
+            scroll-snap-align: start;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: rgba(102, 126, 234, 0.08);
+            border: 1px solid rgba(102, 126, 234, 0.18);
+            border-radius: 10px;
+            text-decoration: none;
+            transition: background 0.2s, border-color 0.2s;
+            white-space: nowrap;
+        }
+
+        .module-chip:hover {
+            background: rgba(102, 126, 234, 0.2);
+            border-color: rgba(102, 126, 234, 0.45);
+        }
+
+        .module-chip-icon {
+            font-size: 18px;
+        }
+
+        .module-chip-text {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.75);
+            font-family: 'Inter', sans-serif;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+
+        /* -- MOBILE -- */
+        @media (max-width: 768px) {
+            nav {
+                padding: 0 16px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero-center {
+                padding: 40px 16px 24px;
+                gap: 16px;
+            }
+
+            .hero-bottom {
+                grid-template-columns: 1fr;
+            }
+
+            .feature-cards {
+                border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            }
+
+            .feature-card {
+                padding: 16px 12px;
+                min-width: 0;
+                flex: 1;
+            }
+
+            .feature-sub {
+                display: none;
+            }
+
+            .module-strip {
+                padding: 16px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAV -->
+    <nav>
+        <a href="#" class="nav-logo">?? <span>DISPATCH</span></a>
+        <ul class="nav-links">
+            <li><a href="modules-index.html">������</a></li>
+            <li><a href="simulator.html">���������</a></li>
+            <li><a href="analytics.html">���������</a></li>
+            <li><a href="../about.html">� �����</a></li>
+        </ul>
+        <a href="modules-index.html" class="nav-cta">������ �������� ></a>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+
+        <div class="hero-center">
+
+            <div class="hero-badge">
+                <span class="badge-dot"></span>
+                ���������������� ���� � ���
+            </div>
+
+            <h1 class="hero-title">���������</h1>
+
+            <p class="hero-tagline">����� ��������� ��������������</p>
+
+            <p class="hero-desc">
+                ������ ���� �������� ���������� �������� ��������� � ���.
+                �� ����� �� ����������� ����������� � ��������� � ����������.
+            </p>
+
+            <div class="hero-buttons">
+                <a href="modules-index.html" class="btn-main">������ ��������</a>
+                <a href="../about.html" class="btn-ghost">������ ������</a>
+            </div>
+
+            <div class="hero-stats">
+                <div class="stat">
+                    <div class="stat-value">12</div>
+                    <div class="stat-label">�������</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">60+</div>
+                    <div class="stat-label">������</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">$80K</div>
+                    <div class="stat-label">������� �����</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">24/7</div>
+                    <div class="stat-label">������</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- BOTTOM -->
+        <div class="hero-bottom">
+
+            <div class="feature-cards">
+                <a href="modules-index.html" class="feature-card">
+                    <div class="feature-icon">??</div>
+                    <div class="feature-name">��������</div>
+                    <div class="feature-sub">12 �������</div>
+                </a>
+                <a href="simulator.html" class="feature-card">
+                    <div class="feature-icon">??</div>
+                    <div class="feature-name">��������</div>
+                    <div class="feature-sub">���������</div>
+                </a>
+                <a href="analytics.html" class="feature-card">
+                    <div class="feature-icon">??</div>
+                    <div class="feature-name">�������</div>
+                    <div class="feature-sub">���������</div>
+                </a>
+            </div>
+
+            <div class="module-strip">
+                <div class="strip-label">������ �����</div>
+                <div class="module-scroll">
+                    <a class="module-chip" href="doc-module-1-complete.html"><span
+                            class="module-chip-icon">??</span><span class="module-chip-text">������ 1 �
+                            ������</span></a>
+                    <a class="module-chip" href="doc-module-2-complete.html"><span
+                            class="module-chip-icon">??</span><span class="module-chip-text">������ 2 �
+                            ���������</span></a>
+                    <a class="module-chip" href="doc-module-3-complete.html"><span
+                            class="module-chip-icon">??</span><span class="module-chip-text">������ 3 �
+                            �������</span></a>
+                    <a class="module-chip" href="doc-module-4-complete.html"><span
+                            class="module-chip-icon">???</span><span class="module-chip-text">������ 4 �
+                            ��������</span></a>
+                    <a class="module-chip" href="doc-module-5-complete.html"><span
+                            class="module-chip-icon">??</span><span class="module-chip-text">������ 5 �
+                            ����������</span></a>
+                    <a class="module-chip" href="doc-module-6-complete.html"><span
+                            class="module-chip-icon">??</span><span class="module-chip-text">������ 6 � �����</span></a>
+                    <a class="module-chip" href="doc-module-7-complete.html"><span
+                            class="module-chip-icon">??</span><span class="module-chip-text">������ 7 �
+                            �������</span></a>
+                    <a class="module-chip" href="doc-module-8-complete.html"><span
+                            class="module-chip-icon">??</span><span class="module-chip-text">������ 8 �
+                            �������</span></a>
+                    <a class="module-chip" href="doc-module-9-complete.html"><span
+                            class="module-chip-icon">??</span><span class="module-chip-text">������ 9 �
+                            �������</span></a>
+                    <a class="module-chip" href="doc-module-10-complete.html"><span
+                            class="module-chip-icon">??</span><span class="module-chip-text">������ 10 � ����</span></a>
+                    <a class="module-chip" href="doc-module-11-complete.html"><span
+                            class="module-chip-icon">??</span><span class="module-chip-text">������ 11 �
+                            �����</span></a>
+                    <a class="module-chip" href="doc-module-12-complete.html"><span
+                            class="module-chip-icon">??</span><span class="module-chip-text">������ 12 � ����</span></a>
+                </div>
+            </div>
+
+        </div>
+
+    </section>
+
+</body>
+
+</html>

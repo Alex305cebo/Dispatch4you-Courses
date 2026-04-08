@@ -1,0 +1,735 @@
+﻿<!DOCTYPE html>
+<html lang="ru" style="background:#070b14">
+<head>
+    <script src="../site-protection.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль 11: TMS и технологии | Курсы Диспетчера</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../shared-nav.css?v=7.6">
+    <link rel="stylesheet" href="../shared-styles.css?v=2.0">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        html{overflow-x:hidden;width:100%;max-width:100vw;scroll-behavior:smooth}
+        :root{--primary:#06b6d4;--secondary:#0ea5e9;--accent:#f97316;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--bg-dark:#0a0e1a;--bg-darker:#070b14;--text-primary:#ffffff;--text-secondary:#e2e8f0;--text-muted:#94a3b8}
+        body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg-darker);color:var(--text-primary);line-height:1.6;overflow-x:hidden;width:100%;max-width:100vw;margin:0;padding:0}
+        body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at 15% 25%,rgba(6,182,212,.15),transparent 50%),radial-gradient(circle at 85% 75%,rgba(249,115,22,.1),transparent 50%),radial-gradient(circle at 50% 50%,rgba(14,165,233,.08),transparent 70%);z-index:-1;pointer-events:none}
+        .container{max-width:1100px;margin:0 auto;padding:40px 40px}
+        .page-header{padding:130px 0 70px;text-align:center}
+        .page-badge{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:linear-gradient(135deg,rgba(6,182,212,.15),rgba(14,165,233,.15));border:1px solid rgba(6,182,212,.3);border-radius:24px;font-size:13px;font-weight:700;color:var(--primary);margin-bottom:20px;text-transform:uppercase;letter-spacing:1.5px}
+        .page-title{font-size:clamp(40px,5vw,64px);font-weight:900;background:linear-gradient(135deg,#06b6d4 0%,#0ea5e9 40%,#f97316 80%,#fb923c 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:24px;line-height:1.1}
+        .page-subtitle{font-size:20px;color:#e2e8f0;max-width:800px;margin:0 auto;line-height:1.7}
+        .hero-stats{display:flex;justify-content:center;gap:48px;margin-top:48px;flex-wrap:wrap}
+        .hero-stat{text-align:center}
+        .hero-stat-number{font-size:36px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .hero-stat-label{font-size:13px;color:#cbd5e1;text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-top:4px}
+        .section{padding:8px 0}
+        .section-title{font-size:clamp(28px,3vw,38px);font-weight:900;margin-bottom:16px;background:linear-gradient(135deg,#06b6d4 0%,#0ea5e9 50%,#f97316 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .section-desc{font-size:17px;color:#e2e8f0;line-height:1.8;max-width:900px;margin-bottom:40px}
+        .section-text{font-size:16px;color:#e2e8f0;line-height:1.85;margin-bottom:20px;max-width:950px}
+        .section-text strong{color:var(--text-primary)}
+        .glass-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:32px;backdrop-filter:blur(10px);transition:all .35s ease}
+        .glass-card:hover{border-color:rgba(6,182,212,.3);background:rgba(6,182,212,.05);transform:translateY(-4px);box-shadow:0 12px 40px rgba(6,182,212,.1)}
+
+        /* ===== NAVIGATION ===== */
+        .sector-navigation{margin-bottom:30px}.navigation-block{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:20px;overflow:hidden;backdrop-filter:blur(10px);box-shadow:0 8px 32px rgba(0,0,0,0.1)}.navigation-toggle{width:100%;display:flex;align-items:center;gap:16px;padding:24px 32px;background:rgba(255,255,255,0.03);border:none;cursor:pointer;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden}.navigation-toggle::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,rgba(6,182,212,0.1),rgba(14,165,233,0.05));opacity:0;transition:opacity 0.3s ease}.navigation-toggle:hover::before{opacity:1}.navigation-toggle:hover{background:rgba(255,255,255,0.05);transform:translateY(-2px)}.navigation-toggle.active{background:rgba(255,255,255,0.05)}.navigation-toggle.active::before{opacity:1}.nav-icon{font-size:28px;position:relative;z-index:1;filter:drop-shadow(0 2px 4px rgba(6,182,212,0.3))}.nav-title{flex:1;text-align:left;font-size:20px;font-weight:700;background:linear-gradient(135deg,#06b6d4,#0ea5e9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:0.5px;position:relative;z-index:1}.nav-arrow{font-size:18px;color:#06b6d4;transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;z-index:1}.navigation-toggle.active .nav-arrow{transform:rotate(180deg)}.navigation-content{max-height:0;overflow:hidden;transition:max-height 0.5s cubic-bezier(0.4,0,0.2,1)}.navigation-content.active{max-height:2000px}.navigation-grid{display:grid;grid-template-columns:2fr 2fr 1.5fr;gap:32px;padding:32px;background:rgba(255,255,255,0.02)}.nav-section{display:flex;flex-direction:column;gap:8px}.section-header{font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#06b6d4;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(6,182,212,0.2)}.section-arrow{display:none}.section-items{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(8,auto);grid-auto-flow:column;gap:8px;counter-reset:nav-counter}.nav-section:last-child .section-items{grid-template-columns:1fr 1fr}.section-items a{padding:10px 12px;color:#e2e8f0;text-decoration:none;border-radius:10px;font-size:13px;font-weight:500;transition:all 0.2s ease;border:1px solid rgba(255,255,255,0.08);background:linear-gradient(135deg,rgba(6,182,212,0.05),rgba(14,165,233,0.03));display:flex;align-items:center;gap:2px;position:relative;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-height:44px}.section-items a::before{counter-increment:nav-counter;content:counter(nav-counter);font-size:8px;font-weight:600;color:rgba(6,182,212,0.5);min-width:10px;text-align:center;transition:all 0.2s ease;flex-shrink:0;margin-left:-4px}.section-items a::after{content:'';position:absolute;left:0;top:0;height:100%;width:3px;background:linear-gradient(180deg,#06b6d4,#0ea5e9);opacity:0;transition:opacity 0.2s ease}.section-items a:hover{background:linear-gradient(135deg,rgba(6,182,212,0.15),rgba(14,165,233,0.1));color:#67e8f9;border-color:rgba(6,182,212,0.3);transform:translateX(3px);box-shadow:0 4px 12px rgba(6,182,212,0.2)}.section-items a:hover::before{color:#06b6d4}.section-items a:hover::after{opacity:1}.section-items a.active{background:linear-gradient(135deg,rgba(6,182,212,0.2),rgba(99,102,241,0.15));color:#67e8f9;border-color:rgba(6,182,212,0.5);font-weight:600;box-shadow:0 0 0 1px rgba(6,182,212,0.2) inset,0 4px 16px rgba(6,182,212,0.25)}.section-items a.active::before{color:#06b6d4}.section-items a.active::after{opacity:1}@media(max-width:1024px){.navigation-grid{grid-template-columns:1fr 1fr;gap:24px}}@media(max-width:640px){.navigation-grid{grid-template-columns:1fr;gap:20px;padding:24px 20px}.section-items{grid-template-columns:1fr 1fr}.section-items a{padding:8px 8px;font-size:11px;white-space:nowrap;min-height:40px;line-height:1.2;gap:6px}.navigation-toggle{padding:18px 20px}.nav-title{font-size:16px}.section-header{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center}.section-header .section-arrow{display:inline-block;font-size:12px;color:#06b6d4;transition:transform 0.3s ease;margin-left:8px}.nav-section.collapsed .section-arrow{transform:rotate(-90deg)}.nav-section.collapsed .section-items{display:none}}
+
+        /* DESKTOP */
+        .desktop-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+        .desktop-icon{text-align:center;padding:24px 16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:16px;cursor:pointer;transition:all .3s}
+        .desktop-icon:hover{border-color:rgba(6,182,212,.4);background:rgba(6,182,212,.08);transform:translateY(-4px)}
+        .desktop-icon.active{border-color:rgba(6,182,212,.5);background:rgba(6,182,212,.1);box-shadow:0 8px 24px rgba(6,182,212,.15)}
+        .desktop-icon .di-emoji{font-size:36px;display:block;margin-bottom:10px}
+        .desktop-icon .di-name{font-size:13px;font-weight:700;color:var(--text-primary)}
+        .desktop-icon .di-cat{font-size:11px;color:#cbd5e1;margin-top:2px}
+        .desktop-popup{display:none;margin-top:20px;padding:28px;background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.2);border-radius:16px;animation:fadeIn .3s ease}
+        .desktop-popup.visible{display:block}
+        .desktop-popup h3{font-size:20px;font-weight:800;color:var(--text-primary);margin-bottom:8px}
+        .desktop-popup .dp-cat{font-size:13px;color:var(--primary);font-weight:600;margin-bottom:12px}
+        .desktop-popup p{font-size:14px;color:#e2e8f0;line-height:1.8;margin-bottom:10px}
+        .desktop-popup .dp-price{font-size:15px;font-weight:700;color:var(--accent)}
+        /* DASHBOARD ERRORS */
+        .dashboard{background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.1);border-radius:20px;padding:24px;position:relative}
+        .dash-header{display:flex;justify-content:space-between;align-items:center;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:16px}
+        .dash-header h3{font-size:18px;font-weight:700;color:var(--text-primary)}
+        .dash-header .dash-date{font-size:13px;color:#cbd5e1}
+        .dash-rows{display:flex;flex-direction:column;gap:8px}
+        .dash-row{display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(255,255,255,.02);border:2px solid transparent;border-radius:12px;cursor:pointer;transition:all .2s;font-size:14px}
+        .dash-row:hover{background:rgba(255,255,255,.05)}
+        .dash-row .dr-icon{font-size:20px;flex-shrink:0}
+        .dash-row .dr-text{flex:1;color:#e2e8f0}
+        .dash-row .dr-status{font-size:12px;font-weight:700;padding:4px 10px;border-radius:6px}
+        .dr-ok{background:rgba(16,185,129,.15);color:var(--success)}
+        .dr-warn{background:rgba(245,158,11,.15);color:var(--warning)}
+        .dr-error{background:rgba(239,68,68,.15);color:var(--danger)}
+        .dash-row.found{border-color:rgba(16,185,129,.5);background:rgba(16,185,129,.05)}
+        .dash-row.missed{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.03)}
+        .dash-fb{padding:16px 20px;border-radius:12px;font-size:14px;line-height:1.8;display:none;margin-top:16px}
+        .dash-fb.visible{display:block;animation:fadeIn .3s ease}
+        .dash-fb.success{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);color:var(--success)}
+        .dash-fb.partial{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:var(--warning)}
+        .dash-check-btn{margin-top:16px;padding:12px 28px;background:linear-gradient(135deg,var(--primary),var(--secondary));border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+        /* TMS TABLE */
+        .tms-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+        .tms-filter{padding:8px 16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;font-size:13px;font-weight:600;color:#e2e8f0;cursor:pointer;transition:all .2s;font-family:inherit}
+        .tms-filter.active{background:rgba(6,182,212,.15);border-color:rgba(6,182,212,.4);color:var(--primary)}
+        .tms-table{width:100%;border-collapse:separate;border-spacing:0 6px}
+        .tms-table th{text-align:left;padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#cbd5e1}
+        .tms-table td{padding:14px;font-size:14px;color:#e2e8f0;background:rgba(255,255,255,.03)}
+        .tms-table td:first-child{border-radius:10px 0 0 10px;font-weight:600;color:var(--text-primary)}
+        .tms-table td:last-child{border-radius:0 10px 10px 0}
+        .tms-table tr.highlight td{background:rgba(6,182,212,.08);border-top:1px solid rgba(6,182,212,.2);border-bottom:1px solid rgba(6,182,212,.2)}
+        .tms-table tr.highlight td:first-child{border-left:1px solid rgba(6,182,212,.2)}
+        .tms-table tr.highlight td:last-child{border-right:1px solid rgba(6,182,212,.2)}
+        .tms-tag{padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600}
+        .tms-tag-yes{background:rgba(16,185,129,.15);color:var(--success)}
+        .tms-tag-no{background:rgba(239,68,68,.1);color:var(--danger)}
+        .tms-tag-partial{background:rgba(245,158,11,.15);color:var(--warning)}
+        /* BUDGET CALC */
+        .budget-items{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px}
+        .budget-item{display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;cursor:pointer;transition:all .2s;user-select:none}
+        .budget-item:hover{border-color:rgba(6,182,212,.3)}
+        .budget-item.selected{border-color:rgba(6,182,212,.5);background:rgba(6,182,212,.08)}
+        .budget-item .bi-check{width:22px;height:22px;border-radius:6px;border:2px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;transition:all .2s}
+        .budget-item.selected .bi-check{background:var(--primary);border-color:var(--primary);color:#fff}
+        .budget-item .bi-info{flex:1}
+        .budget-item .bi-name{font-size:14px;font-weight:600;color:var(--text-primary)}
+        .budget-item .bi-desc{font-size:12px;color:#cbd5e1}
+        .budget-item .bi-price{font-size:15px;font-weight:700;color:var(--accent);flex-shrink:0}
+        .budget-total{padding:24px;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.15);border-radius:16px;text-align:center}
+        .budget-total .bt-amount{font-size:48px;font-weight:900;color:var(--primary)}
+        .budget-total .bt-label{font-size:14px;color:#cbd5e1;margin-top:4px}
+        .budget-total .bt-tier{font-size:16px;font-weight:700;margin-top:8px}
+        /* EXPAND */
+        .checklist{list-style:none}
+        .checklist-item{padding:16px 0;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer}
+        .checklist-item:last-child{border-bottom:none}
+        .checklist-header{display:flex;align-items:center;gap:12px;font-size:16px;font-weight:600;color:var(--text-primary)}
+        .checklist-header:hover{color:var(--primary)}
+        .checklist-icon{font-size:20px;flex-shrink:0}
+        .checklist-arrow{margin-left:auto;font-size:12px;color:#cbd5e1;transition:transform .3s}
+        .checklist-item.open .checklist-arrow{transform:rotate(180deg)}
+        .checklist-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+        .checklist-item.open .checklist-body{max-height:600px}
+        .checklist-body p{padding:12px 0 4px 32px;font-size:14px;color:#e2e8f0;line-height:1.8}
+        /* QUIZ */
+        .quiz-card{background:linear-gradient(135deg,rgba(6,182,212,.08),rgba(249,115,22,.05));border:1px solid rgba(6,182,212,.2);border-radius:24px;padding:40px}
+        .quiz-question{font-size:20px;font-weight:700;color:var(--text-primary);margin-bottom:24px;line-height:1.5}
+        .quiz-options{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+        .quiz-option{padding:16px 20px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;color:#e2e8f0;font-size:15px;font-weight:500;cursor:pointer;transition:all .3s;font-family:inherit;text-align:left}
+        .quiz-option:hover{background:rgba(6,182,212,.1);border-color:rgba(6,182,212,.3);color:var(--text-primary)}
+        .quiz-option.correct{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.4);color:var(--success)}
+        .quiz-option.wrong{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.4);color:var(--danger)}
+        .quiz-option:disabled{cursor:default}
+        .quiz-feedback{padding:16px 20px;border-radius:12px;font-size:14px;line-height:1.7;display:none}
+        .quiz-feedback.visible{display:block;animation:fadeIn .3s ease}
+        .quiz-feedback.success{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:var(--success)}
+        .quiz-feedback.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--danger)}
+        .quiz-nav{display:flex;justify-content:space-between;align-items:center;margin-top:20px}
+        .quiz-counter{font-size:14px;color:#cbd5e1;font-weight:600}
+        .quiz-next-btn{padding:10px 24px;background:linear-gradient(135deg,var(--primary),var(--secondary));border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:none}
+        .quiz-next-btn.visible{display:inline-block}
+        .quiz-score{text-align:center;padding:32px;display:none}
+        .quiz-score.visible{display:block;animation:fadeIn .4s ease}
+        .quiz-score .score-number{font-size:64px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .quiz-restart-btn{margin-top:20px;padding:12px 28px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;color:var(--text-primary);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        /* RESPONSIVE */
+        @media(max-width:1024px){.course-nav-grid{grid-template-columns:repeat(2,1fr)}.desktop-grid{grid-template-columns:repeat(3,1fr)}.budget-items{grid-template-columns:1fr}}
+        @media(max-width:768px){.container{padding:0 20px}.page-header{padding:100px 0 50px}.hero-stats{gap:24px}.hero-stat-number{font-size:28px}.desktop-grid{grid-template-columns:repeat(2,1fr)}.quiz-options{grid-template-columns:1fr}.tms-table{font-size:12px}.tms-table td,.tms-table th{padding:10px 8px}}
+        @media(max-width:480px){.container{padding:0 16px}.hero-stats{flex-direction:column;gap:16px}.desktop-grid{grid-template-columns:repeat(2,1fr)}}
+        @media(max-width:360px){.glass-card{padding:20px}.quiz-card{padding:24px}}
+        ::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:var(--bg-darker)}::-webkit-scrollbar-thumb{background:rgba(6,182,212,.3);border-radius:4px}
+
+        /* ===== SCROLL TO TOP BUTTON ===== */
+        .scroll-to-top{position:fixed;bottom:32px;right:32px;width:56px;height:56px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);border:none;border-radius:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(6,182,212,0.3);transition:all 0.3s cubic-bezier(0.4,0,0.2,1);opacity:0;visibility:hidden;z-index:999}.scroll-to-top.visible{opacity:1;visibility:visible}.scroll-to-top.inactive{opacity:0.2}.scroll-to-top:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(6,182,212,0.4)}.scroll-to-top svg{color:#fff}@media(max-width:768px){.scroll-to-top{width:48px;height:48px;bottom:24px;right:24px}}
+
+        .table-wrap{overflow-x:auto;border-radius:16px}
+.complete-module-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;max-width:1100px;margin:40px auto 24px;padding:20px 32px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:16px;font-size:18px;font-weight:700;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;font-family:inherit}
+.complete-module-btn:hover{background:linear-gradient(135deg,#059669,#047857);transform:translateY(-2px);box-shadow:0 8px 25px rgba(16,185,129,.3)}
+.module-navigation{display:flex;justify-content:space-between;gap:16px;margin:0 auto 40px;max-width:1100px;padding:0 20px}
+.module-nav-btn{flex:1;display:flex;align-items:center;gap:12px;padding:16px 20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;text-decoration:none;color:#ffffff;transition:all .3s;position:relative;overflow:hidden}
+.module-nav-btn:hover{background:rgba(6,182,212,.12);border-color:#06b6d4;transform:translateY(-2px)}
+.module-nav-btn.next{justify-content:flex-end}
+.module-nav-btn .icon{font-size:24px;transition:transform .3s}
+.module-nav-btn:hover .icon{transform:translateX(-4px)}
+.module-nav-btn.next:hover .icon{transform:translateX(4px)}
+.module-nav-btn .text{display:flex;flex-direction:column;gap:2px}
+.module-nav-btn .label{font-size:11px;color:#e2e8f0;text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.module-nav-btn .title{font-size:15px;font-weight:700;color:#ffffff}
+@media(max-width:768px){.module-navigation{flex-direction:column;gap:12px}}
+    </style>
+    <script type="module" src="../firebase-auth-init.js?v=4.0"></script>
+</head>
+
+<body>
+    <script src="../role-guard.js"></script>
+    <div id="nav-placeholder"></div>
+    <script src="../nav-loader.js?v=7.4"></script>
+
+    <!-- HERO -->
+    <section class="page-header">
+        <div class="container">
+            <div class="page-badge">💻 Модуль 11 из 15</div>
+            <h1 class="page-title">TMS и технологии</h1>
+            <p class="page-subtitle">
+                Технологии — это то, что отличает диспетчера, который обрабатывает 3 груза в день, от того, 
+                кто обрабатывает 15. TMS, ELD, GPS tracking, Load Boards, факторинг, бухгалтерия — всё это 
+                инструменты, которые автоматизируют рутину и позволяют сфокусироваться на том, что приносит деньги: 
+                поиск грузов и переговоры.
+            </p>
+            <div class="hero-stats">
+                <div class="hero-stat"><span class="hero-stat-number">10+</span><span class="hero-stat-label">Инструментов</span></div>
+                <div class="hero-stat"><span class="hero-stat-number">$150-600</span><span class="hero-stat-label">$/мес Tech Stack</span></div>
+                <div class="hero-stat"><span class="hero-stat-number">3-5ч</span><span class="hero-stat-label">Экономия в день</span></div>
+                <div class="hero-stat"><span class="hero-stat-number">3x</span><span class="hero-stat-label">Рост продуктивности</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NAV -->
+    <section class="section" style="padding-top:0;padding-bottom:30px;">
+        <div class="container">
+            <div class="sector-wrapper sector-navigation">
+                <div class="navigation-block">
+                    <button class="navigation-toggle" id="navigationToggle">
+                        <span class="nav-icon">📚</span>
+                        <span class="nav-title">Навигация по курсу</span>
+                        <span class="nav-arrow">▼</span>
+                    </button>
+
+                    <div class="navigation-content" id="navigationContent">
+                        <div class="navigation-grid">
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ РАЗДЕЛЫ<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="intro.html">📋 Введение</a>
+                                    <a href="glossary.html">📖 Глоссарий</a>
+                                    <a href="role.html">👤 Роль</a>
+                                    <a href="equipment.html">🚛 Оборудование</a>
+                                    <a href="routes.html">🗺 Маршруты</a>
+                                    <a href="loadboards.html">📡 Load Boards</a>
+                                    <a href="negotiation.html">🤝 Переговоры</a>
+                                    <a href="brokers.html">💼 Брокеры</a>
+                                    <a href="docs.html">📄 Документы</a>
+                                    <a href="regulations.html">⚖️ Законы</a>
+                                    <a href="technology.html" class="active">🖥 TMS</a>
+                                    <a href="communication.html">📞 Коммуникация</a>
+                                    <a href="problems.html">⚠️ Проблемы</a>
+                                    <a href="finances.html">💰 Финансы</a>
+                                    <a href="career.html">📈 Карьера</a>
+                                </div>
+                            </div>
+
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ МОДУЛИ<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="doc-module-1-complete.html">🏭 Индустрия</a>
+                                    <a href="doc-module-2-complete.html">📖 Термины</a>
+                                    <a href="doc-module-3-complete.html">👤 Диспетчер</a>
+                                    <a href="doc-module-4-complete.html">📡 Load Boards</a>
+                                    <a href="doc-module-5-complete.html">🗺 Маршруты</a>
+                                    <a href="doc-module-6-complete.html">🚛 Оборудование</a>
+                                    <a href="doc-module-7-complete.html">🤝 Переговоры</a>
+                                    <a href="doc-module-8-complete.html">💼 Брокеры</a>
+                                    <a href="doc-module-9-complete.html">📊 CSA Scores</a>
+                                    <a href="doc-module-10-complete.html">📦 Грузы</a>
+                                    <a href="doc-module-11-complete.html">⚠️ Проблемы</a>
+                                    <a href="doc-module-12-complete.html">📈 Карьера</a>
+                                </div>
+                            </div>
+
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ ИНСТРУМЕНТЫ<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="simulator.html">🎮 Симулятор</a>
+                                    <a href="testing.html">📝 Тесты</a>
+                                    <a href="cases.html">🗂 Кейсы</a>
+                                    <a href="load-finder.html">🔍 Load Finder</a>
+                                    <a href="dispatcher-cards.html">🃏 Карточки</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ВВЕДЕНИЕ -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">🖥️ Tech Stack диспетчера: обзор</h2>
+            <p class="section-text">
+                Tech Stack — это набор программ и сервисов, которые диспетчер использует ежедневно. 
+                В центре всего — TMS (Transportation Management System), которая объединяет управление грузами, 
+                водителями, документами и финансами в одном месте. Вокруг TMS — специализированные инструменты: 
+                Load Boards для поиска грузов, ELD для мониторинга HOS, GPS для отслеживания траков, 
+                факторинг для быстрой оплаты, бухгалтерия для учёта.
+            </p>
+            <p class="section-text">
+                <strong>Почему технологии критичны:</strong> Без TMS диспетчер тратит 60-70% времени на рутину: 
+                ручной ввод данных, поиск документов, отслеживание оплат, звонки водителям «где ты?». 
+                С TMS — рутина автоматизирована, и 70% времени уходит на то, что приносит деньги: 
+                поиск грузов, переговоры, построение отношений с брокерами. Разница в доходе: 
+                диспетчер без TMS обрабатывает 3-5 грузов/день, с TMS — 10-15.
+            </p>
+            <p class="section-text">
+                <strong>Сколько стоит:</strong> Минимальный набор для старта: $150-200/мес (Load Board + базовый TMS + телефон). 
+                Профессиональный набор: $300-400/мес (TMS + Load Board + ELD + факторинг). 
+                Полный enterprise: $500-800/мес (всё вышеперечисленное + accounting + advanced analytics). 
+                Инвестиция окупается с первого дополнительного груза в неделю.
+            </p>
+        </div>
+    </section>
+
+    <!-- РАБОЧИЙ СТОЛ -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">🖥️ Рабочий стол диспетчера</h2>
+            <p class="section-desc">Кликните на любую иконку, чтобы узнать подробности об инструменте — что это, зачем, сколько стоит.</p>
+
+            <div class="desktop-grid" id="desktopGrid"></div>
+            <div class="desktop-popup" id="desktopPopup"></div>
+        </div>
+    </section>
+
+    <!-- TMS ПОДРОБНО -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">💻 TMS: сердце операций диспетчера</h2>
+            <p class="section-text">
+                TMS (Transportation Management System) — программа, которая объединяет все аспекты работы диспетчера 
+                в одном интерфейсе. Dispatch board (доска грузов и водителей), load management (управление грузами от букинга до delivery), 
+                driver management (HOS статус, местоположение, документы), invoicing (автоматическое создание инвойсов), 
+                reporting (отчёты по прибыли, RPM, utilization).
+            </p>
+            <p class="section-text">
+                <strong>Что делает хороший TMS:</strong> Интеграция с Load Boards (DAT, Truckstop) — грузы подтягиваются автоматически. 
+                Интеграция с ELD (Motive, Samsara) — HOS статус водителей в реальном времени. 
+                Автоматическое создание Rate Con и Invoice. GPS tracking на карте. 
+                Мобильное приложение для водителей (POD upload, status updates). 
+                Интеграция с факторингом (отправка инвойсов одним кликом). 
+                Отчёты: прибыль по водителю, по лейну, по брокеру, по месяцу.
+            </p>
+            <p class="section-text">
+                <strong>Как выбрать TMS:</strong> Для 1-3 траков — простой и дешёвый (TruckingOffice, Axon, TruckSmarter). 
+                Для 3-15 траков — средний с интеграциями (Rose Rocket, Motive TMS). 
+                Для 15+ траков — enterprise (McLeod, TMW, Prophesy). 
+                Всегда берите trial period (7-14 дней бесплатно) перед покупкой. 
+                Проверяйте: есть ли мобильное приложение, интеграция с вашим Load Board и ELD, 
+                качество поддержки (отвечают за минуты или за дни?).
+            </p>
+
+            <!-- TMS СРАВНИТЕЛЬНАЯ ТАБЛИЦА -->
+            <h3 style="font-size:20px;font-weight:800;color:var(--text-primary);margin:32px 0 16px;">📊 Сравнение TMS систем</h3>
+            <p style="font-size:14px;color:#cbd5e1;margin-bottom:16px;">Отметьте важные критерии — подходящие TMS подсветятся:</p>
+            <div class="tms-filters" id="tmsFilters">
+                <button class="tms-filter" data-f="cheap" onclick="toggleTmsFilter(this)">💰 До $100/мес</button>
+                <button class="tms-filter" data-f="eld" onclick="toggleTmsFilter(this)">📱 ELD интеграция</button>
+                <button class="tms-filter" data-f="lb" onclick="toggleTmsFilter(this)">🔍 Load Board sync</button>
+                <button class="tms-filter" data-f="mobile" onclick="toggleTmsFilter(this)">📲 Мобильное приложение</button>
+                <button class="tms-filter" data-f="small" onclick="toggleTmsFilter(this)">🚛 Для 1-5 траков</button>
+            </div>
+            <div class="table-wrap">
+                <table class="tms-table" id="tmsTable">
+                    <thead><tr><th>TMS</th><th>Цена/мес</th><th>Для кого</th><th>ELD</th><th>Load Board</th><th>Mobile</th></tr></thead>
+                    <tbody>
+                        <tr data-cheap="1" data-small="1" data-mobile="1" data-eld="0" data-lb="0"><td>TruckingOffice</td><td>$30-50</td><td>1-5 траков, новички</td><td><span class="tms-tag tms-tag-no">Нет</span></td><td><span class="tms-tag tms-tag-no">Нет</span></td><td><span class="tms-tag tms-tag-yes">Да</span></td></tr>
+                        <tr data-cheap="1" data-small="1" data-mobile="1" data-eld="0" data-lb="1"><td>TruckSmarter</td><td>$0-40</td><td>Owner-operators</td><td><span class="tms-tag tms-tag-no">Нет</span></td><td><span class="tms-tag tms-tag-yes">Да</span></td><td><span class="tms-tag tms-tag-yes">Да</span></td></tr>
+                        <tr data-cheap="1" data-small="1" data-mobile="1" data-eld="1" data-lb="0"><td>Axon TMS</td><td>$50-80</td><td>1-10 траков</td><td><span class="tms-tag tms-tag-yes">Да</span></td><td><span class="tms-tag tms-tag-partial">Частично</span></td><td><span class="tms-tag tms-tag-yes">Да</span></td></tr>
+                        <tr data-cheap="0" data-small="0" data-mobile="1" data-eld="1" data-lb="1"><td>Rose Rocket</td><td>$100-200</td><td>5-50 траков</td><td><span class="tms-tag tms-tag-yes">Да</span></td><td><span class="tms-tag tms-tag-yes">Да</span></td><td><span class="tms-tag tms-tag-yes">Да</span></td></tr>
+                        <tr data-cheap="0" data-small="0" data-mobile="1" data-eld="1" data-lb="1"><td>Motive TMS</td><td>$150-300</td><td>5-100 траков</td><td><span class="tms-tag tms-tag-yes">Да (свой)</span></td><td><span class="tms-tag tms-tag-yes">Да</span></td><td><span class="tms-tag tms-tag-yes">Да</span></td></tr>
+                        <tr data-cheap="0" data-small="0" data-mobile="1" data-eld="1" data-lb="1"><td>Samsara</td><td>$200-400</td><td>10-500+ траков</td><td><span class="tms-tag tms-tag-yes">Да (свой)</span></td><td><span class="tms-tag tms-tag-yes">Да</span></td><td><span class="tms-tag tms-tag-yes">Да</span></td></tr>
+                        <tr data-cheap="0" data-small="0" data-mobile="0" data-eld="1" data-lb="1"><td>McLeod</td><td>$500+</td><td>50+ траков, enterprise</td><td><span class="tms-tag tms-tag-yes">Да</span></td><td><span class="tms-tag tms-tag-yes">Да</span></td><td><span class="tms-tag tms-tag-partial">Частично</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ДОПОЛНИТЕЛЬНЫЕ ИНСТРУМЕНТЫ -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">🔧 Дополнительные инструменты</h2>
+            <p class="section-text">
+                Помимо TMS, диспетчер использует десяток специализированных инструментов. Каждый решает конкретную задачу. 
+                Не нужно покупать всё сразу — начните с минимума и добавляйте по мере роста.
+            </p>
+            <div class="glass-card">
+                <ul class="checklist">
+                    <li class="checklist-item" onclick="toggleItem(this)"><div class="checklist-header"><span class="checklist-icon">📡</span>GPS Tracking и Telematics<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>GPS tracking показывает местоположение каждого трака в реальном времени. Зачем диспетчеру: 
+                        точный ETA для брокера («ваш груз будет через 2 часа 15 минут»), контроль маршрута (водитель не уехал в другую сторону), 
+                        geofencing (автоматическое уведомление когда трак прибыл на pickup/delivery), доказательство при спорах 
+                        («GPS показывает что водитель был на месте в 8:00 AM»). Большинство ELD устройств включают GPS. 
+                        Отдельные GPS трекеры: $15-30/мес за трак. Samsara и Motive включают GPS в свои ELD пакеты.</p></div>
+                    </li>
+                    <li class="checklist-item" onclick="toggleItem(this)"><div class="checklist-header"><span class="checklist-icon">⛽</span>Fuel Cards<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>Fuel cards дают скидки на топливо ($0.05-0.50/галлон) и контроль расходов. 
+                        Популярные: WEX (широкая сеть), Comdata (интеграция с TMS), EFS (для owner-operators), 
+                        RTS Fuel Card (от факторинговой компании RTS). Как работает: водитель заправляется картой → 
+                        транзакция автоматически попадает в систему → диспетчер видит расходы в реальном времени. 
+                        Можно установить лимиты: максимум $500/день, только diesel, только определённые заправки. 
+                        Экономия: $200-500/мес на флот из 5 траков.</p></div>
+                    </li>
+                    <li class="checklist-item" onclick="toggleItem(this)"><div class="checklist-header"><span class="checklist-icon">💬</span>Коммуникация<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>Для связи с водителями: WhatsApp (бесплатно, все знают), Telegram (группы, боты), 
+                        Zello (push-to-talk как рация — популярно среди водителей), обычные звонки. 
+                        Для связи с брокерами: email (основной канал), телефон (для переговоров), TMS messaging (если интегрирован). 
+                        Для команды: Slack (если несколько диспетчеров), Google Workspace (email + docs + drive). 
+                        Совет: с водителями — WhatsApp/Zello (быстро, просто). С брокерами — email + телефон (профессионально).</p></div>
+                    </li>
+                    <li class="checklist-item" onclick="toggleItem(this)"><div class="checklist-header"><span class="checklist-icon">📄</span>Документы и подписи<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>DocuSign / HelloSign — электронные подписи для Rate Con и контрактов ($10-25/мес). 
+                        CamScanner / Adobe Scan — сканирование BOL и POD с телефона (бесплатно). 
+                        Google Drive / Dropbox — хранение документов ($0-10/мес). 
+                        Организация: папка по каждому грузу (Load# → Rate Con + BOL + POD + Invoice). 
+                        Совет: научите водителей пользоваться CamScanner — качество фото POD вырастет в 10 раз.</p></div>
+                    </li>
+                    <li class="checklist-item" onclick="toggleItem(this)"><div class="checklist-header"><span class="checklist-icon">📊</span>Бухгалтерия и учёт<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>QuickBooks — стандарт для малого бизнеса в США ($25-80/мес). Invoicing, expense tracking, 
+                        tax reports, bank reconciliation. Альтернативы: FreshBooks (проще), Wave (бесплатно, базовый). 
+                        Многие TMS имеют встроенный accounting модуль — проверяйте перед покупкой отдельной программы. 
+                        Для налогов: наймите CPA (бухгалтера), который специализируется на trucking — $500-1,500/год. 
+                        Это окупается за счёт правильных tax deductions.</p></div>
+                    </li>
+                    <li class="checklist-item" onclick="toggleItem(this)"><div class="checklist-header"><span class="checklist-icon">🤖</span>AI и автоматизация (2025-2026)<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>AI меняет trucking прямо сейчас. ChatGPT — для email шаблонов, ответов брокерам, 
+                        создания документов. AI-powered load matching (Convoy, Uber Freight) — алгоритмы подбирают грузы автоматически. 
+                        Predictive analytics — DAT и Truckstop используют AI для прогноза ставок. 
+                        Automated dispatching — некоторые TMS (Motive, Samsara) предлагают AI-dispatch: 
+                        система сама назначает грузы водителям на основе HOS, местоположения и предпочтений. 
+                        Пока AI не заменит диспетчера, но уже экономит 1-2 часа в день на рутине.</p></div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- НАЙДИ ОШИБКИ НА DASHBOARD -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">🎯 Найди ошибки на Dashboard</h2>
+            <p class="section-text">
+                Перед вами TMS dashboard с данными по 6 водителям/грузам. 3 из них имеют проблемы, которые нужно решить немедленно. 
+                Кликните на проблемные строки, затем нажмите «Проверить».
+            </p>
+            <div class="dashboard" id="dashBoard">
+                <div class="dash-header"><h3>📊 Dispatch Board — 26 марта 2026</h3><div class="dash-date">Обновлено: 14:30 ET</div></div>
+                <div class="dash-rows" id="dashRows"></div>
+                <button class="dash-check-btn" onclick="checkDash()">Проверить мои ответы</button>
+                <div class="dash-fb" id="dashFb"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- КАЛЬКУЛЯТОР БЮДЖЕТА -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">💰 Калькулятор Tech Stack бюджета</h2>
+            <p class="section-text">Отметьте инструменты, которые планируете использовать — увидите общий месячный бюджет.</p>
+            <div class="glass-card" style="padding:32px;">
+                <div class="budget-items" id="budgetItems"></div>
+                <div class="budget-total" id="budgetTotal">
+                    <div class="bt-amount" id="btAmount">$0</div>
+                    <div class="bt-label">в месяц</div>
+                    <div class="bt-tier" id="btTier" style="color:#cbd5e1;">Выберите инструменты</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- СТАРТОВЫЙ НАБОР -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">🚀 Стартовый набор новичка</h2>
+            <p class="section-text">
+                Не нужно покупать всё сразу. Вот минимальный набор для старта с 1-2 водителями, 
+                и план расширения по мере роста бизнеса.
+            </p>
+            <p class="section-text">
+                <strong>Месяц 1-2 (Старт, $150-200/мес):</strong> Load Board (DAT One $45 или 123Loadboard $29). 
+                Телефон с безлимитным планом ($50-70). Google Workspace ($6 — email + Drive + Docs). 
+                WhatsApp (бесплатно — связь с водителями). CamScanner (бесплатно — сканирование документов). 
+                Факторинг (комиссия 2-3% от инвойсов, но не фиксированная плата). 
+                На этом этапе TMS не нужен — используйте Google Sheets для учёта грузов.
+            </p>
+            <p class="section-text">
+                <strong>Месяц 3-6 (Рост, $300-400/мес):</strong> Добавьте TMS (Axon $50-80 или TruckSmarter $40). 
+                Второй Load Board (Truckstop $39). ELD для водителей (Motive $25/мес за трак). 
+                Fuel card (бесплатно, экономия на топливе). QuickBooks ($25 — бухгалтерия). 
+                На этом этапе вы обрабатываете 5-10 грузов/день и TMS начинает окупаться.
+            </p>
+            <p class="section-text">
+                <strong>Месяц 6+ (Масштаб, $500-800/мес):</strong> Upgrade TMS (Rose Rocket $100-200 или Motive TMS $150-300). 
+                DAT Power ($150 — полная аналитика). Samsara GPS + dashcam ($30-50/трак). 
+                DocuSign ($10 — электронные подписи). CPA бухгалтер ($100-125/мес). 
+                На этом этапе у вас 5-15 траков и технологии — ваше конкурентное преимущество.
+            </p>
+        </div>
+    </section>
+
+    <!-- КВИЗ -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">🎯 Квиз: проверь знания по технологиям</h2>
+            <p class="section-desc">8 вопросов по TMS, инструментам и tech stack диспетчера.</p>
+            <div class="quiz-card" id="quizCard">
+                <div id="quizBody">
+                    <div class="quiz-question" id="quizQuestion"></div>
+                    <div class="quiz-options" id="quizOptions"></div>
+                    <div class="quiz-feedback" id="quizFeedback"></div>
+                    <div class="quiz-nav"><span class="quiz-counter" id="quizCounter"></span><button class="quiz-next-btn" id="quizNext" onclick="nextQ()">Далее →</button></div>
+                </div>
+                <div class="quiz-score" id="quizScore">
+                    <div class="score-number" id="scoreNum"></div>
+                    <p id="scoreTxt"></p>
+                    <button class="quiz-restart-btn" onclick="restartQuiz()">Пройти заново</button>
+                </div>
+            </div>
+        </div>
+        <button class="complete-module-btn" onclick="completeModule(11)"><span>✓</span><span>Завершить модуль и перейти к следующему</span></button>
+        <div class="module-navigation">
+            <a href="regulations.html" class="module-nav-btn"><span class="icon">←</span><div class="text"><span class="label">Предыдущий модуль</span><span class="title">⚖️ Законы</span></div></a>
+            <a href="communication.html" class="module-nav-btn next"><div class="text"><span class="label">Следующий модуль</span><span class="title">💬 Коммуникация</span></div><span class="icon">→</span></a>
+        </div>
+    </section>
+
+    <script>
+        // NAVIGATION
+        (function() {
+            const toggle = document.getElementById('navigationToggle');
+            const content = document.getElementById('navigationContent');
+            
+            toggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+                content.classList.toggle('active');
+            });
+
+            // Аккордеон для секций только на мобильных
+            function initMobileAccordion() {
+                if (window.innerWidth <= 640) {
+                    const navSections = document.querySelectorAll('.nav-section');
+                    
+                    // Показываем стрелки
+                    document.querySelectorAll('.section-arrow').forEach(arrow => {
+                        arrow.style.display = 'inline-block';
+                    });
+                    
+                    // Закрываем секции 2 и 3 (Модули и Инструменты)
+                    navSections.forEach(function(section, index) {
+                        if (index > 0) {
+                            section.classList.add('collapsed');
+                        }
+                        
+                        const header = section.querySelector('.section-header');
+                        if (header && !header.dataset.listenerAdded) {
+                            header.addEventListener('click', function() {
+                                section.classList.toggle('collapsed');
+                            });
+                            header.dataset.listenerAdded = 'true';
+                        }
+                    });
+                } else {
+                    // Скрываем стрелки на десктопе
+                    document.querySelectorAll('.section-arrow').forEach(arrow => {
+                        arrow.style.display = 'none';
+                    });
+                }
+            }
+            
+            initMobileAccordion();
+            window.addEventListener('resize', initMobileAccordion);
+        })();
+
+        function toggleItem(el){el.classList.toggle('open');}
+
+        // ===== DESKTOP =====
+        const desktopApps=[
+            {emoji:'📊',name:'DAT Load Board',cat:'Поиск грузов',desc:'Главная биржа грузов. 500K+ грузов/день. RateView для анализа ставок. Saved searches и alerts. Broker scores.',price:'$45-150/мес'},
+            {emoji:'🚛',name:'TMS',cat:'Управление',desc:'Центр операций: dispatch board, load management, invoicing, driver tracking, reporting. Всё в одном месте.',price:'$30-500/мес'},
+            {emoji:'📱',name:'ELD / Motive',cat:'Compliance',desc:'Электронные логбуки. HOS мониторинг в реальном времени. GPS tracking. DVIR. Alerts при приближении к лимитам.',price:'$25-45/мес за трак'},
+            {emoji:'🗺️',name:'Google Maps',cat:'Маршруты',desc:'Планирование маршрутов, расчёт ETA, traffic в реальном времени. Бесплатно. Для точных truck routes используйте PC Miler.',price:'Бесплатно'},
+            {emoji:'💰',name:'Факторинг',cat:'Финансы',desc:'Быстрая оплата (24-48ч вместо 30-45 дней). Broker check — проверка надёжности брокеров. OTR Solutions, RTS, Apex.',price:'1-5% от инвойса'},
+            {emoji:'📋',name:'QuickBooks',cat:'Бухгалтерия',desc:'Invoicing, expense tracking, tax reports, bank reconciliation. Стандарт для малого бизнеса в США.',price:'$25-80/мес'},
+            {emoji:'💬',name:'WhatsApp / Zello',cat:'Коммуникация',desc:'Связь с водителями. WhatsApp — текст и фото. Zello — push-to-talk как рация. Быстро, бесплатно, все знают.',price:'Бесплатно'},
+            {emoji:'✍️',name:'DocuSign',cat:'Документы',desc:'Электронные подписи для Rate Con и контрактов. Водитель подписывает с телефона за 30 секунд.',price:'$10-25/мес'},
+            {emoji:'☁️',name:'Google Drive',cat:'Хранение',desc:'Облачное хранение документов. Папка по каждому грузу. Доступ с любого устройства. 15 GB бесплатно.',price:'$0-6/мес'},
+            {emoji:'⛽',name:'Fuel Card',cat:'Расходы',desc:'Скидки на топливо $0.05-0.50/галлон. Контроль расходов. Лимиты. Интеграция с TMS. WEX, Comdata, EFS.',price:'Бесплатно (экономия)'},
+            {emoji:'🔍',name:'Carrier411',cat:'Проверка',desc:'Проверка брокеров: credit score, отзывы, D2P. Также проверка перевозчиков. Дополнение к факторинг-проверке.',price:'$30-50/мес'},
+            {emoji:'🤖',name:'ChatGPT',cat:'AI помощник',desc:'Email шаблоны, ответы брокерам, создание документов, анализ данных. Экономит 1-2 часа/день на рутинных текстах.',price:'$0-20/мес'}
+        ];
+        const grid=document.getElementById('desktopGrid');
+        const popup=document.getElementById('desktopPopup');
+        desktopApps.forEach((app,i)=>{
+            const div=document.createElement('div');
+            div.className='desktop-icon';div.dataset.idx=i;
+            div.innerHTML='<span class="di-emoji">'+app.emoji+'</span><div class="di-name">'+app.name+'</div><div class="di-cat">'+app.cat+'</div>';
+            div.onclick=()=>{
+                document.querySelectorAll('.desktop-icon').forEach(d=>d.classList.remove('active'));
+                div.classList.add('active');
+                popup.innerHTML='<h3>'+app.emoji+' '+app.name+'</h3><div class="dp-cat">'+app.cat+'</div><p>'+app.desc+'</p><div class="dp-price">'+app.price+'</div>';
+                popup.classList.add('visible');
+            };
+            grid.appendChild(div);
+        });
+
+        // ===== DASHBOARD ERRORS =====
+        const dashData=[
+            {icon:'🚛',text:'Driver Mike — Chicago→Atlanta, 716mi. HOS: 2h remaining. Pickup: tomorrow 8AM.',status:'dr-ok',label:'On Track',isError:false},
+            {icon:'⚠️',text:'Driver Alex — Dallas→Houston, 239mi. HOS: 0h remaining. Load booked for today 3PM.',status:'dr-error',label:'HOS Violation!',isError:true,explain:'Водитель с 0 часов HOS назначен на груз сегодня — невозможно доставить без нарушения.'},
+            {icon:'📄',text:'Load #4521 — POD отправлен, Invoice создан. Broker: CH Robinson. D2P: 21 дней.',status:'dr-ok',label:'Complete',isError:false},
+            {icon:'🔴',text:'Driver John — Insurance expired 3 days ago. Currently en route LA→Phoenix.',status:'dr-error',label:'Expired!',isError:true,explain:'Просроченная страховка! Водитель на маршруте без действующего покрытия. Авария = катастрофа. Немедленно остановить и обновить insurance.'},
+            {icon:'📋',text:'Load #4518 — Delivered 5 days ago. POD not submitted. Invoice not sent.',status:'dr-warn',label:'Overdue',isError:true,explain:'POD не отправлен 5 дней! Большинство Rate Con требуют paperwork within 48 часов. Задержка оплаты гарантирована. Отправить немедленно.'},
+            {icon:'✅',text:'Driver Sara — Memphis→Nashville, 210mi. On schedule. ETA: 2:30 PM ET.',status:'dr-ok',label:'On Time',isError:false}
+        ];
+        const dashEl=document.getElementById('dashRows');
+        let dashSelected=new Set();
+        dashData.forEach((d,i)=>{
+            const row=document.createElement('div');
+            row.className='dash-row';row.dataset.idx=i;
+            row.innerHTML='<span class="dr-icon">'+d.icon+'</span><span class="dr-text">'+d.text+'</span><span class="dr-status '+d.status+'">'+d.label+'</span>';
+            row.onclick=()=>{if(dashSelected.has(i)){dashSelected.delete(i);row.style.borderColor='transparent';}else{dashSelected.add(i);row.style.borderColor='rgba(6,182,212,.5)';}};
+            dashEl.appendChild(row);
+        });
+        function checkDash(){
+            const errors=dashData.map((d,i)=>d.isError?i:-1).filter(i=>i>=0);
+            let correct=0;let explanations=[];
+            document.querySelectorAll('.dash-row').forEach((row,i)=>{
+                const isError=dashData[i].isError;const wasSelected=dashSelected.has(i);
+                if(isError&&wasSelected){row.classList.add('found');correct++;explanations.push('✅ '+dashData[i].explain);}
+                else if(isError&&!wasSelected){row.classList.add('missed');explanations.push('❌ Пропущено: '+dashData[i].explain);}
+                else if(!isError&&wasSelected){row.classList.add('missed');}
+                else{row.classList.add('found');}
+                row.style.pointerEvents='none';
+            });
+            const fb=document.getElementById('dashFb');
+            fb.className=correct===3?'dash-fb visible success':correct>=2?'dash-fb visible partial':'dash-fb visible partial';
+            fb.innerHTML='<strong>Найдено '+correct+' из 3 проблем.</strong><br><br>'+explanations.join('<br>');
+            document.querySelector('.dash-check-btn').style.display='none';
+        }
+
+        // ===== TMS FILTER =====
+        function toggleTmsFilter(btn){
+            btn.classList.toggle('active');
+            const activeFilters=[...document.querySelectorAll('.tms-filter.active')].map(b=>b.dataset.f);
+            document.querySelectorAll('#tmsTable tbody tr').forEach(row=>{
+                if(activeFilters.length===0){row.classList.remove('highlight');return;}
+                const match=activeFilters.every(f=>row.dataset[f]==='1');
+                row.classList.toggle('highlight',match);
+            });
+        }
+
+        // ===== BUDGET CALC =====
+        const budgetData=[
+            {name:'Load Board (DAT One)',desc:'Поиск грузов — обязательно',price:45,essential:true},
+            {name:'Load Board (Truckstop)',desc:'Второй источник грузов',price:39,essential:false},
+            {name:'TMS (базовый)',desc:'Управление операциями',price:50,essential:false},
+            {name:'TMS (продвинутый)',desc:'Rose Rocket / Motive',price:175,essential:false},
+            {name:'ELD (за 1 трак)',desc:'Motive / Samsara',price:30,essential:true},
+            {name:'Fuel Card',desc:'Скидки на топливо',price:0,essential:false},
+            {name:'Google Workspace',desc:'Email + Drive + Docs',price:6,essential:true},
+            {name:'QuickBooks',desc:'Бухгалтерия',price:25,essential:false},
+            {name:'DocuSign',desc:'Электронные подписи',price:10,essential:false},
+            {name:'Carrier411',desc:'Проверка брокеров',price:35,essential:false},
+            {name:'Телефон (безлимит)',desc:'Звонки брокерам',price:60,essential:true},
+            {name:'ChatGPT Plus',desc:'AI помощник',price:20,essential:false}
+        ];
+        const budgetEl=document.getElementById('budgetItems');
+        budgetData.forEach((b,i)=>{
+            const div=document.createElement('div');
+            div.className='budget-item'+(b.essential?' selected':'');div.dataset.idx=i;div.dataset.price=b.price;
+            div.innerHTML='<div class="bi-check">'+(b.essential?'✓':'')+'</div><div class="bi-info"><div class="bi-name">'+b.name+(b.essential?' ⭐':'')+'</div><div class="bi-desc">'+b.desc+'</div></div><div class="bi-price">'+(b.price>0?'$'+b.price+'/мес':'Бесплатно')+'</div>';
+            div.onclick=()=>{div.classList.toggle('selected');div.querySelector('.bi-check').textContent=div.classList.contains('selected')?'✓':'';calcBudget();};
+            budgetEl.appendChild(div);
+        });
+        function calcBudget(){
+            let total=0;
+            document.querySelectorAll('.budget-item.selected').forEach(el=>{total+=parseInt(el.dataset.price);});
+            document.getElementById('btAmount').textContent='$'+total;
+            let tier='',color='';
+            if(total<=200){tier='🟢 Starter Pack — минимум для старта';color='var(--success)';}
+            else if(total<=400){tier='🟡 Pro Pack — оптимально для 3-10 траков';color='var(--warning)';}
+            else{tier='🔵 Enterprise — для 10+ траков';color='var(--primary)';}
+            const tierEl=document.getElementById('btTier');tierEl.textContent=tier;tierEl.style.color=color;
+        }
+        calcBudget();
+
+        // ===== QUIZ =====
+        const quizData=[
+            {q:'Что такое TMS?',options:['Тип трака','Transportation Management System','Tax Management Service','Truck Maintenance Schedule'],correct:1,explanation:'TMS = Transportation Management System — программа для управления перевозками: dispatch board, load management, invoicing, driver tracking, reporting.'},
+            {q:'Какой минимальный Tech Stack нужен для старта?',options:['Только телефон','Load Board + телефон + email','TMS + ELD + 3 Load Boards','Полный enterprise пакет'],correct:1,explanation:'Для старта с 1-2 водителями достаточно: Load Board (DAT/123Loadboard) + телефон + email (Google Workspace). TMS можно добавить позже.'},
+            {q:'Что делает ELD?',options:['Ищет грузы','Записывает HOS водителя автоматически','Считает прибыль','Отправляет email'],correct:1,explanation:'ELD (Electronic Logging Device) автоматически записывает driving time, подключаясь к двигателю. Обязателен по закону FMCSA.'},
+            {q:'Зачем нужен GPS tracking для диспетчера?',options:['Для развлечения','Точный ETA, контроль маршрута, доказательства при спорах','Только для полиции','Не нужен'],correct:1,explanation:'GPS даёт точный ETA для брокера, контроль маршрута, geofencing (авто-уведомления), доказательства при спорах о времени прибытия.'},
+            {q:'Какой TMS подходит для 1-5 траков?',options:['McLeod ($500+/мес)','Samsara ($200-400/мес)','TruckingOffice ($30-50/мес)','SAP TMS'],correct:2,explanation:'Для 1-5 траков — простой и дешёвый TMS: TruckingOffice ($30-50), TruckSmarter ($0-40), Axon ($50-80). McLeod и Samsara — для крупных флотов.'},
+            {q:'Что такое fuel card?',options:['Кредитная карта','Карта со скидками на топливо и контролем расходов','Водительское удостоверение','Страховой полис'],correct:1,explanation:'Fuel card даёт скидки $0.05-0.50/галлон, контроль расходов в реальном времени, лимиты. WEX, Comdata, EFS — популярные провайдеры.'},
+            {q:'Сколько стоит минимальный Tech Stack для старта?',options:['$50/мес','$150-200/мес','$500/мес','$1,000/мес'],correct:1,explanation:'Минимум: Load Board ($29-45) + телефон ($50-70) + Google Workspace ($6) + факторинг (% от инвойсов) = $150-200/мес.'},
+            {q:'Как AI помогает диспетчеру в 2025-2026?',options:['Заменяет диспетчера полностью','Email шаблоны, load matching, прогноз ставок, автоматический dispatch','Только для крупных компаний','Никак'],correct:1,explanation:'AI экономит 1-2 часа/день: ChatGPT для текстов, AI load matching (Convoy, Uber Freight), predictive analytics для ставок, automated dispatching в продвинутых TMS.'}
+        ];
+        let qIdx=0,qScore=0,qAnswered=false;
+        function renderQ(){const q=quizData[qIdx];document.getElementById('quizQuestion').textContent=q.q;document.getElementById('quizCounter').textContent=(qIdx+1)+' / '+quizData.length;document.getElementById('quizFeedback').className='quiz-feedback';document.getElementById('quizNext').classList.remove('visible');qAnswered=false;const el=document.getElementById('quizOptions');el.innerHTML='';q.options.forEach((o,i)=>{const btn=document.createElement('button');btn.className='quiz-option';btn.textContent=o;btn.onclick=()=>answerQ(i);el.appendChild(btn);})}
+        function answerQ(i){if(qAnswered)return;qAnswered=true;const q=quizData[qIdx];document.querySelectorAll('.quiz-option').forEach((b,j)=>{b.disabled=true;if(j===q.correct)b.classList.add('correct');if(j===i&&i!==q.correct)b.classList.add('wrong');});const fb=document.getElementById('quizFeedback');if(i===q.correct){qScore++;fb.className='quiz-feedback visible success';fb.textContent='✅ Правильно! '+q.explanation;}else{fb.className='quiz-feedback visible error';fb.textContent='❌ Неправильно. '+q.explanation;}if(qIdx<quizData.length-1)document.getElementById('quizNext').classList.add('visible');else setTimeout(showQScore,1500);}
+        function nextQ(){qIdx++;renderQ();}
+        function showQScore(){document.getElementById('quizBody').style.display='none';document.getElementById('quizScore').classList.add('visible');document.getElementById('scoreNum').textContent=qScore+'/'+quizData.length;const p=Math.round(qScore/quizData.length*100);document.getElementById('scoreTxt').textContent=p===100?'Идеально! Вы знаете весь tech stack.':p>=75?'Отличный результат!':p>=50?'Неплохо, повторите материал.':'Перечитайте модуль.';}
+        function restartQuiz(){qIdx=0;qScore=0;document.getElementById('quizBody').style.display='';document.getElementById('quizScore').classList.remove('visible');renderQ();}
+        document.addEventListener('DOMContentLoaded',renderQ);
+    </script>
+    <script>
+function completeModule(n){const p=JSON.parse(localStorage.getItem('courseProgress')||'{}');p['module'+n]=true;localStorage.setItem('courseProgress',JSON.stringify(p));const btn=document.querySelector('.complete-module-btn');btn.innerHTML='<span>✓</span><span>Модуль завершен!</span>';btn.style.background='linear-gradient(135deg,#6b7280,#4b5563)';btn.style.cursor='default';const next=document.querySelector('.module-nav-btn.next');if(next)setTimeout(()=>next.click(),1500)}
+document.addEventListener('DOMContentLoaded',function(){const n=document.querySelector('.complete-module-btn')?.onclick?.toString().match(/completeModule\((\d+)\)/);if(n){const p=JSON.parse(localStorage.getItem('courseProgress')||'{}');if(p['module'+n[1]]){const btn=document.querySelector('.complete-module-btn');btn.innerHTML='<span>✓</span><span>Модуль завершен</span>';btn.style.background='linear-gradient(135deg,#6b7280,#4b5563)';btn.style.cursor='default'}}});
+    </script>
+    <!-- Scroll to Top Button -->
+    <button class="scroll-to-top" id="scrollToTop" aria-label="Вернуться наверх">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+    </button>
+
+    <script>
+        // Кнопка возврата наверх
+        (function() {
+            const scrollBtn = document.getElementById('scrollToTop');
+            let inactivityTimer;
+            
+            window.addEventListener('scroll', function() {
+                if (window.pageYOffset > 300) {
+                    scrollBtn.classList.add('visible');
+                    resetInactivityTimer();
+                } else {
+                    scrollBtn.classList.remove('visible');
+                    scrollBtn.classList.remove('inactive');
+                }
+            });
+            
+            function resetInactivityTimer() {
+                scrollBtn.classList.remove('inactive');
+                clearTimeout(inactivityTimer);
+                inactivityTimer = setTimeout(function() {
+                    scrollBtn.classList.add('inactive');
+                }, 2000);
+            }
+            
+            window.addEventListener('mousemove', resetInactivityTimer);
+            window.addEventListener('scroll', resetInactivityTimer);
+            window.addEventListener('touchstart', resetInactivityTimer);
+            
+            scrollBtn.addEventListener('click', function() {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        })();
+    </script>
+
+<script type="module">
+  import { awardXP } from '../xp-system.js';
+  const K = 'xp_technology_v1';
+  if (!localStorage.getItem(K)) awardXP('SECTOR_COMPLETE').then(r => r && localStorage.setItem(K,'1')).catch(()=>{});
+</script>
+</body>
+</html>

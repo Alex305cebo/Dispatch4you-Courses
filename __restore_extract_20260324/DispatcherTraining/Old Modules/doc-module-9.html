@@ -1,0 +1,1807 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль 9: Безопасность и страхование | DispatcherPro</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="stylesheet" href="../interactive-modules.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #f093fb;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary: #b8c5d6;
+            --text-muted: #8892aa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.1);
+            --audio-primary: #ff6b6b;
+            --audio-secondary: #4ecdc4;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 0;
+            background: rgba(7, 11, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            min-height: 80px;
+        }
+
+        /* Р вЂќР С•Р В±Р В°Р Р†Р В»РЎРЏР ВµР С Р С•РЎвЂљРЎРѓРЎвЂљРЎС“Р С— Р ТР В»РЎРЏ body РЎвЂЎРЎвЂљР С•Р В±РЎвЂ№ Р С”Р С•Р Р…РЎвЂљР ВµР Р…РЎвЂљ Р Р…Р Вµ Р С—Р ВµРЎР‚Р ВµР С”РЎР‚РЎвЂ№Р Р†Р В°Р В»РЎРѓРЎРЏ Р Р…Р В°Р Р†Р СР С–Р В°РЎвЂ Р СР ВµР в„– */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
+            padding-top: 100px;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1), transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(240, 147, 251, 0.1), transparent 50%);
+            animation: none;
+            z-index: -1;
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateX(-3px);
+        }
+
+        .module-info {
+            text-align: center;
+        }
+
+        .module-number {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .module-title {
+            font-size: 18px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Content Blocks */
+        .content-block {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            gap: 20px;
+        }
+
+        .block-title {
+            flex: 1;
+            font-size: 1.8rem;
+            color: var(--primary);
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        /* Audio Play Button with Progress Ring */
+        .audio-container {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .audio-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--audio-primary), var(--audio-secondary));
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .audio-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.5);
+        }
+
+        .audio-btn:active {
+            transform: scale(0.95);
+        }
+
+        .audio-btn .play-icon {
+            font-size: 24px;
+            color: white;
+            margin-left: 3px;
+        }
+
+        .audio-btn .pause-icon {
+            font-size: 20px;
+            color: white;
+            display: none;
+        }
+
+        .audio-btn.playing .play-icon {
+            display: none;
+        }
+
+        .audio-btn.playing .pause-icon {
+            display: block;
+        }
+
+        .audio-btn.playing {
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.7), 0 0 0 10px rgba(255, 107, 107, 0.1);
+            }
+
+            100% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+        }
+
+        /* Progress Ring */
+        .progress-ring {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            transform: rotate(-90deg);
+            z-index: 1;
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 5;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: var(--audio-primary);
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-dasharray: 201.06;
+            stroke-dashoffset: 201.06;
+            transition: stroke-dashoffset 0.1s ease;
+            filter: drop-shadow(0 0 4px rgba(255, 107, 107, 0.5));
+        }
+
+        /* Interactive Progress Ring */
+        .progress-ring-interactive {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            cursor: pointer;
+            z-index: 5;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        .progress-ring-interactive.seekable {
+            pointer-events: auto;
+            background: radial-gradient(circle, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.01) 60%, rgba(255, 255, 255, 0.01) 100%);
+        }
+
+        /* Р СњР В° Р СР С•Р В±Р СР В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ РЎС“РЎРѓРЎвЂљРЎР‚Р С•Р в„–РЎРѓРЎвЂљР Р†Р В°РЎвЂ¦ Р СџР С›Р вЂєР СњР С›Р РЋР СћР В¬Р В® Р С•РЎвЂљР С”Р В»РЎР‹РЎвЂЎР В°Р ВµР С Р С—Р ВµРЎР‚Р ВµР СР С•РЎвЂљР С”РЎС“ */
+        @media (max-width: 768px) {
+            .progress-ring-interactive {
+                pointer-events: none !important;
+                cursor: default !important;
+            }
+
+            .progress-ring-interactive.seekable {
+                pointer-events: none !important;
+                cursor: default !important;
+                background: none;
+            }
+        }
+
+        /* Hover РЎРЊРЎвЂћРЎвЂћР ВµР С”РЎвЂљ РЎвЂљР С•Р В»РЎРЉР С”Р С• Р Р…Р В° desktop */
+        @media (min-width: 769px) {
+            .progress-ring-interactive:hover .progress-ring-fill {
+                stroke-width: 7;
+                filter: drop-shadow(0 0 8px rgba(255, 107, 107, 0.8));
+            }
+        }
+
+        /* Audio Duration Display */
+        .audio-duration {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .audio-container:hover .audio-duration,
+        .audio-container.playing .audio-duration {
+            opacity: 1;
+        }
+
+        /* Mobile Progress Bar (Р С—Р С•Р Т Р С”Р Р…Р С•Р С—Р С”Р С•Р в„–) */
+        .mobile-progress-bar {
+            display: none;
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .mobile-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--audio-primary), var(--audio-secondary));
+            border-radius: 2px;
+            transition: width 0.1s ease;
+        }
+
+        /* Р СџР С•Р С”Р В°Р В·РЎвЂ№Р Р†Р В°Р ВµР С Р С—Р С•Р В»Р С•РЎРѓРЎС“ РЎвЂљР С•Р В»РЎРЉР С”Р С• Р Р…Р В° Р СР С•Р В±Р СР В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ */
+        @media (max-width: 768px) {
+            .mobile-progress-bar {
+                display: block;
+            }
+
+            .audio-container.playing .mobile-progress-bar {
+                display: block;
+            }
+
+            /* Р РЋР С”РЎР‚РЎвЂ№Р Р†Р В°Р ВµР С Р С”Р С•Р В»РЎРЉРЎвЂ Р С• Р Р…Р В° Р СР С•Р В±Р СР В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ */
+            .progress-ring,
+            .progress-ring-interactive {
+                display: none !important;
+            }
+
+            /* Р РЋР ТР Р†Р СР С–Р В°Р ВµР С Р Р†РЎР‚Р ВµР СРЎРЏ Р Р†Р Р…Р СР В· */
+            .audio-duration {
+                bottom: -50px;
+            }
+        }
+
+        /* Р СњР В° desktop РЎРѓР С”РЎР‚РЎвЂ№Р Р†Р В°Р ВµР С Р С—Р С•Р В»Р С•РЎРѓРЎС“, Р С—Р С•Р С”Р В°Р В·РЎвЂ№Р Р†Р В°Р ВµР С Р С”Р С•Р В»РЎРЉРЎвЂ Р С• */
+        @media (min-width: 769px) {
+            .mobile-progress-bar {
+                display: none !important;
+            }
+        }
+
+        /* Content */
+        .block-content {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .block-content h3 {
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            margin: 25px 0 15px 0;
+        }
+
+        .block-content h4 {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            margin: 20px 0 10px 0;
+        }
+
+        .block-content ul,
+        .block-content ol {
+            margin: 15px 0 15px 25px;
+        }
+
+        .block-content li {
+            margin-bottom: 8px;
+        }
+
+        .block-content strong {
+            color: var(--text-primary);
+        }
+
+        /* Navigation */
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .nav-btn.disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .nav-btn.disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .progress-info {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 10px auto;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            color: var(--text-primary);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: var(--warning);
+            color: var(--text-primary);
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+            color: var(--text-primary);
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--danger);
+            color: var(--text-primary);
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 25px 0;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        th,
+        td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        td {
+            color: var(--text-secondary);
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding-top: 90px;
+            }
+
+            .main {
+                padding: 20px 15px;
+            }
+
+            .content-block {
+                padding: 20px 15px;
+                margin-bottom: 20px;
+            }
+
+            .block-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .block-title {
+                font-size: 1.4rem;
+            }
+
+            .audio-container {
+                align-self: center;
+                margin: 0 auto;
+            }
+
+            .lesson-nav {
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px 15px;
+            }
+
+            .nav-btn {
+                width: 100%;
+                min-width: auto;
+            }
+        }
+    
+        /* Footer Styles */
+        .footer {
+            padding: 80px 0 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 80px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 32px;
+            margin-bottom: 48px;
+        }
+
+        .footer-section h4 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .footer-section p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .footer-section a {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 32px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body data-module-id="module-9">
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <a href="modules-index.html" class="back-btn">
+                <span>РІвЂ С’</span>
+                <span>Р С™ Р СР С•Р ТРЎС“Р В»РЎРЏР С</span>
+            </a>
+            <div class="module-info">
+                <div class="module-number">Р СљР С›Р вЂќР Р€Р вЂєР В¬ 9</div>
+                <div class="module-title">Р вЂР ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•РЎРѓРЎвЂљРЎРЉ Р С CSA Scores</div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Block 1: Р С›РЎРѓР Р…Р С•Р Р†РЎвЂ№ РЎРѓР СРЎРѓРЎвЂљР ВµР СРЎвЂ№ CSA -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р С›РЎРѓР Р…Р С•Р Р†РЎвЂ№ РЎРѓР СРЎРѓРЎвЂљР ВµР СРЎвЂ№ CSA (Compliance, Safety, Accountability)</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio1')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio1')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio1')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>CSA (Compliance, Safety, Accountability) РІР‚вЂќ РЎРѓР СРЎРѓРЎвЂљР ВµР СР В° Р С•РЎвЂ Р ВµР Р…Р С”Р С Р В±Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•РЎРѓРЎвЂљР С РЎвЂљРЎР‚Р В°Р Р…РЎРѓР С—Р С•РЎР‚РЎвЂљР Р…РЎвЂ№РЎвЂ¦ Р С”Р С•Р СР С—Р В°Р Р…Р СР в„–,
+                    Р Р†Р Р†Р ВµР ТР ВµР Р…Р Р…Р В°РЎРЏ FMCSA. Р СџР С•Р Р…Р СР СР В°Р Р…Р СР Вµ CSA Р С”РЎР‚Р СРЎвЂљР СРЎвЂЎР ВµРЎРѓР С”Р С Р Р†Р В°Р В¶Р Р…Р С• Р ТР В»РЎРЏ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р С•Р Р†.</p>
+
+                <h3>Р В§РЎвЂљР С• РЎвЂљР В°Р С”Р С•Р Вµ CSA:</h3>
+                <ul>
+                    <li><strong>Р РЋР СРЎРѓРЎвЂљР ВµР СР В° Р СР С•Р Р…Р СРЎвЂљР С•РЎР‚Р СР Р…Р С–Р В°</strong> РІР‚вЂќ Р С•РЎвЂљРЎРѓР В»Р ВµР В¶Р СР Р†Р В°Р ВµРЎвЂљ Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р ВµР Р…Р СРЎРЏ Р С Р В°Р Р†Р В°РЎР‚Р СР С</li>
+                    <li><strong>SMS (Safety Management System)</strong> РІР‚вЂќ Р СР ВµРЎвЂљР С•Р ТР С•Р В»Р С•Р С–Р СРЎРЏ Р С•РЎвЂ Р ВµР Р…Р С”Р С РЎР‚Р СРЎРѓР С”Р С•Р Р†</li>
+                    <li><strong>Р СџРЎС“Р В±Р В»Р СРЎвЂЎР Р…Р В°РЎРЏ Р СР Р…РЎвЂћР С•РЎР‚Р СР В°РЎвЂ Р СРЎРЏ</strong> РІР‚вЂќ Р ТР В°Р Р…Р Р…РЎвЂ№Р Вµ Р ТР С•РЎРѓРЎвЂљРЎС“Р С—Р Р…РЎвЂ№ Р С”Р В»Р СР ВµР Р…РЎвЂљР В°Р С Р С РЎРѓРЎвЂљРЎР‚Р В°РЎвЂ¦Р С•Р Р†РЎвЂ№Р С</li>
+                    <li><strong>Р вЂ™Р В»Р СРЎРЏР Р…Р СР Вµ Р Р…Р В° Р В±Р СР В·Р Р…Р ВµРЎРѓ</strong> РІР‚вЂќ Р С—Р В»Р С•РЎвЂ¦Р СР Вµ scores = Р С—Р С•РЎвЂљР ВµРЎР‚РЎРЏ Р С”Р В»Р СР ВµР Р…РЎвЂљР С•Р Р†</li>
+                    <li><strong>Enforcement Р ТР ВµР в„–РЎРѓРЎвЂљР Р†Р СРЎРЏ</strong> РІР‚вЂќ Р С—РЎР‚Р ВµР ТРЎС“Р С—РЎР‚Р ВµР В¶Р ТР ВµР Р…Р СРЎРЏ, Р В°РЎС“Р ТР СРЎвЂљРЎвЂ№, РЎв‚¬РЎвЂљРЎР‚Р В°РЎвЂћРЎвЂ№</li>
+                </ul>
+
+                <h3>7 Р С”Р В°РЎвЂљР ВµР С–Р С•РЎР‚Р СР в„– BASIC (Behavior Analysis and Safety Improvement Categories):</h3>
+                <ol>
+                    <li><strong>Unsafe Driving</strong> РІР‚вЂќ Р Р…Р ВµР В±Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•Р Вµ Р Р†Р С•Р В¶Р ТР ВµР Р…Р СР Вµ</li>
+                    <li><strong>Fatigued Driving (HOS)</strong> РІР‚вЂќ Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р ВµР Р…Р СРЎРЏ РЎР‚Р В°Р В±Р С•РЎвЂЎР ВµР С–Р С• Р Р†РЎР‚Р ВµР СР ВµР Р…Р С</li>
+                    <li><strong>Driver Fitness</strong> РІР‚вЂќ Р С”Р Р†Р В°Р В»Р СРЎвЂћР СР С”Р В°РЎвЂ Р СРЎРЏ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„–</li>
+                    <li><strong>Controlled Substances/Alcohol</strong> РІР‚вЂќ Р Р…Р В°РЎР‚Р С”Р С•РЎвЂљР СР С”Р С Р С Р В°Р В»Р С”Р С•Р С–Р С•Р В»РЎРЉ</li>
+                    <li><strong>Vehicle Maintenance</strong> РІР‚вЂќ РЎвЂљР ВµРЎвЂ¦Р Р…Р СРЎвЂЎР ВµРЎРѓР С”Р С•Р Вµ РЎРѓР С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р СР Вµ</li>
+                    <li><strong>Hazmat</strong> РІР‚вЂќ Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·Р С”Р В° Р С•Р С—Р В°РЎРѓР Р…РЎвЂ№РЎвЂ¦ Р С–РЎР‚РЎС“Р В·Р С•Р Р†</li>
+                    <li><strong>Crash Indicator</strong> РІР‚вЂќ Р С—Р С•Р С”Р В°Р В·Р В°РЎвЂљР ВµР В»РЎРЉ Р В°Р Р†Р В°РЎР‚Р СР в„–Р Р…Р С•РЎРѓРЎвЂљР С</li>
+                </ol>
+
+                <div class="alert alert-warning">
+                    <strong>РІС™В РїСРЏ Р вЂ™Р В°Р В¶Р Р…Р С•:</strong> CSA scores Р С•Р В±Р Р…Р С•Р Р†Р В»РЎРЏРЎР‹РЎвЂљРЎРѓРЎРЏ Р ВµР В¶Р ВµР СР ВµРЎРѓРЎРЏРЎвЂЎР Р…Р С• Р С Р Р†Р В»Р СРЎРЏРЎР‹РЎвЂљ Р Р…Р В° РЎР‚Р ВµР С—РЎС“РЎвЂљР В°РЎвЂ Р СРЎР‹ Р С”Р С•Р СР С—Р В°Р Р…Р СР С. Р СџР В»Р С•РЎвЂ¦Р СР Вµ
+                    Р С—Р С•Р С”Р В°Р В·Р В°РЎвЂљР ВµР В»Р С Р СР С•Р С–РЎС“РЎвЂљ Р С—РЎР‚Р СР Р†Р ВµРЎРѓРЎвЂљР С Р С” Р С—Р С•РЎвЂљР ВµРЎР‚Р Вµ 30-50% Р С”Р В»Р СР ВµР Р…РЎвЂљР С•Р Р†.
+                </div>
+
+                <!-- Audio Completion Trigger -->
+                <button class="audio-completion-trigger" data-unlocks="quiz-1">
+                    СЂСџР‹В§ Р Р‡ Р В·Р В°Р С”Р С•Р Р…РЎвЂЎР СР В»(Р В°) РЎРѓР В»РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ
+                </button>
+            </div>
+        </div>
+        <!-- Case Study 1: Р СџР В»Р С•РЎвЂ¦Р СР Вµ CSA scores -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">СЂСџвЂ™С</span>
+                <h3 class="case-study-title">Р В Р ВµР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р ВµР в„–РЎРѓ: Р С™Р С•Р СР С—Р В°Р Р…Р СРЎРЏ РЎРѓ Р С—Р В»Р С•РЎвЂ¦Р СР СР С CSA scores</h3>
+            </div>
+            <div class="case-study-content">
+                <p>
+                    <strong>Р РЋР СРЎвЂљРЎС“Р В°РЎвЂ Р СРЎРЏ:</strong> Р СћРЎР‚Р В°Р Р…РЎРѓР С—Р С•РЎР‚РЎвЂљР Р…Р В°РЎРЏ Р С”Р С•Р СР С—Р В°Р Р…Р СРЎРЏ ABC Trucking Р СР СР ВµР ВµРЎвЂљ РЎРѓР В»Р ВµР ТРЎС“РЎР‹РЎвЂ°Р СР Вµ Р С—Р С•Р С”Р В°Р В·Р В°РЎвЂљР ВµР В»Р С:
+                </p>
+                <ul>
+                    <li>Unsafe Driving: 85% (Р С”РЎР‚Р В°РЎРѓР Р…Р В°РЎРЏ Р В·Р С•Р Р…Р В°)</li>
+                    <li>HOS Compliance: 78% (Р С”РЎР‚Р В°РЎРѓР Р…Р В°РЎРЏ Р В·Р С•Р Р…Р В°)</li>
+                    <li>Vehicle Maintenance: 65% (Р В¶Р ВµР В»РЎвЂљР В°РЎРЏ Р В·Р С•Р Р…Р В°)</li>
+                    <li>Р вЂ”Р В° Р С—Р С•РЎРѓР В»Р ВµР ТР Р…Р СР Вµ 6 Р СР ВµРЎРѓРЎРЏРЎвЂ Р ВµР Р† Р С—Р С•РЎвЂљР ВµРЎР‚РЎРЏР В»Р С 40% Р С”Р В»Р СР ВµР Р…РЎвЂљР С•Р Р†</li>
+                </ul>
+                <div class="case-study-highlight">
+                    СЂСџвЂ™РЋ Р вЂ™Р С•Р С—РЎР‚Р С•РЎРѓ: Р С™Р В°Р С”Р СР Вµ РЎв‚¬Р В°Р С–Р С Р ТР С•Р В»Р В¶Р ВµР Р… Р С—РЎР‚Р ВµР ТР С—РЎР‚Р СР Р…РЎРЏРЎвЂљРЎРЉ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚ Р ТР В»РЎРЏ РЎС“Р В»РЎС“РЎвЂЎРЎв‚¬Р ВµР Р…Р СРЎРЏ CSA scores?
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Check 1 -->
+        <div class="quick-check-block locked" id="quiz-1" data-quiz-id="quiz-9-1" data-correct-answer="c">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">РІСљвЂ¦</span>
+                <h3 class="quick-check-title">Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</h3>
+            </div>
+
+            <div class="quick-check-question">
+                Р РЋР С”Р С•Р В»РЎРЉР С”Р С• Р С”Р В°РЎвЂљР ВµР С–Р С•РЎР‚Р СР в„– BASIC Р Р†Р С”Р В»РЎР‹РЎвЂЎР В°Р ВµРЎвЂљ РЎРѓР СРЎРѓРЎвЂљР ВµР СР В° CSA?
+            </div>
+
+            <div class="quick-check-options">
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-1" id="quiz-1-a" value="a">
+                    <label for="quiz-1-a">5 Р С”Р В°РЎвЂљР ВµР С–Р С•РЎР‚Р СР в„–</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-1" id="quiz-1-b" value="b">
+                    <label for="quiz-1-b">6 Р С”Р В°РЎвЂљР ВµР С–Р С•РЎР‚Р СР в„–</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-1" id="quiz-1-c" value="c">
+                    <label for="quiz-1-c">7 Р С”Р В°РЎвЂљР ВµР С–Р С•РЎР‚Р СР в„–</label>
+                </div>
+            </div>
+
+            <div class="quick-check-feedback">
+                <strong>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С•! РІСљвЂњ</strong>
+                CSA Р Р†Р С”Р В»РЎР‹РЎвЂЎР В°Р ВµРЎвЂљ 7 Р С”Р В°РЎвЂљР ВµР С–Р С•РЎР‚Р СР в„– BASIC: Unsafe Driving, HOS, Driver Fitness, Controlled Substances, Vehicle
+                Maintenance, Hazmat Р С Crash Indicator.
+            </div>
+        </div>
+        <!-- Block 2: SMS Scores Р С Р СРЎвЂ¦ Р СР Р…РЎвЂљР ВµРЎР‚Р С—РЎР‚Р ВµРЎвЂљР В°РЎвЂ Р СРЎРЏ -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">SMS Scores Р С Р СРЎвЂ¦ Р СР Р…РЎвЂљР ВµРЎР‚Р С—РЎР‚Р ВµРЎвЂљР В°РЎвЂ Р СРЎРЏ</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio2')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio2')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio2')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>SMS (Safety Management System) scores Р С—Р С•Р С”Р В°Р В·РЎвЂ№Р Р†Р В°РЎР‹РЎвЂљ, Р Р…Р В°РЎРѓР С”Р С•Р В»РЎРЉР С”Р С• Р С”Р С•Р СР С—Р В°Р Р…Р СРЎРЏ Р В±Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р ВµР Вµ Р СР В»Р С Р С•Р С—Р В°РЎРѓР Р…Р ВµР Вµ Р ТРЎР‚РЎС“Р С–Р СРЎвЂ¦
+                    Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·РЎвЂЎР СР С”Р С•Р Р† Р Р† РЎвЂљР С•Р в„– Р В¶Р Вµ Р С”Р В°РЎвЂљР ВµР С–Р С•РЎР‚Р СР С.</p>
+
+                <h3>Р С™Р В°Р С” РЎвЂЎР СРЎвЂљР В°РЎвЂљРЎРЉ SMS scores:</h3>
+                <ul>
+                    <li><strong>Percentile ranking</strong> РІР‚вЂќ Р С—РЎР‚Р С•РЎвЂ Р ВµР Р…РЎвЂљР СР В»РЎРЉ Р С•РЎвЂљ 0 Р ТР С• 100</li>
+                    <li><strong>Р В§Р ВµР С Р Р†РЎвЂ№РЎв‚¬Р Вµ РЎвЂЎР СРЎРѓР В»Р С•, РЎвЂљР ВµР С РЎвЂ¦РЎС“Р В¶Р Вµ</strong> РІР‚вЂќ 85% Р С•Р В·Р Р…Р В°РЎвЂЎР В°Р ВµРЎвЂљ РЎвЂ¦РЎС“Р В¶Р Вµ 85% Р С”Р С•Р СР С—Р В°Р Р…Р СР в„–</li>
+                    <li><strong>Р В¦Р Р†Р ВµРЎвЂљР С•Р Р†РЎвЂ№Р Вµ Р В·Р С•Р Р…РЎвЂ№:</strong> Р вЂ”Р ВµР В»Р ВµР Р…Р В°РЎРЏ (0-50%), Р вЂ“Р ВµР В»РЎвЂљР В°РЎРЏ (51-75%), Р С™РЎР‚Р В°РЎРѓР Р…Р В°РЎРЏ (76-100%)</li>
+                    <li><strong>Intervention thresholds</strong> РІР‚вЂќ Р С—Р С•РЎР‚Р С•Р С–Р С Р ТР В»РЎРЏ Р ТР ВµР в„–РЎРѓРЎвЂљР Р†Р СР в„– FMCSA</li>
+                </ul>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>BASIC Category</th>
+                                <th>Intervention Threshold</th>
+                                <th>Р СџР С•РЎРѓР В»Р ВµР ТРЎРѓРЎвЂљР Р†Р СРЎРЏ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Unsafe Driving</td>
+                                <td>65% (Р С—Р В°РЎРѓРЎРѓР В°Р В¶Р СРЎР‚РЎРѓР С”Р СР Вµ), 80% (Р С–РЎР‚РЎС“Р В·Р С•Р Р†РЎвЂ№Р Вµ)</td>
+                                <td>Warning Letter, Investigation</td>
+                            </tr>
+                            <tr>
+                                <td>HOS Compliance</td>
+                                <td>65% (Р С—Р В°РЎРѓРЎРѓР В°Р В¶Р СРЎР‚РЎРѓР С”Р СР Вµ), 80% (Р С–РЎР‚РЎС“Р В·Р С•Р Р†РЎвЂ№Р Вµ)</td>
+                                <td>Compliance Review</td>
+                            </tr>
+                            <tr>
+                                <td>Driver Fitness</td>
+                                <td>80%</td>
+                                <td>Off-site Investigation</td>
+                            </tr>
+                            <tr>
+                                <td>Controlled Substances</td>
+                                <td>80%</td>
+                                <td>Immediate Investigation</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Р В¤Р В°Р С”РЎвЂљР С•РЎР‚РЎвЂ№, Р Р†Р В»Р СРЎРЏРЎР‹РЎвЂ°Р СР Вµ Р Р…Р В° scores:</h3>
+                <ul>
+                    <li><strong>Severity weights</strong> РІР‚вЂќ РЎРѓР ВµРЎР‚РЎРЉР ВµР В·Р Р…Р С•РЎРѓРЎвЂљРЎРЉ Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р ВµР Р…Р СР в„–</li>
+                    <li><strong>Time weights</strong> РІР‚вЂќ Р Р…Р ВµР ТР В°Р Р†Р Р…Р СР Вµ Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р ВµР Р…Р СРЎРЏ Р Р†Р ВµРЎРѓРЎРЏРЎвЂљ Р В±Р С•Р В»РЎРЉРЎв‚¬Р Вµ</li>
+                    <li><strong>SAFESTAT data</strong> РІР‚вЂќ Р ТР В°Р Р…Р Р…РЎвЂ№Р Вµ Р В·Р В° 24 Р СР ВµРЎРѓРЎРЏРЎвЂ Р В°</li>
+                    <li><strong>Roadside inspections</strong> РІР‚вЂќ РЎР‚Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљРЎвЂ№ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С•Р С”</li>
+                </ul>
+
+                <div class="alert alert-danger">
+                    <strong>СЂСџС™РЃ Р С™РЎР‚Р СРЎвЂљР СРЎвЂЎР Р…Р С•:</strong> Р СџРЎР‚Р ВµР Р†РЎвЂ№РЎв‚¬Р ВµР Р…Р СР Вµ intervention threshold Р СР С•Р В¶Р ВµРЎвЂљ Р С—РЎР‚Р СР Р†Р ВµРЎРѓРЎвЂљР С Р С” Р В°РЎС“Р ТР СРЎвЂљРЎС“ FMCSA,
+                    РЎв‚¬РЎвЂљРЎР‚Р В°РЎвЂћР В°Р С Р ТР С• $15,000 Р С Р ТР В°Р В¶Р Вµ Р В·Р В°Р С”РЎР‚РЎвЂ№РЎвЂљР СРЎР‹ Р С”Р С•Р СР С—Р В°Р Р…Р СР С.
+                </div>
+
+                <!-- Audio Completion Trigger -->
+                <button class="audio-completion-trigger" data-unlocks="quiz-2">
+                    СЂСџР‹В§ Р Р‡ Р В·Р В°Р С”Р С•Р Р…РЎвЂЎР СР В»(Р В°) РЎРѓР В»РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ
+                </button>
+            </div>
+        </div>
+        <!-- Case Study 2: Roadside inspection -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">СЂСџвЂ™С</span>
+                <h3 class="case-study-title">Р В Р ВµР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р ВµР в„–РЎРѓ: Roadside inspection РЎРѓ Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р ВµР Р…Р СРЎРЏР СР С</h3>
+            </div>
+            <div class="case-study-content">
+                <p>
+                    <strong>Р РЋР СРЎвЂљРЎС“Р В°РЎвЂ Р СРЎРЏ:</strong> Р вЂ™Р С•Р ТР СРЎвЂљР ВµР В»РЎРЉ Р вЂќР В¶Р СР С Р С•РЎРѓРЎвЂљР В°Р Р…Р С•Р Р†Р В»Р ВµР Р… Р Р…Р В° roadside inspection Р Р† Р СћР ВµРЎвЂ¦Р В°РЎРѓР Вµ. Р СњР В°Р в„–Р ТР ВµР Р…РЎвЂ№
+                    Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р ВµР Р…Р СРЎРЏ:
+                </p>
+                <ul>
+                    <li>HOS violation: Р С—РЎР‚Р ВµР Р†РЎвЂ№РЎв‚¬Р ВµР Р…Р СР Вµ 14-hour rule Р Р…Р В° 2 РЎвЂЎР В°РЎРѓР В°</li>
+                    <li>Vehicle defect: Р СР В·Р Р…Р С•РЎв‚¬Р ВµР Р…Р Р…РЎвЂ№Р Вµ РЎвЂљР С•РЎР‚Р СР С•Р В·Р Р…РЎвЂ№Р Вµ Р С”Р С•Р В»Р С•Р ТР С”Р С</li>
+                    <li>Logbook falsification: Р Р…Р ВµРЎвЂљР С•РЎвЂЎР Р…РЎвЂ№Р Вµ Р В·Р В°Р С—Р СРЎРѓР С Р Р† ELD</li>
+                    <li>Р вЂњРЎР‚РЎС“Р В·Р С•Р Р†Р СР С” Р С—Р С•РЎРѓРЎвЂљР В°Р Р†Р В»Р ВµР Р… Out of Service Р Р…Р В° 10 РЎвЂЎР В°РЎРѓР С•Р Р†</li>
+                </ul>
+                <div class="case-study-highlight">
+                    СЂСџвЂ™РЋ Р вЂ™Р С•Р С—РЎР‚Р С•РЎРѓ: Р С™Р В°Р С” РЎРЊРЎвЂљР С Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р ВµР Р…Р СРЎРЏ Р С—Р С•Р Р†Р В»Р СРЎРЏРЎР‹РЎвЂљ Р Р…Р В° CSA scores Р С”Р С•Р СР С—Р В°Р Р…Р СР С? Р В§РЎвЂљР С• Р ТР С•Р В»Р В¶Р ВµР Р… Р ТР ВµР В»Р В°РЎвЂљРЎРЉ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚?
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Check 2 -->
+        <div class="quick-check-block locked" id="quiz-2" data-quiz-id="quiz-9-2" data-correct-answer="b">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">РІСљвЂ¦</span>
+                <h3 class="quick-check-title">Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</h3>
+            </div>
+
+            <div class="quick-check-question">
+                Р В§РЎвЂљР С• Р С•Р В·Р Р…Р В°РЎвЂЎР В°Р ВµРЎвЂљ SMS score 85% Р Р† Р С”Р В°РЎвЂљР ВµР С–Р С•РЎР‚Р СР С Unsafe Driving?
+            </div>
+
+            <div class="quick-check-options">
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-2" id="quiz-2-a" value="a">
+                    <label for="quiz-2-a">Р С™Р С•Р СР С—Р В°Р Р…Р СРЎРЏ Р В±Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р ВµР Вµ 85% Р ТРЎР‚РЎС“Р С–Р СРЎвЂ¦ Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·РЎвЂЎР СР С”Р С•Р Р†</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-2" id="quiz-2-b" value="b">
+                    <label for="quiz-2-b">Р С™Р С•Р СР С—Р В°Р Р…Р СРЎРЏ РЎвЂ¦РЎС“Р В¶Р Вµ 85% Р ТРЎР‚РЎС“Р С–Р СРЎвЂ¦ Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·РЎвЂЎР СР С”Р С•Р Р† (Р С”РЎР‚Р В°РЎРѓР Р…Р В°РЎРЏ Р В·Р С•Р Р…Р В°)</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-2" id="quiz-2-c" value="c">
+                    <label for="quiz-2-c">Р Р€ Р С”Р С•Р СР С—Р В°Р Р…Р СР С 85% Р В±Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…РЎвЂ№РЎвЂ¦ Р С—Р С•Р ВµР В·Р ТР С•Р С”</label>
+                </div>
+            </div>
+
+            <div class="quick-check-feedback">
+                <strong>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С•! РІСљвЂњ</strong>
+                SMS score 85% Р С•Р В·Р Р…Р В°РЎвЂЎР В°Р ВµРЎвЂљ, РЎвЂЎРЎвЂљР С• Р С”Р С•Р СР С—Р В°Р Р…Р СРЎРЏ РЎвЂ¦РЎС“Р В¶Р Вµ 85% Р ТРЎР‚РЎС“Р С–Р СРЎвЂ¦ Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·РЎвЂЎР СР С”Р С•Р Р†. Р В­РЎвЂљР С• Р С”РЎР‚Р В°РЎРѓР Р…Р В°РЎРЏ Р В·Р С•Р Р…Р В°, РЎвЂљРЎР‚Р ВµР В±РЎС“РЎР‹РЎвЂ°Р В°РЎРЏ
+                Р Р…Р ВµР СР ВµР ТР В»Р ВµР Р…Р Р…РЎвЂ№РЎвЂ¦ Р ТР ВµР в„–РЎРѓРЎвЂљР Р†Р СР в„–.
+            </div>
+        </div>
+        <!-- Block 3: Roadside Inspections Р С Level I-VI -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Roadside Inspections Р С РЎС“РЎР‚Р С•Р Р†Р Р…Р С Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С•Р С”</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio3')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio3')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio3')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Roadside inspections РІР‚вЂќ Р С”Р В»РЎР‹РЎвЂЎР ВµР Р†Р С•Р в„– РЎРЊР В»Р ВµР СР ВµР Р…РЎвЂљ РЎРѓР СРЎРѓРЎвЂљР ВµР СРЎвЂ№ Р В±Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•РЎРѓРЎвЂљР С. Р В Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљРЎвЂ№ Р Р…Р В°Р С—РЎР‚РЎРЏР СРЎС“РЎР‹ Р Р†Р В»Р СРЎРЏРЎР‹РЎвЂљ Р Р…Р В° CSA
+                    scores Р С РЎР‚Р ВµР С—РЎС“РЎвЂљР В°РЎвЂ Р СРЎР‹ Р С”Р С•Р СР С—Р В°Р Р…Р СР С.</p>
+
+                <h3>Р Р€РЎР‚Р С•Р Р†Р Р…Р С roadside inspections:</h3>
+                <ul>
+                    <li><strong>Level I (North American Standard)</strong> РІР‚вЂќ Р С—Р С•Р В»Р Р…Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В° Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏ Р С Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р В° (37
+                        Р С—РЎС“Р Р…Р С”РЎвЂљР С•Р Р†)</li>
+                    <li><strong>Level II (Walk-Around Driver/Vehicle)</strong> РІР‚вЂќ Р Р†Р Р…Р ВµРЎв‚¬Р Р…Р СР в„– Р С•РЎРѓР СР С•РЎвЂљРЎР‚ Р В±Р ВµР В· Р В·Р В°Р В»Р ВµР В·Р В°Р Р…Р СРЎРЏ Р С—Р С•Р Т
+                        Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”</li>
+                    <li><strong>Level III (Driver-Only)</strong> РІР‚вЂќ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В° РЎвЂљР С•Р В»РЎРЉР С”Р С• Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏ Р С Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р Р†</li>
+                    <li><strong>Level IV (Special Inspections)</strong> РІР‚вЂќ Р С•Р ТР Р…Р С•РЎР‚Р В°Р В·Р С•Р Р†РЎвЂ№Р Вµ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р С (РЎвЂљР С•РЎР‚Р СР С•Р В·Р В°, Р Р†РЎвЂ№РЎвЂ¦Р В»Р С•Р С—РЎвЂ№)</li>
+                    <li><strong>Level V (Vehicle-Only)</strong> РІР‚вЂќ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В° РЎвЂљР С•Р В»РЎРЉР С”Р С• Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р В° Р В±Р ВµР В· Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏ</li>
+                    <li><strong>Level VI (Enhanced NAS)</strong> РІР‚вЂќ Level I + Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В° Р С–РЎР‚РЎС“Р В·Р В°</li>
+                </ul>
+
+                <h3>Р В§РЎвЂљР С• Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚РЎРЏРЎР‹РЎвЂљ Р СР Р…РЎРѓР С—Р ВµР С”РЎвЂљР С•РЎР‚РЎвЂ№:</h3>
+                <h4>Р вЂ™Р С•Р ТР СРЎвЂљР ВµР В»РЎРЉ:</h4>
+                <ul>
+                    <li>CDL license Р С medical certificate</li>
+                    <li>HOS compliance (logbook/ELD)</li>
+                    <li>Alcohol/drug testing records</li>
+                    <li>Vehicle inspection reports</li>
+                </ul>
+
+                <h4>Р вЂњРЎР‚РЎС“Р В·Р С•Р Р†Р СР С”:</h4>
+                <ul>
+                    <li>Р СћР С•РЎР‚Р СР С•Р В·Р Р…Р В°РЎРЏ РЎРѓР СРЎРѓРЎвЂљР ВµР СР В°</li>
+                    <li>Р В РЎС“Р В»Р ВµР Р†Р С•Р Вµ РЎС“Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р СР Вµ</li>
+                    <li>Р РЃР СР Р…РЎвЂ№ Р С Р ТР СРЎРѓР С”Р С</li>
+                    <li>Р С›РЎРѓР Р†Р ВµРЎвЂ°Р ВµР Р…Р СР Вµ Р С РЎРѓР СР С–Р Р…Р В°Р В»РЎвЂ№</li>
+                    <li>Exhaust system</li>
+                    <li>Coupling devices</li>
+                </ul>
+
+                <div class="alert alert-info">
+                    <strong>СЂСџвЂњР‰ Р РЋРЎвЂљР В°РЎвЂљР СРЎРѓРЎвЂљР СР С”Р В°:</strong> Р вЂўР В¶Р ВµР С–Р С•Р ТР Р…Р С• Р С—РЎР‚Р С•Р Р†Р С•Р ТР СРЎвЂљРЎРѓРЎРЏ Р С•Р С”Р С•Р В»Р С• 3.5 Р СР В»Р Р… roadside inspections. 20%
+                    Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р С•Р Р† Р С—Р С•Р В»РЎС“РЎвЂЎР В°РЎР‹РЎвЂљ Out of Service orders.
+                </div>
+
+                <!-- Audio Completion Trigger -->
+                <button class="audio-completion-trigger" data-unlocks="quiz-3">
+                    СЂСџР‹В§ Р Р‡ Р В·Р В°Р С”Р С•Р Р…РЎвЂЎР СР В»(Р В°) РЎРѓР В»РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ
+                </button>
+            </div>
+        </div>
+        <!-- Case Study 3: Level I inspection -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">СЂСџвЂ™С</span>
+                <h3 class="case-study-title">Р В Р ВµР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р ВµР в„–РЎРѓ: Level I inspection РЎРѓ РЎвЂЎР СРЎРѓРЎвЂљРЎвЂ№Р С РЎР‚Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљР С•Р С</h3>
+            </div>
+            <div class="case-study-content">
+                <p>
+                    <strong>Р РЋР СРЎвЂљРЎС“Р В°РЎвЂ Р СРЎРЏ:</strong> Р вЂ™Р С•Р ТР СРЎвЂљР ВµР В»РЎРЉ Р СљР В°РЎР‚Р СРЎРЏ Р С—РЎР‚Р С•РЎв‚¬Р В»Р В° Level I inspection Р Р† Р С™Р В°Р В»Р СРЎвЂћР С•РЎР‚Р Р…Р СР С:
+                </p>
+                <ul>
+                    <li>Р вЂ™РЎРѓР Вµ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљРЎвЂ№ Р Р† Р С—Р С•РЎР‚РЎРЏР ТР С”Р Вµ</li>
+                    <li>HOS compliance РІР‚вЂќ Р В±Р ВµР В· Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р ВµР Р…Р СР в„–</li>
+                    <li>Р вЂњРЎР‚РЎС“Р В·Р С•Р Р†Р СР С” Р Р† Р С•РЎвЂљР В»Р СРЎвЂЎР Р…Р С•Р С РЎРѓР С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р СР С</li>
+                    <li>Р СџР С•Р В»РЎС“РЎвЂЎР СР В»Р В° "clean inspection" РІР‚вЂќ 0 Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р ВµР Р…Р СР в„–</li>
+                </ul>
+                <div class="case-study-highlight">
+                    СЂСџвЂ™РЋ Р вЂ™Р С•Р С—РЎР‚Р С•РЎРѓ: Р С™Р В°Р С” РЎвЂЎР СРЎРѓРЎвЂљР В°РЎРЏ Р СР Р…РЎРѓР С—Р ВµР С”РЎвЂ Р СРЎРЏ Р Р†Р В»Р СРЎРЏР ВµРЎвЂљ Р Р…Р В° CSA scores? Р С™Р В°Р С”РЎС“РЎР‹ Р С—Р С•Р В»РЎРЉР В·РЎС“ РЎРЊРЎвЂљР С• Р С—РЎР‚Р СР Р…Р С•РЎРѓР СРЎвЂљ Р С”Р С•Р СР С—Р В°Р Р…Р СР С?
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Check 3 -->
+        <div class="quick-check-block locked" id="quiz-3" data-quiz-id="quiz-9-3" data-correct-answer="a">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">РІСљвЂ¦</span>
+                <h3 class="quick-check-title">Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</h3>
+            </div>
+
+            <div class="quick-check-question">
+                Р С™Р В°Р С”Р С•Р в„– РЎС“РЎР‚Р С•Р Р†Р ВµР Р…РЎРЉ roadside inspection РЎРЏР Р†Р В»РЎРЏР ВµРЎвЂљРЎРѓРЎРЏ РЎРѓР В°Р СРЎвЂ№Р С Р С—Р С•Р В»Р Р…РЎвЂ№Р С?
+            </div>
+
+            <div class="quick-check-options">
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-3" id="quiz-3-a" value="a">
+                    <label for="quiz-3-a">Level I (North American Standard) РІР‚вЂќ 37 Р С—РЎС“Р Р…Р С”РЎвЂљР С•Р Р† Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р С</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-3" id="quiz-3-b" value="b">
+                    <label for="quiz-3-b">Level III (Driver-Only) РІР‚вЂќ РЎвЂљР С•Р В»РЎРЉР С”Р С• Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЉ</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-3" id="quiz-3-c" value="c">
+                    <label for="quiz-3-c">Level V (Vehicle-Only) РІР‚вЂќ РЎвЂљР С•Р В»РЎРЉР С”Р С• Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”</label>
+                </div>
+            </div>
+
+            <div class="quick-check-feedback">
+                <strong>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С•! РІСљвЂњ</strong>
+                Level I (North American Standard) РІР‚вЂќ РЎРѓР В°Р СР В°РЎРЏ Р С—Р С•Р В»Р Р…Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°, Р Р†Р С”Р В»РЎР‹РЎвЂЎР В°РЎР‹РЎвЂ°Р В°РЎРЏ 37 Р С—РЎС“Р Р…Р С”РЎвЂљР С•Р Р† Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р С Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏ Р С
+                Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р В°.
+            </div>
+        </div>
+        <!-- Block 4: Р СџРЎР‚Р С•Р С–РЎР‚Р В°Р СР СРЎвЂ№ Р В±Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•РЎРѓРЎвЂљР С Р С compliance -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р СџРЎР‚Р С•Р С–РЎР‚Р В°Р СР СРЎвЂ№ Р В±Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•РЎРѓРЎвЂљР С Р С compliance</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio4')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio4')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio4')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р В­РЎвЂћРЎвЂћР ВµР С”РЎвЂљР СР Р†Р Р…РЎвЂ№Р Вµ Р С—РЎР‚Р С•Р С–РЎР‚Р В°Р СР СРЎвЂ№ Р В±Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•РЎРѓРЎвЂљР С Р С—Р С•Р СР С•Р С–Р В°РЎР‹РЎвЂљ Р С—РЎР‚Р ВµР ТР С•РЎвЂљР Р†РЎР‚Р В°РЎвЂљР СРЎвЂљРЎРЉ Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р ВµР Р…Р СРЎРЏ, РЎС“Р В»РЎС“РЎвЂЎРЎв‚¬Р СРЎвЂљРЎРЉ CSA scores Р С Р В·Р В°РЎвЂ°Р СРЎвЂљР СРЎвЂљРЎРЉ
+                    Р С”Р С•Р СР С—Р В°Р Р…Р СРЎР‹ Р С•РЎвЂљ liability.</p>
+
+                <h3>Р С™Р В»РЎР‹РЎвЂЎР ВµР Р†РЎвЂ№Р Вµ РЎРЊР В»Р ВµР СР ВµР Р…РЎвЂљРЎвЂ№ Р С—РЎР‚Р С•Р С–РЎР‚Р В°Р СР СРЎвЂ№ Р В±Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•РЎРѓРЎвЂљР С:</h3>
+                <ul>
+                    <li><strong>Driver qualification files</strong> РІР‚вЂќ Р С—Р С•Р В»Р Р…РЎвЂ№Р Вµ Р ТР С•РЎРѓРЎРЉР Вµ Р Р…Р В° Р С”Р В°Р В¶Р ТР С•Р С–Р С• Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏ</li>
+                    <li><strong>Vehicle maintenance program</strong> РІР‚вЂќ РЎР‚Р ВµР С–РЎС“Р В»РЎРЏРЎР‚Р Р…Р С•Р Вµ Р СћР С› Р С РЎР‚Р ВµР СР С•Р Р…РЎвЂљ</li>
+                    <li><strong>HOS monitoring</strong> РІР‚вЂќ Р С”Р С•Р Р…РЎвЂљРЎР‚Р С•Р В»РЎРЉ РЎР‚Р В°Р В±Р С•РЎвЂЎР ВµР С–Р С• Р Р†РЎР‚Р ВµР СР ВµР Р…Р С</li>
+                    <li><strong>Safety training</strong> РІР‚вЂќ РЎР‚Р ВµР С–РЎС“Р В»РЎРЏРЎР‚Р Р…Р С•Р Вµ Р С•Р В±РЎС“РЎвЂЎР ВµР Р…Р СР Вµ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„–</li>
+                    <li><strong>Accident prevention</strong> РІР‚вЂќ Р В°Р Р…Р В°Р В»Р СР В· Р С Р С—РЎР‚Р ВµР ТР С•РЎвЂљР Р†РЎР‚Р В°РЎвЂ°Р ВµР Р…Р СР Вµ Р В°Р Р†Р В°РЎР‚Р СР в„–</li>
+                    <li><strong>Drug & alcohol program</strong> РІР‚вЂќ РЎвЂљР ВµРЎРѓРЎвЂљР СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ Р С Р С—Р С•Р В»Р СРЎвЂљР СР С”Р С</li>
+                </ul>
+
+                <h3>Р С›Р В±РЎРЏР В·Р В°РЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№Р Вµ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљРЎвЂ№ Р С Р С—РЎР‚Р С•РЎвЂ Р ВµР ТРЎС“РЎР‚РЎвЂ№:</h3>
+                <h4>Р вЂќР В»РЎРЏ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„–:</h4>
+                <ul>
+                    <li>Application for employment</li>
+                    <li>Motor vehicle record (MVR) РІР‚вЂќ Р ВµР В¶Р ВµР С–Р С•Р ТР Р…Р С•</li>
+                    <li>Previous employment verification</li>
+                    <li>Road test Р СР В»Р С certificate</li>
+                    <li>Medical examiner's certificate</li>
+                    <li>Drug & alcohol testing records</li>
+                </ul>
+
+                <h4>Р вЂќР В»РЎРЏ Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р С•Р Р†:</h4>
+                <ul>
+                    <li>Annual inspection reports</li>
+                    <li>Driver vehicle inspection reports (DVIR)</li>
+                    <li>Maintenance records</li>
+                    <li>Repair documentation</li>
+                </ul>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Р СџРЎР‚Р С•Р С–РЎР‚Р В°Р СР СР В°</th>
+                                <th>Р В§Р В°РЎРѓРЎвЂљР С•РЎвЂљР В°</th>
+                                <th>Р С›РЎвЂљР Р†Р ВµРЎвЂљРЎРѓРЎвЂљР Р†Р ВµР Р…Р Р…РЎвЂ№Р в„–</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>MVR Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</td>
+                                <td>Р вЂўР В¶Р ВµР С–Р С•Р ТР Р…Р С•</td>
+                                <td>Safety Manager</td>
+                            </tr>
+                            <tr>
+                                <td>Random drug test</td>
+                                <td>50% Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„–/Р С–Р С•Р Т</td>
+                                <td>DER (Designated Employer Representative)</td>
+                            </tr>
+                            <tr>
+                                <td>Safety meeting</td>
+                                <td>Р вЂўР В¶Р ВµР СР ВµРЎРѓРЎРЏРЎвЂЎР Р…Р С•</td>
+                                <td>Р вЂќР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚/Safety Manager</td>
+                            </tr>
+                            <tr>
+                                <td>Vehicle inspection</td>
+                                <td>Р вЂўР В¶Р ВµР ТР Р…Р ВµР Р†Р Р…Р С• (DVIR)</td>
+                                <td>Р вЂ™Р С•Р ТР СРЎвЂљР ВµР В»РЎРЉ</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-success">
+                    <strong>СЂСџвЂ™РЋ Р вЂєРЎС“РЎвЂЎРЎв‚¬Р СР Вµ Р С—РЎР‚Р В°Р С”РЎвЂљР СР С”Р С:</strong> Р С™Р С•Р СР С—Р В°Р Р…Р СР С РЎРѓ Р С—РЎР‚Р С•Р В°Р С”РЎвЂљР СР Р†Р Р…РЎвЂ№Р СР С Р С—РЎР‚Р С•Р С–РЎР‚Р В°Р СР СР В°Р СР С Р В±Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•РЎРѓРЎвЂљР С Р СР СР ВµРЎР‹РЎвЂљ Р Р…Р В° 60%
+                    Р СР ВµР Р…РЎРЉРЎв‚¬Р Вµ Р В°Р Р†Р В°РЎР‚Р СР в„– Р С Р Р…Р В° 40% Р В»РЎС“РЎвЂЎРЎв‚¬Р Вµ CSA scores.
+                </div>
+
+                <!-- Audio Completion Trigger -->
+                <button class="audio-completion-trigger" data-unlocks="quiz-4">
+                    СЂСџР‹В§ Р Р‡ Р В·Р В°Р С”Р С•Р Р…РЎвЂЎР СР В»(Р В°) РЎРѓР В»РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ
+                </button>
+            </div>
+        </div>
+        <!-- Case Study 4: DOT audit -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">СЂСџвЂ™С</span>
+                <h3 class="case-study-title">Р В Р ВµР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р ВµР в„–РЎРѓ: DOT compliance review (Р В°РЎС“Р ТР СРЎвЂљ)</h3>
+            </div>
+            <div class="case-study-content">
+                <p>
+                    <strong>Р РЋР СРЎвЂљРЎС“Р В°РЎвЂ Р СРЎРЏ:</strong> Р С™Р С•Р СР С—Р В°Р Р…Р СРЎРЏ XYZ Logistics Р С—Р С•Р В»РЎС“РЎвЂЎР СР В»Р В° РЎС“Р Р†Р ВµР ТР С•Р СР В»Р ВµР Р…Р СР Вµ Р С• DOT compliance review Р СР В·-Р В·Р В°
+                    Р С—Р В»Р С•РЎвЂ¦Р СРЎвЂ¦ CSA scores:
+                </p>
+                <ul>
+                    <li>HOS Compliance: 82% (Р С”РЎР‚Р В°РЎРѓР Р…Р В°РЎРЏ Р В·Р С•Р Р…Р В°)</li>
+                    <li>Driver Fitness: 75% (Р В¶Р ВµР В»РЎвЂљР В°РЎРЏ Р В·Р С•Р Р…Р В°)</li>
+                    <li>Р С’РЎС“Р ТР СРЎвЂљР С•РЎР‚ Р В·Р В°Р С—РЎР‚Р С•РЎРѓР СР В» Р Р†РЎРѓР Вµ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљРЎвЂ№ Р В·Р В° Р С—Р С•РЎРѓР В»Р ВµР ТР Р…Р СР Вµ 12 Р СР ВµРЎРѓРЎРЏРЎвЂ Р ВµР Р†</li>
+                    <li>Р СњР В°Р в„–Р ТР ВµР Р…РЎвЂ№ Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р ВµР Р…Р СРЎРЏ Р Р† driver qualification files</li>
+                </ul>
+                <div class="case-study-highlight">
+                    СЂСџвЂ™РЋ Р вЂ™Р С•Р С—РЎР‚Р С•РЎРѓ: Р С™Р В°Р С” Р С—Р С•Р ТР С–Р С•РЎвЂљР С•Р Р†Р СРЎвЂљРЎРЉРЎРѓРЎРЏ Р С” DOT Р В°РЎС“Р ТР СРЎвЂљРЎС“? Р С™Р В°Р С”Р СР Вµ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљРЎвЂ№ Р С”РЎР‚Р СРЎвЂљР СРЎвЂЎР ВµРЎРѓР С”Р С Р Р†Р В°Р В¶Р Р…РЎвЂ№?
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Check 4 -->
+        <div class="quick-check-block locked" id="quiz-4" data-quiz-id="quiz-9-4" data-correct-answer="b">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">РІСљвЂ¦</span>
+                <h3 class="quick-check-title">Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</h3>
+            </div>
+
+            <div class="quick-check-question">
+                Р С™Р В°Р С” РЎвЂЎР В°РЎРѓРЎвЂљР С• Р Р…РЎС“Р В¶Р Р…Р С• Р С—РЎР‚Р С•Р Р†Р С•Р ТР СРЎвЂљРЎРЉ random drug testing?
+            </div>
+
+            <div class="quick-check-options">
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-4" id="quiz-4-a" value="a">
+                    <label for="quiz-4-a">25% Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„– Р Р† Р С–Р С•Р Т</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-4" id="quiz-4-b" value="b">
+                    <label for="quiz-4-b">50% Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„– Р Р† Р С–Р С•Р Т</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-4" id="quiz-4-c" value="c">
+                    <label for="quiz-4-c">100% Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„– Р Р† Р С–Р С•Р Т</label>
+                </div>
+            </div>
+
+            <div class="quick-check-feedback">
+                <strong>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С•! РІСљвЂњ</strong>
+                Р СџР С• РЎвЂљРЎР‚Р ВµР В±Р С•Р Р†Р В°Р Р…Р СРЎРЏР С DOT, Р С”Р С•Р СР С—Р В°Р Р…Р СР С Р ТР С•Р В»Р В¶Р Р…РЎвЂ№ Р С—РЎР‚Р С•Р Р†Р С•Р ТР СРЎвЂљРЎРЉ random drug testing Р ТР В»РЎРЏ 50% Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„– Р ВµР В¶Р ВµР С–Р С•Р ТР Р…Р С•.
+            </div>
+        </div>
+        <!-- Block 5: Р СџРЎР‚Р ВµР ТР С•РЎвЂљР Р†РЎР‚Р В°РЎвЂ°Р ВµР Р…Р СР Вµ Р В°Р Р†Р В°РЎР‚Р СР в„– Р С РЎС“Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р СР Вµ РЎР‚Р СРЎРѓР С”Р В°Р СР С -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р СџРЎР‚Р ВµР ТР С•РЎвЂљР Р†РЎР‚Р В°РЎвЂ°Р ВµР Р…Р СР Вµ Р В°Р Р†Р В°РЎР‚Р СР в„– Р С РЎС“Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р СР Вµ РЎР‚Р СРЎРѓР С”Р В°Р СР С</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio5')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio5')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio5')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р СџРЎР‚Р ВµР ТР С•РЎвЂљР Р†РЎР‚Р В°РЎвЂ°Р ВµР Р…Р СР Вµ Р В°Р Р†Р В°РЎР‚Р СР в„– РІР‚вЂќ Р С—РЎР‚Р СР С•РЎР‚Р СРЎвЂљР ВµРЎвЂљ Р Р…Р С•Р СР ВµРЎР‚ Р С•Р ТР СР Р…. Р С›Р ТР Р…Р В° РЎРѓР ВµРЎР‚РЎРЉР ВµР В·Р Р…Р В°РЎРЏ Р В°Р Р†Р В°РЎР‚Р СРЎРЏ Р СР С•Р В¶Р ВµРЎвЂљ РЎР‚Р В°Р В·РЎР‚РЎС“РЎв‚¬Р СРЎвЂљРЎРЉ РЎР‚Р ВµР С—РЎС“РЎвЂљР В°РЎвЂ Р СРЎР‹
+                    Р С”Р С•Р СР С—Р В°Р Р…Р СР С Р С Р С—РЎР‚Р СР Р†Р ВµРЎРѓРЎвЂљР С Р С” Р СР СР В»Р В»Р СР С•Р Р…Р Р…РЎвЂ№Р С Р СРЎРѓР С”Р В°Р С.</p>
+
+                <h3>Р С›РЎРѓР Р…Р С•Р Р†Р Р…РЎвЂ№Р Вµ Р С—РЎР‚Р СРЎвЂЎР СР Р…РЎвЂ№ Р В°Р Р†Р В°РЎР‚Р СР в„–:</h3>
+                <ul>
+                    <li><strong>Driver fatigue</strong> РІР‚вЂќ РЎС“РЎРѓРЎвЂљР В°Р В»Р С•РЎРѓРЎвЂљРЎРЉ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏ (30% Р В°Р Р†Р В°РЎР‚Р СР в„–)</li>
+                    <li><strong>Distracted driving</strong> РІР‚вЂќ Р С•РЎвЂљР Р†Р В»Р ВµРЎвЂЎР ВµР Р…Р СР Вµ Р Р†Р Р…Р СР СР В°Р Р…Р СРЎРЏ (25%)</li>
+                    <li><strong>Speeding</strong> РІР‚вЂќ Р С—РЎР‚Р ВµР Р†РЎвЂ№РЎв‚¬Р ВµР Р…Р СР Вµ РЎРѓР С”Р С•РЎР‚Р С•РЎРѓРЎвЂљР С (20%)</li>
+                    <li><strong>Following too closely</strong> РІР‚вЂќ Р СР В°Р В»Р В°РЎРЏ Р ТР СРЎРѓРЎвЂљР В°Р Р…РЎвЂ Р СРЎРЏ (15%)</li>
+                    <li><strong>Vehicle defects</strong> РІР‚вЂќ РЎвЂљР ВµРЎвЂ¦Р Р…Р СРЎвЂЎР ВµРЎРѓР С”Р СР Вµ Р Р…Р ВµР СРЎРѓР С—РЎР‚Р В°Р Р†Р Р…Р С•РЎРѓРЎвЂљР С (10%)</li>
+                </ul>
+
+                <h3>Р СћР ВµРЎвЂ¦Р Р…Р С•Р В»Р С•Р С–Р СР С Р В±Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•РЎРѓРЎвЂљР С:</h3>
+                <ul>
+                    <li><strong>Collision mitigation systems</strong> РІР‚вЂќ РЎРѓР СРЎРѓРЎвЂљР ВµР СРЎвЂ№ Р С—РЎР‚Р ВµР ТР С•РЎвЂљР Р†РЎР‚Р В°РЎвЂ°Р ВµР Р…Р СРЎРЏ РЎРѓРЎвЂљР С•Р В»Р С”Р Р…Р С•Р Р†Р ВµР Р…Р СР в„–</li>
+                    <li><strong>Lane departure warning</strong> РІР‚вЂќ Р С—РЎР‚Р ВµР ТРЎС“Р С—РЎР‚Р ВµР В¶Р ТР ВµР Р…Р СР Вµ Р С• РЎРѓРЎР‰Р ВµР В·Р ТР Вµ РЎРѓ Р С—Р С•Р В»Р С•РЎРѓРЎвЂ№</li>
+                    <li><strong>Driver monitoring systems</strong> РІР‚вЂќ Р С”Р С•Р Р…РЎвЂљРЎР‚Р С•Р В»РЎРЉ РЎРѓР С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р СРЎРЏ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏ</li>
+                    <li><strong>Electronic stability control</strong> РІР‚вЂќ РЎРѓР СРЎРѓРЎвЂљР ВµР СР В° РЎРѓРЎвЂљР В°Р В±Р СР В»Р СР В·Р В°РЎвЂ Р СР С</li>
+                    <li><strong>Dash cameras</strong> РІР‚вЂќ Р Р†Р СР ТР ВµР С•РЎР‚Р ВµР С–Р СРЎРѓРЎвЂљРЎР‚Р В°РЎвЂљР С•РЎР‚РЎвЂ№</li>
+                </ul>
+
+                <h3>Р СџРЎР‚Р С•Р С–РЎР‚Р В°Р СР СР В° defensive driving:</h3>
+                <ol>
+                    <li><strong>Space management</strong> РІР‚вЂќ Р С—Р С•Р ТР ТР ВµРЎР‚Р В¶Р В°Р Р…Р СР Вµ Р В±Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•Р в„– Р ТР СРЎРѓРЎвЂљР В°Р Р…РЎвЂ Р СР С</li>
+                    <li><strong>Speed management</strong> РІР‚вЂќ Р С”Р С•Р Р…РЎвЂљРЎР‚Р С•Р В»РЎРЉ РЎРѓР С”Р С•РЎР‚Р С•РЎРѓРЎвЂљР С</li>
+                    <li><strong>Communication</strong> РІР‚вЂќ Р СРЎРѓР С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°Р Р…Р СР Вµ РЎРѓР СР С–Р Р…Р В°Р В»Р С•Р Р† Р С Р С•Р С–Р Р…Р ВµР в„–</li>
+                    <li><strong>Visibility</strong> РІР‚вЂќ Р С•Р В±Р ВµРЎРѓР С—Р ВµРЎвЂЎР ВµР Р…Р СР Вµ Р Р†Р СР ТР СР СР С•РЎРѓРЎвЂљР С</li>
+                    <li><strong>Intersection safety</strong> РІР‚вЂќ Р В±Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•РЎРѓРЎвЂљРЎРЉ Р Р…Р В° Р С—Р ВµРЎР‚Р ВµР С”РЎР‚Р ВµРЎРѓРЎвЂљР С”Р В°РЎвЂ¦</li>
+                </ol>
+
+                <div class="alert alert-danger">
+                    <strong>СЂСџвЂ™В° Р РЋРЎвЂљР С•Р СР СР С•РЎРѓРЎвЂљРЎРЉ Р В°Р Р†Р В°РЎР‚Р СР в„–:</strong> Р РЋРЎР‚Р ВµР ТР Р…РЎРЏРЎРЏ РЎРѓРЎвЂљР С•Р СР СР С•РЎРѓРЎвЂљРЎРЉ fatal accident Р ТР В»РЎРЏ trucking Р С”Р С•Р СР С—Р В°Р Р…Р СР С РІР‚вЂќ $3.6
+                    Р СР В»Р Р…. Injury accident РІР‚вЂќ $195,000.
+                </div>
+
+                <!-- Audio Completion Trigger -->
+                <button class="audio-completion-trigger" data-unlocks="quiz-5">
+                    СЂСџР‹В§ Р Р‡ Р В·Р В°Р С”Р С•Р Р…РЎвЂЎР СР В»(Р В°) РЎРѓР В»РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ
+                </button>
+            </div>
+        </div>
+        <!-- Case Study 5: Р РЋР ВµРЎР‚РЎРЉР ВµР В·Р Р…Р В°РЎРЏ Р В°Р Р†Р В°РЎР‚Р СРЎРЏ -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">СЂСџвЂ™С</span>
+                <h3 class="case-study-title">Р В Р ВµР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р ВµР в„–РЎРѓ: Р РЋР ВµРЎР‚РЎРЉР ВµР В·Р Р…Р В°РЎРЏ Р В°Р Р†Р В°РЎР‚Р СРЎРЏ РЎРѓ fatality</h3>
+            </div>
+            <div class="case-study-content">
+                <p>
+                    <strong>Р РЋР СРЎвЂљРЎС“Р В°РЎвЂ Р СРЎРЏ:</strong> Р вЂ™Р С•Р ТР СРЎвЂљР ВµР В»РЎРЉ Р С”Р С•Р СР С—Р В°Р Р…Р СР С Р С—Р С•Р С—Р В°Р В» Р Р† fatal accident Р Р…Р В° I-95:
+                </p>
+                <ul>
+                    <li>Р вЂ”Р В°РЎРѓР Р…РЎС“Р В» Р В·Р В° РЎР‚РЎС“Р В»Р ВµР С Р С—Р С•РЎРѓР В»Р Вµ 11 РЎвЂЎР В°РЎРѓР С•Р Р† Р Р†Р С•Р В¶Р ТР ВµР Р…Р СРЎРЏ</li>
+                    <li>Р вЂ™РЎР‚Р ВµР В·Р В°Р В»РЎРѓРЎРЏ Р Р† Р С•РЎРѓРЎвЂљР В°Р Р…Р С•Р Р†Р СР Р†РЎв‚¬Р СР ВµРЎРѓРЎРЏ Р СР В°РЎв‚¬Р СР Р…РЎвЂ№</li>
+                    <li>1 РЎвЂЎР ВµР В»Р С•Р Р†Р ВµР С” Р С—Р С•Р С–Р СР В±, 3 РЎР‚Р В°Р Р…Р ВµР Р…РЎвЂ№</li>
+                    <li>DOT Р Р…Р В°РЎвЂЎР В°Р В» РЎР‚Р В°РЎРѓРЎРѓР В»Р ВµР ТР С•Р Р†Р В°Р Р…Р СР Вµ, CSA scores РЎС“РЎвЂ¦РЎС“Р ТРЎв‚¬Р СР В»Р СРЎРѓРЎРЉ</li>
+                </ul>
+                <div class="case-study-highlight">
+                    СЂСџвЂ™РЋ Р вЂ™Р С•Р С—РЎР‚Р С•РЎРѓ: Р С™Р В°Р С”Р СР Вµ Р ТР ВµР в„–РЎРѓРЎвЂљР Р†Р СРЎРЏ Р ТР С•Р В»Р В¶Р ВµР Р… Р С—РЎР‚Р ВµР ТР С—РЎР‚Р СР Р…РЎРЏРЎвЂљРЎРЉ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚ Р С—Р С•РЎРѓР В»Р Вµ РЎвЂљР В°Р С”Р С•Р в„– Р В°Р Р†Р В°РЎР‚Р СР С? Р С™Р В°Р С” Р В·Р В°РЎвЂ°Р СРЎвЂљР СРЎвЂљРЎРЉ Р С”Р С•Р СР С—Р В°Р Р…Р СРЎР‹?
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Check 5 -->
+        <div class="quick-check-block locked" id="quiz-5" data-quiz-id="quiz-9-5" data-correct-answer="a">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">РІСљвЂ¦</span>
+                <h3 class="quick-check-title">Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</h3>
+            </div>
+
+            <div class="quick-check-question">
+                Р С™Р В°Р С”Р В°РЎРЏ Р С•РЎРѓР Р…Р С•Р Р†Р Р…Р В°РЎРЏ Р С—РЎР‚Р СРЎвЂЎР СР Р…Р В° Р В°Р Р†Р В°РЎР‚Р СР в„– РЎРѓ РЎС“РЎвЂЎР В°РЎРѓРЎвЂљР СР ВµР С Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р С•Р Р†?
+            </div>
+
+            <div class="quick-check-options">
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-5" id="quiz-5-a" value="a">
+                    <label for="quiz-5-a">Driver fatigue (РЎС“РЎРѓРЎвЂљР В°Р В»Р С•РЎРѓРЎвЂљРЎРЉ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏ) РІР‚вЂќ 30%</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-5" id="quiz-5-b" value="b">
+                    <label for="quiz-5-b">Vehicle defects (РЎвЂљР ВµРЎвЂ¦Р Р…Р СРЎвЂЎР ВµРЎРѓР С”Р СР Вµ Р Р…Р ВµР СРЎРѓР С—РЎР‚Р В°Р Р†Р Р…Р С•РЎРѓРЎвЂљР С) РІР‚вЂќ 50%</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-5" id="quiz-5-c" value="c">
+                    <label for="quiz-5-c">Weather conditions (Р С—Р С•Р С–Р С•Р ТР Р…РЎвЂ№Р Вµ РЎС“РЎРѓР В»Р С•Р Р†Р СРЎРЏ) РІР‚вЂќ 40%</label>
+                </div>
+            </div>
+
+            <div class="quick-check-feedback">
+                <strong>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С•! РІСљвЂњ</strong>
+                Driver fatigue (РЎС“РЎРѓРЎвЂљР В°Р В»Р С•РЎРѓРЎвЂљРЎРЉ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏ) РІР‚вЂќ Р С•РЎРѓР Р…Р С•Р Р†Р Р…Р В°РЎРЏ Р С—РЎР‚Р СРЎвЂЎР СР Р…Р В° Р В°Р Р†Р В°РЎР‚Р СР в„–, РЎРѓР С•РЎРѓРЎвЂљР В°Р Р†Р В»РЎРЏРЎР‹РЎвЂ°Р В°РЎРЏ 30% Р Р†РЎРѓР ВµРЎвЂ¦ РЎРѓР В»РЎС“РЎвЂЎР В°Р ВµР Р†. Р СџР С•РЎРЊРЎвЂљР С•Р СРЎС“
+                Р С”Р С•Р Р…РЎвЂљРЎР‚Р С•Р В»РЎРЉ HOS РЎвЂљР В°Р С” Р Р†Р В°Р В¶Р ВµР Р….
+            </div>
+        </div>
+        <!-- Block 6: Р Р€Р В»РЎС“РЎвЂЎРЎв‚¬Р ВµР Р…Р СР Вµ CSA scores Р С best practices -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р Р€Р В»РЎС“РЎвЂЎРЎв‚¬Р ВµР Р…Р СР Вµ CSA scores Р С Р В»РЎС“РЎвЂЎРЎв‚¬Р СР Вµ Р С—РЎР‚Р В°Р С”РЎвЂљР СР С”Р С</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio6')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio6')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio6')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р Р€Р В»РЎС“РЎвЂЎРЎв‚¬Р ВµР Р…Р СР Вµ CSA scores РЎвЂљРЎР‚Р ВµР В±РЎС“Р ВµРЎвЂљ РЎРѓР СРЎРѓРЎвЂљР ВµР СР Р…Р С•Р С–Р С• Р С—Р С•Р ТРЎвЂ¦Р С•Р ТР В° Р С Р С—Р С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р Р…Р С•Р в„– РЎР‚Р В°Р В±Р С•РЎвЂљРЎвЂ№. Р ТђР С•РЎР‚Р С•РЎв‚¬Р СР Вµ scores РІР‚вЂќ Р С”Р С•Р Р…Р С”РЎС“РЎР‚Р ВµР Р…РЎвЂљР Р…Р С•Р Вµ
+                    Р С—РЎР‚Р ВµР СР СРЎС“РЎвЂ°Р ВµРЎРѓРЎвЂљР Р†Р С•.</p>
+
+                <h3>Р РЋРЎвЂљРЎР‚Р В°РЎвЂљР ВµР С–Р СР С РЎС“Р В»РЎС“РЎвЂЎРЎв‚¬Р ВµР Р…Р СРЎРЏ CSA scores:</h3>
+                <ul>
+                    <li><strong>Р СџРЎР‚Р С•Р В°Р С”РЎвЂљР СР Р†Р Р…РЎвЂ№Р в„– Р СР С•Р Р…Р СРЎвЂљР С•РЎР‚Р СР Р…Р С–</strong> РІР‚вЂќ Р ВµР В¶Р ВµР СР ВµРЎРѓРЎРЏРЎвЂЎР Р…Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В° scores</li>
+                    <li><strong>Targeted training</strong> РІР‚вЂќ Р С•Р В±РЎС“РЎвЂЎР ВµР Р…Р СР Вµ Р С—Р С• Р С—РЎР‚Р С•Р В±Р В»Р ВµР СР Р…РЎвЂ№Р С Р С”Р В°РЎвЂљР ВµР С–Р С•РЎР‚Р СРЎРЏР С</li>
+                    <li><strong>Incentive programs</strong> РІР‚вЂќ Р В±Р С•Р Р…РЎС“РЎРѓРЎвЂ№ Р В·Р В° Р В±Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•РЎРѓРЎвЂљРЎРЉ</li>
+                    <li><strong>Technology adoption</strong> РІР‚вЂќ Р Р†Р Р…Р ВµР ТРЎР‚Р ВµР Р…Р СР Вµ safety РЎвЂљР ВµРЎвЂ¦Р Р…Р С•Р В»Р С•Р С–Р СР в„–</li>
+                    <li><strong>Data analysis</strong> РІР‚вЂќ Р В°Р Р…Р В°Р В»Р СР В· РЎвЂљРЎР‚Р ВµР Р…Р ТР С•Р Р† Р С Р С—Р В°РЎвЂљРЎвЂљР ВµРЎР‚Р Р…Р С•Р Р†</li>
+                </ul>
+
+                <h3>Р В Р С•Р В»РЎРЉ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р В° Р Р† Р В±Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•РЎРѓРЎвЂљР С:</h3>
+                <ul>
+                    <li><strong>HOS monitoring</strong> РІР‚вЂќ Р С”Р С•Р Р…РЎвЂљРЎР‚Р С•Р В»РЎРЉ РЎР‚Р В°Р В±Р С•РЎвЂЎР ВµР С–Р С• Р Р†РЎР‚Р ВµР СР ВµР Р…Р С Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„–</li>
+                    <li><strong>Route planning</strong> РІР‚вЂќ Р В±Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•Р Вµ Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р†</li>
+                    <li><strong>Weather awareness</strong> РІР‚вЂќ Р СР С•Р Р…Р СРЎвЂљР С•РЎР‚Р СР Р…Р С– Р С—Р С•Р С–Р С•Р ТР Р…РЎвЂ№РЎвЂ¦ РЎС“РЎРѓР В»Р С•Р Р†Р СР в„–</li>
+                    <li><strong>Communication</strong> РІР‚вЂќ Р С—Р С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р Р…Р В°РЎРЏ РЎРѓР Р†РЎРЏР В·РЎРЉ РЎРѓ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏР СР С</li>
+                    <li><strong>Documentation</strong> РІР‚вЂќ Р Р†Р ВµР ТР ВµР Р…Р СР Вµ РЎвЂљР С•РЎвЂЎР Р…РЎвЂ№РЎвЂ¦ Р В·Р В°Р С—Р СРЎРѓР ВµР в„–</li>
+                </ul>
+
+                <h3>Р вЂєРЎС“РЎвЂЎРЎв‚¬Р СР Вµ Р С—РЎР‚Р В°Р С”РЎвЂљР СР С”Р С Р ТР В»РЎРЏ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р С•Р Р†:</h3>
+                <ol>
+                    <li><strong>Never pressure drivers</strong> РІР‚вЂќ Р Р…Р Вµ Р С—РЎР‚Р СР Р…РЎС“Р В¶Р ТР В°Р в„–РЎвЂљР Вµ Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ HOS</li>
+                    <li><strong>Plan realistic schedules</strong> РІР‚вЂќ РЎР‚Р ВµР В°Р В»Р СРЎРѓРЎвЂљР СРЎвЂЎР Р…Р С•Р Вµ Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ</li>
+                    <li><strong>Monitor driver performance</strong> РІР‚вЂќ Р С•РЎвЂљРЎРѓР В»Р ВµР В¶Р СР Р†Р В°Р в„–РЎвЂљР Вµ Р С—Р С•Р С”Р В°Р В·Р В°РЎвЂљР ВµР В»Р С</li>
+                    <li><strong>Provide support</strong> РІР‚вЂќ Р С—Р С•Р ТР ТР ВµРЎР‚Р В¶Р СР Р†Р В°Р в„–РЎвЂљР Вµ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„–</li>
+                    <li><strong>Stay informed</strong> РІР‚вЂќ Р СР В·РЎС“РЎвЂЎР В°Р в„–РЎвЂљР Вµ Р Р…Р С•Р Р†РЎвЂ№Р Вµ РЎР‚Р ВµР С–РЎС“Р В»РЎРЏРЎвЂ Р СР С</li>
+                </ol>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Р вЂќР ВµР в„–РЎРѓРЎвЂљР Р†Р СР Вµ</th>
+                                <th>Р вЂ™Р В»Р СРЎРЏР Р…Р СР Вµ Р Р…Р В° CSA</th>
+                                <th>Р вЂ™РЎР‚Р ВµР СР ВµР Р…Р Р…РЎвЂ№Р Вµ РЎР‚Р В°Р СР С”Р С</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Clean inspections</td>
+                                <td>Р Р€Р В»РЎС“РЎвЂЎРЎв‚¬Р ВµР Р…Р СР Вµ scores</td>
+                                <td>Р СњР ВµР СР ВµР ТР В»Р ВµР Р…Р Р…Р С•</td>
+                            </tr>
+                            <tr>
+                                <td>Driver training</td>
+                                <td>Р РЋР Р…Р СР В¶Р ВµР Р…Р СР Вµ Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р ВµР Р…Р СР в„–</td>
+                                <td>3-6 Р СР ВµРЎРѓРЎРЏРЎвЂ Р ВµР Р†</td>
+                            </tr>
+                            <tr>
+                                <td>Vehicle maintenance</td>
+                                <td>Р СљР ВµР Р…РЎРЉРЎв‚¬Р Вµ defects</td>
+                                <td>1-3 Р СР ВµРЎРѓРЎРЏРЎвЂ Р В°</td>
+                            </tr>
+                            <tr>
+                                <td>Safety technology</td>
+                                <td>Р СџРЎР‚Р ВµР ТР С•РЎвЂљР Р†РЎР‚Р В°РЎвЂ°Р ВµР Р…Р СР Вµ Р В°Р Р†Р В°РЎР‚Р СР в„–</td>
+                                <td>6-12 Р СР ВµРЎРѓРЎРЏРЎвЂ Р ВµР Р†</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-success">
+                    <strong>СЂСџР‹Р‡ Р В¦Р ВµР В»РЎРЉ Р СР С•Р ТРЎС“Р В»РЎРЏ:</strong> Р СћР ВµР С—Р ВµРЎР‚РЎРЉ Р Р†РЎвЂ№ Р С—Р С•Р Р…Р СР СР В°Р ВµРЎвЂљР Вµ РЎРѓР СРЎРѓРЎвЂљР ВµР СРЎС“ CSA, Р В·Р Р…Р В°Р ВµРЎвЂљР Вµ, Р С”Р В°Р С” Р С—РЎР‚Р ВµР ТР С•РЎвЂљР Р†РЎР‚Р В°РЎвЂ°Р В°РЎвЂљРЎРЉ
+                    Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р ВµР Р…Р СРЎРЏ Р С РЎС“Р В»РЎС“РЎвЂЎРЎв‚¬Р В°РЎвЂљРЎРЉ safety scores. Р вЂР ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•РЎРѓРЎвЂљРЎРЉ РІР‚вЂќ Р С•РЎРѓР Р…Р С•Р Р†Р В° РЎС“РЎРѓР С—Р ВµРЎв‚¬Р Р…Р С•Р С–Р С• Р В±Р СР В·Р Р…Р ВµРЎРѓР В° Р Р† trucking.
+                </div>
+
+                <!-- Audio Completion Trigger -->
+                <button class="audio-completion-trigger" data-unlocks="quiz-6">
+                    СЂСџР‹В§ Р Р‡ Р В·Р В°Р С”Р С•Р Р…РЎвЂЎР СР В»(Р В°) РЎРѓР В»РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ
+                </button>
+            </div>
+        </div>
+        <!-- Case Study 6: Р Р€РЎРѓР С—Р ВµРЎв‚¬Р Р…Р С•Р Вµ РЎС“Р В»РЎС“РЎвЂЎРЎв‚¬Р ВµР Р…Р СР Вµ CSA -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">СЂСџвЂ™С</span>
+                <h3 class="case-study-title">Р В Р ВµР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р ВµР в„–РЎРѓ: Р Р€РЎРѓР С—Р ВµРЎв‚¬Р Р…Р С•Р Вµ РЎС“Р В»РЎС“РЎвЂЎРЎв‚¬Р ВµР Р…Р СР Вµ CSA scores</h3>
+            </div>
+            <div class="case-study-content">
+                <p>
+                    <strong>Р РЋР СРЎвЂљРЎС“Р В°РЎвЂ Р СРЎРЏ:</strong> Р С™Р С•Р СР С—Р В°Р Р…Р СРЎРЏ DEF Transport Р В·Р В° 12 Р СР ВµРЎРѓРЎРЏРЎвЂ Р ВµР Р† РЎС“Р В»РЎС“РЎвЂЎРЎв‚¬Р СР В»Р В° РЎРѓР Р†Р С•Р С Р С—Р С•Р С”Р В°Р В·Р В°РЎвЂљР ВµР В»Р С:
+                </p>
+                <ul>
+                    <li>Unsafe Driving: РЎРѓ 85% Р ТР С• 45% (Р СР В· Р С”РЎР‚Р В°РЎРѓР Р…Р С•Р в„– Р Р† Р В·Р ВµР В»Р ВµР Р…РЎС“РЎР‹ Р В·Р С•Р Р…РЎС“)</li>
+                    <li>HOS Compliance: РЎРѓ 78% Р ТР С• 35%</li>
+                    <li>Р вЂ™Р Р…Р ВµР ТРЎР‚Р СР В»Р С dash cameras Р С driver monitoring</li>
+                    <li>Р Р€Р Р†Р ВµР В»Р СРЎвЂЎР СР В»Р С Р С”Р С•Р В»Р СРЎвЂЎР ВµРЎРѓРЎвЂљР Р†Р С• Р С”Р В»Р СР ВµР Р…РЎвЂљР С•Р Р† Р Р…Р В° 60%</li>
+                </ul>
+                <div class="case-study-highlight">
+                    СЂСџвЂ™РЋ Р вЂ™Р С•Р С—РЎР‚Р С•РЎРѓ: Р С™Р В°Р С”Р СР Вµ Р С”Р С•Р Р…Р С”РЎР‚Р ВµРЎвЂљР Р…РЎвЂ№Р Вµ РЎв‚¬Р В°Р С–Р С Р С—Р С•Р СР С•Р С–Р В»Р С Р С”Р С•Р СР С—Р В°Р Р…Р СР С РЎвЂљР В°Р С” Р В·Р Р…Р В°РЎвЂЎР СРЎвЂљР ВµР В»РЎРЉР Р…Р С• РЎС“Р В»РЎС“РЎвЂЎРЎв‚¬Р СРЎвЂљРЎРЉ CSA scores?
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Check 6 -->
+        <div class="quick-check-block locked" id="quiz-6" data-quiz-id="quiz-9-6" data-correct-answer="b">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">РІСљвЂ¦</span>
+                <h3 class="quick-check-title">Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</h3>
+            </div>
+
+            <div class="quick-check-question">
+                Р В§РЎвЂљР С• Р СњР вЂў Р ТР С•Р В»Р В¶Р ВµР Р… Р ТР ВµР В»Р В°РЎвЂљРЎРЉ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚ Р ТР В»РЎРЏ Р С—Р С•Р ТР ТР ВµРЎР‚Р В¶Р В°Р Р…Р СРЎРЏ Р В±Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•РЎРѓРЎвЂљР С?
+            </div>
+
+            <div class="quick-check-options">
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-6" id="quiz-6-a" value="a">
+                    <label for="quiz-6-a">Р С™Р С•Р Р…РЎвЂљРЎР‚Р С•Р В»Р СРЎР‚Р С•Р Р†Р В°РЎвЂљРЎРЉ HOS compliance Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„–</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-6" id="quiz-6-b" value="b">
+                    <label for="quiz-6-b">Р СџРЎР‚Р СР Р…РЎС“Р В¶Р ТР В°РЎвЂљРЎРЉ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„– Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ HOS Р ТР В»РЎРЏ РЎРѓРЎР‚Р С•РЎвЂЎР Р…РЎвЂ№РЎвЂ¦ Р ТР С•РЎРѓРЎвЂљР В°Р Р†Р С•Р С”</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-6" id="quiz-6-c" value="c">
+                    <label for="quiz-6-c">Р СџР В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°РЎвЂљРЎРЉ РЎР‚Р ВµР В°Р В»Р СРЎРѓРЎвЂљР СРЎвЂЎР Р…РЎвЂ№Р Вµ РЎР‚Р В°РЎРѓР С—Р СРЎРѓР В°Р Р…Р СРЎРЏ</label>
+                </div>
+            </div>
+
+            <div class="quick-check-feedback">
+                <strong>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С•! РІСљвЂњ</strong>
+                Р вЂќР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚ Р Р…Р СР С”Р С•Р С–Р ТР В° Р Р…Р Вµ Р ТР С•Р В»Р В¶Р ВµР Р… Р С—РЎР‚Р СР Р…РЎС“Р В¶Р ТР В°РЎвЂљРЎРЉ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„– Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ HOS. Р В­РЎвЂљР С• Р С—РЎР‚Р СР Р†Р С•Р ТР СРЎвЂљ Р С” Р В°Р Р†Р В°РЎР‚Р СРЎРЏР С, РЎв‚¬РЎвЂљРЎР‚Р В°РЎвЂћР В°Р С Р С
+                РЎС“РЎвЂ¦РЎС“Р ТРЎв‚¬Р ВµР Р…Р СРЎР‹ CSA scores.
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="lesson-nav">
+            <a href="doc-module-8.html" class="nav-btn">
+                <span>РІвЂ С’</span>
+                <span>Р СџРЎР‚Р ВµР ТРЎвЂ№Р ТРЎС“РЎвЂ°Р СР в„– РЎС“РЎР‚Р С•Р С”</span>
+            </a>
+            <div class="progress-info">
+                <div>Р СљР С•Р ТРЎС“Р В»РЎРЉ 9 Р СР В· 12</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 75%"></div>
+                </div>
+                <div>75% Р В·Р В°Р Р†Р ВµРЎР‚РЎв‚¬Р ВµР Р…Р С•</div>
+            </div>
+            <a href="doc-module-10.html" class="nav-btn">
+                <span>Р РЋР В»Р ВµР ТРЎС“РЎР‹РЎвЂ°Р СР в„– РЎС“РЎР‚Р С•Р С”</span>
+                <span>РІвЂ вЂ™</span>
+            </a>
+        </nav>
+    </main>
+    <!-- Audio elements (hidden) -->
+    <audio id="audio1" preload="metadata">
+        <source src="../audio/module9-block1.mp3" type="audio/mpeg">
+        <source src="../audio/module9-block1.ogg" type="audio/ogg">
+    </audio>
+    <audio id="audio2" preload="none">
+        <source src="../audio/module9-block2.mp3" type="audio/mpeg">
+        <source src="../audio/module9-block2.ogg" type="audio/ogg">
+    </audio>
+    <audio id="audio3" preload="none">
+        <source src="../audio/module9-block3.mp3" type="audio/mpeg">
+        <source src="../audio/module9-block3.ogg" type="audio/ogg">
+    </audio>
+    <audio id="audio4" preload="none">
+        <source src="../audio/module9-block4.mp3" type="audio/mpeg">
+        <source src="../audio/module9-block4.ogg" type="audio/ogg">
+    </audio>
+    <audio id="audio5" preload="none">
+        <source src="../audio/module9-block5.mp3" type="audio/mpeg">
+        <source src="../audio/module9-block5.ogg" type="audio/ogg">
+    </audio>
+    <audio id="audio6" preload="none">
+        <source src="../audio/module9-block6.mp3" type="audio/mpeg">
+        <source src="../audio/module9-block6.ogg" type="audio/ogg">
+    </audio>
+
+    <script>
+        let currentAudio = null;
+        let currentButton = null;
+        let currentContainer = null;
+        let progressUpdateInterval = null;
+
+        // Audio durations (in seconds)
+        const audioDurations = {
+            'audio1': 0, // Will be loaded from actual file
+            'audio2': 260, // 4.3 minutes (simulated)
+            'audio3': 240, // 4 minutes (simulated)
+            'audio4': 280, // 4.7 minutes (simulated)
+            'audio5': 250, // 4.2 minutes (simulated)
+            'audio6': 270  // 4.5 minutes (simulated)
+        };
+
+        // Load actual audio duration for audio1
+        document.addEventListener('DOMContentLoaded', function () {
+            const audio1 = document.getElementById('audio1');
+
+            audio1.addEventListener('loadedmetadata', function () {
+                if (audio1.duration && !isNaN(audio1.duration) && isFinite(audio1.duration)) {
+                    audioDurations['audio1'] = audio1.duration;
+                    updateProgress('audio1', 0, audio1.duration);
+                } else {
+                    audioDurations['audio1'] = 260;
+                    updateProgress('audio1', 0, 260);
+                }
+            });
+
+            audio1.addEventListener('error', function () {
+                console.log('Could not load audio file, using simulated duration');
+                audioDurations['audio1'] = 260;
+                updateProgress('audio1', 0, 260);
+            });
+
+            // Initialize other audio durations
+            Object.keys(audioDurations).forEach(audioId => {
+                if (audioId !== 'audio1') {
+                    const duration = audioDurations[audioId];
+                    updateProgress(audioId, 0, duration);
+                }
+            });
+        });
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateProgress(audioId, currentTime, duration) {
+            const container = document.querySelector(`[onclick*="${audioId}"]`).closest('.audio-container');
+            const progressRing = container.querySelector('.progress-ring-fill');
+            const mobileProgressFill = container.querySelector('.mobile-progress-fill');
+            const durationDisplay = container.querySelector('.audio-duration');
+
+            const progress = currentTime / duration;
+            const circumference = 2 * Math.PI * 32;
+            const offset = circumference - (progress * circumference);
+
+            if (progressRing) {
+                progressRing.style.strokeDashoffset = offset;
+            }
+
+            if (mobileProgressFill) {
+                mobileProgressFill.style.width = `${progress * 100}%`;
+            }
+
+            durationDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+        }
+
+        function seekAudioMobile(event, element, audioId) {
+            event.stopPropagation();
+
+            const audio = document.getElementById(audioId);
+            if (!audio || audio.paused) {
+                return;
+            }
+
+            const rect = element.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const progress = clickX / rect.width;
+            const duration = audioDurations[audioId];
+            const newTime = progress * duration;
+
+            updateProgress(audioId, newTime, duration);
+
+            if (audioId === 'audio1' && audio.duration) {
+                audio.currentTime = newTime;
+            }
+        }
+
+        function seekAudio(event, element, audioId) {
+            event.stopPropagation();
+
+            if (!element.classList.contains('seekable')) {
+                return;
+            }
+
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const x = event.clientX - centerX;
+            const y = event.clientY - centerY;
+
+            const distance = Math.sqrt(x * x + y * y);
+            const radius = rect.width / 2;
+
+            if (distance < radius * 0.55) {
+                return;
+            }
+
+            let angle = Math.atan2(x, -y) * (180 / Math.PI);
+            if (angle < 0) angle += 360;
+
+            const progress = angle / 360;
+            const duration = audioDurations[audioId];
+            const newTime = progress * duration;
+
+            updateProgress(audioId, newTime, duration);
+
+            const audio = document.getElementById(audioId);
+            if (audio && !audio.paused) {
+                if (audioId === 'audio1') {
+                    audio.currentTime = newTime;
+                }
+            }
+        }
+        // Auto-unlock quiz when audio ends
+        function unlockQuizForAudio(audioId) {
+            const audioToQuizMap = {
+                'audio1': 'quiz-1',
+                'audio2': 'quiz-2',
+                'audio3': 'quiz-3',
+                'audio4': 'quiz-4',
+                'audio5': 'quiz-5',
+                'audio6': 'quiz-6'
+            };
+
+            const quizId = audioToQuizMap[audioId];
+            if (quizId) {
+                const triggerButton = document.querySelector(`[data-unlocks="${quizId}"]`);
+                if (triggerButton && !triggerButton.classList.contains('completed')) {
+                    triggerButton.click();
+                }
+            }
+        }
+
+        function toggleAudio(button, audioId) {
+            const audio = document.getElementById(audioId);
+            const container = button.closest('.audio-container');
+            const interactiveRing = container.querySelector('.progress-ring-interactive');
+
+            // Stop current audio if different
+            if (currentAudio && currentAudio !== audio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                if (currentButton) {
+                    currentButton.classList.remove('playing');
+                }
+                if (currentContainer) {
+                    currentContainer.classList.remove('playing');
+                    const oldRing = currentContainer.querySelector('.progress-ring-interactive');
+                    oldRing.classList.remove('seekable');
+                }
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+            }
+
+            if (audio.paused) {
+                audio.play();
+                button.classList.add('playing');
+                container.classList.add('playing');
+                interactiveRing.classList.add('seekable');
+                currentAudio = audio;
+                currentButton = button;
+                currentContainer = container;
+
+                const duration = audioDurations[audioId];
+
+                if (audioId === 'audio1') {
+                    progressUpdateInterval = setInterval(() => {
+                        if (audio.currentTime < audio.duration) {
+                            updateProgress(audioId, audio.currentTime, audio.duration);
+                        }
+                    }, 100);
+                } else {
+                    let currentTime = 0;
+                    progressUpdateInterval = setInterval(() => {
+                        if (currentTime < duration) {
+                            currentTime += 0.1;
+                            updateProgress(audioId, currentTime, duration);
+                        } else {
+                            clearInterval(progressUpdateInterval);
+                            button.classList.remove('playing');
+                            container.classList.remove('playing');
+                            interactiveRing.classList.remove('seekable');
+                            currentAudio = null;
+                            currentButton = null;
+                            currentContainer = null;
+                            updateProgress(audioId, 0, duration);
+                            unlockQuizForAudio(audioId);
+                        }
+                    }, 100);
+                }
+
+            } else {
+                audio.pause();
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+            }
+
+            audio.onended = function () {
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+                updateProgress(audioId, 0, audioDurations[audioId]);
+                unlockQuizForAudio(audioId);
+            };
+
+            audio.onerror = function () {
+                console.log('Audio file not found, but button still works for demo');
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+            };
+        }
+        // Initialize duration displays
+        document.addEventListener('DOMContentLoaded', function () {
+            Object.keys(audioDurations).forEach(audioId => {
+                const duration = audioDurations[audioId];
+                updateProgress(audioId, 0, duration);
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function (e) {
+            if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+                e.preventDefault();
+                if (currentButton) {
+                    currentButton.click();
+                }
+            }
+        });
+
+        // Progress tracking
+        window.addEventListener('beforeunload', function () {
+            localStorage.setItem('module9-progress', '75');
+            localStorage.setItem('current-module', '9');
+        });
+    </script>
+
+    <!-- Interactive Modules Script -->
+    <script src="../interactive-modules.js"></script>
+  
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>Р В РЎв„ўР РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„– Р В РІР‚СњР В РЎвЂР РЋР С“Р В РЎвЂ”Р В Р’ВµР РЋРІР‚С™Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В Р’В°</h4>
+          <p>Р В РЎСџР РЋР вЂљР В РЎвЂўР РЋРІР‚С›Р В Р’ВµР РЋР С“Р РЋР С“Р В РЎвЂР В РЎвЂўР В Р вЂ¦Р В Р’В°Р В Р’В»Р РЋР Р‰Р В Р вЂ¦Р В РЎвЂўР В Р’Вµ Р В РЎвЂўР В Р’В±Р РЋРЎвЂњР РЋРІР‚РЋР В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ Р В РўвЂР В РЎвЂР РЋР С“Р В РЎвЂ”Р В Р’ВµР РЋРІР‚С™Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В РЎвЂўР В Р вЂ  Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В Р’В·Р В РЎвЂўР В РЎвЂ”Р В Р’ВµР РЋР вЂљР В Р’ВµР В Р вЂ Р В РЎвЂўР В Р’В·Р В РЎвЂўР В РЎвЂќ</p>
+        </div>
+
+        <div class="footer-section">
+          <h4>Р В РЎвЂєР В Р’В±Р РЋРЎвЂњР РЋРІР‚РЋР В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ</h4>
+          <a href="../courses.html">Р В РЎв„ўР РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„–</a>
+        </div>
+
+        <div class="footer-section">
+          <h4>Р В РЎСџР В РЎвЂўР В РўвЂР В РўвЂР В Р’ВµР РЋР вЂљР В Р’В¶Р В РЎвЂќР В Р’В°</h4>
+          <a href="../faq.html">FAQ</a>
+          <a href="../contacts.html">Р В РЎв„ўР В РЎвЂўР В Р вЂ¦Р РЋРІР‚С™Р В Р’В°Р В РЎвЂќР РЋРІР‚С™Р РЋРІР‚в„–</a>
+          <a href="../help.html">Р В РЎСџР В РЎвЂўР В РЎВР В РЎвЂўР РЋРІР‚В°Р РЋР Р‰</a>
+        </div>
+
+        <div class="footer-section">
+          <h4>Р В РЎв„ўР В РЎвЂўР В РЎВР В РЎвЂ”Р В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР РЏ</h4>
+          <a href="../about.html">Р В РЎвЂє Р В Р вЂ¦Р В Р’В°Р РЋР С“</a>
+          <a href="../career.html">Р В РЎв„ўР В Р’В°Р РЋР вЂљР РЋР Р‰Р В Р’ВµР РЋР вЂљР В Р’В°</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2024 Р В РЎв„ўР РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„– Р В РІР‚СњР В РЎвЂР РЋР С“Р В РЎвЂ”Р В Р’ВµР РЋРІР‚С™Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В Р’В°. Р В РІР‚в„ўР РЋР С“Р В Р’Вµ Р В РЎвЂ”Р РЋР вЂљР В Р’В°Р В Р вЂ Р В Р’В° Р В Р’В·Р В Р’В°Р РЋРІР‚В°Р В РЎвЂР РЋРІР‚В°Р В Р’ВµР В Р вЂ¦Р РЋРІР‚в„–.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+
+</html>

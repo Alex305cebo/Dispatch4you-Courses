@@ -1,0 +1,518 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вход | Курсы Диспетчера</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #6366f1;
+      --secondary: #8b5cf6;
+      --bg-darker: #020617;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-darker);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 480px;
+      width: 100%;
+      padding: 0 24px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 32px;
+      padding: 48px;
+      backdrop-filter: blur(20px);
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .logo-icon {
+      font-size: 56px;
+    }
+
+    .logo-text {
+      font-size: 24px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--text-secondary);
+      margin-bottom: 28px;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    .password-wrapper {
+      position: relative;
+    }
+
+    .password-wrapper input {
+      padding-left: 45px;
+    }
+
+    .toggle-password {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 20px;
+      padding: 5px;
+      opacity: 0.6;
+      transition: opacity 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+    }
+
+    .toggle-password:hover {
+      opacity: 1;
+    }
+
+    .toggle-password svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .forgot {
+      text-align: right;
+      margin-bottom: 20px;
+    }
+
+    .forgot a {
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .divider {
+      text-align: center;
+      margin: 24px 0;
+      position: relative;
+    }
+
+    .divider::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .divider span {
+      background: #020617;
+      padding: 0 14px;
+      position: relative;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .btn-google {
+      width: 100%;
+      padding: 13px;
+      background: white;
+      border: none;
+      border-radius: 12px;
+      color: #1f2937;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.3s;
+    }
+
+    .btn-google:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-google img {
+      width: 20px;
+      height: 20px;
+    }
+
+    .bottom-link {
+      text-align: center;
+      margin-top: 24px;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .bottom-link a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .back {
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    .back a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    .error-msg {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #fca5a5;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .reset-msg {
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #a5b4fc;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    @media (max-width: 480px) {
+      .card {
+        padding: 32px 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="logo">
+        <div class="logo-icon">🎓</div>
+        <div class="logo-text">Курсы Диспетчера</div>
+      </div>
+      <h1>Вход</h1>
+      <p class="subtitle">Добро пожаловать! Войдите в свой аккаунт</p>
+
+      <div class="error-msg" id="errorMsg"></div>
+      <div class="reset-msg" id="resetMsg"></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="email" placeholder="your@email.com" required>
+        </div>
+        <div class="form-group">
+          <label>Пароль</label>
+          <div class="password-wrapper">
+            <button type="button" class="toggle-password" id="togglePassword">
+              <svg id="eyeIcon" viewBox="0 0 24 24">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+            <input type="password" id="password" placeholder="••••••••" required>
+          </div>
+        </div>
+        <div class="forgot"><a href="#" id="forgotLink">Забыли пароль?</a></div>
+        <button type="submit" class="btn" id="submitBtn">Войти</button>
+      </form>
+
+      <div class="divider"><span>или</span></div>
+
+      <button class="btn-google" id="googleBtn">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+        Продолжить с Google
+      </button>
+
+      <div class="bottom-link">Нет аккаунта? <a href="register.html">Зарегистрироваться</a></div>
+      <div class="back"><a href="index.html">← Вернуться на главную</a></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, sendPasswordResetEmail, fetchSignInMethodsForEmail, linkWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
+      authDomain: "dispatch4you-80e0f.firebaseapp.com",
+      projectId: "dispatch4you-80e0f",
+      storageBucket: "dispatch4you-80e0f.firebasestorage.app",
+      messagingSenderId: "349235354473",
+      appId: "1:349235354473:web:488aeb29211b02bb153bf8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    const errorMsg = document.getElementById('errorMsg');
+    const resetMsg = document.getElementById('resetMsg');
+
+    function showError(msg) { errorMsg.textContent = msg; errorMsg.style.display = 'block'; resetMsg.style.display = 'none'; }
+    function showInfo(msg) { resetMsg.textContent = msg; resetMsg.style.display = 'block'; errorMsg.style.display = 'none'; }
+
+    function translateError(code) {
+      const map = {
+        'auth/user-not-found': 'Пользователь с таким email не найден.',
+        'auth/wrong-password': 'Неверный пароль.',
+        'auth/invalid-credential': 'Неверный email или пароль.',
+        'auth/invalid-email': 'Неверный формат email.',
+        'auth/too-many-requests': 'Слишком много попыток. Попробуйте позже.',
+        'auth/network-request-failed': 'Ошибка сети. Проверьте интернет.',
+        'auth/unauthorized-domain': 'Домен не авторизован в Firebase.',
+        'auth/popup-blocked': 'Браузер заблокировал popup. Пробуем другой способ...',
+        'auth/cancelled-popup-request': 'Запрос отменён.',
+        'auth/account-exists-with-different-credential': 'Этот email уже используется другим методом входа.',
+        'auth/email-already-in-use': 'Этот email уже зарегистрирован.',
+      };
+      return map[code] || 'Ошибка: ' + code;
+    }
+
+    async function saveUserAndRedirect(user) {
+      const parts = (user.displayName || '').split(' ');
+      const firstName = parts[0] || user.email.split('@')[0];
+      const lastName = parts.slice(1).join(' ') || '';
+      const userData = {
+        uid: user.uid,
+        firstName,
+        lastName,
+        email: user.email,
+        displayName: user.displayName || '',
+        photoURL: user.photoURL || '',
+        lastLogin: serverTimestamp(),
+        provider: user.providerData[0]?.providerId || 'unknown'
+      };
+      localStorage.setItem('user', JSON.stringify({ uid: user.uid, firstName, lastName, email: user.email }));
+      try { await setDoc(doc(db, 'users', user.uid), userData, { merge: true }); } catch (e) { console.error(e); }
+      const returnUrl = localStorage.getItem('returnUrl');
+      localStorage.removeItem('returnUrl');
+      window.location.href = returnUrl || 'dashboard.html';
+    }
+
+    // Проверяем результат redirect при загрузке страницы
+    getRedirectResult(auth).then((result) => {
+      if (result && result.user) {
+        saveUserAndRedirect(result.user);
+      }
+    }).catch((err) => {
+      console.error('Redirect result error:', err.code);
+      if (err.code === 'auth/account-exists-with-different-credential') {
+        showError('Этот email уже зарегистрирован через другой метод. Попробуйте войти через email/пароль или Google.');
+      }
+    });
+
+    // Email/Password login с поддержкой связывания аккаунтов
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true; btn.textContent = 'Входим...';
+
+      try {
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        await saveUserAndRedirect(cred.user);
+      } catch (err) {
+        // Если пользователь не найден, проверяем есть ли аккаунт с Google
+        if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+          try {
+            const methods = await fetchSignInMethodsForEmail(auth, email);
+            if (methods.includes('google.com')) {
+              showError('Этот email зарегистрирован через Google. Нажмите "Продолжить с Google" для входа.');
+            } else {
+              showError(translateError(err.code));
+            }
+          } catch (e) {
+            showError(translateError(err.code));
+          }
+        } else {
+          showError(translateError(err.code));
+        }
+        btn.disabled = false; btn.textContent = 'Войти';
+      }
+    });
+
+    // Google login с поддержкой связывания аккаунтов
+    document.getElementById('googleBtn').addEventListener('click', async () => {
+      try {
+        const result = await signInWithPopup(auth, provider);
+        await saveUserAndRedirect(result.user);
+      } catch (err) {
+        console.error('Google popup error:', err.code);
+
+        // Если аккаунт существует с другим методом
+        if (err.code === 'auth/account-exists-with-different-credential') {
+          showError('Этот email уже зарегистрирован через email/пароль. Войдите через форму выше, затем можете связать аккаунты в настройках.');
+        } else if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+          // Fallback: redirect flow
+          try {
+            await signInWithRedirect(auth, provider);
+          } catch (redirectErr) {
+            showError(translateError(redirectErr.code));
+          }
+        } else {
+          showError(translateError(err.code));
+        }
+      }
+    });
+
+    // Forgot password
+    document.getElementById('forgotLink').addEventListener('click', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      if (!email) { showError('Введите email для сброса пароля.'); return; }
+      try {
+        await sendPasswordResetEmail(auth, email);
+        resetMsg.textContent = 'Письмо для сброса пароля отправлено на ' + email;
+        resetMsg.style.display = 'block';
+        errorMsg.style.display = 'none';
+      } catch (err) {
+        showError(translateError(err.code));
+      }
+    });
+
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function () {
+      const passwordInput = document.getElementById('password');
+      const eyeIcon = document.getElementById('eyeIcon');
+
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        // Иконка "глаз закрыт"
+        eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+      } else {
+        passwordInput.type = 'password';
+        // Иконка "глаз открыт"
+        eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+      }
+    });
+  </script>
+</body>
+
+</html>

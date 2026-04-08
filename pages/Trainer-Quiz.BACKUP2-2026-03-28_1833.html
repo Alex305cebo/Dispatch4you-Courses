@@ -1,0 +1,2021 @@
+﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎯 Тренажёр Диспетчера</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared-nav.css?v=7.0">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{overflow-x:hidden;scroll-behavior:smooth}
+:root{
+  --p:#06b6d4;--s:#0ea5e9;--a:#f97316;
+  --ok:#10b981;--warn:#f59e0b;--err:#ef4444;
+  --bg:#070b14;--bg2:#0d1117;--card:#0f1623;
+  --b:rgba(255,255,255,.07);--t1:#ffffff;--t2:#e2e8f0;--t3:#cbd5e1
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:
+  radial-gradient(ellipse at 10% 20%,rgba(6,182,212,.12),transparent 55%),
+  radial-gradient(ellipse at 90% 80%,rgba(249,115,22,.08),transparent 55%),
+  radial-gradient(ellipse at 50% 50%,rgba(14,165,233,.05),transparent 70%);
+  z-index:-1;pointer-events:none}
+
+/* NAV OFFSET — zero gap */
+.page{padding-top:0}
+.wrap{max-width:1200px;margin:0 auto;padding:0 32px}
+
+/* ── STICKY TABS ── */
+.tabs-sticky{position:sticky;top:64px;z-index:100;
+  background:transparent;
+  padding:16px 0 0;
+  margin:0}
+.tabs{display:flex;gap:12px;align-items:stretch;justify-content:center}
+
+.tb{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 36px;
+  border-radius:16px 16px 0 0;
+  border:1px solid rgba(255,255,255,.08);
+  border-bottom:none;
+  background:rgba(255,255,255,.04);
+  color:var(--t2);font-size:15px;font-weight:700;
+  cursor:pointer;font-family:inherit;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+  position:relative;overflow:hidden;
+}
+/* shimmer line on top */
+.tb::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(6,182,212,.4),transparent);
+  opacity:0;transition:opacity .3s;
+}
+.tb:hover{
+  color:var(--t1);
+  background:rgba(6,182,212,.08);
+  border-color:rgba(6,182,212,.2);
+  transform:translateY(-2px);
+}
+.tb:hover::before{opacity:1}
+.tb.on{
+  color:#fff;
+  background:linear-gradient(160deg,rgba(6,182,212,.18),rgba(14,165,233,.08));
+  border-color:rgba(6,182,212,.35);
+  transform:translateY(0);
+  box-shadow:0 -4px 20px rgba(6,182,212,.15),inset 0 1px 0 rgba(6,182,212,.3);
+}
+.tb.on::before{
+  background:linear-gradient(90deg,transparent,var(--p),transparent);
+  opacity:1;
+  animation:shimmer 2.5s infinite;
+}
+@keyframes shimmer{
+  0%{background-position:-200% center}
+  100%{background-position:200% center}
+}
+.tb.on::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(6,182,212,.15),transparent);
+}
+
+.tb-ico{font-size:20px;line-height:1;transition:transform .3s}
+.tb:hover .tb-ico{transform:scale(1.15) rotate(-5deg)}
+.tb.on .tb-ico{transform:scale(1.1)}
+
+.tb-label{font-size:15px;font-weight:700;letter-spacing:.2px}
+
+.tb .cnt{
+  background:rgba(6,182,212,.15);
+  color:var(--p);
+  font-size:12px;font-weight:800;
+  padding:3px 10px;border-radius:20px;
+  min-width:28px;text-align:center;line-height:1.5;
+  transition:all .3s;
+  border:1px solid rgba(6,182,212,.2);
+}
+.tb.on .cnt{
+  background:var(--p);
+  color:#fff;
+  border-color:transparent;
+  box-shadow:0 2px 8px rgba(6,182,212,.4);
+}
+
+/* divider line below tabs */
+.tabs-line{height:1px;background:linear-gradient(90deg,transparent,rgba(6,182,212,.25),rgba(249,115,22,.15),transparent);margin:0}
+
+/* ── COMPACT HERO ── */
+.hero{padding:10px 0 8px;display:flex;align-items:center;justify-content:space-between;
+  gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--b)}
+.hero-left{display:flex;align-items:center;gap:12px}
+.hero-icon{font-size:26px;line-height:1}
+.hero-title{font-size:18px;font-weight:800;
+  background:linear-gradient(135deg,#06b6d4,#38bdf8 50%,#f97316);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:11px;color:var(--t3);margin-top:1px}
+.hero-nums{display:flex;gap:8px;align-items:center}
+.hn{text-align:center;padding:6px 14px;
+  background:rgba(255,255,255,.04);border:1px solid var(--b);border-radius:10px}
+.hn-v{font-size:22px;font-weight:900;background:linear-gradient(135deg,var(--p),var(--a));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.hn-l{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-top:2px}
+
+/* ── PANELS ── */
+.panel{display:none;padding:16px 0 48px}
+.panel.on{display:block}
+
+/* ── TOOLBAR ── */
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+.srch{flex:1;min-width:180px;position:relative}
+.srch input{width:100%;padding:9px 14px 9px 38px;background:rgba(255,255,255,.04);
+  border:1px solid var(--b);border-radius:10px;color:var(--t1);font-size:13px;
+  font-family:inherit;outline:none;transition:.2s}
+.srch input:focus{border-color:rgba(6,182,212,.4);background:rgba(6,182,212,.04)}
+.srch input::placeholder{color:var(--t3)}
+.srch-ic{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none}
+.fg{display:flex;gap:5px;flex-wrap:wrap}
+.fb{padding:8px 13px;border-radius:9px;border:1px solid var(--b);
+  background:rgba(255,255,255,.03);color:var(--t2);font-size:12px;font-weight:600;
+  cursor:pointer;transition:.2s;font-family:inherit;white-space:nowrap}
+.fb:hover,.fb.on{background:rgba(6,182,212,.1);border-color:rgba(6,182,212,.3);color:var(--p)}
+
+/* ── PROGRESS ── */
+.prog-row{display:flex;justify-content:space-between;font-size:12px;color:var(--t3);margin-bottom:5px}
+.prog-wrap{background:rgba(255,255,255,.06);border-radius:6px;height:5px;margin-bottom:18px;overflow:hidden}
+.prog-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--p),var(--a));transition:width .5s ease}
+</style>
+
+
+<style>
+/* ── FLASHCARD ── */
+.fc-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap;padding-top:18px}
+.fc-modes{display:flex;gap:6px}
+.fcm{padding:8px 16px;border-radius:9px;border:1px solid var(--b);
+  background:rgba(255,255,255,.03);color:var(--t2);font-size:13px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:.2s}
+.fcm.on{background:rgba(6,182,212,.12);border-color:rgba(6,182,212,.3);color:var(--p)}
+.fc-info{display:flex;gap:16px;align-items:center}
+.fc-streak{font-size:14px;font-weight:700;color:var(--warn)}
+.fc-ctr{font-size:13px;color:var(--t3);font-weight:600}
+
+.flip-hint{text-align:center;font-size:13px;color:var(--t3);margin-bottom:12px}
+.scene{width:100%;max-width:100%;margin:0 auto 20px;perspective:1400px;cursor:pointer;user-select:none;
+  height:300px}
+.card3d{width:100%;height:300px;position:relative;transform-style:preserve-3d;
+  transition:transform .5s cubic-bezier(.4,0,.2,1)}
+.card3d.flip{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;border-radius:24px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:36px 44px;text-align:center}
+.front{background:linear-gradient(145deg,rgba(6,182,212,.1),rgba(14,165,233,.05));
+  border:1px solid rgba(6,182,212,.2);box-shadow:0 8px 40px rgba(6,182,212,.08)}
+.back{background:linear-gradient(145deg,rgba(249,115,22,.09),rgba(251,146,60,.04));
+  border:1px solid rgba(249,115,22,.2);transform:rotateY(180deg);
+  box-shadow:0 8px 40px rgba(249,115,22,.07)}
+.f-cat{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;
+  color:var(--p);margin-bottom:12px;opacity:.85}
+.back .f-cat{color:var(--a)}
+.f-term{font-size:clamp(24px,4vw,36px);font-weight:800;color:var(--t1);line-height:1.2;margin-bottom:8px}
+.f-hint{font-size:14px;color:var(--t3);margin-top:8px}
+.f-def{font-size:clamp(15px,2.2vw,18px);color:var(--t1);line-height:1.8;font-weight:500}
+.f-ex{font-size:13px;color:var(--t2);margin-top:14px;font-style:italic;line-height:1.6;
+  background:rgba(255,255,255,.04);border-radius:10px;padding:12px 16px;width:100%;text-align:left}
+
+.card-btns{display:flex;gap:12px;justify-content:center;margin-bottom:24px}
+.cbtn{display:flex;align-items:center;gap:8px;padding:13px 30px;border-radius:14px;
+  border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s}
+.cbtn:hover{transform:translateY(-2px)}
+.cbtn-ok{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:#10b981}
+.cbtn-ok:hover{background:rgba(16,185,129,.25)}
+.cbtn-no{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);color:#ef4444}
+.cbtn-no:hover{background:rgba(239,68,68,.22)}
+.cbtn-sk{background:rgba(255,255,255,.04);border:1px solid var(--b);color:var(--t3)}
+.cbtn-sk:hover{background:rgba(255,255,255,.08);color:var(--t2)}
+
+/* Browse grid */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.mc{background:rgba(255,255,255,.03);border:1px solid var(--b);border-radius:14px;
+  padding:15px;cursor:pointer;transition:all .2s;position:relative}
+.mc:hover{background:rgba(6,182,212,.06);border-color:rgba(6,182,212,.2);transform:translateY(-2px)}
+.mc.known{border-color:rgba(16,185,129,.25);background:rgba(16,185,129,.04)}
+.mc.unknown{border-color:rgba(239,68,68,.2)}
+.mc-cat{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--p);margin-bottom:5px}
+.mc-term{font-size:14px;font-weight:700;color:var(--t1);margin-bottom:3px}
+.mc-def{font-size:12px;color:var(--t2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mc-st{position:absolute;top:10px;right:10px;font-size:13px}
+.diff-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;margin-top:6px}
+.d-easy{background:rgba(16,185,129,.15);color:#10b981}
+.d-medium{background:rgba(245,158,11,.15);color:#f59e0b}
+.d-hard{background:rgba(239,68,68,.15);color:#ef4444}
+</style>
+
+
+<style>
+/* ── CASES ── */
+.cases-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.kc{background:rgba(255,255,255,.03);border:1px solid var(--b);border-radius:16px;
+  padding:18px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.kc::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--p),var(--a));opacity:0;transition:.3s}
+.kc:hover{background:rgba(6,182,212,.05);border-color:rgba(6,182,212,.2);transform:translateY(-3px)}
+.kc:hover::after,.kc.read::after{opacity:1}
+.kc.read{border-color:rgba(16,185,129,.2);background:rgba(16,185,129,.03)}
+.kc.read::after{background:linear-gradient(90deg,var(--ok),#059669)}
+.kc-head{display:flex;gap:11px;margin-bottom:10px;align-items:flex-start}
+.kc-ico{font-size:26px;flex-shrink:0;line-height:1}
+.kc-cat{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--p);margin-bottom:3px}
+.kc-title{font-size:14px;font-weight:700;color:var(--t1);line-height:1.3}
+.kc-desc{font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:10px;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.kc-foot{display:flex;align-items:center;justify-content:space-between}
+.kc-xp{font-size:11px;color:var(--a);font-weight:700}
+.kc-read{font-size:11px;color:var(--ok);font-weight:600}
+
+/* ── MODAL ── */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(10px);
+  z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;
+  opacity:0;pointer-events:none;transition:.3s}
+.ov.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid rgba(6,182,212,.2);border-radius:22px;
+  max-width:700px;width:100%;max-height:88vh;overflow-y:auto;
+  transform:scale(.94) translateY(10px);transition:.3s}
+.ov.open .modal{transform:scale(1) translateY(0)}
+.modal::-webkit-scrollbar{width:4px}
+.modal::-webkit-scrollbar-thumb{background:rgba(6,182,212,.3);border-radius:4px}
+.mh{padding:24px 24px 0;display:flex;align-items:flex-start;gap:14px}
+.m-ico{font-size:38px;flex-shrink:0}
+.m-tw{flex:1}
+.m-cat{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--p);margin-bottom:5px}
+.m-title{font-size:20px;font-weight:800;color:var(--t1);line-height:1.3}
+.m-close{background:rgba(255,255,255,.06);border:1px solid var(--b);border-radius:9px;
+  width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--t2);font-size:17px;flex-shrink:0;transition:.2s}
+.m-close:hover{background:rgba(239,68,68,.15);color:#ef4444}
+.mb{padding:18px 24px 24px}
+.m-sit{background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.15);
+  border-radius:12px;padding:14px;margin-bottom:18px;font-size:13px;color:var(--t2);line-height:1.7}
+.m-sit strong{color:var(--p);display:block;margin-bottom:5px;font-size:11px;text-transform:uppercase;letter-spacing:1px}
+.steps-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:10px}
+.step{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start}
+.sn{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--s));
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0;margin-top:1px}
+.sc{flex:1}
+.sa{font-size:13px;font-weight:700;color:var(--t1);margin-bottom:2px}
+.sd{font-size:12px;color:var(--t2);line-height:1.6}
+.m-tip{background:rgba(249,115,22,.06);border:1px solid rgba(249,115,22,.15);
+  border-radius:11px;padding:13px 15px;margin-top:14px;font-size:12px;color:var(--t2);line-height:1.6}
+.m-tip strong{color:var(--a);display:block;margin-bottom:3px}
+.mf{padding:0 24px 22px;display:flex;gap:8px;justify-content:flex-end}
+.btn-p{padding:9px 20px;border-radius:9px;border:none;
+  background:linear-gradient(135deg,var(--p),var(--s));
+  color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:.2s}
+.btn-p:hover{opacity:.88;transform:translateY(-1px)}
+.btn-s{padding:9px 20px;border-radius:9px;border:1px solid var(--b);
+  background:rgba(255,255,255,.04);color:var(--t2);font-size:13px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:.2s}
+.btn-s:hover{background:rgba(255,255,255,.08);color:var(--t1)}
+
+/* ── STATS ── */
+.sg{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-bottom:24px}
+.sc2{background:rgba(255,255,255,.03);border:1px solid var(--b);border-radius:15px;padding:18px;text-align:center}
+.sc2-ico{font-size:30px;margin-bottom:7px}
+.sc2-v{font-size:34px;font-weight:900;background:linear-gradient(135deg,var(--p),var(--a));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.sc2-l{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-top:3px}
+.sec-t{font-size:17px;font-weight:800;color:var(--t1);margin-bottom:12px}
+.wt{display:flex;flex-direction:column;gap:7px;margin-bottom:24px}
+.wi{display:flex;align-items:center;gap:10px;padding:11px 14px;
+  background:rgba(255,255,255,.03);border:1px solid var(--b);border-radius:11px}
+.wi-n{flex:1;font-size:13px;font-weight:600;color:var(--t1)}
+.wi-bar{flex:2;background:rgba(255,255,255,.06);border-radius:4px;height:5px;overflow:hidden}
+.wi-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--err),var(--warn));transition:width .5s}
+.wi-p{font-size:11px;color:var(--t3);font-weight:600;min-width:32px;text-align:right}
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.ach{background:rgba(255,255,255,.03);border:1px solid var(--b);border-radius:13px;
+  padding:15px;text-align:center;transition:.2s}
+.ach.got{border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.05)}
+.ach.lock{opacity:.4;filter:grayscale(.7)}
+.ach-ic{font-size:30px;margin-bottom:7px}
+.ach-n{font-size:12px;font-weight:700;color:var(--t1);margin-bottom:3px}
+.ach-d{font-size:11px;color:var(--t3);line-height:1.4}
+.ach-xp{font-size:11px;color:var(--warn);font-weight:700;margin-top:5px}
+.streak-box{background:linear-gradient(135deg,rgba(245,158,11,.1),rgba(249,115,22,.07));
+  border:1px solid rgba(245,158,11,.25);border-radius:15px;padding:14px 18px;
+  display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.str-fire{font-size:34px}
+.str-days{font-size:22px;font-weight:900;color:var(--warn)}
+.str-txt{font-size:12px;color:var(--t2)}
+.str-xp{font-size:20px;font-weight:900;color:var(--warn)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:22px;right:22px;z-index:2000;
+  background:linear-gradient(135deg,#1e293b,#0f172a);border:1px solid rgba(99,102,241,.4);
+  border-radius:13px;padding:13px 17px;display:flex;align-items:center;gap:11px;
+  min-width:210px;box-shadow:0 8px 32px rgba(0,0,0,.4);pointer-events:none;
+  animation:tin .4s ease}
+.toast.out{animation:tout .4s ease forwards}
+@keyframes tin{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes tout{from{transform:translateX(0);opacity:1}to{transform:translateX(120%);opacity:0}}
+.t-ico{font-size:24px}
+.t-xp{font-size:14px;font-weight:800;color:#ffffff}
+.t-lbl{font-size:11px;color:#e2e8f0}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:50px 20px;color:var(--t3)}
+.empty .ei{font-size:44px;margin-bottom:10px}
+
+/* ── 3-COLUMN STUDY LAYOUT ── */
+.study-layout{display:grid;grid-template-columns:220px 1fr 220px;gap:20px;align-items:start;padding-top:20px}
+.study-col-left,.study-col-right{display:flex;flex-direction:column;gap:12px}
+.study-col-center{display:flex;flex-direction:column;align-items:center;min-width:0;width:100%}
+
+/* side panels */
+.side-panel{background:rgba(255,255,255,.03);border:1px solid var(--b);border-radius:16px;padding:16px}
+.side-panel-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;
+  color:var(--t3);margin-bottom:12px}
+/* mode buttons in left panel */
+.side-modes{display:flex;flex-direction:column;gap:6px}
+.side-mode-btn{display:flex;align-items:center;gap:9px;padding:10px 13px;border-radius:10px;
+  border:1px solid var(--b);background:rgba(255,255,255,.02);color:var(--t2);
+  font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s;text-align:left}
+.side-mode-btn:hover{background:rgba(6,182,212,.08);border-color:rgba(6,182,212,.25);color:var(--t1)}
+.side-mode-btn.on{background:rgba(6,182,212,.12);border-color:rgba(6,182,212,.35);color:var(--p)}
+/* diff filters in left panel */
+.side-diffs{display:flex;flex-direction:column;gap:5px}
+.side-diff-btn{padding:8px 12px;border-radius:9px;border:1px solid var(--b);
+  background:rgba(255,255,255,.02);color:var(--t2);font-size:12px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:.2s;text-align:left}
+.side-diff-btn:hover,.side-diff-btn.on{background:rgba(6,182,212,.1);border-color:rgba(6,182,212,.3);color:var(--p)}
+/* right panel stats */
+.side-stat{display:flex;align-items:center;justify-content:space-between;
+  padding:9px 0;border-bottom:1px solid var(--b)}
+.side-stat:last-child{border-bottom:none;padding-bottom:0}
+.side-stat-lbl{font-size:12px;color:var(--t3)}
+.side-stat-val{font-size:15px;font-weight:800;color:var(--t1)}
+/* streak in right panel */
+.side-streak{text-align:center;padding:12px;background:rgba(245,158,11,.07);
+  border:1px solid rgba(245,158,11,.2);border-radius:12px}
+.side-streak-fire{font-size:28px;line-height:1;margin-bottom:4px}
+.side-streak-val{font-size:22px;font-weight:900;color:var(--warn);line-height:1}
+.side-streak-lbl{font-size:11px;color:var(--t3);margin-top:2px}
+/* search in left panel */
+.side-srch{position:relative}
+.side-srch input{width:100%;padding:9px 12px 9px 34px;background:rgba(255,255,255,.04);
+  border:1px solid var(--b);border-radius:10px;color:var(--t1);font-size:12px;
+  font-family:inherit;outline:none;transition:.2s}
+.side-srch input:focus{border-color:rgba(6,182,212,.4)}
+.side-srch input::placeholder{color:var(--t3)}
+.side-srch-ic{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none}
+
+/* ── QUIZ MODE ── */
+.quiz-wrap{width:100%;max-width:600px;padding-top:20px}
+.quiz-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.quiz-progress-label{font-size:13px;color:var(--t3);font-weight:700}
+.quiz-score-label{font-size:13px;font-weight:700;color:var(--t2)}
+.quiz-prog-wrap{background:rgba(255,255,255,.06);border-radius:6px;height:5px;margin-bottom:20px;overflow:hidden}
+.quiz-prog-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--p),var(--a));transition:width .4s ease}
+.quiz-card{background:linear-gradient(145deg,rgba(6,182,212,.08),rgba(14,165,233,.03));
+  border:1px solid rgba(6,182,212,.2);border-radius:20px;padding:28px 32px;text-align:center;margin-bottom:18px}
+.quiz-cat{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--p);margin-bottom:10px}
+.quiz-question{font-size:clamp(16px,3vw,22px);font-weight:800;color:var(--t1);line-height:1.4}
+.quiz-hint{font-size:13px;color:var(--t3);margin-top:8px}
+.quiz-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.qopt{padding:14px 16px;border-radius:14px;border:1px solid var(--b);
+  background:rgba(255,255,255,.03);color:var(--t1);font-size:14px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:all .2s;text-align:left;line-height:1.4}
+.qopt:hover:not(:disabled){background:rgba(6,182,212,.1);border-color:rgba(6,182,212,.3);transform:translateY(-1px)}
+.qopt.correct{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.4);color:#10b981}
+.qopt.wrong{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#ef4444}
+.qopt:disabled{cursor:default}
+.quiz-feedback{background:rgba(255,255,255,.03);border:1px solid var(--b);border-radius:16px;
+  padding:18px 20px;text-align:center;animation:fadeInUp .3s ease}
+.qf-icon{font-size:32px;margin-bottom:6px}
+.qf-text{font-size:16px;font-weight:800;color:var(--t1);margin-bottom:6px}
+.qf-def{font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:14px}
+.qf-next{padding:10px 28px;border-radius:10px;border:none;
+  background:linear-gradient(135deg,var(--p),var(--s));
+  color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:.2s}
+.qf-next:hover{opacity:.88;transform:translateY(-1px)}
+.quiz-srs-hint{font-size:11px;color:var(--t3);text-align:center;margin-top:8px;min-height:18px}
+
+/* ── MATCH MODE ── */
+.match-wrap{width:100%;padding-top:20px}
+.match-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.match-title{font-size:14px;font-weight:700;color:var(--t2)}
+.match-stats{font-size:13px;color:var(--t3);font-weight:600}
+.match-board{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.match-col{display:flex;flex-direction:column;gap:8px}
+.match-item{padding:12px 14px;border-radius:12px;border:1px solid var(--b);
+  background:rgba(255,255,255,.03);color:var(--t1);font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .2s;line-height:1.4;user-select:none;min-height:52px;
+  display:flex;align-items:center}
+.match-item.term{border-color:rgba(6,182,212,.2);background:rgba(6,182,212,.05)}
+.match-item.def{border-color:rgba(249,115,22,.15);background:rgba(249,115,22,.03);font-size:12px;color:var(--t2)}
+.match-item.selected{border-color:var(--p);background:rgba(6,182,212,.15);color:#fff;transform:scale(1.02)}
+.match-item.matched{border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.1);color:#10b981;cursor:default;opacity:.7}
+.match-item.wrong-flash{animation:wrongFlash .4s ease}
+@keyframes wrongFlash{0%,100%{background:rgba(255,255,255,.03)}50%{background:rgba(239,68,68,.2);border-color:rgba(239,68,68,.4)}}
+.match-result{text-align:center;padding:32px 20px;animation:fadeInUp .4s ease}
+.mr-icon{font-size:48px;margin-bottom:10px}
+.mr-title{font-size:22px;font-weight:800;color:var(--t1);margin-bottom:8px}
+.mr-time,.mr-score{font-size:14px;color:var(--t2);margin-bottom:6px}
+.mr-score{color:var(--ok);font-weight:700;font-size:16px;margin-bottom:16px}
+
+/* ── INFO BOTTOM ── */
+.info-bottom{margin-top:32px;display:flex;flex-direction:column;gap:16px;padding-bottom:48px}
+
+.ib-tip{display:flex;align-items:center;gap:14px;
+  background:linear-gradient(135deg,rgba(6,182,212,.07),rgba(249,115,22,.04));
+  border:1px solid rgba(6,182,212,.18);border-radius:16px;padding:16px 20px;
+  animation:fadeInUp .5s ease}
+.ib-tip-icon{font-size:28px;flex-shrink:0}
+.ib-tip-body{flex:1}
+.ib-tip-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;
+  color:var(--p);margin-bottom:4px}
+.ib-tip-text{font-size:14px;color:var(--t1);line-height:1.6;font-weight:500;transition:opacity .2s}
+.ib-tip-next{background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.2);
+  border-radius:10px;width:36px;height:36px;color:var(--p);font-size:18px;
+  cursor:pointer;flex-shrink:0;transition:.2s;display:flex;align-items:center;justify-content:center}
+.ib-tip-next:hover{background:rgba(6,182,212,.2);transform:translateX(2px)}
+
+.ib-facts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.ib-fact{background:rgba(255,255,255,.03);border:1px solid var(--b);border-radius:14px;
+  padding:16px 12px;text-align:center;transition:.2s}
+.ib-fact:hover{background:rgba(6,182,212,.06);border-color:rgba(6,182,212,.2);transform:translateY(-2px)}
+.ib-fact-ico{font-size:22px;margin-bottom:6px}
+.ib-fact-val{font-size:20px;font-weight:900;
+  background:linear-gradient(135deg,var(--p),var(--a));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  line-height:1;margin-bottom:4px}
+.ib-fact-lbl{font-size:11px;color:var(--t3);font-weight:600}
+
+.ib-links{background:rgba(255,255,255,.02);border:1px solid var(--b);border-radius:16px;padding:18px 20px}
+.ib-links-title{font-size:13px;font-weight:700;color:var(--t2);margin-bottom:12px}
+.ib-links-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ib-link{display:flex;align-items:center;gap:8px;padding:10px 14px;
+  background:rgba(255,255,255,.03);border:1px solid var(--b);border-radius:11px;
+  color:var(--t2);text-decoration:none;font-size:13px;font-weight:600;
+  transition:.2s}
+.ib-link:hover{background:rgba(6,182,212,.08);border-color:rgba(6,182,212,.25);color:var(--t1);transform:translateY(-2px)}
+.ib-link-ico{font-size:18px;flex-shrink:0}
+
+@keyframes fadeInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1024px){
+  .wrap{padding:0 20px}
+  .study-layout{grid-template-columns:180px 1fr 180px;gap:14px}
+  .tb{padding:12px 24px}
+  /* mobile: navbar is fixed, need offset */
+  .page{padding-top:64px}
+  .tabs-sticky{top:64px}
+}
+@media(max-width:768px){
+  .wrap{padding:0 14px}
+  .tabs-sticky{padding:10px 0 0}
+  .tabs{gap:6px}
+  .tb{padding:10px 18px;border-radius:12px 12px 0 0}
+  .tb-label{font-size:13px}
+  .tb-ico{font-size:17px}
+  .hero{padding:10px 0 8px}
+  .hero-title{font-size:16px}
+  .hero-nums{gap:5px}.hn{padding:5px 10px}.hn-v{font-size:18px}
+  .study-layout{grid-template-columns:1fr;gap:0}
+  .study-col-left,.study-col-right{display:none}
+  .study-col-center{padding-top:16px}
+  .fc-bar-mobile{display:flex !important}
+  .scene{max-width:100%}.face{padding:24px 22px}
+  .f-term{font-size:clamp(20px,5vw,28px)}
+  .cbtn{padding:11px 20px;font-size:13px}
+  .cases-grid{grid-template-columns:1fr}
+  .sg{grid-template-columns:repeat(2,1fr)}
+  .modal{border-radius:16px}.mh{padding:18px 18px 0}.mb{padding:14px 18px 18px}.mf{padding:0 18px 18px}
+  .ib-facts{grid-template-columns:repeat(2,1fr)}
+  .ib-links-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:480px){
+  .tabs{gap:4px}
+  .tb{padding:9px 12px;border-radius:10px 10px 0 0}
+  .tb-ico{font-size:16px}
+  .tb-label{font-size:12px}
+  .tb .cnt{font-size:11px;padding:2px 7px}
+  .card-btns{gap:8px}
+  .cbtn{padding:10px 16px;font-size:13px}
+  .sg{grid-template-columns:1fr 1fr}
+  .ach-grid{grid-template-columns:repeat(2,1fr)}
+  .hero-nums{gap:4px}.hn{padding:4px 8px}.hn-v{font-size:16px}.hn-l{font-size:9px}
+}
+@media(max-width:360px){
+  .wrap{padding:0 10px}
+  .tabs-sticky{padding:6px 0 0}
+  .tb{padding:8px 10px}
+  .tb-label{font-size:11px}
+  .tb-ico{font-size:14px}
+}
+</style>
+
+
+</head>
+<body>
+<div id="shared-nav-container"></div>
+<div class="page"><div class="wrap">
+
+<!-- STICKY TABS -->
+<div class="tabs-sticky">
+  <div class="tabs">
+    <button class="tb on" onclick="tab('cards')" id="t-cards">
+      <span class="tb-ico">📚</span>
+      <span class="tb-label">Карточки</span>
+      <span class="cnt" id="cnt-cards">80</span>
+    </button>
+    <button class="tb" onclick="tab('cases')" id="t-cases">
+      <span class="tb-ico">💼</span>
+      <span class="tb-label">Кейсы</span>
+      <span class="cnt" id="cnt-cases">50</span>
+    </button>
+    <button class="tb" onclick="tab('stats')" id="t-stats">
+      <span class="tb-ico">📊</span>
+      <span class="tb-label">Статистика</span>
+    </button>
+  </div>
+  <div class="tabs-line"></div>
+</div>
+
+<!-- COMPACT HERO -->
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-icon">🎯</div>
+    <div>
+      <div class="hero-title">Тренажёр Диспетчера</div>
+      <div class="hero-sub">Карточки · Кейсы · Статистика</div>
+    </div>
+  </div>
+  <div class="hero-nums">
+    <div class="hn"><div class="hn-v" id="h-cards">80</div><div class="hn-l">карт.</div></div>
+    <div class="hn"><div class="hn-v" id="h-cases">50</div><div class="hn-l">кейсов</div></div>
+    <div class="hn"><div class="hn-v" id="h-known">0</div><div class="hn-l">изучено</div></div>
+    <div class="hn"><div class="hn-v" id="h-streak">0</div><div class="hn-l">дней</div></div>
+  </div>
+</div>
+
+<!-- ═══ PANEL: CARDS ═══ -->
+<div class="panel on" id="p-cards">
+
+  <!-- MOBILE: компактная панель режимов (скрыта на десктопе) -->
+  <div class="fc-bar fc-bar-mobile" style="display:none;padding-top:14px;margin-bottom:10px">
+    <div class="fc-modes">
+      <button class="fcm on" onclick="cmode('study')" id="m-study-m">📖 Учить</button>
+      <button class="fcm" onclick="cmode('review')" id="m-review-m">🔄 Незнакомые</button>
+      <button class="fcm" onclick="cmode('browse')" id="m-browse-m">🗂️ Все</button>
+    </div>
+    <div class="fc-info">
+      <span class="fc-streak" id="fc-streak-m">🔥 0 подряд</span>
+      <span class="fc-ctr" id="fc-ctr-m">0 / 0</span>
+    </div>
+  </div>
+
+  <!-- 3-COLUMN LAYOUT -->
+  <div class="study-layout" id="study-mode">
+
+    <!-- ЛЕВАЯ КОЛОНКА -->
+    <div class="study-col-left">
+
+      <!-- Режимы -->
+      <div class="side-panel">
+        <div class="side-panel-title">Режим</div>
+        <div class="side-modes">
+          <button class="side-mode-btn fcm on" onclick="cmode('study')" id="m-study">📖 Карточки</button>
+          <button class="side-mode-btn fcm" onclick="cmode('quiz')" id="m-quiz">🧠 Тест</button>
+          <button class="side-mode-btn fcm" onclick="cmode('match')" id="m-match">🔗 Сопоставить</button>
+          <button class="side-mode-btn fcm" onclick="cmode('review')" id="m-review">🔄 Повторить</button>
+          <button class="side-mode-btn fcm" onclick="cmode('browse')" id="m-browse">🗂️ Все</button>
+        </div>
+      </div>
+
+      <!-- Поиск -->
+      <div class="side-panel">
+        <div class="side-panel-title">Поиск</div>
+        <div class="side-srch">
+          <span class="side-srch-ic">🔍</span>
+          <input type="text" id="csrch" placeholder="Поиск..." oninput="filterCards()">
+        </div>
+      </div>
+
+      <!-- Сложность -->
+      <div class="side-panel">
+        <div class="side-panel-title">Сложность</div>
+        <div class="side-diffs">
+          <button class="side-diff-btn on" onclick="cdiff('all')" id="cd-all">🔘 Все</button>
+          <button class="side-diff-btn" onclick="cdiff('easy')" id="cd-easy">🟢 Лёгкие</button>
+          <button class="side-diff-btn" onclick="cdiff('medium')" id="cd-med">🟡 Средние</button>
+          <button class="side-diff-btn" onclick="cdiff('hard')" id="cd-hard">🔴 Сложные</button>
+        </div>
+      </div>
+
+      <!-- Категории -->
+      <div class="side-panel">
+        <div class="side-panel-title">Категории</div>
+        <div class="side-diffs" id="cat-filters"></div>
+      </div>
+
+    </div>
+
+    <!-- ЦЕНТРАЛЬНАЯ КОЛОНКА — переключаемый контент -->
+    <div class="study-col-center" id="center-col">
+
+      <!-- ── КАРТОЧКИ (study/review) ── -->
+      <div id="card-panel">
+        <p class="flip-hint">👆 Нажми на карточку чтобы увидеть ответ</p>
+        <div class="scene" onclick="flipCard()" id="scene">
+          <div class="card3d" id="card3d">
+            <div class="face front">
+              <div class="f-cat" id="f-cat">—</div>
+              <div class="f-term" id="f-term">Загрузка...</div>
+              <div class="f-hint" id="f-hint"></div>
+            </div>
+            <div class="face back">
+              <div class="f-cat" id="f-cat2">—</div>
+              <div class="f-def" id="f-def">—</div>
+              <div class="f-ex" id="f-ex" style="display:none"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card-btns">
+          <button class="cbtn cbtn-no" onclick="mark(false)">❌ Не знал</button>
+          <button class="cbtn cbtn-sk" onclick="nextCard()">⏭ Пропустить</button>
+          <button class="cbtn cbtn-ok" onclick="mark(true)">✅ Знал</button>
+        </div>
+        <div style="width:100%;max-width:500px">
+          <div class="prog-row"><span id="prog-txt">Изучено: 0 из 0</span><span id="prog-pct">0%</span></div>
+          <div class="prog-wrap"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <!-- ── ТЕСТ ── -->
+      <div id="quiz-panel" style="display:none;width:100%">
+        <div class="quiz-header">
+          <div class="quiz-progress-label">
+            <span id="quiz-num">1</span> / <span id="quiz-total">10</span>
+          </div>
+          <div class="quiz-score-label">✅ <span id="quiz-correct">0</span> &nbsp; ❌ <span id="quiz-wrong">0</span></div>
+        </div>
+        <div class="quiz-prog-wrap"><div class="quiz-prog-fill" id="quiz-prog-fill" style="width:0%"></div></div>
+        <div class="quiz-card">
+          <div class="quiz-cat" id="quiz-cat">—</div>
+          <div class="quiz-question" id="quiz-question">Загрузка...</div>
+          <div class="quiz-hint" id="quiz-hint"></div>
+        </div>
+        <div class="quiz-options" id="quiz-options"></div>
+        <div class="quiz-feedback" id="quiz-feedback" style="display:none">
+          <div class="qf-icon" id="qf-icon">✅</div>
+          <div class="qf-text" id="qf-text">Правильно!</div>
+          <div class="qf-def" id="qf-def"></div>
+          <button class="qf-next" onclick="quizNext()">Далее →</button>
+        </div>
+        <div class="quiz-srs-hint" id="quiz-srs-hint"></div>
+      </div>
+
+      <!-- ── СОПОСТАВЛЕНИЕ ── -->
+      <div id="match-panel" style="display:none;width:100%">
+        <div class="match-header">
+          <div class="match-title">🔗 Сопоставь термин с определением</div>
+          <div class="match-stats">✅ <span id="match-correct">0</span> / <span id="match-total">6</span> &nbsp;⏱ <span id="match-timer">0</span>с</div>
+        </div>
+        <div class="match-board" id="match-board"></div>
+        <div class="match-result" id="match-result" style="display:none">
+          <div class="mr-icon">🎉</div>
+          <div class="mr-title">Раунд завершён!</div>
+          <div class="mr-time">Время: <span id="mr-time-val">0</span>с</div>
+          <div class="mr-score">Точность: <span id="mr-acc">0</span>%</div>
+          <button class="qf-next" onclick="matchStart()">Новый раунд →</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ПРАВАЯ КОЛОНКА -->
+    <div class="study-col-right">
+
+      <!-- Серия -->
+      <div class="side-streak">
+        <div class="side-streak-fire">🔥</div>
+        <div class="side-streak-val" id="fc-streak">0</div>
+        <div class="side-streak-lbl">подряд</div>
+      </div>
+
+      <!-- Статистика сессии -->
+      <div class="side-panel">
+        <div class="side-panel-title">Сессия</div>
+        <div class="side-stat">
+          <span class="side-stat-lbl">Карточка</span>
+          <span class="side-stat-val" id="fc-ctr">0 / 0</span>
+        </div>
+        <div class="side-stat">
+          <span class="side-stat-lbl">Изучено</span>
+          <span class="side-stat-val" id="h-known-side">0</span>
+        </div>
+        <div class="side-stat">
+          <span class="side-stat-lbl">Всего карт</span>
+          <span class="side-stat-val" id="h-cards-side">80</span>
+        </div>
+      </div>
+
+      <!-- Быстрые действия -->
+      <div class="side-panel">
+        <div class="side-panel-title">Действия</div>
+        <div class="side-modes">
+          <button class="side-mode-btn" onclick="shuffleCards()" style="font-size:12px">🔀 Перемешать</button>
+          <button class="side-mode-btn" onclick="resetSession()" style="font-size:12px">🔄 Сбросить сессию</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- BROWSE GRID (показывается в режиме "Все") -->
+  <div id="browse-mode" style="display:none;padding-top:16px">
+    <!-- Фильтры для browse режима -->
+    <div class="toolbar" style="margin-bottom:14px">
+      <div class="srch"><span class="srch-ic">🔍</span>
+        <input type="text" id="csrch-browse" placeholder="Поиск по карточкам..." oninput="filterCards()">
+      </div>
+      <div class="fg" id="cat-filters-browse"></div>
+    </div>
+    <div class="cards-grid" id="cards-grid"></div>
+  </div>
+
+  <!-- ── INFO BOTTOM ── -->
+  <div class="info-bottom" id="info-bottom">
+
+    <!-- Совет дня -->
+    <div class="ib-tip" id="ib-tip">
+      <div class="ib-tip-icon">💡</div>
+      <div class="ib-tip-body">
+        <div class="ib-tip-label">Совет дня</div>
+        <div class="ib-tip-text" id="tip-text">Загрузка...</div>
+      </div>
+      <button class="ib-tip-next" onclick="nextTip()" title="Следующий совет">→</button>
+    </div>
+
+    <!-- Быстрые факты -->
+    <div class="ib-facts">
+      <div class="ib-fact">
+        <div class="ib-fact-ico">📋</div>
+        <div class="ib-fact-val">80</div>
+        <div class="ib-fact-lbl">терминов в базе</div>
+      </div>
+      <div class="ib-fact">
+        <div class="ib-fact-ico">💼</div>
+        <div class="ib-fact-val">50</div>
+        <div class="ib-fact-lbl">реальных кейсов</div>
+      </div>
+      <div class="ib-fact">
+        <div class="ib-fact-ico">🎯</div>
+        <div class="ib-fact-val">9</div>
+        <div class="ib-fact-lbl">категорий тем</div>
+      </div>
+      <div class="ib-fact">
+        <div class="ib-fact-ico">⚡</div>
+        <div class="ib-fact-val">~15 мин</div>
+        <div class="ib-fact-lbl">в день достаточно</div>
+      </div>
+    </div>
+
+    <!-- Связанные разделы -->
+    <div class="ib-links">
+      <div class="ib-links-title">📚 Продолжи обучение</div>
+      <div class="ib-links-grid">
+        <a href="modules-index.html" class="ib-link">
+          <span class="ib-link-ico">📚</span>
+          <span class="ib-link-text">Модули курса</span>
+        </a>
+        <a href="glossary.html" class="ib-link">
+          <span class="ib-link-ico">📖</span>
+          <span class="ib-link-text">Глоссарий</span>
+        </a>
+        <a href="ai-broker-chat.html" class="ib-link">
+          <span class="ib-link-ico">🤖</span>
+          <span class="ib-link-text">AI Брокер</span>
+        </a>
+        <a href="simulator.html" class="ib-link">
+          <span class="ib-link-ico">🚛</span>
+          <span class="ib-link-text">Симулятор</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- ═══ PANEL: CASES ═══ -->
+<div class="panel" id="p-cases">
+  <div class="toolbar">
+    <div class="srch"><span class="srch-ic">🔍</span>
+      <input type="text" id="ksrch" placeholder="Поиск по кейсам..." oninput="filterCases()">
+    </div>
+    <div class="fg" id="kcat-filters"></div>
+    <div class="fg">
+      <button class="fb on" onclick="kdiff('all')" id="kd-all">Все</button>
+      <button class="fb" onclick="kdiff('easy')" id="kd-easy">Лёгкие</button>
+      <button class="fb" onclick="kdiff('medium')" id="kd-med">Средние</button>
+      <button class="fb" onclick="kdiff('hard')" id="kd-hard">Сложные</button>
+    </div>
+  </div>
+  <div class="prog-row"><span id="kprog-txt">Изучено: 0 из 0</span><span id="kprog-pct">0%</span></div>
+  <div class="prog-wrap"><div class="prog-fill" id="kprog-fill" style="width:0%"></div></div>
+  <div class="cases-grid" id="cases-grid"></div>
+</div>
+
+<!-- ═══ PANEL: STATS ═══ -->
+<div class="panel" id="p-stats">
+  <div class="streak-box">
+    <div class="str-fire">🔥</div>
+    <div style="flex:1">
+      <div class="str-days" id="st-streak">0 дней подряд</div>
+      <div class="str-txt" id="st-streak-sub">Начни учиться сегодня!</div>
+    </div>
+    <div style="text-align:right">
+      <div class="str-xp" id="st-xp">0 XP</div>
+      <div style="font-size:10px;color:var(--t3)">Всего очков</div>
+    </div>
+  </div>
+  <div class="sg">
+    <div class="sc2"><div class="sc2-ico">📚</div><div class="sc2-v" id="s-known">0</div><div class="sc2-l">Карточек изучено</div></div>
+    <div class="sc2"><div class="sc2-ico">💼</div><div class="sc2-v" id="s-cases">0</div><div class="sc2-l">Кейсов разобрано</div></div>
+    <div class="sc2"><div class="sc2-ico">🎯</div><div class="sc2-v" id="s-acc">0%</div><div class="sc2-l">Точность</div></div>
+    <div class="sc2"><div class="sc2-ico">⚡</div><div class="sc2-v" id="s-maxstreak">0</div><div class="sc2-l">Макс. серия</div></div>
+  </div>
+  <div class="sec-t">📉 Слабые темы</div>
+  <div class="wt" id="weak-topics"></div>
+  <div class="sec-t">🏆 Достижения</div>
+  <div class="ach-grid" id="ach-grid"></div>
+  <div style="text-align:center;margin-top:22px">
+    <button class="btn-s" onclick="resetAll()" style="color:var(--err);border-color:rgba(239,68,68,.3)">🗑️ Сбросить прогресс</button>
+  </div>
+</div>
+
+</div></div><!-- /wrap /page -->
+
+<!-- MODAL -->
+<div class="ov" id="modal-ov" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="mh">
+      <div class="m-ico" id="m-ico">📋</div>
+      <div class="m-tw"><div class="m-cat" id="m-cat">—</div><div class="m-title" id="m-title">—</div></div>
+      <button class="m-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="mb">
+      <div class="m-sit"><strong>📍 Ситуация</strong><span id="m-sit">—</span></div>
+      <div class="steps-lbl">✅ Пошаговое решение</div>
+      <div id="m-steps"></div>
+      <div class="m-tip" id="m-tip" style="display:none"><strong>💡 Совет профи</strong><span id="m-tip-txt"></span></div>
+    </div>
+    <div class="mf">
+      <button class="btn-s" onclick="closeModal()">Закрыть</button>
+      <button class="btn-p" id="m-mark-btn" onclick="markCase()">✅ Изучено</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast" style="display:none">
+  <div class="t-ico" id="t-ico">⚡</div>
+  <div><div class="t-xp" id="t-xp">+10 XP</div><div class="t-lbl" id="t-lbl">Карточка изучена</div></div>
+</div>
+
+<script src="../nav-loader.js?v=7.0"></script>
+<script src="../role-guard.js"></script>
+
+
+<script>
+const CARDS=[
+{id:'c1',cat:'Термины',diff:'easy',term:'MC Number',hint:'Motor Carrier',def:'Уникальный номер перевозчика от FMCSA. Обязателен для коммерческих перевозок между штатами.',ex:'"Our MC is 123456 — verify on SAFER.com"'},
+{id:'c2',cat:'Термины',diff:'easy',term:'DOT Number',hint:'Dept. of Transportation',def:'Идентификатор компании для надзора за безопасностью. Требуется всем коммерческим перевозчикам.',ex:'"DOT 987654 — check on FMCSA SAFER"'},
+{id:'c3',cat:'Термины',diff:'easy',term:'Rate Con',hint:'Rate Confirmation',def:'Официальный документ от брокера с деталями груза: маршрут, ставка, условия. Подписывается обеими сторонами.',ex:'"Send me the rate con before driver picks up."'},
+{id:'c4',cat:'Термины',diff:'easy',term:'BOL',hint:'Bill of Lading',def:'Товарно-транспортная накладная. Контракт между грузоотправителем и перевозчиком. Водитель получает при загрузке.',ex:'"Driver needs signed BOL at pickup."'},
+{id:'c5',cat:'Термины',diff:'easy',term:'POD',hint:'Proof of Delivery',def:'Подтверждение доставки. Подписанный BOL или другой документ, доказывающий успешную доставку.',ex:'"Send POD within 24 hours of delivery."'},
+{id:'c6',cat:'Термины',diff:'medium',term:'Detention',hint:'Простой / ожидание',def:'Оплата за ожидание водителя сверх бесплатного времени (обычно 2 часа). Стандарт: $50–100/час.',ex:'"Driver waited 4 hrs — 2 hrs detention at $75/hr = $150."'},
+{id:'c7',cat:'Термины',diff:'medium',term:'TONU',hint:'Truck Order Not Used',def:'Компенсация водителю если груз отменён после подтверждения. Обычно 10–20% от ставки.',ex:'"Shipper cancelled last minute — claim TONU."'},
+{id:'c8',cat:'Термины',diff:'medium',term:'Deadhead',hint:'Пустой пробег',def:'Километры которые водитель едет пустым к месту загрузки или после выгрузки.',ex:'"100 miles deadhead to pickup — factor into rate."'},
+{id:'c9',cat:'Термины',diff:'medium',term:'Lumper',hint:'Грузчик на складе',def:'Нанятый работник для разгрузки/погрузки. Стоимость обычно оплачивает брокер или грузоотправитель.',ex:'"Receiver requires lumper — $150, broker pays."'},
+{id:'c10',cat:'Термины',diff:'hard',term:'HOS',hint:'Hours of Service',def:'Правила FMCSA об ограничении рабочего времени: 11 ч вождения, 14 ч рабочего дня, 10 ч отдыха.',ex:'"Driver is out of HOS — needs 10-hour reset."'},
+{id:'c11',cat:'Термины',diff:'medium',term:'ELD',hint:'Electronic Logging Device',def:'Электронный журнал водителя. Обязателен с 2017 года для большинства коммерческих водителей.',ex:'"ELD shows driver has 3 hours left on clock."'},
+{id:'c12',cat:'Термины',diff:'easy',term:'FMCSA',hint:'Federal Motor Carrier Safety Admin',def:'Федеральное агентство, регулирующее коммерческие перевозки в США.',ex:'"FMCSA requires all carriers to have valid insurance."'},
+{id:'c13',cat:'Термины',diff:'easy',term:'DAT',hint:'Digital Freight Matching',def:'Крупнейшая биржа грузов в США. Используется для поиска грузов и проверки рыночных ставок.',ex:'"DAT shows $2.10/mile average on this lane."'},
+{id:'c14',cat:'Термины',diff:'easy',term:'Load Board',hint:'Биржа грузов',def:'Онлайн-платформа для поиска грузов. Основные: DAT, Truckstop.com, 123Loadboard.',ex:'"Check the load board for backhauls from Chicago."'},
+{id:'c15',cat:'Термины',diff:'easy',term:'Dry Van',hint:'Закрытый фургон',def:'Самый распространённый тип трейлера. Перевозит сухие грузы без температурного контроля.',ex:'"53\' dry van, 45,000 lbs, no temp required."'},
+{id:'c16',cat:'Термины',diff:'easy',term:'Reefer',hint:'Рефрижератор',def:'Трейлер с холодильной установкой. Для скоропортящихся грузов. Требует мониторинга температуры.',ex:'"Reefer set at 34°F for fresh produce."'},
+{id:'c17',cat:'Термины',diff:'easy',term:'Flatbed',hint:'Платформа',def:'Открытый трейлер без бортов. Для строительных материалов, оборудования, негабаритных грузов.',ex:'"Flatbed with tarps required for steel coils."'},
+{id:'c18',cat:'Термины',diff:'hard',term:'Hazmat',hint:'Hazardous Materials',def:'Опасные грузы. Требуют специального разрешения CDL, плакардов и соблюдения DOT правил.',ex:'"Driver needs Hazmat endorsement for Class 3 cargo."'},
+{id:'c19',cat:'Термины',diff:'medium',term:'All-in Rate',hint:'Полная ставка',def:'Включает все надбавки (топливо, toll и т.д.). Упрощает расчёты.',ex:'"Quote me all-in, no fuel surcharge separately."'},
+{id:'c20',cat:'Термины',diff:'medium',term:'FSC',hint:'Fuel Surcharge',def:'Надбавка за топливо. Рассчитывается на основе индекса цен на дизель DOE.',ex:'"Rate is $1,800 plus FSC of $0.15/mile."'},
+{id:'c21',cat:'Переговоры',diff:'easy',term:'Counter Offer',hint:'Встречное предложение',def:'Ответ на первоначальную ставку брокера с предложением другой цены.',ex:'"Broker offers $1,800. Counter: \'Best I can do is $2,100.\'"'},
+{id:'c22',cat:'Переговоры',diff:'medium',term:'Market Rate',hint:'Рыночная ставка',def:'Средняя цена на конкретном маршруте. Проверяется через DAT, Truckstop, Greenscreens.',ex:'"DAT shows $2.30/mile — your offer is below market."'},
+{id:'c23',cat:'Переговоры',diff:'hard',term:'Anchor Price',hint:'Якорная цена',def:'Первое озвученное число в переговорах. Задаёт рамку для дальнейшего торга.',ex:'"Always let broker anchor first, then counter higher."'},
+{id:'c24',cat:'Переговоры',diff:'hard',term:'BATNA',hint:'Best Alternative To Negotiated Agreement',def:'Лучшая альтернатива если переговоры провалятся. Знание BATNA даёт силу в торге.',ex:'"I have another load at $2,200 — that\'s my BATNA."'},
+{id:'c25',cat:'Переговоры',diff:'medium',term:'Lowball Offer',hint:'Заниженное предложение',def:'Намеренно низкая ставка брокера. Нужно уверенно отклонять с обоснованием.',ex:'"That\'s a lowball — market is $2.10, not $1.50."'},
+{id:'c26',cat:'Переговоры',diff:'medium',term:'Take It or Leave It',hint:'Ультиматум',def:'Брокер заявляет финальную цену. Нужно оценить реальность и решить — принять или уйти.',ex:'"That\'s my final number." — проверь DAT перед ответом.'},
+{id:'c27',cat:'Переговоры',diff:'medium',term:'Fuel Cost Argument',hint:'Аргумент о топливе',def:'Обоснование более высокой ставки через расчёт расходов на дизель.',ex:'"Diesel $4.20/gal, 6 mpg = $0.70/mile just for fuel."'},
+{id:'c28',cat:'Переговоры',diff:'hard',term:'Lane Commitment',hint:'Обязательство по маршруту',def:'Предложение регулярных рейсов в обмен на лучшую ставку.',ex:'"3 loads/week on this lane for $2,000 each."'},
+{id:'c29',cat:'Переговоры',diff:'medium',term:'Quick Pay',hint:'Быстрая оплата',def:'Брокер платит в течение 1–3 дней вместо стандартных 30–45. Обычно с комиссией 2–3%.',ex:'"Do you offer quick pay? Need funds within 3 days."'},
+{id:'c30',cat:'Переговоры',diff:'hard',term:'Accessorial Charges',hint:'Дополнительные сборы',def:'Detention, layover, TONU, lumper, toll reimbursement. Всегда уточняй заранее.',ex:'"Who covers accessorials — detention and lumper?"'},
+{id:'c31',cat:'Документы',diff:'medium',term:'Certificate of Insurance',hint:'Сертификат страхования',def:'Документ подтверждающий наличие страховки. Брокеры требуют перед первым грузом.',ex:'"Send COI with $1M liability and $100K cargo."'},
+{id:'c32',cat:'Документы',diff:'easy',term:'Carrier Packet',hint:'Пакет документов',def:'MC, DOT, страховка, W-9, банковские реквизиты. Нужен для регистрации у брокера.',ex:'"Complete our carrier packet at carrier.brokersite.com."'},
+{id:'c33',cat:'Документы',diff:'easy',term:'W-9 Form',hint:'Налоговая форма',def:'Запрашивается брокерами для отчётности в IRS. Содержит EIN или SSN компании.',ex:'"Include W-9 in your carrier packet."'},
+{id:'c34',cat:'Документы',diff:'hard',term:'NOA',hint:'Notice of Assignment',def:'Уведомление об уступке права требования. Используется при факторинге.',ex:'"Our factoring company sent NOA — pay them directly."'},
+{id:'c35',cat:'Документы',diff:'hard',term:'Factoring',hint:'Факторинг',def:'Продажа дебиторской задолженности факторинговой компании за немедленную оплату (минус 2–5%).',ex:'"We use OTR Capital — 3% fee, same-day funding."'},
+{id:'c36',cat:'Документы',diff:'medium',term:'Lumper Receipt',hint:'Квитанция грузчика',def:'Документ об оплате lumper service. Нужен для возмещения расходов от брокера.',ex:'"Get lumper receipt — broker reimburses in 30 days."'},
+{id:'c37',cat:'Документы',diff:'medium',term:'Scale Ticket',hint:'Весовой талон',def:'Документ с весовой станции. Подтверждает соответствие веса груза нормам.',ex:'"Scale ticket: 79,800 lbs — legal weight."'},
+{id:'c38',cat:'Документы',diff:'hard',term:'IFTA',hint:'International Fuel Tax Agreement',def:'Соглашение о топливном налоге между штатами. Перевозчики подают квартальные отчёты.',ex:'"IFTA sticker required on all interstate trucks."'},
+{id:'c39',cat:'Проблемы',diff:'medium',term:'Breakdown',hint:'Поломка',def:'Механическая неисправность грузовика в пути. Требует немедленного уведомления брокера.',ex:'"Driver broke down on I-80 — ETA delayed 6 hours."'},
+{id:'c40',cat:'Проблемы',diff:'easy',term:'Late Pickup',hint:'Опоздание на загрузку',def:'Водитель не успевает к назначенному времени. Нужно уведомить брокера заранее.',ex:'"Driver will be 2 hours late — traffic on I-95."'},
+{id:'c41',cat:'Проблемы',diff:'hard',term:'Cargo Damage',hint:'Повреждение груза',def:'Ущерб товару при транспортировке. Требует фотофиксации и уведомления брокера и страховой.',ex:'"Pallet fell — document damage with photos before unloading."'},
+{id:'c42',cat:'Проблемы',diff:'hard',term:'Refused Load',hint:'Отказ от груза',def:'Получатель не принимает товар. Нужно выяснить причину и получить инструкции от брокера.',ex:'"Receiver refused — wrong temp. Call broker immediately."'},
+{id:'c43',cat:'Проблемы',diff:'medium',term:'Short Load',hint:'Недостача груза',def:'Часть товара не была загружена или потеряна. Фиксируется в BOL при загрузке.',ex:'"Short 5 pallets — note on BOL before signing."'},
+{id:'c44',cat:'Проблемы',diff:'hard',term:'Overweight',hint:'Перегруз',def:'Вес груза превышает допустимые нормы (80,000 lbs gross). Штраф до $10,000+.',ex:'"Scale shows 84,000 lbs — need permit or redistribute."'},
+{id:'c45',cat:'Проблемы',diff:'hard',term:'HOS Violation',hint:'Нарушение режима труда',def:'Водитель превысил допустимое время вождения. Штраф и запрет на движение.',ex:'"Driver violated HOS — must take 10-hour break now."'},
+{id:'c46',cat:'Проблемы',diff:'hard',term:'Double Brokering',hint:'Двойное брокерирование',def:'Незаконная перепродажа груза без ведома грузоотправителя. Мошенничество.',ex:'"Never accept a load from another carrier — that\'s double brokering."'},
+{id:'c47',cat:'Технологии',diff:'medium',term:'TMS',hint:'Transportation Management System',def:'Программа управления перевозками. Автоматизирует диспетчеризацию, документооборот, отчётность.',ex:'"We use McLeod TMS for load management."'},
+{id:'c48',cat:'Технологии',diff:'easy',term:'GPS Tracking',hint:'GPS-отслеживание',def:'Мониторинг местоположения грузовика в реальном времени. Обязателен для большинства брокеров.',ex:'"Broker requires GPS tracking via Samsara."'},
+{id:'c49',cat:'Технологии',diff:'medium',term:'MacroPoint',hint:'Платформа отслеживания',def:'Используется брокерами для мониторинга грузов. Водитель даёт согласие на трекинг.',ex:'"Broker uses MacroPoint — driver needs to accept request."'},
+{id:'c50',cat:'Технологии',diff:'medium',term:'Samsara',hint:'ELD + GPS платформа',def:'Популярная система для электронных журналов и отслеживания. Интегрируется с TMS.',ex:'"Our fleet uses Samsara ELD — FMCSA compliant."'},
+{id:'c51',cat:'Технологии',diff:'medium',term:'Motive (KeepTruckin)',hint:'ELD-платформа',def:'Одна из самых популярных систем электронных журналов в США. Ранее называлась KeepTruckin.',ex:'"Driver logs on Motive (formerly KeepTruckin)."'},
+{id:'c52',cat:'Технологии',diff:'easy',term:'Truckstop.com',hint:'Биржа грузов',def:'Конкурент DAT. Предлагает поиск грузов, проверку брокеров, рыночные ставки.',ex:'"Check Truckstop — sometimes better rates than DAT."'},
+{id:'c53',cat:'Технологии',diff:'hard',term:'Greenscreens.ai',hint:'AI прогноз ставок',def:'AI-платформа для прогнозирования ставок. Использует машинное обучение для анализа рынка.',ex:'"Greenscreens shows $2.15/mile predicted for next week."'},
+{id:'c54',cat:'Технологии',diff:'medium',term:'SAFER',hint:'FMCSA база данных',def:'Safety and Fitness Electronic Records — база данных для проверки перевозчиков. Проверяй MC, DOT, страховку.',ex:'"Always verify carrier on SAFER before booking."'},
+{id:'c55',cat:'Маршруты',diff:'easy',term:'Lane',hint:'Маршрут/направление',def:'Конкретный коридор перевозок между двумя точками. Например, Chicago–Atlanta.',ex:'"We specialize in Midwest to Southeast lanes."'},
+{id:'c56',cat:'Маршруты',diff:'easy',term:'Backhaul',hint:'Обратный груз',def:'Загрузка на обратном пути. Позволяет избежать пустого пробега.',ex:'"Delivered in LA — need backhaul to Chicago."'},
+{id:'c57',cat:'Маршруты',diff:'medium',term:'Drop and Hook',hint:'Обмен трейлерами',def:'Водитель оставляет гружёный трейлер и забирает другой. Экономит время ожидания.',ex:'"Drop and hook at Walmart DC — no wait time."'},
+{id:'c58',cat:'Маршруты',diff:'medium',term:'Live Load/Unload',hint:'Живая загрузка',def:'Водитель ждёт пока грузят/разгружают. В отличие от drop and hook.',ex:'"Live unload — 2 hours free, then detention kicks in."'},
+{id:'c59',cat:'Маршруты',diff:'medium',term:'Team Driver',hint:'Команда водителей',def:'Два водителя на одном грузовике. Позволяет ехать 22 часа в сутки.',ex:'"Team load — 2,800 miles, $4,500 total."'},
+{id:'c60',cat:'Маршруты',diff:'easy',term:'OTR',hint:'Over The Road',def:'Дальние рейсы, водитель проводит несколько дней/недель в дороге.',ex:'"OTR driver — home every 2–3 weeks."'},
+{id:'c61',cat:'Финансы',diff:'medium',term:'Gross Revenue',hint:'Валовая выручка',def:'Общая сумма полученная за перевозку до вычета расходов.',ex:'"Gross $3,500 — fuel $600, driver $1,200 = net $1,700."'},
+{id:'c62',cat:'Финансы',diff:'medium',term:'Net Revenue',hint:'Чистая прибыль',def:'Выручка минус все расходы (топливо, водитель, страховка, обслуживание).',ex:'"Net margin on this load: 35%."'},
+{id:'c63',cat:'Финансы',diff:'hard',term:'Cost Per Mile',hint:'Стоимость мили',def:'Все расходы делённые на пробег. Включает топливо, зарплату, амортизацию.',ex:'"CPM is $1.85 — need at least $2.10/mile to profit."'},
+{id:'c64',cat:'Финансы',diff:'easy',term:'Dispatcher Fee',hint:'Комиссия диспетчера',def:'Обычно 5–10% от ставки брокера. Взимается с перевозчика.',ex:'"Dispatcher fee: 8% of gross — $280 on a $3,500 load."'},
+{id:'c65',cat:'Финансы',diff:'medium',term:'Fuel Efficiency',hint:'Топливная эффективность',def:'Миль на галлон. Средний грузовик: 6–7 mpg. Влияет на расчёт ставки.',ex:'"6 mpg × $4.20/gal = $0.70/mile fuel cost."'},
+{id:'c66',cat:'Финансы',diff:'medium',term:'Layover Pay',hint:'Оплата простоя',def:'Компенсация водителю за ночёвку вне дома из-за задержки груза. Обычно $150–200/ночь.',ex:'"Shipper delayed 24 hours — claim layover pay."'},
+{id:'c67',cat:'Брокеры',diff:'hard',term:'Broker Bond',hint:'Залог брокера',def:'$75,000 обязательный залог для лицензированных брокеров. Защищает перевозчиков от неоплаты.',ex:'"Verify broker has active $75K bond on FMCSA."'},
+{id:'c68',cat:'Брокеры',diff:'medium',term:'Credit Check',hint:'Проверка кредитоспособности',def:'Через Carrier411, TransCredit. Показывает историю оплат брокера.',ex:'"Check broker credit on Carrier411 before booking."'},
+{id:'c69',cat:'Брокеры',diff:'medium',term:'Carrier411',hint:'Сервис проверки брокеров',def:'Показывает рейтинг оплат, жалобы, историю. Обязателен перед работой с новым брокером.',ex:'"Carrier411 shows broker pays in 45 days — factor that in."'},
+{id:'c70',cat:'Брокеры',diff:'medium',term:'Spot Market',hint:'Спотовый рынок',def:'Разовые грузы по текущим рыночным ценам. В отличие от контрактных перевозок.',ex:'"Spot market rates are up 15% this week."'},
+{id:'c71',cat:'Брокеры',diff:'hard',term:'Contract Lane',hint:'Контрактный маршрут',def:'Долгосрочное соглашение с фиксированной ставкой. Стабильность vs. гибкость.',ex:'"Contract lane: Chicago–Atlanta, $1,950/load, 3x/week."'},
+{id:'c72',cat:'Брокеры',diff:'medium',term:'Preferred Carrier',hint:'Предпочтительный перевозчик',def:'Статус у брокера, даёт приоритет в получении грузов.',ex:'"After 10 on-time loads, you become preferred carrier."'},
+{id:'c73',cat:'Безопасность',diff:'hard',term:'CSA Score',hint:'Compliance Safety Accountability',def:'Рейтинг безопасности перевозчика от FMCSA. Высокий балл = брокеры избегают тебя.',ex:'"High CSA score = brokers avoid you. Keep it clean."'},
+{id:'c74',cat:'Безопасность',diff:'easy',term:'Pre-trip Inspection',hint:'Предрейсовый осмотр',def:'Обязательная проверка грузовика перед выездом. Документируется в журнале.',ex:'"Driver must complete pre-trip inspection before every load."'},
+{id:'c75',cat:'Безопасность',diff:'easy',term:'Weigh Station',hint:'Весовая станция',def:'Обязательная остановка для проверки веса и документов. Штраф за перегруз.',ex:'"All trucks must stop at weigh stations unless PrePass clears."'},
+{id:'c76',cat:'Безопасность',diff:'medium',term:'PrePass',hint:'Система обхода весовых',def:'Электронная система позволяющая проехать мимо весовой без остановки.',ex:'"PrePass transponder saves 15–20 min per weigh station."'},
+{id:'c77',cat:'Безопасность',diff:'medium',term:'Drug Test',hint:'Тест на наркотики',def:'Обязателен при найме и случайно в течение года. Положительный = отстранение.',ex:'"New driver must pass DOT drug test before first load."'},
+{id:'c78',cat:'Безопасность',diff:'medium',term:'MVR',hint:'Motor Vehicle Record',def:'История нарушений водителя. Проверяется при найме и ежегодно.',ex:'"Pull MVR before hiring — check for DUI, accidents."'},
+{id:'c79',cat:'Безопасность',diff:'medium',term:'Cargo Insurance',hint:'Страхование груза',def:'Покрывает ущерб или потерю груза. Минимум $100K для большинства брокеров.',ex:'"Cargo insurance $100K required — some shippers need $250K."'},
+{id:'c80',cat:'Безопасность',diff:'medium',term:'Liability Insurance',hint:'Страхование ответственности',def:'Покрывает ущерб третьим лицам. Минимум $750K для interstate перевозок.',ex:'"Primary liability $1M required by most brokers."'}
+];
+</script>
+<script>
+const CASES=[
+{id:'k1',ico:'��',cat:'Переговоры',diff:'easy',xp:8,title:'Брокер предлагает слишком низкую ставку',desc:'Брокер предлагает $1,500 на маршрут Chicago–Atlanta (780 миль). DAT показывает $2.10/mile.',sit:'Брокер: "Best I can do is $1,500 all-in." DAT показывает среднюю $2.10/mile = $1,638 минимум.',steps:[{a:'Проверь DAT',d:'Открой DAT и запиши среднюю ставку на этом маршруте прямо сейчас.'},
+{a:'Назови цифру',d:'"DAT shows $2.10/mile on this lane — that\'s $1,638 minimum. I need $1,900."'},
+{a:'Обоснуй',d:'Упомяни deadhead, fuel cost, driver pay. Конкретные цифры убеждают.'},
+{a:'Дай выбор',d:'"I can do $1,800 if you need it moved today, otherwise I\'ll pass."'},
+{a:'Будь готов уйти',d:'Если брокер не двигается — вежливо откажи. Плохая ставка хуже пустого грузовика.'}],tip:'Никогда не принимай первое предложение. Брокер всегда закладывает пространство для торга.'},
+{id:'k2',ico:'🚛',cat:'Проблемы',diff:'medium',xp:12,title:'Водитель сломался в пути',desc:'Водитель сломался на I-80 в Небраске. До доставки 6 часов. Груз — замороженные продукты.',sit:'Водитель звонит: "Truck broke down, mile marker 312 on I-80. Engine light on."',steps:[{a:'Успокой водителя',d:'Скажи что решишь ситуацию. Паника не помогает.'},
+{a:'Позвони брокеру СРАЗУ',d:'"Driver broke down on I-80 mile 312. Working on solution. Will update in 30 min."'},
+{a:'Найди буксир',d:'Roadside assistance, местные мастерские. Спроси ETA ремонта.'},
+{a:'Оцени ситуацию',d:'Если reefer — критично. Нужен другой грузовик или срочный ремонт.'},
+{a:'Обнови брокера',d:'Каждые 30 минут давай апдейт. Молчание = потеря доверия.'},
+{a:'Задокументируй',d:'Все звонки, время, решения — записывай для возможного claim.'}],tip:'Брокеры прощают поломки. Они не прощают молчание и отсутствие плана.'},
+{id:'k3',ico:'📋',cat:'Документы',diff:'easy',xp:6,title:'Брокер требует carrier packet',desc:'Новый брокер хочет работать с тобой, но просит carrier packet перед первым грузом.',sit:'"Before we can book you, I need your carrier packet. What\'s your email?"',steps:[{a:'Подготовь документы заранее',d:'MC certificate, COI (liability + cargo), W-9, bank info (для direct pay или factoring NOA).'},
+{a:'Отправь быстро',d:'Чем быстрее — тем лучше. Брокер работает с тем кто отвечает первым.'},
+{a:'Проверь страховку',d:'COI должен показывать брокера как certificate holder если требуют.'},
+{a:'Подтверди получение',d:'"Sent to your email. Let me know if you need anything else."'},
+{a:'Следи за статусом',d:'Если нет ответа через 2 часа — позвони и уточни.'}],tip:'Держи carrier packet готовым в PDF. Отправка за 5 минут = конкурентное преимущество.'},
+{id:'k4',ico:'⚖️',cat:'Проблемы',diff:'hard',xp:15,title:'Водитель перегружен на весовой',desc:'Водитель остановлен на весовой. Вес 84,500 lbs при лимите 80,000 lbs.',sit:'Водитель: "Scale shows 84,500 lbs. Officer says I can\'t move."',steps:[{a:'Не паникуй',d:'Это решаемо. Узнай точный вес и какой axle перегружен.'},
+{a:'Позвони брокеру',d:'"Driver overweight at scale — 84,500 lbs. Need instructions from shipper."'},
+{a:'Варианты решения',d:'1) Разгрузить часть груза. 2) Получить oversize permit. 3) Перераспределить вес.'},
+{a:'Permit если нужен',d:'Overweight permit можно получить онлайн в большинстве штатов за $50–200.'},
+{a:'Задокументируй',d:'Сфотографируй scale ticket. Это важно для billing и возможных споров.'},
+{a:'Реши кто платит',d:'Если shipper загрузил неправильно — они платят за permit и задержку.'}],tip:'Всегда проверяй вес на первой доступной весовой после загрузки — до того как попадёшь на официальную.'},
+{id:'k5',ico:'💰',cat:'Финансы',diff:'medium',xp:10,title:'Брокер задерживает оплату',desc:'Прошло 45 дней после доставки. Брокер не платит. POD отправлен.',sit:'Оплата должна была прийти 2 недели назад. Брокер не отвечает на email.',steps:[{a:'Проверь документы',d:'Убедись что POD, BOL, rate con — всё отправлено правильно.'},
+{a:'Позвони напрямую',d:'Email игнорируют. Звонок сложнее проигнорировать.'},
+{a:'Эскалируй',d:'Если менеджер не отвечает — попроси супервайзера или AR department.'},
+{a:'Отправь demand letter',d:'Официальное письмо с датой оплаты и предупреждением о legal action.'},
+{a:'Проверь bond',d:'У каждого брокера есть $75K bond. Подай claim через FMCSA если нужно.'},
+{a:'Carrier411 жалоба',d:'Оставь отзыв на Carrier411 — это влияет на репутацию брокера.'}],tip:'Проверяй Carrier411 ДО работы с новым брокером. Паттерн задержек виден заранее.'},
+{id:'k6',ico:'🌡️',cat:'Проблемы',diff:'hard',xp:15,title:'Reefer сломался в пути',desc:'Рефрижератор перестал работать. Груз — свежие продукты. До доставки 8 часов.',sit:'Водитель: "Reefer unit stopped working. Temp rising — was 34°F, now 45°F."',steps:[{a:'Немедленно брокеру',d:'"Reefer unit failed. Temp at 45°F and rising. Need immediate instructions."'},
+{a:'Найди ремонт',d:'Thermo King, Carrier Transicold — ближайший сервис. Google Maps.'},
+{a:'Задокументируй температуру',d:'Записывай температуру каждые 15 минут. Это критично для insurance claim.'},
+{a:'Оцени груз',d:'Если temp превысила safe zone — брокер/shipper решают принимать ли груз.'},
+{a:'Альтернативный транспорт',d:'Брокер может организовать другой reefer truck для перегрузки.'},
+{a:'Страховой claim',d:'Если груз испорчен — немедленно уведомляй cargo insurance.'}],tip:'Reefer failure = потенциальный cargo claim на $50K+. Документация каждой минуты критична.'},
+{id:'k7',ico:'📞',cat:'Переговоры',diff:'medium',xp:10,title:'Холодный звонок брокеру',desc:'Ты звонишь новому брокеру впервые. Нужно произвести впечатление и получить груз.',sit:'Брокер: "Yeah, who\'s this?" — занятой, немного раздражённый.',steps:[{a:'Будь кратким',d:'"Hi, this is [Name] from [Company], MC 123456. I run dry vans in the Midwest."'},
+{a:'Сразу к делу',d:'"Do you have any loads going Chicago to Southeast this week?"'},
+{a:'Покажи готовность',d:'"Truck available Thursday, 53\' dry van, 45K capacity."'},
+{a:'Не давай лишнего',d:'Не рассказывай историю компании. Брокер хочет знать: что, где, когда.'},
+{a:'Запроси контакт',d:'"Can I get your direct email for future loads?"'},
+{a:'Следи за тоном',d:'Уверенно, профессионально, без заискивания.'}],tip:'Лучшее время для холодных звонков: вторник–четверг, 9–11 утра по времени брокера.'},
+{id:'k8',ico:'📦',cat:'Проблемы',diff:'medium',xp:10,title:'Получатель отказывается принимать груз',desc:'Водитель приехал на доставку. Получатель говорит что не заказывал этот товар.',sit:'Водитель: "Receiver says they didn\'t order this. Won\'t accept delivery."',steps:[{a:'Не уезжай',d:'Водитель должен оставаться на месте до получения инструкций.'},
+{a:'Позвони брокеру',d:'"Receiver refusing delivery — says wrong product. Need instructions ASAP."'},
+{a:'Проверь документы',d:'Сравни BOL с тем что на трейлере. Возможно ошибка в адресе или товаре.'},
+{a:'Свяжись с shipper',d:'Брокер должен связаться с грузоотправителем для подтверждения.'},
+{a:'Detention начинается',d:'Фиксируй время прибытия — detention clock идёт с момента arrival.'},
+{a:'Получи письменный отказ',d:'Попроси получателя написать причину отказа на BOL.'}],tip:'Refused load = потенциальный re-delivery или return. Всегда получай письменное подтверждение отказа.'},
+{id:'k9',ico:'🔍',cat:'Брокеры',diff:'easy',xp:6,title:'Проверка нового брокера',desc:'Брокер предлагает хорошую ставку. Ты никогда с ним не работал.',sit:'Незнакомый брокер предлагает $2,500 на маршрут Dallas–Miami. Звучит хорошо.',steps:[{a:'Проверь FMCSA SAFER',d:'Введи MC number на safer.fmcsa.dot.gov. Проверь: активная лицензия, страховка, bond.'},
+{a:'Carrier411',d:'Проверь рейтинг оплат. Красные флаги: "pays slow", "disputes charges", жалобы.'},
+{a:'Проверь bond',d:'$75K surety bond должен быть активным. Без него — не работай.'},
+{a:'Поищи отзывы',d:'Google "[Broker Name] reviews", форумы диспетчеров.'},
+{a:'Маленький тест',d:'Первый груз — небольшой и близкий. Посмотри как платят.'},
+{a:'Доверяй инстинкту',d:'Если что-то кажется странным — слишком высокая ставка, давление — это red flag.'}],tip:'5 минут проверки могут сэкономить $2,500 и месяц нервов.'},
+{id:'k10',ico:'⏰',cat:'HOS',diff:'hard',xp:15,title:'Водитель заканчивает часы в пути',desc:'Водитель звонит: осталось 2 часа на часах, до доставки 3 часа езды.',sit:'Водитель: "I have 2 hours left on my clock but delivery is 3 hours away."',steps:[{a:'Не паникуй и не давай давления',d:'Никогда не говори водителю "just push through" — это нарушение HOS.'},
+{a:'Позвони брокеру',d:'"Driver has 2 hours HOS remaining, delivery is 3 hours out. Need to reschedule."'},
+{a:'Найди место для стоянки',d:'Truck stop, rest area — водитель должен остановиться безопасно.'},
+{a:'Уточни delivery window',d:'Иногда получатель принимает на следующий день без штрафа.'},
+{a:'Задокументируй',d:'Запиши время звонка, решение, новое ETA.'},
+{a:'Планируй заранее',d:'В будущем: проверяй HOS водителя ДО принятия груза.'}],tip:'HOS violation = штраф $16,000+ и out-of-service order. Никогда не давай давление на водителя.'}
+];
+</script>
+<script>
+CASES.push(
+{id:'k11',ico:'��',cat:'Переговоры',diff:'medium',xp:10,title:'Брокер давит на срочность',desc:'Брокер говорит "нужен водитель прямо сейчас" чтобы ты согласился на низкую ставку.',sit:'"I need a truck in 2 hours or I\'m calling someone else. $1,600 take it or leave it."',steps:[{a:'Не поддавайся панике',d:'Срочность брокера — его проблема, не твоя. Сохраняй спокойствие.'},
+{a:'Проверь рынок быстро',d:'30 секунд на DAT. Если ставка ниже рынка — скажи об этом.'},
+{a:'Контрпредложение',d:'"I can have a truck there in 2 hours for $1,900. That\'s my best number."'},
+{a:'Не снижай ниже CPM',d:'Знай свою минимальную ставку заранее. Ниже неё — убыток.'},
+{a:'Будь готов уйти',d:'"If $1,600 is your max, I\'ll have to pass. Good luck finding a truck."'},
+{a:'Часто перезванивают',d:'Если через 30 минут не нашли — позвонят снова с лучшей ставкой.'}],tip:'Искусственная срочность — классический приём. Реальная срочность = готовность платить больше.'},
+{id:'k12',ico:'📱',cat:'Технологии',diff:'easy',xp:6,title:'Брокер требует GPS трекинг',desc:'Брокер говорит что без GPS трекинга не может дать груз.',sit:'"We require real-time GPS tracking on all loads. Do you have that?"',steps:[{a:'Уточни систему',d:'"We use Samsara/Motive. Do you use MacroPoint or your own system?"'},
+{a:'Дай согласие',d:'Большинство ELD систем поддерживают трекинг. Это стандарт индустрии.'},
+{a:'Объясни водителю',d:'Водитель должен принять запрос на трекинг в приложении.'},
+{a:'Проверь работу',d:'Убедись что трекинг активен до выезда на загрузку.'},
+{a:'Если нет системы',d:'Рассмотри бесплатные опции: Google Maps sharing, или базовый ELD с трекингом.'}],tip:'GPS трекинг — стандарт. Брокеры с ним спокойнее, ты получаешь больше грузов.'},
+{id:'k13',ico:'💼',cat:'Документы',diff:'medium',xp:10,title:'Потерян BOL при доставке',desc:'Водитель потерял BOL. Получатель требует документ для приёмки груза.',sit:'Водитель: "I can\'t find the BOL. Receiver won\'t accept without it."',steps:[{a:'Не паникуй',d:'BOL можно восстановить. Это решаемо.'},
+{a:'Позвони брокеру',d:'"Driver lost BOL. Can you get a copy from shipper and email to receiver?"'},
+{a:'Shipper может выслать копию',d:'Оригинальный shipper всегда имеет копию BOL.'},
+{a:'Email копия',d:'В большинстве случаев email копия принимается для разгрузки.'},
+{a:'Получи подпись на копии',d:'Попроси получателя подписать копию как POD.'},
+{a:'Задокументируй инцидент',d:'Запиши что произошло — для внутреннего учёта.'}],tip:'Водитель должен хранить BOL в кабине всё время. Сделай фото BOL при загрузке как backup.'},
+{id:'k14',ico:'🌧️',cat:'Проблемы',diff:'medium',xp:10,title:'Задержка из-за погоды',desc:'Сильный снегопад закрыл трассу. Водитель стоит 8 часов. Доставка срывается.',sit:'Водитель: "I-70 closed due to blizzard. DOT says road opens in 8 hours minimum."',steps:[{a:'Уведоми брокера немедленно',d:'"I-70 closed — weather delay. Driver stuck at mile 245. ETA unknown."'},
+{a:'Предоставь доказательства',d:'Скриншот DOT road closure, weather report. Это force majeure.'},
+{a:'Обнови каждые 2 часа',d:'Регулярные апдейты показывают профессионализм.'},
+{a:'Уточни новое ETA',d:'Как только дорога открылась — дай точное время прибытия.'},
+{a:'Detention claim',d:'Погодная задержка обычно не оплачивается, но уточни у брокера.'},
+{a:'Документируй всё',d:'Время закрытия, открытия, все звонки — для возможных споров.'}],tip:'Погода — форс-мажор. Брокеры понимают. Главное — коммуникация, а не молчание.'},
+{id:'k15',ico:'🔄',cat:'Маршруты',diff:'easy',xp:6,title:'Поиск обратного груза',desc:'Водитель доставил в Лос-Анджелес. Нужен груз обратно в Чикаго.',sit:'Водитель выгрузился в LA. До Чикаго 2,000 миль пустым = $1,400 в топливо.',steps:[{a:'Открой DAT/Truckstop',d:'Ищи: Los Angeles → Chicago, 53\' dry van, дата доступности.'},
+{a:'Расширь поиск',d:'LA → Midwest, LA → Denver, LA → Dallas — больше вариантов.'},
+{a:'Позвони брокерам',d:'Брокеры с которыми уже работал — первый звонок. Они знают тебя.'},
+{a:'Оцени ставку',d:'Backhaul из CA обычно дешевле. Но лучше $1,500 backhaul чем $0 пустым.'},
+{a:'Учти deadhead',d:'Если груз в 100 милях от водителя — это нормально. 300+ миль — считай расходы.'},
+{a:'Планируй заранее',d:'Идеально искать backhaul за 24 часа до выгрузки.'}],tip:'Лучшие backhaul ставки — утром. Брокеры заполняют трейлеры до конца дня.'},
+{id:'k16',ico:'📊',cat:'Финансы',diff:'hard',xp:15,title:'Расчёт прибыльности груза',desc:'Брокер предлагает $2,200 на маршрут 800 миль. Стоит ли брать?',sit:'Chicago → Nashville, 800 miles, dry van, $2,200 all-in. Deadhead 50 miles.',steps:[{a:'Считай полный пробег',d:'800 miles + 50 deadhead = 850 total miles.'},
+{a:'Топливо',d:'850 miles ÷ 6 mpg × $4.20/gal = $595 fuel cost.'},
+{a:'Зарплата водителя',d:'850 miles × $0.45/mile = $382 driver pay.'},
+{a:'Прочие расходы',d:'Insurance, maintenance, tolls ≈ $150 на этот рейс.'},
+{a:'Итого расходы',d:'$595 + $382 + $150 = $1,127 total cost.'},
+{a:'Прибыль',d:'$2,200 - $1,127 = $1,073 net. Margin 49% — хороший груз!'}],tip:'Всегда считай cost per mile ДО принятия груза. Цель: минимум 30% margin.'},
+{id:'k17',ico:'🚨',cat:'Проблемы',diff:'hard',xp:15,title:'Авария водителя',desc:'Водитель попал в аварию. Никто не пострадал, но трейлер повреждён.',sit:'Водитель: "I was in an accident on I-94. No injuries but trailer is damaged."',steps:[{a:'Убедись в безопасности',d:'Первое — здоровье водителя и других участников. Вызови 911 если нужно.'},
+{a:'Не двигай транспорт',d:'До приезда полиции — ничего не трогать.'},
+{a:'Позвони страховой',d:'Немедленно уведоми liability insurance. Дай им все детали.'},
+{a:'Позвони брокеру',d:'"Driver in accident on I-94. No injuries. Trailer damaged. Working with insurance."'},
+{a:'Задокументируй',d:'Фото со всех сторон, номера участников, полицейский отчёт.'},
+{a:'Cargo status',d:'Проверь состояние груза. Если повреждён — уведоми cargo insurance.'}],tip:'Авария = страховой случай. Никогда не договаривайся напрямую без страховой компании.'},
+{id:'k18',ico:'💬',cat:'Переговоры',diff:'medium',xp:10,title:'Переговоры о detention',desc:'Водитель ждал 5 часов на загрузке. Брокер отказывается платить detention.',sit:'"Our rate con says 2 hours free detention. Driver waited 5 hours — that\'s $225 owed."',steps:[{a:'Проверь rate con',d:'Убедись что detention clause есть в документе. Если есть — ты прав.'},
+{a:'Предоставь доказательства',d:'Timestamp прибытия водителя, время выезда, ELD данные.'},
+{a:'Позвони, не пиши',d:'Телефонный разговор решает быстрее чем email переписка.'},
+{a:'Будь конкретным',d:'"Driver arrived 8:00 AM, departed 1:00 PM. That\'s 3 hours detention at $75/hr = $225."'},
+{a:'Эскалируй если нужно',d:'Если менеджер отказывает — попроси супервайзера.'},
+{a:'Документируй отказ',d:'Если брокер отказывает без причины — это влияет на будущие отношения.'}],tip:'Detention — твоё законное право если оно в rate con. Не стесняйся требовать.'},
+{id:'k19',ico:'🏢',cat:'Брокеры',diff:'medium',xp:10,title:'Построение отношений с брокером',desc:'Ты хочешь стать preferred carrier у крупного брокера.',sit:'Ты сделал 3 успешных груза с брокером. Хочешь получать грузы регулярно.',steps:[{a:'Будь надёжным',d:'On-time pickup и delivery — основа. Без этого ничего не работает.'},
+{a:'Коммуницируй проактивно',d:'Апдейты без запроса: "Picked up on time", "On track for delivery".'},
+{a:'Попроси прямой контакт',d:'"Can I get your direct number for future loads?"'},
+{a:'Предложи lane commitment',d:'"I run Chicago–Atlanta weekly. Can we set up a regular rate?"'},
+{a:'Реши проблемы быстро',d:'Когда что-то идёт не так — реши до того как брокер узнает.'},
+{a:'Попроси feedback',d:'"How was our service? Anything we can improve?"'}],tip:'Preferred carrier status = лучшие ставки, первый звонок, меньше конкуренции.'},
+{id:'k20',ico:'📝',cat:'Документы',diff:'medium',xp:10,title:'Оформление detention claim',desc:'Водитель ждал 4 часа. Нужно правильно оформить detention claim.',sit:'Водитель ждал с 6:00 до 10:00 AM. Бесплатное время — 2 часа. Ставка $75/час.',steps:[{a:'Собери доказательства',d:'ELD timestamp, gate log если есть, фото с временной меткой.'},
+{a:'Посчитай сумму',d:'4 hours - 2 free = 2 billable hours × $75 = $150 detention.'},
+{a:'Отправь email брокеру',d:'Тема: "Detention Claim - Load #12345 - [Date]". Приложи доказательства.'},
+{a:'Укажи реквизиты',d:'Как выставить invoice: company name, MC, bank info или factoring.'},
+{a:'Дай срок',d:'"Please process within 30 days per our agreement."'},
+{a:'Следи за оплатой',d:'Если нет ответа через 2 недели — позвони и уточни статус.'}],tip:'Detention claim без доказательств = отказ. ELD данные — лучшее доказательство.'}
+);
+</script>
+<script>
+CASES.push(
+{id:'k21',ico:'��',cat:'Маршруты',diff:'medium',xp:10,title:'Планирование маршрута с toll',desc:'Маршрут через платные дороги. Нужно решить — ехать через toll или объехать.',sit:'Chicago → NYC, 790 miles. Через I-80/I-78 toll $85. Объезд +60 miles.',steps:[{a:'Посчитай toll vs объезд',d:'Объезд: 60 miles × $0.70/mile fuel = $42. Toll $85. Объезд дешевле на $43.'},
+{a:'Учти время',d:'Объезд +1 час. Если HOS tight — toll может быть лучше.'},
+{a:'Уточни у брокера',d:'Некоторые rate con включают toll reimbursement. Проверь.'},
+{a:'EZPass экономит',d:'EZPass обычно дешевле cash toll на 20-30%.'},
+{a:'Планируй заранее',d:'Google Maps показывает toll costs. Используй для планирования.'}],tip:'Всегда включай toll в расчёт прибыльности груза. $85 toll = 4% от $2,000 ставки.'},
+{id:'k22',ico:'🔒',cat:'Безопасность',diff:'hard',xp:15,title:'Подозрение на кражу груза',desc:'Водитель замечает что пломба на трейлере повреждена при прибытии на доставку.',sit:'Водитель: "Seal number doesn\'t match BOL. Looks like it was tampered with."',steps:[{a:'Не открывай трейлер',d:'Сохрани место происшествия. Не трогай ничего.'},
+{a:'Вызови полицию',d:'Это потенциальное уголовное дело. Полиция должна задокументировать.'},
+{a:'Позвони брокеру и shipper',d:'Немедленно. "Seal tampered — possible cargo theft. Police called."'},
+{a:'Уведоми cargo insurance',d:'Страховая должна знать немедленно.'},
+{a:'Задокументируй',d:'Фото пломбы, номер пломбы на BOL vs фактический, всё окружение.'},
+{a:'Не принимай вину',d:'Не подписывай ничего до расследования.'}],tip:'Cargo theft — $35 млрд в год в США. Документация с момента загрузки критична.'},
+{id:'k23',ico:'📞',cat:'Переговоры',diff:'easy',xp:6,title:'Follow-up звонок брокеру',desc:'Ты работал с брокером месяц назад. Хочешь возобновить сотрудничество.',sit:'Прошёл месяц после последнего груза. Хочешь напомнить о себе.',steps:[{a:'Напомни о прошлом',d:'"Hi, this is [Name] from [Company]. We moved a load for you last month — Chicago to Atlanta."'},
+{a:'Будь конкретным',d:'"I have a truck available Thursday in Chicago. Do you have anything going Southeast?"'},
+{a:'Не будь навязчивым',d:'Один звонок, один email. Если нет ответа — подожди неделю.'},
+{a:'Предложи ценность',d:'"We delivered on time, no issues. Happy to work together again."'},
+{a:'Запроси будущие грузы',d:'"Can you keep me in mind for your Chicago lanes?"'}],tip:'Follow-up через 2-4 недели — оптимально. Слишком часто = раздражает. Слишком редко = забывают.'},
+{id:'k24',ico:'⚡',cat:'HOS',diff:'medium',xp:10,title:'Водитель нарушил 14-часовое окно',desc:'Водитель работает 15 часов. Груз ещё не доставлен.',sit:'Водитель начал смену в 6 AM. Сейчас 9 PM — 15 часов. До доставки 2 часа.',steps:[{a:'Стоп — водитель должен остановиться',d:'14-часовое окно истекло. Продолжение движения = HOS violation.'},
+{a:'Найди безопасное место',d:'Ближайший truck stop или rest area. Немедленно.'},
+{a:'Позвони брокеру',d:'"Driver out of hours. Must stop. Delivery rescheduled to tomorrow morning."'},
+{a:'Уведоми получателя',d:'Через брокера — новое время доставки.'},
+{a:'10-часовой отдых',d:'Водитель должен отдохнуть минимум 10 часов перед продолжением.'},
+{a:'Анализ ситуации',d:'Почему так получилось? Планируй лучше в следующий раз.'}],tip:'14-часовое окно не продлевается. Планируй маршрут с учётом HOS ДО принятия груза.'},
+{id:'k25',ico:'🏭',cat:'Проблемы',diff:'medium',xp:10,title:'Склад закрыт при прибытии',desc:'Водитель приехал на загрузку. Склад закрыт, никого нет.',sit:'Водитель: "I\'m at the shipper. Nobody here. Doors locked. Appointment was 8 AM."',steps:[{a:'Проверь адрес',d:'Убедись что водитель на правильном адресе. Бывают ошибки в rate con.'},
+{a:'Позвони брокеру',d:'"Driver at shipper — facility closed. No one here. Appointment was 8 AM."'},
+{a:'Брокер звонит shipper',d:'Это задача брокера — найти контакт и решить ситуацию.'},
+{a:'Detention начинается',d:'Фиксируй время прибытия. Если ждёт больше 2 часов — detention.'},
+{a:'Если никто не отвечает',d:'Водитель не обязан ждать бесконечно. Через 2 часа — TONU claim.'},
+{a:'Задокументируй',d:'Фото закрытого склада с временной меткой.'}],tip:'Всегда имей прямой контакт shipper в rate con. Брокер не всегда доступен в 6 AM.'},
+{id:'k26',ico:'💡',cat:'Финансы',diff:'medium',xp:10,title:'Расчёт комиссии диспетчера',desc:'Ты диспетчер. Нужно правильно рассчитать свою комиссию.',sit:'Ставка брокера $3,500. Твоя комиссия 8%. Перевозчик хочет знать сколько получит.',steps:[{a:'Посчитай комиссию',d:'$3,500 × 8% = $280 dispatcher fee.'},
+{a:'Сумма перевозчику',d:'$3,500 - $280 = $3,220 to carrier.'},
+{a:'Объясни прозрачно',d:'Всегда говори перевозчику точную сумму которую он получит.'},
+{a:'Оформи договор',d:'Dispatcher-carrier agreement должен фиксировать % комиссии.'},
+{a:'Не скрывай ставку',d:'Перевозчик имеет право знать ставку брокера. Скрытие = потеря доверия.'},
+{a:'Выставь invoice',d:'После доставки — invoice перевозчику на $280.'}],tip:'Прозрачность = долгосрочные отношения. Перевозчики уходят от диспетчеров которые скрывают ставки.'},
+{id:'k27',ico:'🌐',cat:'Технологии',diff:'medium',xp:10,title:'Работа с TMS системой',desc:'Брокер требует обновлять статус груза в их TMS портале.',sit:'"You need to update load status in our portal: picked up, in transit, delivered."',steps:[{a:'Получи доступ',d:'Брокер даст логин/пароль к их carrier portal.'},
+{a:'Обнови при загрузке',d:'Сразу после pickup — статус "Picked Up" + actual time.'},
+{a:'In Transit апдейты',d:'Некоторые брокеры требуют апдейты каждые 4-6 часов.'},
+{a:'Delivered статус',d:'Сразу после выгрузки — "Delivered" + POD upload если требуют.'},
+{a:'Загрузи документы',d:'BOL, POD, lumper receipt — всё в портал для быстрой оплаты.'},
+{a:'Автоматизируй',d:'Многие ELD системы интегрируются с брокерскими порталами.'}],tip:'Брокеры которые видят апдейты в реальном времени дают больше грузов. Это показывает профессионализм.'},
+{id:'k28',ico:'🔧',cat:'Проблемы',diff:'medium',xp:10,title:'Проблема с тормозами на весовой',desc:'Инспектор на весовой нашёл проблему с тормозами. Водитель получил out-of-service order.',sit:'Водитель: "Inspector put me out of service — brake adjustment needed."',steps:[{a:'Водитель не может двигаться',d:'Out-of-service order = запрет на движение до устранения.'},
+{a:'Найди ближайший сервис',d:'Truck stop с ремонтом, Speedco, Love\'s — ближайший вариант.'},
+{a:'Позвони брокеру',d:'"Driver OOS at weigh station — brake issue. Working on repair. ETA unknown."'},
+{a:'Оцени время ремонта',d:'Brake adjustment обычно 1-3 часа. Запчасти — дольше.'},
+{a:'Документируй расходы',d:'Ремонт за счёт перевозчика. Сохрани все чеки.'},
+{a:'Clearance после ремонта',d:'После ремонта — инспектор должен снять OOS order.'}],tip:'Pre-trip inspection должен выявлять такие проблемы ДО выезда. Это экономит время и деньги.'},
+{id:'k29',ico:'📈',cat:'Финансы',diff:'hard',xp:15,title:'Анализ прибыльности за месяц',desc:'Конец месяца. Нужно понять насколько прибыльным был месяц.',sit:'За месяц: 12 грузов, $28,000 gross revenue. Расходы неизвестны.',steps:[{a:'Посчитай расходы',d:'Топливо + зарплата водителя + страховка + обслуживание + dispatcher fee.'},
+{a:'Типичная структура',d:'Топливо 25%, водитель 35%, страховка 8%, обслуживание 7% = 75% расходов.'},
+{a:'Пример расчёта',d:'$28,000 × 75% = $21,000 расходы. Net = $7,000 (25% margin).'},
+{a:'Анализ по маршрутам',d:'Какие маршруты были самыми прибыльными? Повторяй их.'},
+{a:'Deadhead анализ',d:'Сколько пустых миль? Цель: менее 15% от общего пробега.'},
+{a:'Планируй следующий месяц',d:'Больше contract lanes, меньше spot market = стабильность.'}],tip:'Успешные перевозчики знают свой CPM наизусть. Без этого — работаешь вслепую.'},
+{id:'k30',ico:'🤝',cat:'Брокеры',diff:'easy',xp:6,title:'Первый груз с новым брокером',desc:'Новый брокер предлагает первый груз. Как произвести хорошее впечатление.',sit:'Новый брокер дал тебе груз. Это шанс стать preferred carrier.',steps:[{a:'Подтверди все детали',d:'Перечитай rate con. Адрес, время, контакты — всё правильно?'},
+{a:'Будь на связи',d:'Отвечай на звонки и сообщения в течение 15 минут.'},
+{a:'Проактивные апдейты',d:'"Picked up on time." "On track for delivery." Без запроса.'},
+{a:'Доставь вовремя',d:'Первый груз — самый важный. Никаких опозданий.'},
+{a:'Реши проблемы сам',d:'Если что-то пошло не так — реши и потом сообщи. Не жди инструкций.'},
+{a:'Попроси feedback',d:'"How was our service? Looking forward to working together again."'}],tip:'Первый груз = собеседование. Пройди его отлично — получишь постоянный поток грузов.'}
+);
+</script>
+<script>
+CASES.push(
+{id:'k31',ico:'��️',cat:'Проблемы',diff:'medium',xp:10,title:'Задержка на таможне (cross-border)',desc:'Груз идёт в Канаду. Таможня задержала на 6 часов.',sit:'Водитель: "Customs holding the load. They want additional documentation."',steps:[{a:'Уточни что нужно',d:'Какой документ? Commercial invoice, packing list, CUSMA certificate?'},
+{a:'Позвони брокеру',d:'"Customs delay at border — need [document]. Can shipper provide?"'},
+{a:'Shipper должен помочь',d:'Таможенные документы — ответственность shipper/exporter.'},
+{a:'Customs broker',d:'Если сложная ситуация — нужен licensed customs broker.'},
+{a:'Документируй задержку',d:'Время въезда на таможню, время выезда — для detention claim.'},
+{a:'Обнови получателя',d:'Через брокера — новое ETA доставки.'}],tip:'Cross-border грузы требуют дополнительной документации. Проверяй заранее.'},
+{id:'k32',ico:'💳',cat:'Финансы',diff:'medium',xp:10,title:'Factoring vs Direct Pay',desc:'Новый перевозчик спрашивает: использовать factoring или ждать прямой оплаты?',sit:'Перевозчик: "Should I use factoring or wait 30-45 days for direct pay?"',steps:[{a:'Объясни factoring',d:'Factoring company платит тебе сразу (минус 2-5%), потом сама получает от брокера.'},
+{a:'Плюсы factoring',d:'Деньги сразу, не нужно ждать 30-45 дней, помогает с cash flow.'},
+{a:'Минусы factoring',d:'Комиссия 2-5% = $70-175 с $3,500 груза. За год — тысячи долларов.'},
+{a:'Когда factoring выгоден',d:'Новый бизнес, нужны деньги на топливо, много грузов одновременно.'},
+{a:'Когда лучше direct pay',d:'Стабильный cash flow, работаешь с надёжными брокерами, quick pay доступен.'},
+{a:'Quick pay альтернатива',d:'Многие брокеры предлагают quick pay за 2-3% — дешевле factoring.'}],tip:'Factoring — инструмент для роста. Когда бизнес стабилен — переходи на direct pay.'},
+{id:'k33',ico:'📋',cat:'Документы',diff:'hard',xp:15,title:'Cargo claim — повреждение груза',desc:'Получатель обнаружил повреждение груза. Нужно правильно оформить claim.',sit:'Receiver: "3 pallets damaged. We\'re filing a cargo claim."',steps:[{a:'Не спорь на месте',d:'Зафиксируй повреждение. Не признавай вину и не отрицай.'},
+{a:'Фотодокументация',d:'Фото повреждений, упаковки, пломб, всего трейлера — до и после.'},
+{a:'Получи письменный акт',d:'Receiver должен описать повреждения на BOL при подписании.'},
+{a:'Уведоми cargo insurance',d:'Немедленно. Дай им все детали и фото.'},
+{a:'Уведоми брокера',d:'"Cargo damage at delivery — 3 pallets. Insurance notified. Claim in process."'},
+{a:'Сохрани все документы',d:'BOL, фото, police report если есть, repair estimates.'}],tip:'Cargo claim может занять месяцы. Документация с первой минуты — единственная защита.'},
+{id:'k34',ico:'🎯',cat:'Переговоры',diff:'hard',xp:15,title:'Переговоры о контрактном маршруте',desc:'Брокер предлагает контракт на 3 месяца. Нужно договориться о хорошей ставке.',sit:'Брокер: "We need a carrier for Chicago–Atlanta, 3 loads/week, 3 months. What\'s your rate?"',steps:[{a:'Исследуй рынок',d:'DAT 30-day average на этом маршруте. Это твоя база.'},
+{a:'Посчитай свои расходы',d:'CPM × miles + overhead. Минимальная ставка для прибыли.'},
+{a:'Добавь premium за commitment',d:'Контракт = стабильность для тебя. Но и риск если рынок вырастет.'},
+{a:'Предложи чуть выше рынка',d:'"Based on current DAT rates and our costs, $1,950/load works for us."'},
+{a:'Обсуди условия',d:'Что если рынок сильно изменится? Есть ли fuel escalator clause?'},
+{a:'Зафиксируй письменно',d:'Контракт должен быть подписан. Устные договорённости не работают.'}],tip:'Контрактная ставка обычно на 5-10% ниже spot. Компенсация — стабильность и планирование.'},
+{id:'k35',ico:'🚦',cat:'Маршруты',diff:'easy',xp:6,title:'Планирование времени доставки',desc:'Нужно рассчитать реальное время доставки с учётом всех факторов.',sit:'Загрузка в Chicago в 6 AM. Доставка в Atlanta. Расстояние 720 миль.',steps:[{a:'Базовое время',d:'720 miles ÷ 55 mph average = 13 hours driving time.'},
+{a:'Добавь остановки',d:'Fuel stop 30 min, meal 30 min, rest breaks = +1.5 hours.'},
+{a:'HOS ограничения',d:'11 часов вождения максимум. 720 miles = возможно за один день.'},
+{a:'Учти трафик',d:'Chicago rush hour, Atlanta traffic — добавь 1-2 часа.'},
+{a:'Итого',d:'6 AM + 13 + 1.5 + 1.5 = примерно 10 PM arrival. Реалистично.'},
+{a:'Сообщи брокеру',d:'"ETA Atlanta approximately 10 PM today." Обнови если изменится.'}],tip:'Всегда давай реалистичный ETA. Лучше приехать раньше чем обещал, чем опоздать.'},
+{id:'k36',ico:'🔑',cat:'Безопасность',diff:'medium',xp:10,title:'Проверка водителя перед наймом',desc:'Ты нанимаешь нового водителя. Какие проверки обязательны?',sit:'Кандидат на должность водителя. Нужно провести все обязательные проверки.',steps:[{a:'MVR проверка',d:'Motor Vehicle Record — история нарушений за последние 3 года.'},
+{a:'DOT drug test',d:'Обязателен перед первым рейсом. Без него — нельзя выпускать на дорогу.'},
+{a:'CDL verification',d:'Проверь действительность CDL через DMV. Правильные endorsements?'},
+{a:'PSP report',d:'Pre-Employment Screening Program — история нарушений HOS и аварий.'},
+{a:'Employment history',d:'Последние 3 года работы. Проверь причины увольнения.'},
+{a:'Physical/Medical cert',d:'DOT medical certificate должен быть действующим.'}],tip:'Плохой водитель = аварии, штрафы, потеря страховки. Проверка занимает день, экономит годы.'},
+{id:'k37',ico:'📊',cat:'Технологии',diff:'medium',xp:10,title:'Использование DAT для анализа рынка',desc:'Нужно понять рыночную ставку перед переговорами с брокером.',sit:'Брокер предлагает груз. Ты хочешь знать справедливую ставку.',steps:[{a:'Открой DAT Rate View',d:'Введи origin, destination, equipment type, дату.'},
+{a:'Смотри на средние',d:'DAT показывает: low, average, high за последние 7/30 дней.'},
+{a:'Учти сезонность',d:'Ставки меняются. Декабрь и март обычно выше.'},
+{a:'Проверь объём',d:'Сколько грузов на этом маршруте? Мало грузов = ниже ставки.'},
+{a:'Используй в переговорах',d:'"DAT shows $2.15/mile average — I need $2.10 minimum."'},
+{a:'Обнови регулярно',d:'Рынок меняется еженедельно. Проверяй перед каждыми переговорами.'}],tip:'DAT — твой главный аргумент в переговорах. Данные убеждают лучше слов.'},
+{id:'k38',ico:'🏥',cat:'Проблемы',diff:'hard',xp:15,title:'Водитель заболел в пути',desc:'Водитель почувствовал себя плохо. Не может продолжать рейс.',sit:'Водитель: "I\'m not feeling well. I think I need to see a doctor."',steps:[{a:'Здоровье — приоритет',d:'Груз подождёт. Водитель должен получить медицинскую помощь.'},
+{a:'Найди ближайшую клинику',d:'Urgent care, hospital — Google Maps. Помоги водителю добраться.'},
+{a:'Позвони брокеру',d:'"Driver ill — seeking medical attention. Load will be delayed. Will update ASAP."'},
+{a:'Оцени ситуацию',d:'Если водитель не может продолжить — нужен другой водитель или carrier.'},
+{a:'Документируй',d:'Медицинские документы могут понадобиться для объяснения задержки.'},
+{a:'Страховка водителя',d:'Проверь есть ли у водителя health insurance. Помоги с оформлением.'}],tip:'Больной водитель за рулём = опасность для всех. Никогда не давай давление продолжать.'},
+{id:'k39',ico:'💬',cat:'Переговоры',diff:'medium',xp:10,title:'Переговоры о lumper fee',desc:'Получатель требует lumper service. Брокер говорит что не включил в rate con.',sit:'"Receiver requires lumper — $200. It\'s not in the rate con. Who pays?"',steps:[{a:'Проверь rate con',d:'Есть ли упоминание lumper? Если нет — это спорный момент.'},
+{a:'Позвони брокеру',d:'"Receiver requires lumper $200 — not in rate con. Who covers this?"'},
+{a:'Стандартная практика',d:'Обычно lumper платит shipper или брокер. Водитель не должен платить из своего.'},
+{a:'Получи подтверждение',d:'Брокер должен письменно подтвердить кто платит ДО разгрузки.'},
+{a:'Если брокер отказывает',d:'Водитель может заплатить и потом выставить invoice брокеру с lumper receipt.'},
+{a:'Задокументируй',d:'Lumper receipt обязателен для возмещения.'}],tip:'Lumper fee — частая точка конфликта. Всегда уточняй при букинге: "Who covers lumper if required?"'},
+{id:'k40',ico:'🌍',cat:'Маршруты',diff:'hard',xp:15,title:'Организация team load на дальний маршрут',desc:'Брокер предлагает team load: LA → NYC, 2,800 miles, $5,500, 48 часов.',sit:'Нужно решить: брать ли team load и как организовать.',steps:[{a:'Посчитай прибыльность',d:'$5,500 ÷ 2,800 miles = $1.96/mile. Для team — нормально.'},
+{a:'Расходы team',d:'Два водителя × $0.45/mile = $0.90/mile driver cost. Топливо $0.70/mile.'},
+{a:'Net расчёт',d:'$1.96 - $0.90 - $0.70 = $0.36/mile net. $1,008 profit. Приемлемо.'},
+{a:'HOS для team',d:'Team может ехать 22 часа в сутки. 2,800 miles ÷ 55 mph = 51 час ÷ 22 = 2.3 дня.'},
+{a:'Логистика',d:'Водители меняются каждые 10-11 часов. Один спит, другой едет.'},
+{a:'Коммуникация',d:'Оба водителя должны знать маршрут, контакты, детали груза.'}],tip:'Team loads платят меньше per mile но больше per day. Идеально для time-sensitive грузов.'}
+);
+</script>
+<script>
+CASES.push(
+{id:'k41',ico:'��',cat:'Безопасность',diff:'hard',xp:15,title:'Подозрение на double brokering',desc:'Тебе звонит "брокер" который сам получил груз от другого брокера.',sit:'Звонящий: "I have a load for you — $2,800 Chicago to Atlanta." Но он сам carrier, не брокер.',steps:[{a:'Проверь MC статус',d:'Попроси MC number. Проверь на SAFER — это carrier или broker?'},
+{a:'Red flags',d:'Carrier предлагает груз = double brokering. Это незаконно.'},
+{a:'Не принимай',d:'Double brokering = ты можешь не получить оплату. Оригинальный брокер не знает о тебе.'},
+{a:'Проверь оригинал',d:'Найди оригинального брокера через SAFER и свяжись напрямую.'},
+{a:'Сообщи FMCSA',d:'Double brokering — федеральное преступление. Можно подать жалобу.'},
+{a:'Защити себя',d:'Всегда работай только с лицензированными брокерами напрямую.'}],tip:'Double brokering растёт. Всегда проверяй MC статус на SAFER перед принятием груза.'},
+{id:'k42',ico:'📱',cat:'Технологии',diff:'easy',xp:6,title:'Настройка ELD для нового водителя',desc:'Новый водитель не знает как пользоваться ELD системой.',sit:'Водитель: "I\'ve never used Motive before. How do I log my hours?"',steps:[{a:'Создай аккаунт',d:'Зарегистрируй водителя в системе. Дай логин и пароль.'},
+{a:'Покажи основы',d:'Как начать смену, как менять статус (driving/on duty/off duty/sleeper).'},
+{a:'Объясни важность',d:'ELD данные = юридический документ. Ошибки = штрафы.'},
+{a:'Pre-trip inspection',d:'Покажи как заполнять DVIR (Driver Vehicle Inspection Report) в приложении.'},
+{a:'Тестовый рейс',d:'Первый рейс — проверяй что ELD работает правильно.'},
+{a:'Техподдержка',d:'Дай номер техподдержки Motive на случай проблем.'}],tip:'ELD ошибки обнаруживаются на весовых. Обучение занимает час, экономит тысячи в штрафах.'},
+{id:'k43',ico:'💰',cat:'Финансы',diff:'medium',xp:10,title:'Управление cash flow в медленный сезон',desc:'Январь — медленный месяц. Ставки упали, грузов меньше. Как управлять финансами?',sit:'Январь: ставки на 20% ниже чем в декабре. Расходы те же.',steps:[{a:'Сократи deadhead',d:'Каждая пустая миля = чистый убыток. Ищи backhaul агрессивно.'},
+{a:'Рассмотри contract lanes',d:'Контрактные ставки стабильнее spot в медленный сезон.'},
+{a:'Оптимизируй расходы',d:'Можно ли сократить: fuel (route optimization), maintenance (отложить не срочное)?'},
+{a:'Резервный фонд',d:'Идеально иметь 2-3 месяца расходов в резерве для таких периодов.'},
+{a:'Диверсифицируй',d:'Разные брокеры, разные маршруты — не зависи от одного источника.'},
+{a:'Планируй на год',d:'Январь и февраль всегда медленные. Зарабатывай больше в Q4.'}],tip:'Сезонность — реальность фрахта. Успешные перевозчики планируют на год вперёд.'},
+{id:'k44',ico:'📚',cat:'Брокеры',diff:'easy',xp:6,title:'Понимание broker-carrier agreement',desc:'Брокер присылает broker-carrier agreement для подписания.',sit:'Брокер: "Please sign our carrier agreement before we can book you."',steps:[{a:'Читай внимательно',d:'Особенно: payment terms, cargo liability, exclusivity clauses.'},
+{a:'Payment terms',d:'Когда платят? 30 дней? 45? Quick pay доступен?'},
+{a:'Cargo liability',d:'Кто несёт ответственность за повреждение груза?'},
+{a:'Exclusivity',d:'Некоторые соглашения запрещают работать с конкурентами брокера. Это red flag.'},
+{a:'Dispute resolution',d:'Как решаются споры? Арбитраж? Суд? В каком штате?'},
+{a:'Подпиши если всё ок',d:'Стандартные соглашения — нормально. Необычные условия — обсуди.'}],tip:'Broker-carrier agreement — юридический документ. Не подписывай не читая.'},
+{id:'k45',ico:'🌅',cat:'Маршруты',diff:'medium',xp:10,title:'Оптимизация маршрута для экономии топлива',desc:'Нужно снизить расходы на топливо на длинном маршруте.',sit:'Маршрут Dallas → Chicago, 920 miles. Топливо — главная статья расходов.',steps:[{a:'Планируй заправки',d:'GasBuddy или TruckPark — найди дешёвые дизельные станции по маршруту.'},
+{a:'Заправляйся в Техасе',d:'Топливо в TX обычно дешевле чем в IL. Заправь полный бак.'},
+{a:'Скорость = экономия',d:'55 mph vs 65 mph = 15% экономия топлива. На 920 miles — значительно.'},
+{a:'Избегай холостого хода',d:'Idle = 0.8 gal/hour. Выключай двигатель на стоянках.'},
+{a:'Fuel card',d:'Comdata, EFS — скидки на топливо 10-30 центов/галлон.'},
+{a:'Маршрут без объездов',d:'Google Maps Truck routing — избегай низких мостов и запрещённых дорог.'}],tip:'Экономия $0.10/mile на топливе = $92 на этом маршруте. За год — тысячи долларов.'},
+{id:'k46',ico:'⚠️',cat:'Проблемы',diff:'hard',xp:15,title:'Груз задержан на складе получателя',desc:'Получатель принял груз но не подписывает POD уже 3 дня.',sit:'Водитель выгрузился 3 дня назад. POD не подписан. Брокер не платит без POD.',steps:[{a:'Позвони получателю',d:'Напрямую в receiving department. Попроси подписать POD.'},
+{a:'Через брокера',d:'Брокер должен надавить на своего клиента (shipper/receiver).'},
+{a:'Email с deadline',d:'"Please sign POD by [date] or we will escalate to legal."'},
+{a:'Альтернативные доказательства',d:'ELD данные, gate log, фото разгрузки — могут заменить POD для оплаты.'},
+{a:'Некоторые брокеры платят без POD',d:'Если есть другие доказательства доставки — попроси исключение.'},
+{a:'Legal action',d:'Если POD намеренно не подписывают — это нарушение контракта.'}],tip:'Всегда получай подпись на BOL сразу при разгрузке. Не уезжай без подписанного документа.'},
+{id:'k47',ico:'🏆',cat:'Переговоры',diff:'hard',xp:15,title:'Переговоры после плохого опыта',desc:'Брокер задержал оплату в прошлый раз. Теперь предлагает новый груз.',sit:'Тот же брокер который платил 60 дней вместо 30. Предлагает хороший груз.',steps:[{a:'Оцени риск',d:'Один раз задержал — случайность? Паттерн на Carrier411?'},
+{a:'Требуй quick pay',d:'"Given our last experience, I need quick pay (3 days) for this load."'},
+{a:'Или предоплату',d:'Некоторые перевозчики требуют 50% advance для ненадёжных брокеров.'},
+{a:'Меньший груз для теста',d:'Возьми небольшой груз. Посмотри платят ли вовремя.'},
+{a:'Документируй всё',d:'Все договорённости — письменно. Email подтверждения.'},
+{a:'Будь готов уйти',d:'Если условия не устраивают — есть другие брокеры.'}],tip:'Второй шанс — с условиями. Без условий — ты снова рискуешь теми же деньгами.'},
+{id:'k48',ico:'📦',cat:'Проблемы',diff:'medium',xp:10,title:'Неправильный адрес доставки',desc:'Водитель приехал по адресу из rate con. Адрес не существует.',sit:'Водитель: "GPS says this address doesn\'t exist. I\'m in an industrial area but no warehouse."',steps:[{a:'Проверь rate con',d:'Перечитай адрес. Возможно опечатка в номере или улице.'},
+{a:'Позвони брокеру',d:'"Driver at delivery address — location not found. Need correct address ASAP."'},
+{a:'Брокер звонит receiver',d:'Брокер должен получить правильный адрес от своего клиента.'},
+{a:'Detention начинается',d:'Водитель ждёт — фиксируй время.'},
+{a:'Не езди наугад',d:'Водитель не должен искать склад самостоятельно. Это риск.'},
+{a:'Задокументируй',d:'Фото GPS с неправильным адресом — доказательство для detention claim.'}],tip:'Всегда проверяй адрес доставки на Google Maps ДО отправки водителя.'},
+{id:'k49',ico:'🎯',cat:'Брокеры',diff:'medium',xp:10,title:'Работа с несколькими брокерами одновременно',desc:'Как эффективно управлять отношениями с 10+ брокерами?',sit:'У тебя 15 брокеров в контактах. Нужно организовать работу.',steps:[{a:'CRM или таблица',d:'Excel или Google Sheets: брокер, контакт, маршруты, ставки, рейтинг оплат.'},
+{a:'Приоритизируй',d:'Топ-5 брокеров которые платят хорошо и вовремя — основа бизнеса.'},
+{a:'Регулярный контакт',d:'Звони топ-брокерам еженедельно. Остальным — когда нужен груз.'},
+{a:'Специализируйся',d:'Лучше быть экспертом на 3-4 маршрутах чем посредственным везде.'},
+{a:'Отслеживай оплаты',d:'Кто платит вовремя? Кто задерживает? Это влияет на приоритет.'},
+{a:'Новые брокеры',d:'Добавляй 1-2 новых брокера в месяц. Диверсификация важна.'}],tip:'Качество отношений важнее количества. 5 надёжных брокеров лучше 20 случайных.'},
+{id:'k50',ico:'🌟',cat:'Финансы',diff:'hard',xp:15,title:'Масштабирование бизнеса: второй грузовик',desc:'Бизнес идёт хорошо. Стоит ли покупать второй грузовик?',sit:'Один грузовик приносит $8,000/месяц net. Думаешь о расширении.',steps:[{a:'Анализ текущего бизнеса',d:'Стабильно ли работает первый грузовик? Есть ли постоянные клиенты?'},
+{a:'Финансовая подушка',d:'Нужно минимум 6 месяцев расходов в резерве перед покупкой.'},
+{a:'Стоимость второго грузовика',d:'Новый: $150K+. Б/у: $50-80K. Лизинг: $2,500-3,500/месяц.'},
+{a:'Дополнительные расходы',d:'Второй водитель, страховка, обслуживание — +$6,000-8,000/месяц.'},
+{a:'Нужен ли второй водитель',d:'Без надёжного водителя второй грузовик = головная боль.'},
+{a:'Постепенный рост',d:'Лучше один грузовик с 90% загрузкой чем два с 50%.'}],tip:'Масштабирование удваивает не только доходы, но и проблемы. Будь готов к этому.'}
+);
+</script>
+<script>
+// ═══════════════════════════════════════════════
+// ACHIEVEMENTS
+// ═══════════════════════════════════════════════
+const ACHIEVEMENTS=[
+{id:'first_card',ico:'🌱',name:'Первый шаг',desc:'Изучи первую карточку',xp:10,check:s=>s.known>=1},
+{id:'ten_cards',ico:'📚',name:'Десятка',desc:'Изучи 10 карточек',xp:25,check:s=>s.known>=10},
+{id:'half_cards',ico:'🎯',name:'Полпути',desc:'Изучи 40 карточек',xp:50,check:s=>s.known>=40},
+{id:'all_cards',ico:'💎',name:'Мастер карточек',desc:'Изучи все 80 карточек',xp:100,check:s=>s.known>=80},
+{id:'first_case',ico:'💼',name:'Первый кейс',desc:'Разбери первый кейс',xp:10,check:s=>s.cases>=1},
+{id:'ten_cases',ico:'🏆',name:'Практик',desc:'Разбери 10 кейсов',xp:30,check:s=>s.cases>=10},
+{id:'all_cases',ico:'👑',name:'Эксперт',desc:'Разбери все 50 кейсов',xp:100,check:s=>s.cases>=50},
+{id:'streak5',ico:'🔥',name:'Серия 5',desc:'5 карточек подряд правильно',xp:20,check:s=>s.maxStreak>=5},
+{id:'streak10',ico:'⚡',name:'Серия 10',desc:'10 карточек подряд',xp:40,check:s=>s.maxStreak>=10},
+{id:'streak3days',ico:'📅',name:'3 дня подряд',desc:'Занимайся 3 дня подряд',xp:30,check:s=>s.dayStreak>=3},
+{id:'streak7days',ico:'🌟',name:'Неделя',desc:'7 дней подряд',xp:75,check:s=>s.dayStreak>=7},
+{id:'xp500',ico:'💰',name:'500 XP',desc:'Набери 500 XP',xp:0,check:s=>s.xp>=500},
+];
+
+// ═══════════════════════════════════════════════
+// STATE & STORAGE
+// ═══════════════════════════════════════════════
+const SK='trainer_v2';
+function loadState(){
+  try{return JSON.parse(localStorage.getItem(SK))||{};}catch(e){return{};}
+}
+function saveState(s){localStorage.setItem(SK,JSON.stringify(s));}
+function getState(){
+  const d=loadState();
+  return {
+    known:d.known||[],
+    unknown:d.unknown||[],
+    readCases:d.readCases||[],
+    xp:d.xp||0,
+    streak:d.streak||0,
+    maxStreak:d.maxStreak||0,
+    dayStreak:d.dayStreak||0,
+    lastDay:d.lastDay||'',
+    achievements:d.achievements||[],
+    totalAnswers:d.totalAnswers||0,
+    correctAnswers:d.correctAnswers||0,
+  };
+}
+function setState(s){saveState(s);}
+
+// ═══════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════
+function tab(name){
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.getElementById('t-'+name).classList.add('on');
+  document.getElementById('p-'+name).classList.add('on');
+  if(name==='stats')renderStats();
+}
+
+// ═══════════════════════════════════════════════
+// CARD STATE
+// ═══════════════════════════════════════════════
+let filteredCards=[];
+let cardIndex=0;
+let cardFlipped=false;
+let cardMode='study';
+let cardDiff='all';
+let cardCat='all';
+let cardStreak=0;
+
+function initCards(){
+  const cats=[...new Set(CARDS.map(c=>c.cat))];
+  const cf=document.getElementById('cat-filters');
+  cf.innerHTML='<button class="side-diff-btn on" onclick="ccat(\'all\')" id="cc-all">Все темы</button>';
+  cats.forEach(c=>{
+    cf.innerHTML+=`<button class="side-diff-btn" onclick="ccat('${c}')" id="cc-${c.replace(/\s/g,'_')}">${c}</button>`;
+  });
+  filterCards();
+}
+
+function filterCards(){
+  const q=document.getElementById('csrch').value.toLowerCase();
+  const s=getState();
+  filteredCards=CARDS.filter(c=>{
+    if(cardDiff!=='all'&&c.diff!==cardDiff)return false;
+    if(cardCat!=='all'&&c.cat!==cardCat)return false;
+    if(q&&!c.term.toLowerCase().includes(q)&&!c.def.toLowerCase().includes(q)&&!c.cat.toLowerCase().includes(q))return false;
+    if(cardMode==='review')return s.unknown.includes(c.id)||(!s.known.includes(c.id)&&!s.unknown.includes(c.id));
+    return true;
+  });
+  cardIndex=0;
+  if(cardMode==='browse'){renderBrowse();}
+  else{showCard();updateProgress();}
+  document.getElementById('fc-ctr').textContent=`${Math.min(cardIndex+1,filteredCards.length)} / ${filteredCards.length}`;
+}
+
+function cdiff(d){
+  cardDiff=d;
+  document.querySelectorAll('[id^="cd-"]').forEach(b=>b.classList.remove('on'));
+  document.getElementById('cd-'+d).classList.add('on');
+  filterCards();
+}
+function ccat(c){
+  cardCat=c;
+  document.querySelectorAll('[id^="cc-"]').forEach(b=>b.classList.remove('on'));
+  const id=c==='all'?'cc-all':'cc-'+c.replace(/\s/g,'_');
+  const el=document.getElementById(id);
+  if(el)el.classList.add('on');
+  filterCards();
+}
+function cmode(m){
+  cardMode=m;
+  document.querySelectorAll('.fcm').forEach(b=>b.classList.remove('on'));
+  const btn=document.getElementById('m-'+m);
+  if(btn)btn.classList.add('on');
+  // переключаем центральные панели
+  const panels=['card-panel','quiz-panel','match-panel'];
+  panels.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  const bm=document.getElementById('browse-mode');
+  if(bm)bm.style.display='none';
+  if(m==='browse'){if(bm)bm.style.display='block';renderBrowse();}
+  else if(m==='quiz'){const qp=document.getElementById('quiz-panel');if(qp)qp.style.display='block';quizStart();}
+  else if(m==='match'){const mp=document.getElementById('match-panel');if(mp)mp.style.display='block';matchStart();}
+  else{const cp=document.getElementById('card-panel');if(cp)cp.style.display='block';filterCards();}
+}
+
+function showCard(){
+  if(!filteredCards.length){
+    document.getElementById('f-term').textContent='Нет карточек';
+    document.getElementById('f-cat').textContent='—';
+    document.getElementById('f-hint').textContent='Измени фильтры';
+    document.getElementById('f-def').textContent='—';
+    document.getElementById('f-ex').style.display='none';
+    return;
+  }
+  const c=filteredCards[cardIndex%filteredCards.length];
+  cardFlipped=false;
+  document.getElementById('card3d').classList.remove('flip');
+  document.getElementById('f-cat').textContent=c.cat;
+  document.getElementById('f-cat2').textContent=c.cat;
+  document.getElementById('f-term').textContent=c.term;
+  document.getElementById('f-hint').textContent=c.hint?'('+c.hint+')':'';
+  document.getElementById('f-def').textContent=c.def;
+  const ex=document.getElementById('f-ex');
+  if(c.ex){ex.textContent=c.ex;ex.style.display='block';}
+  else ex.style.display='none';
+  document.getElementById('fc-ctr').textContent=`${(cardIndex%filteredCards.length)+1} / ${filteredCards.length}`;
+  updateProgress();
+}
+
+function flipCard(){
+  cardFlipped=!cardFlipped;
+  document.getElementById('card3d').classList.toggle('flip',cardFlipped);
+}
+
+function mark(knew){
+  if(!filteredCards.length)return;
+  const c=filteredCards[cardIndex%filteredCards.length];
+  const s=getState();
+  s.totalAnswers=(s.totalAnswers||0)+1;
+  if(knew){
+    s.correctAnswers=(s.correctAnswers||0)+1;
+    if(!s.known.includes(c.id))s.known.push(c.id);
+    s.unknown=s.unknown.filter(x=>x!==c.id);
+    cardStreak++;
+    s.streak=cardStreak;
+    if(cardStreak>s.maxStreak)s.maxStreak=cardStreak;
+    s.xp=(s.xp||0)+5;
+    showToast('⚡','+5 XP','Карточка изучена!');
+  }else{
+    if(!s.unknown.includes(c.id))s.unknown.push(c.id);
+    s.known=s.known.filter(x=>x!==c.id);
+    cardStreak=0;s.streak=0;
+    s.xp=(s.xp||0)+1;
+    showToast('💪','+1 XP','Повторим позже');
+  }
+  setState(s);
+  checkAchievements(s);
+  updateHeroNums();
+  document.getElementById('fc-streak').textContent=cardStreak;
+  nextCard();
+}
+
+function nextCard(){
+  cardIndex++;
+  if(cardIndex>=filteredCards.length){
+    if(cardMode==='review'){
+      const s=getState();
+      const remaining=filteredCards.filter(c=>s.unknown.includes(c.id));
+      if(!remaining.length){showToast('🎉','+20 XP','Все незнакомые изучены!');const st=getState();st.xp+=20;setState(st);}
+    }
+    cardIndex=0;
+  }
+  showCard();
+}
+
+function updateProgress(){
+  const s=getState();
+  const total=filteredCards.length||CARDS.length;
+  const known=filteredCards.filter(c=>s.known.includes(c.id)).length;
+  const pct=total?Math.round(known/total*100):0;
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('prog-txt').textContent=`Изучено: ${known} из ${total}`;
+  document.getElementById('prog-pct').textContent=pct+'%';
+}
+
+function renderBrowse(){
+  const s=getState();
+  const g=document.getElementById('cards-grid');
+  if(!filteredCards.length){g.innerHTML='<div class="empty"><div class="ei">🔍</div><p>Ничего не найдено</p></div>';return;}
+  g.innerHTML=filteredCards.map(c=>{
+    const known=s.known.includes(c.id);
+    const unknown=s.unknown.includes(c.id);
+    return`<div class="mc ${known?'known':unknown?'unknown':''}" onclick="openCardModal('${c.id}')">
+      <div class="mc-cat">${c.cat}</div>
+      <div class="mc-term">${c.term}</div>
+      <div class="mc-def">${c.def}</div>
+      <span class="diff-badge d-${c.diff}">${c.diff==='easy'?'Лёгкая':c.diff==='medium'?'Средняя':'Сложная'}</span>
+      <div class="mc-st">${known?'✅':unknown?'❌':''}</div>
+    </div>`;
+  }).join('');
+}
+
+function openCardModal(id){
+  const c=CARDS.find(x=>x.id===id);if(!c)return;
+  // reuse case modal for card detail
+  document.getElementById('m-ico').textContent='📚';
+  document.getElementById('m-cat').textContent=c.cat+' · '+{easy:'Лёгкая',medium:'Средняя',hard:'Сложная'}[c.diff];
+  document.getElementById('m-title').textContent=c.term;
+  document.getElementById('m-sit').textContent=c.hint?'('+c.hint+')':'';
+  document.getElementById('m-steps').innerHTML=`<div class="step"><div class="sn">📖</div><div class="sc"><div class="sa">Определение</div><div class="sd">${c.def}</div></div></div>`+(c.ex?`<div class="step"><div class="sn">💬</div><div class="sc"><div class="sa">Пример</div><div class="sd">${c.ex}</div></div></div>`:'');
+  document.getElementById('m-tip').style.display='none';
+  document.getElementById('m-mark-btn').style.display='none';
+  document.getElementById('modal-ov').classList.add('open');
+}
+
+function shuffleCards(){
+  filteredCards=filteredCards.sort(()=>Math.random()-.5);
+  cardIndex=0;
+  showCard();
+  showToast('🔀','Перемешано','Карточки перемешаны');
+}
+
+function resetSession(){
+  cardIndex=0;
+  cardStreak=0;
+  filterCards();
+  document.getElementById('fc-streak').textContent='0';
+  showToast('🔄','Сброс','Сессия сброшена');
+}
+
+function updateSideStats(){
+  const s=getState();
+  const el1=document.getElementById('h-known-side');
+  const el2=document.getElementById('h-cards-side');
+  if(el1)el1.textContent=s.known.length;
+  if(el2)el2.textContent=CARDS.length;
+}
+</script>
+<script>
+// ═══════════════════════════════════════════════
+// CASES
+// ═══════════════════════════════════════════════
+let caseDiff='all';let caseCat='all';let currentCaseId=null;
+
+function initCases(){
+  const cats=[...new Set(CASES.map(c=>c.cat))];
+  const cf=document.getElementById('kcat-filters');
+  cf.innerHTML='<button class="fb on" onclick="kcat(\'all\')" id="kc-all">Все темы</button>';
+  cats.forEach(c=>{
+    cf.innerHTML+=`<button class="fb" onclick="kcat('${c}')" id="kc-${c.replace(/\s/g,'_')}">${c}</button>`;
+  });
+  filterCases();
+}
+
+function filterCases(){
+  const q=document.getElementById('ksrch').value.toLowerCase();
+  const s=getState();
+  const filtered=CASES.filter(c=>{
+    if(caseDiff!=='all'&&c.diff!==caseDiff)return false;
+    if(caseCat!=='all'&&c.cat!==caseCat)return false;
+    if(q&&!c.title.toLowerCase().includes(q)&&!c.desc.toLowerCase().includes(q)&&!c.cat.toLowerCase().includes(q))return false;
+    return true;
+  });
+  const g=document.getElementById('cases-grid');
+  if(!filtered.length){g.innerHTML='<div class="empty"><div class="ei">🔍</div><p>Ничего не найдено</p></div>';return;}
+  g.innerHTML=filtered.map(c=>{
+    const read=s.readCases.includes(c.id);
+    return`<div class="kc ${read?'read':''}" onclick="openCase('${c.id}')">
+      <div class="kc-head">
+        <div class="kc-ico">${c.ico}</div>
+        <div><div class="kc-cat">${c.cat}</div><div class="kc-title">${c.title}</div></div>
+      </div>
+      <div class="kc-desc">${c.desc}</div>
+      <div class="kc-foot">
+        <span class="diff-badge d-${c.diff}">${c.diff==='easy'?'Лёгкий':c.diff==='medium'?'Средний':'Сложный'}</span>
+        <span class="kc-xp">+${c.xp} XP</span>
+        ${read?'<span class="kc-read">✅ Изучено</span>':''}
+      </div>
+    </div>`;
+  }).join('');
+  updateCasesProgress(filtered,s);
+}
+
+function updateCasesProgress(filtered,s){
+  const total=filtered.length;
+  const read=filtered.filter(c=>s.readCases.includes(c.id)).length;
+  const pct=total?Math.round(read/total*100):0;
+  document.getElementById('kprog-fill').style.width=pct+'%';
+  document.getElementById('kprog-txt').textContent=`Изучено: ${read} из ${total}`;
+  document.getElementById('kprog-pct').textContent=pct+'%';
+}
+
+function kdiff(d){
+  caseDiff=d;
+  document.querySelectorAll('[id^="kd-"]').forEach(b=>b.classList.remove('on'));
+  document.getElementById('kd-'+d).classList.add('on');
+  filterCases();
+}
+function kcat(c){
+  caseCat=c;
+  document.querySelectorAll('[id^="kc-"]').forEach(b=>b.classList.remove('on'));
+  const id=c==='all'?'kc-all':'kc-'+c.replace(/\s/g,'_');
+  const el=document.getElementById(id);
+  if(el)el.classList.add('on');
+  filterCases();
+}
+
+function openCase(id){
+  const c=CASES.find(x=>x.id===id);if(!c)return;
+  currentCaseId=id;
+  const s=getState();
+  document.getElementById('m-ico').textContent=c.ico;
+  document.getElementById('m-cat').textContent=c.cat+' · '+{easy:'Лёгкий',medium:'Средний',hard:'Сложный'}[c.diff];
+  document.getElementById('m-title').textContent=c.title;
+  document.getElementById('m-sit').textContent=c.sit;
+  document.getElementById('m-steps').innerHTML=c.steps.map((st,i)=>
+    `<div class="step"><div class="sn">${i+1}</div><div class="sc"><div class="sa">${st.a}</div><div class="sd">${st.d}</div></div></div>`
+  ).join('');
+  const tip=document.getElementById('m-tip');
+  const tipTxt=document.getElementById('m-tip-txt');
+  if(c.tip){tip.style.display='block';tipTxt.textContent=c.tip;}
+  else tip.style.display='none';
+  const btn=document.getElementById('m-mark-btn');
+  btn.style.display='block';
+  if(s.readCases.includes(id)){btn.textContent='✅ Уже изучено';btn.disabled=true;}
+  else{btn.textContent='✅ Изучено';btn.disabled=false;}
+  document.getElementById('modal-ov').classList.add('open');
+}
+
+function markCase(){
+  if(!currentCaseId)return;
+  const c=CASES.find(x=>x.id===currentCaseId);if(!c)return;
+  const s=getState();
+  if(!s.readCases.includes(currentCaseId)){
+    s.readCases.push(currentCaseId);
+    s.xp=(s.xp||0)+c.xp;
+    setState(s);
+    checkAchievements(s);
+    updateHeroNums();
+    showToast(c.ico,'+'+c.xp+' XP','Кейс изучен!');
+    document.getElementById('m-mark-btn').textContent='✅ Уже изучено';
+    document.getElementById('m-mark-btn').disabled=true;
+    filterCases();
+  }
+}
+
+function closeModal(e){
+  if(e&&e.target!==document.getElementById('modal-ov'))return;
+  document.getElementById('modal-ov').classList.remove('open');
+  currentCaseId=null;
+}
+
+// ═══════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════
+function renderStats(){
+  const s=getState();
+  const acc=s.totalAnswers?Math.round(s.correctAnswers/s.totalAnswers*100):0;
+  document.getElementById('st-streak').textContent=s.dayStreak+' дней подряд';
+  document.getElementById('st-streak-sub').textContent=s.dayStreak>0?'Продолжай в том же духе!':'Начни учиться сегодня!';
+  document.getElementById('st-xp').textContent=s.xp+' XP';
+  document.getElementById('s-known').textContent=s.known.length;
+  document.getElementById('s-cases').textContent=s.readCases.length;
+  document.getElementById('s-acc').textContent=acc+'%';
+  document.getElementById('s-maxstreak').textContent=s.maxStreak;
+
+  // Weak topics
+  const catStats={};
+  CARDS.forEach(c=>{
+    if(!catStats[c.cat])catStats[c.cat]={total:0,known:0};
+    catStats[c.cat].total++;
+    if(s.known.includes(c.id))catStats[c.cat].known++;
+  });
+  const weak=Object.entries(catStats)
+    .map(([cat,st])=>({cat,pct:st.total?Math.round(st.known/st.total*100):0,total:st.total,known:st.known}))
+    .sort((a,b)=>a.pct-b.pct).slice(0,5);
+  document.getElementById('weak-topics').innerHTML=weak.map(w=>
+    `<div class="wi"><div class="wi-n">${w.cat}</div>
+    <div class="wi-bar"><div class="wi-fill" style="width:${w.pct}%"></div></div>
+    <div class="wi-p">${w.pct}%</div></div>`
+  ).join('');
+
+  // Achievements
+  document.getElementById('ach-grid').innerHTML=ACHIEVEMENTS.map(a=>{
+    const got=s.achievements.includes(a.id);
+    return`<div class="ach ${got?'got':'lock'}">
+      <div class="ach-ic">${a.ico}</div>
+      <div class="ach-n">${a.name}</div>
+      <div class="ach-d">${a.desc}</div>
+      ${a.xp?`<div class="ach-xp">+${a.xp} XP</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function checkAchievements(s){
+  ACHIEVEMENTS.forEach(a=>{
+    if(!s.achievements.includes(a.id)&&a.check(s)){
+      s.achievements.push(a.id);
+      if(a.xp)s.xp+=a.xp;
+      setState(s);
+      setTimeout(()=>showToast(a.ico,'Достижение!',a.name),500);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+// HERO NUMS & STREAK
+// ═══════════════════════════════════════════════
+function updateHeroNums(){
+  const s=getState();
+  document.getElementById('h-known').textContent=s.known.length;
+  document.getElementById('h-streak').textContent=s.dayStreak;
+  document.getElementById('cnt-cards').textContent=CARDS.length;
+  document.getElementById('cnt-cases').textContent=CASES.length;
+  document.getElementById('h-cards').textContent=CARDS.length;
+  document.getElementById('h-cases').textContent=CASES.length;
+  updateSideStats();
+}
+
+function checkDayStreak(){
+  const s=getState();
+  const today=new Date().toDateString();
+  if(s.lastDay===today)return;
+  const yesterday=new Date(Date.now()-86400000).toDateString();
+  if(s.lastDay===yesterday){s.dayStreak=(s.dayStreak||0)+1;}
+  else if(s.lastDay!==today){s.dayStreak=1;}
+  s.lastDay=today;
+  setState(s);
+}
+
+// ═══════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════
+let toastTimer=null;
+function showToast(ico,xp,label){
+  const t=document.getElementById('toast');
+  document.getElementById('t-ico').textContent=ico;
+  document.getElementById('t-xp').textContent=xp;
+  document.getElementById('t-lbl').textContent=label;
+  t.style.display='flex';t.classList.remove('out');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.style.display='none',400);},2800);
+}
+
+// ═══════════════════════════════════════════════
+// RESET
+// ═══════════════════════════════════════════════
+function resetAll(){
+  if(!confirm('Сбросить весь прогресс? Это действие нельзя отменить.'))return;
+  localStorage.removeItem(SK);
+  cardStreak=0;
+  cardIndex=0;
+  updateHeroNums();
+  filterCards();
+  filterCases();
+  renderStats();
+  showToast('🗑️','Сброс','Прогресс очищен');
+}
+
+// ═══════════════════════════════════════════════
+// QUIZ MODE (тест с 4 вариантами + SRS)
+// ═══════════════════════════════════════════════
+const SRS_INTERVALS=[1,3,7,14,30]; // дней
+let quizCards=[];let quizIdx=0;let quizCorrectCount=0;let quizWrongCount=0;
+
+function quizStart(){
+  const s=getState();
+  // SRS: сортируем по дате следующего повторения
+  const now=Date.now();
+  quizCards=CARDS.filter(c=>{
+    if(cardDiff!=='all'&&c.diff!==cardDiff)return false;
+    if(cardCat!=='all'&&c.cat!==cardCat)return false;
+    return true;
+  }).sort((a,b)=>{
+    const na=s.srs&&s.srs[a.id]?s.srs[a.id].next:0;
+    const nb=s.srs&&s.srs[b.id]?s.srs[b.id].next:0;
+    return na-nb;
+  });
+  quizIdx=0;quizCorrectCount=0;quizWrongCount=0;
+  quizShow();
+}
+
+function quizShow(){
+  if(quizIdx>=quizCards.length){quizIdx=0;}
+  const c=quizCards[quizIdx];
+  const s=getState();
+  document.getElementById('quiz-num').textContent=quizIdx+1;
+  document.getElementById('quiz-total').textContent=quizCards.length;
+  document.getElementById('quiz-correct').textContent=quizCorrectCount;
+  document.getElementById('quiz-wrong').textContent=quizWrongCount;
+  const pct=quizCards.length?Math.round(quizIdx/quizCards.length*100):0;
+  document.getElementById('quiz-prog-fill').style.width=pct+'%';
+  document.getElementById('quiz-cat').textContent=c.cat;
+  document.getElementById('quiz-question').textContent=c.term;
+  document.getElementById('quiz-hint').textContent=c.hint?'('+c.hint+')':'';
+  document.getElementById('quiz-feedback').style.display='none';
+  // SRS hint
+  const srsData=s.srs&&s.srs[c.id];
+  const srsEl=document.getElementById('quiz-srs-hint');
+  if(srsData&&srsData.next>Date.now()){
+    const days=Math.ceil((srsData.next-Date.now())/86400000);
+    srsEl.textContent=`📅 Запланировано к повторению через ${days} дн.`;
+  } else {
+    srsEl.textContent=srsData?`🔁 Повторений: ${srsData.reps||0}`:'🆕 Новая карточка';
+  }
+  // 4 варианта: 1 правильный + 3 случайных
+  const wrong=CARDS.filter(x=>x.id!==c.id).sort(()=>Math.random()-.5).slice(0,3);
+  const opts=[c,...wrong].sort(()=>Math.random()-.5);
+  const container=document.getElementById('quiz-options');
+  container.innerHTML='';
+  opts.forEach(opt=>{
+    const btn=document.createElement('button');
+    btn.className='qopt';
+    btn.textContent=opt.def.length>90?opt.def.slice(0,90)+'…':opt.def;
+    btn.onclick=()=>quizAnswer(opt.id===c.id,c,btn,container);
+    container.appendChild(btn);
+  });
+}
+
+function quizAnswer(correct,card,btn,container){
+  container.querySelectorAll('.qopt').forEach(b=>b.disabled=true);
+  const s=getState();
+  if(!s.srs)s.srs={};
+  const srs=s.srs[card.id]||{reps:0,interval:0,next:0};
+  if(correct){
+    btn.classList.add('correct');
+    quizCorrectCount++;
+    srs.reps=(srs.reps||0)+1;
+    const lvl=Math.min(srs.reps,SRS_INTERVALS.length-1);
+    srs.interval=SRS_INTERVALS[lvl];
+    srs.next=Date.now()+srs.interval*86400000;
+    s.xp=(s.xp||0)+8;
+    showToast('🧠','+8 XP','Правильный ответ!');
+  } else {
+    btn.classList.add('wrong');
+    // подсветить правильный
+    container.querySelectorAll('.qopt').forEach(b=>{
+      if(b.textContent.startsWith(card.def.slice(0,20)))b.classList.add('correct');
+    });
+    quizWrongCount++;
+    srs.reps=0;srs.interval=0;srs.next=Date.now()+86400000;
+    s.xp=(s.xp||0)+1;
+  }
+  s.srs[card.id]=srs;
+  setState(s);
+  updateHeroNums();
+  // feedback
+  const fb=document.getElementById('quiz-feedback');
+  document.getElementById('qf-icon').textContent=correct?'✅':'❌';
+  document.getElementById('qf-text').textContent=correct?'Правильно!':'Неверно';
+  document.getElementById('qf-def').textContent=card.def;
+  fb.style.display='block';
+  const srsEl=document.getElementById('quiz-srs-hint');
+  srsEl.textContent=correct?`📅 Следующее повторение через ${srs.interval} дн.`:'🔁 Повторим завтра';
+}
+
+function quizNext(){
+  quizIdx++;
+  if(quizIdx>=quizCards.length){
+    quizIdx=0;
+    showToast('🎉','+20 XP','Раунд завершён!');
+    const s=getState();s.xp+=20;setState(s);updateHeroNums();
+  }
+  quizShow();
+}
+
+// ═══════════════════════════════════════════════
+// MATCH MODE (сопоставление)
+// ═══════════════════════════════════════════════
+let matchPairs=[];let matchSelected=null;let matchCorrectCount=0;let matchAttempts=0;
+let matchTimer=0;let matchTimerInterval=null;let matchTotal=6;
+
+function matchStart(){
+  clearInterval(matchTimerInterval);
+  matchTimer=0;matchCorrectCount=0;matchAttempts=0;
+  document.getElementById('match-result').style.display='none';
+  document.getElementById('match-board').style.display='grid';
+  // выбираем 6 случайных карточек
+  const pool=CARDS.filter(c=>{
+    if(cardDiff!=='all'&&c.diff!==cardDiff)return false;
+    if(cardCat!=='all'&&c.cat!==cardCat)return false;
+    return true;
+  });
+  matchPairs=pool.sort(()=>Math.random()-.5).slice(0,6);
+  matchTotal=matchPairs.length;
+  matchSelected=null;
+  document.getElementById('match-total').textContent=matchTotal;
+  document.getElementById('match-correct').textContent=0;
+  document.getElementById('match-timer').textContent=0;
+  renderMatchBoard();
+  matchTimerInterval=setInterval(()=>{
+    matchTimer++;
+    document.getElementById('match-timer').textContent=matchTimer;
+  },1000);
+}
+
+function renderMatchBoard(){
+  const board=document.getElementById('match-board');
+  const terms=matchPairs.map((c,i)=>({id:c.id,text:c.term,type:'term',idx:i})).sort(()=>Math.random()-.5);
+  const defs=matchPairs.map((c,i)=>({id:c.id,text:c.def.length>80?c.def.slice(0,80)+'…':c.def,type:'def',idx:i})).sort(()=>Math.random()-.5);
+  board.innerHTML=`
+    <div class="match-col" id="match-terms">
+      ${terms.map(t=>`<div class="match-item term" id="mt-${t.id}" onclick="matchClick('${t.id}','term',this)">${t.text}</div>`).join('')}
+    </div>
+    <div class="match-col" id="match-defs">
+      ${defs.map(d=>`<div class="match-item def" id="md-${d.id}" onclick="matchClick('${d.id}','def',this)">${d.text}</div>`).join('')}
+    </div>`;
+}
+
+function matchClick(id,type,el){
+  if(el.classList.contains('matched'))return;
+  if(!matchSelected){
+    // первый клик
+    document.querySelectorAll('.match-item.selected').forEach(e=>e.classList.remove('selected'));
+    el.classList.add('selected');
+    matchSelected={id,type,el};
+  } else {
+    if(matchSelected.el===el){el.classList.remove('selected');matchSelected=null;return;}
+    // второй клик — проверяем пару
+    matchAttempts++;
+    if(matchSelected.id===id&&matchSelected.type!==type){
+      // правильно
+      matchSelected.el.classList.remove('selected');
+      matchSelected.el.classList.add('matched');
+      el.classList.add('matched');
+      matchCorrectCount++;
+      document.getElementById('match-correct').textContent=matchCorrectCount;
+      matchSelected=null;
+      const s=getState();s.xp=(s.xp||0)+5;setState(s);updateHeroNums();
+      showToast('🔗','+5 XP','Пара найдена!');
+      if(matchCorrectCount>=matchTotal){
+        clearInterval(matchTimerInterval);
+        setTimeout(()=>{
+          document.getElementById('match-board').style.display='none';
+          document.getElementById('mr-time-val').textContent=matchTimer;
+          const acc=Math.round(matchTotal/matchAttempts*100);
+          document.getElementById('mr-acc').textContent=acc;
+          document.getElementById('match-result').style.display='block';
+          const bonus=Math.max(0,Math.round(50-matchTimer));
+          if(bonus>0){const s=getState();s.xp+=bonus;setState(s);updateHeroNums();showToast('⚡','+'+bonus+' XP','Бонус за скорость!');}
+        },400);
+      }
+    } else {
+      // неправильно
+      el.classList.add('wrong-flash');
+      matchSelected.el.classList.add('wrong-flash');
+      setTimeout(()=>{
+        el.classList.remove('wrong-flash','selected');
+        matchSelected.el.classList.remove('wrong-flash','selected');
+        matchSelected=null;
+      },400);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  checkDayStreak();
+  initCards();
+  initCases();
+  updateHeroNums();
+  initTips();
+  // XP award via xp-system if available
+  const PAGE_KEY='xp_page_trainer_quiz';
+  if(!localStorage.getItem(PAGE_KEY)){
+    import('../xp-system.js').then(m=>{
+      m.awardXP('CASE_STUDY_READ').then(r=>{if(r)localStorage.setItem(PAGE_KEY,'1');});
+    }).catch(()=>{});
+  }
+});
+
+// ═══════════════════════════════════════════════
+// TIPS
+// ═══════════════════════════════════════════════
+const TIPS=[
+  'Повторяй карточки каждый день по 10–15 минут — это эффективнее, чем 2 часа раз в неделю.',
+  'Сначала изучи все лёгкие карточки, потом переходи к средним. Уверенность строится постепенно.',
+  'Когда видишь незнакомый термин у брокера — сразу ищи его в глоссарии и добавляй в "незнакомые".',
+  'Rate Con и BOL — два документа которые ты должен знать наизусть. Без них нет груза.',
+  'HOS правила — не просто бюрократия. Нарушение = штраф до $16,000 и потеря CDL водителя.',
+  'Всегда проверяй MC номер перевозчика на SAFER.fmcsa.dot.gov перед первым грузом.',
+  'Detention начинается через 2 часа после arrival time. Фиксируй время прибытия сразу.',
+  'DAT Rate View — твой главный инструмент в переговорах. Данные убеждают лучше слов.',
+  'TONU (Truck Order Not Used) — требуй компенсацию если груз отменили после подтверждения.',
+  'Deadhead miles снижают прибыль. Всегда ищи backhaul перед тем как отправить водителя пустым.',
+  'Lumper fee — уточняй при букинге: "Who covers lumper if required?" Это экономит споры.',
+  'Первый груз с новым брокером — самый важный. Проактивные апдейты = постоянный поток грузов.',
+  'POD нужно отправить в течение 24 часов после доставки. Без POD — нет оплаты.',
+  'Cargo claim? Фотографируй всё до и после разгрузки. Документация с первой минуты.',
+  'Серия из 10 карточек подряд = достижение ⚡. Попробуй побить свой рекорд сегодня!',
+];
+let tipIndex=Math.floor(Math.random()*TIPS.length);
+function initTips(){
+  showTip();
+}
+function showTip(){
+  const el=document.getElementById('tip-text');
+  if(el){
+    el.style.opacity='0';
+    setTimeout(()=>{el.textContent=TIPS[tipIndex];el.style.opacity='1';},200);
+  }
+}
+function nextTip(){
+  tipIndex=(tipIndex+1)%TIPS.length;
+  showTip();
+}
+</script>
+</body>
+</html>
+
+
+
+

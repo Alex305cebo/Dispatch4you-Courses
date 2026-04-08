@@ -1,0 +1,197 @@
+DIALOGUE VALIDATION SUMMARY REPORT
+Generated: March 8, 2026
+================================================================================
+
+OVERVIEW
+--------
+Total Dialogues Tested: 4 (v17, v18, v19, v20)
+Valid Dialogues: 1 (v20)
+Invalid Dialogues: 3 (v17, v18, v19)
+
+================================================================================
+
+SCENARIO #17 - Los Angeles → Dallas (Dry Van Electronics)
+----------------------------------------------------------
+Status: ❌ FAILED
+Total Errors: 65
+
+CRITICAL ISSUES:
+1. Intermediate "weak" path (should be "reject_weak_final")
+   - All 16 steps have suggestion 4 leading to "weak" instead of "reject_weak_final"
+   
+2. Intermediate "warning" path (should be "reject_attitude_final")
+   - Steps 1, 2 have suggestions leading to "warning" instead of "reject_attitude_final"
+   
+3. Missing "_final" suffix on reject paths:
+   - weak
+   - weak_success
+   - warning
+   - reject_early
+   - reject_weak
+   - reject_attitude
+   - reject_timing
+   - reject_experience
+   - reject_insurance
+   - reject_communication
+   - reject_commitment
+   - reject_equipment
+   - reject_security
+   - reject_references
+   - reject_terms
+   - reject_fsc
+   - reject_backup
+   - reject_rate
+   - reject_ultimatum
+   - reject_email
+
+IMPACT: Every weak answer (variant 4) on any step leads to intermediate "weak" path
+with multiple steps, causing deadlock. Dispatcher gets redirected to step 1 of weak
+path instead of final outcome.
+
+================================================================================
+
+SCENARIO #18 - Phoenix → Seattle (Reefer Produce)
+--------------------------------------------------
+Status: ❌ FAILED
+Total Errors: 22
+
+CRITICAL ISSUES:
+1. Intermediate "weak" path (should be "reject_weak_final")
+   - 16 steps have suggestion 4 leading to "weak" instead of "reject_weak_final"
+   
+2. Intermediate "warning" path (should be "reject_attitude_final")
+   - Steps 1 have suggestions leading to "warning" instead of "reject_attitude_final"
+   
+3. Missing "_final" suffix on reject paths:
+   - weak
+   - weak_success
+   - warning
+
+4. Step 13, suggestion 6 leads to "master" (should be reject_*_final)
+   - This is NOT a "posted rate" acceptance, so it's incorrect
+
+IMPACT: Every weak answer (variant 4) on any step leads to intermediate "weak" path,
+causing deadlock.
+
+================================================================================
+
+SCENARIO #19 - Miami → New York (Dry Van Furniture)
+----------------------------------------------------
+Status: ❌ FAILED
+Total Errors: 20
+
+CRITICAL ISSUES:
+1. Intermediate "weak" path (should be "reject_weak_final")
+   - 15 steps have suggestion 4 leading to "weak" instead of "reject_weak_final"
+   
+2. Intermediate "warning" path (should be "reject_attitude_final")
+   - Steps 1 have suggestions leading to "warning" instead of "reject_attitude_final"
+   
+3. Missing "_final" suffix on reject paths:
+   - weak
+   - weak_success
+   - warning
+
+IMPACT: Every weak answer (variant 4) on any step leads to intermediate "weak" path,
+causing deadlock.
+
+================================================================================
+
+SCENARIO #20 - Houston → Detroit (Flatbed Steel)
+-------------------------------------------------
+Status: ✅ PASSED
+Total Errors: 0
+
+This is the REFERENCE EXAMPLE of correct structure:
+- All weak/aggressive/fail answers lead directly to reject_*_final paths
+- All reject paths have "_final" suffix
+- Each reject_*_final path contains exactly 1 element with outcome
+- No intermediate paths
+- No deadlocks
+
+================================================================================
+
+COMMON PATTERN ACROSS ALL FAILED DIALOGUES
+-------------------------------------------
+
+The same structural error appears in v17, v18, v19:
+
+1. INTERMEDIATE "weak" PATH
+   Instead of: suggestion 4 → "reject_weak_final" (1 element with outcome)
+   Currently:  suggestion 4 → "weak" (multiple steps starting from step 1)
+   
+2. INTERMEDIATE "warning" PATH
+   Instead of: suggestion 5 → "reject_attitude_final" (1 element with outcome)
+   Currently:  suggestion 5 → "warning" (multiple steps)
+
+3. REJECT PATHS WITHOUT "_final" SUFFIX
+   All reject paths should end with "_final" to indicate they are final outcomes
+
+================================================================================
+
+RECOMMENDED FIX STRATEGY
+------------------------
+
+For each dialogue (v17, v18, v19):
+
+1. RENAME PATHS:
+   - "weak" → DELETE (replace with direct reject_weak_final)
+   - "warning" → DELETE (replace with direct reject_attitude_final)
+   - "reject_*" → "reject_*_final" (add _final suffix)
+
+2. UPDATE SUGGESTIONS:
+   - All suggestion 4 (weak): path: "reject_weak_final"
+   - All suggestion 5 (aggressive): path: "reject_attitude_final"
+   - All suggestion 6 (fail): path: "reject_*_final" (appropriate reject type)
+
+3. ENSURE REJECT PATHS HAVE 1 ELEMENT:
+   Each reject_*_final path should contain exactly:
+   [
+     {
+       brokerResponse: "Final rejection message",
+       outcome: {
+         type: "failure",
+         quality: "fail",
+         rate: "$0",
+         feedback: "Reason for rejection"
+       }
+     }
+   ]
+
+4. CREATE NEW VERSIONS:
+   - v17 → v21 (fixed)
+   - v18 → v22 (fixed)
+   - v19 → v23 (fixed)
+
+================================================================================
+
+VALIDATION RULES SUMMARY
+-------------------------
+
+✅ RULE #1: Only two path types
+   - "master" (15-17 steps with questions)
+   - "reject_*_final" (1 element with outcome)
+
+✅ RULE #2: Variants 1-3 lead to "master"
+   - excellent → master
+   - good → master
+   - normal → master
+
+✅ RULE #3: Variants 4-6 lead to "reject_*_final"
+   - weak → reject_weak_final
+   - aggressive → reject_attitude_final
+   - fail → reject_*_final (specific type)
+   
+   EXCEPTION: "I'll take posted rate" on negotiation steps can lead to master
+
+✅ RULE #4: All reject paths end with "_final"
+   - reject_weak_final ✅
+   - reject_attitude_final ✅
+   - reject_nomc_final ✅
+   - etc.
+
+✅ RULE #5: Each reject_*_final has exactly 1 element with outcome
+
+================================================================================
+
+END OF REPORT

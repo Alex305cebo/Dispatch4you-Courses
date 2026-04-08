@@ -1,0 +1,238 @@
+﻿<!DOCTYPE html>
+<html lang="ru" style="background:#070b14">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Диагностика меню</title>
+    <link rel="stylesheet" href="shared-nav.css?v=7.6">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0a0e1a;
+            color: #fff;
+            font-family: monospace;
+        }
+
+        .diagnostic {
+            max-width: 1200px;
+            margin: 100px auto;
+            padding: 40px;
+        }
+
+        .diagnostic h1 {
+            color: #06b6d4;
+            margin-bottom: 30px;
+        }
+
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 12px;
+            border-left: 4px solid #06b6d4;
+        }
+
+        .test-section h2 {
+            color: #0ea5e9;
+            margin-bottom: 15px;
+        }
+
+        .result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .pass {
+            background: rgba(34, 197, 94, 0.2);
+            border-left: 3px solid #22c55e;
+        }
+
+        .fail {
+            background: rgba(239, 68, 68, 0.2);
+            border-left: 3px solid #ef4444;
+        }
+
+        .info {
+            background: rgba(59, 130, 246, 0.2);
+            border-left: 3px solid #3b82f6;
+        }
+
+        button {
+            background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+    </style>
+    <script type="module" src="firebase-auth-init.js?v=4.0"></script>
+</head>
+
+<body>
+    <div id="nav-placeholder"></div>
+    <script src="nav-loader.js?v=7.4"></script>
+
+    <div class="diagnostic">
+        <h1>🔍 Диагностика навигационного меню</h1>
+
+        <div class="test-section">
+            <h2>1. Проверка загрузки элементов</h2>
+            <div id="elements-check"></div>
+            <button onclick="checkElements()">Проверить элементы</button>
+        </div>
+
+        <div class="test-section">
+            <h2>2. Проверка CSS стилей</h2>
+            <div id="styles-check"></div>
+            <button onclick="checkStyles()">Проверить стили</button>
+        </div>
+
+        <div class="test-section">
+            <h2>3. Проверка видимости</h2>
+            <div id="visibility-check"></div>
+            <button onclick="checkVisibility()">Проверить видимость</button>
+        </div>
+
+        <div class="test-section">
+            <h2>4. Проверка размера экрана</h2>
+            <div id="screen-check"></div>
+            <button onclick="checkScreen()">Проверить экран</button>
+        </div>
+    </div>
+
+    <script>
+        function addResult(containerId, message, type) {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.textContent = message;
+            container.appendChild(div);
+        }
+
+        function checkElements() {
+            const container = document.getElementById('elements-check');
+            container.innerHTML = '';
+
+            const navbar = document.querySelector('.navbar');
+            addResult('elements-check',
+                navbar ? '✓ .navbar найден' : '✗ .navbar НЕ найден',
+                navbar ? 'pass' : 'fail');
+
+            const mobMenu = document.querySelector('.mob-menu');
+            addResult('elements-check',
+                mobMenu ? '✓ .mob-menu найден' : '✗ .mob-menu НЕ найден',
+                mobMenu ? 'pass' : 'fail');
+
+            const mobOverlay = document.querySelector('.mob-overlay');
+            addResult('elements-check',
+                mobOverlay ? '✓ .mob-overlay найден' : '✗ .mob-overlay НЕ найден',
+                mobOverlay ? 'pass' : 'fail');
+
+            const navItems = document.querySelectorAll('.nav-item');
+            addResult('elements-check',
+                `Найдено .nav-item: ${navItems.length}`,
+                navItems.length > 0 ? 'pass' : 'fail');
+
+            const mobAccs = document.querySelectorAll('.mob-acc');
+            addResult('elements-check',
+                `Найдено .mob-acc: ${mobAccs.length}`,
+                mobAccs.length > 0 ? 'pass' : 'fail');
+        }
+
+        function checkStyles() {
+            const container = document.getElementById('styles-check');
+            container.innerHTML = '';
+
+            const mobMenu = document.querySelector('.mob-menu');
+            if (mobMenu) {
+                const styles = window.getComputedStyle(mobMenu);
+                addResult('styles-check',
+                    `mob-menu display: ${styles.display}`,
+                    styles.display === 'none' ? 'pass' : 'fail');
+                addResult('styles-check',
+                    `mob-menu right: ${styles.right}`,
+                    'info');
+            }
+
+            const mobOverlay = document.querySelector('.mob-overlay');
+            if (mobOverlay) {
+                const styles = window.getComputedStyle(mobOverlay);
+                addResult('styles-check',
+                    `mob-overlay display: ${styles.display}`,
+                    styles.display === 'none' ? 'pass' : 'fail');
+            }
+
+            const mobAccBodies = document.querySelectorAll('.mob-acc-body');
+            let allHidden = true;
+            mobAccBodies.forEach((body, i) => {
+                const styles = window.getComputedStyle(body);
+                if (styles.display !== 'none') allHidden = false;
+                addResult('styles-check',
+                    `mob-acc-body[${i}] display: ${styles.display}`,
+                    styles.display === 'none' ? 'pass' : 'fail');
+            });
+        }
+
+        function checkVisibility() {
+            const container = document.getElementById('visibility-check');
+            container.innerHTML = '';
+
+            const mobMenu = document.querySelector('.mob-menu');
+            if (mobMenu) {
+                const rect = mobMenu.getBoundingClientRect();
+                const isVisible = rect.width > 0 && rect.height > 0 &&
+                    rect.right > 0 && rect.left < window.innerWidth;
+                addResult('visibility-check',
+                    `mob-menu видимость: ${isVisible ? 'ВИДНО' : 'СКРЫТО'}`,
+                    !isVisible ? 'pass' : 'fail');
+                addResult('visibility-check',
+                    `mob-menu позиция: left=${rect.left.toFixed(0)}px, right=${rect.right.toFixed(0)}px`,
+                    'info');
+            }
+        }
+
+        function checkScreen() {
+            const container = document.getElementById('screen-check');
+            container.innerHTML = '';
+
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+
+            addResult('screen-check',
+                `Ширина экрана: ${width}px`,
+                'info');
+            addResult('screen-check',
+                `Высота экрана: ${height}px`,
+                'info');
+            addResult('screen-check',
+                `Режим: ${width > 1024 ? 'ДЕСКТОП' : 'МОБИЛЬНЫЙ'}`,
+                'info');
+            addResult('screen-check',
+                `Мобильное меню должно быть: ${width > 1024 ? 'СКРЫТО' : 'ДОСТУПНО'}`,
+                width > 1024 ? 'pass' : 'info');
+        }
+
+        // Автоматическая проверка при загрузке
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                checkElements();
+                checkStyles();
+                checkVisibility();
+                checkScreen();
+            }, 1000);
+        });
+    </script>
+</body>
+
+</html>

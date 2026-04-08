@@ -1,0 +1,132 @@
+﻿<!-- Navigation -->
+<nav class="navbar">
+    <div class="nav-content">
+        <a href="../index.html" class="logo">
+            <span class="logo-icon">🎓</span>
+            <span class="logo-text">Курсы Диспетчера</span>
+        </a>
+
+        <div class="nav-links">
+            <a href="../index.html" class="nav-link">Главная</a>
+
+            <div class="nav-dropdown">
+                <a href="../courses.html" class="nav-link">Курсы</a>
+                <div class="dropdown-content">
+                    <a href="../pages/modules.html">12 Модулей обучения</a>
+                    <a href="../pages/simulator.html">Симулятор переговоров</a>
+                    <a href="../pages/calls.html">Примеры звонков</a>
+                    <a href="../pages/cases.html">Практические кейсы</a>
+                </div>
+            </div>
+
+            <div class="nav-dropdown">
+                <span class="nav-link" data-short="Инстр.">Инструменты</span>
+                <div class="dropdown-content">
+                    <a href="../pages/analytics.html">Поиск Грузов</a>
+                    <a href="../pages/dispatcher-cards.html">Dispatcher Cards</a>
+                    <a href="../pages/simulator.html">Dispatch Simulator</a>
+                    <a href="../pages/analytics.html">Load Board</a>
+                </div>
+            </div>
+
+            <a href="../pages/documentation.html" class="nav-link" data-short="Докум.">Документация</a>
+            <a href="../about.html" class="nav-link">О нас</a>
+        </div>
+
+        <div class="nav-actions">
+            <a href="../login.html" class="btn-login">Войти</a>
+            <a href="../register.html" class="btn-signup">Регистрация</a>
+        </div>
+
+        <button class="mobile-menu-toggle" id="mobileMenuToggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </div>
+</nav>
+
+<!-- Mobile Menu Overlay -->
+<div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+    <button class="mobile-menu-close" id="mobileMenuClose">✕</button>
+    <div class="mobile-nav-actions">
+        <a href="../login.html" class="btn-login" style="width: 100%; text-align: center;">Войти</a>
+        <a href="../register.html" class="btn-signup" style="width: 100%; text-align: center;">Регистрация</a>
+    </div>
+    <div class="mobile-nav-links">
+        <a href="../index.html" class="nav-link">🏠 Главная</a>
+
+        <div class="mobile-nav-section">
+            <div class="mobile-section-title">📚 КУРСЫ</div>
+            <a href="../courses.html" class="nav-link nav-link-sub">Все курсы</a>
+            <a href="../pages/modules.html" class="nav-link nav-link-sub">12 Модулей обучения</a>
+            <a href="../pages/simulator.html" class="nav-link nav-link-sub">Симулятор переговоров</a>
+            <a href="../pages/calls.html" class="nav-link nav-link-sub">Примеры звонков</a>
+            <a href="../pages/cases.html" class="nav-link nav-link-sub">Практические кейсы</a>
+        </div>
+
+        <div class="mobile-nav-section">
+            <div class="mobile-section-title">🛠️ ИНСТРУМЕНТЫ</div>
+            <a href="../pages/analytics.html" class="nav-link nav-link-sub">Поиск Грузов</a>
+            <a href="../pages/dispatcher-cards.html" class="nav-link nav-link-sub">Dispatcher Cards</a>
+            <a href="../pages/simulator.html" class="nav-link nav-link-sub">Dispatch Simulator</a>
+            <a href="../pages/analytics.html" class="nav-link nav-link-sub">Load Board</a>
+        </div>
+
+        <div class="mobile-menu-divider"></div>
+
+        <a href="../pages/documentation.html" class="nav-link">📄 Документация</a>
+        <a href="../about.html" class="nav-link">ℹ️ О нас</a>
+    </div>
+</div>
+
+<script>
+    // Mobile Menu Script
+    (function () {
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+        const mobileMenuClose = document.getElementById('mobileMenuClose');
+
+        if (mobileMenuToggle && mobileMenu && mobileMenuOverlay) {
+            mobileMenuToggle.addEventListener('click', function () {
+                mobileMenuToggle.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+                mobileMenuOverlay.classList.toggle('active');
+                document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+            });
+
+            mobileMenuOverlay.addEventListener('click', function () {
+                mobileMenuToggle.classList.remove('active');
+                mobileMenu.classList.remove('active');
+                mobileMenuOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+
+            // Close button
+            if (mobileMenuClose) {
+                mobileMenuClose.addEventListener('click', function () {
+                    mobileMenuToggle.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                    mobileMenuOverlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            }
+
+            // Close mobile menu when clicking on a link
+            document.querySelectorAll('.mobile-nav-links .nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (mobileMenu.classList.contains('active')) {
+                        mobileMenuToggle.classList.remove('active');
+                        mobileMenu.classList.remove('active');
+                        mobileMenuOverlay.classList.remove('active');
+                        document.body.style.overflow = '';
+                    }
+                });
+            });
+        }
+    })();
+</script>

@@ -1,0 +1,924 @@
+﻿﻿<!DOCTYPE html>
+<html lang="ru" style="background:#070b14">
+
+<head>
+    <script src="../site-protection.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль 7: Переговоры и ставки | Курсы Диспетчера</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../shared-nav.css?v=7.6">
+    <link rel="stylesheet" href="../shared-styles.css?v=2.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { overflow-x: hidden; width: 100%; max-width: 100vw; scroll-behavior: smooth; }
+        :root {
+            --primary: #06b6d4; --secondary: #0ea5e9; --accent: #f97316; --success: #10b981;
+            --warning: #f59e0b; --danger: #ef4444; --bg-dark: #0a0e1a; --bg-darker: #070b14;
+            --text-primary: #ffffff; --text-secondary:#e2e8f0; --text-muted:#94a3b8;
+        }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-darker); color: var(--text-primary); line-height: 1.6; overflow-x: hidden; width: 100%; max-width: 100vw; margin: 0; padding: 0; }
+        body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 15% 25%, rgba(6,182,212,.15), transparent 50%), radial-gradient(circle at 85% 75%, rgba(249,115,22,.1), transparent 50%), radial-gradient(circle at 50% 50%, rgba(14,165,233,.08), transparent 70%); z-index: -1; pointer-events: none; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 40px 40px; }
+        .page-header { padding: 130px 0 70px; text-align: center; }
+        .page-badge { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, rgba(6,182,212,.15), rgba(14,165,233,.15)); border: 1px solid rgba(6,182,212,.3); border-radius: 24px; font-size: 13px; font-weight: 700; color: var(--primary); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1.5px; }
+        .page-title { font-size: clamp(40px,5vw,64px); font-weight: 900; background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 40%, #f97316 80%, #fb923c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 24px; line-height: 1.1; }
+        .page-subtitle { font-size: 20px; color:#e2e8f0; max-width: 800px; margin: 0 auto; line-height: 1.7; }
+        .hero-stats { display: flex; justify-content: center; gap: 48px; margin-top: 48px; flex-wrap: wrap; }
+        .hero-stat { text-align: center; }
+        .hero-stat-number { font-size: 36px; font-weight: 900; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .hero-stat-label { font-size: 13px; color:#cbd5e1; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-top: 4px; }
+        .section { padding: 8px 0; }
+        .section-title { font-size: clamp(28px,3vw,38px); font-weight: 900; margin-bottom: 16px; background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 50%, #f97316 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .section-desc { font-size: 17px; color:#e2e8f0; line-height: 1.8; max-width: 900px; margin-bottom: 40px; }
+        .section-text { font-size: 16px; color:#e2e8f0; line-height: 1.85; margin-bottom: 20px; max-width: 950px; }
+        .section-text strong { color: var(--text-primary); }
+        .glass-card { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); border-radius: 20px; padding: 32px; backdrop-filter: blur(10px); transition: all .35s ease; }
+        .glass-card:hover { border-color: rgba(6,182,212,.3); background: rgba(6,182,212,.05); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(6,182,212,.1); }
+
+        /* ===== NAVIGATION ===== */
+        .sector-navigation{margin-bottom:30px}.navigation-block{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:20px;overflow:hidden;backdrop-filter:blur(10px);box-shadow:0 8px 32px rgba(0,0,0,0.1)}.navigation-toggle{width:100%;display:flex;align-items:center;gap:16px;padding:24px 32px;background:rgba(255,255,255,0.03);border:none;cursor:pointer;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden}.navigation-toggle::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,rgba(6,182,212,0.1),rgba(14,165,233,0.05));opacity:0;transition:opacity 0.3s ease}.navigation-toggle:hover::before{opacity:1}.navigation-toggle:hover{background:rgba(255,255,255,0.05);transform:translateY(-2px)}.navigation-toggle.active{background:rgba(255,255,255,0.05)}.navigation-toggle.active::before{opacity:1}.nav-icon{font-size:28px;position:relative;z-index:1;filter:drop-shadow(0 2px 4px rgba(6,182,212,0.3))}.nav-title{flex:1;text-align:left;font-size:20px;font-weight:700;background:linear-gradient(135deg,#06b6d4,#0ea5e9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:0.5px;position:relative;z-index:1}.nav-arrow{font-size:18px;color:#06b6d4;transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;z-index:1}.navigation-toggle.active .nav-arrow{transform:rotate(180deg)}.navigation-content{max-height:0;overflow:hidden;transition:max-height 0.5s cubic-bezier(0.4,0,0.2,1)}.navigation-content.active{max-height:2000px}.navigation-grid{display:grid;grid-template-columns:2fr 2fr 1.5fr;gap:32px;padding:32px;background:rgba(255,255,255,0.02)}.nav-section{display:flex;flex-direction:column;gap:8px}.section-header{font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#06b6d4;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(6,182,212,0.2)}.section-arrow{display:none}.section-items{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(8,auto);grid-auto-flow:column;gap:8px;counter-reset:nav-counter}.nav-section:last-child .section-items{grid-template-columns:1fr 1fr}.section-items a{padding:10px 12px;color:#e2e8f0;text-decoration:none;border-radius:10px;font-size:13px;font-weight:500;transition:all 0.2s ease;border:1px solid rgba(255,255,255,0.08);background:linear-gradient(135deg,rgba(6,182,212,0.05),rgba(14,165,233,0.03));display:flex;align-items:center;gap:2px;position:relative;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-height:44px}.section-items a::before{counter-increment:nav-counter;content:counter(nav-counter);font-size:8px;font-weight:600;color:rgba(6,182,212,0.5);min-width:10px;text-align:center;transition:all 0.2s ease;flex-shrink:0;margin-left:-4px}.section-items a::after{content:'';position:absolute;left:0;top:0;height:100%;width:3px;background:linear-gradient(180deg,#06b6d4,#0ea5e9);opacity:0;transition:opacity 0.2s ease}.section-items a:hover{background:linear-gradient(135deg,rgba(6,182,212,0.15),rgba(14,165,233,0.1));color:#67e8f9;border-color:rgba(6,182,212,0.3);transform:translateX(3px);box-shadow:0 4px 12px rgba(6,182,212,0.2)}.section-items a:hover::before{color:#06b6d4}.section-items a:hover::after{opacity:1}.section-items a.active{background:linear-gradient(135deg,rgba(6,182,212,0.2),rgba(99,102,241,0.15));color:#67e8f9;border-color:rgba(6,182,212,0.5);font-weight:600;box-shadow:0 0 0 1px rgba(6,182,212,0.2) inset,0 4px 16px rgba(6,182,212,0.25)}.section-items a.active::before{color:#06b6d4}.section-items a.active::after{opacity:1}@media(max-width:1024px){.navigation-grid{grid-template-columns:1fr 1fr;gap:24px}}@media(max-width:640px){.navigation-grid{grid-template-columns:1fr;gap:20px;padding:24px 20px}.section-items{grid-template-columns:1fr 1fr}.section-items a{padding:8px 8px;font-size:11px;white-space:nowrap;min-height:40px;line-height:1.2;gap:6px}.navigation-toggle{padding:18px 20px}.nav-title{font-size:16px}.section-header{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center}.section-header .section-arrow{display:inline-block;font-size:12px;color:#06b6d4;transition:transform 0.3s ease;margin-left:8px}.nav-section.collapsed .section-arrow{transform:rotate(-90deg)}.nav-section.collapsed .section-items{display:none}}
+
+        /* DIALOGUE */
+        .dialogue { margin: 24px 0; }
+        .dialogue-line { display: flex; gap: 14px; margin-bottom: 14px; align-items: flex-start; }
+        .dialogue-line.broker { flex-direction: row; }
+        .dialogue-line.dispatcher { flex-direction: row-reverse; }
+        .dialogue-avatar { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .broker .dialogue-avatar { background: rgba(239,68,68,.15); }
+        .dispatcher .dialogue-avatar { background: rgba(6,182,212,.15); }
+        .dialogue-bubble { max-width: 75%; padding: 14px 18px; border-radius: 16px; font-size: 14px; line-height: 1.7; }
+        .broker .dialogue-bubble { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); color:#e2e8f0; border-top-left-radius: 4px; }
+        .dispatcher .dialogue-bubble { background: rgba(6,182,212,.1); border: 1px solid rgba(6,182,212,.2); color: var(--text-primary); border-top-right-radius: 4px; }
+        .dialogue-note { font-size: 12px; color: var(--accent); font-style: italic; margin-top: 6px; }
+
+        /* TECHNIQUE CARDS */
+        .techniques-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 20px; }
+        .technique-card { position: relative; border-left: 4px solid var(--primary); }
+        .technique-card .tech-num { position: absolute; top: 16px; right: 16px; font-size: 32px; font-weight: 900; color: rgba(6,182,212,.1); }
+        .technique-card h3 { font-size: 17px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+        .technique-card .tech-phrase { padding: 10px 14px; background: rgba(249,115,22,.06); border: 1px solid rgba(249,115,22,.12); border-radius: 10px; font-size: 13px; color: var(--accent); font-family: monospace; margin: 10px 0; line-height: 1.6; }
+        .technique-card p { font-size: 14px; color:#e2e8f0; line-height: 1.8; }
+
+        /* TABS */
+        .script-tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+        .script-tab { padding: 12px 24px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 14px; color:#e2e8f0; font-size: 15px; font-weight: 600; cursor: pointer; transition: all .3s; font-family: inherit; }
+        .script-tab:hover { background: rgba(6,182,212,.1); border-color: rgba(6,182,212,.3); }
+        .script-tab.active { background: linear-gradient(135deg,rgba(6,182,212,.2),rgba(14,165,233,.2)); border-color: rgba(6,182,212,.5); color: var(--primary); }
+        .script-content { display: none; animation: fadeIn .4s ease; }
+        .script-content.active { display: block; }
+        @keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+
+        /* TRAINER */
+        .trainer-scenario { padding: 20px; background: rgba(249,115,22,.06); border: 1px solid rgba(249,115,22,.15); border-radius: 16px; margin-bottom: 20px; }
+        .trainer-scenario h4 { font-size: 16px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+        .trainer-scenario p { font-size: 14px; color:#e2e8f0; line-height: 1.7; }
+        .trainer-options { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px; }
+        .trainer-opt { padding: 16px 20px; background: rgba(255,255,255,.04); border: 2px solid rgba(255,255,255,.08); border-radius: 14px; cursor: pointer; transition: all .3s; font-family: inherit; font-size: 14px; color:#e2e8f0; text-align: left; line-height: 1.6; }
+        .trainer-opt:hover { border-color: rgba(6,182,212,.4); background: rgba(6,182,212,.05); color: var(--text-primary); }
+        .trainer-opt.best { border-color: rgba(16,185,129,.5); background: rgba(16,185,129,.08); color: var(--success); }
+        .trainer-opt.ok { border-color: rgba(245,158,11,.4); background: rgba(245,158,11,.06); color: var(--warning); }
+        .trainer-opt.bad { border-color: rgba(239,68,68,.4); background: rgba(239,68,68,.06); color: var(--danger); opacity: .8; }
+        .trainer-opt:disabled { cursor: default; }
+        .trainer-fb { padding: 16px 20px; border-radius: 12px; font-size: 14px; line-height: 1.8; display: none; margin-top: 12px; }
+        .trainer-fb.visible { display: block; animation: fadeIn .3s ease; }
+        .trainer-fb.success { background: rgba(16,185,129,.08); border: 1px solid rgba(16,185,129,.2); color: var(--success); }
+        .trainer-fb.partial { background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.2); color: var(--warning); }
+        .trainer-fb.fail { background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.2); color: var(--danger); }
+        .trainer-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+        .trainer-counter { font-size: 14px; color:#cbd5e1; font-weight: 600; }
+        .trainer-btn { padding: 10px 24px; background: linear-gradient(135deg,var(--primary),var(--secondary)); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .3s; font-family: inherit; display: none; }
+        .trainer-btn.visible { display: inline-block; }
+
+        /* MISTAKES */
+        .mistakes-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 20px; }
+        .mistake-card { border-left: 4px solid var(--danger); }
+        .mistake-card h3 { font-size: 17px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+        .mistake-card p { font-size: 14px; color:#e2e8f0; line-height: 1.8; }
+        .mistake-card .fix { margin-top: 12px; padding: 10px 14px; background: rgba(16,185,129,.06); border: 1px solid rgba(16,185,129,.12); border-radius: 10px; font-size: 13px; color: var(--success); line-height: 1.6; }
+
+        /* CHECKLIST */
+        .checklist { list-style: none; }
+        .checklist-item { padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,.05); cursor: pointer; }
+        .checklist-item:last-child { border-bottom: none; }
+        .checklist-header { display: flex; align-items: center; gap: 12px; font-size: 16px; font-weight: 600; color: var(--text-primary); }
+        .checklist-header:hover { color: var(--primary); }
+        .checklist-icon { font-size: 20px; flex-shrink: 0; }
+        .checklist-arrow { margin-left: auto; font-size: 12px; color:#cbd5e1; transition: transform .3s; }
+        .checklist-item.open .checklist-arrow { transform: rotate(180deg); }
+        .checklist-body { max-height: 0; overflow: hidden; transition: max-height .4s ease; }
+        .checklist-item.open .checklist-body { max-height: 400px; }
+        .checklist-body p { padding: 12px 0 4px 32px; font-size: 14px; color:#e2e8f0; line-height: 1.8; }
+
+        /* QUIZ */
+        .quiz-card { background: linear-gradient(135deg,rgba(6,182,212,.08),rgba(249,115,22,.05)); border: 1px solid rgba(6,182,212,.2); border-radius: 24px; padding: 40px; }
+        .quiz-question { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 24px; line-height: 1.5; }
+        .quiz-options { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 20px; }
+        .quiz-option { padding: 16px 20px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 14px; color:#e2e8f0; font-size: 15px; font-weight: 500; cursor: pointer; transition: all .3s; font-family: inherit; text-align: left; }
+        .quiz-option:hover { background: rgba(6,182,212,.1); border-color: rgba(6,182,212,.3); color: var(--text-primary); }
+        .quiz-option.correct { background: rgba(16,185,129,.15); border-color: rgba(16,185,129,.4); color: var(--success); }
+        .quiz-option.wrong { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.4); color: var(--danger); }
+        .quiz-option:disabled { cursor: default; }
+        .quiz-feedback { padding: 16px 20px; border-radius: 12px; font-size: 14px; line-height: 1.7; display: none; }
+        .quiz-feedback.visible { display: block; animation: fadeIn .3s ease; }
+        .quiz-feedback.success { background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.2); color: var(--success); }
+        .quiz-feedback.error { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.2); color: var(--danger); }
+        .quiz-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        .quiz-counter { font-size: 14px; color:#cbd5e1; font-weight: 600; }
+        .quiz-next-btn { padding: 10px 24px; background: linear-gradient(135deg,var(--primary),var(--secondary)); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; display: none; }
+        .quiz-next-btn.visible { display: inline-block; }
+        .quiz-score { text-align: center; padding: 32px; display: none; }
+        .quiz-score.visible { display: block; animation: fadeIn .4s ease; }
+        .quiz-score .score-number { font-size: 64px; font-weight: 900; background: linear-gradient(135deg,var(--primary),var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .quiz-restart-btn { margin-top: 20px; padding: 12px 28px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15); border-radius: 12px; color: var(--text-primary); font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+
+        /* MARGIN VISUAL */
+        .margin-bar { height: 40px; border-radius: 12px; overflow: hidden; display: flex; margin: 20px 0; }
+        .margin-bar div { display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; }
+        .margin-shipper { background: rgba(99,102,241,.6); }
+        .margin-broker { background: rgba(249,115,22,.6); }
+        .margin-carrier { background: rgba(6,182,212,.6); }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) { .techniques-grid, .mistakes-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .container { padding: 0 20px; } .page-header { padding: 100px 0 50px; } .hero-stats { gap: 24px; } .hero-stat-number { font-size: 28px; } .quiz-options { grid-template-columns: 1fr; } .dialogue-bubble { max-width: 85%; } .script-tabs { gap: 6px; } .script-tab { padding: 10px 16px; font-size: 13px; } }
+        @media (max-width: 480px) { .container { padding: 0 16px; } .hero-stats { flex-direction: column; gap: 16px; } }
+        @media (max-width: 360px) { .glass-card { padding: 20px; } .quiz-card { padding: 24px; } }
+        ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: var(--bg-darker); } ::-webkit-scrollbar-thumb { background: rgba(6,182,212,.3); border-radius: 4px; }
+
+        /* ===== SCROLL TO TOP BUTTON ===== */
+        .scroll-to-top{position:fixed;bottom:32px;right:32px;width:56px;height:56px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);border:none;border-radius:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(6,182,212,0.3);transition:all 0.3s cubic-bezier(0.4,0,0.2,1);opacity:0;visibility:hidden;z-index:999}.scroll-to-top.visible{opacity:1;visibility:visible}.scroll-to-top.inactive{opacity:0.2}.scroll-to-top:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(6,182,212,0.4)}.scroll-to-top svg{color:#fff}@media(max-width:768px){.scroll-to-top{width:48px;height:48px;bottom:24px;right:24px}}
+
+.complete-module-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;max-width:1100px;margin:40px auto 24px;padding:20px 32px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:16px;font-size:18px;font-weight:700;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;font-family:inherit}
+.complete-module-btn:hover{background:linear-gradient(135deg,#059669,#047857);transform:translateY(-2px);box-shadow:0 8px 25px rgba(16,185,129,.3)}
+.module-navigation{display:flex;justify-content:space-between;gap:16px;margin:0 auto 40px;max-width:1100px;padding:0 20px}
+.module-nav-btn{flex:1;display:flex;align-items:center;gap:12px;padding:16px 20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;text-decoration:none;color:#ffffff;transition:all .3s;position:relative;overflow:hidden}
+.module-nav-btn:hover{background:rgba(6,182,212,.12);border-color:#06b6d4;transform:translateY(-2px)}
+.module-nav-btn.next{justify-content:flex-end}
+.module-nav-btn .icon{font-size:24px;transition:transform .3s}
+.module-nav-btn:hover .icon{transform:translateX(-4px)}
+.module-nav-btn.next:hover .icon{transform:translateX(4px)}
+.module-nav-btn .text{display:flex;flex-direction:column;gap:2px}
+.module-nav-btn .label{font-size:11px;color:#e2e8f0;text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.module-nav-btn .title{font-size:15px;font-weight:700;color:#ffffff}
+@media(max-width:768px){.module-navigation{flex-direction:column;gap:12px}}
+
+        /* Принудительный чёрный цвет текста в документах */
+        #rate-con-mini p, #rate-con-mini strong, #rate-con-mini td, #rate-con-mini th { color: #000 !important; }
+        .rc-field:hover { box-shadow: 0 2px 8px rgba(6,182,212,0.15) !important; border-color: #06b6d4 !important; }
+    </style>
+    <script type="module" src="../firebase-auth-init.js?v=4.0"></script>
+</head>
+
+<body>
+    <script src="../role-guard.js"></script>
+    <div id="nav-placeholder"></div>
+    <script src="../nav-loader.js?v=7.4"></script>
+
+    <!-- HERO -->
+    <section class="page-header">
+        <div class="container">
+            <div class="page-badge">💬 Модуль 7 из 15</div>
+            <h1 class="page-title">Переговоры и ставки</h1>
+            <p class="page-subtitle">
+                Переговоры — навык, который напрямую определяет ваш доход. Разница между диспетчером, который принимает 
+                первое предложение, и тем, кто торгуется — $20,000-50,000 в год. Брокеры закладывают 10-25% маржу 
+                в каждый пост. Ваша задача — забрать часть этой маржи себе.
+            </p>
+            <div class="hero-stats">
+                <div class="hero-stat"><span class="hero-stat-number">$200-500</span><span class="hero-stat-label">Доп. доход за груз</span></div>
+                <div class="hero-stat"><span class="hero-stat-number">10-25%</span><span class="hero-stat-label">Маржа брокера</span></div>
+                <div class="hero-stat"><span class="hero-stat-number">15-20%</span><span class="hero-stat-label">Рост ставки при торге</span></div>
+                <div class="hero-stat"><span class="hero-stat-number">$50K+</span><span class="hero-stat-label">Разница в год</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NAV -->
+    <section class="section" style="padding-top:0;padding-bottom:30px;">
+        <div class="container">
+            <div class="sector-wrapper sector-navigation">
+                <div class="navigation-block">
+                    <button class="navigation-toggle" id="navigationToggle">
+                        <span class="nav-icon">📚</span>
+                        <span class="nav-title">Навигация по курсу</span>
+                        <span class="nav-arrow">▼</span>
+                    </button>
+
+                    <div class="navigation-content" id="navigationContent">
+                        <div class="navigation-grid">
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ РАЗДЕЛЫ<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="intro.html">📋 Введение</a>
+                                    <a href="glossary.html">📖 Глоссарий</a>
+                                    <a href="role.html">👤 Роль</a>
+                                    <a href="equipment.html">🚛 Оборудование</a>
+                                    <a href="routes.html">🗺 Маршруты</a>
+                                    <a href="loadboards.html">📡 Load Boards</a>
+                                    <a href="negotiation.html" class="active">🤝 Переговоры</a>
+                                    <a href="brokers.html">💼 Брокеры</a>
+                                    <a href="docs.html">📄 Документы</a>
+                                    <a href="regulations.html">⚖️ Законы</a>
+                                    <a href="technology.html">🖥 TMS</a>
+                                    <a href="communication.html">📞 Коммуникация</a>
+                                    <a href="problems.html">⚠️ Проблемы</a>
+                                    <a href="finances.html">💰 Финансы</a>
+                                    <a href="career.html">📈 Карьера</a>
+                                </div>
+                            </div>
+
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ МОДУЛИ<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="doc-module-1-complete.html">🏭 Индустрия</a>
+                                    <a href="doc-module-2-complete.html">📖 Термины</a>
+                                    <a href="doc-module-3-complete.html">👤 Диспетчер</a>
+                                    <a href="doc-module-4-complete.html">📡 Load Boards</a>
+                                    <a href="doc-module-5-complete.html">🗺 Маршруты</a>
+                                    <a href="doc-module-6-complete.html">🚛 Оборудование</a>
+                                    <a href="doc-module-7-complete.html">🤝 Переговоры</a>
+                                    <a href="doc-module-8-complete.html">💼 Брокеры</a>
+                                    <a href="doc-module-9-complete.html">📊 CSA Scores</a>
+                                    <a href="doc-module-10-complete.html">📦 Грузы</a>
+                                    <a href="doc-module-11-complete.html">⚠️ Проблемы</a>
+                                    <a href="doc-module-12-complete.html">📈 Карьера</a>
+                                </div>
+                            </div>
+
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ ИНСТРУМЕНТЫ<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="simulator.html">🎮 Симулятор</a>
+                                    <a href="testing.html">📝 Тесты</a>
+                                    <a href="cases.html">🗂 Кейсы</a>
+                                    <a href="load-finder.html">🔍 Load Finder</a>
+                                    <a href="dispatcher-cards.html">🃏 Карточки</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ПСИХОЛОГИЯ: КАК ДУМАЕТ БРОКЕР -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">🧠 Как думает брокер: психология переговоров</h2>
+            <p class="section-text">
+                Чтобы торговаться эффективно, нужно понимать, как устроен бизнес брокера. Брокер — посредник между шиппером 
+                (грузовладельцем) и перевозчиком (вами). Его доход — разница между тем, что платит шиппер, и тем, что получаете вы. 
+                Эта разница называется <strong>маржа</strong>, и брокер всегда старается её максимизировать.
+            </p>
+            <p class="section-text">
+                <strong>Типичная структура сделки:</strong> Шиппер платит брокеру $3,200 за груз. Целевая маржа брокера — 
+                12-15% ($400-480). Значит, брокер готов заплатить перевозчику $2,720-2,800. Но первое предложение вам будет 
+                $2,400 — брокер надеется на маржу 25% ($800). Если вы соглашаетесь без торга, брокер зарабатывает вдвое больше 
+                своей цели. Если торгуетесь — он соглашается на $2,600-2,700 и всё равно в плюсе.
+            </p>
+
+            <div class="margin-bar">
+                <div class="margin-carrier" style="width:75%;">Перевозчик: $2,400 (75%)</div>
+                <div class="margin-broker" style="width:25%;">Брокер: $800 (25%)</div>
+            </div>
+            <p style="font-size:13px;color:#cbd5e1;text-align:center;margin-bottom:8px;">⬆️ Без торга: брокер забирает 25%</p>
+            <div class="margin-bar">
+                <div class="margin-carrier" style="width:84%;">Перевозчик: $2,700 (84%)</div>
+                <div class="margin-broker" style="width:16%;">Брокер: $500 (16%)</div>
+            </div>
+            <p style="font-size:13px;color:#cbd5e1;text-align:center;">⬆️ После торга: вы получили +$300, брокер всё равно в плюсе</p>
+
+            <p class="section-text" style="margin-top:32px;">
+                <strong>Ключевой инсайт:</strong> Брокер НУЖДАЕТСЯ в вас. Если он звонит вам или разместил груз на бирже — 
+                значит, у него нет перевозчика. Каждый час без трака — это риск потерять шиппера. Это ваш рычаг давления. 
+                Брокер не отдаст груз конкуренту только потому, что вы попросили на $200 больше — ему проще согласиться, 
+                чем тратить ещё час на поиски.
+            </p>
+            <p class="section-text">
+                <strong>Что брокеры уважают:</strong> Перевозчиков, которые знают рыночные ставки и приходят с данными DAT. 
+                Вежливый, но твёрдый тон. Надёжность (доставка вовремя). Быстрые решения после согласования ставки. 
+                <strong>Что брокеры используют против вас:</strong> Вашу неуверенность. Незнание рыночных ставок. 
+                Страх потерять груз. Спешку и отчаяние.
+            </p>
+        </div>
+    </section>
+
+    <!-- 10 ТЕХНИК -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">🎯 10 техник переговоров с брокерами</h2>
+            <p class="section-text">
+                Каждая техника проверена на практике тысячами диспетчеров. Для каждой — конкретная фраза на английском, 
+                которую вы можете использовать дословно. Комбинируйте техники в зависимости от ситуации.
+            </p>
+
+            <div class="techniques-grid">
+                <div class="glass-card technique-card">
+                    <span class="tech-num">01</span>
+                    <h3>Никогда не принимайте первое предложение</h3>
+                    <div class="tech-phrase">"Can you do any better on the rate?"</div>
+                    <p>Первое предложение брокера — стартовая точка, не финальная. Даже этот простой вопрос даёт +$50-200 к каждому грузу. Брокеры ожидают торга — если вы не торгуетесь, они считают вас новичком и будут занижать ставки в будущем.</p>
+                </div>
+
+                <div class="glass-card technique-card">
+                    <span class="tech-num">02</span>
+                    <h3>Anchoring — назовите свою цену первым</h3>
+                    <div class="tech-phrase">"I need $2,800 on this lane to make it work."</div>
+                    <p>Кто первый называет цифру — тот задаёт рамку переговоров. Если вы сказали $2,800, торг пойдёт вокруг этой цифры. Если брокер сказал $2,200 — вам придётся «подниматься» от его якоря. Называйте цену на 15-20% выше вашей цели.</p>
+                </div>
+
+                <div class="glass-card technique-card">
+                    <span class="tech-num">03</span>
+                    <h3>Тишина после предложения</h3>
+                    <div class="tech-phrase">*пауза 5-7 секунд после цифры брокера*</div>
+                    <p>Молчание — мощный инструмент. Когда брокер называет ставку и слышит тишину, он начинает нервничать и часто сам повышает: «Well, I might be able to do $2,500...». Не заполняйте паузу — пусть брокер заполнит её деньгами.</p>
+                </div>
+
+                <div class="glass-card technique-card">
+                    <span class="tech-num">04</span>
+                    <h3>Ссылка на данные DAT</h3>
+                    <div class="tech-phrase">"DAT shows this lane averaging $2.45 per mile this week."</div>
+                    <p>Данные — ваш главный аргумент. Брокер не может спорить с рыночной статистикой. Перед каждым звонком проверяйте DAT RateView. Когда вы оперируете цифрами, брокер понимает, что вы профессионал, и перестаёт пытаться занизить ставку.</p>
+                </div>
+
+                <div class="glass-card technique-card">
+                    <span class="tech-num">05</span>
+                    <h3>Альтернатива — «у меня есть другой груз»</h3>
+                    <div class="tech-phrase">"I have another load paying $2.60 on a similar lane. Can you match that?"</div>
+                    <p>Даже если у вас нет конкретного альтернативного груза, упоминание конкуренции создаёт давление. Брокер понимает, что вы не зависите от него. Важно: не блефуйте слишком очевидно — если брокер попросит детали, у вас должен быть хотя бы примерный ответ.</p>
+                </div>
+
+                <div class="glass-card technique-card">
+                    <span class="tech-num">06</span>
+                    <h3>Разбивка на компоненты</h3>
+                    <div class="tech-phrase">"The base rate is fine, but I need detention pay at $75/hr and TONU at $250."</div>
+                    <p>Если брокер не двигается по основной ставке — торгуйтесь за accessorials: detention pay ($50-150/час после 2 часов), layover ($250-400/ночь), TONU ($150-350 за отмену). Эти «мелочи» могут добавить $200-500 к общему доходу.</p>
+                </div>
+
+                <div class="glass-card technique-card">
+                    <span class="tech-num">07</span>
+                    <h3>Давление временем</h3>
+                    <div class="tech-phrase">"I need a decision in 10 minutes — my driver is ready to roll."</div>
+                    <p>Создайте ощущение срочности. Если брокер знает, что вы ждёте — он будет тянуть. Если знает, что через 10 минут вы возьмёте другой груз — он примет решение быстрее. Работает особенно хорошо в четверг-пятницу, когда брокеры спешат закрыть грузы до выходных.</p>
+                </div>
+
+                <div class="glass-card technique-card">
+                    <span class="tech-num">08</span>
+                    <h3>Walk Away — готовность уйти</h3>
+                    <div class="tech-phrase">"I appreciate the offer, but I can't make it work at that rate. Call me if anything changes."</div>
+                    <p>Самая сильная позиция — готовность отказаться. Если вы не можете уйти — вы не можете торговаться. В 30-40% случаев брокер перезвонит через 15-30 минут с лучшей ставкой. Ключ: знайте свой минимальный RPM и не опускайтесь ниже.</p>
+                </div>
+
+                <div class="glass-card technique-card">
+                    <span class="tech-num">09</span>
+                    <h3>Bundling — предложите взять несколько грузов</h3>
+                    <div class="tech-phrase">"If you can give me consistent loads on this lane, I'll take $2.40 instead of $2.60."</div>
+                    <p>Брокеры ценят надёжных перевозчиков. Предложите скидку в обмен на объём: «Дайте мне 3 груза в неделю на этом лейне — я возьму чуть дешевле». Это создаёт relationship freight — стабильный доход без ежедневного поиска на бирже.</p>
+                </div>
+
+                <div class="glass-card technique-card">
+                    <span class="tech-num">10</span>
+                    <h3>Timing — выбирайте момент</h3>
+                    <div class="tech-phrase">"I see this load has been posted for 3 hours. What's the best you can do now?"</div>
+                    <p>Чем дольше груз висит на бирже — тем больше ваш рычаг. Четверг-пятница после 15:00 — лучшее время для торга (брокеры хотят закрыть грузы до выходных). Понедельник утро — худшее (у брокера много вариантов). Используйте время как оружие.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- СКРИПТЫ РАЗГОВОРОВ -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">📞 Скрипты разговоров с брокерами</h2>
+            <p class="section-text">
+                Три реальных сценария переговоров — от первого звонка до сложного торга. Каждый диалог на английском 
+                с пояснениями на русском. Используйте эти скрипты как шаблон для своих звонков. 
+                Переключайте табы для разных ситуаций.
+            </p>
+
+            <div class="glass-card" style="padding:40px;">
+                <div class="script-tabs">
+                    <button class="script-tab active" onclick="switchScript('first')">📞 Первый звонок</button>
+                    <button class="script-tab" onclick="switchScript('counter')">💰 Counter-offer</button>
+                    <button class="script-tab" onclick="switchScript('tough')">🔥 Сложный брокер</button>
+                </div>
+
+                <div class="script-content active" id="script-first">
+                    <h3 style="font-size:20px;font-weight:800;color:var(--text-primary);margin-bottom:8px;">Сценарий 1: Первый звонок по грузу с Load Board</h3>
+                    <p style="font-size:14px;color:#cbd5e1;margin-bottom:20px;">Вы нашли груз Chicago → Atlanta, Dry Van, на DAT. Средний RPM по лейну: $2.45/mi. Пост свежий (15 мин).</p>
+                    <div class="dialogue">
+                        <div class="dialogue-line dispatcher"><div class="dialogue-avatar">🎧</div><div class="dialogue-bubble">Good morning, this is Alex with Swift Dispatch, MC number 1234567. I'm calling about your Chicago to Atlanta dry van load posted on DAT.<div class="dialogue-note">Представились, назвали MC#, указали конкретный груз — профессионально.</div></div></div>
+                        <div class="dialogue-line broker"><div class="dialogue-avatar">📋</div><div class="dialogue-bubble">Hey Alex, yes that load is still available. Picking up tomorrow at 8 AM, delivering next day by noon. 38,000 pounds. What are you looking for on the rate?</div></div>
+                        <div class="dialogue-line dispatcher"><div class="dialogue-avatar">🎧</div><div class="dialogue-bubble">I've got a truck available in Chicago right now. Based on what I'm seeing on DAT, this lane is averaging about $2.45 per mile this week. I'd need $2.65 to make this work for my driver.<div class="dialogue-note">Anchoring: назвали свою цену первым ($2.65), сослались на данные DAT. Цель — $2.45, но начали выше.</div></div></div>
+                        <div class="dialogue-line broker"><div class="dialogue-avatar">📋</div><div class="dialogue-bubble">That's a bit high for us. I can do $2.30 per mile, that's $1,647 all-in.</div></div>
+                        <div class="dialogue-line dispatcher"><div class="dialogue-avatar">🎧</div><div class="dialogue-bubble">I appreciate that, but $2.30 is below the market average. Can you come up to $2.50? That's fair for both of us, and I can have my driver there first thing tomorrow.<div class="dialogue-note">Не согласились на первое предложение. Предложили компромисс ($2.50) и добавили ценность — «driver ready tomorrow».</div></div></div>
+                        <div class="dialogue-line broker"><div class="dialogue-avatar">📋</div><div class="dialogue-bubble">Let me check... I can do $2.45. That's the best I can do on this one.</div></div>
+                        <div class="dialogue-line dispatcher"><div class="dialogue-avatar">🎧</div><div class="dialogue-bubble">$2.45 works. Can you also confirm detention pay at $75 per hour after 2 hours free time?<div class="dialogue-note">Согласились на целевую ставку и сразу запросили detention pay — дополнительный доход.</div></div></div>
+                        <div class="dialogue-line broker"><div class="dialogue-avatar">📋</div><div class="dialogue-bubble">Yes, standard detention is $75 per hour after 2 hours. I'll send the rate con over right now.</div></div>
+                    </div>
+                    <p style="font-size:14px;color:var(--success);margin-top:16px;">✅ Результат: получили $2.45/mi (рыночная средняя) + detention pay. Без торга получили бы $2.30 — разница $107 на одном грузе.</p>
+                </div>
+
+                <div class="script-content" id="script-counter">
+                    <h3 style="font-size:20px;font-weight:800;color:var(--text-primary);margin-bottom:8px;">Сценарий 2: Counter-offer на низкую ставку</h3>
+                    <p style="font-size:14px;color:#cbd5e1;margin-bottom:20px;">Брокер предлагает $1,800 за Dallas → Atlanta (781 mi). RPM = $2.30. DAT средняя: $2.55. Явно занижено.</p>
+                    <div class="dialogue">
+                        <div class="dialogue-line broker"><div class="dialogue-avatar">📋</div><div class="dialogue-bubble">I've got $1,800 on this Dallas to Atlanta. Can your guy do it?</div></div>
+                        <div class="dialogue-line dispatcher"><div class="dialogue-avatar">🎧</div><div class="dialogue-bubble">$1,800 puts us at $2.30 per mile, which is well below the current market. DAT is showing $2.55 average on this lane. I'd need at least $2,100 to cover my driver's costs.<div class="dialogue-note">Сразу показали, что знаете рынок. Назвали конкретную цифру DAT. Запросили $2,100 ($2.69/mi) — выше цели, чтобы был запас для торга.</div></div></div>
+                        <div class="dialogue-line broker"><div class="dialogue-avatar">📋</div><div class="dialogue-bubble">$2,100 is too high. The best I can do is $1,900.</div></div>
+                        <div class="dialogue-line dispatcher"><div class="dialogue-avatar">🎧</div><div class="dialogue-bubble">*пауза 5 секунд* ...I have another load on a similar lane paying $2.50 per mile. If you can get to $2,000, I'll take yours because the pickup time works better for my driver.<div class="dialogue-note">Тишина + альтернатива + компромисс. Три техники в одном ответе.</div></div></div>
+                        <div class="dialogue-line broker"><div class="dialogue-avatar">📋</div><div class="dialogue-bubble">Alright, I can do $1,975. Final offer.</div></div>
+                        <div class="dialogue-line dispatcher"><div class="dialogue-avatar">🎧</div><div class="dialogue-bubble">Make it $2,000 even and we have a deal. I'll have my driver confirmed in 5 minutes.<div class="dialogue-note">Округление вверх + срочность. Брокеру проще согласиться на $25, чем искать нового перевозчика.</div></div></div>
+                        <div class="dialogue-line broker"><div class="dialogue-avatar">📋</div><div class="dialogue-bubble">Done. Sending rate con now.</div></div>
+                    </div>
+                    <p style="font-size:14px;color:var(--success);margin-top:16px;">✅ Результат: $2,000 вместо $1,800 — +$200 (+11%). RPM $2.56 вместо $2.30. За 200 грузов в год это +$40,000.</p>
+                </div>
+
+                <div class="script-content" id="script-tough">
+                    <h3 style="font-size:20px;font-weight:800;color:var(--text-primary);margin-bottom:8px;">Сценарий 3: Сложный брокер, который не двигается</h3>
+                    <p style="font-size:14px;color:#cbd5e1;margin-bottom:20px;">Брокер упёрся на $2,200 за LA → Dallas (1,435 mi). RPM = $1.53 — ниже минимума. Вам нужно минимум $2.00/mi.</p>
+                    <div class="dialogue">
+                        <div class="dialogue-line broker"><div class="dialogue-avatar">📋</div><div class="dialogue-bubble">Look, $2,200 is all I have in this load. Take it or leave it.</div></div>
+                        <div class="dialogue-line dispatcher"><div class="dialogue-avatar">🎧</div><div class="dialogue-bubble">I understand your position. But at $1.53 per mile, I can't even cover my driver's fuel costs on this lane. The minimum I can work with is $2,870 — that's $2.00 per mile, which is already below the DAT average of $2.20.<div class="dialogue-note">Спокойно объяснили математику. Не эмоции — цифры.</div></div></div>
+                        <div class="dialogue-line broker"><div class="dialogue-avatar">📋</div><div class="dialogue-bubble">I can't go that high. $2,400 is my absolute max.</div></div>
+                        <div class="dialogue-line dispatcher"><div class="dialogue-avatar">🎧</div><div class="dialogue-bubble">I appreciate your honesty. Here's what I can do — if you can add detention at $75/hour, TONU protection at $250, and confirm Quick Pay at 2%, I can work with $2,500.<div class="dialogue-note">Техника разбивки: если основная ставка не двигается — добавляйте accessorials.</div></div></div>
+                        <div class="dialogue-line broker"><div class="dialogue-avatar">📋</div><div class="dialogue-bubble">I can do detention and TONU, but Quick Pay is 3%.</div></div>
+                        <div class="dialogue-line dispatcher"><div class="dialogue-avatar">🎧</div><div class="dialogue-bubble">Deal at $2,500 with detention, TONU, and 3% Quick Pay. Send the rate con with all terms included.<div class="dialogue-note">Согласились на компромисс. $2,500 + accessorials = реальный доход ~$2,700-2,800 с учётом detention.</div></div></div>
+                    </div>
+                    <p style="font-size:14px;color:var(--success);margin-top:16px;">✅ Результат: $2,500 + accessorials вместо $2,200. RPM $1.74 → $1.74 + detention/TONU потенциал. Walk away был готов — это дало силу.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ТРЕНАЖЁР -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">🎮 Тренажёр: выбери лучший ответ брокеру</h2>
+            <p class="section-text">
+                Брокер говорит вам фразу — выберите лучший ответ из трёх вариантов. Каждый вариант оценивается: 
+                лучший ответ (зелёный), приемлемый (жёлтый), плохой (красный). После выбора — объяснение, почему.
+            </p>
+
+            <div class="glass-card" id="trainerCard">
+                <div id="trainerBody">
+                    <div class="trainer-scenario" id="trainerScenario"></div>
+                    <div class="trainer-options" id="trainerOpts"></div>
+                    <div class="trainer-fb" id="trainerFb"></div>
+                    <div class="trainer-nav">
+                        <span class="trainer-counter" id="trainerCounter"></span>
+                        <button class="trainer-btn" id="trainerNext" onclick="nextTrainer()">Далее →</button>
+                    </div>
+                </div>
+                <div class="quiz-score" id="trainerScore">
+                    <div class="score-number" id="trainerScoreNum"></div>
+                    <p id="trainerScoreTxt"></p>
+                    <button class="quiz-restart-btn" onclick="restartTrainer()">Пройти заново</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ОШИБКИ НОВИЧКОВ -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">❌ 6 ошибок новичков в переговорах</h2>
+            <p class="section-text">
+                Каждая ошибка стоит реальных денег. Изучите их сейчас — чтобы не платить за них потом.
+            </p>
+
+            <div class="mistakes-grid">
+                <div class="glass-card mistake-card">
+                    <h3>Принимают первое предложение</h3>
+                    <p>Новичок слышит «$2,200» и сразу соглашается, боясь потерять груз. Но первое предложение — это стартовая позиция брокера, не финальная. В 90% случаев брокер готов добавить $100-300.</p>
+                    <div class="fix">✅ Исправление: Всегда спрашивайте «Can you do any better?» — даже если ставка кажется нормальной.</div>
+                </div>
+                <div class="glass-card mistake-card">
+                    <h3>Не знают рыночных ставок</h3>
+                    <p>Без данных DAT/Truckstop вы торгуетесь вслепую. Брокер говорит «$2.00/mi — это хорошая ставка», и вы верите. А на самом деле средняя по лейну $2.60. Вы потеряли $430 на одном грузе.</p>
+                    <div class="fix">✅ Исправление: Перед КАЖДЫМ звонком проверяйте DAT RateView. 5 минут исследования = $200-500 дополнительного дохода.</div>
+                </div>
+                <div class="glass-card mistake-card">
+                    <h3>Показывают отчаяние</h3>
+                    <p>«Мне очень нужен этот груз, мой водитель простаивает» — худшее, что можно сказать. Брокер мгновенно понимает, что вы в слабой позиции, и не будет двигаться по ставке.</p>
+                    <div class="fix">✅ Исправление: Никогда не показывайте, что вам нужен именно этот груз. Всегда создавайте впечатление, что у вас есть альтернативы.</div>
+                </div>
+                <div class="glass-card mistake-card">
+                    <h3>Забывают про accessorials</h3>
+                    <p>Detention, layover, TONU, lumper fees — это $200-500 дополнительного дохода, который новички просто не просят. Водитель простоял 4 часа на разгрузке — а detention не был оговорён. Деньги потеряны.</p>
+                    <div class="fix">✅ Исправление: ВСЕГДА уточняйте detention pay, TONU и layover ДО подписания rate confirmation.</div>
+                </div>
+                <div class="glass-card mistake-card">
+                    <h3>Грубят или конфликтуют</h3>
+                    <p>Trucking — маленький мир. Брокер, которому вы нагрубили сегодня, может быть единственным с грузом из deadhead зоны завтра. Испорченные отношения = потерянные деньги в будущем.</p>
+                    <div class="fix">✅ Исправление: Будьте твёрдыми, но вежливыми. «I appreciate the offer, but I need more» — профессионально и без конфликта.</div>
+                </div>
+                <div class="glass-card mistake-card">
+                    <h3>Не проверяют rate confirmation</h3>
+                    <p>Договорились на $2,500 по телефону, а в rate con написано $2,200. Или нет detention pay, хотя обсуждали. Если подписали — это ваша проблема. Брокер скажет «в документе $2,200».</p>
+                    <div class="fix">✅ Исправление: ВСЕГДА читайте rate con перед подписанием. Проверяйте: ставку, detention, TONU, pickup/delivery даты, broker MC#.</div>
+                </div>
+            </div>
+            <!-- ИНТЕРАКТИВНЫЙ RATE CON: АКЦЕНТ НА ACCESSORIALS -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px;">
+                <div>
+                    <h4 style="font-size:16px;font-weight:700;color:var(--text-primary);margin:0 0 10px 0;">📋 Что проверять в Rate Con</h4>
+                    <div class="rc-field" data-section="Ставка (Rate)" data-tooltip="Основная ставка за перевозку.<br><br>Совпадает с устной договорённостью? All-in = включая fuel surcharge. Если брокер написал меньше — НЕ подписывай, требуй исправления." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:all 0.2s ease;position:relative;">
+                        <p style="font-size:12px;font-weight:600;color:#06b6d4;margin:0 0 2px 0;">✓ Ставка совпадает?</p>
+                        <p style="font-size:11px;color:#e2e8f0;margin:0;line-height:1.4;">Сравни с тем что обсудили по телефону.</p>
+                    </div>
+                    <div class="rc-field" data-section="Detention Pay" data-tooltip="Оплата за простой водителя.<br><br>Должно быть прописано: ставка (обычно $75/hr) и free time (обычно 2 часа). Без этого пункта — detention pay не получить." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:all 0.2s ease;position:relative;">
+                        <p style="font-size:12px;font-weight:600;color:#06b6d4;margin:0 0 2px 0;">✓ Detention Pay прописан?</p>
+                        <p style="font-size:11px;color:#e2e8f0;margin:0;line-height:1.4;">$75/hr после 2 ч free time — стандарт.</p>
+                    </div>
+                    <div class="rc-field" data-section="TONU Clause" data-tooltip="Оплата при отмене груза после dispatch.<br><br>Без этого пункта — если брокер отменит после того как водитель выехал, ты ничего не получишь. Стандарт: $200-350." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:all 0.2s ease;position:relative;">
+                        <p style="font-size:12px;font-weight:600;color:#06b6d4;margin:0 0 2px 0;">✓ TONU Clause есть?</p>
+                        <p style="font-size:11px;color:#e2e8f0;margin:0;line-height:1.4;">$200-350 при отмене после dispatch.</p>
+                    </div>
+                    <div class="rc-field" data-section="Broker MC#" data-tooltip="MC# брокера в Rate Con.<br><br>Проверь через сайт факторинговой компании. Если MC# не совпадает с постом на load board — это double brokering. Не подписывай!" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:all 0.2s ease;position:relative;">
+                        <p style="font-size:12px;font-weight:600;color:#06b6d4;margin:0 0 2px 0;">✓ Broker MC# проверен?</p>
+                        <p style="font-size:11px;color:#e2e8f0;margin:0;line-height:1.4;">Через факторинг. Несовпадение = double brokering.</p>
+                    </div>
+                    <div style="background:linear-gradient(135deg,rgba(6,182,212,0.15),rgba(14,165,233,0.1));border:2px solid rgba(6,182,212,0.3);border-radius:8px;padding:8px 10px;margin-top:6px;">
+                        <p style="font-size:11px;font-weight:600;color:var(--primary);margin:0 0 2px 0;">💡 Нажми на любой пункт →</p>
+                        <p style="font-size:10px;color:#e2e8f0;margin:0;line-height:1.4;">или на поле в документе справа</p>
+                    </div>
+                </div>
+                <div>
+                    <div style="background:rgba(255,255,255,0.05);border:2px solid rgba(6,182,212,0.2);border-radius:10px;overflow:hidden;">
+                        <div style="padding:14px;background:#fff;font-family:Arial,Helvetica,sans-serif;color:#000;">
+                            <div style="border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px;display:flex;justify-content:space-between;">
+                                <div><p style="font-size:16px;font-weight:900;color:#000;margin:0;">RATE CONFIRMATION</p><p style="font-size:9px;color:#666;margin:0;">Broker-Carrier Agreement</p></div>
+                                <div style="text-align:right;"><p style="font-size:9px;color:#000;margin:0;">LOAD #</p><p style="font-size:14px;font-weight:900;color:#000;margin:0;font-family:monospace;">RC-2026-45678</p></div>
+                            </div>
+                            <div class="rc-field" data-section="Total Rate" data-tooltip="Общая ставка — твой доход.<br><br>All-in = включая fuel surcharge. Сравни с тем что обсудили. Если меньше — не подписывай!" style="border:1px solid #000;padding:8px;margin-bottom:8px;background:#ffffcc;cursor:pointer;position:relative;transition:all 0.2s;">
+                                <span style="position:absolute;top:4px;right:4px;font-size:9px;color:#06b6d4;opacity:0.6;">ⓘ</span>
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <p style="font-size:10px;font-weight:700;color:#000;margin:0;">TOTAL RATE (All-in)</p>
+                                    <p style="font-size:18px;font-weight:900;color:#000;margin:0;">$2,450.00</p>
+                                </div>
+                            </div>
+                            <div class="rc-field" data-section="Detention Pay" data-tooltip="Оплата за простой — дополнительный доход.<br><br>Всегда торгуйся за detention ДО подписания. Без этого пункта — ни цента за ожидание." style="border:1px solid #000;padding:8px;margin-bottom:8px;cursor:pointer;position:relative;transition:all 0.2s;">
+                                <span style="position:absolute;top:4px;right:4px;font-size:9px;color:#06b6d4;opacity:0.6;">ⓘ</span>
+                                <p style="font-size:9px;font-weight:700;color:#000;margin:0 0 3px 0;border-bottom:1px solid #ccc;padding-bottom:2px;">ACCESSORIALS</p>
+                                <p style="font-size:10px;color:#000;margin:0;"><strong style="color:#000;">Detention:</strong> $75/hr after 2 hrs free time</p>
+                                <p style="font-size:10px;color:#000;margin:2px 0 0 0;"><strong style="color:#000;">TONU:</strong> $250 if cancelled after dispatch</p>
+                                <p style="font-size:10px;color:#000;margin:2px 0 0 0;"><strong style="color:#000;">Quick Pay:</strong> Available (2% discount)</p>
+                            </div>
+                            <div class="rc-field" data-section="Broker MC#" data-tooltip="MC# брокера — проверь через факторинг.<br><br>Если MC# не совпадает с постом на load board — это double brokering. Откажись от груза." style="border:1px solid #000;padding:8px;cursor:pointer;position:relative;transition:all 0.2s;">
+                                <span style="position:absolute;top:4px;right:4px;font-size:9px;color:#06b6d4;opacity:0.6;">ⓘ</span>
+                                <p style="font-size:9px;font-weight:700;color:#000;margin:0 0 3px 0;border-bottom:1px solid #ccc;padding-bottom:2px;">BROKER</p>
+                                <p style="font-size:11px;font-weight:700;color:#000;margin:0;">TQL Freight Solutions</p>
+                                <p style="font-size:10px;color:#000;margin:1px 0 0 0;"><strong style="color:#000;">MC:</strong> 295957 | <strong style="color:#000;">DOT:</strong> 802616</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">💰 Accessorial charges: скрытый доход</h2>
+            <p class="section-text">
+                Accessorials — это дополнительные платежи сверх основной ставки за груз. Большинство новичков 
+                даже не знают, что их можно (и нужно) запрашивать. Опытные диспетчеры зарабатывают на accessorials 
+                $500-2,000 в месяц дополнительно. Вот основные виды:
+            </p>
+
+            <div class="glass-card" style="padding:40px;">
+                <ul class="checklist">
+                    <li class="checklist-item" onclick="toggleChecklist(this)">
+                        <div class="checklist-header"><span class="checklist-icon">⏰</span>Detention Pay — $50-150/час<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>Оплата за ожидание на загрузке/разгрузке сверх free time (обычно 2 часа). Стандартная ставка $75/час, но можно торговаться до $100-150. Водитель ОБЯЗАН фиксировать время прибытия и отъезда (timestamp, фото). Без доказательств — нет оплаты. Всегда уточняйте detention policy ДО букинга.</p></div>
+                    </li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)">
+                        <div class="checklist-header"><span class="checklist-icon">🌙</span>Layover Pay — $250-400/ночь<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>Если водитель вынужден остаться на ночь из-за задержки шиппера/ресивера — это layover. Стандарт $250-350 за ночь. Некоторые брокеры платят $400+. Ключ: layover должен быть вызван НЕ водителем (опоздание водителя — его проблема). Документируйте причину задержки.</p></div>
+                    </li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)">
+                        <div class="checklist-header"><span class="checklist-icon">🚫</span>TONU — $150-350 за отмену<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>Truck Ordered Not Used — оплата, когда брокер/шиппер отменяет груз после того, как вы уже направили водителя. Стандарт $150-250, но если водитель уже приехал на pickup — $300-350. TONU должен быть прописан в rate confirmation. Без этого пункта — получить деньги будет сложно.</p></div>
+                    </li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)">
+                        <div class="checklist-header"><span class="checklist-icon">🏗️</span>Lumper Fee — по факту<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>Оплата за разгрузку третьей стороной (lumper service) на складах крупных ритейлеров (Walmart, Costco). Обычно $50-300. Брокер должен компенсировать или предупредить заранее. Водитель платит на месте и получает receipt — брокер возмещает. Уточняйте ДО букинга: «Is there a lumper fee at delivery?»</p></div>
+                    </li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)">
+                        <div class="checklist-header"><span class="checklist-icon">📍</span>Extra Stop — $50-150 за остановку<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>Если груз имеет несколько точек загрузки или разгрузки (multi-stop) — каждая дополнительная остановка должна оплачиваться отдельно. Стандарт $50-150 за stop. Это время водителя + маневрирование + ожидание. Всегда уточняйте количество stops до букинга.</p></div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- КВИЗ -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">🎯 Квиз: проверь навыки переговоров</h2>
+            <p class="section-desc">8 вопросов по материалу модуля. Проверьте, готовы ли вы торговаться с брокерами.</p>
+            <div class="quiz-card" id="quizCard">
+                <div id="quizBody">
+                    <div class="quiz-question" id="quizQuestion"></div>
+                    <div class="quiz-options" id="quizOptions"></div>
+                    <div class="quiz-feedback" id="quizFeedback"></div>
+                    <div class="quiz-nav">
+                        <span class="quiz-counter" id="quizCounter"></span>
+                        <button class="quiz-next-btn" id="quizNext" onclick="nextQ()">Далее →</button>
+                    </div>
+                </div>
+                <div class="quiz-score" id="quizScore">
+                    <div class="score-number" id="scoreNum"></div>
+                    <p id="scoreTxt"></p>
+                    <button class="quiz-restart-btn" onclick="restartQuiz()">Пройти заново</button>
+                </div>
+            </div>
+        </div>
+        <button class="complete-module-btn" onclick="completeModule(7)"><span>✓</span><span>Завершить модуль и перейти к следующему</span></button>
+        <div class="module-navigation">
+            <a href="loadboards.html" class="module-nav-btn"><span class="icon">←</span><div class="text"><span class="label">Предыдущий модуль</span><span class="title">📋 Load Boards</span></div></a>
+            <a href="brokers.html" class="module-nav-btn next"><div class="text"><span class="label">Следующий модуль</span><span class="title">🤝 Брокеры</span></div><span class="icon">→</span></a>
+        </div>
+    </section>
+
+    <script>
+        // NAVIGATION
+        (function() {
+            const toggle = document.getElementById('navigationToggle');
+            const content = document.getElementById('navigationContent');
+            
+            toggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+                content.classList.toggle('active');
+            });
+
+            // Аккордеон для секций только на мобильных
+            function initMobileAccordion() {
+                if (window.innerWidth <= 640) {
+                    const navSections = document.querySelectorAll('.nav-section');
+                    
+                    // Показываем стрелки
+                    document.querySelectorAll('.section-arrow').forEach(arrow => {
+                        arrow.style.display = 'inline-block';
+                    });
+                    
+                    // Закрываем секции 2 и 3 (Модули и Инструменты)
+                    navSections.forEach(function(section, index) {
+                        if (index > 0) {
+                            section.classList.add('collapsed');
+                        }
+                        
+                        const header = section.querySelector('.section-header');
+                        if (header && !header.dataset.listenerAdded) {
+                            header.addEventListener('click', function() {
+                                section.classList.toggle('collapsed');
+                            });
+                            header.dataset.listenerAdded = 'true';
+                        }
+                    });
+                } else {
+                    // Скрываем стрелки на десктопе
+                    document.querySelectorAll('.section-arrow').forEach(arrow => {
+                        arrow.style.display = 'none';
+                    });
+                }
+            }
+            
+            initMobileAccordion();
+            window.addEventListener('resize', initMobileAccordion);
+        })();
+
+        // TABS
+        function switchScript(id) { document.querySelectorAll('.script-content').forEach(c=>c.classList.remove('active')); document.querySelectorAll('.script-tab').forEach(t=>t.classList.remove('active')); document.getElementById('script-'+id).classList.add('active'); event.currentTarget.classList.add('active'); }
+        function toggleChecklist(el) { el.classList.toggle('open'); }
+
+        // TRAINER
+        const trainerData = [
+            {
+                scenario: 'Брокер говорит: "I can do $2,200 for this Chicago to Atlanta load. That\'s my best offer."',
+                context: 'DAT средняя по лейну: $2.45/mi. Груз 716 миль. $2,200 = $3.07/mi... подождите, нет: $2,200 ÷ 716 = $3.07? Нет, это $2,200 за весь груз, значит RPM = $2,200/716 = $3.07. Хм, это выше среднего. Но подождите — давайте пересчитаем для реализма.',
+                options: [
+                    { text: '"Okay, sounds good. Send the rate con." — Соглашаетесь сразу.', rating: 'bad', label: '❌ Плохо' },
+                    { text: '"Can you do any better on the rate? I\'m seeing higher averages on DAT for this lane." — Просите больше с данными.', rating: 'best', label: '✅ Лучший' },
+                    { text: '"That\'s way too low! I need at least double that!" — Требуете нереальную сумму.', rating: 'bad', label: '❌ Плохо' }
+                ],
+                bestIdx: 1,
+                explanation: 'Никогда не принимайте первое предложение — даже если оно кажется нормальным. Простой вопрос с ссылкой на DAT даёт +$50-200. Требовать нереальную сумму — потеря времени и уважения брокера.'
+            },
+            {
+                scenario: 'Брокер: "Look, I\'ve got 5 other carriers calling me. Take it or leave it at $1,800."',
+                context: 'Груз Dallas → Memphis, 452 мили. $1,800 = $3.98/mi. Брокер давит.',
+                options: [
+                    { text: '"Fine, I\'ll take it." — Поддаётесь давлению.', rating: 'bad', label: '❌ Плохо' },
+                    { text: '"I understand you have options. I do too. If you can get to $1,950, I can confirm right now and my driver is 20 miles from pickup." — Спокойный counter с ценностью.', rating: 'best', label: '✅ Лучший' },
+                    { text: '"Whatever, call your other carriers then." — Грубо отказываете.', rating: 'ok', label: '🟡 Средне' }
+                ],
+                bestIdx: 1,
+                explanation: 'Давление «у меня 5 других» — классический блеф. Если бы у него были 5 перевозчиков, он бы не звонил вам. Спокойный counter + ценность (driver nearby, confirm now) — лучшая стратегия. Грубый отказ сжигает мосты.'
+            },
+            {
+                scenario: 'Брокер: "The rate is $2,400 all-in. No detention, no TONU, no extras."',
+                context: 'Груз LA → Phoenix, 370 миль. $2,400 = $6.49/mi — отличная ставка. Но нет accessorials.',
+                options: [
+                    { text: '"The rate is good, but I need detention at $75/hr and TONU at $200 minimum. These are standard terms." — Торгуетесь за accessorials.', rating: 'best', label: '✅ Лучший' },
+                    { text: '"Okay, $2,400 all-in works for me." — Берёте без accessorials.', rating: 'ok', label: '🟡 Средне' },
+                    { text: '"No detention? No deal!" — Отказываетесь из-за отсутствия detention.', rating: 'bad', label: '❌ Плохо' }
+                ],
+                bestIdx: 0,
+                explanation: 'Ставка хорошая, но accessorials — ваша страховка. Если водитель простоит 4 часа без detention — вы потеряете $300. Всегда запрашивайте detention и TONU как стандартные условия. Отказываться от хорошего груза только из-за отсутствия detention — перебор.'
+            },
+            {
+                scenario: 'Брокер: "I can only pay Net 45 on this load. Is that okay?"',
+                context: 'Net 45 = оплата через 45 дней. Стандарт — Net 30.',
+                options: [
+                    { text: '"45 days is fine." — Соглашаетесь без вопросов.', rating: 'bad', label: '❌ Плохо' },
+                    { text: '"I typically work with Net 30 or Quick Pay. Can you offer Quick Pay at 2-3%? If not, I\'d need a higher rate to offset the longer payment terms." — Торгуетесь за условия оплаты.', rating: 'best', label: '✅ Лучший' },
+                    { text: '"Net 45? No way, I only work with Net 15." — Требуете нереальные сроки.', rating: 'ok', label: '🟡 Средне' }
+                ],
+                bestIdx: 1,
+                explanation: 'Net 45 — red flag (возможные финансовые проблемы брокера) и реальная проблема с cash flow. Лучший ответ: предложить Quick Pay (быстрая оплата за комиссию 2-3%) или попросить повышение ставки для компенсации. Net 15 — нереалистично для большинства брокеров.'
+            },
+            {
+                scenario: 'Вы торговались 5 минут. Брокер: "Alright, $2,600 is my final, final offer. I really can\'t go higher."',
+                context: 'Ваша цель была $2,500. Брокер предлагает $2,600 — выше вашей цели.',
+                options: [
+                    { text: '"Let me push for $2,700..." — Продолжаете торговаться выше цели.', rating: 'ok', label: '🟡 Средне' },
+                    { text: '"$2,600 works. Can you send the rate con with detention and TONU terms included?" — Принимаете и закрепляете accessorials.', rating: 'best', label: '✅ Лучший' },
+                    { text: '"Hmm, let me think about it and call you back." — Берёте паузу.', rating: 'bad', label: '❌ Плохо' }
+                ],
+                bestIdx: 1,
+                explanation: 'Вы уже выше цели — берите! Жадность убивает сделки. Но не забудьте закрепить accessorials в rate con. Пауза «перезвоню» рискованна — брокер может отдать груз другому за это время. Знайте, когда остановиться.'
+            }
+        ];
+
+        let tIdx=0, tScore=0, tAnswered=false;
+        function renderTrainer() {
+            const t = trainerData[tIdx];
+            document.getElementById('trainerScenario').innerHTML = '<h4>Ситуация '+(tIdx+1)+' из '+trainerData.length+'</h4><p>'+t.scenario+'</p>';
+            document.getElementById('trainerCounter').textContent = (tIdx+1)+' / '+trainerData.length;
+            document.getElementById('trainerFb').className = 'trainer-fb';
+            document.getElementById('trainerNext').classList.remove('visible');
+            tAnswered = false;
+            const el = document.getElementById('trainerOpts');
+            el.innerHTML = '';
+            t.options.forEach((o,i) => {
+                const btn = document.createElement('button');
+                btn.className = 'trainer-opt'; btn.textContent = o.text; btn.dataset.idx = i;
+                btn.onclick = () => answerTrainer(i); el.appendChild(btn);
+            });
+        }
+        function answerTrainer(i) {
+            if (tAnswered) return; tAnswered = true;
+            const t = trainerData[tIdx];
+            document.querySelectorAll('.trainer-opt').forEach((b,j) => {
+                b.disabled = true;
+                b.classList.add(t.options[j].rating);
+            });
+            const fb = document.getElementById('trainerFb');
+            if (i === t.bestIdx) { tScore++; fb.className = 'trainer-fb visible success'; fb.textContent = '✅ Лучший выбор! '+t.explanation; }
+            else if (t.options[i].rating === 'ok') { fb.className = 'trainer-fb visible partial'; fb.textContent = '🟡 Приемлемо, но не оптимально. '+t.explanation; }
+            else { fb.className = 'trainer-fb visible fail'; fb.textContent = '❌ Плохой выбор. '+t.explanation; }
+            if (tIdx < trainerData.length-1) document.getElementById('trainerNext').classList.add('visible');
+            else setTimeout(showTrainerScore, 1500);
+        }
+        function nextTrainer() { tIdx++; renderTrainer(); }
+        function showTrainerScore() {
+            document.getElementById('trainerBody').style.display = 'none';
+            document.getElementById('trainerScore').classList.add('visible');
+            document.getElementById('trainerScoreNum').textContent = tScore+'/'+trainerData.length;
+            const p = Math.round(tScore/trainerData.length*100);
+            document.getElementById('trainerScoreTxt').textContent = p===100?'Идеально! Вы готовы торговаться с любым брокером.':p>=60?'Хороший результат! Практикуйтесь на реальных звонках.':'Перечитайте техники и скрипты, затем попробуйте снова.';
+        }
+        function restartTrainer() { tIdx=0; tScore=0; document.getElementById('trainerBody').style.display=''; document.getElementById('trainerScore').classList.remove('visible'); renderTrainer(); }
+        document.addEventListener('DOMContentLoaded', renderTrainer);
+
+        // QUIZ
+        const quizData = [
+            { q: 'Какую маржу обычно закладывает брокер в пост на Load Board?', options: ['1-5%','5-10%','10-25%','30-50%'], correct: 2, explanation: 'Брокеры закладывают 10-25% маржу. Мелкие брокеры — 10-15%, крупные — 15-20%. Первое предложение всегда ниже того, что брокер готов заплатить.' },
+            { q: 'Что такое техника "Anchoring" в переговорах?', options: ['Молчание после предложения','Первым назвать свою цену','Ссылка на данные DAT','Угроза уйти'], correct: 1, explanation: 'Anchoring — вы первым называете цифру и задаёте рамку переговоров. Если вы сказали $2,800, торг пойдёт вокруг этой цифры, а не вокруг $2,200 брокера.' },
+            { q: 'Что такое TONU?', options: ['Тип оборудования','Оплата за отменённый груз','Налог на перевозку','Страховой взнос'], correct: 1, explanation: 'TONU = Truck Ordered Not Used. Оплата $150-350, когда брокер/шиппер отменяет груз после того, как вы направили водителя. Должен быть прописан в rate confirmation.' },
+            { q: 'Когда лучшее время для торга с брокером?', options: ['Понедельник утро','Среда днём','Четверг-пятница после 15:00','Время не важно'], correct: 2, explanation: 'Четверг-пятница после 15:00 — брокеры спешат закрыть грузы до выходных и более сговорчивы. Понедельник утро — худшее время (у брокера много вариантов).' },
+            { q: 'Стандартная ставка detention pay:', options: ['$25/час','$50-75/час','$75-150/час','$200/час'], correct: 2, explanation: 'Стандарт detention: $75/час после 2 часов free time. Можно торговаться до $100-150/час. Некоторые крупные брокеры платят $50/час — это минимум.' },
+            { q: 'Что делать, если брокер говорит "Take it or leave it"?', options: ['Сразу соглашаться','Грубо отказать','Спокойно предложить компромисс с добавленной ценностью','Положить трубку'], correct: 2, explanation: '"Take it or leave it" — часто блеф. Спокойный counter с ценностью (driver nearby, confirm now, reliable carrier) работает в 30-40% случаев. Грубость сжигает мосты.' },
+            { q: 'Что ОБЯЗАТЕЛЬНО проверить в Rate Confirmation перед подписанием?', options: ['Только ставку','Ставку и даты','Ставку, даты, detention, TONU, broker MC#','Ничего, доверяю брокеру'], correct: 2, explanation: 'Проверяйте ВСЁ: ставку (совпадает с устной?), даты pickup/delivery, detention policy, TONU, broker MC# (совпадает с постом?), payment terms. Подписали — это закон.' },
+            { q: 'Сколько дополнительного дохода в год даёт навык переговоров?', options: ['$1,000-5,000','$5,000-10,000','$20,000-50,000','$100,000+'], correct: 2, explanation: 'При среднем +$200 за груз и 200 грузах в год = $40,000 дополнительного дохода. Некоторые источники оценивают разницу в $20,000-50,000 в год между теми, кто торгуется, и теми, кто нет.' }
+        ];
+        let qIdx=0,qScore=0,qAnswered=false;
+        function renderQ(){const q=quizData[qIdx];document.getElementById('quizQuestion').textContent=q.q;document.getElementById('quizCounter').textContent=(qIdx+1)+' / '+quizData.length;document.getElementById('quizFeedback').className='quiz-feedback';document.getElementById('quizNext').classList.remove('visible');qAnswered=false;const el=document.getElementById('quizOptions');el.innerHTML='';q.options.forEach((o,i)=>{const btn=document.createElement('button');btn.className='quiz-option';btn.textContent=o;btn.onclick=()=>answerQ(i);el.appendChild(btn);})}
+        function answerQ(i){if(qAnswered)return;qAnswered=true;const q=quizData[qIdx];document.querySelectorAll('.quiz-option').forEach((b,j)=>{b.disabled=true;if(j===q.correct)b.classList.add('correct');if(j===i&&i!==q.correct)b.classList.add('wrong');});const fb=document.getElementById('quizFeedback');if(i===q.correct){qScore++;fb.className='quiz-feedback visible success';fb.textContent='✅ Правильно! '+q.explanation;}else{fb.className='quiz-feedback visible error';fb.textContent='❌ Неправильно. '+q.explanation;}if(qIdx<quizData.length-1)document.getElementById('quizNext').classList.add('visible');else setTimeout(showQScore,1500);}
+        function nextQ(){qIdx++;renderQ();}
+        function showQScore(){document.getElementById('quizBody').style.display='none';document.getElementById('quizScore').classList.add('visible');document.getElementById('scoreNum').textContent=qScore+'/'+quizData.length;const p=Math.round(qScore/quizData.length*100);document.getElementById('scoreTxt').textContent=p===100?'Идеально! Вы мастер переговоров.':p>=75?'Отличный результат!':p>=50?'Неплохо, но повторите материал.':'Перечитайте модуль и попробуйте снова.';}
+        function restartQuiz(){qIdx=0;qScore=0;document.getElementById('quizBody').style.display='';document.getElementById('quizScore').classList.remove('visible');renderQ();}
+        document.addEventListener('DOMContentLoaded', renderQ);
+    </script>
+    <script>
+function completeModule(n){const p=JSON.parse(localStorage.getItem('courseProgress')||'{}');p['module'+n]=true;localStorage.setItem('courseProgress',JSON.stringify(p));const btn=document.querySelector('.complete-module-btn');btn.innerHTML='<span>✓</span><span>Модуль завершен!</span>';btn.style.background='linear-gradient(135deg,#6b7280,#4b5563)';btn.style.cursor='default';const next=document.querySelector('.module-nav-btn.next');if(next)setTimeout(()=>next.click(),1500)}
+document.addEventListener('DOMContentLoaded',function(){const n=document.querySelector('.complete-module-btn')?.onclick?.toString().match(/completeModule\((\d+)\)/);if(n){const p=JSON.parse(localStorage.getItem('courseProgress')||'{}');if(p['module'+n[1]]){const btn=document.querySelector('.complete-module-btn');btn.innerHTML='<span>✓</span><span>Модуль завершен</span>';btn.style.background='linear-gradient(135deg,#6b7280,#4b5563)';btn.style.cursor='default'}}});
+    </script>
+    <!-- Scroll to Top Button -->
+    <button class="scroll-to-top" id="scrollToTop" aria-label="Вернуться наверх">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+    </button>
+
+    <script>
+        // Кнопка возврата наверх
+        (function() {
+            const scrollBtn = document.getElementById('scrollToTop');
+            let inactivityTimer;
+            
+            // Показываем кнопку при скролле вниз
+            window.addEventListener('scroll', function() {
+                if (window.pageYOffset > 300) {
+                    scrollBtn.classList.add('visible');
+                    resetInactivityTimer();
+                } else {
+                    scrollBtn.classList.remove('visible');
+                    scrollBtn.classList.remove('inactive');
+                }
+            });
+            
+            // Сброс таймера при движении мыши или скролле
+            function resetInactivityTimer() {
+                scrollBtn.classList.remove('inactive');
+                clearTimeout(inactivityTimer);
+                inactivityTimer = setTimeout(function() {
+                    scrollBtn.classList.add('inactive');
+                }, 2000);
+            }
+            
+            // Отслеживаем активность
+            window.addEventListener('mousemove', resetInactivityTimer);
+            window.addEventListener('scroll', resetInactivityTimer);
+            window.addEventListener('touchstart', resetInactivityTimer);
+            
+            // Скролл наверх при клике
+            scrollBtn.addEventListener('click', function() {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        })();
+    </script>
+
+<script type="module">
+// XP за посещение страницы (один раз)
+(function() {
+  const PAGE_KEY = 'xp_page_pages_negotiation_html';
+  if (localStorage.getItem(PAGE_KEY)) return;
+  import('../xp-system.js').then(m => {
+    m.awardXP('NEGOTIATION_READ').then(r => {
+      if (r) localStorage.setItem(PAGE_KEY, '1');
+    });
+  }).catch(() => {});
+})();
+</script>
+
+<!-- Tooltip для интерактивных полей -->
+<div id="rc-tooltip" style="display:none;position:fixed;background:rgba(15,23,42,0.98);border:2px solid rgba(6,182,212,0.4);border-radius:12px;padding:12px 16px;max-width:320px;font-size:12px;color:#e2e8f0;line-height:1.6;z-index:10000;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,0.4);backdrop-filter:blur(8px);"></div>
+<script>
+(function(){
+    const tooltip = document.getElementById('rc-tooltip');
+    let activeField = null;
+    function isMobile(){ return window.innerWidth <= 768; }
+    function positionNearMouse(e){ tooltip.style.left=(e.clientX+15)+'px'; tooltip.style.top=(e.clientY+15)+'px'; }
+    function positionCenter(){ tooltip.style.left='50%'; tooltip.style.top='50%'; tooltip.style.transform='translate(-50%,-50%)'; tooltip.style.pointerEvents='auto'; }
+    function closeTip(field){ tooltip.style.display='none'; tooltip.style.pointerEvents='none'; if(field){ const defaultBg=field.closest('#rate-con-interactive,#bol-interactive,#pod-interactive,#invoice-interactive,#carrier-interactive,#extra-interactive')?'#fff':'rgba(255,255,255,0.04)'; field.style.background=defaultBg; } activeField=null; }
+    function initFields(){
+        document.querySelectorAll('.rc-field').forEach(field=>{
+            const text=field.dataset.tooltip; if(!text) return;
+            const defaultBg=field.closest('#rate-con-interactive,#bol-interactive,#pod-interactive,#invoice-interactive,#carrier-interactive,#extra-interactive')?'#fff':'rgba(255,255,255,0.04)';
+            const hoverBg=field.closest('#rate-con-interactive,#bol-interactive,#pod-interactive,#invoice-interactive,#carrier-interactive,#extra-interactive')?'#f0f9ff':'rgba(6,182,212,0.08)';
+            field.addEventListener('mouseenter', function(e){
+                if(isMobile()) return;
+                tooltip.innerHTML=text; tooltip.style.display='block'; tooltip.style.transform='none';
+                positionNearMouse(e); this.style.background=hoverBg;
+            });
+            field.addEventListener('mousemove', function(e){ if(!isMobile()&&tooltip.style.display==='block') positionNearMouse(e); });
+            field.addEventListener('mouseleave', function(){ if(!isMobile()){ tooltip.style.display='none'; this.style.background=defaultBg; } });
+            field.addEventListener('click', function(e){
+                e.stopPropagation();
+                if(activeField===this){ closeTip(this); return; }
+                if(activeField) closeTip(activeField);
+                tooltip.innerHTML=text; tooltip.style.display='block';
+                if(isMobile()){ positionCenter(); } else { positionNearMouse(e); }
+                this.style.background=hoverBg; activeField=this;
+            });
+        });
+    }
+    document.addEventListener('click', function(e){ if(isMobile()&&!e.target.closest('#rc-tooltip')){ closeTip(activeField); } else if(!isMobile()&&!e.target.closest('.rc-field')&&!e.target.closest('#rc-tooltip')){ closeTip(activeField); } });
+    if(tooltip) tooltip.addEventListener('click', function(){ if(isMobile()) closeTip(activeField); });
+    window.addEventListener('scroll', function(){ if(isMobile()) closeTip(activeField); }, {passive:true});
+    document.addEventListener('touchstart', function(e){ if(isMobile()&&!e.target.closest('.rc-field')&&!e.target.closest('#rc-tooltip')) closeTip(activeField); }, {passive:true});
+    document.addEventListener('DOMContentLoaded', initFields);
+    initFields();
+})();
+</script>
+</body>
+</html>

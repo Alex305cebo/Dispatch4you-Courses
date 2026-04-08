@@ -1,0 +1,446 @@
+﻿<!DOCTYPE html>
+<html lang="ru" style="background:#070b14">
+<head>
+    <script src="../site-protection.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль 4: Оборудование и грузы | Курсы Диспетчера</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../shared-nav.css?v=7.6">
+    <link rel="stylesheet" href="../shared-styles.css?v=2.0">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        html{overflow-x:hidden;width:100%;max-width:100vw;scroll-behavior:smooth}
+        :root{--primary:#06b6d4;--secondary:#0ea5e9;--accent:#f97316;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--bg-dark:#0a0e1a;--bg-darker:#070b14;--text-primary:#ffffff;--text-secondary:#e2e8f0;--text-muted:#94a3b8;--border:rgba(255,255,255,0.15)}
+        body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg-darker);color:var(--text-primary);line-height:1.6;overflow-x:hidden;width:100%;max-width:100vw;margin:0;padding:0;font-size:16px}
+        body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at 15% 25%,rgba(6,182,212,.15),transparent 50%),radial-gradient(circle at 85% 75%,rgba(249,115,22,.1),transparent 50%),radial-gradient(circle at 50% 50%,rgba(14,165,233,.08),transparent 70%);z-index:-1;pointer-events:none}
+        .container{max-width:1100px;margin:0 auto;padding:40px 40px}
+        .page-header{padding:70px 0 8px;text-align:center}
+        .page-badge{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:linear-gradient(135deg,rgba(6,182,212,.15),rgba(14,165,233,.15));border:1px solid rgba(6,182,212,.3);border-radius:24px;font-size:13px;font-weight:700;color:var(--primary);margin-bottom:20px;text-transform:uppercase;letter-spacing:1.5px}
+        .page-title{font-size:clamp(36px,5vw,64px);font-weight:900;background:linear-gradient(135deg,#06b6d4 0%,#0ea5e9 40%,#f97316 80%,#fb923c 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;line-height:1.1}
+        .page-subtitle{font-size:18px;color:#e2e8f0;max-width:800px;margin:0 auto;line-height:1.7;text-align:center}
+        .hero-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:24px;max-width:400px;margin-left:auto;margin-right:auto}
+        .hero-stat{text-align:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px 12px}
+        .hero-stat-number{font-size:clamp(24px,4vw,36px);font-weight:900;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:block}
+        .hero-stat-label{font-size:11px;color:#cbd5e1;text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-top:4px;display:block}
+        .section{padding:4px 0 !important}
+        .section-title{font-size:clamp(24px,3vw,36px) !important;font-weight:900;margin-bottom:16px !important;background:linear-gradient(135deg,#06b6d4 0%,#0ea5e9 50%,#f97316 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .section-text{font-size:17px !important;color:#e2e8f0;line-height:1.85;margin-bottom:16px !important;max-width:950px;text-align:left !important}
+        .section-text strong{color:var(--text-primary)}
+        .section-desc{font-size:17px !important;color:#e2e8f0;line-height:1.8;max-width:900px;margin-bottom:32px;text-align:left !important}
+        .glass-card{background:rgba(255,255,255,.03) !important;border:1px solid var(--border) !important;border-bottom:3px solid rgba(6,182,212,.4) !important;border-radius:20px;padding:32px !important;backdrop-filter:blur(10px);transition:all .3s ease;box-shadow:0 4px 16px rgba(0,0,0,.2) !important}
+        .glass-card:hover{border-color:rgba(6,182,212,.5) !important;background:rgba(6,182,212,.05) !important;transform:translateY(-4px);box-shadow:0 12px 40px rgba(6,182,212,.15) !important}
+
+        /* EQUIPMENT GRID */
+
+        /* EQUIPMENT GRID */
+        .equip-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+        .equip-card .eq-icon{font-size:40px;margin-bottom:14px;display:block}
+        .equip-card h3{font-size:20px;font-weight:800;color:var(--text-primary);margin-bottom:6px}
+        .equip-card .eq-sub{font-size:13px;color:var(--primary);font-weight:600;margin-bottom:12px}
+        .equip-card p{font-size:15px;color:#e2e8f0;line-height:1.75;text-align:left}
+        .equip-card .eq-specs{margin-top:14px;padding:12px 14px;background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.15);border-radius:10px;font-size:13px;color:#cbd5e1;line-height:1.6}
+        /* EXPAND */
+        .checklist{list-style:none}
+        .checklist-item{padding:16px 0;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer}
+        .checklist-item:last-child{border-bottom:none}
+        .checklist-header{display:flex;align-items:center;gap:12px;font-size:16px;font-weight:600;color:var(--text-primary)}
+        .checklist-header:hover{color:var(--primary)}
+        .checklist-icon{font-size:20px;flex-shrink:0}
+        .checklist-arrow{margin-left:auto;font-size:12px;color:#cbd5e1;transition:transform .3s}
+        .checklist-item.open .checklist-arrow{transform:rotate(180deg)}
+        .checklist-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+        .checklist-item.open .checklist-body{max-height:600px}
+        .checklist-body p{padding:12px 0 4px 32px;font-size:15px;color:#e2e8f0;line-height:1.8;text-align:left}
+        /* QUIZ */
+        .quiz-card{background:linear-gradient(135deg,rgba(6,182,212,.08),rgba(249,115,22,.05));border:1px solid rgba(6,182,212,.2);border-radius:24px;padding:40px}
+        .quiz-question{font-size:20px;font-weight:700;color:var(--text-primary);margin-bottom:24px;line-height:1.5}
+        .quiz-options{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+        .quiz-option{padding:16px 20px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;color:#e2e8f0;font-size:15px;font-weight:500;cursor:pointer;transition:all .3s;font-family:inherit;text-align:left}
+        .quiz-option:hover{background:rgba(6,182,212,.1);border-color:rgba(6,182,212,.3);color:var(--text-primary)}
+        .quiz-option.correct{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.4);color:var(--success)}
+        .quiz-option.wrong{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.4);color:var(--danger)}
+        .quiz-option:disabled{cursor:default}
+        .quiz-feedback{padding:16px 20px;border-radius:12px;font-size:14px;line-height:1.7;display:none}
+        .quiz-feedback.visible{display:block;animation:fadeIn .3s ease}
+        .quiz-feedback.success{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:var(--success)}
+        .quiz-feedback.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--danger)}
+        .quiz-nav{display:flex;justify-content:space-between;align-items:center;margin-top:20px}
+        .quiz-counter{font-size:14px;color:#cbd5e1;font-weight:600}
+        .quiz-next-btn{padding:10px 24px;background:linear-gradient(135deg,var(--primary),var(--secondary));border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:none}
+        .quiz-next-btn.visible{display:inline-block}
+        .quiz-score{text-align:center;padding:32px;display:none}
+        .quiz-score.visible{display:block;animation:fadeIn .4s ease}
+        .quiz-score .score-number{font-size:64px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .quiz-restart-btn{margin-top:20px;padding:12px 28px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;color:var(--text-primary);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .complete-module-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;max-width:1100px;margin:40px auto 24px;padding:20px 32px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:16px;font-size:18px;font-weight:700;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;font-family:inherit}
+        .complete-module-btn:hover{background:linear-gradient(135deg,#059669,#047857);transform:translateY(-2px);box-shadow:0 8px 25px rgba(16,185,129,.3)}
+        .module-navigation{display:flex;justify-content:space-between;gap:16px;margin:0 auto 40px;max-width:1100px;padding:0 20px}
+        .module-nav-btn{flex:1;display:flex;align-items:center;gap:12px;padding:16px 20px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:14px;text-decoration:none;color:#ffffff;transition:all .3s}
+        .module-nav-btn:hover{background:rgba(6,182,212,.12);border-color:#06b6d4;transform:translateY(-2px)}
+        .module-nav-btn.next{justify-content:flex-end}
+        .module-nav-btn .icon{font-size:24px;transition:transform .3s}
+        .module-nav-btn:hover .icon{transform:translateX(-4px)}
+        .module-nav-btn.next:hover .icon{transform:translateX(4px)}
+        .module-nav-btn .text{display:flex;flex-direction:column;gap:2px}
+        .module-nav-btn .label{font-size:11px;color:#e2e8f0;text-transform:uppercase;letter-spacing:1px;font-weight:600}
+        .module-nav-btn .title{font-size:15px;font-weight:700;color:#ffffff}
+        .scroll-to-top{position:fixed;bottom:30px;right:30px;width:50px;height:50px;background:linear-gradient(135deg,rgba(6,182,212,.9),rgba(14,165,233,.9));border:2px solid rgba(6,182,212,.5);border-radius:50%;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transform:translateY(20px);transition:all 0.3s ease;z-index:1000;box-shadow:0 4px 12px rgba(6,182,212,.3)}.scroll-to-top.visible{opacity:1;visibility:visible;transform:translateY(0)}.scroll-to-top:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(6,182,212,.5)}
+        ::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:var(--bg-darker)}::-webkit-scrollbar-thumb{background:rgba(6,182,212,.3);border-radius:4px}
+        @media(max-width:1024px){.container{padding:30px 24px}.equip-grid{grid-template-columns:repeat(2,1fr)}}
+        @media(max-width:768px){.container{padding:20px}.page-header{padding:80px 0 20px}.page-subtitle{font-size:16px}.hero-stats{gap:20px}.section-title{font-size:22px}.section-text,.section-desc{font-size:15px}.equip-grid{grid-template-columns:1fr}.quiz-options{grid-template-columns:1fr}.module-navigation{flex-direction:column;gap:12px}}
+        @media(max-width:480px){.container{padding:16px}.hero-stats{flex-direction:column;gap:12px}.section-title{font-size:20px}.section-text,.section-desc{font-size:14px}.glass-card{padding:20px}.quiz-card{padding:24px}}
+        @media(max-width:360px){.container{padding:12px}.glass-card{padding:16px}}
+        /* NAVIGATION */
+        .sector-navigation{margin-bottom:30px}.navigation-block{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:20px;overflow:hidden;backdrop-filter:blur(10px);box-shadow:0 8px 32px rgba(0,0,0,0.1)}.navigation-toggle{width:100%;display:flex;align-items:center;gap:16px;padding:24px 32px;background:rgba(255,255,255,0.03);border:none;cursor:pointer;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden}.navigation-toggle::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,rgba(6,182,212,0.1),rgba(14,165,233,0.05));opacity:0;transition:opacity 0.3s ease}.navigation-toggle:hover::before{opacity:1}.navigation-toggle:hover{background:rgba(255,255,255,0.05);transform:translateY(-2px)}.navigation-toggle.active{background:rgba(255,255,255,0.05)}.navigation-toggle.active::before{opacity:1}.nav-icon{font-size:28px;position:relative;z-index:1;filter:drop-shadow(0 2px 4px rgba(6,182,212,0.3))}.nav-title{flex:1;text-align:left;font-size:20px;font-weight:700;background:linear-gradient(135deg,#06b6d4,#0ea5e9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:0.5px;position:relative;z-index:1}.nav-arrow{font-size:18px;color:#06b6d4;transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;z-index:1}.navigation-toggle.active .nav-arrow{transform:rotate(180deg)}.navigation-content{max-height:0;overflow:hidden;transition:max-height 0.5s cubic-bezier(0.4,0,0.2,1)}.navigation-content.active{max-height:2000px}.navigation-grid{display:grid;grid-template-columns:2fr 2fr 1.5fr;gap:32px;padding:32px;background:rgba(255,255,255,0.02)}.nav-section{display:flex;flex-direction:column;gap:8px}.section-header{font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#06b6d4;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(6,182,212,0.2)}.section-arrow{display:none}.section-items{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(8,auto);grid-auto-flow:column;gap:8px;counter-reset:nav-counter}.nav-section:last-child .section-items{grid-template-columns:1fr 1fr}.section-items a{padding:10px 12px;color:#e2e8f0;text-decoration:none;border-radius:10px;font-size:13px;font-weight:500;transition:all 0.2s ease;border:1px solid rgba(255,255,255,0.08);background:linear-gradient(135deg,rgba(6,182,212,0.05),rgba(14,165,233,0.03));display:flex;align-items:center;gap:2px;position:relative;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-height:44px}.section-items a::before{counter-increment:nav-counter;content:counter(nav-counter);font-size:8px;font-weight:600;color:rgba(6,182,212,0.5);min-width:10px;text-align:center;transition:all 0.2s ease;flex-shrink:0;margin-left:-4px}.section-items a::after{content:'';position:absolute;left:0;top:0;height:100%;width:3px;background:linear-gradient(180deg,#06b6d4,#0ea5e9);opacity:0;transition:opacity 0.2s ease}.section-items a:hover{background:linear-gradient(135deg,rgba(6,182,212,0.15),rgba(14,165,233,0.1));color:#67e8f9;border-color:rgba(6,182,212,0.3);transform:translateX(3px);box-shadow:0 4px 12px rgba(6,182,212,0.2)}.section-items a:hover::before{color:#06b6d4}.section-items a:hover::after{opacity:1}.section-items a.active{background:linear-gradient(135deg,rgba(6,182,212,0.2),rgba(99,102,241,0.15));color:#67e8f9;border-color:rgba(6,182,212,0.5);font-weight:600;box-shadow:0 0 0 1px rgba(6,182,212,0.2) inset,0 4px 16px rgba(6,182,212,0.25)}.section-items a.active::before{color:#06b6d4}.section-items a.active::after{opacity:1}@media(max-width:1024px){.navigation-grid{grid-template-columns:1fr 1fr;gap:24px}}@media(max-width:640px){.navigation-grid{grid-template-columns:1fr;gap:20px;padding:24px 20px}.section-items{grid-template-columns:1fr 1fr}.section-items a{padding:8px 8px;font-size:11px;white-space:nowrap;min-height:40px;line-height:1.2;gap:6px}.navigation-toggle{padding:18px 20px}.nav-title{font-size:16px}.section-header{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center}.section-header .section-arrow{display:inline-block;font-size:12px;color:#06b6d4;transition:transform 0.3s ease;margin-left:8px}.nav-section.collapsed .section-arrow{transform:rotate(-90deg)}.nav-section.collapsed .section-items{display:none}}
+    </style>
+    <script type="module" src="../firebase-auth-init.js?v=4.0"></script>
+</head>
+
+<body>
+    <script src="../role-guard.js"></script>
+    <div id="nav-placeholder"></div>
+    <script src="../nav-loader.js?v=7.4"></script>
+
+    <section class="page-header">
+        <div class="container">
+            <div class="page-badge">🚛 Модуль 4 из 15</div>
+            <h1 class="page-title">Оборудование и грузы</h1>
+            <p class="page-subtitle">
+                Грузоперевозки в США — это не просто «загрузил и поехал». Каждый груз требует определённого типа оборудования, 
+                и ошибка в выборе трейлера может стоить тысячи долларов. Как диспетчер, вы — связующее звено между грузом и оборудованием.
+            </p>
+            <div class="hero-stats">
+                <div class="hero-stat"><span class="hero-stat-number">6+</span><span class="hero-stat-label">Типов траков</span></div>
+                <div class="hero-stat"><span class="hero-stat-number">80,000</span><span class="hero-stat-label">lbs макс. вес</span></div>
+                <div class="hero-stat"><span class="hero-stat-number">53'</span><span class="hero-stat-label">Стандарт трейлер</span></div>
+                <div class="hero-stat"><span class="hero-stat-number">26</span><span class="hero-stat-label">Паллет в Dry Van</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NAV -->
+    <section class="section" style="padding-top:0;padding-bottom:4px;">
+        <div class="container">
+            <div class="sector-wrapper sector-navigation fade-in-up">
+                <div class="navigation-block">
+                    <button class="navigation-toggle" id="navigationToggle">
+                        <span class="nav-icon">📚</span>
+                        <span class="nav-title">Навигация по курсу</span>
+                        <span class="nav-arrow">▼</span>
+                    </button>
+
+                    <div class="navigation-content" id="navigationContent">
+                        <div class="navigation-grid">
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ РАЗДЕЛЫ<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="intro.html">📋 Введение</a>
+                                    <a href="glossary.html">📖 Глоссарий</a>
+                                    <a href="role.html">👤 Роль</a>
+                                    <a href="equipment.html" class="active">🚛 Оборудование</a>
+                                    <a href="routes.html">🗺 Маршруты</a>
+                                    <a href="loadboards.html">📡 Load Boards</a>
+                                    <a href="negotiation.html">🤝 Переговоры</a>
+                                    <a href="brokers.html">💼 Брокеры</a>
+                                    <a href="docs.html">📄 Документы</a>
+                                    <a href="regulations.html">⚖️ Законы</a>
+                                    <a href="technology.html">🖥 TMS</a>
+                                    <a href="communication.html">📞 Коммуникация</a>
+                                    <a href="problems.html">⚠️ Проблемы</a>
+                                    <a href="finances.html">💰 Финансы</a>
+                                    <a href="career.html">📈 Карьера</a>
+                                </div>
+                            </div>
+
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ МОДУЛИ<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="doc-module-1-complete.html">🏭 Индустрия</a>
+                                    <a href="doc-module-2-complete.html">📖 Термины</a>
+                                    <a href="doc-module-3-complete.html">👤 Диспетчер</a>
+                                    <a href="doc-module-4-complete.html">📡 Load Boards</a>
+                                    <a href="doc-module-5-complete.html">🗺 Маршруты</a>
+                                    <a href="doc-module-6-complete.html">🚛 Оборудование</a>
+                                    <a href="doc-module-7-complete.html">🤝 Переговоры</a>
+                                    <a href="doc-module-8-complete.html">💼 Брокеры</a>
+                                    <a href="doc-module-9-complete.html">📊 CSA Scores</a>
+                                    <a href="doc-module-10-complete.html">📦 Грузы</a>
+                                    <a href="doc-module-11-complete.html">⚠️ Проблемы</a>
+                                    <a href="doc-module-12-complete.html">📈 Карьера</a>
+                                </div>
+                            </div>
+
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ ИНСТРУМЕНТЫ<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="simulator.html">🎮 Симулятор</a>
+                                    <a href="testing.html">📝 Тесты</a>
+                                    <a href="cases.html">🗂 Кейсы</a>
+                                    <a href="load-finder.html">🔍 Load Finder</a>
+                                    <a href="dispatcher-cards.html">🃏 Карточки</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ВВЕДЕНИЕ -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">🚛 Оборудование в грузоперевозках: Основы</h2>
+            <p class="section-text">
+                В индустрии существует чёткая классификация трейлеров по назначению: закрытые (Dry Van, Reefer) для защищённых 
+                грузов, открытые (Flatbed, Step Deck) для негабаритных и тяжёлых, и специализированные (RGN, Tanker, Auto Hauler) 
+                для уникальных задач. Каждый тип имеет свои ограничения по весу, размерам и типу загрузки.
+            </p>
+            <p class="section-text">
+                Федеральный закон ограничивает общий вес трака с грузом до <strong>80,000 lbs</strong> (36.3 тонны) на Interstate highways. 
+                При весе самого трака ~35,000 lbs, на груз остаётся ~45,000 lbs. Превышение = штраф до <strong>$10,000+</strong> и отстранение водителя.
+            </p>
+            <p class="section-text">
+                Стандартные размеры трейлера — <strong>53 фута</strong> (16.15 м) длина, максимальная высота <strong>13'6"</strong> (4.11 м), 
+                ширина <strong>8'6"</strong> (2.59 м). Вместимость Dry Van: 26 стандартных паллет. Знание этих цифр — обязательно для каждого диспетчера.
+            </p>
+        </div>
+    </section>
+
+    <!-- 6 ТИПОВ ОБОРУДОВАНИЯ -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">📦 Основные типы оборудования</h2>
+            <p class="section-desc">6 типов траков, которые покрывают 95% всех грузоперевозок в США. Каждый с описанием, характеристиками и типичными грузами.</p>
+
+            <div class="equip-grid">
+                <div class="glass-card equip-card">
+                    <span class="eq-icon">🚚</span>
+                    <h3>Dry Van</h3>
+                    <div class="eq-sub">Самый распространённый — 70% всех грузов</div>
+                    <p>Стандартный закрытый прицеп 53 фута. Защищает груз от погоды и кражи. Используется для упакованных товаров: 
+                    электроника, одежда, продукты питания (не требующие температурного контроля), мебель, бытовая техника. 
+                    Загрузка через задние двери, иногда через боковые.</p>
+                    <div class="eq-specs">📏 53' × 8'6" × 9' | ⚖️ до 45,000 lbs | 📦 26 паллет | 💰 RPM: $2.00-2.50</div>
+                </div>
+
+                <div class="glass-card equip-card">
+                    <span class="eq-icon">❄️</span>
+                    <h3>Reefer (Refrigerated)</h3>
+                    <div class="eq-sub">Температурный контроль — премиум ставки</div>
+                    <p>Рефрижераторный прицеп с системой охлаждения/обогрева. Поддерживает температуру от -20°F до +70°F. 
+                    Для скоропортящихся продуктов: фрукты, овощи, мясо, молочные продукты, фармацевтика, цветы. 
+                    Ставки на 20-40% выше Dry Van из-за стоимости оборудования и топлива для рефрижератора.</p>
+                    <div class="eq-specs">📏 53' × 8'6" × 8'6" | ⚖️ до 43,000 lbs | 🌡️ -20°F до +70°F | 💰 RPM: $2.50-3.50</div>
+                </div>
+
+                <div class="glass-card equip-card">
+                    <span class="eq-icon">🏗️</span>
+                    <h3>Flatbed</h3>
+                    <div class="eq-sub">Открытая платформа — для негабарита</div>
+                    <p>Открытая платформа без стен и крыши. Для грузов, которые не помещаются в закрытый трейлер: 
+                    строительные материалы (lumber, steel), оборудование, трубы, бетонные блоки. 
+                    Требует tarping (укрытие тентом) и strapping (крепление ремнями). Водители flatbed зарабатывают больше — работа физически тяжелее.</p>
+                    <div class="eq-specs">📏 48-53' × 8'6" | ⚖️ до 48,000 lbs | 📐 Высота груза до 8'6" | 💰 RPM: $2.50-3.50</div>
+                </div>
+
+                <div class="glass-card equip-card">
+                    <span class="eq-icon">🚛</span>
+                    <h3>Step Deck (Drop Deck)</h3>
+                    <div class="eq-sub">Пониженная платформа — для высоких грузов</div>
+                    <p>Платформа с двумя уровнями: верхний (11') и нижний (37-41'). Нижняя часть ниже стандартного flatbed, 
+                    что позволяет перевозить более высокие грузы без специальных разрешений (permits). 
+                    Для строительной техники, генераторов, промышленного оборудования.</p>
+                    <div class="eq-specs">📏 48-53' | ⚖️ до 43,000 lbs | 📐 Высота груза до 10' | 💰 RPM: $2.80-3.80</div>
+                </div>
+
+                <div class="glass-card equip-card">
+                    <span class="eq-icon">🔧</span>
+                    <h3>Power Only</h3>
+                    <div class="eq-sub">Только тягач — без прицепа</div>
+                    <p>Водитель приезжает только с тягачом и подцепляет прицеп заказчика на месте. Используется когда у шиппера 
+                    есть свои трейлеры (drop trailers). Популярно у Amazon, Walmart, крупных ритейлеров. 
+                    Меньше wear & tear на свой трейлер, но ограниченный выбор грузов.</p>
+                    <div class="eq-specs">🚛 Только тягач | ⚖️ зависит от трейлера | 🔄 Drop & Hook | 💰 RPM: $1.80-2.50</div>
+                </div>
+
+                <div class="glass-card equip-card">
+                    <span class="eq-icon">📦</span>
+                    <h3>Box Truck (Straight Truck)</h3>
+                    <div class="eq-sub">Цельный грузовик — для местных доставок</div>
+                    <p>Грузовик с кузовом на одной раме (не отцепляется). Размеры: 16-26 футов. 
+                    Для местных и региональных доставок, небольших грузов, last-mile delivery. 
+                    Не требует CDL для траков до 26,000 lbs GVWR. Популярен для e-commerce и мелких перевозчиков.</p>
+                    <div class="eq-specs">📏 16-26' | ⚖️ до 26,000 lbs | 🏙️ Городские доставки | 💰 RPM: $2.00-3.00</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- СПЕЦИАЛЬНОЕ ОБОРУДОВАНИЕ -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">⚙️ Специализированное оборудование</h2>
+            <p class="section-text">
+                Помимо основных 6 типов, существует специализированное оборудование для уникальных грузов. 
+                Эти типы встречаются реже, но ставки значительно выше — потому что меньше конкуренции и нужна специализация.
+            </p>
+            <div class="glass-card">
+                <ul class="checklist">
+                    <li class="checklist-item" onclick="toggleItem(this)"><div class="checklist-header"><span class="checklist-icon">🏕️</span>Conestoga — раздвижной тент<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>Flatbed с раздвижным тентом (curtainside). Комбинирует преимущества flatbed (загрузка сбоку/сверху) и dry van (защита от погоды). Для грузов, которые нужно защитить, но невозможно загрузить через задние двери. Ставки на 15-25% выше обычного flatbed.</p></div></li>
+                    <li class="checklist-item" onclick="toggleItem(this)"><div class="checklist-header"><span class="checklist-icon">⬇️</span>Double Drop / RGN — для сверхтяжёлых грузов<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>Removable Gooseneck — трейлер с отсоединяемой передней частью. Позволяет заезжать технике своим ходом. Для строительной техники (экскаваторы, бульдозеры), промышленного оборудования. Грузоподъёмность до 150,000+ lbs с permits. Ставки: $5-15/mi.</p></div></li>
+                    <li class="checklist-item" onclick="toggleItem(this)"><div class="checklist-header"><span class="checklist-icon">🛢️</span>Tanker — для жидких грузов<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>Цистерна для перевозки жидкостей: топливо, химикаты, молоко, вода, пищевые масла. Требует Tanker endorsement на CDL и часто Hazmat endorsement. Строгие правила очистки между грузами. Ставки высокие из-за специализации и рисков.</p></div></li>
+                    <li class="checklist-item" onclick="toggleItem(this)"><div class="checklist-header"><span class="checklist-icon">🚗</span>Auto Hauler — для перевозки автомобилей<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>Специальный трейлер для перевозки 7-10 автомобилей. Используется дилерами, аукционами (Copart, IAAI), и при переездах. Требует специальных навыков загрузки. Ставки: $1-2 за милю за автомобиль × 8-10 авто = $8-20/mi total.</p></div></li>
+                    <li class="checklist-item" onclick="toggleItem(this)"><div class="checklist-header"><span class="checklist-icon">🏎️</span>Hotshot — пикап с прицепом<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>Пикап (Ford F-350, Ram 3500) с gooseneck трейлером 40'. Для срочных и небольших грузов: запчасти для нефтяных вышек, строительные материалы, оборудование. Не требует CDL если GVWR до 26,000 lbs. Низкий порог входа, популярен среди начинающих.</p></div></li>
+                    <li class="checklist-item" onclick="toggleItem(this)"><div class="checklist-header"><span class="checklist-icon">🌾</span>Hopper / Grain Trailer — для сыпучих грузов<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>Для перевозки зерна, кукурузы, сои, песка, гравия. Загрузка сверху, разгрузка через нижние люки. Сезонный спрос: harvest season (сентябрь-ноябрь) — ставки взлетают. Вне сезона — мало грузов.</p></div></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- ВАЖНО ДЛЯ ДИСПЕТЧЕРА -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">💡 Что должен знать диспетчер об оборудовании</h2>
+            <p class="section-text">
+                <strong>Правильный подбор оборудования = деньги.</strong> Если вы отправите Dry Van на груз, 
+                который требует Flatbed — водитель приедет и не сможет загрузиться. Потерянное время, TONU, 
+                испорченные отношения с брокером. Если отправите Reefer на обычный груз — водитель заработает меньше 
+                (reefer дороже в обслуживании, а ставка как за dry van).
+            </p>
+            <p class="section-text">
+                <strong>Ставки зависят от типа оборудования.</strong> Flatbed и Reefer платят на 20-50% больше Dry Van. 
+                Причина: меньше доступных траков, сложнее работа (tarping, temperature control), выше расходы. 
+                Если ваш водитель на Flatbed — ищите flatbed грузы, не dry van. Это как использовать Ferrari для доставки пиццы.
+            </p>
+            <p class="section-text">
+                <strong>Сезонность оборудования.</strong> Reefer: пик весна-лето (produce season из FL и CA). 
+                Flatbed: пик весна-осень (строительный сезон). Hopper: пик осень (harvest). 
+                Dry Van: стабилен круглый год, пик в Q4 (holiday freight). Планируйте загрузку водителей с учётом сезона.
+            </p>
+            <p class="section-text">
+                <strong>Weight limits по штатам.</strong> Федеральный лимит 80,000 lbs, но некоторые штаты разрешают больше 
+                с permits (Michigan — до 164,000 lbs на определённых дорогах). Другие штаты имеют bridge formula restrictions. 
+                Всегда проверяйте weight limits для конкретного маршрута перед букингом.
+            </p>
+        </div>
+    </section>
+
+    <!-- КВИЗ -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">🎯 Квиз: проверь знания по оборудованию</h2>
+            <p class="section-desc">8 вопросов по типам траков, характеристикам и подбору оборудования.</p>
+            <div class="quiz-card" id="quizCard">
+                <div id="quizBody">
+                    <div class="quiz-question" id="quizQuestion"></div>
+                    <div class="quiz-options" id="quizOptions"></div>
+                    <div class="quiz-feedback" id="quizFeedback"></div>
+                    <div class="quiz-nav"><span class="quiz-counter" id="quizCounter"></span><button class="quiz-next-btn" id="quizNext" onclick="nextQ()">Далее →</button></div>
+                </div>
+                <div class="quiz-score" id="quizScore">
+                    <div class="score-number" id="scoreNum"></div>
+                    <p id="scoreTxt"></p>
+                    <button class="quiz-restart-btn" onclick="restartQuiz()">Пройти заново</button>
+                </div>
+            </div>
+        </div>
+        <button class="complete-module-btn" onclick="completeModule(4)"><span>✓</span><span>Завершить модуль и перейти к следующему</span></button>
+        <div class="module-navigation">
+            <a href="role.html" class="module-nav-btn"><span class="icon">←</span><div class="text"><span class="label">Предыдущий модуль</span><span class="title">👔 Роль диспетчера</span></div></a>
+            <a href="routes.html" class="module-nav-btn next"><div class="text"><span class="label">Следующий модуль</span><span class="title">🗺️ Маршруты</span></div><span class="icon">→</span></a>
+        </div>
+    </section>
+
+    <script>
+        const navToggle=document.getElementById('navigationToggle');const navContent=document.getElementById('navigationContent');if(navToggle&&navContent){navToggle.addEventListener('click',function(){this.classList.toggle('active');navContent.classList.toggle('active')});}
+        
+        // Аккордеон для секций только на мобильных
+        function initMobileAccordion() {
+            if (window.innerWidth <= 640) {
+                const navSections = document.querySelectorAll('.nav-section');
+                
+                // Показываем стрелки
+                document.querySelectorAll('.section-arrow').forEach(arrow => {
+                    arrow.style.display = 'inline-block';
+                });
+                
+                // Закрываем секции 2 и 3 (Модули и Инструменты)
+                navSections.forEach(function(section, index) {
+                    if (index > 0) {
+                        section.classList.add('collapsed');
+                    }
+                    
+                    const header = section.querySelector('.section-header');
+                        if (header && !header.dataset.listenerAdded) {
+                        header.addEventListener('click', function() {
+                            section.classList.toggle('collapsed');
+                        });
+                            header.dataset.listenerAdded = 'true';
+                    }
+                });
+            } else {
+                // Скрываем стрелки на десктопе
+                document.querySelectorAll('.section-arrow').forEach(arrow => {
+                    arrow.style.display = 'none';
+                });
+            }
+        }
+        
+        initMobileAccordion();
+        window.addEventListener('resize', initMobileAccordion);
+        
+        function toggleItem(el){el.classList.toggle('open');}
+
+        const quizData=[
+            {q:'Какой тип трейлера самый распространённый в США?',options:['Flatbed','Reefer','Dry Van (70% грузов)','Step Deck'],correct:2,explanation:'Dry Van — 70% всех грузоперевозок. Стандартный закрытый прицеп 53\' для упакованных товаров.'},
+            {q:'Максимальный вес трака с грузом на Interstate highways:',options:['40,000 lbs','60,000 lbs','80,000 lbs','100,000 lbs'],correct:2,explanation:'Федеральный лимит — 80,000 lbs gross weight. При весе трака ~35,000 lbs на груз остаётся ~45,000 lbs.'},
+            {q:'Какой трейлер нужен для перевозки замороженных продуктов?',options:['Dry Van','Flatbed','Reefer (рефрижератор)','Box Truck'],correct:2,explanation:'Reefer поддерживает температуру от -20°F до +70°F. Обязателен для скоропортящихся и замороженных продуктов.'},
+            {q:'Сколько стандартных паллет вмещает Dry Van 53\'?',options:['12','18','26','40'],correct:2,explanation:'Стандартный Dry Van 53\' вмещает 26 паллет размером 48"×40" в два ряда.'},
+            {q:'Какой тип оборудования платит самые высокие ставки?',options:['Dry Van','Power Only','Flatbed / Reefer (на 20-50% больше)','Box Truck'],correct:2,explanation:'Flatbed и Reefer платят на 20-50% больше Dry Van из-за меньшего количества доступных траков и сложности работы.'},
+            {q:'Что такое Power Only?',options:['Электрический трак','Только тягач без прицепа','Трак с усиленным двигателем','Экспресс-доставка'],correct:1,explanation:'Power Only — водитель приезжает только с тягачом и подцепляет прицеп заказчика (drop trailer). Популярно у Amazon, Walmart.'},
+            {q:'Какой трейлер используется для строительной техники?',options:['Dry Van','Reefer','RGN / Double Drop','Tanker'],correct:2,explanation:'RGN (Removable Gooseneck) позволяет технике заезжать своим ходом. Грузоподъёмность до 150,000+ lbs с permits.'},
+            {q:'Стандартная длина трейлера в США:',options:['40 футов','48 футов','53 фута','60 футов'],correct:2,explanation:'53 фута (16.15 м) — стандарт для Dry Van и Reefer. Flatbed бывает 48-53\'. Box Truck — 16-26\'.'}
+        ];
+        let qIdx=0,qScore=0,qAnswered=false;
+        function renderQ(){const q=quizData[qIdx];document.getElementById('quizQuestion').textContent=q.q;document.getElementById('quizCounter').textContent=(qIdx+1)+' / '+quizData.length;document.getElementById('quizFeedback').className='quiz-feedback';document.getElementById('quizNext').classList.remove('visible');qAnswered=false;const el=document.getElementById('quizOptions');el.innerHTML='';q.options.forEach((o,i)=>{const btn=document.createElement('button');btn.className='quiz-option';btn.textContent=o;btn.onclick=()=>answerQ(i);el.appendChild(btn);})}
+        function answerQ(i){if(qAnswered)return;qAnswered=true;const q=quizData[qIdx];document.querySelectorAll('.quiz-option').forEach((b,j)=>{b.disabled=true;if(j===q.correct)b.classList.add('correct');if(j===i&&i!==q.correct)b.classList.add('wrong');});const fb=document.getElementById('quizFeedback');if(i===q.correct){qScore++;fb.className='quiz-feedback visible success';fb.textContent='✅ Правильно! '+q.explanation;}else{fb.className='quiz-feedback visible error';fb.textContent='❌ Неправильно. '+q.explanation;}if(qIdx<quizData.length-1)document.getElementById('quizNext').classList.add('visible');else setTimeout(showQScore,1500);}
+        function nextQ(){qIdx++;renderQ();}
+        function showQScore(){document.getElementById('quizBody').style.display='none';document.getElementById('quizScore').classList.add('visible');document.getElementById('scoreNum').textContent=qScore+'/'+quizData.length;const p=Math.round(qScore/quizData.length*100);document.getElementById('scoreTxt').textContent=p===100?'Идеально! Вы знаете всё оборудование.':p>=75?'Отличный результат!':p>=50?'Неплохо, повторите материал.':'Перечитайте модуль.';}
+        function restartQuiz(){qIdx=0;qScore=0;document.getElementById('quizBody').style.display='';document.getElementById('quizScore').classList.remove('visible');renderQ();}
+        document.addEventListener('DOMContentLoaded',renderQ);
+    </script>
+    <script>
+function completeModule(n){const p=JSON.parse(localStorage.getItem('courseProgress')||'{}');p['module'+n]=true;localStorage.setItem('courseProgress',JSON.stringify(p));const btn=document.querySelector('.complete-module-btn');btn.innerHTML='<span>✓</span><span>Модуль завершен!</span>';btn.style.background='linear-gradient(135deg,#6b7280,#4b5563)';btn.style.cursor='default';const next=document.querySelector('.module-nav-btn.next');if(next)setTimeout(()=>next.click(),1500)}
+document.addEventListener('DOMContentLoaded',function(){const n=document.querySelector('.complete-module-btn')?.onclick?.toString().match(/completeModule\((\d+)\)/);if(n){const p=JSON.parse(localStorage.getItem('courseProgress')||'{}');if(p['module'+n[1]]){const btn=document.querySelector('.complete-module-btn');btn.innerHTML='<span>✓</span><span>Модуль завершен</span>';btn.style.background='linear-gradient(135deg,#6b7280,#4b5563)';btn.style.cursor='default'}}});
+    </script>
+    <script type="module">
+  import { awardXP } from '../xp-system.js';
+  const K = 'xp_equipment_v1';
+  if (!localStorage.getItem(K)) awardXP('SECTOR_COMPLETE').then(r => r && localStorage.setItem(K,'1')).catch(()=>{});
+</script>
+
+<!-- Кнопка возврата наверх -->
+<button class="scroll-to-top" id="scrollToTop" aria-label="Вернуться наверх">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="18 15 12 9 6 15"></polyline>
+    </svg>
+</button>
+
+<script>
+(function(){const scrollBtn=document.getElementById('scrollToTop');let inactivityTimer;window.addEventListener('scroll',function(){if(window.pageYOffset>300){scrollBtn.classList.add('visible');resetInactivityTimer();}else{scrollBtn.classList.remove('visible');scrollBtn.classList.remove('inactive');}});function resetInactivityTimer(){scrollBtn.classList.remove('inactive');clearTimeout(inactivityTimer);inactivityTimer=setTimeout(function(){scrollBtn.classList.add('inactive');},2000);}window.addEventListener('mousemove',resetInactivityTimer);window.addEventListener('scroll',resetInactivityTimer);window.addEventListener('touchstart',resetInactivityTimer);scrollBtn.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});})();
+</script>
+
+</body>
+</html>

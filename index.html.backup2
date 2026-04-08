@@ -1,0 +1,7128 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <!-- Auto-deploy test: 2026-02-25 23:50 - New webhook -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Курсы Диспетчера | Профессиональное обучение</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="courses-section.css">
+  <script>
+    // Отключаем автоматическое восстановление скролла при перезагрузке страницы
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --secondary: #8b5cf6;
+      --accent: #ec4899;
+      --bg-dark: #0f172a;
+      --bg-darker: #020617;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-darker);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: background 0.3s ease, color 0.3s ease;
+      width: 100%;
+      max-width: 100vw;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100vw;
+    }
+
+    /* Animated gradient background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      pointer-events: none;
+      z-index: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    /* Neural Background Canvas */
+    #neuralCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 1;
+      display: block;
+      filter: blur(4px);
+      /* Увеличили размытие с 2px до 4px */
+    }
+
+    /* Grid pattern overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image:
+        linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+
+    .container-wide {
+      max-width: none;
+      width: 100%;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 0 20px;
+        max-width: 100%;
+        width: 100%;
+        box-sizing: border-box;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 0 16px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .container {
+        padding: 0 12px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+    }
+
+    /* Hero Section */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 40px 0 20px;
+    }
+
+    .hero::before {
+      display: none !important;
+    }
+
+    .hero-content {
+      text-align: center;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 20px;
+      width: 100%;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 24px;
+      backdrop-filter: blur(10px);
+      animation: fadeInUp 0.6s ease;
+    }
+
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--primary);
+      border-radius: 50%;
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.5;
+        transform: scale(1.2);
+      }
+    }
+
+    h1 {
+      font-size: clamp(32px, 6vw, 56px);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 20px;
+      animation: fadeInUp 0.8s ease 0.2s both;
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      background-size: 200% 200%;
+      animation: gradientFlow 8s ease infinite;
+    }
+
+    @keyframes gradientFlow {
+
+      0%,
+      100% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+    }
+
+    .subtitle {
+      font-size: clamp(14px, 2.5vw, 18px);
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto 32px;
+      line-height: 1.6;
+      animation: fadeInUp 1s ease 0.4s both;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      animation: fadeInUp 1.2s ease 0.6s both;
+      width: 100%;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 28px;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 16px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      box-shadow: 0 10px 40px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 60px rgba(99, 102, 241, 0.6);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    /* Glass Button with Frosted Effect */
+    .btn-glass {
+      background: rgba(99, 102, 241, 0.15);
+      color: white;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(99, 102, 241, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-glass:hover {
+      background: rgba(99, 102, 241, 0.25);
+      border-color: rgba(99, 102, 241, 0.5);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 48px rgba(99, 102, 241, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    /* Chat Button Styles */
+    .btn-chat {
+      position: relative;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+      color: white;
+      border: 2px solid rgba(139, 92, 246, 0.5);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(139, 92, 246, 0.3);
+    }
+
+    .btn-chat::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .btn-chat:hover::before {
+      left: 100%;
+    }
+
+    .btn-chat:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 60px rgba(139, 92, 246, 0.5);
+      border-color: rgba(139, 92, 246, 0.8);
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3));
+    }
+
+    .chat-icon {
+      display: inline-block;
+      font-size: 1.2em;
+      animation: chatBounce 2s ease-in-out infinite;
+    }
+
+    @keyframes chatBounce {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-3px);
+      }
+    }
+
+    .chat-pulse {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100%;
+      height: 100%;
+      transform: translate(-50%, -50%);
+      border-radius: 12px;
+      background: rgba(139, 92, 246, 0.3);
+      animation: pulse 2s ease-out infinite;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.5;
+      }
+
+      100% {
+        transform: translate(-50%, -50%) scale(1.5);
+        opacity: 0;
+      }
+    }
+
+    .arrow {
+      transition: transform 0.3s;
+    }
+
+    .btn:hover .arrow {
+      transform: translateX(4px);
+    }
+
+    /* Mobile Responsive для Hero */
+    @media (max-width: 768px) {
+      .hero {
+        min-height: auto;
+        padding: 140px 0 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .hero-content {
+        padding: 0 16px;
+        text-align: center;
+        width: 100%;
+        max-width: 100%;
+      }
+
+      h1 {
+        font-size: clamp(28px, 8vw, 40px);
+        margin-bottom: 16px;
+        text-align: center;
+      }
+
+      .subtitle {
+        font-size: clamp(14px, 3vw, 16px);
+        margin-bottom: 28px;
+        text-align: center;
+      }
+
+      .badge {
+        font-size: 12px;
+        padding: 5px 14px;
+        margin-bottom: 20px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .cta-buttons {
+        gap: 12px;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .btn {
+        padding: 12px 24px;
+        font-size: 14px;
+        gap: 10px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero {
+        padding: 120px 0 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .hero-content {
+        padding: 0 12px;
+        text-align: center;
+        width: 100%;
+      }
+
+      h1 {
+        font-size: clamp(24px, 9vw, 32px);
+        margin-bottom: 12px;
+        line-height: 1.2;
+        text-align: center;
+      }
+
+      .subtitle {
+        font-size: 14px;
+        margin-bottom: 24px;
+        line-height: 1.5;
+        text-align: center;
+      }
+
+      .badge {
+        font-size: 11px;
+        padding: 4px 12px;
+        gap: 4px;
+        margin-bottom: 16px;
+        display: inline-flex;
+      }
+
+      .badge-dot {
+        width: 6px;
+        height: 6px;
+      }
+
+      .cta-buttons {
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+        align-items: center;
+      }
+
+      .btn {
+        width: 100%;
+        max-width: 320px;
+        justify-content: center;
+        padding: 12px 20px;
+        font-size: 13px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .hero {
+        padding: 70px 0 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .hero-content {
+        padding: 0 10px;
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 22px;
+        text-align: center;
+      }
+
+      .subtitle {
+        font-size: 13px;
+        text-align: center;
+      }
+
+      .btn {
+        padding: 10px 18px;
+        font-size: 12px;
+        max-width: 280px;
+      }
+    }
+
+    /* Marquee Section */
+    @keyframes marquee {
+      from {
+        transform: translateX(0);
+      }
+
+      to {
+        transform: translateX(-50%);
+      }
+    }
+
+    .hero-marquee {
+      margin-top: 60px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.03);
+      padding: 32px 0;
+      backdrop-filter: blur(24px);
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .marquee-title {
+      margin-bottom: 24px;
+      padding: 0 32px;
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.6);
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .marquee-wrapper {
+      position: relative;
+      display: flex;
+      overflow: hidden;
+      mask-image: linear-gradient(to right, transparent, black 20%, black 80%, transparent);
+      -webkit-mask-image: linear-gradient(to right, transparent, black 20%, black 80%, transparent);
+    }
+
+    .marquee-content {
+      display: flex;
+      gap: 48px;
+      white-space: nowrap;
+      padding: 0 16px;
+      animation: marquee 60s linear infinite;
+      will-change: transform;
+    }
+
+    .brand-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0.5;
+      transition: all 0.3s ease;
+      cursor: default;
+      filter: grayscale(1);
+    }
+
+    .brand-item:hover {
+      opacity: 1;
+      transform: scale(1.05);
+      filter: grayscale(0);
+    }
+
+    .brand-icon {
+      height: 24px;
+      width: 24px;
+      color: white;
+      fill: currentColor;
+    }
+
+    .brand-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: -0.025em;
+    }
+
+    @media (max-width: 768px) {
+      .hero-marquee {
+        display: none;
+      }
+    }
+
+    .marquee-content {
+      gap: 20px;
+      animation: marquee 35s linear infinite;
+    }
+
+    .brand-icon {
+      height: 14px;
+      width: 14px;
+    }
+
+    .brand-name {
+      font-size: 11px;
+    }
+
+    /* Features Grid */
+    .features {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 40px 0;
+      position: relative;
+    }
+
+    .courses-deep-dive {
+      padding: 0;
+    }
+
+    .features::before {
+      content: '01';
+      position: absolute;
+      top: 80px;
+      right: 40px;
+      font-size: 200px;
+      font-weight: 900;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.04), rgba(236, 72, 153, 0.04));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      z-index: 0;
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      margin-top: 80px;
+      width: 100%;
+    }
+
+    .feature-card {
+      padding: 40px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      backdrop-filter: blur(10px);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+      transform: scaleX(0);
+      transition: transform 0.4s;
+    }
+
+    .feature-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .feature-card:hover {
+      transform: translateY(-8px);
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(99, 102, 241, 0.3);
+      box-shadow: 0 20px 60px rgba(99, 102, 241, 0.2);
+    }
+
+    .feature-icon {
+      width: 64px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+      border-radius: 16px;
+      font-size: 32px;
+      margin-bottom: 24px;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .feature-card:hover .feature-icon {
+      transform: scale(1.1) rotate(5deg);
+    }
+
+    /* Mobile-only card - hidden on desktop */
+    .feature-card.mobile-only {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .feature-card.mobile-only {
+        display: flex;
+      }
+    }
+
+    .feature-icon:hover {
+      transform: scale(1.3) rotate(15deg) translateY(-5px) !important;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(139, 92, 246, 0.4));
+      box-shadow: 0 0 30px rgba(99, 102, 241, 0.6), 0 0 60px rgba(139, 92, 246, 0.4);
+      filter: brightness(1.2);
+    }
+
+    .feature-badge {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      padding: 4px 10px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 6px;
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: rgba(99, 102, 241, 0.9);
+      backdrop-filter: blur(10px);
+      z-index: 2;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .feature-badge:hover {
+      background: rgba(99, 102, 241, 0.3);
+      border-color: rgba(99, 102, 241, 0.6);
+      color: #6366f1;
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.6), 0 0 40px rgba(99, 102, 241, 0.3);
+      transform: scale(1.05);
+    }
+
+    .feature-badge:active {
+      animation: evaporate 0.6s ease forwards;
+    }
+
+    @keyframes evaporate {
+      0% {
+        opacity: 1;
+        transform: scale(1.05);
+      }
+
+      50% {
+        opacity: 0.5;
+        transform: scale(1.3);
+        filter: blur(4px);
+      }
+
+      100% {
+        opacity: 0;
+        transform: scale(2);
+        filter: blur(10px);
+      }
+    }
+
+    @keyframes pulse-badge {
+
+      0%,
+      100% {
+        transform: scale(1);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+      }
+
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+      }
+    }
+
+    .feature-card h3 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+      text-align: center;
+    }
+
+    .feature-card p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    /* Stats Section */
+    .stats {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 40px 0;
+      position: relative;
+    }
+
+    .stats::before {
+      content: '02';
+      position: absolute;
+      top: 80px;
+      right: 40px;
+      font-size: 200px;
+      font-weight: 900;
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.04), rgba(99, 102, 241, 0.04));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      z-index: 0;
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    .diesel-section::before {
+      display: none;
+    }
+
+    .rates-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 32px;
+      margin-bottom: 48px;
+    }
+
+    .rates-section {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 32px;
+      transition: all 0.3s ease;
+    }
+
+    .rates-section:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(99, 102, 241, 0.3);
+      transform: translateY(-4px);
+    }
+
+    .rates-section[data-type="diesel"] {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .rates-section[data-type="diesel"]:hover {
+      background: rgba(245, 158, 11, 0.08);
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .rates-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+
+    .rates-icon {
+      font-size: 40px;
+      flex-shrink: 0;
+    }
+
+    .rates-header h3 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #ffffff;
+      flex: 1;
+      min-width: 100px;
+    }
+
+    .rates-badge {
+      padding: 6px 16px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #a5b4fc;
+      white-space: nowrap;
+    }
+
+    .rates-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .rate-bar-container {
+      opacity: 0;
+      animation: fadeInUp 0.6s ease-out forwards;
+    }
+
+    .rate-bar-container:nth-child(1) {
+      animation-delay: 0.1s;
+    }
+
+    .rate-bar-container:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .rate-bar-container:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    .rate-bar-container:nth-child(4) {
+      animation-delay: 0.4s;
+    }
+
+    .rate-bar-container:nth-child(5) {
+      animation-delay: 0.5s;
+    }
+
+    /* Новые современные полоски */
+    .rate-bar-modern {
+      position: relative;
+      height: 70px;
+      margin-bottom: 16px;
+      border-radius: 16px;
+      overflow: hidden;
+      opacity: 0;
+      animation: fadeInUp 0.6s ease-out forwards;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .rate-bar-modern:nth-child(1) {
+      animation-delay: 0.1s;
+    }
+
+    .rate-bar-modern:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .rate-bar-modern:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    .rate-bar-modern:nth-child(4) {
+      animation-delay: 0.4s;
+    }
+
+    .rate-bar-modern:nth-child(5) {
+      animation-delay: 0.5s;
+    }
+
+    .rate-bar-modern:hover {
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 12px 32px rgba(99, 102, 241, 0.3);
+    }
+
+    .rate-bar-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+    }
+
+    .rate-bar-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: linear-gradient(90deg,
+          rgba(99, 102, 241, 0.3),
+          rgba(139, 92, 246, 0.2));
+      border-radius: 16px;
+      animation: fillBarSmooth 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      transform-origin: left;
+      box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.1);
+    }
+
+    .rate-bar-modern:nth-child(1) .rate-bar-fill {
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.4), rgba(16, 185, 129, 0.2));
+    }
+
+    .rate-bar-modern:nth-child(2) .rate-bar-fill {
+      background: linear-gradient(90deg, rgba(99, 102, 241, 0.4), rgba(99, 102, 241, 0.2));
+    }
+
+    .rate-bar-modern:nth-child(3) .rate-bar-fill {
+      background: linear-gradient(90deg, rgba(139, 92, 246, 0.4), rgba(139, 92, 246, 0.2));
+    }
+
+    .rate-bar-modern:nth-child(4) .rate-bar-fill {
+      background: linear-gradient(90deg, rgba(236, 72, 153, 0.4), rgba(236, 72, 153, 0.2));
+    }
+
+    .rate-bar-modern:nth-child(5) .rate-bar-fill {
+      background: linear-gradient(90deg, rgba(245, 158, 11, 0.4), rgba(245, 158, 11, 0.2));
+    }
+
+    /* Hidden rate bars */
+    .rate-bar-hidden {
+      display: none;
+      opacity: 0;
+      max-height: 0;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    .rates-section.expanded .rate-bar-hidden {
+      display: block;
+      opacity: 1;
+      max-height: 100px;
+      margin-bottom: 16px;
+      animation: fadeInUp 0.4s ease-out forwards;
+    }
+
+    /* Expand button */
+    .rates-expand-btn {
+      width: 100%;
+      padding: 12px 20px;
+      margin-top: 8px;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 12px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .rates-expand-btn:hover {
+      background: rgba(99, 102, 241, 0.2);
+      border-color: rgba(99, 102, 241, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .expand-icon {
+      transition: transform 0.3s ease;
+      font-size: 12px;
+    }
+
+    .rates-section.expanded .expand-icon {
+      transform: rotate(180deg);
+    }
+
+    @keyframes fillBarSmooth {
+      from {
+        width: 0;
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .rate-bar-content {
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 24px;
+      height: 100%;
+      z-index: 2;
+    }
+
+    .rate-bar-modern:hover .rate-bar-content {
+      transform: translateX(8px);
+      transition: transform 0.3s ease;
+    }
+
+    .region-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      letter-spacing: 0.5px;
+    }
+
+    .rate-value {
+      font-size: 24px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #ffffff, #a5b4fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 2px 16px rgba(99, 102, 241, 0.5);
+    }
+
+    .rate-bar-glow {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+      border-radius: 16px;
+    }
+
+    .rate-bar-modern:hover .rate-bar-glow {
+      opacity: 0.6;
+      animation: glowPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes glowPulse {
+
+      0%,
+      100% {
+        opacity: 0.4;
+      }
+
+      50% {
+        opacity: 0.8;
+      }
+    }
+
+    /* Выпадающая вкладка с информацией по штатам - компактная версия */
+    .states-dropdown {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-bottom: 12px;
+    }
+
+    .states-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .states-info {
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .states-info .state-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .states-info .state-card:hover {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.1));
+      border-color: rgba(245, 158, 11, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .states-info .state-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+
+    .states-info .state-details {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .states-info .city-name {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .states-info .fuel-price {
+      font-size: 14px;
+      font-weight: 600;
+      color: #f59e0b;
+    }
+
+    @media (max-width: 768px) {
+      .states-grid {
+        grid-template-columns: 1fr;
+        padding: 10px;
+        gap: 6px;
+      }
+    }
+
+    .state-item {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 10px 12px;
+      transition: all 0.2s ease;
+    }
+
+    .state-item:hover {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.1));
+      border-color: rgba(99, 102, 241, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .state-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+
+    .state-city {
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    @media (max-width: 768px) {
+      .state-name {
+        font-size: 11px;
+        margin-bottom: 3px;
+      }
+
+      .state-city {
+        font-size: 9px;
+        display: block;
+        margin-top: 2px;
+      }
+
+      .state-details {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+
+      .state-rate {
+        font-size: 13px;
+      }
+
+      .state-loads {
+        font-size: 9px;
+      }
+    }
+
+    .rate-bar-modern.active {
+      border: 2px solid rgba(99, 102, 241, 0.6);
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+    }
+
+    .market-insights {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 24px;
+      margin-top: 48px;
+    }
+
+    .insight-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: all 0.3s ease;
+      opacity: 0;
+      animation: fadeInUp 0.6s ease-out forwards;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .insight-card::after {
+      content: 'ℹ️';
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .insight-card:hover::after {
+      opacity: 0.5;
+    }
+
+    .insight-card:nth-child(1) {
+      animation-delay: 0.7s;
+    }
+
+    .insight-card:nth-child(2) {
+      animation-delay: 0.8s;
+    }
+
+    .insight-card:nth-child(3) {
+      animation-delay: 0.9s;
+    }
+
+    .insight-card:nth-child(4) {
+      animation-delay: 1.0s;
+    }
+
+    .insight-card:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(99, 102, 241, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .insight-icon {
+      font-size: 32px;
+      flex-shrink: 0;
+    }
+
+    .insight-content {
+      flex: 1;
+    }
+
+    .insight-title {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .insight-value {
+      font-size: 20px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 2px;
+    }
+
+    .insight-subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* Content Overview Section */
+    .content-overview {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 120px 0;
+      position: relative;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 32px;
+      margin-top: 60px;
+      margin-bottom: 60px;
+    }
+
+    .content-category {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      padding: 32px;
+      backdrop-filter: blur(10px);
+      transition: all 0.4s ease;
+    }
+
+    .content-category:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(99, 102, 241, 0.3);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 60px rgba(99, 102, 241, 0.2);
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .category-icon {
+      font-size: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+      border-radius: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .content-category:hover .category-icon {
+      transform: scale(1.1) rotate(5deg);
+    }
+
+    .category-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .category-items {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .content-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .content-item:hover {
+      background: rgba(99, 102, 241, 0.1);
+      border-color: rgba(99, 102, 241, 0.3);
+      transform: translateX(8px);
+    }
+
+    .item-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+      transition: transform 0.3s ease;
+    }
+
+    .content-item:hover .item-icon {
+      transform: scale(1.2);
+    }
+
+    .item-content {
+      flex: 1;
+    }
+
+    .item-content h4 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .item-content p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .item-arrow {
+      font-size: 20px;
+      color: var(--text-muted);
+      opacity: 0;
+      transform: translateX(-10px);
+      transition: all 0.3s ease;
+    }
+
+    .content-item:hover .item-arrow {
+      opacity: 1;
+      transform: translateX(0);
+      color: var(--primary);
+    }
+
+    .overview-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 32px;
+      padding: 40px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+    }
+
+    .overview-stat {
+      text-align: center;
+    }
+
+    .overview-stat .stat-number {
+      font-size: 36px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .overview-stat .stat-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* Content Overview Mobile */
+    @media (max-width: 1024px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+
+      .overview-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+        padding: 32px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .content-overview {
+        padding: 80px 0;
+        min-height: auto;
+      }
+
+      .content-grid {
+        margin-top: 40px;
+        margin-bottom: 40px;
+      }
+
+      .content-category {
+        padding: 24px;
+      }
+
+      .category-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 28px;
+      }
+
+      .category-title {
+        font-size: 20px;
+      }
+
+      .content-item {
+        padding: 14px;
+      }
+
+      .item-icon {
+        font-size: 20px;
+      }
+
+      .item-content h4 {
+        font-size: 15px;
+      }
+
+      .item-content p {
+        font-size: 12px;
+      }
+
+      .overview-stats {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 24px;
+      }
+
+      .overview-stat .stat-number {
+        font-size: 28px;
+      }
+
+      .overview-stat .stat-label {
+        font-size: 13px;
+      }
+    }
+
+    /* Section Headers */
+    .section-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .section-title {
+      font-size: clamp(24px, 4vw, 38px);
+      font-weight: 800;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .section-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Floating elements */
+    .floating {
+      animation: floating 6s ease-in-out infinite;
+    }
+
+    @keyframes floating {
+
+      0%,
+      100% {
+        transform: translateY(0px);
+      }
+
+      50% {
+        transform: translateY(-20px);
+      }
+    }
+
+    /* Mobile Responsive for Stats */
+    @media (max-width: 768px) {
+      .stats::before {
+        font-size: 60px;
+        top: 40px;
+        right: 20px;
+      }
+
+      .rates-container {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+
+      .rates-section {
+        padding: 24px;
+      }
+
+      .rates-header {
+        gap: 12px;
+      }
+
+      .rates-icon {
+        font-size: 32px;
+      }
+
+      .rates-header h3 {
+        font-size: 20px;
+      }
+
+      .rates-badge {
+        font-size: 11px;
+        padding: 4px 12px;
+      }
+
+      .rate-bar {
+        height: 50px;
+      }
+
+      .rate-bar-label {
+        padding: 0 16px;
+      }
+
+      .region-name {
+        font-size: 14px;
+      }
+
+      .rate-value {
+        font-size: 16px;
+      }
+
+      .market-insights {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .insight-card {
+        padding: 20px;
+      }
+
+      .insight-icon {
+        font-size: 28px;
+      }
+
+      .insight-value {
+        font-size: 18px;
+      }
+    }
+
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container {
+        padding: 0 24px;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .hero {
+        padding: 80px 0 60px;
+        min-height: auto;
+      }
+
+      .hero h1 {
+        font-size: 36px;
+        line-height: 1.2;
+      }
+
+      .hero-subtitle {
+        font-size: 18px;
+      }
+
+      .hero-stats {
+        gap: 24px;
+      }
+
+      .stat-number {
+        font-size: 32px;
+      }
+
+      .stat-label {
+        font-size: 12px;
+      }
+
+      .cta-buttons {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      /* Features mobile adaptation */
+      .features {
+        min-height: 100vh;
+        padding: 80px 0;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-top: 40px;
+      }
+
+      .feature-card {
+        padding: 16px;
+      }
+
+      .feature-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+        margin-bottom: 12px;
+      }
+
+      .feature-card h3 {
+        font-size: 10px;
+      }
+
+      .feature-card p {
+        font-size: 7.5px;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+      }
+
+      .pricing {
+        padding: 60px 0;
+      }
+
+      .pricing-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+
+      .footer-content {
+        grid-template-columns: 1fr;
+        gap: 32px;
+      }
+
+      .navbar {
+        padding: 12px 0;
+      }
+
+      .logo-text {
+        font-size: 16px;
+      }
+
+      /* Mobile section numbers */
+      .features::before,
+      .stats::before,
+      .pricing::before,
+      .curriculum::before {
+        font-size: 60px !important;
+        top: 70px !important;
+        right: 20px !important;
+      }
+
+      /* Curriculum mobile */
+      .curriculum-item {
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 32px;
+      }
+
+      .curriculum-number {
+        width: 60px;
+        height: 60px;
+        font-size: 22px;
+      }
+
+      .curriculum-content {
+        padding: 24px;
+      }
+
+      .curriculum-title {
+        font-size: 18px;
+      }
+
+      .curriculum-description {
+        font-size: 14px;
+      }
+
+      .curriculum-topics {
+        gap: 6px;
+      }
+
+      .curriculum-topic {
+        font-size: 12px;
+        padding: 4px 10px;
+      }
+    }
+
+    /* Scroll indicator */
+    .scroll-indicator {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+
+      0%,
+      20%,
+      50%,
+      80%,
+      100% {
+        transform: translateX(-50%) translateY(0);
+      }
+
+      40% {
+        transform: translateX(-50%) translateY(-10px);
+      }
+
+      60% {
+        transform: translateX(-50%) translateY(-5px);
+      }
+    }
+
+    .scroll-indicator svg {
+      width: 24px;
+      height: 24px;
+      opacity: 0.5;
+    }
+
+    /* Navigation */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 999;
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 10px 0;
+      transition: all 0.3s ease;
+    }
+
+    .nav-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-primary);
+      transition: all 0.3s ease;
+    }
+
+    .logo:hover {
+      transform: translateY(-2px);
+    }
+
+    .logo-icon {
+      font-size: 16px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .nav-link {
+      text-decoration: none;
+      color: var(--text-secondary);
+      font-weight: 500;
+      font-size: clamp(11px, 1.1vw, 14px);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--primary);
+      transition: width 0.3s ease;
+    }
+
+    .nav-link:hover {
+      color: var(--text-primary);
+    }
+
+    .nav-link:hover::after {
+      width: 100%;
+    }
+
+    /* Dropdown Navigation */
+    .nav-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .nav-dropdown .nav-link {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .nav-dropdown .nav-link::before {
+      content: '▼';
+      font-size: 8px;
+      transition: transform 0.3s ease;
+      margin-left: 4px;
+    }
+
+    .nav-dropdown .nav-link::after {
+      display: none;
+    }
+
+    .nav-dropdown:hover .nav-link::before {
+      transform: rotate(180deg);
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      min-width: 200px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 8px;
+      margin-top: 0;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+      z-index: 1000;
+    }
+
+    .nav-dropdown:hover .dropdown-content {
+      display: flex;
+      flex-direction: column;
+      animation: fadeInDown 0.3s ease;
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .dropdown-content a {
+      display: block;
+      padding: 10px 14px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .dropdown-content a:hover {
+      background: rgba(99, 102, 241, 0.15);
+      color: var(--text-primary);
+      transform: translateX(2px);
+    }
+
+    /* Responsive navigation for different screen sizes */
+    @media (min-width: 1400px) {
+      .nav-link {
+        font-size: 14px;
+      }
+    }
+
+    @media (max-width: 1200px) {
+      .nav-link {
+        font-size: 12px;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .nav-link {
+        font-size: 11px;
+      }
+
+      .nav-links {
+        gap: 16px;
+      }
+    }
+
+    .nav-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn-login {
+      padding: 6px 16px;
+      text-decoration: none;
+      color: var(--text-primary);
+      font-weight: 500;
+      font-size: 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .btn-login:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-signup {
+      padding: 6px 16px;
+      text-decoration: none;
+      color: white;
+      font-weight: 500;
+      font-size: 12px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .btn-signup:hover {
+      background: rgba(99, 102, 241, 0.25);
+      border-color: rgba(99, 102, 241, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .mobile-menu-toggle {
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      cursor: pointer;
+      padding: 10px 19px;
+      z-index: 1001;
+      transition: all 0.3s ease;
+      margin-right: 0;
+    }
+
+    .mobile-menu-toggle:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .mobile-menu-toggle span {
+      width: 38px;
+      height: 2px;
+      background: #ffffff;
+      transition: all 0.3s ease;
+    }
+
+    .mobile-menu-toggle.active span:nth-child(1) {
+      transform: rotate(45deg) translate(5px, 5px);
+    }
+
+    .mobile-menu-toggle.active span:nth-child(2) {
+      opacity: 0;
+    }
+
+    .mobile-menu-toggle.active span:nth-child(3) {
+      transform: rotate(-45deg) translate(7px, -6px);
+    }
+
+    /* Mobile Menu */
+    .mobile-menu {
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: 85%;
+      max-width: 380px;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.98);
+      backdrop-filter: blur(20px);
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 100px 20px 32px;
+      transition: right 0.3s ease;
+      z-index: 1000;
+      overflow-y: auto;
+    }
+
+    .mobile-menu.active {
+      right: 0;
+    }
+
+    .mobile-menu-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      z-index: 999;
+    }
+
+    .mobile-menu-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .mobile-nav-links {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-bottom: 32px;
+      width: 100%;
+    }
+
+    .mobile-nav-links .nav-link {
+      padding: 14px 16px;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      font-size: 15px;
+    }
+
+    .mobile-nav-links .nav-link:hover {
+      background: rgba(99, 102, 241, 0.15);
+      transform: translateX(4px);
+    }
+
+    /* Mobile nav sections */
+    .mobile-nav-section {
+      margin: 0;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 0;
+      padding: 12px 0;
+      border: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      width: 100%;
+    }
+
+    .mobile-section-title {
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 4px;
+    }
+
+    .nav-link-sub {
+      padding: 10px 16px 10px 36px !important;
+      font-size: 14px;
+      position: relative;
+      margin: 0 !important;
+      border-radius: 0;
+      width: 100%;
+      display: block;
+    }
+
+    .nav-link-sub::before {
+      content: '→';
+      position: absolute;
+      left: 16px;
+      color: var(--primary);
+      font-size: 14px;
+      opacity: 0.7;
+    }
+
+    .nav-link-sub:hover::before {
+      opacity: 1;
+      transform: translateX(2px);
+    }
+
+    .mobile-nav-links>.nav-link:not(.nav-link-sub) {
+      font-weight: 600;
+      font-size: 15px;
+      margin: 0;
+      padding: 14px 16px;
+      width: 100%;
+      display: block;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .mobile-nav-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .mobile-menu-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+      margin: 0;
+      width: 100%;
+    }
+
+    /* Pricing Section */
+    .pricing {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 40px 0;
+      position: relative;
+    }
+
+    .pricing::before {
+      content: '04';
+      position: absolute;
+      top: 80px;
+      right: 40px;
+      font-size: 200px;
+      font-weight: 900;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.04), rgba(236, 72, 153, 0.04));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      z-index: 0;
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    .pricing-banner {
+      margin-top: 60px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05));
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 24px;
+      padding: 60px;
+      backdrop-filter: blur(20px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pricing-banner::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+    }
+
+    .pricing-banner-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .pricing-info-card {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .pricing-icon {
+      font-size: 64px;
+      margin-bottom: 24px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    .pricing-info-card h3 {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+    }
+
+    .pricing-info-card p {
+      font-size: 18px;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .pricing-plans-preview {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+
+    .plan-preview {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 32px;
+      transition: all 0.3s ease;
+    }
+
+    .plan-preview.featured {
+      background: rgba(99, 102, 241, 0.1);
+      border: 2px solid rgba(99, 102, 241, 0.3);
+      transform: scale(1.05);
+    }
+
+    .plan-preview:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(99, 102, 241, 0.2);
+    }
+
+    .plan-preview.featured:hover {
+      transform: translateY(-8px) scale(1.05);
+    }
+
+    .plan-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+    }
+
+    .plan-badge.free {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .plan-badge.pro {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+    }
+
+    .plan-badge.premium {
+      background: linear-gradient(135deg, #f59e0b, #ec4899);
+      color: white;
+    }
+
+    .plan-preview h4 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+
+    .plan-preview p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      line-height: 1.6;
+      min-height: 60px;
+    }
+
+    .plan-features-mini {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .plan-features-mini li {
+      font-size: 13px;
+      color: var(--text-secondary);
+      padding: 8px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .plan-click-hint {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      opacity: 0.7;
+    }
+
+    .pricing-cta {
+      text-align: center;
+    }
+
+    .btn-large {
+      padding: 16px 48px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .pricing-note {
+      margin-top: 24px;
+      font-size: 16px;
+      color: var(--text-secondary);
+    }
+
+    @media (max-width: 1024px) {
+      .pricing-plans-preview {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .plan-preview.featured {
+        transform: scale(1);
+      }
+
+      .plan-preview.featured:hover {
+        transform: translateY(-8px) scale(1);
+      }
+
+      .pricing-banner {
+        padding: 40px 24px;
+      }
+    }
+
+    /* Curriculum Section */
+    .curriculum {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 40px 0;
+      position: relative;
+    }
+
+    .curriculum::before {
+      content: '05';
+      position: absolute;
+      top: 80px;
+      right: 40px;
+      font-size: 200px;
+      font-weight: 900;
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.04), rgba(139, 92, 246, 0.04));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      z-index: 0;
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    /* Advanced Flip Cases Cards Design - Same as Rates Section */
+    .cases-grid-modern {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+      margin-top: 60px;
+      margin-bottom: 48px;
+    }
+
+    .case-card-wrapper {
+      width: 100%;
+    }
+
+    .case-card-modern {
+      perspective: 1000px;
+      height: auto;
+      min-height: 600px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .case-card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+    }
+
+    .case-card-modern.flipped .case-card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .case-card-front,
+    .case-card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      min-height: 600px;
+      backface-visibility: hidden;
+      border-radius: 32px;
+      padding: 48px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .case-card-front {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.3s ease;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(99, 102, 241, 0.5) rgba(255, 255, 255, 0.05);
+    }
+
+    /* Кастомный scrollbar для передней стороны */
+    .case-card-front::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .case-card-front::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      margin: 8px 0;
+    }
+
+    .case-card-front::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(99, 102, 241, 0.6), rgba(139, 92, 246, 0.6));
+      border-radius: 10px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .case-card-front::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, rgba(99, 102, 241, 0.8), rgba(139, 92, 246, 0.8));
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .case-card-front::-webkit-scrollbar-thumb:active {
+      background: linear-gradient(180deg, rgba(99, 102, 241, 1), rgba(139, 92, 246, 1));
+    }
+
+    .case-card-front::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+      transform: scaleX(0);
+      transition: transform 0.4s;
+    }
+
+    .case-card-modern:hover .case-card-front {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(99, 102, 241, 0.3);
+      transform: translateY(-4px);
+    }
+
+    .case-card-modern:hover .case-card-front::before {
+      transform: scaleX(1);
+    }
+
+    .case-card-back {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      transform: rotateY(180deg);
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(99, 102, 241, 0.5) rgba(255, 255, 255, 0.05);
+    }
+
+    /* Кастомный scrollbar для Webkit браузеров */
+    .case-card-back::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .case-card-back::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      margin: 8px 0;
+    }
+
+    .case-card-back::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(99, 102, 241, 0.6), rgba(139, 92, 246, 0.6));
+      border-radius: 10px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .case-card-back::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, rgba(99, 102, 241, 0.8), rgba(139, 92, 246, 0.8));
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .case-card-back::-webkit-scrollbar-thumb:active {
+      background: linear-gradient(180deg, rgba(99, 102, 241, 1), rgba(139, 92, 246, 1));
+    }
+
+    .case-icon-modern {
+      width: 88px;
+      height: 88px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+      border-radius: 20px;
+      font-size: 44px;
+      transition: all 0.3s;
+      flex-shrink: 0;
+    }
+
+    .case-card-modern:hover .case-icon-modern {
+      transform: scale(1.1) rotate(5deg);
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+    }
+
+    .case-header-modern {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+      gap: 20px;
+    }
+
+    .case-header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex: 1;
+    }
+
+    .case-category {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 20px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 12px;
+      font-size: 20px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--primary);
+    }
+
+    .case-difficulty {
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 20px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .case-difficulty.easy {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .case-difficulty.medium {
+      background: rgba(245, 158, 11, 0.15);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .case-difficulty.hard {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .case-title-modern {
+      font-size: 38px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+      line-height: 1.3;
+    }
+
+    .case-description-modern {
+      font-size: 28px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 32px;
+      flex-grow: 1;
+    }
+
+    .case-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .case-tag {
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      font-size: 22px;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+
+    .case-card-modern:hover .case-tag {
+      background: rgba(99, 102, 241, 0.1);
+      border-color: rgba(99, 102, 241, 0.3);
+      color: var(--primary);
+    }
+
+    .case-info-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 32px;
+      padding: 28px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .case-info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .case-info-label {
+      font-size: 20px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .case-info-value {
+      font-size: 24px;
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .case-click-hint {
+      text-align: center;
+      padding: 20px;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px dashed rgba(99, 102, 241, 0.3);
+      border-radius: 16px;
+      font-size: 22px;
+      color: var(--primary);
+      margin-top: auto;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.6;
+      }
+    }
+
+    .case-solution-full {
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.3);
+      border-left: 4px solid var(--primary);
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .case-solution-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .case-solution-text {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+
+    .case-back-details {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .case-detail-item {
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      border-left: 3px solid var(--secondary);
+    }
+
+    .case-detail-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .case-detail-value {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .case-flip-back-btn {
+      margin-top: 20px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .case-solution-preview {
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.3);
+      border-left: 3px solid var(--primary);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-top: auto;
+    }
+
+    .case-solution-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .refresh-cases-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 12px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 32px;
+    }
+
+    .refresh-cases-btn:hover {
+      background: rgba(99, 102, 241, 0.2);
+      border-color: rgba(99, 102, 241, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+    }
+
+    .refresh-icon {
+      transition: transform 0.6s ease;
+    }
+
+    .refresh-cases-btn:hover .refresh-icon {
+      transform: rotate(180deg);
+    }
+
+    @media (max-width: 1024px) {
+      .cases-grid-modern {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+
+      .case-card-modern {
+        min-height: 380px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .cases-grid-modern {
+        gap: 20px;
+      }
+
+      .case-card-modern {
+        min-height: 360px;
+      }
+
+      .case-card-front,
+      .case-card-back {
+        padding: 24px;
+        min-height: 360px;
+      }
+
+      .case-icon-modern {
+        width: 56px;
+        height: 56px;
+        font-size: 28px;
+      }
+
+      .case-title-modern {
+        font-size: 19px;
+      }
+
+      .case-description-modern {
+        font-size: 14px;
+      }
+
+      .case-solution-text {
+        font-size: 13px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .case-card-modern {
+        min-height: 340px;
+      }
+
+      .case-card-front,
+      .case-card-back {
+        padding: 24px 20px;
+        min-height: 340px;
+      }
+
+      .case-icon-modern {
+        width: 48px;
+        height: 48px;
+        font-size: 24px;
+        margin-bottom: 16px;
+      }
+
+      .case-title-modern {
+        font-size: 17px;
+      }
+
+      .case-description-modern {
+        font-size: 13px;
+      }
+    }
+
+    /* New Cases Design */
+    .cases-grid-new {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-top: 60px;
+    }
+
+    .case-card-new {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 28px;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .case-card-new:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(99, 102, 241, 0.3);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(99, 102, 241, 0.2);
+    }
+
+    .case-header-new {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .case-number-new {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .case-level {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .case-level.easy {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .case-level.medium {
+      background: rgba(245, 158, 11, 0.15);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .case-level.hard {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .case-title-new {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+
+    .case-desc-new {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 20px;
+      flex-grow: 1;
+    }
+
+    .case-solution-new {
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .solution-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .solution-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .solution-list li {
+      font-size: 13px;
+      color: var(--text-secondary);
+      padding: 6px 0 6px 20px;
+      position: relative;
+      line-height: 1.5;
+    }
+
+    .solution-list li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    @media (max-width: 1024px) {
+      .cases-grid-new {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .case-card-new {
+        padding: 24px;
+      }
+
+      .case-title-new {
+        font-size: 18px;
+      }
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      margin-top: 60px;
+      align-items: start;
+    }
+
+    @media (max-width: 1024px) {
+      .pricing-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .pricing-card {
+      padding: 32px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      backdrop-filter: blur(10px);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .pricing-card-featured {
+      border: 2px solid var(--primary);
+      background: rgba(99, 102, 241, 0.05);
+      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.2);
+    }
+
+    .pricing-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 60px rgba(99, 102, 241, 0.2);
+    }
+
+    .pricing-card-featured:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 60px rgba(99, 102, 241, 0.4);
+    }
+
+
+
+    .pricing-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 20px;
+    }
+
+    .pricing-badge-featured {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+    }
+
+    .pricing-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .pricing-price {
+      margin-bottom: 12px;
+    }
+
+    .price-amount {
+      font-size: 40px;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .price-period {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-left: 8px;
+    }
+
+    .pricing-description {
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+
+    .pricing-features {
+      list-style: none;
+      margin-bottom: 24px;
+    }
+
+    .pricing-features li {
+      padding: 10px 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .check {
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .check.muted {
+      color: var(--text-muted);
+      opacity: 0.5;
+    }
+
+    .pricing-btn {
+      width: 100%;
+      text-align: center;
+      padding: 14px;
+      font-size: 15px;
+    }
+
+    .pricing-note {
+      text-align: center;
+      margin-top: 48px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* CTA Section */
+    .cta-section {
+      padding: 120px 0;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+      border-radius: 32px;
+      margin: 80px 0;
+      position: relative;
+    }
+
+    .cta-section::before {
+      content: '05';
+      position: absolute;
+      top: 80px;
+      right: 40px;
+      font-size: 200px;
+      font-weight: 900;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.04), rgba(99, 102, 241, 0.04));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      z-index: 0;
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    .cta-content {
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .cta-title {
+      font-size: clamp(36px, 5vw, 48px);
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+
+    .cta-subtitle {
+      font-size: 20px;
+      color: var(--text-secondary);
+      margin-bottom: 40px;
+    }
+
+    /* Final CTA Section - Career Start */
+    .final-cta-section {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 60px 0;
+      position: relative;
+    }
+
+    .final-cta-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 80px;
+      align-items: center;
+      width: 100%;
+    }
+
+    .final-cta-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .final-cta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 50px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      backdrop-filter: blur(10px);
+    }
+
+    .final-cta-title {
+      font-size: clamp(32px, 5vw, 56px);
+      font-weight: 900;
+      line-height: 1.2;
+      margin-bottom: 24px;
+      background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.8) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .final-cta-description {
+      font-size: clamp(16px, 2vw, 20px);
+      line-height: 1.6;
+      color: var(--text-secondary);
+      margin-bottom: 48px;
+    }
+
+    .final-cta-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      margin-bottom: 48px;
+      padding: 32px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+    }
+
+    .final-stat-item {
+      text-align: center;
+    }
+
+    .final-stat-number {
+      font-size: clamp(28px, 4vw, 36px);
+      font-weight: 900;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .final-stat-label {
+      font-size: clamp(12px, 1.5vw, 14px);
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .final-cta-benefits {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+
+    .final-benefit-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: clamp(14px, 1.8vw, 16px);
+      color: var(--text-secondary);
+    }
+
+    .benefit-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+      border-radius: 50%;
+      font-size: 14px;
+      font-weight: 700;
+      color: #6366f1;
+      flex-shrink: 0;
+    }
+
+    .final-cta-buttons {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .final-cta-btn {
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-glow {
+
+      0%,
+      100% {
+        box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+      }
+
+      50% {
+        box-shadow: 0 0 40px rgba(99, 102, 241, 0.5), 0 0 60px rgba(139, 92, 246, 0.3);
+      }
+    }
+
+    /* Visual Card */
+    .final-cta-visual {
+      position: relative;
+    }
+
+    .final-visual-card {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05));
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 32px;
+      padding: 40px;
+      backdrop-filter: blur(20px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .final-visual-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+      animation: rotate-gradient 20s linear infinite;
+    }
+
+    @keyframes rotate-gradient {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .visual-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .visual-icon {
+      font-size: 32px;
+    }
+
+    .visual-status {
+      padding: 6px 16px;
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.1));
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 50px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #22c55e;
+    }
+
+    .visual-card-title {
+      font-size: clamp(20px, 2.5vw, 24px);
+      font-weight: 700;
+      margin-bottom: 32px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .visual-progress {
+      margin-bottom: 32px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .progress-bar {
+      height: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 50px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+      border-radius: 50px;
+      transition: width 2s ease-out;
+      animation: progress-animate 3s ease-out forwards;
+    }
+
+    @keyframes progress-animate {
+      0% {
+        width: 0%;
+      }
+
+      100% {
+        width: 15%;
+      }
+    }
+
+    .progress-label {
+      font-size: clamp(12px, 1.5vw, 14px);
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .visual-features {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .visual-feature {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      font-size: clamp(13px, 1.8vw, 15px);
+      transition: all 0.3s ease;
+    }
+
+    .visual-feature:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(99, 102, 241, 0.3);
+      transform: translateX(8px);
+    }
+
+    .feature-icon {
+      font-size: 20px;
+    }
+
+    /* Responsive - Tablet */
+    @media (max-width: 1024px) {
+      .final-cta-section {
+        padding: 100px 0;
+      }
+
+      .final-cta-grid {
+        gap: 60px;
+      }
+
+      .final-cta-stats {
+        gap: 24px;
+        padding: 28px;
+      }
+
+      .final-visual-card {
+        padding: 32px;
+      }
+    }
+
+    /* Responsive - Mobile Landscape / Small Tablet */
+    @media (max-width: 968px) {
+      .final-cta-section {
+        min-height: auto;
+        padding: 80px 0;
+      }
+
+      .final-cta-grid {
+        grid-template-columns: 1fr;
+        gap: 48px;
+      }
+
+      .final-cta-description {
+        margin-bottom: 36px;
+      }
+
+      .final-cta-stats {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        padding: 24px 20px;
+        margin-bottom: 36px;
+      }
+
+      .final-cta-benefits {
+        margin-bottom: 36px;
+      }
+
+      .final-visual-card {
+        padding: 28px;
+      }
+    }
+
+    /* Responsive - Mobile Portrait */
+    @media (max-width: 640px) {
+      .final-cta-section {
+        padding: 60px 0;
+      }
+
+      .final-cta-badge {
+        font-size: 12px;
+        padding: 6px 16px;
+        margin-bottom: 20px;
+      }
+
+      .final-cta-title {
+        margin-bottom: 20px;
+      }
+
+      .final-cta-description {
+        margin-bottom: 32px;
+        font-size: 15px;
+      }
+
+      .final-cta-stats {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 20px;
+        margin-bottom: 32px;
+      }
+
+      .final-stat-item {
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .final-stat-item:last-child {
+        border-bottom: none;
+      }
+
+      .final-cta-benefits {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-bottom: 32px;
+      }
+
+      .final-benefit-item {
+        padding: 8px 0;
+      }
+
+      .final-cta-buttons {
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .final-cta-buttons .btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .final-visual-card {
+        padding: 24px;
+      }
+
+      .visual-card-header {
+        margin-bottom: 20px;
+      }
+
+      .visual-icon {
+        font-size: 28px;
+      }
+
+      .visual-card-title {
+        margin-bottom: 24px;
+      }
+
+      .visual-progress {
+        margin-bottom: 24px;
+      }
+
+      .visual-features {
+        gap: 12px;
+      }
+
+      .visual-feature {
+        padding: 12px;
+      }
+
+      .visual-feature:hover {
+        transform: translateX(4px);
+      }
+    }
+
+    /* Responsive - Small Mobile */
+    @media (max-width: 480px) {
+      .final-cta-section {
+        padding: 48px 0;
+      }
+
+      .final-cta-grid {
+        gap: 36px;
+      }
+
+      .final-cta-badge {
+        font-size: 11px;
+        padding: 5px 14px;
+      }
+
+      .final-cta-description {
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .final-cta-stats {
+        padding: 16px;
+        gap: 16px;
+      }
+
+      .final-stat-number {
+        font-size: 24px;
+      }
+
+      .final-stat-label {
+        font-size: 11px;
+      }
+
+      .final-benefit-item {
+        font-size: 13px;
+        gap: 10px;
+      }
+
+      .benefit-icon {
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+      }
+
+      .final-visual-card {
+        padding: 20px;
+        border-radius: 24px;
+      }
+
+      .visual-status {
+        padding: 4px 12px;
+        font-size: 10px;
+      }
+
+      .visual-feature {
+        padding: 10px;
+        gap: 10px;
+      }
+
+      .feature-icon {
+        font-size: 18px;
+      }
+    }
+
+    .cta-subtitle {
+      font-size: 20px;
+      color: var(--text-secondary);
+      margin-bottom: 40px;
+    }
+
+    .btn-large {
+      padding: 20px 40px;
+      font-size: 18px;
+    }
+
+    /* Footer */
+    .footer {
+      padding: 80px 0 40px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      margin-top: 80px;
+    }
+
+    .footer-content {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 32px;
+      margin-bottom: 48px;
+    }
+
+    .footer-section h4 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: var(--text-primary);
+    }
+
+    .footer-section p {
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .footer-section a {
+      display: block;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      margin-bottom: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .footer-section a:hover {
+      color: var(--primary);
+      transform: translateX(4px);
+    }
+
+    .footer-bottom {
+      text-align: center;
+      padding-top: 32px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .nav-links {
+        display: none;
+      }
+
+      .mobile-menu-toggle {
+        display: flex;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .theme-toggle {
+        top: 20px;
+        right: 20px;
+        width: 48px;
+        height: 48px;
+      }
+
+      .theme-toggle:hover {
+        transform: scale(1.1);
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      .theme-toggle svg {
+        width: 24px;
+        height: 24px;
+        transition: all 0.3s ease;
+        color: var(--text-primary);
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 0 16px;
+        }
+
+        /* Grid для Flatbed и Дизель на мобильных */
+        div[style*="grid-template-columns: 1fr 1fr"] {
+          grid-template-columns: 1fr !important;
+        }
+
+        .nav-content {
+          gap: 12px;
+        }
+
+        .navbar {
+          padding: 12px 0;
+        }
+
+        .nav-actions {
+          gap: 8px;
+        }
+
+        .btn-login {
+          padding: 8px 12px;
+          font-size: 13px;
+        }
+
+        .btn-signup {
+          padding: 8px 16px;
+          font-size: 13px;
+        }
+
+        .nav-content {
+          padding: 0 16px;
+        }
+
+        .mobile-menu-toggle {
+          margin-right: 0;
+          padding: 8px 14px;
+        }
+
+        .mobile-menu-toggle span {
+          width: 32px;
+        }
+
+        /* Hero Section */
+        .hero {
+          padding: 100px 0 60px;
+        }
+
+        .hero h1 {
+          font-size: 36px;
+          line-height: 1.2;
+        }
+
+        .hero-subtitle {
+          font-size: 18px;
+        }
+
+        .hero-buttons {
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .hero-buttons .btn {
+          width: 100%;
+          justify-content: center;
+        }
+
+        /* Features */
+        .features {
+          padding: 60px 0;
+        }
+
+        .features-grid {
+          grid-template-columns: 1fr;
+          gap: 24px;
+          margin-top: 40px;
+        }
+
+        .feature-card {
+          padding: 32px;
+        }
+
+        .feature-card h3 {
+          font-size: 20px;
+        }
+
+        .feature-card p {
+          font-size: 15px;
+        }
+
+        /* Stats */
+        .stats {
+          padding: 60px 0;
+        }
+
+        .stats-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 32px;
+          margin-top: 40px;
+        }
+
+        .stat-number {
+          font-size: 40px;
+        }
+
+        .stat-label {
+          font-size: 14px;
+        }
+
+        /* Section Headers */
+        .section-header {
+          margin-bottom: 40px;
+        }
+
+        .section-title {
+          font-size: 32px;
+        }
+
+        .section-subtitle {
+          font-size: 16px;
+        }
+
+        /* Pricing */
+        .pricing-grid {
+          grid-template-columns: 1fr;
+          gap: 24px;
+        }
+
+        /* Section spacing optimization */
+        section {
+          padding: 40px 0 20px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .container {
+          padding: 0 12px;
+        }
+
+        .nav-content {
+          gap: 8px;
+        }
+
+        .logo {
+          font-size: 16px;
+        }
+
+        .logo-icon {
+          font-size: 20px;
+        }
+
+        .nav-actions .btn-login,
+        .nav-actions .btn-signup {
+          display: none;
+        }
+
+        .nav-content {
+          padding: 0 12px;
+        }
+
+        .mobile-menu-toggle {
+          padding: 6px 10px;
+          margin-right: 0;
+        }
+
+        .mobile-menu-toggle span {
+          width: 26px;
+        }
+
+        /* Hero */
+        .hero {
+          padding: 80px 0 50px;
+        }
+
+        .hero h1 {
+          font-size: 28px;
+        }
+
+        .hero-subtitle {
+          font-size: 16px;
+        }
+
+        /* Section Headers - Mobile Centering */
+        .section-header {
+          margin-bottom: 40px;
+          text-align: center;
+        }
+
+        .section-title {
+          font-size: 32px;
+          text-align: center;
+        }
+
+        .section-subtitle {
+          font-size: 16px;
+          text-align: center;
+          margin-left: auto;
+          margin-right: auto;
+        }
+
+        /* Features - Mobile Centering */
+        .features {
+          padding: 60px 0;
+        }
+
+        .features-grid {
+          grid-template-columns: 1fr;
+          gap: 20px;
+          margin-top: 40px;
+          width: 100%;
+          padding: 0;
+        }
+
+        .feature-card {
+          padding: 28px 20px;
+          max-width: 100%;
+          width: 100%;
+          text-align: center;
+          box-sizing: border-box;
+          margin: 0;
+        }
+
+        .feature-icon {
+          margin-left: auto;
+          margin-right: auto;
+        }
+
+        .feature-card h3 {
+          font-size: 20px;
+          text-align: center;
+          word-wrap: break-word;
+        }
+
+        .feature-card p {
+          font-size: 15px;
+          text-align: center;
+          word-wrap: break-word;
+          line-height: 1.6;
+        }
+
+        /* Stats - Mobile Centering */
+        .stats {
+          padding: 60px 0;
+        }
+
+        .rates-container {
+          grid-template-columns: 1fr;
+          gap: 20px;
+          justify-items: center;
+          width: 100%;
+          padding: 0;
+        }
+
+        .rates-section {
+          padding: 24px 20px;
+          max-width: 100%;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        .rates-header {
+          gap: 12px;
+          flex-wrap: wrap;
+          justify-content: center;
+          text-align: center;
+        }
+
+        .rates-icon {
+          font-size: 32px;
+        }
+
+        .rates-header h3 {
+          font-size: 20px;
+          text-align: center;
+          width: 100%;
+          word-wrap: break-word;
+        }
+
+        .rates-badge {
+          font-size: 11px;
+          padding: 4px 12px;
+        }
+
+        .rate-bar-modern {
+          height: 60px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        .rate-bar-content {
+          padding: 0 12px;
+        }
+
+        .region-name {
+          font-size: 13px;
+        }
+
+        .rate-value {
+          font-size: 16px;
+        }
+
+        .market-insights {
+          grid-template-columns: 1fr;
+          gap: 16px;
+          width: 100%;
+        }
+
+        .insight-card {
+          padding: 20px 16px;
+          text-align: center;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        .insight-icon {
+          font-size: 28px;
+        }
+
+        .insight-value {
+          font-size: 18px;
+        }
+
+        /* Pricing - Mobile Centering */
+        .pricing-grid {
+          grid-template-columns: 1fr;
+          gap: 24px;
+          justify-items: center;
+          width: 100%;
+          padding: 0;
+        }
+
+        .pricing-card {
+          max-width: 100%;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        .pricing-plans-preview {
+          grid-template-columns: 1fr;
+          gap: 20px;
+          width: 100%;
+        }
+
+        .plan-preview {
+          max-width: 100%;
+          width: 100%;
+          text-align: center;
+          box-sizing: border-box;
+          padding: 28px 20px;
+        }
+
+        .pricing-banner {
+          padding: 40px 20px;
+          text-align: center;
+          box-sizing: border-box;
+        }
+
+        /* Cases - Mobile Centering */
+        .cases-grid-flip {
+          grid-template-columns: 1fr;
+          gap: 20px;
+          width: 100%;
+          padding: 0;
+        }
+
+        .case-flip-container {
+          max-width: 100%;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        .case-flip-front,
+        .case-flip-back {
+          text-align: left;
+          padding: 24px 20px;
+          box-sizing: border-box;
+        }
+
+        .case-header-new {
+          justify-content: space-between;
+        }
+
+        .case-title-new {
+          font-size: 18px;
+          word-wrap: break-word;
+        }
+
+        .case-desc-new {
+          font-size: 14px;
+          word-wrap: break-word;
+          line-height: 1.6;
+        }
+
+        /* Features */
+        .features-grid {
+          gap: 16px;
+          padding: 0;
+        }
+
+        .feature-card {
+          padding: 24px 16px;
+          text-align: center;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        .feature-icon {
+          width: 48px;
+          height: 48px;
+          font-size: 24px;
+          margin-bottom: 16px;
+          margin-left: auto;
+          margin-right: auto;
+        }
+
+        .feature-card h3 {
+          font-size: 18px;
+          text-align: center;
+          word-wrap: break-word;
+        }
+
+        .feature-card p {
+          font-size: 14px;
+          text-align: center;
+          word-wrap: break-word;
+          line-height: 1.5;
+        }
+
+        /* Stats */
+        .stats-grid {
+          grid-template-columns: 1fr;
+          gap: 24px;
+        }
+
+        .stat-number {
+          font-size: 32px;
+        }
+
+        .stat-label {
+          font-size: 12px;
+        }
+
+        /* Section Headers */
+        .section-title {
+          font-size: 28px;
+          text-align: center;
+        }
+
+        .section-subtitle {
+          font-size: 15px;
+          text-align: center;
+        }
+
+        /* Buttons */
+        .btn {
+          padding: 14px 24px;
+          font-size: 14px;
+          max-width: 320px;
+          margin-left: auto;
+          margin-right: auto;
+        }
+
+        /* Cases Grid */
+        .cases-grid-flip {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+
+        .case-flip-container {
+          max-width: 100%;
+          width: 100%;
+        }
+
+        .case-flip-front,
+        .case-flip-back {
+          text-align: center;
+        }
+
+        .case-header-new {
+          justify-content: center;
+        }
+      }
+
+      @media (max-width: 568px) {
+
+        /* Footer mobile optimization */
+        .footer {
+          padding: 40px 0 30px;
+          margin-top: 48px;
+        }
+
+        .footer-content {
+          display: grid !important;
+          grid-template-columns: repeat(3, 1fr) !important;
+          gap: 20px !important;
+        }
+
+        .footer .container {
+          padding: 0 16px;
+        }
+
+        .footer-section {
+          text-align: center;
+        }
+
+        .footer-section:first-child {
+          grid-column: 1 / -1;
+          margin-bottom: 16px;
+          text-align: center;
+        }
+
+        .footer-section:first-child h4 {
+          font-size: 18px;
+          margin-bottom: 8px;
+        }
+
+        .footer-section:first-child p {
+          font-size: 13px;
+          line-height: 1.5;
+          max-width: 400px;
+          margin: 0 auto;
+        }
+
+        .footer-section h4 {
+          font-size: 13px;
+          margin-bottom: 10px;
+          font-weight: 700;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .footer-section a {
+          display: block;
+          margin-bottom: 8px;
+          font-size: 11px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .footer-section p {
+          font-size: 12px;
+          line-height: 1.4;
+        }
+
+        .footer-section a:hover {
+          transform: translateX(0);
+        }
+
+        .footer-bottom {
+          font-size: 11px;
+          padding-top: 20px;
+        }
+      }
+
+      @media (max-width: 400px) {
+        .footer .container {
+          padding: 0 12px;
+        }
+
+        .footer-content {
+          grid-template-columns: repeat(2, 1fr) !important;
+          gap: 20px 12px !important;
+        }
+
+        .footer-section:first-child {
+          grid-column: 1 / -1;
+          margin-bottom: 16px;
+        }
+
+        .footer-section h4 {
+          font-size: 13px;
+          margin-bottom: 8px;
+        }
+
+        .footer-section a {
+          font-size: 11px;
+          margin-bottom: 6px;
+        }
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 0 20px;
+      }
+
+      .hero {
+        padding: 80px 0 50px;
+      }
+    }
+
+    /* Hero Showcase Button */
+    .hero-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 500;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(15, 15, 15, 0.8);
+      backdrop-filter: blur(20px);
+      color: #8a8a8f;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .hero-button:hover {
+      background: rgba(26, 26, 30, 0.9);
+      color: white;
+      transform: translateX(2px);
+    }
+
+    .hero-icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Load Statistics Section */
+    .load-stats-section {
+      padding: 40px 0;
+      background: transparent;
+    }
+
+    .stats-hero {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .stats-hero h2 {
+      font-size: 36px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+
+    .stats-subtitle {
+      font-size: 16px;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(99, 102, 241, 0.3);
+      box-shadow: 0 12px 40px rgba(99, 102, 241, 0.2);
+    }
+
+    .stat-icon {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .stat-number {
+      font-size: 28px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .stat-trend {
+      font-size: 10px;
+      color: #64748b;
+    }
+
+    .stat-trend.positive {
+      color: #22c55e;
+    }
+
+    /* Chart Container */
+    .chart-container {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 700px;
+      margin: 0 auto 40px auto;
+      box-shadow: 0 8px 32px rgba(99, 102, 241, 0.1);
+    }
+
+    .chart-container h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: #ffffff;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .chart-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .chart-bar-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      opacity: 0;
+      transform: translateX(-30px);
+      animation: slideIn 0.6s ease forwards;
+    }
+
+    .chart-bar-item:nth-child(1) {
+      animation-delay: 0.1s;
+    }
+
+    .chart-bar-item:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .chart-bar-item:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    .chart-bar-item:nth-child(4) {
+      animation-delay: 0.4s;
+    }
+
+    .chart-bar-item:nth-child(5) {
+      animation-delay: 0.5s;
+    }
+
+    .chart-bar-item:nth-child(6) {
+      animation-delay: 0.6s;
+    }
+
+    .chart-bar-item:nth-child(7) {
+      animation-delay: 0.7s;
+    }
+
+    .chart-bar-item:nth-child(8) {
+      animation-delay: 0.8s;
+    }
+
+    .chart-bar-item:nth-child(9) {
+      animation-delay: 0.9s;
+    }
+
+    .chart-bar-item:nth-child(10) {
+      animation-delay: 1s;
+    }
+
+    @keyframes slideIn {
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .chart-bar-label {
+      min-width: 90px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #ffffff;
+      transition: all 0.3s ease;
+    }
+
+    .chart-bar-item:hover .chart-bar-label {
+      transform: translateX(5px);
+      color: #8b5cf6;
+    }
+
+    .state-flag {
+      font-size: 16px;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+      transition: transform 0.3s ease;
+    }
+
+    .chart-bar-item:hover .state-flag {
+      transform: scale(1.3) rotate(10deg);
+    }
+
+    .chart-bar-wrapper {
+      flex: 1;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 8px;
+      height: 32px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .chart-bar-wrapper:hover {
+      background: rgba(15, 23, 42, 0.8);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(99, 102, 241, 0.3);
+    }
+
+    .chart-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
+      background-size: 200% 100%;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 12px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+      animation: gradientShift 3s ease infinite;
+      transition: all 0.3s ease;
+    }
+
+    @keyframes gradientShift {
+
+      0%,
+      100% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+    }
+
+    .chart-bar-item:hover .chart-bar {
+      transform: scaleY(1.1);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+    }
+
+    .chart-bar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      animation: shimmer 2.5s infinite;
+    }
+
+    @keyframes shimmer {
+      0% {
+        left: -100%;
+      }
+
+      100% {
+        left: 100%;
+      }
+    }
+
+    .chart-bar::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent);
+      border-radius: 8px 8px 0 0;
+    }
+
+    .chart-bar-value {
+      font-size: 13px;
+      font-weight: 700;
+      color: #ffffff;
+      z-index: 1;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+
+    @media (max-width: 768px) {
+      .stats-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .chart-bar-label {
+        min-width: 80px;
+        font-size: 11px;
+      }
+
+      .state-flag {
+        font-size: 14px;
+      }
+
+      .chart-container {
+        padding: 16px;
+      }
+
+      .chart-bar-wrapper {
+        height: 28px;
+      }
+
+      .chart-bar-value {
+        font-size: 11px;
+      }
+
+      .chart-container h3 {
+        font-size: 14px;
+      }
+
+      .stats-hero h2 {
+        font-size: 28px;
+      }
+
+      .stats-subtitle {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Neural Background Canvas -->
+  <canvas id="neuralCanvas"></canvas>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container">
+      <div class="nav-content">
+        <a href="index.html" class="logo">
+          <span class="logo-icon">🎓</span>
+          <span class="logo-text">Курсы Диспетчера</span>
+        </a>
+
+        <div class="nav-links">
+          <a href="index.html" class="nav-link">Главная</a>
+
+          <div class="nav-dropdown">
+            <a href="courses.html" class="nav-link">Курсы</a>
+            <div class="dropdown-content">
+              <a href="pages/modules.html">12 Модулей обучения</a>
+              <a href="pages/simulator.html">Симулятор переговоров</a>
+              <a href="pages/calls.html">Примеры звонков</a>
+              <a href="pages/cases.html">Практические кейсы</a>
+            </div>
+          </div>
+
+          <div class="nav-dropdown">
+            <span class="nav-link">Инструменты</span>
+            <div class="dropdown-content">
+              <a href="pages/loadboard.html">Поиск Грузов</a>
+              <a href="pages/dispatcher-cards.html">Dispatcher Cards</a>
+              <a href="pages/ai-chat.html">AI Чат</a>
+              <a href="pages/loadboard.html">Load Board</a>
+            </div>
+          </div>
+
+          <a href="pages/documentation.html" class="nav-link">Документация</a>
+          <a href="pricing.html" class="nav-link">Тарифы</a>
+          <a href="about.html" class="nav-link">О нас</a>
+          <a href="dashboard.html" class="nav-link" id="dashboardLink" style="display: none;">Личный кабинет</a>
+        </div>
+
+        <div class="nav-actions">
+          <a href="login.html" class="btn-login">Войти</a>
+          <a href="register.html" class="btn-signup">Регистрация</a>
+        </div>
+
+        <button class="mobile-menu-toggle" id="mobileMenuToggle">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu Overlay -->
+  <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" id="mobileMenu">
+    <div class="mobile-nav-actions">
+      <a href="login.html" class="btn-login" style="width: 100%; text-align: center;">Войти</a>
+      <a href="register.html" class="btn-signup" style="width: 100%; text-align: center;">Регистрация</a>
+    </div>
+    <div class="mobile-nav-links">
+      <a href="index.html" class="nav-link">🏠 Главная</a>
+
+      <div class="mobile-nav-section">
+        <div class="mobile-section-title">📚 КУРСЫ</div>
+        <a href="courses.html" class="nav-link nav-link-sub">Все курсы</a>
+        <a href="pages/modules.html" class="nav-link nav-link-sub">12 Модулей обучения</a>
+        <a href="pages/simulator.html" class="nav-link nav-link-sub">Симулятор переговоров</a>
+        <a href="pages/calls.html" class="nav-link nav-link-sub">Примеры звонков</a>
+        <a href="pages/cases.html" class="nav-link nav-link-sub">Практические кейсы</a>
+      </div>
+
+      <div class="mobile-nav-section">
+        <div class="mobile-section-title">🛠️ ИНСТРУМЕНТЫ</div>
+        <a href="pages/loadboard.html" class="nav-link nav-link-sub">Поиск Грузов</a>
+        <a href="pages/dispatcher-cards.html" class="nav-link nav-link-sub">Dispatcher Cards</a>
+        <a href="pages/ai-chat.html" class="nav-link nav-link-sub">AI Чат</a>
+        <a href="pages/loadboard.html" class="nav-link nav-link-sub">Load Board</a>
+      </div>
+
+      <div class="mobile-menu-divider"></div>
+
+      <a href="pages/documentation.html" class="nav-link">📄 Документация</a>
+      <a href="pricing.html" class="nav-link">💰 Тарифы</a>
+      <a href="about.html" class="nav-link">ℹ️ О нас</a>
+      <a href="dashboard.html" class="nav-link" id="dashboardLinkMobile" style="display: none;">👤 Личный кабинет</a>
+    </div>
+  </div>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <div class="badge">
+          <span class="badge-dot"></span>
+          <span>Профессиональное обучение</span>
+        </div>
+
+        <h1>
+          Станьте<br>
+          <span class="gradient-text">Диспетчером</span><br>
+          Грузоперевозок
+        </h1>
+
+        <p class="subtitle">
+          Освойте востребованную профессию с нуля за 1-3 недели. Практические навыки, реальные кейсы и поддержка
+          экспертов на каждом этапе обучения.
+        </p>
+
+        <div class="cta-buttons">
+          <a href="course.html" class="btn btn-primary">
+            <span>Начать обучение</span>
+            <span class="arrow">→</span>
+          </a>
+          <a href="quiz/index.html" class="btn btn-secondary">
+            <span>🎯 Тесты и Квизы</span>
+          </a>
+          <a href="pages/ai-chat.html" class="btn btn-chat">
+            <span class="chat-icon">💬</span>
+            <span>Чат с Брокером</span>
+            <span class="chat-pulse"></span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA Section - Career Start -->
+  <section class="final-cta-section">
+    <div class="container">
+      <div class="final-cta-grid">
+        <!-- Left Side - Main Content -->
+        <div class="final-cta-content">
+          <div class="final-cta-badge">🚀 Начните сегодня</div>
+          <h2 class="final-cta-title">Станьте профессиональным диспетчером за 3-4 недели</h2>
+          <p class="final-cta-description">
+            Получите востребованную профессию с зарплатой от $3,000-$6,000 в месяц.
+            Работайте удаленно из любой точки мира.
+          </p>
+
+          <!-- Success Stats -->
+          <div class="final-cta-stats">
+            <div class="final-stat-item">
+              <div class="final-stat-number">2,847</div>
+              <div class="final-stat-label">Выпускников</div>
+            </div>
+            <div class="final-stat-item">
+              <div class="final-stat-number">94%</div>
+              <div class="final-stat-label">Трудоустроены</div>
+            </div>
+            <div class="final-stat-item">
+              <div class="final-stat-number">$4,200</div>
+              <div class="final-stat-label">Средняя зарплата</div>
+            </div>
+          </div>
+
+          <!-- Benefits List -->
+          <div class="final-cta-benefits">
+            <div class="final-benefit-item">
+              <span class="benefit-icon">✓</span>
+              <span>Практические кейсы из реальной работы</span>
+            </div>
+            <div class="final-benefit-item">
+              <span class="benefit-icon">✓</span>
+              <span>Поддержка менторов 24/7</span>
+            </div>
+            <div class="final-benefit-item">
+              <span class="benefit-icon">✓</span>
+              <span>Помощь в трудоустройстве</span>
+            </div>
+          </div>
+
+          <div class="final-cta-buttons">
+            <a href="course.html" class="btn btn-primary btn-large final-cta-btn">
+              <span>Начать обучение бесплатно</span>
+              <span class="arrow">→</span>
+            </a>
+            <a href="pricing.html" class="btn btn-secondary btn-large">
+              <span>Посмотреть тарифы</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Right Side - Visual Element -->
+        <div class="final-cta-visual">
+          <div class="final-visual-card">
+            <div class="visual-card-header">
+              <span class="visual-icon">💼</span>
+              <span class="visual-status">Активно</span>
+            </div>
+            <div class="visual-card-title">Ваша карьера диспетчера</div>
+            <div class="visual-progress">
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 0%"></div>
+              </div>
+              <div class="progress-label">Начните прямо сейчас</div>
+            </div>
+            <div class="visual-features">
+              <div class="visual-feature">
+                <span class="feature-icon">📚</span>
+                <span>9 модулей обучения</span>
+              </div>
+              <div class="visual-feature">
+                <span class="feature-icon">🎯</span>
+                <span>50+ практических кейсов</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Что вы получите</h2>
+        <p class="section-subtitle">Актуальные знания о рынке грузоперевозок США. Научитесь анализировать ставки,
+          находить выгодные маршруты и работать удаленно</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card" data-link="pages/documentation.html" style="cursor: pointer;">
+          <div class="feature-badge" data-target="#pricing">✨ Бесплатно</div>
+          <div class="feature-icon">🎓</div>
+          <h3>Документация</h3>
+          <p>Полное руководство по диспетчерству грузоперевозок в США. От основ FMCSA и DOT до продвинутых техник
+            переговоров и оптимизации маршрутов</p>
+        </div>
+
+        <div class="feature-card" data-link="pages/ai-chat.html" style="cursor: pointer;">
+          <div class="feature-icon">📞</div>
+          <h3>Симулятор звонков</h3>
+          <p>AI-симулятор переговоров с брокерами. Практикуйте реальные диалоги, получайте мгновенную обратную связь и
+            совершенствуйте навыки торга</p>
+        </div>
+
+        <div class="feature-card" data-link="pages/modules.html" style="cursor: pointer;">
+          <div class="feature-icon">📚</div>
+          <h3>12 Модулей обучения</h3>
+          <p>Комплексная программа подготовки диспетчера грузоперевозок США. Каждый модуль включает теоретический
+            материал и тест для проверки знаний</p>
+        </div>
+
+        <div class="feature-card mobile-only" onclick="window.location.href='pages/load-finder.html'"
+          style="cursor: pointer;">
+          <div class="feature-icon">🚛</div>
+          <h3>Load Finder</h3>
+          <p>Автоматический поиск грузов с TruckerPath. База 30+ брокеров, полная информация о ценах и контактах</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Courses Deep Dive Section -->
+  <section class="courses-deep-dive">
+    <div class="container">
+      <!-- What's Included -->
+      <div class="course-includes">
+        <h3 class="includes-heading">Что входит в курс</h3>
+        <div class="includes-grid">
+          <div class="include-item">
+            <div class="include-icon">📚</div>
+            <h4>Полная документация</h4>
+            <p>Структурированная база знаний по всем аспектам диспетчерства</p>
+          </div>
+          <div class="include-item">
+            <div class="include-icon">📞</div>
+            <h4>Симулятор звонков</h4>
+            <p>Практика переговоров с брокерами в реалистичной среде</p>
+          </div>
+          <div class="include-item">
+            <div class="include-icon">🎯</div>
+            <h4>Практические кейсы</h4>
+            <p>Реальные ситуации из индустрии для отработки навыков</p>
+          </div>
+          <div class="include-item">
+            <div class="include-icon">📊</div>
+            <h4>Актуальные ставки</h4>
+            <p>Данные DAT по всем регионам США в реальном времени</p>
+          </div>
+          <div class="include-item">
+            <div class="include-icon">🚛</div>
+            <h4>Load Finder</h4>
+            <p>Инструмент поиска грузов с базой 30+ брокеров</p>
+          </div>
+          <div class="include-item">
+            <div class="include-icon">📝</div>
+            <h4>Тесты и квизы</h4>
+            <p>Проверка знаний и закрепление материала</p>
+          </div>
+          <div class="include-item">
+            <div class="include-icon">📄</div>
+            <h4>200+ страниц материалов</h4>
+            <p>Конспекты, чек-листы, шаблоны документов</p>
+          </div>
+          <div class="include-item">
+            <div class="include-icon">💬</div>
+            <h4>Поддержка студентов</h4>
+            <p>Полная реальная поддержка на всех этапах обучения</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="course-cta">
+        <div class="cta-content">
+          <h3>Готовы начать карьеру диспетчера?</h3>
+          <p>Начните обучение бесплатно и получите доступ ко всем материалам платформы</p>
+          <div class="cta-buttons">
+            <a href="courses.html" class="btn btn-primary btn-large">
+              <span>Начать обучение бесплатно</span>
+              <span class="arrow">→</span>
+            </a>
+            <a href="pricing.html" class="btn btn-secondary btn-large">
+              <span>Посмотреть тарифы</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="stats">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Актуальные ставки по регионам США</h2>
+        <p class="section-subtitle">Средние ставки за милю по данным DAT (февраль 2026)</p>
+      </div>
+
+      <div class="rates-container">
+        <!-- Dry Van Rates -->
+        <div class="rates-section">
+          <div class="rates-header">
+            <div class="rates-icon">🚛</div>
+            <h3>Dry Van</h3>
+            <div class="rates-badge">$2.42/миля средняя</div>
+          </div>
+
+          <div class="rates-chart">
+            <div class="rate-bar-modern" data-rate="2.83">
+              <div class="rate-bar-bg"></div>
+              <div class="rate-bar-fill" style="width: 80.86%;"></div>
+              <div class="rate-bar-content">
+                <span class="region-name">Midwest</span>
+                <span class="rate-value">$2.83</span>
+              </div>
+              <div class="rate-bar-glow" style="background: linear-gradient(90deg, transparent, #10b981, transparent);">
+              </div>
+            </div>
+
+            <div class="rate-bar-modern" data-rate="2.30">
+              <div class="rate-bar-bg"></div>
+              <div class="rate-bar-fill" style="width: 65.71%;"></div>
+              <div class="rate-bar-content">
+                <span class="region-name">Southeast</span>
+                <span class="rate-value">$2.30</span>
+              </div>
+              <div class="rate-bar-glow" style="background: linear-gradient(90deg, transparent, #6366f1, transparent);">
+              </div>
+            </div>
+
+            <div class="rate-bar-modern" data-rate="2.27">
+              <div class="rate-bar-bg"></div>
+              <div class="rate-bar-fill" style="width: 64.86%;"></div>
+              <div class="rate-bar-content">
+                <span class="region-name">South/TX</span>
+                <span class="rate-value">$2.27</span>
+              </div>
+              <div class="rate-bar-glow" style="background: linear-gradient(90deg, transparent, #8b5cf6, transparent);">
+              </div>
+            </div>
+
+            <div class="rate-bar-modern rate-bar-hidden" data-rate="2.25">
+              <div class="rate-bar-bg"></div>
+              <div class="rate-bar-fill" style="width: 64.29%;"></div>
+              <div class="rate-bar-content">
+                <span class="region-name">Northeast</span>
+                <span class="rate-value">$2.25</span>
+              </div>
+              <div class="rate-bar-glow" style="background: linear-gradient(90deg, transparent, #ec4899, transparent);">
+              </div>
+            </div>
+
+            <div class="rate-bar-modern rate-bar-hidden" data-rate="2.22">
+              <div class="rate-bar-bg"></div>
+              <div class="rate-bar-fill" style="width: 63.43%;"></div>
+              <div class="rate-bar-content">
+                <span class="region-name">West</span>
+                <span class="rate-value">$2.22</span>
+              </div>
+              <div class="rate-bar-glow" style="background: linear-gradient(90deg, transparent, #f59e0b, transparent);">
+              </div>
+            </div>
+          </div>
+          <button class="rates-expand-btn" onclick="toggleRates(this)">
+            <span class="expand-text">Показать все регионы</span>
+            <span class="expand-icon">▼</span>
+          </button>
+        </div>
+
+        <!-- Reefer Rates -->
+        <div class="rates-section">
+          <div class="rates-header">
+            <div class="rates-icon">❄️</div>
+            <h3>Reefer</h3>
+            <div class="rates-badge">$2.89/миля средняя</div>
+          </div>
+
+          <div class="rates-chart">
+            <div class="rate-bar-modern" data-rate="3.42">
+              <div class="rate-bar-bg"></div>
+              <div class="rate-bar-fill" style="width: 97.71%;"></div>
+              <div class="rate-bar-content">
+                <span class="region-name">Midwest</span>
+                <span class="rate-value">$3.42</span>
+              </div>
+              <div class="rate-bar-glow" style="background: linear-gradient(90deg, transparent, #10b981, transparent);">
+              </div>
+            </div>
+
+            <div class="rate-bar-modern" data-rate="3.05">
+              <div class="rate-bar-bg"></div>
+              <div class="rate-bar-fill" style="width: 87.14%;"></div>
+              <div class="rate-bar-content">
+                <span class="region-name">South/TX</span>
+                <span class="rate-value">$3.05</span>
+              </div>
+              <div class="rate-bar-glow" style="background: linear-gradient(90deg, transparent, #6366f1, transparent);">
+              </div>
+            </div>
+
+            <div class="rate-bar-modern" data-rate="2.78">
+              <div class="rate-bar-bg"></div>
+              <div class="rate-bar-fill" style="width: 79.43%;"></div>
+              <div class="rate-bar-content">
+                <span class="region-name">West</span>
+                <span class="rate-value">$2.78</span>
+              </div>
+              <div class="rate-bar-glow" style="background: linear-gradient(90deg, transparent, #8b5cf6, transparent);">
+              </div>
+            </div>
+
+            <div class="rate-bar-modern rate-bar-hidden" data-rate="2.59">
+              <div class="rate-bar-bg"></div>
+              <div class="rate-bar-fill" style="width: 74.00%;"></div>
+              <div class="rate-bar-content">
+                <span class="region-name">Southeast</span>
+                <span class="rate-value">$2.59</span>
+              </div>
+              <div class="rate-bar-glow" style="background: linear-gradient(90deg, transparent, #ec4899, transparent);">
+              </div>
+            </div>
+
+            <div class="rate-bar-modern rate-bar-hidden" data-rate="2.58">
+              <div class="rate-bar-bg"></div>
+              <div class="rate-bar-fill" style="width: 73.71%;"></div>
+              <div class="rate-bar-content">
+                <span class="region-name">Northeast</span>
+                <span class="rate-value">$2.58</span>
+              </div>
+              <div class="rate-bar-glow" style="background: linear-gradient(90deg, transparent, #f59e0b, transparent);">
+              </div>
+            </div>
+          </div>
+          <button class="rates-expand-btn" onclick="toggleRates(this)">
+            <span class="expand-text">Показать все регионы</span>
+            <span class="expand-icon">▼</span>
+          </button>
+        </div>
+
+        <!-- Flatbed Rates -->
+        <div class="rates-section">
+          <div class="rates-header">
+            <div class="rates-icon">🏗️</div>
+            <h3>Flatbed</h3>
+            <div class="rates-badge">$2.71/миля средняя</div>
+          </div>
+
+          <div class="rates-chart">
+            <div class="rate-bar-modern" data-rate="2.71">
+              <div class="rate-bar-bg"></div>
+              <div class="rate-bar-fill" style="width: 77.43%;"></div>
+              <div class="rate-bar-content">
+                <span class="region-name">National Average</span>
+                <span class="rate-value">$2.71</span>
+              </div>
+              <div class="rate-bar-glow" style="background: linear-gradient(90deg, transparent, #6366f1, transparent);">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Дизель -->
+        <div class="rates-section" style="cursor: pointer;" data-type="diesel">
+          <div class="rates-header">
+            <div class="rates-icon">⛽</div>
+            <h3>Дизель</h3>
+            <div class="rates-badge">$3.45/галлон средняя</div>
+          </div>
+
+          <div class="rates-chart">
+            <div class="rate-bar-modern" data-rate="3.45">
+              <div class="rate-bar-bg"></div>
+              <div class="rate-bar-fill" style="width: 98.57%;"></div>
+              <div class="rate-bar-content">
+                <span class="region-name">National Average</span>
+                <span class="rate-value">$3.45</span>
+              </div>
+              <div class="rate-bar-glow" style="background: linear-gradient(90deg, transparent, #ec4899, transparent);">
+              </div>
+            </div>
+          </div>
+
+          <!-- Expandable States Info -->
+          <div class="states-info"
+            style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <div class="states-grid">
+              <div class="state-card">
+                <div class="state-name">California</div>
+                <div class="state-details">
+                  <span class="city-name">Los Angeles</span>
+                  <span class="fuel-price">$4.25/галлон</span>
+                </div>
+              </div>
+              <div class="state-card">
+                <div class="state-name">Texas</div>
+                <div class="state-details">
+                  <span class="city-name">Houston</span>
+                  <span class="fuel-price">$3.15/галлон</span>
+                </div>
+              </div>
+              <div class="state-card">
+                <div class="state-name">Illinois</div>
+                <div class="state-details">
+                  <span class="city-name">Chicago</span>
+                  <span class="fuel-price">$3.62/галлон</span>
+                </div>
+              </div>
+              <div class="state-card">
+                <div class="state-name">Florida</div>
+                <div class="state-details">
+                  <span class="city-name">Miami</span>
+                  <span class="fuel-price">$3.48/галлон</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Marquee Section -->
+      <div class="hero-marquee" style="margin-top: 80px;">
+        <h3 class="marquee-title">Trusted by Industry Leaders</h3>
+        <div class="marquee-wrapper">
+          <div class="marquee-content">
+            <!-- Brand Items (tripled for seamless loop) -->
+            <div class="brand-item">
+              <svg class="brand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              </svg>
+              <span class="brand-name">DAT</span>
+            </div>
+            <div class="brand-item">
+              <svg class="brand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2L2 19h20L12 2z" />
+              </svg>
+              <span class="brand-name">TQL</span>
+            </div>
+            <div class="brand-item">
+              <svg class="brand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M18 3a3 3 0 00-3 3v12a3 3 0 003 3 3 3 0 003-3 3 3 0 00-3-3H6a3 3 0 00-3 3 3 3 0 003 3 3 3 0 003-3V6a3 3 0 00-3-3" />
+              </svg>
+              <span class="brand-name">C.H. Robinson</span>
+            </div>
+            <div class="brand-item">
+              <svg class="brand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+              </svg>
+              <span class="brand-name">J.B. Hunt</span>
+            </div>
+            <div class="brand-item">
+              <svg class="brand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" />
+              </svg>
+              <span class="brand-name">Landstar</span>
+            </div>
+            <div class="brand-item">
+              <svg class="brand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+              </svg>
+              <span class="brand-name">XPO Logistics</span>
+            </div>
+            <!-- Repeat for seamless loop -->
+            <div class="brand-item">
+              <svg class="brand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              </svg>
+              <span class="brand-name">DAT</span>
+            </div>
+            <div class="brand-item">
+              <svg class="brand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2L2 19h20L12 2z" />
+              </svg>
+              <span class="brand-name">TQL</span>
+            </div>
+            <div class="brand-item">
+              <svg class="brand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M18 3a3 3 0 00-3 3v12a3 3 0 003 3 3 3 0 003-3 3 3 0 00-3-3H6a3 3 0 00-3 3 3 3 0 003 3 3 3 0 003-3V6a3 3 0 00-3-3" />
+              </svg>
+              <span class="brand-name">C.H. Robinson</span>
+            </div>
+            <div class="brand-item">
+              <svg class="brand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+              </svg>
+              <span class="brand-name">J.B. Hunt</span>
+            </div>
+            <div class="brand-item">
+              <svg class="brand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" />
+              </svg>
+              <span class="brand-name">Landstar</span>
+            </div>
+            <div class="brand-item">
+              <svg class="brand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+              </svg>
+              <span class="brand-name">XPO Logistics</span>
+            </div>
+            <!-- Third repeat -->
+            <div class="brand-item">
+              <svg class="brand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              </svg>
+              <span class="brand-name">DAT</span>
+            </div>
+            <div class="brand-item">
+              <svg class="brand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2L2 19h20L12 2z" />
+              </svg>
+              <span class="brand-name">TQL</span>
+            </div>
+            <div class="brand-item">
+              <svg class="brand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M18 3a3 3 0 00-3 3v12a3 3 0 003 3 3 3 0 003-3 3 3 0 00-3-3H6a3 3 0 00-3 3 3 3 0 003 3 3 3 0 003-3V6a3 3 0 00-3-3" />
+              </svg>
+              <span class="brand-name">C.H. Robinson</span>
+            </div>
+            <div class="brand-item">
+              <svg class="brand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+              </svg>
+              <span class="brand-name">J.B. Hunt</span>
+            </div>
+            <div class="brand-item">
+              <svg class="brand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" />
+              </svg>
+              <span class="brand-name">Landstar</span>
+            </div>
+            <div class="brand-item">
+              <svg class="brand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+              </svg>
+              <span class="brand-name">XPO Logistics</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Красивые анимированные графики ставок (только визуальные эффекты)
+
+    // Данные по штатам для каждого региона (только 4 главных города)
+    const ratesData = {
+      dryvan: {
+        'Midwest': {
+          rate: 2.83,
+          states: [
+            { name: 'Illinois', city: 'Chicago', rate: '$2.91', loads: 2010 },
+            { name: 'Michigan', city: 'Detroit', rate: '$2.85', loads: 1245 },
+            { name: 'Indiana', city: 'Indianapolis', rate: '$2.82', loads: 1156 },
+            { name: 'Ohio', city: 'Columbus', rate: '$2.80', loads: 1534 }
+          ]
+        },
+        'Southeast': {
+          rate: 2.30,
+          states: [
+            { name: 'Georgia', city: 'Atlanta', rate: '$2.38', loads: 1678 },
+            { name: 'North Carolina', city: 'Charlotte', rate: '$2.28', loads: 1234 },
+            { name: 'Tennessee', city: 'Nashville', rate: '$2.25', loads: 987 },
+            { name: 'South Carolina', city: 'Columbia', rate: '$2.32', loads: 756 }
+          ]
+        },
+        'South/TX': {
+          rate: 2.27,
+          states: [
+            { name: 'Texas', city: 'Dallas', rate: '$2.31', loads: 1614 },
+            { name: 'Texas', city: 'Houston', rate: '$2.29', loads: 1423 },
+            { name: 'Oklahoma', city: 'Oklahoma City', rate: '$2.22', loads: 645 },
+            { name: 'Louisiana', city: 'New Orleans', rate: '$2.26', loads: 534 }
+          ]
+        },
+        'Northeast': {
+          rate: 2.25,
+          states: [
+            { name: 'Pennsylvania', city: 'Philadelphia', rate: '$2.28', loads: 1345 },
+            { name: 'New York', city: 'New York', rate: '$2.22', loads: 1567 },
+            { name: 'Massachusetts', city: 'Boston', rate: '$2.26', loads: 892 },
+            { name: 'New Jersey', city: 'Newark', rate: '$2.24', loads: 1123 }
+          ]
+        },
+        'West': {
+          rate: 2.22,
+          states: [
+            { name: 'California', city: 'Los Angeles', rate: '$2.28', loads: 867 },
+            { name: 'California', city: 'San Francisco', rate: '$2.24', loads: 645 },
+            { name: 'Washington', city: 'Seattle', rate: '$2.18', loads: 534 },
+            { name: 'Oregon', city: 'Portland', rate: '$2.20', loads: 423 }
+          ]
+        }
+      },
+      reefer: {
+        'Midwest': {
+          rate: 3.42,
+          states: [
+            { name: 'Illinois', city: 'Chicago', rate: '$3.52', loads: 456 },
+            { name: 'Michigan', city: 'Detroit', rate: '$3.45', loads: 312 },
+            { name: 'Minnesota', city: 'Minneapolis', rate: '$3.38', loads: 267 },
+            { name: 'Wisconsin', city: 'Milwaukee', rate: '$3.40', loads: 234 }
+          ]
+        },
+        'South/TX': {
+          rate: 3.05,
+          states: [
+            { name: 'Texas', city: 'Dallas', rate: '$3.12', loads: 500 },
+            { name: 'Texas', city: 'Houston', rate: '$3.08', loads: 456 },
+            { name: 'Oklahoma', city: 'Oklahoma City', rate: '$2.98', loads: 178 },
+            { name: 'Louisiana', city: 'New Orleans', rate: '$3.02', loads: 145 }
+          ]
+        },
+        'West': {
+          rate: 2.78,
+          states: [
+            { name: 'California', city: 'Los Angeles', rate: '$2.85', loads: 312 },
+            { name: 'Washington', city: 'Seattle', rate: '$2.75', loads: 189 },
+            { name: 'Arizona', city: 'Phoenix', rate: '$2.74', loads: 234 },
+            { name: 'Oregon', city: 'Portland', rate: '$2.78', loads: 156 }
+          ]
+        },
+        'Southeast': {
+          rate: 2.59,
+          states: [
+            { name: 'Florida', city: 'Miami', rate: '$2.68', loads: 266 },
+            { name: 'Georgia', city: 'Atlanta', rate: '$2.58', loads: 345 },
+            { name: 'North Carolina', city: 'Charlotte', rate: '$2.52', loads: 223 },
+            { name: 'Tennessee', city: 'Nashville', rate: '$2.60', loads: 198 }
+          ]
+        },
+        'Northeast': {
+          rate: 2.58,
+          states: [
+            { name: 'Pennsylvania', city: 'Philadelphia', rate: '$2.62', loads: 267 },
+            { name: 'New York', city: 'New York', rate: '$2.55', loads: 312 },
+            { name: 'Massachusetts', city: 'Boston', rate: '$2.58', loads: 189 },
+            { name: 'New Jersey', city: 'Newark', rate: '$2.57', loads: 201 }
+          ]
+        }
+      },
+      flatbed: {
+        'National Average': {
+          rate: 2.71,
+          states: [
+            { name: 'Texas', city: 'Dallas', rate: '$2.78', loads: 456 },
+            { name: 'California', city: 'Los Angeles', rate: '$2.68', loads: 312 },
+            { name: 'Illinois', city: 'Chicago', rate: '$2.75', loads: 267 },
+            { name: 'Pennsylvania', city: 'Philadelphia', rate: '$2.69', loads: 234 }
+          ]
+        }
+      },
+      carhauler: {
+        'National Average': {
+          rate: 2.85,
+          states: [
+            { name: 'Texas', city: 'Dallas', rate: '$2.92', loads: 389 },
+            { name: 'California', city: 'Los Angeles', rate: '$2.88', loads: 267 },
+            { name: 'Michigan', city: 'Detroit', rate: '$2.85', loads: 234 },
+            { name: 'Georgia', city: 'Atlanta', rate: '$2.80', loads: 198 }
+          ]
+        }
+      }
+    };
+
+    // Добавляем функционал раскрытия при клике
+    document.addEventListener('DOMContentLoaded', function () {
+      const rateBars = document.querySelectorAll('.rate-bar-modern');
+
+      rateBars.forEach(bar => {
+        bar.style.cursor = 'pointer';
+
+        bar.addEventListener('click', function () {
+          const regionName = this.querySelector('.region-name').textContent;
+          const section = this.closest('.rates-section');
+          const sectionTitle = section.querySelector('h3').textContent.toLowerCase();
+
+          // Определяем тип оборудования
+          let equipmentType = 'dryvan';
+          if (sectionTitle.includes('reefer')) equipmentType = 'reefer';
+          if (sectionTitle.includes('flatbed')) equipmentType = 'flatbed';
+          if (sectionTitle.includes('car hauler')) equipmentType = 'carhauler';
+
+          const regionData = ratesData[equipmentType][regionName];
+
+          if (!regionData) return;
+
+          // Проверяем, есть ли уже открытая вкладка
+          let existingDropdown = this.nextElementSibling;
+          if (existingDropdown && existingDropdown.classList.contains('states-dropdown')) {
+            // Закрываем
+            existingDropdown.style.maxHeight = '0';
+            existingDropdown.style.opacity = '0';
+            setTimeout(() => existingDropdown.remove(), 300);
+            this.classList.remove('active');
+            return;
+          }
+
+          // Закрываем все другие открытые вкладки в этой секции
+          const chart = this.closest('.rates-chart');
+          chart.querySelectorAll('.states-dropdown').forEach(dropdown => {
+            dropdown.style.maxHeight = '0';
+            dropdown.style.opacity = '0';
+            setTimeout(() => dropdown.remove(), 300);
+          });
+          chart.querySelectorAll('.rate-bar-modern').forEach(b => b.classList.remove('active'));
+
+          // Создаем выпадающую вкладку
+          const dropdown = document.createElement('div');
+          dropdown.className = 'states-dropdown';
+          dropdown.innerHTML = `
+        <div class="states-grid">
+          ${regionData.states.map(state => `
+            <div class="state-item">
+              <div class="state-name">${state.name} <span class="state-city">(${state.city})</span></div>
+              <div class="state-details">
+                <span class="state-rate">${state.rate}/миля</span>
+                <span class="state-loads">📦 ${state.loads} грузов</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+          this.classList.add('active');
+          this.parentNode.insertBefore(dropdown, this.nextSibling);
+
+          // Предотвращаем закрытие при клике внутри dropdown
+          dropdown.addEventListener('click', function (e) {
+            e.stopPropagation();
+          });
+
+          // Анимация появления
+          setTimeout(() => {
+            dropdown.style.maxHeight = dropdown.scrollHeight + 'px';
+            dropdown.style.opacity = '1';
+
+            // Запускаем анимацию изменения чисел грузов с маленькими шагами
+            const loadsElements = dropdown.querySelectorAll('.state-loads');
+            loadsElements.forEach((element, index) => {
+              const originalLoads = regionData.states[index].loads;
+              let currentLoads = originalLoads;
+
+              function animateLoads() {
+                // Маленький шаг: изменение на ±1-3%
+                const smallStep = (Math.random() * 0.04 - 0.02); // от -0.02 до +0.02 (±2%)
+                currentLoads = currentLoads * (1 + smallStep);
+
+                // Ограничиваем диапазон: -10% до +15% от оригинала
+                const minLoads = originalLoads * 0.9;
+                const maxLoads = originalLoads * 1.15;
+                currentLoads = Math.max(minLoads, Math.min(maxLoads, currentLoads));
+
+                element.textContent = `📦 ${Math.round(currentLoads)} грузов`;
+
+                // Повторяем каждые 1-2 секунды для плавности
+                const delay = 1000 + Math.random() * 1000;
+                setTimeout(animateLoads, delay);
+              }
+
+              // Запускаем с небольшой задержкой для каждого элемента
+              setTimeout(animateLoads, 500 + index * 200);
+            });
+          }, 10);
+        });
+      });
+
+      // Обработчик клика на Diesel секцию
+      const dieselSection = document.querySelector('.rates-section[data-type="diesel"]');
+      if (dieselSection) {
+        dieselSection.addEventListener('click', function () {
+          const statesInfo = this.querySelector('.states-info');
+          if (statesInfo.style.display === 'none' || statesInfo.style.display === '') {
+            statesInfo.style.display = 'block';
+            setTimeout(() => {
+              statesInfo.style.opacity = '1';
+            }, 10);
+          } else {
+            statesInfo.style.opacity = '0';
+            setTimeout(() => {
+              statesInfo.style.display = 'none';
+            }, 300);
+          }
+        });
+      }
+    });
+
+  </script>
+
+  <!-- Load Statistics Section -->
+  <section class="load-stats-section">
+    <div class="container">
+      <div class="stats-hero">
+        <h2>📊 Статистика грузов по США в реальном времени</h2>
+        <p class="stats-subtitle">Актуальные данные о доступных грузах и ценах на топливо</p>
+      </div>
+
+      <div class="chart-container">
+        <h3>📈 Топ-10 штатов по количеству грузов <span
+            style="font-size: 11px; color: #94a3b8; font-weight: 500;">(наведите для цены на дизель)</span></h3>
+
+        <!-- Легенда -->
+        <div style="display: flex; justify-content: center; gap: 24px; margin-bottom: 16px; font-size: 12px;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <div
+              style="width: 20px; height: 12px; background: linear-gradient(90deg, #6366f1, #8b5cf6); border-radius: 3px;">
+            </div>
+            <span style="color: #94a3b8;">Количество грузов</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <div
+              style="width: 20px; height: 12px; background: linear-gradient(90deg, #f59e0b, #ef4444); border-radius: 3px;">
+            </div>
+            <span style="color: #94a3b8;">Цена дизеля ($1-$10/gal)</span>
+          </div>
+        </div>
+
+        <div class="chart-bars">
+          <div class="chart-bar-item">
+            <div class="chart-bar-label">
+              <span class="state-flag">🌴</span>
+              <span>Californ.</span>
+            </div>
+            <div class="chart-bar-wrapper">
+              <div class="chart-bar" style="width: 100%;">
+                <span class="chart-bar-value">3,247</span>
+              </div>
+            </div>
+          </div>
+          <div class="chart-bar-item">
+            <div class="chart-bar-label">
+              <span class="state-flag">⭐</span>
+              <span>Texas</span>
+            </div>
+            <div class="chart-bar-wrapper">
+              <div class="chart-bar" style="width: 89%;">
+                <span class="chart-bar-value">2,891</span>
+              </div>
+            </div>
+          </div>
+          <div class="chart-bar-item">
+            <div class="chart-bar-label">
+              <span class="state-flag">🌊</span>
+              <span>Florida</span>
+            </div>
+            <div class="chart-bar-wrapper">
+              <div class="chart-bar" style="width: 66%;">
+                <span class="chart-bar-value">2,156</span>
+              </div>
+            </div>
+          </div>
+          <div class="chart-bar-item">
+            <div class="chart-bar-label">
+              <span class="state-flag">🏙️</span>
+              <span>Illinois</span>
+            </div>
+            <div class="chart-bar-wrapper">
+              <div class="chart-bar" style="width: 59%;">
+                <span class="chart-bar-value">1,923</span>
+              </div>
+            </div>
+          </div>
+          <div class="chart-bar-item">
+            <div class="chart-bar-label">
+              <span class="state-flag">🍑</span>
+              <span>Georgia</span>
+            </div>
+            <div class="chart-bar-wrapper">
+              <div class="chart-bar" style="width: 52%;">
+                <span class="chart-bar-value">1,687</span>
+              </div>
+            </div>
+          </div>
+          <div class="chart-bar-item">
+            <div class="chart-bar-label">
+              <span class="state-flag">🌲</span>
+              <span>Pennsylv.</span>
+            </div>
+            <div class="chart-bar-wrapper">
+              <div class="chart-bar" style="width: 47%;">
+                <span class="chart-bar-value">1,534</span>
+              </div>
+            </div>
+          </div>
+          <div class="chart-bar-item">
+            <div class="chart-bar-label">
+              <span class="state-flag">🗽</span>
+              <span>New York</span>
+            </div>
+            <div class="chart-bar-wrapper">
+              <div class="chart-bar" style="width: 44%;">
+                <span class="chart-bar-value">1,421</span>
+              </div>
+            </div>
+          </div>
+          <div class="chart-bar-item">
+            <div class="chart-bar-label">
+              <span class="state-flag">🌾</span>
+              <span>Ohio</span>
+            </div>
+            <div class="chart-bar-wrapper">
+              <div class="chart-bar" style="width: 40%;">
+                <span class="chart-bar-value">1,298</span>
+              </div>
+            </div>
+          </div>
+          <div class="chart-bar-item">
+            <div class="chart-bar-label">
+              <span class="state-flag">🌲</span>
+              <span>N.Carolin.</span>
+            </div>
+            <div class="chart-bar-wrapper">
+              <div class="chart-bar" style="width: 35%;">
+                <span class="chart-bar-value">1,147</span>
+              </div>
+            </div>
+          </div>
+          <div class="chart-bar-item">
+            <div class="chart-bar-label">
+              <span class="state-flag">🏔️</span>
+              <span>Arizona</span>
+            </div>
+            <div class="chart-bar-wrapper">
+              <div class="chart-bar" style="width: 30%;">
+                <span class="chart-bar-value">987</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-container">
+        <div class="stat-card">
+          <div class="stat-icon">🚛</div>
+          <div class="stat-number" id="totalLoads">15,847</div>
+          <div class="stat-label">Активных грузов</div>
+          <div class="stat-trend positive">↑ 12% за неделю</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🏢</div>
+          <div class="stat-number">50+</div>
+          <div class="stat-label">Брокеров</div>
+          <div class="stat-trend">TQL, C.H. Robinson, Arrive...</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⚡</div>
+          <div class="stat-number" id="newLoads">5,247</div>
+          <div class="stat-label">Новых за час</div>
+          <div class="stat-trend positive">↑ Обновляется каждую секунду</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🗺️</div>
+          <div class="stat-number">50</div>
+          <div class="stat-label">Штатов США</div>
+          <div class="stat-trend">Полное покрытие</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing Section -->
+  <section class="pricing" id="pricing">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Тарифные планы</h2>
+        <p class="section-subtitle">Выберите оптимальный план обучения для достижения ваших целей</p>
+      </div>
+
+      <div class="pricing-banner">
+        <div class="pricing-banner-content">
+          <div class="pricing-plans-preview">
+            <div class="plan-preview" onclick="window.location.href='certification.html'" style="cursor: pointer;">
+              <div class="plan-badge free">Бесплатно</div>
+              <h4>Базовый</h4>
+              <p>Полный доступ ко всей теоретической информации курса</p>
+              <ul class="plan-features-mini">
+                <li>✓ Вся документация</li>
+                <li>✓ Теоретические материалы</li>
+                <li>✗ Практические инструменты</li>
+              </ul>
+              <div class="plan-click-hint">Нажми для выбора тарифа</div>
+            </div>
+
+            <div class="plan-preview featured" onclick="window.location.href='certification.html'"
+              style="cursor: pointer;">
+              <div class="plan-badge pro">Популярный</div>
+              <h4>Профессионал</h4>
+              <p>Весь функционал сайта: симуляторы, тесты, AI-чат и инструменты</p>
+              <ul class="plan-features-mini">
+                <li>✓ Все инструменты платформы</li>
+                <li>✓ Симулятор переговоров</li>
+                <li>✗ Поддержка специалистов</li>
+              </ul>
+              <div class="plan-click-hint">Нажми для выбора тарифа</div>
+            </div>
+
+            <div class="plan-preview" onclick="window.location.href='certification.html'" style="cursor: pointer;">
+              <div class="plan-badge premium">Премиум</div>
+              <h4>Эксперт</h4>
+              <p>Поддержка 24/7, консультации и гарантия трудоустройства в США</p>
+              <ul class="plan-features-mini">
+                <li>✓ Telegram поддержка 24/7</li>
+                <li>✓ Личные консультации</li>
+                <li>✓ Помощь в трудоустройстве</li>
+              </ul>
+              <div class="plan-click-hint">Нажми для выбора тарифа</div>
+            </div>
+          </div>
+
+          <div class="pricing-cta">
+            <p class="pricing-note"><strong>Хорошие диспетчеры всегда востребованы в США</strong></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Curriculum Section -->
+  <section class="curriculum" id="curriculum">
+    <div class="container container-wide">
+      <div class="section-header">
+        <h2 class="section-title">Практические кейсы</h2>
+        <p class="section-subtitle">Реальные ситуации из работы диспетчера с готовыми решениями</p>
+      </div>
+
+      <div id="casesContainer" class="cases-grid-modern">
+        <!-- Cases will be loaded dynamically -->
+      </div>
+
+      <div style="text-align: center;">
+        <button class="refresh-cases-btn" onclick="loadRandomCases()">
+          <span class="refresh-icon">🔄</span>
+          <span>Показать другие кейсы</span>
+        </button>
+      </div>
+
+      <div style="text-align: center; margin-top: 32px;">
+        <a href="pages/cases.html" class="btn btn-glass">
+          <span>Все практические кейсы</span>
+          <span class="arrow">→</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <script src="cases-database.js"></script>
+  <script>
+    // Функция для отображения кейсов с flip эффектом
+    function displayCases(cases) {
+      const container = document.getElementById('casesContainer');
+      container.innerHTML = '';
+
+      cases.forEach((caseItem, index) => {
+        const difficultyText = {
+          'easy': 'Базовый',
+          'medium': 'Средний',
+          'hard': 'Сложный'
+        };
+
+        const impactColors = {
+          'Низкий': 'rgba(16, 185, 129, 0.15)',
+          'Средний': 'rgba(245, 158, 11, 0.15)',
+          'Высокий': 'rgba(239, 68, 68, 0.15)',
+          'Критический': 'rgba(220, 38, 38, 0.2)'
+        };
+
+        // Создаем отдельный контейнер для каждой карточки
+        const cardWrapper = document.createElement('div');
+        cardWrapper.className = 'case-card-wrapper';
+
+        const card = document.createElement('div');
+        card.className = 'case-card-modern';
+        card.style.animationDelay = `${index * 0.1}s`;
+
+        // Выбираем 2 случайные метрики (кроме приоритета)
+        const metricsOptions = [
+          { icon: '💵', label: 'Затраты', key: 'cost' },
+          { icon: '✅', label: 'Успех', key: 'successRate' },
+          { icon: '⏱️', label: 'Время', key: 'timeToSolve' },
+          { icon: '📈', label: 'Частота', key: 'frequency' },
+          { icon: '📊', label: 'Влияние', key: 'impact' },
+          { icon: '⚠️', label: 'Риск', key: 'riskLevel' }
+        ];
+
+        const shuffledMetrics = metricsOptions.sort(() => 0.5 - Math.random()).slice(0, 2);
+
+        card.innerHTML = `
+          <div class="case-card-inner">
+            <div class="case-card-front">
+              <div class="case-header-modern">
+                <div class="case-header-left">
+                  <div class="case-icon-modern">${caseItem.icon}</div>
+                  <span class="case-category">${caseItem.category}</span>
+                </div>
+                <span class="case-difficulty ${caseItem.difficulty}">${difficultyText[caseItem.difficulty]}</span>
+              </div>
+              <h3 class="case-title-modern">${caseItem.title}</h3>
+              <p class="case-description-modern">${caseItem.description}</p>
+              
+              <div class="case-info-grid">
+                <div class="case-info-item">
+                  <span class="case-info-label">🎯 Приоритет</span>
+                  <span class="case-info-value">${caseItem.priority}</span>
+                </div>
+                <div class="case-info-item">
+                  <span class="case-info-label">${shuffledMetrics[0].icon} ${shuffledMetrics[0].label}</span>
+                  <span class="case-info-value">${caseItem.metrics[shuffledMetrics[0].key]}</span>
+                </div>
+                <div class="case-info-item">
+                  <span class="case-info-label">${shuffledMetrics[1].icon} ${shuffledMetrics[1].label}</span>
+                  <span class="case-info-value">${caseItem.metrics[shuffledMetrics[1].key]}</span>
+                </div>
+              </div>
+              
+              <div class="case-tags">
+                ${caseItem.tags.map(tag => `<span class="case-tag">${tag}</span>`).join('')}
+              </div>
+              <div class="case-click-hint">👆 Нажмите, чтобы увидеть решение</div>
+            </div>
+            <div class="case-card-back">
+              <div class="case-icon-modern">${caseItem.icon}</div>
+              <div class="case-header-modern">
+                <span class="case-category">${caseItem.category}</span>
+                <span class="case-difficulty ${caseItem.difficulty}">${difficultyText[caseItem.difficulty]}</span>
+              </div>
+              <h3 class="case-title-modern">${caseItem.title}</h3>
+              <div class="case-solution-full">
+                <div class="case-solution-label">💡 Решение кейса</div>
+                <div class="case-solution-text">${caseItem.solution}</div>
+              </div>
+              <div class="case-back-details">
+                <div class="case-detail-item">
+                  <div class="case-detail-label">💡 Полезные советы</div>
+                  <div class="case-detail-value">${caseItem.tips}</div>
+                </div>
+                <div class="case-detail-item">
+                  <div class="case-detail-label">⚠️ Возможные последствия</div>
+                  <div class="case-detail-value">${caseItem.consequences}</div>
+                </div>
+                <div class="case-detail-item">
+                  <div class="case-detail-label">🎯 Ключевые навыки</div>
+                  <div class="case-detail-value">${caseItem.tags.join(', ')}</div>
+                </div>
+              </div>
+              <div class="case-flip-back-btn">👆 Нажмите, чтобы вернуться</div>
+            </div>
+          </div>
+        `;
+
+        // Добавляем обработчик клика для переворота карточки
+        card.addEventListener('click', function () {
+          this.classList.toggle('flipped');
+        });
+
+        cardWrapper.appendChild(card);
+        container.appendChild(cardWrapper);
+      });
+    }
+
+    // Функция для загрузки случайных кейсов
+    function loadRandomCases() {
+      const cases = getRandomCases(4);
+      displayCases(cases);
+
+      // Анимация кнопки
+      const btn = document.querySelector('.refresh-cases-btn .refresh-icon');
+      if (btn) {
+        btn.style.transform = 'rotate(360deg)';
+        setTimeout(() => {
+          btn.style.transform = 'rotate(0deg)';
+        }, 600);
+      }
+    }
+
+    // Загрузка кейсов при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function () {
+      loadRandomCases();
+
+      // Рандомизация декоративных цифр на заднем плане секций
+      const sections = [
+        { selector: '.features', name: 'features' },
+        { selector: '.stats', name: 'stats' },
+        { selector: '.pricing', name: 'pricing' },
+        { selector: '.curriculum', name: 'curriculum' },
+        { selector: '.cta-section', name: 'cta' }
+      ];
+
+      // Создаем style элемент для динамических стилей
+      const styleSheet = document.createElement('style');
+      styleSheet.id = 'dynamic-numbers';
+      document.head.appendChild(styleSheet);
+
+      function updateAllNumbers() {
+        let cssRules = '';
+
+        sections.forEach((section, index) => {
+          const randomNum = Math.floor(Math.random() * (146 - 38 + 1)) + 38;
+          const formattedNum = randomNum.toString().padStart(2, '0');
+
+          cssRules += `
+            ${section.selector}::before {
+              content: '${formattedNum}' !important;
+              animation: numberFade${index} 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            }
+            @keyframes numberFade${index} {
+              0% { 
+                opacity: 0; 
+                transform: scale(0.9) translateY(15px); 
+              }
+              50% {
+                opacity: 0.06;
+              }
+              100% { 
+                opacity: 0.04; 
+                transform: scale(1) translateY(0); 
+              }
+            }
+          `;
+        });
+
+        // Заменяем весь контент style элемента
+        styleSheet.textContent = cssRules;
+      }
+
+      // Инициализация: устанавливаем начальные случайные числа
+      updateAllNumbers();
+
+      // Обновляем цифры каждые 4 секунды
+      setInterval(() => {
+        updateAllNumbers();
+      }, 4000);
+    });
+  </script>
+
+  <!-- Curriculum Modules - Hidden -->
+  <div style="display: none;">
+    <!-- Module 1 -->
+    <div class="curriculum-item">
+      <div class="curriculum-number">01</div>
+      <div class="curriculum-content">
+        <div class="curriculum-header">
+          <span class="curriculum-icon">📋</span>
+          <h3 class="curriculum-title">Основы индустрии</h3>
+        </div>
+        <div class="curriculum-duration">⏱️ 2-3 дня</div>
+        <p class="curriculum-description">
+          Введение в грузоперевозки, роль диспетчера, структура индустрии и основные термины.
+        </p>
+        <div class="curriculum-topics">
+          <span class="curriculum-topic">FMCSA</span>
+          <span class="curriculum-topic">DOT</span>
+          <span class="curriculum-topic">Терминология</span>
+          <span class="curriculum-topic">Типы грузов</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Module 2 -->
+    <div class="curriculum-item">
+      <div class="curriculum-number">02</div>
+      <div class="curriculum-content">
+        <div class="curriculum-header">
+          <span class="curriculum-icon">📱</span>
+          <h3 class="curriculum-title">Load Boards и инструменты</h3>
+        </div>
+        <div class="curriculum-duration">⏱️ 2-3 дня</div>
+        <p class="curriculum-description">
+          Работа с DAT, Truckstop, TruckerPath. Поиск грузов, анализ рынка, оценка маршрутов.
+        </p>
+        <div class="curriculum-topics">
+          <span class="curriculum-topic">DAT</span>
+          <span class="curriculum-topic">Truckstop</span>
+          <span class="curriculum-topic">TruckerPath</span>
+          <span class="curriculum-topic">Анализ рынка</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Module 3 -->
+    <div class="curriculum-item">
+      <div class="curriculum-number">03</div>
+      <div class="curriculum-content">
+        <div class="curriculum-header">
+          <span class="curriculum-icon">💼</span>
+          <h3 class="curriculum-title">Документация и compliance</h3>
+        </div>
+        <div class="curriculum-duration">⏱️ 2 дня</div>
+        <p class="curriculum-description">
+          Rate confirmations, BOL, POD, insurance certificates. Правила оформления документов.
+        </p>
+        <div class="curriculum-topics">
+          <span class="curriculum-topic">Rate Con</span>
+          <span class="curriculum-topic">BOL</span>
+          <span class="curriculum-topic">Insurance</span>
+          <span class="curriculum-topic">Compliance</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Module 4 -->
+    <div class="curriculum-item">
+      <div class="curriculum-number">04</div>
+      <div class="curriculum-content">
+        <div class="curriculum-header">
+          <span class="curriculum-icon">📞</span>
+          <h3 class="curriculum-title">Переговоры с брокерами</h3>
+        </div>
+        <div class="curriculum-duration">⏱️ 3-4 дня</div>
+        <p class="curriculum-description">
+          Техники переговоров, работа с возражениями, построение долгосрочных отношений.
+        </p>
+        <div class="curriculum-topics">
+          <span class="curriculum-topic">Cold calling</span>
+          <span class="curriculum-topic">Negotiation</span>
+          <span class="curriculum-topic">Rate negotiation</span>
+          <span class="curriculum-topic">Objections</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Module 5 -->
+    <div class="curriculum-item">
+      <div class="curriculum-number">05</div>
+      <div class="curriculum-content">
+        <div class="curriculum-header">
+          <span class="curriculum-icon">🗺️</span>
+          <h3 class="curriculum-title">Планирование маршрутов</h3>
+        </div>
+        <div class="curriculum-duration">⏱️ 2 дня</div>
+        <p class="curriculum-description">
+          Оптимизация маршрутов, расчет времени, учет HOS, планирование backhaul.
+        </p>
+        <div class="curriculum-topics">
+          <span class="curriculum-topic">Route planning</span>
+          <span class="curriculum-topic">HOS rules</span>
+          <span class="curriculum-topic">Fuel optimization</span>
+          <span class="curriculum-topic">Backhaul</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Module 6 -->
+    <div class="curriculum-item">
+      <div class="curriculum-number">06</div>
+      <div class="curriculum-content">
+        <div class="curriculum-header">
+          <span class="curriculum-icon">🚛</span>
+          <h3 class="curriculum-title">Работа с водителями</h3>
+        </div>
+        <div class="curriculum-duration">⏱️ 2 дня</div>
+        <p class="curriculum-description">
+          Коммуникация с водителями, решение проблем на дороге, мотивация и удержание.
+        </p>
+        <div class="curriculum-topics">
+          <span class="curriculum-topic">Communication</span>
+          <span class="curriculum-topic">Problem solving</span>
+          <span class="curriculum-topic">Driver retention</span>
+          <span class="curriculum-topic">Conflict resolution</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Module 7 -->
+    <div class="curriculum-item">
+      <div class="curriculum-number">07</div>
+      <div class="curriculum-content">
+        <div class="curriculum-header">
+          <span class="curriculum-icon">⚠️</span>
+          <h3 class="curriculum-title">Кризисные ситуации</h3>
+        </div>
+        <div class="curriculum-duration">⏱️ 2 дня</div>
+        <p class="curriculum-description">
+          Поломки, аварии, задержки, отказы от груза. Протоколы действий в экстренных ситуациях.
+        </p>
+        <div class="curriculum-topics">
+          <span class="curriculum-topic">Breakdowns</span>
+          <span class="curriculum-topic">Accidents</span>
+          <span class="curriculum-topic">Delays</span>
+          <span class="curriculum-topic">Emergency protocols</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Module 8 -->
+    <div class="curriculum-item">
+      <div class="curriculum-number">08</div>
+      <div class="curriculum-content">
+        <div class="curriculum-header">
+          <span class="curriculum-icon">💰</span>
+          <h3 class="curriculum-title">Финансы и учет</h3>
+        </div>
+        <div class="curriculum-duration">⏱️ 2 дня</div>
+        <p class="curriculum-description">
+          Расчет прибыльности, факторинг, invoicing, работа с QuickBooks и accounting software.
+        </p>
+        <div class="curriculum-topics">
+          <span class="curriculum-topic">Profit calculation</span>
+          <span class="curriculum-topic">Factoring</span>
+          <span class="curriculum-topic">Invoicing</span>
+          <span class="curriculum-topic">QuickBooks</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Module 9 -->
+    <div class="curriculum-item">
+      <div class="curriculum-number">09</div>
+      <div class="curriculum-content">
+        <div class="curriculum-header">
+          <span class="curriculum-icon">🎯</span>
+          <h3 class="curriculum-title">Практика и симуляции</h3>
+        </div>
+        <div class="curriculum-duration">⏱️ 3-5 дней</div>
+        <p class="curriculum-description">
+          Реальные кейсы, симулятор диспетчера, ролевые игры и финальный экзамен.
+        </p>
+        <div class="curriculum-topics">
+          <span class="curriculum-topic">Real cases</span>
+          <span class="curriculum-topic">Simulator</span>
+          <span class="curriculum-topic">Role play</span>
+          <span class="curriculum-topic">Final exam</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+  <!-- End Curriculum Modules Hidden -->
+  </div>
+  </section>
+
+  <!-- Final CTA Section -->
+  <section class="final-cta-hero">
+    <div class="container">
+      <div class="final-cta-box">
+        <h2 class="final-cta-title">Готовы начать карьеру диспетчера?</h2>
+        <p class="final-cta-subtitle">Присоединяйтесь к <span id="graduates-count">175</span>+ успешных выпускников.
+          Начните обучение бесплатно!</p>
+        <div class="final-cta-buttons">
+          <a href="courses.html" class="btn btn-primary btn-large">
+            <span>Начать обучение бесплатно</span>
+            <span class="arrow">→</span>
+          </a>
+          <a href="pricing.html" class="btn btn-secondary btn-large">
+            <span>Посмотреть тарифы</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section" style="display: none;">
+    <div class="container">
+      <div class="cta-content">
+        <h2 class="cta-title">Готовы начать обучение?</h2>
+        <p class="cta-subtitle">Присоединяйтесь к тысячам успешных диспетчеров</p>
+        <div class="cta-buttons">
+          <a href="course.html" class="btn btn-primary btn-large">
+            <span>Начать бесплатно</span>
+            <span class="arrow">→</span>
+          </a>
+          <a href="pricing.html" class="btn btn-secondary btn-large">
+            <span>Посмотреть тарифы</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>Курсы Диспетчера</h4>
+          <p>Профессиональное обучение диспетчеров грузоперевозок</p>
+        </div>
+
+        <div class="footer-section">
+          <h4>Обучение</h4>
+          <a href="courses.html">Курсы</a>
+          <a href="webinars.html">Вебинары</a>
+        </div>
+
+        <div class="footer-section">
+          <h4>Поддержка</h4>
+          <a href="faq.html">FAQ</a>
+          <a href="contacts.html">Контакты</a>
+          <a href="help.html">Помощь</a>
+        </div>
+
+        <div class="footer-section">
+          <h4>Компания</h4>
+          <a href="about.html">О нас</a>
+          <a href="blog.html">Блог</a>
+          <a href="career.html">Карьера</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2024 Курсы Диспетчера. Все права защищены.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
+    // Intersection Observer for animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -100px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+          entry.target.classList.add('visible');
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.feature-card, .stat-item, .curriculum-item').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(30px)';
+      el.style.transition = 'all 0.6s ease';
+      observer.observe(el);
+    });
+
+    // Feature badge evaporate and navigate
+    const featureBadge = document.querySelector('.feature-badge');
+    if (featureBadge) {
+      featureBadge.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const target = this.getAttribute('data-target');
+
+        // Start evaporate animation
+        this.style.animation = 'evaporate 0.6s ease forwards';
+
+        // Navigate after animation completes (600ms)
+        setTimeout(() => {
+          const targetElement = document.querySelector(target);
+          if (targetElement) {
+            targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 600);
+      });
+    }
+
+    // Feature card click navigation
+    document.querySelectorAll('.feature-card[data-link]').forEach(card => {
+      card.addEventListener('click', function (e) {
+        // Don't navigate if clicking on badge
+        if (e.target.closest('.feature-badge')) {
+          return;
+        }
+        const link = this.getAttribute('data-link');
+        if (link) {
+          window.location.href = link;
+        }
+      });
+    });
+
+    // Minimalist Waves Animation
+    (function () {
+      const canvas = document.getElementById('neuralCanvas');
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      let time = 0;
+      let animationFrameId;
+
+      const waves = [
+        {
+          amplitude: 50,
+          frequency: 0.004,
+          speed: 0.04,
+          offset: 0,
+          color: 'rgba(99, 102, 241, 0.04)',
+          y: height * 0.3
+        },
+        {
+          amplitude: 60,
+          frequency: 0.0035,
+          speed: 0.05,
+          offset: Math.PI / 3,
+          color: 'rgba(139, 92, 246, 0.03)',
+          y: height * 0.5
+        },
+        {
+          amplitude: 70,
+          frequency: 0.0045,
+          speed: 0.035,
+          offset: Math.PI / 2,
+          color: 'rgba(167, 139, 250, 0.025)',
+          y: height * 0.7
+        }
+      ];
+
+      function init() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        ctx.scale(dpr, dpr);
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+
+        // Update wave positions on resize
+        waves[0].y = height * 0.3;
+        waves[1].y = height * 0.5;
+        waves[2].y = height * 0.7;
+      }
+
+      function drawWave(wave) {
+        ctx.beginPath();
+        ctx.moveTo(0, wave.y);
+
+        for (let x = 0; x <= width; x += 5) {
+          const y = wave.y +
+            Math.sin(x * wave.frequency + time * wave.speed + wave.offset) * wave.amplitude;
+          ctx.lineTo(x, y);
+        }
+
+        // Complete the shape
+        ctx.lineTo(width, height);
+        ctx.lineTo(0, height);
+        ctx.closePath();
+
+        // Fill with gradient
+        const gradient = ctx.createLinearGradient(0, wave.y - wave.amplitude, 0, wave.y + wave.amplitude);
+        gradient.addColorStop(0, wave.color.replace(/[\d.]+\)$/, '0.02)'));
+        gradient.addColorStop(0.5, wave.color);
+        gradient.addColorStop(1, wave.color.replace(/[\d.]+\)$/, '0.01)'));
+
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        // Stroke for wave line
+        ctx.strokeStyle = wave.color.replace(/[\d.]+\)$/, '0.15)');
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      function animate() {
+        if (document.hidden) {
+          animationFrameId = requestAnimationFrame(animate);
+          return;
+        }
+
+        time += 1;
+
+        // Clear canvas
+        ctx.clearRect(0, 0, width, height);
+
+        // Draw waves from back to front
+        waves.forEach(wave => drawWave(wave));
+
+        animationFrameId = requestAnimationFrame(animate);
+      }
+
+      function handleResize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        init();
+      }
+
+      // Start
+      init();
+      animate();
+
+      window.addEventListener('resize', handleResize);
+    })();
+  </script>
+
+  <!-- Mobile Menu Script -->
+  <script>
+    (function () {
+      const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+      const mobileMenu = document.getElementById('mobileMenu');
+      const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+
+      if (mobileMenuToggle && mobileMenu && mobileMenuOverlay) {
+        mobileMenuToggle.addEventListener('click', function () {
+          mobileMenuToggle.classList.toggle('active');
+          mobileMenu.classList.toggle('active');
+          mobileMenuOverlay.classList.toggle('active');
+          document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+        });
+
+        mobileMenuOverlay.addEventListener('click', function () {
+          mobileMenuToggle.classList.remove('active');
+          mobileMenu.classList.remove('active');
+          mobileMenuOverlay.classList.remove('active');
+          document.body.style.overflow = '';
+        });
+
+        // Close mobile menu when clicking on a link
+        document.querySelectorAll('.mobile-nav-links .nav-link').forEach(link => {
+          link.addEventListener('click', () => {
+            if (mobileMenu.classList.contains('active')) {
+              mobileMenuToggle.classList.remove('active');
+              mobileMenu.classList.remove('active');
+              mobileMenuOverlay.classList.remove('active');
+              document.body.style.overflow = '';
+            }
+          });
+        });
+      }
+    })();
+  </script>
+
+  <!-- Graduates Counter Script -->
+  <script>
+    (function () {
+      const STORAGE_KEY = 'graduatesCount';
+      const START_COUNT = 175;
+      const MAX_COUNT = 250;
+      const INCREMENT_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+      function getGraduatesCount() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (!stored) {
+          const data = {
+            count: START_COUNT,
+            lastUpdate: Date.now()
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+          return START_COUNT;
+        }
+
+        const data = JSON.parse(stored);
+        const now = Date.now();
+        const timePassed = now - data.lastUpdate;
+        const incrementsNeeded = Math.floor(timePassed / INCREMENT_INTERVAL);
+
+        if (incrementsNeeded > 0 && data.count < MAX_COUNT) {
+          data.count = Math.min(data.count + incrementsNeeded, MAX_COUNT);
+          data.lastUpdate = now;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        return data.count;
+      }
+
+      function updateCounter() {
+        const counter = document.getElementById('graduates-count');
+        if (counter) {
+          counter.textContent = getGraduatesCount();
+        }
+      }
+
+      // Update on page load
+      updateCounter();
+
+      // Check for updates every hour
+      setInterval(updateCounter, 60 * 60 * 1000);
+    })();
+  </script>
+
+  <!-- Rates Expand/Collapse Script -->
+  <script>
+    function toggleRates(button) {
+      const section = button.closest('.rates-section');
+      const expandText = button.querySelector('.expand-text');
+
+      section.classList.toggle('expanded');
+
+      if (section.classList.contains('expanded')) {
+        expandText.textContent = 'Скрыть';
+      } else {
+        expandText.textContent = 'Показать все регионы';
+      }
+    }
+  </script>
+
+  <!-- Load Statistics Chart Script -->
+  <script>
+    // Анимация счетчика новых грузов
+    let currentLoads = Math.floor(Math.random() * (5700 - 5140 + 1)) + 5140;
+    const newLoadsElement = document.getElementById('newLoads');
+
+    if (newLoadsElement) {
+      function updateLoadsCounter() {
+        const random = Math.random();
+
+        // 65% времени - увеличивается на +12
+        if (random < 0.65) {
+          currentLoads += 12;
+        }
+        // 15% времени - уменьшается на -85
+        else if (random < 0.80) {
+          currentLoads -= 85;
+        }
+        // 10% времени - уменьшается на -65
+        else if (random < 0.90) {
+          currentLoads -= 65;
+        }
+        // 10% времени - уменьшается на -45
+        else {
+          currentLoads -= 45;
+        }
+
+        // Если достигли максимума, возвращаемся к случайному числу в диапазоне
+        if (currentLoads > 7000) {
+          currentLoads = Math.floor(Math.random() * (5700 - 5140 + 1)) + 5140;
+        }
+
+        // Если упали ниже минимума, возвращаемся к случайному числу в диапазоне
+        if (currentLoads < 5000) {
+          currentLoads = Math.floor(Math.random() * (5700 - 5140 + 1)) + 5140;
+        }
+
+        // Форматируем число с запятой
+        newLoadsElement.textContent = currentLoads.toLocaleString('ru-RU');
+      }
+
+      // Обновляем каждую секунду
+      setInterval(updateLoadsCounter, 1000);
+    }
+
+    // Анимация счетчика активных грузов
+    let totalLoads = Math.floor(Math.random() * (2245 - 1485 + 1)) + 1485;
+    const totalLoadsElement = document.getElementById('totalLoads');
+
+    if (totalLoadsElement) {
+      function updateTotalLoadsCounter() {
+        const random = Math.random();
+
+        // 70% времени - увеличивается на +18
+        if (random < 0.70) {
+          totalLoads += 18;
+        }
+        // 10% времени - уменьшается на -15
+        else if (random < 0.80) {
+          totalLoads -= 15;
+        }
+        // 10% времени - уменьшается на -5
+        else if (random < 0.90) {
+          totalLoads -= 5;
+        }
+        // 10% времени - уменьшается на -25
+        else {
+          totalLoads -= 25;
+        }
+
+        // Если достигли максимума, возвращаемся к случайному числу в диапазоне
+        if (totalLoads > 2245) {
+          totalLoads = Math.floor(Math.random() * (2245 - 1485 + 1)) + 1485;
+        }
+
+        // Если упали ниже минимума, возвращаемся к случайному числу в диапазоне
+        if (totalLoads < 1485) {
+          totalLoads = Math.floor(Math.random() * (2245 - 1485 + 1)) + 1485;
+        }
+
+        // Форматируем число с запятой
+        totalLoadsElement.textContent = totalLoads.toLocaleString('ru-RU');
+      }
+
+      // Обновляем каждую секунду
+      setInterval(updateTotalLoadsCounter, 1000);
+    }
+
+    // Анимация появления баров графика при загрузке
+    window.addEventListener('load', () => {
+      const bars = document.querySelectorAll('.chart-bar');
+      bars.forEach((bar, index) => {
+        const currentWidth = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+          bar.style.transition = 'width 1.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+          bar.style.width = currentWidth;
+
+          // Сохраняем оригинальную ширину после завершения анимации
+          setTimeout(() => {
+            if (stateData[index]) {
+              stateData[index].originalWidth = currentWidth;
+            }
+          }, 1600);
+        }, index * 100 + 500);
+      });
+    });
+
+    // Реалистичная анимация изменения данных в графике
+    const stateData = [
+      { name: 'California', flag: '🌴', baseValue: 3247, dieselPrice: 4.89, element: null, bar: null },
+      { name: 'Texas', flag: '⭐', baseValue: 2891, dieselPrice: 3.45, element: null, bar: null },
+      { name: 'Florida', flag: '🌊', baseValue: 2156, dieselPrice: 3.78, element: null, bar: null },
+      { name: 'Illinois', flag: '🏙️', baseValue: 1923, dieselPrice: 4.12, element: null, bar: null },
+      { name: 'Georgia', flag: '🍑', baseValue: 1687, dieselPrice: 3.65, element: null, bar: null },
+      { name: 'Pennsylvania', flag: '🌲', baseValue: 1534, dieselPrice: 4.23, element: null, bar: null },
+      { name: 'New York', flag: '🗽', baseValue: 1421, dieselPrice: 4.56, element: null, bar: null },
+      { name: 'Ohio', flag: '🌾', baseValue: 1298, dieselPrice: 3.92, element: null, bar: null },
+      { name: 'North Carolina', flag: '🌲', baseValue: 1147, dieselPrice: 3.71, element: null, bar: null },
+      { name: 'Arizona', flag: '🏔️', baseValue: 987, dieselPrice: 3.98, element: null, bar: null }
+    ];
+
+    // Инициализация элементов после загрузки
+    setTimeout(() => {
+      const chartItems = document.querySelectorAll('.chart-bar-item');
+
+      chartItems.forEach((item, index) => {
+        if (stateData[index]) {
+          stateData[index].element = item.querySelector('.chart-bar-value');
+          stateData[index].bar = item.querySelector('.chart-bar');
+          stateData[index].currentValue = stateData[index].baseValue;
+          stateData[index].showingDiesel = false;
+          // originalWidth будет установлен после завершения анимации загрузки
+          stateData[index].originalWidth = stateData[index].bar.style.width;
+
+          // Добавляем текстовую подсказку на бар
+          const barLabel = document.createElement('span');
+          barLabel.className = 'bar-mode-label';
+          barLabel.textContent = 'Доступные грузы';
+          barLabel.style.cssText = 'position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 10px; color: rgba(255,255,255,0.08); font-weight: 600; z-index: 2; pointer-events: none; text-shadow: none; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; transition: all 0.4s ease; opacity: 0.3;';
+          stateData[index].bar.appendChild(barLabel);
+          stateData[index].barLabel = barLabel;
+
+          // Функция для позиционирования лейбла в зависимости от ширины бара
+          stateData[index].updateLabelPosition = function () {
+            const barWidth = parseFloat(this.bar.style.width);
+            if (barWidth < 20) {
+              this.barLabel.style.opacity = '0';
+            } else {
+              this.barLabel.style.opacity = '1';
+            }
+          };
+
+          // Функция для случайного исчезновения и появления надписи
+          stateData[index].animateLabel = function () {
+            if (!this.barLabel) return;
+
+            const initialDelay = Math.random() * 5000;
+
+            setTimeout(() => {
+              this.toggleLabelVisibility();
+            }, initialDelay);
+          };
+
+          stateData[index].toggleLabelVisibility = function () {
+            if (!this.barLabel) return;
+
+            const currentOpacity = parseFloat(this.barLabel.style.opacity) || 1;
+
+            if (currentOpacity > 0.5) {
+              this.barLabel.style.transition = 'opacity 0.5s ease';
+              this.barLabel.style.opacity = '0';
+
+              setTimeout(() => {
+                if (this.barLabel) {
+                  this.barLabel.style.transition = 'opacity 0.5s ease';
+                  this.barLabel.style.opacity = '1';
+
+                  setTimeout(() => this.toggleLabelVisibility(), 3000);
+                }
+              }, 3000);
+            }
+          };
+
+          stateData[index].updateLabelPosition();
+          setTimeout(() => stateData[index].animateLabel(), Math.random() * 2000);
+
+          // Добавляем обработчики для показа цены на дизель
+          const barWrapper = item.querySelector('.chart-bar-wrapper');
+          const isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+          if (!isMobile) {
+            // На десктопе: при наведении показываем цену на дизель
+            barWrapper.addEventListener('mouseenter', () => {
+              if (!stateData[index].showingDiesel) {
+                stateData[index].showingDiesel = true;
+
+                // Меняем цвет бара на оранжево-красный градиент
+                stateData[index].bar.style.background = 'linear-gradient(90deg, #f59e0b, #ef4444)';
+                stateData[index].bar.style.backgroundSize = '200% 100%';
+
+                // Меняем текст на цену дизеля
+                stateData[index].element.textContent = '$' + stateData[index].dieselPrice.toFixed(2);
+
+                // Меняем надпись на баре
+                if (stateData[index].barLabel) {
+                  stateData[index].barLabel.textContent = 'Цены на топливо';
+                  stateData[index].barLabel.style.opacity = '0.08';
+                }
+
+                // Меняем ширину бара пропорционально цене (от $1 до $10)
+                const dieselPercentage = (stateData[index].dieselPrice / 10) * 100;
+                stateData[index].bar.style.width = dieselPercentage + '%';
+              }
+            });
+
+            barWrapper.addEventListener('mouseleave', () => {
+              if (stateData[index].showingDiesel) {
+                stateData[index].showingDiesel = false;
+
+                // Возвращаем оригинальный градиент
+                stateData[index].bar.style.background = 'linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899)';
+                stateData[index].bar.style.backgroundSize = '200% 100%';
+
+                // Возвращаем количество грузов
+                stateData[index].element.textContent = stateData[index].currentValue.toLocaleString('ru-RU');
+
+                // Возвращаем надпись на баре
+                if (stateData[index].barLabel) {
+                  stateData[index].barLabel.textContent = 'Доступные грузы';
+                  stateData[index].barLabel.style.opacity = '0.3';
+                }
+
+                // Возвращаем оригинальную ширину
+                stateData[index].bar.style.width = stateData[index].originalWidth;
+              }
+            });
+          } else {
+            // На мобильных: при клике переключаем между грузами и ценой на дизель
+            barWrapper.addEventListener('click', () => {
+              if (!stateData[index].showingDiesel) {
+                // Показываем цену на дизель
+                stateData[index].showingDiesel = true;
+
+                // Меняем цвет бара на оранжево-красный градиент
+                stateData[index].bar.style.background = 'linear-gradient(90deg, #f59e0b, #ef4444)';
+                stateData[index].bar.style.backgroundSize = '200% 100%';
+
+                // Меняем текст на цену дизеля
+                stateData[index].element.textContent = '$' + stateData[index].dieselPrice.toFixed(2);
+
+                // Меняем надпись на баре
+                if (stateData[index].barLabel) {
+                  stateData[index].barLabel.textContent = 'Цены на топливо';
+                  stateData[index].barLabel.style.opacity = '0.08';
+                }
+
+                // Меняем ширину бара пропорционально цене (от $1 до $10)
+                const dieselPercentage = (stateData[index].dieselPrice / 10) * 100;
+                stateData[index].bar.style.width = dieselPercentage + '%';
+              } else {
+                // Возвращаем количество грузов
+                stateData[index].showingDiesel = false;
+
+                // Возвращаем оригинальный градиент
+                stateData[index].bar.style.background = 'linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899)';
+                stateData[index].bar.style.backgroundSize = '200% 100%';
+
+                // Возвращаем количество грузов
+                stateData[index].element.textContent = stateData[index].currentValue.toLocaleString('ru-RU');
+
+                // Возвращаем надпись на баре
+                if (stateData[index].barLabel) {
+                  stateData[index].barLabel.textContent = 'Доступные грузы';
+                  stateData[index].barLabel.style.opacity = '0.3';
+                }
+
+                // Возвращаем оригинальную ширину
+                stateData[index].bar.style.width = stateData[index].originalWidth;
+              }
+            });
+          }
+        }
+      });
+    }, 1000);
+  </script>
+
+  <script src="auth.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,1885 @@
+﻿<!DOCTYPE html>
+<html lang="ru" style="background:#070b14">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тарифы | Курсы Диспетчера</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="shared-nav.css?v=7.6">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --accent: #ec4899;
+            --bg-dark: #0f172a;
+            --bg-darker: #020617;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 32px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 24px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 20px;
+            }
+        }
+
+        /* Hero Section */
+        .pricing-hero {
+            padding: 160px 0 80px;
+            text-align: center;
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            .pricing-hero {
+                padding: 140px 0 60px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .pricing-hero {
+                padding: 140px 0 50px;
+            }
+        }
+
+        .pricing-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .pricing-hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .pricing-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .pricing-title {
+            font-size: clamp(40px, 6vw, 64px);
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.7) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .pricing-subtitle {
+            font-size: clamp(18px, 2vw, 22px);
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto 48px;
+        }
+
+        /* Pricing Toggle */
+        .pricing-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 60px;
+        }
+
+        .toggle-label {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .toggle-label.active {
+            color: var(--text-primary);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.active::after {
+            left: 32px;
+        }
+
+        .save-badge {
+            padding: 4px 12px;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.1));
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #22c55e;
+        }
+
+        /* Pricing Cards */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 80px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        @media (max-width: 1024px) {
+            .pricing-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+                margin-bottom: 60px;
+            }
+        }
+
+        .pricing-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 40px;
+            position: relative;
+            transition: all 0.3s;
+            width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            min-height: 650px;
+            height: 100%;
+        }
+
+        @media (max-width: 480px) {
+            .pricing-card {
+                padding: 32px 24px;
+                border-radius: 20px;
+                min-height: 600px;
+            }
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 20px 60px rgba(99, 102, 241, 0.2);
+        }
+
+        .pricing-card.featured {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.1));
+            border: 3px solid #6366f1;
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.3), 0 10px 40px rgba(0, 0, 0, 0.3);
+            transform: scale(1.02);
+        }
+
+        @media (max-width: 1024px) {
+            .pricing-card.featured {
+                transform: scale(1);
+            }
+        }
+
+        .pricing-card.featured:hover {
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 0 0 40px rgba(99, 102, 241, 0.5), 0 20px 60px rgba(0, 0, 0, 0.4);
+            border-color: #8b5cf6;
+        }
+
+        @media (max-width: 1024px) {
+            .pricing-card.featured:hover {
+                transform: translateY(-4px) scale(1);
+            }
+        }
+
+        .pricing-card.premium-card {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(249, 115, 22, 0.1));
+            border: 3px solid #f59e0b;
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.3), 0 10px 40px rgba(0, 0, 0, 0.3);
+            transform: scale(1.02);
+        }
+
+        @media (max-width: 1024px) {
+            .pricing-card.premium-card {
+                transform: scale(1);
+            }
+        }
+
+        .pricing-card.premium-card:hover {
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 0 0 40px rgba(245, 158, 11, 0.5), 0 20px 60px rgba(0, 0, 0, 0.4);
+            border-color: #f97316;
+        }
+
+        @media (max-width: 1024px) {
+            .pricing-card.premium-card:hover {
+                transform: translateY(-4px) scale(1);
+            }
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            right: 40px;
+            padding: 6px 16px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 700;
+            color: white;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 768px) {
+            .popular-badge {
+                left: 50%;
+                right: auto;
+                transform: translateX(-50%);
+                font-size: 11px;
+                padding: 6px 14px;
+            }
+        }
+
+        .plan-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+            .plan-name {
+                font-size: 22px;
+                text-align: center;
+            }
+        }
+
+        .plan-description {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .plan-description {
+                font-size: 14px;
+                text-align: center;
+                line-height: 1.5;
+            }
+        }
+
+        .plan-price {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .plan-price {
+                justify-content: center;
+            }
+        }
+
+        .price-amount {
+            font-size: 48px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fff, rgba(255, 255, 255, 0.8));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        @media (max-width: 768px) {
+            .price-amount {
+                font-size: 42px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .price-amount {
+                font-size: 36px;
+            }
+        }
+
+        .price-currency {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .price-currency {
+                font-size: 20px;
+            }
+        }
+
+        .price-period {
+            font-size: 16px;
+            color: var(--text-muted);
+        }
+
+        .price-note {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+        }
+
+        @media (max-width: 768px) {
+            .price-note {
+                text-align: center;
+                font-size: 13px;
+            }
+        }
+
+        .plan-features {
+            list-style: none;
+            margin-bottom: 32px;
+            flex-grow: 1;
+        }
+
+        .plan-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            font-size: 15px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .plan-features li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-icon {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+            border-radius: 50%;
+            font-size: 12px;
+            color: var(--primary);
+        }
+
+        .plan-cta {
+            margin-top: auto;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        @media (max-width: 480px) {
+            .btn {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .plan-cta {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        @media (max-width: 480px) {
+            .plan-cta {
+                padding: 14px;
+                font-size: 15px;
+            }
+        }
+
+        /* Plan Details Section */
+        .plan-details-section {
+            padding: 80px 0;
+        }
+
+        .plan-detail-card {
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+            transition: all 0.3s;
+        }
+
+        .plan-detail-card:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 60px rgba(99, 102, 241, 0.15);
+        }
+
+        .plan-detail-card.featured {
+            border-color: rgba(99, 102, 241, 0.4);
+            background: transparent;
+        }
+
+        .plan-detail-card.premium {
+            border-color: rgba(236, 72, 153, 0.4);
+            background: transparent;
+        }
+
+        .plan-detail-header {
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .plan-detail-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        .plan-detail-badge.free {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .plan-detail-badge.pro {
+            background: rgba(99, 102, 241, 0.2);
+            color: #6366f1;
+        }
+
+        .plan-detail-badge.premium {
+            background: rgba(236, 72, 153, 0.2);
+            color: #ec4899;
+        }
+
+        .plan-detail-title {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .plan-detail-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+
+        .plan-detail-content h4 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+        .detail-features-list {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .detail-features-list li {
+            border-radius: 10px;
+            background: rgba(255,255,255,.03);
+            border: 1px solid rgba(255,255,255,.07);
+            overflow: hidden;
+            cursor: pointer;
+            transition: background .2s;
+        }
+
+        .detail-features-list li:hover { background: rgba(255,255,255,.06); }
+        .detail-features-list li.open { background: rgba(6,182,212,.06); border-color: rgba(6,182,212,.2); }
+
+        .detail-li-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .detail-li-head .detail-icon { font-size: 18px; flex-shrink: 0; }
+        .detail-li-head .detail-arrow { margin-left: auto; font-size: 11px; color: #64748b; transition: transform .2s; }
+        .detail-features-list li.open .detail-arrow { transform: rotate(180deg); color: #06b6d4; }
+
+        .detail-li-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .3s ease;
+            font-size: 13px;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        .detail-features-list li.open .detail-li-body { max-height: 200px; }
+        .detail-li-body-inner { padding: 0 14px 12px 42px; }
+
+        .detail-icon { font-size: 18px; flex-shrink: 0; }
+
+        @media (max-width: 640px) {
+            .detail-li-head { font-size: 13px; padding: 10px 12px; }
+        }
+
+        .plan-detail-note {
+            background: rgba(255,255,255,.03);
+            border-left: 3px solid #6366f1;
+            padding: 14px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #e2e8f0;
+        }
+
+        .plan-detail-guarantee {
+            background: transparent;
+            border-left: 3px solid #22c55e;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .plan-details-section {
+                padding: 60px 0;
+            }
+
+            .plan-detail-card {
+                padding: 24px;
+            }
+
+            .plan-detail-title {
+                font-size: 24px;
+            }
+        }
+
+        /* FAQ Section */
+        .faq-section {
+            padding: 80px 0;
+            background: linear-gradient(180deg, transparent 0%, rgba(99, 102, 241, 0.02) 100%);
+        }
+
+        @media (max-width: 768px) {
+            .faq-section {
+                padding: 60px 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .faq-section {
+                padding: 50px 0;
+            }
+        }
+
+        .faq-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .faq-title {
+            font-size: clamp(36px, 5vw, 48px);
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .faq-subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+
+        .faq-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .faq-item:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .faq-icon {
+            font-size: 36px;
+            margin-bottom: 16px;
+            display: inline-block;
+        }
+
+        .faq-question {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .faq-answer {
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
+
+        /* Footer */
+        .footer {
+            padding: 60px 0 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 60px;
+            margin-bottom: 40px;
+        }
+
+        .footer-brand {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .footer-logo {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .footer-description {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .footer-section h4 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .footer-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+
+        .footer-bottom {
+            padding-top: 32px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .nav-links {
+                display: none;
+            }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .faq-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr 1fr;
+                gap: 40px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .pricing-hero {
+                padding: 120px 0 60px;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Load Statistics Section */
+        .load-stats-section {
+            padding: 80px 0;
+            background: rgba(15, 23, 42, 0.5);
+        }
+
+        .stats-hero {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .stats-hero h2 {
+            font-size: 36px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+        }
+
+        .stats-subtitle {
+            font-size: 16px;
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.2);
+        }
+
+        .stat-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #ffffff;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .stat-trend {
+            font-size: 10px;
+            color: #ffffff;
+        }
+
+        .stat-trend.positive {
+            color: #22c55e;
+        }
+
+        .chart-container {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 16px;
+            padding: 12px 20px 20px 20px;
+            max-width: 700px;
+            margin: 0 auto 40px auto;
+            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.1);
+        }
+
+        .chart-container h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #ffffff;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .chart-bars {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 0px;
+            height: 410px;
+            padding: 20px 10px;
+        }
+
+        .chart-bar-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            width: 70px;
+            height: 100%;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: slideUp 0.6s ease forwards;
+        }
+
+        .chart-bar-item:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .chart-bar-item:nth-child(1) .chart-bar {
+            animation-delay: 0.1s, 0.1s;
+        }
+
+        .chart-bar-item:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .chart-bar-item:nth-child(2) .chart-bar {
+            animation-delay: 0.2s, 0.2s;
+        }
+
+        .chart-bar-item:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .chart-bar-item:nth-child(3) .chart-bar {
+            animation-delay: 0.3s, 0.3s;
+        }
+
+        .chart-bar-item:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        .chart-bar-item:nth-child(4) .chart-bar {
+            animation-delay: 0.4s, 0.4s;
+        }
+
+        .chart-bar-item:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+
+        .chart-bar-item:nth-child(5) .chart-bar {
+            animation-delay: 0.5s, 0.5s;
+        }
+
+        .chart-bar-item:nth-child(6) {
+            animation-delay: 0.6s;
+        }
+
+        .chart-bar-item:nth-child(6) .chart-bar {
+            animation-delay: 0.6s, 0.6s;
+        }
+
+        .chart-bar-item:nth-child(7) {
+            animation-delay: 0.7s;
+        }
+
+        .chart-bar-item:nth-child(7) .chart-bar {
+            animation-delay: 0.7s, 0.7s;
+        }
+
+        .chart-bar-item:nth-child(8) {
+            animation-delay: 0.8s;
+        }
+
+        .chart-bar-item:nth-child(8) .chart-bar {
+            animation-delay: 0.8s, 0.8s;
+        }
+
+        .chart-bar-item:nth-child(9) {
+            animation-delay: 0.9s;
+        }
+
+        .chart-bar-item:nth-child(9) .chart-bar {
+            animation-delay: 0.9s, 0.9s;
+        }
+
+        .chart-bar-item:nth-child(10) {
+            animation-delay: 1s;
+        }
+
+        .chart-bar-item:nth-child(10) .chart-bar {
+            animation-delay: 1s, 1s;
+        }
+
+        @keyframes slideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chart-bar-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-top: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            height: 50px;
+        }
+
+        .state-name {
+            font-size: inherit;
+            color: inherit;
+        }
+
+        .state-name::before {
+            content: attr(data-full);
+        }
+
+        @media (max-width: 640px) {
+            .state-name::before {
+                content: attr(data-short);
+            }
+        }
+
+        .chart-bar-item:hover .chart-bar-label {
+            transform: translateY(5px);
+            color: #8b5cf6;
+        }
+
+        .state-flag {
+            font-size: 20px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+            transition: transform 0.3s ease;
+        }
+
+        .chart-bar-item:hover .state-flag {
+            transform: scale(1.3) rotate(10deg);
+        }
+
+        .chart-bar-wrapper {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            min-height: 350px;
+        }
+
+        .chart-bar-wrapper:hover {
+            background: rgba(15, 23, 42, 0.8);
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(99, 102, 241, 0.3);
+        }
+
+        .chart-bar {
+            width: 100%;
+            background: linear-gradient(180deg, #ec4899, #8b5cf6, #6366f1);
+            background-size: 100% 200%;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 12px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 -4px 12px rgba(99, 102, 241, 0.4);
+            animation: gradientShift 3s ease infinite, fillVertical 1.5s ease-out forwards;
+            transition: all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+            transform-origin: bottom;
+        }
+
+        @keyframes fillVertical {
+            from {
+                transform: scaleY(0);
+                opacity: 0;
+            }
+
+            to {
+                transform: scaleY(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes gradientShift {
+
+            0%,
+            100% {
+                background-position: 50% 0%;
+            }
+
+            50% {
+                background-position: 50% 100%;
+            }
+        }
+
+        .chart-bar-item:hover .chart-bar {
+            transform: scaleX(1.1);
+            box-shadow: 0 -6px 20px rgba(99, 102, 241, 0.6);
+        }
+
+        .chart-bar::before {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                top: -100%;
+            }
+
+            100% {
+                top: 100%;
+            }
+        }
+
+        .chart-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .chart-bar-value {
+            font-size: 13px;
+            font-weight: 700;
+            color: #ffffff;
+            z-index: 1;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .chart-bar-item {
+                width: 50px;
+            }
+
+            .chart-bar-wrapper {
+                min-height: 210px;
+            }
+
+            .chart-bar-value {
+                font-size: 11px;
+            }
+
+            .chart-container h3 {
+                font-size: 14px;
+            }
+
+            .stats-hero h2 {
+                font-size: 28px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .chart-bar-item {
+                width: 40px;
+            }
+
+            .chart-bar-wrapper {
+                min-height: 180px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .chart-bar-item {
+                width: 30px;
+            }
+
+            .chart-bar-wrapper {
+                min-height: 150px;
+            }
+
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="shared-nav.css?v=7.6">
+    <script type="module" src="firebase-auth-init.js?v=4.0"></script>
+</head>
+
+<body>
+
+    <div id="nav-placeholder"></div>
+    <script src="nav-loader.js?v=7.4"></script>
+
+    <!-- Hero Section -->
+    <section class="pricing-hero">
+        <div class="container">
+            <div class="pricing-hero-content">
+                <div class="pricing-badge">💎 Прозрачные цены</div>
+                <h1 class="pricing-title">Выберите свой тариф</h1>
+                <p class="pricing-subtitle">
+                    Гибкие планы для начинающих и профессионалов. Начните бесплатно или выберите подходящий тариф.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Cards -->
+    <section class="pricing-section">
+        <div class="container">
+            <div class="pricing-grid">
+
+                <!-- Basic Plan -->
+                <div class="pricing-card">
+                    <div class="popular-badge" style="background: linear-gradient(135deg, #10b981, #14b8a6);">🎁
+                        БЕСПЛАТНО</div>
+                    <h3 class="plan-name">Базовый</h3>
+                    <p class="plan-description">Ограниченный доступ только к информации</p>
+                    <div class="plan-price">
+                        <span class="price-currency" style="font-size: 24px;">FREE</span>
+                        <span class="price-amount" style="font-size: 48px;">0</span>
+                    </div>
+                    <p class="price-note">Доступ навсегда</p>
+                    <ul class="plan-features">
+                        <li><span class="feature-icon">✓</span> Доступ к теоретическим материалам</li>
+                        <li><span class="feature-icon">✓</span> Базовая документация</li>
+                        <li><span class="feature-icon">✓</span> Общие инструкции</li>
+                        <li><span class="feature-icon">✓</span> Информация о штатах</li>
+                        <li><span class="feature-icon">✓</span> Доступ к комьюнити</li>
+                        <li><span class="feature-icon">✗</span> <span style="opacity: 0.5;">Нет практических
+                                инструментов</span></li>
+                        <li><span class="feature-icon">✗</span> <span style="opacity: 0.5;">Нет симуляторов и
+                                кейсов</span></li>
+                    </ul>
+                    <a href="login.html" class="btn btn-secondary plan-cta"
+                        style="background: linear-gradient(135deg, #10b981, #14b8a6);">🚀 Начать бесплатно</a>
+                </div>
+
+                <!-- Dispatcher Plan -->
+                <div class="pricing-card featured">
+                    <div class="popular-badge" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">⭐
+                        ПОПУЛЯРНЫЙ</div>
+                    <!-- Скидка бейдж -->
+                    <div style="display:inline-block;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:11px;font-weight:800;padding:4px 12px;border-radius:20px;letter-spacing:.05em;margin-bottom:8px;">🔥 СКИДКА 20%</div>
+                    <h3 class="plan-name">Полный доступ</h3>
+                    <p class="plan-description">Полный доступ ко всем функциям и материалам платформы</p>
+                    <div class="plan-price">
+                        <!-- Старая цена зачёркнута -->
+                        <div style="font-size:18px;color:#64748b;text-decoration:line-through;margin-bottom:4px;">$1,000</div>
+                        <span class="price-currency">$</span>
+                        <span class="price-amount" style="color:#10b981;">800</span>
+                    </div>
+                    <p class="price-note" style="color:#10b981;font-weight:700;">Экономия $200 · Единоразовая оплата</p>
+                    <!-- Таймер 15 дней -->
+                    <div style="margin:14px 0;padding:12px 16px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:12px;text-align:center;">
+                        <div style="font-size:11px;font-weight:700;color:#fca5a5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">⏰ Предложение истекает через</div>
+                        <div id="timer-full" style="display:flex;justify-content:center;gap:8px;"></div>
+                    </div>
+                    <ul class="plan-features">
+                        <li><span class="feature-icon">✓</span> Все 12 модулей обучения</li>
+                        <li><span class="feature-icon">✓</span> 50+ практических кейсов</li>
+                        <li><span class="feature-icon">✓</span> Симулятор переговоров</li>
+                        <li><span class="feature-icon">✓</span> Все инструменты и приложения</li>
+                        <li><span class="feature-icon">✓</span> Полный доступ к материалам</li>
+                        <li><span class="feature-icon">✓</span> Тесты и проверка знаний</li>
+                        <li><span class="feature-icon">✓</span> Пожизненный доступ</li>
+                    </ul>
+                    <a href="checkout.html?plan=full" class="btn btn-primary plan-cta">Купить за $800</a>
+                </div>
+
+                <!-- Professional Plan -->
+                <div class="pricing-card premium-card">
+                    <div class="popular-badge" style="background: linear-gradient(135deg, #f59e0b, #f97316);">💎 ПРЕМИУМ</div>
+                    <!-- Скидка бейдж -->
+                    <div style="display:inline-block;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:11px;font-weight:800;padding:4px 12px;border-radius:20px;letter-spacing:.05em;margin-bottom:8px;">🔥 СКИДКА 14%</div>
+                    <h3 class="plan-name">Премиум</h3>
+                    <p class="plan-description">Всё + личный ментор и доступ к закрытому сообществу</p>
+                    <div class="plan-price">
+                        <!-- Старая цена зачёркнута -->
+                        <div style="font-size:18px;color:#64748b;text-decoration:line-through;margin-bottom:4px;">$1,750</div>
+                        <span class="price-currency">$</span>
+                        <span class="price-amount" style="color:#f59e0b;">1,500</span>
+                    </div>
+                    <p class="price-note" style="color:#f59e0b;font-weight:700;">Экономия $250 · Единоразовая оплата</p>
+                    <!-- Таймер 12 дней -->
+                    <div style="margin:14px 0;padding:12px 16px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:12px;text-align:center;">
+                        <div style="font-size:11px;font-weight:700;color:#fcd34d;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">⏰ Предложение истекает через</div>
+                        <div id="timer-premium" style="display:flex;justify-content:center;gap:8px;"></div>
+                    </div>
+                    <ul class="plan-features">
+                        <li><span class="feature-icon">✓</span> Всё из тарифа "Полный доступ"</li>
+                        <li><span class="feature-icon">✓</span> 🎧 Аудио версия всего курса</li>
+                        <li><span class="feature-icon">✓</span> Личный ментор 24/7</li>
+                        <li><span class="feature-icon">✓</span> Доступ к закрытому сообществу</li>
+                        <li><span class="feature-icon">✓</span> Подготовка к карьере</li>
+                        <li><span class="feature-icon">✓</span> Работа на живом примере</li>
+                        <li><span class="feature-icon">✓</span> Финальный экзамен и сертификат</li>
+                    </ul>
+                    <a href="checkout.html?plan=premium" class="btn btn-primary plan-cta"
+                        style="background: linear-gradient(135deg, #f59e0b, #f97316);">💎 Купить за $1,500</a>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Detailed Plan Descriptions -->
+    <section class="plan-details-section">
+        <div class="container">
+            <div class="section-header" style="text-align: center; margin-bottom: 60px;">
+                <h2 class="section-title"
+                    style="font-size: 42px; font-weight: 900; background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 16px;">
+                    📋 Подробное описание тарифов
+                </h2>
+                <p class="section-subtitle" style="font-size: 18px; color: #ffffff; max-width: 600px; margin: 0 auto;">
+                    Узнайте всё о возможностях каждого плана
+                </p>
+            </div>
+
+            <!-- Базовый Plan Details -->
+            <div class="plan-detail-card">
+                <div class="plan-detail-header">
+                    <div class="plan-detail-badge free">Бесплатно</div>
+                    <h3 class="plan-detail-title">Базовый</h3>
+                    <p class="plan-detail-subtitle">Ограниченный доступ только к информации</p>
+                </div>
+                <div class="plan-detail-content">
+                    <h4>Что входит:</h4>
+                    <ul class="detail-features-list">
+                        <li><div class="detail-li-head"><span class="detail-icon">📖</span><strong>Доступ к теоретическим материалам</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Читайте всю информацию о профессии диспетчера — роль, обязанности, рынок США.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">📚</span><strong>Базовая документация</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Изучайте основы работы диспетчера — термины, процессы, структуру индустрии.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">📝</span><strong>Общие инструкции</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Ознакомьтесь с процессами и процедурами работы диспетчера.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">🗺️</span><strong>Информация о штатах</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Базовые сведения о работе в США — штаты, маршруты, особенности рынка.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">👥</span><strong>Доступ к комьюнити</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Общайтесь с другими студентами, задавайте вопросы, делитесь опытом.</div></div></li>
+                    </ul>
+                    <div class="plan-detail-note">
+                        <strong>Ограничения:</strong> Нет доступа к практическим инструментам, симуляторам, кейсам,
+                        квизам, аудио материалам и интерактивным функциям. Только чтение теоретической информации.
+                    </div>
+                    <div class="plan-detail-note" style="margin-top: 16px;">
+                        <strong>Идеально для:</strong> Тех, кто хочет бесплатно ознакомиться с теорией профессии
+                        диспетчера перед принятием решения об инвестиции в полное обучение.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Полный доступ Plan Details -->
+            <div class="plan-detail-card featured">
+                <div class="plan-detail-header">
+                    <div class="plan-detail-badge pro">Популярный</div>
+                    <h3 class="plan-detail-title">Полный доступ</h3>
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap;">
+                        <span style="font-size:16px;color:#64748b;text-decoration:line-through;">$1,000</span>
+                        <span style="font-size:32px;font-weight:900;color:#10b981;line-height:1;">$800</span>
+                        <span style="background:rgba(239,68,68,.15);color:#fca5a5;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid rgba(239,68,68,.3);">🔥 -20%</span>
+                    </div>
+                    <p class="plan-detail-subtitle">Полный курс для серьезного старта карьеры диспетчера</p>
+                </div>
+                <div class="plan-detail-content">
+                    <h4>Что входит:</h4>
+                    <ul class="detail-features-list">
+                        <li><div class="detail-li-head"><span class="detail-icon">📚</span><strong>Все 12 модулей обучения</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Полная программа от основ до экспертного уровня — теория, практика, кейсы.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">🎯</span><strong>50+ практических кейсов</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Реальные ситуации из практики диспетчеров — разбор, решения, шаблоны.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">💬</span><strong>Полный симулятор переговоров</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">15+ сценариев с брокерами и водителями — тренируйте навыки переговоров.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">🛠️</span><strong>Все инструменты и приложения</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Load Board, Load Finder, Dispatcher Cards, AI Брокер и другие инструменты.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">📖</span><strong>Полный доступ к материалам</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Документы, шаблоны, чек-листы, инструкции — всё что нужно для работы.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">✅</span><strong>Тесты и проверка знаний</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">После каждого модуля — тест с детальной обратной связью и объяснениями.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">📊</span><strong>Продвинутая аналитика</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Детальная статистика вашего прогресса, XP система, уровни.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">🗺️</span><strong>База знаний по штатам</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Особенности работы в каждом штате США — ставки, маршруты, специфика.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">💰</span><strong>Калькуляторы и инструменты</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Расчёт ставок, маржи, расстояний — всё для принятия правильных решений.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">📞</span><strong>Примеры реальных звонков</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Слушайте и анализируйте успешные переговоры с брокерами.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">🔄</span><strong>Пожизненный доступ</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Учитесь в своём темпе без ограничений по времени — навсегда.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">🆕</span><strong>Все обновления бесплатно</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Получайте новые материалы и функции автоматически без доплат.</div></div></li>
+                    </ul>
+                    <div class="plan-detail-note">
+                        <strong>Идеально для:</strong> Тех, кто серьезно настроен начать карьеру диспетчера и хочет
+                        получить все необходимые знания и инструменты для успешного старта. Это закрытое комьюнити
+                        профессионалов.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Премиум Plan Details -->
+            <div class="plan-detail-card premium">
+                <div class="plan-detail-header">
+                    <div class="plan-detail-badge premium">Премиум</div>
+                    <h3 class="plan-detail-title">Премиум</h3>
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap;">
+                        <span style="font-size:16px;color:#64748b;text-decoration:line-through;">$1,750</span>
+                        <span style="font-size:32px;font-weight:900;color:#f59e0b;line-height:1;">$1,500</span>
+                        <span style="background:rgba(245,158,11,.15);color:#fcd34d;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid rgba(245,158,11,.3);">🔥 -14%</span>
+                    </div>
+                    <p class="plan-detail-subtitle">Максимальная поддержка и профессиональная подготовка</p>
+                </div>
+                <div class="plan-detail-content">
+                    <h4>Всё из тарифа "Полный доступ" +</h4>
+                    <ul class="detail-features-list">
+                        <li><div class="detail-li-head"><span class="detail-icon">🎧</span><strong>Аудио версия всего курса</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Все 12 модулей в аудио формате — учитесь в дороге, на прогулке, в любое время.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">👨‍🏫</span><strong>Личный ментор 24/7</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Опытный диспетчер отвечает на ваши вопросы, разбирает ситуации, помогает расти.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">💬</span><strong>Закрытый премиум чат</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Доступ к закрытому сообществу профессионалов — нетворкинг, советы, поддержка.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">🎥</span><strong>Работа на живом примере</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Разбор реальных рабочих ситуаций с ментором — видите как работает профессионал.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">💼</span><strong>Карьерная подготовка</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Помощь в поиске первых клиентов, составлении резюме, подготовке к переговорам.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">🤝</span><strong>Рекомендации работодателям</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Рекомендательное письмо от платформы для потенциальных клиентов и работодателей.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">📋</span><strong>Финальный экзамен и сертификат</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Официальный сертификат диспетчера после успешной сдачи финального экзамена.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">📞</span><strong>Индивидуальные консультации</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Персональные сессии с ментором — разбор ваших конкретных вопросов и ситуаций.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">🎯</span><strong>Персональный план развития</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Индивидуальный roadmap от новичка до профессионального диспетчера.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">⚡</span><strong>Приоритетная поддержка</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Ответы в течение 2 часов — ваши вопросы в приоритете.</div></div></li>
+                        <li><div class="detail-li-head"><span class="detail-icon">🔥</span><strong>Эксклюзивные материалы</strong><span class="detail-arrow">▼</span></div><div class="detail-li-body"><div class="detail-li-body-inner">Закрытые материалы только для премиум студентов — скрипты, шаблоны, базы.</div></div></li>
+                    </ul>
+                    <div class="plan-detail-note">
+                        <strong>Идеально для:</strong> Тех, кто хочет максимально быстро и эффективно освоить профессию
+                        с полной поддержкой и постоянной помощью эксперта. Это VIP-уровень закрытого
+                        комьюнити.
+                    </div>
+                    <div class="plan-detail-guarantee">
+                        <strong>🎯 Профессиональная готовность:</strong> После прохождения финального экзамена вы получите полную подготовку к работе в индустрии грузоперевозок США.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <div class="container">
+            <div class="faq-header">
+                <h2 class="faq-title">Часто задаваемые вопросы</h2>
+                <p class="faq-subtitle">Всё, что нужно знать о тарифах и обучении</p>
+            </div>
+
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <div class="faq-icon">🎯</div>
+                    <h3 class="faq-question">Как работает бесплатный пробный период?</h3>
+                    <p class="faq-answer">
+                        После регистрации вы автоматически получаете 7 дней полного доступа ко всем материалам
+                        платформы.
+                        Никаких кредитных карт не требуется. Это закрытое комьюнити для серьезных студентов.
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-icon">💳</div>
+                    <h3 class="faq-question">Какие способы оплаты вы принимаете?</h3>
+                    <p class="faq-answer">
+                        Мы принимаем Stripe (все карты), PayPal, а также переводы через Zelle, Venmo и Cash App для
+                        клиентов из США.
+                        Оплата производится один раз - никаких подписок.
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-icon">⏰</div>
+                    <h3 class="faq-question">Сколько длится доступ к курсу?</h3>
+                    <p class="faq-answer">
+                        При покупке любого платного тарифа ($1,000 или $1,500) вы получаете пожизненный доступ ко всем
+                        материалам курса, включая все будущие обновления и новые модули. Учитесь в своем темпе.
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-icon">🚀</div>
+                    <h3 class="faq-question">Можно ли перейти с одного тарифа на другой?</h3>
+                    <p class="faq-answer">
+                        Да! Вы можете в любой момент обновить тариф с "Полный доступ" ($1,000) на "Премиум" ($1,500).
+                        Все ваши достижения и прогресс сохранятся, доплатите только разницу.
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-icon">💼</div>
+                    <h3 class="faq-question">Что включает карьерная подготовка?</h3>
+                    <p class="faq-answer">
+                        В тарифе "Премиум" ($1,500): финальная проверка навыков, советы по старту карьеры, понимание рынка труда США, поддержка выпускников и личный ментор для консультаций.
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-icon">📚</div>
+                    <h3 class="faq-question">Получу ли я сертификат после обучения?</h3>
+                    <p class="faq-answer">
+                        Да, в тарифе "Премиум" ($1,500) после прохождения финального экзамена вы получаете официальный
+                        сертификат, который подтверждает ваши знания и навыки работы диспетчером.
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-icon">👨‍🏫</div>
+                    <h3 class="faq-question">Как работает личный ментор в премиум тарифе?</h3>
+                    <p class="faq-answer">
+                        Опытный диспетчер доступен 24/7 в закрытом чате для ответов на вопросы, разбора ваших ситуаций,
+                        проведения индивидуальных консультаций и показа реальной работы в режиме реального времени.
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-icon">🔒</div>
+                    <h3 class="faq-question">Это действительно закрытое комьюнити?</h3>
+                    <p class="faq-answer">
+                        Да, это не открытая платформа. Доступ предоставляется только после регистрации и верификации.
+                        Мы создаем профессиональное сообщество серьезных студентов и практикующих диспетчеров.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Load Statistics Section - HIDDEN -->
+    <!--
+    <section class="load-stats-section" style="padding: 80px 0; background: rgba(15, 23, 42, 0.5);">
+        <div class="container">
+            <div style="text-align: center; margin-bottom: 40px;">
+                <h2
+                    style="font-size: 36px; font-weight: 900; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 12px;">
+                    📊 Статистика грузов по США в реальном времени
+                </h2>
+                <p style="font-size: 16px; color: #ffffff;">Актуальные данные о доступных грузах и ценах на топливо</p>
+            </div>
+
+            <div
+                style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05)); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 16px; padding: 30px; max-width: 900px; margin: 0 auto 40px;">
+                <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 20px; color: #ffffff; text-align: center;">
+                    📈 Топ-10 штатов по количеству грузов
+                </h3>
+
+                <div
+                    style="display: flex; justify-content: center; gap: 24px; margin-bottom: 20px; font-size: 12px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <div
+                            style="width: 20px; height: 12px; background: linear-gradient(90deg, #6366f1, #8b5cf6); border-radius: 3px;">
+                        </div>
+                        <span style="color: #ffffff;">Количество грузов</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <div
+                            style="width: 20px; height: 12px; background: linear-gradient(90deg, #f59e0b, #ef4444); border-radius: 3px;">
+                        </div>
+                        <span style="color: #ffffff;">Цена дизеля ($1-$10/gal)</span>
+                    </div>
+                </div>
+
+                <div
+                    style="display: flex; align-items: flex-end; justify-content: center; gap: 8px; height: 300px; padding: 20px;">
+                    <div style="display: flex; flex-direction: column; align-items: center; width: 70px;">
+                        <div
+                            style="width: 100%; background: linear-gradient(180deg, #ec4899, #8b5cf6, #6366f1); border-radius: 8px 8px 0 0; height: 100%; display: flex; align-items: flex-start; justify-content: center; padding-top: 8px;">
+                            <span style="color: white; font-weight: 700; font-size: 12px;">3,247</span>
+                        </div>
+                        <div style="margin-top: 8px; text-align: center;">
+                            <div style="font-size: 20px;">🌴</div>
+                            <div style="font-size: 10px; color: #ffffff; font-weight: 600;">CA</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; width: 70px;">
+                        <div
+                            style="width: 100%; background: linear-gradient(180deg, #ec4899, #8b5cf6, #6366f1); border-radius: 8px 8px 0 0; height: 89%; display: flex; align-items: flex-start; justify-content: center; padding-top: 8px;">
+                            <span style="color: white; font-weight: 700; font-size: 12px;">2,891</span>
+                        </div>
+                        <div style="margin-top: 8px; text-align: center;">
+                            <div style="font-size: 20px;">⭐</div>
+                            <div style="font-size: 10px; color: #ffffff; font-weight: 600;">TX</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; width: 70px;">
+                        <div
+                            style="width: 100%; background: linear-gradient(180deg, #ec4899, #8b5cf6, #6366f1); border-radius: 8px 8px 0 0; height: 66%; display: flex; align-items: flex-start; justify-content: center; padding-top: 8px;">
+                            <span style="color: white; font-weight: 700; font-size: 12px;">2,156</span>
+                        </div>
+                        <div style="margin-top: 8px; text-align: center;">
+                            <div style="font-size: 20px;">🌊</div>
+                            <div style="font-size: 10px; color: #ffffff; font-weight: 600;">FL</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; width: 70px;">
+                        <div
+                            style="width: 100%; background: linear-gradient(180deg, #ec4899, #8b5cf6, #6366f1); border-radius: 8px 8px 0 0; height: 59%; display: flex; align-items: flex-start; justify-content: center; padding-top: 8px;">
+                            <span style="color: white; font-weight: 700; font-size: 12px;">1,923</span>
+                        </div>
+                        <div style="margin-top: 8px; text-align: center;">
+                            <div style="font-size: 20px;">🏙️</div>
+                            <div style="font-size: 10px; color: #ffffff; font-weight: 600;">IL</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; width: 70px;">
+                        <div
+                            style="width: 100%; background: linear-gradient(180deg, #ec4899, #8b5cf6, #6366f1); border-radius: 8px 8px 0 0; height: 52%; display: flex; align-items: flex-start; justify-content: center; padding-top: 8px;">
+                            <span style="color: white; font-weight: 700; font-size: 12px;">1,687</span>
+                        </div>
+                        <div style="margin-top: 8px; text-align: center;">
+                            <div style="font-size: 20px;">🍑</div>
+                            <div style="font-size: 10px; color: #ffffff; font-weight: 600;">GA</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; width: 70px;">
+                        <div
+                            style="width: 100%; background: linear-gradient(180deg, #ec4899, #8b5cf6, #6366f1); border-radius: 8px 8px 0 0; height: 47%; display: flex; align-items: flex-start; justify-content: center; padding-top: 8px;">
+                            <span style="color: white; font-weight: 700; font-size: 12px;">1,534</span>
+                        </div>
+                        <div style="margin-top: 8px; text-align: center;">
+                            <div style="font-size: 20px;">🌲</div>
+                            <div style="font-size: 10px; color: #ffffff; font-weight: 600;">PA</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; width: 70px;">
+                        <div
+                            style="width: 100%; background: linear-gradient(180deg, #ec4899, #8b5cf6, #6366f1); border-radius: 8px 8px 0 0; height: 44%; display: flex; align-items: flex-start; justify-content: center; padding-top: 8px;">
+                            <span style="color: white; font-weight: 700; font-size: 12px;">1,421</span>
+                        </div>
+                        <div style="margin-top: 8px; text-align: center;">
+                            <div style="font-size: 20px;">🗽</div>
+                            <div style="font-size: 10px; color: #ffffff; font-weight: 600;">NY</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; width: 70px;">
+                        <div
+                            style="width: 100%; background: linear-gradient(180deg, #ec4899, #8b5cf6, #6366f1); border-radius: 8px 8px 0 0; height: 40%; display: flex; align-items: flex-start; justify-content: center; padding-top: 8px;">
+                            <span style="color: white; font-weight: 700; font-size: 12px;">1,298</span>
+                        </div>
+                        <div style="margin-top: 8px; text-align: center;">
+                            <div style="font-size: 20px;">🌾</div>
+                            <div style="font-size: 10px; color: #ffffff; font-weight: 600;">OH</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; width: 70px;">
+                        <div
+                            style="width: 100%; background: linear-gradient(180deg, #ec4899, #8b5cf6, #6366f1); border-radius: 8px 8px 0 0; height: 35%; display: flex; align-items: flex-start; justify-content: center; padding-top: 8px;">
+                            <span style="color: white; font-weight: 700; font-size: 12px;">1,147</span>
+                        </div>
+                        <div style="margin-top: 8px; text-align: center;">
+                            <div style="font-size: 20px;">🌲</div>
+                            <div style="font-size: 10px; color: #ffffff; font-weight: 600;">NC</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; width: 70px;">
+                        <div
+                            style="width: 100%; background: linear-gradient(180deg, #ec4899, #8b5cf6, #6366f1); border-radius: 8px 8px 0 0; height: 30%; display: flex; align-items: flex-start; justify-content: center; padding-top: 8px;">
+                            <span style="color: white; font-weight: 700; font-size: 12px;">987</span>
+                        </div>
+                        <div style="margin-top: 8px; text-align: center;">
+                            <div style="font-size: 20px;">🏔️</div>
+                            <div style="font-size: 10px; color: #ffffff; font-weight: 600;">AZ</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; max-width: 1000px; margin: 0 auto;">
+                <div
+                    style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 24px; text-align: center;">
+                    <div style="font-size: 32px; margin-bottom: 12px;">🚛</div>
+                    <div
+                        style="font-size: 32px; font-weight: 900; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px;">
+                        15,847</div>
+                    <div style="font-size: 14px; color: #ffffff; font-weight: 600; margin-bottom: 8px;">Активных грузов
+                    </div>
+                    <div style="font-size: 12px; color: #22c55e;">↑ 12% за неделю</div>
+                </div>
+                <div
+                    style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 24px; text-align: center;">
+                    <div style="font-size: 32px; margin-bottom: 12px;">🏢</div>
+                    <div
+                        style="font-size: 32px; font-weight: 900; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px;">
+                        50+</div>
+                    <div style="font-size: 14px; color: #ffffff; font-weight: 600; margin-bottom: 8px;">Брокеров</div>
+                    <div style="font-size: 12px; color: #ffffff;">TQL, C.H. Robinson...</div>
+                </div>
+                <div
+                    style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 24px; text-align: center;">
+                    <div style="font-size: 32px; margin-bottom: 12px;">⚡</div>
+                    <div
+                        style="font-size: 32px; font-weight: 900; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px;">
+                        5,247</div>
+                    <div style="font-size: 14px; color: #ffffff; font-weight: 600; margin-bottom: 8px;">Новых за час
+                    </div>
+                    <div style="font-size: 12px; color: #22c55e;">↑ Обновляется</div>
+                </div>
+                <div
+                    style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 24px; text-align: center;">
+                    <div style="font-size: 32px; margin-bottom: 12px;">🗺️</div>
+                    <div
+                        style="font-size: 32px; font-weight: 900; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px;">
+                        50</div>
+                    <div style="font-size: 14px; color: #ffffff; font-weight: 600; margin-bottom: 8px;">Штатов США</div>
+                    <div style="font-size: 12px; color: #ffffff;">Полное покрытие</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    -->
+
+
+
+    <script>
+        // Pricing Toggle
+        const toggle = document.getElementById('pricingToggle');
+        const monthlyLabel = document.getElementById('monthlyLabel');
+        const yearlyLabel = document.getElementById('yearlyLabel');
+        const priceAmounts = document.querySelectorAll('.price-amount');
+        const pricePeriods = document.querySelectorAll('.price-period');
+
+        let isYearly = false;
+
+        toggle.addEventListener('click', () => {
+            isYearly = !isYearly;
+            toggle.classList.toggle('active');
+
+            if (isYearly) {
+                monthlyLabel.classList.remove('active');
+                yearlyLabel.classList.add('active');
+            } else {
+                monthlyLabel.classList.add('active');
+                yearlyLabel.classList.remove('active');
+            }
+
+            priceAmounts.forEach(amount => {
+                const monthly = amount.dataset.monthly;
+                const yearly = amount.dataset.yearly;
+                amount.textContent = isYearly ? yearly : monthly;
+            });
+
+            pricePeriods.forEach(period => {
+                period.textContent = isYearly ? '/год' : '/месяц';
+            });
+        });
+    </script>
+
+
+
+    <!-- Mobile menu script -->
+    <script>
+        // Mobile menu functionality
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+
+        if (mobileMenuToggle && mobileMenu && mobileMenuOverlay) {
+            mobileMenuToggle.addEventListener('click', () => {
+                mobileMenu.classList.toggle('active');
+                mobileMenuOverlay.classList.toggle('active');
+                document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+            });
+
+            mobileMenuOverlay.addEventListener('click', () => {
+                mobileMenu.classList.remove('active');
+                mobileMenuOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+    </script>
+    <link rel="stylesheet" href="scroll-to-top.css">
+    <script src="scroll-to-top.js"></script>
+
+<script>
+// Feature accordion
+document.addEventListener('click', function(e) {
+    var li = e.target.closest('.detail-features-list li');
+    if (!li) return;
+    var isOpen = li.classList.contains('open');
+    // Close all in same list
+    li.closest('ul').querySelectorAll('li.open').forEach(function(el) { el.classList.remove('open'); });
+    if (!isOpen) li.classList.add('open');
+});
+function makeTimer(elementId, deadlineKey, daysFromNow) {
+    // Store deadline in localStorage so it persists across page loads
+    var key = 'pricing_deadline_' + deadlineKey;
+    var deadline = localStorage.getItem(key);
+    if (!deadline) {
+        var d = new Date();
+        d.setDate(d.getDate() + daysFromNow);
+        d.setHours(23, 59, 59, 0);
+        deadline = d.getTime();
+        localStorage.setItem(key, deadline);
+    }
+    deadline = parseInt(deadline);
+
+    function timerUnit(val, label) {
+        return '<div style="text-align:center;min-width:44px;">' +
+            '<div style="font-size:22px;font-weight:900;color:#fff;line-height:1;">' + String(val).padStart(2,'0') + '</div>' +
+            '<div style="font-size:9px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;">' + label + '</div>' +
+            '</div>';
+    }
+    function sep() {
+        return '<div style="font-size:20px;font-weight:900;color:rgba(255,255,255,.4);align-self:flex-start;padding-top:2px;">:</div>';
+    }
+
+    function update() {
+        var el = document.getElementById(elementId);
+        if (!el) return;
+        var now = Date.now();
+        var diff = Math.max(0, deadline - now);
+        var days = Math.floor(diff / 86400000);
+        var hours = Math.floor((diff % 86400000) / 3600000);
+        var mins = Math.floor((diff % 3600000) / 60000);
+        var secs = Math.floor((diff % 60000) / 1000);
+        el.innerHTML = timerUnit(days,'дн') + sep() + timerUnit(hours,'ч') + sep() + timerUnit(mins,'мин') + sep() + timerUnit(secs,'сек');
+        if (diff > 0) setTimeout(update, 1000);
+        else el.innerHTML = '<div style="color:#fca5a5;font-size:13px;font-weight:700;">Предложение истекло</div>';
+    }
+    update();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    makeTimer('timer-full', 'full', 15);
+    makeTimer('timer-premium', 'premium', 12);
+});
+</script>
+</body>
+
+</html>

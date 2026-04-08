@@ -1,0 +1,1618 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль 7: Документооборот и отчетность | DispatcherPro</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #f093fb;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary: #b8c5d6;
+            --text-muted: #8892aa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.1);
+            --audio-primary: #ff6b6b;
+            --audio-secondary: #4ecdc4;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
+            padding-top: 80px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1), transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(240, 147, 251, 0.1), transparent 50%);
+            animation: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 999;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 0;
+            transition: all 0.3s ease;
+            height: auto;
+            min-height: 60px;
+        }
+
+        .nav-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: translateY(-2px);
+        }
+
+        .logo-icon {
+            font-size: 16px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: clamp(11px, 1.1vw, 14px);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* Dropdown Navigation */
+        .nav-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .nav-dropdown .nav-link {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-dropdown .nav-link::before {
+            content: 'РІвЂ“С';
+            font-size: 8px;
+            transition: transform 0.3s ease;
+            margin-left: 4px;
+        }
+
+        .nav-dropdown .nav-link::after {
+            display: none;
+        }
+
+        .nav-dropdown:hover .nav-link::before {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 200px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 8px;
+            margin-top: 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            z-index: 1000;
+        }
+
+        .nav-dropdown:hover .dropdown-content {
+            display: flex;
+            flex-direction: column;
+            animation: fadeInDown 0.3s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-content a {
+            display: block;
+            padding: 10px 14px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .dropdown-content a:hover {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--text-primary);
+            transform: translateX(2px);
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-login {
+            padding: 6px 16px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .btn-login:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-signup {
+            padding: 6px 16px;
+            text-decoration: none;
+            color: white;
+            font-weight: 500;
+            font-size: 12px;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .btn-signup:hover {
+            background: rgba(99, 102, 241, 0.25);
+            border-color: rgba(99, 102, 241, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .mobile-menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 10px 19px;
+            z-index: 1001;
+            transition: all 0.3s ease;
+            margin-right: 0;
+        }
+
+        .mobile-menu-toggle:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .mobile-menu-toggle span {
+            width: 38px;
+            height: 2px;
+            background: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .mobile-menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -6px);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 85%;
+            max-width: 380px;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 100px 20px 32px;
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .mobile-menu.active {
+            right: 0;
+        }
+
+        .mobile-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+
+        .mobile-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .mobile-nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin-bottom: 32px;
+            width: 100%;
+        }
+
+        .mobile-nav-links .nav-link {
+            padding: 14px 16px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-size: 15px;
+        }
+
+        .mobile-nav-links .nav-link:hover {
+            background: rgba(99, 102, 241, 0.15);
+            transform: translateX(4px);
+        }
+
+        /* Mobile nav sections */
+        .mobile-nav-section {
+            margin: 0;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 0;
+            padding: 12px 0;
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            width: 100%;
+        }
+
+        .mobile-section-title {
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 4px;
+        }
+
+        .nav-link-sub {
+            padding: 10px 16px 10px 36px !important;
+            font-size: 14px;
+            position: relative;
+            margin: 0 !important;
+            border-radius: 0;
+            width: 100%;
+            display: block;
+        }
+
+        .nav-link-sub::before {
+            content: 'РІвЂ вЂ™';
+            position: absolute;
+            left: 16px;
+            color: var(--primary);
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        .nav-link-sub:hover::before {
+            opacity: 1;
+            transform: translateX(2px);
+        }
+
+        .mobile-nav-links>.nav-link:not(.nav-link-sub) {
+            font-weight: 600;
+            font-size: 15px;
+            margin: 0;
+            padding: 14px 16px;
+            width: 100%;
+            display: block;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .mobile-nav-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .mobile-menu-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            margin: 20px 0;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: flex;
+            }
+
+            .nav-links,
+            .nav-actions {
+                display: none;
+            }
+        }
+
+        /* Main Content */
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Content Blocks */
+        .content-block {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            gap: 20px;
+        }
+
+        .block-title {
+            flex: 1;
+            font-size: 1.8rem;
+            color: var(--primary);
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        /* Audio Play Button with Progress Ring */
+        .audio-container {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .audio-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--audio-primary), var(--audio-secondary));
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .audio-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.4);
+        }
+
+        .audio-btn.playing {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.6), 0 0 0 10px rgba(255, 107, 107, 0.1);
+            }
+
+            100% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+        }
+
+        .play-icon,
+        .pause-icon {
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+
+        .pause-icon {
+            display: none;
+        }
+
+        .audio-btn.playing .play-icon {
+            display: none;
+        }
+
+        .audio-btn.playing .pause-icon {
+            display: block;
+        }
+
+        /* Progress Ring */
+        .progress-ring {
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            width: 66px;
+            height: 66px;
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-circle {
+            stroke: var(--audio-primary);
+            stroke-width: 3;
+            fill: transparent;
+            stroke-dasharray: 207.35;
+            stroke-dashoffset: 207.35;
+            transition: stroke-dashoffset 0.3s ease;
+        }
+
+        /* Content Text */
+        .content-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            margin-bottom: 25px;
+        }
+
+        .content-text p {
+            margin-bottom: 20px;
+        }
+
+        .content-text ul,
+        .content-text ol {
+            margin: 20px 0;
+            padding-left: 30px;
+        }
+
+        .content-text li {
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+        }
+
+        .content-text strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Highlight Boxes */
+        .highlight-box {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+
+        .highlight-box.warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .highlight-box.success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        /* Case Study Blocks */
+        .case-study-block {
+            background: rgba(240, 147, 251, 0.05);
+            border: 1px solid rgba(240, 147, 251, 0.2);
+            border-radius: 16px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+
+        .case-study-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .case-study-icon {
+            font-size: 24px;
+        }
+
+        .case-study-title {
+            font-size: 1.3rem;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Quick Check Blocks */
+        .quick-check-block {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 16px;
+            padding: 25px;
+            margin: 30px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quick-check-block:hover {
+            background: rgba(16, 185, 129, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .quick-check-block.locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .quick-check-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .quick-check-icon {
+            font-size: 24px;
+        }
+
+        .quick-check-title {
+            font-size: 1.3rem;
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .quiz-question {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .quiz-option {
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .quiz-option:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .quiz-option.incorrect {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        /* Navigation */
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 50px;
+            padding: 30px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 12px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .nav-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .nav-btn span {
+            font-size: 18px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main {
+                padding: 20px 15px;
+            }
+
+            .content-block {
+                padding: 20px;
+            }
+
+            .block-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .block-title {
+                font-size: 1.5rem;
+            }
+
+            .audio-container {
+                align-self: flex-start;
+            }
+
+            .lesson-nav {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    
+        /* Footer Styles */
+        .footer {
+            padding: 80px 0 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 80px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 32px;
+            margin-bottom: 48px;
+        }
+
+        .footer-section h4 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .footer-section p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .footer-section a {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 32px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-content">
+                <a href="../index.html" class="logo">
+                    <span class="logo-icon">СЂСџР‹вЂњ</span>
+                    <span class="logo-text">Р С™РЎС“РЎР‚РЎРѓРЎвЂ№ Р вЂќР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р В°</span>
+                </a>
+
+                <div class="nav-links">
+                    <a href="../index.html" class="nav-link" data-short="Р вЂњР В»Р В°Р Р†Р Р…Р В°РЎРЏ">Р вЂњР В»Р В°Р Р†Р Р…Р В°РЎРЏ</a>
+
+                    <div class="nav-dropdown">
+                        <a href="../courses.html" class="nav-link" data-short="Р С™РЎС“РЎР‚РЎРѓРЎвЂ№">Р С™РЎС“РЎР‚РЎРѓРЎвЂ№</a>
+                        <div class="dropdown-content">
+                            <a href="../course.html">Р С›Р В±Р В·Р С•РЎР‚ Р С”РЎС“РЎР‚РЎРѓР В°</a>
+                            <a href="modules-index.html">12 Р СљР С•Р ТРЎС“Р В»Р ВµР в„– Р С•Р В±РЎС“РЎвЂЎР ВµР Р…Р СРЎРЏ</a>
+                            <a href="simulator.html">Р РЋР СР СРЎС“Р В»РЎРЏРЎвЂљР С•РЎР‚ Р С—Р ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚Р С•Р Р†</a>
+                            <a href="calls.html">Р СџРЎР‚Р СР СР ВµРЎР‚РЎвЂ№ Р В·Р Р†Р С•Р Р…Р С”Р С•Р Р†</a>
+                            <a href="cases.html">Р СџРЎР‚Р В°Р С”РЎвЂљР СРЎвЂЎР ВµРЎРѓР С”Р СР Вµ Р С”Р ВµР в„–РЎРѓРЎвЂ№</a>
+                            <a href="testing.html">Р СћР ВµРЎРѓРЎвЂљР СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ</a>
+                        </div>
+                    </div>
+
+                    <div class="nav-dropdown">
+                        <span class="nav-link" data-short="Р ВР Р…РЎРѓРЎвЂљРЎР‚.">Р ВР Р…РЎРѓРЎвЂљРЎР‚РЎС“Р СР ВµР Р…РЎвЂљРЎвЂ№</span>
+                        <div class="dropdown-content">
+                            <a href="analytics.html">📊 Статистика рынка</a>
+                            <a href="load-finder.html">Load Finder</a>
+                            <a href="dispatcher-cards.html">Dispatcher Cards</a>
+                            <a href="simulator.html">Dispatch Simulator</a>
+                        </div>
+                    </div>
+
+                    <div class="nav-dropdown">
+                        <span class="nav-link" data-short="Р ВР Р…РЎвЂћР С•">Р ВР Р…РЎвЂћР С•РЎР‚Р СР В°РЎвЂ Р СРЎРЏ</span>
+                        <div class="dropdown-content">
+                            <a href="../about.html">Р С› Р Р…Р В°РЎРѓ</a>
+                            <a href="../career.html">Р С™Р В°РЎР‚РЎРЉР ВµРЎР‚Р В°</a>
+                            <a href="../faq.html">FAQ</a>
+                            <a href="../help.html">Р СџР С•Р СР С•РЎвЂ°РЎРЉ</a>
+                            <a href="../contacts.html">Р С™Р С•Р Р…РЎвЂљР В°Р С”РЎвЂљРЎвЂ№</a>
+                        </div>
+                    </div>
+
+                    <a href="documentation-new.html" class="nav-link" data-short="Р вЂќР С•Р С”РЎС“Р С.">Р вЂќР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР В°РЎвЂ Р СРЎРЏ</a>
+                    <a href="../pricing.html" class="nav-link" data-short="Р СћР В°РЎР‚Р СРЎвЂћРЎвЂ№">Р СћР В°РЎР‚Р СРЎвЂћРЎвЂ№</a>
+                    <a href="../dashboard.html" class="nav-link" id="dashboardLink" style="display: none;"
+                        data-short="Р С™Р В°Р В±Р СР Р…Р ВµРЎвЂљ">Р вЂєР СРЎвЂЎР Р…РЎвЂ№Р в„– Р С”Р В°Р В±Р СР Р…Р ВµРЎвЂљ</a>
+                </div>
+                <div class="nav-actions">
+                    <a href="../login.html" class="btn-login">Р вЂ™Р С•Р в„–РЎвЂљР С</a>
+                    <a href="../register.html" class="btn-signup">Р В Р ВµР С–Р СРЎРѓРЎвЂљРЎР‚Р В°РЎвЂ Р СРЎРЏ</a>
+                </div>
+
+                <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-nav-links">
+            <div class="mobile-nav-actions">
+                <a href="../login.html" class="btn-login">Р вЂ™Р С•Р в„–РЎвЂљР С</a>
+                <a href="../register.html" class="btn-signup">Р В Р ВµР С–Р СРЎРѓРЎвЂљРЎР‚Р В°РЎвЂ Р СРЎРЏ</a>
+            </div>
+
+            <div class="mobile-menu-divider"></div>
+
+            <a href="../index.html" class="nav-link">СЂСџРЏВ  Р вЂњР В»Р В°Р Р†Р Р…Р В°РЎРЏ</a>
+
+            <div class="mobile-nav-section">
+                <div class="mobile-section-title">СЂСџвЂњС™ Р С™Р Р€Р В Р РЋР В«</div>
+                <a href="../courses.html" class="nav-link nav-link-sub">Р вЂ™РЎРѓР Вµ Р С”РЎС“РЎР‚РЎРѓРЎвЂ№</a>
+                <a href="../course.html" class="nav-link nav-link-sub">Р С›Р В±Р В·Р С•РЎР‚ Р С”РЎС“РЎР‚РЎРѓР В°</a>
+                <a href="modules-index.html" class="nav-link nav-link-sub">12 Р СљР С•Р ТРЎС“Р В»Р ВµР в„– Р С•Р В±РЎС“РЎвЂЎР ВµР Р…Р СРЎРЏ</a>
+                <a href="simulator.html" class="nav-link nav-link-sub">Р РЋР СР СРЎС“Р В»РЎРЏРЎвЂљР С•РЎР‚ Р С—Р ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚Р С•Р Р†</a>
+                <a href="calls.html" class="nav-link nav-link-sub">Р СџРЎР‚Р СР СР ВµРЎР‚РЎвЂ№ Р В·Р Р†Р С•Р Р…Р С”Р С•Р Р†</a>
+                <a href="cases.html" class="nav-link nav-link-sub">Р СџРЎР‚Р В°Р С”РЎвЂљР СРЎвЂЎР ВµРЎРѓР С”Р СР Вµ Р С”Р ВµР в„–РЎРѓРЎвЂ№</a>
+                <a href="testing.html" class="nav-link nav-link-sub">Р СћР ВµРЎРѓРЎвЂљР СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ</a>
+            </div>
+
+            <div class="mobile-nav-section">
+                <div class="mobile-section-title">СЂСџвЂєВ РїСРЏ Р ВР СњР РЋР СћР В Р Р€Р СљР вЂўР СњР СћР В«</div>
+                <a href="analytics.html" class="nav-link nav-link-sub">📊 Статистика рынка</a>
+                <a href="load-finder.html" class="nav-link nav-link-sub">Load Finder</a>
+                <a href="dispatcher-cards.html" class="nav-link nav-link-sub">Dispatcher Cards</a>
+                <a href="simulator.html" class="nav-link nav-link-sub">Dispatch Simulator</a>
+            </div>
+            <div class="mobile-nav-section">
+                <div class="mobile-section-title">РІвЂћв„–РїСРЏ Р ВР СњР В¤Р С›Р В Р СљР С’Р В¦Р ВР Р‡</div>
+                <a href="../about.html" class="nav-link nav-link-sub">Р С› Р Р…Р В°РЎРѓ</a>
+                <a href="../career.html" class="nav-link nav-link-sub">Р С™Р В°РЎР‚РЎРЉР ВµРЎР‚Р В°</a>
+                <a href="../faq.html" class="nav-link nav-link-sub">FAQ</a>
+                <a href="../help.html" class="nav-link nav-link-sub">Р СџР С•Р СР С•РЎвЂ°РЎРЉ</a>
+                <a href="../contacts.html" class="nav-link nav-link-sub">Р С™Р С•Р Р…РЎвЂљР В°Р С”РЎвЂљРЎвЂ№</a>
+            </div>
+
+            <a href="documentation-new.html" class="nav-link">СЂСџвЂњвЂћ Р вЂќР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР В°РЎвЂ Р СРЎРЏ</a>
+            <a href="../pricing.html" class="nav-link">СЂСџвЂ™В° Р СћР В°РЎР‚Р СРЎвЂћРЎвЂ№</a>
+            <a href="../dashboard.html" class="nav-link" id="dashboardLinkMobile" style="display: none;">СЂСџвЂВ¤ Р вЂєР СРЎвЂЎР Р…РЎвЂ№Р в„–
+                Р С”Р В°Р В±Р СР Р…Р ВµРЎвЂљ</a>
+        </div>
+    </div>
+
+    <main class="main">
+
+        <!-- Block 1: Р С›РЎРѓР Р…Р С•Р Р†Р Р…РЎвЂ№Р Вµ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљРЎвЂ№ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р В° -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р С›РЎРѓР Р…Р С•Р Р†Р Р…РЎвЂ№Р Вµ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљРЎвЂ№ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р В°</h2>
+                <div class="audio-container">
+                    <button class="audio-btn" onclick="toggleAudio('audio-7-1')">
+                        <svg class="play-icon" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z" />
+                        </svg>
+                        <svg class="pause-icon" viewBox="0 0 24 24">
+                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                        </svg>
+                    </button>
+                    <svg class="progress-ring" width="66" height="66">
+                        <circle class="progress-ring-circle" cx="33" cy="33" r="33"></circle>
+                    </svg>
+                    <audio id="audio-7-1" preload="metadata">
+                        <source src="../audio/module-7/section-1.mp3" type="audio/mpeg">
+                    </audio>
+                </div>
+            </div>
+            <div class="content-text">
+                <p>Р вЂќР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р С•Р В±Р С•РЎР‚Р С•РЎвЂљ - РЎРЊРЎвЂљР С• Р С•РЎРѓР Р…Р С•Р Р†Р В° Р С—РЎР‚Р С•РЎвЂћР ВµРЎРѓРЎРѓР СР С•Р Р…Р В°Р В»РЎРЉР Р…Р С•Р в„– РЎР‚Р В°Р В±Р С•РЎвЂљРЎвЂ№ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р В°. Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С•Р Вµ Р Р†Р ВµР ТР ВµР Р…Р СР Вµ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР В°РЎвЂ Р СР С
+                    Р С•Р В±Р ВµРЎРѓР С—Р ВµРЎвЂЎР СР Р†Р В°Р ВµРЎвЂљ Р В·Р В°РЎвЂ°Р СРЎвЂљРЎС“ Р С”Р С•Р СР С—Р В°Р Р…Р СР С Р С Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏ, Р В° РЎвЂљР В°Р С”Р В¶Р Вµ Р С—Р С•Р СР С•Р С–Р В°Р ВµРЎвЂљ Р СР В·Р В±Р ВµР В¶Р В°РЎвЂљРЎРЉ Р С—РЎР‚Р С•Р В±Р В»Р ВµР С РЎРѓ DOT Р С Р ТРЎР‚РЎС“Р С–Р СР СР С
+                    РЎР‚Р ВµР С–РЎС“Р В»Р СРЎР‚РЎС“РЎР‹РЎвЂ°Р СР СР С Р С•РЎР‚Р С–Р В°Р Р…Р В°Р СР С.</p>
+
+                <h3>Р С›РЎРѓР Р…Р С•Р Р†Р Р…РЎвЂ№Р Вµ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљРЎвЂ№, Р С”Р С•РЎвЂљР С•РЎР‚РЎвЂ№Р Вµ Р ТР С•Р В»Р В¶Р ВµР Р… Р В·Р Р…Р В°РЎвЂљРЎРЉ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚:</h3>
+                <ul>
+                    <li><strong>Bill of Lading (BOL)</strong> - Р С”Р С•Р Р…Р С•РЎРѓР В°Р СР ВµР Р…РЎвЂљ, Р С•РЎРѓР Р…Р С•Р Р†Р Р…Р С•Р в„– Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљ Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р В·Р С”Р С</li>
+                    <li><strong>Rate Confirmation</strong> - Р С—Р С•Р ТРЎвЂљР Р†Р ВµРЎР‚Р В¶Р ТР ВµР Р…Р СР Вµ РЎРѓРЎвЂљР В°Р Р†Р С”Р С</li>
+                    <li><strong>Proof of Delivery (POD)</strong> - Р С—Р С•Р ТРЎвЂљР Р†Р ВµРЎР‚Р В¶Р ТР ВµР Р…Р СР Вµ Р ТР С•РЎРѓРЎвЂљР В°Р Р†Р С”Р С</li>
+                    <li><strong>Inspection Reports</strong> - Р С•РЎвЂљРЎвЂЎР ВµРЎвЂљРЎвЂ№ Р С• РЎРѓР С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р СР С Р С–РЎР‚РЎС“Р В·Р В°</li>
+                    <li><strong>Fuel Receipts</strong> - РЎвЂЎР ВµР С”Р С Р В·Р В° РЎвЂљР С•Р С—Р В»Р СР Р†Р С•</li>
+                    <li><strong>Logbook Records</strong> - Р В·Р В°Р С—Р СРЎРѓР С Р Р† Р В¶РЎС“РЎР‚Р Р…Р В°Р В»Р Вµ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏ</li>
+                </ul>
+                <div class="highlight-box">
+                    <p><strong>Р вЂ™Р В°Р В¶Р Р…Р С•:</strong> Р вЂ™РЎРѓР Вµ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљРЎвЂ№ Р ТР С•Р В»Р В¶Р Р…РЎвЂ№ Р В±РЎвЂ№РЎвЂљРЎРЉ РЎРѓР С•РЎвЂ¦РЎР‚Р В°Р Р…Р ВµР Р…РЎвЂ№ Р Р† РЎвЂљР ВµРЎвЂЎР ВµР Р…Р СР Вµ Р СР СР Р…Р СР СРЎС“Р С 3 Р В»Р ВµРЎвЂљ РЎРѓР С•Р С–Р В»Р В°РЎРѓР Р…Р С•
+                        РЎвЂљРЎР‚Р ВµР В±Р С•Р Р†Р В°Р Р…Р СРЎРЏР С FMCSA. Р В Р ВµР С”Р С•Р СР ВµР Р…Р ТРЎС“Р ВµРЎвЂљРЎРѓРЎРЏ Р СРЎРѓР С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљРЎРЉ Р С”Р В°Р С” РЎвЂћР СР В·Р СРЎвЂЎР ВµРЎРѓР С”Р СР Вµ, РЎвЂљР В°Р С” Р С РЎРЊР В»Р ВµР С”РЎвЂљРЎР‚Р С•Р Р…Р Р…РЎвЂ№Р Вµ Р С”Р С•Р С—Р СР С.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Case Study 1: Р СџРЎР‚Р С•Р В±Р В»Р ВµР СР В° РЎРѓ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР В°Р СР С -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">СЂСџвЂ™С</span>
+                <h3 class="case-study-title">Р В Р ВµР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р ВµР в„–РЎРѓ: Р СџР С•РЎвЂљР ВµРЎР‚РЎРЏР Р…Р Р…РЎвЂ№Р в„– BOL</h3>
+            </div>
+            <div class="content-text">
+                <p><strong>Р РЋР СРЎвЂљРЎС“Р В°РЎвЂ Р СРЎРЏ:</strong> Р вЂ™Р С•Р ТР СРЎвЂљР ВµР В»РЎРЉ Р С—Р С•РЎвЂљР ВµРЎР‚РЎРЏР В» Р С•РЎР‚Р СР С–Р СР Р…Р В°Р В» BOL Р С—Р С•РЎРѓР В»Р Вµ Р ТР С•РЎРѓРЎвЂљР В°Р Р†Р С”Р С Р С–РЎР‚РЎС“Р В·Р В°. Р СџР С•Р В»РЎС“РЎвЂЎР В°РЎвЂљР ВµР В»РЎРЉ
+                    Р С•РЎвЂљР С”Р В°Р В·РЎвЂ№Р Р†Р В°Р ВµРЎвЂљРЎРѓРЎРЏ Р С—Р С•Р ТР С—Р СРЎРѓРЎвЂ№Р Р†Р В°РЎвЂљРЎРЉ POD Р В±Р ВµР В· Р С•РЎР‚Р СР С–Р СР Р…Р В°Р В»Р В° Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР В°.</p>
+                <p><strong>Р В Р ВµРЎв‚¬Р ВµР Р…Р СР Вµ:</strong> Р вЂќР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚ РЎРѓР Р†РЎРЏР В·Р В°Р В»РЎРѓРЎРЏ РЎРѓ Р В±РЎР‚Р С•Р С”Р ВµРЎР‚Р С•Р С, Р С—Р С•Р В»РЎС“РЎвЂЎР СР В» Р С”Р С•Р С—Р СРЎР‹ BOL Р С—Р С• email, РЎР‚Р В°РЎРѓР С—Р ВµРЎвЂЎР В°РЎвЂљР В°Р В» Р С
+                    Р С•РЎвЂљР С—РЎР‚Р В°Р Р†Р СР В» РЎвЂћР В°Р С”РЎРѓР С•Р С Р С—Р С•Р В»РЎС“РЎвЂЎР В°РЎвЂљР ВµР В»РЎР‹. Р СћР В°Р С”Р В¶Р Вµ Р В±РЎвЂ№Р В»Р В° Р С•РЎвЂћР С•РЎР‚Р СР В»Р ВµР Р…Р В° Р В°РЎвЂћРЎвЂћР СР ТР В°Р Р†Р СРЎвЂљ Р С• Р С—Р С•РЎвЂљР ВµРЎР‚Р Вµ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР В°.</p>
+                <p><strong>Р Р€РЎР‚Р С•Р С”:</strong> Р вЂ™РЎРѓР ВµР С–Р ТР В° Р ТР ВµР В»Р В°Р в„–РЎвЂљР Вµ Р С”Р С•Р С—Р СР С Р Р†Р В°Р В¶Р Р…РЎвЂ№РЎвЂ¦ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р Р† Р С—Р ВµРЎР‚Р ВµР Т Р С•РЎвЂљР С—РЎР‚Р В°Р Р†Р С”Р С•Р в„– Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏ Р Р† РЎР‚Р ВµР в„–РЎРѓ.</p>
+            </div>
+        </div>
+
+        <!-- Quick Check 1 -->
+        <div class="quick-check-block locked" id="quiz-1" data-quiz-id="quiz-7-1" data-correct-answer="c">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">РІСљвЂ¦</span>
+                <h3 class="quick-check-title">Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</h3>
+            </div>
+            <div class="quiz-question">
+                Р РЋР С”Р С•Р В»РЎРЉР С”Р С• Р В»Р ВµРЎвЂљ Р ТР С•Р В»Р В¶Р Р…РЎвЂ№ РЎвЂ¦РЎР‚Р В°Р Р…Р СРЎвЂљРЎРЉРЎРѓРЎРЏ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљРЎвЂ№ РЎРѓР С•Р С–Р В»Р В°РЎРѓР Р…Р С• РЎвЂљРЎР‚Р ВµР В±Р С•Р Р†Р В°Р Р…Р СРЎРЏР С FMCSA?
+            </div>
+            <div class="quiz-options">
+                <div class="quiz-option" data-answer="a">1 Р С–Р С•Р Т</div>
+                <div class="quiz-option" data-answer="b">2 Р С–Р С•Р ТР В°</div>
+                <div class="quiz-option" data-answer="c">3 Р С–Р С•Р ТР В°</div>
+                <div class="quiz-option" data-answer="d">5 Р В»Р ВµРЎвЂљ</div>
+            </div>
+        </div>
+
+        <!-- Block 2: Р В­Р В»Р ВµР С”РЎвЂљРЎР‚Р С•Р Р…Р Р…РЎвЂ№Р Вµ РЎРѓР СРЎРѓРЎвЂљР ВµР СРЎвЂ№ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р С•Р В±Р С•РЎР‚Р С•РЎвЂљР В° -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р В­Р В»Р ВµР С”РЎвЂљРЎР‚Р С•Р Р…Р Р…РЎвЂ№Р Вµ РЎРѓР СРЎРѓРЎвЂљР ВµР СРЎвЂ№ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р С•Р В±Р С•РЎР‚Р С•РЎвЂљР В°</h2>
+                <div class="audio-container">
+                    <button class="audio-btn" onclick="toggleAudio('audio-7-2')">
+                        <svg class="play-icon" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z" />
+                        </svg>
+                        <svg class="pause-icon" viewBox="0 0 24 24">
+                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                        </svg>
+                    </button>
+                    <svg class="progress-ring" width="66" height="66">
+                        <circle class="progress-ring-circle" cx="33" cy="33" r="33"></circle>
+                    </svg>
+                    <audio id="audio-7-2" preload="metadata">
+                        <source src="../audio/module-7/section-2.mp3" type="audio/mpeg">
+                    </audio>
+                </div>
+            </div>
+            <div class="content-text">
+                <p>Р РЋР С•Р Р†РЎР‚Р ВµР СР ВµР Р…Р Р…РЎвЂ№Р Вµ РЎвЂљРЎР‚Р В°Р Р…РЎРѓР С—Р С•РЎР‚РЎвЂљР Р…РЎвЂ№Р Вµ Р С”Р С•Р СР С—Р В°Р Р…Р СР С Р Р†РЎРѓР Вµ РЎвЂЎР В°РЎвЂ°Р Вµ Р С—Р ВµРЎР‚Р ВµРЎвЂ¦Р С•Р ТРЎРЏРЎвЂљ Р Р…Р В° РЎРЊР В»Р ВµР С”РЎвЂљРЎР‚Р С•Р Р…Р Р…РЎвЂ№Р Вµ РЎРѓР СРЎРѓРЎвЂљР ВµР СРЎвЂ№ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р С•Р В±Р С•РЎР‚Р С•РЎвЂљР В°. Р В­РЎвЂљР С•
+                    Р С—Р С•Р Р†РЎвЂ№РЎв‚¬Р В°Р ВµРЎвЂљ РЎРЊРЎвЂћРЎвЂћР ВµР С”РЎвЂљР СР Р†Р Р…Р С•РЎРѓРЎвЂљРЎРЉ, РЎРѓР Р…Р СР В¶Р В°Р ВµРЎвЂљ Р В·Р В°РЎвЂљРЎР‚Р В°РЎвЂљРЎвЂ№ Р С РЎС“Р СР ВµР Р…РЎРЉРЎв‚¬Р В°Р ВµРЎвЂљ Р С”Р С•Р В»Р СРЎвЂЎР ВµРЎРѓРЎвЂљР Р†Р С• Р С•РЎв‚¬Р СР В±Р С•Р С”.</p>
+
+                <h3>Р СџР С•Р С—РЎС“Р В»РЎРЏРЎР‚Р Р…РЎвЂ№Р Вµ РЎРѓР СРЎРѓРЎвЂљР ВµР СРЎвЂ№ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р С•Р В±Р С•РЎР‚Р С•РЎвЂљР В°:</h3>
+                <ul>
+                    <li><strong>McLeod LoadMaster</strong> - Р С”Р С•Р СР С—Р В»Р ВµР С”РЎРѓР Р…Р В°РЎРЏ TMS РЎРѓР СРЎРѓРЎвЂљР ВµР СР В°</li>
+                    <li><strong>TMW Suite</strong> - РЎС“Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р СР Вµ РЎвЂљРЎР‚Р В°Р Р…РЎРѓР С—Р С•РЎР‚РЎвЂљР С•Р С Р С Р В»Р С•Р С–Р СРЎРѓРЎвЂљР СР С”Р С•Р в„–</li>
+                    <li><strong>PeopleNet</strong> - Р СР С•Р В±Р СР В»РЎРЉР Р…РЎвЂ№Р Вµ РЎР‚Р ВµРЎв‚¬Р ВµР Р…Р СРЎРЏ Р ТР В»РЎРЏ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„–</li>
+                    <li><strong>Omnitracs</strong> - РЎвЂљР ВµР В»Р ВµР СР В°РЎвЂљР СР С”Р В° Р С РЎС“Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р СР Вµ РЎвЂћР В»Р С•РЎвЂљР С•Р С</li>
+                    <li><strong>Samsara</strong> - Р С•Р В±Р В»Р В°РЎвЂЎР Р…Р В°РЎРЏ Р С—Р В»Р В°РЎвЂљРЎвЂћР С•РЎР‚Р СР В° Р ТР В»РЎРЏ Р С•Р С—Р ВµРЎР‚Р В°РЎвЂ Р СР в„–</li>
+                </ul>
+
+                <h3>Р СџРЎР‚Р ВµР СР СРЎС“РЎвЂ°Р ВµРЎРѓРЎвЂљР Р†Р В° РЎРЊР В»Р ВµР С”РЎвЂљРЎР‚Р С•Р Р…Р Р…Р С•Р С–Р С• Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р С•Р В±Р С•РЎР‚Р С•РЎвЂљР В°:</h3>
+                <ul>
+                    <li>Р СљР С–Р Р…Р С•Р Р†Р ВµР Р…Р Р…Р В°РЎРЏ Р С—Р ВµРЎР‚Р ВµР ТР В°РЎвЂЎР В° Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р Р†</li>
+                    <li>Р С’Р Р†РЎвЂљР С•Р СР В°РЎвЂљР СРЎвЂЎР ВµРЎРѓР С”Р С•Р Вµ РЎР‚Р ВµР В·Р ВµРЎР‚Р Р†Р Р…Р С•Р Вµ Р С”Р С•Р С—Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ</li>
+                    <li>Р вЂєР ВµР С–Р С”Р СР в„– Р С—Р С•Р СРЎРѓР С” Р С Р ТР С•РЎРѓРЎвЂљРЎС“Р С— Р С” Р В°РЎР‚РЎвЂ¦Р СР Р†Р В°Р С</li>
+                    <li>Р РЋР Р…Р СР В¶Р ВµР Р…Р СР Вµ Р В±РЎС“Р СР В°Р В¶Р Р…Р С•Р в„– РЎР‚Р В°Р В±Р С•РЎвЂљРЎвЂ№</li>
+                    <li>Р ВР Р…РЎвЂљР ВµР С–РЎР‚Р В°РЎвЂ Р СРЎРЏ РЎРѓ Р ТРЎР‚РЎС“Р С–Р СР СР С РЎРѓР СРЎРѓРЎвЂљР ВµР СР В°Р СР С</li>
+                    <li>Р С›РЎвЂљРЎРѓР В»Р ВµР В¶Р СР Р†Р В°Р Р…Р СР Вµ РЎРѓРЎвЂљР В°РЎвЂљРЎС“РЎРѓР В° Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р Р†</li>
+                </ul>
+
+                <div class="highlight-box success">
+                    <p><strong>Р РЋР С•Р Р†Р ВµРЎвЂљ:</strong> Р ВР В·РЎС“РЎвЂЎР СРЎвЂљР Вµ РЎРѓР СРЎРѓРЎвЂљР ВµР СРЎС“ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р С•Р В±Р С•РЎР‚Р С•РЎвЂљР В° Р Р†Р В°РЎв‚¬Р ВµР в„– Р С”Р С•Р СР С—Р В°Р Р…Р СР С. Р вЂР С•Р В»РЎРЉРЎв‚¬Р СР Р…РЎРѓРЎвЂљР Р†Р С• РЎРѓР С•Р Р†РЎР‚Р ВµР СР ВµР Р…Р Р…РЎвЂ№РЎвЂ¦
+                        TMS Р СР СР ВµРЎР‹РЎвЂљ Р СР С•Р В±Р СР В»РЎРЉР Р…РЎвЂ№Р Вµ Р С—РЎР‚Р СР В»Р С•Р В¶Р ВµР Р…Р СРЎРЏ Р ТР В»РЎРЏ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„–, РЎвЂЎРЎвЂљР С• Р В·Р Р…Р В°РЎвЂЎР СРЎвЂљР ВµР В»РЎРЉР Р…Р С• РЎС“Р С—РЎР‚Р С•РЎвЂ°Р В°Р ВµРЎвЂљ Р С—РЎР‚Р С•РЎвЂ Р ВµРЎРѓРЎРѓ.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Case Study 2: Р вЂ™Р Р…Р ВµР ТРЎР‚Р ВµР Р…Р СР Вµ РЎРЊР В»Р ВµР С”РЎвЂљРЎР‚Р С•Р Р…Р Р…Р С•Р в„– РЎРѓР СРЎРѓРЎвЂљР ВµР СРЎвЂ№ -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">СЂСџвЂ™С</span>
+                <h3 class="case-study-title">Р В Р ВµР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р ВµР в„–РЎРѓ: Р СџР ВµРЎР‚Р ВµРЎвЂ¦Р С•Р Т Р Р…Р В° РЎРЊР В»Р ВµР С”РЎвЂљРЎР‚Р С•Р Р…Р Р…РЎвЂ№Р в„– POD</h3>
+            </div>
+            <div class="content-text">
+                <p><strong>Р РЋР СРЎвЂљРЎС“Р В°РЎвЂ Р СРЎРЏ:</strong> Р С™Р С•Р СР С—Р В°Р Р…Р СРЎРЏ РЎР‚Р ВµРЎв‚¬Р СР В»Р В° Р С—Р ВµРЎР‚Р ВµР в„–РЎвЂљР С Р Р…Р В° РЎРЊР В»Р ВµР С”РЎвЂљРЎР‚Р С•Р Р…Р Р…РЎвЂ№Р Вµ Р С—Р С•Р ТР С—Р СРЎРѓР С Р ТР В»РЎРЏ POD. Р СњР ВµР С”Р С•РЎвЂљР С•РЎР‚РЎвЂ№Р Вµ
+                    Р С—Р С•Р В»РЎС“РЎвЂЎР В°РЎвЂљР ВµР В»Р С Р С•РЎвЂљР С”Р В°Р В·РЎвЂ№Р Р†Р В°Р В»Р СРЎРѓРЎРЉ Р С—РЎР‚Р СР Р…Р СР СР В°РЎвЂљРЎРЉ РЎРЊР В»Р ВµР С”РЎвЂљРЎР‚Р С•Р Р…Р Р…РЎвЂ№Р Вµ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљРЎвЂ№.</p>
+                <p><strong>Р В Р ВµРЎв‚¬Р ВµР Р…Р СР Вµ:</strong> Р вЂќР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚РЎвЂ№ Р С—РЎР‚Р С•Р Р†Р ВµР В»Р С Р С•Р В±РЎС“РЎвЂЎР ВµР Р…Р СР Вµ Р С”Р В»Р СР ВµР Р…РЎвЂљР С•Р Р†, Р С•Р В±РЎР‰РЎРЏРЎРѓР Р…Р СР В»Р С Р С—РЎР‚Р ВµР СР СРЎС“РЎвЂ°Р ВµРЎРѓРЎвЂљР Р†Р В° Р С РЎР‹РЎР‚Р СР ТР СРЎвЂЎР ВµРЎРѓР С”РЎС“РЎР‹
+                    РЎРѓР СР В»РЎС“ РЎРЊР В»Р ВµР С”РЎвЂљРЎР‚Р С•Р Р…Р Р…РЎвЂ№РЎвЂ¦ Р С—Р С•Р ТР С—Р СРЎРѓР ВµР в„–. Р вЂќР В»РЎРЏ Р С”Р С•Р Р…РЎРѓР ВµРЎР‚Р Р†Р В°РЎвЂљР СР Р†Р Р…РЎвЂ№РЎвЂ¦ Р С”Р В»Р СР ВµР Р…РЎвЂљР С•Р Р† Р С•РЎРѓРЎвЂљР В°Р Р†Р СР В»Р С Р Р†Р С•Р В·Р СР С•Р В¶Р Р…Р С•РЎРѓРЎвЂљРЎРЉ Р В±РЎС“Р СР В°Р В¶Р Р…Р С•Р С–Р С•
+                    Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р С•Р В±Р С•РЎР‚Р С•РЎвЂљР В°.</p>
+                <p><strong>Р В Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљ:</strong> 85% Р С”Р В»Р СР ВµР Р…РЎвЂљР С•Р Р† Р С—Р ВµРЎР‚Р ВµРЎв‚¬Р В»Р С Р Р…Р В° РЎРЊР В»Р ВµР С”РЎвЂљРЎР‚Р С•Р Р…Р Р…РЎвЂ№Р Вµ POD, РЎвЂЎРЎвЂљР С• РЎРѓР С•Р С”РЎР‚Р В°РЎвЂљР СР В»Р С• Р Р†РЎР‚Р ВµР СРЎРЏ Р С•Р В±РЎР‚Р В°Р В±Р С•РЎвЂљР С”Р С
+                    Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р Р† Р Р…Р В° 60%.</p>
+            </div>
+        </div>
+
+        <!-- Quick Check 2 -->
+        <div class="quick-check-block locked" id="quiz-2" data-quiz-id="quiz-7-2" data-correct-answer="b">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">РІСљвЂ¦</span>
+                <h3 class="quick-check-title">Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</h3>
+            </div>
+            <div class="quiz-question">
+                Р С™Р В°Р С”Р С•Р Вµ Р С•РЎРѓР Р…Р С•Р Р†Р Р…Р С•Р Вµ Р С—РЎР‚Р ВµР СР СРЎС“РЎвЂ°Р ВµРЎРѓРЎвЂљР Р†Р С• РЎРЊР В»Р ВµР С”РЎвЂљРЎР‚Р С•Р Р…Р Р…Р С•Р С–Р С• Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р С•Р В±Р С•РЎР‚Р С•РЎвЂљР В°?
+            </div>
+            <div class="quiz-options">
+                <div class="quiz-option" data-answer="a">Р В­Р С”Р С•Р Р…Р С•Р СР СРЎРЏ Р В±РЎС“Р СР В°Р С–Р С</div>
+                <div class="quiz-option" data-answer="b">Р СљР С–Р Р…Р С•Р Р†Р ВµР Р…Р Р…Р В°РЎРЏ Р С—Р ВµРЎР‚Р ВµР ТР В°РЎвЂЎР В° Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р Р†</div>
+                <div class="quiz-option" data-answer="c">Р С™РЎР‚Р В°РЎРѓР СР Р†РЎвЂ№Р в„– Р ТР СР В·Р В°Р в„–Р Р…</div>
+                <div class="quiz-option" data-answer="d">Р СљР ВµР Р…РЎРЉРЎв‚¬Р Вµ РЎР‚Р В°Р В±Р С•РЎвЂљРЎвЂ№</div>
+            </div>
+        </div>
+        <!-- Block 3: Р С›РЎвЂљРЎвЂЎР ВµРЎвЂљР Р…Р С•РЎРѓРЎвЂљРЎРЉ Р С Р В°Р Р…Р В°Р В»Р СРЎвЂљР СР С”Р В° -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р С›РЎвЂљРЎвЂЎР ВµРЎвЂљР Р…Р С•РЎРѓРЎвЂљРЎРЉ Р С Р В°Р Р…Р В°Р В»Р СРЎвЂљР СР С”Р В°</h2>
+                <div class="audio-container">
+                    <button class="audio-btn" onclick="toggleAudio('audio-7-3')">
+                        <svg class="play-icon" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z" />
+                        </svg>
+                        <svg class="pause-icon" viewBox="0 0 24 24">
+                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                        </svg>
+                    </button>
+                    <svg class="progress-ring" width="66" height="66">
+                        <circle class="progress-ring-circle" cx="33" cy="33" r="33"></circle>
+                    </svg>
+                    <audio id="audio-7-3" preload="metadata">
+                        <source src="../audio/module-7/section-3.mp3" type="audio/mpeg">
+                    </audio>
+                </div>
+            </div>
+            <div class="content-text">
+                <p>Р В Р ВµР С–РЎС“Р В»РЎРЏРЎР‚Р Р…Р В°РЎРЏ Р С•РЎвЂљРЎвЂЎР ВµРЎвЂљР Р…Р С•РЎРѓРЎвЂљРЎРЉ Р С—Р С•Р СР С•Р С–Р В°Р ВµРЎвЂљ Р В°Р Р…Р В°Р В»Р СР В·Р СРЎР‚Р С•Р Р†Р В°РЎвЂљРЎРЉ РЎРЊРЎвЂћРЎвЂћР ВµР С”РЎвЂљР СР Р†Р Р…Р С•РЎРѓРЎвЂљРЎРЉ Р С•Р С—Р ВµРЎР‚Р В°РЎвЂ Р СР в„–, Р Р†РЎвЂ№РЎРЏР Р†Р В»РЎРЏРЎвЂљРЎРЉ Р С—РЎР‚Р С•Р В±Р В»Р ВµР СРЎвЂ№ Р С Р С—РЎР‚Р СР Р…Р СР СР В°РЎвЂљРЎРЉ
+                    Р С•Р В±Р С•РЎРѓР Р…Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№Р Вµ РЎР‚Р ВµРЎв‚¬Р ВµР Р…Р СРЎРЏ Р ТР В»РЎРЏ РЎС“Р В»РЎС“РЎвЂЎРЎв‚¬Р ВµР Р…Р СРЎРЏ Р В±Р СР В·Р Р…Р ВµРЎРѓР В°.</p>
+
+                <h3>Р С›РЎРѓР Р…Р С•Р Р†Р Р…РЎвЂ№Р Вµ Р Р†Р СР ТРЎвЂ№ Р С•РЎвЂљРЎвЂЎР ВµРЎвЂљР С•Р Р†:</h3>
+                <ul>
+                    <li><strong>Р вЂўР В¶Р ВµР ТР Р…Р ВµР Р†Р Р…РЎвЂ№Р Вµ Р С•РЎвЂљРЎвЂЎР ВµРЎвЂљРЎвЂ№</strong> - РЎРѓРЎвЂљР В°РЎвЂљРЎС“РЎРѓ Р С–РЎР‚РЎС“Р В·Р С•Р Р†, Р С—РЎР‚Р С•Р В±Р В»Р ВµР СРЎвЂ№, Р В·Р В°Р ТР ВµРЎР‚Р В¶Р С”Р С</li>
+                    <li><strong>Р СњР ВµР ТР ВµР В»РЎРЉР Р…РЎвЂ№Р Вµ Р С•РЎвЂљРЎвЂЎР ВµРЎвЂљРЎвЂ№</strong> - Р С—РЎР‚Р С•Р СР В·Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЉР Р…Р С•РЎРѓРЎвЂљРЎРЉ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„–, РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТРЎвЂ№</li>
+                    <li><strong>Р СљР ВµРЎРѓРЎРЏРЎвЂЎР Р…РЎвЂ№Р Вµ Р С•РЎвЂљРЎвЂЎР ВµРЎвЂљРЎвЂ№</strong> - РЎвЂћР СР Р…Р В°Р Р…РЎРѓР С•Р Р†РЎвЂ№Р Вµ Р С—Р С•Р С”Р В°Р В·Р В°РЎвЂљР ВµР В»Р С, KPI</li>
+                    <li><strong>Р С™Р Р†Р В°РЎР‚РЎвЂљР В°Р В»РЎРЉР Р…РЎвЂ№Р Вµ Р С•РЎвЂљРЎвЂЎР ВµРЎвЂљРЎвЂ№</strong> - РЎРѓРЎвЂљРЎР‚Р В°РЎвЂљР ВµР С–Р СРЎвЂЎР ВµРЎРѓР С”Р СР в„– Р В°Р Р…Р В°Р В»Р СР В·, Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ</li>
+                </ul>
+
+                <h3>Р С™Р В»РЎР‹РЎвЂЎР ВµР Р†РЎвЂ№Р Вµ Р СР ВµРЎвЂљРЎР‚Р СР С”Р С Р ТР В»РЎРЏ Р С•РЎвЂљРЎРѓР В»Р ВµР В¶Р СР Р†Р В°Р Р…Р СРЎРЏ:</h3>
+                <ul>
+                    <li>On-time delivery rate (Р С—РЎР‚Р С•РЎвЂ Р ВµР Р…РЎвЂљ РЎРѓР Р†Р С•Р ВµР Р†РЎР‚Р ВµР СР ВµР Р…Р Р…РЎвЂ№РЎвЂ¦ Р ТР С•РЎРѓРЎвЂљР В°Р Р†Р С•Р С”)</li>
+                    <li>Revenue per mile (Р ТР С•РЎвЂ¦Р С•Р Т Р Р…Р В° Р СР СР В»РЎР‹)</li>
+                    <li>Fuel efficiency (РЎРЊРЎвЂћРЎвЂћР ВµР С”РЎвЂљР СР Р†Р Р…Р С•РЎРѓРЎвЂљРЎРЉ РЎвЂљР С•Р С—Р В»Р СР Р†Р В°)</li>
+                    <li>Driver utilization (Р В·Р В°Р С–РЎР‚РЎС“Р В·Р С”Р В° Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„–)</li>
+                    <li>Customer satisfaction (РЎС“Р ТР С•Р Р†Р В»Р ВµРЎвЂљР Р†Р С•РЎР‚Р ВµР Р…Р Р…Р С•РЎРѓРЎвЂљРЎРЉ Р С”Р В»Р СР ВµР Р…РЎвЂљР С•Р Р†)</li>
+                    <li>Claims ratio (Р С—РЎР‚Р С•РЎвЂ Р ВµР Р…РЎвЂљ Р С—РЎР‚Р ВµРЎвЂљР ВµР Р…Р В·Р СР в„–)</li>
+                </ul>
+
+                <div class="highlight-box">
+                    <p><strong>Р В¤Р С•РЎР‚Р СРЎС“Р В»Р В° РЎР‚Р В°РЎРѓРЎвЂЎР ВµРЎвЂљР В° Revenue per Mile:</strong><br>
+                        RPM = Р С›Р В±РЎвЂ°Р СР в„– Р ТР С•РЎвЂ¦Р С•Р Т / Р С›Р В±РЎвЂ°Р ВµР Вµ Р С”Р С•Р В»Р СРЎвЂЎР ВµРЎРѓРЎвЂљР Р†Р С• Р СР СР В»РЎРЉ<br>
+                        Р СџРЎР‚Р СР СР ВµРЎР‚: $50,000 / 25,000 Р СР СР В»РЎРЉ = $2.00 per mile</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Case Study 3: Р С’Р Р…Р В°Р В»Р СР В· РЎРЊРЎвЂћРЎвЂћР ВµР С”РЎвЂљР СР Р†Р Р…Р С•РЎРѓРЎвЂљР С -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">СЂСџвЂ™С</span>
+                <h3 class="case-study-title">Р В Р ВµР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р ВµР в„–РЎРѓ: Р РЋР Р…Р СР В¶Р ВµР Р…Р СР Вµ РЎРЊРЎвЂћРЎвЂћР ВµР С”РЎвЂљР СР Р†Р Р…Р С•РЎРѓРЎвЂљР С</h3>
+            </div>
+            <div class="content-text">
+                <p><strong>Р СџРЎР‚Р С•Р В±Р В»Р ВµР СР В°:</strong> Р СљР ВµРЎРѓРЎРЏРЎвЂЎР Р…РЎвЂ№Р в„– Р С•РЎвЂљРЎвЂЎР ВµРЎвЂљ Р С—Р С•Р С”Р В°Р В·Р В°Р В» РЎРѓР Р…Р СР В¶Р ВµР Р…Р СР Вµ RPM РЎРѓ $2.20 Р ТР С• $1.85 Р В·Р В° Р С—Р С•РЎРѓР В»Р ВµР ТР Р…Р СР Вµ 3
+                    Р СР ВµРЎРѓРЎРЏРЎвЂ Р В°.</p>
+                <p><strong>Р С’Р Р…Р В°Р В»Р СР В·:</strong> Р вЂќР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚ Р С—РЎР‚Р С•Р В°Р Р…Р В°Р В»Р СР В·Р СРЎР‚Р С•Р Р†Р В°Р В» Р ТР В°Р Р…Р Р…РЎвЂ№Р Вµ Р С Р С•Р В±Р Р…Р В°РЎР‚РЎС“Р В¶Р СР В» РЎС“Р Р†Р ВµР В»Р СРЎвЂЎР ВµР Р…Р СР Вµ Р С—РЎС“РЎРѓРЎвЂљРЎвЂ№РЎвЂ¦ Р СР СР В»РЎРЉ Р Р…Р В° 15%
+                    Р СР В·-Р В·Р В° Р Р…Р ВµРЎРЊРЎвЂћРЎвЂћР ВµР С”РЎвЂљР СР Р†Р Р…Р С•Р С–Р С• Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СРЎРЏ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р†.</p>
+                <p><strong>Р В Р ВµРЎв‚¬Р ВµР Р…Р СР Вµ:</strong> Р вЂ™Р Р…Р ВµР ТРЎР‚Р СР В»Р С Р Р…Р С•Р Р†РЎС“РЎР‹ РЎРѓР СРЎРѓРЎвЂљР ВµР СРЎС“ Р С—Р В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СРЎРЏ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р† Р С Р Р…Р В°РЎвЂЎР В°Р В»Р С Р В°Р С”РЎвЂљР СР Р†Р Р…Р ВµР Вµ Р СРЎРѓР С”Р В°РЎвЂљРЎРЉ
+                    backhaul Р С–РЎР‚РЎС“Р В·РЎвЂ№.</p>
+                <p><strong>Р В Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљ:</strong> Р вЂ”Р В° РЎРѓР В»Р ВµР ТРЎС“РЎР‹РЎвЂ°Р СР Вµ 2 Р СР ВµРЎРѓРЎРЏРЎвЂ Р В° RPM Р Р†РЎвЂ№РЎР‚Р С•РЎРѓ Р ТР С• $2.35, Р С—РЎР‚Р ВµР Р†РЎвЂ№РЎРѓР СР Р† Р С—Р ВµРЎР‚Р Р†Р С•Р Р…Р В°РЎвЂЎР В°Р В»РЎРЉР Р…РЎвЂ№Р Вµ
+                    Р С—Р С•Р С”Р В°Р В·Р В°РЎвЂљР ВµР В»Р С.</p>
+            </div>
+        </div>
+        <!-- Quick Check 3 -->
+        <div class="quick-check-block locked" id="quiz-3" data-quiz-id="quiz-7-3" data-correct-answer="a">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">РІСљвЂ¦</span>
+                <h3 class="quick-check-title">Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</h3>
+            </div>
+            <div class="quiz-question">
+                Р В§РЎвЂљР С• Р С•Р В·Р Р…Р В°РЎвЂЎР В°Р ВµРЎвЂљ Р СР ВµРЎвЂљРЎР‚Р СР С”Р В° RPM (Revenue per Mile)?
+            </div>
+            <div class="quiz-options">
+                <div class="quiz-option" data-answer="a">Р вЂќР С•РЎвЂ¦Р С•Р Т Р Р…Р В° Р СР СР В»РЎР‹</div>
+                <div class="quiz-option" data-answer="b">Р В Р В°РЎРѓРЎвЂ¦Р С•Р Т РЎвЂљР С•Р С—Р В»Р СР Р†Р В° Р Р…Р В° Р СР СР В»РЎР‹</div>
+                <div class="quiz-option" data-answer="c">Р РЋР С”Р С•РЎР‚Р С•РЎРѓРЎвЂљРЎРЉ Р ТР Р†Р СР В¶Р ВµР Р…Р СРЎРЏ</div>
+                <div class="quiz-option" data-answer="d">Р С™Р С•Р В»Р СРЎвЂЎР ВµРЎРѓРЎвЂљР Р†Р С• Р С•РЎРѓРЎвЂљР В°Р Р…Р С•Р Р†Р С•Р С”</div>
+            </div>
+        </div>
+
+        <!-- Block 4: Р В Р В°Р В±Р С•РЎвЂљР В° РЎРѓ Р С—РЎР‚Р ВµРЎвЂљР ВµР Р…Р В·Р СРЎРЏР СР С Р С РЎРѓРЎвЂљРЎР‚Р В°РЎвЂ¦Р С•Р Р†РЎвЂ№Р СР С РЎРѓР В»РЎС“РЎвЂЎР В°РЎРЏР СР С -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р В Р В°Р В±Р С•РЎвЂљР В° РЎРѓ Р С—РЎР‚Р ВµРЎвЂљР ВµР Р…Р В·Р СРЎРЏР СР С Р С РЎРѓРЎвЂљРЎР‚Р В°РЎвЂ¦Р С•Р Р†РЎвЂ№Р СР С РЎРѓР В»РЎС“РЎвЂЎР В°РЎРЏР СР С</h2>
+                <div class="audio-container">
+                    <button class="audio-btn" onclick="toggleAudio('audio-7-4')">
+                        <svg class="play-icon" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z" />
+                        </svg>
+                        <svg class="pause-icon" viewBox="0 0 24 24">
+                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                        </svg>
+                    </button>
+                    <svg class="progress-ring" width="66" height="66">
+                        <circle class="progress-ring-circle" cx="33" cy="33" r="33"></circle>
+                    </svg>
+                    <audio id="audio-7-4" preload="metadata">
+                        <source src="../audio/module-7/section-4.mp3" type="audio/mpeg">
+                    </audio>
+                </div>
+            </div>
+            <div class="content-text">
+                <p>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р В°РЎРЏ Р С•Р В±РЎР‚Р В°Р В±Р С•РЎвЂљР С”Р В° Р С—РЎР‚Р ВµРЎвЂљР ВµР Р…Р В·Р СР в„– Р С РЎРѓРЎвЂљРЎР‚Р В°РЎвЂ¦Р С•Р Р†РЎвЂ№РЎвЂ¦ РЎРѓР В»РЎС“РЎвЂЎР В°Р ВµР Р† Р С”РЎР‚Р СРЎвЂљР СРЎвЂЎР ВµРЎРѓР С”Р С Р Р†Р В°Р В¶Р Р…Р В° Р ТР В»РЎРЏ Р В·Р В°РЎвЂ°Р СРЎвЂљРЎвЂ№ Р СР Р…РЎвЂљР ВµРЎР‚Р ВµРЎРѓР С•Р Р† Р С”Р С•Р СР С—Р В°Р Р…Р СР С Р С
+                    Р С—Р С•Р ТР ТР ВµРЎР‚Р В¶Р В°Р Р…Р СРЎРЏ РЎвЂ¦Р С•РЎР‚Р С•РЎв‚¬Р СРЎвЂ¦ Р С•РЎвЂљР Р…Р С•РЎв‚¬Р ВµР Р…Р СР в„– РЎРѓ Р С”Р В»Р СР ВµР Р…РЎвЂљР В°Р СР С.</p>
+
+                <h3>Р СћР СР С—РЎвЂ№ Р С—РЎР‚Р ВµРЎвЂљР ВµР Р…Р В·Р СР в„–:</h3>
+                <ul>
+                    <li><strong>Cargo Claims</strong> - Р С—Р С•Р Р†РЎР‚Р ВµР В¶Р ТР ВµР Р…Р СР Вµ Р СР В»Р С Р С—Р С•РЎвЂљР ВµРЎР‚РЎРЏ Р С–РЎР‚РЎС“Р В·Р В°</li>
+                    <li><strong>Delivery Claims</strong> - Р С—РЎР‚Р С•Р В±Р В»Р ВµР СРЎвЂ№ РЎРѓ Р ТР С•РЎРѓРЎвЂљР В°Р Р†Р С”Р С•Р в„–</li>
+                    <li><strong>Billing Disputes</strong> - РЎРѓР С—Р С•РЎР‚РЎвЂ№ Р С—Р С• Р С•Р С—Р В»Р В°РЎвЂљР Вµ</li>
+                    <li><strong>Service Claims</strong> - Р Р…Р ВµР ТР С•Р Р†Р С•Р В»РЎРЉРЎРѓРЎвЂљР Р†Р С• Р С”Р В°РЎвЂЎР ВµРЎРѓРЎвЂљР Р†Р С•Р С РЎС“РЎРѓР В»РЎС“Р С–</li>
+                </ul>
+
+                <h3>Р С’Р В»Р С–Р С•РЎР‚Р СРЎвЂљР С РЎР‚Р В°Р В±Р С•РЎвЂљРЎвЂ№ РЎРѓ Р С—РЎР‚Р ВµРЎвЂљР ВµР Р…Р В·Р СР ВµР в„–:</h3>
+                <ol>
+                    <li>Р СњР ВµР СР ВµР ТР В»Р ВµР Р…Р Р…Р С• РЎС“Р Р†Р ВµР ТР С•Р СР СРЎвЂљРЎРЉ РЎРѓРЎвЂљРЎР‚Р В°РЎвЂ¦Р С•Р Р†РЎС“РЎР‹ Р С”Р С•Р СР С—Р В°Р Р…Р СРЎР‹</li>
+                    <li>Р РЋР С•Р В±РЎР‚Р В°РЎвЂљРЎРЉ Р Р†РЎРѓРЎР‹ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР В°РЎвЂ Р СРЎР‹ Р С—Р С• Р С–РЎР‚РЎС“Р В·РЎС“</li>
+                    <li>Р СџР С•Р В»РЎС“РЎвЂЎР СРЎвЂљРЎРЉ РЎвЂћР С•РЎвЂљР С•Р С–РЎР‚Р В°РЎвЂћР СР С Р С—Р С•Р Р†РЎР‚Р ВµР В¶Р ТР ВµР Р…Р СР в„–</li>
+                    <li>Р РЋР Р†РЎРЏР В·Р В°РЎвЂљРЎРЉРЎРѓРЎРЏ РЎРѓ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР С Р ТР В»РЎРЏ Р С—Р С•Р В»РЎС“РЎвЂЎР ВµР Р…Р СРЎРЏ Р ТР ВµРЎвЂљР В°Р В»Р ВµР в„–</li>
+                    <li>Р вЂ”Р В°Р С—Р С•Р В»Р Р…Р СРЎвЂљРЎРЉ claim form</li>
+                    <li>Р С›РЎвЂљР С—РЎР‚Р В°Р Р†Р СРЎвЂљРЎРЉ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљРЎвЂ№ Р Р† РЎРѓРЎвЂљРЎР‚Р В°РЎвЂ¦Р С•Р Р†РЎС“РЎР‹</li>
+                    <li>Р С›РЎвЂљРЎРѓР В»Р ВµР В¶Р СР Р†Р В°РЎвЂљРЎРЉ Р С—РЎР‚Р С•РЎвЂ Р ВµРЎРѓРЎРѓ РЎР‚Р В°РЎРѓРЎРѓР СР С•РЎвЂљРЎР‚Р ВµР Р…Р СРЎРЏ</li>
+                </ol>
+
+                <div class="highlight-box warning">
+                    <p><strong>Р вЂ™Р В°Р В¶Р Р…Р С•:</strong> Р С› Р В»РЎР‹Р В±Р С•Р С Р СР Р…РЎвЂ Р СР ТР ВµР Р…РЎвЂљР Вµ Р Р…Р ВµР С•Р В±РЎвЂ¦Р С•Р ТР СР СР С• РЎС“Р Р†Р ВµР ТР С•Р СР СРЎвЂљРЎРЉ РЎРѓРЎвЂљРЎР‚Р В°РЎвЂ¦Р С•Р Р†РЎС“РЎР‹ Р С”Р С•Р СР С—Р В°Р Р…Р СРЎР‹ Р Р† РЎвЂљР ВµРЎвЂЎР ВµР Р…Р СР Вµ 24
+                        РЎвЂЎР В°РЎРѓР С•Р Р†, Р ТР В°Р В¶Р Вµ Р ВµРЎРѓР В»Р С РЎС“РЎвЂ°Р ВµРЎР‚Р В± Р С”Р В°Р В¶Р ВµРЎвЂљРЎРѓРЎРЏ Р Р…Р ВµР В·Р Р…Р В°РЎвЂЎР СРЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№Р С.</p>
+                </div>
+            </div>
+        </div>
+        <!-- Case Study 4: Р РЋРЎвЂљРЎР‚Р В°РЎвЂ¦Р С•Р Р†Р С•Р в„– РЎРѓР В»РЎС“РЎвЂЎР В°Р в„– -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">СЂСџвЂ™С</span>
+                <h3 class="case-study-title">Р В Р ВµР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р ВµР в„–РЎРѓ: Р СџР С•Р Р†РЎР‚Р ВµР В¶Р ТР ВµР Р…Р СР Вµ Р С–РЎР‚РЎС“Р В·Р В°</h3>
+            </div>
+            <div class="content-text">
+                <p><strong>Р РЋР СРЎвЂљРЎС“Р В°РЎвЂ Р СРЎРЏ:</strong> Р вЂ™Р С•Р ТР СРЎвЂљР ВµР В»РЎРЉ РЎРѓР С•Р С•Р В±РЎвЂ°Р СР В» Р С• Р С—Р С•Р Р†РЎР‚Р ВµР В¶Р ТР ВµР Р…Р СР С РЎвЂЎР В°РЎРѓРЎвЂљР С Р С–РЎР‚РЎС“Р В·Р В° (РЎРЊР В»Р ВµР С”РЎвЂљРЎР‚Р С•Р Р…Р СР С”Р В° Р Р…Р В° $15,000) Р СР В·-Р В·Р В°
+                    РЎР‚Р ВµР В·Р С”Р С•Р С–Р С• РЎвЂљР С•РЎР‚Р СР С•Р В¶Р ВµР Р…Р СРЎРЏ.</p>
+                <p><strong>Р вЂќР ВµР в„–РЎРѓРЎвЂљР Р†Р СРЎРЏ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р В°:</strong></p>
+                <ol>
+                    <li>Р СњР ВµР СР ВµР ТР В»Р ВµР Р…Р Р…Р С• РЎРѓР Р†РЎРЏР В·Р В°Р В»РЎРѓРЎРЏ РЎРѓР С• РЎРѓРЎвЂљРЎР‚Р В°РЎвЂ¦Р С•Р Р†Р С•Р в„– Р С”Р С•Р СР С—Р В°Р Р…Р СР ВµР в„–</li>
+                    <li>Р СџР С•Р С—РЎР‚Р С•РЎРѓР СР В» Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏ РЎРѓР ТР ВµР В»Р В°РЎвЂљРЎРЉ РЎвЂћР С•РЎвЂљР С•Р С–РЎР‚Р В°РЎвЂћР СР С</li>
+                    <li>Р Р€Р Р†Р ВµР ТР С•Р СР СР В» Р В±РЎР‚Р С•Р С”Р ВµРЎР‚Р В° Р С Р С—Р С•Р В»РЎС“РЎвЂЎР В°РЎвЂљР ВµР В»РЎРЏ</li>
+                    <li>Р вЂ”Р В°Р С—Р С•Р В»Р Р…Р СР В» incident report</li>
+                    <li>Р С›РЎР‚Р С–Р В°Р Р…Р СР В·Р С•Р Р†Р В°Р В» Р СР Р…РЎРѓР С—Р ВµР С”РЎвЂ Р СРЎР‹ Р С–РЎР‚РЎС“Р В·Р В°</li>
+                </ol>
+                <p><strong>Р В Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљ:</strong> Р РЋРЎвЂљРЎР‚Р В°РЎвЂ¦Р С•Р Р†Р В°РЎРЏ Р С—Р С•Р С”РЎР‚РЎвЂ№Р В»Р В° 90% РЎС“РЎвЂ°Р ВµРЎР‚Р В±Р В°. Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ РЎР‚Р ВµР В°Р С”РЎвЂ Р СРЎРЏ Р С—Р С•Р СР С•Р С–Р В»Р В° РЎРѓР С•РЎвЂ¦РЎР‚Р В°Р Р…Р СРЎвЂљРЎРЉ Р С•РЎвЂљР Р…Р С•РЎв‚¬Р ВµР Р…Р СРЎРЏ
+                    РЎРѓ Р С”Р В»Р СР ВµР Р…РЎвЂљР С•Р С.</p>
+            </div>
+        </div>
+
+        <!-- Quick Check 4 -->
+        <div class="quick-check-block locked" id="quiz-4" data-quiz-id="quiz-7-4" data-correct-answer="a">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">РІСљвЂ¦</span>
+                <h3 class="quick-check-title">Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</h3>
+            </div>
+            <div class="quiz-question">
+                Р вЂ™ РЎвЂљР ВµРЎвЂЎР ВµР Р…Р СР Вµ Р С”Р В°Р С”Р С•Р С–Р С• Р Р†РЎР‚Р ВµР СР ВµР Р…Р С Р Р…Р ВµР С•Р В±РЎвЂ¦Р С•Р ТР СР СР С• РЎС“Р Р†Р ВµР ТР С•Р СР СРЎвЂљРЎРЉ РЎРѓРЎвЂљРЎР‚Р В°РЎвЂ¦Р С•Р Р†РЎС“РЎР‹ Р С”Р С•Р СР С—Р В°Р Р…Р СРЎР‹ Р С•Р В± Р СР Р…РЎвЂ Р СР ТР ВµР Р…РЎвЂљР Вµ?
+            </div>
+            <div class="quiz-options">
+                <div class="quiz-option" data-answer="a">24 РЎвЂЎР В°РЎРѓР В°</div>
+                <div class="quiz-option" data-answer="b">48 РЎвЂЎР В°РЎРѓР С•Р Р†</div>
+                <div class="quiz-option" data-answer="c">72 РЎвЂЎР В°РЎРѓР В°</div>
+                <div class="quiz-option" data-answer="d">1 Р Р…Р ВµР ТР ВµР В»РЎРЏ</div>
+            </div>
+        </div>
+
+        <!-- Block 5: Р СњР В°Р В»Р С•Р С–Р С•Р Р†Р В°РЎРЏ Р С•РЎвЂљРЎвЂЎР ВµРЎвЂљР Р…Р С•РЎРѓРЎвЂљРЎРЉ Р С IFTA -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р СњР В°Р В»Р С•Р С–Р С•Р Р†Р В°РЎРЏ Р С•РЎвЂљРЎвЂЎР ВµРЎвЂљР Р…Р С•РЎРѓРЎвЂљРЎРЉ Р С IFTA</h2>
+                <div class="audio-container">
+                    <button class="audio-btn" onclick="toggleAudio('audio-7-5')">
+                        <svg class="play-icon" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z" />
+                        </svg>
+                        <svg class="pause-icon" viewBox="0 0 24 24">
+                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                        </svg>
+                    </button>
+                    <svg class="progress-ring" width="66" height="66">
+                        <circle class="progress-ring-circle" cx="33" cy="33" r="33"></circle>
+                    </svg>
+                    <audio id="audio-7-5" preload="metadata">
+                        <source src="../audio/module-7/section-5.mp3" type="audio/mpeg">
+                    </audio>
+                </div>
+            </div>
+            <div class="content-text">
+                <p>IFTA (International Fuel Tax Agreement) - РЎРЊРЎвЂљР С• РЎРѓР С•Р С–Р В»Р В°РЎв‚¬Р ВµР Р…Р СР Вµ Р СР ВµР В¶Р ТРЎС“ РЎв‚¬РЎвЂљР В°РЎвЂљР В°Р СР С Р РЋР РЃР С’ Р С Р С—РЎР‚Р С•Р Р†Р СР Р…РЎвЂ Р СРЎРЏР СР С Р С™Р В°Р Р…Р В°Р ТРЎвЂ№ Р С•
+                    Р Р…Р В°Р В»Р С•Р С–Р С•Р С•Р В±Р В»Р С•Р В¶Р ВµР Р…Р СР С РЎвЂљР С•Р С—Р В»Р СР Р†Р В° Р ТР В»РЎРЏ Р С”Р С•Р СР СР ВµРЎР‚РЎвЂЎР ВµРЎРѓР С”Р СРЎвЂ¦ РЎвЂљРЎР‚Р В°Р Р…РЎРѓР С—Р С•РЎР‚РЎвЂљР Р…РЎвЂ№РЎвЂ¦ РЎРѓРЎР‚Р ВµР ТРЎРѓРЎвЂљР Р†.</p>
+                <h3>Р С›РЎРѓР Р…Р С•Р Р†Р Р…РЎвЂ№Р Вµ РЎвЂљРЎР‚Р ВµР В±Р С•Р Р†Р В°Р Р…Р СРЎРЏ IFTA:</h3>
+                <ul>
+                    <li>Р вЂ™Р ВµР ТР ВµР Р…Р СР Вµ РЎвЂљР С•РЎвЂЎР Р…РЎвЂ№РЎвЂ¦ Р В·Р В°Р С—Р СРЎРѓР ВµР в„– Р С• Р С—РЎР‚Р С•Р В±Р ВµР С–Р Вµ Р С—Р С• РЎв‚¬РЎвЂљР В°РЎвЂљР В°Р С</li>
+                    <li>Р РЋР С•РЎвЂ¦РЎР‚Р В°Р Р…Р ВµР Р…Р СР Вµ Р Р†РЎРѓР ВµРЎвЂ¦ РЎвЂЎР ВµР С”Р С•Р Р† Р В·Р В° РЎвЂљР С•Р С—Р В»Р СР Р†Р С•</li>
+                    <li>Р СџР С•Р ТР В°РЎвЂЎР В° Р С”Р Р†Р В°РЎР‚РЎвЂљР В°Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ Р С•РЎвЂљРЎвЂЎР ВµРЎвЂљР С•Р Р†</li>
+                    <li>Р С›Р С—Р В»Р В°РЎвЂљР В° Р Р…Р В°Р В»Р С•Р С–Р С•Р Р† Р СР В»Р С Р С—Р С•Р В»РЎС“РЎвЂЎР ВµР Р…Р СР Вµ Р Р†Р С•Р В·Р Р†РЎР‚Р В°РЎвЂљР В°</li>
+                </ul>
+
+                <h3>Р вЂќР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљРЎвЂ№ Р ТР В»РЎРЏ IFTA Р С•РЎвЂљРЎвЂЎР ВµРЎвЂљР В°:</h3>
+                <ul>
+                    <li>Fuel receipts (РЎвЂЎР ВµР С”Р С Р В·Р В° РЎвЂљР С•Р С—Р В»Р СР Р†Р С•)</li>
+                    <li>Trip sheets (Р С—РЎС“РЎвЂљР ВµР Р†РЎвЂ№Р Вµ Р В»Р СРЎРѓРЎвЂљРЎвЂ№)</li>
+                    <li>Odometer readings (Р С—Р С•Р С”Р В°Р В·Р В°Р Р…Р СРЎРЏ Р С•Р ТР С•Р СР ВµРЎвЂљРЎР‚Р В°)</li>
+                    <li>Maintenance records (Р В·Р В°Р С—Р СРЎРѓР С Р С• РЎвЂљР ВµРЎвЂ¦Р С•Р В±РЎРѓР В»РЎС“Р В¶Р СР Р†Р В°Р Р…Р СР С)</li>
+                </ul>
+
+                <h3>Р РЋРЎР‚Р С•Р С”Р С Р С—Р С•Р ТР В°РЎвЂЎР С IFTA Р С•РЎвЂљРЎвЂЎР ВµРЎвЂљР С•Р Р†:</h3>
+                <ul>
+                    <li>Q1 (РЎРЏР Р…Р Р†Р В°РЎР‚РЎРЉ-Р СР В°РЎР‚РЎвЂљ) - Р ТР С• 30 Р В°Р С—РЎР‚Р ВµР В»РЎРЏ</li>
+                    <li>Q2 (Р В°Р С—РЎР‚Р ВµР В»РЎРЉ-Р СРЎР‹Р Р…РЎРЉ) - Р ТР С• 31 Р СРЎР‹Р В»РЎРЏ</li>
+                    <li>Q3 (Р СРЎР‹Р В»РЎРЉ-РЎРѓР ВµР Р…РЎвЂљРЎРЏР В±РЎР‚РЎРЉ) - Р ТР С• 31 Р С•Р С”РЎвЂљРЎРЏР В±РЎР‚РЎРЏ</li>
+                    <li>Q4 (Р С•Р С”РЎвЂљРЎРЏР В±РЎР‚РЎРЉ-Р ТР ВµР С”Р В°Р В±РЎР‚РЎРЉ) - Р ТР С• 31 РЎРЏР Р…Р Р†Р В°РЎР‚РЎРЏ</li>
+                </ul>
+
+                <div class="highlight-box warning">
+                    <p><strong>Р РЃРЎвЂљРЎР‚Р В°РЎвЂћРЎвЂ№ Р В·Р В° Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р ВµР Р…Р СРЎРЏ:</strong> Р СњР ВµРЎРѓР Р†Р С•Р ВµР Р†РЎР‚Р ВµР СР ВµР Р…Р Р…Р В°РЎРЏ Р С—Р С•Р ТР В°РЎвЂЎР В° Р С•РЎвЂљРЎвЂЎР ВµРЎвЂљР В° Р СР С•Р В¶Р ВµРЎвЂљ Р С—РЎР‚Р СР Р†Р ВµРЎРѓРЎвЂљР С Р С” РЎв‚¬РЎвЂљРЎР‚Р В°РЎвЂћР В°Р С Р С•РЎвЂљ
+                        $50 Р ТР С• $500 Р В·Р В° Р С”Р В°Р В¶Р ТРЎвЂ№Р в„– Р С—РЎР‚Р С•РЎРѓРЎР‚Р С•РЎвЂЎР ВµР Р…Р Р…РЎвЂ№Р в„– Р СР ВµРЎРѓРЎРЏРЎвЂ .</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Case Study 5: IFTA Р В°РЎС“Р ТР СРЎвЂљ -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">СЂСџвЂ™С</span>
+                <h3 class="case-study-title">Р В Р ВµР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р ВµР в„–РЎРѓ: IFTA Р В°РЎС“Р ТР СРЎвЂљ</h3>
+            </div>
+            <div class="content-text">
+                <p><strong>Р РЋР СРЎвЂљРЎС“Р В°РЎвЂ Р СРЎРЏ:</strong> Р С™Р С•Р СР С—Р В°Р Р…Р СРЎРЏ Р С—Р С•Р В»РЎС“РЎвЂЎР СР В»Р В° РЎС“Р Р†Р ВµР ТР С•Р СР В»Р ВµР Р…Р СР Вµ Р С•Р В± IFTA Р В°РЎС“Р ТР СРЎвЂљР Вµ Р В·Р В° Р С—Р С•РЎРѓР В»Р ВµР ТР Р…Р СР Вµ 3 Р С–Р С•Р ТР В°.</p>
+                <p><strong>Р СџРЎР‚Р С•Р В±Р В»Р ВµР СР В°:</strong> Р С›Р В±Р Р…Р В°РЎР‚РЎС“Р В¶Р СР В»Р СРЎРѓРЎРЉ Р С—РЎР‚Р С•Р С—РЎС“РЎРѓР С”Р С Р Р† Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР В°РЎвЂ Р СР С - Р С•РЎвЂљРЎРѓРЎС“РЎвЂљРЎРѓРЎвЂљР Р†Р С•Р Р†Р В°Р В»Р С Р Р…Р ВµР С”Р С•РЎвЂљР С•РЎР‚РЎвЂ№Р Вµ РЎвЂЎР ВµР С”Р С Р В·Р В°
+                    РЎвЂљР С•Р С—Р В»Р СР Р†Р С• Р С Р С—РЎС“РЎвЂљР ВµР Р†РЎвЂ№Р Вµ Р В»Р СРЎРѓРЎвЂљРЎвЂ№.</p>
+                <p><strong>Р В Р ВµРЎв‚¬Р ВµР Р…Р СР Вµ:</strong> Р вЂќР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚ Р Р†Р С•РЎРѓРЎРѓРЎвЂљР В°Р Р…Р С•Р Р†Р СР В» Р Р…Р ВµР ТР С•РЎРѓРЎвЂљР В°РЎР‹РЎвЂ°Р СР Вµ Р ТР В°Р Р…Р Р…РЎвЂ№Р Вµ РЎвЂЎР ВµРЎР‚Р ВµР В· Р В±Р В°Р Р…Р С”Р С•Р Р†РЎРѓР С”Р СР Вµ Р Р†РЎвЂ№Р С—Р СРЎРѓР С”Р С, GPS
+                    Р В·Р В°Р С—Р СРЎРѓР С Р С Р В»Р С•Р С–Р С ELD РЎРѓР СРЎРѓРЎвЂљР ВµР СРЎвЂ№.</p>
+                <p><strong>Р В Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљ:</strong> Р С’РЎС“Р ТР СРЎвЂљ Р С—РЎР‚Р С•РЎв‚¬Р ВµР В» РЎС“РЎРѓР С—Р ВµРЎв‚¬Р Р…Р С•, Р ТР С•Р С—Р В»Р В°РЎвЂљР В° РЎРѓР С•РЎРѓРЎвЂљР В°Р Р†Р СР В»Р В° Р Р†РЎРѓР ВµР С–Р С• $1,200 Р Р†Р СР ВµРЎРѓРЎвЂљР С• Р С—Р С•РЎвЂљР ВµР Р…РЎвЂ Р СР В°Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦
+                    $15,000 РЎв‚¬РЎвЂљРЎР‚Р В°РЎвЂћР В°.</p>
+                <p><strong>Р Р€РЎР‚Р С•Р С”:</strong> Р вЂ™Р ВµР ТР СРЎвЂљР Вµ РЎвЂљР С•РЎвЂЎР Р…РЎС“РЎР‹ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР В°РЎвЂ Р СРЎР‹ РЎРѓ Р С—Р ВµРЎР‚Р Р†Р С•Р С–Р С• Р ТР Р…РЎРЏ - РЎРЊРЎвЂљР С• РЎРѓРЎРЊР С”Р С•Р Р…Р С•Р СР СРЎвЂљ РЎвЂљРЎвЂ№РЎРѓРЎРЏРЎвЂЎР С Р ТР С•Р В»Р В»Р В°РЎР‚Р С•Р Р† Р Р†
+                    Р В±РЎС“Р ТРЎС“РЎвЂ°Р ВµР С.</p>
+            </div>
+        </div>
+
+        <!-- Quick Check 5 -->
+        <div class="quick-check-block locked" id="quiz-5" data-quiz-id="quiz-7-5" data-correct-answer="b">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">РІСљвЂ¦</span>
+                <h3 class="quick-check-title">Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</h3>
+            </div>
+            <div class="quiz-question">
+                Р С™Р В°Р С” РЎвЂЎР В°РЎРѓРЎвЂљР С• Р Р…РЎС“Р В¶Р Р…Р С• Р С—Р С•Р ТР В°Р Р†Р В°РЎвЂљРЎРЉ IFTA Р С•РЎвЂљРЎвЂЎР ВµРЎвЂљРЎвЂ№?
+            </div>
+            <div class="quiz-options">
+                <div class="quiz-option" data-answer="a">Р вЂўР В¶Р ВµР СР ВµРЎРѓРЎРЏРЎвЂЎР Р…Р С•</div>
+                <div class="quiz-option" data-answer="b">Р вЂўР В¶Р ВµР С”Р Р†Р В°РЎР‚РЎвЂљР В°Р В»РЎРЉР Р…Р С•</div>
+                <div class="quiz-option" data-answer="c">Р В Р В°Р В· Р Р† Р С—Р С•Р В»Р С–Р С•Р ТР В°</div>
+                <div class="quiz-option" data-answer="d">Р вЂўР В¶Р ВµР С–Р С•Р ТР Р…Р С•</div>
+            </div>
+        </div>
+        <!-- Block 6: Р В¦Р СРЎвЂћРЎР‚Р С•Р Р†Р СР В·Р В°РЎвЂ Р СРЎРЏ Р С Р В°Р Р†РЎвЂљР С•Р СР В°РЎвЂљР СР В·Р В°РЎвЂ Р СРЎРЏ -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р В¦Р СРЎвЂћРЎР‚Р С•Р Р†Р СР В·Р В°РЎвЂ Р СРЎРЏ Р С Р В°Р Р†РЎвЂљР С•Р СР В°РЎвЂљР СР В·Р В°РЎвЂ Р СРЎРЏ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р С•Р В±Р С•РЎР‚Р С•РЎвЂљР В°</h2>
+                <div class="audio-container">
+                    <button class="audio-btn" onclick="toggleAudio('audio-7-6')">
+                        <svg class="play-icon" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z" />
+                        </svg>
+                        <svg class="pause-icon" viewBox="0 0 24 24">
+                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                        </svg>
+                    </button>
+                    <svg class="progress-ring" width="66" height="66">
+                        <circle class="progress-ring-circle" cx="33" cy="33" r="33"></circle>
+                    </svg>
+                    <audio id="audio-7-6" preload="metadata">
+                        <source src="../audio/module-7/section-6.mp3" type="audio/mpeg">
+                    </audio>
+                </div>
+            </div>
+            <div class="content-text">
+                <p>Р вЂРЎС“Р ТРЎС“РЎвЂ°Р ВµР Вµ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р С•Р В±Р С•РЎР‚Р С•РЎвЂљР В° Р Р† РЎвЂљРЎР‚Р В°Р Р…РЎРѓР С—Р С•РЎР‚РЎвЂљР Р…Р С•Р в„– Р С•РЎвЂљРЎР‚Р В°РЎРѓР В»Р С - РЎРЊРЎвЂљР С• Р С—Р С•Р В»Р Р…Р В°РЎРЏ Р В°Р Р†РЎвЂљР С•Р СР В°РЎвЂљР СР В·Р В°РЎвЂ Р СРЎРЏ Р С Р СР Р…РЎвЂљР ВµР С–РЎР‚Р В°РЎвЂ Р СРЎРЏ Р Р†РЎРѓР ВµРЎвЂ¦
+                    Р С—РЎР‚Р С•РЎвЂ Р ВµРЎРѓРЎРѓР С•Р Р†. Р РЋР С•Р Р†РЎР‚Р ВµР СР ВµР Р…Р Р…РЎвЂ№Р Вµ РЎвЂљР ВµРЎвЂ¦Р Р…Р С•Р В»Р С•Р С–Р СР С Р С—Р С•Р В·Р Р†Р С•Р В»РЎРЏРЎР‹РЎвЂљ Р В·Р Р…Р В°РЎвЂЎР СРЎвЂљР ВµР В»РЎРЉР Р…Р С• РЎРѓР С•Р С”РЎР‚Р В°РЎвЂљР СРЎвЂљРЎРЉ РЎР‚РЎС“РЎвЂЎР Р…РЎС“РЎР‹ РЎР‚Р В°Р В±Р С•РЎвЂљРЎС“.</p>
+
+                <h3>Р СћРЎР‚Р ВµР Р…Р ТРЎвЂ№ Р В°Р Р†РЎвЂљР С•Р СР В°РЎвЂљР СР В·Р В°РЎвЂ Р СР С:</h3>
+                <ul>
+                    <li><strong>AI-powered OCR</strong> - Р В°Р Р†РЎвЂљР С•Р СР В°РЎвЂљР СРЎвЂЎР ВµРЎРѓР С”Р С•Р Вµ РЎР‚Р В°РЎРѓР С—Р С•Р В·Р Р…Р В°Р Р†Р В°Р Р…Р СР Вµ Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р Р†</li>
+                    <li><strong>Blockchain</strong> - Р Р…Р ВµР СР В·Р СР ВµР Р…РЎРЏР ВµР СРЎвЂ№Р Вµ Р В·Р В°Р С—Р СРЎРѓР С РЎвЂљРЎР‚Р В°Р Р…Р В·Р В°Р С”РЎвЂ Р СР в„–</li>
+                    <li><strong>IoT Р СР Р…РЎвЂљР ВµР С–РЎР‚Р В°РЎвЂ Р СРЎРЏ</strong> - Р В°Р Р†РЎвЂљР С•Р СР В°РЎвЂљР СРЎвЂЎР ВµРЎРѓР С”Р СР в„– РЎРѓР В±Р С•РЎР‚ Р ТР В°Р Р…Р Р…РЎвЂ№РЎвЂ¦ РЎРѓ Р ТР В°РЎвЂљРЎвЂЎР СР С”Р С•Р Р†</li>
+                    <li><strong>Machine Learning</strong> - Р С—РЎР‚Р ВµР ТР СР С”РЎвЂљР СР Р†Р Р…Р В°РЎРЏ Р В°Р Р…Р В°Р В»Р СРЎвЂљР СР С”Р В°</li>
+                    <li><strong>API Р СР Р…РЎвЂљР ВµР С–РЎР‚Р В°РЎвЂ Р СР С</strong> - РЎРѓР Р†РЎРЏР В·РЎРЉ Р СР ВµР В¶Р ТРЎС“ РЎР‚Р В°Р В·Р В»Р СРЎвЂЎР Р…РЎвЂ№Р СР С РЎРѓР СРЎРѓРЎвЂљР ВµР СР В°Р СР С</li>
+                </ul>
+
+                <h3>Р СџРЎР‚Р ВµР СР СРЎС“РЎвЂ°Р ВµРЎРѓРЎвЂљР Р†Р В° Р В°Р Р†РЎвЂљР С•Р СР В°РЎвЂљР СР В·Р В°РЎвЂ Р СР С:</h3>
+                <ul>
+                    <li>Р РЋР Р…Р СР В¶Р ВµР Р…Р СР Вµ РЎвЂЎР ВµР В»Р С•Р Р†Р ВµРЎвЂЎР ВµРЎРѓР С”Р СРЎвЂ¦ Р С•РЎв‚¬Р СР В±Р С•Р С” Р Р…Р В° 95%</li>
+                    <li>Р Р€РЎРѓР С”Р С•РЎР‚Р ВµР Р…Р СР Вµ Р С•Р В±РЎР‚Р В°Р В±Р С•РЎвЂљР С”Р С Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р Р† Р Р† 10 РЎР‚Р В°Р В·</li>
+                    <li>Р В­Р С”Р С•Р Р…Р С•Р СР СРЎРЏ Р Р†РЎР‚Р ВµР СР ВµР Р…Р С Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р В° Р ТР С• 4 РЎвЂЎР В°РЎРѓР С•Р Р† Р Р† Р ТР ВµР Р…РЎРЉ</li>
+                    <li>Р Р€Р В»РЎС“РЎвЂЎРЎв‚¬Р ВµР Р…Р СР Вµ РЎвЂљР С•РЎвЂЎР Р…Р С•РЎРѓРЎвЂљР С Р С•РЎвЂљРЎвЂЎР ВµРЎвЂљР Р…Р С•РЎРѓРЎвЂљР С</li>
+                    <li>Р РЋР Р…Р СР В¶Р ВµР Р…Р СР Вµ Р С•Р С—Р ВµРЎР‚Р В°РЎвЂ Р СР С•Р Р…Р Р…РЎвЂ№РЎвЂ¦ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТР С•Р Р† Р Р…Р В° 30%</li>
+                </ul>
+
+                <h3>Р ВР Р…РЎРѓРЎвЂљРЎР‚РЎС“Р СР ВµР Р…РЎвЂљРЎвЂ№ Р ТР В»РЎРЏ Р В°Р Р†РЎвЂљР С•Р СР В°РЎвЂљР СР В·Р В°РЎвЂ Р СР С:</h3>
+                <ul>
+                    <li><strong>Zapier</strong> - Р В°Р Р†РЎвЂљР С•Р СР В°РЎвЂљР СР В·Р В°РЎвЂ Р СРЎРЏ РЎР‚Р В°Р В±Р С•РЎвЂЎР СРЎвЂ¦ Р С—РЎР‚Р С•РЎвЂ Р ВµРЎРѓРЎРѓР С•Р Р†</li>
+                    <li><strong>Microsoft Power Automate</strong> - Р СР Р…РЎвЂљР ВµР С–РЎР‚Р В°РЎвЂ Р СРЎРЏ Office 365</li>
+                    <li><strong>DocuSign</strong> - РЎРЊР В»Р ВµР С”РЎвЂљРЎР‚Р С•Р Р…Р Р…РЎвЂ№Р Вµ Р С—Р С•Р ТР С—Р СРЎРѓР С</li>
+                    <li><strong>ABBYY FlexiCapture</strong> - Р С•Р В±РЎР‚Р В°Р В±Р С•РЎвЂљР С”Р В° Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р Р†</li>
+                </ul>
+
+                <div class="highlight-box success">
+                    <p><strong>Р РЋР С•Р Р†Р ВµРЎвЂљ Р ТР В»РЎРЏ Р С”Р В°РЎР‚РЎРЉР ВµРЎР‚РЎвЂ№:</strong> Р ВР В·РЎС“РЎвЂЎР В°Р в„–РЎвЂљР Вµ Р Р…Р С•Р Р†РЎвЂ№Р Вµ РЎвЂљР ВµРЎвЂ¦Р Р…Р С•Р В»Р С•Р С–Р СР С Р С Р СР Р…РЎРѓРЎвЂљРЎР‚РЎС“Р СР ВµР Р…РЎвЂљРЎвЂ№ Р В°Р Р†РЎвЂљР С•Р СР В°РЎвЂљР СР В·Р В°РЎвЂ Р СР С.
+                        Р вЂќР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚РЎвЂ№, Р С”Р С•РЎвЂљР С•РЎР‚РЎвЂ№Р Вµ РЎС“Р СР ВµРЎР‹РЎвЂљ РЎР‚Р В°Р В±Р С•РЎвЂљР В°РЎвЂљРЎРЉ РЎРѓ РЎРѓР С•Р Р†РЎР‚Р ВµР СР ВµР Р…Р Р…РЎвЂ№Р СР С РЎРѓР СРЎРѓРЎвЂљР ВµР СР В°Р СР С, Р Р†РЎРѓР ВµР С–Р ТР В° Р Р†Р С•РЎРѓРЎвЂљРЎР‚Р ВµР В±Р С•Р Р†Р В°Р Р…РЎвЂ№ Р С Р С—Р С•Р В»РЎС“РЎвЂЎР В°РЎР‹РЎвЂљ
+                        Р В±Р С•Р В»Р ВµР Вµ Р Р†РЎвЂ№РЎРѓР С•Р С”РЎС“РЎР‹ Р В·Р В°РЎР‚Р С—Р В»Р В°РЎвЂљРЎС“.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Case Study 6: Р вЂ™Р Р…Р ВµР ТРЎР‚Р ВµР Р…Р СР Вµ Р В°Р Р†РЎвЂљР С•Р СР В°РЎвЂљР СР В·Р В°РЎвЂ Р СР С -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">СЂСџвЂ™С</span>
+                <h3 class="case-study-title">Р В Р ВµР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р ВµР в„–РЎРѓ: Р С’Р Р†РЎвЂљР С•Р СР В°РЎвЂљР СР В·Р В°РЎвЂ Р СРЎРЏ IFTA Р С•РЎвЂљРЎвЂЎР ВµРЎвЂљР С•Р Р†</h3>
+            </div>
+            <div class="content-text">
+                <p><strong>Р СџРЎР‚Р С•Р В±Р В»Р ВµР СР В°:</strong> Р вЂќР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚ РЎвЂљРЎР‚Р В°РЎвЂљР СР В» 2 Р ТР Р…РЎРЏ Р С”Р В°Р В¶Р ТРЎвЂ№Р в„– Р С”Р Р†Р В°РЎР‚РЎвЂљР В°Р В» Р Р…Р В° Р С—Р С•Р ТР С–Р С•РЎвЂљР С•Р Р†Р С”РЎС“ IFTA Р С•РЎвЂљРЎвЂЎР ВµРЎвЂљР С•Р Р† Р ТР В»РЎРЏ 50
+                    Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р С•Р Р†.</p>
+                <p><strong>Р В Р ВµРЎв‚¬Р ВµР Р…Р СР Вµ:</strong> Р вЂ™Р Р…Р ВµР ТРЎР‚Р СР В»Р С Р СР Р…РЎвЂљР ВµР С–РЎР‚Р В°РЎвЂ Р СРЎР‹ Р СР ВµР В¶Р ТРЎС“ ELD РЎРѓР СРЎРѓРЎвЂљР ВµР СР С•Р в„–, РЎвЂљР С•Р С—Р В»Р СР Р†Р Р…РЎвЂ№Р СР С Р С”Р В°РЎР‚РЎвЂљР В°Р СР С Р С IFTA РЎРѓР С•РЎвЂћРЎвЂљР С•Р С.
+                    Р СњР В°РЎРѓРЎвЂљРЎР‚Р С•Р СР В»Р С Р В°Р Р†РЎвЂљР С•Р СР В°РЎвЂљР СРЎвЂЎР ВµРЎРѓР С”Р СР в„– Р СР СР С—Р С•РЎР‚РЎвЂљ Р ТР В°Р Р…Р Р…РЎвЂ№РЎвЂ¦.</p>
+                <p><strong>Р В Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљ:</strong> Р вЂ™РЎР‚Р ВµР СРЎРЏ Р С—Р С•Р ТР С–Р С•РЎвЂљР С•Р Р†Р С”Р С Р С•РЎвЂљРЎвЂЎР ВµРЎвЂљР С•Р Р† РЎРѓР С•Р С”РЎР‚Р В°РЎвЂљР СР В»Р С•РЎРѓРЎРЉ РЎРѓ 16 РЎвЂЎР В°РЎРѓР С•Р Р† Р ТР С• 2 РЎвЂЎР В°РЎРѓР С•Р Р†. Р СћР С•РЎвЂЎР Р…Р С•РЎРѓРЎвЂљРЎРЉ
+                    Р ТР В°Р Р…Р Р…РЎвЂ№РЎвЂ¦ РЎС“Р Р†Р ВµР В»Р СРЎвЂЎР СР В»Р В°РЎРѓРЎРЉ Р Р…Р В° 98%.</p>
+                <p><strong>ROI:</strong> Р В­Р С”Р С•Р Р…Р С•Р СР СРЎРЏ $3,200 Р Р† Р С”Р Р†Р В°РЎР‚РЎвЂљР В°Р В» Р Р…Р В° Р В·Р В°РЎР‚Р С—Р В»Р В°РЎвЂљР Вµ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р В° + РЎРѓР Р…Р СР В¶Р ВµР Р…Р СР Вµ Р С•РЎв‚¬Р СР В±Р С•Р С” РЎРѓРЎРЊР С”Р С•Р Р…Р С•Р СР СР В»Р С•
+                    $8,000 Р Р† Р С–Р С•Р Т Р Р…Р В° РЎв‚¬РЎвЂљРЎР‚Р В°РЎвЂћР В°РЎвЂ¦.</p>
+            </div>
+        </div>
+        <!-- Quick Check 6 -->
+        <div class="quick-check-block locked" id="quiz-6" data-quiz-id="quiz-7-6" data-correct-answer="a">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">РІСљвЂ¦</span>
+                <h3 class="quick-check-title">Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</h3>
+            </div>
+            <div class="quiz-question">
+                Р СњР В° РЎРѓР С”Р С•Р В»РЎРЉР С”Р С• Р С—РЎР‚Р С•РЎвЂ Р ВµР Р…РЎвЂљР С•Р Р† Р В°Р Р†РЎвЂљР С•Р СР В°РЎвЂљР СР В·Р В°РЎвЂ Р СРЎРЏ Р СР С•Р В¶Р ВµРЎвЂљ РЎРѓР Р…Р СР В·Р СРЎвЂљРЎРЉ РЎвЂЎР ВµР В»Р С•Р Р†Р ВµРЎвЂЎР ВµРЎРѓР С”Р СР Вµ Р С•РЎв‚¬Р СР В±Р С”Р С?
+            </div>
+            <div class="quiz-options">
+                <div class="quiz-option" data-answer="a">95%</div>
+                <div class="quiz-option" data-answer="b">75%</div>
+                <div class="quiz-option" data-answer="c">50%</div>
+                <div class="quiz-option" data-answer="d">25%</div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="lesson-nav">
+            <a href="doc-module-6.html" class="nav-btn">
+                <span>РІвЂ С’</span>
+                <span>Р СљР С•Р ТРЎС“Р В»РЎРЉ 6: Р СџР В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р†</span>
+            </a>
+            <a href="doc-module-8.html" class="nav-btn">
+                <span>Р СљР С•Р ТРЎС“Р В»РЎРЉ 8: Р Р€Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р СР Вµ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏР СР С</span>
+                <span>РІвЂ вЂ™</span>
+            </a>
+        </nav>
+
+    </main>
+
+    <script>
+        // Audio functionality
+        function toggleAudio(audioId) {
+            const audio = document.getElementById(audioId);
+            const btn = audio.parentElement.querySelector('.audio-btn');
+            const progressRing = audio.parentElement.querySelector('.progress-ring-circle');
+
+            if (audio.paused) {
+                // Pause all other audio
+                document.querySelectorAll('audio').forEach(a => {
+                    if (a !== audio) {
+                        a.pause();
+                        a.parentElement.querySelector('.audio-btn').classList.remove('playing');
+                    }
+                });
+
+                audio.play();
+                btn.classList.add('playing');
+
+                // Update progress
+                audio.addEventListener('timeupdate', () => {
+                    const progress = (audio.currentTime / audio.duration) * 207.35;
+                    progressRing.style.strokeDashoffset = 207.35 - progress;
+                });
+
+                audio.addEventListener('ended', () => {
+                    btn.classList.remove('playing');
+                    progressRing.style.strokeDashoffset = 207.35;
+                });
+            } else {
+                audio.pause();
+                btn.classList.remove('playing');
+            }
+        }
+
+        // Quiz functionality
+        document.querySelectorAll('.quiz-option').forEach(option => {
+            option.addEventListener('click', function () {
+                const quizBlock = this.closest('.quick-check-block');
+                const correctAnswer = quizBlock.dataset.correctAnswer;
+                const selectedAnswer = this.dataset.answer;
+
+                // Remove previous selections
+                quizBlock.querySelectorAll('.quiz-option').forEach(opt => {
+                    opt.classList.remove('correct', 'incorrect');
+                });
+
+                // Mark correct answer
+                quizBlock.querySelector(`[data-answer="${correctAnswer}"]`).classList.add('correct');
+
+                // Mark incorrect if wrong selection
+                if (selectedAnswer !== correctAnswer) {
+                    this.classList.add('incorrect');
+                }
+
+                // Unlock next quiz after 2 seconds
+                setTimeout(() => {
+                    const nextQuiz = document.querySelector(`#quiz-${parseInt(quizBlock.id.split('-')[1]) + 1}`);
+                    if (nextQuiz) {
+                        nextQuiz.classList.remove('locked');
+                    }
+                }, 2000);
+            });
+        });
+
+        // Mobile Menu JavaScript
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+
+        if (mobileMenuToggle && mobileMenu && mobileMenuOverlay) {
+            mobileMenuToggle.addEventListener('click', function () {
+                mobileMenuToggle.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+                mobileMenuOverlay.classList.toggle('active');
+                document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+            });
+
+            mobileMenuOverlay.addEventListener('click', function () {
+                mobileMenuToggle.classList.remove('active');
+                mobileMenu.classList.remove('active');
+                mobileMenuOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+
+            // Close mobile menu when clicking on a link
+            document.querySelectorAll('.mobile-nav-links .nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (mobileMenu.classList.contains('active')) {
+                        mobileMenuToggle.classList.remove('active');
+                        mobileMenu.classList.remove('active');
+                        mobileMenuOverlay.classList.remove('active');
+                        document.body.style.overflow = '';
+                    }
+                });
+            });
+        }
+    </script>
+  
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>Р В РЎв„ўР РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„– Р В РІР‚СњР В РЎвЂР РЋР С“Р В РЎвЂ”Р В Р’ВµР РЋРІР‚С™Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В Р’В°</h4>
+          <p>Р В РЎСџР РЋР вЂљР В РЎвЂўР РЋРІР‚С›Р В Р’ВµР РЋР С“Р РЋР С“Р В РЎвЂР В РЎвЂўР В Р вЂ¦Р В Р’В°Р В Р’В»Р РЋР Р‰Р В Р вЂ¦Р В РЎвЂўР В Р’Вµ Р В РЎвЂўР В Р’В±Р РЋРЎвЂњР РЋРІР‚РЋР В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ Р В РўвЂР В РЎвЂР РЋР С“Р В РЎвЂ”Р В Р’ВµР РЋРІР‚С™Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В РЎвЂўР В Р вЂ  Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В Р’В·Р В РЎвЂўР В РЎвЂ”Р В Р’ВµР РЋР вЂљР В Р’ВµР В Р вЂ Р В РЎвЂўР В Р’В·Р В РЎвЂўР В РЎвЂќ</p>
+        </div>
+
+        <div class="footer-section">
+          <h4>Р В РЎвЂєР В Р’В±Р РЋРЎвЂњР РЋРІР‚РЋР В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ</h4>
+          <a href="../courses.html">Р В РЎв„ўР РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„–</a>
+        </div>
+
+        <div class="footer-section">
+          <h4>Р В РЎСџР В РЎвЂўР В РўвЂР В РўвЂР В Р’ВµР РЋР вЂљР В Р’В¶Р В РЎвЂќР В Р’В°</h4>
+          <a href="../faq.html">FAQ</a>
+          <a href="../contacts.html">Р В РЎв„ўР В РЎвЂўР В Р вЂ¦Р РЋРІР‚С™Р В Р’В°Р В РЎвЂќР РЋРІР‚С™Р РЋРІР‚в„–</a>
+          <a href="../help.html">Р В РЎСџР В РЎвЂўР В РЎВР В РЎвЂўР РЋРІР‚В°Р РЋР Р‰</a>
+        </div>
+
+        <div class="footer-section">
+          <h4>Р В РЎв„ўР В РЎвЂўР В РЎВР В РЎвЂ”Р В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР РЏ</h4>
+          <a href="../about.html">Р В РЎвЂє Р В Р вЂ¦Р В Р’В°Р РЋР С“</a>
+          <a href="../career.html">Р В РЎв„ўР В Р’В°Р РЋР вЂљР РЋР Р‰Р В Р’ВµР РЋР вЂљР В Р’В°</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2024 Р В РЎв„ўР РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„– Р В РІР‚СњР В РЎвЂР РЋР С“Р В РЎвЂ”Р В Р’ВµР РЋРІР‚С™Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В Р’В°. Р В РІР‚в„ўР РЋР С“Р В Р’Вµ Р В РЎвЂ”Р РЋР вЂљР В Р’В°Р В Р вЂ Р В Р’В° Р В Р’В·Р В Р’В°Р РЋРІР‚В°Р В РЎвЂР РЋРІР‚В°Р В Р’ВµР В Р вЂ¦Р РЋРІР‚в„–.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+
+</html>

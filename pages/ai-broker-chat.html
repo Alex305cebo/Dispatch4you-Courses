@@ -1,0 +1,3828 @@
+﻿<!DOCTYPE html>
+<html lang="ru" style="background:#070b14">
+<head>
+    <script src="../site-protection.js"></script>
+    <meta charset="UTF-8">
+    <script type="module" src="../firebase-auth-init.js?v=4.0"></script>
+    <script src="../role-guard.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 AI Брокер — Голосовой чат | Курсы Диспетчера</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../shared-nav.css?v=7.6">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        html{overflow-x:hidden;height:100%}
+        :root{--primary:#06b6d4;--accent:#f97316;--success:#10b981;--danger:#ef4444;--bg:#050a12;--bg2:#0a0f1a;--card:rgba(15,20,35,.65);--border:rgba(255,255,255,.07);--t1:#ffffff;--t2:#e2e8f0;--t3:#94a3b8;--nav:64px;--glass:rgba(15,23,42,.55);--glass-border:rgba(255,255,255,.1);--glow-primary:rgba(6,182,212,.15);--glow-accent:rgba(249,115,22,.1)}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);margin:0;height:100dvh;min-height:100vh;overflow:hidden;display:flex;flex-direction:column}
+        body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 30%,rgba(6,182,212,.07),transparent),radial-gradient(ellipse 60% 50% at 80% 70%,rgba(139,92,246,.05),transparent),radial-gradient(ellipse 40% 40% at 50% 50%,rgba(249,115,22,.03),transparent);z-index:-1;pointer-events:none}
+
+        /* Nav placeholder */
+        #shared-nav-container{flex-shrink:0}
+
+        .app{display:flex;flex-direction:column;flex:1;max-width:100%;margin:0 auto;width:100%;min-height:0;overflow:hidden;overflow-x:hidden}
+
+        /* HEADER */
+        .hdr{padding:8px 16px 6px;background:rgba(10,14,26,.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);flex-shrink:0;z-index:10;display:none}
+        .hdr-row{display:flex;align-items:center;justify-content:space-between}
+        .bi{display:flex;align-items:center;gap:8px}
+        .av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:15px;position:relative;flex-shrink:0}
+        .av .dot{position:absolute;bottom:0;right:0;width:9px;height:9px;border-radius:50%;background:#ef4444;border:2px solid var(--bg);transition:.3s}
+        .av .dot.on{background:var(--success)}
+        .bn{font-size:15px;font-weight:700}.bs{font-size:11px;color:var(--t3)}
+        .hdr-btns{display:flex;gap:4px}
+        .hb{padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:var(--t2);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s}
+        .hb:hover{background:rgba(6,182,212,.12);color:var(--primary);border-color:rgba(6,182,212,.25)}
+
+        /* SCENARIO BAR */
+        .sbar-wrap{display:flex;align-items:center;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;position:relative}
+        .sbar-arrow{width:24px;height:100%;border:none;background:rgba(15,23,42,.6);color:var(--t3);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s ease;z-index:2;backdrop-filter:blur(4px)}
+        .sbar-arrow:hover{color:var(--primary);background:rgba(6,182,212,.08)}
+        .sbar-arrow-l{border-right:1px solid rgba(255,255,255,.04)}
+        .sbar-arrow-r{border-left:1px solid rgba(255,255,255,.04)}
+        .sbar{padding:6px 8px;flex-shrink:0;display:flex;gap:4px;overflow-x:auto;flex:1;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
+        .sbar::-webkit-scrollbar{height:3px}
+        .sbar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+        .sc{padding:6px 14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:var(--t3);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .25s ease;backdrop-filter:blur(4px)}
+        .sc:hover,.sc.on{background:rgba(6,182,212,.12);border-color:rgba(6,182,212,.3);color:var(--primary);box-shadow:0 0 16px rgba(6,182,212,.1)}
+
+        /* CHAT */
+        .chat{flex:1;overflow-y:auto;padding:8px 12px;display:flex;flex-direction:column;gap:6px;scroll-behavior:smooth}
+        .chat::-webkit-scrollbar{width:3px}
+        .chat::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
+
+        .msg{max-width:82%;padding:12px 16px;border-radius:16px;font-size:15px;line-height:1.55;backdrop-filter:blur(8px)}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+        .msg.user{align-self:flex-end;background:linear-gradient(135deg,rgba(6,182,212,.18),rgba(14,165,233,.12));border:1px solid rgba(6,182,212,.12);border-bottom-right-radius:4px;box-shadow:0 2px 12px rgba(6,182,212,.08)}
+        .msg.broker{align-self:flex-start;background:rgba(15,23,42,.6);border:1px solid rgba(255,255,255,.06);border-bottom-left-radius:4px;box-shadow:0 2px 12px rgba(0,0,0,.15)}
+        .msg.broker .who{font-size:11px;font-weight:700;color:var(--primary);margin-bottom:3px}
+        .msg.sys{align-self:center;background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.1);border-radius:8px;font-size:13px;color:var(--t3);text-align:center;max-width:90%;padding:6px 12px}
+        .msg .ts{font-size:10px;color:var(--t3);margin-top:3px;display:block;text-align:right}
+        .msg.broker .ts{text-align:left}
+        .msg.broker .who{font-size:12px;font-weight:700;color:var(--primary);margin-bottom:2px}
+
+
+
+        /* TYPING */
+        .typing{align-self:flex-start;padding:10px 18px;background:var(--card);border:1px solid var(--border);border-radius:14px;border-bottom-left-radius:4px;display:none;gap:4px;align-items:center}
+        .typing.show{display:flex}
+        .td{width:7px;height:7px;border-radius:50%;background:var(--t3);animation:bounce 1.4s infinite}
+        .td:nth-child(2){animation-delay:.2s}.td:nth-child(3){animation-delay:.4s}
+        @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+
+        /* BROKER SPEAKING INDICATOR */
+        .speaking-indicator{align-self:flex-start;padding:6px 12px;border-radius:10px;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.12);font-size:11px;color:var(--primary);display:none;align-items:center;gap:6px}
+        .speaking-indicator.show{display:flex}
+        .speaking-indicator .wave{display:flex;gap:2px;align-items:center}
+        .speaking-indicator .wave span{width:3px;height:12px;background:var(--primary);border-radius:2px;animation:wave 1s infinite}
+        .speaking-indicator .wave span:nth-child(2){animation-delay:.15s;height:16px}
+        .speaking-indicator .wave span:nth-child(3){animation-delay:.3s;height:10px}
+        @keyframes wave{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1)}}
+
+        /* TRANSCRIPT DISPLAY COMPONENT */
+        .transcript-display{padding:8px 12px;background:rgba(10,14,26,.95);border-top:1px solid var(--border);flex-shrink:0;min-height:48px;display:none;flex-direction:column;gap:4px}
+        .transcript-display.show{display:flex}
+        .transcript-interim{font-size:14px;color:#94a3b8;font-style:italic;line-height:1.5;min-height:20px}
+        .transcript-final{font-size:14px;color:#ffffff;font-weight:500;line-height:1.5;min-height:20px}
+        .transcript-display:empty{display:none}
+
+        /* Notification animations */
+        @keyframes slideDown{from{opacity:0;transform:translate(-50%,-20px)}to{opacity:1;transform:translate(-50%,0)}}
+        @keyframes slideUp{from{opacity:1;transform:translate(-50%,0)}to{opacity:0;transform:translate(-50%,-20px)}}
+
+        /* INPUT AREA */
+        .input-area{padding:8px 12px 12px;background:rgba(10,14,26,.97);border-top:1px solid var(--border);flex-shrink:0;display:flex;justify-content:center;align-items:center;gap:8px}
+
+
+        .mic-btn{
+          width:72px;height:72px;border-radius:50%;border:none;
+          background:linear-gradient(145deg,#06b6d4,#0ea5e9,#6366f1);
+          color:#fff;font-size:28px;cursor:pointer;
+          display:flex;align-items:center;justify-content:center;
+          transition:all .3s cubic-bezier(.4,0,.2,1);
+          flex-shrink:0;position:relative;
+          box-shadow:0 8px 32px rgba(6,182,212,.45),0 0 0 0 rgba(6,182,212,.3),inset 0 1px 0 rgba(255,255,255,.2);
+        }
+        .mic-btn::before{
+          content:'';position:absolute;inset:-3px;border-radius:50%;
+          background:linear-gradient(145deg,rgba(6,182,212,.4),rgba(99,102,241,.4));
+          z-index:-1;filter:blur(8px);opacity:0;transition:opacity .3s;
+        }
+        .mic-btn:hover{transform:scale(1.08);box-shadow:0 12px 40px rgba(6,182,212,.55),0 0 0 0 rgba(6,182,212,.3),inset 0 1px 0 rgba(255,255,255,.25);}
+        .mic-btn:hover::before{opacity:1;}
+        .mic-btn.rec{
+          background:linear-gradient(145deg,#ef4444,#dc2626,#b91c1c);
+          box-shadow:0 8px 32px rgba(239,68,68,.5),inset 0 1px 0 rgba(255,255,255,.15);
+          animation:micPulse 1s ease-in-out infinite;
+        }
+        .mic-btn.rec::before{background:linear-gradient(145deg,rgba(239,68,68,.5),rgba(220,38,38,.3));opacity:1;}
+        @keyframes micPulse{
+          0%,100%{box-shadow:0 8px 32px rgba(239,68,68,.4),0 0 0 0 rgba(239,68,68,.4);}
+          50%{box-shadow:0 8px 40px rgba(239,68,68,.6),0 0 0 14px rgba(239,68,68,.0);}
+        }
+        .mic-btn:disabled{opacity:.3;cursor:not-allowed;transform:none;animation:none;filter:grayscale(.5)}
+
+        /* ── APP LAYOUT ── */
+        .app-layout{display:flex;justify-content:center;align-items:center;flex:1;min-height:0;overflow:auto;overflow-x:hidden;padding:20px;transition:all .5s cubic-bezier(.4,0,.2,1)}
+        .app-layout.dialog-active{align-items:stretch;max-height:none;overflow:hidden;overflow-y:auto}
+        .app-layout.dialog-active .transcript-panel{display:flex;width:min(420px,44vw);flex-shrink:0;animation:slideInLeft .5s cubic-bezier(.4,0,.2,1)}
+        .app-layout.dialog-active .voice-chat-widget{max-width:min(420px,52vw);animation:slideRight .5s cubic-bezier(.4,0,.2,1)}
+        /* Before dialog: widget centered; after: stretch to match transcript panel height */
+        .voice-chat-widget{align-self:center;transition:align-self 0s}
+        .app-layout.dialog-active .voice-chat-widget{align-self:stretch;overflow-y:auto}
+        @keyframes slideInLeft{from{opacity:0;transform:translateX(-30px);width:0}to{opacity:1;transform:translateX(0);width:min(420px,44vw)}}
+        @keyframes slideRight{from{transform:translateX(-15px)}to{transform:translateX(0)}}
+
+        /* ── VOICE CHAT WIDGET ── */
+        .voice-chat-widget{
+          display:flex;flex-direction:column;
+          align-items:center;justify-content:flex-start;
+          text-align:center;padding:20px 20px 0;
+          max-width:480px;width:100%;min-width:0;
+          background:var(--glass);
+          backdrop-filter:blur(40px) saturate(1.8);
+          -webkit-backdrop-filter:blur(40px) saturate(1.8);
+          border:1px solid var(--glass-border);
+          border-radius:24px;
+          transition:all .5s cubic-bezier(.4,0,.2,1);
+          box-shadow:0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06);
+          position:relative;
+          overflow-y:auto;
+          overflow-x:hidden;
+        }
+        .voice-chat-widget::-webkit-scrollbar{width:3px}
+        .voice-chat-widget::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
+        .app-layout.dialog-active .voice-chat-widget{border-radius:0 24px 24px 0;border-left:1px solid rgba(255,255,255,.05);justify-content:flex-start}
+
+        /* ── MIC CONTAINER & PULSE RINGS ── */
+        .vcw-mic-container{position:relative;width:72px;height:72px;margin:16px auto 12px;display:flex;align-items:center;justify-content:center;overflow:visible}
+        .vcw-mic-container .mic-btn{width:72px;height:72px;font-size:28px;position:relative;z-index:5;flex-shrink:0}
+
+        /* Idle — 3 плавных кольца, не влияют на layout */
+        .pulse-ring{
+          position:absolute;border-radius:50%;pointer-events:none;z-index:1;
+          width:72px;height:72px;top:0;left:0;
+        }
+        .pulse-ring:nth-child(1){border:1.5px solid rgba(6,182,212,.55);animation:idleFloat 3.2s ease-in-out infinite 0s;}
+        .pulse-ring:nth-child(2){border:1px solid rgba(99,102,241,.35);animation:idleFloat 3.2s ease-in-out infinite .9s;}
+        .pulse-ring:nth-child(3){border:1px solid rgba(14,165,233,.2);animation:idleFloat 3.2s ease-in-out infinite 1.8s;}
+        @keyframes idleFloat{
+          0%  {transform:scale(1);   opacity:.8;}
+          50% {transform:scale(1.7); opacity:0;}
+          100%{transform:scale(1);   opacity:.8;}
+        }
+
+        /* Voice rings — управляются JS, не влияют на layout */
+        .wave-ring{
+          position:absolute;border-radius:50%;pointer-events:none;z-index:2;
+          width:72px;height:72px;top:0;left:0;
+          transform:scale(1);opacity:0;
+          will-change:transform,opacity;
+          display:none;
+        }
+        .wave-ring:nth-child(1){border:2.5px solid rgba(239,68,68,.95);}
+        .wave-ring:nth-child(2){border:2px   solid rgba(249,115,22,.75);}
+        .wave-ring:nth-child(3){border:1.5px solid rgba(251,191,36,.55);}
+        .wave-ring:nth-child(4){border:1px   solid rgba(239,68,68,.3);}
+
+        /* Скрываем idle при записи */
+        .vcw-mic-container.recording .pulse-ring{display:none;}
+        .vcw-mic-container.recording .wave-ring{display:block;}
+
+        /* Свечение кнопки при записи */
+        .vcw-mic-container.recording .mic-btn{
+          box-shadow:0 0 0 6px rgba(239,68,68,.12),0 0 0 14px rgba(239,68,68,.06),0 8px 32px rgba(239,68,68,.5);
+        }
+
+        /* ── WIDGET TEXT & FEATURES ── */
+        .vcw-title{font-size:28px;font-weight:800;color:var(--t1);margin-bottom:10px;letter-spacing:-0.5px}
+        .vcw-subtitle{font-size:15px;color:var(--t3);margin-bottom:36px;line-height:1.6;max-width:320px}
+        .vcw-features{display:none}
+        .vcw-feature{display:none}
+        .vcw-feature-icon{display:none}
+        .vcw-feature-text{display:none}
+
+        /* ── LOAD INFO CARD ── */
+        .load-info-card{width:100%;max-width:360px;background:rgba(6,182,212,.04);border:1px solid rgba(6,182,212,.1);border-radius:14px;padding:10px 12px;margin-bottom:10px;backdrop-filter:blur(4px)}
+        .load-info-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--primary);margin-bottom:6px}
+        .load-info-route{font-size:17px;font-weight:800;color:var(--t1);margin-bottom:10px;letter-spacing:-0.3px}
+        .load-info-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}
+        .load-info-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.04);border-radius:8px;padding:5px 7px}
+        .load-info-label{display:block;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:1px}
+        .load-info-val{display:block;font-size:12px;font-weight:700;color:var(--t1)}
+
+        /* ── SAY THIS BLOCK ── */
+        .say-this{width:100%;max-width:360px;background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.15);border-radius:14px;padding:10px 12px;margin-bottom:10px}
+        .say-this-header{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+        .say-this-dot{width:6px;height:6px;border-radius:50%;background:var(--success);box-shadow:0 0 6px rgba(16,185,129,.5);animation:coachPulse 2s ease-in-out infinite}
+        .say-this-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--success)}
+        .say-this-text{font-size:14px;color:var(--t1);line-height:1.6;font-weight:500;font-style:italic}
+        @keyframes sayThisGen{0%,100%{opacity:.4}50%{opacity:1}}
+        .say-this-text.generating{color:#475569;font-style:normal;animation:sayThisGen .8s ease-in-out infinite}
+
+        /* ── SIDEBAR TIPS BLOCK ── */
+        @keyframes tips-in{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes tip-shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+        .sidebar-tips{
+          width:100%;margin-top:10px;padding:0 0 12px;
+          animation:tips-in .5s .3s both ease;
+          flex-shrink:0;
+        }
+        .sidebar-tips-title{
+          font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;
+          color:#475569;margin-bottom:8px;padding:0 2px;
+          display:flex;align-items:center;gap:6px;
+        }
+        .sidebar-tips-title::before,.sidebar-tips-title::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.06)}
+        .tip-card{
+          background:rgba(255,255,255,.04);
+          border:1px solid rgba(255,255,255,.08);
+          border-radius:10px;padding:9px 11px;
+          margin-bottom:6px;text-align:left;
+          animation:tips-in .4s ease both;
+        }
+        .tip-card:last-child{margin-bottom:0}
+        .tip-card-head{display:flex;align-items:center;gap:7px;margin-bottom:3px}
+        .tip-card-icon{font-size:13px;flex-shrink:0}
+        .tip-card-label{font-size:12px;font-weight:700;color:#38bdf8;letter-spacing:.2px}
+        .tip-card-text{font-size:12px;color:#94a3b8;line-height:1.5}
+        .tip-card-text strong{color:#cbd5e1;font-weight:600}
+        /* Loading skeleton */
+        .tip-skeleton{
+          height:60px;border-radius:10px;margin-bottom:6px;
+          background:linear-gradient(90deg,rgba(255,255,255,.04) 25%,rgba(255,255,255,.08) 50%,rgba(255,255,255,.04) 75%);
+          background-size:200% 100%;
+          animation:tip-shimmer 1.5s infinite;
+        }
+        /* AI badge */
+        .tips-ai-badge{
+          display:inline-flex;align-items:center;gap:4px;
+          font-size:9px;font-weight:700;letter-spacing:.5px;
+          color:#6366f1;background:rgba(99,102,241,.1);
+          border:1px solid rgba(99,102,241,.2);
+          border-radius:6px;padding:2px 6px;margin-left:4px;
+          text-transform:uppercase;
+        }
+
+        /* ── VOICE TOGGLE BUTTON ── */
+        .voice-switch{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;padding:4px 8px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(4px);transition:all .3s ease;position:absolute;top:12px;right:12px;z-index:5}
+        .voice-switch:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.12)}
+        /* mini state kept for backward compat but position is always absolute top-right */
+        .voice-switch.mini{padding:4px;gap:4px;border-radius:12px;background:rgba(255,255,255,.05)}
+        .voice-switch.mini .voice-switch-label,.voice-switch.mini .voice-switch-label-ai{font-size:0;width:0;overflow:hidden;padding:0;margin:0}
+        .voice-switch.mini .voice-switch-track{width:28px;height:16px;border-radius:8px}
+        .voice-switch.mini .voice-switch-thumb{width:12px;height:12px;top:1px;left:1px}
+        .voice-switch.mini.active .voice-switch-thumb{left:14px}
+        .voice-switch-label{font-size:11px;font-weight:600;color:var(--t3);transition:.2s}
+        .voice-switch-label-ai{color:var(--t3)}
+        .voice-switch.active .voice-switch-label{color:var(--t3)}
+        .voice-switch.active .voice-switch-label-ai{color:var(--primary)}
+        .voice-switch:not(.active) .voice-switch-label{color:var(--accent)}
+        .voice-switch-track{width:40px;height:22px;border-radius:11px;background:rgba(249,115,22,.2);border:1px solid rgba(249,115,22,.3);position:relative;transition:all .3s ease;flex-shrink:0}
+        .voice-switch.active .voice-switch-track{background:rgba(6,182,212,.2);border-color:rgba(6,182,212,.3)}
+        .voice-switch-thumb{width:16px;height:16px;border-radius:50%;background:var(--accent);position:absolute;top:2px;left:2px;transition:all .3s cubic-bezier(.4,0,.2,1);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+        .voice-switch.active .voice-switch-thumb{left:20px;background:var(--primary)}
+
+        /* ── WIDGET STATUS ── */
+        .vcw-status{min-height:24px;margin-top:16px;font-size:13px;color:var(--t3);display:flex;align-items:center;gap:6px}
+        .vcw-status .wave{display:flex;gap:2px;align-items:center}
+        .vcw-status .wave span{width:3px;height:12px;background:var(--primary);border-radius:2px;animation:wave 1s infinite}
+        .vcw-status .wave span:nth-child(2){animation-delay:.15s;height:16px}
+        .vcw-status .wave span:nth-child(3){animation-delay:.3s;height:10px}
+
+        /* ── TRANSCRIPT PANEL ── */
+        .transcript-panel{display:none;flex-direction:column;background:var(--glass);backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);border:1px solid var(--glass-border);border-right:1px solid rgba(255,255,255,.04);border-radius:24px 0 0 24px;overflow:hidden;min-height:0;box-shadow:0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06)}
+        .app-layout.dialog-active .transcript-panel{display:flex}
+        .transcript-panel-header{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:8px;flex-shrink:0;text-transform:uppercase;letter-spacing:1px}
+        .transcript-panel-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px;scroll-behavior:smooth}
+        .transcript-panel-messages::-webkit-scrollbar{width:3px}
+        .transcript-panel-messages::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
+        .transcript-panel-messages .msg{max-width:95%;font-size:14px}
+        /* ── LIVE SPEECH DISPLAY ── */
+        @keyframes tpi-fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes tpi-pulse{0%,100%{box-shadow:0 0 0 0 rgba(6,182,212,0.0),0 4px 24px rgba(6,182,212,0.15)}50%{box-shadow:0 0 0 6px rgba(6,182,212,0.12),0 4px 32px rgba(6,182,212,0.35)}}
+        @keyframes tpi-cursor{0%,100%{opacity:1}50%{opacity:0}}
+        @keyframes tpi-glow{0%,100%{text-shadow:0 0 8px rgba(6,182,212,0.4)}50%{text-shadow:0 0 20px rgba(6,182,212,0.9),0 0 40px rgba(14,165,233,0.5)}}
+        .transcript-panel-interim{
+          padding:14px 18px;
+          font-size:18px;
+          font-weight:600;
+          color:#e2e8f0;
+          font-style:normal;
+          min-height:0;
+          flex-shrink:0;
+          border-top:2px solid rgba(6,182,212,0.4);
+          background:linear-gradient(135deg,rgba(6,182,212,0.12),rgba(14,165,233,0.06));
+          display:none;
+          position:relative;
+          letter-spacing:0.3px;
+          line-height:1.5;
+        }
+        .transcript-panel-interim::before{
+          content:'';
+          position:absolute;
+          left:14px;
+          top:50%;
+          transform:translateY(-50%);
+          font-size:16px;
+          animation:tpi-pulse 1.4s ease-in-out infinite;
+        }
+        .transcript-panel-interim.show{
+          display:block;
+          padding-left:44px;
+          animation:tpi-fadein 0.2s ease,tpi-pulse 1.4s ease-in-out infinite;
+        }
+        .transcript-panel-interim.show .tpi-text{
+          animation:tpi-glow 1.4s ease-in-out infinite;
+          color:#fff;
+        }
+        .transcript-panel-interim .tpi-cursor{
+          display:inline-block;
+          width:2px;
+          height:1.1em;
+          background:#06b6d4;
+          margin-left:3px;
+          vertical-align:middle;
+          border-radius:2px;
+          animation:tpi-cursor 0.8s step-end infinite;
+        }
+        .transcript-panel-interim .tpi-waiting{
+          font-size:12px;
+          color:#f59e0b;
+          font-style:italic;
+          margin-left:6px;
+          opacity:0.85;
+          animation:tpi-cursor 1.2s ease-in-out infinite;
+        }
+        .tpi-send-btn{
+          display:inline-block;
+          margin-left:10px;
+          padding:3px 12px;
+          background:linear-gradient(135deg,#06b6d4,#0ea5e9);
+          color:#fff;
+          font-size:12px;
+          font-weight:700;
+          font-style:normal;
+          border:none;
+          border-radius:20px;
+          cursor:pointer;
+          vertical-align:middle;
+          animation:none;
+          opacity:1;
+          transition:transform 0.1s,box-shadow 0.1s;
+          box-shadow:0 2px 8px rgba(6,182,212,0.4);
+        }
+        .tpi-send-btn:hover{transform:scale(1.05);box-shadow:0 4px 14px rgba(6,182,212,0.6);}
+        .tpi-send-btn:active{transform:scale(0.97);}
+
+        /* RESPONSIVE */
+        /* ── SHORT VIEWPORT (маленькое окно по высоте) ── */
+        @media(max-height:700px){
+          body{height:auto;min-height:100dvh;overflow-y:auto}
+          .app{height:auto;overflow:visible;flex:none}
+          .app-layout{overflow:visible;flex:none;min-height:0;padding:12px}
+          .app-layout.dialog-active{overflow:visible}
+          .app-layout.dialog-active .transcript-panel{max-height:calc(100dvh - 64px - 40px);overflow-y:auto}
+          .app-layout.dialog-active .voice-chat-widget{max-height:none;overflow-y:auto}
+          .voice-chat-widget{overflow-y:auto}
+          .vcw-title{font-size:22px}
+          .vcw-subtitle{margin-bottom:16px;font-size:13px}
+          .vcw-mic-container{margin:8px auto 8px}
+          .sidebar-tips{margin-top:6px}
+        }
+        @media(max-height:580px){
+          .vcw-title{font-size:18px}
+          .vcw-subtitle{display:none}
+          .vcw-mic-container{margin:6px auto 6px}
+          .sidebar-tips{display:none}
+          .say-this{margin-bottom:6px}
+          .load-info-card{margin-bottom:6px}
+          .app-layout{padding:8px}
+        }
+
+        /* ── SMALL DESKTOP (1024-1200px) ── */
+        @media(max-width:1200px){
+          .app-layout.dialog-active .transcript-panel{width:300px}
+          .app-layout.dialog-active .voice-chat-widget{max-width:360px}
+          @keyframes slideInLeft{from{opacity:0;transform:translateX(-30px);width:0}to{opacity:1;transform:translateX(0);width:300px}}
+        }
+
+        /* Tablet (768-1024px) */
+        @media(max-width:1024px){
+          .app{max-width:100%;padding:0 12px}
+          .hdr{padding:8px 14px 6px}
+          .msg{font-size:14px;padding:9px 12px}
+          .feedback-card{max-width:90%;padding:28px}
+          .prep-card{max-width:90%;padding:28px}
+          .app-layout{padding:12px}
+          .app-layout.dialog-active .transcript-panel{width:min(300px,45vw);min-height:280px;max-height:80vh}
+          .app-layout.dialog-active .voice-chat-widget{max-width:min(360px,50vw);min-height:280px}
+        }
+
+        /* Mobile (< 768px) */
+        @media(max-width:768px){
+          .app{padding:0}
+          .hdr{padding:6px 10px 5px}
+          .av{width:28px;height:28px;font-size:12px}
+          .bn{font-size:12px}
+          .bs{font-size:10px}
+          .msg{max-width:88%;font-size:13px}
+          .input-area{padding:5px 8px 8px}
+          .sbar{padding:4px 8px}
+          .chat{padding:6px 10px}
+
+          /* Transcript display */
+          .transcript-display{padding:6px 10px;min-height:40px}
+          .transcript-interim{font-size:13px}
+          .transcript-final{font-size:13px}
+          .transcript-panel-interim{font-size:15px;padding:10px 14px}
+          .transcript-panel-interim.show{padding-left:38px}
+
+          /* Phrase hints */
+          .phrase-hints{padding:4px 10px 0}
+          .ph{font-size:10px;padding:4px 9px}
+
+          /* ── ЕДИНЫЙ БЛОК на мобильных ── */
+          .app-layout{
+            flex-direction:column;
+            padding:10px;
+            align-items:stretch;
+            gap:0;
+          }
+
+          /* Виджет — верхняя часть единого блока */
+          .voice-chat-widget{
+            max-width:100%;
+            width:100%;
+            padding:16px 16px 12px;
+            border-radius:16px;
+            border:1px solid rgba(255,255,255,.1);
+            box-shadow:0 4px 24px rgba(0,0,0,.4);
+            overflow:visible;
+            align-self:auto;
+          }
+
+          /* Когда диалог активен — виджет сверху, транскрипт снизу, единый блок */
+          .app-layout.dialog-active .voice-chat-widget{
+            max-width:100%;
+            border-radius:16px 16px 0 0;
+            border:1px solid rgba(255,255,255,.1);
+            border-bottom:1px solid rgba(255,255,255,.05);
+            order:1;
+            animation:none;
+            align-self:auto;
+          }
+          .app-layout.dialog-active .transcript-panel{
+            width:100%;
+            height:auto;
+            flex:1;
+            min-height:200px;
+            max-height:45vh;
+            border-radius:0 0 16px 16px;
+            border:1px solid rgba(255,255,255,.1);
+            border-top:none;
+            order:2;
+            animation:none;
+            overflow:hidden;
+          }
+
+          .sidebar-tips,.phrase-sheet{display:none}
+          .vcw-title{font-size:20px}
+          .vcw-subtitle{font-size:13px;margin-bottom:16px}
+          .vcw-mic-container{width:64px;height:64px;margin:10px auto 10px}
+          .vcw-mic-container .mic-btn{width:64px;height:64px;font-size:24px}
+          .vcw-features{gap:8px}
+          .vcw-feature-text{font-size:13px}
+          .transcript-panel{border-radius:0;border:none;max-height:35vh}
+          .transcript-panel-messages .msg{font-size:13px}
+        }
+
+        /* Small Mobile (< 480px) */
+        @media(max-width:480px){
+          .hdr{padding:5px 8px 4px}
+          .hdr-btns{gap:3px}
+          .hb{padding:4px 6px;font-size:10px}
+          .hb .txt{display:none}
+          .av{width:26px;height:26px;font-size:11px}
+          .bn{font-size:11px}
+          .bs{font-size:9px}
+
+          .msg{max-width:92%;font-size:12px;padding:6px 10px}
+          .msg .ts{font-size:9px}
+          .msg.broker .who{font-size:11px}
+
+          .mic-btn{width:34px;height:34px;font-size:14px}
+          .input-area{padding:4px 6px 6px}
+
+          .sc{font-size:11px;padding:4px 8px}
+          .sbar{padding:3px 6px;gap:3px}
+
+          .chat{padding:5px 8px;gap:5px}
+
+          /* Transcript display */
+          .transcript-display{padding:5px 8px;min-height:36px}
+          .transcript-interim{font-size:12px}
+          .transcript-final{font-size:12px}
+          .transcript-panel-interim{font-size:14px;padding:8px 12px}
+          .transcript-panel-interim.show{padding-left:36px}
+
+          /* Typing indicator */
+          .typing{padding:8px 14px}
+          .td{width:6px;height:6px}
+
+          /* Speaking indicator */
+          .speaking-indicator{padding:5px 10px;font-size:10px}
+          .speaking-indicator .wave span{width:2px;height:10px}
+          .speaking-indicator .wave span:nth-child(2){height:14px}
+          .speaking-indicator .wave span:nth-child(3){height:8px}
+
+          /* Phrase hints */
+          .phrase-hints{padding:3px 8px 0;gap:4px}
+          .ph{font-size:10px;padding:4px 8px}
+
+          /* Единый блок 480px */
+          .app-layout{padding:8px;gap:0}
+          .voice-chat-widget{padding:14px 14px 10px;border-radius:14px}
+          .app-layout.dialog-active .voice-chat-widget{border-radius:14px 14px 0 0;padding:12px 14px 10px}
+          .app-layout.dialog-active .transcript-panel{border-radius:0 0 14px 14px;min-height:180px;max-height:42vh}
+
+          .vcw-title{font-size:18px}
+          .vcw-subtitle{font-size:12px;margin-bottom:12px}
+          .vcw-mic-container{width:60px;height:60px;margin:8px auto 8px}
+          .vcw-mic-container .mic-btn{width:60px;height:60px;font-size:22px}
+          .vcw-feature-icon{width:24px;height:24px;font-size:15px}
+          .vcw-feature-text{font-size:12px}
+          .vcw-status{font-size:11px}
+          .transcript-panel-messages .msg{font-size:12px}
+
+          .load-info-card{max-width:100%}
+          .say-this{max-width:100%}
+        }
+
+        /* Extra Small Mobile (< 360px) */
+        @media(max-width:360px){
+          .hdr{padding:4px 6px 3px}
+          .hdr-btns{gap:2px}
+          .hb{padding:3px 5px;font-size:9px}
+          .av{width:24px;height:24px;font-size:10px}
+          .av .dot{width:8px;height:8px}
+          .bn{font-size:10px}
+          .bs{font-size:8px}
+
+          .msg{font-size:11px;padding:5px 8px}
+          .msg .ts{font-size:8px}
+          .msg.broker .who{font-size:10px}
+
+          .mic-btn{width:32px;height:32px;font-size:13px}
+          .input-area{padding:3px 5px 5px}
+
+          .sc{font-size:10px;padding:3px 7px}
+          .sbar{padding:2px 5px;gap:2px}
+
+          .chat{padding:4px 6px;gap:4px}
+
+          /* Transcript display */
+          .transcript-display{padding:4px 6px;min-height:32px}
+          .transcript-interim{font-size:11px}
+          .transcript-final{font-size:11px}
+
+          /* Typing indicator */
+          .typing{padding:6px 12px}
+          .td{width:5px;height:5px}
+
+          /* Speaking indicator */
+          .speaking-indicator{padding:4px 8px;font-size:9px;gap:4px}
+          .speaking-indicator .wave{gap:1px}
+          .speaking-indicator .wave span{width:2px;height:8px}
+          .speaking-indicator .wave span:nth-child(2){height:12px}
+          .speaking-indicator .wave span:nth-child(3){height:6px}
+
+          /* Phrase hints */
+          .phrase-hints{padding:2px 6px 0;gap:3px}
+          .ph{font-size:9px;padding:3px 7px}
+
+          /* Единый блок 360px */
+          .app-layout{padding:6px;gap:0}
+          .voice-chat-widget{padding:12px 12px 8px;border-radius:12px}
+          .app-layout.dialog-active .voice-chat-widget{border-radius:12px 12px 0 0;padding:10px 12px 8px}
+          .app-layout.dialog-active .transcript-panel{border-radius:0 0 12px 12px;min-height:160px;max-height:40vh}
+
+          .vcw-title{font-size:16px}
+          .vcw-subtitle{font-size:11px;margin-bottom:10px}
+          .vcw-mic-container{width:56px;height:56px;margin:6px auto 6px}
+          .vcw-mic-container .mic-btn{width:56px;height:56px;font-size:20px}
+          .vcw-feature-text{font-size:11px}
+          .vcw-status{font-size:10px}
+          .transcript-panel-messages .msg{font-size:11px}
+
+          .load-info-card{max-width:100%;padding:8px 10px}
+          .say-this{max-width:100%;padding:8px 10px}
+          .load-info-grid{grid-template-columns:1fr 1fr}
+        }
+        /* Hide footer on chat page */
+        footer,.footer-section,.site-footer{display:none!important}
+
+        /* ── FEEDBACK MODAL ── */
+        @keyframes fb-backdrop{from{opacity:0}to{opacity:1}}
+        @keyframes fb-card-in{from{opacity:0;transform:translateY(40px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+        @keyframes fb-score-pop{0%{transform:scale(0) rotate(-10deg);opacity:0}60%{transform:scale(1.2) rotate(2deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+        @keyframes fb-bar-fill{from{width:0}to{width:var(--w)}}
+        @keyframes fb-shine{0%{left:-100%}100%{left:200%}}
+        @keyframes fb-pulse-ring{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.5);opacity:0}}
+        @keyframes fb-count{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+        .feedback-modal{position:fixed;inset:0;background:rgba(4,8,18,.97);backdrop-filter:blur(24px);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px;animation:fb-backdrop .4s ease}
+        .feedback-modal.show{display:flex}
+
+        .feedback-card{
+          background:linear-gradient(160deg,rgba(13,18,30,1) 0%,rgba(8,12,22,1) 100%);
+          border:1px solid rgba(6,182,212,.2);
+          border-radius:28px;
+          max-width:600px;width:100%;
+          padding:0;
+          animation:fb-card-in .5s cubic-bezier(.34,1.56,.64,1);
+          max-height:90vh;overflow-y:auto;overflow-x:hidden;
+          box-shadow:0 0 0 1px rgba(6,182,212,.08),0 32px 80px rgba(0,0,0,.7),0 0 60px rgba(6,182,212,.06);
+          position:relative;
+        }
+        .feedback-card::-webkit-scrollbar{width:3px}
+        .feedback-card::-webkit-scrollbar-thumb{background:rgba(6,182,212,.3);border-radius:3px}
+
+        /* Hero section */
+        .fb-hero{
+          padding:20px 24px 16px;
+          text-align:center;
+          background:linear-gradient(180deg,rgba(6,182,212,.08) 0%,transparent 100%);
+          border-bottom:1px solid rgba(255,255,255,.05);
+          position:relative;
+        }
+        .fb-hero::before{
+          content:'';position:absolute;top:-60px;left:50%;transform:translateX(-50%);
+          width:200px;height:200px;
+          background:radial-gradient(circle,rgba(6,182,212,.15) 0%,transparent 70%);
+          pointer-events:none;
+        }
+        .fb-emoji{font-size:36px;display:block;margin-bottom:6px;animation:fb-score-pop .6s .2s both cubic-bezier(.34,1.56,.64,1)}
+        .fb-title{font-size:22px;font-weight:900;color:#fff;margin:0 0 4px;letter-spacing:-.5px}
+        .fb-subtitle{font-size:12px;color:#64748b;margin:0}
+
+        /* Score ring */
+        .fb-score-wrap{
+          display:flex;align-items:center;justify-content:center;gap:20px;
+          padding:16px 24px;
+          border-bottom:1px solid rgba(255,255,255,.05);
+        }
+        .fb-score-ring{
+          position:relative;width:90px;height:90px;flex-shrink:0;
+        }
+        .fb-score-ring svg{transform:rotate(-90deg)}
+        .fb-score-ring-bg{fill:none;stroke:rgba(255,255,255,.06);stroke-width:8}
+        .fb-score-ring-fill{fill:none;stroke:url(#scoreGrad);stroke-width:8;stroke-linecap:round;stroke-dasharray:339;stroke-dashoffset:339;transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1) .3s}
+        .fb-score-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+        .fb-score-num{font-size:26px;font-weight:900;color:#fff;line-height:1;animation:fb-count .5s .8s both}
+        .fb-score-denom{font-size:11px;color:#64748b;margin-top:1px}
+        .fb-score-info{flex:1}
+        .fb-score-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#06b6d4;margin-bottom:4px}
+        .fb-score-desc{font-size:13px;color:#e2e8f0;line-height:1.5;font-weight:500}
+
+        /* Metrics bars */
+        .fb-metrics{padding:14px 24px;border-bottom:1px solid rgba(255,255,255,.05)}
+        .fb-metrics-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#475569;margin-bottom:10px}
+        .fb-metric-row{margin-bottom:10px}
+        .fb-metric-row:last-child{margin-bottom:0}
+        .fb-metric-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+        .fb-metric-name{font-size:12px;font-weight:600;color:#cbd5e1}
+        .fb-metric-val{font-size:12px;font-weight:800;color:#06b6d4}
+        .fb-metric-track{height:5px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden}
+        .fb-metric-bar{height:100%;border-radius:99px;background:linear-gradient(90deg,#06b6d4,#0ea5e9);width:0;transition:width 1s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden}
+        .fb-metric-bar::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:fb-shine 1.5s .8s ease}
+
+        /* Feedback text */
+        .fb-text{padding:14px 24px;border-bottom:1px solid rgba(255,255,255,.05)}
+        .fb-text-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#475569;margin-bottom:8px}
+        .fb-text-content{font-size:13px;color:#94a3b8;line-height:1.6}
+
+        /* Highlights */
+        .fb-highlights{padding:14px 24px;border-bottom:1px solid rgba(255,255,255,.05)}
+        .fb-highlights-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#475569;margin-bottom:8px}
+        .fb-highlight{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;margin-bottom:6px;transition:.2s}
+        .fb-highlight:last-child{margin-bottom:0}
+        .fb-highlight.success{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.18)}
+        .fb-highlight.improvement{background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.18)}
+        .fb-highlight-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+        .fb-highlight-text{font-size:12px;color:#cbd5e1;line-height:1.5}
+
+        /* Motivation banner */
+        .fb-motivation{
+          margin:12px 24px;
+          padding:12px 16px;
+          background:linear-gradient(135deg,rgba(6,182,212,.12),rgba(14,165,233,.06));
+          border:1px solid rgba(6,182,212,.25);
+          border-radius:12px;
+          text-align:center;
+          font-size:13px;font-weight:700;color:#e2e8f0;
+          line-height:1.5;
+        }
+
+        /* Actions */
+        .fb-actions{padding:0 24px 20px;display:flex;gap:10px}
+        .fb-btn{
+          flex:1;padding:16px;border-radius:14px;border:none;
+          font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;
+          transition:all .2s ease;position:relative;overflow:hidden;
+        }
+        .fb-btn-primary{
+          background:linear-gradient(135deg,#06b6d4,#0ea5e9);
+          color:#fff;
+          box-shadow:0 4px 20px rgba(6,182,212,.35);
+        }
+        .fb-btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(6,182,212,.5)}
+        .fb-btn-primary::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);transition:.4s}
+        .fb-btn-primary:hover::after{left:200%}
+        .fb-btn-secondary{
+          background:rgba(255,255,255,.05);
+          border:1px solid rgba(255,255,255,.1);
+          color:#94a3b8;
+        }
+        .fb-btn-secondary:hover{background:rgba(255,255,255,.09);color:#e2e8f0}
+
+        /* Prep screen start button upgrade */
+        .prep-start-btn{
+          width:100%;padding:18px 24px;
+          background:linear-gradient(135deg,#06b6d4 0%,#0ea5e9 50%,#6366f1 100%);
+          background-size:200% 100%;
+          border:none;border-radius:16px;
+          color:#fff;font-size:18px;font-weight:800;
+          cursor:pointer;font-family:inherit;
+          transition:all .3s ease;
+          box-shadow:0 4px 24px rgba(6,182,212,.4),0 0 0 0 rgba(6,182,212,.3);
+          position:relative;overflow:hidden;
+          letter-spacing:.3px;
+          animation:prep-btn-pulse 2s ease-in-out infinite;
+        }
+        @keyframes prep-btn-pulse{
+          0%,100%{box-shadow:0 4px 24px rgba(6,182,212,.4),0 0 0 0 rgba(6,182,212,.3)}
+          50%{box-shadow:0 8px 32px rgba(6,182,212,.6),0 0 0 8px rgba(6,182,212,.0)}
+        }
+        .prep-start-btn:hover{
+          transform:translateY(-3px) scale(1.02);
+          box-shadow:0 12px 40px rgba(6,182,212,.6);
+          background-position:100% 0;
+        }
+        .prep-start-btn::before{
+          content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;
+          background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent);
+          animation:fb-shine 2s 1s ease infinite;
+        }
+
+        /* Feedback Modal Responsive */
+        @media(max-width:1024px){
+          .feedback-modal{padding:12px}
+          .fb-hero{padding:18px 20px 14px}
+          .fb-score-wrap,.fb-metrics,.fb-text,.fb-highlights{padding-left:20px;padding-right:20px}
+          .fb-actions{padding:0 20px 20px}
+          .fb-motivation{margin:10px 20px}
+        }
+
+        @media(max-width:768px){
+          .feedback-modal{padding:10px}
+          .feedback-card{max-width:98%;max-height:88vh}
+          .fb-hero{padding:14px 16px 12px}
+          .fb-emoji{font-size:28px;margin-bottom:4px}
+          .fb-title{font-size:18px}
+          .fb-score-wrap{padding:12px 16px;gap:14px}
+          .fb-score-ring{width:76px;height:76px}
+          .fb-score-ring svg{width:76px;height:76px}
+          .fb-score-num{font-size:22px}
+          .fb-score-desc{font-size:12px}
+          .fb-metrics,.fb-text,.fb-highlights{padding:12px 16px}
+          .fb-actions{padding:0 16px 16px}
+          .fb-motivation{margin:8px 16px}
+        }
+
+        @media(max-width:480px){
+          .feedback-modal{padding:8px}
+          .feedback-card{max-width:100%;border-radius:20px;max-height:92dvh}
+          .fb-hero{padding:10px 14px 8px}
+          .fb-emoji{font-size:22px;margin-bottom:2px}
+          .fb-title{font-size:15px}
+          .fb-subtitle{font-size:10px}
+          .fb-score-wrap{padding:8px 14px;gap:10px}
+          .fb-score-ring{width:64px;height:64px}
+          .fb-score-ring svg{width:64px;height:64px}
+          .fb-score-num{font-size:18px}
+          .fb-metrics,.fb-text,.fb-highlights{padding:8px 14px}
+          .fb-metric-row{margin-bottom:6px}
+          .fb-metric-name{font-size:11px}
+          .fb-text-content{font-size:11px;line-height:1.4}
+          .fb-highlight{padding:7px 10px;margin-bottom:4px}
+          .fb-highlight-text{font-size:11px;line-height:1.4}
+          .fb-highlight-icon{font-size:12px}
+          .fb-actions{padding:0 14px 12px;flex-direction:column;gap:8px}
+          .fb-motivation{margin:6px 14px;font-size:11px;padding:8px 10px}
+          .fb-metrics-title,.fb-text-label,.fb-highlights-label{font-size:9px;margin-bottom:6px}
+        }
+
+        @media(max-width:360px){
+          .feedback-card{border-radius:16px}
+          .fb-title{font-size:15px}
+          .fb-score-ring{width:60px;height:60px}
+          .fb-score-ring svg{width:60px;height:60px}
+          .fb-score-num{font-size:18px}
+        }
+
+        /* ── HISTORY MODAL ── */
+        .history-list{max-height:400px;overflow-y:auto;margin-bottom:20px}
+        .history-list::-webkit-scrollbar{width:4px}
+        .history-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
+        
+        .history-loading{text-align:center;padding:40px 20px;font-size:14px;color:var(--t3)}
+        .history-empty{text-align:center;padding:40px 20px}
+        .history-empty-icon{font-size:48px;margin-bottom:12px}
+        .history-empty-text{font-size:14px;color:var(--t3);line-height:1.6}
+        
+        .history-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:16px;margin-bottom:12px;cursor:pointer;transition:.2s}
+        .history-item:hover{background:rgba(255,255,255,.06);border-color:rgba(6,182,212,.2)}
+        .history-item:last-child{margin-bottom:0}
+        
+        .history-item-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+        .history-item-date{font-size:12px;font-weight:600;color:var(--t2)}
+        .history-item-xp{font-size:12px;font-weight:700;color:var(--primary);background:rgba(6,182,212,.1);padding:4px 8px;border-radius:6px}
+        
+        .history-item-scenario{font-size:14px;font-weight:700;color:var(--t1);margin-bottom:8px}
+        
+        .history-item-footer{display:flex;gap:12px;align-items:center}
+        .history-item-score{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--t3)}
+        .history-item-score-value{font-size:16px;font-weight:800;color:var(--primary)}
+        .history-item-duration{font-size:12px;color:var(--t3)}
+        
+        /* History Modal Responsive */
+        @media(max-width:1024px){
+          .history-list{max-height:350px}
+          .history-item{padding:14px}
+        }
+
+        @media(max-width:768px){
+          .history-list{max-height:300px}
+          .history-item{padding:12px;border-radius:10px}
+          .history-item-header{margin-bottom:6px}
+          .history-item-date{font-size:11px}
+          .history-item-xp{font-size:11px;padding:3px 7px}
+          .history-item-scenario{font-size:13px;margin-bottom:6px}
+          .history-item-footer{gap:10px}
+          .history-item-score{font-size:11px}
+          .history-item-score-value{font-size:15px}
+          .history-item-duration{font-size:11px}
+        }
+
+        @media(max-width:480px){
+          .history-list{max-height:250px}
+          .history-item{padding:10px;border-radius:8px;margin-bottom:10px}
+          .history-item-header{flex-direction:column;align-items:flex-start;gap:4px}
+          .history-item-date{font-size:10px}
+          .history-item-xp{font-size:10px;padding:3px 6px;border-radius:5px}
+          .history-item-scenario{font-size:12px;margin-bottom:5px}
+          .history-item-footer{gap:8px;flex-wrap:wrap}
+          .history-item-score{font-size:10px}
+          .history-item-score-value{font-size:14px}
+          .history-item-duration{font-size:10px}
+          .history-loading{padding:30px 15px;font-size:13px}
+          .history-empty{padding:30px 15px}
+          .history-empty-icon{font-size:40px;margin-bottom:10px}
+          .history-empty-text{font-size:13px}
+        }
+
+        @media(max-width:360px){
+          .history-list{max-height:220px}
+          .history-item{padding:8px;border-radius:6px;margin-bottom:8px}
+          .history-item-date{font-size:9px}
+          .history-item-xp{font-size:9px;padding:2px 5px;border-radius:4px}
+          .history-item-scenario{font-size:11px;margin-bottom:4px}
+          .history-item-footer{gap:6px}
+          .history-item-score{font-size:9px;gap:3px}
+          .history-item-score-value{font-size:13px}
+          .history-item-duration{font-size:9px}
+          .history-loading{padding:25px 12px;font-size:12px}
+          .history-empty{padding:25px 12px}
+          .history-empty-icon{font-size:36px;margin-bottom:8px}
+          .history-empty-text{font-size:12px}
+        }
+
+        /* ── SESSION DETAILS VIEW ── */
+        .session-details{display:none}
+        .session-details.show{display:block}
+        .session-details-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+        .session-details-back{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--t2);padding:8px 12px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:6px}
+        .session-details-back:hover{background:rgba(255,255,255,.1)}
+        .session-details-info{flex:1;margin-left:16px}
+        .session-details-scenario{font-size:18px;font-weight:800;color:var(--t1);margin-bottom:4px}
+        .session-details-date{font-size:12px;color:var(--t3)}
+        
+        .session-messages{max-height:300px;overflow-y:auto;margin-bottom:20px;padding:12px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:12px}
+        .session-messages::-webkit-scrollbar{width:4px}
+        .session-messages::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
+        
+        .session-msg{margin-bottom:12px;padding:10px 12px;border-radius:10px;font-size:14px;line-height:1.5}
+        .session-msg:last-child{margin-bottom:0}
+        .session-msg.user{background:linear-gradient(135deg,rgba(6,182,212,.15),rgba(14,165,233,.1));border:1px solid rgba(6,182,212,.15);margin-left:20px}
+        .session-msg.broker{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);margin-right:20px}
+        .session-msg.system{background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.1);text-align:center;font-size:13px;color:var(--t3)}
+        .session-msg-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+        .session-msg-who{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--primary)}
+        .session-msg-time{font-size:10px;color:var(--t3)}
+        .session-msg-content{color:var(--t2)}
+        
+        .session-metrics-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+        .session-metric-small{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:12px;text-align:center}
+        .session-metric-small-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:6px}
+        .session-metric-small-value{font-size:24px;font-weight:900;color:var(--primary);line-height:1}
+        
+        /* Session Details Responsive */
+        @media(max-width:1024px){
+          .session-messages{max-height:280px}
+          .session-msg{font-size:13px;padding:9px 11px}
+        }
+
+        @media(max-width:768px){
+          .session-details-header{flex-direction:column;align-items:flex-start}
+          .session-details-info{margin-left:0;margin-top:12px}
+          .session-details-back{padding:7px 10px;font-size:12px;gap:5px}
+          .session-details-scenario{font-size:16px;margin-bottom:3px}
+          .session-details-date{font-size:11px}
+          .session-messages{max-height:250px;padding:10px}
+          .session-msg{font-size:13px;padding:8px 10px;border-radius:8px;margin-bottom:10px}
+          .session-msg.user{margin-left:15px}
+          .session-msg.broker{margin-right:15px}
+          .session-msg.system{font-size:12px}
+          .session-msg-header{margin-bottom:5px}
+          .session-msg-who{font-size:10px}
+          .session-msg-time{font-size:9px}
+          .session-metrics-summary{grid-template-columns:1fr;gap:8px;margin-bottom:16px}
+          .session-metric-small{padding:10px;border-radius:8px}
+          .session-metric-small-label{font-size:9px;margin-bottom:5px}
+          .session-metric-small-value{font-size:22px}
+        }
+
+        @media(max-width:480px){
+          .session-details-header{padding-bottom:12px;margin-bottom:16px}
+          .session-details-back{padding:6px 9px;font-size:11px;gap:4px;border-radius:6px}
+          .session-details-info{margin-top:10px}
+          .session-details-scenario{font-size:14px}
+          .session-details-date{font-size:10px}
+          .session-messages{max-height:220px;padding:8px;border-radius:10px}
+          .session-msg{font-size:12px;padding:7px 9px;border-radius:7px;margin-bottom:8px}
+          .session-msg.user{margin-left:10px}
+          .session-msg.broker{margin-right:10px}
+          .session-msg.system{font-size:11px}
+          .session-msg-header{margin-bottom:4px}
+          .session-msg-who{font-size:9px}
+          .session-msg-time{font-size:8px}
+          .session-msg-content{font-size:12px;line-height:1.4}
+          .session-metrics-summary{gap:6px;margin-bottom:14px}
+          .session-metric-small{padding:9px;border-radius:7px}
+          .session-metric-small-label{font-size:8px;margin-bottom:4px}
+          .session-metric-small-value{font-size:20px}
+        }
+
+        @media(max-width:360px){
+          .session-details-header{padding-bottom:10px;margin-bottom:14px}
+          .session-details-back{padding:5px 8px;font-size:10px;gap:3px;border-radius:5px}
+          .session-details-info{margin-top:8px}
+          .session-details-scenario{font-size:13px}
+          .session-details-date{font-size:9px}
+          .session-messages{max-height:200px;padding:6px;border-radius:8px}
+          .session-msg{font-size:11px;padding:6px 8px;border-radius:6px;margin-bottom:6px}
+          .session-msg.user{margin-left:8px}
+          .session-msg.broker{margin-right:8px}
+          .session-msg.system{font-size:10px}
+          .session-msg-header{margin-bottom:3px}
+          .session-msg-who{font-size:8px}
+          .session-msg-time{font-size:7px}
+          .session-msg-content{font-size:11px;line-height:1.3}
+          .session-metrics-summary{gap:5px;margin-bottom:12px}
+          .session-metric-small{padding:8px;border-radius:6px}
+          .session-metric-small-label{font-size:7px;margin-bottom:3px}
+          .session-metric-small-value{font-size:18px}
+        }
+
+        /* ── PREP SCREEN ── */
+        .prep-screen{position:fixed;inset:0;background:rgba(7,11,20,.97);backdrop-filter:blur(20px);z-index:500;display:none;align-items:center;justify-content:center;padding:20px}
+        .prep-card{background:linear-gradient(145deg,rgba(6,182,212,.08),rgba(14,165,233,.04));border:1px solid rgba(6,182,212,.2);border-radius:24px;max-width:560px;width:100%;padding:32px;animation:fadeInUp .4s ease}
+        @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        .prep-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--primary);margin-bottom:8px}
+        .prep-scenario{font-size:22px;font-weight:800;color:var(--t1);margin-bottom:20px;line-height:1.3}
+        .prep-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+        .prep-item{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px 14px}
+        .prep-item-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:4px}
+        .prep-item-val{font-size:14px;font-weight:700;color:var(--t1)}
+        .prep-steps{margin-bottom:24px}
+        .prep-step{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}
+        .prep-step-num{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0;margin-top:1px}
+        .prep-step-text{font-size:13px;color:var(--t2);line-height:1.5}
+        .prep-step-text b{color:var(--t1)}
+        .prep-start-btn{width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--primary),#0ea5e9);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:.2s}
+        .prep-start-btn:hover{opacity:.9;transform:translateY(-1px)}
+
+        /* Prep Screen Responsive */
+        @media(max-width:1024px){
+          .prep-screen{padding:16px}
+          .prep-card{max-width:90%;padding:28px}
+        }
+
+        @media(max-width:768px){
+          .prep-screen{padding:12px}
+          .prep-card{padding:24px;border-radius:20px}
+          .prep-title{font-size:10px;letter-spacing:1.5px;margin-bottom:6px}
+          .prep-scenario{font-size:19px;margin-bottom:16px}
+          .prep-grid{gap:8px;margin-bottom:16px}
+          .prep-item{padding:10px 12px;border-radius:10px}
+          .prep-item-label{font-size:9px}
+          .prep-item-val{font-size:13px}
+          .prep-steps{margin-bottom:20px}
+          .prep-step{gap:8px;margin-bottom:8px}
+          .prep-step-num{width:20px;height:20px;font-size:10px}
+          .prep-step-text{font-size:12px}
+          .prep-start-btn{padding:13px;font-size:14px;border-radius:12px}
+        }
+
+        @media(max-width:480px){
+          .prep-screen{padding:10px}
+          .prep-card{padding:20px;border-radius:16px}
+          .prep-title{font-size:9px;letter-spacing:1.2px;margin-bottom:5px}
+          .prep-scenario{font-size:17px;margin-bottom:14px;line-height:1.25}
+          .prep-grid{grid-template-columns:1fr;gap:6px;margin-bottom:14px}
+          .prep-item{padding:9px 11px;border-radius:8px}
+          .prep-item-label{font-size:8px}
+          .prep-item-val{font-size:12px}
+          .prep-steps{margin-bottom:18px}
+          .prep-step{gap:7px;margin-bottom:7px}
+          .prep-step-num{width:18px;height:18px;font-size:9px}
+          .prep-step-text{font-size:11px;line-height:1.4}
+          .prep-start-btn{padding:12px;font-size:13px;border-radius:10px}
+        }
+
+        @media(max-width:360px){
+          .prep-screen{padding:8px}
+          .prep-card{padding:16px;border-radius:14px}
+          .prep-title{font-size:8px;letter-spacing:1px;margin-bottom:4px}
+          .prep-scenario{font-size:15px;margin-bottom:12px;line-height:1.2}
+          .prep-grid{gap:5px;margin-bottom:12px}
+          .prep-item{padding:8px 10px;border-radius:7px}
+          .prep-item-label{font-size:7px;margin-bottom:3px}
+          .prep-item-val{font-size:11px}
+          .prep-steps{margin-bottom:16px}
+          .prep-step{gap:6px;margin-bottom:6px}
+          .prep-step-num{width:16px;height:16px;font-size:8px}
+          .prep-step-text{font-size:10px;line-height:1.3}
+          .prep-start-btn{padding:11px;font-size:12px;border-radius:9px}
+        }
+
+
+
+        /* ── PHRASE HINTS ── */
+        .phrase-hints{padding:4px 12px 0;display:none;gap:6px;flex-wrap:wrap}
+        .phrase-hints.show{display:flex}
+        .ph{padding:5px 11px;border-radius:20px;border:1px solid rgba(6,182,212,.2);background:rgba(6,182,212,.06);color:var(--primary);font-size:11px;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap}
+        .ph:hover{background:rgba(6,182,212,.15)}
+    </style>
+    <script type="module" src="../firebase-auth-init.js?v=4.0"></script>
+    <script src="../role-guard.js"></script>
+</head>
+<body>
+    <div id="nav-placeholder"></div>
+
+    <!-- ── PREP SCREEN ── -->
+    <div class="prep-screen" id="prep-screen" role="dialog" aria-modal="true" aria-labelledby="prepScreenTitle">
+      <div class="prep-card">
+        <div class="prep-title" id="prepScreenTitle">📋 Подготовка к звонку</div>
+        <div class="prep-scenario" id="prep-scenario">Холодный звонок брокеру</div>
+        <div class="prep-grid" id="prep-grid">
+          <div class="prep-item"><div class="prep-item-label">Тип трейлера</div><div class="prep-item-val" id="prep-trailer">53' Dry Van</div></div>
+          <div class="prep-item"><div class="prep-item-label">Маршрут</div><div class="prep-item-val" id="prep-route">Chicago → Atlanta</div></div>
+          <div class="prep-item"><div class="prep-item-label">Целевая ставка</div><div class="prep-item-val" id="prep-rate">$2,100+</div></div>
+          <div class="prep-item"><div class="prep-item-label">Доступность</div><div class="prep-item-val" id="prep-avail">Сегодня, 2 PM</div></div>
+        </div>
+        <div class="prep-steps" id="prep-steps"></div>
+        <button class="prep-start-btn" onclick="startCall()" aria-label="Начать звонок с брокером">📞 Начать звонок</button>
+      </div>
+    </div>
+
+    <!-- ── FEEDBACK MODAL ── -->
+    <div class="feedback-modal" id="feedbackModal" role="dialog" aria-modal="true" aria-labelledby="feedbackModalTitle">
+      <div class="feedback-card">
+
+        <!-- SVG gradient def -->
+        <svg width="0" height="0" style="position:absolute">
+          <defs>
+            <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#06b6d4"/>
+              <stop offset="100%" stop-color="#6366f1"/>
+            </linearGradient>
+          </defs>
+        </svg>
+
+        <!-- Hero -->
+        <div class="fb-hero">
+          <span class="fb-emoji" id="fbEmoji">🎯</span>
+          <div class="fb-title" id="feedbackModalTitle">Результаты звонка</div>
+          <div class="fb-subtitle">Анализ вашего диалога с брокером</div>
+        </div>
+
+        <!-- Score ring + description -->
+        <div class="fb-score-wrap">
+          <div class="fb-score-ring">
+            <svg width="90" height="90" viewBox="0 0 120 120">
+              <circle class="fb-score-ring-bg" cx="60" cy="60" r="54"/>
+              <circle class="fb-score-ring-fill" id="fbScoreRing" cx="60" cy="60" r="54"/>
+            </svg>
+            <div class="fb-score-center">
+              <div class="fb-score-num" id="avgScore">—</div>
+              <div class="fb-score-denom">/10</div>
+            </div>
+          </div>
+          <div class="fb-score-info">
+            <div class="fb-score-label">Общий балл</div>
+            <div class="fb-score-desc" id="fbScoreDesc">Анализируем диалог...</div>
+          </div>
+        </div>
+
+        <!-- Metric bars -->
+        <div class="fb-metrics">
+          <div class="fb-metrics-title">Детальные оценки</div>
+          <div class="fb-metric-row">
+            <div class="fb-metric-head">
+              <span class="fb-metric-name">🎙️ Профессионализм</span>
+              <span class="fb-metric-val" id="metricProfessionalism">—</span>
+            </div>
+            <div class="fb-metric-track"><div class="fb-metric-bar" id="barProfessionalism"></div></div>
+          </div>
+          <div class="fb-metric-row">
+            <div class="fb-metric-head">
+              <span class="fb-metric-name">🎯 Результативность</span>
+              <span class="fb-metric-val" id="metricEffectiveness">—</span>
+            </div>
+            <div class="fb-metric-track"><div class="fb-metric-bar" id="barEffectiveness"></div></div>
+          </div>
+          <div class="fb-metric-row">
+            <div class="fb-metric-head">
+              <span class="fb-metric-name">📚 Терминология</span>
+              <span class="fb-metric-val" id="metricTerminology">—</span>
+            </div>
+            <div class="fb-metric-track"><div class="fb-metric-bar" id="barTerminology"></div></div>
+          </div>
+        </div>
+
+        <!-- Feedback text -->
+        <div class="fb-text">
+          <div class="fb-text-label">📝 Разбор диалога</div>
+          <div class="fb-text-content" id="feedbackText">Загрузка...</div>
+        </div>
+
+        <!-- Highlights -->
+        <div class="fb-highlights">
+          <div class="fb-highlights-label">✨ Ключевые моменты</div>
+          <div id="feedbackHighlights"></div>
+        </div>
+
+        <!-- Motivation -->
+        <div class="fb-motivation" id="fbMotivation">💪 Каждый звонок делает тебя лучше. Продолжай!</div>
+
+        <!-- Actions -->
+        <div class="fb-actions">
+          <button class="fb-btn fb-btn-secondary" onclick="closeFeedbackModal()" aria-label="Закрыть">✕ Закрыть</button>
+          <button class="fb-btn fb-btn-primary" onclick="closeFeedbackModal();resetChat()" aria-label="Новый звонок">📞 Новый звонок</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── HISTORY MODAL ── -->
+    <div class="feedback-modal" id="historyModal" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle">
+      <div class="feedback-card">
+        <!-- History List View -->
+        <div id="historyListView">
+          <div class="feedback-header">
+            <div class="feedback-title" id="historyModalTitle">📜 История сессий</div>
+            <div class="feedback-subtitle">Ваши предыдущие тренировки с AI брокером</div>
+          </div>
+          
+          <div id="historyList" class="history-list">
+            <div class="history-loading">Загрузка...</div>
+          </div>
+          
+          <div class="feedback-actions">
+            <button class="feedback-btn feedback-btn-secondary" onclick="closeHistoryModal()" aria-label="Закрыть окно истории">Закрыть</button>
+          </div>
+        </div>
+
+        <!-- Session Details View -->
+        <div id="sessionDetailsView" class="session-details">
+          <div class="session-details-header">
+            <button class="session-details-back" onclick="backToHistoryList()" aria-label="Вернуться к списку сессий">
+              <span>←</span>
+              <span>Назад</span>
+            </button>
+            <div class="session-details-info">
+              <div class="session-details-scenario" id="detailsScenario">Загрузка...</div>
+              <div class="session-details-date" id="detailsDate"></div>
+            </div>
+          </div>
+
+          <div class="session-metrics-summary">
+            <div class="session-metric-small">
+              <div class="session-metric-small-label">Профессионализм</div>
+              <div class="session-metric-small-value" id="detailsProfessionalism">-</div>
+            </div>
+            <div class="session-metric-small">
+              <div class="session-metric-small-label">Результативность</div>
+              <div class="session-metric-small-value" id="detailsEffectiveness">-</div>
+            </div>
+            <div class="session-metric-small">
+              <div class="session-metric-small-label">Терминология</div>
+              <div class="session-metric-small-value" id="detailsTerminology">-</div>
+            </div>
+          </div>
+
+          <div class="feedback-text" style="margin-bottom:20px">
+            <div class="feedback-text-label">💬 Диалог</div>
+          </div>
+
+          <div class="session-messages" id="sessionMessages">
+            <div class="history-loading">Загрузка сообщений...</div>
+          </div>
+
+          <div class="feedback-text">
+            <div class="feedback-text-label">📝 Обратная связь</div>
+            <div class="feedback-text-content" id="detailsFeedback">Загрузка...</div>
+          </div>
+
+          <div class="feedback-actions" style="margin-top:20px">
+            <button class="feedback-btn feedback-btn-secondary" onclick="backToHistoryList()" aria-label="Закрыть детали сессии">Закрыть</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="app">
+        <div class="hdr"><div class="hdr-row">
+            <div class="bi"><div class="av" role="img" aria-label="Аватар AI брокера">🤖<span class="dot" id="dot" role="status" aria-label="Статус подключения"></span></div><div><div class="bn" id="bName">AI Брокер — Mike</div><div class="bs" id="bStat">Проверка...</div></div></div>
+            <div class="hdr-btns">
+                <button class="hb" onclick="showHints()" aria-label="Показать подсказки">💡</button>
+                <button class="hb" onclick="showHistory()" aria-label="Показать историю сессий">📜</button>
+                <button class="hb" onclick="getAnalysis()" aria-label="Получить анализ">📊</button>
+                <button class="hb" onclick="endSession()" aria-label="Завершить сессию">🏁 <span class="txt">Завершить</span></button>
+                <button class="hb" onclick="resetChat()" aria-label="Начать новый чат">🔄</button>
+            </div>
+        </div></div>
+        <div class="phrase-hints" id="phrase-hints"></div>
+        <div class="app-layout" id="appLayout">
+            <!-- Transcript Panel (hidden until dialog starts) -->
+            <div class="transcript-panel" id="transcriptPanel">
+                <div class="sbar-wrap">
+                    <button class="sbar-arrow sbar-arrow-l" id="sbarArrowL" onclick="scrollSbar(-1)" aria-label="Прокрутить влево">‹</button>
+                    <div class="sbar" id="sbar" role="tablist" aria-label="Выбор сценария переговоров">
+                        <button class="sc on" data-s="free" role="tab" aria-selected="true" aria-label="Свободный разговор">💬 Свободный</button>
+                        <button class="sc" data-s="negotiate" role="tab" aria-selected="false" aria-label="Переговоры о ставке">💰 Торг</button>
+                        <button class="sc" data-s="book" role="tab" aria-selected="false" aria-label="Букинг груза">📋 Букинг</button>
+                        <button class="sc" data-s="problem" role="tab" aria-selected="false" aria-label="Решение проблемы">⚠️ Проблема</button>
+                        <button class="sc" data-s="cold" role="tab" aria-selected="false" aria-label="Холодный звонок">📞 Холодный</button>
+                        <button class="sc" data-s="followup" role="tab" aria-selected="false" aria-label="Follow-up звонок">🔄 Follow-up</button>
+                    </div>
+                    <button class="sbar-arrow sbar-arrow-r" id="sbarArrowR" onclick="scrollSbar(1)" aria-label="Прокрутить вправо">›</button>
+                </div>
+                <div class="transcript-panel-header">💬 Транскрипт диалога</div>
+                <div class="transcript-panel-messages" id="chat" role="log" aria-live="polite" aria-label="Транскрипт диалога с брокером"></div>
+                <div class="transcript-panel-interim" id="transcriptInterim"></div>
+            </div>
+
+            <!-- Voice Chat Widget -->
+            <div class="voice-chat-widget" id="voiceChatWidget">
+                <!-- Mic Button -->
+                <div class="vcw-mic-container" id="vcwMicContainer">
+                    <div class="wave-ring"></div>
+                    <div class="wave-ring"></div>
+                    <div class="wave-ring"></div>
+                    <div class="wave-ring"></div>
+                    <div class="pulse-ring"></div>
+                    <button class="mic-btn" id="micBtn" onclick="toggleMic()" aria-label="Начать запись" aria-pressed="false" role="button">🎙️</button>
+                </div>
+                <div class="vcw-status" id="vcwStatus"></div>
+
+                <!-- Load Info Card (under mic) -->
+                <div class="load-info-card" id="loadInfoCard">
+                    <div class="load-info-badge" id="loadInfoBadge">📦 Груз с DAT Loadboard</div>
+                    <div class="load-info-route" id="loadInfoRoute">Chicago, IL → Nashville, TN</div>
+                    <div class="load-info-grid">
+                        <div class="load-info-item"><span class="load-info-label">Miles</span><span class="load-info-val" id="liMiles">380</span></div>
+                        <div class="load-info-item"><span class="load-info-label">Equipment</span><span class="load-info-val" id="liEquip">53' Dry Van</span></div>
+                        <div class="load-info-item"><span class="load-info-label">Weight</span><span class="load-info-val" id="liWeight">38,000 lbs</span></div>
+                        <div class="load-info-item"><span class="load-info-label">Rate</span><span class="load-info-val" id="liRate">$1,650</span></div>
+                        <div class="load-info-item"><span class="load-info-label">Pickup</span><span class="load-info-val" id="liPickup">Today 3PM</span></div>
+                        <div class="load-info-item"><span class="load-info-label">RPM</span><span class="load-info-val" id="liRPM">$4.34</span></div>
+                    </div>
+                </div>
+
+                <!-- Say This — prompt for student to read aloud -->
+                <div class="say-this" id="sayThis">
+                    <div class="say-this-header">
+                        <span class="say-this-dot"></span>
+                        <span class="say-this-label">Скажите вслух:</span>
+                    </div>
+                    <div class="say-this-text" id="sayThisText">Hi, this is Alex from Swift Dispatch. I'm calling about the load you posted on DAT, from Chicago to Nashville.</div>
+                </div>
+
+                <!-- Voice Switch -->
+                <div class="voice-switch active" onclick="toggleVoiceEngine()" id="voiceSwitch" aria-label="Переключить голосовой движок">
+                    <span class="voice-switch-label" id="vsSwitchLabel">🔈 Browser</span>
+                    <div class="voice-switch-track"><div class="voice-switch-thumb"></div></div>
+                    <span class="voice-switch-label voice-switch-label-ai" id="vsSwitchLabelAI">AI 🔊</span>
+                </div>
+
+                <!-- ── SIDEBAR TIPS (desktop only) ── -->
+                <div class="sidebar-tips" id="sidebarTips">
+                  <div class="sidebar-tips-title" id="tipsSectionTitle">Советы диспетчера</div>
+                  <div id="tipsContent">
+                    <div class="tip-card" id="tipCard1">
+                      <div class="tip-card-head"><span class="tip-card-icon">🎯</span><span class="tip-card-label">Порядок диалога</span></div>
+                      <div class="tip-card-text">MC# → Оборудование → Load Info → Локация водителя → <strong>Ставка</strong> → Букинг</div>
+                    </div>
+                    <div class="tip-card" id="tipCard2">
+                      <div class="tip-card-head"><span class="tip-card-icon">💰</span><span class="tip-card-label">Торг по ставке</span></div>
+                      <div class="tip-card-text">Используй DAT рынок как аргумент. Называй <strong>deadhead miles</strong>. Двигайся по $50-75.</div>
+                    </div>
+                  </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="../nav-loader.js?v=7.4"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+<script type="module">
+// Import SessionManager
+import SessionManager from '../session-manager.js';
+
+// Global session manager and session ID
+window.sessionManager = null;
+window.currentSessionId = null;
+
+// Initialize SessionManager when user is authenticated
+(async function initSessionManager() {
+  try {
+    // Wait for Firebase auth to initialize
+    const auth = window._fbAuth;
+    if (!auth) {
+      console.warn('[AI Broker Chat] Firebase auth not available yet, waiting...');
+      setTimeout(initSessionManager, 500);
+      return;
+    }
+    
+    // Check if user is authenticated
+    const user = auth.currentUser;
+    if (user) {
+      window.sessionManager = new SessionManager(user.uid);
+    } else {
+      // Wait for auth state change
+      auth.onAuthStateChanged((user) => {
+        if (user && !window.sessionManager) {
+          window.sessionManager = new SessionManager(user.uid);
+        }
+      });
+    }
+  } catch (error) {
+    console.error('[AI Broker Chat] Error initializing SessionManager:', error);
+  }
+})();
+
+// XP за посещение страницы (один раз)
+(function() {
+  const PAGE_KEY = 'xp_page_pages_ai_broker_chat_html';
+  if (localStorage.getItem(PAGE_KEY)) return;
+  import('../xp-system.js').then(m => {
+    m.awardXP('AI_BROKER_USED').then(r => {
+      if (r) localStorage.setItem(PAGE_KEY, '1');
+    });
+  }).catch(() => {});
+})();
+</script>
+</body>
+</html>
+
+<script>
+const _k=['gsk_7b9aEN1PMQBKSKbw','GOyoWGdyb3FYcNiq4FWZScbJ4iZYYSYOF4Qh'];
+const GK=_k[0]+_k[1], GU='https://api.groq.com/openai/v1/chat/completions', MD='llama-3.1-8b-instant';
+let hist=[],scen='free',broker='Mike',busy=false,isRec=false,recognition=null,synth=window.speechSynthesis;
+let widgetState='idle',dialogActive=false;
+var sessionManager=null,currentSessionId=null;
+const NAMES=['Sarah','Jessica','Amanda','Rachel','Emily','Nicole','Ashley','Megan','Lauren','Brittany'];
+
+const BROKER_PROMPT=`You are {N}, a freight broker. A dispatcher is calling about a load you posted on DAT.
+
+CALL FLOW — STRICT ORDER (follow every step, never skip, never go back):
+STEP 1. Answer the phone professionally. Use a proper business greeting with your name and company. Examples: "Thank you for calling Apex Freight, this is {N}, how can I assist you?" / "Good morning, this is {N} with Apex Freight, how may I help you?" / "Apex Freight, {N} speaking, how can I help you today?" — NEVER use slang like "Yeah", "Yep", "Uh-huh", "go ahead" to open a call.
+STEP 2. They say why calling → confirm load available + ask MC. Example: "That load is still available. Can I get your MC number?"
+STEP 3. MC received → confirm briefly + ask equipment. Example: "I have you in the system. What type of equipment are you running?"
+STEP 4. Equipment confirmed → give full Load Info in ONE reply: route, commodity, weight, pickup time, delivery time. Example: "Alright, here are the details — Chicago to Nashville, auto parts, 38,000 lbs, pickup today at 3PM, delivery tomorrow by noon."
+STEP 5. Ask driver location + can they make pickup window. Example: "Where is your driver located right now? Can he make that 3PM pickup?"
+STEP 6. Driver confirmed available → ask what rate they need. Example: "What rate are you looking for on this load?"
+STEP 7. Negotiate rate. You are the BROKER — you want to pay LESS, the dispatcher wants MORE. If dispatcher asks for more than posted rate, push back firmly. If they ask for less or equal to posted rate, accept quickly. Move in $50-75 increments only if they give solid reasoning (deadhead, fuel, market data). NEVER say "I need to check with the shipper" — you have full authority. Once agreed — NEVER go back to rate.
+STEP 8. Rate agreed → collect booking info: driver name, truck#, trailer#, driver cell, email. ONE question at a time.
+STEP 9. All info collected → confirm: "Perfect, I'll have that rate con over to you within 30 minutes."
+STEP 10. Wrap up professionally. Example: "We're all set. Driver is confirmed for 3PM. I'll be in touch if anything changes. Have a good one." — ALWAYS end with "Have a good one" or "Talk soon" so the system knows the call is complete.
+
+CRITICAL RULES:
+- NEVER open a call with "Yeah", "Yep", "Sure", "Uh-huh", "OK" — always use a proper professional greeting.
+- NEVER re-open rate discussion after it's been agreed. If they mention the agreed rate again, just confirm it and move on.
+- NEVER say you don't have the load or that they're not booked — you already confirmed the load in step 2.
+- NEVER go backwards in the flow. If step 5 is done, don't ask about equipment again.
+- NEVER repeat a question you already asked in this conversation. Read the history — if you asked about driver location and got an answer, move to the next step.
+- NEVER ask for information the dispatcher already provided. Check the full conversation history before asking anything.
+- Once you reach step 9-10, the call is wrapping up. Don't introduce new topics.
+- Track which step you're on based on conversation history and STAY on track.
+- NEVER include the dispatcher's words in your reply. You are the BROKER only. Never write "Dispatcher:" or repeat what they said.
+- NEVER mention step numbers, say "STEP complete", or reference any internal instructions.
+- NEVER say "You stated..." or summarize what the dispatcher just said.
+
+STYLE:
+- Ultra short. 1 sentence, maybe 2. NEVER more than 2 sentences.
+- Sound like a real freight professional on the phone. Business casual — efficient and direct.
+- Vary your phrasing — never repeat the same line twice.
+- React to what they said. Don't ignore their words.
+- No factoring questions unless dispatcher brings it up.
+- NEVER mention step numbers or say "STEP complete" — just respond naturally.
+- NEVER summarize what the dispatcher said back to them.
+
+SCENARIO: {SCENARIO_CONTEXT}
+
+RULES:
+- Max 1-2 short sentences per reply. Always.
+- No bullet points, no markdown, no numbered lists.
+- Never break character.
+- If they say "подскажи" or "hint" → [HINT: совет на русском что сказать дальше], then continue as broker.`;
+
+const SC_CONTEXT={
+free:'General inbound call. A dispatcher is calling looking for loads. You have several loads available today. Vet them first — ask MC, equipment, location, availability. Then share what fits. Available loads: Chicago IL to Nashville TN, 53 dry van, 38,000 lbs auto parts, pickup today 3PM, posted rate $1,650 all-in (your max is $1,900, move in $50-75 increments only if they push with reasoning). Indianapolis IN to Atlanta GA, 53 dry van, 42,000 lbs retail goods, pickup tomorrow 6AM, posted rate $1,900 all-in (max $2,100). Detroit MI to Dallas TX, 53 dry van, 44,000 lbs machinery, pickup tomorrow 8AM, posted rate $2,400 all-in (max $2,600). RATE NEGOTIATION RULES: If dispatcher asks for MORE than posted rate — push back, you want to pay LESS not more. If they ask for less than posted — that works in your favor, accept quickly. NEVER say "I need to check with the shipper" — you have authority to negotiate. NEVER confuse higher/lower: if posted is $1,650 and they ask $1,950, that is $300 MORE than posted — resist it. Your shipper pays net 15 days. You prefer carriers with clean safety records and good communication.',
+
+negotiate:'A dispatcher is calling about a load you posted on DAT. The load: Dallas TX to Atlanta GA, 780 miles, 53 dry van, no-touch auto parts, 42,000 lbs, pickup tomorrow 6AM sharp — dock appointment, cannot be late. Your posted rate is $1,750 all-in. Your absolute max is $2,150 but you will fight for every dollar. DAT market rate shows about $2.05/mile on this lane right now. Your shipper is a repeat customer who pays net 15. If they push hard with good reasoning (deadhead, fuel costs, market data), you can move in $50-75 increments. If they go above $2,000, slow down and make them work for every penny. Detention policy: 2 hours free, then $75/hour.',
+
+book:'A dispatcher wants to book a specific load. Load details: Chicago IL to Miami FL, 1,380 miles, 53-foot reefer must maintain 34°F the entire trip — this is critical, no exceptions. Commodity: fresh strawberries from Sysco Foods, 38,000 lbs. Pickup: tomorrow 4:00 AM at Sysco Foods, 2200 W 35th St, Chicago IL 60632, dock #7. Delivery: day after tomorrow by 5:00 PM at Sysco Miami, 8300 NW 53rd St, Miami FL 33166. Rate: $3,450 all-in (you can go down to $3,100 if pushed hard). Special requirements: driver must pre-cool trailer to 34°F before arrival at pickup. You need to collect: driver full name, truck number, trailer number, driver cell phone, and email address for rate confirmation. Rate con goes out within 30 minutes of booking.',
+
+problem:'You have an active high-value load in transit and a dispatcher is calling you about it. Load details: Los Angeles CA to Denver CO, 1,020 miles, consumer electronics valued at $180,000. Picked up yesterday at 8AM. Must deliver TODAY by 5:00 PM — the receiver is Best Buy distribution center, they close at 5PM sharp and will refuse the load if it arrives late. Current time is 11:00 AM, driver should be somewhere in Utah by now. This is a major account — if this load is late, you could lose the shipper entirely. You are stressed but professional. You need: exact current location (city and mile marker), realistic updated ETA, and a concrete action plan. You do not accept vague answers or excuses without solutions.',
+
+cold:'Your phone rings — unknown number. You pick up professionally. You get 25+ cold calls a day from carriers and dispatchers, so you are efficient with your time. Give them about 60 seconds to prove they are worth talking to. Good signs that make you engage: MC number ready, knows their specific lanes, mentions specific equipment, professional tone, mentions their safety rating or years of experience. Bad signs that make you wrap up quickly: vague questions like "do you have any loads?", does not know their MC, claims "we can run anything anywhere", sounds nervous or reads from a script. If they impress you, you have loads available: Phoenix AZ to Dallas TX, dry van, $1,400, pickup Friday. Seattle WA to Los Angeles CA, dry van, $2,100, pickup Thursday. If they do not impress you, politely direct them to email their carrier packet.',
+
+followup:'A dispatcher you have worked with before is calling back. You did one load together last week — Dallas TX to Memphis TN. The driver was on time, communicated well, no issues at pickup or delivery. You liked working with them and want to build the relationship. Be warm but still professional — you are a businesswoman. Available loads this week: Houston TX to Nashville TN, 790 miles, 53 dry van, 40,000 lbs retail, pickup Thursday 8AM, $1,900 total. Memphis TN to Charlotte NC, 630 miles, 53 dry van, 38,000 lbs auto parts, pickup Friday 6AM, $1,500 total. Jacksonville FL to Atlanta GA, 350 miles, reefer 34°F, 22,000 lbs produce, pickup Wednesday 10AM, $1,100 total. You are willing to be more flexible on rate ($100-150 more than for a new carrier). Hint at future consistent business: 3-4 loads per week if things keep going well. Ask about their fleet size and capacity.'
+};
+
+const SC={
+free:{p:BROKER_PROMPT,ctx:'free',h:['Брокер спросит твой MC# — будь готов','Скажи свой факторинг (напр. OTR Solutions)','Назови оборудование и где находишься']},
+negotiate:{p:BROKER_PROMPT,ctx:'negotiate',h:['Дай свой MC# сразу','Назови факторинг компанию','Торгуйся: DAT показывает $2.05/mile']},
+book:{p:BROKER_PROMPT,ctx:'book',h:['MC# и факторинг наготове','Данные водителя: имя, truck#, trailer#, email','Уточни температуру и dock#']},
+problem:{p:BROKER_PROMPT,ctx:'problem',h:['MC# сразу — брокер нервничает','Точное местоположение водителя','Конкретный план — не оправдания']},
+cold:{p:BROKER_PROMPT,ctx:'cold',h:['MC# готов — брокер спросит первым','Назови лейны и оборудование чётко','Safety rating и опыт — твои козыри']},
+followup:{p:BROKER_PROMPT,ctx:'followup',h:['MC# — брокер всё равно проверит','Напомни прошлый груз Dallas-Memphis','Предложи стать preferred carrier']}
+};
+
+const $=id=>document.getElementById(id);
+const chat=$('chat'),micBtn=$('micBtn');
+
+// TranscriptDisplay Component Methods
+const TranscriptDisplay={
+  showInterim(text){
+    const el=$('transcriptInterim');
+    if(!el)return;
+    if(!text||text.trim()===''){el.innerHTML='';el.classList.remove('show');return;}
+    el.innerHTML=`<span class="tpi-text">${text}</span><span class="tpi-cursor"></span>`;
+    el.classList.add('show');
+  },
+  showWaiting(text){
+    // Показываем текст + индикатор "жду продолжения..." + кнопка Отправить
+    const el=$('transcriptInterim');
+    if(!el)return;
+    el.innerHTML=`<span class="tpi-text">${text}</span><span class="tpi-waiting"> продолжай...</span><button class="tpi-send-btn" onclick="sendNow()" aria-label="Отправить сообщение">Отправить →</button>`;
+    el.classList.add('show');
+  },
+  showFinal(text){
+    const el=$('transcriptInterim');
+    if(!el)return;
+    el.textContent='';
+    el.classList.remove('show');
+  },
+  clear(){
+    const el=$('transcriptInterim');
+    if(!el)return;
+    el.textContent='';
+    el.classList.remove('show');
+  }
+};
+
+// Widget State Management
+function updateWidgetState(state){
+  widgetState=state;
+  const mc=$('vcwMicContainer'),st=$('vcwStatus'),mb=$('micBtn');
+  if(!mc||!st||!mb)return;
+  mc.classList.remove('recording');
+  switch(state){
+    case 'idle':
+      st.innerHTML='';
+      mb.disabled=false;
+      mb.setAttribute('aria-label','Начать запись');
+      mb.setAttribute('aria-pressed','false');
+      break;
+    case 'recording':
+      mc.classList.add('recording');
+      st.innerHTML='<span style="color:var(--danger)">● Слушаю...</span>';
+      mb.setAttribute('aria-label','Остановить запись');
+      mb.setAttribute('aria-pressed','true');
+      break;
+    case 'processing':
+      st.innerHTML='<span style="color:var(--t3)">⏳ Обработка...</span>';
+      mb.disabled=true;
+      mb.setAttribute('aria-label','Микрофон заблокирован');
+      mb.setAttribute('aria-pressed','false');
+      break;
+    case 'speaking':
+      st.innerHTML='<div class="wave"><span></span><span></span><span></span></div> Брокер говорит...';
+      // Не блокируем микрофон — студент может говорить пока брокер говорит
+      mb.disabled=false;
+      mb.setAttribute('aria-label','Говорить (брокер ещё говорит)');
+      break;
+  }
+}
+
+// Init AI
+(async()=>{
+  try{
+    const r=await fetch(GU,{method:'POST',mode:'cors',headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},body:JSON.stringify({model:MD,messages:[{role:'user',content:'ping'}],max_tokens:5})});
+    if(!r.ok){
+      const errorText = await r.text();
+      console.error('[AI] Test failed:', r.status, errorText);
+    }
+    $('dot').classList.toggle('on',r.ok);
+    $('bStat').textContent=r.ok?'Онлайн':'Офлайн';
+    if(!r.ok){
+      showNotification('📞 Брокер офлайн. Попробуйте позже.','warning');
+    }
+  }catch(e){
+    console.error('[AI] Connection test failed:', e);
+    $('bStat').textContent='Офлайн';
+    showNotification('📞 Нет связи с брокером. Проверьте интернет.','error');
+  }
+})();
+
+// ── STT ENGINE: Groq Whisper (primary) + Web Speech API (fallback) ──────────
+const GROQ_STT_URL='https://api.groq.com/openai/v1/audio/transcriptions';
+// Freight terms hint for Whisper — dramatically improves accuracy
+const WHISPER_PROMPT='Freight dispatcher call. Terms: MC number, dry van, 53-foot, reefer, flatbed, rate con, BOL, POD, DAT, deadhead, detention, lumper, TONU, RPM, all-in, ETA, HOS, ELD, factoring, OTR Solutions, Triumph, RTS Financial, rate per mile, pickup, delivery, dock, shipper, broker, carrier, dispatcher.';
+
+let whisperStream=null, whisperRecorder=null, whisperChunks=[];
+let useWhisper=true; // true = Groq Whisper, false = browser SR
+
+// Speech Recognition (browser fallback)
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let finalText='', micPermission=false, autoSendTimer=null;
+
+function sendNow(){
+  if(!finalText.trim()) return;
+  if(autoSendTimer){ clearTimeout(autoSendTimer); autoSendTimer=null; }
+  const msg=fixTerms(finalText.trim());
+  finalText='';
+  isRec=false;
+  const micBtn=document.getElementById('micBtn');
+  if(micBtn) micBtn.classList.remove('rec');
+  updateWidgetState('idle');
+  if(useWhisper){ stopWhisperRec(); }
+  else { try{recognition.stop();}catch(ex){} }
+  TranscriptDisplay.clear();
+  processMsg(msg);
+}
+
+// ── Groq Whisper recording ──
+async function startWhisperRec(){
+  try{
+    whisperStream=await navigator.mediaDevices.getUserMedia({audio:{sampleRate:16000,channelCount:1,echoCancellation:true,noiseSuppression:true}});
+    whisperChunks=[];
+    const mimeType=MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?'audio/webm':
+                   MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':'audio/ogg';
+    whisperRecorder=new MediaRecorder(whisperStream,{mimeType:MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?'audio/webm;codecs=opus':mimeType});
+    whisperRecorder.ondataavailable=e=>{ if(e.data.size>0) whisperChunks.push(e.data); };
+    whisperRecorder.onstop=()=>{ sendToWhisper(); };
+    whisperRecorder.start(250);
+    return true;
+  }catch(e){
+    console.warn('[Whisper] Mic access failed, falling back to browser SR:',e.message);
+    useWhisper=false;
+    return false;
+  }
+}
+
+function stopWhisperRec(){
+  if(whisperRecorder && whisperRecorder.state!=='inactive'){
+    whisperRecorder.stop();
+  }
+  if(whisperStream){ whisperStream.getTracks().forEach(t=>t.stop()); whisperStream=null; }
+}
+
+async function sendToWhisper(){
+  if(!whisperChunks.length){ console.warn('[Whisper] No chunks to send'); return; }
+  const mimeType=whisperRecorder?.mimeType||'audio/webm';
+  const blob=new Blob(whisperChunks,{type:mimeType});
+  whisperChunks=[];
+  if(blob.size<500){ console.warn('[Whisper] Audio too short:',blob.size,'bytes'); TranscriptDisplay.clear(); return; }
+
+  console.log('[Whisper] Sending audio:',blob.size,'bytes, type:',mimeType);
+  TranscriptDisplay.showInterim('✦ распознаю...');
+
+  try{
+    const fd=new FormData();
+    // Always send as .webm — Groq accepts webm regardless of codec
+    fd.append('file', blob, 'audio.webm');
+    fd.append('model','whisper-large-v3-turbo');
+    fd.append('language','en');
+    fd.append('prompt',WHISPER_PROMPT);
+    fd.append('response_format','text');
+    fd.append('temperature','0');
+
+    const r=await fetch(GROQ_STT_URL,{
+      method:'POST',
+      headers:{'Authorization':`Bearer ${GK}`},
+      body:fd
+    });
+    if(!r.ok){
+      const errText=await r.text();
+      console.error('[Whisper] API error:',r.status,errText);
+      throw new Error('whisper_'+r.status);
+    }
+    const text=(await r.text()).trim();
+    console.log('[Whisper] Result:',text);
+    if(!text){ TranscriptDisplay.clear(); return; }
+
+    // Reject if result contains non-Latin characters (Russian, etc.)
+    const nonLatinRatio = (text.match(/[^\x00-\x7F]/g)||[]).length / text.length;
+    if(nonLatinRatio > 0.2){
+      console.warn('[Whisper] Non-English detected, ignoring.');
+      TranscriptDisplay.showInterim('⚠️ Говорите по-английски');
+      setTimeout(()=>TranscriptDisplay.clear(), 2000);
+      return;
+    }
+
+    const fixed=fixTerms(text);
+    TranscriptDisplay.clear();
+    processMsg(fixed);
+  }catch(e){
+    console.warn('[Whisper] Failed:',e.message,'. Falling back to browser SR.');
+    TranscriptDisplay.clear();
+    // Don't disable Whisper permanently — just show error
+    showNotification('⚠️ Ошибка распознавания Whisper. Попробуйте ещё раз.','warning');
+  }
+}
+
+// Browser SR setup (fallback)
+if(SR){
+  recognition=new SR();
+  recognition.continuous=true;
+  recognition.interimResults=true;
+  recognition.lang='en-US';
+  recognition.maxAlternatives=3;
+
+  recognition.onresult=e=>{
+    let interimTranscript='', finalTranscript='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal){
+        let best=e.results[i][0].transcript;
+        for(let a=1;a<e.results[i].length;a++){
+          const alt=e.results[i][a].transcript;
+          if(/dry\s*van|reefer|flatbed|53.foot|mc\s*\d|rate\s*con|dead\s*head|detention|lumper/i.test(alt)
+            &&!/dry\s*van|reefer|flatbed|53.foot|mc\s*\d|rate\s*con|dead\s*head|detention|lumper/i.test(best)){
+            best=alt;
+          }
+        }
+        finalTranscript+=best;
+      }else{ interimTranscript+=e.results[i][0].transcript; }
+    }
+    if(interimTranscript.trim()) TranscriptDisplay.showInterim(fixTerms(finalText+interimTranscript));
+    if(finalTranscript.trim()){
+      finalText+=finalTranscript+' ';
+      TranscriptDisplay.showInterim(fixTerms(finalText));
+      if(autoSendTimer) clearTimeout(autoSendTimer);
+      if(isRec && finalText.trim()){
+        TranscriptDisplay.showWaiting(fixTerms(finalText.trim()));
+        autoSendTimer=setTimeout(()=>{
+          if(isRec && finalText.trim()){
+            const msg=fixTerms(finalText.trim());
+            finalText=''; isRec=false;
+            micBtn.classList.remove('rec');
+            updateWidgetState('idle');
+            try{recognition.stop();}catch(ex){}
+            TranscriptDisplay.clear();
+            processMsg(msg);
+          }
+        },3000);
+      }
+    }
+  };
+  recognition.onend=()=>{ if(isRec&&!busy){ try{recognition.start();}catch(e){} } };
+  recognition.onerror=e=>{
+    if(autoSendTimer){ clearTimeout(autoSendTimer); autoSendTimer=null; }
+    switch(e.error){
+      case 'no-speech': break;
+      case 'not-allowed': case 'permission-denied':
+        stopRec(); showNotification('🎙️ Доступ к микрофону заблокирован.','error'); break;
+      case 'audio-capture':
+        stopRec(); showNotification('🎙️ Микрофон не найден.','error'); break;
+      case 'network':
+        stopRec(); showNotification('🌐 Ошибка сети.','error'); break;
+      default:
+        stopRec(); showNotification('❌ Ошибка распознавания речи.','error');
+    }
+  };
+}
+// Check if page is opened via file:// protocol
+if(window.location.protocol==='file:'){
+  // Show warning about file:// protocol limitations
+  const warning=document.createElement('div');
+  warning.style.cssText='position:fixed;top:80px;left:50%;transform:translateX(-50%);background:rgba(249,115,22,.2);border:1px solid rgba(249,115,22,.4);border-radius:12px;padding:16px 20px;font-size:13px;color:#ffffff;z-index:9999;text-align:center;backdrop-filter:blur(10px);max-width:500px;line-height:1.6;';
+  warning.innerHTML='⚠️ <b>Страница открыта локально (file://)</b><br>Браузер не сохраняет разрешение микрофона.<br><br>Для нормальной работы запустите локальный сервер:<br><code style="background:rgba(0,0,0,.3);padding:2px 6px;border-radius:4px;font-size:12px;">python -m http.server 8000</code><br>или используйте Live Server в VS Code';
+  document.body.appendChild(warning);
+  // Don't auto-remove this warning - it's important
+}
+
+// Pre-request mic permission once on page load (silent)
+if(navigator.permissions){
+  navigator.permissions.query({name:'microphone'}).then(p=>{
+    if(p.state==='granted'){micPermission=true;}
+    else if(p.state==='prompt'){
+      // Show one-time tip (only if not file:// protocol)
+      if(window.location.protocol!=='file:'){
+        const tip=document.createElement('div');
+        tip.id='mic-tip';
+        tip.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3);border-radius:12px;padding:10px 18px;font-size:13px;color:#ffffff;z-index:999;text-align:center;backdrop-filter:blur(10px);max-width:320px;';
+        tip.innerHTML='🎙️ Нажми на микрофон и выбери <b>"Разрешить когда я на сайте"</b> — больше не будет спрашивать';
+        document.body.appendChild(tip);
+        setTimeout(()=>tip.remove(),7000);
+      }
+    }
+  }).catch(()=>{});
+}
+
+// Scenario chips — start scenario directly (no prep screen)
+document.querySelectorAll('.sc').forEach(c=>c.addEventListener('click',()=>{
+  scen=c.dataset.s;
+  document.querySelectorAll('.sc').forEach(x=>{
+    x.classList.remove('on');
+    x.setAttribute('aria-selected', 'false');
+  });
+  c.classList.add('on');
+  c.setAttribute('aria-selected', 'true');
+  startScenario(scen);
+}));
+
+async function startScenario(s){
+    document.querySelectorAll('.sc').forEach(c=>{
+      c.classList.remove('on');
+      c.setAttribute('aria-selected', 'false');
+    });
+    const selectedBtn = document.querySelector(`.sc[data-s="${s}"]`);
+    if(selectedBtn){
+      selectedBtn.classList.add('on');
+      selectedBtn.setAttribute('aria-selected', 'true');
+    }
+    scen=s;hist=[];turnCount=0;coachState='start';broker=NAMES[Math.floor(Math.random()*NAMES.length)];
+    // Reset hint rotation so new scenario starts fresh
+    Object.keys(usedHints).forEach(k=>delete usedHints[k]);
+    $('bName').textContent=`AI Брокер — ${broker}`;
+    chat.innerHTML='';
+    dialogActive=true;
+    const al=$('appLayout');if(al)al.classList.add('dialog-active');
+    // Animate widget sliding to top
+    const vcw=$('voiceChatWidget');
+    if(vcw&&typeof gsap!=='undefined'){
+      gsap.fromTo(vcw,{y:30,opacity:.7},{y:0,opacity:1,duration:.5,ease:'power3.out'});
+    }
+    setTimeout(adaptTips,400);
+    // Generate AI tips for this scenario
+    generateSidebarTips(scen);
+    // Show header and scenario bar when dialog starts
+    const hdr=document.querySelector('.hdr');if(hdr)hdr.style.display='';
+    const sbar=$('sbar');if(sbar)sbar.style.display='flex';
+    updateWidgetState('idle');
+
+    // Start new session in Firestore
+    if (sessionManager) {
+      try {
+        currentSessionId = await sessionManager.startSession(scen, broker);
+      } catch (error) {
+        console.error('[AI Broker Chat] Failed to start session:', error);
+        // Continue without session tracking if it fails
+        currentSessionId = null;
+      }
+    } else {
+      console.warn('[AI Broker Chat] SessionManager not initialized, session not tracked');
+      currentSessionId = null;
+    }
+
+    // Chat starts clean — no pre-generated messages
+}
+
+function toggleMic(){
+  if(!dialogActive){startScenario(scen);setTimeout(()=>startRec(),500);return;}
+  if(isRec){stopRec();}
+  else{startRec();}
+}
+// ── Web Audio: анализ громкости голоса ───────────────────────────
+let audioCtx=null, analyser=null, micStream=null, voiceRafId=null;
+const waveRings=()=>document.querySelectorAll('.wave-ring');
+
+function startVoiceVisualizer(){
+  if(audioCtx) return; // уже запущен
+  navigator.mediaDevices.getUserMedia({audio:true,video:false}).then(stream=>{
+    micStream=stream;
+    audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    analyser=audioCtx.createAnalyser();
+    analyser.fftSize=256;
+    analyser.smoothingTimeConstant=0.75;
+    const src=audioCtx.createMediaStreamSource(stream);
+    src.connect(analyser);
+    const data=new Uint8Array(analyser.frequencyBinCount);
+    const rings=waveRings();
+
+    function tick(){
+      voiceRafId=requestAnimationFrame(tick);
+      analyser.getByteFrequencyData(data);
+      // Средняя громкость 0..255
+      let sum=0; for(let i=0;i<data.length;i++) sum+=data[i];
+      const vol=sum/data.length; // 0..255
+      const norm=Math.min(vol/60,1); // нормализуем: тихо=0, громко=1
+
+      rings.forEach((r,i)=>{
+        const delay=i*0.08; // каждое кольцо чуть позже
+        const scale=1+norm*(1.2+i*0.35); // чем дальше кольцо — тем шире
+        const opacity=norm*(0.9-i*0.18);
+        r.style.transform=`scale(${scale.toFixed(3)})`;
+        r.style.opacity=opacity.toFixed(3);
+      });
+    }
+    tick();
+  }).catch(()=>{}); // нет доступа — тихо игнорируем
+}
+
+function stopVoiceVisualizer(){
+  if(voiceRafId){cancelAnimationFrame(voiceRafId);voiceRafId=null;}
+  waveRings().forEach(r=>{r.style.transform='scale(1)';r.style.opacity='0';});
+  if(micStream){micStream.getTracks().forEach(t=>t.stop());micStream=null;}
+  if(audioCtx){audioCtx.close();audioCtx=null;}
+  analyser=null;
+}
+
+function startRec(){
+  isRec=true;
+  finalText='';
+  TranscriptDisplay.clear();
+  micBtn.classList.add('rec');
+  micBtn.setAttribute('aria-pressed','true');
+  micBtn.setAttribute('aria-label','Деактивировать микрофон');
+  updateWidgetState('recording');
+  startVoiceVisualizer();
+
+  if(useWhisper){
+    startWhisperRec().then(ok=>{
+      if(!ok){
+        // Whisper failed — fall back to browser SR
+        useWhisper=false;
+        if(recognition){ try{recognition.start();}catch(e){} }
+        else{ isRec=false; micBtn.classList.remove('rec'); updateWidgetState('idle'); }
+      }
+    });
+  } else {
+    if(!recognition){
+      showNotification('🎙️ Голосовой ввод недоступен. Обновите страницу.','error');
+      isRec=false; micBtn.classList.remove('rec'); updateWidgetState('idle'); return;
+    }
+    try{
+      recognition.start();
+    }catch(e){
+      if(e.name==='InvalidStateError'){
+        try{recognition.stop();}catch(ex){}
+        setTimeout(()=>{ try{recognition.start();}catch(ex){ isRec=false; micBtn.classList.remove('rec'); updateWidgetState('idle'); } },200);
+      }else{
+        isRec=false; micBtn.classList.remove('rec'); updateWidgetState('idle');
+        showNotification('❌ Не удалось запустить распознавание речи.','error');
+      }
+    }
+  }
+}
+
+function stopRec(){
+  isRec=false;
+  micBtn.classList.remove('rec');
+  micBtn.setAttribute('aria-pressed','false');
+  micBtn.setAttribute('aria-label','Активировать микрофон');
+  updateWidgetState('idle');
+  stopVoiceVisualizer();
+  if(autoSendTimer){ clearTimeout(autoSendTimer); autoSendTimer=null; }
+
+  if(useWhisper){
+    stopWhisperRec();
+  } else {
+    try{recognition.stop();}catch(e){}
+    finalText='';
+    TranscriptDisplay.clear();
+  }
+}
+
+// ── Исправление терминов после распознавания ─────────────────────
+function fixTerms(t){
+  // Карта: [regex, замена] — типичные ошибки Web Speech API для терминов диспетчера
+  const map=[
+    // ── Оборудование — самые частые ошибки распознавания ──
+    [/\bpainful\s*to\s*drive\s*in\b/gi,'53-foot dry van'],
+    [/\bfifty[\s-]three[\s-]foot\b/gi,'53-foot'],
+    [/\bfifty\s*3\s*foot\b/gi,'53-foot'],
+    [/\b53\s*foot\b/gi,'53-foot'],
+    [/\b53\s*ft\b/gi,'53-foot'],
+    [/\bfive\s*three\s*foot\b/gi,'53-foot'],
+    [/\bfive\s*three\s*feet\b/gi,'53-foot'],
+    [/\b53[\s-]feet\b/gi,'53-foot'],
+    [/\bdry\s*van\b/gi,'dry van'],
+    [/\bdrive\s*van\b/gi,'dry van'],
+    [/\bdry\s*band\b/gi,'dry van'],
+    [/\bdry\s*man\b/gi,'dry van'],
+    [/\bdrive[\s-]in\b/gi,'dry van'],
+    [/\bdriving\s*in\b/gi,'dry van'],
+    [/\bdrive[\s-]in\s*53\b/gi,'53-foot dry van'],
+    [/\bhave\s*drive[\s-]in\b/gi,'have dry van'],
+    [/\bdry\s*van\s*53\b/gi,'53-foot dry van'],
+    [/\b53\s*dry\s*van\b/gi,'53-foot dry van'],
+    [/\breefer\b/gi,'reefer'],
+    [/\brefrigerated\b/gi,'reefer'],
+    [/\bflatbed\b/gi,'flatbed'],
+    [/\bflat\s*bed\b/gi,'flatbed'],
+    [/\bstep\s*deck\b/gi,'step deck'],
+    [/\bpower\s*only\b/gi,'power only'],
+    [/\b48\s*foot\b/gi,'48-foot'],
+    [/\b48\s*ft\b/gi,'48-foot'],
+    // ── MC number ──
+    [/\bjames\s*number\b/gi,'MC number'],
+    [/\bem\s*see\b/gi,'MC'],
+    [/\bm\.?\s*c\.?\s*#?\s*number\b/gi,'MC number'],
+    [/\bm\.?\s*c\.?\b(?!\s*[a-z])/gi,'MC'],
+    [/\bd\.?\s*o\.?\s*t\.?\b/gi,'DOT'],
+    [/\bf\.?\s*m\.?\s*c\.?\s*s\.?\s*a\.?\b/gi,'FMCSA'],
+    // ── Документы ──
+    [/\bb\.?\s*o\.?\s*l\.?\b/gi,'BOL'],
+    [/\bbill of lading\b/gi,'BOL'],
+    [/\bp\.?\s*o\.?\s*d\.?\b/gi,'POD'],
+    [/\bproof of delivery\b/gi,'POD'],
+    [/\brate\s*con(firmation)?\b/gi,'rate con'],
+    [/\br\.?\s*c\.?\b/gi,'RC'],
+    [/\bt\.?\s*o\.?\s*n\.?\s*u\.?\b/gi,'TONU'],
+    [/\btruck order not used\b/gi,'TONU'],
+    // ── Финансы ──
+    [/\br\.?\s*p\.?\s*m\.?\b/gi,'RPM'],
+    [/\brate per mile\b/gi,'RPM'],
+    [/\ball[\s-]in\b/gi,'all-in'],
+    [/\bdeadhead\b/gi,'deadhead'],
+    [/\bdead\s*head\b/gi,'deadhead'],
+    [/\bdetention\b/gi,'detention'],
+    [/\blumper\b/gi,'lumper'],
+    [/\baccessorial(s)?\b/gi,'accessorials'],
+    [/\bfuel\s*surcharge\b/gi,'fuel surcharge'],
+    [/\bquick\s*pay\b/gi,'quick pay'],
+    [/\bnet\s*(\d+)\b/gi,'net $1'],
+    // ── Операции ──
+    [/\bpick\s*up\b/gi,'pickup'],
+    [/\bp\.?\s*u\.?\b/gi,'PU'],
+    [/\bcheck\s*call(s)?\b/gi,'check call'],
+    [/\bcheck\s*in\b/gi,'check-in'],
+    [/\bf\.?\s*c\.?\s*f\.?\s*s\.?\b/gi,'FCFS'],
+    [/\bfirst\s*come\s*first\s*served\b/gi,'FCFS'],
+    [/\be\.?\s*t\.?\s*a\.?\b/gi,'ETA'],
+    [/\bestimated\s*time\s*of\s*arrival\b/gi,'ETA'],
+    [/\bhours\s*of\s*service\b/gi,'HOS'],
+    [/\bh\.?\s*o\.?\s*s\.?\b/gi,'HOS'],
+    [/\belectronic\s*log(ging)?\b/gi,'ELD'],
+    [/\be\.?\s*l\.?\s*d\.?\b/gi,'ELD'],
+    [/\bmile\s*market\b/gi,'mile marker'],
+    [/\bmile\s*marker\b/gi,'mile marker'],
+    // ── Биржи ──
+    [/\bdat\s*load\s*board\b/gi,'DAT loadboard'],
+    [/\bdat\b/gi,'DAT'],
+    [/\btruckstop\b/gi,'Truckstop'],
+    // ── Города ──
+    [/\bchicago\b/gi,'Chicago'],
+    [/\bnashville\b/gi,'Nashville'],
+    [/\batlanta\b/gi,'Atlanta'],
+    [/\bdallas\b/gi,'Dallas'],
+    [/\bhouston\b/gi,'Houston'],
+    [/\blos\s*angeles\b/gi,'Los Angeles'],
+    [/\bmiami\b/gi,'Miami'],
+    [/\bdenver\b/gi,'Denver'],
+    [/\bindianapolis\b/gi,'Indianapolis'],
+    [/\bmemphis\b/gi,'Memphis'],
+    [/\bdetroit\b/gi,'Detroit'],
+    [/\bseattle\b/gi,'Seattle'],
+    [/\bphoenix\b/gi,'Phoenix'],
+    // ── Участники ──
+    [/\bshipper\b/gi,'shipper'],
+    [/\bconsignee\b/gi,'consignee'],
+    [/\bcarrier\b/gi,'carrier'],
+    [/\bdispatcher\b/gi,'dispatcher'],
+    [/\bbroker\b/gi,'broker'],
+  ];
+  let r=t;
+  map.forEach(([rx,rep])=>{ r=r.replace(rx,rep); });
+  return r;
+}
+
+async function processMsg(text){
+    text=fixTerms(text.trim());
+    // Clear transcript display after message is sent
+    TranscriptDisplay.clear();
+    // Add user message to chat
+    addMsg('user',text);
+    hist.push({role:'user',content:text});busy=true;micBtn.disabled=false;
+    updateWidgetState('processing');
+    chat.scrollTop=chat.scrollHeight;
+    
+    // Save user message to Firestore (Task 8.2)
+    if (sessionManager && currentSessionId) {
+        try {
+            await sessionManager.saveMessage(currentSessionId, {
+                type: 'user',
+                content: text
+            });
+        } catch (error) {
+            console.error('[AI Broker Chat] Failed to save user message:', error);
+            // Continue execution even if save fails
+        }
+    }
+    
+    try{
+        const reply=await callAI(text);
+        // Handle hints
+        let brokerReply=reply;
+        if(reply.includes('[HINT')){const m=reply.match(/\[HINT:?\s*(.*?)\]/);if(m){addMsg('sys','💡 '+m[1].trim());brokerReply=reply.replace(/\[HINT:?\s*.*?\]/,'').trim()}}
+        addMsg('broker',brokerReply);hist.push({role:'assistant',content:brokerReply});
+        
+        // Update Say This + sidebar tips in one AI call
+        updateSayThis(brokerReply,text);
+
+        // ── Auto-detect call end: broker said goodbye ──
+        const isGoodbye = /\b(bye|goodbye|have a good one|talk soon|take care|good luck|all set.*talk|we.?re all set|nice talking|pleasure working|i.?ll be in touch|confirmed for|rate con.*30 min|have a good day|have a great day|look forward to working)\b/i.test(brokerReply);
+        if(isGoodbye && hist.length >= 4){
+          setTimeout(async ()=>{
+            if(dialogActive){
+              stopRec();
+              await endSession();
+            }
+          }, 3500);
+        }
+        
+        // Save broker message to Firestore (Task 8.2)
+        if (sessionManager && currentSessionId) {
+            try {
+                await sessionManager.saveMessage(currentSessionId, {
+                    type: 'broker',
+                    content: brokerReply
+                });
+            } catch (error) {
+                console.error('[AI Broker Chat] Failed to save broker message:', error);
+                // Continue execution even if save fails
+            }
+        }
+        
+        updateWidgetState('speaking');
+        await speakText(brokerReply);
+        busy=false; micBtn.disabled=false;
+        updateWidgetState('idle');
+        // Если студент уже что-то наговорил пока брокер говорил — отправляем сразу (только для браузерного SR)
+        if(!useWhisper && isRec && finalText.trim()){
+          if(autoSendTimer) clearTimeout(autoSendTimer);
+          autoSendTimer=setTimeout(()=>{
+            if(isRec && finalText.trim()){
+              const msg=finalText.trim();
+              finalText='';
+              isRec=false;
+              micBtn.classList.remove('rec');
+              try{recognition.stop();}catch(ex){}
+              TranscriptDisplay.clear();
+              processMsg(msg);
+            }
+          }, 2500);
+        } else {
+          setTimeout(()=>{if(!isRec&&!busy&&dialogActive){startRec();}},1000);
+        }
+    }catch(e){
+        updateWidgetState('idle');
+        // Error already shown to user via showNotification in callAI
+        // Remove last user message from history since AI didn't respond
+        hist.pop();
+        // Auto-restart recording on error too
+        busy=false;micBtn.disabled=false;
+        setTimeout(()=>{if(!isRec&&!busy&&dialogActive){console.log('[Auto] Restarting mic after error');startRec();}},1200);
+    }
+    
+    busy=false;micBtn.disabled=false;
+    if(widgetState!=='idle')updateWidgetState('idle');
+}
+
+async function callAI(msg){
+    const sp=SC[scen].p.replace(/{N}/g,broker).replace('{SCENARIO_CONTEXT}',SC_CONTEXT[SC[scen].ctx]||SC_CONTEXT.free);
+    
+    // Build context-aware history
+    let histSlice;
+    if(hist.length<=12){
+      histSlice=hist;
+    }else{
+      const head=hist.slice(0,4);
+      const tail=hist.slice(-8);
+      histSlice=[...head,...tail];
+    }
+
+    // Detect current step and inject precise reminder
+    const agreedRate=detectAgreedRate(hist);
+    const brokerAll=hist.filter(m=>m.role==='assistant').map(m=>m.content).join(' ').toLowerCase();
+    const userAll=hist.filter(m=>m.role==='user').map(m=>m.content).join(' ').toLowerCase();
+    const reminders=[];
+
+    const loadInfoDone = /pickup.*today|pickup.*tomorrow|delivery.*by|auto parts|retail|machinery|38,000|42,000|44,000/i.test(brokerAll);
+    const locationAsked = /where.*driver|can.*make.*pickup|driver.*located|make.*3pm|make.*pickup/i.test(brokerAll);
+    const locationAnswered = /chicago|available|can make|he.?s in|she.?s in|driver is|located in|area|on the way|heading|en route|nearby|close|ready/i.test(userAll);
+    const locationDone = locationAsked && locationAnswered;
+    const bookingAsked = /driver.?s name|truck number|trailer number|cell.*phone|email.*rate/i.test(brokerAll);
+    const bookingDone  = /driver.*name.*is|truck.*\d{3,}|trailer.*\d{3,}|my email|george|john|mike/i.test(userAll);
+    const rateConConfirmed = /rate con.*30|within 30|sending.*rate con|confirmation.*sent/i.test(brokerAll);
+
+    if(agreedRate){
+      reminders.push(`CRITICAL: Rate ${agreedRate} is ALREADY AGREED. Do NOT re-negotiate. Do NOT mention rate again unless asked. Move to next step.`);
+    }
+    if(locationAsked && locationAnswered){
+      reminders.push(`STEP 5 COMPLETE: Driver location was already confirmed. DO NOT ask about driver location again. Move to next step.`);
+    }
+    if(loadInfoDone && !locationDone){
+      reminders.push(`CURRENT STEP: Ask driver location and confirm they can make the pickup window.`);
+    }
+    if(locationDone && !agreedRate){
+      reminders.push(`CURRENT STEP: Ask what rate they need for this load.`);
+    }
+    if(agreedRate && !bookingAsked){
+      reminders.push(`CURRENT STEP: Collect booking info — ask driver name first.`);
+    }
+    if(bookingAsked && !bookingDone){
+      reminders.push(`CURRENT STEP: Still collecting booking info. Ask for missing items: truck#, trailer#, cell, email.`);
+    }
+    if(bookingDone && !rateConConfirmed){
+      reminders.push(`CURRENT STEP: Confirm rate con goes out within 30 minutes and wrap up the call.`);
+    }
+    if(rateConConfirmed){
+      reminders.push(`CURRENT STEP: Call is wrapping up. Say goodbye professionally. The booking is complete.`);
+    }
+    if(hist.length>20){
+      reminders.push(`NOTE: This call has been going on for ${hist.length} turns. Move toward conclusion — don't introduce new topics.`);
+    }
+
+    if(reminders.length>0){
+      histSlice=[{role:'system',content:reminders.join(' ')},...histSlice];
+    }
+    
+    const msgs=[{role:'system',content:sp},...histSlice];
+    const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),8000);
+    try{
+        const r=await fetch(GU,{method:'POST',mode:'cors',signal:ctrl.signal,headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},body:JSON.stringify({model:MD,messages:msgs,temperature:.92,max_tokens:80,top_p:.95})});
+        clearTimeout(t);
+        if(!r.ok){
+            const errorText = await r.text();
+            console.error('[AI] API error:', r.status, r.statusText, errorText);
+            $('dot').classList.remove('on');
+            throw new Error(`API_ERROR_${r.status}`);
+        }
+        const d=await r.json();
+        $('dot').classList.add('on');
+        if(!d.choices?.[0]?.message?.content){
+            console.error('[AI] Empty response:', d);
+            throw new Error('EMPTY_RESPONSE');
+        }
+        return d.choices[0].message.content;
+    }catch(e){
+        clearTimeout(t);
+        console.error('[AI] Call failed:', e);
+        $('dot').classList.remove('on');
+        // Show error to user instead of fallback
+        if(e.name==='AbortError'){
+            showNotification('📞 Брокер на другой линии. Перезвоните через минуту.','warning');
+            throw new Error('AI_TIMEOUT');
+        }else if(e.message.includes('API_ERROR_429')){
+            showNotification('📞 Линия занята. Попробуйте перезвонить через минуту.','warning');
+            throw new Error('RATE_LIMIT');
+        }else if(e.message.includes('API_ERROR_401')){
+            showNotification('📞 Брокер недоступен. Проверьте подключение.','error');
+            throw new Error('AUTH_ERROR');
+        }else if(e.message.includes('Failed to fetch')){
+            showNotification('📞 Нет связи. Проверьте интернет.','error');
+            throw new Error('NETWORK_ERROR');
+        }else{
+            showNotification('📞 Брокер не ответил. Попробуйте ещё раз.','error');
+            throw new Error('AI_ERROR');
+        }
+    }
+}
+
+// OpenAI TTS config
+const OAI_TTS_URL='https://api.openai.com/v1/audio/speech';
+const OAI_TTS_VOICE='onyx';
+const OAI_TTS_MODEL='tts-1';
+let OAI_TTS_KEY=localStorage.getItem('oai_tts_key')||'';
+let useAIVoice=true;
+
+function toggleVoiceEngine(){
+  useAIVoice=!useAIVoice;
+  const sw=$('voiceSwitch');
+  if(sw) sw.classList.toggle('active',useAIVoice);
+}
+
+function setOpenAIKey(key){
+  OAI_TTS_KEY=key;
+  localStorage.setItem('oai_tts_key',key);
+  useAIVoice=true;
+  const sw=$('voiceSwitch');
+  if(sw) sw.classList.add('active');
+  console.log('[OpenAI TTS] Key set, AI voice enabled.');
+}
+
+function speakText(text){
+    return new Promise(resolve=>{
+        if(!text||!text.trim()){resolve();return}
+        if(!synth){resolve();return}
+        synth.cancel();
+        const u=new SpeechSynthesisUtterance(text);
+        u.lang='en-GB';u.rate=1.1;u.pitch=0.75;u.volume=1.0;
+        const v=synth.getVoices();
+
+        const priority=[
+          'Google UK English Male',
+          'Microsoft George Online (Natural)','Microsoft George',
+          'Microsoft Ryan Online (Natural)','Microsoft Ryan',
+          'Microsoft Andrew Online (Natural)','Microsoft Andrew',
+          'Google US English',
+        ];
+        const skipVoices=/female|zira|samantha|karen|moira|fiona|tessa|victoria|susan|hazel|jenny|aria|sara|shelley|sandy|allison|ava|sonia|libby|mia|michelle|ashley|nancy/i;
+
+        let bv=null;
+        for(const name of priority){
+          bv=v.find(x=>x.name.toLowerCase().includes(name.toLowerCase())&&!skipVoices.test(x.name));
+          if(bv) break;
+        }
+        if(!bv) bv=v.find(x=>x.lang==='en-GB'&&!skipVoices.test(x.name));
+        if(!bv) bv=v.find(x=>x.lang.startsWith('en'));
+
+        console.log('[TTS] Using voice:', bv?.name||'default');
+        if(bv) u.voice=bv;
+        u.onend=()=>{resolve()};u.onerror=()=>{resolve()};
+        synth.speak(u);
+    });
+}
+if(synth)synth.onvoiceschanged=()=>synth.getVoices();
+
+const MSG_LIMIT=50;
+function addMsg(type,text){
+    const d=document.createElement('div');d.className=`msg ${type}`;
+    d.setAttribute('role','article');
+    const t=now();
+    if(type==='broker'){
+        d.innerHTML=`<div class="who">${broker}</div>${esc(text)}<span class="ts">${t}</span>`;
+        d.setAttribute('aria-label',`Сообщение от брокера ${broker} в ${t}`);
+    } else if(type==='user'){
+        d.innerHTML=`${esc(text)}<span class="ts">${t} ✓</span>`;
+        d.setAttribute('aria-label',`Ваше сообщение в ${t}`);
+    } else {
+        d.innerHTML=text;
+        d.setAttribute('aria-label','Системное сообщение');
+    }
+    // Анимация появления
+    d.style.cssText+='opacity:0;transform:translateY(8px);transition:opacity 0.25s ease,transform 0.25s ease;';
+    chat.appendChild(d);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        d.style.opacity='1';
+        d.style.transform='translateY(0)';
+    }));
+    const msgs=chat.querySelectorAll('.msg');
+    if(msgs.length>MSG_LIMIT){
+        for(let i=0;i<msgs.length-MSG_LIMIT;i++) msgs[i].remove();
+    }
+    chat.scrollTop=chat.scrollHeight;
+}
+function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
+function now(){const d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')}
+function autoH(){}
+
+function showNotification(message,type='info'){
+    // Remove existing notifications first
+    document.querySelectorAll('.app-notification').forEach(n=>n.remove());
+    const notification=document.createElement('div');
+    notification.className='app-notification';
+    notification.style.cssText=`position:fixed;top:12px;right:12px;background:${type==='error'?'rgba(239,68,68,.2)':type==='warning'?'rgba(249,115,22,.2)':'rgba(6,182,212,.2)'};border:1px solid ${type==='error'?'rgba(239,68,68,.3)':type==='warning'?'rgba(249,115,22,.3)':'rgba(6,182,212,.3)'};border-radius:12px;padding:10px 16px;font-size:12px;color:#ffffff;z-index:9999;text-align:left;backdrop-filter:blur(16px);max-width:300px;box-shadow:0 4px 16px rgba(0,0,0,.4);animation:slideDown .3s ease`;
+    notification.textContent=message;
+    document.body.appendChild(notification);
+    setTimeout(()=>{
+        notification.style.animation='slideUp .3s ease';
+        setTimeout(()=>notification.remove(),300);
+    },3000);
+}
+
+function showHints(){const h=SC[scen]?.h||[];addMsg('sys','💡 '+h.join(' • '));chat.scrollTop=chat.scrollHeight}
+
+async function getAnalysis(){
+    if(hist.length<4){addMsg('sys','📊 Поговори ещё немного для анализа.');return}
+    addMsg('sys','📊 Анализирую...');
+    const tr=hist.map(m=>`${m.role==='user'?'Dispatcher':'Broker'}: ${m.content}`).join('\n');
+    try{const r=await fetch(GU,{method:'POST',mode:'cors',headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},body:JSON.stringify({model:MD,messages:[{role:'user',content:`Analyze this dispatcher-broker call. Rate dispatcher 1-10. Respond in Russian, 3-4 sentences: score, what's good, what to improve.\n\n${tr}`}],temperature:.3,max_tokens:200})});
+    const d=await r.json();addMsg('sys','📊 '+( d.choices?.[0]?.message?.content||'Ошибка анализа'))}catch(e){addMsg('sys','📊 Ошибка анализа')}
+    chat.scrollTop=chat.scrollHeight;
+}
+
+function resetChat(){synth?.cancel();if(recognition&&isRec)recognition.stop();isRec=false;busy=false;hist=[];chat.innerHTML='';dialogActive=false;const al=$('appLayout');if(al)al.classList.remove('dialog-active');updateWidgetState('idle');const ti=$('transcriptInterim');if(ti){ti.textContent='';ti.classList.remove('show');}document.querySelectorAll('.sc').forEach(c=>{c.classList.remove('on');c.setAttribute('aria-selected','false')});const freeBtn=document.querySelector('.sc[data-s="free"]');if(freeBtn){freeBtn.classList.add('on');freeBtn.setAttribute('aria-selected','true')}scen='free';broker=NAMES[Math.floor(Math.random()*NAMES.length)];$('bName').textContent=`AI Брокер — ${broker}`;const hdr=document.querySelector('.hdr');if(hdr)hdr.style.display='none';const sbar=$('sbar');if(sbar)sbar.style.display='none';}
+
+// ── Adaptive tips: hide card2 if widget overflows ──
+function adaptTips(){
+  const vcw=$('voiceChatWidget');
+  const c2=$('tipCard2');
+  const tips=$('sidebarTips');
+  if(!vcw||!c2||!tips)return;
+  // Show both first to measure
+  c2.style.display='';
+  tips.style.display='';
+  requestAnimationFrame(()=>{
+    const overflows=vcw.scrollHeight>vcw.clientHeight+4;
+    if(overflows){c2.style.display='none';}
+  });
+}
+window.addEventListener('resize',adaptTips);
+// Run after layout settles
+setTimeout(adaptTips,600);
+
+// ═══════════════════════════════════════════════
+// PREP SCREEN
+// ═══════════════════════════════════════════════
+const PREP_DATA={
+  free:{title:'Свободный разговор с брокером',trailer:"53' Dry Van",route:'Любой маршрут',rate:'По рынку',avail:'Уточни у водителя',
+    steps:[
+      {t:'Представься',d:'<b>"This is [Имя] from [Компания], how are you doing today?"</b>'},
+      {t:'Узнай о грузе',d:'<b>"Do you have any loads available for [дата]?"</b>'},
+      {t:'Уточни детали',d:'Origin, destination, weight, commodity, pickup time'},
+      {t:'Обсуди ставку',d:'Проверь DAT перед звонком. Называй чуть выше рынка'},
+    ]},
+  negotiate:{title:'Переговоры о ставке',trailer:"53' Dry Van",route:'Chicago → Atlanta',rate:'$2,100 (рынок $1,950)',avail:'Завтра, 8 AM',
+    steps:[
+      {t:'Якорная цена',d:'Называй первым: <b>"I need $2,100 all-in"</b>'},
+      {t:'Обоснуй',d:'<b>"DAT shows $2.05/mile average on this lane"</b>'},
+      {t:'Не сдавайся сразу',d:'На первый отказ: <b>"What\'s the best you can do?"</b>'},
+      {t:'Финальный торг',d:'Уступай не более $50-100. Ниже $1,900 — уходи'},
+    ]},
+  book:{title:'Букинг груза',trailer:"53' Reefer",route:'Dallas → Miami',rate:'$3,200 all-in',avail:'Сегодня, 3 PM',
+    steps:[
+      {t:'Подтверди детали',d:'Адрес pickup, delivery, contact names, hours'},
+      {t:'Запроси Rate Con',d:'<b>"Can you send the rate con to [email]?"</b>'},
+      {t:'Уточни требования',d:'Lumper? Detention policy? Special instructions?'},
+      {t:'Подтверди водителя',d:'Имя, номер телефона, номер трейлера'},
+    ]},
+  problem:{title:'Решение проблемы',trailer:'Любой',route:'В пути',rate:'Уже забронировано',avail:'Водитель в пути',
+    steps:[
+      {t:'Сообщи сразу',d:'<b>"I need to update you on load #[номер]"</b>'},
+      {t:'Объясни ситуацию',d:'Факты без эмоций. Что случилось, где водитель'},
+      {t:'Предложи решение',d:'Всегда приходи с планом Б'},
+      {t:'Зафиксируй',d:'Все договорённости — письменно на email'},
+    ]},
+  cold:{title:'Холодный звонок',trailer:"53' Dry Van",route:'Midwest lanes',rate:'Рыночная',avail:'Флот 3 грузовика',
+    steps:[
+      {t:'Открытие',d:'<b>"Hi, this is [Имя], I\'m a dispatcher looking to work with quality brokers"</b>'},
+      {t:'Ценностное предложение',d:'<b>"We specialize in Midwest lanes, 99% on-time delivery"</b>'},
+      {t:'Квалификация',d:'Спроси о типичных грузах, объёме, требованиях'},
+      {t:'Следующий шаг',d:'<b>"Can I send you our carrier packet?"</b>'},
+    ]},
+  followup:{title:'Follow-up звонок',trailer:'Уже работали',route:'Повторный контакт',rate:'Лучше прошлого',avail:'Готовы к работе',
+    steps:[
+      {t:'Напомни о себе',d:'<b>"Hi [Имя], this is [Твоё имя] — we hauled your load last week"</b>'},
+      {t:'Оцени прошлый опыт',d:'<b>"How was our service? Any feedback?"</b>'},
+      {t:'Предложи снова',d:'<b>"We have a truck available [дата] — do you have anything?"</b>'},
+      {t:'Строй отношения',d:'Цель — стать preferred carrier'},
+    ]},
+};
+
+function showPrepScreen(){
+  const d=PREP_DATA[scen]||PREP_DATA.free;
+  $('prep-scenario').textContent=d.title;
+  $('prep-trailer').textContent=d.trailer;
+  $('prep-route').textContent=d.route;
+  $('prep-rate').textContent=d.rate;
+  $('prep-avail').textContent=d.avail;
+  $('prep-steps').innerHTML=d.steps.map((s,i)=>`
+    <div class="prep-step">
+      <div class="prep-step-num">${i+1}</div>
+      <div class="prep-step-text"><b>${s.t}</b> — ${s.d}</div>
+    </div>`).join('');
+  $('prep-screen').style.display='flex';
+}
+
+async function startCall(){
+  $('prep-screen').style.display='none';
+  await startScenario(scen);
+}
+
+
+
+// Auto-start — just set broker name, no prep screen on load
+broker=NAMES[Math.floor(Math.random()*NAMES.length)];$('bName').textContent=`AI Брокер — ${broker}`;scen='free';
+
+// ═══════════════════════════════════════════════
+// FEEDBACK MODAL FUNCTIONS
+// ═══════════════════════════════════════════════
+
+/**
+ * Show feedback modal with performance metrics
+ * @param {Object} metrics - Performance metrics object
+ * @param {number} metrics.professionalism - Score 1-10
+ * @param {number} metrics.effectiveness - Score 1-10
+ * @param {number} metrics.terminology - Score 1-10
+ * @param {number} metrics.avgScore - Average score
+ * @param {string} metrics.feedback - Text feedback
+ * @param {Array} metrics.highlights - Array of highlight objects {type: 'success'|'improvement', message: string}
+ * @param {Object} metrics.xpAwarded - XP information {total, base, bonus, bonusReason}
+ */
+function showFeedbackModal(metrics = {}) {
+  const modal = $('feedbackModal');
+
+  // Score descriptions
+  const scoreDesc = s => s>=9?'Отличный результат! Профессиональный уровень 🔥':s>=7?'Хорошая работа! Есть куда расти 💪':s>=5?'Неплохо, но нужна практика 📈':'Продолжай тренироваться, всё придёт 🎯';
+  const motivations = [
+    '💪 Каждый звонок делает тебя лучше. Не останавливайся!',
+    '🚀 Реальные брокеры сложнее — но ты уже знаешь как с ними говорить!',
+    '🎯 Диспетчер который практикует каждый день — зарабатывает больше всех!',
+    '⚡ Ещё один звонок — и ты на шаг ближе к идеальному диалогу!',
+    '🏆 Профессионализм приходит с практикой. Ты на правильном пути!'
+  ];
+
+  // Set score ring animation
+  const avg = metrics.avgScore || 0;
+  const ring = $('fbScoreRing');
+  if(ring){
+    const pct = Math.min(avg/10,1);
+    const dash = 339;
+    setTimeout(()=>{ ring.style.strokeDashoffset = dash - dash*pct; }, 100);
+  }
+
+  // Set emoji based on score
+  const emoji = $('fbEmoji');
+  if(emoji) emoji.textContent = avg>=9?'🏆':avg>=7?'🎯':avg>=5?'💪':'📈';
+
+  // Set score number
+  $('avgScore').textContent = avg ? avg.toFixed(1) : '—';
+  const desc = $('fbScoreDesc');
+  if(desc) desc.textContent = scoreDesc(avg);
+
+  // Set metric values + animate bars
+  const setMetric = (id, barId, val) => {
+    const el = $(id); if(el) el.textContent = val || '—';
+    const bar = $(barId);
+    if(bar && val){
+      setTimeout(()=>{ bar.style.width = (val/10*100)+'%'; }, 200);
+    }
+  };
+  setMetric('metricProfessionalism','barProfessionalism', metrics.professionalism);
+  setMetric('metricEffectiveness',  'barEffectiveness',   metrics.effectiveness);
+  setMetric('metricTerminology',    'barTerminology',     metrics.terminology);
+
+  // Feedback text
+  $('feedbackText').textContent = metrics.feedback || 'Обратная связь недоступна';
+
+  // Motivation
+  const mot = $('fbMotivation');
+  if(mot) mot.textContent = metrics.motivation || motivations[Math.floor(Math.random()*motivations.length)];
+
+  // Highlights
+  const highlightsContainer = $('feedbackHighlights');
+  const highlightsHTML = [];
+
+  if (metrics.xpAwarded) {
+    const { total, base, bonus, bonusReason } = metrics.xpAwarded;
+    let xpMessage = `Начислено ${total} XP`;
+    if (bonus > 0) xpMessage += ` (${base} базовых + ${bonus} бонус: ${bonusReason})`;
+    highlightsHTML.push(`<div class="fb-highlight success"><div class="fb-highlight-icon">⚡</div><div class="fb-highlight-text">${xpMessage}</div></div>`);
+  }
+
+  if (metrics.highlights && metrics.highlights.length > 0) {
+    // Limit to 3 highlights to save space on mobile
+    metrics.highlights.slice(0, 3).forEach(h => {
+      highlightsHTML.push(`<div class="fb-highlight ${h.type}"><div class="fb-highlight-icon">${h.type==='success'?'✅':'💡'}</div><div class="fb-highlight-text">${esc(h.message)}</div></div>`);
+    });
+  }
+
+  highlightsContainer.innerHTML = highlightsHTML.length > 0
+    ? highlightsHTML.join('')
+    : '<div style="font-size:13px;color:#475569;text-align:center;padding:12px">Нет ключевых моментов</div>';
+
+  modal.classList.add('show');
+}
+
+/**
+ * Close feedback modal
+ */
+function closeFeedbackModal() {
+  const modal = $('feedbackModal');
+  modal.classList.remove('show');
+}
+
+/**
+ * End the current session and show feedback
+ * Validates: Requirements 6.1
+ */
+async function endSession() {
+  // Check if there's enough conversation to analyze
+  if (hist.length < 4) {
+    showNotification('📊 Поговорите ещё немного перед завершением сессии (минимум 2 обмена репликами)', 'warning');
+    return;
+  }
+  
+  // Stop any ongoing speech
+  if (synth) {
+    synth.cancel();
+  }
+  
+  // Stop recording if active
+  if (recognition && isRec) {
+    stopRec();
+  }
+  
+  // Disable mic button during analysis
+  micBtn.disabled = true;
+  
+  // Show loading notification
+  showNotification('📊 Анализирую вашу сессию...', 'info');
+  
+  try {
+    // Generate feedback using the conversation history
+    const metrics = await generateFinalFeedback(hist);
+    
+    // Save session end with metrics to Firestore (Task 8.2)
+    if (sessionManager && currentSessionId) {
+      try {
+        await sessionManager.endSession(currentSessionId, metrics);
+      } catch (error) {
+        console.error('[AI Broker Chat] Failed to save session end:', error);
+        // Continue to show feedback even if save fails
+      }
+    }
+    
+    // Award XP for session completion (Task 9.2 & 9.3)
+    let xpAwarded = { total: 0, base: 50, bonus: 0, bonusReason: '' };
+    try {
+      const xpModule = await import('../xp-system.js');
+      const { avgScore } = metrics;
+      
+      // Base XP for completing any session (50 XP)
+      const baseResult = await xpModule.awardXP('BROKER_SESSION_COMPLETE', {
+        scenario: scen,
+        avgScore: avgScore.toFixed(2),
+        sessionId: currentSessionId
+      });
+      
+      if (baseResult) {
+        xpAwarded.total += baseResult.xp;
+      }
+      
+      // Bonus XP for high score (>= 8) - 25 XP
+      if (avgScore >= 8 && avgScore < 9) {
+        const bonusResult = await xpModule.awardXP('BROKER_HIGH_SCORE', {
+          scenario: scen,
+          avgScore: avgScore.toFixed(2),
+          sessionId: currentSessionId
+        });
+        
+        if (bonusResult) {
+          xpAwarded.bonus += bonusResult.xp;
+          xpAwarded.total += bonusResult.xp;
+          xpAwarded.bonusReason = 'высокий балл (8+)';
+        }
+      }
+      
+      // Bonus XP for perfect score (>= 9) - 50 XP (replaces high score bonus)
+      if (avgScore >= 9) {
+        const bonusResult = await xpModule.awardXP('BROKER_PERFECT_SCORE', {
+          scenario: scen,
+          avgScore: avgScore.toFixed(2),
+          sessionId: currentSessionId
+        });
+        
+        if (bonusResult) {
+          xpAwarded.bonus += bonusResult.xp;
+          xpAwarded.total += bonusResult.xp;
+          xpAwarded.bonusReason = 'отличный балл (9+)';
+        }
+      }
+      
+    } catch (error) {
+      console.error('[AI Broker Chat] Failed to award XP:', error);
+      // Continue to show feedback even if XP award fails
+      // Set default XP values
+      xpAwarded = { total: 50, base: 50, bonus: 0, bonusReason: '' };
+    }
+    
+    // Add XP information to metrics
+    metrics.xpAwarded = xpAwarded;
+    
+    // Show feedback modal with results (including XP)
+    showFeedbackModal(metrics);
+    
+  } catch (error) {
+    console.error('endSession error:', error);
+    
+    // Handle specific errors
+    if (error.message === 'AI_TIMEOUT') {
+      showNotification('📞 Брокер на линии. Перезвоните позже.', 'error');
+    } else if (error.message === 'RATE_LIMIT') {
+      showNotification('📞 Линия занята. Подождите минуту.', 'warning');
+    } else if (error.message === 'AUTH_ERROR') {
+      showNotification('📞 Брокер недоступен.', 'error');
+    } else if (error.message === 'PARSE_ERROR') {
+      showNotification('📞 Ошибка анализа. Попробуйте ещё раз.', 'error');
+    } else if (error.message === 'EMPTY_TRANSCRIPT') {
+      showNotification('📞 Поговорите ещё немного для анализа.', 'warning');
+    } else {
+      showNotification('📞 Ошибка. Попробуйте ещё раз.', 'error');
+    }
+    
+    // Re-enable mic button
+    micBtn.disabled = false;
+  }
+}
+
+/**
+ * Generate final feedback by analyzing the entire conversation
+ * @param {Array} transcript - Array of message objects from hist array
+ * @returns {Promise<Object>} Performance metrics object
+ * 
+ * Validates: Requirements 6.1, 6.2, 6.3, 6.4, 6.5, 6.6
+ */
+async function generateFinalFeedback(transcript) {
+  if (!transcript || transcript.length === 0) {
+    throw new Error('EMPTY_TRANSCRIPT');
+  }
+  
+  const formattedTranscript = transcript.map(msg => {
+    const speaker = msg.role === 'user' ? 'Dispatcher' : 'Broker';
+    return `${speaker}: ${msg.content}`;
+  }).join('\n');
+
+  const turnCount = transcript.filter(m=>m.role==='user').length;
+  const brokerText = transcript.filter(m=>m.role==='assistant').map(m=>m.content).join(' ');
+  const userText = transcript.filter(m=>m.role==='user').map(m=>m.content).join(' ');
+  const rateMatch = brokerText.match(/\$\s*([\d,]+)/g);
+  const agreedRate = rateMatch ? rateMatch[rateMatch.length-1] : null;
+  const gotBooked = /rate con|driver.*name|truck number|booking/i.test(brokerText+userText);
+
+  const systemPrompt = `You are Alex — a tough but fair freight dispatcher coach with 15 years of experience. You've heard thousands of broker calls. You give SPECIFIC, HONEST, MOTIVATING feedback directly to the student.
+
+Analyze this dispatcher-broker call and rate performance on 3 metrics (1-10):
+1. Professionalism — tone, confidence, structure, no filler words
+2. Effectiveness — did they achieve the goal? negotiate well? get the load booked?
+3. Terminology — correct use of: MC#, rate con, BOL, detention, lumper, deadhead, all-in, RPM, TONU, ETA
+
+IMPORTANT RULES for feedback:
+- Address the student directly as "вы" (you) — never say "диспетчер сделал", say "вы сделали"
+- Be SPECIFIC — quote actual things the student said (good or bad)
+- Give REAL numbers where possible. Example: "Вы договорились на $1,750, но рынок был $2.05/mile — брокер был готов заплатить на $114 больше!"
+- Mention what step they missed or nailed in the call flow
+- Feedback text: 2 sentences max, punchy and direct, in Russian, addressing student as "вы"
+- Highlights: 3-4 items — mix of wins and improvements, very specific, all addressing student as "вы"
+- Motivation: one short energetic phrase in Russian addressing student as "вы" or "ты", relate to what happened
+- "rate con" IS correct industry term — do NOT say to use "rate confirmation" instead
+
+Call stats: ${turnCount} dispatcher turns, ${agreedRate ? 'rate agreed: '+agreedRate : 'no rate agreed'}, ${gotBooked ? 'booking started' : 'no booking'}.
+
+Respond ONLY with valid JSON:
+{
+  "professionalism": <1-10>,
+  "effectiveness": <1-10>,
+  "terminology": <1-10>,
+  "feedback": "<2 sentences in Russian addressing student as вы, specific>",
+  "motivation": "<1 punchy motivating sentence in Russian addressing student as ты>",
+  "highlights": [
+    {"type": "success", "message": "<specific win, address as вы>"},
+    {"type": "success", "message": "<specific win, address as вы>"},
+    {"type": "improvement", "message": "<specific thing to fix, address as вы>"},
+    {"type": "improvement", "message": "<specific thing to fix, address as вы>"}
+  ]
+}`;
+
+  const userPrompt = `Analyze this dispatcher-broker conversation:\n\n${formattedTranscript}`;
+  
+  // Call Groq API with timeout
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  
+  try {
+    const response = await fetch(GU, {
+      method: 'POST',
+      mode: 'cors',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GK}`
+      },
+      body: JSON.stringify({
+        model: MD,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 700
+      })
+    });
+    
+    clearTimeout(timeout);
+    
+    if (!response.ok) {
+      console.error('Feedback API error:', response.status, response.statusText);
+      if (response.status === 429) {
+        throw new Error('RATE_LIMIT');
+      } else if (response.status === 401) {
+        throw new Error('AUTH_ERROR');
+      } else {
+        throw new Error(`API_ERROR_${response.status}`);
+      }
+    }
+    
+    const data = await response.json();
+    
+    if (!data.choices?.[0]?.message?.content) {
+      throw new Error('EMPTY_RESPONSE');
+    }
+    
+    // Parse JSON response
+    const content = data.choices[0].message.content.trim();
+    let metrics;
+    
+    try {
+      // Try to parse as JSON
+      metrics = JSON.parse(content);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      console.error('Raw content:', content);
+      
+      // Try to extract JSON from markdown code blocks if present
+      const jsonMatch = content.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
+      if (jsonMatch) {
+        try {
+          metrics = JSON.parse(jsonMatch[1]);
+        } catch (e) {
+          throw new Error('JSON_PARSE_ERROR');
+        }
+      } else {
+        throw new Error('JSON_PARSE_ERROR');
+      }
+    }
+    
+    // Validate metrics structure
+    if (typeof metrics.professionalism !== 'number' || 
+        typeof metrics.effectiveness !== 'number' || 
+        typeof metrics.terminology !== 'number') {
+      throw new Error('INVALID_METRICS_FORMAT');
+    }
+    
+    // Ensure scores are in valid range (1-10)
+    metrics.professionalism = Math.max(1, Math.min(10, metrics.professionalism));
+    metrics.effectiveness = Math.max(1, Math.min(10, metrics.effectiveness));
+    metrics.terminology = Math.max(1, Math.min(10, metrics.terminology));
+    
+    // Calculate average score
+    metrics.avgScore = (metrics.professionalism + metrics.effectiveness + metrics.terminology) / 3;
+    
+    // Ensure highlights array exists
+    if (!Array.isArray(metrics.highlights)) {
+      metrics.highlights = [];
+    }
+    
+    // Ensure feedback text exists
+    if (typeof metrics.feedback !== 'string' || metrics.feedback.trim() === '') {
+      metrics.feedback = 'Анализ завершён. Продолжайте практиковаться!';
+    }
+    
+    return metrics;
+    
+  } catch (error) {
+    clearTimeout(timeout);
+    console.error('generateFinalFeedback error:', error);
+    
+    // Handle specific errors
+    if (error.name === 'AbortError') {
+      throw new Error('AI_TIMEOUT');
+    } else if (error.message === 'RATE_LIMIT') {
+      throw new Error('RATE_LIMIT');
+    } else if (error.message === 'AUTH_ERROR') {
+      throw new Error('AUTH_ERROR');
+    } else if (error.message === 'JSON_PARSE_ERROR' || error.message === 'INVALID_METRICS_FORMAT') {
+      throw new Error('PARSE_ERROR');
+    } else if (error.message === 'EMPTY_TRANSCRIPT') {
+      throw new Error('EMPTY_TRANSCRIPT');
+    } else {
+      throw new Error('AI_ERROR');
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════
+// HISTORY MODAL FUNCTIONS
+// ═══════════════════════════════════════════════
+
+/**
+ * Show history modal with list of past sessions
+ * Validates: Requirements 5.6
+ */
+async function showHistory() {
+  const modal = $('historyModal');
+  const historyList = $('historyList');
+  
+  // Show modal with loading state
+  modal.classList.add('show');
+  historyList.innerHTML = '<div class="history-loading">Загрузка истории сессий...</div>';
+  
+  // Check if user is authenticated
+  const auth = window._fbAuth;
+  if (!auth || !auth.currentUser) {
+    historyList.innerHTML = '<div class="history-empty"><div class="history-empty-icon">🔒</div><div class="history-empty-text">Войдите в систему для просмотра истории</div></div>';
+    return;
+  }
+  
+  // Check if SessionManager is available
+  if (!sessionManager) {
+    historyList.innerHTML = '<div class="history-empty"><div class="history-empty-icon">⚠️</div><div class="history-empty-text">История недоступна. Попробуйте перезагрузить страницу.</div></div>';
+    return;
+  }
+  
+  try {
+    // Load last 10 sessions
+    const sessions = await sessionManager.getUserSessions(10);
+    
+    if (!sessions || sessions.length === 0) {
+      historyList.innerHTML = '<div class="history-empty"><div class="history-empty-icon">📭</div><div class="history-empty-text">У вас пока нет завершённых сессий.<br>Начните тренировку и завершите её, чтобы увидеть результаты здесь.</div></div>';
+      return;
+    }
+    
+    // Render sessions list
+    historyList.innerHTML = sessions.map(session => renderHistoryItem(session)).join('');
+    
+  } catch (error) {
+    console.error('[History Modal] Failed to load sessions:', error);
+    historyList.innerHTML = '<div class="history-empty"><div class="history-empty-icon">❌</div><div class="history-empty-text">Ошибка загрузки истории.<br>Попробуйте ещё раз.</div></div>';
+  }
+}
+
+/**
+ * Render a single history item
+ * @param {Object} session - Session data from Firestore
+ * @returns {string} HTML string
+ */
+function renderHistoryItem(session) {
+  // Format date
+  const date = session.completedAt ? new Date(session.completedAt.toDate()) : new Date();
+  const dateStr = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+  const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  
+  // Get scenario name
+  const scenarioNames = {
+    free: '💬 Свободный разговор',
+    negotiate: '💰 Переговоры о ставке',
+    book: '📋 Букинг груза',
+    problem: '⚠️ Решение проблемы',
+    cold: '📞 Холодный звонок',
+    followup: '🔄 Follow-up'
+  };
+  const scenarioName = scenarioNames[session.scenario] || session.scenario;
+  
+  // Get metrics
+  const avgScore = session.metrics?.avgScore || 0;
+  const xpAwarded = session.xpAwarded || 0;
+  
+  // Format duration
+  const duration = session.duration || 0;
+  const minutes = Math.floor(duration / 60);
+  const seconds = duration % 60;
+  const durationStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  
+  return `
+    <div class="history-item" onclick="viewSessionDetails('${session.sessionId}')">
+      <div class="history-item-header">
+        <div class="history-item-date">${dateStr} в ${timeStr}</div>
+        <div class="history-item-xp">+${xpAwarded} XP</div>
+      </div>
+      <div class="history-item-scenario">${scenarioName}</div>
+      <div class="history-item-footer">
+        <div class="history-item-score">
+          <span>Балл:</span>
+          <span class="history-item-score-value">${avgScore.toFixed(1)}</span>
+          <span>/10</span>
+        </div>
+        <div class="history-item-duration">⏱️ ${durationStr}</div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Close history modal
+ */
+function closeHistoryModal() {
+  const modal = $('historyModal');
+  modal.classList.remove('show');
+}
+
+/**
+ * View details of a specific session
+ * Shows full conversation dialog with timestamps and metrics
+ * Validates: Requirements 5.1, 5.2, 5.3, 5.6
+ * 
+ * @param {string} sessionId - Session ID
+ */
+async function viewSessionDetails(sessionId) {
+  // Check if SessionManager is available
+  if (!sessionManager) {
+    showNotification('История недоступна. Попробуйте перезагрузить страницу.', 'error');
+    return;
+  }
+  
+  // Hide history list, show details view
+  $('historyListView').style.display = 'none';
+  $('sessionDetailsView').classList.add('show');
+  
+  // Show loading state
+  $('sessionMessages').innerHTML = '<div class="history-loading">Загрузка сообщений...</div>';
+  $('detailsScenario').textContent = 'Загрузка...';
+  $('detailsDate').textContent = '';
+  $('detailsFeedback').textContent = 'Загрузка...';
+  
+  try {
+    // Load session data from Firestore
+    const session = await sessionManager.getSessionHistory(sessionId);
+    
+    if (!session) {
+      throw new Error('Session not found');
+    }
+    
+    // Get scenario name
+    const scenarioNames = {
+      free: '💬 Свободный разговор',
+      negotiate: '💰 Переговоры о ставке',
+      book: '📋 Букинг груза',
+      problem: '⚠️ Решение проблемы',
+      cold: '📞 Холодный звонок',
+      followup: '🔄 Follow-up'
+    };
+    const scenarioName = scenarioNames[session.scenario] || session.scenario;
+    
+    // Format date
+    const date = session.completedAt ? new Date(session.completedAt.toDate()) : new Date();
+    const dateStr = date.toLocaleDateString('ru-RU', { 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    // Update header
+    $('detailsScenario').textContent = scenarioName;
+    $('detailsDate').textContent = dateStr;
+    
+    // Update metrics
+    if (session.metrics) {
+      $('detailsProfessionalism').textContent = session.metrics.professionalism || '-';
+      $('detailsEffectiveness').textContent = session.metrics.effectiveness || '-';
+      $('detailsTerminology').textContent = session.metrics.terminology || '-';
+      $('detailsFeedback').textContent = session.metrics.feedback || 'Обратная связь недоступна';
+    } else {
+      $('detailsProfessionalism').textContent = '-';
+      $('detailsEffectiveness').textContent = '-';
+      $('detailsTerminology').textContent = '-';
+      $('detailsFeedback').textContent = 'Метрики недоступны для этой сессии';
+    }
+    
+    // Render messages
+    if (session.messages && session.messages.length > 0) {
+      const messagesHTML = session.messages.map(msg => {
+        // Format timestamp
+        const msgDate = msg.timestamp ? new Date(msg.timestamp.toDate()) : new Date();
+        const timeStr = msgDate.toLocaleTimeString('ru-RU', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+        
+        // Determine message type and render accordingly
+        if (msg.type === 'user') {
+          return `
+            <div class="session-msg user">
+              <div class="session-msg-header">
+                <div class="session-msg-who">Вы</div>
+                <div class="session-msg-time">${timeStr}</div>
+              </div>
+              <div class="session-msg-content">${esc(msg.content)}</div>
+            </div>
+          `;
+        } else if (msg.type === 'broker') {
+          return `
+            <div class="session-msg broker">
+              <div class="session-msg-header">
+                <div class="session-msg-who">${session.brokerName || 'Брокер'}</div>
+                <div class="session-msg-time">${timeStr}</div>
+              </div>
+              <div class="session-msg-content">${esc(msg.content)}</div>
+            </div>
+          `;
+        } else if (msg.type === 'system') {
+          return `
+            <div class="session-msg system">
+              <div class="session-msg-content">${msg.content}</div>
+            </div>
+          `;
+        }
+        return '';
+      }).join('');
+      
+      $('sessionMessages').innerHTML = messagesHTML;
+      
+      // Scroll to bottom of messages
+      $('sessionMessages').scrollTop = $('sessionMessages').scrollHeight;
+    } else {
+      $('sessionMessages').innerHTML = '<div class="history-empty"><div class="history-empty-text">Нет сообщений в этой сессии</div></div>';
+    }
+    
+  } catch (error) {
+    console.error('[History Modal] Failed to load session details:', error);
+    showNotification('Ошибка загрузки деталей сессии', 'error');
+    
+    // Show error in UI
+    $('sessionMessages').innerHTML = '<div class="history-empty"><div class="history-empty-icon">❌</div><div class="history-empty-text">Ошибка загрузки сообщений</div></div>';
+    $('detailsScenario').textContent = 'Ошибка загрузки';
+    $('detailsFeedback').textContent = 'Не удалось загрузить обратную связь';
+  }
+}
+
+/**
+ * Go back to history list from session details
+ */
+function backToHistoryList() {
+  // Hide details view, show history list
+  $('sessionDetailsView').classList.remove('show');
+  $('historyListView').style.display = 'block';
+}
+
+// ═══════════════════════════════════════════════
+// KEYBOARD NAVIGATION (Task 14.3)
+// ═══════════════════════════════════════════════
+
+// Track which element opened each modal so we can restore focus on close
+let _focusBeforeFeedback = null;
+let _focusBeforeHistory = null;
+let _focusBeforePrep = null;
+
+// Patch modal open/close functions to track and restore focus
+const _origShowFeedbackModal = showFeedbackModal;
+window.showFeedbackModal = function(metrics) {
+  _focusBeforeFeedback = document.activeElement;
+  _origShowFeedbackModal(metrics);
+  // Move focus into modal
+  const firstFocusable = getFocusableElements($('feedbackModal'))[0];
+  if (firstFocusable) firstFocusable.focus();
+};
+
+const _origCloseFeedbackModal = closeFeedbackModal;
+window.closeFeedbackModal = function() {
+  _origCloseFeedbackModal();
+  if (_focusBeforeFeedback) { _focusBeforeFeedback.focus(); _focusBeforeFeedback = null; }
+};
+
+const _origShowHistory = showHistory;
+window.showHistory = async function() {
+  _focusBeforeHistory = document.activeElement;
+  await _origShowHistory();
+  const firstFocusable = getFocusableElements($('historyModal'))[0];
+  if (firstFocusable) firstFocusable.focus();
+};
+
+const _origCloseHistoryModal = closeHistoryModal;
+window.closeHistoryModal = function() {
+  _origCloseHistoryModal();
+  if (_focusBeforeHistory) { _focusBeforeHistory.focus(); _focusBeforeHistory = null; }
+};
+
+// Patch showPrepScreen / startCall to track prep screen focus
+const _origShowPrepScreen = showPrepScreen;
+window.showPrepScreen = function() {
+  _focusBeforePrep = document.activeElement;
+  _origShowPrepScreen();
+  // Focus the start button inside prep screen
+  const startBtn = $('prep-screen').querySelector('.prep-start-btn');
+  if (startBtn) startBtn.focus();
+};
+
+const _origStartCall = startCall;
+window.startCall = async function() {
+  await _origStartCall();
+  if (_focusBeforePrep) { _focusBeforePrep.focus(); _focusBeforePrep = null; }
+};
+
+/** Returns all keyboard-focusable elements within a container */
+function getFocusableElements(container) {
+  return Array.from(container.querySelectorAll(
+    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  )).filter(el => !el.closest('[style*="display: none"]') && !el.closest('[style*="display:none"]'));
+}
+
+/** Trap Tab/Shift+Tab focus within a modal element */
+function trapFocus(e, modalEl) {
+  const focusable = getFocusableElements(modalEl);
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (e.shiftKey) {
+    if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+  } else {
+    if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+}
+
+/** Check if a modal is currently open */
+function getOpenModal() {
+  if ($('feedbackModal').classList.contains('show')) return $('feedbackModal');
+  if ($('historyModal').classList.contains('show')) return $('historyModal');
+  const prepScreen = $('prep-screen');
+  if (prepScreen && prepScreen.style.display === 'flex') return prepScreen;
+  return null;
+}
+
+// Global keydown handler
+document.addEventListener('keydown', function(e) {
+  const openModal = getOpenModal();
+
+  // Escape — close any open modal
+  if (e.key === 'Escape') {
+    if ($('feedbackModal').classList.contains('show')) {
+      closeFeedbackModal();
+      return;
+    }
+    if ($('historyModal').classList.contains('show')) {
+      closeHistoryModal();
+      return;
+    }
+    // Prep screen is intentionally not closeable via Escape (user must choose a scenario)
+  }
+
+  // Tab — trap focus inside open modal
+  if (e.key === 'Tab' && openModal) {
+    trapFocus(e, openModal);
+    return;
+  }
+
+  // Space — toggle mic when mic button is focused
+  if (e.key === ' ' && document.activeElement === micBtn && !openModal) {
+    e.preventDefault(); // prevent page scroll
+    toggleMic();
+    return;
+  }
+});
+
+// Make scenario cards keyboard-accessible (Enter/Space to select)
+document.querySelectorAll('.sc').forEach(btn => {
+  // Buttons already handle Enter natively; add Space support explicitly
+  btn.addEventListener('keydown', function(e) {
+    if (e.key === ' ') {
+      e.preventDefault();
+      btn.click();
+    }
+  });
+});
+
+// Make history items keyboard-accessible
+// (items are rendered dynamically, so use event delegation)
+$('historyList').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    const item = e.target.closest('.history-item');
+    if (item) {
+      e.preventDefault();
+      item.click();
+    }
+  }
+});
+
+// Ensure dynamically rendered history items are focusable
+const _origRenderHistoryItem = renderHistoryItem;
+window.renderHistoryItem = function(session) {
+  // Add tabindex="0" and role="button" to history items for keyboard access
+  return _origRenderHistoryItem(session)
+    .replace('<div class="history-item"', '<div class="history-item" tabindex="0" role="button"');
+};
+
+// ═══════════════════════════════════════════════
+// SAY THIS — Smart prompt updater for student
+// ═══════════════════════════════════════════════
+let coachState='start';
+let turnCount=0;
+const usedHints={};
+
+const SAY_THIS={
+  start:[
+    'Hi, this is Alex from Swift Dispatch. I\'m calling about the load you posted on DAT.',
+    'Hello, this is Alex with Swift Dispatch. How are you doing today? I\'m looking for loads heading south.',
+    'Hi there, Alex from Swift Dispatch. I saw your posting on DAT and wanted to check availability.',
+    'Good morning, Alex here from Swift Dispatch. Got your number from DAT — do you have capacity available?'
+  ],
+  mc:[
+    'Our MC number is 1-2-3-4-5-6-7. We\'re based out of Chicago.',
+    'MC 1-2-3-4-5-6-7. Clean safety record, been in business 3 years.',
+    'Yes, MC 1-2-3-4-5-6-7. We run 53-foot dry vans, mostly Midwest and Southeast lanes.',
+    'MC 1-2-3-4-5-6-7. We\'re fully insured, $1 million cargo, $1 million liability.'
+  ],
+  equipment:[
+    'We\'re running a 53-foot dry van. Currently empty in Chicago, available today.',
+    'I\'ve got a 53 dry van, driver is ready to go. What do you have available?',
+    'Dry van, 53 foot. My driver just delivered in Chicago and he\'s looking for a backhaul.',
+    '53-foot dry van, no-touch preferred. Driver has 5 years experience, clean record.'
+  ],
+  rate_ask:[
+    'What\'s the rate on that load?',
+    'What are you paying on that? And what\'s the pickup window?',
+    'Sounds good. What\'s the all-in rate?',
+    'Before we go further — what\'s the rate and is it all-in or plus fuel?'
+  ],
+  rate_counter:[
+    'I appreciate that, but I need at least two dollars a mile to cover my costs with the deadhead.',
+    'DAT is showing about two-oh-five per mile on this lane. Can you come up a little?',
+    'That\'s a bit low for me. I\'ve got 80 miles deadhead to get there. Can you do better?',
+    'I hear you, but fuel is up and I\'ve got deadhead miles. I need at least $1,900 to make this work.',
+    'My driver\'s costs on this run are tight. If you can get to $1,950 we have a deal right now.'
+  ],
+  rate_accept:[
+    'Alright, I can work with that. Let\'s book it.',
+    'That works for me. Let me get you the driver info.',
+    'Deal. I\'ll take it. What do you need from me to get this booked?',
+    'Perfect, we\'re good on the rate. Send me the rate con and I\'ll get you the driver details.'
+  ],
+  booking:[
+    'Driver is John Smith, truck number 4-5-2-1, trailer 8-8-3-4. His cell is 3-1-2-5-5-5-0-1-2-3.',
+    'Please send the rate con to dispatch at swift dispatch dot com.',
+    'What\'s the detention policy? And is there a lumper fee at delivery?',
+    'Driver name is Mike Johnson, CDL number available on request. Truck 4521, trailer 8834.',
+    'Can you confirm the pickup address and dock number? And what\'s the contact at the shipper?'
+  ],
+  wrap_up:[
+    'Perfect, we\'re all set. I\'ll watch for the rate con. Talk soon.',
+    'Great, driver will be there at 3PM. Thanks for the load.',
+    'Sounds good. I\'ll have the driver call you when he\'s 30 minutes out.',
+    'We\'re good to go. Looking forward to working with you again.'
+  ],
+  after_booking:[
+    'What\'s the check-in procedure at the shipper? Does the driver need an appointment number?',
+    'Will you send the rate con to dispatch at swift dispatch dot com? We use OTR Solutions for factoring.',
+    'What\'s your after-hours number in case the driver has issues at pickup?',
+    'Can you confirm the delivery appointment time? And is there a lumper at the receiver?',
+    'What\'s the detention rate if the driver gets held up at the dock?'
+  ],
+  location:[
+    'My driver just delivered in Chicago and he\'s available right now. He can hit that pickup today.',
+    'Driver is empty in Chicago, about 15 miles from the pickup. He\'s ready to go.',
+    'We\'re available today. Driver is in the Chicago area, no deadhead issues.',
+    'Driver is local — he can be at the pickup within the hour if needed.'
+  ],
+  factoring:[
+    'We use OTR Solutions for factoring. I\'ll send you their NOA with the rate con.',
+    'Our factoring company is Triumph Business Capital. They\'ll reach out for the NOA.',
+    'We factor through RTS Financial. I\'ll include their info when I send driver details.',
+    'Yes, we use quick pay through OTR Solutions — standard 2% fee, net same day.'
+  ],
+  commodity:[
+    'No-touch freight is preferred but we can handle it. What\'s the commodity?',
+    'We\'re good with auto parts, retail, general freight. No hazmat on this truck.',
+    'Driver is experienced with dock deliveries. What\'s the weight and commodity?',
+    'We can handle up to 44,000 lbs. Is this no-touch or does the driver need to assist?'
+  ],
+  pickup_details:[
+    'Driver can make that pickup window. What\'s the address and dock number?',
+    'We\'re good for the pickup time. Is there a specific appointment or first-come first-served?',
+    'Driver will be there on time. Does he need to call ahead to the shipper?',
+    'What\'s the pickup contact name and number at the facility?'
+  ],
+  delivery_details:[
+    'What\'s the delivery appointment time? And is the receiver open on weekends?',
+    'Driver will call the receiver 30 minutes out. What\'s their contact number?',
+    'Is there a lumper at delivery? And who pays — shipper, broker, or carrier?',
+    'What are the receiver\'s hours? And is there a late fee if we miss the window?'
+  ],
+  accessorials:[
+    'What\'s your detention policy? We need at least $75 per hour after 2 free hours.',
+    'Is there a TONU clause if the load gets cancelled after the driver is in route?',
+    'Who handles the lumper fee — is it on the rate con or do we get reimbursed separately?',
+    'We need detention in writing on the rate con. Can you add that?'
+  ],
+  problem_report:[
+    'I need to update you on the load. We have a situation.',
+    'The driver is at mile marker 280 on I-70. We\'re looking at about a 2-hour delay.',
+    'Here\'s my plan — I can have the driver push through and deliver by 7 PM. Will the receiver accept that?',
+    'Driver had a tire issue but it\'s handled. He\'s back on the road, ETA is 4 hours out.',
+    'I\'ve already called the receiver and they can accept until 6 PM. Can you confirm that works?'
+  ],
+  followup:[
+    'Hey, this is Alex from Swift Dispatch. We hauled your Dallas to Memphis load last week.',
+    'Everything went smooth on that last load. Do you have anything else this week?',
+    'Can you keep us busy? We\'d love to be your go-to carrier on these lanes.',
+    'Driver got great feedback at the receiver. We\'d love to build a long-term relationship.',
+    'We\'ve got two trucks available this week. What lanes are you heavy on right now?'
+  ],
+  general:[
+    'Can you tell me more about that load?',
+    'What\'s the commodity? And is it no-touch freight?',
+    'When does it need to deliver? And what\'s the receiver hours?',
+    'Is there a dock appointment or is it first-come first-served?',
+    'What\'s the weight and are there any special requirements?'
+  ]
+};
+
+function pickRandom(arr){return arr[Math.floor(Math.random()*arr.length)];}
+
+// Track used hints per state to avoid repetition — declared at module level
+function pickUnique(arr,state){
+  if(!usedHints[state])usedHints[state]=[];
+  const used=usedHints[state];
+  let available=arr.filter((_,i)=>!used.includes(i));
+  if(available.length===0){usedHints[state]=[];available=arr;}
+  const idx=arr.indexOf(available[Math.floor(Math.random()*available.length)]);
+  usedHints[state].push(idx);
+  return arr[idx];
+}
+
+// Detect if a rate was already agreed in conversation history
+function detectAgreedRate(history){
+  const acceptPhrases=/\b(deal|agreed|works for me|let's book|book it|i'll take it|sounds good|perfect|done|alright.*book|we're good)\b/i;
+  const ratePat=/\$\s*([\d,]+)/;
+  let lastRate=null;
+  for(let i=0;i<history.length;i++){
+    const m=history[i];
+    const rateM=m.content.match(ratePat);
+    if(rateM)lastRate='$'+rateM[1];
+    if(acceptPhrases.test(m.content)&&lastRate){
+      // Check next message doesn't re-open negotiation
+      return lastRate;
+    }
+  }
+  return null;
+}
+
+// ── AI-generated sidebar tips per scenario ──
+const SCENARIO_TIPS_CONTEXT = {
+  free:      'A dispatcher is calling a broker looking for available loads. The broker will vet them first (MC, equipment, location), then share loads.',
+  negotiate: 'A dispatcher is negotiating rate on a specific load: Dallas TX to Atlanta GA, 780 miles, 53 dry van, auto parts. Posted rate $1,750, market ~$2.05/mile.',
+  book:      'A dispatcher is booking a reefer load: Chicago to Miami, 1,380 miles, fresh strawberries at 34°F. Rate $3,450. Need to collect all driver info.',
+  problem:   'A dispatcher has an active load in trouble: LA to Denver, electronics $180k, must deliver TODAY by 5PM. Driver location unknown, broker is stressed.',
+  cold:      'A dispatcher is cold-calling a broker they have never worked with. They have 60 seconds to prove their value.',
+  followup:  'A dispatcher is calling back a broker they worked with last week. Dallas to Memphis went well. Building a long-term relationship.'
+};
+
+async function generateSidebarTips(scenario, brokerLastMsg){
+  const tipsEl = document.getElementById('tipsContent');
+  const titleEl = document.getElementById('tipsSectionTitle');
+  if(!tipsEl) return;
+
+  // Show skeleton loading
+  tipsEl.innerHTML = `
+    <div class="tip-skeleton"></div>
+    <div class="tip-skeleton" style="height:50px;opacity:.6"></div>
+  `;
+  if(titleEl) titleEl.innerHTML = `Советы <span class="tips-ai-badge">✦ AI</span>`;
+
+  // Build live conversation context if dialog is active
+  const recentHist = hist.slice(-8).map(m=>`${m.role==='user'?'Dispatcher':'Broker'}: ${m.content}`).join('\n');
+  const hasDialog = hist.length > 0;
+
+  let prompt;
+  if(hasDialog && brokerLastMsg){
+    // Live context-aware tips based on current conversation
+    const userAll = hist.filter(m=>m.role==='user').map(m=>m.content).join(' ').toLowerCase();
+    const brokerAll = hist.filter(m=>m.role==='assistant').map(m=>m.content).join(' ').toLowerCase();
+    const mcGiven      = /\bmc\b.*\d{4,}|\d{4,}.*\bmc\b/i.test(userAll);
+    const equipGiven   = /dry van|53.foot|reefer|flatbed/i.test(userAll);
+    const rateOffered  = /\$\s*[\d,]+/i.test(brokerAll);
+    const rateAgreed   = /deal|let.?s book|works for me|will work|sounds good/i.test(userAll);
+    const bookingAsked = /driver.?s name|truck number|trailer number|cell.*phone/i.test(brokerAll);
+
+    prompt = `You are a freight dispatcher training coach. Give 2 coaching tips based ONLY on what just happened in this conversation.
+
+Recent conversation:
+${recentHist}
+
+Broker just said: "${brokerLastMsg}"
+
+Current stage:
+- MC number given by dispatcher: ${mcGiven ? 'YES' : 'NO'}
+- Equipment confirmed: ${equipGiven ? 'YES' : 'NO'}
+- Rate offered by broker: ${rateOffered ? 'YES' : 'NO'}
+- Rate agreed: ${rateAgreed ? 'YES' : 'NO'}
+- Broker collecting booking info: ${bookingAsked ? 'YES' : 'NO'}
+
+Return JSON array with exactly 2 objects:
+[
+  {"icon":"emoji","label":"2-3 слова","text":"Конкретный совет что сказать СЕЙЧАС, макс 12 слов"},
+  {"icon":"emoji","label":"2-3 слова","text":"Тактический совет, макс 12 слов"}
+]
+
+STRICT RULES:
+- Write ONLY in Russian
+- NEVER translate industry terms — keep them in English as-is: MC number, dry van, rate con, DAT, RPM, BOL, POD, ETA, deadhead
+- NEVER write "МЧ" — always write "MC number"
+- Tips must be 100% based on what broker JUST said — no generic advice
+- If broker asked for MC number → tip: назови MC number уверенно, одной фразой
+- If broker asked about equipment → tip: скажи "53-foot dry van, driver ready"
+- If broker gave load details → tip: подтверди детали и спроси ставку
+- If broker asked about driver location → tip: подтверди что водитель в Chicago, готов к 3PM
+- If broker is negotiating rate → tip: используй DAT рынок $2.05/mile как аргумент
+- If broker collecting booking info → tip: назови имя водителя, truck#, trailer#, cell
+- NEVER invent equipment types (no tankers, no flatbeds unless scenario says so)
+- NEVER give advice about steps already completed`;
+  } else {
+    // Initial tips for scenario (before dialog starts)
+    const ctx = SCENARIO_TIPS_CONTEXT[scenario] || SCENARIO_TIPS_CONTEXT.free;
+    const scenarioNames = {free:'Свободный поиск',negotiate:'Торг',book:'Букинг',problem:'Проблема',cold:'Холодный звонок',followup:'Повторный контакт'};
+    prompt = `You are a freight dispatcher coach. Give 2 practical tips for a dispatcher BEFORE this call starts.
+
+Scenario: ${scenarioNames[scenario]||scenario}
+Context: ${ctx}
+
+Return JSON array with exactly 2 objects:
+[
+  {"icon":"emoji","label":"2-3 слова","text":"Конкретный совет, макс 12 слов"},
+  {"icon":"emoji","label":"2-3 слова","text":"Конкретный совет, макс 12 слов"}
+]
+
+STRICT RULES:
+- Write ONLY in Russian
+- Keep industry terms in English: MC number, dry van, rate con, DAT, RPM, BOL, ETA, deadhead
+- NEVER write "МЧ" — always write "MC number"
+- Be specific to THIS scenario only`;
+  }
+
+  try{
+    const r = await fetch(GU,{
+      method:'POST',mode:'cors',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},
+      body:JSON.stringify({
+        model: MD,
+        messages:[{role:'user',content:prompt}],
+        temperature:0.75,
+        max_tokens:220
+      })
+    });
+    if(!r.ok) throw new Error('api');
+    const d = await r.json();
+    const raw = d.choices?.[0]?.message?.content?.trim();
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    if(!jsonMatch) throw new Error('no json');
+    const tips = JSON.parse(jsonMatch[0]);
+
+    tipsEl.innerHTML = tips.map((t,i)=>`
+      <div class="tip-card" id="tipCard${i+1}" style="animation-delay:${i*0.1}s">
+        <div class="tip-card-head">
+          <span class="tip-card-icon">${t.icon||'💡'}</span>
+          <span class="tip-card-label">${t.label||''}</span>
+        </div>
+        <div class="tip-card-text">${t.text||''}</div>
+      </div>
+    `).join('');
+
+    setTimeout(adaptTips, 200);
+  }catch(e){
+    // Fallback to static tips
+    tipsEl.innerHTML = `
+      <div class="tip-card" id="tipCard1">
+        <div class="tip-card-head"><span class="tip-card-icon">🎯</span><span class="tip-card-label">Порядок диалога</span></div>
+        <div class="tip-card-text">MC number → Оборудование → Load Info → Локация → <strong>Ставка</strong> → Букинг</div>
+      </div>
+      <div class="tip-card" id="tipCard2">
+        <div class="tip-card-head"><span class="tip-card-icon">💰</span><span class="tip-card-label">Торг по ставке</span></div>
+        <div class="tip-card-text">Используй DAT рынок. Называй <strong>deadhead miles</strong>. Двигайся по $50-75.</div>
+      </div>
+    `;
+    if(titleEl) titleEl.innerHTML = 'Советы диспетчера';
+    setTimeout(adaptTips, 200);
+  }
+}
+
+// ── Single AI call: updates Say This + both tip cards ──
+async function updateSayThis(brokerMsg, userMsg){
+  turnCount++;
+  const bl = (brokerMsg||'').toLowerCase();
+
+  // Sync: update load info card and badge
+  parseLoadInfo(bl);
+  const badge=$('loadInfoBadge');
+  if(badge){
+    const badges={free:'📦 Груз с DAT Loadboard',negotiate:'💰 Переговоры о ставке',book:'📋 Букинг груза',problem:'⚠️ Груз в пути',cold:'📞 Холодный звонок',followup:'🔄 Повторный контакт'};
+    badge.textContent=badges[scen]||badges.free;
+  }
+
+  const el=$('sayThisText');
+  const tipsEl=document.getElementById('tipsContent');
+  const titleEl=document.getElementById('tipsSectionTitle');
+
+  // Show loading indicators
+  if(el){ el.textContent='✦ генерирую...'; el.classList.add('generating'); }
+  if(tipsEl) tipsEl.innerHTML=`<div class="tip-skeleton"></div><div class="tip-skeleton" style="height:50px;opacity:.6"></div>`;
+  if(titleEl) titleEl.innerHTML=`Советы <span class="tips-ai-badge">✦ AI</span>`;
+
+  // Build context
+  const recentHist = hist.slice(-8).map(m=>`${m.role==='user'?'Dispatcher':'Broker'}: ${m.content}`).join('\n');
+  const userAll = hist.filter(m=>m.role==='user').map(m=>m.content).join(' ').toLowerCase();
+  const brokerAll = hist.filter(m=>m.role==='assistant').map(m=>m.content).join(' ').toLowerCase();
+
+  const mcGiven       = /\bmc\b.*\d{4,}|\d{4,}.*\bmc\b|\bmc\s+\d|\d+.*\bmc\b/i.test(userAll);
+  const equipGiven    = /dry van|53.foot|reefer|flatbed/i.test(userAll);
+  const loadInfoGiven = /pickup.*today|pickup.*tomorrow|delivery.*by|auto parts|retail|machinery/i.test(brokerAll);
+  const locationGiven = /chicago|available|empty in|just delivered|can make/i.test(userAll);
+  const rateAgreed    = /\b(deal|let.?s book|works for me|will work|sounds good|perfect|alright)\b/i.test(userAll);
+  const bookingAsked  = /driver.?s name|truck number|trailer number|cell.*phone/i.test(brokerAll);
+  const rateOffered   = /\$\s*[\d,]+/i.test(brokerAll);
+
+  // Update coachState for fallback
+  if(bookingAsked) coachState='booking';
+  else if(rateAgreed) coachState='after_booking';
+  else if(rateOffered) coachState='rate_counter';
+  else if(loadInfoGiven && locationGiven) coachState='rate_ask';
+  else if(loadInfoGiven) coachState='location';
+  else if(equipGiven) coachState='rate_ask';
+  else if(mcGiven) coachState='equipment';
+  else if(turnCount>1) coachState='mc';
+
+  // Determine next step for dispatcher
+  const nextStep = !mcGiven
+    ? 'Give your MC number. Example: "MC 1234567, we\'re based in Chicago."'
+    : !equipGiven
+    ? 'Confirm equipment. Say: "53-foot dry van, driver is ready to go."'
+    : !loadInfoGiven
+    ? 'Ask for load details. Say: "What are the load details — route, weight, pickup time?"'
+    : !locationGiven
+    ? 'Confirm driver location. Say: "Driver is in Chicago, he can make that pickup."'
+    : !rateAgreed && rateOffered
+    ? 'Negotiate rate. Use DAT market data. Say your counter-offer with reasoning.'
+    : rateAgreed && !bookingAsked
+    ? 'Rate agreed. Provide booking info: driver name, truck#, trailer#, cell, email.'
+    : bookingAsked
+    ? 'Give booking info one piece at a time: driver name, truck#, trailer#, cell.'
+    : 'Continue naturally based on what broker just said.';
+
+  const prompt=`You are a freight dispatcher training coach. Analyze this broker-dispatcher call and return coaching data.
+
+CONVERSATION:
+${recentHist}
+
+BROKER JUST SAID: "${brokerMsg}"
+
+NEXT STEP FOR DISPATCHER: ${nextStep}
+
+Return ONLY valid JSON, no other text:
+{
+  "say_this": "One natural English sentence the dispatcher should say RIGHT NOW (max 15 words, no quotes around it)",
+  "tip1_icon": "one emoji",
+  "tip1_label": "2-3 слова на русском",
+  "tip1_text": "Конкретный совет что сказать или сделать СЕЙЧАС (макс 12 слов)",
+  "tip2_icon": "one emoji",
+  "tip2_label": "2-3 слова на русском",
+  "tip2_text": "Тактический совет для этого момента (макс 12 слов)"
+}
+
+RULES:
+- say_this: natural dispatcher phrase, directly responding to what broker just said
+- Tips in Russian only. Keep English terms as-is: MC number, dry van, rate con, DAT, RPM, deadhead, ETA
+- NEVER write "МЧ" — always "MC number"
+- tip1 = what to SAY next (specific phrase or approach)
+- tip2 = tactical/preparation advice for this moment
+- Base everything ONLY on the actual conversation above — no invented details
+- If broker greeted → dispatcher introduces self + reason for calling
+- If broker asked for MC → give MC number confidently
+- If broker asked equipment → confirm 53-foot dry van + driver ready
+- If broker gave load info → confirm details + ask about rate
+- If broker asked location → confirm driver location + availability
+- If broker negotiating rate → use DAT market rate as leverage
+- If broker collecting booking info → have driver name, truck#, trailer#, cell ready`;
+
+  const showSayThis=(txt)=>{
+    if(!el) return;
+    if(typeof gsap!=='undefined'){
+      gsap.to(el,{opacity:0,y:-6,duration:0.15,ease:'power2.in',onComplete:()=>{
+        el.textContent=txt; el.classList.remove('generating');
+        gsap.fromTo(el,{opacity:0,y:8},{opacity:1,y:0,duration:0.35,ease:'back.out(1.3)'});
+      }});
+    }else{ el.textContent=txt; el.classList.remove('generating'); }
+  };
+
+  const showTips=(t1icon,t1label,t1text,t2icon,t2label,t2text)=>{
+    if(!tipsEl) return;
+    tipsEl.innerHTML=`
+      <div class="tip-card" id="tipCard1">
+        <div class="tip-card-head"><span class="tip-card-icon">${t1icon}</span><span class="tip-card-label">${t1label}</span></div>
+        <div class="tip-card-text">${t1text}</div>
+      </div>
+      <div class="tip-card" id="tipCard2" style="animation-delay:0.1s">
+        <div class="tip-card-head"><span class="tip-card-icon">${t2icon}</span><span class="tip-card-label">${t2label}</span></div>
+        <div class="tip-card-text">${t2text}</div>
+      </div>`;
+    setTimeout(adaptTips,200);
+  };
+
+  try{
+    const r=await fetch(GU,{
+      method:'POST',mode:'cors',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},
+      body:JSON.stringify({model:MD,messages:[{role:'user',content:prompt}],temperature:0.6,max_tokens:200})
+    });
+    if(!r.ok) throw new Error('api_'+r.status);
+    const d=await r.json();
+    const raw=(d.choices?.[0]?.message?.content||'').trim();
+    const jsonMatch=raw.match(/\{[\s\S]*\}/);
+    if(!jsonMatch) throw new Error('no_json');
+    const res=JSON.parse(jsonMatch[0]);
+
+    if(res.say_this) showSayThis(res.say_this);
+    else showSayThis(pickUnique(SAY_THIS[coachState]||SAY_THIS.general,coachState));
+
+    showTips(
+      res.tip1_icon||'💬', res.tip1_label||'Следующий шаг', res.tip1_text||'',
+      res.tip2_icon||'🎯', res.tip2_label||'Тактика', res.tip2_text||''
+    );
+    if(titleEl) titleEl.innerHTML=`Советы <span class="tips-ai-badge">✦ AI</span>`;
+
+  }catch(e){
+    console.warn('[CoachUI] AI error, using fallback:',e.message);
+    showSayThis(pickUnique(SAY_THIS[coachState]||SAY_THIS.general,coachState));
+    showTips('🎯','Следующий шаг',
+      !mcGiven?'Назови MC number уверенно, одной фразой':
+      !equipGiven?'Скажи: 53-foot dry van, driver is ready':
+      !rateAgreed&&rateOffered?'Используй DAT рынок как аргумент для торга':
+      bookingAsked?'Назови driver name, truck#, trailer#, cell':'Продолжай диалог по ситуации',
+      '📋','Будь готов',
+      !mcGiven?'Приготовь MC number и название компании':
+      !equipGiven?'Подтверди тип оборудования и готовность водителя':
+      !rateAgreed?'Знай рыночную ставку DAT на этом маршруте':
+      'Имей данные водителя наготове: имя, truck#, trailer#'
+    );
+    if(titleEl) titleEl.innerHTML='Советы диспетчера';
+  }
+}
+
+function parseLoadInfo(text){
+  const cap=s=>s.replace(/\b\w/g,c=>c.toUpperCase()); // capitalize words
+  const routeMatch=text.match(/from\s+(\w[\w\s,]*?)\s+to\s+(\w[\w\s,]*?)[\.,!?]/i);
+  if(routeMatch){const r=$('loadInfoRoute');if(r)r.textContent=cap(routeMatch[1].trim())+' → '+cap(routeMatch[2].trim());}
+  const milesMatch=text.match(/(\d{2,4})\s*miles/i);
+  if(milesMatch){const m=$('liMiles');if(m)m.textContent=milesMatch[1];}
+  const rateMatch=text.match(/\$\s*([\d,]+)/);
+  if(rateMatch){
+    const r=$('liRate');if(r)r.textContent='$'+rateMatch[1];
+    const miles=parseInt(($('liMiles')||{}).textContent)||1;
+    const rate=parseInt(rateMatch[1].replace(',',''))||0;
+    const rpm=$('liRPM');if(rpm&&rate&&miles)rpm.textContent='$'+(rate/miles).toFixed(2);
+  }
+  const weightMatch=text.match(/([\d,]+)\s*(lbs|pounds)/i);
+  if(weightMatch){const w=$('liWeight');if(w)w.textContent=weightMatch[1]+' lbs';}
+}
+
+// ═══════════════════════════════════════════════
+// SCENARIO BAR SCROLL (arrows + mouse drag)
+// ═══════════════════════════════════════════════
+function scrollSbar(dir){
+  const sb=$('sbar');if(!sb)return;
+  sb.scrollBy({left:dir*120,behavior:'smooth'});
+}
+
+// Mouse drag to scroll on desktop
+(function(){
+  const sb=$('sbar');if(!sb)return;
+  let isDown=false,startX,scrollL;
+  sb.addEventListener('mousedown',e=>{
+    if(e.target.closest('.sc'))return; // don't interfere with button clicks
+    isDown=true;sb.style.cursor='grabbing';
+    startX=e.pageX-sb.offsetLeft;scrollL=sb.scrollLeft;
+    e.preventDefault();
+  });
+  sb.addEventListener('mouseleave',()=>{isDown=false;sb.style.cursor='grab';});
+  sb.addEventListener('mouseup',()=>{isDown=false;sb.style.cursor='grab';});
+  sb.addEventListener('mousemove',e=>{
+    if(!isDown)return;e.preventDefault();
+    const x=e.pageX-sb.offsetLeft;
+    sb.scrollLeft=scrollL-(x-startX);
+  });
+  sb.style.cursor='grab';
+})();
+
+// ═══════════════════════════════════════════════
+// SESSION INTERRUPTION HANDLER (Task 15.2)
+// ═══════════════════════════════════════════════
+
+// Mark session as interrupted when page is closed/refreshed mid-session
+window.addEventListener('beforeunload', function() {
+  if (currentSessionId && sessionManager) {
+    // Use sendBeacon for reliable delivery on page unload
+    // Mark session as interrupted in Firestore
+    try {
+      sessionManager.markSessionInterrupted(currentSessionId);
+    } catch(e) {
+      // Silently ignore — page is closing
+    }
+  }
+  // Stop speech synthesis and recognition cleanly
+  if (synth) synth.cancel();
+  if (recognition && isRec) { try { recognition.stop(); } catch(e) {} }
+});
+
+// ═══════════════════════════════════════════════
+// GSAP ANIMATIONS
+// ═══════════════════════════════════════════════
+if(typeof gsap!=='undefined'){
+
+  // 1. Page load — animate widget entrance (grow into view)
+  gsap.fromTo('.voice-chat-widget',
+    {opacity:0,y:30,scale:0.9},
+    {duration:0.8,opacity:1,y:0,scale:1,ease:'back.out(1.4)',delay:0.2}
+  );
+
+  // 2. Animate load info card and say-this entrance
+  gsap.fromTo('.load-info-card',
+    {opacity:0,y:15,scale:0.95},
+    {duration:0.5,opacity:1,y:0,scale:1,ease:'back.out(1.3)',delay:0.5}
+  );
+  gsap.fromTo('.load-info-item',
+    {opacity:0,scale:0.9},
+    {duration:0.3,opacity:1,scale:1,stagger:0.06,ease:'power2.out',delay:0.7}
+  );
+  gsap.fromTo('.say-this',
+    {opacity:0,y:12},
+    {duration:0.4,opacity:1,y:0,ease:'power2.out',delay:0.9}
+  );
+
+  // 3. Mic button breathing animation
+  gsap.to('.vcw-mic-container .mic-btn',{
+    scale:1.06,duration:1.8,repeat:-1,yoyo:true,ease:'sine.inOut'
+  });
+
+  // 4. Title and subtitle entrance
+  gsap.fromTo('.vcw-title',
+    {opacity:0,y:12},
+    {duration:0.5,opacity:1,y:0,ease:'power3.out',delay:0.4}
+  );
+  gsap.fromTo('.vcw-subtitle',
+    {opacity:0,y:8},
+    {duration:0.5,opacity:1,y:0,ease:'power3.out',delay:0.5}
+  );
+
+  // 5. Override addMsg to use GSAP for message entrance
+  const _origAddMsg=addMsg;
+  window.addMsg=function(type,text){
+    _origAddMsg(type,text);
+    const msgs=chat.querySelectorAll('.msg');
+    const lastMsg=msgs[msgs.length-1];
+    if(lastMsg){
+      gsap.fromTo(lastMsg,
+        {opacity:0,y:type==='user'?12:-12,x:type==='user'?15:type==='broker'?-15:0,scale:0.94},
+        {duration:0.35,opacity:1,y:0,x:0,scale:1,ease:'back.out(1.2)'}
+      );
+    }
+  };
+
+  // 6. Override startScenario layout transition with GSAP
+  const _origStartScenarioGSAP=startScenario;
+  window.startScenario=async function(s){
+    await _origStartScenarioGSAP(s);
+    const tp=$('transcriptPanel');
+    if(tp){
+      gsap.fromTo(tp,
+        {opacity:0,x:-40},
+        {duration:0.5,opacity:1,x:0,ease:'power3.out'}
+      );
+    }
+  };
+
+  // 7. Voice switch hover
+  const vs=$('voiceSwitch');
+  if(vs){
+    vs.addEventListener('mouseenter',()=>gsap.to(vs,{scale:1.05,duration:0.2}));
+    vs.addEventListener('mouseleave',()=>gsap.to(vs,{scale:1,duration:0.2}));
+  }
+
+  // 8. Scenario buttons hover
+  document.querySelectorAll('.sc').forEach(btn=>{
+    btn.addEventListener('mouseenter',()=>gsap.to(btn,{scale:1.08,duration:0.15}));
+    btn.addEventListener('mouseleave',()=>gsap.to(btn,{scale:1,duration:0.15}));
+  });
+
+  console.log('[GSAP] Animations initialized');
+}
+
+</script>

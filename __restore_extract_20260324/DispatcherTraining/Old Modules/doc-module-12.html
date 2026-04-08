@@ -1,0 +1,2310 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль 12: Практические навыки и карьера | DispatcherPro</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="stylesheet" href="../interactive-modules.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #f093fb;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary: #b8c5d6;
+            --text-muted: #8892aa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.1);
+            --audio-primary: #ff6b6b;
+            --audio-secondary: #4ecdc4;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 0;
+            background: rgba(7, 11, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            min-height: 80px;
+        }
+
+        /* Р вЂќР С•Р В±Р В°Р Р†Р В»РЎРЏР ВµР С Р С•РЎвЂљРЎРѓРЎвЂљРЎС“Р С— Р ТР В»РЎРЏ body РЎвЂЎРЎвЂљР С•Р В±РЎвЂ№ Р С”Р С•Р Р…РЎвЂљР ВµР Р…РЎвЂљ Р Р…Р Вµ Р С—Р ВµРЎР‚Р ВµР С”РЎР‚РЎвЂ№Р Р†Р В°Р В»РЎРѓРЎРЏ Р Р…Р В°Р Р†Р СР С–Р В°РЎвЂ Р СР ВµР в„– */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
+            padding-top: 100px;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1), transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(240, 147, 251, 0.1), transparent 50%);
+            animation: none;
+            z-index: -1;
+        }
+
+
+
+        25% {
+            transform: translate(5%, 5%) scale(1.05);
+        }
+
+        50% {
+            transform: translate(-5%, 5%) scale(1.1);
+        }
+
+        75% {
+            transform: translate(5%, -5%) scale(1.05);
+        }
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateX(-3px);
+        }
+
+        .module-info {
+            text-align: center;
+        }
+
+        .module-number {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .module-title {
+            font-size: 18px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Content Blocks */
+        .content-block {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            gap: 20px;
+        }
+
+        .block-title {
+            flex: 1;
+            font-size: 1.8rem;
+            color: var(--primary);
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        /* Audio Play Button with Progress Ring */
+        .audio-container {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .audio-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--audio-primary), var(--audio-secondary));
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .audio-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.5);
+        }
+
+        .audio-btn:active {
+            transform: scale(0.95);
+        }
+
+        .audio-btn .play-icon {
+            font-size: 24px;
+            color: white;
+            margin-left: 3px;
+        }
+
+        .audio-btn .pause-icon {
+            font-size: 20px;
+            color: white;
+            display: none;
+        }
+
+        .audio-btn.playing .play-icon {
+            display: none;
+        }
+
+        .audio-btn.playing .pause-icon {
+            display: block;
+        }
+
+        .audio-btn.playing {
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.7), 0 0 0 10px rgba(255, 107, 107, 0.1);
+            }
+
+            100% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            }
+        }
+
+        /* Progress Ring */
+        .progress-ring {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            transform: rotate(-90deg);
+            z-index: 1;
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 5;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: var(--audio-primary);
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-dasharray: 201.06;
+            /* 2 * РџР‚ * 32 */
+            stroke-dashoffset: 201.06;
+            transition: stroke-dashoffset 0.1s ease;
+            filter: drop-shadow(0 0 4px rgba(255, 107, 107, 0.5));
+        }
+
+        /* Interactive Progress Ring */
+        .progress-ring-interactive {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            cursor: pointer;
+            z-index: 5;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        .progress-ring-interactive.seekable {
+            pointer-events: auto;
+            /* Р РЋР С•Р В·Р ТР В°Р ВµР С Р С”Р С•Р В»РЎРЉРЎвЂ Р С• РЎРѓ Р С—РЎР‚Р С•Р В·РЎР‚Р В°РЎвЂЎР Р…РЎвЂ№Р С РЎвЂ Р ВµР Р…РЎвЂљРЎР‚Р С•Р С Р ТР В»РЎРЏ Р С”Р В»Р СР С”Р В° */
+            background: radial-gradient(circle, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.01) 60%, rgba(255, 255, 255, 0.01) 100%);
+        }
+
+        /* Р СњР В° Р СР С•Р В±Р СР В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ РЎС“РЎРѓРЎвЂљРЎР‚Р С•Р в„–РЎРѓРЎвЂљР Р†Р В°РЎвЂ¦ Р СџР С›Р вЂєР СњР С›Р РЋР СћР В¬Р В® Р С•РЎвЂљР С”Р В»РЎР‹РЎвЂЎР В°Р ВµР С Р С—Р ВµРЎР‚Р ВµР СР С•РЎвЂљР С”РЎС“ */
+        @media (max-width: 768px) {
+            .progress-ring-interactive {
+                pointer-events: none !important;
+                cursor: default !important;
+            }
+
+            .progress-ring-interactive.seekable {
+                pointer-events: none !important;
+                cursor: default !important;
+                background: none;
+            }
+        }
+
+        /* Hover РЎРЊРЎвЂћРЎвЂћР ВµР С”РЎвЂљ РЎвЂљР С•Р В»РЎРЉР С”Р С• Р Р…Р В° desktop */
+        @media (min-width: 769px) {
+            .progress-ring-interactive:hover .progress-ring-fill {
+                stroke-width: 7;
+                filter: drop-shadow(0 0 8px rgba(255, 107, 107, 0.8));
+            }
+        }
+
+        .progress-ring-interactive:hover+.audio-btn+.progress-ring-interactive+.audio-duration {
+            opacity: 1;
+        }
+
+        /* Audio Duration Display */
+        .audio-duration {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .audio-container:hover .audio-duration,
+        .audio-container.playing .audio-duration {
+            opacity: 1;
+        }
+
+        /* Mobile Progress Bar (Р С—Р С•Р Т Р С”Р Р…Р С•Р С—Р С”Р С•Р в„–) */
+        .mobile-progress-bar {
+            display: none;
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .mobile-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--audio-primary), var(--audio-secondary));
+            border-radius: 2px;
+            transition: width 0.1s ease;
+        }
+
+        /* Р СџР С•Р С”Р В°Р В·РЎвЂ№Р Р†Р В°Р ВµР С Р С—Р С•Р В»Р С•РЎРѓРЎС“ РЎвЂљР С•Р В»РЎРЉР С”Р С• Р Р…Р В° Р СР С•Р В±Р СР В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ */
+        @media (max-width: 768px) {
+            .mobile-progress-bar {
+                display: block;
+            }
+
+            .audio-container.playing .mobile-progress-bar {
+                display: block;
+            }
+
+            /* Р РЋР С”РЎР‚РЎвЂ№Р Р†Р В°Р ВµР С Р С”Р С•Р В»РЎРЉРЎвЂ Р С• Р Р…Р В° Р СР С•Р В±Р СР В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ */
+            .progress-ring,
+            .progress-ring-interactive {
+                display: none !important;
+            }
+
+            /* Р РЋР ТР Р†Р СР С–Р В°Р ВµР С Р Р†РЎР‚Р ВµР СРЎРЏ Р Р†Р Р…Р СР В· */
+            .audio-duration {
+                bottom: -50px;
+            }
+        }
+
+        /* Р СњР В° desktop РЎРѓР С”РЎР‚РЎвЂ№Р Р†Р В°Р ВµР С Р С—Р С•Р В»Р С•РЎРѓРЎС“, Р С—Р С•Р С”Р В°Р В·РЎвЂ№Р Р†Р В°Р ВµР С Р С”Р С•Р В»РЎРЉРЎвЂ Р С• */
+        @media (min-width: 769px) {
+            .mobile-progress-bar {
+                display: none !important;
+            }
+        }
+
+        /* Content */
+        .block-content {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .block-content h3 {
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            margin: 25px 0 15px 0;
+        }
+
+        .block-content h4 {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            margin: 20px 0 10px 0;
+        }
+
+        .block-content ul,
+        .block-content ol {
+            margin: 15px 0 15px 25px;
+        }
+
+        .block-content li {
+            margin-bottom: 8px;
+        }
+
+        .block-content strong {
+            color: var(--text-primary);
+        }
+
+        /* Navigation */
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .nav-btn.disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .nav-btn.disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .progress-info {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 10px auto;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* Mobile Responsive - Complete Coverage */
+        @media (max-width: 1200px) {
+            .nav {
+                padding: 0 15px;
+            }
+
+            .main {
+                max-width: 100%;
+                padding: 30px 15px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 90px;
+            }
+
+            .header {
+                padding: 15px 0;
+                min-height: 70px;
+            }
+
+            .nav {
+                padding: 0 15px;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .back-btn {
+                padding: 10px 16px;
+                font-size: 14px;
+                order: 1;
+                flex: 1;
+                min-width: 150px;
+            }
+
+            .module-info {
+                order: 2;
+                width: 100%;
+                margin-top: 10px;
+            }
+
+            .module-title {
+                font-size: 16px;
+            }
+
+            .module-number {
+                font-size: 12px;
+            }
+
+            .main {
+                padding: 20px 15px;
+            }
+
+            .content-block {
+                padding: 20px 15px;
+                margin-bottom: 20px;
+                border-radius: 12px;
+            }
+
+            .block-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                margin-bottom: 20px;
+            }
+
+            .block-title {
+                font-size: 1.4rem;
+                margin-bottom: 0;
+                line-height: 1.3;
+                width: 100%;
+            }
+
+            .audio-btn {
+                width: 70px;
+                height: 70px;
+                align-self: center;
+                margin: 0 auto;
+            }
+
+            .audio-container {
+                width: 70px;
+                height: 70px;
+                align-self: center;
+                margin: 0 auto;
+            }
+
+            .progress-ring {
+                width: 80px;
+                height: 80px;
+                top: -5px;
+                left: -5px;
+            }
+
+            .progress-ring-interactive {
+                width: 80px;
+                height: 80px;
+                top: -5px;
+                left: -5px;
+            }
+
+            .audio-btn .play-icon {
+                font-size: 28px;
+            }
+
+            .audio-btn .pause-icon {
+                font-size: 24px;
+            }
+
+            .block-content {
+                font-size: 15px;
+                line-height: 1.6;
+            }
+
+            .block-content h3 {
+                font-size: 1.2rem;
+                margin: 20px 0 12px 0;
+            }
+
+            .block-content h4 {
+                font-size: 1rem;
+                margin: 15px 0 8px 0;
+            }
+
+            .lesson-nav {
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px 15px;
+                margin-top: 30px;
+            }
+
+            .nav-btn {
+                width: 100%;
+                min-width: auto;
+                padding: 15px 20px;
+                font-size: 15px;
+            }
+
+            .progress-bar {
+                width: 100%;
+                max-width: 250px;
+            }
+
+            .progress-info {
+                order: 2;
+            }
+
+            .table-container {
+                font-size: 14px;
+                margin: 20px -15px;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+            }
+
+            th,
+            td {
+                padding: 12px 8px;
+                font-size: 13px;
+            }
+
+            .alert {
+                padding: 15px;
+                margin: 15px -15px;
+                border-radius: 0;
+                border-left: 4px solid;
+                border-right: none;
+                border-top: none;
+                border-bottom: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding-top: 80px;
+            }
+
+            .header {
+                padding: 15px 0;
+                min-height: 60px;
+            }
+
+            .nav {
+                padding: 0 10px;
+            }
+
+            .back-btn {
+                padding: 8px 12px;
+                font-size: 13px;
+                gap: 6px;
+            }
+
+            .module-title {
+                font-size: 14px;
+            }
+
+            .module-number {
+                font-size: 11px;
+            }
+
+            .main {
+                padding: 15px 10px;
+            }
+
+            .content-block {
+                padding: 15px 10px;
+                margin-bottom: 15px;
+            }
+
+            .block-title {
+                font-size: 1.2rem;
+                line-height: 1.2;
+            }
+
+            .audio-btn {
+                width: 80px;
+                height: 80px;
+            }
+
+            .audio-container {
+                width: 80px;
+                height: 80px;
+            }
+
+            .progress-ring {
+                width: 90px;
+                height: 90px;
+                top: -5px;
+                left: -5px;
+            }
+
+            .progress-ring-interactive {
+                width: 90px;
+                height: 90px;
+                top: -5px;
+                left: -5px;
+            }
+
+            .audio-btn .play-icon {
+                font-size: 32px;
+            }
+
+            .audio-btn .pause-icon {
+                font-size: 28px;
+            }
+
+            .block-content {
+                font-size: 14px;
+            }
+
+            .block-content h3 {
+                font-size: 1.1rem;
+            }
+
+            .block-content h4 {
+                font-size: 0.95rem;
+            }
+
+            .nav-btn {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+
+            .lesson-nav {
+                padding: 15px 10px;
+            }
+
+            .table-container {
+                margin: 15px -10px;
+            }
+
+            th,
+            td {
+                padding: 10px 6px;
+                font-size: 12px;
+            }
+
+            .alert {
+                padding: 12px;
+                margin: 15px -10px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            body {
+                padding-top: 70px;
+            }
+
+            .header {
+                padding: 12px 0;
+                min-height: 55px;
+            }
+
+            .nav {
+                padding: 0 8px;
+            }
+
+            .back-btn {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+
+            .main {
+                padding: 12px 8px;
+            }
+
+            .content-block {
+                padding: 12px 8px;
+            }
+
+            .block-title {
+                font-size: 1.1rem;
+            }
+
+            .audio-btn {
+                width: 75px;
+                height: 75px;
+            }
+
+            .audio-container {
+                width: 75px;
+                height: 75px;
+            }
+
+            .progress-ring {
+                width: 85px;
+                height: 85px;
+                top: -5px;
+                left: -5px;
+            }
+
+            .progress-ring-interactive {
+                width: 85px;
+                height: 85px;
+                top: -5px;
+                left: -5px;
+            }
+
+            .audio-btn .play-icon {
+                font-size: 30px;
+            }
+
+            .audio-btn .pause-icon {
+                font-size: 26px;
+            }
+
+            .block-content {
+                font-size: 13px;
+            }
+
+            .nav-btn {
+                padding: 10px 14px;
+                font-size: 13px;
+            }
+
+            .lesson-nav {
+                padding: 12px 8px;
+            }
+
+            .table-container {
+                margin: 12px -8px;
+            }
+
+            th,
+            td {
+                padding: 8px 4px;
+                font-size: 11px;
+            }
+
+            .alert {
+                padding: 10px;
+                margin: 12px -8px;
+                font-size: 13px;
+            }
+        }
+
+        /* Large screens optimization */
+        @media (min-width: 1400px) {
+            .main {
+                max-width: 1000px;
+            }
+
+            .content-block {
+                padding: 35px;
+            }
+
+            .block-title {
+                font-size: 2rem;
+            }
+
+            .block-content {
+                font-size: 17px;
+            }
+        }
+
+        /* Ultra-wide screens */
+        @media (min-width: 1920px) {
+            .main {
+                max-width: 1200px;
+            }
+
+            .content-block {
+                padding: 40px;
+            }
+        }
+
+        /* Navigation Styles from Main Site */
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 999;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 0;
+            transition: all 0.3s ease;
+        }
+
+        .nav-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: translateY(-2px);
+        }
+
+        .logo-icon {
+            font-size: 16px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: clamp(11px, 1.1vw, 14px);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .nav-link.active {
+            color: var(--primary);
+        }
+
+        .nav-link.active::after {
+            width: 100%;
+        }
+
+        /* Dropdown Navigation */
+        .nav-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .nav-dropdown .nav-link {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-dropdown .nav-link::before {
+            content: 'РІвЂ“С';
+            font-size: 8px;
+            transition: transform 0.3s ease;
+            margin-left: 4px;
+        }
+
+        .nav-dropdown .nav-link::after {
+            display: none;
+        }
+
+        .nav-dropdown:hover .nav-link::before {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 200px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 8px;
+            margin-top: 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            z-index: 1000;
+        }
+
+        .nav-dropdown:hover .dropdown-content {
+            display: flex;
+            flex-direction: column;
+            animation: fadeInDown 0.3s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-content a {
+            display: block;
+            padding: 10px 14px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .dropdown-content a:hover {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--text-primary);
+            transform: translateX(2px);
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-login {
+            padding: 6px 16px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .btn-login:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-signup {
+            padding: 6px 16px;
+            text-decoration: none;
+            color: white;
+            font-weight: 500;
+            font-size: 12px;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .btn-signup:hover {
+            background: rgba(99, 102, 241, 0.25);
+            border-color: rgba(99, 102, 241, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .mobile-menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 10px 19px;
+            z-index: 1001;
+            transition: all 0.3s ease;
+            margin-right: 0;
+        }
+
+        .mobile-menu-toggle:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .mobile-menu-toggle span {
+            width: 38px;
+            height: 2px;
+            background: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .mobile-menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -6px);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 85%;
+            max-width: 380px;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 100px 20px 32px;
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .mobile-menu.active {
+            right: 0;
+        }
+
+        .mobile-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+
+        .mobile-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .mobile-nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin-bottom: 32px;
+            width: 100%;
+        }
+
+        .mobile-nav-links .nav-link {
+            padding: 14px 16px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-size: 15px;
+        }
+
+        .mobile-nav-links .nav-link:hover {
+            background: rgba(99, 102, 241, 0.15);
+            transform: translateX(4px);
+        }
+
+        .mobile-nav-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .mobile-menu-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 20px 0;
+        }
+
+        .mobile-nav-section {
+            margin: 0;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 0;
+            padding: 12px 0;
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            width: 100%;
+        }
+
+        .mobile-section-title {
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 4px;
+        }
+
+        .nav-link-sub {
+            padding: 10px 16px 10px 36px !important;
+            font-size: 14px;
+            color: var(--text-muted) !important;
+        }
+
+
+
+        /* Mobile Navigation Responsive */
+        @media (max-width: 1024px) {
+            .nav-links {
+                display: none;
+            }
+
+            .mobile-menu-toggle {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-content {
+                gap: 12px;
+            }
+
+            .navbar {
+                padding: 12px 0;
+            }
+
+            .nav-actions {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-content {
+                padding: 0 16px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .nav-content {
+                gap: 8px;
+            }
+
+            .nav-content {
+                padding: 0 12px;
+            }
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            color: var(--text-primary);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: var(--warning);
+            color: var(--text-primary);
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+            color: var(--text-primary);
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 25px 0;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        th,
+        td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        td {
+            color: var(--text-secondary);
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+    
+        /* Footer Styles */
+        .footer {
+            padding: 80px 0 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 80px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 32px;
+            margin-bottom: 48px;
+        }
+
+        .footer-section h4 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .footer-section p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .footer-section a {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 32px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body data-module-id="module-1">
+    <!-- Header -->
+    <header class="header">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-content">
+                    <a href="../index.html" class="logo">
+                        <span class="logo-icon">СЂСџР‹вЂњ</span>
+                        <span class="logo-text">Р С™РЎС“РЎР‚РЎРѓРЎвЂ№ Р вЂќР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р В°</span>
+                    </a>
+
+                    <div class="nav-links">
+                        <a href="../index.html" class="nav-link" data-short="Р вЂњР В»Р В°Р Р†Р Р…Р В°РЎРЏ">Р вЂњР В»Р В°Р Р†Р Р…Р В°РЎРЏ</a>
+
+                        <div class="nav-dropdown">
+                            <a href="../courses.html" class="nav-link" data-short="Р С™РЎС“РЎР‚РЎРѓРЎвЂ№">Р С™РЎС“РЎР‚РЎРѓРЎвЂ№</a>
+                            <div class="dropdown-content">
+                                <a href="../course.html">Р С›Р В±Р В·Р С•РЎР‚ Р С”РЎС“РЎР‚РЎРѓР В°</a>
+                                <a href="modules-index.html">12 Р СљР С•Р ТРЎС“Р В»Р ВµР в„– Р С•Р В±РЎС“РЎвЂЎР ВµР Р…Р СРЎРЏ</a>
+                                <a href="simulator.html">Р РЋР СР СРЎС“Р В»РЎРЏРЎвЂљР С•РЎР‚ Р С—Р ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚Р С•Р Р†</a>
+                                <a href="calls.html">Р СџРЎР‚Р СР СР ВµРЎР‚РЎвЂ№ Р В·Р Р†Р С•Р Р…Р С”Р С•Р Р†</a>
+                                <a href="cases.html">Р СџРЎР‚Р В°Р С”РЎвЂљР СРЎвЂЎР ВµРЎРѓР С”Р СР Вµ Р С”Р ВµР в„–РЎРѓРЎвЂ№</a>
+                                <a href="testing.html">Р СћР ВµРЎРѓРЎвЂљР СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ</a>
+                            </div>
+                        </div>
+
+                        <div class="nav-dropdown">
+                            <span class="nav-link" data-short="Р ВР Р…РЎРѓРЎвЂљРЎР‚.">Р ВР Р…РЎРѓРЎвЂљРЎР‚РЎС“Р СР ВµР Р…РЎвЂљРЎвЂ№</span>
+                            <div class="dropdown-content">
+                                <a href="analytics.html">📊 Статистика рынка</a>
+                                <a href="load-finder.html">Load Finder</a>
+                                <a href="dispatcher-cards.html">Dispatcher Cards</a>
+                                <a href="simulator.html">Dispatch Simulator</a>
+                            </div>
+                        </div>
+
+                        <div class="nav-dropdown">
+                            <span class="nav-link" data-short="Р ВР Р…РЎвЂћР С•">Р ВР Р…РЎвЂћР С•РЎР‚Р СР В°РЎвЂ Р СРЎРЏ</span>
+                            <div class="dropdown-content">
+                                <a href="../about.html">Р С› Р Р…Р В°РЎРѓ</a>
+                                <a href="../career.html">Р С™Р В°РЎР‚РЎРЉР ВµРЎР‚Р В°</a>
+                                <a href="../faq.html">FAQ</a>
+                                <a href="../help.html">Р СџР С•Р СР С•РЎвЂ°РЎРЉ</a>
+                                <a href="../contacts.html">Р С™Р С•Р Р…РЎвЂљР В°Р С”РЎвЂљРЎвЂ№</a>
+                            </div>
+                        </div>
+
+                        <a href="modules-index.html" class="nav-link active" data-short="Р вЂќР С•Р С”РЎС“Р С.">Р вЂќР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР В°РЎвЂ Р СРЎРЏ</a>
+                        <a href="../pricing.html" class="nav-link" data-short="Р СћР В°РЎР‚Р СРЎвЂћРЎвЂ№">Р СћР В°РЎР‚Р СРЎвЂћРЎвЂ№</a>
+                        <a href="../dashboard.html" class="nav-link" id="dashboardLink" style="display: none;"
+                            data-short="Р С™Р В°Р В±Р СР Р…Р ВµРЎвЂљ">Р вЂєР СРЎвЂЎР Р…РЎвЂ№Р в„– Р С”Р В°Р В±Р СР Р…Р ВµРЎвЂљ</a>
+                    </div>
+
+                    <div class="nav-actions">
+                        <a href="../login.html" class="btn-login">Р вЂ™Р С•Р в„–РЎвЂљР С</a>
+                        <a href="../register.html" class="btn-signup">Р В Р ВµР С–Р СРЎРѓРЎвЂљРЎР‚Р В°РЎвЂ Р СРЎРЏ</a>
+                    </div>
+
+                    <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Mobile Menu Overlay -->
+        <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+
+        <!-- Mobile Menu -->
+        <div class="mobile-menu" id="mobileMenu">
+            <div class="mobile-nav-links">
+                <div class="mobile-nav-actions">
+                    <a href="../login.html" class="btn-login">Р вЂ™Р С•Р в„–РЎвЂљР С</a>
+                    <a href="../register.html" class="btn-signup">Р В Р ВµР С–Р СРЎРѓРЎвЂљРЎР‚Р В°РЎвЂ Р СРЎРЏ</a>
+                </div>
+
+                <div class="mobile-menu-divider"></div>
+
+                <a href="../index.html" class="nav-link">СЂСџРЏВ  Р вЂњР В»Р В°Р Р†Р Р…Р В°РЎРЏ</a>
+
+                <div class="mobile-nav-section">
+                    <div class="mobile-section-title">СЂСџвЂњС™ Р С™Р Р€Р В Р РЋР В«</div>
+                    <a href="../courses.html" class="nav-link nav-link-sub">Р вЂ™РЎРѓР Вµ Р С”РЎС“РЎР‚РЎРѓРЎвЂ№</a>
+                    <a href="../course.html" class="nav-link nav-link-sub">Р С›Р В±Р В·Р С•РЎР‚ Р С”РЎС“РЎР‚РЎРѓР В°</a>
+                    <a href="modules-index.html" class="nav-link nav-link-sub">12 Р СљР С•Р ТРЎС“Р В»Р ВµР в„– Р С•Р В±РЎС“РЎвЂЎР ВµР Р…Р СРЎРЏ</a>
+                    <a href="simulator.html" class="nav-link nav-link-sub">Р РЋР СР СРЎС“Р В»РЎРЏРЎвЂљР С•РЎР‚ Р С—Р ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚Р С•Р Р†</a>
+                    <a href="calls.html" class="nav-link nav-link-sub">Р СџРЎР‚Р СР СР ВµРЎР‚РЎвЂ№ Р В·Р Р†Р С•Р Р…Р С”Р С•Р Р†</a>
+                    <a href="cases.html" class="nav-link nav-link-sub">Р СџРЎР‚Р В°Р С”РЎвЂљР СРЎвЂЎР ВµРЎРѓР С”Р СР Вµ Р С”Р ВµР в„–РЎРѓРЎвЂ№</a>
+                    <a href="testing.html" class="nav-link nav-link-sub">Р СћР ВµРЎРѓРЎвЂљР СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ</a>
+                </div>
+
+                <div class="mobile-nav-section">
+                    <div class="mobile-section-title">СЂСџвЂєВ РїСРЏ Р ВР СњР РЋР СћР В Р Р€Р СљР вЂўР СњР СћР В«</div>
+                    <a href="analytics.html" class="nav-link nav-link-sub">📊 Статистика рынка</a>
+                    <a href="load-finder.html" class="nav-link nav-link-sub">Load Finder</a>
+                    <a href="dispatcher-cards.html" class="nav-link nav-link-sub">Dispatcher Cards</a>
+                    <a href="simulator.html" class="nav-link nav-link-sub">Dispatch Simulator</a>
+                </div>
+
+                <div class="mobile-nav-section">
+                    <div class="mobile-section-title">РІвЂћв„–РїСРЏ Р ВР СњР В¤Р С›Р В Р СљР С’Р В¦Р ВР Р‡</div>
+                    <a href="../about.html" class="nav-link nav-link-sub">Р С› Р Р…Р В°РЎРѓ</a>
+                    <a href="../career.html" class="nav-link nav-link-sub">Р С™Р В°РЎР‚РЎРЉР ВµРЎР‚Р В°</a>
+                    <a href="../faq.html" class="nav-link nav-link-sub">FAQ</a>
+                    <a href="../help.html" class="nav-link nav-link-sub">Р СџР С•Р СР С•РЎвЂ°РЎРЉ</a>
+                    <a href="../contacts.html" class="nav-link nav-link-sub">Р С™Р С•Р Р…РЎвЂљР В°Р С”РЎвЂљРЎвЂ№</a>
+                </div>
+
+                <a href="modules-index.html" class="nav-link active">СЂСџвЂњвЂћ Р вЂќР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР В°РЎвЂ Р СРЎРЏ</a>
+                <a href="../pricing.html" class="nav-link">СЂСџвЂ™В° Р СћР В°РЎР‚Р СРЎвЂћРЎвЂ№</a>
+                <a href="../dashboard.html" class="nav-link" id="dashboardLinkMobile" style="display: none;">СЂСџвЂВ¤ Р вЂєР СРЎвЂЎР Р…РЎвЂ№Р в„–
+                    Р С”Р В°Р В±Р СР Р…Р ВµРЎвЂљ</a>
+            </div>
+        </div>
+
+
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+
+        <!-- Block 1: Р РЋР С•РЎРѓРЎвЂљР В°Р Р†Р В»Р ВµР Р…Р СР Вµ РЎР‚Р ВµР В·РЎР‹Р СР Вµ Р С Р С—Р С•Р СРЎРѓР С” РЎР‚Р В°Р В±Р С•РЎвЂљРЎвЂ№ -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р РЋР С•РЎРѓРЎвЂљР В°Р Р†Р В»Р ВµР Р…Р СР Вµ РЎР‚Р ВµР В·РЎР‹Р СР Вµ Р С Р С—Р С•Р СРЎРѓР С” РЎР‚Р В°Р В±Р С•РЎвЂљРЎвЂ№ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р В°</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio1')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio1')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio1')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <p>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С• РЎРѓР С•РЎРѓРЎвЂљР В°Р Р†Р В»Р ВµР Р…Р Р…Р С•Р Вµ РЎР‚Р ВµР В·РЎР‹Р СР Вµ РІР‚вЂќ Р Р†Р В°РЎв‚¬ Р С—Р ВµРЎР‚Р Р†РЎвЂ№Р в„– РЎв‚¬Р В°Р С– Р С” Р С”Р В°РЎР‚РЎРЉР ВµРЎР‚Р Вµ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р В°. Р В Р В°Р В±Р С•РЎвЂљР С•Р ТР В°РЎвЂљР ВµР В»Р С РЎвЂљРЎР‚Р В°РЎвЂљРЎРЏРЎвЂљ Р Р† РЎРѓРЎР‚Р ВµР ТР Р…Р ВµР С
+                    6-7 РЎРѓР ВµР С”РЎС“Р Р…Р Т Р Р…Р В° Р С—Р ВµРЎР‚Р Р†Р СРЎвЂЎР Р…РЎвЂ№Р в„– Р С—РЎР‚Р С•РЎРѓР СР С•РЎвЂљРЎР‚ РЎР‚Р ВµР В·РЎР‹Р СР Вµ.</p>
+
+                <h3>Р С™Р В»РЎР‹РЎвЂЎР ВµР Р†РЎвЂ№Р Вµ РЎРЊР В»Р ВµР СР ВµР Р…РЎвЂљРЎвЂ№ РЎР‚Р ВµР В·РЎР‹Р СР Вµ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р В°:</h3>
+                <ul>
+                    <li><strong>Contact Information</strong> РІР‚вЂќ РЎвЂљР ВµР В»Р ВµРЎвЂћР С•Р Р…, email, LinkedIn, Р С–Р С•РЎР‚Р С•Р Т</li>
+                    <li><strong>Professional Summary</strong> РІР‚вЂќ 2-3 Р С—РЎР‚Р ВµР ТР В»Р С•Р В¶Р ВµР Р…Р СРЎРЏ Р С• Р Р†Р В°РЎв‚¬Р ВµР С Р С•Р С—РЎвЂ№РЎвЂљР Вµ</li>
+                    <li><strong>Core Skills</strong> РІР‚вЂќ TMS, load boards, DOT regulations, communication</li>
+                    <li><strong>Work Experience</strong> РІР‚вЂќ Р С•Р В±РЎРЏР В·Р В°Р Р…Р Р…Р С•РЎРѓРЎвЂљР С Р С Р ТР С•РЎРѓРЎвЂљР СР В¶Р ВµР Р…Р СРЎРЏ РЎРѓ РЎвЂ Р СРЎвЂћРЎР‚Р В°Р СР С</li>
+                    <li><strong>Education & Certifications</strong> РІР‚вЂќ Р С”РЎС“РЎР‚РЎРѓРЎвЂ№, РЎРѓР ВµРЎР‚РЎвЂљР СРЎвЂћР СР С”Р В°РЎвЂљРЎвЂ№</li>
+                </ul>
+
+                <h3>Р вЂњР ТР Вµ Р СРЎРѓР С”Р В°РЎвЂљРЎРЉ РЎР‚Р В°Р В±Р С•РЎвЂљРЎС“ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р В°:</h3>
+                <h4>СЂСџРЉС’ Р С›Р Р…Р В»Р В°Р в„–Р Р… Р С—Р В»Р В°РЎвЂљРЎвЂћР С•РЎР‚Р СРЎвЂ№</h4>
+                <ul>
+                    <li><strong>Indeed.com</strong> РІР‚вЂќ Р С”РЎР‚РЎС“Р С—Р Р…Р ВµР в„–РЎв‚¬Р СР в„– job board</li>
+                    <li><strong>LinkedIn</strong> РІР‚вЂќ Р С—РЎР‚Р С•РЎвЂћР ВµРЎРѓРЎРѓР СР С•Р Р…Р В°Р В»РЎРЉР Р…Р В°РЎРЏ РЎРѓР ВµРЎвЂљРЎРЉ</li>
+                    <li><strong>ZipRecruiter</strong> РІР‚вЂќ Р В°Р С–РЎР‚Р ВµР С–Р В°РЎвЂљР С•РЎР‚ Р Р†Р В°Р С”Р В°Р Р…РЎРѓР СР в„–</li>
+                    <li><strong>Glassdoor</strong> РІР‚вЂќ Р Р†Р В°Р С”Р В°Р Р…РЎРѓР СР С + Р С•РЎвЂљР В·РЎвЂ№Р Р†РЎвЂ№ Р С• Р С”Р С•Р СР С—Р В°Р Р…Р СРЎРЏРЎвЂ¦</li>
+                    <li><strong>CareerBuilder</strong> РІР‚вЂќ РЎРѓР С—Р ВµРЎвЂ Р СР В°Р В»Р СР В·Р СРЎР‚Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№Р Вµ Р Р†Р В°Р С”Р В°Р Р…РЎРѓР СР С</li>
+                </ul>
+
+                <h4>СЂСџС™вЂє Р РЋР С—Р ВµРЎвЂ Р СР В°Р В»Р СР В·Р СРЎР‚Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№Р Вµ РЎР‚Р ВµРЎРѓРЎС“РЎР‚РЎРѓРЎвЂ№</h4>
+                <ul>
+                    <li><strong>TruckingUnlimited.com</strong> РІР‚вЂќ trucking jobs</li>
+                    <li><strong>CDLLife.com</strong> РІР‚вЂќ dispatcher positions</li>
+                    <li><strong>Facebook Groups</strong> РІР‚вЂќ "Truck Dispatchers USA", "Freight Brokers & Dispatchers"</li>
+                </ul>
+
+                <div class="alert alert-info">
+                    <strong>СЂСџвЂ™РЋ Р РЋР С•Р Р†Р ВµРЎвЂљ:</strong> Р РЋРЎР‚Р ВµР ТР Р…РЎРЏРЎРЏ Р В·Р В°РЎР‚Р С—Р В»Р В°РЎвЂљР В° Р Р…Р В°РЎвЂЎР СР Р…Р В°РЎР‹РЎвЂ°Р ВµР С–Р С• Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р В°: $35,000-45,000/Р С–Р С•Р Т. Р С›Р С—РЎвЂ№РЎвЂљР Р…Р С•Р С–Р С•:
+                    $50,000-70,000/Р С–Р С•Р Т. Р СћР С•Р С— Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚РЎвЂ№: $80,000+/Р С–Р С•Р Т.
+                </div>
+
+                <button class="audio-completion-trigger" data-unlocks="quiz-1">
+                    СЂСџР‹В§ Р Р‡ Р В·Р В°Р С”Р С•Р Р…РЎвЂЎР СР В»(Р В°) РЎРѓР В»РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ
+                </button>
+            </div>
+        </div>
+
+        <!-- Case Study 1: Р СџР ВµРЎР‚Р Р†РЎвЂ№Р в„– Р ТР ВµР Р…РЎРЉ РЎР‚Р В°Р В±Р С•РЎвЂљРЎвЂ№ -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">СЂСџвЂ™С</span>
+                <h3 class="case-study-title">Р В Р ВµР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р ВµР в„–РЎРѓ: Р СџР ВµРЎР‚Р Р†РЎвЂ№Р в„– Р ТР ВµР Р…РЎРЉ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р В°</h3>
+            </div>
+            <div class="case-study-content">
+                <p>
+                    <strong>Р РЋР СРЎвЂљРЎС“Р В°РЎвЂ Р СРЎРЏ:</strong> Р вЂ™РЎвЂ№ РЎвЂљР С•Р В»РЎРЉР С”Р С• Р Р…Р В°РЎвЂЎР В°Р В»Р С РЎР‚Р В°Р В±Р С•РЎвЂљР В°РЎвЂљРЎРЉ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р С•Р С Р Р† Р Р…Р ВµР В±Р С•Р В»РЎРЉРЎв‚¬Р С•Р в„– Р С”Р С•Р СР С—Р В°Р Р…Р СР С РЎРѓ 5
+                    Р С–РЎР‚РЎС“Р В·Р С•Р Р†Р СР С”Р В°Р СР С.
+                    Р Р€РЎвЂљРЎР‚Р С•Р С Р С—Р С•Р Р…Р ВµР ТР ВµР В»РЎРЉР Р…Р СР С”Р В° Р Р†Р В°Р С Р Р…РЎС“Р В¶Р Р…Р С•:
+                </p>
+                <ul>
+                    <li>Р СџРЎР‚Р С•Р Р†Р ВµРЎР‚Р СРЎвЂљРЎРЉ РЎРѓРЎвЂљР В°РЎвЂљРЎС“РЎРѓ 3 Р В°Р С”РЎвЂљР СР Р†Р Р…РЎвЂ№РЎвЂ¦ Р С–РЎР‚РЎС“Р В·Р С•Р Р† Р Р† Р С—РЎС“РЎвЂљР С</li>
+                    <li>Р СњР В°Р в„–РЎвЂљР С Р Р…Р С•Р Р†РЎвЂ№Р в„– Р С–РЎР‚РЎС“Р В· Р ТР В»РЎРЏ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏ, Р С”Р С•РЎвЂљР С•РЎР‚РЎвЂ№Р в„– РЎР‚Р В°Р В·Р С–РЎР‚РЎС“Р В¶Р В°Р ВµРЎвЂљРЎРѓРЎРЏ Р Р† Dallas РЎРѓР ВµР С–Р С•Р ТР Р…РЎРЏ Р Р†Р ВµРЎвЂЎР ВµРЎР‚Р С•Р С</li>
+                    <li>Р В Р ВµРЎв‚¬Р СРЎвЂљРЎРЉ Р С—РЎР‚Р С•Р В±Р В»Р ВµР СРЎС“: Р С•Р ТР СР Р… Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЉ Р С•Р С—Р В°Р В·Р ТРЎвЂ№Р Р†Р В°Р ВµРЎвЂљ Р Р…Р В° 2 РЎвЂЎР В°РЎРѓР В° Р СР В·-Р В·Р В° Р С—РЎР‚Р С•Р В±Р С”Р С</li>
+                    <li>Р С›РЎвЂљР Р†Р ВµРЎвЂљР СРЎвЂљРЎРЉ Р Р…Р В° 5 Р В·Р Р†Р С•Р Р…Р С”Р С•Р Р† Р С•РЎвЂљ Р В±РЎР‚Р С•Р С”Р ВµРЎР‚Р С•Р Р†</li>
+                </ul>
+                <div class="case-study-highlight">
+                    СЂСџвЂ™РЋ Р вЂ™Р С•Р С—РЎР‚Р С•РЎРѓ: Р РЋ РЎвЂЎР ВµР С–Р С• Р Р†РЎвЂ№ Р Р…Р В°РЎвЂЎР Р…Р ВµРЎвЂљР Вµ РЎРѓР Р†Р С•Р в„– РЎР‚Р В°Р В±Р С•РЎвЂЎР СР в„– Р ТР ВµР Р…РЎРЉ? Р С™Р В°Р С”Р В°РЎРЏ Р В·Р В°Р ТР В°РЎвЂЎР В° РЎРѓР В°Р СР В°РЎРЏ Р С—РЎР‚Р СР С•РЎР‚Р СРЎвЂљР ВµРЎвЂљР Р…Р В°РЎРЏ?
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Check 1 -->
+        <div class="quick-check-block locked" id="quiz-1" data-quiz-id="quiz-1-1" data-correct-answer="b">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">РІСљвЂ¦</span>
+                <h3 class="quick-check-title">Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</h3>
+            </div>
+
+            <div class="quick-check-question">
+                Р С™Р В°Р С”Р В°РЎРЏ Р В·Р В°Р ТР В°РЎвЂЎР В° Р ТР С•Р В»Р В¶Р Р…Р В° Р В±РЎвЂ№РЎвЂљРЎРЉ Р Р†РЎвЂ№Р С—Р С•Р В»Р Р…Р ВµР Р…Р В° Р Р† Р С—Р ВµРЎР‚Р Р†РЎС“РЎР‹ Р С•РЎвЂЎР ВµРЎР‚Р ВµР ТРЎРЉ?
+            </div>
+
+            <div class="quick-check-options">
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-1" id="quiz-1-a" value="a">
+                    <label for="quiz-1-a">Р СњР В°РЎвЂЎР В°РЎвЂљРЎРЉ Р СРЎРѓР С”Р В°РЎвЂљРЎРЉ Р Р…Р С•Р Р†РЎвЂ№Р в„– Р С–РЎР‚РЎС“Р В· Р ТР В»РЎРЏ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏ Р Р† Dallas</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-1" id="quiz-1-b" value="b">
+                    <label for="quiz-1-b">Р РЋР Р†РЎРЏР В·Р В°РЎвЂљРЎРЉРЎРѓРЎРЏ РЎРѓ Р С—Р С•Р В»РЎС“РЎвЂЎР В°РЎвЂљР ВµР В»Р ВµР С Р С–РЎР‚РЎС“Р В·Р В°, Р С–Р ТР Вµ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЉ Р С•Р С—Р В°Р В·Р ТРЎвЂ№Р Р†Р В°Р ВµРЎвЂљ, Р С Р С—РЎР‚Р ВµР ТРЎС“Р С—РЎР‚Р ВµР ТР СРЎвЂљРЎРЉ Р С•
+                        Р В·Р В°Р ТР ВµРЎР‚Р В¶Р С”Р Вµ</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-1" id="quiz-1-c" value="c">
+                    <label for="quiz-1-c">Р С›РЎвЂљР Р†Р ВµРЎвЂљР СРЎвЂљРЎРЉ Р Р…Р В° Р В·Р Р†Р С•Р Р…Р С”Р С Р С•РЎвЂљ Р В±РЎР‚Р С•Р С”Р ВµРЎР‚Р С•Р Р†</label>
+                </div>
+            </div>
+
+            <div class="quick-check-feedback">
+                <strong>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С•! РІСљвЂњ</strong>
+                Р С™Р С•Р СР СРЎС“Р Р…Р СР С”Р В°РЎвЂ Р СРЎРЏ РЎРѓ Р С—Р С•Р В»РЎС“РЎвЂЎР В°РЎвЂљР ВµР В»Р ВµР С Р С• Р В·Р В°Р ТР ВµРЎР‚Р В¶Р С”Р Вµ РІР‚вЂќ РЎРЊРЎвЂљР С• Р С”РЎР‚Р СРЎвЂљР СРЎвЂЎР ВµРЎРѓР С”Р С Р Р†Р В°Р В¶Р Р…Р В°РЎРЏ Р В·Р В°Р ТР В°РЎвЂЎР В°. Р С›Р С—Р С•Р В·Р ТР В°Р Р…Р СР Вµ Р Р…Р В° 2 РЎвЂЎР В°РЎРѓР В° Р СР С•Р В¶Р ВµРЎвЂљ РЎРѓР С•РЎР‚Р Р†Р В°РЎвЂљРЎРЉ
+                Р СРЎвЂ¦ Р С–РЎР‚Р В°РЎвЂћР СР С” РЎР‚Р В°Р В·Р С–РЎР‚РЎС“Р В·Р С”Р С.
+                Р СџРЎР‚Р ВµР ТРЎС“Р С—РЎР‚Р ВµР ТР СР Р† Р В·Р В°РЎР‚Р В°Р Р…Р ВµР Вµ, Р Р†РЎвЂ№ РЎРѓР С•РЎвЂ¦РЎР‚Р В°Р Р…Р СРЎвЂљР Вµ РЎвЂ¦Р С•РЎР‚Р С•РЎв‚¬Р СР Вµ Р С•РЎвЂљР Р…Р С•РЎв‚¬Р ВµР Р…Р СРЎРЏ Р С Р СР В·Р В±Р ВµР В¶Р СРЎвЂљР Вµ РЎв‚¬РЎвЂљРЎР‚Р В°РЎвЂћР С•Р Р†. Р С›РЎРѓРЎвЂљР В°Р В»РЎРЉР Р…РЎвЂ№Р Вµ Р В·Р В°Р ТР В°РЎвЂЎР С Р Р†Р В°Р В¶Р Р…РЎвЂ№, Р Р…Р С• Р Р…Р Вµ
+                РЎвЂљРЎР‚Р ВµР В±РЎС“РЎР‹РЎвЂљ Р Р…Р ВµР СР ВµР ТР В»Р ВµР Р…Р Р…Р С•Р С–Р С• Р ТР ВµР в„–РЎРѓРЎвЂљР Р†Р СРЎРЏ.
+            </div>
+        </div>
+
+        <!-- Block 2: Р С›Р В±РЎРЏР В·Р В°Р Р…Р Р…Р С•РЎРѓРЎвЂљР С -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р С›РЎРѓР Р…Р С•Р Р†Р Р…РЎвЂ№Р Вµ Р С•Р В±РЎРЏР В·Р В°Р Р…Р Р…Р С•РЎРѓРЎвЂљР С Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р В°</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio2')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio2')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio2')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <h3>Р вЂўР В¶Р ВµР ТР Р…Р ВµР Р†Р Р…РЎвЂ№Р Вµ Р В·Р В°Р ТР В°РЎвЂЎР С:</h3>
+
+                <h4>СЂСџвЂќРЊ Р СџР С•Р СРЎРѓР С” Р С РЎРѓР С•Р С–Р В»Р В°РЎРѓР С•Р Р†Р В°Р Р…Р СР Вµ Р С–РЎР‚РЎС“Р В·Р С•Р Р†</h4>
+                <ul>
+                    <li>Р В Р В°Р В±Р С•РЎвЂљР В° РЎРѓ load boards (DAT, Truckstop, 123loadboard)</li>
+                    <li>Р СџР ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚РЎвЂ№ РЎРѓ Р В±РЎР‚Р С•Р С”Р ВµРЎР‚Р В°Р СР С Р С—Р С• РЎРѓРЎвЂљР В°Р Р†Р С”Р В°Р С</li>
+                    <li>Р СџР С•Р СРЎРѓР С” Р С—РЎР‚РЎРЏР СРЎвЂ№РЎвЂ¦ Р С”Р В»Р СР ВµР Р…РЎвЂљР С•Р Р†</li>
+                    <li>Р С’Р Р…Р В°Р В»Р СР В· РЎР‚Р ВµР Р…РЎвЂљР В°Р В±Р ВµР В»РЎРЉР Р…Р С•РЎРѓРЎвЂљР С Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р†</li>
+                </ul>
+
+                <h4>СЂСџвЂ”С”РїСРЏ Р СџР В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С•Р Р†</h4>
+                <ul>
+                    <li>Р С›Р С—РЎвЂљР СР СР СР В·Р В°РЎвЂ Р СРЎРЏ Р Р†РЎР‚Р ВµР СР ВµР Р…Р С Р С РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТР С•Р Р† Р Р…Р В° РЎвЂљР С•Р С—Р В»Р СР Р†Р С•</li>
+                    <li>Р Р€РЎвЂЎР ВµРЎвЂљ Р С•Р С–РЎР‚Р В°Р Р…Р СРЎвЂЎР ВµР Р…Р СР в„– Р С—Р С• Р Р†Р ВµРЎРѓРЎС“ Р С Р С–Р В°Р В±Р В°РЎР‚Р СРЎвЂљР В°Р С</li>
+                    <li>Р СџР В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ Р С•РЎвЂљР ТРЎвЂ№РЎвЂ¦Р В° Р Р†Р С•Р ТР СРЎвЂљР ВµР В»Р ВµР в„– (HOS compliance)</li>
+                    <li>Р СџР С•Р СРЎРѓР С” backhaul Р С–РЎР‚РЎС“Р В·Р С•Р Р† Р ТР В»РЎРЏ Р СР СР Р…Р СР СР СР В·Р В°РЎвЂ Р СР С deadhead miles</li>
+                </ul>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Р вЂ™РЎР‚Р ВµР СРЎРЏ</th>
+                                <th>Р вЂ”Р В°Р ТР В°РЎвЂЎР В°</th>
+                                <th>Р СџРЎР‚Р СР С•РЎР‚Р СРЎвЂљР ВµРЎвЂљ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>6:00-8:00</td>
+                                <td>Р СџРЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В° РЎРѓРЎвЂљР В°РЎвЂљРЎС“РЎРѓР В° Р В°Р С”РЎвЂљР СР Р†Р Р…РЎвЂ№РЎвЂ¦ Р С–РЎР‚РЎС“Р В·Р С•Р Р†</td>
+                                <td>СЂСџвЂќТђ Р вЂ™РЎвЂ№РЎРѓР С•Р С”Р СР в„–</td>
+                            </tr>
+                            <tr>
+                                <td>8:00-12:00</td>
+                                <td>Р СџР С•Р СРЎРѓР С” Р Р…Р С•Р Р†РЎвЂ№РЎвЂ¦ Р С–РЎР‚РЎС“Р В·Р С•Р Р† Р С Р С—Р ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚РЎвЂ№</td>
+                                <td>СЂСџвЂќТђ Р вЂ™РЎвЂ№РЎРѓР С•Р С”Р СР в„–</td>
+                            </tr>
+                            <tr>
+                                <td>12:00-17:00</td>
+                                <td>Р С™Р С•Р С•РЎР‚Р ТР СР Р…Р В°РЎвЂ Р СРЎРЏ pickup/delivery</td>
+                                <td>РІС™РЋ Р РЋРЎР‚Р ВµР ТР Р…Р СР в„–</td>
+                            </tr>
+                            <tr>
+                                <td>17:00-20:00</td>
+                                <td>Р СџР В»Р В°Р Р…Р СРЎР‚Р С•Р Р†Р В°Р Р…Р СР Вµ Р Р…Р В° Р В·Р В°Р Р†РЎвЂљРЎР‚Р В°</td>
+                                <td>СЂСџвЂњР‰ Р СњР СР В·Р С”Р СР в„–</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Audio Completion Trigger -->
+                <button class="audio-completion-trigger" data-unlocks="quiz-2">
+                    СЂСџР‹В§ Р Р‡ Р В·Р В°Р С”Р С•Р Р…РЎвЂЎР СР В»(Р В°) РЎРѓР В»РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ
+                </button>
+            </div>
+        </div>
+
+        <!-- Case Study 2: Р СџР ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚РЎвЂ№ РЎРѓ Р В±РЎР‚Р С•Р С”Р ВµРЎР‚Р С•Р С -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">СЂСџвЂ™С</span>
+                <h3 class="case-study-title">Р В Р ВµР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р ВµР в„–РЎРѓ: Р СџР ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚РЎвЂ№ Р С• РЎРѓРЎвЂљР В°Р Р†Р С”Р Вµ</h3>
+            </div>
+            <div class="case-study-content">
+                <p>
+                    <strong>Р РЋР СРЎвЂљРЎС“Р В°РЎвЂ Р СРЎРЏ:</strong> Р вЂ™РЎвЂ№ Р Р…Р В°РЎв‚¬Р В»Р С Р С–РЎР‚РЎС“Р В· Р Р…Р В° DAT Load Board: Chicago, IL РІвЂ вЂ™ Dallas, TX,
+                    1,200 Р СР СР В»РЎРЉ, 45,000 lbs. Р вЂРЎР‚Р С•Р С”Р ВµРЎР‚ Р С—РЎР‚Р ВµР ТР В»Р В°Р С–Р В°Р ВµРЎвЂљ $2,400 ($2.00/mile).
+                </p>
+                <p>
+                    Р вЂ™РЎвЂ№ Р В·Р Р…Р В°Р ВµРЎвЂљР Вµ, РЎвЂЎРЎвЂљР С• РЎРѓРЎР‚Р ВµР ТР Р…РЎРЏРЎРЏ РЎРѓРЎвЂљР В°Р Р†Р С”Р В° Р Р…Р В° РЎРЊРЎвЂљР С•Р С Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР Вµ РЎРѓР ВµР в„–РЎвЂЎР В°РЎРѓ $2.50/mile Р СР В·-Р В·Р В° Р Р†РЎвЂ№РЎРѓР С•Р С”Р С•Р С–Р С• РЎРѓР С—РЎР‚Р С•РЎРѓР В°.
+                    Р вЂќР СР В·Р ВµР В»РЎРЉ РЎРѓРЎвЂљР С•Р СРЎвЂљ $3.80/Р С–Р В°Р В»Р В»Р С•Р Р…, Р С Р Р†Р В°РЎв‚¬ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЉ Р С—Р С•Р В»РЎС“РЎвЂЎР В°Р ВµРЎвЂљ 6 MPG (miles per gallon).
+                </p>
+                <div class="case-study-highlight">
+                    СЂСџвЂ™РЋ Р вЂ™Р С•Р С—РЎР‚Р С•РЎРѓ: Р РЋРЎвЂљР С•Р СРЎвЂљ Р В»Р С Р В±РЎР‚Р В°РЎвЂљРЎРЉ РЎРЊРЎвЂљР С•РЎвЂљ Р С–РЎР‚РЎС“Р В·? Р С™Р В°Р С”РЎС“РЎР‹ Р С”Р С•Р Р…РЎвЂљРЎР‚-Р С•РЎвЂћРЎвЂћР ВµРЎР‚ Р Р†РЎвЂ№ Р С—РЎР‚Р ВµР ТР В»Р С•Р В¶Р СРЎвЂљР Вµ Р В±РЎР‚Р С•Р С”Р ВµРЎР‚РЎС“?
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Check 2 -->
+        <div class="quick-check-block locked" id="quiz-2" data-quiz-id="quiz-1-2" data-correct-answer="b">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">РІСљвЂ¦</span>
+                <h3 class="quick-check-title">Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</h3>
+            </div>
+
+            <div class="quick-check-question">
+                Р С™Р В°Р С”Р В°РЎРЏ Р СР СР Р…Р СР СР В°Р В»РЎРЉР Р…Р В°РЎРЏ РЎРѓРЎвЂљР В°Р Р†Р С”Р В° Р В±РЎС“Р ТР ВµРЎвЂљ Р Р†РЎвЂ№Р С–Р С•Р ТР Р…Р С•Р в„– Р ТР В»РЎРЏ РЎРЊРЎвЂљР С•Р С–Р С• Р С–РЎР‚РЎС“Р В·Р В°, РЎС“РЎвЂЎР СРЎвЂљРЎвЂ№Р Р†Р В°РЎРЏ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р ТРЎвЂ№ Р Р…Р В° РЎвЂљР С•Р С—Р В»Р СР Р†Р С•?
+            </div>
+
+            <div class="quick-check-options">
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-2" id="quiz-2-a" value="a">
+                    <label for="quiz-2-a">$2,400 ($2.00/mile) - Р С—РЎР‚Р СР Р…РЎРЏРЎвЂљРЎРЉ Р С•РЎР‚Р СР С–Р СР Р…Р В°Р В»РЎРЉР Р…Р С•Р Вµ Р С—РЎР‚Р ВµР ТР В»Р С•Р В¶Р ВµР Р…Р СР Вµ</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-2" id="quiz-2-b" value="b">
+                    <label for="quiz-2-b">$2,880 ($2.40/mile) - Р С—Р С•Р С”РЎР‚РЎвЂ№Р Р†Р В°Р ВµРЎвЂљ РЎвЂљР С•Р С—Р В»Р СР Р†Р С• + РЎР‚Р В°Р В·РЎС“Р СР Р…Р В°РЎРЏ Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉ</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-2" id="quiz-2-c" value="c">
+                    <label for="quiz-2-c">$3,600 ($3.00/mile) - Р СР В°Р С”РЎРѓР СР СР В°Р В»РЎРЉР Р…Р В°РЎРЏ РЎРѓРЎвЂљР В°Р Р†Р С”Р В°</label>
+                </div>
+            </div>
+
+            <div class="quick-check-feedback">
+                <strong>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С•! РІСљвЂњ</strong>
+                Р СџРЎР‚Р С 6 MPG Р С $3.80/Р С–Р В°Р В»Р В»Р С•Р Р…, РЎвЂљР С•Р С—Р В»Р СР Р†Р С• РЎРѓРЎвЂљР С•Р СРЎвЂљ ~$760 (1,200 Р СР СР В»РЎРЉ Р“В· 6 Р“вЂ” $3.80).
+                Р РЋРЎвЂљР В°Р Р†Р С”Р В° $2.40/mile ($2,880) Р С—Р С•Р С”РЎР‚РЎвЂ№Р Р†Р В°Р ВµРЎвЂљ РЎвЂљР С•Р С—Р В»Р СР Р†Р С•, Р СР В·Р Р…Р С•РЎРѓ, Р В·Р В°РЎР‚Р С—Р В»Р В°РЎвЂљРЎС“ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЏ Р С Р ТР В°Р ВµРЎвЂљ РЎР‚Р В°Р В·РЎС“Р СР Р…РЎС“РЎР‹ Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉ.
+                Р В­РЎвЂљР С• РЎР‚Р ВµР В°Р В»Р СРЎРѓРЎвЂљР СРЎвЂЎР Р…Р В°РЎРЏ Р С”Р С•Р Р…РЎвЂљРЎР‚-Р С•РЎвЂћРЎвЂћР ВµРЎР‚, Р С”Р С•РЎвЂљР С•РЎР‚РЎС“РЎР‹ Р В±РЎР‚Р С•Р С”Р ВµРЎР‚ Р СР С•Р В¶Р ВµРЎвЂљ Р С—РЎР‚Р СР Р…РЎРЏРЎвЂљРЎРЉ.
+            </div>
+        </div>
+
+        <!-- Block 3: Р СњР ВµР С•Р В±РЎвЂ¦Р С•Р ТР СР СРЎвЂ№Р Вµ Р Р…Р В°Р Р†РЎвЂ№Р С”Р С -->
+        <div class="content-block">
+            <div class="block-header">
+                <h2 class="block-title">Р СњР ВµР С•Р В±РЎвЂ¦Р С•Р ТР СР СРЎвЂ№Р Вµ Р Р…Р В°Р Р†РЎвЂ№Р С”Р С Р С Р С”Р В°РЎвЂЎР ВµРЎРѓРЎвЂљР Р†Р В°</h2>
+                <div class="audio-container">
+                    <svg class="progress-ring">
+                        <circle class="progress-ring-bg" cx="35" cy="35" r="32"></circle>
+                        <circle class="progress-ring-fill" cx="35" cy="35" r="32"></circle>
+                    </svg>
+                    <button class="audio-btn" onclick="toggleAudio(this, 'audio3')">
+                        <span class="play-icon">РІвЂ“В¶</span>
+                        <span class="pause-icon">РІРЏС</span>
+                    </button>
+                    <div class="progress-ring-interactive" onclick="seekAudio(event, this, 'audio3')"></div>
+                    <div class="mobile-progress-bar" onclick="seekAudioMobile(event, this, 'audio3')">
+                        <div class="mobile-progress-fill"></div>
+                    </div>
+                    <div class="audio-duration">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="block-content">
+                <h3>Р СћР ВµРЎвЂ¦Р Р…Р СРЎвЂЎР ВµРЎРѓР С”Р СР Вµ Р Р…Р В°Р Р†РЎвЂ№Р С”Р С:</h3>
+                <ul>
+                    <li><strong>Р вЂ”Р Р…Р В°Р Р…Р СР Вµ Р С–Р ВµР С•Р С–РЎР‚Р В°РЎвЂћР СР С Р РЋР РЃР С’</strong> РІР‚вЂќ Р С•РЎРѓР Р…Р С•Р Р†Р Р…РЎвЂ№Р Вµ Р СР В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљРЎвЂ№, РЎв‚¬РЎвЂљР В°РЎвЂљРЎвЂ№, Р С–Р С•РЎР‚Р С•Р ТР В°</li>
+                    <li><strong>Р В Р В°Р В±Р С•РЎвЂљР В° РЎРѓ TMS</strong> РІР‚вЂќ Transportation Management Systems</li>
+                    <li><strong>Load boards</strong> РІР‚вЂќ РЎРЊРЎвЂћРЎвЂћР ВµР С”РЎвЂљР СР Р†Р Р…РЎвЂ№Р в„– Р С—Р С•Р СРЎРѓР С” Р С–РЎР‚РЎС“Р В·Р С•Р Р†</li>
+                    <li><strong>DOT regulations</strong> РІР‚вЂќ Р В·Р Р…Р В°Р Р…Р СР Вµ Р С—РЎР‚Р В°Р Р†Р СР В» Р С РЎвЂљРЎР‚Р ВµР В±Р С•Р Р†Р В°Р Р…Р СР в„–</li>
+                </ul>
+
+                <h3>Р вЂєР СРЎвЂЎР Р…РЎвЂ№Р Вµ Р С”Р В°РЎвЂЎР ВµРЎРѓРЎвЂљР Р†Р В°:</h3>
+                <ul>
+                    <li><strong>Р С™Р С•Р СР СРЎС“Р Р…Р СР С”Р В°Р В±Р ВµР В»РЎРЉР Р…Р С•РЎРѓРЎвЂљРЎРЉ</strong> РІР‚вЂќ РЎС“Р СР ВµР Р…Р СР Вµ Р Р†Р ВµРЎРѓРЎвЂљР С Р С—Р ВµРЎР‚Р ВµР С–Р С•Р Р†Р С•РЎР‚РЎвЂ№</li>
+                    <li><strong>Р РЋРЎвЂљРЎР‚Р ВµРЎРѓРЎРѓР С•РЎС“РЎРѓРЎвЂљР С•Р в„–РЎвЂЎР СР Р†Р С•РЎРѓРЎвЂљРЎРЉ</strong> РІР‚вЂќ РЎР‚Р В°Р В±Р С•РЎвЂљР В° Р Р† РЎС“РЎРѓР В»Р С•Р Р†Р СРЎРЏРЎвЂ¦ Р ТР ВµР ТР В»Р В°Р в„–Р Р…Р С•Р Р†</li>
+                    <li><strong>Р СљР Р…Р С•Р С–Р С•Р В·Р В°Р ТР В°РЎвЂЎР Р…Р С•РЎРѓРЎвЂљРЎРЉ</strong> РІР‚вЂќ РЎС“Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р СР Вµ Р Р…Р ВµРЎРѓР С”Р С•Р В»РЎРЉР С”Р СР СР С Р С–РЎР‚РЎС“Р В·Р В°Р СР С</li>
+                    <li><strong>Р вЂ™Р Р…Р СР СР В°РЎвЂљР ВµР В»РЎРЉР Р…Р С•РЎРѓРЎвЂљРЎРЉ</strong> РІР‚вЂќ Р С”Р С•Р Р…РЎвЂљРЎР‚Р С•Р В»РЎРЉ Р ТР ВµРЎвЂљР В°Р В»Р ВµР в„– Р С Р ТР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљР С•Р Р†</li>
+                </ul>
+
+                <div class="alert alert-success">
+                    <strong>СЂСџР‹Р‡ Р В¦Р ВµР В»РЎРЉ Р СР С•Р ТРЎС“Р В»РЎРЏ:</strong> Р СџР С•РЎРѓР В»Р Вµ Р СР В·РЎС“РЎвЂЎР ВµР Р…Р СРЎРЏ РЎРЊРЎвЂљР С•Р С–Р С• Р СР С•Р ТРЎС“Р В»РЎРЏ Р Р†РЎвЂ№ Р В±РЎС“Р ТР ВµРЎвЂљР Вµ Р С—Р С•Р Р…Р СР СР В°РЎвЂљРЎРЉ РЎР‚Р С•Р В»РЎРЉ Р ТР СРЎРѓР С—Р ВµРЎвЂљРЎвЂЎР ВµРЎР‚Р В° Р С
+                    Р С•РЎРѓР Р…Р С•Р Р†Р Р…РЎвЂ№Р Вµ РЎвЂљРЎР‚Р ВµР В±Р С•Р Р†Р В°Р Р…Р СРЎРЏ Р С” Р С—РЎР‚Р С•РЎвЂћР ВµРЎРѓРЎРѓР СР С.
+                </div>
+
+                <!-- Audio Completion Trigger -->
+                <button class="audio-completion-trigger" data-unlocks="quiz-3">
+                    СЂСџР‹В§ Р Р‡ Р В·Р В°Р С”Р С•Р Р…РЎвЂЎР СР В»(Р В°) РЎРѓР В»РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ
+                </button>
+            </div>
+        </div>
+
+        <!-- Case Study 3: Р РЋРЎвЂљРЎР‚Р ВµРЎРѓРЎРѓР С•Р Р†Р В°РЎРЏ РЎРѓР СРЎвЂљРЎС“Р В°РЎвЂ Р СРЎРЏ -->
+        <div class="case-study-block">
+            <div class="case-study-header">
+                <span class="case-study-icon">СЂСџвЂ™С</span>
+                <h3 class="case-study-title">Р В Р ВµР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С”Р ВµР в„–РЎРѓ: Р СџРЎС“РЎРѓРЎвЂљР С•Р в„– Р С—РЎР‚Р С•Р В±Р ВµР С– (Deadhead)</h3>
+            </div>
+            <div class="case-study-content">
+                <p>
+                    <strong>Р РЋР СРЎвЂљРЎС“Р В°РЎвЂ Р СРЎРЏ:</strong> Р вЂ™Р В°РЎв‚¬ Р Р†Р С•Р ТР СРЎвЂљР ВµР В»РЎРЉ РЎвЂљР С•Р В»РЎРЉР С”Р С• РЎвЂЎРЎвЂљР С• РЎР‚Р В°Р В·Р С–РЎР‚РЎС“Р В·Р СР В»РЎРѓРЎРЏ Р Р† Phoenix, AZ.
+                    Р РЋР В»Р ВµР ТРЎС“РЎР‹РЎвЂ°Р СР в„– Р С–РЎР‚РЎС“Р В· Р Р…Р В°РЎвЂ¦Р С•Р ТР СРЎвЂљРЎРѓРЎРЏ Р Р† Los Angeles, CA (370 Р СР СР В»РЎРЉ deadhead - Р С—РЎС“РЎРѓРЎвЂљР С•Р в„– Р С—РЎР‚Р С•Р В±Р ВµР С–).
+                </p>
+                <p>
+                    Р вЂњРЎР‚РЎС“Р В·: LA РІвЂ вЂ™ Seattle, WA, 1,150 Р СР СР В»РЎРЉ, $3,450 ($3.00/mile).
+                    Р СњР С• Р Р†Р В°Р С Р Р…РЎС“Р В¶Р Р…Р С• Р С—РЎР‚Р С•Р ВµРЎвЂ¦Р В°РЎвЂљРЎРЉ 370 Р СР СР В»РЎРЉ Р С—РЎС“РЎРѓРЎвЂљРЎвЂ№Р С Р ТР С• LA, РЎвЂЎРЎвЂљР С•Р В±РЎвЂ№ Р В·Р В°Р В±РЎР‚Р В°РЎвЂљРЎРЉ Р С–РЎР‚РЎС“Р В·.
+                </p>
+                <div class="case-study-highlight">
+                    СЂСџвЂ™РЋ Р вЂ™Р С•Р С—РЎР‚Р С•РЎРѓ: Р С™Р В°Р С” deadhead miles Р Р†Р В»Р СРЎРЏРЎР‹РЎвЂљ Р Р…Р В° РЎР‚Р ВµР В°Р В»РЎРЉР Р…РЎС“РЎР‹ Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљРЎРЉ РЎРЊРЎвЂљР С•Р С–Р С• Р С–РЎР‚РЎС“Р В·Р В°?
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Check 3 -->
+        <div class="quick-check-block locked" id="quiz-3" data-quiz-id="quiz-1-3" data-correct-answer="b">
+            <div class="quick-check-header">
+                <span class="quick-check-icon">РІСљвЂ¦</span>
+                <h3 class="quick-check-title">Р вЂРЎвЂ№РЎРѓРЎвЂљРЎР‚Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°</h3>
+            </div>
+
+            <div class="quick-check-question">
+                Р С™Р В°Р С”Р В°РЎРЏ РЎР‚Р ВµР В°Р В»РЎРЉР Р…Р В°РЎРЏ РЎРѓРЎвЂљР В°Р Р†Р С”Р В° Р В·Р В° Р СР СР В»РЎР‹ Р ТР В»РЎРЏ РЎРЊРЎвЂљР С•Р С–Р С• Р С–РЎР‚РЎС“Р В·Р В° РЎРѓ РЎС“РЎвЂЎР ВµРЎвЂљР С•Р С deadhead?
+            </div>
+
+            <div class="quick-check-options">
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-3" id="quiz-3-a" value="a">
+                    <label for="quiz-3-a">$3.00/mile - Р С”Р В°Р С” РЎС“Р С”Р В°Р В·Р В°Р Р…Р С• Р Р† Р С•РЎвЂћРЎвЂћР ВµРЎР‚Р Вµ</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-3" id="quiz-3-b" value="b">
+                    <label for="quiz-3-b">$2.27/mile - РЎРѓ РЎС“РЎвЂЎР ВµРЎвЂљР С•Р С deadhead (370 + 1,150 = 1,520 Р СР СР В»РЎРЉ)</label>
+                </div>
+
+                <div class="quick-check-option">
+                    <input type="radio" name="quiz-3" id="quiz-3-c" value="c">
+                    <label for="quiz-3-c">$2.50/mile - РЎРѓРЎР‚Р ВµР ТР Р…РЎРЏРЎРЏ РЎРѓРЎвЂљР В°Р Р†Р С”Р В°</label>
+                </div>
+            </div>
+
+            <div class="quick-check-feedback">
+                <strong>Р СџРЎР‚Р В°Р Р†Р СР В»РЎРЉР Р…Р С•! РІСљвЂњ</strong>
+                Р С›Р В±РЎвЂ°Р ВµР Вµ РЎР‚Р В°РЎРѓРЎРѓРЎвЂљР С•РЎРЏР Р…Р СР Вµ: 370 (deadhead) + 1,150 (loaded) = 1,520 Р СР СР В»РЎРЉ.
+                Р вЂќР С•РЎвЂ¦Р С•Р Т: $3,450 Р“В· 1,520 Р СР СР В»РЎРЉ = $2.27/mile РЎР‚Р ВµР В°Р В»РЎРЉР Р…Р В°РЎРЏ РЎРѓРЎвЂљР В°Р Р†Р С”Р В°.
+                Р вЂ™РЎРѓР ВµР С–Р ТР В° РЎС“РЎвЂЎР СРЎвЂљРЎвЂ№Р Р†Р В°Р в„–РЎвЂљР Вµ deadhead miles Р С—РЎР‚Р С РЎР‚Р В°РЎРѓРЎвЂЎР ВµРЎвЂљР Вµ Р С—РЎР‚Р СР В±РЎвЂ№Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљР С!
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="lesson-nav">
+            <a href="doc-module-11.html" class="nav-btn">
+                <span>РІвЂ С’</span>
+                <span>Р СџРЎР‚Р ВµР ТРЎвЂ№Р ТРЎС“РЎвЂ°Р СР в„– РЎС“РЎР‚Р С•Р С”</span>
+            </a>
+            <div class="progress-info">
+                <div>Р СљР С•Р ТРЎС“Р В»РЎРЉ 12 Р СР В· 12</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 100%"></div>
+                </div>
+                <div>100% Р В·Р В°Р Р†Р ВµРЎР‚РЎв‚¬Р ВµР Р…Р С•</div>
+            </div>
+            <a href="modules-index.html" class="nav-btn">
+                <span>Р С™ Р СР С•Р ТРЎС“Р В»РЎРЏР С</span>
+                <span>РІвЂ вЂ™</span>
+            </a>
+        </nav>
+    </main>
+
+    <!-- Audio elements (hidden) -->
+    <audio id="audio1" preload="metadata">
+        <source src="../audio/module12-block1.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="audio2" preload="none">
+        <source src="../audio/module12-block2.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="audio3" preload="none">
+        <source src="../audio/module12-block3.mp3" type="audio/mpeg">
+    </audio>module1-block3.mp3" type="audio/mpeg">
+    <source src="../audio/module1-block3.ogg" type="audio/ogg">
+    </audio>
+
+    <script>
+        let currentAudio = null;
+        let currentButton = null;
+        let currentContainer = null;
+        let progressUpdateInterval = null;
+
+        // Audio durations (in seconds) - will be updated from actual audio files
+        const audioDurations = {
+            'audio1': 0, // Will be loaded from actual file
+            'audio2': 240, // 4 minutes (simulated)
+            'audio3': 210  // 3.5 minutes (simulated)
+        };
+
+        // Load actual audio duration for audio1
+        document.addEventListener('DOMContentLoaded', function () {
+            const audio1 = document.getElementById('audio1');
+
+            audio1.addEventListener('loadedmetadata', function () {
+                if (audio1.duration && !isNaN(audio1.duration) && isFinite(audio1.duration)) {
+                    audioDurations['audio1'] = audio1.duration;
+                    updateProgress('audio1', 0, audio1.duration);
+                } else {
+                    // Fallback to simulated duration if file can't be loaded
+                    audioDurations['audio1'] = 180;
+                    updateProgress('audio1', 0, 180);
+                }
+            });
+
+            audio1.addEventListener('error', function () {
+                console.log('Could not load audio file, using simulated duration');
+                audioDurations['audio1'] = 180;
+                updateProgress('audio1', 0, 180);
+            });
+
+            // Initialize other audio durations
+            Object.keys(audioDurations).forEach(audioId => {
+                if (audioId !== 'audio1') {
+                    const duration = audioDurations[audioId];
+                    updateProgress(audioId, 0, duration);
+                }
+            });
+        });
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateProgress(audioId, currentTime, duration) {
+            const container = document.querySelector(`[onclick*="${audioId}"]`).closest('.audio-container');
+            const progressRing = container.querySelector('.progress-ring-fill');
+            const mobileProgressFill = container.querySelector('.mobile-progress-fill');
+            const durationDisplay = container.querySelector('.audio-duration');
+
+            const progress = currentTime / duration;
+            const circumference = 2 * Math.PI * 32; // radius = 32
+            const offset = circumference - (progress * circumference);
+
+            // Update ring progress (desktop)
+            if (progressRing) {
+                progressRing.style.strokeDashoffset = offset;
+            }
+
+            // Update mobile progress bar
+            if (mobileProgressFill) {
+                mobileProgressFill.style.width = `${progress * 100}%`;
+            }
+
+            durationDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+        }
+
+        function seekAudioMobile(event, element, audioId) {
+            event.stopPropagation();
+
+            const audio = document.getElementById(audioId);
+            if (!audio || audio.paused) {
+                return; // Only allow seeking when playing
+            }
+
+            const rect = element.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const progress = clickX / rect.width;
+            const duration = audioDurations[audioId];
+            const newTime = progress * duration;
+
+            // Update progress immediately
+            updateProgress(audioId, newTime, duration);
+
+            // Seek audio
+            if (audioId === 'audio1' && audio.duration) {
+                audio.currentTime = newTime;
+            }
+        }
+
+        function seekAudio(event, element, audioId) {
+            event.stopPropagation();
+
+            // Only allow seeking if audio is playing
+            if (!element.classList.contains('seekable')) {
+                return;
+            }
+
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const x = event.clientX - centerX;
+            const y = event.clientY - centerY;
+
+            // Calculate distance from center
+            const distance = Math.sqrt(x * x + y * y);
+            const radius = rect.width / 2;
+
+            // Only allow seeking if click is on the ring (outer 40% of radius)
+            // This prevents conflicts with the play button in the center
+            if (distance < radius * 0.55) {
+                // Click is too close to center, ignore it
+                return;
+            }
+
+            // Calculate angle from top (0 degrees)
+            let angle = Math.atan2(x, -y) * (180 / Math.PI);
+            if (angle < 0) angle += 360;
+
+            const progress = angle / 360;
+            const duration = audioDurations[audioId];
+            const newTime = progress * duration;
+
+            // Update progress ring immediately
+            updateProgress(audioId, newTime, duration);
+
+            // If audio is playing, seek to new position
+            const audio = document.getElementById(audioId);
+            if (audio && !audio.paused) {
+                if (audioId === 'audio1') {
+                    // Real audio seeking
+                    audio.currentTime = newTime;
+                } else {
+                    // For demo purposes, just update the visual progress
+                    // In real implementation, you would set audio.currentTime = newTime;
+                }
+            }
+        }
+
+        // Auto-unlock quiz when audio ends
+        function unlockQuizForAudio(audioId) {
+            // Map audio IDs to quiz IDs
+            const audioToQuizMap = {
+                'audio1': 'quiz-1',
+                'audio2': 'quiz-2',
+                'audio3': 'quiz-3'
+            };
+
+            const quizId = audioToQuizMap[audioId];
+            if (quizId) {
+                // Find the trigger button for this quiz
+                const triggerButton = document.querySelector(`[data-unlocks="${quizId}"]`);
+                if (triggerButton && !triggerButton.classList.contains('completed')) {
+                    // Simulate button click to unlock quiz
+                    triggerButton.click();
+                }
+            }
+        }
+
+        function toggleAudio(button, audioId) {
+            const audio = document.getElementById(audioId);
+            const container = button.closest('.audio-container');
+            const interactiveRing = container.querySelector('.progress-ring-interactive');
+
+            // Stop current audio if different
+            if (currentAudio && currentAudio !== audio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                if (currentButton) {
+                    currentButton.classList.remove('playing');
+                }
+                if (currentContainer) {
+                    currentContainer.classList.remove('playing');
+                    const oldRing = currentContainer.querySelector('.progress-ring-interactive');
+                    oldRing.classList.remove('seekable');
+                }
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+            }
+
+            if (audio.paused) {
+                audio.play();
+                button.classList.add('playing');
+                container.classList.add('playing');
+                interactiveRing.classList.add('seekable');
+                currentAudio = audio;
+                currentButton = button;
+                currentContainer = container;
+
+                // Start progress updates
+                const duration = audioDurations[audioId];
+
+                if (audioId === 'audio1') {
+                    // Use real audio progress for audio1
+                    progressUpdateInterval = setInterval(() => {
+                        if (audio.currentTime < audio.duration) {
+                            updateProgress(audioId, audio.currentTime, audio.duration);
+                        }
+                    }, 100);
+                } else {
+                    // Use simulated progress for other audio
+                    let currentTime = 0;
+                    progressUpdateInterval = setInterval(() => {
+                        if (currentTime < duration) {
+                            currentTime += 0.1;
+                            updateProgress(audioId, currentTime, duration);
+                        } else {
+                            // Audio ended
+                            clearInterval(progressUpdateInterval);
+                            button.classList.remove('playing');
+                            container.classList.remove('playing');
+                            interactiveRing.classList.remove('seekable');
+                            currentAudio = null;
+                            currentButton = null;
+                            currentContainer = null;
+
+                            // Reset progress
+                            updateProgress(audioId, 0, duration);
+
+                            // Auto-unlock quiz when simulated audio ends
+                            unlockQuizForAudio(audioId);
+                        }
+                    }, 100);
+                }
+
+            } else {
+                audio.pause();
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+            }
+
+            // Handle audio end
+            audio.onended = function () {
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+                updateProgress(audioId, 0, audioDurations[audioId]);
+
+                // Auto-unlock quiz when audio ends
+                unlockQuizForAudio(audioId);
+            };
+
+            // Handle audio error
+            audio.onerror = function () {
+                console.log('Audio file not found, but button still works for demo');
+                button.classList.remove('playing');
+                container.classList.remove('playing');
+                interactiveRing.classList.remove('seekable');
+                if (progressUpdateInterval) {
+                    clearInterval(progressUpdateInterval);
+                }
+                currentAudio = null;
+                currentButton = null;
+                currentContainer = null;
+            };
+        }
+
+        // Initialize duration displays
+        document.addEventListener('DOMContentLoaded', function () {
+            Object.keys(audioDurations).forEach(audioId => {
+                const duration = audioDurations[audioId];
+                updateProgress(audioId, 0, duration);
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function (e) {
+            if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+                e.preventDefault();
+                if (currentButton) {
+                    currentButton.click();
+                }
+            }
+        });
+
+        // Auto-scroll to playing content
+        function scrollToPlaying() {
+            if (currentButton) {
+                currentButton.closest('.content-block').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }
+        }
+
+        // Progress tracking
+        window.addEventListener('beforeunload', function () {
+            localStorage.setItem('module1-progress', '10');
+            localStorage.setItem('current-module', '1');
+        });
+
+        // Mobile Menu JavaScript
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+
+        if (mobileMenuToggle && mobileMenu && mobileMenuOverlay) {
+            mobileMenuToggle.addEventListener('click', function () {
+                mobileMenuToggle.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+                mobileMenuOverlay.classList.toggle('active');
+                document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+            });
+
+            mobileMenuOverlay.addEventListener('click', function () {
+                mobileMenuToggle.classList.remove('active');
+                mobileMenu.classList.remove('active');
+                mobileMenuOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+
+            // Close mobile menu when clicking on a link
+            document.querySelectorAll('.mobile-nav-links .nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (mobileMenu.classList.contains('active')) {
+                        mobileMenuToggle.classList.remove('active');
+                        mobileMenu.classList.remove('active');
+                        mobileMenuOverlay.classList.remove('active');
+                        document.body.style.overflow = '';
+                    }
+                });
+            });
+        }
+    </script>
+
+    <!-- Interactive Modules Script -->
+    <script src="../interactive-modules.js"></script>
+  
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>Р В РЎв„ўР РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„– Р В РІР‚СњР В РЎвЂР РЋР С“Р В РЎвЂ”Р В Р’ВµР РЋРІР‚С™Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В Р’В°</h4>
+          <p>Р В РЎСџР РЋР вЂљР В РЎвЂўР РЋРІР‚С›Р В Р’ВµР РЋР С“Р РЋР С“Р В РЎвЂР В РЎвЂўР В Р вЂ¦Р В Р’В°Р В Р’В»Р РЋР Р‰Р В Р вЂ¦Р В РЎвЂўР В Р’Вµ Р В РЎвЂўР В Р’В±Р РЋРЎвЂњР РЋРІР‚РЋР В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ Р В РўвЂР В РЎвЂР РЋР С“Р В РЎвЂ”Р В Р’ВµР РЋРІР‚С™Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В РЎвЂўР В Р вЂ  Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В Р’В·Р В РЎвЂўР В РЎвЂ”Р В Р’ВµР РЋР вЂљР В Р’ВµР В Р вЂ Р В РЎвЂўР В Р’В·Р В РЎвЂўР В РЎвЂќ</p>
+        </div>
+
+        <div class="footer-section">
+          <h4>Р В РЎвЂєР В Р’В±Р РЋРЎвЂњР РЋРІР‚РЋР В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ</h4>
+          <a href="../courses.html">Р В РЎв„ўР РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„–</a>
+        </div>
+
+        <div class="footer-section">
+          <h4>Р В РЎСџР В РЎвЂўР В РўвЂР В РўвЂР В Р’ВµР РЋР вЂљР В Р’В¶Р В РЎвЂќР В Р’В°</h4>
+          <a href="../faq.html">FAQ</a>
+          <a href="../contacts.html">Р В РЎв„ўР В РЎвЂўР В Р вЂ¦Р РЋРІР‚С™Р В Р’В°Р В РЎвЂќР РЋРІР‚С™Р РЋРІР‚в„–</a>
+          <a href="../help.html">Р В РЎСџР В РЎвЂўР В РЎВР В РЎвЂўР РЋРІР‚В°Р РЋР Р‰</a>
+        </div>
+
+        <div class="footer-section">
+          <h4>Р В РЎв„ўР В РЎвЂўР В РЎВР В РЎвЂ”Р В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР РЏ</h4>
+          <a href="../about.html">Р В РЎвЂє Р В Р вЂ¦Р В Р’В°Р РЋР С“</a>
+          <a href="../career.html">Р В РЎв„ўР В Р’В°Р РЋР вЂљР РЋР Р‰Р В Р’ВµР РЋР вЂљР В Р’В°</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2024 Р В РЎв„ўР РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„– Р В РІР‚СњР В РЎвЂР РЋР С“Р В РЎвЂ”Р В Р’ВµР РЋРІР‚С™Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В Р’В°. Р В РІР‚в„ўР РЋР С“Р В Р’Вµ Р В РЎвЂ”Р РЋР вЂљР В Р’В°Р В Р вЂ Р В Р’В° Р В Р’В·Р В Р’В°Р РЋРІР‚В°Р В РЎвЂР РЋРІР‚В°Р В Р’ВµР В Р вЂ¦Р РЋРІР‚в„–.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+
+</html>
