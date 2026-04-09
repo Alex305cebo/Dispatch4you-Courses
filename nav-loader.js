@@ -254,7 +254,7 @@
         <div class="footer-acc-col">
           <button class="footer-acc-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="footer-col-title">🛠️ Инструменты</span><span class="acc-arrow">▼</span></button>
           <div class="footer-acc-body">
-            <a href="BASE_pages/glossary.html" class="footer-link">📝 Термины Диспетчера</a>
+            <a href="BASE_pages/glossary.html" class="footer-link" style="white-space:nowrap">📝 Термины Диспетчера</a>
             <a href="BASE_pages/cases.html" class="footer-link">💼 Кейсы</a>
             <a href="BASE_pages/ai-broker-chat.html" class="footer-link">🎙️ AI Переговоры</a>
           </div>
