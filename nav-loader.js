@@ -243,11 +243,12 @@
           <a href="mailto:info@dispatch4you.com" class="footer-link" style="margin-top:8px">✉️ info@dispatch4you.com</a>
         </div>
         <div class="footer-acc-col">
-          <button class="footer-acc-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="footer-col-title">📚 Курсы</span><span class="acc-arrow">▼</span></button>
+          <button class="footer-acc-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="footer-col-title">📚 Курс обучения</span><span class="acc-arrow">▼</span></button>
           <div class="footer-acc-body">
             <a href="BASE_course.html" class="footer-link">📖 Обзор курса</a>
             <a href="BASE_pages/modules-index.html" class="footer-link">✍️ 12 Модулей обучения</a>
             <a href="BASE_pages/simulator.html" class="footer-link">🎯 Симулятор переговоров</a>
+            <a href="BASE_pages/ai-broker-chat.html" class="footer-link">🎙️ Примеры звонков</a>
             <a href="BASE_pages/cases.html" class="footer-link">💼 Практические кейсы</a>
             <a href="BASE_pages/testing.html" class="footer-link">📝 Тестирование</a>
           </div>
@@ -258,18 +259,18 @@
             <a href="BASE_pages/analytics.html" class="footer-link">📊 Статистика рынка</a>
             <a href="BASE_pages/load-finder.html" class="footer-link">🔍 Load Finder</a>
             <a href="BASE_pages/dispatcher-cards.html" class="footer-link">🃏 Dispatcher Cards</a>
-            <a href="BASE_pages/documentation.html" class="footer-link">📄 Документация</a>
-            <a href="BASE_pages/ai-broker-chat.html" class="footer-link">🎙️ AI Переговоры</a>
+            <a href="BASE_pages/simulator.html" class="footer-link">🎮 Dispatch Simulator</a>
           </div>
         </div>
         <div class="footer-acc-col">
           <button class="footer-acc-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="footer-col-title">ℹ️ Информация</span><span class="acc-arrow">▼</span></button>
           <div class="footer-acc-body">
+            <a href="BASE_pages/documentation.html" class="footer-link">📄 Документация</a>
+            <a href="BASE_pricing.html" class="footer-link">💰 Тарифы</a>
             <a href="BASE_about.html" class="footer-link">ℹ️ О нас</a>
             <a href="BASE_career.html" class="footer-link">🚀 Карьера</a>
             <a href="BASE_faq.html" class="footer-link">❓ FAQ</a>
             <a href="BASE_contacts.html" class="footer-link">✉️ Контакты</a>
-            <a href="BASE_pricing.html" class="footer-link">💰 Тарифы</a>
           </div>
         </div>
       </div>
