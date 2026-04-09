@@ -243,28 +243,33 @@
           <a href="mailto:info@dispatch4you.com" class="footer-link" style="margin-top:8px">✉️ info@dispatch4you.com</a>
         </div>
         <div class="footer-acc-col">
-          <button class="footer-acc-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="footer-col-title">📚 Обучение</span><span class="acc-arrow">▼</span></button>
+          <button class="footer-acc-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="footer-col-title">📚 Курсы</span><span class="acc-arrow">▼</span></button>
           <div class="footer-acc-body">
-            <a href="BASE_pages/documentation.html" class="footer-link">📚 База знаний</a>
-            <a href="BASE_pages/modules-index.html" class="footer-link">✍️ Тесты знаний</a>
-            <a href="BASE_pages/simulator.html" class="footer-link">🎯 Симулятор</a>
-            <a href="BASE_pages/testing.html" class="footer-link">🎯 Проверить себя</a>
+            <a href="BASE_course.html" class="footer-link">📖 Обзор курса</a>
+            <a href="BASE_pages/modules-index.html" class="footer-link">✍️ 12 Модулей обучения</a>
+            <a href="BASE_pages/simulator.html" class="footer-link">🎯 Симулятор переговоров</a>
+            <a href="BASE_pages/cases.html" class="footer-link">💼 Практические кейсы</a>
+            <a href="BASE_pages/testing.html" class="footer-link">📝 Тестирование</a>
           </div>
         </div>
         <div class="footer-acc-col">
           <button class="footer-acc-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="footer-col-title">🛠️ Инструменты</span><span class="acc-arrow">▼</span></button>
           <div class="footer-acc-body">
-            <a href="BASE_pages/glossary.html" class="footer-link" style="white-space:nowrap">📝 Термины Диспетчера</a>
-            <a href="BASE_pages/cases.html" class="footer-link">💼 Кейсы</a>
+            <a href="BASE_pages/analytics.html" class="footer-link">📊 Статистика рынка</a>
+            <a href="BASE_pages/load-finder.html" class="footer-link">🔍 Load Finder</a>
+            <a href="BASE_pages/dispatcher-cards.html" class="footer-link">🃏 Dispatcher Cards</a>
+            <a href="BASE_pages/documentation.html" class="footer-link">📄 Документация</a>
             <a href="BASE_pages/ai-broker-chat.html" class="footer-link">🎙️ AI Переговоры</a>
           </div>
         </div>
         <div class="footer-acc-col">
-          <button class="footer-acc-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="footer-col-title">🏢 Компания</span><span class="acc-arrow">▼</span></button>
+          <button class="footer-acc-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="footer-col-title">ℹ️ Информация</span><span class="acc-arrow">▼</span></button>
           <div class="footer-acc-body">
             <a href="BASE_about.html" class="footer-link">ℹ️ О нас</a>
-            <a href="BASE_dashboard.html" class="footer-link">👤 Личный кабинет</a>
-            <a href="mailto:info@dispatch4you.com" class="footer-link">✉️ Контакты</a>
+            <a href="BASE_career.html" class="footer-link">🚀 Карьера</a>
+            <a href="BASE_faq.html" class="footer-link">❓ FAQ</a>
+            <a href="BASE_contacts.html" class="footer-link">✉️ Контакты</a>
+            <a href="BASE_pricing.html" class="footer-link">💰 Тарифы</a>
           </div>
         </div>
       </div>
