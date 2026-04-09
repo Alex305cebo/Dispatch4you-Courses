@@ -207,7 +207,7 @@
 .site-footer .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:56px;padding-bottom:56px;border-bottom:1px solid rgba(255,255,255,.05)}
 .site-footer .footer-brand-desc{font-size:14px;color:#475569;line-height:1.75;margin-bottom:28px;max-width:240px}
 .site-footer .footer-col-title{font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.14em;margin-bottom:20px}
-.site-footer .footer-link{display:flex;align-items:center;gap:9px;font-size:14px;color:#64748b;text-decoration:none;margin-bottom:13px;transition:all .22s}
+.site-footer .footer-link{display:flex;align-items:center;gap:9px;font-size:13px;color:#64748b;text-decoration:none;margin-bottom:10px;transition:all .22s;white-space:nowrap}
 .site-footer .footer-link:hover{color:#e2e8f0;padding-left:5px}
 .site-footer .footer-bottom{display:flex;justify-content:space-between;align-items:center;padding:22px 0;flex-wrap:wrap;gap:14px}
 .site-footer .footer-copy{font-size:13px;color:#94a3b8}
