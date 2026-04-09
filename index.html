@@ -1198,10 +1198,11 @@
       overflow-x: scroll;
       overflow-y: hidden;
       padding: 20px;
-      scroll-behavior: smooth;
+      scroll-behavior: auto;
       scrollbar-width: none;
       -ms-overflow-style: none;
       -webkit-overflow-scrolling: touch;
+      transition: scroll-left 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     }
 
     .features-grid::-webkit-scrollbar {
@@ -6360,6 +6361,13 @@
     </div>
   </section>
 
+  <!-- Divider Section -->
+  <section style="padding: 60px 0; margin: 0; background: transparent;">
+    <div class="container">
+      <div style="width: 100%; height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(6,182,212,0.6) 15%, rgba(59,130,246,0.7) 50%, rgba(139,92,246,0.6) 85%, transparent 100%); margin: 0 auto; box-shadow: 0 0 15px rgba(59,130,246,0.3);"></div>
+    </div>
+  </section>
+
   <!-- Why Choose Us Section - CRITICAL -->
   <section class="why-choose-section" style="padding: 80px 0; position: relative; z-index: 1;">
   <style>
@@ -10438,13 +10446,42 @@
       const cardSequence = [0, 2, 3, 4, 5];
       let sequenceIndex = 0;
 
+      // Smooth scroll animation with custom easing
+      function smoothScrollTo(targetPosition, duration = 1200) {
+        const startPosition = slider.scrollLeft;
+        const distance = targetPosition - startPosition;
+        let startTime = null;
+
+        function animation(currentTime) {
+          if (startTime === null) startTime = currentTime;
+          const timeElapsed = currentTime - startTime;
+          const progress = Math.min(timeElapsed / duration, 1);
+          
+          // Ease-in-out cubic easing
+          const easeProgress = progress < 0.5
+            ? 4 * progress * progress * progress
+            : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+          
+          slider.scrollLeft = startPosition + distance * easeProgress;
+          
+          if (timeElapsed < duration) {
+            requestAnimationFrame(animation);
+          }
+        }
+
+        requestAnimationFrame(animation);
+      }
+
       // Scroll to specific card by index
       function scrollToCardIndex(cardIndex, smooth = true) {
         const scrollPosition = cardIndex * cardWidth;
-        slider.scrollTo({
-          left: scrollPosition,
-          behavior: smooth ? 'smooth' : 'auto'
-        });
+        
+        if (smooth) {
+          smoothScrollTo(scrollPosition, 1200); // 1.2 seconds smooth animation
+        } else {
+          slider.scrollLeft = scrollPosition;
+        }
+        
         currentCardIndex = cardIndex;
       }
 
