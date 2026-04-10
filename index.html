@@ -1213,7 +1213,7 @@
       scrollbar-width: none;
       -ms-overflow-style: none;
       -webkit-overflow-scrolling: touch;
-      transition: scroll-left 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      transition: scroll-left 2s cubic-bezier(0.22, 0.61, 0.36, 1);
     }
 
     .features-grid::-webkit-scrollbar {
@@ -1227,7 +1227,7 @@
       border-radius: 18px;
       backdrop-filter: var(--glass-blur);
       -webkit-backdrop-filter: var(--glass-blur);
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
       position: relative;
       overflow: hidden;
       user-select: none;
@@ -1257,7 +1257,7 @@
       height: 4px;
       background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
       transform: scaleX(0);
-      transition: transform 0.4s;
+      transition: transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
     }
 
     .feature-card:hover::before {
@@ -1352,9 +1352,9 @@
         max-width: 100% !important;
       }
 
-      /* Fix for large headings in benefit cards */
-      h3[style*="font-size: 20px"],
-      h3[style*="font-size:20px"] {
+      /* Fix for large headings in benefit cards - more aggressive */
+      div[style*="border-radius: 20px"] h3,
+      div[style*="border-radius:20px"] h3 {
         font-size: 16px !important;
       }
 
@@ -10709,7 +10709,7 @@
       let sequenceIndex = 0;
 
       // Smooth scroll animation with custom easing
-      function smoothScrollTo(targetPosition, duration = 1200) {
+      function smoothScrollTo(targetPosition, duration = 2000) {
         const startPosition = slider.scrollLeft;
         const distance = targetPosition - startPosition;
         let startTime = null;
@@ -10719,10 +10719,10 @@
           const timeElapsed = currentTime - startTime;
           const progress = Math.min(timeElapsed / duration, 1);
           
-          // Ease-in-out cubic easing
+          // Ease-in-out quartic easing - более плавная анимация
           const easeProgress = progress < 0.5
-            ? 4 * progress * progress * progress
-            : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+            ? 8 * progress * progress * progress * progress
+            : 1 - Math.pow(-2 * progress + 2, 4) / 2;
           
           slider.scrollLeft = startPosition + distance * easeProgress;
           
@@ -10739,7 +10739,7 @@
         const scrollPosition = cardIndex * cardWidth;
         
         if (smooth) {
-          smoothScrollTo(scrollPosition, 1200); // 1.2 seconds smooth animation
+          smoothScrollTo(scrollPosition, 2000); // 2 seconds smooth animation
         } else {
           slider.scrollLeft = scrollPosition;
         }
@@ -10800,11 +10800,11 @@
         });
       });
 
-      // Autoplay functionality - every 3 seconds
+      // Autoplay functionality - every 5 seconds
       function startAutoplay() {
         autoplayInterval = setInterval(() => {
           nextPosition();
-        }, 3000); // 3 seconds
+        }, 5000); // 5 seconds
       }
 
       function stopAutoplay() {
