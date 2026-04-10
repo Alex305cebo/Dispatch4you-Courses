@@ -2310,7 +2310,15 @@ function addMsg(type,text){
     }
     // Анимация появления
     d.style.cssText+='opacity:0;transform:translateY(8px);transition:opacity 0.25s ease,transform 0.25s ease;';
-    chat.appendChild(d);
+    
+    // Insert after transcriptInterim element (which is first in chat)
+    const interim = $('transcriptInterim');
+    if(interim && interim.parentNode === chat){
+        interim.insertAdjacentElement('afterend', d);
+    } else {
+        chat.appendChild(d);
+    }
+    
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
         d.style.opacity='1';
         d.style.transform='translateY(0)';
