@@ -217,32 +217,124 @@
     }
 
     window.laSeek = function(e, id) {
+        e.stopPropagation(); // Предотвращаем всплытие события
         var r = e.currentTarget.getBoundingClientRect();
         var a = Math.atan2(e.clientY-(r.top+r.height/2), e.clientX-(r.left+r.width/2));
         var p = (a + Math.PI/2)/(2*Math.PI); if (p<0) p+=1;
         var au = document.getElementById(id);
-        if (!au || au.paused) return;
+        if (!au) return;
         var d = au.duration && isFinite(au.duration) ? au.duration : (au._dur||300);
-        au.currentTime = p*d; ring(id, au.currentTime, d);
+        
+        // Устанавливаем позицию
+        au.currentTime = p*d;
+        
+        // Если аудио на паузе, запускаем его
+        if (au.paused && !au._simPlaying) {
+            var btn = document.querySelector('[onclick*="laToggle"][onclick*="' + id + '"]');
+            if (btn) laToggle(btn, id);
+        } else {
+            ring(id, au.currentTime, d);
+        }
     };
 
     window.laSeekMobile = function(e, id) {
+        e.stopPropagation(); // Предотвращаем всплытие события
         var r = e.currentTarget.getBoundingClientRect();
-        var p = (e.clientX-r.left)/r.width;
+        var p = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
         var au = document.getElementById(id);
-        if (!au || au.paused) return;
+        if (!au) return;
         var d = au.duration && isFinite(au.duration) ? au.duration : (au._dur||300);
-        au.currentTime = p*d; ring(id, au.currentTime, d);
+        
+        var wasPaused = au.paused && !au._simPlaying;
+        
+        // Устанавливаем позицию
+        au.currentTime = p*d;
+        ring(id, au.currentTime, d);
+        
+        // Если аудио было на паузе, запускаем его
+        if (wasPaused) {
+            var btn = document.querySelector('[onclick*="laToggle"][onclick*="' + id + '"]');
+            if (btn) {
+                // Запускаем без сброса позиции
+                btn.classList.add('playing');
+                var box = btn.closest('.la-container');
+                if (box) box.classList.add('playing');
+                curAudio = au; 
+                curBtn = btn; 
+                curBox = box;
+                curAudioIndex = allAudioIds.indexOf(id);
+                updateCounter();
+                updateFixedTitle(curAudioIndex);
+                syncMobPlayBtn(true);
+                
+                var p = au.play();
+                if (p !== undefined) {
+                    p.then(function() { startProgress(au, id); }).catch(function(){});
+                } else { 
+                    startProgress(au, id); 
+                }
+            }
+        }
     };
 
     // Перемотка по прогресс-бару в fixed-барах
     window.laSeekBar = function(e) {
-        if (!curAudio) return;
         var r = e.currentTarget.getBoundingClientRect();
         var p = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+        
+        if (!curAudio) {
+            // Если нет активного аудио, запускаем первый трек с нужной позиции
+            var id = allAudioIds[0];
+            if (!id) return;
+            var au = document.getElementById(id);
+            if (!au) return;
+            var d = au._dur || 300;
+            au.currentTime = p * d;
+            
+            var btn = document.querySelector('[onclick*="laToggle"][onclick*="' + id + '"]');
+            if (btn) {
+                var box = btn.closest('.la-container');
+                au._box = box;
+                btn.classList.add('playing');
+                if (box) box.classList.add('playing');
+                curAudio = au; 
+                curBtn = btn; 
+                curBox = box;
+                curAudioIndex = 0;
+                updateCounter();
+                updateFixedTitle(0);
+                syncMobPlayBtn(true);
+                
+                var playPromise = au.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(function() { startProgress(au, id); }).catch(function(){});
+                } else { 
+                    startProgress(au, id); 
+                }
+            }
+            return;
+        }
+        
         var d = curAudio.duration && isFinite(curAudio.duration) ? curAudio.duration : (curAudio._dur||300);
+        var wasPaused = curAudio.paused && !curAudio._simPlaying;
+        
+        // Устанавливаем позицию
         curAudio.currentTime = p * d;
         ring(curAudio.id, curAudio.currentTime, d);
+        
+        // Если аудио было на паузе, запускаем воспроизведение
+        if (wasPaused) {
+            if (curBtn) curBtn.classList.add('playing');
+            if (curBox) curBox.classList.add('playing');
+            syncMobPlayBtn(true);
+            
+            var playPromise = curAudio.play();
+            if (playPromise !== undefined) {
+                playPromise.then(function() { startProgress(curAudio, curAudio.id); }).catch(function(){});
+            } else { 
+                startProgress(curAudio, curAudio.id); 
+            }
+        }
     };
 
     // ── Стрелки ──────────────────────────────────────────────────
@@ -291,11 +383,10 @@
                 '<div id="la-fixed-slot" class="la-fixed-slot"></div>' +
                 '<button class="la-arrow la-arrow-next" onclick="laNext()" aria-label="Следующий">&#8250;</button>' +
             '</div>' +
+            '<div class="la-fixed-time">0:00 / 0:00</div>' +
             '<div class="la-fixed-progress" onclick="laSeekBar(event)">' +
                 '<div class="la-fixed-progress-fill"></div>' +
-            '</div>' +
-            '<div class="la-fixed-time">0:00 / 0:00</div>' +
-            '<div class="la-fixed-counter">1 / ' + allAudioIds.length + '</div>';
+            '</div>';
         document.body.appendChild(bar);
         fixedBar = bar;
         fixedSlot = bar.querySelector('#la-fixed-slot');
@@ -307,9 +398,6 @@
         bar.id = 'la-mobile-bottom-bar';
         bar.className = 'la-mobile-bottom-bar';
         bar.innerHTML =
-            '<div class="la-mob-progress" onclick="laSeekBar(event)">' +
-                '<div class="la-mob-progress-fill"></div>' +
-            '</div>' +
             '<div class="la-mob-row">' +
                 '<div class="la-mob-icon">🎧</div>' +
                 '<div class="la-mob-info">' +
@@ -324,6 +412,9 @@
                     '</button>' +
                     '<button class="la-mob-btn-next hidden" onclick="laNext()" aria-label="Следующий">&#8250;</button>' +
                 '</div>' +
+            '</div>' +
+            '<div class="la-mob-progress" onclick="laSeekBar(event)">' +
+                '<div class="la-mob-progress-fill"></div>' +
             '</div>';
         document.body.appendChild(bar);
         mobileBar = bar;
@@ -331,16 +422,8 @@
 
     function updateCounter() {
         var total = allAudioIds.length;
-        // Inline счётчики
-        var allContainers = document.querySelectorAll('.la-container');
-        for (var i = 0; i < allContainers.length; i++) {
-            var c = allContainers[i].querySelector('.la-counter');
-            if (c) c.textContent = (curAudioIndex + 1) + ' / ' + total;
-        }
         // Десктоп бар
         if (fixedBar) {
-            var fc = fixedBar.querySelector('.la-fixed-counter');
-            if (fc) fc.textContent = (curAudioIndex + 1) + ' / ' + total;
             var prev = fixedBar.querySelector('.la-arrow-prev');
             var next = fixedBar.querySelector('.la-arrow-next');
             if (prev) prev.classList.toggle('hidden', total <= 1);
@@ -436,15 +519,6 @@
         }
 
         allWraps = Array.prototype.slice.call(document.querySelectorAll('.section-audio-wrap'));
-
-        var total = allAudioIds.length;
-        for (var j = 0; j < allWraps.length; j++) {
-            var cnt = document.createElement('span');
-            cnt.className = 'la-counter';
-            cnt.textContent = (j + 1) + ' / ' + total;
-            var container = allWraps[j].querySelector('.la-container');
-            if (container) container.appendChild(cnt);
-        }
 
         if (allWraps.length > 0) {
             buildFixedBar();

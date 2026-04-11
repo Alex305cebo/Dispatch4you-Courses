@@ -37,7 +37,7 @@
         .hb:hover{background:rgba(6,182,212,.12);color:var(--primary);border-color:rgba(6,182,212,.25)}
 
         /* SCENARIO BAR */
-        .sbar-wrap{display:flex;align-items:center;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;position:relative}
+        .sbar-wrap{display:none;align-items:center;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;position:relative}
         .sbar-arrow{width:24px;height:100%;border:none;background:rgba(15,23,42,.6);color:var(--t3);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s ease;z-index:2;backdrop-filter:blur(4px)}
         .sbar-arrow:hover{color:var(--primary);background:rgba(6,182,212,.08)}
         .sbar-arrow-l{border-right:1px solid rgba(255,255,255,.04)}
@@ -313,12 +313,16 @@
           font-style:normal;
           min-height:0;
           flex-shrink:0;
-          border-top:2px solid rgba(6,182,212,0.4);
+          border:2px solid rgba(6,182,212,0.4);
           background:linear-gradient(135deg,rgba(6,182,212,0.12),rgba(14,165,233,0.06));
           display:none;
           position:relative;
           letter-spacing:0.3px;
           line-height:1.5;
+          border-radius:12px;
+          margin-bottom:12px;
+          align-self:stretch;
+          z-index:10;
         }
         .transcript-panel-interim::before{
           content:'';
@@ -437,8 +441,8 @@
           .transcript-display{padding:6px 10px;min-height:40px}
           .transcript-interim{font-size:13px}
           .transcript-final{font-size:13px}
-          .transcript-panel-interim{font-size:15px;padding:10px 14px}
-          .transcript-panel-interim.show{padding-left:38px}
+          .transcript-panel-interim{font-size:15px;padding:12px 16px;border-radius:11px;margin-bottom:10px}
+          .transcript-panel-interim.show{padding-left:40px}
 
           /* Phrase hints */
           .phrase-hints{padding:4px 10px 0}
@@ -525,8 +529,8 @@
           .transcript-display{padding:5px 8px;min-height:36px}
           .transcript-interim{font-size:12px}
           .transcript-final{font-size:12px}
-          .transcript-panel-interim{font-size:14px;padding:8px 12px}
-          .transcript-panel-interim.show{padding-left:36px}
+          .transcript-panel-interim{font-size:14px;padding:10px 14px;border-radius:10px;margin-bottom:8px}
+          .transcript-panel-interim.show{padding-left:38px}
 
           /* Typing indicator */
           .typing{padding:8px 14px}
@@ -1294,8 +1298,9 @@
                     <button class="sbar-arrow sbar-arrow-r" id="sbarArrowR" onclick="scrollSbar(1)" aria-label="Прокрутить вправо">›</button>
                 </div>
                 <div class="transcript-panel-header">💬 Транскрипт диалога</div>
-                <div class="transcript-panel-messages" id="chat" role="log" aria-live="polite" aria-label="Транскрипт диалога с брокером"></div>
-                <div class="transcript-panel-interim" id="transcriptInterim"></div>
+                <div class="transcript-panel-messages" id="chat" role="log" aria-live="polite" aria-label="Транскрипт диалога с брокером">
+                    <div class="transcript-panel-interim" id="transcriptInterim"></div>
+                </div>
             </div>
 
             <!-- Voice Chat Widget -->
@@ -2303,7 +2308,15 @@ function addMsg(type,text){
     }
     // Анимация появления
     d.style.cssText+='opacity:0;transform:translateY(8px);transition:opacity 0.25s ease,transform 0.25s ease;';
-    chat.appendChild(d);
+    
+    // Insert after transcriptInterim element (which is first in chat)
+    const interim = $('transcriptInterim');
+    if(interim && interim.parentNode === chat){
+        interim.insertAdjacentElement('afterend', d);
+    } else {
+        chat.appendChild(d);
+    }
+    
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
         d.style.opacity='1';
         d.style.transform='translateY(0)';
