@@ -3,15 +3,20 @@
 /* Обёртка: заголовок + кнопка аудио */
 .section-audio-wrap {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    gap: 20px;
+    gap: 16px;
     margin-bottom: 24px;
 }
 .section-audio-wrap h2 {
     margin-bottom: 0 !important;
-    flex: 1;
-    min-width: 0;
+    text-align: center;
+    width: 100%;
+}
+.section-audio-wrap h3 {
+    margin-bottom: 0 !important;
+    text-align: center;
+    width: 100%;
 }
 
 /* Контейнер кнопки */
@@ -132,29 +137,9 @@
 .la-container:hover .la-time,
 .la-container.playing .la-time { opacity: 0; display: none; }
 
-/* Мобильный прогресс-бар (в inline-контейнере) */
+/* Мобильный прогресс-бар (в inline-контейнере) - ОТКЛЮЧЕН */
 .la-mobile-bar {
-    display: none;
-    position: absolute;
-    bottom: -32px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80px; height: 4px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 2px;
-    cursor: pointer;
-    overflow: hidden;
-    transition: background 0.2s ease;
-}
-.la-mobile-bar:hover {
-    background: rgba(255,255,255,0.15);
-}
-.la-mobile-fill {
-    height: 100%; width: 0%;
-    background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
-    border-radius: 2px;
-    transition: width 0.1s ease;
-    pointer-events: none;
+    display: none !important; /* Полностью скрываем, перемотка только в fixed-барах */
 }
 
 /* Счётчик */
@@ -183,10 +168,9 @@
     .la-btn { width: 50px; height: 50px; }
     .la-btn .la-play { font-size: 20px; }
     .la-btn .la-pause { font-size: 16px; }
-    .la-mobile-bar { display: block; }
-    .la-time { display: none; } /* Скрываем время на мобильных, показываем только прогресс-бар */
-    .la-counter { bottom: -40px; } /* Опускаем счётчик ниже прогресс-бара */
-    .section-audio-wrap { flex-wrap: wrap; }
+    /* .la-mobile-bar убран - перемотка только в fixed-барах */
+    .la-time { display: none; }
+    .la-counter { bottom: -24px; }
 }
 @media (max-width: 480px) {
     .la-container { width: 44px; height: 44px; }
@@ -591,7 +575,106 @@
 
 /* Отступ снизу страницы когда бар виден */
 body.la-mob-bar-visible {
-    padding-bottom: 72px;
+    padding-bottom: 120px; /* Увеличено для контролов */
+}
+
+/* Контролы скорости и громкости в мобильном баре */
+.la-mob-controls-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px 10px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.la-mob-control-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+}
+
+.la-mob-control-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #64748b;
+    min-width: 32px;
+}
+
+.la-mob-speed-buttons {
+    display: flex;
+    gap: 4px;
+    flex: 1;
+}
+
+.la-mob-speed-btn {
+    flex: 1;
+    padding: 6px 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    text-align: center;
+}
+
+.la-mob-speed-btn:active {
+    transform: scale(0.95);
+}
+
+.la-mob-speed-btn.active {
+    background: rgba(6,182,212,0.15);
+    border-color: rgba(6,182,212,0.4);
+    color: #06b6d4;
+}
+
+.la-mob-volume-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+}
+
+.la-mob-volume-icon {
+    font-size: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.la-mob-volume-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+
+.la-mob-volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(6,182,212,0.4);
+}
+
+.la-mob-volume-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 6px rgba(6,182,212,0.4);
 }
 
 @media (max-width: 768px) {

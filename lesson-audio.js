@@ -483,6 +483,23 @@
                     '</button>' +
                     '<button class="la-mob-btn-next hidden" onclick="laNext()" aria-label="Следующий">&#8250;</button>' +
                 '</div>' +
+            '</div>' +
+            '<div class="la-mob-controls-row">' +
+                '<div class="la-mob-control-group">' +
+                    '<span class="la-mob-control-label">⚡ Speed</span>' +
+                    '<div class="la-mob-speed-buttons">' +
+                        '<button class="la-mob-speed-btn active" onclick="laSetSpeed(1)">1x</button>' +
+                        '<button class="la-mob-speed-btn" onclick="laSetSpeed(1.5)">1.5x</button>' +
+                        '<button class="la-mob-speed-btn" onclick="laSetSpeed(2)">2x</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="la-mob-control-group">' +
+                    '<span class="la-mob-control-label">🔊 Vol</span>' +
+                    '<div class="la-mob-volume-group">' +
+                        '<span class="la-mob-volume-icon" onclick="laToggleMute()">🔊</span>' +
+                        '<input type="range" class="la-mob-volume-slider" min="0" max="100" value="100" oninput="laSetVolume(this.value)">' +
+                    '</div>' +
+                '</div>' +
             '</div>';
         document.body.appendChild(bar);
         mobileBar = bar;
@@ -640,8 +657,8 @@
         if (curAudio) {
             curAudio.playbackRate = speed;
         }
-        // Обновить активную кнопку
-        var buttons = document.querySelectorAll('.la-speed-btn');
+        // Обновить активную кнопку в десктоп и мобильном баре
+        var buttons = document.querySelectorAll('.la-speed-btn, .la-mob-speed-btn');
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].classList.remove('active');
             if (parseFloat(buttons[i].textContent) === speed) {
@@ -661,15 +678,15 @@
         }
         savedVolume = volume;
         
-        // Обновить иконку
-        var icon = document.querySelector('.la-volume-icon');
-        if (icon) {
+        // Обновить иконки в десктоп и мобильном баре
+        var icons = document.querySelectorAll('.la-volume-icon, .la-mob-volume-icon');
+        for (var i = 0; i < icons.length; i++) {
             if (volume === 0) {
-                icon.textContent = '🔇';
+                icons[i].textContent = '🔇';
             } else if (volume < 0.5) {
-                icon.textContent = '🔉';
+                icons[i].textContent = '🔉';
             } else {
-                icon.textContent = '🔊';
+                icons[i].textContent = '🔊';
             }
         }
         isMuted = false;
@@ -678,19 +695,27 @@
     window.laToggleMute = function() {
         if (!curAudio) return;
         
-        var slider = document.querySelector('.la-volume-slider');
-        var icon = document.querySelector('.la-volume-icon');
+        var sliders = document.querySelectorAll('.la-volume-slider, .la-mob-volume-slider');
+        var icons = document.querySelectorAll('.la-volume-icon, .la-mob-volume-icon');
         
         if (isMuted) {
             curAudio.volume = savedVolume;
-            if (slider) slider.value = savedVolume * 100;
-            if (icon) icon.textContent = savedVolume < 0.5 ? '🔉' : '🔊';
+            for (var i = 0; i < sliders.length; i++) {
+                sliders[i].value = savedVolume * 100;
+            }
+            for (var j = 0; j < icons.length; j++) {
+                icons[j].textContent = savedVolume < 0.5 ? '🔉' : '🔊';
+            }
             isMuted = false;
         } else {
             savedVolume = curAudio.volume;
             curAudio.volume = 0;
-            if (slider) slider.value = 0;
-            if (icon) icon.textContent = '🔇';
+            for (var k = 0; k < sliders.length; k++) {
+                sliders[k].value = 0;
+            }
+            for (var l = 0; l < icons.length; l++) {
+                icons[l].textContent = '🔇';
+            }
             isMuted = true;
         }
     };
