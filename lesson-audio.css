@@ -72,23 +72,27 @@
     transition: stroke-dashoffset 0.1s ease;
 }
 
-/* Seek зона */
-.la-seek {
-    position: absolute;
-    top: -5px; left: -5px;
-    width: 70px; height: 70px;
+/* Кнопка play/pause */
+.la-btn {
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
+    background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    z-index: 3;
-    display: none;
-    pointer-events: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+    z-index: 4;
+    position: relative;
 }
-.la-container.playing .la-seek { display: block; pointer-events: auto; }
 
 /* Время */
 .la-time {
     position: absolute;
-    bottom: -22px;
+    bottom: -24px;
     left: 50%;
     transform: translateX(-50%);
     font-size: 11px;
@@ -98,6 +102,7 @@
     transition: opacity 0.3s ease;
     font-weight: 500;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    z-index: 5;
 }
 .la-container:hover .la-time,
 .la-container.playing .la-time { opacity: 1; }
@@ -114,18 +119,23 @@
     border-radius: 2px;
     cursor: pointer;
     overflow: hidden;
+    transition: background 0.2s ease;
+}
+.la-mobile-bar:hover {
+    background: rgba(255,255,255,0.15);
 }
 .la-mobile-fill {
     height: 100%; width: 0%;
     background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
     border-radius: 2px;
     transition: width 0.1s ease;
+    pointer-events: none;
 }
 
 /* Счётчик */
 .la-counter {
     position: absolute;
-    bottom: -36px;
+    bottom: -48px;
     left: 50%;
     transform: translateX(-50%);
     font-size: 10px;
@@ -137,6 +147,7 @@
     transition: opacity 0.3s ease;
     pointer-events: none;
     letter-spacing: 0.3px;
+    z-index: 5;
 }
 .la-container:hover .la-counter,
 .la-container.playing .la-counter { opacity: 1; }
@@ -150,6 +161,8 @@
     .la-ring { width: 60px; height: 60px; }
     .la-seek { width: 60px; height: 60px; }
     .la-mobile-bar { display: block; }
+    .la-time { display: none; } /* Скрываем время на мобильных, показываем только прогресс-бар */
+    .la-counter { bottom: -40px; } /* Опускаем счётчик ниже прогресс-бара */
     .section-audio-wrap { flex-wrap: wrap; }
 }
 @media (max-width: 480px) {
@@ -247,6 +260,10 @@
     border-radius: 2px;
     overflow: hidden;
     cursor: pointer;
+    transition: background 0.2s ease;
+}
+.la-fixed-progress:hover {
+    background: rgba(255,255,255,0.12);
 }
 .la-fixed-progress-fill {
     height: 100%; width: 0%;
@@ -308,6 +325,10 @@
     background: rgba(255,255,255,0.08);
     cursor: pointer;
     position: relative;
+    transition: background 0.2s ease;
+}
+.la-mob-progress:hover {
+    background: rgba(255,255,255,0.12);
 }
 .la-mob-progress-fill {
     height: 100%; width: 0%;
