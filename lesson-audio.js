@@ -504,6 +504,10 @@
         document.body.appendChild(bar);
         mobileBar = bar;
         
+        // Обработчики для возврата активности
+        bar.addEventListener('touchstart', resetInactivityTimer);
+        bar.addEventListener('mouseenter', resetInactivityTimer);
+        
         // Добавляем обработчик клика на мобильный прогресс-бар
         var mobProgress = bar.querySelector('.la-mob-progress');
         if (mobProgress) {
@@ -666,6 +670,48 @@
             }
         }
     };
+
+    // ── Автоскрытие и прозрачность мобильного бара ───────────────
+    var lastScrollY = 0;
+    var inactivityTimer = null;
+    var scrollTimeout = null;
+
+    function resetInactivityTimer() {
+        if (!mobileBar) return;
+        mobileBar.classList.remove('inactive');
+        clearTimeout(inactivityTimer);
+        inactivityTimer = setTimeout(function() {
+            if (mobileBar && mobileBar.classList.contains('visible')) {
+                mobileBar.classList.add('inactive');
+            }
+        }, 3000);
+    }
+
+    function handleMobileBarScroll() {
+        if (!mobileBar || window.innerWidth > 768) return;
+        
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(function() {
+            var currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
+            
+            if (currentScrollY > lastScrollY && currentScrollY > 100) {
+                // Скролл вниз - скрываем
+                mobileBar.classList.add('hidden-on-scroll');
+            } else {
+                // Скролл вверх - показываем
+                mobileBar.classList.remove('hidden-on-scroll');
+                resetInactivityTimer();
+            }
+            
+            lastScrollY = currentScrollY;
+        }, 100);
+    }
+
+    // Инициализация автоскрытия
+    if (window.innerWidth <= 768) {
+        window.addEventListener('scroll', handleMobileBarScroll, { passive: true });
+        resetInactivityTimer();
+    }
 
     // ── Управление громкостью ─────────────────────────────────────
     var savedVolume = 1;
