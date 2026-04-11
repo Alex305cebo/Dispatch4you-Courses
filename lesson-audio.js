@@ -671,10 +671,8 @@
         }
     };
 
-    // ── Автоскрытие и прозрачность мобильного бара ───────────────
-    var lastScrollY = 0;
+    // ── Прозрачность мобильного бара при неактивности ─────────────
     var inactivityTimer = null;
-    var scrollTimeout = null;
 
     function resetInactivityTimer() {
         if (!mobileBar) return;
@@ -684,33 +682,13 @@
             if (mobileBar && mobileBar.classList.contains('visible')) {
                 mobileBar.classList.add('inactive');
             }
-        }, 3000);
+        }, 3000); // 3 секунды до прозрачности
     }
 
-    function handleMobileBarScroll() {
-        if (!mobileBar || window.innerWidth > 768) return;
-        
-        clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(function() {
-            var currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
-            
-            if (currentScrollY > lastScrollY && currentScrollY > 100) {
-                // Скролл вниз - скрываем
-                mobileBar.classList.add('hidden-on-scroll');
-            } else {
-                // Скролл вверх - показываем
-                mobileBar.classList.remove('hidden-on-scroll');
-                resetInactivityTimer();
-            }
-            
-            lastScrollY = currentScrollY;
-        }, 100);
-    }
-
-    // Инициализация автоскрытия
+    // Инициализация таймера неактивности для мобильных
     if (window.innerWidth <= 768) {
-        window.addEventListener('scroll', handleMobileBarScroll, { passive: true });
-        resetInactivityTimer();
+        document.addEventListener('touchstart', resetInactivityTimer, { passive: true });
+        document.addEventListener('touchmove', resetInactivityTimer, { passive: true });
     }
 
     // ── Управление громкостью ─────────────────────────────────────
