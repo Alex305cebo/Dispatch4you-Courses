@@ -685,12 +685,14 @@
     window.laCollapseMobileBar = function() {
         if (!mobileBar) return;
         mobileBar.classList.add('collapsed');
+        document.body.classList.add('la-mob-bar-collapsed');
         document.body.style.paddingBottom = '8px';
     };
 
     window.laExpandMobileBar = function() {
         if (!mobileBar) return;
         mobileBar.classList.remove('collapsed');
+        document.body.classList.remove('la-mob-bar-collapsed');
         document.body.style.paddingBottom = '120px';
         resetInactivityTimer();
     };
