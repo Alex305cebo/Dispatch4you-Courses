@@ -182,6 +182,9 @@
         if (!mobileBar) return;
         var mp = mobileBar.querySelector('.la-mob-play');
         if (mp) mp.classList.toggle('playing', playing);
+        
+        // Также синхронизировать фиксированную кнопку
+        syncFixedButton();
     }
 
     // Клик по кнопке play в мобильном/десктоп баре
@@ -394,16 +397,41 @@
         bar.id = 'la-fixed-bar';
         bar.className = 'la-fixed-bar';
         bar.innerHTML =
-            '<div class="la-fixed-title">Аудио</div>' +
+            '<div class="la-fixed-title">Выберите аудио</div>' +
             '<div class="la-fixed-controls">' +
                 '<button class="la-arrow la-arrow-prev" onclick="laPrev()" aria-label="Предыдущий">&#8249;</button>' +
-                '<div id="la-fixed-slot" class="la-fixed-slot"></div>' +
+                '<div id="la-fixed-slot" class="la-fixed-slot">' +
+                    '<div class="la-container">' +
+                        '<div class="la-wave"></div>' +
+                        '<div class="la-wave"></div>' +
+                        '<div class="la-wave"></div>' +
+                        '<button class="la-btn" onclick="laBarToggle()" aria-label="Play/Pause">' +
+                            '<span class="la-play">▶</span>' +
+                            '<span class="la-pause">⏸</span>' +
+                        '</button>' +
+                    '</div>' +
+                '</div>' +
                 '<button class="la-arrow la-arrow-next" onclick="laNext()" aria-label="Следующий">&#8250;</button>' +
             '</div>' +
             '<div class="la-fixed-progress">' +
                 '<div class="la-fixed-progress-fill"></div>' +
             '</div>' +
-            '<div class="la-fixed-time">0:00 / 0:00</div>';
+            '<div class="la-fixed-time">0:00 / 0:00</div>' +
+            '<div class="la-controls">' +
+                '<div class="la-control-row">' +
+                    '<span class="la-control-label">⚡ Speed</span>' +
+                    '<div class="la-speed-buttons">' +
+                        '<button class="la-speed-btn active" onclick="laSetSpeed(1)">1x</button>' +
+                        '<button class="la-speed-btn" onclick="laSetSpeed(1.5)">1.5x</button>' +
+                        '<button class="la-speed-btn" onclick="laSetSpeed(2)">2x</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="la-control-row">' +
+                    '<span class="la-control-label">🔊 Vol</span>' +
+                    '<span class="la-volume-icon" onclick="laToggleMute()">🔊</span>' +
+                    '<input type="range" class="la-volume-slider" min="0" max="100" value="100" oninput="laSetVolume(this.value)">' +
+                '</div>' +
+            '</div>';
         document.body.appendChild(bar);
         fixedBar = bar;
         fixedSlot = bar.querySelector('#la-fixed-slot');
@@ -515,24 +543,26 @@
         return last;
     }
 
-    var currentlyInFixed = null;
-    var originalParent = null;
-    var placeholder = null;
+    var currentActiveWrap = null;
 
     function putInFixed(wrap) {
-        var container = wrap.querySelector('.la-container');
-        if (!container || container === currentlyInFixed) return;
-        returnFromFixed();
+        if (wrap === currentActiveWrap) return;
+        
+        // Убрать подсветку с предыдущей секции
+        if (currentActiveWrap) {
+            currentActiveWrap.classList.remove('active-track');
+        }
+        
+        // Подсветить текущую секцию
+        wrap.classList.add('active-track');
+        currentActiveWrap = wrap;
 
-        var ph = document.createElement('div');
-        ph.style.cssText = 'width:' + container.offsetWidth + 'px;height:' + container.offsetHeight + 'px;flex-shrink:0;display:inline-block;';
-        container.parentNode.insertBefore(ph, container);
-        placeholder = ph;
-        originalParent = container.parentNode;
-        currentlyInFixed = container;
-
-        if (fixedSlot) fixedSlot.appendChild(container);
-        if (fixedBar) fixedBar.classList.add('visible');
+        // Показать сайдбар с плавной анимацией
+        if (fixedBar) {
+            fixedBar.classList.add('visible');
+            // Синхронизировать состояние кнопки в сайдбаре
+            syncFixedButton();
+        }
 
         // Мобильный бар
         if (mobileBar) {
@@ -552,14 +582,34 @@
     }
 
     function returnFromFixed() {
-        if (!currentlyInFixed || !originalParent || !placeholder) return;
-        originalParent.insertBefore(currentlyInFixed, placeholder);
-        placeholder.parentNode.removeChild(placeholder);
-        placeholder = null; originalParent = null; currentlyInFixed = null;
+        // Убрать подсветку
+        if (currentActiveWrap) {
+            currentActiveWrap.classList.remove('active-track');
+            currentActiveWrap = null;
+        }
+        
+        // Скрыть сайдбар
         if (fixedBar) fixedBar.classList.remove('visible');
         if (mobileBar) {
             mobileBar.classList.remove('visible');
             document.body.classList.remove('la-mob-bar-visible');
+        }
+    }
+
+    // Синхронизировать состояние кнопки в фиксированном сайдбаре
+    function syncFixedButton() {
+        if (!fixedSlot) return;
+        var fixedBtn = fixedSlot.querySelector('.la-btn');
+        var fixedContainer = fixedSlot.querySelector('.la-container');
+        if (!fixedBtn || !fixedContainer) return;
+
+        // Синхронизировать playing состояние
+        if (curAudio && (!curAudio.paused || curAudio._simPlaying)) {
+            fixedBtn.classList.add('playing');
+            fixedContainer.classList.add('playing');
+        } else {
+            fixedBtn.classList.remove('playing');
+            fixedContainer.classList.remove('playing');
         }
     }
 
@@ -569,12 +619,81 @@
         requestAnimationFrame(function() {
             ticking = false;
             var idx = getStuckWrapIdx();
-            if (idx < 0) { returnFromFixed(); return; }
+            if (idx < 0) { 
+                returnFromFixed(); 
+                return; 
+            }
             var wrap = allWraps[idx];
-            var container = wrap.querySelector('.la-container');
-            if (container && container !== currentlyInFixed) putInFixed(wrap);
+            if (wrap) {
+                if (wrap !== currentActiveWrap) {
+                    putInFixed(wrap);
+                } else if (!fixedBar || !fixedBar.classList.contains('visible')) {
+                    // Если wrap уже активен, но сайдбар не виден - показываем его
+                    putInFixed(wrap);
+                }
+            }
         });
     }
+
+    // ── Управление скоростью ─────────────────────────────────────
+    window.laSetSpeed = function(speed) {
+        if (curAudio) {
+            curAudio.playbackRate = speed;
+        }
+        // Обновить активную кнопку
+        var buttons = document.querySelectorAll('.la-speed-btn');
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].classList.remove('active');
+            if (parseFloat(buttons[i].textContent) === speed) {
+                buttons[i].classList.add('active');
+            }
+        }
+    };
+
+    // ── Управление громкостью ─────────────────────────────────────
+    var savedVolume = 1;
+    var isMuted = false;
+
+    window.laSetVolume = function(value) {
+        var volume = value / 100;
+        if (curAudio) {
+            curAudio.volume = volume;
+        }
+        savedVolume = volume;
+        
+        // Обновить иконку
+        var icon = document.querySelector('.la-volume-icon');
+        if (icon) {
+            if (volume === 0) {
+                icon.textContent = '🔇';
+            } else if (volume < 0.5) {
+                icon.textContent = '🔉';
+            } else {
+                icon.textContent = '🔊';
+            }
+        }
+        isMuted = false;
+    };
+
+    window.laToggleMute = function() {
+        if (!curAudio) return;
+        
+        var slider = document.querySelector('.la-volume-slider');
+        var icon = document.querySelector('.la-volume-icon');
+        
+        if (isMuted) {
+            curAudio.volume = savedVolume;
+            if (slider) slider.value = savedVolume * 100;
+            if (icon) icon.textContent = savedVolume < 0.5 ? '🔉' : '🔊';
+            isMuted = false;
+        } else {
+            savedVolume = curAudio.volume;
+            curAudio.volume = 0;
+            if (slider) slider.value = 0;
+            if (icon) icon.textContent = '🔇';
+            isMuted = true;
+        }
+    };
 
     document.addEventListener('DOMContentLoaded', function() {
         var els = document.querySelectorAll('audio[data-duration]');

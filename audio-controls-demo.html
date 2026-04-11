@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ru" style="background:#070b14">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Controls Demo - Скорость и Громкость</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #070b14;
+            color: #ffffff;
+            padding: 40px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .demo-container {
+            max-width: 600px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #06b6d4, #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #94a3b8;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        /* Плеер */
+        .audio-player {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Кнопка Play с волнами */
+        .player-main {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .player-btn-wrap {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+
+        .wave {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 2px solid rgba(78, 205, 196, 0.6);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .player-btn-wrap.playing .wave {
+            animation: wave-pulse 2s ease-out infinite;
+        }
+
+        .player-btn-wrap.playing .wave:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+
+        .player-btn-wrap.playing .wave:nth-child(3) {
+            animation-delay: 1s;
+        }
+
+        @keyframes wave-pulse {
+            0% {
+                width: 80px;
+                height: 80px;
+                opacity: 0.8;
+            }
+            100% {
+                width: 140px;
+                height: 140px;
+                opacity: 0;
+            }
+        }
+
+        .play-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 32px;
+            color: white;
+            position: relative;
+            z-index: 10;
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 20px rgba(78, 205, 196, 0.4);
+        }
+
+        .play-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .player-info {
+            flex: 1;
+        }
+
+        .track-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 8px;
+        }
+
+        .track-time {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        /* Прогресс-бар */
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+            border-radius: 3px;
+            transition: width 0.1s ease;
+        }
+
+        /* Контролы */
+        .controls-section {
+            display: flex;
+            gap: 20px;
+        }
+
+        .control-group {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .control-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #06b6d4;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Кнопки скорости */
+        .speed-buttons {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .speed-btn {
+            flex: 1;
+            min-width: 50px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .speed-btn:hover {
+            background: rgba(6, 182, 212, 0.1);
+            border-color: rgba(6, 182, 212, 0.3);
+            color: #06b6d4;
+        }
+
+        .speed-btn.active {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(14, 165, 233, 0.2));
+            border-color: rgba(6, 182, 212, 0.5);
+            color: #06b6d4;
+            box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.1);
+        }
+
+        /* Слайдер громкости */
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .volume-icon {
+            font-size: 20px;
+            color: #06b6d4;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .volume-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .volume-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(6, 182, 212, 0.4);
+            transition: transform 0.2s ease;
+        }
+
+        .volume-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(6, 182, 212, 0.4);
+        }
+
+        .volume-value {
+            font-size: 13px;
+            color: #94a3b8;
+            min-width: 35px;
+            text-align: right;
+        }
+
+        /* Инфо */
+        .demo-info {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 12px;
+            font-size: 13px;
+            color: #e2e8f0;
+            line-height: 1.6;
+        }
+
+        .demo-info strong {
+            color: #06b6d4;
+        }
+
+        @media (max-width: 600px) {
+            .controls-section {
+                flex-direction: column;
+            }
+            
+            .player-main {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>🎵 Аудио плеер с контролами</h1>
+        <p class="subtitle">Регулятор скорости и громкости</p>
+
+        <div class="audio-player">
+            <!-- Основной плеер -->
+            <div class="player-main">
+                <div class="player-btn-wrap" id="playerWrap">
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                    <button class="play-btn" id="playBtn" onclick="togglePlay()">▶</button>
+                </div>
+                <div class="player-info">
+                    <div class="track-title">🎧 Добро пожаловать в курс диспетчера</div>
+                    <div class="track-time" id="timeDisplay">0:00 / 4:27</div>
+                </div>
+            </div>
+
+            <!-- Прогресс-бар -->
+            <div class="progress-bar" id="progressBar" onclick="seekAudio(event)">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <!-- Контролы -->
+            <div class="controls-section">
+                <!-- Скорость -->
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>⚡</span>
+                        <span>Скорость</span>
+                    </div>
+                    <div class="speed-buttons">
+                        <button class="speed-btn" onclick="setSpeed(0.75)">0.75x</button>
+                        <button class="speed-btn active" onclick="setSpeed(1)">1x</button>
+                        <button class="speed-btn" onclick="setSpeed(1.25)">1.25x</button>
+                        <button class="speed-btn" onclick="setSpeed(1.5)">1.5x</button>
+                        <button class="speed-btn" onclick="setSpeed(2)">2x</button>
+                    </div>
+                </div>
+
+                <!-- Громкость -->
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>🔊</span>
+                        <span>Громкость</span>
+                    </div>
+                    <div class="volume-control">
+                        <span class="volume-icon" id="volumeIcon" onclick="toggleMute()">🔊</span>
+                        <input type="range" class="volume-slider" id="volumeSlider" 
+                               min="0" max="100" value="100" oninput="setVolume(this.value)">
+                        <span class="volume-value" id="volumeValue">100%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-info">
+            <strong>💡 Как использовать:</strong><br>
+            • Нажми Play чтобы запустить аудио<br>
+            • Выбери скорость воспроизведения (полезно для обучения)<br>
+            • Регулируй громкость слайдером или нажми на иконку для mute<br>
+            • Кликни на прогресс-бар для перемотки<br><br>
+            <strong>✨ Эффекты:</strong> Звуковые волны при воспроизведении
+        </div>
+
+        <!-- Скрытый аудио элемент -->
+        <audio id="audio" src="audio/documentation-audio-1.mp3"></audio>
+    </div>
+
+    <script>
+        const audio = document.getElementById('audio');
+        const playBtn = document.getElementById('playBtn');
+        const playerWrap = document.getElementById('playerWrap');
+        const progressFill = document.getElementById('progressFill');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumeValue = document.getElementById('volumeValue');
+        const volumeIcon = document.getElementById('volumeIcon');
+
+        let isPlaying = false;
+        let isMuted = false;
+
+        // Play/Pause
+        function togglePlay() {
+            if (isPlaying) {
+                audio.pause();
+                playBtn.textContent = '▶';
+                playerWrap.classList.remove('playing');
+            } else {
+                audio.play();
+                playBtn.textContent = '⏸';
+                playerWrap.classList.add('playing');
+            }
+            isPlaying = !isPlaying;
+        }
+
+        // Обновление прогресса
+        audio.addEventListener('timeupdate', () => {
+            const progress = (audio.currentTime / audio.duration) * 100;
+            progressFill.style.width = progress + '%';
+            
+            const current = formatTime(audio.currentTime);
+            const total = formatTime(audio.duration);
+            timeDisplay.textContent = `${current} / ${total}`;
+        });
+
+        // Форматирование времени
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        // Перемотка
+        function seekAudio(e) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const percent = (e.clientX - rect.left) / rect.width;
+            audio.currentTime = percent * audio.duration;
+        }
+
+        // Скорость
+        function setSpeed(speed) {
+            audio.playbackRate = speed;
+            
+            // Обновить активную кнопку
+            document.querySelectorAll('.speed-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        // Громкость
+        function setVolume(value) {
+            audio.volume = value / 100;
+            volumeValue.textContent = value + '%';
+            
+            // Обновить иконку
+            if (value == 0) {
+                volumeIcon.textContent = '🔇';
+            } else if (value < 50) {
+                volumeIcon.textContent = '🔉';
+            } else {
+                volumeIcon.textContent = '🔊';
+            }
+        }
+
+        // Mute/Unmute
+        function toggleMute() {
+            if (isMuted) {
+                audio.volume = volumeSlider.value / 100;
+                volumeIcon.textContent = '🔊';
+                isMuted = false;
+            } else {
+                audio.volume = 0;
+                volumeIcon.textContent = '🔇';
+                isMuted = true;
+            }
+        }
+
+        // Конец трека
+        audio.addEventListener('ended', () => {
+            playBtn.textContent = '▶';
+            playerWrap.classList.remove('playing');
+            isPlaying = false;
+            progressFill.style.width = '0%';
+        });
+    </script>
+</body>
+</html>
