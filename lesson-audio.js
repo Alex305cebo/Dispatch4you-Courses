@@ -503,6 +503,9 @@
                         '<input type="range" class="la-mob-volume-slider" min="0" max="100" value="100" oninput="laSetVolume(this.value)">' +
                     '</div>' +
                 '</div>' +
+                '<button class="la-mob-scroll-top" onclick="laScrollToTop()" aria-label="Наверх">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>' +
+                '</button>' +
             '</div>';
         document.body.appendChild(bar);
         mobileBar = bar;
@@ -679,6 +682,14 @@
                 buttons[i].classList.add('active');
             }
         }
+    };
+
+    // ── Скролл наверх из плеера ───────────────────────────────────
+    window.laScrollToTop = function() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
     };
 
     // ── Сворачивание/разворачивание мобильного бара ───────────────
