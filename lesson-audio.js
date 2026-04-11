@@ -466,6 +466,9 @@
         bar.id = 'la-mobile-bottom-bar';
         bar.className = 'la-mobile-bottom-bar';
         bar.innerHTML =
+            '<div class="la-mob-collapse-btn" onclick="laCollapseMobileBar()">' +
+                '<span class="la-mob-collapse-icon">▼</span>' +
+            '</div>' +
             '<div class="la-mob-progress">' +
                 '<div class="la-mob-progress-fill"></div>' +
             '</div>' +
@@ -503,6 +506,13 @@
             '</div>';
         document.body.appendChild(bar);
         mobileBar = bar;
+        
+        // Большая кнопка для разворачивания
+        var expandBtn = document.createElement('div');
+        expandBtn.className = 'la-mob-expand-btn';
+        expandBtn.onclick = laExpandMobileBar;
+        expandBtn.innerHTML = '<span class="la-mob-expand-icon">▲</span>';
+        document.body.appendChild(expandBtn);
         
         // Обработчики для возврата активности
         bar.addEventListener('touchstart', resetInactivityTimer);
@@ -671,6 +681,20 @@
         }
     };
 
+    // ── Сворачивание/разворачивание мобильного бара ───────────────
+    window.laCollapseMobileBar = function() {
+        if (!mobileBar) return;
+        mobileBar.classList.add('collapsed');
+        document.body.style.paddingBottom = '8px';
+    };
+
+    window.laExpandMobileBar = function() {
+        if (!mobileBar) return;
+        mobileBar.classList.remove('collapsed');
+        document.body.style.paddingBottom = '120px';
+        resetInactivityTimer();
+    };
+
     // ── Прозрачность мобильного бара при неактивности ─────────────
     var inactivityTimer = null;
 
@@ -679,7 +703,7 @@
         mobileBar.classList.remove('inactive');
         clearTimeout(inactivityTimer);
         inactivityTimer = setTimeout(function() {
-            if (mobileBar && mobileBar.classList.contains('visible')) {
+            if (mobileBar && mobileBar.classList.contains('visible') && !mobileBar.classList.contains('collapsed')) {
                 mobileBar.classList.add('inactive');
             }
         }, 3000); // 3 секунды до прозрачности
