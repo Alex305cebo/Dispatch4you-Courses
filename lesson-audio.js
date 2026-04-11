@@ -383,11 +383,10 @@
                 '<div id="la-fixed-slot" class="la-fixed-slot"></div>' +
                 '<button class="la-arrow la-arrow-next" onclick="laNext()" aria-label="Следующий">&#8250;</button>' +
             '</div>' +
+            '<div class="la-fixed-time">0:00 / 0:00</div>' +
             '<div class="la-fixed-progress" onclick="laSeekBar(event)">' +
                 '<div class="la-fixed-progress-fill"></div>' +
-            '</div>' +
-            '<div class="la-fixed-time">0:00 / 0:00</div>' +
-            '<div class="la-fixed-counter">1 / ' + allAudioIds.length + '</div>';
+            '</div>';
         document.body.appendChild(bar);
         fixedBar = bar;
         fixedSlot = bar.querySelector('#la-fixed-slot');
@@ -399,9 +398,6 @@
         bar.id = 'la-mobile-bottom-bar';
         bar.className = 'la-mobile-bottom-bar';
         bar.innerHTML =
-            '<div class="la-mob-progress" onclick="laSeekBar(event)">' +
-                '<div class="la-mob-progress-fill"></div>' +
-            '</div>' +
             '<div class="la-mob-row">' +
                 '<div class="la-mob-icon">🎧</div>' +
                 '<div class="la-mob-info">' +
@@ -416,6 +412,9 @@
                     '</button>' +
                     '<button class="la-mob-btn-next hidden" onclick="laNext()" aria-label="Следующий">&#8250;</button>' +
                 '</div>' +
+            '</div>' +
+            '<div class="la-mob-progress" onclick="laSeekBar(event)">' +
+                '<div class="la-mob-progress-fill"></div>' +
             '</div>';
         document.body.appendChild(bar);
         mobileBar = bar;
@@ -423,16 +422,8 @@
 
     function updateCounter() {
         var total = allAudioIds.length;
-        // Inline счётчики
-        var allContainers = document.querySelectorAll('.la-container');
-        for (var i = 0; i < allContainers.length; i++) {
-            var c = allContainers[i].querySelector('.la-counter');
-            if (c) c.textContent = (curAudioIndex + 1) + ' / ' + total;
-        }
         // Десктоп бар
         if (fixedBar) {
-            var fc = fixedBar.querySelector('.la-fixed-counter');
-            if (fc) fc.textContent = (curAudioIndex + 1) + ' / ' + total;
             var prev = fixedBar.querySelector('.la-arrow-prev');
             var next = fixedBar.querySelector('.la-arrow-next');
             if (prev) prev.classList.toggle('hidden', total <= 1);
@@ -528,15 +519,6 @@
         }
 
         allWraps = Array.prototype.slice.call(document.querySelectorAll('.section-audio-wrap'));
-
-        var total = allAudioIds.length;
-        for (var j = 0; j < allWraps.length; j++) {
-            var cnt = document.createElement('span');
-            cnt.className = 'la-counter';
-            cnt.textContent = (j + 1) + ' / ' + total;
-            var container = allWraps[j].querySelector('.la-container');
-            if (container) container.appendChild(cnt);
-        }
 
         if (allWraps.length > 0) {
             buildFixedBar();
