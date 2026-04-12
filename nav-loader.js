@@ -46,9 +46,9 @@
       </div>
     </div>
     <div class="mob-actions" id="mob-actions"><a href="{{BASE}}login.html" class="btn-login">Войти</a><a href="{{BASE}}register.html" class="btn-signup">Регистрация</a></div>
-    <div class="mob-acc"><div class="mob-acc-title">📚 Курс обучения <span class="mob-arr">▼</span></div><div class="mob-acc-body"><a href="{{BASE}}pages/documentation.html" class="mob-sub">📚 Курс обучения</a><a href="{{BASE}}pages/modules-index.html" class="mob-sub">✍️ Проверка знаний</a><a href="{{BASE}}pages/glossary.html" class="mob-sub">📖 Термины и Сокращения</a></div></div>
+    <div class="mob-acc"><div class="mob-acc-title">📚 Курс обучения <span class="mob-arr">▼</span></div><div class="mob-acc-body"><div class="mob-sub-main-wrapper"><a href="{{BASE}}pages/documentation.html" class="mob-sub mob-sub-main">📚 Курс обучения</a><span class="mob-sub-arrow">▼</span></div><div class="mob-sub-nested"><div class="mob-sub-nested-title">Разделы курса:</div><a href="{{BASE}}pages/intro.html" class="mob-sub-nested-item">1. Введение в профессию</a><a href="{{BASE}}pages/glossary.html" class="mob-sub-nested-item">2. Глоссарий терминов</a><a href="{{BASE}}pages/role.html" class="mob-sub-nested-item">3. Роль диспетчера</a><a href="{{BASE}}pages/equipment.html" class="mob-sub-nested-item">4. Типы траков</a><a href="{{BASE}}pages/routes.html" class="mob-sub-nested-item">5. Маршруты и география</a><a href="{{BASE}}pages/docs.html" class="mob-sub-nested-item">6. Документы</a><a href="{{BASE}}pages/loadboards.html" class="mob-sub-nested-item">7. Load Boards</a><a href="{{BASE}}pages/negotiation.html" class="mob-sub-nested-item">8. Переговоры</a><a href="{{BASE}}pages/communication.html" class="mob-sub-nested-item">9. Коммуникация</a><a href="{{BASE}}pages/problems.html" class="mob-sub-nested-item">10. Проблемные ситуации</a><a href="{{BASE}}pages/finances.html" class="mob-sub-nested-item">11. Финансы</a><a href="{{BASE}}pages/regulations.html" class="mob-sub-nested-item">12. Compliance</a><a href="{{BASE}}pages/technology.html" class="mob-sub-nested-item">13. Технологии</a></div><div class="mob-sub-main-wrapper"><a href="{{BASE}}pages/modules-index.html" class="mob-sub mob-sub-main">✍️ Проверка знаний</a><span class="mob-sub-arrow">▼</span></div><div class="mob-sub-nested"><div class="mob-sub-nested-title">Модули тестирования:</div><a href="{{BASE}}pages/doc-module-1-complete.html" class="mob-sub-nested-item">1. Основы профессии</a><a href="{{BASE}}pages/doc-module-2-complete.html" class="mob-sub-nested-item">2. Типы грузоперевозок</a><a href="{{BASE}}pages/doc-module-3-complete.html" class="mob-sub-nested-item">3. Документы диспетчера</a><a href="{{BASE}}pages/doc-module-4-complete.html" class="mob-sub-nested-item">4. Load Boards</a><a href="{{BASE}}pages/doc-module-5-complete.html" class="mob-sub-nested-item">5. Переговоры</a><a href="{{BASE}}pages/doc-module-6-complete.html" class="mob-sub-nested-item">6. Маршруты</a><a href="{{BASE}}pages/doc-module-7-complete.html" class="mob-sub-nested-item">7. Коммуникация</a><a href="{{BASE}}pages/doc-module-8-complete.html" class="mob-sub-nested-item">8. Проблемы в пути</a><a href="{{BASE}}pages/doc-module-9-complete.html" class="mob-sub-nested-item">9. Финансы</a><a href="{{BASE}}pages/doc-module-10-complete.html" class="mob-sub-nested-item">10. Compliance</a><a href="{{BASE}}pages/doc-module-11-complete.html" class="mob-sub-nested-item">11. Технологии</a><a href="{{BASE}}pages/doc-module-12-complete.html" class="mob-sub-nested-item">12. Итоговый тест</a></div></div></div>
     <div class="mob-acc"><div class="mob-acc-title">🛠️ Инструменты <span class="mob-arr">▼</span></div><div class="mob-acc-body"><a href="{{BASE}}pages/ai-broker-chat.html" class="mob-sub">🎙️ AI Переговоры</a><a href="{{BASE}}pages/testing.html" class="mob-sub">🎯 Проверить себя</a><a href="{{BASE}}pages/Trainer-Quiz.html" class="mob-sub">💡 Флеш-карточки</a><a href="{{BASE}}pages/load-finder.html" class="mob-sub">📦 Поиск грузов</a><a href="{{BASE}}pages/users-stats.html" class="mob-sub">🎖️ Рейтинг</a></div></div>
-    <div class="mob-acc"><div class="mob-acc-title">ℹ️ Информация <span class="mob-arr">▼</span></div><div class="mob-acc-body"><a href="{{BASE}}about.html" class="mob-sub">�� О курсе</a><a href="{{BASE}}faq.html" class="mob-sub">❓ Частые вопросы</a><a href="{{BASE}}contacts.html" class="mob-sub">📩 Написать нам</a><a href="{{BASE}}pricing.html" class="mob-sub">💎 Планы и цены</a></div></div>
+    <div class="mob-acc"><div class="mob-acc-title">ℹ️ Информация <span class="mob-arr">▼</span></div><div class="mob-acc-body"><a href="{{BASE}}about.html" class="mob-sub">ℹ️ О курсе</a><a href="{{BASE}}faq.html" class="mob-sub">❓ Частые вопросы</a><a href="{{BASE}}contacts.html" class="mob-sub">📩 Написать нам</a><a href="{{BASE}}pricing.html" class="mob-sub">💎 Планы и цены</a></div></div>
   </div>
 </div>`;
 
@@ -159,6 +159,26 @@
         document.querySelectorAll('.mob-acc-title').forEach(function (t) {
             t.onclick = function () {
                 this.parentElement.classList.toggle('open');
+            };
+        });
+
+        // Nested submenu toggle - only on arrow click
+        var arrows = document.querySelectorAll('.mob-sub-arrow');
+        console.log('Found arrows:', arrows.length);
+        arrows.forEach(function (arrow) {
+            arrow.onclick = function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                var wrapper = this.parentElement;
+                var nextElement = wrapper.nextElementSibling;
+                
+                console.log('Arrow clicked, wrapper:', wrapper, 'next:', nextElement);
+                
+                if (nextElement && nextElement.classList.contains('mob-sub-nested')) {
+                    this.classList.toggle('expanded');
+                    nextElement.classList.toggle('show');
+                }
             };
         });
     }
