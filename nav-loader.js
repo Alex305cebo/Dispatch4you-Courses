@@ -293,29 +293,27 @@
         <div class="footer-acc-col">
           <button class="footer-acc-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="footer-col-title">📚 Обучение</span><span class="acc-arrow">▼</span></button>
           <div class="footer-acc-body">
-            <a href="BASE_pages/documentation.html" class="footer-link">📚 Документация - 15 Уроков</a>
-            <a href="BASE_pages/modules-index.html" class="footer-link">✍️ 12 Модулей обучения</a>
+            <a href="BASE_pages/documentation.html" class="footer-link">📚 Курс - 15 Уроков</a>
+            <a href="BASE_pages/modules-index.html" class="footer-link">✍️ Обучение - 12 Модулей</a>
           </div>
         </div>
         <div class="footer-acc-col">
           <button class="footer-acc-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="footer-col-title">🛠️ Инструменты</span><span class="acc-arrow">▼</span></button>
           <div class="footer-acc-body">
-            <a href="BASE_pages/ai-broker-chat.html" class="footer-link">🎙️ Симулятор переговоров</a>
-            <a href="BASE_pages/testing.html" class="footer-link">🎯 Тестирование</a>
+            <a href="BASE_pages/ai-broker-chat.html" class="footer-link">🎙️ AI Переговоры</a>
+            <a href="BASE_pages/testing.html" class="footer-link">🎯 Проверить себя</a>
             <a href="BASE_pages/Trainer-Quiz.html" class="footer-link">💡 Флеш-карточки</a>
-            <a href="BASE_pages/load-finder.html" class="footer-link">📦 Load Finder</a>
-            <a href="BASE_pages/analytics.html" class="footer-link">📊 Статистика рынка</a>
-            <a href="BASE_pages/cases.html" class="footer-link">📋 Практические кейсы</a>
+            <a href="BASE_pages/load-finder.html" class="footer-link">📦 Поиск грузов</a>
+            <a href="BASE_pages/users-stats.html" class="footer-link">🎖️ Рейтинг</a>
           </div>
         </div>
         <div class="footer-acc-col">
           <button class="footer-acc-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="footer-col-title">ℹ️ Информация</span><span class="acc-arrow">▼</span></button>
           <div class="footer-acc-body">
-            <a href="BASE_about.html" class="footer-link">ℹ️ О нас</a>
-            <a href="BASE_pricing.html" class="footer-link">💎 Тарифы</a>
-            <a href="BASE_career.html" class="footer-link">🚀 Карьера</a>
-            <a href="BASE_faq.html" class="footer-link">❓ FAQ</a>
-            <a href="BASE_contacts.html" class="footer-link">📩 Контакты</a>
+            <a href="BASE_about.html" class="footer-link">ℹ️ О курсе</a>
+            <a href="BASE_faq.html" class="footer-link">❓ Частые вопросы</a>
+            <a href="BASE_contacts.html" class="footer-link">📩 Написать нам</a>
+            <a href="BASE_pricing.html" class="footer-link">💎 Планы и цены</a>
           </div>
         </div>
       </div>
