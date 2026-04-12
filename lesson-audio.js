@@ -299,6 +299,7 @@
 
     // Перемотка по прогресс-бару в fixed-барах
     window.laSeekBar = function(e) {
+        if (e.stopPropagation) e.stopPropagation();
         var r = e.currentTarget.getBoundingClientRect();
         var p = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
         
@@ -309,7 +310,7 @@
             var au = document.getElementById(id);
             if (!au) return;
             var d = au._dur || 300;
-            au.currentTime = p * d;
+            var targetTime = p * d;
             
             var btn = document.querySelector('[onclick*="laToggle"][onclick*="' + id + '"]');
             if (btn) {
@@ -325,25 +326,52 @@
                 updateFixedTitle(0);
                 syncMobPlayBtn(true);
                 
-                var playPromise = au.play();
-                if (playPromise !== undefined) {
-                    playPromise.then(function() { startProgress(au, id); }).catch(function(){});
-                } else { 
-                    startProgress(au, id); 
-                }
+                // Загружаем аудио если нужно
+                if (au.readyState < 2) au.load();
+                
+                // Ждем загрузки метаданных
+                var trySeek = function() {
+                    if (au.readyState >= 2) {
+                        au.currentTime = targetTime;
+                        var playPromise = au.play();
+                        if (playPromise !== undefined) {
+                            playPromise.then(function() { startProgress(au, id); }).catch(function(){ simulatePlayback(au, id, btn, box); });
+                        } else { 
+                            startProgress(au, id); 
+                        }
+                    } else {
+                        au.addEventListener('loadedmetadata', function() {
+                            au.currentTime = targetTime;
+                            var playPromise = au.play();
+                            if (playPromise !== undefined) {
+                                playPromise.then(function() { startProgress(au, id); }).catch(function(){ simulatePlayback(au, id, btn, box); });
+                            } else { 
+                                startProgress(au, id); 
+                            }
+                        }, { once: true });
+                    }
+                };
+                trySeek();
             }
             return;
         }
         
         var d = curAudio.duration && isFinite(curAudio.duration) ? curAudio.duration : (curAudio._dur||300);
-        var wasPaused = curAudio.paused && !curAudio._simPlaying;
+        var targetTime = p * d;
+        var wasPlaying = !curAudio.paused || curAudio._simPlaying;
         
         // Устанавливаем позицию
-        curAudio.currentTime = p * d;
-        updateProgress(curAudio.id, curAudio.currentTime, d);
+        if (curAudio.readyState >= 2 && !curAudio._simPlaying) {
+            curAudio.currentTime = targetTime;
+            updateProgress(curAudio.id, targetTime, d);
+        } else if (curAudio._simPlaying) {
+            // Для симулированного аудио только обновляем визуально
+            updateProgress(curAudio.id, targetTime, d);
+        }
         
         // Если аудио было на паузе, запускаем воспроизведение
-        if (wasPaused) {
+        // Если уже играло - НЕ вызываем play() снова!
+        if (!wasPlaying) {
             if (curBtn) curBtn.classList.add('playing');
             if (curBox) curBox.classList.add('playing');
             syncMobPlayBtn(true);
