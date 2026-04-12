@@ -177,10 +177,16 @@ function applyUI(user, xpOverride) {
                     <span id="nav-xp-badge" style="font-size:11px;color:#fbbf24;font-weight:700;line-height:1;">⚡ ${xp} XP</span>
                 </div>
             </a>
-            <button onclick="authLogout(event)" style="padding:7px 14px;border:1px solid rgba(239,68,68,.3);border-radius:14px;color:#fca5a5;font-size:13px;font-weight:600;background:rgba(239,68,68,.08);cursor:pointer;font-family:inherit;transition:all .2s;"
+            <button id="nav-logout-btn" style="padding:7px 14px;border:1px solid rgba(239,68,68,.3);border-radius:14px;color:#fca5a5;font-size:13px;font-weight:600;background:rgba(239,68,68,.08);cursor:pointer;font-family:inherit;transition:all .2s;"
                 onmouseover="this.style.background='rgba(239,68,68,.18)';this.style.borderColor='rgba(239,68,68,.5)'" onmouseout="this.style.background='rgba(239,68,68,.08)';this.style.borderColor='rgba(239,68,68,.3)'">
                 Выйти
             </button>`;
+        
+        // Attach logout handler
+        const logoutBtn = document.getElementById('nav-logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', window.authLogout);
+        }
 
         // Mobile navbar badge
         const mobWrap = document.getElementById('mob-xp-wrap');
@@ -219,6 +225,13 @@ function applyUI(user, xpOverride) {
             }
         }
         if (mobActions) mobActions.style.display = 'none';
+        
+        // Attach mobile logout handler
+        const mobLogoutBtn = document.getElementById('mob-logout-btn');
+        if (mobLogoutBtn) {
+            mobLogoutBtn.removeEventListener('click', window.authLogout); // Remove old listener
+            mobLogoutBtn.addEventListener('click', window.authLogout);
+        }
 
         // Stats icon always visible — no toggle needed
 
@@ -237,7 +250,7 @@ function applyUI(user, xpOverride) {
     } else {
         // Не залогинен
         navActions.innerHTML = `
-            <button onclick="signInWithGoogle()" style="display:flex;align-items:center;gap:8px;padding:8px 16px;background:#fff;border:none;border-radius:12px;font-size:14px;font-weight:600;color:#1f2937;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.2);font-family:inherit;"
+            <button id="nav-signin-btn" style="display:flex;align-items:center;gap:8px;padding:8px 16px;background:#fff;border:none;border-radius:12px;font-size:14px;font-weight:600;color:#1f2937;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.2);font-family:inherit;"
                 onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
                 <svg width="18" height="18" viewBox="0 0 48 48">
                     <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -247,6 +260,12 @@ function applyUI(user, xpOverride) {
                 </svg>
                 Войти через Google
             </button>`;
+        
+        // Attach signin handler
+        const signinBtn = document.getElementById('nav-signin-btn');
+        if (signinBtn) {
+            signinBtn.addEventListener('click', window.signInWithGoogle);
+        }
 
         const mobWrap = document.getElementById('mob-xp-wrap');
         if (mobWrap) mobWrap.style.display = 'none';
