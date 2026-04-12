@@ -120,34 +120,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
   animate();
 
-  // Mouse interaction
-  canvas.addEventListener('mousemove', function(e) {
-    const rect = canvas.getBoundingClientRect();
+  // Mouse interaction - только отслеживание, без перехвата событий
+  window.addEventListener('mousemove', function(e) {
     mouse.x = e.clientX;
     mouse.y = e.clientY;
   });
 
-  canvas.addEventListener('mouseleave', function() {
-    mouse.x = null;
-    mouse.y = null;
-  });
-
-  // Touch interaction
-  canvas.addEventListener('touchstart', function(e) {
-    e.preventDefault();
-    const touch = e.touches[0];
-    mouse.x = touch.clientX;
-    mouse.y = touch.clientY;
-  });
-
-  canvas.addEventListener('touchmove', function(e) {
-    e.preventDefault();
-    const touch = e.touches[0];
-    mouse.x = touch.clientX;
-    mouse.y = touch.clientY;
-  });
-
-  canvas.addEventListener('touchend', function() {
+  window.addEventListener('mouseleave', function() {
     mouse.x = null;
     mouse.y = null;
   });
