@@ -15,7 +15,7 @@
     }
 
     var NAV_INLINE = `<nav class="navbar"><div class="nav-container"><div class="nav-content">
-<a href="{{BASE}}index.html" class="logo"><span class="logo-icon">📚</span><span class="logo-text">Курсы Диспетчера</span></a>
+<a href="{{BASE}}index.html" class="logo"><span class="logo-icon">🚛</span><span class="logo-text">Dispatch4You.Com</span></a>
 <div class="nav-links">
   <div class="nav-item"><button class="nav-btn">Курс обучения <span class="arrow">▾</span></button><div class="dropdown"><a href="{{BASE}}pages/documentation.html">📚 Курс обучения</a><a href="{{BASE}}pages/modules-index.html">✍️ Проверка знаний</a><a href="{{BASE}}pages/glossary.html">📖 Термины и Сокращения</a></div></div>
   <div class="nav-item"><button class="nav-btn">Инструменты <span class="arrow">▾</span></button><div class="dropdown"><a href="{{BASE}}pages/ai-broker-chat.html">🎙️ AI Переговоры</a><a href="{{BASE}}pages/testing.html">🎯 Проверить себя</a><a href="{{BASE}}pages/Trainer-Quiz.html">💡 Флеш-карточки</a><a href="{{BASE}}pages/load-finder.html">📦 Поиск грузов</a><a href="{{BASE}}pages/users-stats.html">🎖️ Рейтинг</a></div></div>
@@ -29,7 +29,7 @@
 </div></div></nav>
 <div class="mob-overlay" id="mobOverlay"></div>
 <div class="mob-menu" id="mobMenu">
-  <div class="mob-header"><span>📚 Меню</span><button id="mobClose">✕</button></div>
+  <div class="mob-header"><span>🚛 Dispatch4You.Com</span><button id="mobClose">✕</button></div>
   <div class="mob-body">
     <div id="mob-profile-card" style="display:none;margin-bottom:12px;padding:16px;background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.15));border:1px solid rgba(99,102,241,.3);border-radius:16px;">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
@@ -205,15 +205,15 @@
 .site-footer .footer-body{padding:72px 0 0}
 .site-footer .footer-inner{max-width:1000px;margin:0 auto;padding:0 40px}
 .site-footer .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:56px;padding-bottom:56px;border-bottom:1px solid rgba(255,255,255,.05)}
-.site-footer .footer-brand-desc{font-size:14px;color:#475569;line-height:1.75;margin-bottom:28px;max-width:240px}
-.site-footer .footer-col-title{font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.14em;margin-bottom:20px}
-.site-footer .footer-link{display:flex;align-items:center;gap:9px;font-size:13px;color:#64748b;text-decoration:none;margin-bottom:10px;transition:all .22s;white-space:nowrap}
-.site-footer .footer-link:hover{color:#e2e8f0;padding-left:5px}
+.site-footer .footer-brand-desc{font-size:14px;color:#e2e8f0;line-height:1.75;margin-bottom:28px;max-width:240px}
+.site-footer .footer-col-title{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.14em;margin-bottom:20px}
+.site-footer .footer-link{display:flex;align-items:center;gap:9px;font-size:13px;color:#cbd5e1;text-decoration:none;margin-bottom:10px;transition:all .22s;white-space:nowrap}
+.site-footer .footer-link:hover{color:#ffffff;padding-left:5px}
 .site-footer .footer-bottom{display:flex;justify-content:space-between;align-items:center;padding:22px 0;flex-wrap:wrap;gap:14px}
-.site-footer .footer-copy{font-size:13px;color:#94a3b8}
+.site-footer .footer-copy{font-size:13px;color:#e2e8f0}
 .site-footer .footer-status{display:flex;align-items:center;gap:7px}
 .site-footer .footer-status-dot{width:7px;height:7px;background:#10b981;border-radius:50%;animation:fpulse 2.5s ease infinite}
-.site-footer .footer-status-text{font-size:12px;color:#94a3b8}
+.site-footer .footer-status-text{font-size:12px;color:#cbd5e1}
 @keyframes fpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.3)}}
 .site-footer .footer-acc-toggle{display:none}
 @media(max-width:1024px){.site-footer .footer-grid{grid-template-columns:1fr 1fr 1fr;gap:36px}.site-footer .footer-grid>div:first-child{grid-column:1/-1}}
@@ -224,7 +224,7 @@
   .site-footer .footer-brand-block{padding-bottom:28px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:8px}
   .site-footer .footer-acc-col{border-bottom:1px solid rgba(255,255,255,.06)}
   .site-footer .footer-acc-toggle{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:none;padding:16px 0;cursor:pointer;color:#fff}
-  .site-footer .footer-acc-toggle .footer-col-title{margin-bottom:0;font-size:12px;color:#94a3b8}
+  .site-footer .footer-acc-toggle .footer-col-title{margin-bottom:0;font-size:12px;color:#e2e8f0}
   .site-footer .footer-acc-toggle .acc-arrow{font-size:10px;color:#475569;transition:transform .25s}
   .site-footer .footer-acc-toggle.open .acc-arrow{transform:rotate(180deg)}
   .site-footer .footer-acc-body{max-height:0;overflow:hidden;transition:max-height .3s}
@@ -238,7 +238,7 @@
     <div class="footer-inner">
       <div class="footer-grid">
         <div class="footer-brand-block">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><span style="font-size:28px">🚛</span><span style="font-size:18px;font-weight:800;background:linear-gradient(135deg,#06b6d4,#0ea5e9);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Курсы Диспетчера</span></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><span style="font-size:28px">🚛</span><span style="font-size:18px;font-weight:800;background:linear-gradient(135deg,#06b6d4,#0ea5e9);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Dispatch4You.Com</span></div>
           <p class="footer-brand-desc">Профессиональное обучение диспетчеров грузоперевозок США.</p>
           <a href="mailto:info@dispatch4you.com" class="footer-link" style="margin-top:8px">✉️ info@dispatch4you.com</a>
         </div>

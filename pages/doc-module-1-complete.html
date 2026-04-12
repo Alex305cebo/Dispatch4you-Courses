@@ -11,6 +11,7 @@
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <link rel="stylesheet" href="../interactive-modules.css">
     <style>
+        /* Navigation Fix v2.0 - 2026-04-12 */
         * {
             margin: 0;
             padding: 0;
@@ -1163,7 +1164,7 @@
         }
 
         .navigation-content {
-            max-height: 0 !important;
+            max-height: 0;
             overflow: hidden;
             transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -1426,14 +1427,14 @@
         <!-- UPDATED: 2026-03-22 - NEW NAVIGATION SECTOR 00 -->
         <!-- СЕКТОР 00: Навигация по курсу -->
         <div class="sector-wrapper sector-navigation">
-            <div class="navigation-block" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:20px;overflow:hidden;backdrop-filter:blur(10px);box-shadow:0 8px 32px rgba(0,0,0,0.1);">
-                <button class="navigation-toggle" id="navigationToggle" style="width:100%;display:flex;align-items:center;gap:16px;padding:20px 28px;background:linear-gradient(135deg,rgba(6,182,212,0.08),rgba(14,165,233,0.06));border:1px solid rgba(6,182,212,0.2);border-radius:16px;cursor:pointer;color:#e2e8f0;font-family:inherit;">
+            <div class="navigation-block">
+                <button class="navigation-toggle" id="navigationToggle">
                     <span class="nav-icon">📚</span>
                     <span class="nav-title">Навигация по курсу</span>
                     <span class="nav-arrow">▼</span>
                 </button>
 
-                <div class="navigation-content" id="navigationContent" style="display:none">
+                <div class="navigation-content" id="navigationContent">
                     <div class="navigation-grid">
                         <div class="nav-section">
                             <h4 class="section-header">▪ РАЗДЕЛЫ<span class="section-arrow">▼</span></h4>
@@ -2339,31 +2340,6 @@
             'audio7': 225  // 3.75 minutes
         };
 
-                    // Simulate audio playback for demo
-                    let currentTime = 0;
-                    const duration = audioDurations[audioId];
-
-                    button.classList.add('playing');
-                    container.classList.add('playing');
-                    currentAudio = audio;
-                    currentButton = button;
-                    currentContainer = container;
-
-                    progressUpdateInterval = setInterval(() => {
-                        if (currentTime < duration) {
-                            currentTime += 0.1;
-                            updateProgress(audioId, currentTime, duration);
-                        } else {
-                            clearInterval(progressUpdateInterval);
-                            button.classList.remove('playing');
-                            container.classList.remove('playing');
-                            currentAudio = null;
-                            currentButton = null;
-                            currentContainer = null;
-                            updateProgress(audioId, 0, duration);
-                        }
-                    }, 100);
-                });
 
                 button.classList.add('playing');
                 container.classList.add('playing');
@@ -2415,45 +2391,6 @@
             }
         }
 
-        // Mobile menu
-        (function () {
-            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-            const mobileMenu = document.getElementById('mobileMenu');
-            const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
-            const mobileMenuClose = document.getElementById('mobileMenuClose');
-            if (mobileMenuToggle && mobileMenu && mobileMenuOverlay) {
-                mobileMenuToggle.addEventListener('click', function () {
-                    mobileMenuToggle.classList.toggle('active');
-                    mobileMenu.classList.toggle('active');
-                    mobileMenuOverlay.classList.toggle('active');
-                    document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
-                });
-                mobileMenuOverlay.addEventListener('click', function () {
-                    mobileMenuToggle.classList.remove('active');
-                    mobileMenu.classList.remove('active');
-                    mobileMenuOverlay.classList.remove('active');
-                    document.body.style.overflow = '';
-                });
-                if (mobileMenuClose) {
-                    mobileMenuClose.addEventListener('click', function () {
-                        mobileMenuToggle.classList.remove('active');
-                        mobileMenu.classList.remove('active');
-                        mobileMenuOverlay.classList.remove('active');
-                        document.body.style.overflow = '';
-                    });
-                }
-                document.querySelectorAll('.mobile-nav-links .nav-link').forEach(link => {
-                    link.addEventListener('click', () => {
-                        if (mobileMenu.classList.contains('active')) {
-                            mobileMenuToggle.classList.remove('active');
-                            mobileMenu.classList.remove('active');
-                            mobileMenuOverlay.classList.remove('active');
-                            document.body.style.overflow = '';
-                        }
-                    });
-                });
-            }
-        })();
 
         // Quiz handling
         document.addEventListener('DOMContentLoaded', function () {
@@ -2486,7 +2423,6 @@
 
                     // XP за квиз
                     if (selectedAnswer === correctAnswer) {
-                        import('../xp-system.js').then(m => m.awardXP('QUIZ_CORRECT', { module: 1 }));
                     }
                 });
             });
@@ -2515,9 +2451,8 @@
 
             if (navigationToggle && navigationContent) {
                 navigationToggle.addEventListener('click', function () {
-                    const isOpen = navigationContent.style.display === 'block';
-                    navigationContent.style.display = isOpen ? 'none' : 'block';
-                    this.querySelector('.nav-arrow').style.transform = isOpen ? '' : 'rotate(180deg)';
+                    this.classList.toggle('active');
+                    navigationContent.classList.toggle('active');
                 });
             }
 
