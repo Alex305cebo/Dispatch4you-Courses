@@ -13,14 +13,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Deploy to Hostinger via SSH
-        uses: appleboy/ssh-action@v1.0.0
+      - name: Deploy files via rsync over SSH
+        uses: burnett01/rsync-deployments@7.0.1
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          script: |
-            cd ~/domains/dispatch4you.com/public_html
-            git pull origin main
-            echo "Deploy completed at $(date)"
+          switches: -avzr --delete --exclude='.git' --exclude='.github' --exclude='*.md' --exclude='.kiro'
+          path: ./
+          remote_path: ~/domains/dispatch4you.com/public_html/
+          remote_host: ${{ secrets.SSH_HOST }}
+          remote_port: ${{ secrets.SSH_PORT }}
+          remote_user: ${{ secrets.SSH_USERNAME }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
