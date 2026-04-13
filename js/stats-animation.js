@@ -59,11 +59,51 @@ const statsObserver = new IntersectionObserver((entries) => {
   });
 }, observerOptions);
 
+// Функция для немедленной инициализации статистики (для SEO/ботов)
+function initStatsImmediately() {
+  const statsSection = document.querySelector('.profession-stats');
+  if (!statsSection) return;
+  
+  // Проверяем, является ли это бот или мобильное устройство
+  const isMobileOrBot = /bot|crawler|spider|crawling|googlebot|bingbot|yandex|baidu/i.test(navigator.userAgent) || 
+                        window.innerWidth <= 1024;
+  
+  if (isMobileOrBot) {
+    // Немедленно показываем финальные значения без анимации
+    statsSection.classList.add('animated');
+    
+    const counters = statsSection.querySelectorAll('.stat-value');
+    counters.forEach(counter => {
+      const target = parseFloat(counter.getAttribute('data-target'));
+      const suffix = counter.getAttribute('data-suffix') || '';
+      const prefix = counter.getAttribute('data-prefix') || '';
+      const decimal = parseInt(counter.getAttribute('data-decimal')) || 0;
+      const displayValue = decimal > 0 ? target.toFixed(decimal) : Math.floor(target);
+      counter.textContent = prefix + displayValue + suffix;
+    });
+    
+    const progressBars = statsSection.querySelectorAll('.stat-progress-bar');
+    progressBars.forEach(bar => {
+      const targetWidth = bar.getAttribute('data-width');
+      bar.style.width = targetWidth;
+    });
+  }
+}
+
 // Запуск наблюдателя
 document.addEventListener('DOMContentLoaded', () => {
-  const statsSection = document.querySelector('.profession-stats');
-  if (statsSection) {
-    statsObserver.observe(statsSection);
+  // Сначала инициализируем статистику немедленно для ботов и мобильных
+  initStatsImmediately();
+  
+  // Затем настраиваем observer для десктопа (для анимации при скролле)
+  const isMobileOrBot = /bot|crawler|spider|crawling|googlebot|bingbot|yandex|baidu/i.test(navigator.userAgent) || 
+                        window.innerWidth <= 1024;
+  
+  if (!isMobileOrBot) {
+    const statsSection = document.querySelector('.profession-stats');
+    if (statsSection) {
+      statsObserver.observe(statsSection);
+    }
   }
   
   // Параллакс эффект при скролле
