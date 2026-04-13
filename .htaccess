@@ -113,3 +113,76 @@ Options -Indexes
 # Кастомные страницы ошибок
 ErrorDocument 404 /404.html
 ErrorDocument 500 /404.html
+
+# ========================================
+# SEO ОПТИМИЗАЦИЯ
+# ========================================
+
+# Добавляем заголовки безопасности и SEO
+<IfModule mod_headers.c>
+  # X-Content-Type-Options - предотвращает MIME-sniffing
+  Header always set X-Content-Type-Options "nosniff"
+  
+  # X-Frame-Options - защита от clickjacking
+  Header always set X-Frame-Options "SAMEORIGIN"
+  
+  # Referrer Policy - контроль передачи referrer
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  
+  # Permissions Policy - ограничение API браузера
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# Принудительный UTF-8 для текстовых файлов
+AddDefaultCharset UTF-8
+<IfModule mod_mime.c>
+  AddCharset UTF-8 .html .css .js .xml .json .txt
+</IfModule>
+
+# Правильные MIME типы для SEO
+<IfModule mod_mime.c>
+  # Аудио
+  AddType audio/mpeg .mp3
+  AddType audio/ogg .ogg
+  AddType audio/wav .wav
+  
+  # Видео
+  AddType video/mp4 .mp4
+  AddType video/webm .webm
+  
+  # Шрифты
+  AddType font/woff .woff
+  AddType font/woff2 .woff2
+  AddType application/vnd.ms-fontobject .eot
+  AddType font/ttf .ttf
+  AddType font/otf .otf
+  
+  # Изображения
+  AddType image/webp .webp
+  AddType image/svg+xml .svg
+  
+  # Манифесты и конфиги
+  AddType application/manifest+json .webmanifest
+  AddType application/xml .xml
+  AddType text/xml .xml
+</IfModule>
+
+# Редирект старых URL (если были)
+# RewriteRule ^old-page\.html$ /new-page.html [R=301,L]
+
+# Удаление trailing slash для файлов
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} (.+)/$
+RewriteRule ^ %1 [R=301,L]
+
+# Блокировка доступа к служебным файлам
+<FilesMatch "(^#.*#|\.(bak|conf|dist|fla|in[ci]|log|orig|psd|sh|sql|sw[op])|~)$">
+  Order allow,deny
+  Deny from all
+  Satisfy All
+</FilesMatch>
+
+# Защита от hotlinking изображений (опционально)
+# RewriteCond %{HTTP_REFERER} !^$
+# RewriteCond %{HTTP_REFERER} !^https?://(www\.)?dispatch4you\.com [NC]
+# RewriteRule \.(jpg|jpeg|png|gif|webp|svg)$ - [F,NC]
