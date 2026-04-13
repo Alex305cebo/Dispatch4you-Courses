@@ -1,5 +1,5 @@
 ﻿/**
- * nav-loader.js v8.4 — Renamed menu items: Обучение - 15 Уроков, Практика - 12 Модулей
+ * nav-loader.js v10.0 — Updated logo cache busting
  * Loads nav.html, injects into #nav-placeholder, handles mobile menu
  */
 (function () {
@@ -8,7 +8,7 @@
 
     // ── Load nav HTML ──────────────────────────────────────────────
     function loadNav() {
-        fetch(BASE + 'nav.html?v=8.4')
+        fetch(BASE + 'nav.html?v=10.0')
             .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
             .then(function (html) { inject(html.replace(/\{\{BASE\}\}/g, BASE)); })
             .catch(function () { inject(NAV_INLINE.replace(/\{\{BASE\}\}/g, BASE)); });
