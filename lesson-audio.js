@@ -65,6 +65,10 @@
             var mp = mobileBar.querySelector('.la-mob-play');
             if (mp) mp.classList.remove('playing');
         }
+        // Убрать класс playing с fixedBar
+        if (fixedBar) {
+            fixedBar.classList.remove('playing');
+        }
     }
 
     function startProgress(au, id) {
@@ -185,6 +189,11 @@
         
         // Также синхронизировать фиксированную кнопку
         syncFixedButton();
+        
+        // Обновить класс playing на fixedBar для индикации воспроизведения
+        if (fixedBar) {
+            fixedBar.classList.toggle('playing', playing);
+        }
     }
 
     // Клик по кнопке play в мобильном/десктоп баре
@@ -425,6 +434,9 @@
         bar.id = 'la-fixed-bar';
         bar.className = 'la-fixed-bar';
         bar.innerHTML =
+            '<button class="la-fixed-toggle" onclick="laToggleFixedBar()" aria-label="Свернуть/развернуть плеер">' +
+                '<span class="la-fixed-toggle-icon">▶</span>' +
+            '</button>' +
             '<div class="la-fixed-title">Выберите аудио</div>' +
             '<div class="la-fixed-controls">' +
                 '<button class="la-arrow la-arrow-prev" onclick="laPrev()" aria-label="Предыдущий">&#8249;</button>' +
@@ -666,12 +678,15 @@
         if (!fixedBtn || !fixedContainer) return;
 
         // Синхронизировать playing состояние
-        if (curAudio && (!curAudio.paused || curAudio._simPlaying)) {
+        var isPlaying = curAudio && (!curAudio.paused || curAudio._simPlaying);
+        if (isPlaying) {
             fixedBtn.classList.add('playing');
             fixedContainer.classList.add('playing');
+            if (fixedBar) fixedBar.classList.add('playing');
         } else {
             fixedBtn.classList.remove('playing');
             fixedContainer.classList.remove('playing');
+            if (fixedBar) fixedBar.classList.remove('playing');
         }
     }
 
@@ -734,6 +749,12 @@
         document.body.classList.remove('la-mob-bar-collapsed');
         document.body.style.paddingBottom = '120px';
         resetInactivityTimer();
+    };
+
+    // ── Сворачивание/разворачивание десктопного плеера ─────────────
+    window.laToggleFixedBar = function() {
+        if (!fixedBar) return;
+        fixedBar.classList.toggle('collapsed');
     };
 
     // ── Прозрачность мобильного бара при неактивности ─────────────
