@@ -752,7 +752,18 @@ export const useGameStore = create<GameState>((set, get) => ({
             if (data.routes && data.routes[0]) {
               const routePath = data.routes[0].geometry.coordinates;
               console.log(`✅ Loaded route for ${truck.id}: ${routePath.length} points`);
-              return { ...truck, routePath };
+              // Вычисляем реальную позицию по progress
+              const totalPoints = routePath.length;
+              const pointIndex = Math.floor(truck.progress * (totalPoints - 1));
+              const nextIndex = Math.min(pointIndex + 1, totalPoints - 1);
+              const segmentProgress = (truck.progress * (totalPoints - 1)) - pointIndex;
+              const p1 = routePath[pointIndex];
+              const p2 = routePath[nextIndex];
+              const position: [number, number] = [
+                p1[0] + (p2[0] - p1[0]) * segmentProgress,
+                p1[1] + (p2[1] - p1[1]) * segmentProgress,
+              ];
+              return { ...truck, routePath, position };
             }
           } catch (err) {
             console.warn(`Failed to load route for ${truck.id}`);
