@@ -33,6 +33,15 @@ jobs:
         working-directory: adventure
         run: npx expo export --platform web
 
+      - name: Create game directory on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: mkdir -p ~/domains/dispatch4you.com/public_html/game
+
       - name: Deploy to Hostinger via SSH (rsync)
         uses: burnett01/rsync-deployments@7.0.1
         with:
