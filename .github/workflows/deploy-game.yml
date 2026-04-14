@@ -33,6 +33,13 @@ jobs:
         working-directory: adventure
         run: npx expo export --platform web
 
+      - name: Fix asset paths for /game/ subdirectory
+        working-directory: adventure
+        run: |
+          sed -i 's|href="/_expo/|href="/game/_expo/|g' dist/index.html
+          sed -i 's|src="/_expo/|src="/game/_expo/|g' dist/index.html
+          sed -i 's|href="/favicon.ico"|href="/game/favicon.ico"|g' dist/index.html
+
       - name: Create game directory and clean old files
         uses: appleboy/ssh-action@v1.0.3
         with:
