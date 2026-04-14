@@ -1,5 +1,5 @@
-export const MAPTILER_KEY = '1RYfUbQioiRzGAguNVNt';
-export const MAP_STYLE = `https://api.maptiler.com/maps/hybrid/style.json?key=${MAPTILER_KEY}`;
+export const MAPTILER_KEY = '';
+export const MAP_STYLE = 'https://tiles.openfreemap.org/styles/dark';
 
 // Бесплатный роутинг по реальным дорогам
 export const OSRM_URL = 'https://router.project-osrm.org/route/v1/driving';
