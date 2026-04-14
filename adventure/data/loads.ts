@@ -1,0 +1,40 @@
+import { Load } from '../store/gameStore';
+
+export const LOADS: Load[] = [
+  {
+    id: 'L001',
+    from: 'Chicago', fromState: 'IL',
+    to: 'Houston', toState: 'TX',
+    commodity: 'Медицинское оборудование',
+    weight: 42000,
+    rate: 3200,
+    miles: 1092,
+    equipment: 'Dry Van',
+    brokerName: 'Tom (FastFreight)',
+    difficulty: 'medium',
+  },
+  {
+    id: 'L002',
+    from: 'Los Angeles', fromState: 'CA',
+    to: 'Dallas', toState: 'TX',
+    commodity: 'Электроника',
+    weight: 38000,
+    rate: 4100,
+    miles: 1435,
+    equipment: 'Dry Van',
+    brokerName: 'Sarah (QuickLoad)',
+    difficulty: 'hard',
+  },
+  {
+    id: 'L003',
+    from: 'Atlanta', fromState: 'GA',
+    to: 'New York', toState: 'NY',
+    commodity: 'Продукты питания',
+    weight: 44000,
+    rate: 2800,
+    miles: 881,
+    equipment: 'Reefer',
+    brokerName: 'Mike (EastFreight)',
+    difficulty: 'easy',
+  },
+];
