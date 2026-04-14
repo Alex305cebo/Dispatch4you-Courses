@@ -1551,6 +1551,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     try {
       const state = get();
       const saveData = {
+        version: 2, // bump при изменении структуры данных
         phase: state.phase,
         day: state.day,
         gameMinute: state.gameMinute,
@@ -1584,6 +1585,13 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (!saved) return false;
       
       const saveData = JSON.parse(saved);
+
+      // Сбрасываем старые сохранения без версии или с устаревшей версией
+      if (!saveData.version || saveData.version < 2) {
+        localStorage.removeItem('dispatcher-game-save');
+        console.log('🔄 Old save detected, resetting...');
+        return false;
+      }
       set({
         phase: saveData.phase,
         day: saveData.day,
