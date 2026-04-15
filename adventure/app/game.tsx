@@ -118,7 +118,7 @@ export default function GameScreen() {
           {/* ЛЕВАЯ КОЛОНКА: время + табы траков + карта */}
           <View style={styles.leftCol}>
             {/* HUD: время + прогресс */}
-            <View style={[styles.hud, { paddingTop: Platform.OS === 'ios' ? 48 : 10 }]}>
+            <View style={styles.hud}>
               <View style={styles.hudRow1}>
                 <TouchableOpacity onPress={() => {
                   if (clockRef.current) clearInterval(clockRef.current);
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
-    paddingBottom: 8,
+    height: 52,
     gap: 8,
   },
   hudBack: {
@@ -472,11 +472,22 @@ const styles = StyleSheet.create({
   // Desktop 2-column full-height layout
   desktopRoot: { flex: 1, flexDirection: 'row' },
   leftCol: { flex: 1, flexDirection: 'column' },
-  rightCol: { width: 420, borderLeftWidth: 1, borderLeftColor: Colors.border, flexDirection: 'column' },
+  rightCol: {
+    width: 420,
+    borderLeftWidth: 1,
+    borderLeftColor: 'rgba(6,182,212,0.25)',
+    flexDirection: 'column',
+    backgroundColor: 'rgba(5,10,20,0.98)',
+  },
   rightHeader: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 12, paddingVertical: 8,
-    borderBottomWidth: 1, borderBottomColor: Colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 0,
+    height: 52,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(6,182,212,0.15)',
     backgroundColor: 'rgba(5,10,20,0.98)',
   },
 
