@@ -66,8 +66,11 @@ export default function BrokerCommunicationModal({ notification, onClose }: Prop
         // Получаем detention payment
         addMoney(150, 'Detention payment received');
       } else if (notification.type === 'pod_ready') {
-        // Ускоряем получение оплаты
-        addMoney(50, 'Quick payment bonus');
+        // Факторинговая компания выплачивает сразу после отправки POD (комиссия 3%)
+        const loadRate = notification.relatedLoadId ? 1500 : 1000; // примерная ставка
+        const factoringFee = Math.round(loadRate * 0.03);
+        const netPayout = loadRate - factoringFee;
+        addMoney(netPayout, `Факторинг: оплата за груз (минус 3% комиссия $${factoringFee})`);
       }
       
       setIsSending(false);

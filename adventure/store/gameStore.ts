@@ -392,20 +392,19 @@ const INITIAL_LOAD_6: ActiveLoad = {
 };
 
 const INITIAL_TRUCKS: Truck[] = [
-  // 2 трака в пути на доставку
   {
     id: 'T1',
     name: 'Truck 1047',
     driver: 'John Martinez',
-    status: 'loaded', // едет с грузом
-    position: CITIES['Memphis'], // между Chicago и Houston
-    currentCity: 'Memphis',
-    destinationCity: 'Houston',
-    progress: 0.6, // 60% пути
-    currentLoad: INITIAL_LOAD_1,
-    hoursLeft: 8,
+    status: 'idle',
+    position: CITIES['Nashville'],
+    currentCity: 'Nashville',
+    destinationCity: null,
+    progress: 0,
+    currentLoad: null,
+    hoursLeft: 11,
     mood: 90,
-    routePath: null, // будет загружен при старте
+    routePath: null,
     safetyScore: 95,
     fuelEfficiency: 6.8,
     onTimeRate: 98,
@@ -419,12 +418,12 @@ const INITIAL_TRUCKS: Truck[] = [
     id: 'T2',
     name: 'Truck 2023',
     driver: 'Carlos Rivera',
-    status: 'loaded',
-    position: CITIES['Phoenix'], // между LA и Dallas
-    currentCity: 'Phoenix',
-    destinationCity: 'Dallas',
-    progress: 0.5,
-    currentLoad: INITIAL_LOAD_2,
+    status: 'idle',
+    position: CITIES['Nashville'],
+    currentCity: 'Nashville',
+    destinationCity: null,
+    progress: 0,
+    currentLoad: null,
     hoursLeft: 9,
     mood: 85,
     routePath: null,
@@ -437,17 +436,16 @@ const INITIAL_TRUCKS: Truck[] = [
     hosViolations: 1,
     lastInspection: 0,
   },
-  // 3 трака на разгрузке (at_delivery)
   {
     id: 'T3',
     name: 'Truck 3012',
     driver: 'Mike Chen',
-    status: 'at_delivery',
-    position: CITIES['Atlanta'],
-    currentCity: 'Atlanta',
+    status: 'idle',
+    position: CITIES['Nashville'],
+    currentCity: 'Nashville',
     destinationCity: null,
-    progress: 1,
-    currentLoad: INITIAL_LOAD_3,
+    progress: 0,
+    currentLoad: null,
     hoursLeft: 11,
     mood: 95,
     routePath: null,
@@ -464,12 +462,12 @@ const INITIAL_TRUCKS: Truck[] = [
     id: 'T4',
     name: 'Truck 4034',
     driver: 'Tom Wilson',
-    status: 'at_delivery',
-    position: CITIES['Seattle'],
-    currentCity: 'Seattle',
+    status: 'idle',
+    position: CITIES['Nashville'],
+    currentCity: 'Nashville',
     destinationCity: null,
-    progress: 1,
-    currentLoad: INITIAL_LOAD_4,
+    progress: 0,
+    currentLoad: null,
     hoursLeft: 10,
     mood: 100,
     routePath: null,
@@ -486,12 +484,12 @@ const INITIAL_TRUCKS: Truck[] = [
     id: 'T5',
     name: 'Truck 5056',
     driver: 'Lisa Brown',
-    status: 'at_delivery',
-    position: CITIES['Denver'],
-    currentCity: 'Denver',
+    status: 'idle',
+    position: CITIES['Nashville'],
+    currentCity: 'Nashville',
     destinationCity: null,
-    progress: 1,
-    currentLoad: INITIAL_LOAD_5,
+    progress: 0,
+    currentLoad: null,
     hoursLeft: 11,
     mood: 92,
     routePath: null,
@@ -504,17 +502,16 @@ const INITIAL_TRUCKS: Truck[] = [
     hosViolations: 0,
     lastInspection: 0,
   },
-  // 1 трак в пути на доставку в Майами
   {
     id: 'T6',
     name: 'Truck 6078',
     driver: 'David Martinez',
-    status: 'loaded',
-    position: CITIES['Jacksonville'], // между Savannah и Miami
-    currentCity: 'Jacksonville',
-    destinationCity: 'Miami',
-    progress: 0.7,
-    currentLoad: INITIAL_LOAD_6,
+    status: 'idle',
+    position: CITIES['Nashville'],
+    currentCity: 'Nashville',
+    destinationCity: null,
+    progress: 0,
+    currentLoad: null,
     hoursLeft: 7,
     mood: 88,
     routePath: null,
@@ -527,14 +524,13 @@ const INITIAL_TRUCKS: Truck[] = [
     hosViolations: 1,
     lastInspection: 0,
   },
-  // 3 свободных трака готовых к работе
   {
     id: 'T7',
     name: 'Truck 7089',
     driver: 'James Anderson',
     status: 'idle',
-    position: CITIES['Chicago'],
-    currentCity: 'Chicago',
+    position: CITIES['Nashville'],
+    currentCity: 'Nashville',
     destinationCity: null,
     progress: 0,
     currentLoad: null,
@@ -555,8 +551,8 @@ const INITIAL_TRUCKS: Truck[] = [
     name: 'Truck 8091',
     driver: 'Maria Garcia',
     status: 'idle',
-    position: CITIES['Dallas'],
-    currentCity: 'Dallas',
+    position: CITIES['Nashville'],
+    currentCity: 'Nashville',
     destinationCity: null,
     progress: 0,
     currentLoad: null,
@@ -577,8 +573,8 @@ const INITIAL_TRUCKS: Truck[] = [
     name: 'Truck 9102',
     driver: 'Robert Johnson',
     status: 'idle',
-    position: CITIES['Los Angeles'],
-    currentCity: 'Los Angeles',
+    position: CITIES['Nashville'],
+    currentCity: 'Nashville',
     destinationCity: null,
     progress: 0,
     currentLoad: null,
@@ -672,6 +668,291 @@ function generateLoads(minute: number): LoadOffer[] {
     // Из Salt Lake City
     { from: 'Salt Lake City', to: 'Denver', miles: 525, base: 1500 },
     { from: 'Salt Lake City', to: 'Los Angeles', miles: 689, base: 2000 },
+
+    // Nashville (стартовый город) → все направления
+    { from: 'Nashville', to: 'Atlanta', miles: 250, base: 800 },
+    { from: 'Nashville', to: 'Chicago', miles: 476, base: 1500 },
+    { from: 'Nashville', to: 'Dallas', miles: 663, base: 2000 },
+    { from: 'Nashville', to: 'Charlotte', miles: 409, base: 1300 },
+    { from: 'Nashville', to: 'Indianapolis', miles: 286, base: 900 },
+    { from: 'Nashville', to: 'Louisville', miles: 175, base: 600 },
+    { from: 'Nashville', to: 'Memphis', miles: 210, base: 700 },
+    { from: 'Nashville', to: 'Birmingham', miles: 191, base: 650 },
+    { from: 'Nashville', to: 'Knoxville', miles: 180, base: 600 },
+    { from: 'Nashville', to: 'St. Louis', miles: 309, base: 1000 },
+    { from: 'Nashville', to: 'Cincinnati', miles: 270, base: 900 },
+    { from: 'Nashville', to: 'Columbus', miles: 330, base: 1050 },
+    { from: 'Nashville', to: 'New York', miles: 900, base: 2700 },
+    { from: 'Nashville', to: 'Miami', miles: 1000, base: 2900 },
+    { from: 'Nashville', to: 'Houston', miles: 790, base: 2300 },
+    { from: 'Nashville', to: 'Kansas City', miles: 550, base: 1700 },
+    { from: 'Nashville', to: 'Denver', miles: 1200, base: 3400 },
+
+    // Юго-восток
+    { from: 'Atlanta', to: 'Charlotte', miles: 245, base: 800 },
+    { from: 'Atlanta', to: 'Birmingham', miles: 147, base: 500 },
+    { from: 'Atlanta', to: 'Savannah', miles: 250, base: 800 },
+    { from: 'Atlanta', to: 'Jacksonville', miles: 346, base: 1100 },
+    { from: 'Atlanta', to: 'Knoxville', miles: 180, base: 600 },
+    { from: 'Atlanta', to: 'Chattanooga', miles: 118, base: 400 },
+    { from: 'Charlotte', to: 'Raleigh', miles: 170, base: 580 },
+    { from: 'Charlotte', to: 'Richmond', miles: 334, base: 1050 },
+    { from: 'Charlotte', to: 'Washington DC', miles: 390, base: 1200 },
+    { from: 'Raleigh', to: 'New York', miles: 530, base: 1650 },
+    { from: 'Raleigh', to: 'Atlanta', miles: 420, base: 1300 },
+    { from: 'Savannah', to: 'Miami', miles: 660, base: 2000 },
+    { from: 'Savannah', to: 'Charlotte', miles: 380, base: 1200 },
+    { from: 'Jacksonville', to: 'Tampa', miles: 200, base: 680 },
+    { from: 'Tampa', to: 'Miami', miles: 280, base: 900 },
+    { from: 'Tampa', to: 'Atlanta', miles: 460, base: 1450 },
+    { from: 'Orlando', to: 'Miami', miles: 235, base: 780 },
+    { from: 'Orlando', to: 'Atlanta', miles: 440, base: 1380 },
+    { from: 'Orlando', to: 'Charlotte', miles: 620, base: 1900 },
+    { from: 'Fort Lauderdale', to: 'Atlanta', miles: 660, base: 2000 },
+    { from: 'Pensacola', to: 'Atlanta', miles: 320, base: 1000 },
+    { from: 'Pensacola', to: 'New Orleans', miles: 200, base: 680 },
+    { from: 'Montgomery', to: 'Atlanta', miles: 160, base: 550 },
+    { from: 'Montgomery', to: 'Nashville', miles: 290, base: 930 },
+    { from: 'Gulfport', to: 'New Orleans', miles: 80, base: 300 },
+    { from: 'Gulfport', to: 'Atlanta', miles: 380, base: 1200 },
+    { from: 'Jackson', to: 'Memphis', miles: 210, base: 700 },
+    { from: 'Jackson', to: 'New Orleans', miles: 185, base: 620 },
+    { from: 'Jackson', to: 'Dallas', miles: 440, base: 1380 },
+
+    // Северо-восток
+    { from: 'New York', to: 'Boston', miles: 215, base: 720 },
+    { from: 'New York', to: 'Philadelphia', miles: 95, base: 350 },
+    { from: 'New York', to: 'Baltimore', miles: 190, base: 640 },
+    { from: 'New York', to: 'Pittsburgh', miles: 370, base: 1150 },
+    { from: 'New York', to: 'Buffalo', miles: 370, base: 1150 },
+    { from: 'Boston', to: 'New York', miles: 215, base: 720 },
+    { from: 'Boston', to: 'Philadelphia', miles: 300, base: 960 },
+    { from: 'Boston', to: 'Providence', miles: 50, base: 200 },
+    { from: 'Philadelphia', to: 'Baltimore', miles: 100, base: 360 },
+    { from: 'Philadelphia', to: 'Pittsburgh', miles: 305, base: 970 },
+    { from: 'Philadelphia', to: 'New York', miles: 95, base: 350 },
+    { from: 'Baltimore', to: 'Pittsburgh', miles: 245, base: 800 },
+    { from: 'Baltimore', to: 'Richmond', miles: 150, base: 520 },
+    { from: 'Pittsburgh', to: 'Cleveland', miles: 130, base: 460 },
+    { from: 'Pittsburgh', to: 'Columbus', miles: 185, base: 620 },
+    { from: 'Pittsburgh', to: 'Detroit', miles: 290, base: 930 },
+    { from: 'Buffalo', to: 'Cleveland', miles: 185, base: 620 },
+    { from: 'Buffalo', to: 'Detroit', miles: 290, base: 930 },
+    { from: 'Albany', to: 'Boston', miles: 170, base: 580 },
+    { from: 'Albany', to: 'New York', miles: 150, base: 520 },
+    { from: 'Newark', to: 'Philadelphia', miles: 90, base: 330 },
+    { from: 'Trenton', to: 'Philadelphia', miles: 35, base: 160 },
+    { from: 'Richmond', to: 'Charlotte', miles: 334, base: 1050 },
+    { from: 'Richmond', to: 'Washington DC', miles: 110, base: 390 },
+    { from: 'Norfolk', to: 'Richmond', miles: 95, base: 350 },
+    { from: 'Norfolk', to: 'Charlotte', miles: 380, base: 1200 },
+    { from: 'Virginia Beach', to: 'Richmond', miles: 100, base: 360 },
+    { from: 'Roanoke', to: 'Charlotte', miles: 200, base: 670 },
+    { from: 'Roanoke', to: 'Richmond', miles: 180, base: 610 },
+    { from: 'Charleston WV', to: 'Pittsburgh', miles: 165, base: 560 },
+    { from: 'Charleston WV', to: 'Columbus', miles: 165, base: 560 },
+    { from: 'Huntington', to: 'Columbus', miles: 150, base: 520 },
+
+    // Средний Запад
+    { from: 'Chicago', to: 'Detroit', miles: 280, base: 900 },
+    { from: 'Chicago', to: 'Indianapolis', miles: 180, base: 610 },
+    { from: 'Chicago', to: 'Milwaukee', miles: 92, base: 340 },
+    { from: 'Chicago', to: 'Minneapolis', miles: 410, base: 1280 },
+    { from: 'Chicago', to: 'Kansas City', miles: 500, base: 1560 },
+    { from: 'Chicago', to: 'Columbus', miles: 355, base: 1110 },
+    { from: 'Chicago', to: 'Cleveland', miles: 345, base: 1080 },
+    { from: 'Detroit', to: 'Cleveland', miles: 170, base: 580 },
+    { from: 'Detroit', to: 'Columbus', miles: 200, base: 670 },
+    { from: 'Detroit', to: 'Indianapolis', miles: 280, base: 900 },
+    { from: 'Detroit', to: 'Grand Rapids', miles: 150, base: 520 },
+    { from: 'Grand Rapids', to: 'Chicago', miles: 180, base: 610 },
+    { from: 'Lansing', to: 'Detroit', miles: 90, base: 330 },
+    { from: 'Cleveland', to: 'Columbus', miles: 145, base: 510 },
+    { from: 'Cleveland', to: 'Cincinnati', miles: 245, base: 800 },
+    { from: 'Columbus', to: 'Cincinnati', miles: 110, base: 390 },
+    { from: 'Columbus', to: 'Indianapolis', miles: 175, base: 590 },
+    { from: 'Cincinnati', to: 'Louisville', miles: 100, base: 360 },
+    { from: 'Cincinnati', to: 'Indianapolis', miles: 110, base: 390 },
+    { from: 'Indianapolis', to: 'Louisville', miles: 115, base: 410 },
+    { from: 'Indianapolis', to: 'St. Louis', miles: 240, base: 790 },
+    { from: 'Indianapolis', to: 'Kansas City', miles: 480, base: 1500 },
+    { from: 'Louisville', to: 'Nashville', miles: 175, base: 600 },
+    { from: 'Louisville', to: 'St. Louis', miles: 265, base: 860 },
+    { from: 'St. Louis', to: 'Kansas City', miles: 250, base: 820 },
+    { from: 'St. Louis', to: 'Memphis', miles: 285, base: 920 },
+    { from: 'St. Louis', to: 'Chicago', miles: 300, base: 960 },
+    { from: 'Kansas City', to: 'Omaha', miles: 185, base: 620 },
+    { from: 'Kansas City', to: 'Wichita', miles: 200, base: 670 },
+    { from: 'Kansas City', to: 'Des Moines', miles: 195, base: 650 },
+    { from: 'Minneapolis', to: 'Chicago', miles: 410, base: 1280 },
+    { from: 'Minneapolis', to: 'Omaha', miles: 370, base: 1160 },
+    { from: 'Minneapolis', to: 'Fargo', miles: 235, base: 780 },
+    { from: 'Minneapolis', to: 'Milwaukee', miles: 335, base: 1060 },
+    { from: 'Milwaukee', to: 'Chicago', miles: 92, base: 340 },
+    { from: 'Madison', to: 'Chicago', miles: 148, base: 520 },
+    { from: 'Madison', to: 'Milwaukee', miles: 78, base: 290 },
+    { from: 'Des Moines', to: 'Chicago', miles: 330, base: 1040 },
+    { from: 'Des Moines', to: 'Omaha', miles: 135, base: 480 },
+    { from: 'Cedar Rapids', to: 'Chicago', miles: 220, base: 740 },
+    { from: 'Omaha', to: 'Kansas City', miles: 185, base: 620 },
+    { from: 'Omaha', to: 'Denver', miles: 540, base: 1680 },
+    { from: 'Lincoln', to: 'Omaha', miles: 55, base: 220 },
+    { from: 'Sioux Falls', to: 'Minneapolis', miles: 245, base: 800 },
+    { from: 'Sioux Falls', to: 'Omaha', miles: 360, base: 1130 },
+    { from: 'Fargo', to: 'Minneapolis', miles: 235, base: 780 },
+    { from: 'Bismarck', to: 'Fargo', miles: 195, base: 650 },
+    { from: 'Duluth', to: 'Minneapolis', miles: 155, base: 540 },
+    { from: 'Wichita', to: 'Oklahoma City', miles: 160, base: 550 },
+    { from: 'Wichita', to: 'Kansas City', miles: 200, base: 670 },
+    { from: 'Topeka', to: 'Kansas City', miles: 65, base: 250 },
+
+    // Юг / Техас
+    { from: 'Dallas', to: 'Houston', miles: 239, base: 800 },
+    { from: 'Dallas', to: 'San Antonio', miles: 275, base: 890 },
+    { from: 'Dallas', to: 'Austin', miles: 195, base: 660 },
+    { from: 'Dallas', to: 'Fort Worth', miles: 35, base: 160 },
+    { from: 'Dallas', to: 'Oklahoma City', miles: 205, base: 690 },
+    { from: 'Dallas', to: 'Lubbock', miles: 320, base: 1020 },
+    { from: 'Dallas', to: 'Amarillo', miles: 360, base: 1130 },
+    { from: 'Houston', to: 'San Antonio', miles: 200, base: 670 },
+    { from: 'Houston', to: 'Austin', miles: 165, base: 570 },
+    { from: 'Houston', to: 'Baton Rouge', miles: 270, base: 880 },
+    { from: 'Houston', to: 'New Orleans', miles: 350, base: 1100 },
+    { from: 'Houston', to: 'Corpus Christi', miles: 210, base: 710 },
+    { from: 'Houston', to: 'Laredo', miles: 340, base: 1070 },
+    { from: 'San Antonio', to: 'Austin', miles: 80, base: 300 },
+    { from: 'San Antonio', to: 'El Paso', miles: 550, base: 1710 },
+    { from: 'San Antonio', to: 'Laredo', miles: 155, base: 540 },
+    { from: 'Austin', to: 'Dallas', miles: 195, base: 660 },
+    { from: 'Austin', to: 'Houston', miles: 165, base: 570 },
+    { from: 'El Paso', to: 'Albuquerque', miles: 265, base: 860 },
+    { from: 'El Paso', to: 'Phoenix', miles: 430, base: 1350 },
+    { from: 'Amarillo', to: 'Albuquerque', miles: 290, base: 930 },
+    { from: 'Amarillo', to: 'Oklahoma City', miles: 260, base: 850 },
+    { from: 'Oklahoma City', to: 'Tulsa', miles: 100, base: 360 },
+    { from: 'Oklahoma City', to: 'Dallas', miles: 205, base: 690 },
+    { from: 'Oklahoma City', to: 'Kansas City', miles: 340, base: 1070 },
+    { from: 'Tulsa', to: 'Kansas City', miles: 250, base: 820 },
+    { from: 'Tulsa', to: 'Dallas', miles: 260, base: 850 },
+    { from: 'Little Rock', to: 'Memphis', miles: 137, base: 480 },
+    { from: 'Little Rock', to: 'Dallas', miles: 320, base: 1020 },
+    { from: 'Little Rock', to: 'Nashville', miles: 360, base: 1130 },
+    { from: 'Shreveport', to: 'Dallas', miles: 190, base: 640 },
+    { from: 'Shreveport', to: 'New Orleans', miles: 335, base: 1060 },
+    { from: 'Lafayette', to: 'New Orleans', miles: 135, base: 480 },
+    { from: 'Baton Rouge', to: 'New Orleans', miles: 80, base: 300 },
+    { from: 'New Orleans', to: 'Houston', miles: 350, base: 1100 },
+    { from: 'New Orleans', to: 'Atlanta', miles: 470, base: 1470 },
+
+    // Запад
+    { from: 'Los Angeles', to: 'San Francisco', miles: 380, base: 1190 },
+    { from: 'Los Angeles', to: 'San Diego', miles: 120, base: 430 },
+    { from: 'Los Angeles', to: 'Las Vegas', miles: 270, base: 880 },
+    { from: 'Los Angeles', to: 'Sacramento', miles: 385, base: 1200 },
+    { from: 'Los Angeles', to: 'Fresno', miles: 220, base: 740 },
+    { from: 'San Francisco', to: 'Sacramento', miles: 90, base: 330 },
+    { from: 'San Francisco', to: 'Portland', miles: 640, base: 1980 },
+    { from: 'San Francisco', to: 'Seattle', miles: 810, base: 2480 },
+    { from: 'San Francisco', to: 'Las Vegas', miles: 570, base: 1770 },
+    { from: 'Sacramento', to: 'Portland', miles: 580, base: 1800 },
+    { from: 'Sacramento', to: 'Reno', miles: 135, base: 480 },
+    { from: 'San Diego', to: 'Phoenix', miles: 355, base: 1110 },
+    { from: 'San Diego', to: 'Los Angeles', miles: 120, base: 430 },
+    { from: 'Las Vegas', to: 'Phoenix', miles: 295, base: 950 },
+    { from: 'Las Vegas', to: 'Salt Lake City', miles: 420, base: 1320 },
+    { from: 'Las Vegas', to: 'Denver', miles: 750, base: 2300 },
+    { from: 'Reno', to: 'Las Vegas', miles: 450, base: 1410 },
+    { from: 'Reno', to: 'Sacramento', miles: 135, base: 480 },
+    { from: 'Phoenix', to: 'Tucson', miles: 115, base: 410 },
+    { from: 'Phoenix', to: 'Albuquerque', miles: 465, base: 1450 },
+    { from: 'Tucson', to: 'El Paso', miles: 265, base: 860 },
+    { from: 'Tucson', to: 'Phoenix', miles: 115, base: 410 },
+    { from: 'Flagstaff', to: 'Phoenix', miles: 145, base: 510 },
+    { from: 'Flagstaff', to: 'Albuquerque', miles: 325, base: 1030 },
+    { from: 'Albuquerque', to: 'Denver', miles: 450, base: 1410 },
+    { from: 'Albuquerque', to: 'Oklahoma City', miles: 540, base: 1680 },
+    { from: 'Santa Fe', to: 'Albuquerque', miles: 65, base: 250 },
+    { from: 'Las Cruces', to: 'El Paso', miles: 45, base: 190 },
+    { from: 'Salt Lake City', to: 'Boise', miles: 340, base: 1070 },
+    { from: 'Salt Lake City', to: 'Las Vegas', miles: 420, base: 1320 },
+    { from: 'Salt Lake City', to: 'Cheyenne', miles: 440, base: 1380 },
+    { from: 'Provo', to: 'Salt Lake City', miles: 45, base: 190 },
+    { from: 'Ogden', to: 'Salt Lake City', miles: 40, base: 170 },
+    { from: 'Boise', to: 'Portland', miles: 430, base: 1350 },
+    { from: 'Boise', to: 'Seattle', miles: 500, base: 1560 },
+    { from: 'Pocatello', to: 'Boise', miles: 155, base: 540 },
+    { from: 'Portland', to: 'Eugene', miles: 110, base: 390 },
+    { from: 'Portland', to: 'Spokane', miles: 350, base: 1100 },
+    { from: 'Eugene', to: 'Portland', miles: 110, base: 390 },
+    { from: 'Salem', to: 'Portland', miles: 50, base: 200 },
+    { from: 'Seattle', to: 'Spokane', miles: 280, base: 900 },
+    { from: 'Seattle', to: 'Tacoma', miles: 35, base: 160 },
+    { from: 'Seattle', to: 'Yakima', miles: 145, base: 510 },
+    { from: 'Spokane', to: 'Boise', miles: 300, base: 960 },
+    { from: 'Tacoma', to: 'Seattle', miles: 35, base: 160 },
+
+    // Горный запад
+    { from: 'Denver', to: 'Cheyenne', miles: 100, base: 360 },
+    { from: 'Denver', to: 'Colorado Springs', miles: 70, base: 270 },
+    { from: 'Denver', to: 'Albuquerque', miles: 450, base: 1410 },
+    { from: 'Denver', to: 'Boise', miles: 830, base: 2540 },
+    { from: 'Colorado Springs', to: 'Denver', miles: 70, base: 270 },
+    { from: 'Pueblo', to: 'Denver', miles: 110, base: 390 },
+    { from: 'Cheyenne', to: 'Denver', miles: 100, base: 360 },
+    { from: 'Cheyenne', to: 'Salt Lake City', miles: 440, base: 1380 },
+    { from: 'Casper', to: 'Cheyenne', miles: 180, base: 610 },
+    { from: 'Billings', to: 'Denver', miles: 540, base: 1680 },
+    { from: 'Billings', to: 'Boise', miles: 530, base: 1650 },
+    { from: 'Great Falls', to: 'Billings', miles: 225, base: 750 },
+    { from: 'Great Falls', to: 'Boise', miles: 490, base: 1530 },
+    { from: 'Rapid City', to: 'Denver', miles: 390, base: 1220 },
+    { from: 'Rapid City', to: 'Sioux Falls', miles: 350, base: 1100 },
+
+    // Новая Англия
+    { from: 'Boston', to: 'Providence', miles: 50, base: 200 },
+    { from: 'Boston', to: 'Worcester', miles: 45, base: 190 },
+    { from: 'Boston', to: 'Manchester', miles: 55, base: 220 },
+    { from: 'Providence', to: 'Boston', miles: 50, base: 200 },
+    { from: 'Hartford', to: 'New York', miles: 115, base: 410 },
+    { from: 'Hartford', to: 'Boston', miles: 100, base: 360 },
+    { from: 'Bridgeport', to: 'New York', miles: 60, base: 240 },
+    { from: 'Manchester', to: 'Boston', miles: 55, base: 220 },
+    { from: 'Burlington', to: 'Boston', miles: 220, base: 740 },
+    { from: 'Albany', to: 'Buffalo', miles: 300, base: 960 },
+    { from: 'Rochester NY', to: 'Buffalo', miles: 75, base: 280 },
+    { from: 'Rochester NY', to: 'Syracuse', miles: 85, base: 310 },
+    { from: 'Annapolis', to: 'Baltimore', miles: 30, base: 140 },
+    { from: 'Wilmington', to: 'Philadelphia', miles: 30, base: 140 },
+    { from: 'Allentown', to: 'Philadelphia', miles: 60, base: 240 },
+    { from: 'Erie', to: 'Pittsburgh', miles: 130, base: 460 },
+    { from: 'Erie', to: 'Cleveland', miles: 95, base: 350 },
+
+    // Каролины
+    { from: 'Columbia', to: 'Charlotte', miles: 95, base: 350 },
+    { from: 'Columbia', to: 'Atlanta', miles: 215, base: 720 },
+    { from: 'Charleston SC', to: 'Columbia', miles: 115, base: 410 },
+    { from: 'Charleston SC', to: 'Savannah', miles: 105, base: 380 },
+    { from: 'Greensboro', to: 'Charlotte', miles: 90, base: 330 },
+    { from: 'Greensboro', to: 'Raleigh', miles: 80, base: 300 },
+
+    // Кентукки / Теннесси
+    { from: 'Lexington', to: 'Louisville', miles: 80, base: 300 },
+    { from: 'Lexington', to: 'Cincinnati', miles: 85, base: 310 },
+    { from: 'Lexington', to: 'Nashville', miles: 175, base: 590 },
+    { from: 'Bowling Green', to: 'Nashville', miles: 65, base: 250 },
+    { from: 'Bowling Green', to: 'Louisville', miles: 110, base: 390 },
+    { from: 'Knoxville', to: 'Nashville', miles: 180, base: 610 },
+    { from: 'Knoxville', to: 'Charlotte', miles: 185, base: 620 },
+    { from: 'Chattanooga', to: 'Nashville', miles: 135, base: 480 },
+    { from: 'Chattanooga', to: 'Atlanta', miles: 118, base: 420 },
+    { from: 'Chattanooga', to: 'Birmingham', miles: 148, base: 520 },
+
+    // Мичиган / Висконсин
+    { from: 'Milwaukee', to: 'Minneapolis', miles: 335, base: 1060 },
+    { from: 'Milwaukee', to: 'Detroit', miles: 330, base: 1040 },
+    { from: 'Madison', to: 'Minneapolis', miles: 275, base: 890 },
+    { from: 'Grand Rapids', to: 'Detroit', miles: 150, base: 520 },
+    { from: 'Grand Rapids', to: 'Chicago', miles: 180, base: 610 },
   ];
 
   const commodities = [
@@ -683,8 +964,8 @@ function generateLoads(minute: number): LoadOffer[] {
 
   const equipment: Array<'Dry Van' | 'Reefer' | 'Flatbed'> = ['Dry Van', 'Dry Van', 'Dry Van', 'Reefer', 'Flatbed'];
 
-  // Генерируем 20-25 грузов случайным образом
-  const numLoads = 20 + Math.floor(Math.random() * 6);
+  // Генерируем 40-50 грузов случайным образом
+  const numLoads = 40 + Math.floor(Math.random() * 11);
   const loads: LoadOffer[] = [];
   
   for (let i = 0; i < numLoads; i++) {
@@ -753,252 +1034,22 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Всегда сбрасываем старое сохранение и начинаем заново
     get().clearSave();
     
-    // Правильное распределение по правилу 2:
-    // - 1-2 трака на разгрузке (at_delivery)
-    // - остальные в пути (loaded)
-    // Для 3 траков: 1 на разгрузке, 2 в пути
-    // Для 4 траков: 2 на разгрузке, 2 в пути
-    // Для 5 траков: 2 на разгрузке, 3 в пути
-    const deliveryCount = truckCount <= 3 ? 1 : 2;
-    const inTransitCount = truckCount - deliveryCount;
-
-    const allTrucks = INITIAL_TRUCKS.slice(0, truckCount).map((truck, i) => {
-      if (i < deliveryCount) {
-        // На разгрузке
-        return { ...truck, status: 'at_delivery' as TruckStatus, progress: 1, destinationCity: null };
-      } else {
-        // В пути с грузом
-        return { ...truck, status: 'loaded' as TruckStatus };
-      }
-    });
-
-    const selectedActiveLoads = [
-      INITIAL_LOAD_1, INITIAL_LOAD_2, INITIAL_LOAD_3,
-      INITIAL_LOAD_4, INITIAL_LOAD_5, INITIAL_LOAD_6,
-    ].slice(0, truckCount);
-    
-    // Загружаем маршруты для траков которые в пути
-    const trucksWithRoutes = await Promise.all(allTrucks.map(async (truck) => {
-      // Если трак едет - загружаем маршрут
-      if ((truck.status === 'driving' || truck.status === 'loaded') && truck.destinationCity) {
-        const to = CITIES[truck.destinationCity];
-        if (to) {
-          try {
-            const url = `https://router.project-osrm.org/route/v1/driving/${truck.position[0]},${truck.position[1]};${to[0]},${to[1]}?overview=full&geometries=geojson`;
-            const res = await fetch(url);
-            const data = await res.json();
-            if (data.routes && data.routes[0]) {
-              const routePath = data.routes[0].geometry.coordinates;
-              console.log(`✅ Loaded route for ${truck.id}: ${routePath.length} points`);
-              // Вычисляем реальную позицию по progress
-              const totalPoints = routePath.length;
-              const pointIndex = Math.floor(truck.progress * (totalPoints - 1));
-              const nextIndex = Math.min(pointIndex + 1, totalPoints - 1);
-              const segmentProgress = (truck.progress * (totalPoints - 1)) - pointIndex;
-              const p1 = routePath[pointIndex];
-              const p2 = routePath[nextIndex];
-              const position: [number, number] = [
-                p1[0] + (p2[0] - p1[0]) * segmentProgress,
-                p1[1] + (p2[1] - p1[1]) * segmentProgress,
-              ];
-              return { ...truck, routePath, position };
-            }
-          } catch (err) {
-            console.warn(`Failed to load route for ${truck.id}`);
-          }
-        }
-      }
-      return { ...truck, routePath: null };
+    // Все траки стартуют idle в Nashville TN — игрок сам находит грузы
+    const allTrucks = INITIAL_TRUCKS.slice(0, truckCount).map((truck) => ({
+      ...truck,
+      status: 'idle' as TruckStatus,
+      destinationCity: null,
+      currentLoad: null,
+      progress: 0,
+      routePath: null,
     }));
 
-    console.log('✅ All trucks initialized, starting game...');
+    const selectedActiveLoads: any[] = [];
+    
+    // Маршруты не нужны — все idle
+    const trucksWithRoutes = allTrucks;
 
-    // Начальные email-уведомления от брокеров
-    const initialEmails: Notification[] = [
-      // ═══ ПРОШЛЫЕ ГРУЗЫ - ЗАВЕРШЁННЫЕ ═══
-      
-      // Email 1: Подтверждение Rate Con от Tom (INIT-L1 - Chicago → Houston)
-      {
-        id: 'email-init-1',
-        type: 'rate_con',
-        from: 'Tom - FastFreight LLC',
-        subject: 'Rate Confirmation #CHI-HOU-2847',
-        message: 'Hi there!\n\nRate Con attached for your load from Chicago to Houston. Electronics, 42k lbs.\n\nPick up: Yesterday 14:00\nDelivery: Tomorrow 08:00\nRate: $2,700\n\nDriver should be on the way. Let me know when delivered!\n\nTom',
-        minute: -480, // вчера утром
-        read: false,
-        priority: 'medium',
-        actionRequired: false,
-        relatedLoadId: 'INIT-L1',
-      },
-      
-      // Email 2: Подтверждение от Sarah (INIT-L2 - LA → Dallas)
-      {
-        id: 'email-init-2',
-        type: 'email',
-        from: 'Sarah - QuickLoad Inc',
-        subject: 'Re: LA-Dallas Auto Parts Load',
-        message: 'Perfect! Confirmed at $3,200.\n\nPU: 2 days ago 10:00 AM - Los Angeles\nDEL: Day after tomorrow 06:00 AM - Dallas\n\nAuto parts, 38k lbs, Dry Van. Shipper info in Rate Con.\n\nThanks for working with us!\nSarah',
-        minute: -1200, // 2 дня назад
-        read: true,
-        priority: 'low',
-        actionRequired: false,
-        relatedLoadId: 'INIT-L2',
-      },
-      
-      // Email 3: Urgent от Mike про медоборудование (INIT-L3 - NY → Atlanta)
-      {
-        id: 'email-init-3',
-        type: 'pod_ready',
-        from: 'Mike - EastFreight Co',
-        subject: 'URGENT: POD needed for NY-ATL medical equipment',
-        message: 'Hey,\n\nYour driver should be unloading in Atlanta right now. I need the POD ASAP - customer is asking.\n\nLoad #NY-ATL-1847\nMedical equipment, delivered today 08:00\n\nCan you send POD within the hour?\n\nMike',
-        minute: -30, // 30 минут назад
-        read: false,
-        priority: 'high',
-        actionRequired: true,
-        relatedLoadId: 'INIT-L3',
-      },
-      
-      // Email 4: Благодарность от Lisa (INIT-L4 - Portland → Seattle)
-      {
-        id: 'email-init-4',
-        type: 'email',
-        from: 'Lisa - PrimeHaul',
-        subject: 'Thanks for the quick turnaround!',
-        message: 'Hi!\n\nJust wanted to say thanks for taking that Portland-Seattle reefer load on short notice. $800 for 175 miles - good rate for both of us.\n\nDriver should be delivering soon. Send POD when ready.\n\nLooking forward to more loads together!\nLisa',
-        minute: -120, // 2 часа назад
-        read: true,
-        priority: 'low',
-        actionRequired: false,
-        relatedLoadId: 'INIT-L4',
-      },
-      
-      // Email 5: Вопрос от Dave про detention (INIT-L5 - Salt Lake → Denver)
-      {
-        id: 'email-init-5',
-        type: 'detention',
-        from: 'Dave - CrossCountry',
-        subject: 'Re: Detention claim SLC-DEN',
-        message: 'Hey,\n\nI saw your driver was delayed at pickup yesterday. How long was the wait? If it was over 2 hours, send me the detention request and I\'ll get it approved.\n\nLoad is delivering today, right? Flatbed with construction materials.\n\nLet me know.\nDave',
-        minute: -90, // 1.5 часа назад
-        read: false,
-        priority: 'medium',
-        actionRequired: true,
-        relatedLoadId: 'INIT-L5',
-      },
-      
-      // ═══ ТЕКУЩИЕ АКТИВНЫЕ ГРУЗЫ ═══
-      
-      // Email 6: Напоминание от Tom про Miami delivery (INIT-L6)
-      {
-        id: 'email-init-6',
-        type: 'email',
-        from: 'Tom - FastFreight LLC',
-        subject: 'Reminder: Miami delivery today 14:00',
-        message: 'Good morning!\n\nJust a reminder - your reefer with pharmaceuticals needs to deliver in Miami today by 14:00.\n\nLoad #SAV-MIA-3921\nPicked up yesterday 20:00 from Savannah\nRate: $950\n\nReceiver is strict about temp - make sure driver checks reefer unit!\n\nTom',
-        minute: -15, // 15 минут назад
-        read: false,
-        priority: 'medium',
-        actionRequired: false,
-        relatedLoadId: 'INIT-L6',
-      },
-      
-      // ═══ НОВЫЕ ВОЗМОЖНОСТИ ═══
-      
-      // Email 7: Новый груз от Sarah
-      {
-        id: 'email-init-7',
-        type: 'email',
-        from: 'Sarah - QuickLoad Inc',
-        subject: 'Hot load: Phoenix to Chicago - $4,200',
-        message: 'Hey!\n\nGot a great load if you have a truck available:\n\nPhoenix, AZ → Chicago, IL\nDry Van, 44k lbs\nElectronics\n1,750 miles\nPick up: Today 16:00\nDeliver: Day after tomorrow 10:00\n\nPosting at $3,800 but I can do $4,200 for you. Let me know ASAP!\n\nSarah',
-        minute: -45, // 45 минут назад
-        read: false,
-        priority: 'high',
-        actionRequired: false,
-      },
-      
-      // Email 8: Вопрос от нового брокера
-      {
-        id: 'email-init-8',
-        type: 'email',
-        from: 'Jennifer - NationWide Logistics',
-        subject: 'New carrier setup - interested in working together?',
-        message: 'Hi,\n\nI found your company on the load board. We\'re always looking for reliable carriers.\n\nDo you run Dry Vans? We have consistent freight in the Midwest and Southeast.\n\nWhat lanes do you prefer? What\'s your typical rate per mile?\n\nLooking forward to hearing from you!\n\nJennifer\nNationWide Logistics\n(555) 234-5678',
-        minute: -180, // 3 часа назад
-        read: true,
-        priority: 'low',
-        actionRequired: false,
-      },
-      
-      // Email 9: Проблема с прошлым грузом
-      {
-        id: 'email-init-9',
-        type: 'email',
-        from: 'Robert - MegaFreight Corp',
-        subject: 'Issue with last week\'s delivery',
-        message: 'Hello,\n\nWe had a complaint from the receiver about the Dallas delivery last week. They said the driver arrived 3 hours late and didn\'t call ahead.\n\nCan you explain what happened? This affects our relationship with the customer.\n\nI need a response today.\n\nRobert',
-        minute: -240, // 4 часа назад
-        read: false,
-        priority: 'critical',
-        actionRequired: true,
-      },
-      
-      // Email 10: Благодарность и новое предложение
-      {
-        id: 'email-init-10',
-        type: 'email',
-        from: 'Tom - FastFreight LLC',
-        subject: 'Great job on recent loads + new opportunity',
-        message: 'Hey!\n\nYou guys have been crushing it lately. Both Chicago and Miami loads went smooth.\n\nI have another one if you\'re interested:\n\nHouston → Atlanta\nDry Van, 40k lbs\nPackaged goods\n800 miles\nPick up: Tomorrow 08:00\nDeliver: Day after tomorrow 18:00\n\nCan offer $2,400. You in?\n\nTom',
-        minute: -60, // 1 час назад
-        read: false,
-        priority: 'medium',
-        actionRequired: false,
-      },
-      
-      // Email 11: Rate Con request
-      {
-        id: 'email-init-11',
-        type: 'rate_con',
-        from: 'Mike - EastFreight Co',
-        subject: 'Rate Con for Boston-Miami load',
-        message: 'Hi,\n\nAttached is the Rate Con for the load we discussed:\n\nBoston, MA → Miami, FL\nDry Van, 38k lbs\nTextiles\n1,500 miles\nRate: $3,600\n\nPick up: Tomorrow 14:00\nDeliver: 3 days from now 10:00\n\nPlease sign and return. Also send me your insurance cert if I don\'t have it on file.\n\nMike',
-        minute: -150, // 2.5 часа назад
-        read: true,
-        priority: 'medium',
-        actionRequired: false,
-      },
-      
-      // Email 12: Срочный запрос
-      {
-        id: 'email-init-12',
-        type: 'email',
-        from: 'Lisa - PrimeHaul',
-        subject: 'URGENT: Need truck for Seattle pickup TODAY',
-        message: 'URGENT!\n\nCustomer just called - their original carrier fell through.\n\nSeattle → Los Angeles\nReefer, 35k lbs\nFrozen food\n1,135 miles\nPick up: TODAY 18:00 (yes, tonight!)\nDeliver: Day after tomorrow 06:00\n\nWilling to pay $3,000 for the rush. Do you have a reefer available?\n\nNeed answer in next 30 minutes!\n\nLisa\n(555) 789-0123',
-        minute: -20, // 20 минут назад
-        read: false,
-        priority: 'critical',
-        actionRequired: true,
-      },
-      
-      // ═══ ГОЛОСОВЫЕ СООБЩЕНИЯ ОТ ВОДИТЕЛЕЙ ═══
-      
-      // Voicemail 1: Mike (водитель) сообщает о задержке
-      {
-        id: 'voicemail-init-1',
-        type: 'voicemail',
-        from: 'Mike (водитель)',
-        subject: 'Голосовое сообщение',
-        message: 'Привет, я на погрузке. Говорят будет задержка 2 часа. Что делать?',
-        minute: -10, // 10 минут назад
-        read: false,
-        priority: 'high',
-        actionRequired: true,
-        relatedTruckId: 'T3',
-      },
-    ];
+    console.log('✅ All trucks initialized, starting game...');
 
     set({
       phase: 'playing',
@@ -1023,16 +1074,134 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   tickClock: async () => {
     const { gameMinute, trucks, availableLoads, activeLoads } = get();
-    // Увеличиваем на 1 минуту за один тик (TIME_SCALE = 60 секунд)
-    const newMinute = gameMinute + 1;
+    // 1 день = 20 реальных минут = 1200 тиков
+    // 1 тик = 1440/1200 = 1.2 игровых минуты
+    const TICK_MINUTES = 1.2;
+    const newMinute = gameMinute + TICK_MINUTES;
 
     if (newMinute >= SHIFT_DURATION) {
       get().endShift();
       return;
     }
 
-    // Обновляем прогресс траков (скорость 180 миль/час = 3 мили/минуту)
+    // Скорость: 10 миль/игровую минуту × 1.2 мин/тик = 12 миль/тик, делим на 3 для плавности
+    const MILES_PER_TICK = (10 * TICK_MINUTES) / 3;
+
+    // HOS: 11 часов = 660 игровых минут вождения
+    const HOS_MAX_DRIVE = 660;
+    const HOS_REST = 600; // 10 часов отдыха
+
+    // Обновляем прогресс траков
     const updatedTrucks = await Promise.all(trucks.map(async (truck) => {
+
+      // ── HOS: трак исчерпал лимит вождения — принудительный отдых ──
+      if ((truck.status === 'driving' || truck.status === 'loaded') && truck.hoursLeft <= 0) {
+        get().addNotification({
+          type: 'urgent', priority: 'critical',
+          from: `${truck.driver} (ELD)`,
+          subject: `🚨 HOS нарушение — ${truck.name} остановлен`,
+          message: `${truck.driver} исчерпал 11-часовой лимит вождения. Трак остановлен по требованию ELD. Обязательный отдых 10 часов.`,
+          actionRequired: true,
+          relatedTruckId: truck.id,
+        });
+        return {
+          ...truck,
+          status: 'waiting' as TruckStatus,
+          hosRestStartMinute: newMinute,
+        } as any;
+      }
+
+      // ── HOS: трак на отдыхе — ждём 10 часов (600 игровых минут) ──
+      if (truck.status === 'waiting') {
+        const restStart = (truck as any).hosRestStartMinute ?? newMinute;
+        const restDone = newMinute - restStart >= HOS_REST;
+        if (restDone) {
+          get().addNotification({
+            type: 'email', priority: 'medium',
+            from: `${truck.driver}`,
+            subject: `✅ ${truck.name} отдохнул — готов к работе`,
+            message: `${truck.driver} завершил обязательный отдых (10 часов). HOS сброшен. Трак готов к движению.`,
+            actionRequired: false,
+            relatedTruckId: truck.id,
+          });
+          return {
+            ...truck,
+            status: truck.currentLoad ? 'loaded' as TruckStatus : 'idle' as TruckStatus,
+            hoursLeft: 11,
+            hosRestStartMinute: undefined,
+          } as any;
+        }
+        return truck;
+      }
+
+      // ── at_pickup: автоматически начинаем ехать на delivery через 5 минут ──
+      if (truck.status === 'at_pickup' && truck.currentLoad) {
+        const pickupArrivalMinute = (truck as any).pickupArrivalMinute ?? newMinute;
+        const waitTime = newMinute - pickupArrivalMinute;
+        if (waitTime >= 5) {
+          // Загружаем маршрут до delivery
+          const deliveryCity = CITIES[truck.currentLoad.toCity];
+          let routePath: Array<[number, number]> | null = null;
+          if (deliveryCity) {
+            try {
+              const url = `https://router.project-osrm.org/route/v1/driving/${truck.position[0]},${truck.position[1]};${deliveryCity[0]},${deliveryCity[1]}?overview=full&geometries=geojson`;
+              const res = await fetch(url);
+              const data = await res.json();
+              if (data.routes && data.routes[0]) {
+                routePath = data.routes[0].geometry.coordinates;
+              }
+            } catch {}
+          }
+          get().addNotification({
+            type: 'email', priority: 'low',
+            from: truck.currentLoad.brokerName,
+            subject: `🚛 ${truck.name} загружен, едет на delivery`,
+            message: `${truck.name} загружен в ${truck.currentLoad.fromCity} и едет в ${truck.currentLoad.toCity}`,
+            actionRequired: false,
+            relatedTruckId: truck.id,
+          });
+          return {
+            ...truck,
+            status: 'loaded' as TruckStatus,
+            destinationCity: truck.currentLoad.toCity,
+            progress: 0,
+            routePath,
+            currentLoad: { ...truck.currentLoad, phase: 'to_delivery' as any },
+          };
+        }
+        // Ещё ждём — сохраняем время прибытия
+        return { ...truck, pickupArrivalMinute } as any;
+      }
+
+      // ── at_delivery: автоматически освобождаем трак через 10 минут ──
+      if (truck.status === 'at_delivery' && truck.currentLoad) {
+        const deliveryArrivalMinute = (truck as any).deliveryArrivalMinute ?? newMinute;
+        const waitTime = newMinute - deliveryArrivalMinute;
+        if (waitTime >= 10) {
+          get().addNotification({
+            type: 'email', priority: 'low',
+            from: truck.currentLoad.brokerName,
+            subject: `✅ ${truck.name} разгружен — свободен`,
+            message: `${truck.name} разгружен в ${truck.currentLoad.toCity}. Трак свободен, ищи следующий груз!`,
+            actionRequired: false,
+            relatedTruckId: truck.id,
+          });
+          // Убираем груз из activeLoads
+          const activeLoads = get().activeLoads.filter(l => l.id !== truck.currentLoad!.id);
+          set({ activeLoads });
+          return {
+            ...truck,
+            status: 'idle' as TruckStatus,
+            currentLoad: null,
+            destinationCity: null,
+            progress: 0,
+            routePath: null,
+            currentCity: truck.currentLoad.toCity,
+          };
+        }
+        return { ...truck, deliveryArrivalMinute } as any;
+      }
+
       // Если трак на разгрузке/погрузке и у него уже есть следующий груз - автоматически начинаем движение
       if ((truck.status === 'at_delivery' || truck.status === 'at_pickup') && truck.currentLoad) {
         // Проверяем что это pre-planned груз (phase должна быть 'to_pickup')
@@ -1080,29 +1249,26 @@ export const useGameStore = create<GameState>((set, get) => ({
       
       // Двигаем трак только если он реально едет с грузом
       if ((truck.status === 'driving' || truck.status === 'loaded') && truck.destinationCity) {
-        // Ускоренная скорость для игры: 180 миль/час = 3 мили/минуту
-        // Рассчитываем прогресс на основе реального расстояния
         const to = CITIES[truck.destinationCity];
         if (!to) return truck;
 
-        // Получаем расстояние маршрута
-        let totalMiles = 1000; // дефолт если не знаем
+        // Расстояние маршрута
+        let totalMiles = 500;
         if (truck.currentLoad) {
           totalMiles = truck.currentLoad.miles;
         } else {
-          // Примерное расстояние между городами
           const from = CITIES[truck.currentCity] || truck.position;
           const dx = to[0] - from[0];
           const dy = to[1] - from[1];
-          const degreeDistance = Math.sqrt(dx * dx + dy * dy);
-          totalMiles = Math.round(degreeDistance * 69); // 1 градус ≈ 69 миль
+          totalMiles = Math.round(Math.sqrt(dx * dx + dy * dy) * 69);
         }
 
-        // Реалистичная скорость: 180 миль/час (ускорено в 3 раза для игры)
-        // За 1 минуту трак проезжает: 180 миль/час * 1 мин / 60 мин = 3 мили
-        // Прогресс за один тик = 3 мили / totalMiles
-        const progressPerTick = 3 / totalMiles;
+        // 10 миль/игровую минуту × 1.2 мин/тик = 12 миль/тик
+        const progressPerTick = MILES_PER_TICK / totalMiles;
         const newProgress = Math.min(1, truck.progress + progressPerTick);
+
+        // Уменьшаем HOS: 1.2 игровых минуты = 1.2/60 часа
+        const newHoursLeft = Math.max(0, truck.hoursLeft - TICK_MINUTES / 60);
 
         if (newProgress >= 1) {
           // Трак приехал в пункт назначения
@@ -1156,11 +1322,14 @@ export const useGameStore = create<GameState>((set, get) => ({
             position: to,
             currentCity: truck.destinationCity,
             destinationCity: null,
-            routePath: nextRoutePath, // Сохраняем следующий маршрут если есть
+            routePath: nextRoutePath,
+            hoursLeft: newHoursLeft,
+            pickupArrivalMinute: newStatus === 'at_pickup' ? newMinute : undefined,
+            deliveryArrivalMinute: newStatus === 'at_delivery' ? newMinute : undefined,
           };
         }
         
-        // ВСЕГДА двигаемся по routePath если он есть
+        // Двигаемся по routePath
         if (truck.routePath && truck.routePath.length > 1) {
           const totalPoints = truck.routePath.length;
           const pointIndex = Math.floor(newProgress * (totalPoints - 1));
@@ -1172,9 +1341,8 @@ export const useGameStore = create<GameState>((set, get) => ({
           const lng = p1[0] + (p2[0] - p1[0]) * segmentProgress;
           const lat = p1[1] + (p2[1] - p1[1]) * segmentProgress;
           
-          return { ...truck, progress: newProgress, position: [lng, lat] as [number, number] };
+          return { ...truck, progress: newProgress, position: [lng, lat] as [number, number], hoursLeft: newHoursLeft };
         } else {
-          // Если routePath нет - НЕ ДВИГАЕМ трак, ждём загрузки маршрута
           return truck;
         }
       }
@@ -1184,9 +1352,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Убираем истёкшие грузы
     const freshLoads = availableLoads.filter(l => l.expiresAt > newMinute);
 
-    // Добавляем новые грузы каждые 10 минут
-    const shouldAddLoads = newMinute % 10 === 0 && newMinute > 0;
-    const newLoads = shouldAddLoads ? generateLoads(newMinute).slice(0, 5) : []; // добавляем 5 новых грузов
+    // Добавляем новые грузы каждые 12 минут (≈ 10 реальных секунд)
+    const shouldAddLoads = Math.floor(newMinute / 12) > Math.floor(gameMinute / 12);
+    const newLoads = shouldAddLoads ? generateLoads(newMinute).slice(0, 5) : [];
 
     // Генерация случайных уведомлений
     if (Math.random() < 0.02) { // 2% шанс каждую минуту
@@ -1314,8 +1482,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       availableLoads: [...freshLoads, ...newLoads],
     });
     
-    // Автосохранение каждые 5 минут
-    if (newMinute % 5 === 0) {
+    // Автосохранение каждые 60 игровых минут (≈ 50 реальных секунд)
+    if (Math.floor(newMinute / 60) > Math.floor(gameMinute / 60)) {
       get().saveGame();
     }
   },
@@ -1609,6 +1777,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         activeLoads: [...get().activeLoads, activeLoad],
         bookedLoads,
       });
+      // Сохраняем сразу после назначения
+      setTimeout(() => get().saveGame(), 100);
     } else {
       // Обычное назначение - трак свободен и сразу начинает движение
       const updatedTrucks = get().trucks.map(t =>
@@ -1629,6 +1799,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         activeLoads: [...get().activeLoads, activeLoad],
         bookedLoads,
       });
+      // Сохраняем сразу после назначения
+      setTimeout(() => get().saveGame(), 100);
     }
   },
 
@@ -1749,7 +1921,23 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   endShift: () => {
-    set({ phase: 'shift_end' });
+    // Вместо завершения игры — начинаем новый день
+    const state = get();
+    const newDay = (state.day || 1) + 1;
+    // Сбрасываем время на начало нового дня, обновляем HOS всех траков
+    const updatedTrucks = state.trucks.map(truck => ({
+      ...truck,
+      hoursLeft: 11, // HOS сброшен — новый день
+      // Если трак был на отдыхе — освобождаем
+      status: truck.status === 'waiting' ? 'idle' as any : truck.status,
+    }));
+    set({
+      phase: 'new_day',  // специальная фаза для popup
+      day: newDay,
+      gameMinute: 0,     // время сбрасывается на 08:00
+      trucks: updatedTrucks,
+    });
+    get().saveGame();
   },
 
   saveGame: () => {
@@ -1798,6 +1986,31 @@ export const useGameStore = create<GameState>((set, get) => ({
         console.log('🔄 Old save detected, resetting...');
         return false;
       }
+
+      // Восстанавливаем маршруты для едущих траков у которых routePath = null
+      const trucksToRestore = saveData.trucks as any[];
+      const restoreRoutes = async () => {
+        const restored = await Promise.all(trucksToRestore.map(async (truck: any) => {
+          if ((truck.status === 'driving' || truck.status === 'loaded') && truck.destinationCity && !truck.routePath) {
+            const dest = CITIES[truck.destinationCity];
+            if (dest) {
+              try {
+                const url = `https://router.project-osrm.org/route/v1/driving/${truck.position[0]},${truck.position[1]};${dest[0]},${dest[1]}?overview=full&geometries=geojson`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.routes && data.routes[0]) {
+                  console.log(`✅ Restored route for ${truck.id}`);
+                  return { ...truck, routePath: data.routes[0].geometry.coordinates };
+                }
+              } catch {}
+            }
+          }
+          return truck;
+        }));
+        set({ trucks: restored });
+      };
+      restoreRoutes();
+
       set({
         phase: saveData.phase,
         day: saveData.day,
@@ -1809,7 +2022,9 @@ export const useGameStore = create<GameState>((set, get) => ({
         financeLog: saveData.financeLog,
         reputation: saveData.reputation,
         trucks: saveData.trucks,
-        availableLoads: saveData.availableLoads.length > 0 ? saveData.availableLoads : generateLoads(saveData.gameMinute),
+        availableLoads: saveData.availableLoads.length > 0 
+          ? saveData.availableLoads.filter((l: any) => l.expiresAt > saveData.gameMinute)
+          : generateLoads(saveData.gameMinute),
         activeLoads: saveData.activeLoads,
         bookedLoads: saveData.bookedLoads,
         brokers: saveData.brokers,
@@ -2028,4 +2243,6 @@ export function formatTimeWithDate(timeString: string): string {
   // Если не распознали - возвращаем как есть
   return timeString;
 }
+
+
 
