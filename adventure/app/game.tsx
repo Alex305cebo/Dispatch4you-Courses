@@ -1,8 +1,20 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, Component } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   useWindowDimensions, Platform,
 } from 'react-native';
+
+// Error boundary to catch "Element type is invalid" errors
+class ErrorBoundary extends Component<{children: any; name: string}, {error: string | null}> {
+  constructor(props: any) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(e: any) { return { error: e?.message || String(e) }; }
+  render() {
+    if (this.state.error) {
+      return <View style={{padding:20,backgroundColor:'#1a0000'}}><Text style={{color:'#f87171',fontSize:12}}>❌ {this.props.name}: {this.state.error}</Text></View>;
+    }
+    return this.props.children;
+  }
+}
 import { useRouter } from 'expo-router';
 import { Colors } from '../constants/colors';
 import { useGameStore, formatGameTime, formatTimeDual, ActiveLoad } from '../store/gameStore';
@@ -189,7 +201,7 @@ export default function GameScreen() {
         // DESKTOP: карта слева, панели справа
         <View style={styles.desktopLayout}>
           <View style={styles.mapArea}>
-            <MapView />
+            <ErrorBoundary name="MapView"><MapView /></ErrorBoundary>
           </View>
           <View style={styles.sidePanel}>
             {/* Табы */}
@@ -212,19 +224,19 @@ export default function GameScreen() {
               ))}
             </View>
             <View style={styles.sidePanelContent}>
-              {activeTab === 'loadboard' && <LoadBoardPanel onNegotiate={setPendingLoad} />}
-              {activeTab === 'email' && <EmailPanel />}
-              {activeTab === 'trucks' && <TruckPanel onSwitchToLoadBoard={() => setActiveTab('loadboard')} />}
+              {activeTab === 'loadboard' && <ErrorBoundary name="LoadBoardPanel"><LoadBoardPanel onNegotiate={setPendingLoad} /></ErrorBoundary>}
+              {activeTab === 'email' && <ErrorBoundary name="EmailPanel"><EmailPanel /></ErrorBoundary>}
+              {activeTab === 'trucks' && <ErrorBoundary name="TruckPanel"><TruckPanel onSwitchToLoadBoard={() => setActiveTab('loadboard')} /></ErrorBoundary>}
             </View>
           </View>
         </View>
       ) : (
         // MOBILE: табы снизу
         <View style={styles.mobileLayout}>
-          {activeTab === 'map' && <MapView />}
-          {activeTab === 'loadboard' && <LoadBoardPanel onNegotiate={setPendingLoad} />}
-          {activeTab === 'email' && <EmailPanel />}
-          {activeTab === 'trucks' && <TruckPanel onSwitchToLoadBoard={() => setActiveTab('loadboard')} />}
+          {activeTab === 'map' && <ErrorBoundary name="MapView"><MapView /></ErrorBoundary>}
+          {activeTab === 'loadboard' && <ErrorBoundary name="LoadBoardPanel"><LoadBoardPanel onNegotiate={setPendingLoad} /></ErrorBoundary>}
+          {activeTab === 'email' && <ErrorBoundary name="EmailPanel"><EmailPanel /></ErrorBoundary>}
+          {activeTab === 'trucks' && <ErrorBoundary name="TruckPanel"><TruckPanel onSwitchToLoadBoard={() => setActiveTab('loadboard')} /></ErrorBoundary>}
 
           {/* Bottom tabs */}
           <View style={styles.bottomTabs}>
@@ -247,9 +259,9 @@ export default function GameScreen() {
       )}
 
       {/* ── MODALS ── */}
-      {negotiation.open && <NegotiationModal onAssign={(load) => setPendingLoad(load)} />}
+      {negotiation.open && <ErrorBoundary name="NegotiationModal"><NegotiationModal onAssign={(load) => setPendingLoad(load)} /></ErrorBoundary>}
       {pendingLoad && !negotiation.open && (
-        <AssignModal load={pendingLoad} onClose={() => setPendingLoad(null)} />
+        <ErrorBoundary name="AssignModal"><AssignModal load={pendingLoad} onClose={() => setPendingLoad(null)} /></ErrorBoundary>
       )}
       
       {/* Модалки из меню */}
