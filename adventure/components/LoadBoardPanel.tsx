@@ -1,10 +1,12 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput,
 } from 'react-native';
 import { Colors } from '../constants/colors';
 import { useGameStore, LoadOffer, ActiveLoad } from '../store/gameStore';
 import { cityState, CITY_STATE } from '../constants/config';
+import NegotiationChat from './NegotiationChat';
+import AssignModal from './AssignModal';
 
 interface Props {
   onNegotiate: (load: ActiveLoad) => void;
@@ -183,19 +185,43 @@ function CitySearchInput({
 }
 
 export default function LoadBoardPanel({ onNegotiate }: Props) {
-  const { availableLoads, openNegotiation, trucks, refreshLoadBoard } = useGameStore();
+  const { availableLoads, trucks, refreshLoadBoard, bookLoad, loadBoardSearchFrom, setLoadBoardSearch } = useGameStore();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchFrom, setSearchFrom] = useState('');
   const [searchTo, setSearchTo] = useState('');
+  const [chatLoad, setChatLoad] = useState<LoadOffer | null>(null);
+  const [pendingLoad, setPendingLoad] = useState<ActiveLoad | null>(null);
 
-  // Включаем траки которые скоро освободятся
-  const availableTrucks = trucks.filter(t => 
+  // При монтировании — применить предзаполненный поиск из стора
+  useEffect(() => {
+    if (loadBoardSearchFrom) {
+      setSearchFrom(loadBoardSearchFrom);
+      setLoadBoardSearch(''); // сбросить после применения
+    }
+  }, [loadBoardSearchFrom]);
+
+  const availableTrucks = trucks.filter(t =>
     t.status === 'idle' || t.status === 'at_delivery' || t.status === 'at_pickup'
   ).length;
   const totalTrucks = trucks.length;
 
   function handleCall(load: LoadOffer) {
-    openNegotiation(load);
+    setChatLoad(load);
+  }
+
+  function handleNegotiationAccepted(agreedRate: number) {
+    if (!chatLoad) return;
+    const activeLoad: ActiveLoad = {
+      ...chatLoad,
+      agreedRate,
+      truckId: '',
+      phase: 'to_pickup',
+      detentionMinutes: 0,
+      detentionPaid: false,
+    };
+    bookLoad(activeLoad);
+    setPendingLoad(activeLoad);
+    setChatLoad(null);
   }
 
   // Фильтрация по городу/штату
@@ -264,6 +290,22 @@ export default function LoadBoardPanel({ onNegotiate }: Props) {
             />
           ))}
         </ScrollView>
+      )}
+
+      {/* Чат-переговоры */}
+      <NegotiationChat
+        visible={!!chatLoad}
+        load={chatLoad}
+        onClose={() => setChatLoad(null)}
+        onAccepted={handleNegotiationAccepted}
+      />
+
+      {/* Назначение трака после сделки */}
+      {pendingLoad && (
+        <AssignModal
+          load={pendingLoad}
+          onClose={() => setPendingLoad(null)}
+        />
       )}
     </View>
   );

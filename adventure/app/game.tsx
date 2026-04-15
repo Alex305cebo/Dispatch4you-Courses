@@ -30,7 +30,7 @@ export default function GameScreen() {
   const {
     phase, gameMinute, balance, reputation,
     trucks, activeEvents, availableLoads, negotiation, bookedLoads, activeLoads,
-    tickClock, selectedTruckId, notifications,
+    tickClock, selectedTruckId, notifications, sessionName,
   } = useGameStore();
 
   const [activeTab, setActiveTab] = useState<Tab>('map');
@@ -102,6 +102,9 @@ export default function GameScreen() {
             <Text style={[styles.hudTimeText, isMobile && { fontSize: 13 }]}>
               {formatTimeDual(gameMinute)}
             </Text>
+            {sessionName ? (
+              <Text style={styles.hudSessionName} numberOfLines={1}>{sessionName}</Text>
+            ) : null}
             <View style={styles.hudBars}>
               {/* Shift progress */}
               <View style={styles.hudBarTrack}>
@@ -211,7 +214,7 @@ export default function GameScreen() {
             <View style={styles.sidePanelContent}>
               {activeTab === 'loadboard' && <LoadBoardPanel onNegotiate={setPendingLoad} />}
               {activeTab === 'email' && <EmailPanel />}
-              {activeTab === 'trucks' && <TruckPanel />}
+              {activeTab === 'trucks' && <TruckPanel onSwitchToLoadBoard={() => setActiveTab('loadboard')} />}
             </View>
           </View>
         </View>
@@ -221,7 +224,7 @@ export default function GameScreen() {
           {activeTab === 'map' && <MapView />}
           {activeTab === 'loadboard' && <LoadBoardPanel onNegotiate={setPendingLoad} />}
           {activeTab === 'email' && <EmailPanel />}
-          {activeTab === 'trucks' && <TruckPanel />}
+          {activeTab === 'trucks' && <TruckPanel onSwitchToLoadBoard={() => setActiveTab('loadboard')} />}
 
           {/* Bottom tabs */}
           <View style={styles.bottomTabs}>
@@ -371,7 +374,14 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '900',
     color: '#fff',
-    marginBottom: 4,
+    marginBottom: 2,
+  },
+  hudSessionName: {
+    fontSize: 9,
+    color: Colors.primary,
+    fontWeight: '700',
+    marginBottom: 2,
+    letterSpacing: 0.3,
   },
   hudBars: {
     gap: 3,
@@ -440,7 +450,7 @@ const styles = StyleSheet.create({
   desktopLayout: { flex: 1, flexDirection: 'row' },
   mapArea: { flex: 1 },
   sidePanel: { 
-    width: 380,
+    width: 437,
     borderLeftWidth: 1, 
     borderLeftColor: Colors.border, 
     flexDirection: 'column' 

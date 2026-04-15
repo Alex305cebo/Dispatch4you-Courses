@@ -5,6 +5,10 @@ import { cityState } from '../constants/config';
 import { useGameStore, Truck, TruckStatus } from '../store/gameStore';
 import TruckDetailModal from './TruckDetailModal';
 
+interface TruckPanelProps {
+  onSwitchToLoadBoard?: () => void;
+}
+
 const STATUS_LABEL: Record<TruckStatus, string> = {
   idle: '⚪ Свободен',
   driving: '🔵 Едет к погрузке',
@@ -25,8 +29,8 @@ const STATUS_COLOR: Record<TruckStatus, string> = {
   waiting: '#f97316',
 };
 
-export default function TruckPanel() {
-  const { trucks, selectedTruckId, selectTruck } = useGameStore();
+export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}) {
+  const { trucks, selectedTruckId, selectTruck, setLoadBoardSearch } = useGameStore();
   const [detailTruck, setDetailTruck] = useState<Truck | null>(null);
   const { width } = useWindowDimensions();
   const isMobile = width < 600;
@@ -123,8 +127,11 @@ export default function TruckPanel() {
         truck={detailTruck}
         onClose={() => setDetailTruck(null)}
         onFindLoad={() => {
+          if (detailTruck) {
+            setLoadBoardSearch(detailTruck.currentCity);
+          }
           setDetailTruck(null);
-          // TODO: переключить на Load Board
+          onSwitchToLoadBoard?.();
         }}
       />
     </ScrollView>

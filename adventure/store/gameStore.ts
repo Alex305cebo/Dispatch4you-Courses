@@ -108,18 +108,28 @@ export interface FinanceEntry {
   minute: number;
 }
 
+export interface NotificationReply {
+  from: string;
+  message: string;
+  minute: number;
+  isMe?: boolean;
+}
+
 export interface Notification {
   id: string;
   type: 'missed_call' | 'email' | 'voicemail' | 'text' | 'urgent' | 'detention' | 'pod_ready' | 'rate_con';
-  from: string; // кто отправил (брокер, водитель)
+  from: string;
   subject: string;
   message: string;
-  minute: number; // когда пришло
+  minute: number;
   read: boolean;
   priority: 'low' | 'medium' | 'high' | 'critical';
   actionRequired?: boolean;
   relatedTruckId?: string;
   relatedLoadId?: string;
+  // Thread support
+  threadId?: string; // группировка по отправителю+теме
+  replies?: NotificationReply[]; // история переписки
 }
 
 // ─── СТОР ───────────────────────────────────────────────────────────────────
@@ -138,7 +148,8 @@ interface GameState {
   // Мета
   phase: 'menu' | 'playing' | 'shift_end';
   day: number;
-  gameMinute: number; // 0 = 06:00, 480 = 14:00
+  gameMinute: number; // 0 = 08:43
+  sessionName: string;
 
   // Финансы
   balance: number;
@@ -183,11 +194,12 @@ interface GameState {
   // Выбранный трак/событие
   selectedTruckId: string | null;
   selectedEventId: string | null;
-  selectedLoadId: string | null; // выбранный груз на карте
+  selectedLoadId: string | null;
+  loadBoardSearchFrom: string;
 
   // ─── ACTIONS ───
 
-  startShift: () => void;
+  startShift: (truckCount?: number, sessionName?: string) => void;
   tickClock: () => void;
 
   openNegotiation: (load: LoadOffer) => void;
@@ -216,6 +228,7 @@ interface GameState {
 
   refreshLoadBoard: () => void;
   endShift: () => void;
+  setLoadBoardSearch: (city: string) => void;
   
   // Сохранение и загрузка
   saveGame: () => void;
@@ -714,6 +727,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   totalLost: 0,
   financeLog: [],
   reputation: 100,
+  sessionName: '',
   trucks: INITIAL_TRUCKS,
   availableLoads: [],
   activeLoads: [],
@@ -725,22 +739,43 @@ export const useGameStore = create<GameState>((set, get) => ({
   selectedTruckId: null,
   selectedEventId: null,
   selectedLoadId: null,
+  loadBoardSearchFrom: '',
   notifications: [],
   unreadCount: 0,
   pendingEmailResponses: [],
 
-  startShift: async () => {
-    console.log('🎮 Starting shift initialization...');
+  startShift: async (truckCount: number = 3, sessionName: string = '') => {
+    console.log(`🎮 Starting shift with ${truckCount} trucks, session: "${sessionName}"`);
     
-    // Проверяем есть ли сохранение
-    const hasSave = get().loadGame();
-    if (hasSave) {
-      console.log('✅ Loaded saved game');
-      return; // Если загрузили сохранение - не инициализируем заново
-    }
+    // Всегда сбрасываем старое сохранение и начинаем заново
+    get().clearSave();
+    
+    // Правильное распределение по правилу 2:
+    // - 1-2 трака на разгрузке (at_delivery)
+    // - остальные в пути (loaded)
+    // Для 3 траков: 1 на разгрузке, 2 в пути
+    // Для 4 траков: 2 на разгрузке, 2 в пути
+    // Для 5 траков: 2 на разгрузке, 3 в пути
+    const deliveryCount = truckCount <= 3 ? 1 : 2;
+    const inTransitCount = truckCount - deliveryCount;
+
+    const allTrucks = INITIAL_TRUCKS.slice(0, truckCount).map((truck, i) => {
+      if (i < deliveryCount) {
+        // На разгрузке
+        return { ...truck, status: 'at_delivery' as TruckStatus, progress: 1, destinationCity: null };
+      } else {
+        // В пути с грузом
+        return { ...truck, status: 'loaded' as TruckStatus };
+      }
+    });
+
+    const selectedActiveLoads = [
+      INITIAL_LOAD_1, INITIAL_LOAD_2, INITIAL_LOAD_3,
+      INITIAL_LOAD_4, INITIAL_LOAD_5, INITIAL_LOAD_6,
+    ].slice(0, truckCount);
     
     // Загружаем маршруты для траков которые в пути
-    const trucksWithRoutes = await Promise.all(INITIAL_TRUCKS.map(async (truck) => {
+    const trucksWithRoutes = await Promise.all(allTrucks.map(async (truck) => {
       // Если трак едет - загружаем маршрут
       if ((truck.status === 'driving' || truck.status === 'loaded') && truck.destinationCity) {
         const to = CITIES[truck.destinationCity];
@@ -970,9 +1005,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       totalLost: 0,
       financeLog: [],
       reputation: 100,
+      sessionName: sessionName || `Смена · ${truckCount} трака`,
       trucks: trucksWithRoutes,
       availableLoads: generateLoads(0),
-      activeLoads: [INITIAL_LOAD_1, INITIAL_LOAD_2, INITIAL_LOAD_3, INITIAL_LOAD_4, INITIAL_LOAD_5, INITIAL_LOAD_6],
+      activeLoads: selectedActiveLoads,
       bookedLoads: [],
       activeEvents: [],
       resolvedEvents: [],
@@ -1543,6 +1579,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ availableLoads: generateLoads(get().gameMinute) });
   },
 
+  setLoadBoardSearch: (city: string) => {
+    set({ loadBoardSearchFrom: city });
+  },
+
   endShift: () => {
     set({ phase: 'shift_end' });
   },
@@ -1551,10 +1591,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     try {
       const state = get();
       const saveData = {
-        version: 2, // bump при изменении структуры данных
+        version: 2,
         phase: state.phase,
         day: state.day,
         gameMinute: state.gameMinute,
+        sessionName: state.sessionName,
         balance: state.balance,
         totalEarned: state.totalEarned,
         totalLost: state.totalLost,
@@ -1596,6 +1637,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         phase: saveData.phase,
         day: saveData.day,
         gameMinute: saveData.gameMinute,
+        sessionName: saveData.sessionName || '',
         balance: saveData.balance,
         totalEarned: saveData.totalEarned,
         totalLost: saveData.totalLost,
@@ -1630,15 +1672,53 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   addNotification: (notification) => {
+    const existing = get().notifications;
+    const gameMinute = get().gameMinute;
+
+    // Ищем существующий тред от того же отправителя
+    const threadMatch = existing.find(n =>
+      n.from === notification.from &&
+      !n.read &&
+      n.type === (notification.type || 'email')
+    );
+
+    if (threadMatch) {
+      // Добавляем как reply в существующий тред
+      const reply: NotificationReply = {
+        from: notification.from,
+        message: notification.message,
+        minute: gameMinute,
+      };
+      const updated = existing.map(n =>
+        n.id === threadMatch.id
+          ? { ...n, read: false, message: notification.message, minute: gameMinute, replies: [...(n.replies || []), reply] }
+          : n
+      );
+      const unreadCount = updated.filter(n => !n.read).length;
+      set({ notifications: updated, unreadCount });
+      return;
+    }
+
+    // Лимит: максимум 7 писем — удаляем самое старое прочитанное если превышен
+    let list = [...existing];
+    if (list.length >= 7) {
+      const oldestRead = list.findIndex(n => n.read);
+      if (oldestRead !== -1) list.splice(oldestRead, 1);
+      else list.pop(); // если все непрочитанные — удаляем последнее
+    }
+
     const newNotif: Notification = {
       ...notification,
       id: `notif-${Date.now()}-${Math.random()}`,
-      minute: get().gameMinute,
+      minute: gameMinute,
       read: false,
+      threadId: `${notification.from}-${notification.type}`,
+      replies: [],
     };
+    const updated = [newNotif, ...list];
     set({
-      notifications: [newNotif, ...get().notifications],
-      unreadCount: get().unreadCount + 1,
+      notifications: updated,
+      unreadCount: updated.filter(n => !n.read).length,
     });
   },
 

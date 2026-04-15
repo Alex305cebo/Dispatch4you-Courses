@@ -1,5 +1,5 @@
 export const MAPTILER_KEY = '';
-export const MAP_STYLE = 'https://tiles.openfreemap.org/styles/dark';
+export const MAP_STYLE = 'https://tiles.stadiamaps.com/styles/alidade_smooth_dark.json';
 
 // Бесплатный роутинг по реальным дорогам
 export const OSRM_URL = 'https://router.project-osrm.org/route/v1/driving';

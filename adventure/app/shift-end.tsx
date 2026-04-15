@@ -10,7 +10,8 @@ export default function ShiftEndScreen() {
   const { balance, totalEarned, totalLost, reputation, financeLog, trucks, resolvedEvents, startShift } = useGameStore();
 
   const profit = totalEarned - totalLost;
-  const grade = profit > 10000 ? 'S' : profit > 6000 ? 'A' : profit > 3000 ? 'B' : profit > 0 ? 'C' : 'D';
+  const truckCount = trucks.length;
+  const grade = profit > truckCount * 4000 ? 'S' : profit > truckCount * 2500 ? 'A' : profit > truckCount * 1500 ? 'B' : profit > 0 ? 'C' : 'D';
   const gradeColor = { S: '#fbbf24', A: '#22c55e', B: '#06b6d4', C: '#f59e0b', D: '#ef4444' }[grade];
 
   const incomes = financeLog.filter(f => f.type === 'income');
@@ -28,12 +29,39 @@ export default function ShiftEndScreen() {
           </View>
           <Text style={styles.gradeTitle}>Смена завершена</Text>
           <Text style={styles.gradeSub}>
-            {grade === 'S' ? 'Идеальная смена! Ты профессионал.' :
+            {grade === 'S' ? `Идеальная смена! ${truckCount} траков без потерь.` :
              grade === 'A' ? 'Отличная работа! Клиенты довольны.' :
              grade === 'B' ? 'Хороший результат. Есть куда расти.' :
              grade === 'C' ? 'Неплохо, но можно лучше.' :
              'Нужна практика. Попробуй ещё раз.'}
           </Text>
+          <View style={styles.truckCountBadge}>
+            <Text style={styles.truckCountText}>🚛 {truckCount} траков · ${Math.round(profit / truckCount).toLocaleString()} / трак</Text>
+          </View>
+        </View>
+
+        {/* СТАТИСТИКА ПО ТРАКАМ */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>🚛 Статистика по тракам</Text>
+          {trucks.map(truck => (
+            <View key={truck.id} style={styles.truckStatRow}>
+              <View style={styles.truckStatLeft}>
+                <Text style={styles.truckStatName}>{truck.name}</Text>
+                <Text style={styles.truckStatDriver}>{truck.driver}</Text>
+              </View>
+              <View style={styles.truckStatRight}>
+                <Text style={styles.truckStatMiles}>{truck.totalMiles.toLocaleString()} mi</Text>
+                <Text style={styles.truckStatDeliveries}>{truck.totalDeliveries} доставок</Text>
+              </View>
+              <View style={[styles.truckStatScore, {
+                backgroundColor: truck.safetyScore >= 90 ? 'rgba(34,197,94,0.15)' : 'rgba(251,191,36,0.15)'
+              }]}>
+                <Text style={[styles.truckStatScoreVal, {
+                  color: truck.safetyScore >= 90 ? '#4ade80' : '#fbbf24'
+                }]}>{truck.safetyScore}%</Text>
+              </View>
+            </View>
+          ))}
         </View>
 
         {/* P&L */}
@@ -82,7 +110,7 @@ export default function ShiftEndScreen() {
 
         {/* КНОПКИ */}
         <View style={styles.btns}>
-          <TouchableOpacity style={styles.btnPrimary} onPress={() => { startShift(); router.replace('/game'); }}>
+          <TouchableOpacity style={styles.btnPrimary} onPress={() => router.replace('/')}>
             <Text style={styles.btnPrimaryText}>🔄 Новая смена</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.btnSecondary} onPress={() => router.replace('/')}>
@@ -110,6 +138,27 @@ const styles = StyleSheet.create({
   gradeText: { fontSize: 30, fontWeight: '900' },
   gradeTitle: { fontSize: 24, fontWeight: '900', color: '#fff', marginBottom: 6 },
   gradeSub: { fontSize: 14, color: Colors.textMuted, textAlign: 'center' },
+  truckCountBadge: {
+    marginTop: 10, paddingHorizontal: 16, paddingVertical: 6,
+    backgroundColor: 'rgba(6,182,212,0.1)', borderRadius: 20,
+    borderWidth: 1, borderColor: 'rgba(6,182,212,0.3)',
+  },
+  truckCountText: { fontSize: 13, color: '#06b6d4', fontWeight: '700' },
+
+  // Truck stats
+  truckStatRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 10,
+    borderWidth: 1, borderColor: Colors.border, padding: 10,
+  },
+  truckStatLeft: { flex: 1 },
+  truckStatName: { fontSize: 12, fontWeight: '800', color: '#fff' },
+  truckStatDriver: { fontSize: 10, color: Colors.textDim },
+  truckStatRight: { alignItems: 'flex-end' },
+  truckStatMiles: { fontSize: 11, color: Colors.textMuted, fontWeight: '700' },
+  truckStatDeliveries: { fontSize: 10, color: Colors.textDim },
+  truckStatScore: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
+  truckStatScoreVal: { fontSize: 13, fontWeight: '900' },
 
   pnl: {
     width: '100%', backgroundColor: Colors.bgCard, borderRadius: 16,

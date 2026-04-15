@@ -11,11 +11,67 @@ interface Props {
   onNavigateToEvents?: () => void;
 }
 
+// ─── Компонент одного уведомления ────────────────────────────────────────────
+function NotifItem({ notif, onPress, getIcon, getPriorityColor }: {
+  notif: Notification;
+  onPress: () => void;
+  getIcon: (t: Notification['type']) => string;
+  getPriorityColor: (p: Notification['priority']) => string;
+}) {
+  return (
+    <TouchableOpacity
+      style={[
+        styles.notifItem,
+        !notif.read && styles.notifItemUnread,
+        notif.priority === 'critical' && !notif.read && styles.notifItemCritical,
+        { borderLeftColor: getPriorityColor(notif.priority) },
+      ]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <View style={styles.notifHeader}>
+        <Text style={styles.notifIcon}>{getIcon(notif.type)}</Text>
+        <Text style={styles.notifTime}>{formatGameTime(notif.minute)}</Text>
+        {notif.priority === 'critical' && !notif.read && (
+          <View style={styles.criticalBadge}><Text style={styles.criticalBadgeText}>🚨 СРОЧНО</Text></View>
+        )}
+        {!notif.read && <View style={styles.unreadDot} />}
+        {notif.read && <Text style={styles.readCheck}>✓</Text>}
+      </View>
+      <Text style={styles.notifFrom}>{notif.from}</Text>
+      <Text style={styles.notifSubject}>{notif.subject}</Text>
+      <Text style={styles.notifMessage} numberOfLines={2}>{notif.message}</Text>
+      {notif.actionRequired && !notif.read && (
+        <View style={styles.actionBadge}>
+          <Text style={styles.actionBadgeText}>⚡ Нажми для действия</Text>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+}
+
 export default function NotificationBell({ onNavigateToTrucks, onNavigateToLoads, onNavigateToEvents }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedBrokerNotification, setSelectedBrokerNotification] = useState<Notification | null>(null);
   const [selectedDriverNotification, setSelectedDriverNotification] = useState<Notification | null>(null);
+  const [sortMode, setSortMode] = useState<'priority' | 'time' | 'done'>('priority');
   const { notifications, unreadCount, markNotificationRead, markAllNotificationsRead, selectTruck, trucks } = useGameStore();
+
+  // Сортировка и группировка
+  const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+
+  const sorted = [...notifications].sort((a, b) => {
+    if (sortMode === 'priority') {
+      if (a.read !== b.read) return a.read ? 1 : -1;
+      return (priorityOrder[a.priority] ?? 3) - (priorityOrder[b.priority] ?? 3);
+    }
+    if (sortMode === 'time') return b.minute - a.minute;
+    if (sortMode === 'done') return a.read === b.read ? 0 : a.read ? -1 : 1;
+    return 0;
+  });
+
+  const pending = sorted.filter(n => !n.read);
+  const done = sorted.filter(n => n.read);
 
   const handleNotificationClick = (notif: Notification) => {
     markNotificationRead(notif.id);
@@ -122,6 +178,21 @@ export default function NotificationBell({ onNavigateToTrucks, onNavigateToLoads
               </View>
             </View>
 
+            {/* Sort tabs */}
+            <View style={styles.sortTabs}>
+              {(['priority', 'time', 'done'] as const).map(mode => (
+                <TouchableOpacity
+                  key={mode}
+                  style={[styles.sortTab, sortMode === mode && styles.sortTabActive]}
+                  onPress={() => setSortMode(mode)}
+                >
+                  <Text style={[styles.sortTabText, sortMode === mode && styles.sortTabTextActive]}>
+                    {mode === 'priority' ? '🔴 Важные' : mode === 'time' ? '🕐 По времени' : '✅ Выполненные'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
             {/* Notifications List */}
             <ScrollView style={styles.list}>
               {notifications.length === 0 ? (
@@ -129,49 +200,49 @@ export default function NotificationBell({ onNavigateToTrucks, onNavigateToLoads
                   <Text style={styles.emptyIcon}>📭</Text>
                   <Text style={styles.emptyText}>Нет уведомлений</Text>
                 </View>
-              ) : (
-                notifications.map(notif => (
-                  <TouchableOpacity
-                    key={notif.id}
-                    style={[
-                      styles.notifItem,
-                      !notif.read && styles.notifItemUnread,
-                      { borderLeftColor: getPriorityColor(notif.priority) }
-                    ]}
-                    onPress={() => handleNotificationClick(notif)}
-                    activeOpacity={0.7}
-                  >
-                    {/* Icon & Time */}
-                    <View style={styles.notifHeader}>
-                      <Text style={styles.notifIcon}>{getIcon(notif.type)}</Text>
-                      <Text style={styles.notifTime}>{formatGameTime(notif.minute)}</Text>
-                      {!notif.read && <View style={styles.unreadDot} />}
-                    </View>
-
-                    {/* From */}
-                    <Text style={styles.notifFrom}>{notif.from}</Text>
-
-                    {/* Subject */}
-                    <Text style={styles.notifSubject}>{notif.subject}</Text>
-
-                    {/* Message */}
-                    <Text style={styles.notifMessage} numberOfLines={2}>{notif.message}</Text>
-
-                    {/* Action Required Badge */}
-                    {notif.actionRequired && (
-                      <View style={styles.actionBadge}>
-                        <Text style={styles.actionBadgeText}>⚡ Нажми для действия</Text>
-                      </View>
-                    )}
-
-                    {/* Priority Badge */}
-                    {notif.priority === 'critical' && (
-                      <View style={[styles.priorityBadge, { backgroundColor: 'rgba(220,38,38,0.15)' }]}>
-                        <Text style={[styles.priorityText, { color: '#dc2626' }]}>🚨 СРОЧНО</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
+              ) : sortMode === 'done' ? (
+                // Показываем только выполненные
+                done.length === 0 ? (
+                  <View style={styles.empty}>
+                    <Text style={styles.emptyIcon}>✅</Text>
+                    <Text style={styles.emptyText}>Нет выполненных</Text>
+                  </View>
+                ) : done.map(notif => (
+                  <NotifItem key={notif.id} notif={notif} onPress={() => handleNotificationClick(notif)} getIcon={getIcon} getPriorityColor={getPriorityColor} />
                 ))
+              ) : (
+                <>
+                  {/* Нужно обработать */}
+                  {pending.length > 0 && (
+                    <>
+                      <View style={styles.groupHeader}>
+                        <Text style={styles.groupHeaderText}>⚡ Нужно обработать ({pending.length})</Text>
+                      </View>
+                      {pending.map(notif => (
+                        <NotifItem key={notif.id} notif={notif} onPress={() => handleNotificationClick(notif)} getIcon={getIcon} getPriorityColor={getPriorityColor} />
+                      ))}
+                    </>
+                  )}
+                  {/* Выполненные */}
+                  {done.length > 0 && sortMode === 'priority' && (
+                    <>
+                      <View style={[styles.groupHeader, styles.groupHeaderDone]}>
+                        <Text style={[styles.groupHeaderText, { color: '#475569' }]}>✓ Обработано ({done.length})</Text>
+                      </View>
+                      {done.slice(0, 5).map(notif => (
+                        <NotifItem key={notif.id} notif={notif} onPress={() => handleNotificationClick(notif)} getIcon={getIcon} getPriorityColor={getPriorityColor} />
+                      ))}
+                      {done.length > 5 && (
+                        <View style={styles.moreRow}>
+                          <Text style={styles.moreText}>+ ещё {done.length - 5} обработанных</Text>
+                        </View>
+                      )}
+                    </>
+                  )}
+                  {sortMode === 'time' && sorted.map(notif => (
+                    <NotifItem key={notif.id} notif={notif} onPress={() => handleNotificationClick(notif)} getIcon={getIcon} getPriorityColor={getPriorityColor} />
+                  ))}
+                </>
               )}
             </ScrollView>
           </View>
@@ -312,6 +383,38 @@ const styles = StyleSheet.create({
   notifItemUnread: {
     backgroundColor: 'rgba(6,182,212,0.05)',
   },
+  notifItemCritical: {
+    backgroundColor: 'rgba(220,38,38,0.08)',
+  },
+  criticalBadge: {
+    paddingHorizontal: 6, paddingVertical: 2,
+    backgroundColor: 'rgba(220,38,38,0.2)', borderRadius: 6,
+  },
+  criticalBadgeText: { fontSize: 10, fontWeight: '800', color: '#dc2626' },
+  readCheck: { fontSize: 11, color: '#475569', fontWeight: '700' },
+  sortTabs: {
+    flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)',
+  },
+  sortTab: {
+    flex: 1, paddingVertical: 10, alignItems: 'center',
+  },
+  sortTabActive: {
+    borderBottomWidth: 2, borderBottomColor: '#06b6d4',
+  },
+  sortTabText: { fontSize: 11, color: '#475569', fontWeight: '600' },
+  sortTabTextActive: { color: '#06b6d4' },
+  groupHeader: {
+    paddingHorizontal: 16, paddingVertical: 8,
+    backgroundColor: 'rgba(239,68,68,0.08)',
+    borderBottomWidth: 1, borderBottomColor: 'rgba(239,68,68,0.15)',
+  },
+  groupHeaderDone: {
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+  },
+  groupHeaderText: { fontSize: 11, fontWeight: '800', color: '#ef4444', textTransform: 'uppercase', letterSpacing: 0.5 },
+  moreRow: { padding: 12, alignItems: 'center' },
+  moreText: { fontSize: 11, color: '#475569', fontWeight: '600' },
   notifHeader: {
     flexDirection: 'row',
     alignItems: 'center',
