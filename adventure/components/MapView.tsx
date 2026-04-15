@@ -100,7 +100,7 @@ function MapCanvas() {
         ctx.globalAlpha = 1;
         ctx.shadowColor = "transparent";
         ctx.strokeStyle = "#2d6a4f";
-        ctx.lineWidth = 0.8;
+        ctx.lineWidth = 0.8 / zoom.current;
         ctx.stroke(p);
       });
 
@@ -119,9 +119,9 @@ function MapCanvas() {
         ctx.moveTo(a[0], a[1]);
         ctx.quadraticCurveTo((a[0] + b[0]) / 2, Math.min(a[1], b[1]) - 30, b[0], b[1]);
         ctx.strokeStyle = color;
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.5 / zoom.current;
         ctx.globalAlpha = 0.55;
-        ctx.setLineDash([5, 4]);
+        ctx.setLineDash([5 / zoom.current, 4 / zoom.current]);
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.globalAlpha = 1;
@@ -174,7 +174,7 @@ function MapCanvas() {
         ctx.fillStyle = color;
         ctx.fill();
         ctx.strokeStyle = "#fff";
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.5 / zoom.current;
         ctx.stroke();
         ctx.font = "bold 7px sans-serif";
         ctx.textAlign = "center";
