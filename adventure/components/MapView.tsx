@@ -46,6 +46,7 @@ function MapAmCharts() {
   const polygonSeriesRef = useRef<any>(null);
   const truckSeriesRef = useRef<any>(null);
   const lineSeriesRef = useRef<any>(null);
+  const arrowSeriesRef = useRef<any>(null);
   const citySeriesRef = useRef<any>(null);
   const am5Ref = useRef<any>(null);
   const intervalRef = useRef<any>(null);
@@ -147,14 +148,40 @@ function MapAmCharts() {
         if (b) b.set("visible", false);
       });
 
-      // ── Линии маршрутов ────────────────────────────────────────────
+      // ── Graticule (сетка координат) ───────────────────────────────
+      const graticuleSeries = chart.series.push(am5map.GraticuleSeries.new(root, {}));
+      graticuleSeries.mapLines.template.setAll({
+        stroke: am5.color(0x2d6a4f),
+        strokeOpacity: 0.06,
+        strokeWidth: 0.5,
+      });
+
+      // ── Линии маршрутов (кривые по проекции) ──────────────────────
       const lineSeries = chart.series.push(am5map.MapLineSeries.new(root, {}));
       lineSeries.mapLines.template.setAll({
-        strokeOpacity: 0.6,
+        strokeOpacity: 0.7,
         strokeWidth: 2,
         strokeDasharray: [6, 4],
       });
       lineSeriesRef.current = lineSeries;
+
+      // ── Стрелки на маршрутах ───────────────────────────────────────
+      const arrowSeries = chart.series.push(am5map.MapPointSeries.new(root, {}));
+      arrowSeries.bullets.push(() => {
+        const arrow = am5.Graphics.new(root, {
+          fill: am5.color(0x06b6d4),
+          stroke: am5.color(0x06b6d4),
+          draw: (display: any) => {
+            display.moveTo(0, -3);
+            display.lineTo(8, 0);
+            display.lineTo(0, 3);
+            display.lineTo(0, -3);
+          },
+        });
+        return am5.Bullet.new(root, { sprite: arrow });
+      });
+
+      arrowSeriesRef.current = arrowSeries;
 
       // ── Города ────────────────────────────────────────────────────
       const citySeries = chart.series.push(
@@ -370,6 +397,16 @@ function MapAmCharts() {
         lineSeries.mapLines.each((line: any, i: number) => {
           if (lineData[i]) line.set("stroke", am5c.color(lineData[i].stroke));
         });
+
+        // Стрелки на серединах маршрутов
+        const arrowSeries = arrowSeriesRef.current;
+        if (arrowSeries) {
+          const arrowData = lineData.map((_: any, i: number) => {
+            const lineDataItem = lineSeries.dataItems[i];
+            return lineDataItem ? { lineDataItem, positionOnLine: 0.5, autoRotate: true } : null;
+          }).filter(Boolean);
+          arrowSeries.data.setAll(arrowData);
+        }
       }
 
       updateMap();
