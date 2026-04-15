@@ -121,6 +121,59 @@ const ALL_CITIES = Object.entries(CITY_STATE).map(([city, state]) => ({
   label: `${city}, ${state}`,
 }));
 
+const deadheadStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    flexWrap: 'wrap',
+  },
+  label: {
+    fontSize: 11,
+    color: Colors.textDim,
+    fontWeight: '600',
+    marginRight: 2,
+  },
+  btn: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.bgCard,
+  },
+  btnActive: {
+    borderColor: Colors.primary,
+    backgroundColor: 'rgba(6,182,212,0.15)',
+  },
+  btnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.textDim,
+  },
+  btnTextActive: {
+    color: Colors.primary,
+  },
+  clearBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.4)',
+    backgroundColor: 'rgba(239,68,68,0.1)',
+    marginLeft: 4,
+  },
+  clearText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#ef4444',
+  },
+});
+
 function CitySearchInput({
   value,
   onChange,
@@ -406,59 +459,6 @@ const searchStyles = StyleSheet.create({
     fontSize: 13,
     color: '#e2e8f0',
     fontWeight: '600',
-  },
-});
-
-const deadheadStyles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    gap: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    flexWrap: 'wrap',
-  },
-  label: {
-    fontSize: 11,
-    color: Colors.textDim,
-    fontWeight: '600',
-    marginRight: 2,
-  },
-  btn: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.bgCard,
-  },
-  btnActive: {
-    borderColor: Colors.primary,
-    backgroundColor: 'rgba(6,182,212,0.15)',
-  },
-  btnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: Colors.textDim,
-  },
-  btnTextActive: {
-    color: Colors.primary,
-  },
-  clearBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(239,68,68,0.4)',
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    marginLeft: 4,
-  },
-  clearText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#ef4444',
   },
 });
 

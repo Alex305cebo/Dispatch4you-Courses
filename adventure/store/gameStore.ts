@@ -1463,13 +1463,23 @@ export const useGameStore = create<GameState>((set, get) => ({
 
         // Расстояние маршрута
         let totalMiles = 500;
-        if (truck.currentLoad) {
+        if (truck.status === 'loaded' && truck.currentLoad) {
+          // Едет к delivery — используем мили груза
+          totalMiles = truck.currentLoad.miles;
+        } else if (truck.status === 'driving') {
+          // Едет к pickup (deadhead) — считаем по координатам
+          const from = CITIES[truck.currentCity] || truck.position;
+          const dx = to[0] - from[0];
+          const dy = to[1] - from[1];
+          const calcMiles = Math.round(Math.sqrt(dx * dx + dy * dy) * 69);
+          totalMiles = Math.max(calcMiles, 50); // минимум 50 миль чтобы не зависнуть
+        } else if (truck.currentLoad) {
           totalMiles = truck.currentLoad.miles;
         } else {
           const from = CITIES[truck.currentCity] || truck.position;
           const dx = to[0] - from[0];
           const dy = to[1] - from[1];
-          totalMiles = Math.round(Math.sqrt(dx * dx + dy * dy) * 69);
+          totalMiles = Math.max(Math.round(Math.sqrt(dx * dx + dy * dy) * 69), 50);
         }
 
         // 10 миль/игровую минуту × 1.2 мин/тик = 12 миль/тик
@@ -1555,17 +1565,13 @@ export const useGameStore = create<GameState>((set, get) => ({
           return { ...truck, progress: newProgress, position: [lng, lat] as [number, number], hoursLeft: newHoursLeft };
         } else if (truck.destinationCity && CITIES[truck.destinationCity]) {
           // Fallback: линейное движение если нет routePath
-          const from = truck.progress === 0 ? truck.position : truck.position;
           const dest = CITIES[truck.destinationCity];
-          const startPos = newProgress === 0
-            ? truck.position
-            : [
-                truck.position[0] + (dest[0] - truck.position[0]) * (newProgress - progressPerTick) / newProgress,
-                truck.position[1] + (dest[1] - truck.position[1]) * (newProgress - progressPerTick) / newProgress,
-              ] as [number, number];
-          const lng = truck.position[0] + (dest[0] - truck.position[0]) * progressPerTick / (1 - truck.progress + progressPerTick);
-          const lat = truck.position[1] + (dest[1] - truck.position[1]) * progressPerTick / (1 - truck.progress + progressPerTick);
-          return { ...truck, progress: newProgress, position: [lng, lat] as [number, number], hoursLeft: newHoursLeft };
+          const startPos = truck.routePath ? truck.position : (CITIES[truck.currentCity] || truck.position);
+          const totalProgress = truck.progress + progressPerTick;
+          const t = Math.min(totalProgress, 1);
+          const lng = startPos[0] + (dest[0] - startPos[0]) * t;
+          const lat = startPos[1] + (dest[1] - startPos[1]) * t;
+          return { ...truck, progress: Math.min(newProgress, 0.99), position: [lng, lat] as [number, number], hoursLeft: newHoursLeft };
         } else {
           return truck;
         }
@@ -2014,6 +2020,8 @@ export const useGameStore = create<GameState>((set, get) => ({
           currentLoad: activeLoad,
           position: snappedPosition,
           routePath,
+          idleSinceMinute: undefined,
+          idleWarningLevel: 0 as 0,
         } : t
       );
       
