@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+﻿import { create } from 'zustand';
 import { SHIFT_DURATION, SHIFT_START_HOUR, SHIFT_START_MINUTE, CITIES, TIME_SCALE } from '../constants/config';
 
 // ─── ТИПЫ ───────────────────────────────────────────────────────────────────
@@ -202,6 +202,7 @@ interface GameState {
 
   startShift: (truckCount?: number, sessionName?: string) => void;
   tickClock: () => void;
+  triggerRandomEvent: () => void;
 
   openNegotiation: (load: LoadOffer) => void;
   makeOffer: (amount: number) => 'accepted' | 'counter' | 'rejected';
@@ -1314,6 +1315,143 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
+  triggerRandomEvent: () => {
+    const { trucks, activeLoads } = get();
+    const drivingTrucks = trucks.filter(t => t.status === 'driving' || t.status === 'loaded');
+    
+    if (drivingTrucks.length === 0) return; // Нет траков в пути — нечего ломать
+    
+    const eventTypes = [
+      'breakdown', 'detention', 'driver_question', 'weather_delay', 
+      'inspection', 'fuel_issue', 'broker_call', 'rate_increase'
+    ];
+    
+    const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+    const truck = drivingTrucks[Math.floor(Math.random() * drivingTrucks.length)];
+    
+    switch (eventType) {
+      case 'breakdown':
+        get().addNotification({
+          type: 'text',
+          priority: 'critical',
+          from: truck.driver,
+          subject: '🚨 Поломка трака',
+          message: `${truck.name} сломался! Двигатель перегрелся. Нужна техпомощь или ремонт. Что делать?`,
+          actionRequired: true,
+          relatedTruckId: truck.id,
+        });
+        break;
+        
+      case 'detention':
+        get().addNotification({
+          type: 'text',
+          priority: 'high',
+          from: truck.driver,
+          subject: '⏰ Задержка на погрузке',
+          message: `Жду на ${truck.currentLoad?.fromCity || truck.currentCity} уже 3 часа. Detention начался. Требовать оплату?`,
+          actionRequired: true,
+          relatedTruckId: truck.id,
+        });
+        break;
+        
+      case 'driver_question':
+        const questions = [
+          'Где остановиться на ночь? HOS заканчивается через 2 часа.',
+          'Груз тяжелее чем в BOL. Везти или отказаться?',
+          'На весах показали перегруз 500 фунтов. Что делать?',
+          'Шиппер просит подписать дополнительные документы. Подписывать?',
+        ];
+        get().addNotification({
+          type: 'text',
+          priority: 'medium',
+          from: truck.driver,
+          subject: '❓ Вопрос водителя',
+          message: questions[Math.floor(Math.random() * questions.length)],
+          actionRequired: true,
+          relatedTruckId: truck.id,
+        });
+        break;
+        
+      case 'weather_delay':
+        get().addNotification({
+          type: 'text',
+          priority: 'medium',
+          from: truck.driver,
+          subject: '🌨️ Погода',
+          message: 'Сильный снегопад. Дорога закрыта. Жду когда откроют. Задержка ~2 часа.',
+          actionRequired: false,
+          relatedTruckId: truck.id,
+        });
+        break;
+        
+      case 'inspection':
+        get().addNotification({
+          type: 'text',
+          priority: 'high',
+          from: truck.driver,
+          subject: '🚔 DOT инспекция',
+          message: 'Остановили на весах. Проверяют документы и трак. Жду результата.',
+          actionRequired: false,
+          relatedTruckId: truck.id,
+        });
+        break;
+        
+      case 'fuel_issue':
+        get().addNotification({
+          type: 'text',
+          priority: 'medium',
+          from: truck.driver,
+          subject: '⛽ Топливо',
+          message: 'Топливная карта не работает. Заправиться за наличные или ждать?',
+          actionRequired: true,
+          relatedTruckId: truck.id,
+        });
+        break;
+        
+      case 'broker_call':
+        const brokerNames = ['Tom (FastFreight)', 'Sarah (LoadMax)', 'Mike (FreightPro)', 'Lisa (CargoLink)'];
+        get().addNotification({
+          type: 'missed_call',
+          priority: 'medium',
+          from: brokerNames[Math.floor(Math.random() * brokerNames.length)],
+          subject: '📞 Пропущенный звонок',
+          message: 'Брокер звонил 2 раза. Возможно срочный груз или вопрос по текущей доставке.',
+          actionRequired: true,
+        });
+        break;
+        
+      case 'rate_increase':
+        if (truck.currentLoad) {
+          const bonus = 100 + Math.floor(Math.random() * 200);
+          get().addNotification({
+            type: 'email',
+            priority: 'high',
+            from: `${truck.currentLoad.brokerName} - ${truck.currentLoad.brokerCompany}`,
+            subject: '💰 Повышение ставки!',
+            message: `Good news! Shipper increased the rate by ${bonus}. Your new total: ${(truck.currentLoad.agreedRate + bonus).toLocaleString()}`,
+            actionRequired: false,
+            relatedTruckId: truck.id,
+            relatedLoadId: truck.currentLoad.id,
+          });
+          // Обновляем ставку груза
+          const updatedTrucks = trucks.map(t => {
+            if (t.id === truck.id && t.currentLoad) {
+              return {
+                ...t,
+                currentLoad: {
+                  ...t.currentLoad,
+                  agreedRate: t.currentLoad.agreedRate + bonus,
+                },
+              };
+            }
+            return t;
+          });
+          set({ trucks: updatedTrucks });
+        }
+        break;
+    }
+  },
+
   openNegotiation: (load) => {
     set({
       negotiation: {
@@ -1885,3 +2023,4 @@ export function formatTimeWithDate(timeString: string): string {
   // Если не распознали - возвращаем как есть
   return timeString;
 }
+
