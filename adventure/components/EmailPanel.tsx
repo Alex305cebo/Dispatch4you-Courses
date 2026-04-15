@@ -4,23 +4,15 @@ import { Colors } from '../constants/colors';
 import { useGameStore, Notification } from '../store/gameStore';
 import RateConModal from './RateConModal';
 
-type Group = 'urgent' | 'brokers' | 'drivers' | 'docs' | 'done';
+type Group = 'unread' | 'read';
 
 const GROUPS: { id: Group; label: string; icon: string }[] = [
-  { id: 'urgent', label: 'Срочные', icon: '🔴' },
-  { id: 'brokers', label: 'Брокеры', icon: '📧' },
-  { id: 'drivers', label: 'Водители', icon: '🚛' },
-  { id: 'docs', label: 'Документы', icon: '📋' },
-  { id: 'done', label: 'Готово', icon: '✅' },
+  { id: 'unread', label: 'Новые', icon: '🔔' },
+  { id: 'read',   label: 'Прочитанные', icon: '✅' },
 ];
 
 function getGroup(n: Notification): Group {
-  if (n.read) return 'done';
-  if (n.priority === 'critical' || n.priority === 'high') return 'urgent';
-  if (n.type === 'missed_call' || n.type === 'voicemail' || n.type === 'text') return 'drivers';
-  if (n.type === 'rate_con' || n.type === 'pod_ready') return 'docs';
-  if (n.type === 'detention') return 'urgent';
-  return 'brokers';
+  return n.read ? 'read' : 'unread';
 }
 
 function getEmailIcon(type: string) {
@@ -295,7 +287,7 @@ function EmailDetail({ email, onBack }: { email: Notification; onBack: () => voi
 // ─── Главный компонент ────────────────────────────────────────────────────────
 export default function EmailPanel() {
   const { notifications, markNotificationRead } = useGameStore();
-  const [activeGroup, setActiveGroup] = useState<Group>('urgent');
+  const [activeGroup, setActiveGroup] = useState<Group>('unread');
   const [selectedEmail, setSelectedEmail] = useState<Notification | null>(null);
 
   const allEmails = notifications.filter(n =>
@@ -363,7 +355,7 @@ export default function EmailPanel() {
           <View style={s.empty}>
             <Text style={s.emptyIcon}>📭</Text>
             <Text style={s.emptyTitle}>Нет писем</Text>
-            <Text style={s.emptySub}>{activeGroup === 'done' ? 'Нет обработанных' : 'В этой группе пусто'}</Text>
+            <Text style={s.emptySub}>{activeGroup === 'read' ? 'Нет прочитанных' : 'Нет новых уведомлений'}</Text>
           </View>
         ) : (
           filteredEmails.map(email => (
