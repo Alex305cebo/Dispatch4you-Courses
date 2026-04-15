@@ -47,6 +47,16 @@ jobs:
           NODE_ENV: production
           EXPO_PUBLIC_URL: /game
 
+      - name: Add .htaccess for proper routing
+        run: |
+          cat > adventure/dist/.htaccess << 'EOF'
+          RewriteEngine On
+          RewriteBase /game/
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule . /game/index.html [L]
+          EOF
+
       - name: Deploy game to /game folder
         uses: burnett01/rsync-deployments@7.0.1
         with:
