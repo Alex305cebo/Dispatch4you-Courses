@@ -51,11 +51,13 @@ jobs:
       - name: Add .htaccess for proper routing
         run: |
           cat > adventure/dist/.htaccess << 'EOF'
+          Options -MultiViews
           RewriteEngine On
           RewriteBase /game/
           RewriteCond %{REQUEST_FILENAME} !-f
           RewriteCond %{REQUEST_FILENAME} !-d
-          RewriteRule . /game/index.html [L]
+          RewriteCond %{REQUEST_URI} !^/game/index\.html
+          RewriteRule ^ index.html [L]
           EOF
 
       - name: Deploy game to /game folder
