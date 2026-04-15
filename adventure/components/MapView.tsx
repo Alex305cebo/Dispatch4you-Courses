@@ -1,8 +1,12 @@
 ﻿import { useEffect, useRef, useState } from "react";
-import { View, StyleSheet, Platform, Text, TouchableOpacity } from "react-native";
+import { View, StyleSheet, Platform, Text } from "react-native";
 import { useGameStore } from "../store/gameStore";
 import { CITIES, CITY_STATE } from "../constants/config";
 import { Colors } from "../constants/colors";
+import * as am5 from "@amcharts/amcharts5";
+import * as am5map from "@amcharts/amcharts5/map";
+import am5geodata_usaLow from "@amcharts/amcharts5-geodata/usaLow";
+import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 
 const STATUS_COLOR: Record<string, string> = {
   idle: "#94a3b8", driving: "#38bdf8", loaded: "#4ade80",
@@ -69,15 +73,11 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
   useEffect(() => {
     if (!divRef.current) return;
 
-    async function init() {
-      const am5 = await import("@amcharts/amcharts5");
-      const am5map = await import("@amcharts/amcharts5/map");
-      const am5geodata = await import("@amcharts/amcharts5-geodata/usaLow");
-      const am5themes = await import("@amcharts/amcharts5/themes/Animated");
+    function init() {
       am5Ref.current = am5;
 
       const root = am5.Root.new(divRef.current);
-      root.setThemes([am5themes.default.new(root)]);
+      root.setThemes([am5themes_Animated.new(root)]);
       rootRef.current = root;
 
       const chart = root.container.children.push(
@@ -98,7 +98,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
 
       // ── Штаты ──────────────────────────────────────────────────────
       const polygonSeries = chart.series.push(
-        am5map.MapPolygonSeries.new(root, { geoJSON: am5geodata.default })
+        am5map.MapPolygonSeries.new(root, { geoJSON: am5geodata_usaLow })
       );
       polygonSeriesRef.current = polygonSeries;
 
@@ -309,8 +309,6 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
           background: am5.Rectangle.new(root, {
             fill: am5.color(d.color),
             fillOpacity: 0.85,
-            cornerRadiusTL: 4, cornerRadiusTR: 4,
-            cornerRadiusBL: 4, cornerRadiusBR: 4,
           }),
         }));
         nameLabel.get("background")?.adapters.add("fill", (_fill: any, target: any) => {
@@ -551,8 +549,8 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
       // Каждый трак обновляется независимо с рандомным смещением
       const truckIntervals: any[] = [];
       trucksRef.current.forEach((_, i) => {
-        const offset = Math.random() * 2000; // 0–2 сек смещение
-        const interval = 2000 + Math.random() * 1000; // 2–3 сек интервал
+        const offset = Math.random() * 2000;
+        const interval = 2000 + Math.random() * 1000;
         setTimeout(() => {
           updateTruck(i);
           const id = setInterval(() => updateTruck(i), interval);
@@ -560,7 +558,6 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
         }, offset);
       });
 
-      // Линии и штаты обновляем реже — раз в 5 сек
       intervalRef.current = setInterval(updateMap, 5000);
 
       return () => {
@@ -571,7 +568,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
     }
 
     const cleanup = init();
-    return () => { cleanup.then(fn => fn && fn()); };
+    return cleanup;
   }, []);
 
   return (
