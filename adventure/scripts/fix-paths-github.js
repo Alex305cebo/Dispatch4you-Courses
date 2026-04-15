@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GitHub Pages: alex305cebo.github.io/Dispatch4you-Courses/
-// baseUrl=/Dispatch4you-Courses уже прописан в app.json
-// Expo с output=single генерирует пути /_expo/ — нужно добавить базовый путь
+// Expo без baseUrl генерирует пути /_expo/ и /assets/
+// Нужно добавить /Dispatch4you-Courses/ префикс везде
 
 const fs = require('fs');
 const path = require('path');
@@ -9,37 +9,44 @@ const path = require('path');
 const distPath = path.join(__dirname, '../dist');
 const BASE = '/Dispatch4you-Courses';
 
+function fixContent(content) {
+  // src="/_expo/ → src="/Dispatch4you-Courses/_expo/
+  content = content.replace(/src="\/_expo\//g, `src="${BASE}/_expo/`);
+  content = content.replace(/href="\/_expo\//g, `href="${BASE}/_expo/`);
+  content = content.replace(/href="\/favicon/g, `href="${BASE}/favicon`);
+  // preload href
+  content = content.replace(/href="\/_expo\//g, `href="${BASE}/_expo/`);
+  // JS: "/_expo/ и '/_expo/
+  content = content.replace(/"\/(_expo\/)/g, `"${BASE}/$1`);
+  content = content.replace(/'\/(_expo\/)/g, `'${BASE}/$1`);
+  // assets
+  content = content.replace(/src="\/assets\//g, `src="${BASE}/assets/`);
+  content = content.replace(/"\/assets\//g, `"${BASE}/assets/`);
+  return content;
+}
+
 function fixFile(filePath) {
-  let content = fs.readFileSync(filePath, 'utf8');
-  const before = content;
-
-  // Заменяем абсолютные пути /_expo/ → /Dispatch4you-Courses/_expo/
-  content = content.replace(/(['"`(])\/(_expo\/)/g, `$1${BASE}/$2`);
-  content = content.replace(/(['"`(])\/favicon\.ico/g, `$1${BASE}/favicon.ico`);
-
-  if (content !== before) {
-    fs.writeFileSync(filePath, content, 'utf8');
+  const content = fs.readFileSync(filePath, 'utf8');
+  const fixed = fixContent(content);
+  if (fixed !== content) {
+    fs.writeFileSync(filePath, fixed, 'utf8');
     console.log(`  ✅ Fixed: ${path.relative(distPath, filePath)}`);
   }
 }
 
-// Фиксим index.html
+// index.html
 fixFile(path.join(distPath, 'index.html'));
 
-// Фиксим все JS файлы
+// JS бандлы
 const jsDir = path.join(distPath, '_expo/static/js/web');
 if (fs.existsSync(jsDir)) {
-  fs.readdirSync(jsDir).filter(f => f.endsWith('.js')).forEach(f => {
-    fixFile(path.join(jsDir, f));
-  });
+  fs.readdirSync(jsDir).filter(f => f.endsWith('.js')).forEach(f => fixFile(path.join(jsDir, f)));
 }
 
-// Фиксим все CSS файлы
+// CSS
 const cssDir = path.join(distPath, '_expo/static/css');
 if (fs.existsSync(cssDir)) {
-  fs.readdirSync(cssDir).filter(f => f.endsWith('.css')).forEach(f => {
-    fixFile(path.join(cssDir, f));
-  });
+  fs.readdirSync(cssDir).filter(f => f.endsWith('.css')).forEach(f => fixFile(path.join(cssDir, f)));
 }
 
-console.log(`✅ All paths fixed for GitHub Pages (base: ${BASE})`);
+console.log(`✅ Done. Base: ${BASE}`);
