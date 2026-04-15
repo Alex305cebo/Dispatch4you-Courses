@@ -111,130 +111,107 @@ export default function GameScreen() {
   return (
     <View style={styles.container}>
 
-      {/* ══════════════════════════════════════════════
-          TOP HUD — полностью переработан
-      ══════════════════════════════════════════════ */}
-      <View style={[styles.hud, { paddingTop: Platform.OS === 'ios' ? 48 : 10 }]}>
-
-        {/* ROW 1: время + баланс + кнопки */}
-        <View style={styles.hudRow1}>
-
-          {/* Кнопка назад */}
-          <TouchableOpacity onPress={() => {
-            if (clockRef.current) clearInterval(clockRef.current);
-            router.replace('/');
-          }} style={styles.hudBack}>
-            <Text style={styles.hudBackText}>✕</Text>
-          </TouchableOpacity>
-
-          {/* Время + прогресс смены */}
-          <View style={styles.hudTimeWrap}>
-            <Text style={styles.hudTime}>{formatTimeDual(gameMinute)}</Text>
-            {sessionName ? <Text style={styles.hudSession}>{sessionName}</Text> : null}
-            {/* Прогресс смены — тонкая полоска */}
-            <View style={styles.shiftBar}>
-              <View style={[styles.shiftBarFill, { width: `${Math.min(progress * 100, 100)}%` as any }]} />
-            </View>
-          </View>
-
-          {/* Статы */}
-          <View style={styles.hudStats}>
-            <View style={styles.hudStatChip}>
-              <Text style={styles.hudStatEmoji}>💰</Text>
-              <Text style={[styles.hudStatNum, { color: balance < 0 ? Colors.danger : '#4ade80' }]}>
-                ${balance >= 1000 ? `${(balance/1000).toFixed(1)}k` : balance}
-              </Text>
-            </View>
-            <View style={styles.hudStatChip}>
-              <Text style={styles.hudStatEmoji}>📦</Text>
-              <Text style={styles.hudStatNum}>{totalLoads}</Text>
-            </View>
-            <View style={styles.hudStatChip}>
-              <Text style={styles.hudStatEmoji}>⭐</Text>
-              <Text style={[styles.hudStatNum, {
-                color: reputation > 70 ? '#4ade80' : reputation > 40 ? '#fbbf24' : '#f87171'
-              }]}>{reputation}%</Text>
-            </View>
-          </View>
-
-          {/* Уведомления + меню */}
-          <View style={styles.hudActions}>
-            <NotificationBell
-              onNavigateToTrucks={() => setActiveTab('trucks')}
-              onNavigateToLoads={() => setActiveTab('email')}
-              onNavigateToEvents={() => setShowEvents(true)}
-            />
-            <GameMenu
-              onOpenFleet={() => setShowFleet(true)}
-              onOpenCompliance={() => setShowCompliance(true)}
-              onOpenEvents={() => setShowEvents(true)}
-              onOpenMyLoads={() => setShowMyLoads(true)}
-            />
-          </View>
-        </View>
-
-        {/* ROW 2: табы траков */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.truckTabsScroll}
-          contentContainerStyle={styles.truckTabsContent}
-        >
-          {trucks.map(truck => {
-            const color = STATUS_COLOR[truck.status] || '#94a3b8';
-            const hos = Math.max(0, truck.hoursLeft);
-            const hosRounded = Math.round(hos * 10) / 10;
-            const hosColor = hos < 2 ? '#f87171' : hos < 4 ? '#fbbf24' : '#4ade80';
-            const isSelected = selectedTruckId === truck.id;
-            return (
-              <TouchableOpacity
-                key={truck.id}
-                style={[styles.truckTab, isSelected && styles.truckTabSelected, { borderColor: isSelected ? color : 'rgba(255,255,255,0.08)' }]}
-                onPress={() => handleTruckTabClick(truck)}
-                activeOpacity={0.75}
-              >
-                {/* Статус dot */}
-                <View style={[styles.truckDot, { backgroundColor: color }]} />
-                {/* Имя */}
-                <Text style={styles.truckTabName}>{truck.name.replace('Truck ', 'T')}</Text>
-                {/* Статус */}
-                <Text style={[styles.truckTabStatus, { color }]}>{STATUS_SHORT[truck.status]}</Text>
-                {/* Маршрут если едет */}
-                {truck.destinationCity ? (
-                  <Text style={styles.truckTabRoute} numberOfLines={1}>→ {truck.destinationCity}</Text>
-                ) : null}
-                {/* HOS */}
-                <View style={styles.truckTabHos}>
-                  <Text style={[styles.truckTabHosText, { color: hosColor }]}>⏰ {hosRounded}h</Text>
-                </View>
-                {/* Прогресс если едет */}
-                {(truck.status === 'driving' || truck.status === 'loaded') && (
-                  <View style={styles.truckProgress}>
-                    <View style={[styles.truckProgressFill, { width: `${Math.round(truck.progress * 100)}%` as any, backgroundColor: color }]} />
-                  </View>
-                )}
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-
-      </View>
-      {/* ══════════════════════════════════════════════ */}
-
-      {/* ── MAIN CONTENT ── */}
       {isWide ? (
-        <View style={styles.desktopLayout}>
-          <View style={styles.mapArea}>
-            <ErrorBoundary name="MapView"><MapView /></ErrorBoundary>
+        /* ══════════ DESKTOP LAYOUT — 2 колонки на всю высоту ══════════ */
+        <View style={styles.desktopRoot}>
+
+          {/* ЛЕВАЯ КОЛОНКА: время + табы траков + карта */}
+          <View style={styles.leftCol}>
+            {/* HUD: время + прогресс */}
+            <View style={[styles.hud, { paddingTop: Platform.OS === 'ios' ? 48 : 10 }]}>
+              <View style={styles.hudRow1}>
+                <TouchableOpacity onPress={() => {
+                  if (clockRef.current) clearInterval(clockRef.current);
+                  router.replace('/');
+                }} style={styles.hudBack}>
+                  <Text style={styles.hudBackText}>✕</Text>
+                </TouchableOpacity>
+                <View style={styles.hudTimeWrap}>
+                  <Text style={styles.hudTime}>{formatTimeDual(gameMinute)}</Text>
+                  {sessionName ? <Text style={styles.hudSession}>{sessionName}</Text> : null}
+                  <View style={styles.shiftBar}>
+                    <View style={[styles.shiftBarFill, { width: `${Math.min(progress * 100, 100)}%` as any }]} />
+                  </View>
+                </View>
+              </View>
+              {/* Табы траков */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}
+                style={styles.truckTabsScroll} contentContainerStyle={styles.truckTabsContent}>
+                {trucks.map(truck => {
+                  const color = STATUS_COLOR[truck.status] || '#94a3b8';
+                  const hos = Math.max(0, truck.hoursLeft);
+                  const hosRounded = Math.round(hos * 10) / 10;
+                  const hosColor = hos < 2 ? '#f87171' : hos < 4 ? '#fbbf24' : '#4ade80';
+                  const isSelected = selectedTruckId === truck.id;
+                  return (
+                    <TouchableOpacity key={truck.id}
+                      style={[styles.truckTab, isSelected && styles.truckTabSelected, { borderColor: isSelected ? color : 'rgba(255,255,255,0.08)' }]}
+                      onPress={() => handleTruckTabClick(truck)} activeOpacity={0.75}>
+                      <View style={[styles.truckDot, { backgroundColor: color }]} />
+                      <Text style={styles.truckTabName}>{truck.name.replace('Truck ', 'T')}</Text>
+                      <Text style={[styles.truckTabStatus, { color }]}>{STATUS_SHORT[truck.status]}</Text>
+                      {truck.destinationCity ? <Text style={styles.truckTabRoute} numberOfLines={1}>→ {truck.destinationCity}</Text> : null}
+                      <View style={styles.truckTabHos}>
+                        <Text style={[styles.truckTabHosText, { color: hosColor }]}>⏰ {hosRounded}h</Text>
+                      </View>
+                      {(truck.status === 'driving' || truck.status === 'loaded') && (
+                        <View style={styles.truckProgress}>
+                          <View style={[styles.truckProgressFill, { width: `${Math.round(truck.progress * 100)}%` as any, backgroundColor: color }]} />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+            {/* Карта — занимает всё оставшееся место */}
+            <View style={styles.mapArea}>
+              <ErrorBoundary name="MapView"><MapView /></ErrorBoundary>
+            </View>
           </View>
-          <View style={styles.sidePanel}>
+
+          {/* ПРАВАЯ КОЛОНКА: статы + меню + контент */}
+          <View style={styles.rightCol}>
+            {/* Шапка правой колонки: статы + уведомления + гамбургер */}
+            <View style={styles.rightHeader}>
+              <View style={styles.hudStats}>
+                <View style={styles.hudStatChip}>
+                  <Text style={styles.hudStatEmoji}>💰</Text>
+                  <Text style={[styles.hudStatNum, { color: balance < 0 ? Colors.danger : '#4ade80' }]}>
+                    ${balance >= 1000 ? `${(balance/1000).toFixed(1)}k` : balance}
+                  </Text>
+                </View>
+                <View style={styles.hudStatChip}>
+                  <Text style={styles.hudStatEmoji}>📦</Text>
+                  <Text style={styles.hudStatNum}>{totalLoads}</Text>
+                </View>
+                <View style={styles.hudStatChip}>
+                  <Text style={styles.hudStatEmoji}>⭐</Text>
+                  <Text style={[styles.hudStatNum, {
+                    color: reputation > 70 ? '#4ade80' : reputation > 40 ? '#fbbf24' : '#f87171'
+                  }]}>{reputation}%</Text>
+                </View>
+              </View>
+              <View style={styles.hudActions}>
+                <NotificationBell
+                  onNavigateToTrucks={() => setActiveTab('trucks')}
+                  onNavigateToLoads={() => setActiveTab('email')}
+                  onNavigateToEvents={() => setShowEvents(true)}
+                />
+                <GameMenu
+                  onOpenFleet={() => setShowFleet(true)}
+                  onOpenCompliance={() => setShowCompliance(true)}
+                  onOpenEvents={() => setShowEvents(true)}
+                  onOpenMyLoads={() => setShowMyLoads(true)}
+                />
+              </View>
+            </View>
+            {/* Табы навигации */}
             <View style={styles.sideTabs}>
               {tabs.slice(1).map(tab => (
-                <TouchableOpacity
-                  key={tab.id}
+                <TouchableOpacity key={tab.id}
                   style={[styles.sideTab, activeTab === tab.id && styles.sideTabActive]}
-                  onPress={() => setActiveTab(tab.id)}
-                >
+                  onPress={() => setActiveTab(tab.id)}>
                   <Text style={styles.sideTabIcon}>{tab.icon}</Text>
                   <Text style={[styles.sideTabText, activeTab === tab.id && styles.sideTabTextActive]}>{tab.label}</Text>
                   {tab.badge !== undefined && (
@@ -243,34 +220,117 @@ export default function GameScreen() {
                 </TouchableOpacity>
               ))}
             </View>
+            {/* Контент — на всю оставшуюся высоту */}
             <View style={styles.sidePanelContent}>
               {activeTab === 'loadboard' && <ErrorBoundary name="LoadBoardPanel"><LoadBoardPanel onNegotiate={setPendingLoad} /></ErrorBoundary>}
               {activeTab === 'email' && <ErrorBoundary name="EmailPanel"><EmailPanel /></ErrorBoundary>}
               {activeTab === 'trucks' && <ErrorBoundary name="TruckPanel"><TruckPanel onSwitchToLoadBoard={() => setActiveTab('loadboard')} /></ErrorBoundary>}
+              {(activeTab === 'map') && (
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ color: Colors.textDim, fontSize: 14 }}>Выбери раздел выше</Text>
+                </View>
+              )}
             </View>
           </View>
         </View>
-      ) : (
-        <View style={styles.mobileLayout}>
-          {activeTab === 'map' && <ErrorBoundary name="MapView"><MapView /></ErrorBoundary>}
-          {activeTab === 'loadboard' && <ErrorBoundary name="LoadBoardPanel"><LoadBoardPanel onNegotiate={setPendingLoad} /></ErrorBoundary>}
-          {activeTab === 'email' && <ErrorBoundary name="EmailPanel"><EmailPanel /></ErrorBoundary>}
-          {activeTab === 'trucks' && <ErrorBoundary name="TruckPanel"><TruckPanel onSwitchToLoadBoard={() => setActiveTab('loadboard')} /></ErrorBoundary>}
 
-          <View style={styles.bottomTabs}>
-            {tabs.map(tab => (
-              <TouchableOpacity
-                key={tab.id}
-                style={[styles.bottomTab, activeTab === tab.id && styles.bottomTabActive]}
-                onPress={() => setActiveTab(tab.id)}
-              >
-                <Text style={styles.bottomTabIcon}>{tab.icon}</Text>
-                <Text style={[styles.bottomTabText, activeTab === tab.id && styles.bottomTabTextActive]}>{tab.label}</Text>
-                {tab.badge !== undefined && (
-                  <View style={styles.badge}><Text style={styles.badgeText}>{tab.badge}</Text></View>
-                )}
+      ) : (
+        /* ══════════ MOBILE LAYOUT ══════════ */
+        <View style={{ flex: 1 }}>
+          <View style={[styles.hud, { paddingTop: Platform.OS === 'ios' ? 48 : 10 }]}>
+            <View style={styles.hudRow1}>
+              <TouchableOpacity onPress={() => {
+                if (clockRef.current) clearInterval(clockRef.current);
+                router.replace('/');
+              }} style={styles.hudBack}>
+                <Text style={styles.hudBackText}>✕</Text>
               </TouchableOpacity>
-            ))}
+              <View style={styles.hudTimeWrap}>
+                <Text style={styles.hudTime}>{formatTimeDual(gameMinute)}</Text>
+                {sessionName ? <Text style={styles.hudSession}>{sessionName}</Text> : null}
+                <View style={styles.shiftBar}>
+                  <View style={[styles.shiftBarFill, { width: `${Math.min(progress * 100, 100)}%` as any }]} />
+                </View>
+              </View>
+              <View style={styles.hudStats}>
+                <View style={styles.hudStatChip}>
+                  <Text style={styles.hudStatEmoji}>💰</Text>
+                  <Text style={[styles.hudStatNum, { color: balance < 0 ? Colors.danger : '#4ade80' }]}>
+                    ${balance >= 1000 ? `${(balance/1000).toFixed(1)}k` : balance}
+                  </Text>
+                </View>
+                <View style={styles.hudStatChip}>
+                  <Text style={styles.hudStatEmoji}>📦</Text>
+                  <Text style={styles.hudStatNum}>{totalLoads}</Text>
+                </View>
+                <View style={styles.hudStatChip}>
+                  <Text style={styles.hudStatEmoji}>⭐</Text>
+                  <Text style={[styles.hudStatNum, {
+                    color: reputation > 70 ? '#4ade80' : reputation > 40 ? '#fbbf24' : '#f87171'
+                  }]}>{reputation}%</Text>
+                </View>
+              </View>
+              <View style={styles.hudActions}>
+                <NotificationBell
+                  onNavigateToTrucks={() => setActiveTab('trucks')}
+                  onNavigateToLoads={() => setActiveTab('email')}
+                  onNavigateToEvents={() => setShowEvents(true)}
+                />
+                <GameMenu
+                  onOpenFleet={() => setShowFleet(true)}
+                  onOpenCompliance={() => setShowCompliance(true)}
+                  onOpenEvents={() => setShowEvents(true)}
+                  onOpenMyLoads={() => setShowMyLoads(true)}
+                />
+              </View>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}
+              style={styles.truckTabsScroll} contentContainerStyle={styles.truckTabsContent}>
+              {trucks.map(truck => {
+                const color = STATUS_COLOR[truck.status] || '#94a3b8';
+                const hos = Math.max(0, truck.hoursLeft);
+                const hosRounded = Math.round(hos * 10) / 10;
+                const hosColor = hos < 2 ? '#f87171' : hos < 4 ? '#fbbf24' : '#4ade80';
+                const isSelected = selectedTruckId === truck.id;
+                return (
+                  <TouchableOpacity key={truck.id}
+                    style={[styles.truckTab, isSelected && styles.truckTabSelected, { borderColor: isSelected ? color : 'rgba(255,255,255,0.08)' }]}
+                    onPress={() => handleTruckTabClick(truck)} activeOpacity={0.75}>
+                    <View style={[styles.truckDot, { backgroundColor: color }]} />
+                    <Text style={styles.truckTabName}>{truck.name.replace('Truck ', 'T')}</Text>
+                    <Text style={[styles.truckTabStatus, { color }]}>{STATUS_SHORT[truck.status]}</Text>
+                    {truck.destinationCity ? <Text style={styles.truckTabRoute} numberOfLines={1}>→ {truck.destinationCity}</Text> : null}
+                    <View style={styles.truckTabHos}>
+                      <Text style={[styles.truckTabHosText, { color: hosColor }]}>⏰ {hosRounded}h</Text>
+                    </View>
+                    {(truck.status === 'driving' || truck.status === 'loaded') && (
+                      <View style={styles.truckProgress}>
+                        <View style={[styles.truckProgressFill, { width: `${Math.round(truck.progress * 100)}%` as any, backgroundColor: color }]} />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+          <View style={styles.mobileLayout}>
+            {activeTab === 'map' && <ErrorBoundary name="MapView"><MapView /></ErrorBoundary>}
+            {activeTab === 'loadboard' && <ErrorBoundary name="LoadBoardPanel"><LoadBoardPanel onNegotiate={setPendingLoad} /></ErrorBoundary>}
+            {activeTab === 'email' && <ErrorBoundary name="EmailPanel"><EmailPanel /></ErrorBoundary>}
+            {activeTab === 'trucks' && <ErrorBoundary name="TruckPanel"><TruckPanel onSwitchToLoadBoard={() => setActiveTab('loadboard')} /></ErrorBoundary>}
+            <View style={styles.bottomTabs}>
+              {tabs.map(tab => (
+                <TouchableOpacity key={tab.id}
+                  style={[styles.bottomTab, activeTab === tab.id && styles.bottomTabActive]}
+                  onPress={() => setActiveTab(tab.id)}>
+                  <Text style={styles.bottomTabIcon}>{tab.icon}</Text>
+                  <Text style={[styles.bottomTabText, activeTab === tab.id && styles.bottomTabTextActive]}>{tab.label}</Text>
+                  {tab.badge !== undefined && (
+                    <View style={styles.badge}><Text style={styles.badgeText}>{tab.badge}</Text></View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
         </View>
       )}
@@ -409,7 +469,18 @@ const styles = StyleSheet.create({
   },
   truckProgressFill: { height: '100%', borderRadius: 2 },
 
-  // Desktop
+  // Desktop 2-column full-height layout
+  desktopRoot: { flex: 1, flexDirection: 'row' },
+  leftCol: { flex: 1, flexDirection: 'column' },
+  rightCol: { width: 420, borderLeftWidth: 1, borderLeftColor: Colors.border, flexDirection: 'column' },
+  rightHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 12, paddingVertical: 8,
+    borderBottomWidth: 1, borderBottomColor: Colors.border,
+    backgroundColor: 'rgba(5,10,20,0.98)',
+  },
+
+  // Desktop (old, kept for reference)
   desktopLayout: { flex: 1, flexDirection: 'row' },
   mapArea: { flex: 1 },
   sidePanel: {
