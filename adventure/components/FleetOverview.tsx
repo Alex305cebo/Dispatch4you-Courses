@@ -154,7 +154,7 @@ export default function FleetOverview() {
               <Text style={styles.statText}>🛣️ {truck.totalMiles.toLocaleString()} mi</Text>
               <Text style={styles.statText}>📦 {truck.totalDeliveries} loads</Text>
               <Text style={[styles.statText, truck.hoursLeft < 4 && { color: Colors.warning }]}>
-                ⏰ {truck.hoursLeft}h HOS
+                ⏰ {(Math.round(truck.hoursLeft * 10) / 10).toFixed(1)}h HOS
               </Text>
             </View>
 

@@ -50,7 +50,7 @@ export default function AssignModal({ load, onClose }: Props) {
                   <View style={{ flex: 1 }}>
                     <Text style={styles.truckName}>{truck.name} · {truck.driver}</Text>
                     <Text style={styles.truckInfo}>
-                      📍 {cityState(truck.currentCity)} · HOS: {truck.hoursLeft}ч · Настроение: {truck.mood}%
+                      📍 {cityState(truck.currentCity)} · HOS: {(Math.round(truck.hoursLeft * 10) / 10).toFixed(1)}ч · Настроение: {truck.mood}%
                     </Text>
                     <Text style={styles.truckStatus}>{statusBadge}</Text>
                   </View>

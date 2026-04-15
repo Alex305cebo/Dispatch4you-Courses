@@ -190,7 +190,7 @@ export default function LoadDetailModal({ load, onClose, onNegotiate }: Props) {
                     return (
                       <View key={truck.id} style={styles.truckChip}>
                         <Text style={styles.truckChipText}>
-                          {truck.name} · {truck.driver} · {truck.hoursLeft}h HOS
+                          {truck.name} · {truck.driver} · {(Math.round(truck.hoursLeft * 10) / 10).toFixed(1)}h HOS
                         </Text>
                         <Text style={styles.truckStatus}>{statusText}</Text>
                       </View>

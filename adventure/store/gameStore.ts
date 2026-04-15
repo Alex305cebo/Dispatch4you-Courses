@@ -1268,7 +1268,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         const newProgress = Math.min(1, truck.progress + progressPerTick);
 
         // Уменьшаем HOS: 1.2 игровых минуты = 1.2/60 часа
-        const newHoursLeft = Math.max(0, truck.hoursLeft - TICK_MINUTES / 60);
+        const newHoursLeft = Math.round(Math.max(0, truck.hoursLeft - TICK_MINUTES / 60) * 10) / 10;
 
         if (newProgress >= 1) {
           // Трак приехал в пункт назначения

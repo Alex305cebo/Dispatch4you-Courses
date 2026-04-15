@@ -214,7 +214,7 @@ function TrucksContent({ trucks }: { trucks: any[] }) {
                   {statusText}
                 </Text>
               </View>
-              <Text style={styles.truckMeta}>📍 {truck.currentCity} · HOS {truck.hoursLeft}ч · 😊 {truck.mood}%</Text>
+              <Text style={styles.truckMeta}>📍 {truck.currentCity} · HOS {(Math.round(truck.hoursLeft * 10) / 10).toFixed(1)}ч · 😊 {truck.mood}%</Text>
             </View>
             <Text style={styles.clickArrow}>→</Text>
           </TouchableOpacity>
@@ -240,7 +240,7 @@ function TrucksContent({ trucks }: { trucks: any[] }) {
                   </View>
                   <View style={styles.truckDetailStat}>
                     <Text style={styles.truckDetailStatLabel}>HOS осталось</Text>
-                    <Text style={styles.truckDetailStatValue}>⏰ {selectedTruck.hoursLeft}ч</Text>
+                    <Text style={styles.truckDetailStatValue}>⏰ {(Math.round(selectedTruck.hoursLeft * 10) / 10).toFixed(1)}ч</Text>
                   </View>
                   <View style={styles.truckDetailStat}>
                     <Text style={styles.truckDetailStatLabel}>Настроение</Text>

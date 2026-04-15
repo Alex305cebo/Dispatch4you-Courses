@@ -81,7 +81,7 @@ export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}
           <View style={styles.metrics}>
             <View style={styles.metric}>
               <Text style={[styles.metricVal, truck.hoursLeft < 4 && { color: Colors.danger }, isMobile && { fontSize: 12 }]}>
-                {truck.hoursLeft}ч
+                {(Math.round(truck.hoursLeft * 10) / 10).toFixed(1)}ч
               </Text>
               <Text style={[styles.metricLabel, isMobile && { fontSize: 8 }]}>HOS</Text>
             </View>

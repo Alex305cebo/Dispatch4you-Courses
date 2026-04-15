@@ -75,7 +75,7 @@ export default function ComplianceDashboard() {
 
             <View style={styles.metricsRow}>
               <View style={styles.metric}>
-                <Text style={[styles.metricValue, { color: statusColor }]}>{truck.hoursLeft}h</Text>
+                <Text style={[styles.metricValue, { color: statusColor }]}>{(Math.round(truck.hoursLeft * 10) / 10).toFixed(1)}h</Text>
                 <Text style={styles.metricLabel}>HOS Left</Text>
               </View>
               <View style={styles.metric}>

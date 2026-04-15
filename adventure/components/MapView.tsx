@@ -442,7 +442,7 @@ function MapAmCharts() {
               </div>
             )}
             <div style={{ fontSize: 12, color: selectedTruck.hoursLeft < 4 ? "#f87171" : "#94a3b8", fontFamily: "sans-serif" } as any}>
-              ⏰ HOS: {selectedTruck.hoursLeft}h
+              ⏰ HOS: {Math.round(selectedTruck.hoursLeft * 10) / 10}h
             </div>
           </div>
         </div>
