@@ -1,5 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
-import {
+import { useState, useRef, useEffect } from 'react';import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput,
 } from 'react-native';
 import { Colors } from '../constants/colors';
@@ -245,12 +244,36 @@ export default function LoadBoardPanel({ onNegotiate }: Props) {
   const [deadheadRadius, setDeadheadRadius] = useState<number | null>(null);
   const [chatLoad, setChatLoad] = useState<LoadOffer | null>(null);
   const [pendingLoad, setPendingLoad] = useState<ActiveLoad | null>(null);
+  const [countdown, setCountdown] = useState(5);
+  const countdownRef = useRef<any>(null);
+
+  function startCountdown() {
+    setCountdown(5);
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    countdownRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(countdownRef.current);
+          refreshLoadBoard();
+          // restart
+          setTimeout(() => startCountdown(), 100);
+          return 5;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }
+
+  useEffect(() => {
+    startCountdown();
+    return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
+  }, []);
 
   // При монтировании — применить предзаполненный поиск из стора
   useEffect(() => {
     if (loadBoardSearchFrom) {
       setSearchFrom(loadBoardSearchFrom);
-      setLoadBoardSearch(''); // сбросить после применения
+      setLoadBoardSearch('');
     }
   }, [loadBoardSearchFrom]);
 
@@ -317,8 +340,9 @@ export default function LoadBoardPanel({ onNegotiate }: Props) {
             {isFiltering ? `${filteredLoads.length} из ${availableLoads.length}` : availableLoads.length} грузов · {availableTrucks}/{totalTrucks} доступно
           </Text>
         </View>
-        <TouchableOpacity style={styles.refreshBtn} onPress={refreshLoadBoard}>
-          <Text style={styles.refreshText}>🔄</Text>
+        <TouchableOpacity style={styles.refreshBtn} onPress={() => { refreshLoadBoard(); startCountdown(); }}>
+          <Text style={styles.refreshIcon}>🔄</Text>
+          <Text style={styles.refreshCountdown}>{countdown}s</Text>
         </TouchableOpacity>
       </View>
 
@@ -476,16 +500,22 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 16, fontWeight: '900', color: '#fff' },
   headerSub: { fontSize: 11, color: Colors.textDim, marginTop: 2 },
   refreshBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.bgCard,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: 'rgba(6,182,212,0.15)',
+    borderWidth: 2,
+    borderColor: 'rgba(6,182,212,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 2,
   },
-  refreshText: { fontSize: 16 },
+  refreshIcon: { fontSize: 18 },
+  refreshCountdown: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#06b6d4',
+  },
 
   allBusy: {
     margin: 10,
