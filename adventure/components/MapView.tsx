@@ -114,9 +114,11 @@ function MapAmCharts() {
 
       // Клик на штат
       polygonSeries.mapPolygons.template.events.on("click", (ev: any) => {
-        const stateId = ev.target.dataItem?.get("id");
+        const rawId = ev.target.dataItem?.get("id") as string;
         const stateName = ev.target.dataItem?.get("name");
-        if (!stateId) return;
+        if (!rawId) return;
+        // amcharts usaLow возвращает "US-CO", CITY_STATE хранит "CO"
+        const stateId = rawId.replace("US-", "");
         const ts = trucksRef.current;
         const ls = loadsRef.current;
         const trucksInState = ts.filter(t => CITY_STATE[t.currentCity] === stateId || CITY_STATE[t.destinationCity || ""] === stateId);
@@ -324,7 +326,8 @@ function MapAmCharts() {
           if (t.destinationCity && CITY_STATE[t.destinationCity]) activeStates.add(CITY_STATE[t.destinationCity]);
         });
         polygonSeries.mapPolygons.each((polygon: any) => {
-          const stateId = polygon.dataItem?.get("id");
+          const rawId = polygon.dataItem?.get("id") as string;
+          const stateId = rawId?.replace("US-", "");
           if (activeStates.has(stateId)) {
             polygon.set("fill", am5c.color(0x1e5c3a));
             polygon.set("fillOpacity", 1);
