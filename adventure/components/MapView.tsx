@@ -156,12 +156,15 @@ function MapAmCharts() {
         strokeWidth: 0.5,
       });
 
-      // ── Линии маршрутов (кривые по проекции) ──────────────────────
-      const lineSeries = chart.series.push(am5map.MapLineSeries.new(root, {}));
+      // ── Линии маршрутов (кривые геодезические) ────────────────────
+      const lineSeries = chart.series.push(am5map.MapLineSeries.new(root, {
+        lineType: "curved",
+      }));
       lineSeries.mapLines.template.setAll({
         strokeOpacity: 0.7,
         strokeWidth: 2,
         strokeDasharray: [6, 4],
+        stroke: am5.color(0x06b6d4),
       });
       lineSeriesRef.current = lineSeries;
 
@@ -387,24 +390,18 @@ function MapAmCharts() {
           .filter(t => t.destinationCity && CITIES[t.destinationCity])
           .map(t => {
             const dest = CITIES[t.destinationCity!];
-            const color = parseInt((STATUS_COLOR[t.status] || "#94a3b8").replace("#", ""), 16);
             return {
               geometry: { type: "LineString", coordinates: [[t.position[0], t.position[1]], [dest[0], dest[1]]] },
-              stroke: am5c.color(color),
             };
           });
         lineSeries.data.setAll(lineData);
-        lineSeries.mapLines.each((line: any, i: number) => {
-          if (lineData[i]) line.set("stroke", am5c.color(lineData[i].stroke));
-        });
 
         // Стрелки на серединах маршрутов
         const arrowSeries = arrowSeriesRef.current;
         if (arrowSeries) {
-          const arrowData = lineData.map((_: any, i: number) => {
-            const lineDataItem = lineSeries.dataItems[i];
-            return lineDataItem ? { lineDataItem, positionOnLine: 0.5, autoRotate: true } : null;
-          }).filter(Boolean);
+          const arrowData = lineSeries.dataItems.map((lineDataItem: any) =>
+            lineDataItem ? { lineDataItem, positionOnLine: 0.5, autoRotate: true } : null
+          ).filter(Boolean);
           arrowSeries.data.setAll(arrowData);
         }
       }
