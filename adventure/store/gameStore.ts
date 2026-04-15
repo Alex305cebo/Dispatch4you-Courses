@@ -1077,7 +1077,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     // 1 день = 20 реальных минут = 1200 тиков
     // 1 тик = 1440/1200 = 1.2 игровых минуты
     const TICK_MINUTES = 1.2;
-    const newMinute = gameMinute + TICK_MINUTES;
+    const newMinute = Math.round((gameMinute + TICK_MINUTES) * 10) / 10;
 
     if (newMinute >= SHIFT_DURATION) {
       get().endShift();

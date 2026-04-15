@@ -94,7 +94,7 @@ function LoadRow({ load, onCall, isExpanded, onToggle }: {
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>Истекает</Text>
               <Text style={[styles.detailValue, isExpiringSoon && { color: Colors.danger }]}>
-                {timeLeft} мин
+                {Math.round(timeLeft)} мин
               </Text>
             </View>
           </View>

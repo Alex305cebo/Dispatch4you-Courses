@@ -161,7 +161,7 @@ function EmailDetail({ email, onBack }: { email: Notification; onBack: () => voi
           <Text style={s.detailIcon}>{getEmailIcon(email.type)}</Text>
           <View style={{ flex: 1 }}>
             <Text style={s.detailFrom}>{email.from}</Text>
-            <Text style={s.detailTime}>{email.minute < 0 ? 'До смены' : `+${email.minute} мин`}</Text>
+            <Text style={s.detailTime}>{email.minute < 0 ? 'До смены' : `+${Math.round(email.minute)} мин`}</Text>
           </View>
         </View>
         <Text style={s.detailSubject}>{email.subject}</Text>
@@ -382,7 +382,7 @@ export default function EmailPanel() {
                 <Text style={s.emailIcon}>{getEmailIcon(email.type)}</Text>
                 <View style={s.emailHeaderInfo}>
                   <Text style={s.emailFrom}>{email.from}</Text>
-                  <Text style={s.emailTime}>{email.minute < 0 ? 'До смены' : `+${email.minute} мин`}</Text>
+                  <Text style={s.emailTime}>{email.minute < 0 ? 'До смены' : `+${Math.round(email.minute)} мин`}</Text>
                 </View>
                 {!email.read && <View style={s.unreadDot} />}
               </View>
