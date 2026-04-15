@@ -1303,6 +1303,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       set({ pendingEmailResponses: remainingResponses });
     }
 
+    // Случайные события каждые 32 игровых минуты (50% шанс)
+    if (newMinute % 32 === 0 && newMinute > 0 && Math.random() < 0.5) {
+      setTimeout(() => get().triggerRandomEvent(), 500);
+    }
+
     set({
       gameMinute: newMinute,
       trucks: updatedTrucks,

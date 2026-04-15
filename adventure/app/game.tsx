@@ -41,19 +41,10 @@ export default function GameScreen() {
   const [showMyLoads, setShowMyLoads] = useState(false);
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Игровые часы — всегда идут + случайные события
+  // Игровые часы — всегда идут
   useEffect(() => {
-    let eventCounter = 0;
     clockRef.current = setInterval(() => {
       tickClock();
-      eventCounter++;
-      // Каждые 2.5 минуты (150 секунд) — шанс случайного события
-      if (eventCounter >= 150) {
-        eventCounter = 0;
-        if (Math.random() > 0.4) { // 60% шанс
-          useGameStore.getState().triggerRandomEvent();
-        }
-      }
     }, 1000); // каждую реальную секунду
     
     return () => { if (clockRef.current) clearInterval(clockRef.current); };
