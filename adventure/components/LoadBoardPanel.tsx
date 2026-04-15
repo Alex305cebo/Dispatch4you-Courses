@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { Colors } from '../constants/colors';
 import { useGameStore, LoadOffer, ActiveLoad } from '../store/gameStore';
-import { cityState, CITY_STATE } from '../constants/config';
+import { cityState, CITY_STATE, CITIES } from '../constants/config';
 import NegotiationChat from './NegotiationChat';
 import AssignModal from './AssignModal';
 
@@ -189,6 +189,7 @@ export default function LoadBoardPanel({ onNegotiate }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchFrom, setSearchFrom] = useState('');
   const [searchTo, setSearchTo] = useState('');
+  const [deadheadRadius, setDeadheadRadius] = useState<number | null>(null);
   const [chatLoad, setChatLoad] = useState<LoadOffer | null>(null);
   const [pendingLoad, setPendingLoad] = useState<ActiveLoad | null>(null);
 
@@ -224,7 +225,7 @@ export default function LoadBoardPanel({ onNegotiate }: Props) {
     setChatLoad(null);
   }
 
-  // Фильтрация по городу/штату
+  // Фильтрация по городу/штату + deadhead radius
   const filteredLoads = availableLoads.filter(load => {
     const fromMatch = searchFrom.trim() === '' ||
       load.fromCity.toLowerCase().includes(searchFrom.toLowerCase()) ||
@@ -232,10 +233,26 @@ export default function LoadBoardPanel({ onNegotiate }: Props) {
     const toMatch = searchTo.trim() === '' ||
       load.toCity.toLowerCase().includes(searchTo.toLowerCase()) ||
       (CITY_STATE[load.toCity] || '').toLowerCase().includes(searchTo.toLowerCase());
-    return fromMatch && toMatch;
+
+    // Deadhead radius фильтр — ищем грузы в радиусе от города поиска
+    let radiusMatch = true;
+    if (deadheadRadius && searchFrom.trim() !== '') {
+      const originCity = Object.keys(CITIES).find(c =>
+        c.toLowerCase().includes(searchFrom.toLowerCase())
+      );
+      if (originCity && CITIES[originCity] && CITIES[load.fromCity]) {
+        const [ox, oy] = CITIES[originCity];
+        const [fx, fy] = CITIES[load.fromCity];
+        // 1 градус ≈ 69 миль
+        const distMiles = Math.round(Math.hypot(fx - ox, fy - oy) * 69);
+        radiusMatch = distMiles <= deadheadRadius;
+      }
+    }
+
+    return fromMatch && toMatch && radiusMatch;
   });
 
-  const isFiltering = searchFrom.trim() !== '' || searchTo.trim() !== '';
+  const isFiltering = searchFrom.trim() !== '' || searchTo.trim() !== '' || deadheadRadius !== null;
 
   return (
     <View style={styles.container}>
@@ -264,6 +281,27 @@ export default function LoadBoardPanel({ onNegotiate }: Props) {
           onChange={setSearchTo}
           placeholder="🔍 Куда (город или штат)"
         />
+      </View>
+
+      {/* Deadhead radius фильтр */}
+      <View style={deadheadStyles.row}>
+        <Text style={deadheadStyles.label}>📍 Deadhead:</Text>
+        {[100, 150, 200].map(r => (
+          <TouchableOpacity
+            key={r}
+            style={[deadheadStyles.btn, deadheadRadius === r && deadheadStyles.btnActive]}
+            onPress={() => setDeadheadRadius(deadheadRadius === r ? null : r)}
+          >
+            <Text style={[deadheadStyles.btnText, deadheadRadius === r && deadheadStyles.btnTextActive]}>
+              {r}mi
+            </Text>
+          </TouchableOpacity>
+        ))}
+        {deadheadRadius !== null && (
+          <TouchableOpacity style={deadheadStyles.clearBtn} onPress={() => setDeadheadRadius(null)}>
+            <Text style={deadheadStyles.clearText}>✕ Сброс</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {availableTrucks === 0 && availableLoads.length > 0 && (
@@ -368,6 +406,59 @@ const searchStyles = StyleSheet.create({
     fontSize: 13,
     color: '#e2e8f0',
     fontWeight: '600',
+  },
+});
+
+const deadheadStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    flexWrap: 'wrap',
+  },
+  label: {
+    fontSize: 11,
+    color: Colors.textDim,
+    fontWeight: '600',
+    marginRight: 2,
+  },
+  btn: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.bgCard,
+  },
+  btnActive: {
+    borderColor: Colors.primary,
+    backgroundColor: 'rgba(6,182,212,0.15)',
+  },
+  btnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.textDim,
+  },
+  btnTextActive: {
+    color: Colors.primary,
+  },
+  clearBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.4)',
+    backgroundColor: 'rgba(239,68,68,0.1)',
+    marginLeft: 4,
+  },
+  clearText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#ef4444',
   },
 });
 

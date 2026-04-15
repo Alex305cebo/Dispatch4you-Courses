@@ -28,7 +28,10 @@ const HUBS = [
   "Portland","San Francisco","Las Vegas","Salt Lake City",
 ];
 
-export default function MapView() {
+export default function MapView({ onTruckInfo, onFindLoad }: {
+  onTruckInfo?: (truckId: string) => void;
+  onFindLoad?: (city: string) => void;
+}) {
   if (Platform.OS !== "web") {
     return (
       <View style={styles.container}>
@@ -36,10 +39,13 @@ export default function MapView() {
       </View>
     );
   }
-  return <MapAmCharts />;
+  return <MapAmCharts onTruckInfo={onTruckInfo} onFindLoad={onFindLoad} />;
 }
 
-function MapAmCharts() {
+function MapAmCharts({ onTruckInfo, onFindLoad }: {
+  onTruckInfo?: (truckId: string) => void;
+  onFindLoad?: (city: string) => void;
+}) {
   const divRef = useRef<any>(null);
   const chartRef = useRef<any>(null);
   const rootRef = useRef<any>(null);
@@ -158,35 +164,48 @@ function MapAmCharts() {
         strokeWidth: 0.5,
       });
 
-      // ── Линии маршрутов (кривые геодезические) ────────────────────
-      const lineSeries = chart.series.push(am5map.MapLineSeries.new(root, {
-        lineType: "curved",
-      }));
-      lineSeries.mapLines.template.setAll({
-        strokeOpacity: 0.7,
-        strokeWidth: 2,
-        strokeDasharray: [6, 4],
-        stroke: am5.color(0x06b6d4),
-      });
+      // ── Линии маршрутов — невидимые направляющие ─────────────────
+      const lineSeries = chart.series.push(am5map.MapLineSeries.new(root, {}));
+      lineSeries.mapLines.template.setAll({ strokeOpacity: 0 });
       lineSeriesRef.current = lineSeries;
 
-      // ── Стрелки на маршрутах ───────────────────────────────────────
-      const arrowSeries = chart.series.push(am5map.MapPointSeries.new(root, {}));
-      arrowSeries.bullets.push(() => {
-        const arrow = am5.Graphics.new(root, {
-          fill: am5.color(0x06b6d4),
-          stroke: am5.color(0x06b6d4),
-          draw: (display: any) => {
-            display.moveTo(0, -3);
-            display.lineTo(8, 0);
-            display.lineTo(0, 3);
-            display.lineTo(0, -3);
-          },
+      // ── Анимированные линии (видимые, соединяют 2 бегущие точки) ──
+      const animatedLineSeries = chart.series.push(am5map.MapLineSeries.new(root, {}));
+      animatedLineSeries.mapLines.template.setAll({
+        stroke: am5.color(0x06b6d4),
+        strokeOpacity: 0.8,
+        strokeWidth: 2,
+      });
+      arrowSeriesRef.current = animatedLineSeries;
+
+      // ── Невидимые точки которые бегут по направляющим ─────────────
+      const animatedBulletSeries = chart.series.push(am5map.MapPointSeries.new(root, {}));
+      animatedBulletSeries.bullets.push(() => {
+        return am5.Bullet.new(root, {
+          sprite: am5.Circle.new(root, { radius: 0 }),
         });
-        return am5.Bullet.new(root, { sprite: arrow });
       });
 
-      arrowSeriesRef.current = arrowSeries;
+      // Хранилище активных анимаций для очистки
+      const activeAnimations: any[] = [];
+
+      function animateStart(startItem: any, endItem: any, duration: number) {
+        const anim = startItem.animate({ key: "positionOnLine", from: 0, to: 1, duration });
+        activeAnimations.push(anim);
+        anim.events.on("stopped", () => animateEnd(startItem, endItem, duration));
+      }
+      function animateEnd(startItem: any, endItem: any, duration: number) {
+        startItem.set("positionOnLine", 0);
+        const anim = endItem.animate({ key: "positionOnLine", from: 0, to: 1, duration });
+        activeAnimations.push(anim);
+        anim.events.on("stopped", () => animateStart(startItem, endItem, duration));
+      }
+
+      // Ref для управления анимациями маршрутов
+      (lineSeriesRef as any).animatedBulletSeries = animatedBulletSeries;
+      (lineSeriesRef as any).animatedLineSeries = animatedLineSeries;
+      (lineSeriesRef as any).animateStart = animateStart;
+      (lineSeriesRef as any).animateEnd = animateEnd;
 
       // ── Города ────────────────────────────────────────────────────
       const citySeries = chart.series.push(
@@ -259,11 +278,16 @@ function MapAmCharts() {
           radius: 10, fill: am5.color(0x000000), fillOpacity: 0.3, dy: 3, dx: 2,
         }));
 
-        // Основной круг
-        container.children.push(am5.Circle.new(root, {
+        // Основной круг — с адаптером для динамического цвета
+        const mainCircle = container.children.push(am5.Circle.new(root, {
           radius: 10, fill: am5.color(d.color),
           stroke: am5.color(0xffffff), strokeWidth: 2,
         }));
+        mainCircle.adapters.add("fill", (_fill: any, target: any) => {
+          const ctx = target.dataItem?.dataContext as any;
+          return ctx?.color !== undefined ? am5.color(ctx.color) : _fill;
+        });
+        mainCircle.adapters.add("stroke", (_stroke: any) => am5.color(0xffffff));
 
         // Иконка статуса
         const icon = d.breakdown ? "⚠️" : d.waiting ? "⏱" : "🚛";
@@ -275,7 +299,7 @@ function MapAmCharts() {
         }));
 
         // Имя трака над иконкой
-        container.children.push(am5.Label.new(root, {
+        const nameLabel = container.children.push(am5.Label.new(root, {
           text: d.truckName,
           fill: am5.color(0xffffff),
           fontSize: 8,
@@ -289,6 +313,10 @@ function MapAmCharts() {
             cornerRadiusBL: 4, cornerRadiusBR: 4,
           }),
         }));
+        nameLabel.get("background")?.adapters.add("fill", (_fill: any, target: any) => {
+          const ctx = (target.parent as any)?.dataItem?.dataContext as any;
+          return ctx?.color !== undefined ? am5.color(ctx.color) : _fill;
+        });
 
         // Миль до доставки
         if (d.milesLeft > 0) {
@@ -301,9 +329,13 @@ function MapAmCharts() {
           }));
         }
 
-        // Клик на трак
+        // Клик на трак — зум к позиции
         container.events.on("click", () => {
           setSelectedTruck(d);
+          const chart = chartRef.current;
+          if (chart && d.lng !== undefined && d.lat !== undefined) {
+            chart.zoomToGeoPoint({ longitude: d.lng, latitude: d.lat }, 4, true);
+          }
         });
 
         return am5.Bullet.new(root, { sprite: container });
@@ -314,6 +346,8 @@ function MapAmCharts() {
       zoomControl.homeButton.set("visible", true);
 
       // ── Обновление данных ──────────────────────────────────────────
+      let firstRun = true;
+
       function updateMap() {
         const ts = trucksRef.current;
         const am5c = am5Ref.current;
@@ -337,8 +371,7 @@ function MapAmCharts() {
           }
         });
 
-        // Обновляем траки — разделяем стакнутые маркеры
-        // Группируем по округлённым координатам чтобы найти совпадения
+        // Jitter расчёт
         const positionCount: Record<string, number> = {};
         const positionIndex: Record<string, number> = {};
         ts.forEach(t => {
@@ -351,23 +384,18 @@ function MapAmCharts() {
           const milesLeft = dest ? Math.round(
             Math.hypot(dest[0] - t.position[0], dest[1] - t.position[1]) * 55
           ) : 0;
-
-          // Jitter: если несколько траков на одной позиции — раскладываем по кругу
           const key = `${t.position[0].toFixed(2)},${t.position[1].toFixed(2)}`;
           const total = positionCount[key] || 1;
           positionIndex[key] = (positionIndex[key] || 0);
           const idx = positionIndex[key];
           positionIndex[key]++;
-
-          let jitterLng = 0;
-          let jitterLat = 0;
+          let jitterLng = 0, jitterLat = 0;
           if (total > 1) {
             const angle = (2 * Math.PI * idx) / total;
-            const radius = 0.8; // градусы — ~50-80 миль разброс
+            const radius = 0.8;
             jitterLng = Math.cos(angle) * radius;
             jitterLat = Math.sin(angle) * radius;
           }
-
           return {
             lat: t.position[1] + jitterLat,
             lng: t.position[0] + jitterLng,
@@ -375,7 +403,15 @@ function MapAmCharts() {
             driver: t.driver,
             status: t.status,
             statusLabel: STATUS_LABEL[t.status] || t.status,
-            color: parseInt((STATUS_COLOR[t.status] || "#94a3b8").replace("#", ""), 16),
+            color: parseInt((() => {
+              const outOfOrder = (t as any).outOfOrderUntil;
+              if (outOfOrder && outOfOrder > 0) return "#ff0000"; // out of service — ярко красный
+              const warn = (t as any).idleWarningLevel ?? 0;
+              if (warn === 3) return "#ef4444"; // красный
+              if (warn === 2) return "#f97316"; // оранжевый
+              if (warn === 1) return "#fbbf24"; // жёлтый
+              return STATUS_COLOR[t.status] || "#94a3b8";
+            })().replace("#", ""), 16),
             active: t.status === "loaded" || t.status === "driving",
             breakdown: t.status === "breakdown",
             waiting: t.status === "waiting",
@@ -384,36 +420,152 @@ function MapAmCharts() {
             destinationCity: t.destinationCity || "",
             hoursLeft: t.hoursLeft,
             currentLoad: t.currentLoad,
+            truckId: t.id,
           };
         });
-        truckSeries.data.setAll(pointData);
 
-        // Обновляем линии маршрутов
-        const lineData = ts
-          .filter(t => t.destinationCity && CITIES[t.destinationCity])
-          .map(t => {
-            const dest = CITIES[t.destinationCity!];
-            return {
-              geometry: { type: "LineString", coordinates: [[t.position[0], t.position[1]], [dest[0], dest[1]]] },
-            };
+        if (firstRun) {
+          truckSeries.data.setAll(pointData);
+          firstRun = false;
+        } else if (truckSeries.dataItems.length !== pointData.length) {
+          truckSeries.data.setAll(pointData);
+        } else {
+          // Обновляем через setIndex — не пересоздаёт буллеты, только меняет данные
+          pointData.forEach((d, i) => {
+            truckSeries.data.setIndex(i, d);
           });
-        lineSeries.data.setAll(lineData);
+        }
 
-        // Стрелки на серединах маршрутов
-        const arrowSeries = arrowSeriesRef.current;
-        if (arrowSeries) {
-          const arrowData = lineSeries.dataItems.map((lineDataItem: any) =>
-            lineDataItem ? { lineDataItem, positionOnLine: 0.5, autoRotate: true } : null
-          ).filter(Boolean);
-          arrowSeries.data.setAll(arrowData);
+        // ── Анимированные линии маршрутов ─────────────────────────
+        const trucksWithRoute = ts.filter(t => t.destinationCity && CITIES[t.destinationCity]);
+        const animBS = (lineSeriesRef as any).animatedBulletSeries;
+        const animLS = (lineSeriesRef as any).animatedLineSeries;
+        const animStart = (lineSeriesRef as any).animateStart;
+
+        // Очищаем старые линии и пересоздаём только если маршруты изменились
+        const currentRouteKey = trucksWithRoute.map(t => `${t.id}:${t.destinationCity}`).join('|');
+        if ((lineSeriesRef as any).lastRouteKey !== currentRouteKey) {
+          (lineSeriesRef as any).lastRouteKey = currentRouteKey;
+
+          // Очищаем
+          lineSeries.data.clear();
+          if (animBS) animBS.data.clear();
+          if (animLS) animLS.data.clear();
+
+          // Создаём новые анимированные линии
+          trucksWithRoute.forEach(t => {
+            const dest = CITIES[t.destinationCity!];
+            const color = parseInt((STATUS_COLOR[t.status] || "#06b6d4").replace("#", ""), 16);
+
+            // Невидимая направляющая
+            const lineDataItem = lineSeries.pushDataItem({
+              geometry: { type: "LineString", coordinates: [[t.position[0], t.position[1]], [dest[0], dest[1]]] },
+            });
+
+            if (animBS && animLS && animStart) {
+              const startItem = animBS.pushDataItem({ lineDataItem, positionOnLine: 0 });
+              const endItem = animBS.pushDataItem({ lineDataItem, positionOnLine: 0 });
+
+              const animLineItem = animLS.pushDataItem({
+                pointsToConnect: [startItem, endItem],
+              });
+              animLS.mapLines.each((line: any) => {
+                if (line.dataItem === animLineItem) {
+                  line.set("stroke", am5c.color(color));
+                }
+              });
+
+              const distance = Math.hypot(dest[0] - t.position[0], dest[1] - t.position[1]);
+              const duration = Math.max(1500, distance * 120);
+              animStart(startItem, endItem, duration);
+            }
+          });
+        }
+      }
+
+      // Функция обновления одного трака по индексу
+      function updateTruck(index: number) {
+        const ts = trucksRef.current;
+        const am5c = am5Ref.current;
+        if (!am5c || index >= ts.length) return;
+
+        const t = ts[index];
+        const dest = t.destinationCity ? CITIES[t.destinationCity] : null;
+        const milesLeft = dest ? Math.round(
+          Math.hypot(dest[0] - t.position[0], dest[1] - t.position[1]) * 55
+        ) : 0;
+
+        const positionCount: Record<string, number> = {};
+        const positionIndex: Record<string, number> = {};
+        ts.forEach(tr => {
+          const key = `${tr.position[0].toFixed(2)},${tr.position[1].toFixed(2)}`;
+          positionCount[key] = (positionCount[key] || 0) + 1;
+        });
+
+        const key = `${t.position[0].toFixed(2)},${t.position[1].toFixed(2)}`;
+        const total = positionCount[key] || 1;
+        const idx = ts.slice(0, index).filter(tr =>
+          `${tr.position[0].toFixed(2)},${tr.position[1].toFixed(2)}` === key
+        ).length;
+        let jitterLng = 0, jitterLat = 0;
+        if (total > 1) {
+          const angle = (2 * Math.PI * idx) / total;
+          jitterLng = Math.cos(angle) * 0.8;
+          jitterLat = Math.sin(angle) * 0.8;
+        }
+
+        const d = {
+          lat: t.position[1] + jitterLat,
+          lng: t.position[0] + jitterLng,
+          truckName: t.name.replace("Truck ", "T"),
+          driver: t.driver,
+          status: t.status,
+          statusLabel: STATUS_LABEL[t.status] || t.status,
+          color: parseInt((() => {
+            const outOfOrder = (t as any).outOfOrderUntil;
+            if (outOfOrder && outOfOrder > 0) return "#ff0000";
+            const warn = (t as any).idleWarningLevel ?? 0;
+            if (warn === 3) return "#ef4444";
+            if (warn === 2) return "#f97316";
+            if (warn === 1) return "#fbbf24";
+            return STATUS_COLOR[t.status] || "#94a3b8";
+          })().replace("#", ""), 16),
+          active: t.status === "loaded" || t.status === "driving",
+          breakdown: t.status === "breakdown",
+          waiting: t.status === "waiting",
+          milesLeft,
+          currentCity: t.currentCity,
+          destinationCity: t.destinationCity || "",
+          hoursLeft: t.hoursLeft,
+          currentLoad: t.currentLoad,
+          truckId: t.id,
+        };
+
+        if (truckSeries.dataItems[index]) {
+          truckSeries.data.setIndex(index, d);
         }
       }
 
       updateMap();
-      intervalRef.current = setInterval(updateMap, 1000);
+
+      // Каждый трак обновляется независимо с рандомным смещением
+      const truckIntervals: any[] = [];
+      trucksRef.current.forEach((_, i) => {
+        const offset = Math.random() * 2000; // 0–2 сек смещение
+        const interval = 2000 + Math.random() * 1000; // 2–3 сек интервал
+        setTimeout(() => {
+          updateTruck(i);
+          const id = setInterval(() => updateTruck(i), interval);
+          truckIntervals.push(id);
+        }, offset);
+      });
+
+      // Линии и штаты обновляем реже — раз в 5 сек
+      intervalRef.current = setInterval(updateMap, 5000);
 
       return () => {
         clearInterval(intervalRef.current);
+        truckIntervals.forEach(id => clearInterval(id));
         root.dispose();
       };
     }
@@ -424,7 +576,7 @@ function MapAmCharts() {
 
   return (
     <View style={styles.container}>
-      <div ref={divRef} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%" } as any} />
+      <div ref={divRef} style={{ width: "100%", height: "100%", display: "block" } as any} />
 
       {/* Легенда */}
       <div style={{
@@ -446,42 +598,41 @@ function MapAmCharts() {
         })}
       </div>
 
-      {/* Попап трака */}
+      {/* Компактная плашка трака */}
       {selectedTruck && (
         <div style={{
-          position: "absolute", top: "50%", left: "50%",
-          transform: "translate(-50%,-50%)",
-          background: "rgba(8,14,28,0.97)", borderRadius: 16,
-          border: `2px solid ${STATUS_COLOR[selectedTruck.status]}`,
-          padding: "16px 20px", minWidth: 240, zIndex: 1000,
-          boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+          position: "absolute", bottom: 20, left: "50%",
+          transform: "translateX(-50%)",
+          background: "rgba(8,14,28,0.96)",
+          border: `1px solid ${STATUS_COLOR[selectedTruck.status]}`,
+          borderRadius: 12, padding: "10px 14px",
+          display: "flex", alignItems: "center", gap: 12,
+          zIndex: 1000, boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+          fontFamily: "sans-serif", whiteSpace: "nowrap",
         } as any}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 } as any}>
-            <span style={{ fontSize: 15, fontWeight: 800, color: "#fff", fontFamily: "sans-serif" } as any}>
-              🚛 {selectedTruck.truckName}
-            </span>
-            <span onClick={() => setSelectedTruck(null)} style={{ cursor: "pointer", fontSize: 18, color: "#94a3b8", fontFamily: "sans-serif" } as any}>✕</span>
+          {/* Статус dot */}
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: STATUS_COLOR[selectedTruck.status], flexShrink: 0 } as any} />
+          {/* Имя + статус */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 } as any}>
+            <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" } as any}>🚛 {selectedTruck.truckName}</span>
+            <span style={{ fontSize: 11, color: STATUS_COLOR[selectedTruck.status] } as any}>{selectedTruck.statusLabel} · {selectedTruck.currentCity}</span>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 } as any}>
-            <div style={{ fontSize: 12, color: "#94a3b8", fontFamily: "sans-serif" } as any}>👤 {selectedTruck.driver}</div>
-            <div style={{ fontSize: 12, color: STATUS_COLOR[selectedTruck.status], fontWeight: 700, fontFamily: "sans-serif" } as any}>
-              {STATUS_EMOJI[selectedTruck.status]} {selectedTruck.statusLabel}
-            </div>
-            <div style={{ fontSize: 12, color: "#e2e8f0", fontFamily: "sans-serif" } as any}>📍 {selectedTruck.currentCity}</div>
-            {selectedTruck.destinationCity && (
-              <div style={{ fontSize: 12, color: "#e2e8f0", fontFamily: "sans-serif" } as any}>
-                🎯 → {selectedTruck.destinationCity} ({selectedTruck.milesLeft} mi)
-              </div>
-            )}
-            {selectedTruck.currentLoad && (
-              <div style={{ fontSize: 12, color: "#4ade80", fontWeight: 700, fontFamily: "sans-serif" } as any}>
-                📦 {selectedTruck.currentLoad.commodity} · ${selectedTruck.currentLoad.agreedRate?.toLocaleString()}
-              </div>
-            )}
-            <div style={{ fontSize: 12, color: selectedTruck.hoursLeft < 4 ? "#f87171" : "#94a3b8", fontFamily: "sans-serif" } as any}>
-              ⏰ HOS: {Math.round(selectedTruck.hoursLeft * 10) / 10}h
-            </div>
-          </div>
+          {/* Кнопки */}
+          <button onClick={() => onTruckInfo?.(selectedTruck.truckId)} style={{
+            background: "rgba(6,182,212,0.15)", border: "1px solid rgba(6,182,212,0.4)",
+            borderRadius: 8, padding: "6px 12px", color: "#06b6d4",
+            fontSize: 12, fontWeight: 700, cursor: "pointer",
+          } as any}>📋 Инфо</button>
+          {(selectedTruck.status === 'idle' || selectedTruck.status === 'at_delivery') && (
+            <button onClick={() => { onFindLoad?.(selectedTruck.currentCity); setSelectedTruck(null); chartRef.current?.goHome(); }} style={{
+              background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.4)",
+              borderRadius: 8, padding: "6px 12px", color: "#4ade80",
+              fontSize: 12, fontWeight: 700, cursor: "pointer",
+            } as any}>🔍 Найти груз</button>
+          )}
+          {/* Закрыть */}
+          <span onClick={() => { setSelectedTruck(null); chartRef.current?.goHome(); }}
+            style={{ cursor: "pointer", fontSize: 16, color: "#64748b", paddingLeft: 4 } as any}>✕</span>
         </div>
       )}
 
@@ -518,7 +669,7 @@ function MapAmCharts() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg, position: 'relative' },
+  container: { flex: 1, backgroundColor: Colors.bg, overflow: 'hidden' as any },
   text: { color: Colors.textMuted, fontSize: 16 },
 });
 

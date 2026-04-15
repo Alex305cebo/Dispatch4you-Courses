@@ -9,9 +9,10 @@ interface GameMenuProps {
   onOpenCompliance?: () => void;
   onOpenEvents?: () => void;
   onOpenMyLoads?: () => void;
+  onExit?: () => void;
 }
 
-export default function GameMenu({ onOpenFleet, onOpenCompliance, onOpenEvents, onOpenMyLoads }: GameMenuProps) {
+export default function GameMenu({ onOpenFleet, onOpenCompliance, onOpenEvents, onOpenMyLoads, onExit }: GameMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const { gameMinute, balance, reputation, trucks, activeLoads, bookedLoads, activeEvents } = useGameStore();
@@ -74,7 +75,7 @@ export default function GameMenu({ onOpenFleet, onOpenCompliance, onOpenEvents, 
     { 
       icon: '🚪', 
       label: 'Выйти из игры', 
-      action: () => { handleClose(); router.replace('/'); },
+      action: () => { handleClose(); onExit?.(); router.replace('/'); },
       color: Colors.danger 
     },
   ];

@@ -35,6 +35,9 @@ export interface Truck {
   totalDeliveries: number; // всего доставок
   hosViolations: number; // количество нарушений HOS
   lastInspection: number; // минута последней инспекции
+  idleSinceMinute?: number; // минута когда трак встал (для idle warning)
+  outOfOrderUntil?: number; // минута до которой трак out of order (police inspection)
+  idleWarningLevel?: 0 | 1 | 2 | 3; // 0=ok, 1=yellow, 2=orange, 3=red
 }
 
 export interface LoadOffer {
@@ -393,202 +396,76 @@ const INITIAL_LOAD_6: ActiveLoad = {
 
 const INITIAL_TRUCKS: Truck[] = [
   {
-    id: 'T1',
-    name: 'Truck 1047',
-    driver: 'John Martinez',
-    status: 'idle',
-    position: CITIES['Nashville'],
-    currentCity: 'Nashville',
-    destinationCity: null,
-    progress: 0,
-    currentLoad: null,
-    hoursLeft: 11,
-    mood: 90,
-    routePath: null,
-    safetyScore: 95,
-    fuelEfficiency: 6.8,
-    onTimeRate: 98,
-    complianceRate: 100,
-    totalMiles: 45230,
-    totalDeliveries: 156,
-    hosViolations: 0,
-    lastInspection: 0,
+    id: 'T1', name: 'Truck 1047', driver: 'John Martinez',
+    status: 'loaded', position: CITIES['Chicago'],
+    currentCity: 'Chicago', destinationCity: 'Dallas',
+    progress: 0.15, currentLoad: null, hoursLeft: 11, mood: 90, routePath: null,
+    safetyScore: 95, fuelEfficiency: 6.8, onTimeRate: 98, complianceRate: 100,
+    totalMiles: 45230, totalDeliveries: 156, hosViolations: 0, lastInspection: 0,
   },
   {
-    id: 'T2',
-    name: 'Truck 2023',
-    driver: 'Carlos Rivera',
-    status: 'idle',
-    position: CITIES['Nashville'],
-    currentCity: 'Nashville',
-    destinationCity: null,
-    progress: 0,
-    currentLoad: null,
-    hoursLeft: 9,
-    mood: 85,
-    routePath: null,
-    safetyScore: 92,
-    fuelEfficiency: 7.1,
-    onTimeRate: 96,
-    complianceRate: 98,
-    totalMiles: 38450,
-    totalDeliveries: 142,
-    hosViolations: 1,
-    lastInspection: 0,
+    id: 'T2', name: 'Truck 2023', driver: 'Carlos Rivera',
+    status: 'loaded', position: CITIES['Atlanta'],
+    currentCity: 'Atlanta', destinationCity: 'New York',
+    progress: 0.2, currentLoad: null, hoursLeft: 9, mood: 85, routePath: null,
+    safetyScore: 92, fuelEfficiency: 7.1, onTimeRate: 96, complianceRate: 98,
+    totalMiles: 38450, totalDeliveries: 142, hosViolations: 1, lastInspection: 0,
   },
   {
-    id: 'T3',
-    name: 'Truck 3012',
-    driver: 'Mike Chen',
-    status: 'idle',
-    position: CITIES['Nashville'],
-    currentCity: 'Nashville',
-    destinationCity: null,
-    progress: 0,
-    currentLoad: null,
-    hoursLeft: 11,
-    mood: 95,
-    routePath: null,
-    safetyScore: 98,
-    fuelEfficiency: 7.3,
-    onTimeRate: 99,
-    complianceRate: 100,
-    totalMiles: 52100,
-    totalDeliveries: 178,
-    hosViolations: 0,
-    lastInspection: 0,
+    id: 'T3', name: 'Truck 3012', driver: 'Mike Chen',
+    status: 'driving', position: CITIES['Denver'],
+    currentCity: 'Denver', destinationCity: 'Los Angeles',
+    progress: 0.1, currentLoad: null, hoursLeft: 11, mood: 95, routePath: null,
+    safetyScore: 98, fuelEfficiency: 7.3, onTimeRate: 99, complianceRate: 100,
+    totalMiles: 52100, totalDeliveries: 178, hosViolations: 0, lastInspection: 0,
   },
   {
-    id: 'T4',
-    name: 'Truck 4034',
-    driver: 'Tom Wilson',
-    status: 'idle',
-    position: CITIES['Nashville'],
-    currentCity: 'Nashville',
-    destinationCity: null,
-    progress: 0,
-    currentLoad: null,
-    hoursLeft: 10,
-    mood: 100,
-    routePath: null,
-    safetyScore: 88,
-    fuelEfficiency: 6.5,
-    onTimeRate: 94,
-    complianceRate: 96,
-    totalMiles: 41200,
-    totalDeliveries: 135,
-    hosViolations: 2,
-    lastInspection: 0,
+    id: 'T4', name: 'Truck 4034', driver: 'Tom Wilson',
+    status: 'loaded', position: CITIES['Houston'],
+    currentCity: 'Houston', destinationCity: 'Chicago',
+    progress: 0.25, currentLoad: null, hoursLeft: 10, mood: 100, routePath: null,
+    safetyScore: 88, fuelEfficiency: 6.5, onTimeRate: 94, complianceRate: 96,
+    totalMiles: 41200, totalDeliveries: 135, hosViolations: 2, lastInspection: 0,
   },
   {
-    id: 'T5',
-    name: 'Truck 5056',
-    driver: 'Lisa Brown',
-    status: 'idle',
-    position: CITIES['Nashville'],
-    currentCity: 'Nashville',
-    destinationCity: null,
-    progress: 0,
-    currentLoad: null,
-    hoursLeft: 11,
-    mood: 92,
-    routePath: null,
-    safetyScore: 97,
-    fuelEfficiency: 7.0,
-    onTimeRate: 97,
-    complianceRate: 100,
-    totalMiles: 48900,
-    totalDeliveries: 165,
-    hosViolations: 0,
-    lastInspection: 0,
+    id: 'T5', name: 'Truck 5056', driver: 'Lisa Brown',
+    status: 'idle', position: CITIES['Miami'],
+    currentCity: 'Miami', destinationCity: null,
+    progress: 0, currentLoad: null, hoursLeft: 11, mood: 92, routePath: null,
+    safetyScore: 97, fuelEfficiency: 7.0, onTimeRate: 97, complianceRate: 100,
+    totalMiles: 48900, totalDeliveries: 165, hosViolations: 0, lastInspection: 0,
   },
   {
-    id: 'T6',
-    name: 'Truck 6078',
-    driver: 'David Martinez',
-    status: 'idle',
-    position: CITIES['Nashville'],
-    currentCity: 'Nashville',
-    destinationCity: null,
-    progress: 0,
-    currentLoad: null,
-    hoursLeft: 7,
-    mood: 88,
-    routePath: null,
-    safetyScore: 90,
-    fuelEfficiency: 6.9,
-    onTimeRate: 95,
-    complianceRate: 97,
-    totalMiles: 39800,
-    totalDeliveries: 148,
-    hosViolations: 1,
-    lastInspection: 0,
+    id: 'T6', name: 'Truck 6078', driver: 'David Martinez',
+    status: 'loaded', position: CITIES['Seattle'],
+    currentCity: 'Seattle', destinationCity: 'Phoenix',
+    progress: 0.3, currentLoad: null, hoursLeft: 7, mood: 88, routePath: null,
+    safetyScore: 90, fuelEfficiency: 6.9, onTimeRate: 95, complianceRate: 97,
+    totalMiles: 39800, totalDeliveries: 148, hosViolations: 1, lastInspection: 0,
   },
   {
-    id: 'T7',
-    name: 'Truck 7089',
-    driver: 'James Anderson',
-    status: 'idle',
-    position: CITIES['Nashville'],
-    currentCity: 'Nashville',
-    destinationCity: null,
-    progress: 0,
-    currentLoad: null,
-    hoursLeft: 11,
-    mood: 95,
-    routePath: null,
-    safetyScore: 96,
-    fuelEfficiency: 7.2,
-    onTimeRate: 98,
-    complianceRate: 100,
-    totalMiles: 44500,
-    totalDeliveries: 152,
-    hosViolations: 0,
-    lastInspection: 0,
+    id: 'T7', name: 'Truck 7089', driver: 'James Anderson',
+    status: 'driving', position: CITIES['Kansas City'],
+    currentCity: 'Kansas City', destinationCity: 'Memphis',
+    progress: 0.4, currentLoad: null, hoursLeft: 11, mood: 95, routePath: null,
+    safetyScore: 96, fuelEfficiency: 7.2, onTimeRate: 98, complianceRate: 100,
+    totalMiles: 44500, totalDeliveries: 152, hosViolations: 0, lastInspection: 0,
   },
   {
-    id: 'T8',
-    name: 'Truck 8091',
-    driver: 'Maria Garcia',
-    status: 'idle',
-    position: CITIES['Nashville'],
-    currentCity: 'Nashville',
-    destinationCity: null,
-    progress: 0,
-    currentLoad: null,
-    hoursLeft: 11,
-    mood: 100,
-    routePath: null,
-    safetyScore: 99,
-    fuelEfficiency: 7.4,
-    onTimeRate: 99,
-    complianceRate: 100,
-    totalMiles: 51200,
-    totalDeliveries: 171,
-    hosViolations: 0,
-    lastInspection: 0,
+    id: 'T8', name: 'Truck 8091', driver: 'Maria Garcia',
+    status: 'idle', position: CITIES['Las Vegas'],
+    currentCity: 'Las Vegas', destinationCity: null,
+    progress: 0, currentLoad: null, hoursLeft: 11, mood: 100, routePath: null,
+    safetyScore: 99, fuelEfficiency: 7.4, onTimeRate: 99, complianceRate: 100,
+    totalMiles: 51200, totalDeliveries: 171, hosViolations: 0, lastInspection: 0,
   },
   {
-    id: 'T9',
-    name: 'Truck 9102',
-    driver: 'Robert Johnson',
-    status: 'idle',
-    position: CITIES['Nashville'],
-    currentCity: 'Nashville',
-    destinationCity: null,
-    progress: 0,
-    currentLoad: null,
-    hoursLeft: 10,
-    mood: 90,
-    routePath: null,
-    safetyScore: 93,
-    fuelEfficiency: 6.8,
-    onTimeRate: 96,
-    complianceRate: 98,
-    totalMiles: 42300,
-    totalDeliveries: 145,
-    hosViolations: 1,
-    lastInspection: 0,
+    id: 'T9', name: 'Truck 9102', driver: 'Robert Johnson',
+    status: 'loaded', position: CITIES['Indianapolis'],
+    currentCity: 'Indianapolis', destinationCity: 'Atlanta',
+    progress: 0.2, currentLoad: null, hoursLeft: 10, mood: 90, routePath: null,
+    safetyScore: 93, fuelEfficiency: 6.8, onTimeRate: 96, complianceRate: 98,
+    totalMiles: 42300, totalDeliveries: 145, hosViolations: 1, lastInspection: 0,
   },
 ];
 
@@ -953,6 +830,256 @@ function generateLoads(minute: number): LoadOffer[] {
     { from: 'Madison', to: 'Minneapolis', miles: 275, base: 890 },
     { from: 'Grand Rapids', to: 'Detroit', miles: 150, base: 520 },
     { from: 'Grand Rapids', to: 'Chicago', miles: 180, base: 610 },
+
+    // Мэн / Нью-Гэмпшир / Вермонт
+    { from: 'Portland ME', to: 'Boston', miles: 110, base: 390 },
+    { from: 'Portland ME', to: 'Manchester', miles: 90, base: 330 },
+    { from: 'Bangor', to: 'Portland ME', miles: 130, base: 460 },
+    { from: 'Manchester', to: 'Boston', miles: 55, base: 220 },
+    { from: 'Concord NH', to: 'Boston', miles: 70, base: 270 },
+    { from: 'Burlington VT', to: 'Albany', miles: 100, base: 360 },
+    { from: 'Burlington VT', to: 'Boston', miles: 220, base: 740 },
+    { from: 'Montpelier', to: 'Burlington VT', miles: 40, base: 170 },
+
+    // Делавэр / Мэриленд
+    { from: 'Wilmington DE', to: 'Philadelphia', miles: 30, base: 140 },
+    { from: 'Wilmington DE', to: 'Baltimore', miles: 70, base: 270 },
+    { from: 'Dover DE', to: 'Philadelphia', miles: 85, base: 310 },
+    { from: 'Annapolis MD', to: 'Baltimore', miles: 30, base: 140 },
+    { from: 'Annapolis MD', to: 'Washington DC', miles: 35, base: 160 },
+    { from: 'Washington DC', to: 'New York', miles: 230, base: 770 },
+    { from: 'Washington DC', to: 'Richmond', miles: 110, base: 390 },
+    { from: 'Washington DC', to: 'Philadelphia', miles: 140, base: 500 },
+    { from: 'Washington DC', to: 'Charlotte', miles: 390, base: 1220 },
+    { from: 'Washington DC', to: 'Atlanta', miles: 640, base: 1980 },
+
+    // Западная Вирджиния
+    { from: 'Charleston WV', to: 'Cincinnati', miles: 165, base: 560 },
+    { from: 'Charleston WV', to: 'Richmond', miles: 310, base: 990 },
+    { from: 'Morgantown', to: 'Pittsburgh', miles: 75, base: 280 },
+
+    // Миссисипи / Алабама
+    { from: 'Birmingham', to: 'Nashville', miles: 191, base: 650 },
+    { from: 'Birmingham', to: 'Atlanta', miles: 147, base: 500 },
+    { from: 'Birmingham', to: 'Memphis', miles: 240, base: 790 },
+    { from: 'Birmingham', to: 'New Orleans', miles: 350, base: 1100 },
+    { from: 'Huntsville', to: 'Nashville', miles: 100, base: 360 },
+    { from: 'Huntsville', to: 'Birmingham', miles: 90, base: 330 },
+    { from: 'Mobile', to: 'New Orleans', miles: 145, base: 510 },
+    { from: 'Mobile', to: 'Birmingham', miles: 265, base: 860 },
+    { from: 'Mobile', to: 'Atlanta', miles: 340, base: 1070 },
+    { from: 'Hattiesburg', to: 'New Orleans', miles: 110, base: 390 },
+    { from: 'Hattiesburg', to: 'Mobile', miles: 95, base: 350 },
+    { from: 'Meridian', to: 'Birmingham', miles: 90, base: 330 },
+    { from: 'Meridian', to: 'Jackson', miles: 90, base: 330 },
+
+    // Арканзас
+    { from: 'Fort Smith', to: 'Little Rock', miles: 160, base: 550 },
+    { from: 'Fort Smith', to: 'Oklahoma City', miles: 175, base: 590 },
+    { from: 'Fort Smith', to: 'Dallas', miles: 330, base: 1040 },
+    { from: 'Fayetteville AR', to: 'Little Rock', miles: 200, base: 670 },
+    { from: 'Fayetteville AR', to: 'Kansas City', miles: 280, base: 900 },
+    { from: 'Jonesboro', to: 'Memphis', miles: 70, base: 270 },
+    { from: 'Jonesboro', to: 'Little Rock', miles: 130, base: 460 },
+
+    // Миссури
+    { from: 'Springfield MO', to: 'St. Louis', miles: 215, base: 720 },
+    { from: 'Springfield MO', to: 'Kansas City', miles: 160, base: 550 },
+    { from: 'Springfield MO', to: 'Memphis', miles: 310, base: 990 },
+    { from: 'Joplin', to: 'Kansas City', miles: 155, base: 540 },
+    { from: 'Joplin', to: 'Tulsa', miles: 90, base: 330 },
+    { from: 'Columbia MO', to: 'St. Louis', miles: 125, base: 450 },
+    { from: 'Columbia MO', to: 'Kansas City', miles: 130, base: 460 },
+
+    // Небраска / Канзас
+    { from: 'Lincoln NE', to: 'Kansas City', miles: 195, base: 650 },
+    { from: 'Lincoln NE', to: 'Denver', miles: 490, base: 1530 },
+    { from: 'Grand Island', to: 'Omaha', miles: 150, base: 520 },
+    { from: 'Wichita', to: 'Dallas', miles: 360, base: 1130 },
+    { from: 'Wichita', to: 'Denver', miles: 380, base: 1190 },
+    { from: 'Salina', to: 'Wichita', miles: 95, base: 350 },
+    { from: 'Salina', to: 'Kansas City', miles: 185, base: 620 },
+
+    // Айова
+    { from: 'Iowa City', to: 'Chicago', miles: 220, base: 740 },
+    { from: 'Iowa City', to: 'Des Moines', miles: 110, base: 390 },
+    { from: 'Davenport', to: 'Chicago', miles: 180, base: 610 },
+    { from: 'Davenport', to: 'Des Moines', miles: 165, base: 560 },
+    { from: 'Waterloo IA', to: 'Des Moines', miles: 100, base: 360 },
+    { from: 'Waterloo IA', to: 'Minneapolis', miles: 270, base: 880 },
+
+    // Северная / Южная Дакота
+    { from: 'Sioux City', to: 'Omaha', miles: 100, base: 360 },
+    { from: 'Sioux City', to: 'Sioux Falls', miles: 80, base: 300 },
+    { from: 'Aberdeen SD', to: 'Sioux Falls', miles: 190, base: 640 },
+    { from: 'Aberdeen SD', to: 'Fargo', miles: 190, base: 640 },
+    { from: 'Pierre', to: 'Sioux Falls', miles: 220, base: 740 },
+    { from: 'Pierre', to: 'Rapid City', miles: 180, base: 610 },
+    { from: 'Minot', to: 'Bismarck', miles: 110, base: 390 },
+    { from: 'Minot', to: 'Fargo', miles: 190, base: 640 },
+    { from: 'Grand Forks', to: 'Fargo', miles: 80, base: 300 },
+    { from: 'Grand Forks', to: 'Minneapolis', miles: 330, base: 1040 },
+
+    // Монтана / Вайоминг
+    { from: 'Missoula', to: 'Billings', miles: 345, base: 1080 },
+    { from: 'Missoula', to: 'Boise', miles: 340, base: 1070 },
+    { from: 'Missoula', to: 'Spokane', miles: 200, base: 670 },
+    { from: 'Helena MT', to: 'Billings', miles: 225, base: 750 },
+    { from: 'Helena MT', to: 'Missoula', miles: 115, base: 410 },
+    { from: 'Butte', to: 'Missoula', miles: 65, base: 250 },
+    { from: 'Butte', to: 'Billings', miles: 225, base: 750 },
+    { from: 'Casper WY', to: 'Denver', miles: 180, base: 610 },
+    { from: 'Casper WY', to: 'Billings', miles: 225, base: 750 },
+    { from: 'Casper WY', to: 'Salt Lake City', miles: 380, base: 1190 },
+    { from: 'Cheyenne WY', to: 'Denver', miles: 100, base: 360 },
+    { from: 'Cheyenne WY', to: 'Omaha', miles: 490, base: 1530 },
+    { from: 'Laramie', to: 'Cheyenne WY', miles: 50, base: 200 },
+    { from: 'Rock Springs', to: 'Salt Lake City', miles: 175, base: 590 },
+    { from: 'Rock Springs', to: 'Casper WY', miles: 190, base: 640 },
+
+    // Айдахо
+    { from: 'Twin Falls', to: 'Boise', miles: 130, base: 460 },
+    { from: 'Twin Falls', to: 'Salt Lake City', miles: 215, base: 720 },
+    { from: 'Idaho Falls', to: 'Salt Lake City', miles: 200, base: 670 },
+    { from: 'Idaho Falls', to: 'Boise', miles: 285, base: 920 },
+    { from: 'Coeur d Alene', to: 'Spokane', miles: 35, base: 160 },
+    { from: 'Coeur d Alene', to: 'Boise', miles: 330, base: 1040 },
+
+    // Нью-Мексико
+    { from: 'Albuquerque', to: 'El Paso', miles: 265, base: 860 },
+    { from: 'Albuquerque', to: 'Phoenix', miles: 465, base: 1450 },
+    { from: 'Albuquerque', to: 'Dallas', miles: 650, base: 2010 },
+    { from: 'Santa Fe NM', to: 'Albuquerque', miles: 65, base: 250 },
+    { from: 'Santa Fe NM', to: 'Denver', miles: 390, base: 1220 },
+    { from: 'Roswell', to: 'Albuquerque', miles: 200, base: 670 },
+    { from: 'Roswell', to: 'El Paso', miles: 200, base: 670 },
+    { from: 'Las Cruces NM', to: 'El Paso', miles: 45, base: 190 },
+    { from: 'Las Cruces NM', to: 'Albuquerque', miles: 225, base: 750 },
+
+    // Юта
+    { from: 'Provo UT', to: 'Salt Lake City', miles: 45, base: 190 },
+    { from: 'Provo UT', to: 'Las Vegas', miles: 400, base: 1250 },
+    { from: 'Ogden UT', to: 'Salt Lake City', miles: 40, base: 170 },
+    { from: 'Ogden UT', to: 'Boise', miles: 310, base: 990 },
+    { from: 'St. George UT', to: 'Las Vegas', miles: 120, base: 430 },
+    { from: 'St. George UT', to: 'Salt Lake City', miles: 305, base: 970 },
+
+    // Невада
+    { from: 'Henderson NV', to: 'Las Vegas', miles: 15, base: 100 },
+    { from: 'Henderson NV', to: 'Phoenix', miles: 295, base: 950 },
+    { from: 'Sparks NV', to: 'Reno', miles: 10, base: 80 },
+    { from: 'Sparks NV', to: 'Sacramento', miles: 140, base: 490 },
+    { from: 'Carson City', to: 'Reno', miles: 30, base: 140 },
+    { from: 'Carson City', to: 'Sacramento', miles: 130, base: 460 },
+
+    // Колорадо
+    { from: 'Fort Collins', to: 'Denver', miles: 65, base: 250 },
+    { from: 'Fort Collins', to: 'Cheyenne WY', miles: 45, base: 190 },
+    { from: 'Boulder CO', to: 'Denver', miles: 30, base: 140 },
+    { from: 'Colorado Springs CO', to: 'Denver', miles: 70, base: 270 },
+    { from: 'Colorado Springs CO', to: 'Albuquerque', miles: 380, base: 1190 },
+    { from: 'Pueblo CO', to: 'Denver', miles: 110, base: 390 },
+    { from: 'Grand Junction', to: 'Denver', miles: 245, base: 800 },
+    { from: 'Grand Junction', to: 'Salt Lake City', miles: 280, base: 900 },
+
+    // Аризона
+    { from: 'Tucson AZ', to: 'Phoenix', miles: 115, base: 410 },
+    { from: 'Tucson AZ', to: 'El Paso', miles: 265, base: 860 },
+    { from: 'Tucson AZ', to: 'Los Angeles', miles: 490, base: 1530 },
+    { from: 'Mesa AZ', to: 'Phoenix', miles: 20, base: 110 },
+    { from: 'Flagstaff AZ', to: 'Phoenix', miles: 145, base: 510 },
+    { from: 'Flagstaff AZ', to: 'Las Vegas', miles: 255, base: 840 },
+    { from: 'Yuma', to: 'Phoenix', miles: 185, base: 620 },
+    { from: 'Yuma', to: 'San Diego', miles: 175, base: 590 },
+
+    // Калифорния (дополнительно)
+    { from: 'Bakersfield', to: 'Los Angeles', miles: 110, base: 390 },
+    { from: 'Bakersfield', to: 'Fresno', miles: 110, base: 390 },
+    { from: 'Fresno CA', to: 'Los Angeles', miles: 220, base: 740 },
+    { from: 'Fresno CA', to: 'San Francisco', miles: 185, base: 620 },
+    { from: 'Stockton', to: 'Sacramento', miles: 50, base: 200 },
+    { from: 'Stockton', to: 'San Francisco', miles: 80, base: 300 },
+    { from: 'Modesto', to: 'Sacramento', miles: 90, base: 330 },
+    { from: 'Modesto', to: 'San Francisco', miles: 90, base: 330 },
+    { from: 'Riverside', to: 'Los Angeles', miles: 60, base: 240 },
+    { from: 'Riverside', to: 'San Diego', miles: 90, base: 330 },
+    { from: 'San Bernardino', to: 'Los Angeles', miles: 65, base: 250 },
+    { from: 'San Bernardino', to: 'Las Vegas', miles: 200, base: 670 },
+    { from: 'Long Beach', to: 'Los Angeles', miles: 25, base: 130 },
+    { from: 'Long Beach', to: 'San Diego', miles: 100, base: 360 },
+    { from: 'Anaheim', to: 'Los Angeles', miles: 30, base: 140 },
+    { from: 'Santa Barbara', to: 'Los Angeles', miles: 95, base: 350 },
+    { from: 'San Jose', to: 'San Francisco', miles: 50, base: 200 },
+    { from: 'San Jose', to: 'Los Angeles', miles: 340, base: 1070 },
+    { from: 'Oakland', to: 'San Francisco', miles: 15, base: 100 },
+    { from: 'Oakland', to: 'Sacramento', miles: 80, base: 300 },
+    { from: 'Redding', to: 'Sacramento', miles: 160, base: 550 },
+    { from: 'Redding', to: 'Portland', miles: 280, base: 900 },
+    { from: 'Eureka CA', to: 'Sacramento', miles: 280, base: 900 },
+    { from: 'Eureka CA', to: 'Portland', miles: 380, base: 1190 },
+
+    // Орегон (дополнительно)
+    { from: 'Medford OR', to: 'Portland', miles: 275, base: 890 },
+    { from: 'Medford OR', to: 'Sacramento', miles: 310, base: 990 },
+    { from: 'Bend OR', to: 'Portland', miles: 160, base: 550 },
+    { from: 'Bend OR', to: 'Boise', miles: 280, base: 900 },
+    { from: 'Corvallis', to: 'Portland', miles: 85, base: 310 },
+    { from: 'Astoria', to: 'Portland', miles: 95, base: 350 },
+
+    // Вашингтон (дополнительно)
+    { from: 'Bellingham', to: 'Seattle', miles: 90, base: 330 },
+    { from: 'Bellingham', to: 'Vancouver BC', miles: 55, base: 220 },
+    { from: 'Olympia', to: 'Seattle', miles: 60, base: 240 },
+    { from: 'Olympia', to: 'Portland', miles: 110, base: 390 },
+    { from: 'Kennewick', to: 'Spokane', miles: 130, base: 460 },
+    { from: 'Kennewick', to: 'Portland', miles: 215, base: 720 },
+    { from: 'Yakima WA', to: 'Seattle', miles: 145, base: 510 },
+    { from: 'Yakima WA', to: 'Spokane', miles: 150, base: 520 },
+
+    // Теннесси (дополнительно)
+    { from: 'Memphis', to: 'Nashville', miles: 210, base: 700 },
+    { from: 'Memphis', to: 'Atlanta', miles: 395, base: 1240 },
+    { from: 'Memphis', to: 'Dallas', miles: 470, base: 1470 },
+    { from: 'Memphis', to: 'Chicago', miles: 530, base: 1650 },
+    { from: 'Memphis', to: 'New Orleans', miles: 395, base: 1240 },
+    { from: 'Memphis', to: 'St. Louis', miles: 285, base: 920 },
+    { from: 'Memphis', to: 'Houston', miles: 570, base: 1770 },
+    { from: 'Clarksville TN', to: 'Nashville', miles: 50, base: 200 },
+    { from: 'Murfreesboro', to: 'Nashville', miles: 35, base: 160 },
+    { from: 'Johnson City', to: 'Knoxville', miles: 90, base: 330 },
+    { from: 'Johnson City', to: 'Charlotte', miles: 200, base: 670 },
+
+    // Луизиана (дополнительно)
+    { from: 'New Orleans', to: 'Memphis', miles: 395, base: 1240 },
+    { from: 'New Orleans', to: 'Dallas', miles: 505, base: 1570 },
+    { from: 'New Orleans', to: 'Miami', miles: 860, base: 2620 },
+    { from: 'Baton Rouge LA', to: 'Houston', miles: 270, base: 880 },
+    { from: 'Baton Rouge LA', to: 'New Orleans', miles: 80, base: 300 },
+    { from: 'Shreveport LA', to: 'Memphis', miles: 320, base: 1020 },
+    { from: 'Shreveport LA', to: 'Houston', miles: 240, base: 790 },
+
+    // Флорида (дополнительно)
+    { from: 'Tampa FL', to: 'Orlando', miles: 85, base: 310 },
+    { from: 'Tampa FL', to: 'Jacksonville', miles: 200, base: 670 },
+    { from: 'Tampa FL', to: 'Miami', miles: 280, base: 900 },
+    { from: 'Tampa FL', to: 'Atlanta', miles: 460, base: 1440 },
+    { from: 'Tampa FL', to: 'Charlotte', miles: 620, base: 1920 },
+    { from: 'Orlando FL', to: 'Jacksonville', miles: 140, base: 490 },
+    { from: 'Orlando FL', to: 'Tampa', miles: 85, base: 310 },
+    { from: 'Orlando FL', to: 'Miami', miles: 235, base: 780 },
+    { from: 'Gainesville FL', to: 'Jacksonville', miles: 70, base: 270 },
+    { from: 'Gainesville FL', to: 'Tampa', miles: 130, base: 460 },
+    { from: 'Tallahassee', to: 'Jacksonville', miles: 165, base: 560 },
+    { from: 'Tallahassee', to: 'Atlanta', miles: 270, base: 880 },
+    { from: 'Tallahassee', to: 'New Orleans', miles: 380, base: 1190 },
+    { from: 'Fort Myers', to: 'Miami', miles: 110, base: 390 },
+    { from: 'Fort Myers', to: 'Tampa', miles: 130, base: 460 },
+    { from: 'West Palm Beach', to: 'Miami', miles: 70, base: 270 },
+    { from: 'West Palm Beach', to: 'Orlando', miles: 170, base: 580 },
+    { from: 'Daytona Beach', to: 'Orlando', miles: 60, base: 240 },
+    { from: 'Daytona Beach', to: 'Jacksonville', miles: 90, base: 330 },
+    { from: 'Pensacola FL', to: 'Mobile', miles: 60, base: 240 },
+    { from: 'Pensacola FL', to: 'Tallahassee', miles: 200, base: 670 },
   ];
 
   const commodities = [
@@ -1034,20 +1161,31 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Всегда сбрасываем старое сохранение и начинаем заново
     get().clearSave();
     
-    // Все траки стартуют idle в Nashville TN — игрок сам находит грузы
-    const allTrucks = INITIAL_TRUCKS.slice(0, truckCount).map((truck) => ({
+    // Берём траки из INITIAL_TRUCKS с их реальными позициями и маршрутами
+    const allTrucks = INITIAL_TRUCKS.slice(0, truckCount).map(truck => ({
       ...truck,
-      status: 'idle' as TruckStatus,
-      destinationCity: null,
-      currentLoad: null,
-      progress: 0,
-      routePath: null,
+      // Рандомная скорость 0.75–1.25 для каждого трака
+      speedMultiplier: 0.75 + Math.random() * 0.5,
     }));
 
-    const selectedActiveLoads: any[] = [];
-    
-    // Маршруты не нужны — все idle
-    const trucksWithRoutes = allTrucks;
+    // Загружаем OSRM маршруты для траков у которых есть destinationCity
+    const trucksWithRoutes = await Promise.all(allTrucks.map(async (truck) => {
+      if ((truck.status === 'driving' || truck.status === 'loaded') && truck.destinationCity && CITIES[truck.destinationCity]) {
+        const dest = CITIES[truck.destinationCity];
+        try {
+          const url = `https://router.project-osrm.org/route/v1/driving/${truck.position[0]},${truck.position[1]};${dest[0]},${dest[1]}?overview=full&geometries=geojson`;
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data.routes && data.routes[0]) {
+            console.log(`✅ Route loaded for ${truck.id}: ${truck.currentCity} → ${truck.destinationCity}`);
+            return { ...truck, routePath: data.routes[0].geometry.coordinates };
+          }
+        } catch (e) {
+          console.warn(`⚠️ Route failed for ${truck.id}, using linear movement`);
+        }
+      }
+      return truck;
+    }));
 
     console.log('✅ All trucks initialized, starting game...');
 
@@ -1247,6 +1385,77 @@ export const useGameStore = create<GameState>((set, get) => ({
         }
       }
       
+      // ── IDLE WARNING: трак стоит слишком долго ──────────────────────
+      if (truck.status === 'idle') {
+        const idleSince = (truck as any).idleSinceMinute ?? newMinute;
+        const idleMinutes = newMinute - idleSince;
+        const idleHours = idleMinutes / 60;
+
+        // Уровни предупреждения: 4ч=1, 5ч=2, 6ч=3
+        let idleWarningLevel: 0|1|2|3 = 0;
+        if (idleHours >= 6) idleWarningLevel = 3;
+        else if (idleHours >= 5) idleWarningLevel = 2;
+        else if (idleHours >= 4) idleWarningLevel = 1;
+
+        // Уведомления при достижении порогов
+        if (idleHours >= 4 && (truck as any).idleWarningLevel < 1) {
+          get().addNotification({
+            type: 'urgent', priority: 'high',
+            from: `${truck.driver} (${truck.name})`,
+            subject: `⚠️ ${truck.name} стоит уже 4 часа`,
+            message: `${truck.driver} ждёт груз уже 4 часа в ${truck.currentCity}. Найди груз или объясни ситуацию водителю!`,
+            actionRequired: true, relatedTruckId: truck.id,
+          });
+        }
+        if (idleHours >= 6 && (truck as any).idleWarningLevel < 3) {
+          get().addNotification({
+            type: 'urgent', priority: 'critical',
+            from: `${truck.driver} (${truck.name})`,
+            subject: `🚨 ${truck.name} стоит уже 6 часов — критично!`,
+            message: `${truck.driver} простаивает 6 часов! Настроение падает, водитель может уйти. Срочно найди груз!`,
+            actionRequired: true, relatedTruckId: truck.id,
+          });
+        }
+
+        // Шанс полицейской инспекции для долго стоящего трака (раз в 30 мин)
+        const outOfOrderUntil = (truck as any).outOfOrderUntil;
+        if (outOfOrderUntil && newMinute < outOfOrderUntil) {
+          // Трак на принудительном простое — ничего не делаем
+          return { ...truck, idleSinceMinute: idleSince, idleWarningLevel } as any;
+        }
+
+        if (idleHours >= 3 && Math.floor(newMinute / 30) > Math.floor((newMinute - TICK_MINUTES) / 30)) {
+          const inspectionChance = idleHours >= 5 ? 0.15 : 0.05;
+          if (Math.random() < inspectionChance) {
+            const violations = ['превышение HOS', 'неисправность тормозов', 'нарушение весового контроля', 'просроченные документы'];
+            const violation = violations[Math.floor(Math.random() * violations.length)];
+            const outUntil = newMinute + 1440; // 24 игровых часа = 1440 минут
+            get().addNotification({
+              type: 'urgent', priority: 'critical',
+              from: 'DOT Inspector',
+              subject: `🚔 ${truck.name} остановлен полицией — Violation!`,
+              message: `Инспектор DOT остановил ${truck.name} в ${truck.currentCity}.\n\nНарушение: ${violation}\n\nТрак поставлен OUT OF SERVICE на 24 часа. Необходимо устранить нарушение и пройти повторную инспекцию.\n\nДействия: свяжись с водителем и реши проблему!`,
+              actionRequired: true, relatedTruckId: truck.id,
+            });
+            return {
+              ...truck,
+              idleSinceMinute: idleSince,
+              idleWarningLevel: 3,
+              outOfOrderUntil: outUntil,
+              hosViolations: truck.hosViolations + 1,
+              complianceRate: Math.max(0, truck.complianceRate - 10),
+            } as any;
+          }
+        }
+
+        return { ...truck, idleSinceMinute: idleSince, idleWarningLevel } as any;
+      }
+
+      // Сбрасываем idle счётчик когда трак начинает ехать
+      if (truck.status !== 'idle' && (truck as any).idleSinceMinute !== undefined) {
+        return { ...truck, idleSinceMinute: undefined, idleWarningLevel: 0 } as any;
+      }
+
       // Двигаем трак только если он реально едет с грузом
       if ((truck.status === 'driving' || truck.status === 'loaded') && truck.destinationCity) {
         const to = CITIES[truck.destinationCity];
@@ -1264,7 +1473,9 @@ export const useGameStore = create<GameState>((set, get) => ({
         }
 
         // 10 миль/игровую минуту × 1.2 мин/тик = 12 миль/тик
-        const progressPerTick = MILES_PER_TICK / totalMiles;
+        // Каждый трак имеет свой speedMultiplier для рандомизации
+        const speedMult = (truck as any).speedMultiplier ?? 1.0;
+        const progressPerTick = (MILES_PER_TICK / totalMiles) * speedMult;
         const newProgress = Math.min(1, truck.progress + progressPerTick);
 
         // Уменьшаем HOS: 1.2 игровых минуты = 1.2/60 часа
@@ -1341,6 +1552,19 @@ export const useGameStore = create<GameState>((set, get) => ({
           const lng = p1[0] + (p2[0] - p1[0]) * segmentProgress;
           const lat = p1[1] + (p2[1] - p1[1]) * segmentProgress;
           
+          return { ...truck, progress: newProgress, position: [lng, lat] as [number, number], hoursLeft: newHoursLeft };
+        } else if (truck.destinationCity && CITIES[truck.destinationCity]) {
+          // Fallback: линейное движение если нет routePath
+          const from = truck.progress === 0 ? truck.position : truck.position;
+          const dest = CITIES[truck.destinationCity];
+          const startPos = newProgress === 0
+            ? truck.position
+            : [
+                truck.position[0] + (dest[0] - truck.position[0]) * (newProgress - progressPerTick) / newProgress,
+                truck.position[1] + (dest[1] - truck.position[1]) * (newProgress - progressPerTick) / newProgress,
+              ] as [number, number];
+          const lng = truck.position[0] + (dest[0] - truck.position[0]) * progressPerTick / (1 - truck.progress + progressPerTick);
+          const lat = truck.position[1] + (dest[1] - truck.position[1]) * progressPerTick / (1 - truck.progress + progressPerTick);
           return { ...truck, progress: newProgress, position: [lng, lat] as [number, number], hoursLeft: newHoursLeft };
         } else {
           return truck;
@@ -1944,7 +2168,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     try {
       const state = get();
       const saveData = {
-        version: 2,
+        version: 3,
         phase: state.phase,
         day: state.day,
         gameMinute: state.gameMinute,
@@ -1981,7 +2205,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       const saveData = JSON.parse(saved);
 
       // Сбрасываем старые сохранения без версии или с устаревшей версией
-      if (!saveData.version || saveData.version < 2) {
+      if (!saveData.version || saveData.version < 3) {
         localStorage.removeItem('dispatcher-game-save');
         console.log('🔄 Old save detected, resetting...');
         return false;
@@ -2191,8 +2415,19 @@ export function formatTimeDual(minute: number): string {
   const h24 = hours.toString().padStart(2, '0');
   const m = mins.toString().padStart(2, '0');
   
-  // Формат: 14:00 (2 PM)
+  // Формат: 14:00 (2:00 PM)
   return `${h24}:${m} (${h12}:${m} ${ampm})`;
+}
+
+export function formatTimeShort(minute: number): string {
+  const roundedMinute = Math.round(minute);
+  const totalMinutes = SHIFT_START_HOUR * 60 + SHIFT_START_MINUTE + roundedMinute;
+  const hours = Math.floor(totalMinutes / 60) % 24;
+  const mins = totalMinutes % 60;
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const h12 = hours % 12 || 12;
+  const m = mins.toString().padStart(2, '0');
+  return `${h12}:${m} ${ampm}`;
 }
 
 // Форматирование времени с датой (для pickup/delivery)

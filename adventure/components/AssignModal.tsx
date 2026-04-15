@@ -1,4 +1,4 @@
-﻿import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+﻿import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { Colors } from '../constants/colors';
 import { cityState } from '../constants/config';
 import { useGameStore, ActiveLoad } from '../store/gameStore';
@@ -29,7 +29,7 @@ export default function AssignModal({ load, onClose }: Props) {
             {cityState(load.fromCity)} → {cityState(load.toCity)} · ${(load.agreedRate ?? load.postedRate).toLocaleString()}
           </Text>
 
-          <View style={styles.trucks}>
+          <ScrollView style={styles.trucks} contentContainerStyle={{ gap: 10 }} showsVerticalScrollIndicator={false}>
             {availableTrucks.map(truck => {
               let statusBadge = '';
               if (truck.status === 'at_delivery') {
@@ -39,7 +39,6 @@ export default function AssignModal({ load, onClose }: Props) {
               } else {
                 statusBadge = '✅ Свободен';
               }
-              
               return (
                 <TouchableOpacity
                   key={truck.id}
@@ -60,7 +59,7 @@ export default function AssignModal({ load, onClose }: Props) {
                 </TouchableOpacity>
               );
             })}
-          </View>
+          </ScrollView>
 
           <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
             <Text style={styles.cancelText}>Отмена</Text>
@@ -76,11 +75,11 @@ const styles = StyleSheet.create({
   modal: {
     backgroundColor: '#0f172a', borderRadius: 20,
     borderWidth: 1, borderColor: Colors.border, padding: 20,
-    width: '100%', maxWidth: 480,
+    width: '100%', maxWidth: 480, maxHeight: '80%' as any,
   },
   title: { fontSize: 18, fontWeight: '800', color: '#fff', marginBottom: 4 },
   sub: { fontSize: 13, color: Colors.textMuted, marginBottom: 16 },
-  trucks: { gap: 10, marginBottom: 14 },
+  trucks: { maxHeight: 400, marginBottom: 14 },
   truckCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     backgroundColor: Colors.bgCard, borderRadius: 14,

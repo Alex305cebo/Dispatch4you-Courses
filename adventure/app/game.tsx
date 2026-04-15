@@ -17,7 +17,7 @@ class ErrorBoundary extends Component<{children: any; name: string}, {error: str
 }
 import { useRouter } from 'expo-router';
 import { Colors } from '../constants/colors';
-import { useGameStore, formatGameTime, formatTimeDual, ActiveLoad } from '../store/gameStore';
+import { useGameStore, formatGameTime, formatTimeDual, formatTimeShort, ActiveLoad } from '../store/gameStore';
 import { SHIFT_DURATION } from '../constants/config';
 import MapView from '../components/MapView';
 import TruckPanel from '../components/TruckPanel';
@@ -59,16 +59,17 @@ export default function GameScreen() {
   const {
     phase, gameMinute, balance, reputation,
     trucks, activeEvents, availableLoads, negotiation, bookedLoads, activeLoads,
-    tickClock, selectedTruckId, selectTruck, notifications, sessionName, score, refreshLoadBoard,
+    tickClock, selectedTruckId, selectTruck, notifications, sessionName, score, refreshLoadBoard, setLoadBoardSearch,
   } = useGameStore();
 
-  const [activeTab, setActiveTab] = useState<Tab>('map');
+  const [activeTab, setActiveTab] = useState<Tab>('loadboard');
   const [pendingLoad, setPendingLoad] = useState<ActiveLoad | null>(null);
   const [showFleet, setShowFleet] = useState(false);
   const [showCompliance, setShowCompliance] = useState(false);
   const [showEvents, setShowEvents] = useState(false);
   const [showMyLoads, setShowMyLoads] = useState(false);
   const [detailTruck, setDetailTruck] = useState<any>(null);
+  const [timeFormat, setTimeFormat] = useState<'us' | 'eu'>('us');
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -120,14 +121,12 @@ export default function GameScreen() {
             {/* HUD: время + прогресс */}
             <View style={styles.hud}>
               <View style={styles.hudRow1}>
-                <TouchableOpacity onPress={() => {
-                  if (clockRef.current) clearInterval(clockRef.current);
-                  router.replace('/');
-                }} style={styles.hudBack}>
-                  <Text style={styles.hudBackText}>✕</Text>
-                </TouchableOpacity>
                 <View style={styles.hudTimeWrap}>
-                  <Text style={styles.hudTime}>{formatTimeDual(gameMinute)}</Text>
+                  <TouchableOpacity onPress={() => setTimeFormat(f => f === 'us' ? 'eu' : 'us')} activeOpacity={0.7}>
+                    <Text style={styles.hudTime}>
+                      {timeFormat === 'us' ? formatTimeShort(gameMinute) : formatTimeDual(gameMinute).split(' (')[0]}
+                    </Text>
+                  </TouchableOpacity>
                   {sessionName ? <Text style={styles.hudSession}>{sessionName}</Text> : null}
                   <View style={styles.shiftBar}>
                     <View style={[styles.shiftBarFill, { width: `${Math.min(progress * 100, 100)}%` as any }]} />
@@ -166,7 +165,16 @@ export default function GameScreen() {
             </View>
             {/* Карта — занимает всё оставшееся место */}
             <View style={styles.mapArea}>
-              <ErrorBoundary name="MapView"><MapView /></ErrorBoundary>
+              <ErrorBoundary name="MapView"><MapView
+                onTruckInfo={(truckId) => {
+                  const truck = trucks.find(t => t.id === truckId);
+                  if (truck) setDetailTruck(truck);
+                }}
+                onFindLoad={(city) => {
+                  setLoadBoardSearch(city);
+                  setActiveTab('loadboard');
+                }}
+              /></ErrorBoundary>
             </View>
           </View>
 
@@ -239,14 +247,12 @@ export default function GameScreen() {
         <View style={{ flex: 1 }}>
           <View style={[styles.hud, { paddingTop: Platform.OS === 'ios' ? 48 : 10 }]}>
             <View style={styles.hudRow1}>
-              <TouchableOpacity onPress={() => {
-                if (clockRef.current) clearInterval(clockRef.current);
-                router.replace('/');
-              }} style={styles.hudBack}>
-                <Text style={styles.hudBackText}>✕</Text>
-              </TouchableOpacity>
               <View style={styles.hudTimeWrap}>
-                <Text style={styles.hudTime}>{formatTimeDual(gameMinute)}</Text>
+                <TouchableOpacity onPress={() => setTimeFormat(f => f === 'us' ? 'eu' : 'us')} activeOpacity={0.7}>
+                  <Text style={styles.hudTime}>
+                    {timeFormat === 'us' ? formatTimeShort(gameMinute) : formatTimeDual(gameMinute).split(' (')[0]}
+                  </Text>
+                </TouchableOpacity>
                 {sessionName ? <Text style={styles.hudSession}>{sessionName}</Text> : null}
                 <View style={styles.shiftBar}>
                   <View style={[styles.shiftBarFill, { width: `${Math.min(progress * 100, 100)}%` as any }]} />
@@ -281,6 +287,7 @@ export default function GameScreen() {
                   onOpenCompliance={() => setShowCompliance(true)}
                   onOpenEvents={() => setShowEvents(true)}
                   onOpenMyLoads={() => setShowMyLoads(true)}
+                  onExit={() => { if (clockRef.current) clearInterval(clockRef.current); }}
                 />
               </View>
             </View>
@@ -314,7 +321,16 @@ export default function GameScreen() {
             </ScrollView>
           </View>
           <View style={styles.mobileLayout}>
-            {activeTab === 'map' && <ErrorBoundary name="MapView"><MapView /></ErrorBoundary>}
+            {activeTab === 'map' && <ErrorBoundary name="MapView"><MapView
+                onTruckInfo={(truckId) => {
+                  const truck = trucks.find(t => t.id === truckId);
+                  if (truck) setDetailTruck(truck);
+                }}
+                onFindLoad={(city) => {
+                  setLoadBoardSearch(city);
+                  setActiveTab('loadboard');
+                }}
+              /></ErrorBoundary>}
             {activeTab === 'loadboard' && <ErrorBoundary name="LoadBoardPanel"><LoadBoardPanel onNegotiate={setPendingLoad} /></ErrorBoundary>}
             {activeTab === 'email' && <ErrorBoundary name="EmailPanel"><EmailPanel /></ErrorBoundary>}
             {activeTab === 'trucks' && <ErrorBoundary name="TruckPanel"><TruckPanel onSwitchToLoadBoard={() => setActiveTab('loadboard')} /></ErrorBoundary>}
@@ -346,7 +362,7 @@ export default function GameScreen() {
         <TruckDetailModal
           truck={detailTruck}
           onClose={() => setDetailTruck(null)}
-          onFindLoad={() => { setDetailTruck(null); setActiveTab('loadboard'); }}
+          onFindLoad={(city) => { setLoadBoardSearch(city); setDetailTruck(null); setActiveTab('loadboard'); }}
         />
       )}
 

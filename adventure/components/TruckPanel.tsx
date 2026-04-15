@@ -126,10 +126,8 @@ export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}
       <TruckDetailModal
         truck={detailTruck}
         onClose={() => setDetailTruck(null)}
-        onFindLoad={() => {
-          if (detailTruck) {
-            setLoadBoardSearch(detailTruck.currentCity);
-          }
+        onFindLoad={(city) => {
+          setLoadBoardSearch(city);
           setDetailTruck(null);
           onSwitchToLoadBoard?.();
         }}

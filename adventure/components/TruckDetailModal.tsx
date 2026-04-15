@@ -7,7 +7,7 @@ import DriverScorecard from './DriverScorecard';
 interface Props {
   truck: Truck | null;
   onClose: () => void;
-  onFindLoad: () => void;
+  onFindLoad: (city: string) => void;
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -115,7 +115,7 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
             <View style={s.section}>
               <Text style={s.sectionTitle}>✅ Действия</Text>
               {canFind && (
-                <TouchableOpacity style={s.findBtn} onPress={onFindLoad} activeOpacity={0.85}>
+                <TouchableOpacity style={s.findBtn} onPress={() => onFindLoad(truck.currentCity)} activeOpacity={0.85}>
                   <Text style={s.findBtnIcon}>🔍</Text>
                   <View style={{ flex: 1 }}>
                     <Text style={s.findBtnTitle}>Найти груз</Text>
