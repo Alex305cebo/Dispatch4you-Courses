@@ -387,7 +387,7 @@ function MapAmCharts() {
 
   return (
     <View style={styles.container}>
-      <div ref={divRef} style={{ width: "100%", height: "100%" } as any} />
+      <div ref={divRef} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%" } as any} />
 
       {/* Легенда */}
       <div style={{
@@ -481,7 +481,7 @@ function MapAmCharts() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg },
+  container: { flex: 1, backgroundColor: Colors.bg, position: 'relative' },
   text: { color: Colors.textMuted, fontSize: 16 },
 });
 
