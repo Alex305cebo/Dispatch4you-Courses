@@ -156,6 +156,7 @@ interface GameState {
   totalEarned: number;
   totalLost: number;
   financeLog: FinanceEntry[];
+  score: number; // очки за смену
 
   // Репутация
   reputation: number;
@@ -726,6 +727,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   totalEarned: 0,
   totalLost: 0,
   financeLog: [],
+  score: 0,
   reputation: 100,
   sessionName: '',
   trucks: INITIAL_TRUCKS,
@@ -1104,6 +1106,26 @@ export const useGameStore = create<GameState>((set, get) => ({
         if (newProgress >= 1) {
           // Трак приехал в пункт назначения
           const newStatus = truck.status === 'driving' ? 'at_pickup' as TruckStatus : 'at_delivery' as TruckStatus;
+
+          // 💰 Оплата при доставке
+          if (newStatus === 'at_delivery' && truck.currentLoad) {
+            const load = truck.currentLoad;
+            get().addMoney(load.agreedRate, `Доставка: ${load.fromCity} → ${load.toCity} (${truck.name})`);
+            // Очки: базовые за доставку + бонус за RPM
+            const rpm = load.agreedRate / load.miles;
+            const bonus = rpm >= 3.0 ? 50 : rpm >= 2.5 ? 30 : 10;
+            set({ score: get().score + 100 + bonus });
+            get().addNotification({
+              type: 'email',
+              priority: 'medium',
+              from: `${load.brokerName} - ${load.brokerCompany}`,
+              subject: `✅ Доставка подтверждена — $${load.agreedRate.toLocaleString()}`,
+              message: `Груз доставлен! ${load.fromCity} → ${load.toCity}\n${load.commodity} · ${load.miles} mi\nОплата: $${load.agreedRate.toLocaleString()}\n\nОтправь POD для закрытия.`,
+              actionRequired: true,
+              relatedTruckId: truck.id,
+              relatedLoadId: load.id,
+            });
+          }
           
           // Если приехал на pickup - нужно загрузить маршрут до delivery
           let nextRoutePath: Array<[number, number]> | null = null;

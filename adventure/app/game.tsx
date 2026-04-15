@@ -30,7 +30,7 @@ export default function GameScreen() {
   const {
     phase, gameMinute, balance, reputation,
     trucks, activeEvents, availableLoads, negotiation, bookedLoads, activeLoads,
-    tickClock, selectedTruckId, notifications, sessionName,
+    tickClock, selectedTruckId, notifications, sessionName, score,
   } = useGameStore();
 
   const [activeTab, setActiveTab] = useState<Tab>('map');
