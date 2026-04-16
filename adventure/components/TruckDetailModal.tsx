@@ -35,6 +35,77 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
   const dest = truck.destinationCity ? ` → ${cityState(truck.destinationCity)}` : '';
   const canFind = truck.status === 'idle' || truck.status === 'at_delivery' || truck.status === 'at_pickup';
 
+  // ── AI сообщение о стадии готовности ──
+  const idleHours = (truck as any).idleSinceMinute !== undefined
+    ? Math.round(((truck as any).idleSinceMinute ?? 0) / 60 * 10) / 10 : 0;
+
+  function getAiMessage(): { icon: string; title: string; text: string; color: string } {
+    if (needsRest) return {
+      icon: '😴', color: '#ef4444',
+      title: 'Требуется отдых',
+      text: `У ${truck!.driver} осталось ${truck!.hoursLeft.toFixed(1)}ч HOS. Нельзя назначать длинные рейсы. После отдыха (10ч) — полный сброс HOS.`,
+    };
+    if (truck.status === 'idle') {
+      const idleWarn = (truck as any).idleWarningLevel ?? 0;
+      if (idleWarn >= 3) return {
+        icon: '🚨', color: '#ef4444',
+        title: 'Критично — трак стоит слишком долго!',
+        text: `${truck.driver} свободен уже более 5 часов в ${cityState(truck.currentCity)}. Каждый час простоя = потеря денег. Срочно найди груз!`,
+      };
+      if (idleWarn >= 1) return {
+        icon: '⚠️', color: '#f97316',
+        title: 'Трак простаивает',
+        text: `${truck.driver} ждёт груз в ${cityState(truck.currentCity)}. Найди загрузку — чем быстрее, тем лучше. Deadhead 0 миль = идеально.`,
+      };
+      return {
+        icon: '✅', color: '#4ade80',
+        title: 'Готов к следующему грузу',
+        text: `${truck.driver} свободен в ${cityState(truck.currentCity)}. Ищи груз из этого города — 0 deadhead миль. HOS: ${truck.hoursLeft.toFixed(0)}ч.`,
+      };
+    }
+    if (truck.status === 'at_delivery') return {
+      icon: '📦', color: '#fbbf24',
+      title: 'Разгружается — готовь следующий груз',
+      text: `${truck.driver} на разгрузке в ${cityState(truck.currentCity)}. Самое время найти следующий груз из этого города — трак скоро освободится!`,
+    };
+    if (truck.status === 'at_pickup') return {
+      icon: '🔄', color: '#f59e0b',
+      title: 'Загружается',
+      text: `${truck.driver} на погрузке в ${cityState(truck.currentCity)}. Груз: ${truck.currentLoad?.toCity ? `→ ${cityState(truck.currentLoad.toCity)}` : '—'}. Скоро выедет.`,
+    };
+    if (truck.status === 'loaded') {
+      const pct = Math.round(truck.progress * 100);
+      const eta = truck.currentLoad ? Math.round((1 - truck.progress) * truck.currentLoad.miles / 60) : 0;
+      if (pct > 70) return {
+        icon: '🎯', color: '#06b6d4',
+        title: 'Скоро прибудет — ищи следующий груз!',
+        text: `${truck.driver} проехал ${pct}% маршрута. ETA ~${eta}ч до ${cityState(truck.currentLoad?.toCity || '')}. Самое время найти следующий груз из точки доставки!`,
+      };
+      return {
+        icon: '🚛', color: '#38bdf8',
+        title: 'В пути с грузом',
+        text: `${truck.driver} везёт груз в ${cityState(truck.currentLoad?.toCity || '')}. Прогресс: ${pct}%, ETA ~${eta}ч. Мониторь HOS и детали доставки.`,
+      };
+    }
+    if (truck.status === 'driving') return {
+      icon: '🔵', color: '#38bdf8',
+      title: 'Едет к погрузке',
+      text: `${truck.driver} едет к pickup в ${cityState(truck.destinationCity || '')}. Убедись что Rate Con подписан и водитель знает детали загрузки.`,
+    };
+    if (truck.status === 'breakdown') return {
+      icon: '🔧', color: '#ef4444',
+      title: 'Поломка — требуется действие',
+      text: `${truck.driver} сломался! Свяжись с техпомощью, уведоми брокера о задержке. Зафиксируй время для страховки.`,
+    };
+    return {
+      icon: '🤖', color: '#06b6d4',
+      title: 'AI Диспетчер',
+      text: 'Мониторь статус трака и реагируй на изменения.',
+    };
+  }
+
+  const ai = getAiMessage();
+
   return (
     <Modal transparent animationType="fade" visible onRequestClose={onClose}>
       <TouchableOpacity style={s.overlay} activeOpacity={1} onPress={onClose}>
@@ -72,6 +143,18 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
               {needsRest && (
                 <View style={s.restBadge}><Text style={s.restBadgeText}>⚠️ Отдых!</Text></View>
               )}
+            </View>
+
+            {/* ── AI ДИСПЕТЧЕР (сразу после статуса) ── */}
+            <View style={[s.aiCard, { borderColor: ai.color + '44', backgroundColor: ai.color + '12' }]}>
+              <View style={s.aiHeader}>
+                <Text style={s.aiIcon}>{ai.icon}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.aiLabel}>🤖 AI Диспетчер</Text>
+                  <Text style={[s.aiTitle, { color: ai.color }]}>{ai.title}</Text>
+                </View>
+              </View>
+              <Text style={s.aiText}>{ai.text}</Text>
             </View>
 
             {/* ── БЕЙДЖИ ── */}
@@ -127,20 +210,6 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
               <TouchableOpacity style={s.statsBtn} onPress={() => setShowScorecard(true)} activeOpacity={0.85}>
                 <Text style={s.statsBtnText}>📊 Driver Performance & Stats</Text>
               </TouchableOpacity>
-            </View>
-
-            {/* ── AI СОВЕТ ── */}
-            <View style={s.aiCard}>
-              <Text style={s.aiTitle}>🤖 AI Диспетчер</Text>
-              <Text style={s.aiText}>
-                {canFind
-                  ? `Найди груз из ${cityState(truck.currentCity)} — 0 deadhead миль!`
-                  : truck.status === 'loaded' && truck.progress > 0.7
-                  ? `Уже ищи следующий груз из ${cityState(truck.destinationCity || truck.currentCity)}.`
-                  : needsRest
-                  ? 'Водитель скоро должен отдыхать — учти при планировании!'
-                  : 'Мониторь прогресс, проверяй каждые 2 часа.'}
-              </Text>
             </View>
 
           </ScrollView>
@@ -231,7 +300,10 @@ const s = StyleSheet.create({
   statsBtnText: { fontSize: 13, fontWeight: '700', color: '#06b6d4' },
 
   // AI
-  aiCard: { margin: 12, padding: 12, backgroundColor: 'rgba(6,182,212,0.08)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(6,182,212,0.2)' },
-  aiTitle: { fontSize: 12, fontWeight: '800', color: '#06b6d4', textTransform: 'uppercase', marginBottom: 6 },
-  aiText: { fontSize: 12, color: '#e2e8f0', lineHeight: 18 },
+  aiCard: { margin: 12, marginBottom: 0, padding: 12, borderRadius: 12, borderWidth: 1.5, gap: 8 },
+  aiHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  aiIcon: { fontSize: 26 },
+  aiLabel: { fontSize: 10, fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 0.8 },
+  aiTitle: { fontSize: 14, fontWeight: '900', marginTop: 1 },
+  aiText: { fontSize: 13, color: '#e2e8f0', lineHeight: 20 },
 });

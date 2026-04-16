@@ -95,6 +95,9 @@ function EmailDetail({ email, onBack }: { email: Notification; onBack: () => voi
   // Состояние для звонка
   const [callDone, setCallDone] = useState(false);
 
+  // Bubble-подсказка для Rate Con
+  const [bubbleDismissed, setBubbleDismissed] = useState(false);
+
   const tiles = getPhraseTiles(email);
   const driverResponses = getDriverResponses(email);
   const bodyText = selected.join(' ');
@@ -140,9 +143,21 @@ function EmailDetail({ email, onBack }: { email: Notification; onBack: () => voi
         </TouchableOpacity>
         <View style={s.detailHeaderActions}>
           {isRateCon && (
-            <TouchableOpacity style={s.rateConBtn} onPress={() => setRateConOpen(true)}>
-              <Text style={s.rateConBtnText}>📋 Rate Con</Text>
-            </TouchableOpacity>
+            <View style={{ position: 'relative' }}>
+              {/* Bubble-подсказка */}
+              {!bubbleDismissed && (
+                <View style={s.rateConBubble} pointerEvents="none">
+                  <Text style={s.rateConBubbleText}>👆 Нажми Rate Con{'\n'}и проверь детали груза,{'\n'}потом напиши брокеру</Text>
+                  <View style={s.rateConBubbleArrow} />
+                </View>
+              )}
+              <TouchableOpacity
+                style={s.rateConBtn}
+                onPress={() => { setBubbleDismissed(true); setRateConOpen(true); }}
+              >
+                <Text style={s.rateConBtnText}>📋 Rate Con</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
       </View>
@@ -447,6 +462,38 @@ const s = StyleSheet.create({
   backBtnText: { fontSize: 13, fontWeight: '600', color: '#cbd5e1' },
   rateConBtn: { paddingVertical: 8, paddingHorizontal: 12, backgroundColor: 'rgba(251,191,36,0.15)', borderRadius: 8, borderWidth: 1, borderColor: 'rgba(251,191,36,0.4)' },
   rateConBtnText: { fontSize: 12, fontWeight: '700', color: '#fbbf24' },
+  rateConBubble: {
+    position: 'absolute',
+    bottom: 46,
+    right: 0,
+    backgroundColor: '#1e293b',
+    borderWidth: 1.5,
+    borderColor: '#06b6d4',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    width: 190,
+    zIndex: 100,
+    shadowColor: '#06b6d4',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  rateConBubbleText: { fontSize: 12, fontWeight: '700', color: '#e2e8f0', lineHeight: 18, textAlign: 'center' },
+  rateConBubbleArrow: {
+    position: 'absolute',
+    bottom: -8,
+    right: 20,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 8,
+    borderRightWidth: 8,
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#06b6d4',
+  },
   detailScroll: { flex: 1, padding: 16 },
   detailMeta: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
   detailIcon: { fontSize: 32 },

@@ -152,6 +152,7 @@ interface GameState {
   phase: 'menu' | 'playing' | 'shift_end';
   day: number;
   gameMinute: number; // 0 = 08:43
+  timeSpeed: 1 | 2 | 5;
   sessionName: string;
 
   // Финансы
@@ -206,6 +207,7 @@ interface GameState {
   startShift: (truckCount?: number, sessionName?: string) => void;
   tickClock: () => void;
   triggerRandomEvent: () => void;
+  setTimeSpeed: (speed: 1 | 2 | 5) => void;
 
   openNegotiation: (load: LoadOffer) => void;
   makeOffer: (amount: number) => 'accepted' | 'counter' | 'rejected';
@@ -324,47 +326,47 @@ const INITIAL_LOAD_4: ActiveLoad = {
   brokerId: 'B4',
   brokerName: 'Lisa',
   brokerCompany: 'PrimeHaul',
-  fromCity: 'Portland',
-  toCity: 'Seattle',
-  commodity: 'Продукты питания',
-  weight: 28000,
-  equipment: 'Reefer',
-  postedRate: 700,
-  marketRate: 850,
-  minRate: 650,
-  miles: 175,
-  pickupTime: 'Yesterday 18:00',
-  deliveryTime: 'Today 07:00',
+  fromCity: 'Houston',
+  toCity: 'Chicago',
+  commodity: 'Промышленное оборудование',
+  weight: 41000,
+  equipment: 'Flatbed',
+  postedRate: 2800,
+  marketRate: 3100,
+  minRate: 2600,
+  miles: 1092,
+  pickupTime: 'Yesterday 08:00',
+  deliveryTime: 'Tomorrow 10:00',
   expiresAt: 0,
   isUrgent: false,
-  agreedRate: 800,
+  agreedRate: 3000,
   truckId: 'T4',
-  phase: 'unloading',
+  phase: 'to_delivery',
   detentionMinutes: 0,
   detentionPaid: false,
 };
 
-const INITIAL_LOAD_5: ActiveLoad = {
-  id: 'INIT-L5',
-  brokerId: 'B5',
-  brokerName: 'Dave',
-  brokerCompany: 'CrossCountry',
-  fromCity: 'Salt Lake City',
-  toCity: 'Denver',
-  commodity: 'Строительные материалы',
-  weight: 40000,
-  equipment: 'Flatbed',
-  postedRate: 1200,
-  marketRate: 1500,
-  minRate: 1100,
-  miles: 525,
-  pickupTime: 'Yesterday 12:00',
-  deliveryTime: 'Today 06:00',
+const INITIAL_LOAD_9: ActiveLoad = {
+  id: 'INIT-L9',
+  brokerId: 'B3',
+  brokerName: 'Mike',
+  brokerCompany: 'EastFreight Co',
+  fromCity: 'Indianapolis',
+  toCity: 'Atlanta',
+  commodity: 'Автозапчасти',
+  weight: 36000,
+  equipment: 'Dry Van',
+  postedRate: 1600,
+  marketRate: 1900,
+  minRate: 1500,
+  miles: 490,
+  pickupTime: 'Yesterday 14:00',
+  deliveryTime: 'Today 18:00',
   expiresAt: 0,
   isUrgent: false,
-  agreedRate: 1400,
-  truckId: 'T5',
-  phase: 'unloading',
+  agreedRate: 1800,
+  truckId: 'T9',
+  phase: 'to_delivery',
   detentionMinutes: 0,
   detentionPaid: false,
 };
@@ -396,54 +398,63 @@ const INITIAL_LOAD_6: ActiveLoad = {
 
 const INITIAL_TRUCKS: Truck[] = [
   {
+    // T1 — едет с грузом к delivery
     id: 'T1', name: 'Truck 1047', driver: 'John Martinez',
     status: 'loaded', position: CITIES['Chicago'],
     currentCity: 'Chicago', destinationCity: 'Dallas',
-    progress: 0.15, currentLoad: null, hoursLeft: 11, mood: 90, routePath: null,
+    progress: 0.15, currentLoad: INITIAL_LOAD_1, hoursLeft: 11, mood: 90, routePath: null,
     safetyScore: 95, fuelEfficiency: 6.8, onTimeRate: 98, complianceRate: 100,
     totalMiles: 45230, totalDeliveries: 156, hosViolations: 0, lastInspection: 0,
   },
   {
+    // T2 — едет с грузом к delivery
     id: 'T2', name: 'Truck 2023', driver: 'Carlos Rivera',
     status: 'loaded', position: CITIES['Atlanta'],
     currentCity: 'Atlanta', destinationCity: 'New York',
-    progress: 0.2, currentLoad: null, hoursLeft: 9, mood: 85, routePath: null,
+    progress: 0.2, currentLoad: INITIAL_LOAD_2, hoursLeft: 9, mood: 85, routePath: null,
     safetyScore: 92, fuelEfficiency: 7.1, onTimeRate: 96, complianceRate: 98,
     totalMiles: 38450, totalDeliveries: 142, hosViolations: 1, lastInspection: 0,
   },
   {
+    // T3 — свободен, только что разгрузился — ищет груз
     id: 'T3', name: 'Truck 3012', driver: 'Mike Chen',
-    status: 'driving', position: CITIES['Denver'],
-    currentCity: 'Denver', destinationCity: 'Los Angeles',
-    progress: 0.1, currentLoad: null, hoursLeft: 11, mood: 95, routePath: null,
+    status: 'idle', position: CITIES['Denver'],
+    currentCity: 'Denver', destinationCity: null,
+    progress: 0, currentLoad: null, hoursLeft: 11, mood: 95, routePath: null,
     safetyScore: 98, fuelEfficiency: 7.3, onTimeRate: 99, complianceRate: 100,
     totalMiles: 52100, totalDeliveries: 178, hosViolations: 0, lastInspection: 0,
-  },
+    idleSinceMinute: 0,
+  } as any,
   {
+    // T4 — едет с грузом к delivery
     id: 'T4', name: 'Truck 4034', driver: 'Tom Wilson',
     status: 'loaded', position: CITIES['Houston'],
     currentCity: 'Houston', destinationCity: 'Chicago',
-    progress: 0.25, currentLoad: null, hoursLeft: 10, mood: 100, routePath: null,
+    progress: 0.25, currentLoad: INITIAL_LOAD_4, hoursLeft: 10, mood: 100, routePath: null,
     safetyScore: 88, fuelEfficiency: 6.5, onTimeRate: 94, complianceRate: 96,
     totalMiles: 41200, totalDeliveries: 135, hosViolations: 2, lastInspection: 0,
   },
   {
+    // T5 — свободен, только что разгрузился
     id: 'T5', name: 'Truck 5056', driver: 'Lisa Brown',
     status: 'idle', position: CITIES['Miami'],
     currentCity: 'Miami', destinationCity: null,
     progress: 0, currentLoad: null, hoursLeft: 11, mood: 92, routePath: null,
     safetyScore: 97, fuelEfficiency: 7.0, onTimeRate: 97, complianceRate: 100,
     totalMiles: 48900, totalDeliveries: 165, hosViolations: 0, lastInspection: 0,
-  },
+    idleSinceMinute: 0,
+  } as any,
   {
+    // T6 — едет с грузом к delivery
     id: 'T6', name: 'Truck 6078', driver: 'David Martinez',
     status: 'loaded', position: CITIES['Seattle'],
     currentCity: 'Seattle', destinationCity: 'Phoenix',
-    progress: 0.3, currentLoad: null, hoursLeft: 7, mood: 88, routePath: null,
+    progress: 0.3, currentLoad: INITIAL_LOAD_6, hoursLeft: 7, mood: 88, routePath: null,
     safetyScore: 90, fuelEfficiency: 6.9, onTimeRate: 95, complianceRate: 97,
     totalMiles: 39800, totalDeliveries: 148, hosViolations: 1, lastInspection: 0,
   },
   {
+    // T7 — едет к pickup (deadhead)
     id: 'T7', name: 'Truck 7089', driver: 'James Anderson',
     status: 'driving', position: CITIES['Kansas City'],
     currentCity: 'Kansas City', destinationCity: 'Memphis',
@@ -452,18 +463,21 @@ const INITIAL_TRUCKS: Truck[] = [
     totalMiles: 44500, totalDeliveries: 152, hosViolations: 0, lastInspection: 0,
   },
   {
+    // T8 — свободен, только что разгрузился
     id: 'T8', name: 'Truck 8091', driver: 'Maria Garcia',
     status: 'idle', position: CITIES['Las Vegas'],
     currentCity: 'Las Vegas', destinationCity: null,
     progress: 0, currentLoad: null, hoursLeft: 11, mood: 100, routePath: null,
     safetyScore: 99, fuelEfficiency: 7.4, onTimeRate: 99, complianceRate: 100,
     totalMiles: 51200, totalDeliveries: 171, hosViolations: 0, lastInspection: 0,
-  },
+    idleSinceMinute: 0,
+  } as any,
   {
+    // T9 — едет с грузом к delivery
     id: 'T9', name: 'Truck 9102', driver: 'Robert Johnson',
     status: 'loaded', position: CITIES['Indianapolis'],
     currentCity: 'Indianapolis', destinationCity: 'Atlanta',
-    progress: 0.2, currentLoad: null, hoursLeft: 10, mood: 90, routePath: null,
+    progress: 0.2, currentLoad: INITIAL_LOAD_9, hoursLeft: 10, mood: 90, routePath: null,
     safetyScore: 93, fuelEfficiency: 6.8, onTimeRate: 96, complianceRate: 98,
     totalMiles: 42300, totalDeliveries: 145, hosViolations: 1, lastInspection: 0,
   },
@@ -1132,6 +1146,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   phase: 'menu',
   day: 1,
   gameMinute: 0,
+  timeSpeed: 1,
   balance: 0,
   totalEarned: 0,
   totalLost: 0,
@@ -1160,6 +1175,38 @@ export const useGameStore = create<GameState>((set, get) => ({
     
     // Всегда сбрасываем старое сохранение и начинаем заново
     get().clearSave();
+
+    // ── Начальные активные грузы (только едущие траки) ──
+    const allInitialLoads = [INITIAL_LOAD_1, INITIAL_LOAD_2, INITIAL_LOAD_4, INITIAL_LOAD_6, INITIAL_LOAD_9];
+    const selectedActiveLoads = allInitialLoads
+      .filter(l => parseInt(l.truckId.replace('T','')) <= truckCount)
+      .filter(l => l.phase === 'to_delivery'); // только те кто едет, не разгружается
+
+    // ── Начальные письма ──
+    const initialEmails: Notification[] = [
+      {
+        id: 'INIT-EMAIL-1',
+        type: 'rate_con',
+        from: 'Sarah (QuickLoad)',
+        subject: 'Rate Con готов',
+        message: 'Rate Con на груз Chicago → Houston подписан. Проверь детали.',
+        minute: -65,
+        read: false,
+        priority: 'medium',
+        actionRequired: true,
+      },
+      {
+        id: 'INIT-EMAIL-2',
+        type: 'email',
+        from: 'Tom (FastFreight)',
+        subject: 'Новый груз — Dallas → Atlanta',
+        message: 'Есть груз Dallas → Atlanta, $2,400, 781 mi. Dry Van. Pickup сегодня 10:00. Интересует?',
+        minute: -30,
+        read: false,
+        priority: 'medium',
+        actionRequired: false,
+      },
+    ];
     
     // Берём траки из INITIAL_TRUCKS с их реальными позициями и маршрутами
     const allTrucks = INITIAL_TRUCKS.slice(0, truckCount).map(truck => ({
@@ -1211,10 +1258,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   tickClock: async () => {
-    const { gameMinute, trucks, availableLoads, activeLoads } = get();
+    const { gameMinute, trucks, availableLoads, activeLoads, timeSpeed } = get();
     // 1 день = 20 реальных минут = 1200 тиков
     // 1 тик = 1440/1200 = 1.2 игровых минуты
-    const TICK_MINUTES = 1.2;
+    const TICK_MINUTES = 1.2 * (timeSpeed ?? 1);
     const newMinute = Math.round((gameMinute + TICK_MINUTES) * 10) / 10;
 
     if (newMinute >= SHIFT_DURATION) {
@@ -1311,20 +1358,38 @@ export const useGameStore = create<GameState>((set, get) => ({
         return { ...truck, pickupArrivalMinute } as any;
       }
 
-      // ── at_delivery: автоматически освобождаем трак через 10 минут ──
+      // ── at_delivery: разгрузка длится 30-120 игровых минут, detention после 120 мин ──
       if (truck.status === 'at_delivery' && truck.currentLoad) {
         const deliveryArrivalMinute = (truck as any).deliveryArrivalMinute ?? newMinute;
+        // Случайная длительность разгрузки: 30-120 мин (задаётся при первом тике)
+        const unloadDuration = (truck as any).unloadDuration ?? (30 + Math.floor(Math.random() * 91));
         const waitTime = newMinute - deliveryArrivalMinute;
-        if (waitTime >= 10) {
+
+        // Detention: после 120 игровых минут (2 часа) — уведомление
+        if (waitTime >= 120 && !(truck as any).detentionNotified) {
+          get().addNotification({
+            type: 'detention', priority: 'high',
+            from: truck.currentLoad.brokerName,
+            subject: `⏰ Detention — ${truck.name} ждёт уже 2 часа`,
+            message: `${truck.driver} на разгрузке в ${truck.currentLoad.toCity} уже 2 часа. Detention $75/час начался. Зафиксируй время и уведоми брокера!`,
+            actionRequired: true,
+            relatedTruckId: truck.id,
+          });
+          return { ...truck, deliveryArrivalMinute, unloadDuration, detentionNotified: true } as any;
+        }
+
+        // Разгрузка завершена
+        if (waitTime >= unloadDuration) {
+          const detentionHours = Math.max(0, Math.floor((waitTime - 120) / 60));
+          const detentionPay = detentionHours * 75;
           get().addNotification({
             type: 'email', priority: 'low',
             from: truck.currentLoad.brokerName,
             subject: `✅ ${truck.name} разгружен — свободен`,
-            message: `${truck.name} разгружен в ${truck.currentLoad.toCity}. Трак свободен, ищи следующий груз!`,
+            message: `${truck.driver}: разгрузился в ${truck.currentLoad.toCity}, BOL подписан. Свободен — ищи следующий груз.${detentionPay > 0 ? ` Detention: $${detentionPay} — выставь брокеру!` : ''}`,
             actionRequired: false,
             relatedTruckId: truck.id,
           });
-          // Убираем груз из activeLoads
           const activeLoads = get().activeLoads.filter(l => l.id !== truck.currentLoad!.id);
           set({ activeLoads });
           return {
@@ -1335,9 +1400,14 @@ export const useGameStore = create<GameState>((set, get) => ({
             progress: 0,
             routePath: null,
             currentCity: truck.currentLoad.toCity,
+            idleSinceMinute: newMinute,
+            idleWarningLevel: 0,
+            deliveryArrivalMinute: undefined,
+            unloadDuration: undefined,
+            detentionNotified: undefined,
           };
         }
-        return { ...truck, deliveryArrivalMinute } as any;
+        return { ...truck, deliveryArrivalMinute, unloadDuration } as any;
       }
 
       // Если трак на разгрузке/погрузке и у него уже есть следующий груз - автоматически начинаем движение
@@ -1391,28 +1461,28 @@ export const useGameStore = create<GameState>((set, get) => ({
         const idleMinutes = newMinute - idleSince;
         const idleHours = idleMinutes / 60;
 
-        // Уровни предупреждения: 4ч=1, 5ч=2, 6ч=3
+        // Уровни предупреждения: 3ч=1(жёлтый), 4ч=2(оранжевый), 5ч=3(красный)
         let idleWarningLevel: 0|1|2|3 = 0;
-        if (idleHours >= 6) idleWarningLevel = 3;
-        else if (idleHours >= 5) idleWarningLevel = 2;
-        else if (idleHours >= 4) idleWarningLevel = 1;
+        if (idleHours >= 5) idleWarningLevel = 3;
+        else if (idleHours >= 4) idleWarningLevel = 2;
+        else if (idleHours >= 3) idleWarningLevel = 1;
 
         // Уведомления при достижении порогов
-        if (idleHours >= 4 && (truck as any).idleWarningLevel < 1) {
+        if (idleHours >= 3 && idleHours < 3.1 && (truck as any).idleWarningLevel < 1) {
           get().addNotification({
             type: 'urgent', priority: 'high',
             from: `${truck.driver} (${truck.name})`,
-            subject: `⚠️ ${truck.name} стоит уже 4 часа`,
-            message: `${truck.driver} ждёт груз уже 4 часа в ${truck.currentCity}. Найди груз или объясни ситуацию водителю!`,
+            subject: `⚠️ ${truck.name} стоит уже 3 часа`,
+            message: `${truck.driver} ждёт груз уже 3 часа в ${truck.currentCity}. Трак выделен жёлтым на карте. Найди груз!`,
             actionRequired: true, relatedTruckId: truck.id,
           });
         }
-        if (idleHours >= 6 && (truck as any).idleWarningLevel < 3) {
+        if (idleHours >= 5 && (truck as any).idleWarningLevel < 3) {
           get().addNotification({
             type: 'urgent', priority: 'critical',
             from: `${truck.driver} (${truck.name})`,
-            subject: `🚨 ${truck.name} стоит уже 6 часов — критично!`,
-            message: `${truck.driver} простаивает 6 часов! Настроение падает, водитель может уйти. Срочно найди груз!`,
+            subject: `🚨 ${truck.name} стоит уже 5 часов — критично!`,
+            message: `${truck.driver} простаивает 5 часов! Трак красный на карте. Настроение падает, водитель может уйти. Срочно найди груз!`,
             actionRequired: true, relatedTruckId: truck.id,
           });
         }
@@ -1460,6 +1530,19 @@ export const useGameStore = create<GameState>((set, get) => ({
       if ((truck.status === 'driving' || truck.status === 'loaded') && truck.destinationCity) {
         const to = CITIES[truck.destinationCity];
         if (!to) return truck;
+
+        // Защита: loaded без груза — переводим в idle
+        if (truck.status === 'loaded' && !truck.currentLoad) {
+          return {
+            ...truck,
+            status: 'idle' as TruckStatus,
+            destinationCity: null,
+            progress: 0,
+            routePath: null,
+            idleSinceMinute: newMinute,
+            idleWarningLevel: 0,
+          } as any;
+        }
 
         // Расстояние маршрута
         let totalMiles = 500;
@@ -1615,7 +1698,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           type: 'text' as const,
           from: 'Carlos (водитель)',
           subject: 'SMS',
-          message: 'Разгрузился. Жду следующий груз. Где едем?',
+          message: 'Разгрузился, BOL подписан. Свободен. Куда дальше?',
           priority: 'medium' as const,
         },
         {
@@ -2150,6 +2233,10 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   setLoadBoardSearch: (city: string) => {
     set({ loadBoardSearchFrom: city });
+  },
+
+  setTimeSpeed: (speed: 1 | 2 | 5) => {
+    set({ timeSpeed: speed });
   },
 
   endShift: () => {

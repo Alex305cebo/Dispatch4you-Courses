@@ -54,7 +54,7 @@ export default function NotificationBell({ onNavigateToTrucks, onNavigateToLoads
   const [isOpen, setIsOpen] = useState(false);
   const [selectedBrokerNotification, setSelectedBrokerNotification] = useState<Notification | null>(null);
   const [selectedDriverNotification, setSelectedDriverNotification] = useState<Notification | null>(null);
-  const [sortMode, setSortMode] = useState<'priority' | 'time' | 'done'>('priority');
+  const [sortMode, setSortMode] = useState<'unread' | 'read'>('unread');
   const { notifications, unreadCount, markNotificationRead, markAllNotificationsRead, selectTruck, trucks } = useGameStore();
 
   // Сортировка и группировка
@@ -180,17 +180,25 @@ export default function NotificationBell({ onNavigateToTrucks, onNavigateToLoads
 
             {/* Sort tabs */}
             <View style={styles.sortTabs}>
-              {(['priority', 'time', 'done'] as const).map(mode => (
-                <TouchableOpacity
-                  key={mode}
-                  style={[styles.sortTab, sortMode === mode && styles.sortTabActive]}
-                  onPress={() => setSortMode(mode)}
-                >
-                  <Text style={[styles.sortTabText, sortMode === mode && styles.sortTabTextActive]}>
-                    {mode === 'priority' ? '🔴 Важные' : mode === 'time' ? '🕐 По времени' : '✅ Выполненные'}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {(['unread', 'read'] as const).map(mode => {
+                const count = mode === 'unread' ? pending.length : done.length;
+                return (
+                  <TouchableOpacity
+                    key={mode}
+                    style={[styles.sortTab, sortMode === mode && styles.sortTabActive]}
+                    onPress={() => setSortMode(mode)}
+                  >
+                    <Text style={[styles.sortTabText, sortMode === mode && styles.sortTabTextActive]}>
+                      {mode === 'unread' ? '🔔 Новые' : '✅ Прочитанные'}
+                    </Text>
+                    {count > 0 && (
+                      <View style={[styles.tabBadge, mode === 'unread' && styles.tabBadgeRed]}>
+                        <Text style={styles.tabBadgeText}>{count}</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
 
             {/* Notifications List */}
@@ -200,50 +208,49 @@ export default function NotificationBell({ onNavigateToTrucks, onNavigateToLoads
                   <Text style={styles.emptyIcon}>📭</Text>
                   <Text style={styles.emptyText}>Нет уведомлений</Text>
                 </View>
-              ) : sortMode === 'done' ? (
-                // Показываем только выполненные
-                done.length === 0 ? (
-                  <View style={styles.empty}>
-                    <Text style={styles.emptyIcon}>✅</Text>
-                    <Text style={styles.emptyText}>Нет выполненных</Text>
-                  </View>
-                ) : done.map(notif => (
-                  <NotifItem key={notif.id} notif={notif} onPress={() => handleNotificationClick(notif)} getIcon={getIcon} getPriorityColor={getPriorityColor} />
-                ))
-              ) : (
-                <>
-                  {/* Нужно обработать */}
-                  {pending.length > 0 && (
-                    <>
-                      <View style={styles.groupHeader}>
-                        <Text style={styles.groupHeaderText}>⚡ Нужно обработать ({pending.length})</Text>
-                      </View>
-                      {pending.map(notif => (
-                        <NotifItem key={notif.id} notif={notif} onPress={() => handleNotificationClick(notif)} getIcon={getIcon} getPriorityColor={getPriorityColor} />
-                      ))}
-                    </>
-                  )}
-                  {/* Выполненные */}
-                  {done.length > 0 && sortMode === 'priority' && (
-                    <>
-                      <View style={[styles.groupHeader, styles.groupHeaderDone]}>
-                        <Text style={[styles.groupHeaderText, { color: '#475569' }]}>✓ Обработано ({done.length})</Text>
-                      </View>
-                      {done.slice(0, 5).map(notif => (
-                        <NotifItem key={notif.id} notif={notif} onPress={() => handleNotificationClick(notif)} getIcon={getIcon} getPriorityColor={getPriorityColor} />
-                      ))}
-                      {done.length > 5 && (
-                        <View style={styles.moreRow}>
-                          <Text style={styles.moreText}>+ ещё {done.length - 5} обработанных</Text>
+              ) : (() => {
+                const list = sortMode === 'unread' ? pending : done;
+                const critical = list.filter(n => n.priority === 'critical' || n.priority === 'high');
+                const normal = list.filter(n => n.priority !== 'critical' && n.priority !== 'high');
+
+                if (list.length === 0) {
+                  return (
+                    <View style={styles.empty}>
+                      <Text style={styles.emptyIcon}>{sortMode === 'unread' ? '🔔' : '✅'}</Text>
+                      <Text style={styles.emptyText}>{sortMode === 'unread' ? 'Нет новых' : 'Нет прочитанных'}</Text>
+                    </View>
+                  );
+                }
+
+                return (
+                  <>
+                    {/* Красный раздел — Критические */}
+                    {critical.length > 0 && (
+                      <>
+                        <View style={styles.criticalHeader}>
+                          <Text style={styles.criticalHeaderText}>🚨 ВАЖНЫЕ / КРИТИЧЕСКИЕ ({critical.length})</Text>
                         </View>
-                      )}
-                    </>
-                  )}
-                  {sortMode === 'time' && sorted.map(notif => (
-                    <NotifItem key={notif.id} notif={notif} onPress={() => handleNotificationClick(notif)} getIcon={getIcon} getPriorityColor={getPriorityColor} />
-                  ))}
-                </>
-              )}
+                        {critical.map(notif => (
+                          <NotifItem key={notif.id} notif={notif} onPress={() => handleNotificationClick(notif)} getIcon={getIcon} getPriorityColor={getPriorityColor} />
+                        ))}
+                      </>
+                    )}
+                    {/* Обычные */}
+                    {normal.length > 0 && (
+                      <>
+                        {critical.length > 0 && (
+                          <View style={styles.groupHeader}>
+                            <Text style={styles.groupHeaderText}>📋 Остальные ({normal.length})</Text>
+                          </View>
+                        )}
+                        {normal.map(notif => (
+                          <NotifItem key={notif.id} notif={notif} onPress={() => handleNotificationClick(notif)} getIcon={getIcon} getPriorityColor={getPriorityColor} />
+                        ))}
+                      </>
+                    )}
+                  </>
+                );
+              })()}
             </ScrollView>
           </View>
         </View>
@@ -397,6 +404,7 @@ const styles = StyleSheet.create({
   },
   sortTab: {
     flex: 1, paddingVertical: 10, alignItems: 'center',
+    flexDirection: 'row' as any, justifyContent: 'center' as any, gap: 4,
   },
   sortTabActive: {
     borderBottomWidth: 2, borderBottomColor: '#06b6d4',
@@ -412,7 +420,24 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderBottomColor: 'rgba(255,255,255,0.06)',
   },
-  groupHeaderText: { fontSize: 11, fontWeight: '800', color: '#ef4444', textTransform: 'uppercase', letterSpacing: 0.5 },
+  groupHeaderText: { fontSize: 11, fontWeight: '800', color: '#ef4444', textTransform: 'uppercase' as any, letterSpacing: 0.5 },
+  criticalHeader: {
+    padding: 10,
+    paddingHorizontal: 14,
+    backgroundColor: 'rgba(239,68,68,0.18)',
+    borderLeftWidth: 4,
+    borderLeftColor: '#ef4444',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(239,68,68,0.3)',
+    marginBottom: 2,
+  },
+  criticalHeaderText: { fontSize: 12, fontWeight: '900', color: '#ef4444', letterSpacing: 0.5 },
+  tabBadge: {
+    marginLeft: 6, paddingHorizontal: 6, paddingVertical: 2,
+    backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 10,
+  },
+  tabBadgeRed: { backgroundColor: 'rgba(239,68,68,0.3)' },
+  tabBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff' },
   moreRow: { padding: 12, alignItems: 'center' },
   moreText: { fontSize: 11, color: '#475569', fontWeight: '600' },
   notifHeader: {

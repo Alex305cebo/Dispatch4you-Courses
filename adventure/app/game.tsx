@@ -60,9 +60,10 @@ export default function GameScreen() {
     phase, gameMinute, balance, reputation,
     trucks, activeEvents, availableLoads, negotiation, bookedLoads, activeLoads,
     tickClock, selectedTruckId, selectTruck, notifications, sessionName, score, refreshLoadBoard, setLoadBoardSearch,
+    timeSpeed, setTimeSpeed,
   } = useGameStore();
 
-  const [activeTab, setActiveTab] = useState<Tab>('loadboard');
+  const [activeTab, setActiveTab] = useState<Tab>('map');
   const [pendingLoad, setPendingLoad] = useState<ActiveLoad | null>(null);
   const [showFleet, setShowFleet] = useState(false);
   const [showCompliance, setShowCompliance] = useState(false);
@@ -102,6 +103,24 @@ export default function GameScreen() {
 
   const isMobile = width < 600;
 
+  // Компонент перемотки времени
+  const SpeedControl = () => (
+    <View style={styles.speedWrap}>
+      {([1, 2, 5] as const).map(s => (
+        <TouchableOpacity
+          key={s}
+          style={[styles.speedBtn, timeSpeed === s && styles.speedBtnActive]}
+          onPress={() => setTimeSpeed(s)}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.speedBtnText, timeSpeed === s && styles.speedBtnTextActive]}>
+            {s === 1 ? '▶ ×1' : s === 2 ? '⏩ ×2' : '⏭ ×5'}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+
   // Обработчик клика на трак в HUD
   function handleTruckTabClick(truck: any) {
     selectTruck(truck.id);
@@ -128,8 +147,11 @@ export default function GameScreen() {
                     </Text>
                   </TouchableOpacity>
                   {sessionName ? <Text style={styles.hudSession}>{sessionName}</Text> : null}
-                  <View style={styles.shiftBar}>
-                    <View style={[styles.shiftBarFill, { width: `${Math.min(progress * 100, 100)}%` as any }]} />
+                  <View style={styles.shiftBarRow}>
+                    <View style={styles.shiftBar}>
+                      <View style={[styles.shiftBarFill, { width: `${Math.min(progress * 100, 100)}%` as any }]} />
+                    </View>
+                    <SpeedControl />
                   </View>
                 </View>
               </View>
@@ -254,8 +276,11 @@ export default function GameScreen() {
                   </Text>
                 </TouchableOpacity>
                 {sessionName ? <Text style={styles.hudSession}>{sessionName}</Text> : null}
-                <View style={styles.shiftBar}>
-                  <View style={[styles.shiftBarFill, { width: `${Math.min(progress * 100, 100)}%` as any }]} />
+                <View style={styles.shiftBarRow}>
+                  <View style={styles.shiftBar}>
+                    <View style={[styles.shiftBarFill, { width: `${Math.min(progress * 100, 100)}%` as any }]} />
+                  </View>
+                  <SpeedControl />
                 </View>
               </View>
               <View style={styles.hudStats}>
@@ -443,7 +468,10 @@ const styles = StyleSheet.create({
   hudSession: { fontSize: 9, color: Colors.primary, fontWeight: '700', marginTop: 1 },
   shiftBar: {
     height: 3, backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 2, overflow: 'hidden', marginTop: 4,
+    borderRadius: 2, overflow: 'hidden', flex: 1,
+  },
+  shiftBarRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4,
   },
   shiftBarFill: { height: '100%', backgroundColor: Colors.primary, borderRadius: 2 },
 
@@ -458,6 +486,22 @@ const styles = StyleSheet.create({
   hudStatNum: { fontSize: 12, fontWeight: '800', color: '#fff' },
 
   hudActions: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0 },
+
+  // Speed control
+  speedWrap: { flexDirection: 'row', gap: 2, alignItems: 'center' },
+  speedBtn: {
+    paddingHorizontal: 5, paddingVertical: 2,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 6, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center', minWidth: 26,
+  },
+  speedBtnActive: {
+    backgroundColor: 'rgba(6,182,212,0.2)',
+    borderColor: '#06b6d4',
+  },
+  speedBtnText: { fontSize: 9, color: '#94a3b8' },
+  speedBtnLabel: { fontSize: 8, fontWeight: '800', color: '#94a3b8' },
+  speedBtnTextActive: { color: '#06b6d4' },
 
   // Row 2 — truck tabs
   truckTabsScroll: { maxHeight: 80 },
