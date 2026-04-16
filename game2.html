@@ -1,0 +1,3506 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Dispatch Office — Beta v2.4.0 [CLAYMORPHISM]</title>
+<style>
+/* ═══════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+body{background:#080d1a;color:#e2e8f0}
+button{cursor:pointer;border:none;outline:none;font-family:inherit}
+input{font-family:inherit;outline:none}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:rgba(255,255,255,0.03)}
+::-webkit-scrollbar-thumb{background:rgba(56,189,248,0.3);border-radius:2px}
+
+/* ═══════════════════════════════════════════════
+   CSS VARIABLES
+═══════════════════════════════════════════════ */
+:root{
+  --bg:#080d1a;
+  --bg2:#0d1526;
+  --bg3:#111827;
+  --card:rgba(255,255,255,0.04);
+  --border:rgba(255,255,255,0.08);
+  --primary:#38bdf8;
+  --primary-dim:rgba(56,189,248,0.15);
+  --success:#34d399;
+  --warning:#fbbf24;
+  --danger:#f87171;
+  --text:#e2e8f0;
+  --text-muted:#94a3b8;
+  --text-dim:#475569;
+}
+
+/* ═══════════════════════════════════════════════
+   SCREENS
+═══════════════════════════════════════════════ */
+.screen{display:none;width:100%;height:100%}
+.screen.active{display:flex}
+
+/* ═══════════════════════════════════════════════
+   SCREEN: LOGIN
+═══════════════════════════════════════════════ */
+#screen-login{
+  flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(56,189,248,0.08) 0%,transparent 70%),
+             linear-gradient(180deg,#080d1a 0%,#060a14 100%);
+  padding:24px;gap:16px;
+}
+.login-logo{
+  width:88px;height:88px;border-radius:22px;
+  background:linear-gradient(135deg,rgba(56,189,248,0.15),rgba(14,165,233,0.08));
+  border:1px solid rgba(56,189,248,0.25);
+  display:flex;align-items:center;justify-content:center;
+  font-size:44px;margin-bottom:4px;
+  box-shadow:0 8px 32px rgba(56,189,248,0.15);
+}
+.login-title{font-size:30px;font-weight:900;color:#fff;letter-spacing:-0.5px}
+.login-sub{font-size:14px;color:var(--text-muted);text-align:center}
+.beta-badge{
+  padding:3px 12px;border-radius:20px;
+  background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);
+  font-size:11px;font-weight:800;color:var(--primary);letter-spacing:2px;
+}
+.login-form{width:100%;max-width:340px;display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.login-label{font-size:13px;font-weight:600;color:var(--text-muted);margin-left:4px}
+.login-input{
+  background:var(--bg3);border:1px solid var(--border);border-radius:14px;
+  padding:14px 16px;font-size:16px;color:var(--text);font-weight:600;
+  transition:border-color 0.2s;
+}
+.login-input:focus{border-color:rgba(56,189,248,0.5)}
+.login-input::placeholder{color:var(--text-dim)}
+.login-error{font-size:12px;color:var(--danger);margin-left:4px;min-height:16px}
+.btn-primary{
+  width:100%;max-width:340px;padding:16px;border-radius:16px;
+  background:linear-gradient(135deg,#0ea5e9,#38bdf8);
+  font-size:17px;font-weight:700;color:#fff;letter-spacing:-0.3px;
+  transition:opacity 0.2s,transform 0.1s;
+  box-shadow:0 4px 20px rgba(56,189,248,0.3);
+}
+.btn-primary:hover{opacity:0.9}
+.btn-primary:active{transform:scale(0.98)}
+.btn-primary:disabled{opacity:0.35;cursor:not-allowed}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: MENU
+═══════════════════════════════════════════════ -->
+<style>
+#screen-menu{
+  flex-direction:column;align-items:center;
+  background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(56,189,248,0.07) 0%,transparent 60%),
+             linear-gradient(180deg,#080d1a 0%,#060a14 100%);
+  overflow-y:auto;padding:24px 20px 40px;
+}
+.menu-hero{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:24px;padding-top:40px}
+.menu-hero-icon{
+  width:72px;height:72px;border-radius:18px;
+  background:linear-gradient(135deg,rgba(56,189,248,0.15),rgba(14,165,233,0.08));
+  border:1px solid rgba(56,189,248,0.2);
+  display:flex;align-items:center;justify-content:center;font-size:36px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.4);margin-bottom:4px;
+}
+.menu-hero-title{font-size:26px;font-weight:900;color:#fff;letter-spacing:-0.5px}
+.menu-hero-sub{font-size:13px;color:var(--text-muted);text-align:center}
+.menu-version{font-size:11px;color:var(--primary);font-weight:700;opacity:0.7}
+
+.account-card{
+  width:100%;max-width:400px;
+  display:flex;align-items:center;gap:12px;
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:14px;margin-bottom:16px;
+}
+.account-avatar{
+  width:40px;height:40px;border-radius:20px;
+  background:var(--primary);display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:800;color:#fff;flex-shrink:0;
+}
+.account-info{flex:1;min-width:0}
+.account-name{font-size:15px;font-weight:700;color:var(--text)}
+.account-stats{font-size:12px;color:var(--text-muted);margin-top:2px}
+.btn-logout{
+  padding:6px 12px;border-radius:10px;
+  background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.2);
+  font-size:12px;font-weight:600;color:var(--danger);
+  transition:background 0.2s;
+}
+.btn-logout:hover{background:rgba(248,113,113,0.18)}
+
+.menu-actions{width:100%;max-width:400px;display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+.btn-action{
+  width:100%;border-radius:16px;padding:16px 20px;
+  display:flex;align-items:center;gap:14px;
+  font-size:16px;font-weight:700;color:#fff;
+  transition:opacity 0.2s,transform 0.1s;
+}
+.btn-action:hover{opacity:0.9}
+.btn-action:active{transform:scale(0.98)}
+.btn-action-continue{background:linear-gradient(135deg,#0ea5e9,#38bdf8);box-shadow:0 4px 20px rgba(56,189,248,0.25)}
+.btn-action-new{background:linear-gradient(135deg,#059669,#34d399);box-shadow:0 4px 20px rgba(52,211,153,0.2)}
+.btn-action-icon{font-size:24px}
+.btn-action-title{font-size:16px;font-weight:700;color:#fff}
+.btn-action-sub{font-size:12px;color:rgba(255,255,255,0.7);margin-top:1px}
+
+.menu-section{width:100%;max-width:400px;margin-bottom:24px}
+.menu-section-title{
+  font-size:13px;font-weight:700;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;margin-left:4px;
+}
+.fleet-row{display:flex;gap:10px;margin-bottom:8px}
+.fleet-card{
+  flex:1;display:flex;flex-direction:column;align-items:center;padding:14px;
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+}
+.fleet-card.active{border-color:var(--primary);background:rgba(56,189,248,0.08)}
+.fleet-card.locked{opacity:0.45}
+.fleet-num{font-size:26px;font-weight:900;color:var(--text-dim)}
+.fleet-card.active .fleet-num{color:var(--primary)}
+.fleet-label{font-size:10px;color:var(--text-dim);font-weight:600;margin-top:3px}
+.fleet-card.active .fleet-label{color:var(--primary)}
+.fleet-hint{font-size:12px;color:var(--text-dim);text-align:center;margin-top:4px}
+
+.steps{display:flex;flex-direction:column;gap:8px}
+.step{
+  display:flex;align-items:center;gap:14px;
+  background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;
+}
+.step-icon{
+  width:40px;height:40px;border-radius:12px;
+  background:rgba(255,255,255,0.06);
+  display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;
+}
+.step-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px}
+.step-desc{font-size:12px;color:var(--text-muted);line-height:1.5}
+</style>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: GAME
+═══════════════════════════════════════════════ -->
+<style>
+#screen-game{
+  flex-direction:column;
+  background:var(--bg);
+  overflow:hidden;
+}
+
+/* TOP BAR */
+.topbar{
+  display:flex;align-items:center;gap:10px;
+  height:56px;padding:0 12px;flex-shrink:0;
+  background:linear-gradient(180deg,rgba(13,21,38,0.99) 0%,rgba(8,13,26,0.99) 100%);
+  border-bottom:1px solid rgba(56,189,248,0.1);
+  box-shadow:0 1px 20px rgba(0,0,0,0.5);
+  position:relative;overflow:hidden;
+}
+.topbar::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 100% at 50% 0%,rgba(56,189,248,0.05) 0%,transparent 70%);
+  pointer-events:none;
+}
+.topbar-time{min-width:76px;flex-shrink:0}
+.topbar-clock{font-size:20px;font-weight:900;color:#fff;letter-spacing:0.5px;line-height:1}
+.topbar-session{font-size:9px;color:var(--primary);font-weight:700;margin-top:2px;opacity:0.8}
+.topbar-progress{flex:1;display:flex;flex-direction:column;gap:5px}
+.progress-track{
+  height:6px;background:rgba(255,255,255,0.06);
+  border-radius:3px;overflow:hidden;position:relative;
+}
+.progress-fill{
+  height:100%;background:linear-gradient(90deg,#0ea5e9,#38bdf8);
+  border-radius:3px;transition:width 0.5s ease;
+  box-shadow:0 0 8px rgba(56,189,248,0.5);
+}
+.progress-mark{
+  position:absolute;top:0;bottom:0;width:1px;
+  background:rgba(255,255,255,0.15);
+}
+.speed-row{display:flex;gap:4px}
+.speed-btn{
+  padding:2px 9px;border-radius:6px;font-size:10px;font-weight:800;
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+  color:var(--text-dim);transition:all 0.15s;
+}
+.speed-btn.on{
+  background:linear-gradient(135deg,rgba(56,189,248,0.2),rgba(14,165,233,0.12));
+  border-color:rgba(56,189,248,0.45);color:var(--primary);
+  box-shadow:0 0 8px rgba(56,189,248,0.15);
+}
+.topbar-stats{display:flex;gap:6px;flex-shrink:0}
+.stat-chip{
+  padding:5px 10px;border-radius:10px;
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+}
+.stat-chip-label{font-size:9px;color:var(--text-dim);font-weight:600;margin-bottom:1px}
+.stat-chip-val{font-size:13px;font-weight:900}
+.stat-chip.green{background:rgba(52,211,153,0.1);border-color:rgba(52,211,153,0.2)}
+.stat-chip.green .stat-chip-val{color:var(--success)}
+.stat-chip.red{background:rgba(248,113,113,0.1);border-color:rgba(248,113,113,0.2)}
+.stat-chip.red .stat-chip-val{color:var(--danger)}
+.stat-chip.blue .stat-chip-val{color:var(--primary)}
+.stat-chip.yellow .stat-chip-val{color:var(--warning)}
+.topbar-actions{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.icon-btn{
+  width:34px;height:34px;border-radius:10px;
+  background:rgba(255,255,255,0.05);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;transition:all 0.15s;position:relative;
+}
+.icon-btn:hover{background:rgba(255,255,255,0.09);border-color:rgba(56,189,248,0.3)}
+.icon-btn .notif-dot{
+  position:absolute;top:4px;right:4px;
+  width:8px;height:8px;border-radius:50%;
+  background:var(--danger);border:1px solid var(--bg2);
+  font-size:7px;color:#fff;display:flex;align-items:center;justify-content:center;
+}
+
+/* TRUCK STRIP */
+.truck-strip{
+  display:flex;overflow-x:auto;gap:8px;
+  padding:8px 12px;flex-shrink:0;
+  background:linear-gradient(180deg,rgba(8,13,26,0.99) 0%,rgba(6,10,20,0.99) 100%);
+  border-bottom:1px solid rgba(56,189,248,0.07);
+  scrollbar-width:none;
+}
+.truck-strip::-webkit-scrollbar{display:none}
+.truck-card{
+  min-width:118px;flex-shrink:0;border-radius:12px;overflow:hidden;
+  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);
+  cursor:pointer;transition:all 0.2s;
+}
+.truck-card:hover{border-color:rgba(56,189,248,0.3);background:rgba(56,189,248,0.05)}
+.truck-card.selected{border-color:rgba(56,189,248,0.5);background:rgba(56,189,248,0.08);box-shadow:0 0 16px rgba(56,189,248,0.15)}
+.truck-card.alert{animation:pulse-border 1.5s infinite}
+@keyframes pulse-border{0%,100%{box-shadow:0 0 0 0 rgba(248,113,113,0.3)}50%{box-shadow:0 0 0 4px rgba(248,113,113,0.1)}}
+.truck-card-bar{height:3px;width:100%}
+.truck-card-body{padding:7px 9px;display:flex;flex-direction:column;gap:3px}
+.truck-card-name{font-size:13px;font-weight:900;color:#fff;letter-spacing:0.3px}
+.truck-card-status{font-size:10px;font-weight:700}
+.truck-card-dest{font-size:9px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.truck-card-hos{font-size:9px;font-weight:700}
+.truck-card-prog{height:3px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden;margin-top:2px}
+.truck-card-prog-fill{height:100%;border-radius:2px;transition:width 0.5s}
+
+/* GAME BODY */
+.game-body{flex:1;display:flex;overflow:hidden}
+
+/* MAP AREA */
+.map-area{flex:1;position:relative;overflow:hidden;background:linear-gradient(135deg,#060c1a 0%,#080d1e 100%)}
+#map-canvas{width:100%;height:100%}
+.map-overlay-btn{
+  position:absolute;bottom:12px;right:12px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.map-zoom-btn{
+  width:32px;height:32px;border-radius:8px;
+  background:rgba(13,21,38,0.9);border:1px solid var(--border);
+  color:var(--text);font-size:16px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.15s;
+}
+.map-zoom-btn:hover{background:rgba(56,189,248,0.15);border-color:var(--primary)}
+
+/* RIGHT PANEL */
+.right-panel{
+  width:400px;flex-shrink:0;
+  display:flex;flex-direction:column;
+  background:var(--bg2);
+  border-left:1px solid var(--border);
+}
+.panel-tabs{
+  display:flex;gap:4px;padding:8px 10px;
+  border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.panel-tab{
+  flex:1;padding:8px 4px;border-radius:8px;
+  border:1px solid transparent;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  font-size:12px;font-weight:700;color:var(--text-dim);
+  transition:all 0.15s;
+}
+.panel-tab:hover{color:var(--text-muted);background:rgba(255,255,255,0.04)}
+.panel-tab.on{
+  background:rgba(56,189,248,0.1);border-color:rgba(56,189,248,0.3);color:var(--primary);
+}
+.tab-badge{
+  background:var(--primary);border-radius:8px;
+  padding:1px 5px;min-width:16px;
+  font-size:9px;font-weight:900;color:#000;
+}
+.panel-content{flex:1;overflow:hidden;display:flex;flex-direction:column}
+
+/* BOTTOM TABS (mobile) */
+.bottom-tabs{
+  display:none;flex-direction:row;gap:4px;
+  padding:6px 8px;
+  background:var(--bg2);border-top:1px solid var(--border);
+  flex-shrink:0;
+}
+.bottom-tab{
+  flex:1;padding:8px 4px;border-radius:10px;
+  border:1px solid transparent;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  font-size:12px;font-weight:700;color:var(--text-dim);
+  transition:all 0.15s;
+}
+.bottom-tab.on{background:rgba(56,189,248,0.1);border-color:rgba(56,189,248,0.3);color:var(--primary)}
+
+@media(max-width:900px){
+  .right-panel{display:none}
+  .bottom-tabs{display:flex}
+  .map-area{display:flex} /* Показываем карту по умолчанию */
+  .map-area.mobile-active{display:flex}
+  .mobile-panel{display:none;overflow:hidden;flex-direction:column} /* Скрываем панель по умолчанию */
+}
+</style>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: SHIFT END
+═══════════════════════════════════════════════ -->
+<style>
+#screen-shift-end{
+  flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(52,211,153,0.08) 0%,transparent 70%),
+             linear-gradient(180deg,#080d1a 0%,#060a14 100%);
+  overflow-y:auto;padding:24px;
+}
+.shift-end-wrap{width:100%;max-width:480px;display:flex;flex-direction:column;gap:16px;align-items:center}
+.shift-end-grade{
+  width:100px;height:100px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:52px;font-weight:900;
+  border:3px solid;
+}
+.shift-end-title{font-size:24px;font-weight:900;color:#fff;text-align:center}
+.shift-end-sub{font-size:14px;color:var(--text-muted);text-align:center}
+.pnl-card{
+  width:100%;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;
+}
+.pnl-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.pnl-row:last-child{border-bottom:none}
+.pnl-label{font-size:13px;color:var(--text-muted)}
+.pnl-val{font-size:14px;font-weight:700;color:var(--text)}
+.pnl-val.green{color:var(--success)}
+.pnl-val.red{color:var(--danger)}
+.pnl-total{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 0 0;margin-top:4px;
+  border-top:2px solid rgba(255,255,255,0.1);
+}
+.pnl-total-label{font-size:15px;font-weight:700;color:var(--text)}
+.pnl-total-val{font-size:20px;font-weight:900}
+.btn-new-shift{
+  width:100%;padding:16px;border-radius:16px;
+  background:linear-gradient(135deg,#059669,#34d399);
+  font-size:17px;font-weight:700;color:#fff;
+  box-shadow:0 4px 20px rgba(52,211,153,0.25);
+  transition:opacity 0.2s;
+}
+.btn-new-shift:hover{opacity:0.9}
+
+/* ═══════════════════════════════════════════════
+   PANELS CONTENT STYLES
+═══════════════════════════════════════════════ */
+
+/* Load Board */
+.loadboard-wrap{flex:1;overflow-y:auto;padding:10px}
+.lb-search{
+  display:flex;gap:8px;margin-bottom:10px;
+}
+.lb-search-input{
+  flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;
+  padding:8px 12px;font-size:13px;color:var(--text);
+}
+.lb-search-input:focus{border-color:rgba(56,189,248,0.4)}
+.lb-search-input::placeholder{color:var(--text-dim)}
+.lb-refresh-btn{
+  padding:8px 12px;border-radius:10px;
+  background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.25);
+  font-size:12px;font-weight:700;color:var(--primary);
+  transition:all 0.15s;
+}
+.lb-refresh-btn:hover{background:rgba(56,189,248,0.18)}
+.load-card{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:12px;margin-bottom:8px;cursor:pointer;transition:all 0.2s;
+}
+.load-card:hover{border-color:rgba(56,189,248,0.3);background:rgba(56,189,248,0.05)}
+.load-card.urgent-load{
+  border-color:rgba(248,113,113,0.4);
+  background:rgba(248,113,113,0.06);
+  box-shadow:0 0 12px rgba(248,113,113,0.15);
+}
+.load-card.urgent-load:hover{border-color:rgba(248,113,113,0.6);background:rgba(248,113,113,0.1)}
+.load-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.load-route{font-size:15px;font-weight:800;color:#fff;letter-spacing:-0.2px}
+.load-rate{font-size:17px;font-weight:900;color:var(--success)}
+.load-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.load-tag{
+  font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;
+  background:rgba(255,255,255,0.06);color:var(--text-muted);
+}
+.load-tag.urgent{background:rgba(248,113,113,0.15);color:var(--danger)}
+.load-tag.reefer{background:rgba(56,189,248,0.12);color:var(--primary)}
+.load-tag.flatbed{background:rgba(251,191,36,0.12);color:var(--warning)}
+.load-card-footer{display:flex;justify-content:space-between;align-items:center}
+.load-rpm{font-size:11px;color:var(--text-muted)}
+.btn-negotiate{
+  padding:6px 14px;border-radius:8px;
+  background:linear-gradient(135deg,rgba(56,189,248,0.2),rgba(14,165,233,0.12));
+  border:1px solid rgba(56,189,248,0.35);
+  font-size:12px;font-weight:700;color:var(--primary);
+  transition:all 0.15s;
+}
+.btn-negotiate:hover{background:rgba(56,189,248,0.3)}
+
+/* Trucks Panel */
+.trucks-wrap{flex:1;overflow-y:auto;padding:10px}
+.truck-row{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:12px;margin-bottom:8px;cursor:pointer;transition:all 0.2s;
+}
+.truck-row:hover{border-color:rgba(56,189,248,0.3)}
+.truck-row.truck-idle{
+  border-color:rgba(251,191,36,0.3);
+  background:rgba(251,191,36,0.05);
+}
+.truck-row.truck-idle:hover{border-color:rgba(251,191,36,0.5);background:rgba(251,191,36,0.1)}
+.truck-row-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.truck-row-name{font-size:15px;font-weight:800;color:#fff;letter-spacing:-0.2px}
+.truck-row-status{font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px}
+.truck-row-driver{font-size:12px;color:var(--text-muted);margin-bottom:6px}
+.truck-row-load{font-size:13px;color:var(--text);margin-bottom:6px;line-height:1.5}
+.truck-row-footer{display:flex;gap:10px;align-items:center}
+.truck-hos{font-size:11px;font-weight:700}
+.truck-prog-wrap{flex:1;height:4px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden}
+.truck-prog-fill{height:100%;border-radius:2px;transition:width 0.5s}
+.btn-find-load{
+  padding:5px 10px;border-radius:7px;
+  background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.25);
+  font-size:11px;font-weight:700;color:var(--success);
+  transition:all 0.15s;
+}
+.btn-find-load:hover{background:rgba(52,211,153,0.2)}
+
+/* Email Panel */
+.email-wrap{flex:1;overflow-y:auto;padding:10px}
+.email-item{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:12px;margin-bottom:8px;cursor:pointer;transition:all 0.2s;
+  position:relative;
+}
+.email-item:hover{border-color:rgba(56,189,248,0.3)}
+.email-item.unread{border-left:3px solid var(--primary)}
+.email-item.urgent{border-left:3px solid var(--danger)}
+.email-unread-dot{
+  position:absolute;top:12px;right:12px;
+  width:8px;height:8px;border-radius:50%;background:var(--primary);
+}
+.email-from{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px}
+.email-subject{font-size:13px;color:#fff;margin-bottom:4px;font-weight:600}
+.email-preview{font-size:12px;color:var(--text-muted);line-height:1.4}
+.email-time{font-size:10px;color:var(--text-dim);margin-top:4px}
+.email-type-badge{
+  display:inline-block;font-size:9px;font-weight:700;
+  padding:1px 6px;border-radius:4px;margin-bottom:4px;
+}
+</style>
+
+<!-- ═══════════════════════════════════════════════
+     MODALS
+═══════════════════════════════════════════════ -->
+<style>
+.modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.75);
+  z-index:1000;align-items:center;justify-content:center;padding:20px;
+}
+.modal-overlay.open{display:flex}
+.modal-box{
+  background:#13131f;border:1px solid var(--border);border-radius:16px;
+  width:100%;max-width:520px;max-height:85vh;overflow:hidden;
+  display:flex;flex-direction:column;position:relative;
+}
+.modal-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.modal-title{font-size:16px;font-weight:800;color:#fff}
+.modal-close{
+  width:28px;height:28px;border-radius:14px;
+  background:rgba(255,255,255,0.08);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:var(--text-muted);font-weight:700;
+  transition:background 0.15s;
+}
+.modal-close:hover{background:rgba(255,255,255,0.15)}
+.modal-body{flex:1;overflow-y:auto;padding:20px}
+
+/* Negotiation Modal */
+.neg-load-info{
+  background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.15);
+  border-radius:12px;padding:14px;margin-bottom:16px;
+}
+.neg-route{font-size:18px;font-weight:900;color:#fff;margin-bottom:4px}
+.neg-meta{font-size:12px;color:var(--text-muted)}
+.neg-broker{
+  display:flex;align-items:center;gap:10px;
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:12px;margin-bottom:16px;
+}
+.neg-broker-avatar{font-size:28px}
+.neg-broker-name{font-size:14px;font-weight:700;color:var(--text)}
+.neg-broker-company{font-size:12px;color:var(--text-muted)}
+.neg-broker-mood{font-size:11px;font-weight:700;margin-top:2px}
+.neg-chat{
+  background:var(--bg);border:1px solid var(--border);border-radius:12px;
+  padding:12px;margin-bottom:16px;min-height:80px;max-height:160px;overflow-y:auto;
+  display:flex;flex-direction:column;gap:8px;
+}
+.chat-msg{font-size:13px;line-height:1.5;padding:8px 12px;border-radius:10px;max-width:85%}
+.chat-msg.broker{background:rgba(255,255,255,0.06);color:var(--text);align-self:flex-start}
+.chat-msg.me{background:rgba(56,189,248,0.15);color:#fff;align-self:flex-end}
+.neg-offer-row{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.neg-offer-input{
+  flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;
+  padding:10px 14px;font-size:16px;font-weight:700;color:var(--text);
+}
+.neg-offer-input:focus{border-color:rgba(56,189,248,0.4)}
+.btn-send-offer{
+  padding:10px 18px;border-radius:10px;
+  background:linear-gradient(135deg,#0ea5e9,#38bdf8);
+  font-size:13px;font-weight:700;color:#fff;
+  transition:opacity 0.2s;
+}
+.btn-send-offer:hover{opacity:0.9}
+.neg-quick-btns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.neg-quick-btn{
+  padding:5px 10px;border-radius:7px;
+  background:rgba(255,255,255,0.05);border:1px solid var(--border);
+  font-size:11px;font-weight:700;color:var(--text-muted);
+  transition:all 0.15s;
+}
+.neg-quick-btn:hover{background:rgba(56,189,248,0.1);border-color:rgba(56,189,248,0.3);color:var(--primary)}
+.neg-actions{display:flex;gap:8px}
+.btn-book-load{
+  flex:1;padding:12px;border-radius:12px;
+  background:linear-gradient(135deg,#059669,#34d399);
+  font-size:14px;font-weight:700;color:#fff;
+  transition:opacity 0.2s;
+}
+.btn-book-load:hover{opacity:0.9}
+.btn-decline{
+  padding:12px 16px;border-radius:12px;
+  background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.2);
+  font-size:14px;font-weight:700;color:var(--danger);
+  transition:all 0.15s;
+}
+.btn-decline:hover{background:rgba(248,113,113,0.18)}
+
+/* Assign Modal */
+.assign-trucks{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.assign-truck-btn{
+  display:flex;align-items:center;gap:12px;
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:12px;transition:all 0.2s;
+}
+.assign-truck-btn:hover{border-color:rgba(52,211,153,0.4);background:rgba(52,211,153,0.06)}
+.assign-truck-btn.unavailable{opacity:0.4;cursor:not-allowed}
+.assign-truck-icon{font-size:24px}
+.assign-truck-name{font-size:14px;font-weight:700;color:var(--text)}
+.assign-truck-info{font-size:12px;color:var(--text-muted)}
+
+/* Truck Detail Modal */
+.truck-detail-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.truck-stat-card{
+  background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;
+}
+.truck-stat-label{font-size:10px;color:var(--text-dim);font-weight:600;margin-bottom:3px}
+.truck-stat-val{font-size:16px;font-weight:800;color:var(--text)}
+
+/* Email Detail Modal */
+.email-detail-header{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:14px;margin-bottom:16px;
+}
+.email-detail-from{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px}
+.email-detail-subject{font-size:16px;font-weight:800;color:#fff;margin-bottom:4px}
+.email-detail-time{font-size:11px;color:var(--text-dim)}
+.email-detail-body{font-size:13px;color:var(--text);line-height:1.7;white-space:pre-wrap}
+.email-reply-area{margin-top:16px}
+.email-reply-input{
+  width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;
+  padding:10px 14px;font-size:13px;color:var(--text);resize:vertical;min-height:80px;
+}
+.email-reply-input:focus{border-color:rgba(56,189,248,0.4)}
+.btn-send-reply{
+  margin-top:8px;padding:10px 20px;border-radius:10px;
+  background:linear-gradient(135deg,#0ea5e9,#38bdf8);
+  font-size:13px;font-weight:700;color:#fff;
+  transition:opacity 0.2s;
+}
+.btn-send-reply:hover{opacity:0.9}
+
+/* Delivery Result Popup */
+.delivery-popup{
+  display:none;position:fixed;bottom:20px;right:20px;
+  width:320px;z-index:900;
+  background:#13131f;border:1px solid rgba(52,211,153,0.3);border-radius:16px;
+  padding:16px;box-shadow:0 8px 32px rgba(0,0,0,0.5);
+  animation:slideUp 0.3s ease;
+}
+.delivery-popup.show{display:block}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.delivery-popup-title{font-size:14px;font-weight:800;color:var(--success);margin-bottom:10px}
+.delivery-popup-route{font-size:16px;font-weight:900;color:#fff;margin-bottom:8px}
+.delivery-popup-rows{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.delivery-popup-row{display:flex;justify-content:space-between;font-size:12px}
+.delivery-popup-label{color:var(--text-muted)}
+.delivery-popup-val{font-weight:700;color:var(--text)}
+.delivery-popup-net{
+  display:flex;justify-content:space-between;
+  padding-top:8px;border-top:1px solid rgba(255,255,255,0.08);
+  font-size:14px;font-weight:800;
+}
+.btn-dismiss-popup{
+  width:100%;margin-top:10px;padding:8px;border-radius:8px;
+  background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.25);
+  font-size:12px;font-weight:700;color:var(--success);
+  transition:all 0.15s;
+}
+.btn-dismiss-popup:hover{background:rgba(52,211,153,0.2)}
+
+/* Toast */
+.toast{
+  display:none;position:fixed;top:70px;left:50%;transform:translateX(-50%);
+  background:#13131f;border:1px solid var(--border);border-radius:10px;
+  padding:10px 18px;font-size:13px;font-weight:600;color:var(--text);
+  z-index:2000;box-shadow:0 4px 20px rgba(0,0,0,0.4);
+  animation:fadeInOut 2.5s ease forwards;
+}
+@keyframes fadeInOut{0%{opacity:0;transform:translateX(-50%) translateY(-8px)}15%{opacity:1;transform:translateX(-50%) translateY(0)}85%{opacity:1}100%{opacity:0}}
+</style>
+
+<!-- ═══════════════════════════════════════════════
+     HTML STRUCTURE
+═══════════════════════════════════════════════ -->
+
+<!-- SCREEN: LOGIN -->
+<div id="screen-login" class="screen active">
+  <div class="login-logo">🚛</div>
+  <div class="login-title">Dispatch Office</div>
+  <div class="login-sub">Симулятор диспетчера грузоперевозок США</div>
+  <div class="beta-badge">BETA v2.0.0</div>
+  <div class="login-form">
+    <div class="login-label">Никнейм</div>
+    <input id="login-input" class="login-input" type="text" placeholder="Dispatcher_Pro" maxlength="20" autocomplete="off">
+    <div id="login-error" class="login-error"></div>
+    <button id="login-btn" class="btn-primary" disabled>Начать →</button>
+  </div>
+</div>
+
+<!-- SCREEN: MENU -->
+<div id="screen-menu" class="screen">
+  <div class="menu-hero">
+    <div class="menu-hero-icon">🚛</div>
+    <div class="menu-hero-title">Dispatch Office</div>
+    <div class="menu-hero-sub">Симулятор диспетчера грузоперевозок США</div>
+    <div class="menu-version">Beta v2.0.0</div>
+  </div>
+  <div class="account-card">
+    <div class="account-avatar" id="menu-avatar">D</div>
+    <div class="account-info">
+      <div class="account-name" id="menu-nickname">Dispatcher</div>
+      <div class="account-stats" id="menu-stats">0 смен · $0</div>
+    </div>
+    <button class="btn-logout" id="btn-logout">Выйти</button>
+  </div>
+  <div class="menu-actions">
+    <button class="btn-action btn-action-continue" id="btn-continue" style="display:none">
+      <span class="btn-action-icon">▶</span>
+      <div><div class="btn-action-title">Продолжить</div><div class="btn-action-sub">сохранённая сессия</div></div>
+    </button>
+    <button class="btn-action btn-action-new" id="btn-new-shift">
+      <span class="btn-action-icon">🚀</span>
+      <div><div class="btn-action-title" id="btn-new-label">Начать игру</div><div class="btn-action-sub">3 трака · стандарт</div></div>
+    </button>
+  </div>
+  <div class="menu-section">
+    <div class="menu-section-title">Твой флот</div>
+    <div class="fleet-row">
+      <div class="fleet-card active"><div class="fleet-num">3</div><div class="fleet-label">✓ Доступно</div></div>
+      <div class="fleet-card locked"><div class="fleet-num">4</div><div class="fleet-label">🔒 $15k</div></div>
+      <div class="fleet-card locked"><div class="fleet-num">5</div><div class="fleet-label">🔒 $30k</div></div>
+    </div>
+    <div class="fleet-hint">Дополнительные траки покупаются за заработанные деньги</div>
+  </div>
+  <div class="menu-section">
+    <div class="menu-section-title">Как играть</div>
+    <div class="steps">
+      <div class="step"><div class="step-icon">🌅</div><div><div class="step-title">Утро диспетчера</div><div class="step-desc">Проверь статус траков, обработай почту, оцени рынок.</div></div></div>
+      <div class="step"><div class="step-icon">🚛</div><div><div class="step-title">Веди флот</div><div class="step-desc">Траки всегда в движении — пикап, деливери, в пути.</div></div></div>
+      <div class="step"><div class="step-icon">⚡</div><div><div class="step-title">Решай проблемы</div><div class="step-desc">Поломки, detention, задержки — всё как в реальной жизни.</div></div></div>
+      <div class="step"><div class="step-icon">💰</div><div><div class="step-title">Зарабатывай</div><div class="step-desc">Доходы и расходы по каждому траку. Твой P&L — твой рейтинг.</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN: GAME -->
+<div id="screen-game" class="screen">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-time">
+      <div class="topbar-clock" id="topbar-clock">08:43</div>
+      <div class="topbar-session" id="topbar-session"></div>
+    </div>
+    <div class="topbar-progress">
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+        <div class="progress-mark" style="left:25%"></div>
+        <div class="progress-mark" style="left:50%"></div>
+        <div class="progress-mark" style="left:75%"></div>
+      </div>
+      <div class="speed-row">
+        <button class="speed-btn on" data-speed="1">×1</button>
+        <button class="speed-btn" data-speed="2">×2</button>
+        <button class="speed-btn" data-speed="5">×5</button>
+      </div>
+    </div>
+    <div class="topbar-stats">
+      <div class="stat-chip green" id="chip-balance">
+        <div class="stat-chip-label">БАЛАНС</div>
+        <div class="stat-chip-val" id="chip-balance-val">$0</div>
+      </div>
+      <div class="stat-chip blue">
+        <div class="stat-chip-label">ГРУЗЫ</div>
+        <div class="stat-chip-val" id="chip-loads-val">0</div>
+      </div>
+      <div class="stat-chip" id="chip-rep">
+        <div class="stat-chip-label">РЕПУТ.</div>
+        <div class="stat-chip-val" id="chip-rep-val">100%</div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="btn-notif" title="Уведомления">
+        🔔<span class="notif-dot" id="notif-dot" style="display:none"></span>
+      </button>
+      <button class="icon-btn" id="btn-menu-game" title="Меню">☰</button>
+    </div>
+  </div>
+
+  <!-- TRUCK STRIP -->
+  <div class="truck-strip" id="truck-strip"></div>
+
+  <!-- GAME BODY -->
+  <div class="game-body">
+    <!-- MAP -->
+    <div class="map-area" id="map-area">
+      <canvas id="map-canvas"></canvas>
+      <div class="map-overlay-btn">
+        <button class="map-zoom-btn" id="map-zoom-in" title="Увеличить">+</button>
+        <button class="map-zoom-btn" id="map-zoom-out" title="Уменьшить">−</button>
+        <button class="map-zoom-btn" id="map-redraw" title="Перерисовать карту" style="font-size:14px;">🔄</button>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL (desktop) -->
+    <div class="right-panel">
+      <div class="panel-tabs">
+        <button class="panel-tab on" data-tab="loadboard">Грузы <span class="tab-badge" id="badge-loads">0</span></button>
+        <button class="panel-tab" data-tab="email">Почта <span class="tab-badge" id="badge-email" style="display:none">0</span></button>
+        <button class="panel-tab" data-tab="trucks">Траки <span class="tab-badge" id="badge-idle" style="display:none">0</span></button>
+      </div>
+      <div class="panel-content" id="panel-content"></div>
+    </div>
+
+    <!-- MOBILE PANEL -->
+    <div class="mobile-panel" id="mobile-panel" style="display:none"></div>
+  </div>
+
+  <!-- BOTTOM TABS (mobile) -->
+  <div class="bottom-tabs">
+    <button class="bottom-tab on" data-tab="map">🗺 Карта</button>
+    <button class="bottom-tab" data-tab="loadboard">📦 Грузы</button>
+    <button class="bottom-tab" data-tab="email">✉️ Почта</button>
+    <button class="bottom-tab" data-tab="trucks">🚛 Траки</button>
+  </div>
+</div>
+
+<!-- SCREEN: SHIFT END -->
+<div id="screen-shift-end" class="screen">
+  <div class="shift-end-wrap">
+    <div class="shift-end-grade" id="shift-grade">A</div>
+    <div class="shift-end-title" id="shift-end-title">Смена завершена!</div>
+    <div class="shift-end-sub" id="shift-end-sub">Отличная работа, диспетчер</div>
+    <div class="pnl-card" id="pnl-card"></div>
+    <button class="btn-new-shift" id="btn-after-shift">🚀 Новая смена</button>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-negotiate">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title">Переговоры</div>
+      <button class="modal-close" onclick="closeModal('modal-negotiate')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-negotiate-body"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-assign">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title">Назначить трак</div>
+      <button class="modal-close" onclick="closeModal('modal-assign')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-assign-body"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-truck-detail">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-truck-title">Трак</div>
+      <button class="modal-close" onclick="closeModal('modal-truck-detail')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-truck-body"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-email-detail">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">Письмо</div>
+      <button class="modal-close" onclick="closeModal('modal-email-detail')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-email-body"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-event">
+  <div class="modal-box" style="max-width:460px">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-event-title">Событие</div>
+      <button class="modal-close" onclick="closeModal('modal-event')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-event-body"></div>
+  </div>
+</div>
+
+<!-- DELIVERY POPUP -->
+<div class="delivery-popup" id="delivery-popup">
+  <div class="delivery-popup-title">✅ Доставка завершена!</div>
+  <div class="delivery-popup-route" id="dp-route"></div>
+  <div class="delivery-popup-rows" id="dp-rows"></div>
+  <div class="delivery-popup-net">
+    <span>Чистая прибыль</span>
+    <span id="dp-net"></span>
+  </div>
+  <button class="btn-dismiss-popup" onclick="dismissDelivery()">Закрыть</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="us-map-data.js?v=20260416"></script>
+<script src="game-cities-data.js?v=20260416"></script>
+<script src="game-routes-data.js?v=20260416"></script>
+<script src="game-weather.js?v=20260416"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════════════
+const SHIFT_DURATION = 660; // минут (11 часов)
+const SHIFT_START_HOUR = 8;
+const SHIFT_START_MIN = 43;
+const SAVE_KEY = 'dispatch-office-v2-save';
+const ACCOUNT_KEY = 'dispatch-office-v2-account';
+
+// Города США [lng, lat] — из OpenStreetMap/Census Bureau (77 городов)
+// Подгружаются из game-cities-data.js, здесь fallback
+const CITIES = (typeof CITIES_DATA !== 'undefined') ? CITIES_DATA : {
+  'Chicago':       [-87.6298, 41.8781],
+  'Houston':       [-95.3698, 29.7604],
+  'Dallas':        [-96.7970, 32.7767],
+  'Atlanta':       [-84.3880, 33.7490],
+  'New York':      [-74.0060, 40.7128],
+  'Los Angeles':   [-118.2437, 34.0522],
+  'Miami':         [-80.1918, 25.7617],
+  'Denver':        [-104.9903, 39.7392],
+  'Seattle':       [-122.3321, 47.6062],
+  'Phoenix':       [-112.0740, 33.4484],
+  'Las Vegas':     [-115.1398, 36.1699],
+  'Salt Lake City':[-111.8910, 40.7608],
+  'Kansas City':   [-94.5786, 39.0997],
+  'Minneapolis':   [-93.2650, 44.9778],
+  'Nashville':     [-86.7816, 36.1627],
+  'Memphis':       [-90.0490, 35.1495],
+  'Charlotte':     [-80.8431, 35.2271],
+  'Indianapolis':  [-86.1581, 39.7684],
+  'Columbus':      [-82.9988, 39.9612],
+  'Detroit':       [-83.0458, 42.3314],
+  'Philadelphia':  [-75.1652, 39.9526],
+  'Boston':        [-71.0589, 42.3601],
+  'St. Louis':     [-90.1994, 38.6270],
+  'New Orleans':   [-90.0715, 29.9511],
+  'San Francisco': [-122.4194, 37.7749],
+  'Portland':      [-122.6750, 45.5051],
+  'Savannah':      [-81.0998, 32.0835],
+  'Jacksonville':  [-81.6557, 30.3322],
+  'Louisville':    [-85.7585, 38.2527],
+  'Cincinnati':    [-84.5120, 39.1031],
+  'Pittsburgh':    [-79.9959, 40.4406],
+  'Baltimore':     [-76.6122, 39.2904],
+  'Albuquerque':   [-106.6504, 35.0844],
+  'El Paso':       [-106.4850, 31.7619],
+  'San Antonio':   [-98.4936, 29.4241],
+  'Oklahoma City': [-97.5164, 35.4676],
+  'Omaha':         [-95.9345, 41.2565],
+  'Tulsa':         [-95.9928, 36.1540],
+  'Boise':         [-116.2023, 43.6150],
+  'Spokane':       [-117.4260, 47.6588],
+  'Austin':        [-97.7431, 30.2672],
+  'Fort Worth':    [-97.3308, 32.7555],
+  'San Diego':     [-117.1611, 32.7157],
+  'Sacramento':    [-121.4944, 38.5816],
+  'Fresno':        [-119.7871, 36.7378],
+  'Raleigh':       [-78.6382, 35.7796],
+  'Cleveland':     [-81.6944, 41.4993],
+  'Milwaukee':     [-87.9065, 43.0389],
+  'Des Moines':    [-93.6250, 41.5868],
+  'Wichita':       [-97.3301, 37.6872],
+  'Tucson':        [-110.9747, 32.2226],
+  'Colorado Springs':[-104.8214, 38.8339],
+  'Billings':      [-108.5007, 45.7833],
+  'Fargo':         [-96.7898, 46.8772],
+  'Sioux Falls':   [-96.7311, 43.5446],
+  'Green Bay':     [-88.0133, 44.5133],
+  'Knoxville':     [-83.9207, 35.9606],
+  'Birmingham':    [-86.8104, 33.5186],
+  'Little Rock':   [-92.2896, 34.7465],
+  'Baton Rouge':   [-91.1871, 30.4515],
+  'Corpus Christi':[-97.3964, 27.8006],
+  'Chattanooga':   [-85.3097, 35.0456],
+  'Richmond':      [-77.4360, 37.5407],
+  'Norfolk':       [-76.2859, 36.8508],
+  'Buffalo':       [-78.8784, 42.8864],
+  'Jackson':       [-90.1848, 32.2988],
+  'Mobile':        [-88.0399, 30.6954],
+  'Shreveport':    [-93.7502, 32.5252],
+  'Reno':          [-119.8138, 39.5296],
+  'Madison':       [-89.4012, 43.0731],
+  'Laredo':        [-99.4803, 27.5306],
+  'Lubbock':       [-101.8552, 33.5779],
+  'Amarillo':      [-101.8313, 35.2220],
+};
+
+// Маппинг город → штат
+const CITY_STATE = (typeof CITY_STATE_DATA !== 'undefined') ? CITY_STATE_DATA : {
+  'Chicago':'IL','Houston':'TX','Dallas':'TX','Atlanta':'GA','New York':'NY',
+  'Los Angeles':'CA','Miami':'FL','Denver':'CO','Seattle':'WA','Phoenix':'AZ',
+  'Las Vegas':'NV','Salt Lake City':'UT','Kansas City':'MO','Minneapolis':'MN',
+  'Nashville':'TN','Memphis':'TN','Charlotte':'NC','Indianapolis':'IN',
+  'Columbus':'OH','Detroit':'MI','Philadelphia':'PA','Boston':'MA',
+  'St. Louis':'MO','New Orleans':'LA','San Francisco':'CA','Portland':'OR',
+  'Savannah':'GA','Jacksonville':'FL','Louisville':'KY','Cincinnati':'OH',
+  'Pittsburgh':'PA','Baltimore':'MD','Albuquerque':'NM','El Paso':'TX',
+  'San Antonio':'TX','Oklahoma City':'OK','Omaha':'NE','Tulsa':'OK',
+  'Boise':'ID','Spokane':'WA','Austin':'TX','Fort Worth':'TX',
+  'San Diego':'CA','Sacramento':'CA','Fresno':'CA','Raleigh':'NC',
+  'Cleveland':'OH','Milwaukee':'WI','Des Moines':'IA','Wichita':'KS',
+  'Tucson':'AZ','Colorado Springs':'CO','Billings':'MT','Fargo':'ND',
+  'Sioux Falls':'SD','Green Bay':'WI','Knoxville':'TN','Birmingham':'AL',
+  'Little Rock':'AR','Baton Rouge':'LA','Corpus Christi':'TX',
+  'Chattanooga':'TN','Richmond':'VA','Norfolk':'VA','Buffalo':'NY',
+  'Jackson':'MS','Mobile':'AL','Shreveport':'LA','Reno':'NV',
+  'Madison':'WI','Laredo':'TX','Lubbock':'TX','Amarillo':'TX',
+};
+
+// ── OSRM — реальные расстояния между городами ──────────────────
+const _distanceCache = {};
+
+function getRouteDistance(fromCity, toCity, callback) {
+  const key = fromCity + '->' + toCity;
+  if (_distanceCache[key]) { callback(_distanceCache[key]); return; }
+  
+  const c1 = CITIES[fromCity], c2 = CITIES[toCity];
+  if (!c1 || !c2) { callback(null); return; }
+  
+  const url = `https://router.project-osrm.org/route/v1/driving/${c1[0]},${c1[1]};${c2[0]},${c2[1]}?overview=false`;
+  
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      if (data.routes && data.routes[0]) {
+        const miles = Math.round(data.routes[0].distance / 1609.34);
+        const hours = Math.round(data.routes[0].duration / 3600 * 10) / 10;
+        const result = { miles, hours };
+        _distanceCache[key] = result;
+        _distanceCache[toCity + '->' + fromCity] = result; // симметрично
+        callback(result);
+      } else {
+        callback(null);
+      }
+    })
+    .catch(() => callback(null));
+}
+
+// Предварительно рассчитываем расстояния для часто используемых маршрутов
+function preloadDistances(cities) {
+  const pairs = [];
+  for (let i = 0; i < cities.length; i++) {
+    for (let j = i + 1; j < cities.length; j++) {
+      pairs.push([cities[i], cities[j]]);
+    }
+  }
+  // Загружаем по 3 за раз с задержкой
+  let idx = 0;
+  function loadNext() {
+    if (idx >= pairs.length) return;
+    const batch = pairs.slice(idx, idx + 3);
+    idx += 3;
+    batch.forEach(([a, b]) => getRouteDistance(a, b, () => {}));
+    setTimeout(loadNext, 1000);
+  }
+  loadNext();
+}
+
+const STATUS_COLOR = {
+  idle:'#64748b', driving:'#38bdf8', loaded:'#34d399',
+  at_pickup:'#fbbf24', at_delivery:'#a78bfa',
+  breakdown:'#f87171', waiting:'#fb923c',
+};
+const STATUS_LABEL = {
+  idle:'Свободен', driving:'К погрузке', loaded:'В пути',
+  at_pickup:'Погрузка', at_delivery:'Разгрузка',
+  breakdown:'Поломка', waiting:'Detention',
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// GAME STATE
+// ═══════════════════════════════════════════════════════════════════
+let G = {
+  phase: 'menu',       // menu | playing | shift_end
+  day: 1,
+  gameMinute: 0,
+  timeSpeed: 1,
+  sessionName: '',
+  balance: 0,
+  totalEarned: 0,
+  totalLost: 0,
+  score: 0,
+  reputation: 100,
+  trucks: [],
+  availableLoads: [],
+  activeLoads: [],
+  bookedLoads: [],
+  brokers: [],
+  notifications: [],
+  activeEvents: [],
+  resolvedEvents: [],
+  financeLog: [],
+  deliveryResults: [],
+  pendingDelivery: null,
+  negotiation: { open:false, load:null, currentOffer:0, round:0, brokerMood:'neutral' },
+  selectedTruckId: null,
+  loadBoardSearch: '',
+  _nextId: 1,
+};
+
+function uid(prefix='') { return prefix + (G._nextId++); }
+
+// ═══════════════════════════════════════════════════════════════════
+// ACCOUNT
+// ═══════════════════════════════════════════════════════════════════
+let Account = { nickname:'', totalShifts:0, totalEarned:0 };
+
+function loadAccount() {
+  try { const d = localStorage.getItem(ACCOUNT_KEY); if(d) Account = JSON.parse(d); } catch{}
+}
+function saveAccount() {
+  try { localStorage.setItem(ACCOUNT_KEY, JSON.stringify(Account)); } catch{}
+}
+function loginAccount(nick) {
+  Account.nickname = nick;
+  saveAccount();
+}
+function logoutAccount() {
+  Account.nickname = '';
+  saveAccount();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SAVE / LOAD
+// ═══════════════════════════════════════════════════════════════════
+function saveGame() {
+  try {
+    const data = { v:2, ...G };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  } catch(e) { console.warn('Save failed', e); }
+}
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data || data.v !== 2) { localStorage.removeItem(SAVE_KEY); return false; }
+    Object.assign(G, data);
+    return true;
+  } catch { return false; }
+}
+function clearSave() { localStorage.removeItem(SAVE_KEY); }
+function hasSave() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    return d && d.v === 2 && d.phase === 'playing';
+  } catch { return false; }
+}
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// INITIAL DATA — TRUCKS & BROKERS
+// ═══════════════════════════════════════════════════════════════════
+const BROKERS = [
+  { id:'B1', name:'Tom',   company:'FastFreight LLC',  relationship:50, avatar:'👨‍💼' },
+  { id:'B2', name:'Sarah', company:'QuickLoad Inc',    relationship:40, avatar:'👩‍💼' },
+  { id:'B3', name:'Mike',  company:'EastFreight Co',   relationship:60, avatar:'🧑‍💼' },
+  { id:'B4', name:'Lisa',  company:'PrimeHaul',        relationship:30, avatar:'👩‍💼' },
+  { id:'B5', name:'Dave',  company:'CrossCountry',     relationship:55, avatar:'👨‍💼' },
+];
+
+function makeTruck(id, name, driver, status, city, destCity, progress, load, hoursLeft, mood) {
+  return {
+    id, name, driver, status,
+    position: [...CITIES[city]],
+    currentCity: city,
+    destinationCity: destCity,
+    progress,
+    currentLoad: load,
+    hoursLeft,
+    mood,
+    safetyScore: 90 + Math.floor(Math.random()*10),
+    fuelEfficiency: 6.5 + Math.random()*1,
+    onTimeRate: 90 + Math.floor(Math.random()*10),
+    totalMiles: 30000 + Math.floor(Math.random()*25000),
+    totalDeliveries: 100 + Math.floor(Math.random()*80),
+    hosViolations: Math.floor(Math.random()*3),
+    idleSinceMinute: status === 'idle' ? 0 : null,
+    idleWarningLevel: 0,
+    outOfOrderUntil: null,
+  };
+}
+
+function makeLoad(id, brokerId, from, to, miles, commodity, equipment, postedRate, agreedRate, truckId, phase) {
+  const broker = BROKERS.find(b => b.id === brokerId);
+  return {
+    id, brokerId,
+    brokerName: broker.name,
+    brokerCompany: broker.company,
+    fromCity: from, toCity: to,
+    commodity, weight: 32000 + Math.floor(Math.random()*12000),
+    equipment: equipment || 'Dry Van',
+    postedRate, marketRate: Math.round(postedRate * 1.12),
+    minRate: Math.round(postedRate * 0.92),
+    miles, pickupTime: 'Yesterday 14:00',
+    deliveryTime: 'Tomorrow 08:00',
+    expiresAt: 9999, isUrgent: false,
+    agreedRate: agreedRate || postedRate,
+    truckId: truckId || null,
+    phase: phase || 'to_delivery',
+    detentionMinutes: 0, detentionPaid: false,
+  };
+}
+
+function buildInitialTrucks(count) {
+  const load1 = makeLoad('IL1','B1','Chicago','Houston',1092,'Электроника','Dry Van',2500,2700,'T1','to_delivery');
+  const load2 = makeLoad('IL2','B2','Los Angeles','Dallas',1435,'Автозапчасти','Dry Van',3000,3200,'T2','to_delivery');
+  const load3 = makeLoad('IL3','B3','New York','Atlanta',881,'Медоборудование','Dry Van',1900,2100,'T3','unloading');
+
+  const all = [
+    makeTruck('T1','Truck 1047','John Martinez','loaded','Chicago','Houston',0.15,load1,11,90),
+    makeTruck('T2','Truck 2023','Carlos Rivera','loaded','Atlanta','New York',0.20,load2,9,85),
+    makeTruck('T3','Truck 3012','Mike Chen','at_delivery','Denver',null,0,load3,11,95),
+  ];
+  if (count >= 4) {
+    const load4 = makeLoad('IL4','B4','Houston','Chicago',1092,'Промоборудование','Flatbed',2800,3000,'T4','to_delivery');
+    all.push(makeTruck('T4','Truck 4034','Tom Wilson','loaded','Houston','Chicago',0.25,load4,10,100));
+  }
+  if (count >= 5) {
+    all.push(makeTruck('T5','Truck 5056','Lisa Brown','idle','Miami',null,0,null,11,92));
+    all[all.length-1].idleSinceMinute = 0;
+  }
+  return all;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// LOAD BOARD GENERATOR
+// ═══════════════════════════════════════════════════════════════════
+
+// Маршруты с реальными расстояниями из OSRM (подгружаются из game-routes-data.js)
+// Fallback — захардкоженные данные
+const ROUTES_FALLBACK = [
+  {from:'Chicago',to:'Houston',miles:1092},{from:'Chicago',to:'Dallas',miles:967},
+  {from:'Chicago',to:'Atlanta',miles:716},{from:'Chicago',to:'Miami',miles:1377},
+  {from:'Chicago',to:'Denver',miles:1003},{from:'Chicago',to:'New York',miles:790},
+  {from:'Dallas',to:'Chicago',miles:967},{from:'Dallas',to:'Atlanta',miles:781},
+  {from:'Dallas',to:'Los Angeles',miles:1435},{from:'Dallas',to:'Miami',miles:1308},
+  {from:'Houston',to:'Chicago',miles:1092},{from:'Houston',to:'Atlanta',miles:789},
+  {from:'Houston',to:'Miami',miles:1190},{from:'Houston',to:'New York',miles:1630},
+  {from:'Atlanta',to:'Chicago',miles:716},{from:'Atlanta',to:'New York',miles:881},
+  {from:'Atlanta',to:'Miami',miles:662},{from:'Atlanta',to:'Dallas',miles:781},
+  {from:'New York',to:'Chicago',miles:790},{from:'New York',to:'Atlanta',miles:881},
+  {from:'New York',to:'Miami',miles:1280},{from:'New York',to:'Dallas',miles:1550},
+  {from:'Los Angeles',to:'Chicago',miles:2015},{from:'Los Angeles',to:'Dallas',miles:1435},
+  {from:'Los Angeles',to:'Houston',miles:1550},{from:'Los Angeles',to:'Denver',miles:1016},
+  {from:'Los Angeles',to:'Seattle',miles:1135},{from:'Los Angeles',to:'Phoenix',miles:373},
+  {from:'Seattle',to:'Los Angeles',miles:1135},{from:'Seattle',to:'Denver',miles:1306},
+  {from:'Seattle',to:'Chicago',miles:2065},{from:'Seattle',to:'Dallas',miles:2100},
+  {from:'Denver',to:'Chicago',miles:1003},{from:'Denver',to:'Dallas',miles:781},
+  {from:'Denver',to:'Los Angeles',miles:1016},{from:'Denver',to:'Atlanta',miles:1400},
+  {from:'Miami',to:'Atlanta',miles:662},{from:'Miami',to:'Chicago',miles:1377},
+  {from:'Miami',to:'New York',miles:1280},{from:'Miami',to:'Dallas',miles:1308},
+  {from:'Phoenix',to:'Los Angeles',miles:373},{from:'Phoenix',to:'Dallas',miles:1071},
+  {from:'Phoenix',to:'Denver',miles:600},{from:'Phoenix',to:'Chicago',miles:1750},
+  {from:'Nashville',to:'Chicago',miles:476},{from:'Nashville',to:'Atlanta',miles:250},
+  {from:'Nashville',to:'Dallas',miles:663},{from:'Nashville',to:'New York',miles:900},
+  {from:'Kansas City',to:'Chicago',miles:500},{from:'Kansas City',to:'Dallas',miles:500},
+  {from:'Kansas City',to:'Denver',miles:600},{from:'Kansas City',to:'Atlanta',miles:800},
+  {from:'Minneapolis',to:'Chicago',miles:410},{from:'Minneapolis',to:'Denver',miles:920},
+  {from:'Charlotte',to:'Atlanta',miles:245},{from:'Charlotte',to:'New York',miles:630},
+  {from:'Indianapolis',to:'Chicago',miles:180},{from:'Indianapolis',to:'Atlanta',miles:490},
+  {from:'Memphis',to:'Chicago',miles:530},{from:'Memphis',to:'Atlanta',miles:395},
+  {from:'Memphis',to:'Dallas',miles:470},{from:'St. Louis',to:'Chicago',miles:300},
+  {from:'St. Louis',to:'Dallas',miles:630},{from:'Columbus',to:'Chicago',miles:355},
+  {from:'Detroit',to:'Chicago',miles:280},{from:'Detroit',to:'New York',miles:600},
+  {from:'Philadelphia',to:'Chicago',miles:760},{from:'Philadelphia',to:'Atlanta',miles:1000},
+  {from:'Boston',to:'Chicago',miles:980},{from:'Boston',to:'Atlanta',miles:1100},
+  {from:'San Francisco',to:'Los Angeles',miles:380},{from:'San Francisco',to:'Seattle',miles:810},
+  {from:'San Francisco',to:'Denver',miles:1240},{from:'San Francisco',to:'Dallas',miles:1770},
+  {from:'Las Vegas',to:'Los Angeles',miles:270},{from:'Las Vegas',to:'Denver',miles:750},
+  {from:'Salt Lake City',to:'Los Angeles',miles:689},{from:'Salt Lake City',to:'Denver',miles:525},
+  {from:'New Orleans',to:'Houston',miles:350},{from:'New Orleans',to:'Atlanta',miles:470},
+  {from:'Oklahoma City',to:'Dallas',miles:200},{from:'Oklahoma City',to:'Kansas City',miles:340},
+  {from:'Omaha',to:'Chicago',miles:490},{from:'Omaha',to:'Kansas City',miles:180},
+  {from:'Louisville',to:'Chicago',miles:300},{from:'Louisville',to:'Atlanta',miles:400},
+  {from:'Cincinnati',to:'Chicago',miles:300},{from:'Cincinnati',to:'Atlanta',miles:460},
+  {from:'Pittsburgh',to:'Chicago',miles:460},{from:'Pittsburgh',to:'New York',miles:370},
+  {from:'Baltimore',to:'New York',miles:190},{from:'Baltimore',to:'Atlanta',miles:680},
+  {from:'Jacksonville',to:'Atlanta',miles:340},{from:'Jacksonville',to:'Miami',miles:340},
+  {from:'Savannah',to:'Atlanta',miles:250},{from:'Savannah',to:'Miami',miles:500},
+  {from:'El Paso',to:'Dallas',miles:625},{from:'El Paso',to:'Phoenix',miles:430},
+  {from:'San Antonio',to:'Dallas',miles:275},{from:'San Antonio',to:'Houston',miles:200},
+  {from:'Tulsa',to:'Dallas',miles:260},{from:'Tulsa',to:'Kansas City',miles:250},
+  {from:'Albuquerque',to:'Dallas',miles:650},{from:'Albuquerque',to:'Phoenix',miles:460},
+  {from:'Boise',to:'Seattle',miles:500},{from:'Boise',to:'Salt Lake City',miles:340},
+  {from:'Portland',to:'Seattle',miles:175},{from:'Portland',to:'San Francisco',miles:640},
+  {from:'Spokane',to:'Seattle',miles:280},{from:'Spokane',to:'Boise',miles:300},
+];
+
+// Используем реальные данные OSRM если загружены, иначе fallback
+const ROUTES = (typeof ROUTES_DATA !== 'undefined' && ROUTES_DATA.length > 0)
+  ? ROUTES_DATA
+  : ROUTES_FALLBACK;
+
+const COMMODITIES = [
+  'Электроника','Автозапчасти','Продукты питания','Медоборудование',
+  'Промышленное оборудование','Мебель','Строительные материалы',
+  'Фармацевтика','Одежда и текстиль','Химикаты','Бытовая техника',
+  'Металлопрокат','Пластик','Бумага','Напитки',
+];
+const EQUIP_TYPES = ['Dry Van','Dry Van','Dry Van','Reefer','Flatbed'];
+
+function generateLoads(count = 12) {
+  const loads = [];
+  const used = new Set();
+  let attempts = 0;
+  while (loads.length < count && attempts < 200) {
+    attempts++;
+    const r = ROUTES[Math.floor(Math.random() * ROUTES.length)];
+    const key = r.from + r.to;
+    if (used.has(key)) continue;
+    used.add(key);
+    const equip = EQUIP_TYPES[Math.floor(Math.random() * EQUIP_TYPES.length)];
+    const rpmBase = equip === 'Reefer' ? 2.8 : equip === 'Flatbed' ? 2.6 : 2.4;
+    const rpm = rpmBase + Math.random() * 0.8;
+    const postedRate = Math.round(r.miles * rpm / 50) * 50;
+    const broker = BROKERS[Math.floor(Math.random() * BROKERS.length)];
+    const isUrgent = Math.random() < 0.15;
+    loads.push({
+      id: uid('L'),
+      brokerId: broker.id,
+      brokerName: broker.name,
+      brokerCompany: broker.company,
+      fromCity: r.from, toCity: r.to,
+      commodity: COMMODITIES[Math.floor(Math.random() * COMMODITIES.length)],
+      weight: 28000 + Math.floor(Math.random() * 16000),
+      equipment: equip,
+      postedRate,
+      marketRate: Math.round(postedRate * 1.1),
+      minRate: Math.round(postedRate * 0.88),
+      miles: r.miles,
+      pickupTime: isUrgent ? 'Today 14:00' : 'Tomorrow 08:00',
+      deliveryTime: r.miles > 1000 ? 'In 2 days' : 'Tomorrow',
+      expiresAt: G.gameMinute + 60 + Math.floor(Math.random() * 120),
+      isUrgent,
+    });
+  }
+  return loads;
+}
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// TIME & CLOCK
+// ═══════════════════════════════════════════════════════════════════
+function formatTime(minute) {
+  const total = SHIFT_START_HOUR * 60 + SHIFT_START_MIN + minute;
+  const h = Math.floor(total / 60) % 24;
+  const m = total % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+
+let clockInterval = null;
+
+function startClock() {
+  if (clockInterval) clearInterval(clockInterval);
+  clockInterval = setInterval(() => {
+    if (G.phase !== 'playing') return;
+    const steps = G.timeSpeed;
+    for (let i = 0; i < steps; i++) {
+      G.gameMinute++;
+      tickMinute();
+    }
+    renderTopBar();
+    renderTruckStrip();
+    renderMap();
+    // Автосохранение каждые 60 секунд реального времени
+  }, 1000);
+}
+
+function stopClock() {
+  if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TICK — вся игровая логика за одну минуту
+// ═══════════════════════════════════════════════════════════════════
+function tickMinute() {
+  const min = G.gameMinute;
+
+  // Конец смены
+  if (min >= SHIFT_DURATION) {
+    G.phase = 'shift_end';
+    stopClock();
+    saveGame();
+    showShiftEnd();
+    return;
+  }
+
+  // Движение траков
+  G.trucks.forEach(t => moveTruck(t, min));
+
+  // Истечение грузов на бирже
+  G.availableLoads = G.availableLoads.filter(l => l.expiresAt > min);
+
+  // Пополнение биржи
+  if (G.availableLoads.length < 8 && min % 15 === 0) {
+    const newLoads = generateLoads(4);
+    G.availableLoads.push(...newLoads);
+    updateBadges();
+  }
+
+  // Случайные события каждые 20-40 минут
+  if (min > 30 && min % 25 === 0 && Math.random() < 0.6) {
+    triggerRandomEvent(min);
+  }
+
+  // Idle warning для свободных траков
+  G.trucks.forEach(t => {
+    if (t.status === 'idle') {
+      if (t.idleSinceMinute === null) t.idleSinceMinute = min;
+      const idleFor = min - t.idleSinceMinute;
+      if (idleFor >= 90) t.idleWarningLevel = 3;
+      else if (idleFor >= 60) t.idleWarningLevel = 2;
+      else if (idleFor >= 30) t.idleWarningLevel = 1;
+      else t.idleWarningLevel = 0;
+    } else {
+      t.idleSinceMinute = null;
+      t.idleWarningLevel = 0;
+    }
+  });
+
+  // Обновить бейджи
+  if (min % 5 === 0) updateBadges();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ROAD PATHFINDING
+// ═══════════════════════════════════════════════════════════════════
+let _roadGraph = null;
+let _routeCache = {};
+
+function _dist2(a,b){const dx=a[0]-b[0],dy=a[1]-b[1];return dx*dx+dy*dy;}
+function _distKm(a,b){return Math.sqrt(_dist2(a,b))*111;}
+
+function buildRoadGraph() {
+  if (_roadGraph) return _roadGraph;
+  const highways = window.US_HIGHWAYS || [];
+  if (!highways.length) { _roadGraph={nodes:[],adj:[]}; return _roadGraph; }
+  const nodes=[], nodeIndex=new Map();
+  function addNode(pt) {
+    const key=pt[0].toFixed(3)+','+pt[1].toFixed(3);
+    if (nodeIndex.has(key)) return nodeIndex.get(key);
+    const idx=nodes.length; nodes.push([pt[0],pt[1]]); nodeIndex.set(key,idx); return idx;
+  }
+  const rawEdges=[];
+  highways.forEach(hw=>{
+    const pts=hw.points; if(!pts||pts.length<2) return;
+    for(let i=0;i<pts.length-1;i++){
+      const a=addNode(pts[i]),b=addNode(pts[i+1]);
+      if(a!==b) rawEdges.push({a,b,d:_distKm(pts[i],pts[i+1])});
+    }
+  });
+  const adj=new Array(nodes.length).fill(null).map(()=>[]);
+  rawEdges.forEach(e=>{adj[e.a].push({to:e.b,d:e.d});adj[e.b].push({to:e.a,d:e.d});});
+  _roadGraph={nodes,adj};
+  return _roadGraph;
+}
+
+function nearestNode(graph,pt) {
+  let best=0,bestD=Infinity;
+  for(let i=0;i<graph.nodes.length;i++){const d=_dist2(graph.nodes[i],pt);if(d<bestD){bestD=d;best=i;}}
+  return best;
+}
+
+function astarPath(graph,startIdx,endIdx) {
+  const {nodes,adj}=graph, N=nodes.length;
+  const gScore=new Float32Array(N).fill(Infinity);
+  const fScore=new Float32Array(N).fill(Infinity);
+  const cameFrom=new Int32Array(N).fill(-1);
+  const open=new Set();
+  gScore[startIdx]=0; fScore[startIdx]=_distKm(nodes[startIdx],nodes[endIdx]); open.add(startIdx);
+  let iter=0;
+  while(open.size>0&&iter++<60000){
+    let cur=-1,minF=Infinity;
+    for(const n of open){if(fScore[n]<minF){minF=fScore[n];cur=n;}}
+    if(cur===endIdx){
+      const path=[]; let c=cur;
+      while(c!==-1){path.unshift(nodes[c]);c=cameFrom[c];}
+      return path;
+    }
+    open.delete(cur);
+    for(const {to,d} of adj[cur]){
+      const tg=gScore[cur]+d;
+      if(tg<gScore[to]){cameFrom[to]=cur;gScore[to]=tg;fScore[to]=tg+_distKm(nodes[to],nodes[endIdx]);open.add(to);}
+    }
+  }
+  return null;
+}
+
+function getRoutePath(fromCity,toCity) {
+  const key=fromCity+'->'+toCity;
+  if(_routeCache[key]) return _routeCache[key];
+  const fc=CITIES[fromCity], tc=CITIES[toCity];
+  if(!fc||!tc) return null;
+  const graph=buildRoadGraph();
+  if(!graph.nodes.length) return null;
+  const sn=nearestNode(graph,fc), en=nearestNode(graph,tc);
+  let path=astarPath(graph,sn,en);
+  if(!path||path.length<2) path=[fc,tc];
+  else path=[fc,...path,tc];
+  _routeCache[key]=path;
+  return path;
+}
+
+function pathTotalLen(path) {
+  let len=0;
+  for(let i=0;i<path.length-1;i++) len+=Math.sqrt(_dist2(path[i],path[i+1]));
+  return len;
+}
+
+function posOnPath(path,progress) {
+  if(!path||path.length<2) return path?path[0]:[0,0];
+  const total=pathTotalLen(path), target=total*Math.max(0,Math.min(1,progress));
+  let walked=0;
+  for(let i=0;i<path.length-1;i++){
+    const sl=Math.sqrt(_dist2(path[i],path[i+1]));
+    if(walked+sl>=target){
+      const t=sl>0?(target-walked)/sl:0;
+      return[path[i][0]+(path[i+1][0]-path[i][0])*t, path[i][1]+(path[i+1][1]-path[i][1])*t];
+    }
+    walked+=sl;
+  }
+  return path[path.length-1];
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TRUCK MOVEMENT
+// ═══════════════════════════════════════════════════════════════════
+function moveTruck(truck, min) {
+  if (!truck.currentLoad) return;
+  const load = truck.currentLoad;
+  
+  // Базовая скорость 45 mph, корректируется погодой
+  let speedMph = 45;
+  if (typeof getSpeedMultiplier === 'function' && typeof weatherCache !== 'undefined') {
+    const cityWeather = weatherCache[truck.currentCity];
+    if (cityWeather) speedMph = Math.round(45 * getSpeedMultiplier(cityWeather.severity));
+  }
+  const progressPerMin = 1 / (load.miles / speedMph);
+
+  if (load.phase === 'to_delivery' || load.phase === 'to_pickup') {
+    truck.progress = Math.min(1, truck.progress + progressPerMin);
+
+    if (!truck.routePath) {
+      truck.routePath = getRoutePath(load.fromCity, load.toCity);
+    }
+
+    if (truck.routePath && truck.routePath.length >= 2) {
+      truck.position = posOnPath(truck.routePath, truck.progress);
+    } else {
+      const from = CITIES[load.fromCity] || truck.position;
+      const to   = CITIES[load.toCity]   || truck.position;
+      if (from && to) {
+        truck.position = [
+          from[0] + (to[0]-from[0]) * truck.progress,
+          from[1] + (to[1]-from[1]) * truck.progress,
+        ];
+      }
+    }
+
+    if (truck.progress >= 1) {
+      load.phase = 'unloading';
+      truck.status = 'at_delivery';
+      truck.progress = 1;
+      truck.routePath = null;
+      truck.currentCity = load.toCity;
+      truck.destinationCity = null;
+      truck.position = [...(CITIES[load.toCity] || truck.position)];
+      addNotification({
+        type:'email', from: load.brokerName + ' @ ' + load.brokerCompany,
+        subject:`POD Ready - ${load.fromCity} to ${load.toCity}`,
+        message:`Truck ${truck.name} arrived at ${load.toCity}. Please send POD to confirm delivery.\n\nLoad: ${load.commodity}\nAgreed Rate: $${load.agreedRate.toLocaleString()}`,
+        priority:'medium', relatedTruckId: truck.id, relatedLoadId: load.id,
+      });
+      load._unloadStartMin = min;
+      load._unloadDuration = 30 + Math.floor(Math.random() * 30);
+    }
+    truck.hoursLeft = Math.max(0, truck.hoursLeft - progressPerMin / 60);
+  }
+
+  if (load.phase === 'unloading') {
+    const elapsed = min - (load._unloadStartMin || min);
+    if (elapsed >= (load._unloadDuration || 45)) {
+      completeDelivery(truck, load, min);
+    }
+  }
+}
+function completeDelivery(truck, load, min) {
+  // Финансы
+  const fuelCost = Math.round(load.miles * 0.45);
+  const driverPay = Math.round(load.miles * 0.55);
+  const dispatchFee = Math.round(load.agreedRate * 0.08);
+  const factoringFee = Math.round(load.agreedRate * 0.03);
+  const lumperCost = Math.random() < 0.3 ? 150 + Math.floor(Math.random() * 150) : 0;
+  const detentionPay = load.detentionMinutes > 120
+    ? Math.round((load.detentionMinutes - 120) / 60 * 50) : 0;
+  const totalExpenses = fuelCost + driverPay + dispatchFee + factoringFee + lumperCost;
+  const netProfit = load.agreedRate + detentionPay - totalExpenses;
+
+  G.balance += netProfit;
+  G.totalEarned += load.agreedRate;
+  G.totalLost += totalExpenses;
+  G.score += Math.max(0, Math.round(netProfit / 10));
+  G.financeLog.push({ type:'income', amount:load.agreedRate, description:`Delivery: ${load.fromCity}→${load.toCity}`, minute:min });
+  G.financeLog.push({ type:'expense', amount:totalExpenses, description:`Costs: ${load.fromCity}→${load.toCity}`, minute:min });
+
+  // Репутация
+  const broker = G.brokers.find(b => b.id === load.brokerId);
+  if (broker) { broker.relationship = Math.min(100, broker.relationship + 5); }
+  G.reputation = Math.min(100, G.reputation + 2);
+
+  // Результат доставки
+  G.pendingDelivery = {
+    truckName: truck.name, driverName: truck.driver,
+    fromCity: load.fromCity, toCity: load.toCity,
+    miles: load.miles, agreedRate: load.agreedRate,
+    fuelCost, driverPay, dispatchFee, factoringFee, lumperCost, detentionPay,
+    totalExpenses, netProfit,
+    ratePerMile: +(load.agreedRate / load.miles).toFixed(2),
+    profitPerMile: +(netProfit / load.miles).toFixed(2),
+  };
+
+  // Трак свободен
+  truck.status = 'idle';
+  truck.currentLoad = null;
+  truck.progress = 0;
+  truck.destinationCity = null;
+  truck.idleSinceMinute = min;
+  truck.idleWarningLevel = 0;
+
+  // Убираем из activeLoads
+  G.activeLoads = G.activeLoads.filter(l => l.id !== load.id);
+
+  showDeliveryPopup(G.pendingDelivery);
+  renderTruckStrip();
+  updateBadges();
+}
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// RANDOM EVENTS
+// ═══════════════════════════════════════════════════════════════════
+const EVENT_TEMPLATES = [
+  {
+    type:'breakdown',
+    title:'🔧 Поломка трака',
+    makeMsg: (t) => `${t.driver} сообщает: трак ${t.name} заглох на трассе. Нужна помощь.`,
+    urgency:'high',
+    options:[
+      { id:'roadside', text:'Вызвать roadside assistance ($350)', outcome:{ money:-350, rep:0, rel:2, desc:'Трак починен через 2 часа. Небольшая задержка.', correct:true }},
+      { id:'tow', text:'Эвакуатор + ремонт ($800)', outcome:{ money:-800, rep:1, rel:3, desc:'Быстрый ремонт, минимальная задержка.', correct:true }},
+      { id:'ignore', text:'Игнорировать', outcome:{ money:0, rep:-15, rel:-10, desc:'Водитель злится. Груз задержан. Брокер недоволен.', correct:false }},
+    ],
+  },
+  {
+    type:'detention',
+    title:'⏰ Detention на погрузке',
+    makeMsg: (t) => `${t.driver}: на складе очередь, ждём уже 3 часа. Detention?`,
+    urgency:'medium',
+    options:[
+      { id:'claim', text:'Подать detention claim брокеру', outcome:{ money:150, rep:0, rel:-2, desc:'Брокер согласился на $150/hr detention. Правильное решение.', correct:true }},
+      { id:'wait', text:'Подождать без претензий', outcome:{ money:0, rep:0, rel:1, desc:'Потеряли деньги, но брокер доволен.', correct:false }},
+      { id:'leave', text:'Уехать без загрузки (TONU)', outcome:{ money:-200, rep:-10, rel:-15, desc:'TONU fee. Плохое решение — груз был реальный.', correct:false }},
+    ],
+  },
+  {
+    type:'hos_violation',
+    title:'⚠️ HOS предупреждение',
+    makeMsg: (t) => `${t.driver}: у меня осталось 2 часа HOS. Не успею до delivery.`,
+    urgency:'high',
+    options:[
+      { id:'stop', text:'Остановиться на отдых (10ч)', outcome:{ money:0, rep:0, rel:0, desc:'Правильное решение. Безопасность прежде всего.', correct:true }},
+      { id:'push', text:'Продолжить ехать', outcome:{ money:-500, rep:-20, rel:-5, desc:'HOS нарушение! Штраф $500. Опасно и незаконно.', correct:false }},
+      { id:'split', text:'Split sleeper berth (8+2)', outcome:{ money:0, rep:2, rel:1, desc:'Умное использование split sleeper. Отличное решение!', correct:true }},
+    ],
+  },
+  {
+    type:'rate_dispute',
+    title:'💬 Брокер снижает ставку',
+    makeMsg: (t) => `Брокер пишет: "Груз легче чем указано. Хотим снизить ставку на $200."`,
+    urgency:'medium',
+    options:[
+      { id:'refuse', text:'Отказать — ставка зафиксирована в Rate Con', outcome:{ money:0, rep:2, rel:-3, desc:'Правильно! Rate Con — юридический документ. Ставка не меняется.', correct:true }},
+      { id:'agree', text:'Согласиться (-$200)', outcome:{ money:-200, rep:-5, rel:3, desc:'Потеряли деньги. Брокер будет давить снова.', correct:false }},
+      { id:'negotiate', text:'Предложить компромисс (-$100)', outcome:{ money:-100, rep:0, rel:1, desc:'Частичный компромисс. Не идеально, но приемлемо.', correct:false }},
+    ],
+  },
+  {
+    type:'weather',
+    title:'🌨️ Плохая погода',
+    makeMsg: (t) => `${t.driver}: на I-80 снегопад, видимость плохая. Ехать или ждать?`,
+    urgency:'medium',
+    options:[
+      { id:'wait', text:'Остановиться, переждать (2-3 часа)', outcome:{ money:0, rep:1, rel:0, desc:'Безопасное решение. Небольшая задержка.', correct:true }},
+      { id:'slow', text:'Ехать медленно, осторожно', outcome:{ money:0, rep:0, rel:0, desc:'Приемлемо при хорошей видимости.', correct:true }},
+      { id:'push', text:'Гнать как обычно', outcome:{ money:-300, rep:-10, rel:-5, desc:'Авария! Штраф и задержка. Опасно.', correct:false }},
+    ],
+  },
+  {
+    type:'pod_issue',
+    title:'📄 Проблема с POD',
+    makeMsg: (t) => `Брокер: "POD не подписан получателем. Не можем выплатить."`,
+    urgency:'high',
+    options:[
+      { id:'contact', text:'Связаться с получателем для подписи', outcome:{ money:0, rep:2, rel:1, desc:'Правильно! Получили подписанный POD, оплата прошла.', correct:true }},
+      { id:'dispute', text:'Оспорить через факторинговую компанию', outcome:{ money:-50, rep:0, rel:-2, desc:'Долго, но деньги получили. Небольшая комиссия.', correct:false }},
+      { id:'ignore', text:'Игнорировать', outcome:{ money:-500, rep:-15, rel:-10, desc:'Оплата заморожена. Серьёзная проблема.', correct:false }},
+    ],
+  },
+];
+
+function triggerRandomEvent(min) {
+  // Только для траков в пути
+  const activeTrucks = G.trucks.filter(t =>
+    (t.status === 'loaded' || t.status === 'driving' || t.status === 'at_pickup') && t.currentLoad
+  );
+  if (!activeTrucks.length) return;
+
+  const truck = activeTrucks[Math.floor(Math.random() * activeTrucks.length)];
+  const tmpl = EVENT_TEMPLATES[Math.floor(Math.random() * EVENT_TEMPLATES.length)];
+
+  const event = {
+    id: uid('EV'),
+    type: tmpl.type,
+    truckId: truck.id,
+    title: tmpl.title,
+    message: tmpl.makeMsg(truck),
+    urgency: tmpl.urgency,
+    options: tmpl.options,
+    triggeredAt: min,
+    resolved: false,
+  };
+
+  G.activeEvents.push(event);
+
+  // Уведомление
+  addNotification({
+    type: 'urgent',
+    from: truck.driver,
+    subject: tmpl.title,
+    message: event.message,
+    priority: tmpl.urgency === 'high' ? 'critical' : 'high',
+    relatedTruckId: truck.id,
+    eventId: event.id,
+  });
+
+  updateBadges();
+  // Показываем модал события
+  showEventModal(event);
+}
+
+function resolveEvent(eventId, optionId) {
+  const event = G.activeEvents.find(e => e.id === eventId);
+  if (!event) return;
+  const option = event.options.find(o => o.id === optionId);
+  if (!option) return;
+
+  const out = option.outcome;
+  if (out.money > 0) addMoney(out.money, `Event: ${event.title}`);
+  if (out.money < 0) removeMoney(Math.abs(out.money), `Event: ${event.title}`);
+  if (out.rep) G.reputation = Math.max(0, Math.min(100, G.reputation + out.rep));
+  if (out.rel && event.truckId) {
+    const truck = G.trucks.find(t => t.id === event.truckId);
+    if (truck && truck.currentLoad) {
+      const broker = G.brokers.find(b => b.id === truck.currentLoad.brokerId);
+      if (broker) broker.relationship = Math.max(0, Math.min(100, broker.relationship + out.rel));
+    }
+  }
+
+  event.resolved = true;
+  G.activeEvents = G.activeEvents.filter(e => e.id !== eventId);
+  G.resolvedEvents.push(event);
+
+  closeModal('modal-event');
+  showToast(out.correct ? '✅ ' + out.desc : '⚠️ ' + out.desc, out.correct ? 'success' : 'warning');
+  renderTopBar();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FINANCE HELPERS
+// ═══════════════════════════════════════════════════════════════════
+function addMoney(amount, desc) {
+  G.balance += amount;
+  G.totalEarned += amount;
+  G.financeLog.push({ type:'income', amount, description:desc, minute:G.gameMinute });
+}
+function removeMoney(amount, desc) {
+  G.balance -= amount;
+  G.totalLost += amount;
+  G.financeLog.push({ type:'expense', amount, description:desc, minute:G.gameMinute });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════════════════════════════
+function addNotification(n) {
+  G.notifications.unshift({
+    id: uid('N'),
+    minute: G.gameMinute,
+    read: false,
+    ...n,
+  });
+  updateBadges();
+}
+
+function markRead(id) {
+  const n = G.notifications.find(x => x.id === id);
+  if (n) n.read = true;
+  updateBadges();
+}
+
+function markAllRead() {
+  G.notifications.forEach(n => n.read = true);
+  updateBadges();
+}
+
+function unreadCount() {
+  return G.notifications.filter(n => !n.read).length;
+}
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// NEGOTIATION
+// ═══════════════════════════════════════════════════════════════════
+function openNegotiation(load) {
+  G.negotiation = {
+    open: true,
+    load,
+    currentOffer: load.postedRate,
+    round: 0,
+    brokerMood: 'neutral',
+    chatHistory: [
+      { from:'broker', text:`Привет! У меня есть груз ${load.fromCity} → ${load.toCity}, ${load.miles} миль. Ставка $${load.postedRate.toLocaleString()}. Интересует?` }
+    ],
+  };
+  renderNegotiationModal();
+  openModal('modal-negotiate');
+}
+
+function makeOffer(amount) {
+  const neg = G.negotiation;
+  const load = neg.load;
+  neg.round++;
+  neg.chatHistory.push({ from:'me', text:`Предлагаю $${amount.toLocaleString()}` });
+
+  // Логика брокера
+  if (amount >= load.marketRate) {
+    // Принято сразу
+    neg.chatHistory.push({ from:'broker', text:`Отлично! Договорились на $${amount.toLocaleString()}. Отправляю Rate Con.` });
+    neg.brokerMood = 'happy';
+    setTimeout(() => acceptLoad(amount), 800);
+    return 'accepted';
+  }
+  if (amount < load.minRate) {
+    // Отказ
+    neg.chatHistory.push({ from:'broker', text:`Нет, это слишком мало. Минимум что могу — $${Math.round(load.minRate * 1.02).toLocaleString()}.` });
+    neg.brokerMood = 'angry';
+    if (neg.round >= 3) {
+      setTimeout(() => { closeModal('modal-negotiate'); showToast('❌ Брокер отказал от переговоров', 'error'); }, 800);
+      return 'rejected';
+    }
+    return 'counter';
+  }
+  // Контроффер
+  const gap = load.marketRate - amount;
+  const counter = Math.round((amount + load.marketRate) / 2 / 50) * 50;
+  const moods = ['neutral','neutral','annoyed','angry'];
+  neg.brokerMood = moods[Math.min(neg.round, 3)];
+  const phrases = [
+    `Хм, могу сделать $${counter.toLocaleString()}. Как тебе?`,
+    `Лучшее что могу — $${counter.toLocaleString()}. Последнее предложение.`,
+    `Ладно, $${counter.toLocaleString()} — и по рукам. Иначе ищу другого.`,
+  ];
+  neg.chatHistory.push({ from:'broker', text: phrases[Math.min(neg.round-1, 2)] });
+  neg.currentOffer = counter;
+  renderNegotiationModal();
+  return 'counter';
+}
+
+function acceptLoad(agreedRate) {
+  const load = G.negotiation.load;
+  const bookedLoad = { ...load, agreedRate, truckId: null, phase:'to_pickup', detentionMinutes:0, detentionPaid:false };
+  G.bookedLoads.push(bookedLoad);
+  G.availableLoads = G.availableLoads.filter(l => l.id !== load.id);
+  G.negotiation.open = false;
+  closeModal('modal-negotiate');
+
+  addNotification({
+    type:'rate_con',
+    from: load.brokerName + ' @ ' + load.brokerCompany,
+    subject:`Rate Con — ${load.fromCity} → ${load.toCity}`,
+    message:`Rate Confirmation attached.\n\nRoute: ${load.fromCity} → ${load.toCity}\nMiles: ${load.miles}\nCommodity: ${load.commodity}\nEquipment: ${load.equipment}\nAgreed Rate: $${agreedRate.toLocaleString()}\nPickup: ${load.pickupTime}\nDelivery: ${load.deliveryTime}\n\nPlease assign a truck and confirm.`,
+    priority:'high', relatedLoadId: load.id,
+  });
+
+  updateBadges();
+  renderPanel();
+  showToast(`✅ Груз забукан за $${agreedRate.toLocaleString()}!`, 'success');
+
+  // Открываем назначение трака
+  setTimeout(() => openAssignModal(bookedLoad), 500);
+}
+
+function openAssignModal(load) {
+  G._pendingAssignLoad = load;
+  renderAssignModal(load);
+  openModal('modal-assign');
+}
+
+function assignTruckToLoad(truckId, load) {
+  const truck = G.trucks.find(t => t.id === truckId);
+  if (!truck) return;
+
+  load.truckId = truckId;
+  load.phase = 'to_delivery';
+  truck.status = 'driving';
+  truck.currentLoad = load;
+  truck.destinationCity = load.toCity;
+  truck.progress = 0;
+  truck.routePath = null; // будет построен при первом moveTruck
+  truck.idleSinceMinute = null;
+  truck.idleWarningLevel = 0;
+
+  // Переносим из bookedLoads в activeLoads
+  G.bookedLoads = G.bookedLoads.filter(l => l.id !== load.id);
+  G.activeLoads.push(load);
+
+  closeModal('modal-assign');
+  renderTruckStrip();
+  renderPanel();
+  updateBadges();
+  showToast(`🚛 ${truck.name} назначен на груз!`, 'success');
+}
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// MAP — USA States & Highways (Canvas)
+// ═══════════════════════════════════════════════════════════════════
+let mapCanvas, mapCtx, mapW, mapH;
+let mapZoom = 1, mapOffX = 0, mapOffY = 0;
+let mapDragging = false, mapDragStart = null;
+
+// Проекция: lng/lat → пиксели (с сохранением пропорций)
+function project(lng, lat) {
+  const minLng = -126;
+  const maxLng = -65;
+  const minLat = 24;
+  const maxLat = 50;
+  
+  // Нормализуем координаты в диапазон 0-1
+  const normX = (lng - minLng) / (maxLng - minLng);
+  const normY = (maxLat - lat) / (maxLat - minLat);
+  
+  // Соотношение сторон карты США: 61° долготы / 26° широты
+  // С коррекцией на широту (cos(37°) ≈ 0.8) → реальное соотношение ≈ 61*0.8/26 ≈ 1.88
+  const mapAspect = (maxLng - minLng) * 0.8 / (maxLat - minLat);
+  const canvasAspect = mapW / mapH;
+  
+  let drawW, drawH, offsetX, offsetY;
+  
+  if (canvasAspect > mapAspect) {
+    // Canvas шире чем карта — ограничиваем по высоте
+    drawH = mapH * 0.94;
+    drawW = drawH * mapAspect;
+    offsetX = (mapW - drawW) / 2;
+    offsetY = mapH * 0.03;
+  } else {
+    // Canvas уже чем карта — ограничиваем по ширине
+    drawW = mapW * 0.94;
+    drawH = drawW / mapAspect;
+    offsetX = mapW * 0.03;
+    offsetY = (mapH - drawH) / 2;
+  }
+  
+  const px = offsetX + normX * drawW;
+  const py = offsetY + normY * drawH;
+  
+  return [px * mapZoom + mapOffX, py * mapZoom + mapOffY];
+}
+
+// Отладка проекции — проверяем углы карты
+window.debugProjection = function() {
+  console.log('🔍 DEBUG PROJECTION:');
+  console.log('Северо-запад (-126, 50):', project(-126, 50));
+  console.log('Северо-восток (-65, 50):', project(-65, 50));
+  console.log('Юго-запад (-126, 24):', project(-126, 24));
+  console.log('Юго-восток (-65, 24):', project(-65, 24));
+  console.log('Canvas размер:', mapW, 'x', mapH);
+};
+
+function initMap() {
+  mapCanvas = document.getElementById('map-canvas');
+  if (!mapCanvas) return;
+  
+  // Получаем данные из us-map-data.js
+  const US_STATES = window.US_STATES_ACCURATE || window.US_STATES || {};
+  const HIGHWAYS = window.US_HIGHWAYS || [];
+  
+  console.log('Инициализация карты, штатов:', Object.keys(US_STATES).length);
+  
+  // Сохраняем в глобальную область для использования в renderMap
+  window._MAP_US_STATES = US_STATES;
+  window._MAP_HIGHWAYS = HIGHWAYS;
+  
+  const area = document.getElementById('map-area');
+  
+  // Защита от нулевых размеров — если элемент скрыт, ждём
+  mapW = area.clientWidth || area.offsetWidth || 800;
+  mapH = area.clientHeight || area.offsetHeight || 500;
+  
+  console.log('📐 Размер map-area:', mapW, 'x', mapH);
+  
+  // Если размеры всё ещё 0 — принудительно задаём
+  if (mapW < 10 || mapH < 10) {
+    console.warn('⚠️ map-area имеет нулевые размеры! Задаём принудительно.');
+    mapW = window.innerWidth || 800;
+    mapH = window.innerHeight - 100 || 500;
+  }
+  
+  mapCanvas.width = mapW;
+  mapCanvas.height = mapH;
+  mapCtx = mapCanvas.getContext('2d');
+
+  // Начальный зум — вся карта США должна быть видна
+  mapZoom = 1.0;
+  mapOffX = 0;
+  mapOffY = 0;
+
+  mapCanvas.addEventListener('wheel', onMapWheel, { passive:true });
+  mapCanvas.addEventListener('mousedown', onMapMouseDown);
+  mapCanvas.addEventListener('mousemove', onMapMouseMove);
+  mapCanvas.addEventListener('mouseup', onMapMouseUp);
+  mapCanvas.addEventListener('click', onMapClick);
+  mapCanvas.addEventListener('touchstart', onMapTouchStart, { passive:true });
+  mapCanvas.addEventListener('touchmove', onMapTouchMove, { passive:false });
+  mapCanvas.addEventListener('touchend', onMapTouchEnd);
+
+  document.getElementById('map-zoom-in').onclick = () => { mapZoom = Math.min(3.0, mapZoom * 1.3); renderMap(); };
+  document.getElementById('map-zoom-out').onclick = () => { mapZoom = Math.max(0.85, mapZoom / 1.3); renderMap(); };
+  document.getElementById('map-redraw').onclick = () => { 
+    console.log('🔄 Принудительная перерисовка по клику');
+    mapZoom = 1.0;
+    mapOffX = 0;
+    mapOffY = 0;
+    renderMap(); 
+    window.debugProjection();
+  };
+
+  window.addEventListener('resize', () => {
+    mapW = area.clientWidth; mapH = area.clientHeight;
+    mapCanvas.width = mapW; mapCanvas.height = mapH;
+    renderMap();
+  });
+
+  console.log('✅ initMap() завершён, вызываю renderMap()');
+  renderMap();
+  
+  // Принудительная перерисовка через 100ms на случай если данные загружаются
+  setTimeout(() => {
+    console.log('🔄 Принудительная перерисовка через 100ms');
+    // Пересчитываем размеры на случай если они изменились
+    const areaEl = document.getElementById('map-area');
+    if (areaEl && areaEl.clientWidth > 10) {
+      mapW = areaEl.clientWidth;
+      mapH = areaEl.clientHeight;
+      mapCanvas.width = mapW;
+      mapCanvas.height = mapH;
+    }
+    renderMap();
+  }, 100);
+}
+
+function onMapWheel(e) {
+  const delta = e.deltaY > 0 ? 0.85 : 1.18;
+  const rect = mapCanvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  const newZoom = Math.max(0.85, Math.min(3.0, mapZoom * delta));
+  const scale = newZoom / mapZoom;
+  mapOffX = mx - (mx - mapOffX) * scale;
+  mapOffY = my - (my - mapOffY) * scale;
+  mapZoom = newZoom;
+  // Ограничиваем offset чтобы карта не улетала
+  clampMapOffset();
+  renderMap();
+}
+
+function clampMapOffset() {
+  const maxOffX = mapW * 0.5;
+  const maxOffY = mapH * 0.5;
+  const minOffX = -mapW * mapZoom + mapW * 0.5;
+  const minOffY = -mapH * mapZoom + mapH * 0.5;
+  mapOffX = Math.max(minOffX, Math.min(maxOffX, mapOffX));
+  mapOffY = Math.max(minOffY, Math.min(maxOffY, mapOffY));
+}
+function onMapMouseDown(e) { mapDragging = true; mapDragStart = [e.clientX - mapOffX, e.clientY - mapOffY]; }
+function onMapMouseMove(e) {
+  if (!mapDragging) return;
+  mapOffX = e.clientX - mapDragStart[0];
+  mapOffY = e.clientY - mapDragStart[1];
+  clampMapOffset();
+  renderMap();
+}
+function onMapMouseUp() { mapDragging = false; }
+
+let _touchStart = null;
+function onMapTouchStart(e) {
+  if (e.touches.length === 1) {
+    mapDragging = true;
+    mapDragStart = [e.touches[0].clientX - mapOffX, e.touches[0].clientY - mapOffY];
+  }
+}
+function onMapTouchMove(e) {
+  if (mapDragging && e.touches.length === 1) {
+    e.preventDefault();
+    mapOffX = e.touches[0].clientX - mapDragStart[0];
+    mapOffY = e.touches[0].clientY - mapDragStart[1];
+    clampMapOffset();
+    renderMap();
+  }
+}
+function onMapTouchEnd() { mapDragging = false; }
+
+function onMapClick(e) {
+  const rect = mapCanvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  // Проверяем клик по траку
+  G.trucks.forEach(truck => {
+    const [px, py] = project(truck.position[0], truck.position[1]);
+    if (Math.hypot(mx - px, my - py) < 14) {
+      G.selectedTruckId = truck.id;
+      showTruckDetail(truck);
+      renderMap();
+    }
+  });
+}
+
+function drawStatePath(ctx, coords) {
+  if (!coords || coords.length < 2) return;
+  ctx.beginPath();
+  const [sx, sy] = project(coords[0][0], coords[0][1]);
+  ctx.moveTo(sx, sy);
+  for (let i = 1; i < coords.length; i++) {
+    const [px, py] = project(coords[i][0], coords[i][1]);
+    ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+}
+
+function renderMap() {
+  if (!mapCtx) return;
+  const ctx = mapCtx;
+  
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+  ctx.restore();
+  
+  const US_STATES = window._MAP_US_STATES || {};
+  const HIGHWAYS = window._MAP_HIGHWAYS || [];
+
+  // ── Фон — мягкий пастельный ───────────────────────────
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, mapW, mapH);
+
+  // ── Claymorphism цвета для штатов ─────────────────────
+  const clayColors = [
+    '#4ecdc4', '#45b7d1', '#96ceb4', '#88d8b0', '#ffeaa7',
+    '#dfe6e9', '#74b9ff', '#a29bfe', '#fd79a8', '#fab1a0',
+    '#55efc4', '#81ecec', '#00cec9', '#6c5ce7', '#e17055',
+    '#fdcb6e', '#e84393', '#00b894', '#0984e3', '#636e72',
+  ];
+  
+  const stateKeys = Object.keys(US_STATES);
+
+  // ── Тень штатов (3D эффект) ───────────────────────────
+  stateKeys.forEach((abbr, i) => {
+    const coords = US_STATES[abbr];
+    // Смещённая тень вниз-вправо
+    ctx.save();
+    ctx.translate(3 * mapZoom, 4 * mapZoom);
+    drawStatePath(ctx, coords);
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // ── Штаты — яркая заливка ─────────────────────────────
+  stateKeys.forEach((abbr, i) => {
+    const coords = US_STATES[abbr];
+    const baseColor = clayColors[i % clayColors.length];
+    
+    drawStatePath(ctx, coords);
+    
+    // Градиент для 3D-эффекта (светлее сверху, темнее снизу)
+    let cx = 0, cy = 0;
+    coords.forEach(([lng, lat]) => { cx += lng; cy += lat; });
+    cx /= coords.length; cy /= coords.length;
+    const [centerX, centerY] = project(cx, cy);
+    
+    const grad = ctx.createLinearGradient(centerX, centerY - 30, centerX, centerY + 30);
+    grad.addColorStop(0, lightenColor(baseColor, 30));
+    grad.addColorStop(0.5, baseColor);
+    grad.addColorStop(1, darkenColor(baseColor, 25));
+    ctx.fillStyle = grad;
+    ctx.fill();
+  });
+
+  // ── Внутренний блик (claymorphism highlight) ──────────
+  stateKeys.forEach((abbr, i) => {
+    const coords = US_STATES[abbr];
+    drawStatePath(ctx, coords);
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  });
+
+  // ── Границы штатов — тёмные для разделения ────────────
+  stateKeys.forEach((abbr) => {
+    const coords = US_STATES[abbr];
+    drawStatePath(ctx, coords);
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+  });
+
+  // ── Interstate Highways — белые дороги ─────────────────
+  if (mapZoom >= 0.8) {
+    const lw = Math.max(1.5, 2 * mapZoom);
+    HIGHWAYS.forEach(highway => {
+      if (!highway.points || highway.points.length < 2) return;
+      const firstPt = highway.points[0];
+      if (firstPt[0] < -130 || firstPt[0] > -60 || firstPt[1] < 24 || firstPt[1] > 50) return;
+      
+      const [sx, sy] = project(highway.points[0][0], highway.points[0][1]);
+      const [ex, ey] = project(highway.points[highway.points.length-1][0], highway.points[highway.points.length-1][1]);
+      if (sx < -200 && ex < -200) return;
+      if (sx > mapW+200 && ex > mapW+200) return;
+
+      // Тень дороги
+      ctx.beginPath();
+      ctx.moveTo(sx + 1, sy + 1);
+      for (let i = 1; i < highway.points.length; i++) {
+        const [px, py] = project(highway.points[i][0], highway.points[i][1]);
+        ctx.lineTo(px + 1, py + 1);
+      }
+      ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+      ctx.lineWidth = lw + 1;
+      ctx.stroke();
+
+      // Дорога
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      for (let i = 1; i < highway.points.length; i++) {
+        const [px, py] = project(highway.points[i][0], highway.points[i][1]);
+        ctx.lineTo(px, py);
+      }
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+      ctx.lineWidth = lw;
+      ctx.stroke();
+    });
+  }
+
+  // ── Аббревиатуры штатов ───────────────────────────────
+  if (mapZoom > 0.9) {
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const fontSize = Math.max(9, Math.round(10 * mapZoom));
+    ctx.font = `800 ${fontSize}px sans-serif`;
+    stateKeys.forEach((abbr, i) => {
+      if (abbr === 'MI_UPPER') return;
+      const coords = US_STATES[abbr];
+      let cx = 0, cy = 0;
+      coords.forEach(([lng, lat]) => { cx += lng; cy += lat; });
+      cx /= coords.length; cy /= coords.length;
+      const [px, py] = project(cx, cy);
+      if (px < 0 || px > mapW || py < 0 || py > mapH) return;
+      // Тень текста
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillText(abbr, px + 1, py + 1);
+      // Текст
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillText(abbr, px, py);
+    });
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  // ── Маршруты активных грузов ──────────────────────────
+  G.activeLoads.forEach(load => {
+    const truck = G.trucks.find(t => t.currentLoad && t.currentLoad.id === load.id);
+    const routePath = truck && truck.routePath;
+    const from = CITIES[load.fromCity], to = CITIES[load.toCity];
+    if (!from || !to) return;
+    const pathPts = routePath && routePath.length >= 2 ? routePath : [from, to];
+
+    ctx.beginPath();
+    const [sx0,sy0] = project(pathPts[0][0], pathPts[0][1]);
+    ctx.moveTo(sx0, sy0);
+    for (let i = 1; i < pathPts.length; i++) {
+      const [px,py] = project(pathPts[i][0], pathPts[i][1]);
+      ctx.lineTo(px, py);
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 7;
+    ctx.setLineDash([]);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(sx0, sy0);
+    for (let i = 1; i < pathPts.length; i++) {
+      const [px,py] = project(pathPts[i][0], pathPts[i][1]);
+      ctx.lineTo(px, py);
+    }
+    ctx.strokeStyle = '#55efc4';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([10, 6]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // ── Booked грузы ──────────────────────────────────────
+  G.bookedLoads.forEach(load => {
+    const from = CITIES[load.fromCity], to = CITIES[load.toCity];
+    if (!from || !to) return;
+    const [fx, fy] = project(from[0], from[1]);
+    const [tx, ty] = project(to[0], to[1]);
+    ctx.beginPath();
+    ctx.moveTo(fx, fy);
+    ctx.lineTo(tx, ty);
+    ctx.strokeStyle = '#fdcb6e';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 8]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // ── Города ────────────────────────────────────────────
+  const MAJOR_HUBS = ['Chicago','Houston','Dallas','Atlanta','New York','Los Angeles','Miami','Denver','Seattle','Phoenix','Las Vegas','Salt Lake City','Kansas City','Minneapolis','Nashville','Memphis','Charlotte','Indianapolis','Detroit','Philadelphia','Boston','San Francisco','Portland'];
+  
+  Object.entries(CITIES).forEach(([name, coords]) => {
+    const [px, py] = project(coords[0], coords[1]);
+    if (px < -20 || px > mapW+20 || py < -20 || py > mapH+20) return;
+
+    const hasLoad = G.activeLoads.some(l => l.fromCity === name || l.toCity === name);
+    const isMajor = MAJOR_HUBS.includes(name);
+
+    if (hasLoad) {
+      ctx.beginPath();
+      ctx.arc(px, py, 8, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(85,239,196,0.2)';
+      ctx.fill();
+    }
+
+    // Тень точки
+    ctx.beginPath();
+    ctx.arc(px + 1, py + 1, hasLoad ? 4 : isMajor ? 3 : 2, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fill();
+
+    // Точка города
+    ctx.beginPath();
+    ctx.arc(px, py, hasLoad ? 4 : isMajor ? 3 : 2, 0, Math.PI*2);
+    ctx.fillStyle = hasLoad ? '#55efc4' : '#fff';
+    ctx.fill();
+
+    const showLabel = isMajor || hasLoad || mapZoom > 1.5;
+    if (showLabel) {
+      const fs = Math.max(10, Math.round(11 * mapZoom));
+      ctx.font = `${hasLoad ? '800' : '600'} ${fs}px sans-serif`;
+      // Тень текста
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fillText(name, px + 6, py - 3);
+      // Текст
+      ctx.fillStyle = hasLoad ? '#fff' : 'rgba(255,255,255,0.8)';
+      ctx.fillText(name, px + 5, py - 4);
+    }
+  });
+
+  // ── Траки ─────────────────────────────────────────────
+  G.trucks.forEach(truck => {
+    const [px, py] = project(truck.position[0], truck.position[1]);
+    if (px < -30 || px > mapW+30 || py < -30 || py > mapH+30) return;
+
+    const color = getTruckColor(truck);
+    const isSelected = G.selectedTruckId === truck.id;
+    const r = isSelected ? 12 : 10;
+
+    // Большая тень (claymorphism)
+    ctx.beginPath();
+    ctx.arc(px + 2, py + 3, r + 2, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fill();
+
+    if (isSelected) {
+      ctx.beginPath();
+      ctx.arc(px, py, r + 5, 0, Math.PI*2);
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // Основной круг с градиентом
+    const grad = ctx.createRadialGradient(px - 3, py - 3, 1, px, py, r);
+    grad.addColorStop(0, lightenColor(color, 50));
+    grad.addColorStop(0.6, color);
+    grad.addColorStop(1, darkenColor(color, 30));
+    ctx.beginPath();
+    ctx.arc(px, py, r, 0, Math.PI*2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Блик сверху (3D)
+    ctx.beginPath();
+    ctx.arc(px - 2, py - 3, r * 0.5, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.fill();
+
+    // Обводка
+    ctx.beginPath();
+    ctx.arc(px, py, r, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Иконка
+    ctx.font = `${Math.round(r * 1.1)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🚛', px, py + 1);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+
+    // Имя трака
+    if (mapZoom > 0.7) {
+      const labelFs = Math.max(11, Math.round(12 * mapZoom));
+      ctx.font = `900 ${labelFs}px sans-serif`;
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.fillText(truck.name.replace('Truck ','T'), px + r + 5, py + 1);
+      ctx.fillStyle = '#fff';
+      ctx.fillText(truck.name.replace('Truck ','T'), px + r + 4, py);
+    }
+
+    // Прогресс-дуга
+    if ((truck.status === 'loaded' || truck.status === 'driving') && truck.progress > 0) {
+      ctx.beginPath();
+      ctx.arc(px, py, r + 4, -Math.PI/2, -Math.PI/2 + truck.progress * Math.PI * 2);
+      ctx.strokeStyle = '#55efc4';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+  });
+
+  // ── Мини-легенда ──────────────────────────────────────
+  if (G.trucks.length > 0) {
+    const legendX = 10, legendY = mapH - 10;
+    const statuses = [
+      ['idle','⚪','Свободен'],['driving','🔵','К погрузке'],['loaded','🟢','В пути'],
+      ['at_pickup','🟡','Погрузка'],['at_delivery','🟣','Разгрузка'],
+      ['breakdown','🔴','Поломка'],['waiting','🟠','Detention'],
+    ];
+    const activeStatuses = statuses.filter(([s]) => G.trucks.some(t => t.status === s));
+    const lh = 15;
+    const lw = 115;
+    const totalH = activeStatuses.length * lh + 12;
+    
+    // Тень легенды
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.beginPath();
+    ctx.roundRect(legendX + 2, legendY - totalH + 2, lw, totalH, 10);
+    ctx.fill();
+    
+    // Фон легенды
+    ctx.fillStyle = 'rgba(26,26,46,0.9)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(legendX, legendY - totalH, lw, totalH, 10);
+    ctx.fill();
+    ctx.stroke();
+    
+    activeStatuses.forEach(([status, emoji, label], i) => {
+      const count = G.trucks.filter(t => t.status === status).length;
+      const y = legendY - totalH + 9 + i * lh;
+      ctx.font = '500 10px sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillText(`${emoji} ${label}`, legendX + 8, y + 10);
+      if (count > 0) {
+        ctx.fillStyle = STATUS_COLOR[status] || '#94a3b8';
+        ctx.font = '800 10px sans-serif';
+        ctx.fillText(count.toString(), legendX + lw - 20, y + 10);
+      }
+    });
+  }
+}
+
+function lightenColor(hex, amount) {
+  const num = parseInt(hex.replace('#',''), 16);
+  const r = Math.min(255, (num >> 16) + amount);
+  const g = Math.min(255, ((num >> 8) & 0xff) + amount);
+  const b = Math.min(255, (num & 0xff) + amount);
+  return `rgb(${r},${g},${b})`;
+}
+
+function darkenColor(hex, amount) {
+  const num = parseInt(hex.replace('#',''), 16);
+  const r = Math.max(0, (num >> 16) - amount);
+  const g = Math.max(0, ((num >> 8) & 0xff) - amount);
+  const b = Math.max(0, (num & 0xff) - amount);
+  return `rgb(${r},${g},${b})`;
+}
+
+function getTruckColor(truck) {
+  if (truck.outOfOrderUntil && truck.outOfOrderUntil > G.gameMinute) return '#ff0000';
+  if (truck.idleWarningLevel === 3) return '#ef4444';
+  if (truck.idleWarningLevel === 2) return '#f97316';
+  if (truck.idleWarningLevel === 1) return '#fbbf24';
+  return STATUS_COLOR[truck.status] || '#64748b';
+}
+
+function zoomToTruck(truck) {
+  // Сохраняем текущий зум, сбрасываем offset для расчёта
+  const savedZoom = mapZoom;
+  const savedOffX = mapOffX;
+  const savedOffY = mapOffY;
+  mapZoom = 1; mapOffX = 0; mapOffY = 0;
+  const [px, py] = project(truck.position[0], truck.position[1]);
+  mapZoom = Math.max(1.5, savedZoom);
+  mapOffX = mapW/2 - px * mapZoom;
+  mapOffY = mapH/2 - py * mapZoom;
+  clampMapOffset();
+  renderMap();
+}
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// RENDER — TOP BAR
+// ═══════════════════════════════════════════════════════════════════
+function renderTopBar() {
+  const pct = Math.min(100, (G.gameMinute / SHIFT_DURATION) * 100);
+  const fill = document.getElementById('progress-fill');
+  if (fill) fill.style.width = pct + '%';
+
+  const clock = document.getElementById('topbar-clock');
+  if (clock) clock.textContent = formatTime(G.gameMinute);
+
+  const session = document.getElementById('topbar-session');
+  if (session) session.textContent = G.sessionName || '';
+
+  // Balance chip
+  const balChip = document.getElementById('chip-balance');
+  const balVal = document.getElementById('chip-balance-val');
+  if (balVal) {
+    balVal.textContent = G.balance >= 0
+      ? '$' + (G.balance >= 1000 ? (G.balance/1000).toFixed(1)+'k' : G.balance.toLocaleString())
+      : '-$' + Math.abs(G.balance).toLocaleString();
+    balChip.className = 'stat-chip ' + (G.balance >= 0 ? 'green' : 'red');
+  }
+
+  // Loads chip
+  const loadsVal = document.getElementById('chip-loads-val');
+  if (loadsVal) loadsVal.textContent = G.activeLoads.length + G.bookedLoads.length;
+
+  // Rep chip
+  const repChip = document.getElementById('chip-rep');
+  const repVal = document.getElementById('chip-rep-val');
+  if (repVal) {
+    repVal.textContent = G.reputation + '%';
+    repChip.className = 'stat-chip ' + (G.reputation > 70 ? 'green' : G.reputation > 40 ? 'yellow' : 'red');
+  }
+
+  // Notif dot
+  const dot = document.getElementById('notif-dot');
+  if (dot) dot.style.display = unreadCount() > 0 ? 'flex' : 'none';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// RENDER — TRUCK STRIP
+// ═══════════════════════════════════════════════════════════════════
+function renderTruckStrip() {
+  const strip = document.getElementById('truck-strip');
+  if (!strip) return;
+  strip.innerHTML = G.trucks.map(truck => {
+    const color = getTruckColor(truck);
+    const hos = Math.max(0, truck.hoursLeft);
+    const hosColor = hos < 2 ? '#f87171' : hos < 4 ? '#fbbf24' : '#34d399';
+    const isSelected = G.selectedTruckId === truck.id;
+    const isMoving = truck.status === 'driving' || truck.status === 'loaded';
+    const isAlert = truck.idleWarningLevel > 0 || truck.status === 'breakdown';
+    const pct = Math.round(truck.progress * 100);
+    const shortName = truck.name.replace('Truck ','T');
+
+    return `<div class="truck-card ${isSelected?'selected':''} ${isAlert?'alert':''}"
+      onclick="onTruckCardClick('${truck.id}')"
+      style="border-color:${isSelected ? color+'88' : isAlert ? color+'44' : ''}">
+      <div class="truck-card-bar" style="background:linear-gradient(90deg,${color},${color}88);box-shadow:0 0 6px ${color}"></div>
+      <div class="truck-card-body">
+        <div class="truck-card-name">${shortName}</div>
+        <div class="truck-card-status" style="color:${color}">${STATUS_LABEL[truck.status]||truck.status}</div>
+        ${truck.destinationCity ? `<div class="truck-card-dest">→ ${truck.destinationCity}</div>` : ''}
+        <div class="truck-card-hos" style="color:${hosColor}">⏱ ${hos.toFixed(1)}h ${isAlert?'⚠️':''}</div>
+        ${isMoving ? `<div class="truck-card-prog"><div class="truck-card-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${color}88,${color})"></div></div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function onTruckCardClick(id) {
+  G.selectedTruckId = id;
+  const truck = G.trucks.find(t => t.id === id);
+  if (truck) {
+    renderMap();
+    zoomToTruck(truck);
+    showTruckDetail(truck);
+  }
+  renderTruckStrip();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// RENDER — BADGES
+// ═══════════════════════════════════════════════════════════════════
+function updateBadges() {
+  const loadsB = document.getElementById('badge-loads');
+  if (loadsB) loadsB.textContent = G.availableLoads.length;
+
+  const emailB = document.getElementById('badge-email');
+  const unread = G.notifications.filter(n => !n.read).length;
+  if (emailB) {
+    emailB.textContent = unread;
+    emailB.style.display = unread > 0 ? 'inline-block' : 'none';
+  }
+
+  const idleB = document.getElementById('badge-idle');
+  const idle = G.trucks.filter(t => t.status === 'idle').length;
+  if (idleB) {
+    idleB.textContent = idle;
+    idleB.style.display = idle > 0 ? 'inline-block' : 'none';
+  }
+
+  const dot = document.getElementById('notif-dot');
+  if (dot) dot.style.display = unread > 0 ? 'flex' : 'none';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// RENDER — PANELS
+// ═══════════════════════════════════════════════════════════════════
+let currentTab = 'loadboard';
+
+function renderPanel(tab) {
+  if (tab) currentTab = tab;
+  const content = document.getElementById('panel-content');
+  if (!content) return;
+
+  // Update tab active state
+  document.querySelectorAll('.panel-tab').forEach(btn => {
+    btn.classList.toggle('on', btn.dataset.tab === currentTab);
+  });
+
+  if (currentTab === 'loadboard') content.innerHTML = renderLoadBoard();
+  else if (currentTab === 'email') content.innerHTML = renderEmailPanel();
+  else if (currentTab === 'trucks') content.innerHTML = renderTrucksPanel();
+
+  attachPanelEvents();
+}
+
+function renderLoadBoard() {
+  const loads = G.availableLoads.filter(l =>
+    !G.loadBoardSearch ||
+    l.fromCity.toLowerCase().includes(G.loadBoardSearch.toLowerCase()) ||
+    l.toCity.toLowerCase().includes(G.loadBoardSearch.toLowerCase())
+  );
+
+  loads.sort((a,b) => {
+    if (a.isUrgent && !b.isUrgent) return -1;
+    if (!a.isUrgent && b.isUrgent) return 1;
+    return (b.postedRate/b.miles) - (a.postedRate/a.miles);
+  });
+
+  const cards = loads.map(load => {
+    const rpm = (load.postedRate / load.miles).toFixed(2);
+    const marketRpm = (load.marketRate / load.miles).toFixed(2);
+    const equipClass = load.equipment === 'Reefer' ? 'reefer' : load.equipment === 'Flatbed' ? 'flatbed' : '';
+    const expiresIn = Math.max(0, load.expiresAt - G.gameMinute);
+    const broker = G.brokers.find(b => b.id === load.brokerId);
+    const brokerRel = broker ? broker.relationship : 50;
+    const relColor = brokerRel > 70 ? '#34d399' : brokerRel > 40 ? '#fbbf24' : '#f87171';
+    
+    return `<div class="load-card ${load.isUrgent?'urgent-load':''}" onclick="onLoadCardClick('${load.id}')">
+      <div class="load-card-header">
+        <div>
+          <div class="load-route">${load.fromCity} → ${load.toCity}</div>
+          <div style="font-size:10px;color:var(--text-dim);margin-top:2px">
+            ${load.brokerName} @ ${load.brokerCompany} 
+            <span style="color:${relColor};font-weight:700">★${brokerRel}%</span>
+          </div>
+        </div>
+        <div>
+          <div class="load-rate">$${load.postedRate.toLocaleString()}</div>
+          <div style="font-size:10px;color:var(--text-muted);text-align:right;margin-top:2px">
+            ~$${load.marketRate.toLocaleString()}
+          </div>
+        </div>
+      </div>
+      <div class="load-meta">
+        <span class="load-tag">${load.miles} mi</span>
+        <span class="load-tag ${equipClass}">${load.equipment}</span>
+        <span class="load-tag">${load.commodity}</span>
+        <span class="load-tag">${(load.weight/1000).toFixed(0)}k lbs</span>
+        ${load.isUrgent ? '<span class="load-tag urgent">🔥 URGENT</span>' : ''}
+        ${expiresIn < 30 ? `<span class="load-tag" style="background:rgba(248,113,113,0.15);color:#f87171">⏰ ${expiresIn}m</span>` : ''}
+      </div>
+      <div class="load-card-footer">
+        <div>
+          <span class="load-rpm" style="font-size:13px;font-weight:700;color:var(--primary)">$${rpm}/mi</span>
+          <span class="load-rpm" style="margin-left:6px;color:var(--text-dim)">рынок $${marketRpm}/mi</span>
+        </div>
+        <button class="btn-negotiate" onclick="event.stopPropagation();onNegotiateClick('${load.id}')">💬 Переговоры</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="loadboard-wrap">
+    <div class="lb-search">
+      <input class="lb-search-input" id="lb-search-input" placeholder="🔍 Поиск по городу..." value="${G.loadBoardSearch}">
+      <button class="lb-refresh-btn" onclick="refreshLoadBoard()">↻ Обновить</button>
+    </div>
+    <div style="padding:0 10px 8px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:11px;color:var(--text-dim)">Найдено: ${loads.length} грузов</span>
+      <span style="font-size:10px;color:var(--text-dim)">Сортировка: RPM ↓</span>
+    </div>
+    ${loads.length ? cards : '<div style="text-align:center;padding:40px;color:var(--text-dim)">Нет доступных грузов</div>'}
+  </div>`;
+}
+
+function renderEmailPanel() {
+  const unread = G.notifications.filter(n => !n.read);
+  const read = G.notifications.filter(n => n.read);
+  
+  const typeColors = { urgent:'#f87171', rate_con:'#38bdf8', pod_ready:'#34d399', detention:'#fbbf24', email:'#94a3b8', text:'#a78bfa', missed_call:'#fb923c' };
+  const typeLabels = { urgent:'⚡ URGENT', rate_con:'📄 Rate Con', pod_ready:'✅ POD', detention:'⏰ Detention', email:'✉️ Email', text:'💬 SMS', missed_call:'📞 Missed Call' };
+  
+  const renderItem = (n) => {
+    const color = typeColors[n.type] || '#94a3b8';
+    const timeAgo = G.gameMinute - n.minute;
+    const timeStr = timeAgo < 60 ? `${timeAgo}m назад` : `${Math.floor(timeAgo/60)}h назад`;
+    
+    return `<div class="email-item ${!n.read?'unread':''} ${n.priority==='critical'?'urgent':''}"
+      onclick="onEmailClick('${n.id}')">
+      ${!n.read ? '<div class="email-unread-dot"></div>' : ''}
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div class="email-type-badge" style="background:${color}22;color:${color}">${typeLabels[n.type]||n.type}</div>
+        <div style="font-size:9px;color:var(--text-dim)">${timeStr}</div>
+      </div>
+      <div class="email-from">${n.from}</div>
+      <div class="email-subject">${n.subject}</div>
+      <div class="email-preview">${n.message.substring(0,70)}...</div>
+    </div>`;
+  };
+
+  const unreadHtml = unread.length ? `
+    <div style="padding:8px 10px 4px;font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.5px">
+      Непрочитанные (${unread.length})
+    </div>
+    ${unread.map(renderItem).join('')}` : '';
+  
+  const readHtml = read.length ? `
+    <div style="padding:8px 10px 4px;font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px">
+      Прочитанные (${read.length})
+    </div>
+    ${read.slice(0, 20).map(renderItem).join('')}` : '';
+
+  return `<div class="email-wrap">
+    ${G.notifications.length ? unreadHtml + readHtml : '<div style="text-align:center;padding:40px;color:var(--text-dim)">📭 Нет сообщений</div>'}
+  </div>`;
+}
+
+function renderTrucksPanel() {
+  const sorted = [...G.trucks].sort((a,b) => {
+    if (a.status === 'idle' && b.status !== 'idle') return -1;
+    if (a.status !== 'idle' && b.status === 'idle') return 1;
+    if (a.idleWarningLevel !== b.idleWarningLevel) return b.idleWarningLevel - a.idleWarningLevel;
+    return a.hoursLeft - b.hoursLeft;
+  });
+
+  const cards = sorted.map(truck => {
+    const color = getTruckColor(truck);
+    const hos = Math.max(0, truck.hoursLeft);
+    const hosColor = hos < 2 ? '#f87171' : hos < 4 ? '#fbbf24' : '#34d399';
+    const pct = Math.round(truck.progress * 100);
+    const isIdle = truck.status === 'idle';
+    const idleTime = isIdle && truck.idleSinceMinute !== null ? G.gameMinute - truck.idleSinceMinute : 0;
+    
+    return `<div class="truck-row ${isIdle?'truck-idle':''}" onclick="onTruckCardClick('${truck.id}')">
+      <div class="truck-row-header">
+        <div>
+          <div class="truck-row-name">${truck.name}</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:1px">
+            📍 ${truck.currentCity || 'В пути'} · 
+            <span style="color:${hosColor}">⏱ ${hos.toFixed(1)}h HOS</span>
+          </div>
+        </div>
+        <div class="truck-row-status" style="background:${color}22;color:${color}">${STATUS_LABEL[truck.status]}</div>
+      </div>
+      <div class="truck-row-driver">👤 ${truck.driver} · 
+        <span style="font-size:11px;color:var(--text-dim)">
+          Safety ${truck.safetyScore}% · ${truck.totalDeliveries} доставок
+        </span>
+      </div>
+      ${truck.currentLoad
+        ? `<div class="truck-row-load">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span>📦 ${truck.currentLoad.fromCity} → ${truck.currentLoad.toCity}</span>
+              <span style="font-size:13px;font-weight:800;color:var(--success)">$${truck.currentLoad.agreedRate.toLocaleString()}</span>
+            </div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:2px">
+              ${truck.currentLoad.commodity} · ${truck.currentLoad.miles} mi · ${pct}% выполнено
+            </div>
+          </div>`
+        : `<div class="truck-row-load" style="color:var(--text-dim);text-align:center;padding:8px;background:rgba(100,116,139,0.08);border-radius:8px">
+            ${isIdle && idleTime > 0 ? `⚠️ Простой ${idleTime} минут` : 'Нет груза'}
+          </div>`}
+      <div class="truck-row-footer">
+        ${truck.currentLoad ? `<div class="truck-prog-wrap"><div class="truck-prog-fill" style="width:${pct}%;background:${color}"></div></div>` : ''}
+        ${isIdle ? `<button class="btn-find-load" onclick="event.stopPropagation();switchTab('loadboard')">🔍 Найти груз</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  const idleCount = G.trucks.filter(t => t.status === 'idle').length;
+  const activeCount = G.trucks.filter(t => t.currentLoad).length;
+
+  return `<div class="trucks-wrap">
+    <div style="padding:8px 10px;display:flex;gap:8px;border-bottom:1px solid var(--border)">
+      <div style="flex:1;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.2);border-radius:8px;padding:6px 10px;text-align:center">
+        <div style="font-size:9px;color:var(--text-dim);font-weight:600">АКТИВНЫХ</div>
+        <div style="font-size:18px;font-weight:900;color:var(--success)">${activeCount}</div>
+      </div>
+      <div style="flex:1;background:rgba(100,116,139,0.1);border:1px solid rgba(100,116,139,0.2);border-radius:8px;padding:6px 10px;text-align:center">
+        <div style="font-size:9px;color:var(--text-dim);font-weight:600">СВОБОДНЫХ</div>
+        <div style="font-size:18px;font-weight:900;color:${idleCount>0?'var(--warning)':'var(--text-dim)'}">${idleCount}</div>
+      </div>
+    </div>
+    ${cards}
+  </div>`;
+}
+
+function attachPanelEvents() {
+  const searchInput = document.getElementById('lb-search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', e => {
+      G.loadBoardSearch = e.target.value;
+      renderPanel('loadboard');
+    });
+  }
+}
+
+function refreshLoadBoard() {
+  const newLoads = generateLoads(6);
+  G.availableLoads.push(...newLoads);
+  // Убираем старые истёкшие
+  G.availableLoads = G.availableLoads.filter(l => l.expiresAt > G.gameMinute);
+  updateBadges();
+  renderPanel('loadboard');
+  showToast('↻ Биржа обновлена', 'info');
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  renderPanel(tab);
+  // Sync bottom tabs
+  document.querySelectorAll('.bottom-tab').forEach(btn => {
+    btn.classList.toggle('on', btn.dataset.tab === tab);
+  });
+}
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// MODAL RENDERS
+// ═══════════════════════════════════════════════════════════════════
+function renderNegotiationModal() {
+  const neg = G.negotiation;
+  if (!neg.load) return;
+  const load = neg.load;
+  const broker = BROKERS.find(b => b.id === load.brokerId) || { avatar:'👨‍💼', name:load.brokerName, company:load.brokerCompany };
+  const moodColors = { happy:'#34d399', neutral:'#94a3b8', annoyed:'#fbbf24', angry:'#f87171' };
+  const moodLabels = { happy:'😊 Доволен', neutral:'😐 Нейтрально', annoyed:'😤 Раздражён', angry:'😠 Злится' };
+
+  const chatHtml = (neg.chatHistory || []).map(m =>
+    `<div class="chat-msg ${m.from === 'me' ? 'me' : 'broker'}">${m.text}</div>`
+  ).join('');
+
+  const rpm = (load.postedRate / load.miles).toFixed(2);
+  const marketRpm = (load.marketRate / load.miles).toFixed(2);
+
+  document.getElementById('modal-negotiate-body').innerHTML = `
+    <div class="neg-load-info">
+      <div class="neg-route">${load.fromCity} → ${load.toCity}</div>
+      <div class="neg-meta">${load.miles} миль · ${load.equipment} · ${load.commodity} · ${(load.weight/1000).toFixed(0)}k lbs</div>
+      <div class="neg-meta" style="margin-top:4px">Ставка: <b style="color:#fff">$${load.postedRate.toLocaleString()}</b> ($${rpm}/mi) · Рынок: ~$${load.marketRate.toLocaleString()} ($${marketRpm}/mi)</div>
+    </div>
+    <div class="neg-broker">
+      <div class="neg-broker-avatar">${broker.avatar}</div>
+      <div>
+        <div class="neg-broker-name">${broker.name}</div>
+        <div class="neg-broker-company">${broker.company}</div>
+        <div class="neg-broker-mood" style="color:${moodColors[neg.brokerMood]}">${moodLabels[neg.brokerMood]}</div>
+      </div>
+    </div>
+    <div class="neg-chat" id="neg-chat">${chatHtml}</div>
+    <div class="neg-quick-btns">
+      ${[load.postedRate, Math.round(load.postedRate*1.05/50)*50, Math.round(load.marketRate/50)*50, load.marketRate].map(v =>
+        `<button class="neg-quick-btn" onclick="setNegOffer(${v})">$${v.toLocaleString()}</button>`
+      ).join('')}
+    </div>
+    <div class="neg-offer-row">
+      <input class="neg-offer-input" id="neg-offer-input" type="number" value="${neg.currentOffer}" min="500" step="50">
+      <button class="btn-send-offer" onclick="onSendOffer()">Предложить →</button>
+    </div>
+    <div class="neg-actions">
+      <button class="btn-book-load" onclick="acceptLoad(${load.postedRate})">✅ Принять $${load.postedRate.toLocaleString()}</button>
+      <button class="btn-decline" onclick="closeModal('modal-negotiate')">Отказать</button>
+    </div>`;
+
+  // Скролл чата вниз
+  setTimeout(() => {
+    const chat = document.getElementById('neg-chat');
+    if (chat) chat.scrollTop = chat.scrollHeight;
+  }, 50);
+}
+
+function setNegOffer(val) {
+  const inp = document.getElementById('neg-offer-input');
+  if (inp) inp.value = val;
+}
+
+function onSendOffer() {
+  const inp = document.getElementById('neg-offer-input');
+  if (!inp) return;
+  const amount = parseInt(inp.value);
+  if (!amount || amount < 100) { showToast('Введи корректную сумму', 'error'); return; }
+  const result = makeOffer(amount);
+  renderNegotiationModal();
+}
+
+function renderAssignModal(load) {
+  const availTrucks = G.trucks.filter(t => t.status === 'idle');
+  const truckBtns = G.trucks.map(truck => {
+    const isAvail = truck.status === 'idle';
+    const color = getTruckColor(truck);
+    return `<button class="assign-truck-btn ${!isAvail?'unavailable':''}"
+      ${!isAvail ? 'disabled' : `onclick="assignTruckToLoad('${truck.id}', '${load.id}')"`}>
+      <div class="assign-truck-icon">🚛</div>
+      <div>
+        <div class="assign-truck-name">${truck.name}</div>
+        <div class="assign-truck-info" style="color:${color}">${STATUS_LABEL[truck.status]} · ${truck.currentCity} · HOS: ${truck.hoursLeft.toFixed(1)}h</div>
+      </div>
+    </button>`;
+  }).join('');
+
+  document.getElementById('modal-assign-body').innerHTML = `
+    <div style="background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.15);border-radius:12px;padding:12px;margin-bottom:16px">
+      <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:4px">${load.fromCity} → ${load.toCity}</div>
+      <div style="font-size:12px;color:var(--text-muted)">${load.miles} миль · ${load.equipment} · $${load.agreedRate.toLocaleString()}</div>
+    </div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px">Выбери свободный трак:</div>
+    <div class="assign-trucks">${truckBtns}</div>
+    ${!availTrucks.length ? '<div style="text-align:center;padding:16px;color:var(--danger)">Нет свободных траков</div>' : ''}`;
+}
+
+// Переопределяем assignTruckToLoad чтобы принимать id строки
+const _origAssign = assignTruckToLoad;
+window.assignTruckToLoad = function(truckId, loadId) {
+  const load = G.bookedLoads.find(l => l.id === loadId) || G._pendingAssignLoad;
+  if (!load) return;
+  _origAssign(truckId, load);
+};
+
+function showTruckDetail(truck) {
+  const color = getTruckColor(truck);
+  const hos = Math.max(0, truck.hoursLeft);
+  const hosColor = hos < 2 ? '#f87171' : hos < 4 ? '#fbbf24' : '#34d399';
+
+  document.getElementById('modal-truck-title').textContent = truck.name;
+  document.getElementById('modal-truck-body').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="font-size:36px">🚛</div>
+      <div>
+        <div style="font-size:18px;font-weight:800;color:#fff">${truck.name}</div>
+        <div style="font-size:13px;color:var(--text-muted)">👤 ${truck.driver}</div>
+        <div style="font-size:12px;font-weight:700;color:${color};margin-top:2px">${STATUS_LABEL[truck.status]}</div>
+      </div>
+    </div>
+    <div class="truck-detail-stats">
+      <div class="truck-stat-card">
+        <div class="truck-stat-label">HOS ОСТАЛОСЬ</div>
+        <div class="truck-stat-val" style="color:${hosColor}">${hos.toFixed(1)}h</div>
+      </div>
+      <div class="truck-stat-card">
+        <div class="truck-stat-label">МЕСТОПОЛОЖЕНИЕ</div>
+        <div class="truck-stat-val" style="font-size:13px">${truck.currentCity}</div>
+      </div>
+      <div class="truck-stat-card">
+        <div class="truck-stat-label">БЕЗОПАСНОСТЬ</div>
+        <div class="truck-stat-val">${truck.safetyScore}%</div>
+      </div>
+      <div class="truck-stat-card">
+        <div class="truck-stat-label">ДОСТАВОК</div>
+        <div class="truck-stat-val">${truck.totalDeliveries}</div>
+      </div>
+    </div>
+    ${truck.currentLoad ? `
+      <div style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);border-radius:12px;padding:12px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;color:var(--success);margin-bottom:6px">📦 Текущий груз</div>
+        <div style="font-size:15px;font-weight:800;color:#fff">${truck.currentLoad.fromCity} → ${truck.currentLoad.toCity}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${truck.currentLoad.commodity} · $${truck.currentLoad.agreedRate.toLocaleString()} · ${Math.round(truck.progress*100)}% выполнено</div>
+      </div>` : `
+      <div style="background:rgba(100,116,139,0.1);border:1px solid rgba(100,116,139,0.2);border-radius:12px;padding:12px;margin-bottom:12px;text-align:center">
+        <div style="color:var(--text-dim);font-size:13px">Нет активного груза</div>
+        <button class="btn-find-load" style="margin-top:8px" onclick="closeModal('modal-truck-detail');switchTab('loadboard')">🔍 Найти груз</button>
+      </div>`}
+    <div style="font-size:11px;color:var(--text-dim)">Всего миль: ${truck.totalMiles.toLocaleString()} · HOS нарушений: ${truck.hosViolations}</div>`;
+
+  openModal('modal-truck-detail');
+}
+
+function showEventModal(event) {
+  document.getElementById('modal-event-title').textContent = event.title;
+  const truck = G.trucks.find(t => t.id === event.truckId);
+  const urgColors = { low:'#94a3b8', medium:'#fbbf24', high:'#f87171', critical:'#ef4444' };
+  const color = urgColors[event.urgency] || '#94a3b8';
+
+  document.getElementById('modal-event-body').innerHTML = `
+    <div style="background:${color}15;border:1px solid ${color}33;border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-size:13px;color:${color};font-weight:700;margin-bottom:4px">
+        ${event.urgency.toUpperCase()} · ${truck ? truck.name : ''}
+      </div>
+      <div style="font-size:14px;color:var(--text);line-height:1.6">${event.message}</div>
+    </div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:10px">Выбери действие:</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${event.options.map(opt => `
+        <button onclick="resolveEvent('${event.id}','${opt.id}')"
+          style="text-align:left;padding:12px 14px;border-radius:12px;
+          background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
+          color:var(--text);font-size:13px;font-weight:600;transition:all 0.15s;cursor:pointer"
+          onmouseover="this.style.background='rgba(56,189,248,0.1)';this.style.borderColor='rgba(56,189,248,0.3)'"
+          onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.borderColor='rgba(255,255,255,0.1)'">
+          ${opt.text}
+        </button>`).join('')}
+    </div>`;
+
+  openModal('modal-event');
+}
+
+function onEmailClick(id) {
+  markRead(id);
+  const n = G.notifications.find(x => x.id === id);
+  if (!n) return;
+
+  // Если это событие — показываем модал события
+  if (n.eventId) {
+    const event = G.activeEvents.find(e => e.id === n.eventId);
+    if (event) { showEventModal(event); return; }
+  }
+
+  document.getElementById('modal-email-body').innerHTML = `
+    <div class="email-detail-header">
+      <div class="email-detail-from">От: ${n.from}</div>
+      <div class="email-detail-subject">${n.subject}</div>
+      <div class="email-detail-time">${formatTime(n.minute)}</div>
+    </div>
+    <div class="email-detail-body">${n.message}</div>
+    <div class="email-reply-area">
+      <textarea class="email-reply-input" id="reply-input" placeholder="Написать ответ..."></textarea>
+      <button class="btn-send-reply" onclick="sendReply('${n.id}')">Отправить ответ</button>
+    </div>`;
+
+  openModal('modal-email-detail');
+  updateBadges();
+  renderPanel();
+}
+
+function sendReply(notifId) {
+  const inp = document.getElementById('reply-input');
+  if (!inp || !inp.value.trim()) return;
+  showToast('✉️ Ответ отправлен', 'success');
+  closeModal('modal-email-detail');
+  inp.value = '';
+}
+
+function onLoadCardClick(id) {
+  const load = G.availableLoads.find(l => l.id === id);
+  if (load) openNegotiation(load);
+}
+
+function onNegotiateClick(id) {
+  const load = G.availableLoads.find(l => l.id === id);
+  if (load) openNegotiation(load);
+}
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// DELIVERY POPUP
+// ═══════════════════════════════════════════════════════════════════
+function showDeliveryPopup(result) {
+  document.getElementById('dp-route').textContent = `${result.fromCity} → ${result.toCity}`;
+  document.getElementById('dp-rows').innerHTML = `
+    <div class="delivery-popup-row"><span class="delivery-popup-label">Ставка</span><span class="delivery-popup-val">$${result.agreedRate.toLocaleString()}</span></div>
+    <div class="delivery-popup-row"><span class="delivery-popup-label">Топливо</span><span class="delivery-popup-val" style="color:var(--danger)">-$${result.fuelCost.toLocaleString()}</span></div>
+    <div class="delivery-popup-row"><span class="delivery-popup-label">Водитель</span><span class="delivery-popup-val" style="color:var(--danger)">-$${result.driverPay.toLocaleString()}</span></div>
+    <div class="delivery-popup-row"><span class="delivery-popup-label">Dispatch 8%</span><span class="delivery-popup-val" style="color:var(--danger)">-$${result.dispatchFee.toLocaleString()}</span></div>
+    <div class="delivery-popup-row"><span class="delivery-popup-label">Factoring 3%</span><span class="delivery-popup-val" style="color:var(--danger)">-$${result.factoringFee.toLocaleString()}</span></div>
+    ${result.lumperCost ? `<div class="delivery-popup-row"><span class="delivery-popup-label">Lumper</span><span class="delivery-popup-val" style="color:var(--danger)">-$${result.lumperCost.toLocaleString()}</span></div>` : ''}
+    ${result.detentionPay ? `<div class="delivery-popup-row"><span class="delivery-popup-label">Detention</span><span class="delivery-popup-val" style="color:var(--success)">+$${result.detentionPay.toLocaleString()}</span></div>` : ''}`;
+
+  const netEl = document.getElementById('dp-net');
+  netEl.textContent = (result.netProfit >= 0 ? '+' : '') + '$' + result.netProfit.toLocaleString();
+  netEl.style.color = result.netProfit >= 0 ? 'var(--success)' : 'var(--danger)';
+
+  const popup = document.getElementById('delivery-popup');
+  popup.classList.add('show');
+  setTimeout(() => popup.classList.remove('show'), 8000);
+}
+
+function dismissDelivery() {
+  document.getElementById('delivery-popup').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SHIFT END
+// ═══════════════════════════════════════════════════════════════════
+function showShiftEnd() {
+  const net = G.totalEarned - G.totalLost;
+  const perTruck = net / G.trucks.length;
+  let grade, gradeColor;
+  if (perTruck >= 2500) { grade = 'S'; gradeColor = '#fbbf24'; }
+  else if (perTruck >= 2000) { grade = 'A'; gradeColor = '#34d399'; }
+  else if (perTruck >= 1500) { grade = 'B'; gradeColor = '#38bdf8'; }
+  else if (perTruck >= 1000) { grade = 'C'; gradeColor = '#94a3b8'; }
+  else { grade = 'D'; gradeColor = '#f87171'; }
+
+  document.getElementById('shift-grade').textContent = grade;
+  document.getElementById('shift-grade').style.color = gradeColor;
+  document.getElementById('shift-grade').style.borderColor = gradeColor;
+  document.getElementById('shift-grade').style.boxShadow = `0 0 30px ${gradeColor}44`;
+  document.getElementById('shift-end-title').textContent = `Смена завершена! Оценка ${grade}`;
+  document.getElementById('shift-end-sub').textContent = `${G.sessionName} · ${G.trucks.length} траков`;
+
+  document.getElementById('pnl-card').innerHTML = `
+    <div class="pnl-row"><span class="pnl-label">Валовый доход</span><span class="pnl-val green">$${G.totalEarned.toLocaleString()}</span></div>
+    <div class="pnl-row"><span class="pnl-label">Расходы</span><span class="pnl-val red">-$${G.totalLost.toLocaleString()}</span></div>
+    <div class="pnl-row"><span class="pnl-label">Репутация</span><span class="pnl-val">${G.reputation}%</span></div>
+    <div class="pnl-row"><span class="pnl-label">Очки</span><span class="pnl-val" style="color:var(--primary)">${G.score.toLocaleString()}</span></div>
+    <div class="pnl-row"><span class="pnl-label">Доставок завершено</span><span class="pnl-val">${G.resolvedEvents.length + G.activeLoads.filter(l=>l.phase==='done').length}</span></div>
+    <div class="pnl-total">
+      <span class="pnl-total-label">Чистая прибыль</span>
+      <span class="pnl-total-val" style="color:${net>=0?'var(--success)':'var(--danger)'}">${net>=0?'+':''}$${net.toLocaleString()}</span>
+    </div>`;
+
+  // Обновляем аккаунт
+  Account.totalShifts++;
+  Account.totalEarned += Math.max(0, net);
+  saveAccount();
+  clearSave();
+
+  showScreen('shift-end');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MODAL HELPERS
+// ═══════════════════════════════════════════════════════════════════
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// Закрытие по клику на оверлей
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════════
+let toastTimer = null;
+function showToast(msg, type = 'info') {
+  const toast = document.getElementById('toast');
+  const colors = { success:'#34d399', error:'#f87171', warning:'#fbbf24', info:'#38bdf8' };
+  toast.textContent = msg;
+  toast.style.borderColor = colors[type] || colors.info;
+  toast.style.color = colors[type] || colors.info;
+  toast.style.display = 'block';
+  toast.style.animation = 'none';
+  void toast.offsetWidth; // reflow
+  toast.style.animation = 'fadeInOut 2.5s ease forwards';
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 2600);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SCREEN NAVIGATION
+// ═══════════════════════════════════════════════════════════════════
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('screen-' + name);
+  if (el) el.classList.add('active');
+  if (name === 'game') {
+    // Первый вызов — быстро
+    setTimeout(() => { initMap(); renderPanel(); renderTruckStrip(); renderTopBar(); updateBadges(); }, 50);
+    // Второй вызов — после полного рендера DOM
+    setTimeout(() => { 
+      console.log('🔄 Повторная инициализация карты (200ms)');
+      initMap(); 
+      renderMap(); 
+    }, 200);
+    // Третий вызов — финальная перерисовка
+    setTimeout(() => { 
+      console.log('🔄 Финальная перерисовка карты (500ms)');
+      renderMap(); 
+    }, 500);
+  }
+}
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// START SHIFT
+// ═══════════════════════════════════════════════════════════════════
+function startShift(truckCount, sessionName) {
+  stopClock();
+  G = {
+    phase: 'playing',
+    day: 1,
+    gameMinute: 0,
+    timeSpeed: 1,
+    sessionName: sessionName || `${Account.nickname} · ${truckCount} трака`,
+    balance: 0,
+    totalEarned: 0,
+    totalLost: 0,
+    score: 0,
+    reputation: 100,
+    trucks: buildInitialTrucks(truckCount),
+    availableLoads: generateLoads(12),
+    activeLoads: [],
+    bookedLoads: [],
+    brokers: BROKERS.map(b => ({...b})),
+    notifications: [],
+    activeEvents: [],
+    resolvedEvents: [],
+    financeLog: [],
+    deliveryResults: [],
+    pendingDelivery: null,
+    negotiation: { open:false, load:null, currentOffer:0, round:0, brokerMood:'neutral' },
+    selectedTruckId: null,
+    loadBoardSearch: '',
+    _nextId: 100,
+  };
+
+  // Начальные грузы для траков в пути
+  G.trucks.forEach(t => {
+    if (t.currentLoad) {
+      G.activeLoads.push(t.currentLoad);
+    }
+  });
+
+  // Приветственное письмо
+  addNotification({
+    type: 'email',
+    from: 'Dispatch Office System',
+    subject: '🌅 Доброе утро! Начало смены',
+    message: `Доброе утро, ${Account.nickname}!\n\nТвоя смена началась. Статус флота:\n${G.trucks.map(t => `• ${t.name} (${t.driver}): ${STATUS_LABEL[t.status]}`).join('\n')}\n\nЦель смены: $${(truckCount * 2500).toLocaleString()}\nУдачи!`,
+    priority: 'low',
+  });
+
+  saveGame();
+  showScreen('game');
+  startClock();
+  setTimeout(() => { initMap(); renderPanel(); renderTruckStrip(); renderTopBar(); updateBadges(); }, 100);
+  setTimeout(() => { renderMap(); }, 300); // повторная перерисовка карты
+  
+  // Загружаем погоду для активных городов
+  setTimeout(() => {
+    if (typeof loadWeatherForCities === 'function') {
+      const activeCities = [...new Set(G.trucks.map(t => t.currentCity).filter(Boolean))];
+      loadWeatherForCities(activeCities, CITIES);
+    }
+  }, 2000);
+
+  // Автосохранение каждые 30 сек
+  setInterval(() => {
+    if (G.phase === 'playing') saveGame();
+  }, 30000);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INIT — LOGIN & MENU
+// ═══════════════════════════════════════════════════════════════════
+function initLogin() {
+  const input = document.getElementById('login-input');
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-error');
+
+  input.addEventListener('input', () => {
+    const v = input.value.trim();
+    btn.disabled = v.length < 2;
+    err.textContent = '';
+  });
+
+  input.addEventListener('keydown', e => { if (e.key === 'Enter' && !btn.disabled) doLogin(); });
+  btn.addEventListener('click', doLogin);
+
+  function doLogin() {
+    const nick = input.value.trim();
+    if (nick.length < 2) { err.textContent = 'Минимум 2 символа'; return; }
+    if (nick.length > 20) { err.textContent = 'Максимум 20 символов'; return; }
+    loginAccount(nick);
+    showMenu();
+  }
+}
+
+function showMenu() {
+  const nick = Account.nickname;
+  document.getElementById('menu-avatar').textContent = nick[0].toUpperCase();
+  document.getElementById('menu-nickname').textContent = nick;
+  document.getElementById('menu-stats').textContent = `${Account.totalShifts} смен · $${Account.totalEarned.toLocaleString()}`;
+
+  const hasSv = hasSave();
+  const continueBtn = document.getElementById('btn-continue');
+  const newLabel = document.getElementById('btn-new-label');
+  continueBtn.style.display = hasSv ? 'flex' : 'none';
+  newLabel.textContent = hasSv ? 'Новая смена' : 'Начать игру';
+
+  showScreen('menu');
+}
+
+function initMenu() {
+  document.getElementById('btn-logout').addEventListener('click', () => {
+    logoutAccount();
+    showScreen('login');
+  });
+
+  document.getElementById('btn-continue').addEventListener('click', () => {
+    if (loadGame()) {
+      showScreen('game');
+      startClock();
+      setTimeout(() => { initMap(); renderPanel(); renderTruckStrip(); renderTopBar(); updateBadges(); }, 50);
+    } else {
+      showToast('Сохранение не найдено', 'error');
+    }
+  });
+
+  document.getElementById('btn-new-shift').addEventListener('click', () => {
+    clearSave();
+    startShift(3);
+  });
+
+  document.getElementById('btn-after-shift').addEventListener('click', () => {
+    clearSave();
+    startShift(3);
+  });
+}
+
+function initGameControls() {
+  // Speed buttons
+  document.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      G.timeSpeed = parseInt(btn.dataset.speed);
+      document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('on', b === btn));
+    });
+  });
+
+  // Panel tabs (desktop)
+  document.querySelectorAll('.panel-tab').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  // Bottom tabs (mobile)
+  document.querySelectorAll('.bottom-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.bottom-tab').forEach(b => b.classList.toggle('on', b === btn));
+      const tab = btn.dataset.tab;
+      if (tab === 'map') {
+        document.getElementById('map-area').classList.add('mobile-active');
+        document.getElementById('mobile-panel').style.display = 'none';
+      } else {
+        document.getElementById('map-area').classList.remove('mobile-active');
+        const mp = document.getElementById('mobile-panel');
+        mp.style.display = 'flex';
+        currentTab = tab;
+        mp.innerHTML = currentTab === 'loadboard' ? renderLoadBoard()
+          : currentTab === 'email' ? renderEmailPanel()
+          : renderTrucksPanel();
+        attachPanelEvents();
+      }
+    });
+  });
+
+  // Notification bell
+  document.getElementById('btn-notif').addEventListener('click', () => {
+    markAllRead();
+    switchTab('email');
+    renderPanel('email');
+  });
+
+  // Game menu button
+  document.getElementById('btn-menu-game').addEventListener('click', () => {
+    showToast('Меню: сохранение выполнено', 'info');
+    saveGame();
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  loadAccount();
+  initLogin();
+  initMenu();
+  initGameControls();
+
+  // Если уже залогинен
+  if (Account.nickname) {
+    showMenu();
+  }
+
+  // Мобильные табы
+  document.querySelectorAll('.bottom-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const tabName = tab.dataset.tab;
+      
+      // Переключаем активный таб
+      document.querySelectorAll('.bottom-tab').forEach(t => t.classList.remove('on'));
+      tab.classList.add('on');
+      
+      // Показываем нужный контент
+      const mapArea = document.getElementById('map-area');
+      const mobilePanel = document.getElementById('mobile-panel');
+      
+      if (tabName === 'map') {
+        mapArea.classList.add('mobile-active');
+        mobilePanel.style.display = 'none';
+      } else {
+        mapArea.classList.remove('mobile-active');
+        mobilePanel.style.display = 'flex';
+        
+        // Загружаем контент в мобильную панель
+        const panelContent = document.getElementById('panel-content');
+        mobilePanel.innerHTML = panelContent.innerHTML;
+        
+        // Переключаем таб в десктопной панели тоже
+        document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('on'));
+        const desktopTab = document.querySelector(`.panel-tab[data-tab="${tabName}"]`);
+        if (desktopTab) {
+          desktopTab.classList.add('on');
+          desktopTab.click();
+        }
+      }
+    });
+  });
+
+  // Инициализация карты
+  if (typeof initMap === 'function') {
+    initMap();
+  }
+
+  // Сохранение при закрытии
+  window.addEventListener('beforeunload', () => {
+    if (G.phase === 'playing') saveGame();
+  });
+});
+</script>
+</body>
+</html>
