@@ -82,6 +82,13 @@ export default function GameScreen() {
     return () => { if (clockRef.current) clearInterval(clockRef.current); };
   }, []);
 
+  // Сохраняем при закрытии/перезагрузке вкладки
+  useEffect(() => {
+    const handleUnload = () => { useGameStore.getState().saveGame(); };
+    window.addEventListener('beforeunload', handleUnload);
+    return () => window.removeEventListener('beforeunload', handleUnload);
+  }, []);
+
   useEffect(() => {
     if (phase === 'shift_end') router.replace('/shift-end');
   }, [phase]);
@@ -126,6 +133,12 @@ export default function GameScreen() {
     selectTruck(truck.id);
     setDetailTruck(truck);
     if (!isWide) setActiveTab('map');
+    // Центрируем карту на траке через custom event
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('zoomToTruck', {
+        detail: { lng: truck.position[0], lat: truck.position[1] }
+      }));
+    }
   }
 
   return (

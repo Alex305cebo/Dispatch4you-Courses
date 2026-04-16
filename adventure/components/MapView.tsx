@@ -39,6 +39,19 @@ function getTruckColor(truck: any): string {
   return STATUS_COLOR[truck.status] || "#94a3b8";
 }
 
+const STATE_NAMES: Record<string, string> = {
+  AL:"Alabama", AK:"Alaska", AZ:"Arizona", AR:"Arkansas", CA:"California",
+  CO:"Colorado", CT:"Connecticut", DE:"Delaware", FL:"Florida", GA:"Georgia",
+  HI:"Hawaii", ID:"Idaho", IL:"Illinois", IN:"Indiana", IA:"Iowa",
+  KS:"Kansas", KY:"Kentucky", LA:"Louisiana", ME:"Maine", MD:"Maryland",
+  MA:"Massachusetts", MI:"Michigan", MN:"Minnesota", MS:"Mississippi", MO:"Missouri",
+  MT:"Montana", NE:"Nebraska", NV:"Nevada", NH:"New Hampshire", NJ:"New Jersey",
+  NM:"New Mexico", NY:"New York", NC:"North Carolina", ND:"North Dakota", OH:"Ohio",
+  OK:"Oklahoma", OR:"Oregon", PA:"Pennsylvania", RI:"Rhode Island", SC:"South Carolina",
+  SD:"South Dakota", TN:"Tennessee", TX:"Texas", UT:"Utah", VT:"Vermont",
+  VA:"Virginia", WA:"Washington", WV:"West Virginia", WI:"Wisconsin", WY:"Wyoming",
+};
+
 export default function MapView({ onTruckInfo, onFindLoad }: {
   onTruckInfo?: (truckId: string) => void;
   onFindLoad?: (city: string) => void;
@@ -124,7 +137,6 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
 
   // Пересоздаём серию маршрутов по routePath из store
   function rebuildRoutes(root: any, chart: any) {
-    // Удаляем старую серию маршрутов
     if (routeSeriesRef.current) {
       const idx = chart.series.indexOf(routeSeriesRef.current);
       if (idx >= 0) chart.series.removeIndex(idx);
@@ -137,46 +149,48 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
       (t.status === "loaded" || t.status === "driving") &&
       t.routePath && t.routePath.length > 1
     );
-
     if (trucksWithRoute.length === 0) return;
 
+    // Одна серия на все маршруты
     const routeSeries = chart.series.push(am5map.MapLineSeries.new(root, {}));
+
+    // Стиль по умолчанию через template
+    routeSeries.mapLines.template.setAll({
+      strokeWidth: 2.5,
+      strokeOpacity: 0.7,
+    });
 
     trucksWithRoute.forEach(t => {
       const colorInt = parseInt(getTruckColor(t).replace("#", ""), 16);
       const path = t.routePath!;
+      const startIdx = Math.max(0, Math.floor(t.progress * (path.length - 1)) - 1);
 
-      // Прогресс трака — показываем только оставшуюся часть маршрута
-      const startIdx = Math.floor(t.progress * (path.length - 1));
-      const remainingPath = path.slice(startIdx);
-
-      if (remainingPath.length < 2) return;
-
-      // Пройденная часть — тусклая
-      const donePath = path.slice(0, startIdx + 1);
-      if (donePath.length >= 2) {
-        routeSeries.pushDataItem({
+      // Пройденная часть — тусклая пунктирная
+      if (startIdx >= 2) {
+        const donePath = path.slice(0, startIdx + 1);
+        const doneItem = routeSeries.pushDataItem({
           geometry: { type: "LineString", coordinates: donePath },
+        });
+        doneItem.get("mapLine")?.setAll({
           stroke: am5.color(colorInt),
-          strokeOpacity: 0.2,
-          strokeWidth: 2,
-        } as any);
+          strokeOpacity: 0.18,
+          strokeWidth: 1.5,
+          strokeDasharray: [4, 4],
+        });
       }
 
-      // Оставшаяся часть — яркая с градиентом
-      routeSeries.pushDataItem({
-        geometry: { type: "LineString", coordinates: remainingPath },
-        stroke: am5.color(colorInt),
-        strokeOpacity: 0.85,
-        strokeWidth: 3,
-      } as any);
-    });
-
-    // Стиль линий через template
-    routeSeries.mapLines.template.setAll({
-      strokeWidth: 3,
-      strokeOpacity: 0.85,
-      strokeDasharray: [0],
+      // Оставшаяся часть — яркая
+      const remainingPath = path.slice(startIdx);
+      if (remainingPath.length >= 2) {
+        const activeItem = routeSeries.pushDataItem({
+          geometry: { type: "LineString", coordinates: remainingPath },
+        });
+        activeItem.get("mapLine")?.setAll({
+          stroke: am5.color(colorInt),
+          strokeOpacity: 0.85,
+          strokeWidth: 3,
+        });
+      }
     });
 
     routeSeriesRef.current = routeSeries;
@@ -376,6 +390,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
       setSelectedState({
         id: stateId, name: stateName,
         trucks: ts.filter(t => CITY_STATE[t.currentCity] === stateId || CITY_STATE[t.destinationCity || ""] === stateId),
+        inboundTrucks: ts.filter(t => CITY_STATE[t.destinationCity || ""] === stateId && CITY_STATE[t.currentCity] !== stateId),
         loads: ls.filter(l => CITY_STATE[l.fromCity] === stateId),
       });
     });
@@ -414,6 +429,13 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
     const zoomControl = chart.set("zoomControl", am5map.ZoomControl.new(root, {}));
     zoomControl.homeButton.set("visible", true);
 
+    // Слушаем событие центрирования на траке из HUD
+    function handleZoomToTruck(e: Event) {
+      const { lng, lat } = (e as CustomEvent).detail;
+      chart.zoomToGeoPoint({ longitude: lng, latitude: lat }, 5, true);
+    }
+    window.addEventListener('zoomToTruck', handleZoomToTruck);
+
     // Первое создание серий
     rebuildRoutes(root, chart);
     rebuildTruckSeries(root, chart);
@@ -426,6 +448,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
 
     return () => {
       clearInterval(intervalRef.current);
+      window.removeEventListener('zoomToTruck', handleZoomToTruck);
       root.dispose();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -489,23 +512,136 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
         <div style={{
           position: "absolute", top: 12, right: 12,
           background: "rgba(8,14,28,0.97)", borderRadius: 16,
-          border: "2px solid rgba(6,182,212,0.4)",
-          padding: "14px 18px", minWidth: 200, zIndex: 1000,
-          boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+          border: "2px solid rgba(6,182,212,0.35)",
+          padding: "14px 16px", width: 280, zIndex: 1000,
+          boxShadow: "0 8px 32px rgba(0,0,0,0.7)",
+          fontFamily: "sans-serif",
+          maxHeight: "80vh", overflowY: "auto",
         } as any}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 } as any}>
-            <span style={{ fontSize: 14, fontWeight: 800, color: "#06b6d4", fontFamily: "sans-serif" } as any}>
-              {selectedState.id} — {selectedState.name}
-            </span>
-            <span onClick={() => setSelectedState(null)} style={{ cursor: "pointer", fontSize: 16, color: "#94a3b8", fontFamily: "sans-serif" } as any}>✕</span>
-          </div>
-          <div style={{ fontSize: 11, color: "#94a3b8", fontFamily: "sans-serif", marginBottom: 6 } as any}>🚛 Траков: {selectedState.trucks.length}</div>
-          <div style={{ fontSize: 11, color: "#94a3b8", fontFamily: "sans-serif" } as any}>📋 Грузов из штата: {selectedState.loads.length}</div>
-          {selectedState.trucks.map((t: any) => (
-            <div key={t.id} style={{ fontSize: 10, color: STATUS_COLOR[t.status], marginTop: 4, fontFamily: "sans-serif" } as any}>
-              {STATUS_EMOJI[t.status]} {t.name} — {t.driver}
+          {/* Заголовок */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 } as any}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 } as any}>
+              <span style={{ fontSize: 20, fontWeight: 900, color: "#06b6d4" } as any}>{selectedState.id}</span>
+              <span style={{ fontSize: 13, color: "#94a3b8" } as any}>{STATE_NAMES[selectedState.id] || selectedState.name}</span>
             </div>
-          ))}
+            <span onClick={() => setSelectedState(null)} style={{ cursor: "pointer", fontSize: 18, color: "#64748b" } as any}>✕</span>
+          </div>
+
+          {/* Траки В штате */}
+          {selectedState.trucks.length > 0 && (
+            <div style={{ marginBottom: 12 } as any}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 } as any}>
+                🚛 ТРАКИ В ШТАТЕ ({selectedState.trucks.length})
+              </div>
+              {selectedState.trucks.map((t: any) => {
+                const color = getTruckColor(t);
+                const isIdle = t.status === "idle";
+                return (
+                  <div key={t.id}
+                    onClick={() => { onTruckInfo?.(t.id); setSelectedState(null); }}
+                    style={{
+                      background: "rgba(255,255,255,0.04)", borderRadius: 8,
+                      padding: "7px 10px", marginBottom: 5,
+                      border: `1px solid ${color}33`,
+                      display: "flex", flexDirection: "column", gap: 3,
+                      cursor: "pointer", transition: "background 0.15s",
+                    } as any}
+                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" } as any}>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: "#fff" } as any}>{t.name}</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color, background: `${color}22`, padding: "1px 6px", borderRadius: 4 } as any}>
+                        {STATUS_LABEL[t.status] || t.status}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 10, color: "#94a3b8" } as any}>
+                      👤 {t.driver} · ⏱ {t.hoursLeft}h HOS
+                    </div>
+                    {t.currentLoad && (
+                      <div style={{ fontSize: 10, color: "#4ade80" } as any}>
+                        📦 {t.currentLoad.fromCity} → {t.currentLoad.toCity} · ${t.currentLoad.agreedRate?.toLocaleString()}
+                      </div>
+                    )}
+                    {!t.currentLoad && t.currentCity && (
+                      <div style={{ fontSize: 10, color: "#94a3b8" } as any}>📍 {t.currentCity}</div>
+                    )}
+                    {isIdle && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onFindLoad?.(t.currentCity); setSelectedState(null); }}
+                        style={{
+                          marginTop: 3, background: "rgba(74,222,128,0.15)",
+                          border: "1px solid rgba(74,222,128,0.4)", borderRadius: 6,
+                          padding: "3px 8px", color: "#4ade80", fontSize: 10,
+                          fontWeight: 700, cursor: "pointer", alignSelf: "flex-start",
+                        } as any}
+                      >🔍 Найти груз</button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Траки едущие В штат */}
+          {selectedState.inboundTrucks?.length > 0 && (
+            <div style={{ marginBottom: 12 } as any}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 } as any}>
+                ➡️ ЕДУТ В ШТАТ ({selectedState.inboundTrucks.length})
+              </div>
+              {selectedState.inboundTrucks.map((t: any) => (
+                <div key={t.id} style={{ fontSize: 10, color: "#38bdf8", marginBottom: 3 } as any}>
+                  🚛 {t.name} · {t.driver} → {t.destinationCity}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Грузы из штата */}
+          {selectedState.loads.length > 0 && (
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 } as any}>
+                📋 ГРУЗЫ ИЗ ШТАТА ({selectedState.loads.length})
+              </div>
+              {selectedState.loads.slice(0, 4).map((l: any) => (
+                <div key={l.id}
+                  onClick={() => { onFindLoad?.(l.fromCity); setSelectedState(null); }}
+                  style={{
+                    background: "rgba(255,255,255,0.04)", borderRadius: 8,
+                    padding: "6px 10px", marginBottom: 5,
+                    border: "1px solid rgba(255,255,255,0.07)",
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    cursor: "pointer", transition: "background 0.15s",
+                  } as any}
+                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.09)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+                >
+                  <div style={{ display: "flex", flexDirection: "column", gap: 2 } as any}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#e2e8f0" } as any}>
+                      {l.fromCity} → {l.toCity}
+                    </span>
+                    <span style={{ fontSize: 9, color: "#64748b" } as any}>
+                      {l.miles}mi · {l.equipment} · {l.commodity}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: "#4ade80" } as any}>
+                    ${l.postedRate?.toLocaleString()}
+                  </span>
+                </div>
+              ))}
+              {selectedState.loads.length > 4 && (
+                <div style={{ fontSize: 10, color: "#64748b", textAlign: "center", marginTop: 4 } as any}>
+                  +{selectedState.loads.length - 4} ещё грузов
+                </div>
+              )}
+            </div>
+          )}
+
+          {selectedState.trucks.length === 0 && selectedState.loads.length === 0 && (
+            <div style={{ fontSize: 12, color: "#64748b", textAlign: "center", padding: "12px 0" } as any}>
+              Нет траков и грузов в этом штате
+            </div>
+          )}
         </div>
       )}
     </View>

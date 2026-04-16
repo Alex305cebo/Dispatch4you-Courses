@@ -60,8 +60,8 @@ export function cityState(city: string): string {
 export const MINUTES_PER_TICK = 1.2;
 // Длина смены в игровых минутах (24 часа)
 export const SHIFT_DURATION = 1440;
-// Старт смены: 08:00
-export const SHIFT_START_HOUR = 8;
+// Старт смены: 06:00
+export const SHIFT_START_HOUR = 6;
 export const SHIFT_START_MINUTE = 0;
 
 // Скорость трака: 10 миль/игровую минуту
