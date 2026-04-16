@@ -77,10 +77,11 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
   const routeSeriesRef = useRef<any>(null);
   const intervalRef = useRef<any>(null);
 
-  const { trucks, availableLoads } = useGameStore();
-  const trucksRef = useRef(trucks);
+  const { trucks, availableLoads, phase } = useGameStore();
+  const activeTrucks = phase === 'playing' ? trucks : [];
+  const trucksRef = useRef(activeTrucks);
   const loadsRef = useRef(availableLoads);
-  trucksRef.current = trucks;
+  trucksRef.current = activeTrucks;
   loadsRef.current = availableLoads;
 
   const [selectedTruck, setSelectedTruck] = useState<any>(null);

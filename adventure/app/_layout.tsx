@@ -13,7 +13,7 @@ if (typeof document !== 'undefined') {
 
 function AutoRestore() {
   const router = useRouter();
-  const { loadGame, gameMinute, phase, setGameMinute } = useGameStore();
+  const { loadGame } = useGameStore();
 
   useEffect(() => {
     try {
@@ -22,22 +22,21 @@ function AutoRestore() {
       const save = JSON.parse(raw);
       if (!save?.version || save.version < 3) return;
       if (save.phase !== 'playing') return;
+      // Не восстанавливаем старые сохранения с > 5 траками
+      if (save.trucks && save.trucks.length > 5) {
+        localStorage.removeItem('dispatcher-game-save');
+        return;
+      }
 
       // Компенсируем реальное время пока страница была закрыта
-      // TIME_SCALE: 1 реальная секунда = 1.2 игровых минуты (при speed×1)
       const realElapsedMs = Date.now() - (save.savedAt || Date.now());
-      const realElapsedSec = Math.min(realElapsedMs / 1000, 600); // максимум 10 минут компенсации
+      const realElapsedSec = Math.min(realElapsedMs / 1000, 600);
       const gameMinutesElapsed = Math.round(realElapsedSec * 1.2);
-      const restoredMinute = Math.min(save.gameMinute + gameMinutesElapsed, SHIFT_DURATION - 1);
-
-      // Патчим сохранение с компенсированным временем
-      save.gameMinute = restoredMinute;
+      save.gameMinute = Math.min(save.gameMinute + gameMinutesElapsed, SHIFT_DURATION - 1);
       localStorage.setItem('dispatcher-game-save', JSON.stringify(save));
 
       const loaded = loadGame();
-      if (loaded) {
-        router.replace('/game');
-      }
+      if (loaded) router.replace('/game');
     } catch {}
   }, []);
 

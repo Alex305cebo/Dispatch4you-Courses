@@ -2306,6 +2306,13 @@ export const useGameStore = create<GameState>((set, get) => ({
         return false;
       }
 
+      // Сбрасываем сохранения со старым количеством траков (> 5)
+      if (saveData.trucks && saveData.trucks.length > 5) {
+        localStorage.removeItem('dispatcher-game-save');
+        console.log('🔄 Old save with too many trucks, resetting...');
+        return false;
+      }
+
       // Восстанавливаем маршруты для едущих траков у которых routePath = null
       const trucksToRestore = saveData.trucks as any[];
       const restoreRoutes = async () => {

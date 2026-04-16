@@ -172,23 +172,35 @@ export default function GameScreen() {
               <ScrollView horizontal showsHorizontalScrollIndicator={false}
                 style={styles.truckTabsScroll} contentContainerStyle={styles.truckTabsContent}>
                 {trucks.map(truck => {
-                  const color = STATUS_COLOR[truck.status] || '#94a3b8';
+                  const idleWarn = (truck as any).idleWarningLevel ?? 0;
+                  const outOfOrder = (truck as any).outOfOrderUntil > 0;
+                  const color = outOfOrder ? '#ff0000'
+                    : idleWarn === 3 ? '#ef4444'
+                    : idleWarn === 2 ? '#f97316'
+                    : idleWarn === 1 ? '#fbbf24'
+                    : STATUS_COLOR[truck.status] || '#94a3b8';
                   const hos = Math.max(0, truck.hoursLeft);
                   const hosRounded = Math.round(hos * 10) / 10;
                   const hosColor = hos < 2 ? '#f87171' : hos < 4 ? '#fbbf24' : '#4ade80';
                   const isSelected = selectedTruckId === truck.id;
+                  const isMoving = truck.status === 'driving' || truck.status === 'loaded';
+                  const shortName = truck.name.replace('Truck ', 'T');
                   return (
                     <TouchableOpacity key={truck.id}
                       style={[styles.truckTab, isSelected && styles.truckTabSelected, { borderColor: isSelected ? color : 'rgba(255,255,255,0.08)' }]}
                       onPress={() => handleTruckTabClick(truck)} activeOpacity={0.75}>
-                      <View style={[styles.truckDot, { backgroundColor: color }]} />
-                      <Text style={styles.truckTabName}>{truck.name.replace('Truck ', 'T')}</Text>
+                      {/* Маркер как на карте */}
+                      <View style={styles.truckMarkerRow}>
+                        <View style={[styles.truckMarker, { backgroundColor: color, shadowColor: color }]}>
+                          <Text style={styles.truckMarkerText}>{shortName}</Text>
+                        </View>
+                      </View>
                       <Text style={[styles.truckTabStatus, { color }]}>{STATUS_SHORT[truck.status]}</Text>
                       {truck.destinationCity ? <Text style={styles.truckTabRoute} numberOfLines={1}>→ {truck.destinationCity}</Text> : null}
                       <View style={styles.truckTabHos}>
                         <Text style={[styles.truckTabHosText, { color: hosColor }]}>⏰ {hosRounded}h</Text>
                       </View>
-                      {(truck.status === 'driving' || truck.status === 'loaded') && (
+                      {isMoving && (
                         <View style={styles.truckProgress}>
                           <View style={[styles.truckProgressFill, { width: `${Math.round(truck.progress * 100)}%` as any, backgroundColor: color }]} />
                         </View>
@@ -522,14 +534,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8, paddingBottom: 8, gap: 6, flexDirection: 'row',
   },
   truckTab: {
-    minWidth: 110, paddingHorizontal: 10, paddingVertical: 7,
+    minWidth: 100, paddingHorizontal: 10, paddingVertical: 8,
     backgroundColor: 'rgba(255,255,255,0.04)',
     borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
-    gap: 2,
+    gap: 3,
   },
   truckTabSelected: {
     backgroundColor: 'rgba(6,182,212,0.08)',
   },
+  truckMarkerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
+  truckMarker: {
+    paddingHorizontal: 8, paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.9)',
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.6, shadowRadius: 6,
+  },
+  truckMarkerText: { fontSize: 10, fontWeight: '900', color: '#fff' },
   truckDot: { width: 7, height: 7, borderRadius: 4, position: 'absolute', top: 8, right: 8 },
   truckTabName: { fontSize: 12, fontWeight: '800', color: '#fff' },
   truckTabStatus: { fontSize: 10, fontWeight: '700' },
