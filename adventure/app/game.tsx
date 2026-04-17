@@ -74,7 +74,15 @@ export default function GameScreen() {
     deliveryResults,
   } = useGameStore();
 
-  const [activeTab, setActiveTab] = useState<Tab>('map');
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    try { return (localStorage.getItem('dispatch-active-tab') as Tab) || 'trucks'; } catch { return 'trucks'; }
+  });
+
+  // Сохраняем активную вкладку при каждом переключении
+  const switchTab = (tab: Tab) => {
+    setActiveTab(tab);
+    try { localStorage.setItem('dispatch-active-tab', tab); } catch {}
+  };
   const [pendingLoad, setPendingLoad] = useState<ActiveLoad | null>(null);
   const [showFleet, setShowFleet] = useState(false);
   const [showCompliance, setShowCompliance] = useState(false);
@@ -128,7 +136,7 @@ export default function GameScreen() {
   function handleTruckClick(truck: any) {
     selectTruck(truck.id);
     setDetailTruck(truck);
-    if (!isWide) setActiveTab('map');
+    if (!isWide) switchTab('map');
     window.dispatchEvent(new CustomEvent('zoomToTruck', {
       detail: { lng: truck.position[0], lat: truck.position[1] }
     }));
@@ -301,8 +309,8 @@ export default function GameScreen() {
             } as any}
           >TEST P&L</button>
           <NotificationBell
-            onNavigateToTrucks={() => setActiveTab('trucks')}
-            onNavigateToLoads={() => setActiveTab('email')}
+            onNavigateToTrucks={() => switchTab('trucks')}
+            onNavigateToLoads={() => switchTab('email')}
             onNavigateToEvents={() => setShowEvents(true)}
           />
           <GameMenu
@@ -423,7 +431,7 @@ export default function GameScreen() {
       {tabs.map(tab => (
         <TouchableOpacity key={tab.id}
           style={[s.sideTab, activeTab === tab.id && s.sideTabOn]}
-          onPress={() => tab.onPress ? tab.onPress() : setActiveTab(tab.id)}>
+          onPress={() => tab.onPress ? tab.onPress() : switchTab(tab.id)}>
           <Text style={[s.sideTabTxt, activeTab === tab.id && s.sideTabTxtOn]}>{tab.label}</Text>
           {tab.badge !== undefined && (
             <View style={s.badge}><Text style={s.badgeTxt}>{tab.badge}</Text></View>
@@ -439,7 +447,7 @@ export default function GameScreen() {
       {[{ id: 'map' as Tab, label: 'Карта' }, ...tabs].map(tab => (
         <TouchableOpacity key={tab.id}
           style={[s.bottomTab, activeTab === tab.id && s.bottomTabOn]}
-          onPress={() => (tab as any).onPress ? (tab as any).onPress() : setActiveTab(tab.id)}>
+          onPress={() => (tab as any).onPress ? (tab as any).onPress() : switchTab(tab.id)}>
           <Text style={[s.bottomTabTxt, activeTab === tab.id && s.bottomTabTxtOn]}>{tab.label}</Text>
           {(tab as any).badge !== undefined && (
             <View style={s.badge}><Text style={s.badgeTxt}>{(tab as any).badge}</Text></View>
@@ -451,7 +459,7 @@ export default function GameScreen() {
 
   const mapProps = {
     onTruckInfo: (id: string) => { const t = trucks.find(x => x.id === id); if (t) setDetailTruck(t); },
-    onFindLoad: (city: string) => { setLoadBoardSearch(city); setActiveTab('loadboard'); },
+    onFindLoad: (city: string) => { setLoadBoardSearch(city); switchTab('loadboard'); },
   };
 
   return (
@@ -474,7 +482,7 @@ export default function GameScreen() {
             <SideTabs />
             <View style={s.panelContent}>
               {activeTab === 'loadboard' && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} /></ErrorBoundary>}
-              {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => setActiveTab('loadboard')} /></ErrorBoundary>}
+              {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
               {activeTab === 'map'       && (
                 <View style={s.emptyPanel}>
                   <Text style={s.emptyTxt}>Выбери раздел</Text>
@@ -492,7 +500,7 @@ export default function GameScreen() {
           <View style={s.mobileContent}>
             {activeTab === 'map'       && <ErrorBoundary name="Map"><MapView {...mapProps} /></ErrorBoundary>}
             {activeTab === 'loadboard' && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} /></ErrorBoundary>}
-            {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => setActiveTab('loadboard')} /></ErrorBoundary>}
+            {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
           </View>
           <BottomTabs />
         </View>
@@ -505,7 +513,7 @@ export default function GameScreen() {
       )}
       {detailTruck && (
         <TruckDetailModal truck={detailTruck} onClose={() => setDetailTruck(null)}
-          onFindLoad={(city) => { setLoadBoardSearch(city); setDetailTruck(null); setActiveTab('loadboard'); }} />
+          onFindLoad={(city) => { setLoadBoardSearch(city); setDetailTruck(null); switchTab('loadboard'); }} />
       )}
       {showFleet && <Modal onClose={() => setShowFleet(false)}><FleetOverview /></Modal>}
       {showCompliance && <Modal onClose={() => setShowCompliance(false)}><ComplianceDashboard /></Modal>}
