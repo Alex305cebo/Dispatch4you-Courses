@@ -199,8 +199,21 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
       const { truckId } = (e as CustomEvent).detail;
       followTruckIdRef.current = truckId;
       setFollowTruck(true);
+      // Сохраняем в sessionStorage — на случай если MapView ещё не был смонтирован
+      try { sessionStorage.setItem('followTruckId', truckId); } catch (_) {}
     }
     window.addEventListener('followAssignedTruck', handleFollowAssigned);
+
+    // При монтировании проверяем — вдруг событие уже было до нашей подписки
+    try {
+      const pending = sessionStorage.getItem('followTruckId');
+      if (pending) {
+        followTruckIdRef.current = pending;
+        setFollowTruck(true);
+        sessionStorage.removeItem('followTruckId');
+      }
+    } catch (_) {}
+
     return () => window.removeEventListener('followAssignedTruck', handleFollowAssigned);
   }, []);
 

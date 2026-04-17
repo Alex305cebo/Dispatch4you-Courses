@@ -36,6 +36,7 @@ export interface Truck {
   totalDeliveries: number; // всего доставок
   hosViolations: number; // количество нарушений HOS
   tripExpenses: Array<{ label: string; amount: number; minute: number }>; // доп. расходы за поездку
+  tripExpenses: Array<{ label: string; amount: number; minute: number }>; // доп. расходы за поездку
   lastInspection: number; // минута последней инспекции
   idleSinceMinute?: number; // минута когда трак встал (для idle warning)
   outOfOrderUntil?: number; // минута до которой трак out of order (police inspection)
@@ -1278,6 +1279,17 @@ export const useGameStore = create<GameState>((set, get) => ({
           const grossRevenue = agreedRate + detentionPay;
           const totalExpenses = fuelCost + driverPay + dispatchFee + factoringFee + lumperCost + truckPayment + trailerPayment;
           const netProfit = grossRevenue - totalExpenses;
+          // Доп. расходы за поездку (поломки, шины, roadside)
+          const tripExpArr = (truck as any).tripExpenses as Array<{ label: string; amount: number; minute: number }> ?? [];
+          const roadsideCost = tripExpArr.filter((e: any) => e.label.includes('Roadside')).reduce((s: number, e: any) => s + e.amount, 0);
+          const tireCost = tripExpArr.filter((e: any) => e.label.includes('шин') || e.label.includes('колес')).reduce((s: number, e: any) => s + e.amount, 0);
+          const otherRepairCost = tripExpArr.filter((e: any) => !e.label.includes('Roadside') && !e.label.includes('шин') && !e.label.includes('колес')).reduce((s: number, e: any) => s + e.amount, 0);
+          const tripExtraExpenses = tripExpArr.reduce((s: number, e: any) => s + e.amount, 0);
+          // Штраф за опоздание: если delivery window просрочена —  за каждый час сверх
+          const deliveryWindowMinutes = 1440; // 24ч окно по умолчанию
+          const lateMinutes = Math.max(0, waitTime - deliveryWindowMinutes);
+          const lateDeliveryFine = Math.round(lateMinutes / 60) * 150;
+          const adjustedNetProfit = netProfit - tripExtraExpenses - lateDeliveryFine;
           const deliveryResult: DeliveryResult = {
             truckId: truck.id, truckName: truck.name, driverName: truck.driver,
             loadId: load.id, fromCity: load.fromCity, toCity: load.toCity,

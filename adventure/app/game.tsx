@@ -706,17 +706,21 @@ export default function GameScreen() {
     const truck = trucks.find(t => t.id === truckId);
     if (truck) {
       selectTruck(truckId);
+      // Сохраняем truckId заранее — MapView подхватит при монтировании
+      try { sessionStorage.setItem('followTruckId', truckId); } catch (_) {}
       switchTab('map');
-      setTimeout(() => {
-        // Зумируем на трак
+      // Даём MapView время смонтироваться (особенно на мобильном где он рендерится по вкладке)
+      const dispatch = () => {
         window.dispatchEvent(new CustomEvent('zoomToTruck', {
           detail: { lng: truck.position[0], lat: truck.position[1] }
         }));
-        // Включаем слежение за этим траком
         window.dispatchEvent(new CustomEvent('followAssignedTruck', {
           detail: { truckId }
         }));
-      }, 300);
+      };
+      setTimeout(dispatch, 400);
+      // Повторяем через 1.2s на случай если MapView ещё монтировался
+      setTimeout(dispatch, 1200);
     }
   }
 
