@@ -1,12 +1,13 @@
 ﻿import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
-import { Truck } from '../store/gameStore';
+import { Truck, useGameStore } from '../store/gameStore';
 import { cityState } from '../constants/config';
 import HOSGraph from './HOSGraph';
 import ELDGraph from './ELDGraph';
 import DriverCommunicationModal from './DriverCommunicationModal';
 import CallModal from './CallModal';
 import CancelLoadModal from './CancelLoadModal';
+import MechanicChatModal from './MechanicChatModal';
 
 interface Props {
   truck: Truck | null;
@@ -33,7 +34,33 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
   const [showSMS, setShowSMS] = useState(false);
   const [showCall, setShowCall] = useState(false);
   const [showCancelLoad, setShowCancelLoad] = useState(false);
+  const [showMechanic, setShowMechanic] = useState(false);
+  const { gameMinute, removeMoney } = useGameStore();
   if (!truck) return null;
+
+  const isBreakdown = truck.status === 'breakdown';
+  const roadsideOrdered = (truck as any).breakdownRoadsideOrdered ?? false;
+  const repairCost = (truck as any).breakdownRepairCost ?? 450;
+  const repairLabel = (truck as any).breakdownLabel ?? 'Поломка';
+  const repairMinutes = (truck as any).breakdownRepairMinutes ?? 90;
+
+  const callRoadside = () => {
+    if (roadsideOrdered) return;
+    useGameStore.setState(s => ({
+      trucks: s.trucks.map(t => t.id === truck.id ? {
+        ...t,
+        breakdownRoadsideOrdered: true,
+        outOfOrderUntil: gameMinute + repairMinutes,
+      } as any : t),
+    }));
+    removeMoney(repairCost, `Roadside Assist — ${truck.name}: ${repairLabel}`);
+    useGameStore.getState().addNotification({
+      type: 'text', priority: 'medium', from: truck.driver,
+      subject: `🔧 Техпомощь вызвана — ${truck.name}`,
+      message: `Roadside assistance вызвана. Ремонт: ${repairLabel}. Стоимость: $${repairCost}. Ожидаемое время: ~${Math.round(repairMinutes / 60 * 10) / 10}ч.`,
+      actionRequired: false, relatedTruckId: truck.id,
+    });
+  };
 
   const hoursWorked = 11 - truck.hoursLeft;
   const needsRest = truck.hoursLeft < 2;
@@ -42,10 +69,6 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
   const sc = STATUS_COLOR[truck.status] || '#94a3b8';
   const dest = truck.destinationCity ? ` → ${cityState(truck.destinationCity)}` : '';
   const canFind = truck.status === 'idle' || truck.status === 'at_delivery' || truck.status === 'at_pickup';
-
-  // ── AI сообщение о стадии готовности ──
-  const idleHours = (truck as any).idleSinceMinute !== undefined
-    ? Math.round(((truck as any).idleSinceMinute ?? 0) / 60 * 10) / 10 : 0;
 
   function getAiMessage(): { icon: string; title: string; text: string; color: string; action?: () => void; actionLabel?: string } {
     if (needsRest) return {
@@ -65,7 +88,7 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
       if (idleWarn >= 1) return {
         icon: '⚠️', color: '#f97316',
         title: 'Трак простаивает',
-        text: `${truck.driver} ждёт груз в ${cityState(truck.currentCity)}. Найди загрузку — чем быстрее, тем лучше. Deadhead 0 миль = идеально.`,
+        text: `${truck.driver} ждёт груз в ${cityState(truck.currentCity)}. Найди загрузку — чем быстрее, тем лучше.`,
         action: () => onFindLoad(truck!.currentCity), actionLabel: '🔍 Найти груз',
       };
       return {
@@ -78,7 +101,7 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
     if (truck.status === 'at_delivery') return {
       icon: '📦', color: '#fbbf24',
       title: 'Разгружается — готовь следующий груз',
-      text: `${truck.driver} на разгрузке в ${cityState(truck.currentCity)}. Самое время найти следующий груз из этого города — трак скоро освободится!`,
+      text: `${truck.driver} на разгрузке в ${cityState(truck.currentCity)}. Самое время найти следующий груз!`,
       action: () => onFindLoad(truck!.currentCity), actionLabel: '🔍 Найти груз',
     };
     if (truck.status === 'at_pickup') return {
@@ -93,27 +116,27 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
       if (pct > 70) return {
         icon: '🎯', color: '#06b6d4',
         title: 'Скоро прибудет — ищи следующий груз!',
-        text: `${truck.driver} проехал ${pct}% маршрута. ETA ~${eta}ч до ${cityState(truck.currentLoad?.toCity || '')}. Самое время найти следующий груз из точки доставки!`,
+        text: `${truck.driver} проехал ${pct}% маршрута. ETA ~${eta}ч до ${cityState(truck.currentLoad?.toCity || '')}. Найди следующий груз!`,
         action: () => onFindLoad(truck!.currentLoad?.toCity || truck!.currentCity), actionLabel: '🔍 Найти груз',
       };
       return {
         icon: '🚛', color: '#38bdf8',
         title: 'В пути с грузом',
-        text: `${truck.driver} везёт груз в ${cityState(truck.currentLoad?.toCity || '')}. Прогресс: ${pct}%, ETA ~${eta}ч. Мониторь HOS и детали доставки.`,
+        text: `${truck.driver} везёт груз в ${cityState(truck.currentLoad?.toCity || '')}. Прогресс: ${pct}%, ETA ~${eta}ч.`,
         action: () => setShowSMS(true), actionLabel: '💬 SMS водителю',
       };
     }
     if (truck.status === 'driving') return {
       icon: '🔵', color: '#38bdf8',
       title: 'Едет к погрузке',
-      text: `${truck.driver} едет к pickup в ${cityState(truck.destinationCity || '')}. Убедись что Rate Con подписан и водитель знает детали загрузки.`,
+      text: `${truck.driver} едет к pickup в ${cityState(truck.destinationCity || '')}. Убедись что Rate Con подписан.`,
       action: () => setShowSMS(true), actionLabel: '💬 SMS водителю',
     };
     if (truck.status === 'breakdown') return {
       icon: '🔧', color: '#ef4444',
       title: 'Поломка — требуется действие',
       text: `${truck.driver} сломался! Свяжись с техпомощью, уведоми брокера о задержке. Зафиксируй время для страховки.`,
-      action: () => setShowCall(true), actionLabel: '📞 Позвонить водителю',
+      action: () => setShowMechanic(true), actionLabel: '🔧 Вызвать техпомощь',
     };
     return {
       icon: '🤖', color: '#06b6d4',
@@ -163,7 +186,7 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
               )}
             </View>
 
-            {/* ── AI ДИСПЕТЧЕР (сразу после статуса) ── */}
+            {/* ── AI ДИСПЕТЧЕР ── */}
             <TouchableOpacity
               activeOpacity={ai.action ? 0.75 : 1}
               onPress={ai.action}
@@ -196,6 +219,38 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
               )}
             </TouchableOpacity>
 
+            {/* ── БЛОК ПОЛОМКИ ── */}
+            {isBreakdown && (
+              <View style={[s.breakdownCard, roadsideOrdered && s.breakdownCardActive]}>
+                <Text style={s.breakdownTitle}>🚨 {repairLabel}</Text>
+                <Text style={s.breakdownSub}>Трак стоит · Стоимость ремонта: ${repairCost.toLocaleString()}</Text>
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                  <TouchableOpacity
+                    style={[s.roadsideBtn, roadsideOrdered && s.roadsideBtnDone]}
+                    onPress={() => setShowMechanic(true)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[s.roadsideBtnText, roadsideOrdered && { color: '#4ade80' }]}>
+                      {roadsideOrdered ? '✅ Техпомощь едет — открыть чат 💬' : `🔧 Вызвать техпомощь ($${repairCost})`}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                  <TouchableOpacity style={s.breakdownActionBtn} onPress={() => setShowCall(true)} activeOpacity={0.8}>
+                    <Text style={[s.breakdownActionText, { color: '#30d158' }]}>📞 Позвонить</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={s.breakdownActionBtn} onPress={() => setShowSMS(true)} activeOpacity={0.8}>
+                    <Text style={[s.breakdownActionText, { color: '#0a84ff' }]}>💬 SMS</Text>
+                  </TouchableOpacity>
+                  {truck.currentLoad && (
+                    <TouchableOpacity style={s.breakdownActionBtn} onPress={() => setShowCancelLoad(true)} activeOpacity={0.8}>
+                      <Text style={[s.breakdownActionText, { color: '#ff453a' }]}>⚠️ TONU</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            )}
+
             {/* ── БЕЙДЖИ ── */}
             <View style={s.badgesRow}>
               <View style={s.badge}><Text style={s.badgeText}>⭐ {truck.safetyScore}</Text><Text style={s.badgeLabel}>Safety</Text></View>
@@ -225,8 +280,8 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
                   {cityState(truck.currentLoad.fromCity)} → {cityState(truck.currentLoad.toCity)}
                 </Text>
                 <View style={s.loadStats}>
-                  <LoadStat label="Ставка" value={`$${truck.currentLoad.agreedRate.toLocaleString()}`} />
-                  <LoadStat label="$/миля" value={`$${rpm}`} />
+                  <LoadStat label="Ставка" value={`${truck.currentLoad.agreedRate.toLocaleString()}`} />
+                  <LoadStat label="$/миля" value={`${rpm}`} />
                   <LoadStat label="Миль" value={String(truck.currentLoad.miles)} />
                   <LoadStat label="Груз" value={truck.currentLoad.commodity} />
                 </View>
@@ -278,6 +333,17 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
       {showSMS && <DriverCommunicationModal truck={truck} onClose={() => setShowSMS(false)} onCall={() => { setShowSMS(false); setShowCall(true); }} />}
       {showCall && <CallModal contactName={truck.driver} contactRole="driver" truckId={truck.id} onClose={() => setShowCall(false)} />}
       {showCancelLoad && truck.currentLoad && <CancelLoadModal load={truck.currentLoad} onClose={() => setShowCancelLoad(false)} />}
+      {showMechanic && (
+        <MechanicChatModal
+          truck={truck}
+          repairCost={repairCost}
+          repairLabel={repairLabel}
+          repairMinutes={repairMinutes}
+          roadsideOrdered={roadsideOrdered}
+          onClose={() => setShowMechanic(false)}
+          onCallRoadside={callRoadside}
+        />
+      )}
     </Modal>
   );
 }
@@ -306,8 +372,6 @@ function LoadStat({ label, value }: { label: string; value: string }) {
 const s = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 16 },
   modal: { backgroundColor: '#111827', borderRadius: 20, width: '100%', maxWidth: 480, maxHeight: '88%', borderWidth: 1.5, borderColor: 'rgba(6,182,212,0.35)' },
-
-  // Header
   header: { flexDirection: 'row', alignItems: 'center', padding: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)' },
   headerLeft: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(6,182,212,0.2)', borderWidth: 2, borderColor: '#06b6d4', alignItems: 'center', justifyContent: 'center' },
@@ -316,26 +380,18 @@ const s = StyleSheet.create({
   truckSub: { fontSize: 13, color: '#cbd5e1', marginTop: 1 },
   closeBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' },
   closeBtnText: { fontSize: 16, color: '#cbd5e1' },
-
-  // Status bar
   statusBar: { flexDirection: 'row', alignItems: 'center', gap: 10, margin: 12, marginBottom: 0, padding: 12, borderRadius: 12, borderWidth: 1 },
   statusIcon: { fontSize: 22 },
   statusLabel: { fontSize: 14, fontWeight: '700' },
   statusSub: { fontSize: 13, color: '#cbd5e1', marginTop: 2 },
   restBadge: { paddingHorizontal: 8, paddingVertical: 3, backgroundColor: 'rgba(239,68,68,0.2)', borderRadius: 8 },
   restBadgeText: { fontSize: 12, fontWeight: '800', color: '#ef4444' },
-
-  // Badges
   badgesRow: { flexDirection: 'row', gap: 8, margin: 12, marginBottom: 0 },
   badge: { flex: 1, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: 8, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
   badgeText: { fontSize: 13, fontWeight: '800', color: '#e2e8f0' },
   badgeLabel: { fontSize: 13, color: '#cbd5e1', marginTop: 2, textTransform: 'uppercase' },
-
-  // Section
   section: { margin: 12, marginBottom: 0, padding: 12, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)', gap: 8 },
   sectionTitle: { fontSize: 12, fontWeight: '800', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: 0.5 },
-
-  // HOS
   hosRow: { flexDirection: 'row', gap: 10 },
   hosItem: { flex: 1, alignItems: 'center', gap: 4 },
   hosVal: { fontSize: 18, fontWeight: '900' },
@@ -343,15 +399,11 @@ const s = StyleSheet.create({
   hosBarFill: { height: '100%', borderRadius: 3 },
   hosLabel: { fontSize: 13, color: '#cbd5e1', fontWeight: '700', textTransform: 'uppercase' },
   hosWarn: { fontSize: 13, color: '#ef4444', fontWeight: '600', textAlign: 'center' },
-
-  // Load
   loadRoute: { fontSize: 14, fontWeight: '700', color: '#67e8f9' },
   loadStats: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   loadStat: { minWidth: '22%', flex: 1, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: 8, alignItems: 'center' },
   loadStatVal: { fontSize: 13, fontWeight: '800', color: '#e2e8f0' },
   loadStatLabel: { fontSize: 13, color: '#cbd5e1', marginTop: 2, textTransform: 'uppercase' },
-
-  // Actions
   findBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, backgroundColor: 'rgba(34,197,94,0.12)', borderRadius: 12, borderWidth: 1.5, borderColor: 'rgba(34,197,94,0.3)' },
   findBtnIcon: { fontSize: 22 },
   findBtnTitle: { fontSize: 14, fontWeight: '800', color: '#4ade80' },
@@ -361,8 +413,6 @@ const s = StyleSheet.create({
   statsBtnText: { fontSize: 13, fontWeight: '700', color: '#06b6d4' },
   actionBtn: { flex: 1, padding: 10, borderRadius: 12, borderWidth: 1, alignItems: 'center' },
   actionBtnText: { fontSize: 13, fontWeight: '700' },
-
-  // AI
   aiCard: { margin: 12, marginBottom: 0, padding: 12, borderRadius: 12, borderWidth: 1.5, gap: 8 },
   aiHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   aiIcon: { fontSize: 26 },
@@ -371,4 +421,13 @@ const s = StyleSheet.create({
   aiText: { fontSize: 13, color: '#e2e8f0', lineHeight: 20 },
   aiActionBtn: { marginTop: 4, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1, alignSelf: 'flex-start' },
   aiActionBtnText: { fontSize: 13, fontWeight: '800' },
+  breakdownCard: { margin: 12, marginBottom: 0, padding: 12, borderRadius: 12, borderWidth: 2, borderColor: 'rgba(239,68,68,0.5)', backgroundColor: 'rgba(239,68,68,0.08)', gap: 4 },
+  breakdownCardActive: { borderColor: 'rgba(74,222,128,0.4)', backgroundColor: 'rgba(74,222,128,0.06)' },
+  breakdownTitle: { fontSize: 15, fontWeight: '900', color: '#ef4444' },
+  breakdownSub: { fontSize: 12, color: '#94a3b8' },
+  roadsideBtn: { flex: 1, padding: 12, borderRadius: 10, borderWidth: 1.5, borderColor: 'rgba(239,68,68,0.5)', backgroundColor: 'rgba(239,68,68,0.12)', alignItems: 'center' },
+  roadsideBtnDone: { borderColor: 'rgba(74,222,128,0.4)', backgroundColor: 'rgba(74,222,128,0.08)' },
+  roadsideBtnText: { fontSize: 14, fontWeight: '900', color: '#ef4444' },
+  breakdownActionBtn: { flex: 1, padding: 8, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.04)', alignItems: 'center' },
+  breakdownActionText: { fontSize: 12, fontWeight: '700' },
 });

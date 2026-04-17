@@ -23,6 +23,11 @@ const QUICK_MESSAGES = [
   'Check your tire pressure at next stop.',
   'How many hours do you have left?',
   'Is the load secure?',
+  // Breakdown specific
+  'Call roadside assistance now!',
+  'Document everything with photos.',
+  'I\'ll notify the broker about the delay.',
+  'How long until you\'re back on the road?',
 ];
 
 const DRIVER_AUTO_REPLIES: Record<string, string[]> = {
@@ -34,6 +39,12 @@ const DRIVER_AUTO_REPLIES: Record<string, string[]> = {
   'tire': ['Will check at next stop. Thanks for the heads up.', 'Checked 30 minutes ago, all good.', 'Rear left looks a bit low, I\'ll add air.'],
   'hours': ['I have 6.5 hours left on my clock.', 'About 4 hours driving left. Might need to stop soon.', 'Plenty of hours — 8.5 left.'],
   'secure': ['Load is tight, all straps good.', 'Checked at last stop — everything secure.', 'Yes sir, no shifting.'],
+  // Breakdown responses
+  'roadside': ['Calling roadside now. They said 30-60 min ETA.', 'Already on hold with roadside. $450 estimate. Approving?', 'Roadside is dispatched, 45 min away.'],
+  'Document': ['Taking photos now — truck, location, timestamp. 📸', 'All documented. GPS coords saved, photos taken.', 'Done. Sending you photos for insurance claim.'],
+  'broker': ['Texting broker now about the delay.', 'Broker notified. They said to keep them updated.', 'Already messaged them. Waiting for response.'],
+  'long': ['Roadside says 1-2 hours for engine repair.', 'Mechanic says 90 min. Tire change is 45 min.', 'Assessing now, will know in 15 min.'],
+  'road': ['Back on the road in about 2 hours.', 'Mechanic says 90 min, then I\'m good to go.', 'Should be moving again by 3 PM.'],
 };
 
 function getDriverReply(msg: string): string {
@@ -71,9 +82,12 @@ export default function DriverCommunicationModal({ truck, onClose, onCall }: Pro
     if (driverMsgs.length > 0) {
       setMessages(driverMsgs);
     } else {
-      setMessages([{
-        from: 'driver', text: `Hey boss, ${truck.name} here. What do you need?`, time: formatNow(),
-      }]);
+      const greeting = truck.status === 'breakdown'
+        ? `Boss, I'm broken down on the side of the road near ${truck.currentCity}. Waiting for roadside. What do you need me to do?`
+        : truck.status === 'idle'
+        ? `Hey boss, ${truck.name} here. I'm empty in ${truck.currentCity}. What's next?`
+        : `Hey boss, ${truck.name} here. What do you need?`;
+      setMessages([{ from: 'driver', text: greeting, time: formatNow() }]);
     }
   }, []);
 
@@ -140,6 +154,7 @@ export default function DriverCommunicationModal({ truck, onClose, onCall }: Pro
             <div style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>{truck.driver}</div>
             <div style={{ fontSize: 11, color: statusColor, fontWeight: 600 }}>
               {truck.name} · {truck.currentCity}
+              {truck.status === 'breakdown' && <span style={{ marginLeft: 6, color: '#ef4444', fontWeight: 800 }}>🚨 ПОЛОМКА</span>}
             </div>
           </div>
           {onCall && (

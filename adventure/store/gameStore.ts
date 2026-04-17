@@ -1329,6 +1329,28 @@ export const useGameStore = create<GameState>((set, get) => ({
         } as any;
       }
 
+      // ── BREAKDOWN: трак на ремонте — ждём пока outOfOrderUntil истечёт ──
+      if (truck.status === 'breakdown') {
+        const outUntil = (truck as any).outOfOrderUntil ?? 0;
+        if (outUntil > 0 && newMinute >= outUntil) {
+          const resumeStatus = truck.currentLoad ? 'loaded' as TruckStatus : 'idle' as TruckStatus;
+          get().addNotification({
+            type: 'text', priority: 'medium', from: truck.driver,
+            subject: `✅ ${truck.name} отремонтирован — готов к работе`,
+            message: `Ремонт завершён. ${truck.driver} готов продолжить. ${truck.currentLoad ? `Продолжает маршрут в ${truck.currentLoad.toCity}.` : 'Ждёт новый груз.'}`,
+            actionRequired: false, relatedTruckId: truck.id,
+          });
+          window.dispatchEvent(new CustomEvent('mapToast', { detail: { message: `✅ ${truck.name} отремонтирован!`, color: '#4ade80' } }));
+          return {
+            ...truck,
+            status: resumeStatus,
+            outOfOrderUntil: 0,
+            mood: Math.max(40, (truck.mood ?? 65) - 10),
+          } as any;
+        }
+        return truck;
+      }
+
       // ── HOS: трак на отдыхе на Truck Stop — ждём 10 часов ──
       if (truck.status === 'waiting') {
         const restStart = (truck as any).hosRestStartMinute ?? newMinute;
@@ -1494,6 +1516,21 @@ export const useGameStore = create<GameState>((set, get) => ({
           console.log('🎉 DeliveryResult created:', deliveryResult.loadId, deliveryResult.netProfit);
           newDeliveryResults.push(deliveryResult);
           get().addMoney(adjustedNetProfit, `Доставка ${load.fromCity}→${load.toCity}`);
+
+          // ── FACTORING OFFER: предлагаем получить деньги сейчас (−3%) или ждать 30 дней ──
+          if (agreedRate >= 1500) { // только для крупных рейсов
+            const factoringOffer: FactoringOffer = {
+              id: `FACT-${Date.now()}`,
+              loadId: load.id,
+              truckName: truck.name,
+              fromCity: load.fromCity,
+              toCity: load.toCity,
+              fullAmount: agreedRate,
+              factoredAmount: Math.round(agreedRate * 0.97),
+              expiresAt: newMinute + 60,
+            };
+            set(s => ({ pendingFactoringOffers: [...(s as any).pendingFactoringOffers, factoringOffer] }));
+          }
           get().addNotification({
             type: 'email', priority: 'low',
             from: load.brokerName,
@@ -1935,6 +1972,16 @@ export const useGameStore = create<GameState>((set, get) => ({
       trucks: updatedTrucks,
       availableLoads: [...freshLoads, ...newLoads],
       ...(newDeliveryResults.length > 0 ? { deliveryResults: [...(s.deliveryResults || []), ...newDeliveryResults] } : {}),
+      // Обновляем погодные зоны: убираем истёкшие, иногда добавляем новые
+      activeWeatherZones: (() => {
+        const current = (s.activeWeatherZones ?? []) as WeatherZone[];
+        const active = current.filter((z: WeatherZone) => z.endMinute > newMinute);
+        // Каждые 120 минут — шанс появления новой погоды
+        if (Math.floor(newMinute / 120) > Math.floor(gameMinute / 120) && Math.random() < 0.35) {
+          return [...active, ...generateWeatherZones(newMinute)];
+        }
+        return active;
+      })(),
     }));
     
     // Автосохранение каждые 60 игровых минут (≈ 50 реальных секунд)
@@ -1972,37 +2019,66 @@ export const useGameStore = create<GameState>((set, get) => ({
     
     switch (eventType) {
       case 'breakdown': {
-        // Реальная поломка — трак останавливается
-        const repairCost = 300 + Math.floor(Math.random() * 700);
+        const bdTypes = [
+          { label: 'Двигатель перегрелся',     roadside: 550, tow: 1400, delayRoadside: 90,  delayTow: 240 },
+          { label: 'Отказали тормоза',         roadside: 650, tow: 1600, delayRoadside: 120, delayTow: 300 },
+          { label: 'Электрика вышла из строя', roadside: 480, tow: 1200, delayRoadside: 75,  delayTow: 210 },
+          { label: 'Закончилось топливо',      roadside: 150, tow: 0,    delayRoadside: 30,  delayTow: 0   },
+          { label: 'Трансмиссия',              roadside: 0,   tow: 1800, delayRoadside: 0,   delayTow: 360 },
+        ];
+        const bd = bdTypes[Math.floor(Math.random() * bdTypes.length)];
+        const canRoadside = bd.roadside > 0;
         const updatedTrucks = trucks.map(t =>
-          t.id === truck.id ? { ...t, status: 'breakdown' as any, outOfOrderUntil: gameMinute + 60 + Math.floor(Math.random() * 120) } : t
+          t.id === truck.id ? {
+            ...t, status: 'breakdown' as any,
+            awaitingRepairChoice: canRoadside,
+            breakdownType: bd.label,
+            breakdownCostRoadside: bd.roadside,
+            breakdownCostTow: bd.tow,
+            breakdownDelayRoadside: bd.delayRoadside,
+            breakdownDelayTow: bd.delayTow,
+            outOfOrderUntil: canRoadside ? undefined : gameMinute + bd.delayTow,
+          } : t
         );
         set({ trucks: updatedTrucks });
-        get().removeMoney(repairCost, `Ремонт ${truck.name} — поломка двигателя`);
+        if (!canRoadside) {
+          get().removeMoney(bd.tow, 'Эвакуатор — ' + truck.name + ': ' + bd.label);
+        }
         get().addNotification({
           type: 'text', priority: 'critical', from: truck.driver,
-          subject: '🚨 Поломка трака!',
-          message: `${truck.name} сломался возле ${truck.currentCity}! Двигатель перегрелся. Вызвал техпомощь, ремонт ~$${repairCost}. Простой 1-3 часа.`,
-          actionRequired: true, relatedTruckId: truck.id,
+          subject: '🚨 Поломка — ' + truck.name + '!',
+          message: canRoadside
+            ? bd.label + ' возле ' + truck.currentCity + '.\n\n🔧 Roadside Assist: $' + bd.roadside + ' (~' + bd.delayRoadside + ' мин)\n🚛 Эвакуатор: $' + bd.tow + ' (~' + bd.delayTow + ' мин)\n\nВыбери вариант в панели трака.'
+            : bd.label + ' возле ' + truck.currentCity + '. Только эвакуатор ($' + bd.tow + '). Задержка ~' + bd.delayTow + ' мин.',
+          actionRequired: canRoadside, relatedTruckId: truck.id,
         });
-        window.dispatchEvent(new CustomEvent('mapToast', { detail: { message: `🚨 ${truck.name} сломался!`, color: '#ef4444' } }));
+        window.dispatchEvent(new CustomEvent('mapToast', { detail: { message: '🚨 ' + truck.name + ' — ' + bd.label + '!', color: '#ef4444' } }));
         break;
       }
-        
+
       case 'tire_blowout': {
-        const cost = 200 + Math.floor(Math.random() * 300);
-        get().removeMoney(cost, `Замена шины ${truck.name}`);
+        const tireCount = Math.random() > 0.6 ? 2 : 1;
+        const costPerTire = 800 + Math.floor(Math.random() * 700);
+        const cost = tireCount * costPerTire;
+        const updatedTrucksTire = trucks.map(t =>
+          t.id === truck.id ? {
+            ...t,
+            tripExpenses: [...((t as any).tripExpenses ?? []), { label: 'Замена шин (' + tireCount + ' шт x ' + costPerTire + ')', amount: cost, minute: gameMinute }],
+          } : t
+        );
+        set({ trucks: updatedTrucksTire });
+        get().removeMoney(cost, 'Замена шин ' + truck.name + ' (' + tireCount + ' шт)');
         get().addNotification({
           type: 'text', priority: 'high', from: truck.driver,
-          subject: '💥 Пробило колесо',
-          message: `Пробило шину на трассе. Уже меняю, задержка ~40 минут. Стоимость: $${cost}.`,
+          subject: '�� Пробило ' + (tireCount === 2 ? '2 колеса' : 'колесо') + ' — ' + truck.name,
+          message: 'Пробило ' + (tireCount === 2 ? '2 шины' : 'шину') + ' возле ' + truck.currentCity + '. Мобильный шиномонтаж.\nСтоимость: ' + cost.toLocaleString() + ' (' + tireCount + ' x ' + costPerTire + ')\nЗадержка ~' + (tireCount === 2 ? '90' : '45') + ' мин.',
           actionRequired: false, relatedTruckId: truck.id,
         });
-        window.dispatchEvent(new CustomEvent('mapToast', { detail: { message: `💥 ${truck.name} — пробило колесо`, color: '#f97316' } }));
+        window.dispatchEvent(new CustomEvent('mapToast', { detail: { message: '💥 ' + truck.name + ' — пробило ' + (tireCount === 2 ? '2 колеса' : 'колесо') + ' (' + cost.toLocaleString() + ')', color: '#f97316' } }));
         break;
       }
-        
-      case 'detention': {
+
+case 'detention': {
         const hours = 2 + Math.floor(Math.random() * 3);
         const detentionPay = hours * 50;
         get().addNotification({
@@ -2613,20 +2689,17 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
-  dismissDeliveryResult: (loadId: string) => {
-    set((s: any) => ({
-      deliveryResults: (s.deliveryResults || []).filter((r: DeliveryResult) => r.loadId !== loadId),
-    }));
-  },
-
   testDeliveryPopup: () => {
     const testResult: DeliveryResult = {
       truckId: 'T1', truckName: 'Truck 1047', driverName: 'John Martinez',
       loadId: `TEST-${Date.now()}`, fromCity: 'Chicago', toCity: 'Houston',
       miles: 1092, agreedRate: 2700,
       fuelCost: 491, driverPay: 601, dispatchFee: 216, factoringFee: 81, lumperCost: 0,
-      detentionPay: 0, grossRevenue: 2700, totalExpenses: 1389, netProfit: 1311,
-      ratePerMile: 2.47, profitPerMile: 1.20, minute: get().gameMinute,
+      detentionPay: 0,
+      roadsideCost: 450, tireCost: 0, otherRepairCost: 0, lateDeliveryFine: 0, tripExtraExpenses: 450,
+      truckPayment: 216, trailerPayment: 135,
+      grossRevenue: 2700, totalExpenses: 1839, netProfit: 861,
+      ratePerMile: 2.47, profitPerMile: 0.79, minute: get().gameMinute,
     };
     set((s: any) => ({ deliveryResults: [...(s.deliveryResults || []), testResult] }));
   },
@@ -2695,6 +2768,115 @@ export const useGameStore = create<GameState>((set, get) => ({
       notifications: get().notifications.map(n => ({ ...n, read: true })),
       unreadCount: 0,
     });
+  },
+
+  // ── REPAIR BREAKDOWN ────────────────────────────────────────────────────────
+  repairBreakdown: (truckId: string, choice: 'roadside' | 'tow') => {
+    const { trucks, gameMinute } = get();
+    const truck = trucks.find(t => t.id === truckId);
+    if (!truck) return;
+    const cost = choice === 'roadside'
+      ? ((truck as any).breakdownCostRoadside ?? 500)
+      : ((truck as any).breakdownCostTow ?? 1500);
+    const delay = choice === 'roadside'
+      ? ((truck as any).breakdownDelayRoadside ?? 90)
+      : ((truck as any).breakdownDelayTow ?? 240);
+    const label = (truck as any).breakdownType ?? 'Поломка';
+    get().removeMoney(cost, (choice === 'roadside' ? 'Roadside Assist' : 'Эвакуатор') + ' — ' + truck.name + ': ' + label);
+    const updatedTrucks = trucks.map(t =>
+      t.id === truckId ? {
+        ...t,
+        awaitingRepairChoice: false,
+        outOfOrderUntil: gameMinute + delay,
+        tripExpenses: [...((t as any).tripExpenses ?? []), {
+          label: (choice === 'roadside' ? 'Roadside Assist' : 'Эвакуатор') + ' — ' + label,
+          amount: cost, minute: gameMinute,
+        }],
+      } : t
+    );
+    set({ trucks: updatedTrucks });
+    get().addNotification({
+      type: 'text', priority: 'medium', from: truck.driver,
+      subject: (choice === 'roadside' ? '🔧 Roadside вызван' : '🚛 Эвакуатор вызван') + ' — ' + truck.name,
+      message: (choice === 'roadside' ? 'Roadside Assist едет. ' : 'Эвакуатор едет. ') + 'Задержка ~' + delay + ' мин. Стоимость: $' + cost.toLocaleString(),
+      actionRequired: false, relatedTruckId: truckId,
+    });
+    window.dispatchEvent(new CustomEvent('mapToast', {
+      detail: { message: (choice === 'roadside' ? '🔧' : '🚛') + ' ' + truck.name + ' — ремонт $' + cost.toLocaleString(), color: '#fbbf24' }
+    }));
+  },
+
+  // ── DRIVER MARKETPLACE ───────────────────────────────────────────────────────
+  hireDriver: (candidateId: string, truckId: string) => {
+    const { driverCandidates, trucks } = get();
+    const candidate = driverCandidates.find(d => d.id === candidateId);
+    const truck = trucks.find(t => t.id === truckId);
+    if (!candidate || !truck) return;
+    get().removeMoney(candidate.hiringCost, 'Найм водителя — ' + candidate.name);
+    const updatedTrucks = trucks.map(t =>
+      t.id === truckId ? {
+        ...t,
+        driver: candidate.name,
+        mood: candidate.mood,
+        complianceRate: candidate.hosCompliance,
+        fuelEfficiency: candidate.fuelEfficiency,
+      } : t
+    );
+    const remaining = driverCandidates.filter(d => d.id !== candidateId);
+    set({ trucks: updatedTrucks, driverCandidates: remaining });
+    get().addNotification({
+      type: 'email', priority: 'medium',
+      from: 'HR Department',
+      subject: '✅ ' + candidate.name + ' нанят на ' + truck.name,
+      message: candidate.name + ' приступает к работе на ' + truck.name + '. Опыт: ' + candidate.experience + ' лет. HOS compliance: ' + candidate.hosCompliance + '%. Стоимость найма: $' + candidate.hiringCost.toLocaleString(),
+      actionRequired: false, relatedTruckId: truckId,
+    });
+    window.dispatchEvent(new CustomEvent('mapToast', {
+      detail: { message: '👤 ' + candidate.name + ' нанят на ' + truck.name, color: '#4ade80' }
+    }));
+  },
+
+  refreshDriverMarket: () => {
+    set({ driverCandidates: generateDriverCandidates() });
+  },
+
+  // ── FACTORING ────────────────────────────────────────────────────────────────
+  acceptFactoring: (offerId: string) => {
+    const { pendingFactoringOffers } = get();
+    const offer = pendingFactoringOffers.find(o => o.id === offerId);
+    if (!offer) return;
+    get().addMoney(offer.factoredAmount, 'Factoring — ' + offer.fromCity + '→' + offer.toCity + ' (немедленно -3%)');
+    set({ pendingFactoringOffers: pendingFactoringOffers.filter(o => o.id !== offerId) });
+    get().addNotification({
+      type: 'email', priority: 'low',
+      from: 'QuickPay Factoring',
+      subject: '💵 Factoring выплачен — $' + offer.factoredAmount.toLocaleString(),
+      message: 'Получено $' + offer.factoredAmount.toLocaleString() + ' (полная сумма $' + offer.fullAmount.toLocaleString() + ', комиссия 3% = $' + (offer.fullAmount - offer.factoredAmount).toLocaleString() + '). Деньги на счету.',
+      actionRequired: false,
+    });
+  },
+
+  declineFactoring: (offerId: string) => {
+    const { pendingFactoringOffers } = get();
+    const offer = pendingFactoringOffers.find(o => o.id === offerId);
+    if (!offer) return;
+    // Деньги придут через 30 игровых дней (в рамках смены — через 720 минут)
+    set({ pendingFactoringOffers: pendingFactoringOffers.filter(o => o.id !== offerId) });
+    get().addNotification({
+      type: 'email', priority: 'low',
+      from: 'Broker Payment',
+      subject: '⏳ Оплата $' + offer.fullAmount.toLocaleString() + ' — через 30 дней',
+      message: 'Полная оплата $' + offer.fullAmount.toLocaleString() + ' будет переведена через 30 дней. Без комиссии factoring.',
+      actionRequired: false,
+    });
+    // Добавляем деньги через 720 игровых минут (симуляция 30 дней)
+    const targetMinute = get().gameMinute + 720;
+    const checkInterval = setInterval(() => {
+      if (get().gameMinute >= targetMinute) {
+        get().addMoney(offer.fullAmount, 'Broker payment (30 days) — ' + offer.fromCity + '→' + offer.toCity);
+        clearInterval(checkInterval);
+      }
+    }, 5000);
   },
 
   clearNotifications: () => {

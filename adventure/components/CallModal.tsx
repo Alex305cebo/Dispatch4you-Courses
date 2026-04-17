@@ -17,6 +17,10 @@ const DRIVER_RESPONSES: Record<string, string[]> = {
   'ETA update?': ['Looking at about 2 hours to delivery. Traffic is light.', 'GPS says 3.5 hours but I think I can make it in 3.', 'Might be late — construction zone ahead, 1 lane only.'],
   'Take a break': ['Copy that, I\'ll pull over at the next rest area. Need fuel anyway.', 'Roger. There\'s a Pilot about 15 miles ahead, I\'ll stop there.', 'Understood. HOS is getting tight anyway, good call.'],
   'Any problems?': ['Nope, smooth sailing today. Truck\'s running great.', 'Check engine light came on briefly but went off. Keeping an eye on it.', 'Tire pressure warning on rear axle. I\'ll check it at next stop.'],
+  'Call roadside': ['Already called them, ETA 45 minutes. Staying safe on the shoulder.', 'On hold with roadside now. They said 30-60 min. I\'ll keep you posted.', 'Roadside is on the way. Estimated $450 for the repair. Approving?'],
+  'Notify broker': ['I\'ll text the broker right now about the delay.', 'Already sent them a message. Waiting for response.', 'Broker notified. They said to keep them updated on ETA.'],
+  'How long repair?': ['Roadside says 1-2 hours for the engine. Could be longer.', 'Mechanic is here, says about 90 minutes. Tire change is faster — 45 min.', 'They\'re assessing now. Will know in 15 minutes.'],
+  'Document everything': ['Taking photos of the truck and location now. Timestamped.', 'Got photos, GPS location saved, and I noted the exact time.', 'All documented. Sending you the photos now for insurance.'],
 };
 
 const BROKER_RESPONSES: Record<string, string[]> = {

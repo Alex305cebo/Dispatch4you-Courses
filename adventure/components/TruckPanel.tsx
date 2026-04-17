@@ -51,9 +51,13 @@ export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}
           {/* Статус */}
           <View style={styles.cardTop}>
             <Text style={[styles.truckName, isMobile && { fontSize: 13 }]}>{truck.name} - {truck.driver}</Text>
-            <View style={[styles.statusBadge, { borderColor: STATUS_COLOR[truck.status] }]}>
-              <Text style={[styles.statusText, { color: STATUS_COLOR[truck.status] }, isMobile && { fontSize: 9 }]}>
-                {STATUS_LABEL[truck.status]}
+            <View style={[styles.statusBadge, { borderColor: (truck as any).onNightStop || (truck as any).hosRestUntilMinute > 0 ? '#64748b' : STATUS_COLOR[truck.status] }]}>
+              <Text style={[styles.statusText, { color: (truck as any).onNightStop || (truck as any).hosRestUntilMinute > 0 ? '#94a3b8' : STATUS_COLOR[truck.status] }, isMobile && { fontSize: 9 }]}>
+                {(truck as any).onNightStop
+                  ? '🌙 Ночёвка'
+                  : (truck as any).hosRestUntilMinute > 0
+                  ? '😴 HOS отдых'
+                  : STATUS_LABEL[truck.status]}
               </Text>
             </View>
           </View>
@@ -65,7 +69,7 @@ export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}
           </Text>
 
           {/* Прогресс если едет */}
-          {(truck.status === 'driving' || truck.status === 'loaded') && (
+          {(truck.status === 'driving' || truck.status === 'loaded') && !(truck as any).onNightStop && !((truck as any).hosRestUntilMinute > 0) && (
             <View style={styles.progressWrap}>
               <View style={styles.progressTrack}>
                 <View style={[styles.progressFill, {

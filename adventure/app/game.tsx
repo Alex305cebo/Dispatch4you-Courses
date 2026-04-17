@@ -72,7 +72,8 @@ function getDriverAvatar(truckId: string): string {
 
 // Google Noto Animated Emoji — CDN (Apache 2.0, бесплатно)
 const NOTO = 'https://fonts.gstatic.com/s/e/notoemoji/latest';
-function getMoodEmoji(mood: number, status: string): string {
+function getMoodEmoji(mood: number, status: string, truck?: any): string {
+  if (truck && ((truck as any).onNightStop || (truck as any).hosRestUntilMinute > 0)) return `${NOTO}/1f634/512.webp`; // 😴 sleeping
   if (status === 'breakdown') return `${NOTO}/1f92f/512.webp`; // 🤯 exploding
   if (status === 'waiting')   return `${NOTO}/1f62b/512.webp`; // 😫 tired
   if (status === 'at_pickup') return `${NOTO}/1f4aa/512.webp`; // 💪 loading
@@ -88,6 +89,8 @@ function getMoodEmoji(mood: number, status: string): string {
 function getTruckColor(truck: any): string {
   const outOfOrder = (truck as any).outOfOrderUntil;
   if (outOfOrder && typeof outOfOrder === 'number' && outOfOrder > 0) return '#ef4444';
+  // Ночёвка / HOS-стоп — серо-синий
+  if ((truck as any).onNightStop || (truck as any).hosRestUntilMinute > 0) return '#64748b';
   // idleWarning — только уровень 3 (5+ часов) даёт красный, остальное мягче
   const w = (truck as any).idleWarningLevel ?? 0;
   if (w === 3) return '#ef4444'; // 5+ часов — красный
@@ -526,7 +529,7 @@ export default function GameScreen() {
         const isAlert = (truck as any).idleWarningLevel > 0 || truck.status === 'breakdown';
         const progressPct = Math.round(truck.progress * 100);
         const mood = truck.mood ?? 80;
-        const moodEmoji = getMoodEmoji(mood, truck.status);
+        const moodEmoji = getMoodEmoji(mood, truck.status, truck);
         // Уникальный CSS класс анимации по индексу трака
         const truckIdx = trucks.indexOf(truck);
         const animClass = `emoji-anim-${truckIdx % 4}`;
@@ -588,11 +591,15 @@ export default function GameScreen() {
 
               {/* Статус */}
               <span style={{ fontSize: 10, fontWeight: 700, color } as any}>
-                {STATUS_LABEL[truck.status]}
+                {(truck as any).onNightStop
+                  ? '🌙 Ночёвка'
+                  : (truck as any).hosRestUntilMinute > 0
+                  ? '😴 HOS отдых'
+                  : STATUS_LABEL[truck.status]}
               </span>
 
               {/* Маршрут */}
-              {truck.destinationCity ? (
+              {truck.destinationCity && !(truck as any).onNightStop && !((truck as any).hosRestUntilMinute > 0) ? (
                 <span style={{ fontSize: 9, color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
                   → {truck.destinationCity}
                 </span>
@@ -609,7 +616,7 @@ export default function GameScreen() {
               </div>
 
               {/* Прогресс маршрута */}
-              {isMoving && (
+              {isMoving && !(truck as any).onNightStop && !((truck as any).hosRestUntilMinute > 0) && (
                 <div style={{
                   height: 3, background: 'rgba(255,255,255,0.07)',
                   borderRadius: 2, overflow: 'hidden', marginTop: 2,
