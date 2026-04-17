@@ -491,6 +491,8 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
 
     const root = am5.Root.new(divRef.current);
     root.setThemes([am5themes_Animated.new(root)]);
+    // Скрываем логотип amCharts
+    root._logo?.dispose();
     rootRef.current = root;
 
     const chart = root.container.children.push(
@@ -996,6 +998,18 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
         @keyframes fadeInSlide {
           from { opacity: 0; transform: translateX(20px); }
           to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Скрываем логотип amCharts */
+        [class*="am5-logo"],
+        [class*="amcharts-logo"],
+        a[href*="amcharts.com"],
+        div[class*="am5-credits"],
+        .am5-credits,
+        .am5-logo {
+          display: none !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
         }
         
         /* Адаптивность для мобильных */
