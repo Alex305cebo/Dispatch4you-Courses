@@ -1515,7 +1515,18 @@ export const useGameStore = create<GameState>((set, get) => ({
           };
           console.log('🎉 DeliveryResult created:', deliveryResult.loadId, deliveryResult.netProfit);
           newDeliveryResults.push(deliveryResult);
-          get().addMoney(adjustedNetProfit, `Доставка ${load.fromCity}→${load.toCity}`);
+          // Записываем GROSS доход отдельно
+          get().addMoney(grossRevenue, `Доставка: ${load.fromCity}→${load.toCity} (${truck.name})`);
+          // Записываем расходы отдельно — чтобы totalLost и financeLog были корректны
+          if (fuelCost > 0)       get().removeMoney(fuelCost,       `Топливо — ${truck.name} (${load.fromCity}→${load.toCity})`);
+          if (driverPay > 0)      get().removeMoney(driverPay,      `Зарплата водителя — ${truck.driver}`);
+          if (dispatchFee > 0)    get().removeMoney(dispatchFee,    `Dispatch fee — ${truck.name}`);
+          if (factoringFee > 0)   get().removeMoney(factoringFee,   `Factoring fee — ${truck.name}`);
+          if (lumperCost > 0)     get().removeMoney(lumperCost,     `Lumper — ${load.toCity}`);
+          if (truckPayment > 0)   get().removeMoney(truckPayment,   `Truck payment — ${truck.name}`);
+          if (trailerPayment > 0) get().removeMoney(trailerPayment, `Trailer payment — ${truck.name}`);
+          if (tripExtraExpenses > 0) get().removeMoney(tripExtraExpenses, `Доп. расходы в пути — ${truck.name}`);
+          if (lateDeliveryFine > 0)  get().removeMoney(lateDeliveryFine,  `Штраф за опоздание — ${truck.name}`);
 
           // ── FACTORING OFFER: предлагаем получить деньги сейчас (−3%) или ждать 30 дней ──
           if (agreedRate >= 1500) { // только для крупных рейсов
