@@ -53,6 +53,32 @@ const STATUS_LABEL: Record<string, string> = {
   breakdown: 'Поломка', waiting: 'Detention',
 };
 
+// Уникальный аватар водителя по ID трака
+const DRIVER_AVATARS: Record<string, string> = {
+  'T1': '👨🏻', 'T2': '👨🏾', 'T3': '👨🏼', 'T4': '👩🏽', 'T5': '👨🏿',
+  'T1047': '👨🏻', 'T2023': '👨🏾', 'T3012': '👨🏼',
+};
+function getDriverAvatar(truckId: string): string {
+  if (DRIVER_AVATARS[truckId]) return DRIVER_AVATARS[truckId];
+  // Фоллбэк по последней цифре ID
+  const avatars = ['👨🏻','👨🏾','👨🏼','👩🏽','👨🏿','👩🏻','👨🏽','👩🏾'];
+  const n = parseInt(truckId.replace(/\D/g,'')) || 0;
+  return avatars[n % avatars.length];
+}
+
+// Эмоция водителя по настроению (mood 0-100)
+function getMoodEmoji(mood: number, status: string): string {
+  if (status === 'breakdown') return '😤';
+  if (status === 'waiting') return '😒';
+  if (mood >= 90) return '😄';
+  if (mood >= 75) return '🙂';
+  if (mood >= 60) return '😐';
+  if (mood >= 45) return '😕';
+  if (mood >= 30) return '😟';
+  if (mood >= 15) return '😠';
+  return '🤬';
+}
+
 function getTruckColor(truck: any): string {
   const outOfOrder = (truck as any).outOfOrderUntil;
   if (outOfOrder && typeof outOfOrder === 'number' && outOfOrder > 0) return '#ff0000';
@@ -220,8 +246,8 @@ export default function GameScreen() {
 
     return (
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        height: 56, paddingLeft: 16, paddingRight: 12,
+        display: 'flex', alignItems: 'center', gap: isWide ? 12 : 6,
+        height: isWide ? 56 : 48, paddingLeft: isWide ? 16 : 10, paddingRight: isWide ? 12 : 8,
         background: 'linear-gradient(180deg, rgba(15,25,50,0.98) 0%, rgba(10,18,38,0.98) 100%)',
         borderBottom: '1px solid rgba(56,189,248,0.12)',
         boxShadow: '0 1px 20px rgba(0,0,0,0.4)',
@@ -237,13 +263,13 @@ export default function GameScreen() {
         } as any} />
 
         {/* Время */}
-        <div style={{ minWidth: 80, flexShrink: 0 } as any}>
+        <div style={{ minWidth: isWide ? 80 : 60, flexShrink: 0 } as any}>
           <div style={{
-            fontSize: 20, fontWeight: 900, color: '#fff',
+            fontSize: isWide ? 20 : 16, fontWeight: 900, color: '#fff',
             letterSpacing: 0.5, lineHeight: 1,
             textShadow: `0 0 20px ${timeColor}88`,
           } as any}>{formatTimeShort(gameMinute)}</div>
-          {sessionName ? (
+          {sessionName && isWide ? (
             <div style={{ fontSize: 9, color: '#38bdf8', fontWeight: 700, marginTop: 2, opacity: 0.8 } as any}>
               {sessionName}
             </div>
@@ -274,12 +300,13 @@ export default function GameScreen() {
             ))}
           </div>
           {/* Кнопки скорости */}
-          <div style={{ display: 'flex', gap: 4 } as any}>
+          <div style={{ display: 'flex', gap: 3 } as any}>
             {([1, 2, 5] as const).map(sp => (
               <button key={sp}
                 onClick={() => setTimeSpeed(sp)}
                 style={{
-                  padding: '2px 9px',
+                  padding: isWide ? '2px 9px' : '2px 7px',
+                  display: (!isWide && timeSpeed !== sp) ? 'none' : 'block',
                   background: timeSpeed === sp
                     ? 'linear-gradient(135deg, rgba(56,189,248,0.25), rgba(14,165,233,0.15))'
                     : 'rgba(255,255,255,0.04)',
@@ -287,111 +314,87 @@ export default function GameScreen() {
                   borderRadius: 6, cursor: 'pointer',
                   fontSize: 10, fontWeight: 800,
                   color: timeSpeed === sp ? '#38bdf8' : '#475569',
-                  boxShadow: timeSpeed === sp ? '0 0 8px rgba(56,189,248,0.2)' : 'none',
                   transition: 'all 0.15s',
                 } as any}>
                 {sp === 1 ? '×1' : sp === 2 ? '×2' : '×5'}
               </button>
             ))}
+            {/* На мобильных — кнопка переключения скорости */}
+            {!isWide && (
+              <button onClick={() => setTimeSpeed(timeSpeed === 1 ? 2 : timeSpeed === 2 ? 5 : 1)} style={{
+                padding: '2px 8px',
+                background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.3)',
+                borderRadius: 6, cursor: 'pointer', fontSize: 10, fontWeight: 800, color: '#38bdf8',
+              } as any}>×{timeSpeed} ▶</button>
+            )}
           </div>
         </div>
 
         {/* Статы */}
-        <div style={{ display: 'flex', gap: 6, flexShrink: 0 } as any}>
+        <div style={{ display: 'flex', gap: isWide ? 6 : 4, flexShrink: 0 } as any}>
           {/* Баланс */}
-          {/* Баланс */}
-          <div style={{
-            padding: '5px 10px',
+          <button onClick={() => setShowStats(true)} style={{
+            padding: isWide ? '5px 10px' : '4px 8px',
             background: balance >= 0
               ? 'linear-gradient(135deg, rgba(52,211,153,0.12), rgba(16,185,129,0.06))'
               : 'linear-gradient(135deg, rgba(248,113,113,0.12), rgba(239,68,68,0.06))',
             border: `1px solid ${balance >= 0 ? 'rgba(52,211,153,0.25)' : 'rgba(248,113,113,0.25)'}`,
-            borderRadius: 10,
-            boxShadow: balance >= 0 ? '0 0 12px rgba(52,211,153,0.08)' : 'none',
+            borderRadius: 10, cursor: 'pointer', textAlign: 'left',
           } as any}>
-            <div style={{ fontSize: 9, color: '#64748b', fontWeight: 600, marginBottom: 1 } as any}>БАЛАНС</div>
-            <div style={{
-              fontSize: 13, fontWeight: 900,
-              color: balance >= 0 ? '#34d399' : '#f87171',
-            } as any}>
+            {isWide && <div style={{ fontSize: 9, color: '#64748b', fontWeight: 600, marginBottom: 1 } as any}>БАЛАНС</div>}
+            <div style={{ fontSize: isWide ? 13 : 12, fontWeight: 900, color: balance >= 0 ? '#34d399' : '#f87171' } as any}>
               ${balance >= 1000 ? `${(balance/1000).toFixed(1)}k` : balance.toLocaleString()}
             </div>
-          </div>
+          </button>
 
-          {/* Грузы */}
-          <div style={{
-            padding: '5px 10px',
-            background: 'linear-gradient(135deg, rgba(56,189,248,0.1), rgba(14,165,233,0.05))',
-            border: '1px solid rgba(56,189,248,0.2)',
-            borderRadius: 10,
-          } as any}>
-            <div style={{ fontSize: 9, color: '#64748b', fontWeight: 600, marginBottom: 1 } as any}>ГРУЗЫ</div>
-            <div style={{ fontSize: 13, fontWeight: 900, color: '#38bdf8' } as any}>{totalLoads}</div>
-          </div>
-
-          {/* Репутация */}
-          <div style={{
-            padding: '5px 10px',
-            background: reputation > 70
-              ? 'linear-gradient(135deg, rgba(52,211,153,0.1), rgba(16,185,129,0.05))'
-              : reputation > 40
-              ? 'linear-gradient(135deg, rgba(251,191,36,0.1), rgba(245,158,11,0.05))'
-              : 'linear-gradient(135deg, rgba(248,113,113,0.1), rgba(239,68,68,0.05))',
-            border: `1px solid ${reputation > 70 ? 'rgba(52,211,153,0.2)' : reputation > 40 ? 'rgba(251,191,36,0.2)' : 'rgba(248,113,113,0.2)'}`,
-            borderRadius: 10,
-          } as any}>
-            <div style={{ fontSize: 9, color: '#64748b', fontWeight: 600, marginBottom: 1 } as any}>РЕПУТ.</div>
-            <div style={{
-              fontSize: 13, fontWeight: 900,
-              color: reputation > 70 ? '#34d399' : reputation > 40 ? '#fbbf24' : '#f87171',
-            } as any}>{reputation}%</div>
-          </div>
-
-          {/* Предупреждения HOS */}
+          {/* HOS */}
           {hosWarnings > 0 && (
-            <div style={{
-              padding: '5px 10px',
+            <button onClick={() => switchTab('trucks')} style={{
+              padding: isWide ? '5px 10px' : '4px 8px',
               background: 'linear-gradient(135deg, rgba(248,113,113,0.15), rgba(239,68,68,0.08))',
               border: '1px solid rgba(248,113,113,0.35)',
-              borderRadius: 10,
-              boxShadow: '0 0 12px rgba(248,113,113,0.15)',
-              animation: 'pulse 1.5s infinite',
+              borderRadius: 10, animation: 'pulse 1.5s infinite',
+              cursor: 'pointer', textAlign: 'left',
             } as any}>
-              <div style={{ fontSize: 9, color: '#f87171', fontWeight: 600, marginBottom: 1 } as any}>⚠️ HOS</div>
-              <div style={{ fontSize: 13, fontWeight: 900, color: '#f87171' } as any}>{hosWarnings}</div>
-            </div>
+              {isWide && <div style={{ fontSize: 9, color: '#f87171', fontWeight: 600, marginBottom: 1 } as any}>⚠️ HOS</div>}
+              <div style={{ fontSize: isWide ? 13 : 12, fontWeight: 900, color: '#f87171' } as any}>
+                {!isWide && '⚠️'}{hosWarnings}
+              </div>
+            </button>
           )}
         </div>
 
         {/* Действия */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 } as any}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: isWide ? 6 : 4, flexShrink: 0 } as any}>
           {/* Колокольчик */}
           <button onClick={() => setShowBell(true)} style={{
-            position: 'relative', width: 42, height: 42, borderRadius: 21,
+            position: 'relative', width: isWide ? 42 : 36, height: isWide ? 42 : 36,
+            borderRadius: isWide ? 21 : 18,
             background: 'rgba(6,182,212,0.15)', border: '1px solid rgba(6,182,212,0.3)',
             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 20,
+            fontSize: isWide ? 20 : 17,
           } as any}>
             🔔
             {unreadEmails > 0 && (
               <span style={{
-                position: 'absolute', top: -4, right: -4,
-                background: '#ef4444', borderRadius: 12, minWidth: 20, height: 20,
+                position: 'absolute', top: -3, right: -3,
+                background: '#ef4444', borderRadius: 10, minWidth: 17, height: 17,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 10, fontWeight: 800, color: '#fff', padding: '0 4px',
+                fontSize: 9, fontWeight: 800, color: '#fff', padding: '0 3px',
                 border: '2px solid #0a0f1e',
               } as any}>{unreadEmails > 9 ? '9+' : unreadEmails}</span>
             )}
           </button>
           {/* Гамбургер */}
           <button onClick={() => setShowMenu(true)} style={{
-            width: 42, height: 42, borderRadius: 12,
+            width: isWide ? 42 : 36, height: isWide ? 42 : 36,
+            borderRadius: isWide ? 12 : 10,
             background: 'rgba(56,189,248,0.1)', border: '1.5px solid rgba(56,189,248,0.3)',
             cursor: 'pointer', display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center', gap: 5, padding: 10,
+            alignItems: 'center', justifyContent: 'center', gap: isWide ? 5 : 4, padding: 8,
           } as any}>
             {[0,1,2].map(i => (
-              <span key={i} style={{ width: 20, height: 2.5, background: '#38bdf8', borderRadius: 2, display: 'block' } as any} />
+              <span key={i} style={{ width: isWide ? 20 : 16, height: 2, background: '#38bdf8', borderRadius: 2, display: 'block' } as any} />
             ))}
           </button>
         </div>
@@ -419,6 +422,9 @@ export default function GameScreen() {
         const isAlert = (truck as any).idleWarningLevel > 0 || truck.status === 'breakdown';
         const name = truck.name.replace('Truck ', 'T');
         const progressPct = Math.round(truck.progress * 100);
+        const mood = truck.mood ?? 80;
+        const avatar = getDriverAvatar(truck.id);
+        const moodEmoji = getMoodEmoji(mood, truck.status);
 
         return (
           <div key={truck.id}
@@ -443,13 +449,12 @@ export default function GameScreen() {
             } as any} />
 
             <div style={{ padding: '7px 9px', display: 'flex', flexDirection: 'column', gap: 3 } as any}>
-              {/* Имя + статус */}
+              {/* Имя + эмодзи водителя + настроение */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' } as any}>
                 <span style={{ fontSize: 13, fontWeight: 900, color: '#fff', letterSpacing: 0.3 } as any}>{name}</span>
-                <span style={{
-                  fontSize: 8, fontWeight: 700, color: color,
-                  background: `${color}18`, padding: '1px 5px', borderRadius: 4,
-                } as any}>●</span>
+                <span style={{ fontSize: 14, lineHeight: 1 } as any} title={`Настроение: ${mood}%`}>
+                  {avatar}{moodEmoji}
+                </span>
               </div>
 
               {/* Статус */}
