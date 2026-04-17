@@ -75,7 +75,12 @@ export default function GameScreen() {
   } = useGameStore();
 
   const [activeTab, setActiveTab] = useState<Tab>(() => {
-    try { return (localStorage.getItem('dispatch-active-tab') as Tab) || 'trucks'; } catch { return 'trucks'; }
+    try {
+      const saved = localStorage.getItem('dispatch-active-tab') as Tab;
+      if (saved) return saved;
+    } catch {}
+    // Десктоп (≥900px) → trucks, мобильный → map
+    return (typeof window !== 'undefined' && window.innerWidth >= 900) ? 'trucks' : 'map';
   });
 
   // Сохраняем активную вкладку при каждом переключении
