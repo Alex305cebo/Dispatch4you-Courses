@@ -179,17 +179,19 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
       const chart = chartRef.current;
       if (!chart) return;
       const trucks = trucksRef.current;
-      // Приоритет: назначенный трак → выбранный трак → первый активный
-      const targetId = followTruckIdRef.current ?? selectedTruck?.truckId;
+      // Приоритет: назначенный трак → кликнутый трак → первый активный (loaded/driving)
+      const targetId = followTruckIdRef.current ?? selectedTruckRef.current?.truckId;
       const target = targetId
         ? trucks.find((t: any) => t.id === targetId)
-        : trucks.find((t: any) => t.status === 'loaded' || t.status === 'driving');
+        : trucks.find((t: any) => t.status === 'loaded' || t.status === 'driving') ?? trucks[0];
       if (target) {
         chart.zoomToGeoPoint({ longitude: target.position[0], latitude: target.position[1] }, 5, true);
       }
     }, 2000);
     return () => clearInterval(followIntervalRef.current);
-  }, [followTruck, selectedTruck]);
+  // selectedTruck намеренно убран из зависимостей — используем ref чтобы не перезапускать интервал
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [followTruck]);
 
   // Слушаем событие назначения груза — включаем слежение за конкретным траком
   useEffect(() => {
@@ -1198,7 +1200,12 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
           style={{ ...mapBtnStyle(), fontSize: 22, fontWeight: 900, color: "#94a3b8" }}>－</button>
         {/* 🎯 Follow */}
         <button
-          onClick={() => { resetMapBtnsTimer(); followTruckIdRef.current = null; setFollowTruck(f => !f); }}
+          onClick={() => {
+            resetMapBtnsTimer();
+            const next = !followTruck;
+            if (!next) followTruckIdRef.current = null; // сбрасываем только при выключении
+            setFollowTruck(next);
+          }}
           title={followTruck ? "Отключить слежение" : "Следить за траком"}
           style={mapBtnStyle(followTruck)}
         >🎯</button>
