@@ -2074,6 +2074,10 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   saveGame: () => {
     try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        console.warn('⚠️ localStorage not available');
+        return;
+      }
       const state = get();
       const saveData = {
         version: 3,
@@ -2107,6 +2111,10 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   loadGame: () => {
     try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        console.warn('⚠️ localStorage not available');
+        return false;
+      }
       const saved = localStorage.getItem('dispatcher-game-save');
       if (!saved) return false;
       
@@ -2189,6 +2197,10 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   clearSave: () => {
     try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        console.warn('⚠️ localStorage not available');
+        return;
+      }
       localStorage.removeItem('dispatcher-game-save');
       console.log('✅ Save cleared');
     } catch (error) {

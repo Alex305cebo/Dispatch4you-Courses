@@ -31,6 +31,10 @@ export const useAccountStore = create<AccountState>((set, get) => ({
 
   loadFromStorage: () => {
     try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        set({ accounts: [], currentNickname: null });
+        return;
+      }
       const raw = localStorage.getItem(STORAGE_KEY);
       const accounts: Account[] = raw ? JSON.parse(raw) : [];
       const current = localStorage.getItem(CURRENT_KEY) || null;
@@ -42,6 +46,7 @@ export const useAccountStore = create<AccountState>((set, get) => ({
 
   saveToStorage: () => {
     try {
+      if (typeof window === 'undefined' || !window.localStorage) return;
       const { accounts, currentNickname } = get();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
       if (currentNickname) localStorage.setItem(CURRENT_KEY, currentNickname);
@@ -50,6 +55,7 @@ export const useAccountStore = create<AccountState>((set, get) => ({
   },
 
   login: (nickname: string) => {
+    if (typeof window === 'undefined' || !window.localStorage) return;
     const { accounts } = get();
     const exists = accounts.find(a => a.nickname.toLowerCase() === nickname.toLowerCase());
     if (!exists) {
@@ -72,11 +78,13 @@ export const useAccountStore = create<AccountState>((set, get) => ({
   },
 
   logout: () => {
+    if (typeof window === 'undefined' || !window.localStorage) return;
     set({ currentNickname: null });
     localStorage.removeItem(CURRENT_KEY);
   },
 
   updateStats: (earned: number, truckCount: number) => {
+    if (typeof window === 'undefined' || !window.localStorage) return;
     const { accounts, currentNickname } = get();
     if (!currentNickname) return;
     const updated = accounts.map(a => {

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { Colors } from '../constants/colors';
 import { useGameStore, Notification, formatGameTime } from '../store/gameStore';
-import BrokerCommunicationModal from './BrokerCommunicationModal';
+// import BrokerCommunicationModal from './BrokerCommunicationModal';
 import DriverCommunicationModal from './DriverCommunicationModal';
 import { ThreadChatPopup } from './EmailPanel';
 

@@ -1521,10 +1521,10 @@ input{font-family:inherit;outline:none}
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<script src="us-map-data.js?v=20260418"></script>
-<script src="game-cities-data.js?v=20260418"></script>
-<script src="game-routes-data.js?v=20260418"></script>
-<script src="game-weather.js?v=20260418"></script>
+<script src="us-map-data.js?v=20260419"></script>
+<script src="game-cities-data.js?v=20260419"></script>
+<script src="game-routes-data.js?v=20260419"></script>
+<script src="game-weather.js?v=20260419"></script>
 <script>
 // Заглушки для функций из game2-features.js
 function showMorningBriefing(callback) { if(callback) callback(); }
@@ -6143,12 +6143,16 @@ function startShift(truckCount, sessionName) {
 // INIT — LOGIN & MENU
 // ═══════════════════════════════════════════════════════════════════
 function initLogin() {
+  console.log('🔧 initLogin called');
   const input = document.getElementById('login-input');
   const btn = document.getElementById('login-btn');
   const err = document.getElementById('login-error');
+  
+  console.log('Elements found:', { input, btn, err });
 
   input.addEventListener('input', () => {
     const v = input.value.trim();
+    console.log('Input value:', v, 'Length:', v.length);
     btn.disabled = v.length < 2;
     err.textContent = '';
   });
@@ -6724,25 +6728,29 @@ function briefWeatherClick(idx) {
 // ═══════════════════════════════════════════════════════════════════
 // MAIN INIT
 // ═══════════════════════════════════════════════════════════════════
-loadAccount();
 
-// АВТОЗАПУСК — сразу начинаем игру с 3 траками
-Account.nickname = Account.nickname || 'Dispatcher';
-saveAccount();
+// Ждём загрузки DOM перед инициализацией
+document.addEventListener('DOMContentLoaded', () => {
+  loadAccount();
 
-initLogin();
-initMenu();
-initGameControls();
+  // Инициализация UI
+  initLogin();
+  initMenu();
+  initGameControls();
 
-// Запускаем игру
-clearSave();
-startShift(3);
+  // Показываем экран логина или меню
+  if (Account.nickname) {
+    showMenu();
+  } else {
+    showScreen('login');
+  }
 
-// Preload distances for common routes
-const topCities = ['Chicago','Houston','Dallas','Atlanta','New York','Los Angeles','Miami','Denver','Seattle','Phoenix'];
-preloadDistances(topCities);
+  // Preload distances for common routes
+  const topCities = ['Chicago','Houston','Dallas','Atlanta','New York','Los Angeles','Miami','Denver','Seattle','Phoenix'];
+  preloadDistances(topCities);
 
-console.log('🚛 Dispatch Office v2.6.0 loaded — AUTOSTART');
+  console.log('🚛 Dispatch Office v2.6.0 loaded');
+});
 </script>
 
 </body>

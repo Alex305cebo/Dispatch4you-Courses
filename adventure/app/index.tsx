@@ -21,6 +21,10 @@ export default function HomeScreen() {
 
   function checkSave() {
     try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        setHasSave(false);
+        return;
+      }
       const raw = localStorage.getItem('dispatcher-game-save');
       if (!raw) { setHasSave(false); return; }
       const save = JSON.parse(raw);
