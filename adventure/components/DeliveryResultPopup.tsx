@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useGameStore, DeliveryResult } from '../store/gameStore';
 
@@ -124,6 +124,10 @@ export default function DeliveryResultPopup() {
                   <PnlRow label="Trailer Payment (5%)" value={-result.trailerPayment} color="#f87171" />
                   {result.lumperCost > 0 && <PnlRow label="Lumper (разгрузка)" value={-result.lumperCost} color="#f87171" />}
                   <PnlRow label="TOTAL EXPENSES" value={-result.totalExpenses} color="#f87171" bold />
+                  {(result.roadsideCost ?? 0) > 0 && <PnlRow label="🚨 Roadside Assistance" value={-(result.roadsideCost ?? 0)} color="#ef4444" />}
+                  {(result.tireCost ?? 0) > 0 && <PnlRow label="💥 Замена шин" value={-(result.tireCost ?? 0)} color="#ef4444" />}
+                  {(result.otherRepairCost ?? 0) > 0 && <PnlRow label="🔧 Прочий ремонт" value={-(result.otherRepairCost ?? 0)} color="#ef4444" />}
+                  {(result.lateDeliveryFine ?? 0) > 0 && <PnlRow label="⏰ Штраф за опоздание" value={-(result.lateDeliveryFine ?? 0)} color="#ef4444" />}
                 </View>
 
                 {/* Итог */}

@@ -36,7 +36,6 @@ export interface Truck {
   totalDeliveries: number; // всего доставок
   hosViolations: number; // количество нарушений HOS
   tripExpenses: Array<{ label: string; amount: number; minute: number }>; // доп. расходы за поездку
-  tripExpenses: Array<{ label: string; amount: number; minute: number }>; // доп. расходы за поездку
   lastInspection: number; // минута последней инспекции
   idleSinceMinute?: number; // минута когда трак встал (для idle warning)
   outOfOrderUntil?: number; // минута до которой трак out of order (police inspection)
@@ -56,6 +55,19 @@ export interface Truck {
   preRestDestCity?: string;     // город назначения до отдыха
   preRestProgress?: number;     // прогресс маршрута до отдыха
   preRestRoutePath?: Array<[number, number]> | null; // маршрут до отдыха
+  // ── 30-MIN BREAK ──
+  onMandatoryBreak?: boolean;
+  mandatoryBreakDone?: boolean;
+  mandatoryBreakStartMinute?: number;
+  mandatoryBreakDuration?: number;
+  // ── NIGHT STOP ──
+  onNightStop?: boolean;
+  nightStopDone?: boolean;
+  nightStopStartMinute?: number;
+  nightStopDuration?: number;
+  nightStopName?: string;
+  hadNightStop?: boolean;
+  nightStopDelayMinutes?: number; // суммарная задержка из-за ночёвок
 }
 
 export interface LoadOffer {
@@ -1115,6 +1127,183 @@ export const useGameStore = create<GameState>((set, get) => ({
         } as any;
       }
 
+      // ── 30-MIN MANDATORY BREAK: после 8ч вождения (FMCSA §395.3) ──
+      // hoursLeft начинается с 11 → после 8ч вождения = hoursLeft ≤ 3.0
+      if ((truck.status === 'driving' || truck.status === 'loaded') &&
+          truck.hoursLeft <= 3.0 && truck.hoursLeft > 1.5 &&
+          !(truck as any).mandatoryBreakDone &&
+          !(truck as any).drivingToHosStop &&
+          !(truck as any).onMandatoryBreak) {
+        const nearestStop = findNearestTruckStop(truck.position[0], truck.position[1], 'rest_area');
+        // Только один раз за смену — случайный шанс 40% за тик чтобы не все разом
+        if (Math.random() < 0.4) {
+          get().addNotification({
+            type: 'email', priority: 'medium',
+            from: `${truck.driver}`,
+            subject: `☕ ${truck.name} — обязательный 30-мин перерыв`,
+            message: `${truck.driver} остановился на "${nearestStop.name}" для обязательного 30-минутного перерыва (FMCSA §395.3 — после 8ч вождения). Продолжит через 30 минут.`,
+            actionRequired: false,
+            relatedTruckId: truck.id,
+          });
+          return {
+            ...truck,
+            onMandatoryBreak: true,
+            mandatoryBreakStartMinute: newMinute,
+            mandatoryBreakDuration: 30, // 30 игровых минут
+            position: nearestStop.position,
+            preRestStatus: truck.status,
+            preRestDestCity: truck.destinationCity,
+            preRestProgress: truck.progress,
+            preRestRoutePath: truck.routePath,
+            resumeAfterRest: !!truck.currentLoad,
+          } as any;
+        }
+      }
+
+      // ── 30-MIN BREAK: ждём пока закончится ──
+      if ((truck as any).onMandatoryBreak) {
+        const breakStart = (truck as any).mandatoryBreakStartMinute ?? newMinute;
+        const breakDuration = (truck as any).mandatoryBreakDuration ?? 30;
+        const elapsed = newMinute - breakStart;
+        if (elapsed >= breakDuration) {
+          // Перерыв закончен — продолжаем маршрут
+          const preRestDest = (truck as any).preRestDestCity;
+          const preRestPath = (truck as any).preRestRoutePath;
+          const preRestProg = (truck as any).preRestProgress ?? truck.progress;
+          get().addNotification({
+            type: 'email', priority: 'low',
+            from: `${truck.driver}`,
+            subject: `✅ ${truck.name} продолжает маршрут`,
+            message: `${truck.driver} завершил 30-минутный перерыв. Продолжает движение${preRestDest ? ` в ${preRestDest}` : ''}.`,
+            actionRequired: false,
+            relatedTruckId: truck.id,
+          });
+          return {
+            ...truck,
+            onMandatoryBreak: false,
+            mandatoryBreakDone: true, // больше не останавливаем за эту смену
+            mandatoryBreakStartMinute: undefined,
+            status: ((truck as any).preRestStatus ?? truck.status) as TruckStatus,
+            destinationCity: preRestDest ?? truck.destinationCity,
+            progress: preRestProg,
+            routePath: preRestPath ?? truck.routePath,
+            preRestStatus: undefined,
+            preRestDestCity: undefined,
+            preRestProgress: undefined,
+            preRestRoutePath: undefined,
+          } as any;
+        }
+        return truck; // ждём
+      }
+
+      // ── НОЧНАЯ ОСТАНОВКА: 22:00-06:00 (игровое время) ──
+      // Игровое время: gameMinute 0 = 08:43, 1 мин = 1 игровая минута
+      // 22:00 = 08:43 + 13ч17мин = 797 мин от старта
+      // 06:00 = 08:43 + 21ч17мин = 1277 мин (следующий день)
+      const NIGHT_START = 797;  // ~22:00
+      const NIGHT_END   = 1277; // ~06:00 следующего дня
+      const isNightTime = newMinute >= NIGHT_START && newMinute <= NIGHT_END;
+      if ((truck.status === 'driving' || truck.status === 'loaded') &&
+          isNightTime &&
+          !(truck as any).nightStopDone &&
+          !(truck as any).onNightStop &&
+          !(truck as any).drivingToHosStop &&
+          !(truck as any).onMandatoryBreak) {
+        // Шанс остановки на ночь: 25% за тик в ночное время (не все водители останавливаются)
+        if (Math.random() < 0.25) {
+          const nearestStop = findNearestTruckStop(truck.position[0], truck.position[1], 'truck_stop');
+          const nightRestMinutes = 480 + Math.floor(Math.random() * 120); // 8-10 часов
+          const hasLoad = !!truck.currentLoad;
+          // Проверяем — может ли опоздать на доставку?
+          const estimatedDelay = nightRestMinutes; // минут задержки
+          const willBeLate = hasLoad && estimatedDelay > 120; // если задержка > 2ч — риск опоздания
+          get().addNotification({
+            type: 'email', priority: willBeLate ? 'high' : 'medium',
+            from: `${truck.driver}`,
+            subject: `🌙 ${truck.name} — ночёвка на ${nearestStop.name}`,
+            message: `${truck.driver} остановился на ночёвку на "${nearestStop.name}". Отдых ~${Math.round(nightRestMinutes/60)}ч.${willBeLate ? `\n\n⚠️ ВНИМАНИЕ: Возможное опоздание на доставку в ${truck.destinationCity}! Свяжись с брокером.` : ''}`,
+            actionRequired: willBeLate,
+            relatedTruckId: truck.id,
+          });
+          return {
+            ...truck,
+            onNightStop: true,
+            nightStopStartMinute: newMinute,
+            nightStopDuration: nightRestMinutes,
+            nightStopName: nearestStop.name,
+            position: nearestStop.position,
+            preRestStatus: truck.status,
+            preRestDestCity: truck.destinationCity,
+            preRestProgress: truck.progress,
+            preRestRoutePath: truck.routePath,
+            resumeAfterRest: hasLoad,
+            // Помечаем что была ночёвка — для расчёта штрафа при доставке
+            hadNightStop: true,
+            nightStopDelayMinutes: ((truck as any).nightStopDelayMinutes ?? 0) + nightRestMinutes,
+          } as any;
+        }
+      }
+
+      // ── НОЧНАЯ ОСТАНОВКА: ждём пока закончится ──
+      if ((truck as any).onNightStop) {
+        const nightStart = (truck as any).nightStopStartMinute ?? newMinute;
+        const nightDuration = (truck as any).nightStopDuration ?? 480;
+        const elapsed = newMinute - nightStart;
+        if (elapsed >= nightDuration) {
+          const stopName = (truck as any).nightStopName ?? 'Truck Stop';
+          const preRestDest = (truck as any).preRestDestCity;
+          const preRestPath = (truck as any).preRestRoutePath;
+          const preRestProg = (truck as any).preRestProgress ?? truck.progress;
+          const shouldResume = (truck as any).resumeAfterRest && preRestDest;
+          // Сбрасываем HOS после ночёвки (≥8ч = полный сброс)
+          const newHoursLeft = nightDuration >= 480 ? 11 : truck.hoursLeft;
+          get().addNotification({
+            type: 'email', priority: 'low',
+            from: `${truck.driver}`,
+            subject: `☀️ ${truck.name} выезжает с ${stopName}`,
+            message: `${truck.driver} отдохнул на "${stopName}" (${Math.round(nightDuration/60)}ч). HOS ${nightDuration >= 480 ? 'сброшен до 11ч' : `осталось ${newHoursLeft.toFixed(1)}ч`}. ${shouldResume ? `Продолжает маршрут в ${preRestDest}.` : 'Ждёт груз.'}`,
+            actionRequired: false,
+            relatedTruckId: truck.id,
+          });
+          if (shouldResume) {
+            return {
+              ...truck,
+              onNightStop: false,
+              nightStopDone: true,
+              nightStopStartMinute: undefined,
+              nightStopDuration: undefined,
+              nightStopName: undefined,
+              hoursLeft: newHoursLeft,
+              status: ((truck as any).preRestStatus ?? 'loaded') as TruckStatus,
+              destinationCity: preRestDest,
+              progress: preRestProg,
+              routePath: preRestPath ?? truck.routePath,
+              preRestStatus: undefined,
+              preRestDestCity: undefined,
+              preRestProgress: undefined,
+              preRestRoutePath: undefined,
+            } as any;
+          }
+          return {
+            ...truck,
+            onNightStop: false,
+            nightStopDone: true,
+            nightStopStartMinute: undefined,
+            nightStopDuration: undefined,
+            nightStopName: undefined,
+            hoursLeft: newHoursLeft,
+            status: 'idle' as TruckStatus,
+            idleSinceMinute: newMinute,
+            idleWarningLevel: 0,
+            preRestStatus: undefined,
+            preRestDestCity: undefined,
+            preRestProgress: undefined,
+            preRestRoutePath: undefined,
+          } as any;
+        }
+        return truck; // ждём
+      }
+
       // ── HOS: трак исчерпал лимит — экстренная остановка ──
       if ((truck.status === 'driving' || truck.status === 'loaded') && truck.hoursLeft <= 0) {
         const nearestStop = findNearestTruckStop(truck.position[0], truck.position[1]);
@@ -1285,23 +1474,26 @@ export const useGameStore = create<GameState>((set, get) => ({
           const tireCost = tripExpArr.filter((e: any) => e.label.includes('шин') || e.label.includes('колес')).reduce((s: number, e: any) => s + e.amount, 0);
           const otherRepairCost = tripExpArr.filter((e: any) => !e.label.includes('Roadside') && !e.label.includes('шин') && !e.label.includes('колес')).reduce((s: number, e: any) => s + e.amount, 0);
           const tripExtraExpenses = tripExpArr.reduce((s: number, e: any) => s + e.amount, 0);
-          // Штраф за опоздание: если delivery window просрочена —  за каждый час сверх
-          const deliveryWindowMinutes = 1440; // 24ч окно по умолчанию
-          const lateMinutes = Math.max(0, waitTime - deliveryWindowMinutes);
-          const lateDeliveryFine = Math.round(lateMinutes / 60) * 150;
+          // Штраф за опоздание: если была ночёвка которая сдвинула доставку
+          const nightDelay = (truck as any).nightStopDelayMinutes ?? 0;
+          // Считаем опоздание только если ночёвка добавила > 2ч задержки
+          const lateDeliveryFine = nightDelay > 120 ? Math.round((nightDelay - 120) / 60) * 150 : 0;
           const adjustedNetProfit = netProfit - tripExtraExpenses - lateDeliveryFine;
           const deliveryResult: DeliveryResult = {
             truckId: truck.id, truckName: truck.name, driverName: truck.driver,
             loadId: load.id, fromCity: load.fromCity, toCity: load.toCity,
             miles, agreedRate, fuelCost, driverPay, dispatchFee, factoringFee,
-            lumperCost, detentionPay, truckPayment, trailerPayment, grossRevenue, totalExpenses, netProfit,
+            lumperCost, detentionPay, truckPayment, trailerPayment, grossRevenue,
+            roadsideCost, tireCost, otherRepairCost, lateDeliveryFine, tripExtraExpenses,
+            totalExpenses: totalExpenses + tripExtraExpenses + lateDeliveryFine,
+            netProfit: adjustedNetProfit,
             ratePerMile: miles > 0 ? Math.round((agreedRate / miles) * 100) / 100 : 0,
-            profitPerMile: miles > 0 ? Math.round((netProfit / miles) * 100) / 100 : 0,
+            profitPerMile: miles > 0 ? Math.round((adjustedNetProfit / miles) * 100) / 100 : 0,
             minute: newMinute,
           };
           console.log('🎉 DeliveryResult created:', deliveryResult.loadId, deliveryResult.netProfit);
           newDeliveryResults.push(deliveryResult);
-          get().addMoney(netProfit, `Доставка ${load.fromCity}→${load.toCity}`);
+          get().addMoney(adjustedNetProfit, `Доставка ${load.fromCity}→${load.toCity}`);
           get().addNotification({
             type: 'email', priority: 'low',
             from: load.brokerName,
@@ -2110,6 +2302,13 @@ export const useGameStore = create<GameState>((set, get) => ({
           routePath,
           idleSinceMinute: undefined,
           idleWarningLevel: 0 as 0,
+          // Сбрасываем флаги перерывов для нового рейса
+          mandatoryBreakDone: false,
+          nightStopDone: false,
+          hadNightStop: false,
+          nightStopDelayMinutes: 0,
+          onMandatoryBreak: false,
+          onNightStop: false,
         } : t
       );
       
