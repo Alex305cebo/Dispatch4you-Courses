@@ -1028,7 +1028,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
           }
           
           .map-legend {
-            bottom: 8px !important;
+            bottom: 76px !important;
             left: 8px !important;
             padding: 6px 8px !important;
             border-radius: 8px !important;
@@ -1054,7 +1054,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
           }
           
           .map-truck-card {
-            bottom: 10px !important;
+            bottom: 76px !important;
             left: 8px !important;
             right: 8px !important;
             transform: none !important;
