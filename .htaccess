@@ -9,6 +9,13 @@ RewriteRule ^favicon\.ico$ favicon.svg [L,T=image/svg+xml]
 # ВСЕ редиректы (www, HTTPS) убраны — Hostinger управляет ими на уровне сервера
 
 # ========================================
+# React SPA — /game/ всегда отдаёт index.html
+# ========================================
+RewriteCond %{REQUEST_URI} ^/game/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ /game/index.html [L]
+
+# ========================================
 # Firebase Auth files — serve without extension as HTML
 # ========================================
 <FilesMatch "^(handler|iframe|links)$">
@@ -18,7 +25,7 @@ RewriteRule ^favicon\.ico$ favicon.svg [L,T=image/svg+xml]
 # ========================================
 # Clean URLs — /pages/name → /pages/name.html
 # ========================================
-RewriteCond %{REQUEST_URI} !^/game/
+RewriteCond %{REQUEST_URI} !^/game
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME}.html -f
