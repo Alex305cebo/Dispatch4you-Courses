@@ -1521,12 +1521,15 @@ input{font-family:inherit;outline:none}
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<script src="us-map-data.js?v=20260417"></script>
-<script src="game-cities-data.js?v=20260417"></script>
-<script src="game-routes-data.js?v=20260417"></script>
-<script src="game-weather.js?v=20260417"></script>
-<script src="game2-features.js?v=20260417"></script>
+<script src="us-map-data.js?v=20260418"></script>
+<script src="game-cities-data.js?v=20260418"></script>
+<script src="game-routes-data.js?v=20260418"></script>
+<script src="game-weather.js?v=20260418"></script>
 <script>
+// Заглушки для функций из game2-features.js
+function showMorningBriefing(callback) { if(callback) callback(); }
+function openNegotiationV2(load) { console.log('Negotiation not implemented'); }
+function renderFinancialDashboard() { return ''; }
 // ═══════════════════════════════════════════════════════════════════
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════════════
@@ -1535,6 +1538,17 @@ const SHIFT_START_HOUR = 8;
 const SHIFT_START_MIN = 43;
 const SAVE_KEY = 'dispatch-office-v2-save';
 const ACCOUNT_KEY = 'dispatch-office-v2-account';
+
+const STATUS_COLOR = {
+  idle:'#64748b', driving:'#38bdf8', loaded:'#34d399',
+  at_pickup:'#fbbf24', at_delivery:'#a78bfa',
+  breakdown:'#f87171', waiting:'#fb923c',
+};
+const STATUS_LABEL = {
+  idle:'Свободен', driving:'К погрузке', loaded:'В пути',
+  at_pickup:'Погрузка', at_delivery:'Разгрузка',
+  breakdown:'Поломка', waiting:'Detention',
+};
 
 // Города США [lng, lat] — из OpenStreetMap/Census Bureau (77 городов)
 // Подгружаются из game-cities-data.js, здесь fallback
@@ -1695,19 +1709,8 @@ function preloadDistances(cities) {
   loadNext();
 }
 
-const STATUS_COLOR = {
-  idle:'#64748b', driving:'#38bdf8', loaded:'#34d399',
-  at_pickup:'#fbbf24', at_delivery:'#a78bfa',
-  breakdown:'#f87171', waiting:'#fb923c',
-};
-const STATUS_LABEL = {
-  idle:'Свободен', driving:'К погрузке', loaded:'В пути',
-  at_pickup:'Погрузка', at_delivery:'Разгрузка',
-  breakdown:'Поломка', waiting:'Detention',
-};
-
 // ═══════════════════════════════════════════════════════════════════
-// GAME STATE
+// GAME STATE (using constants defined above)
 // ═══════════════════════════════════════════════════════════════════
 let G = {
   phase: 'menu',       // menu | playing | shift_end
@@ -1738,6 +1741,12 @@ let G = {
 };
 
 function uid(prefix='') { return prefix + (G._nextId++); }
+
+// UI State
+let currentTab = 'loadboard';
+let clockInterval = null;
+let mapCanvas = null;
+let mapCtx = null;
 
 // ═══════════════════════════════════════════════════════════════════
 // ACCOUNT
@@ -1787,6 +1796,14 @@ function hasSave() {
     return d && d.v === 2 && d.phase === 'playing';
   } catch { return false; }
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// START SHIFT - Full implementation is below in the main script section
+// ═══════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════
+// RENDER FUNCTIONS - Implemented below in the main script section
+// ═══════════════════════════════════════════════════════════════════
 </script>
 
 <script>
@@ -4248,6 +4265,45 @@ function onStatePopupTruckClick(truckId) {
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
+// RENDER — PANEL (Desktop & Mobile)
+// ═══════════════════════════════════════════════════════════════════
+function renderPanel(tab) {
+  const activeTab = tab || currentTab || 'loadboard';
+  currentTab = activeTab;
+  
+  // Determine content based on tab
+  let content;
+  if (activeTab === 'loadboard') {
+    content = renderLoadBoard();
+  } else if (activeTab === 'email') {
+    content = renderEmailPanel();
+  } else if (activeTab === 'myloads') {
+    content = renderMyLoadsPanel ? renderMyLoadsPanel() : '<div style="padding:20px;text-align:center;color:#64748b">Мои грузы</div>';
+  } else if (activeTab === 'trucks') {
+    content = renderTrucksPanel();
+  } else {
+    content = '<div style="padding:20px;text-align:center;color:#64748b">Панель</div>';
+  }
+  
+  // Update desktop panel
+  const desktopPanel = document.getElementById('panel-content');
+  if (desktopPanel) {
+    desktopPanel.innerHTML = content;
+  }
+  
+  // Update mobile panel
+  const mobilePanel = document.getElementById('mobile-panel');
+  if (mobilePanel) {
+    mobilePanel.innerHTML = content;
+  }
+  
+  // Attach event listeners
+  if (typeof attachPanelEvents === 'function') {
+    attachPanelEvents();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // RENDER — TOP BAR
 // ═══════════════════════════════════════════════════════════════════
 function renderTopBar() {
@@ -6124,6 +6180,7 @@ function showMenu() {
   showScreen('menu');
 }
 
+// ═══════════════════════════════════════════════════════════════════
 function initMenu() {
   document.getElementById('btn-logout').addEventListener('click', () => {
     logoutAccount();
@@ -6199,39 +6256,6 @@ function initGameControls() {
     openGameMenu();
   });
 }
-
-// ═══════════════════════════════════════════════════════════════════
-// BOOT
-// ═══════════════════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
-  // Attach new modal overlays for click-to-close
-  document.querySelectorAll('.modal-overlay').forEach(overlay => {
-    if (!overlay._clickAttached) {
-      overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
-      overlay._clickAttached = true;
-    }
-  });
-  loadAccount();
-  initLogin();
-  initMenu();
-  initGameControls();
-
-  // Если уже залогинен
-  if (Account.nickname) {
-    showMenu();
-  }
-
-  // Инициализация карты
-  if (typeof initMap === 'function') {
-    initMap();
-  }
-
-  // Сохранение при закрытии
-  window.addEventListener('beforeunload', () => {
-    if (G.phase === 'playing') saveGame();
-  });
-});
-</script>
 
 <!-- ═══════════════════════════════════════════════════════════════════
      MORNING BRIEFING
@@ -6667,6 +6691,58 @@ function briefWeatherClick(idx) {
   const msg = `${w.type} — ${w.region}\n\n${details[w.severity]}\n\n${w.note}`;
   alert(msg);
 }
+</script>
+
+</body>
+</html>
+          : currentTab === 'trucks' ? renderTrucksPanel()
+          : '';
+      }
+    });
+  });
+
+  // Menu button
+  document.getElementById('btn-menu').addEventListener('click', openGameMenu);
+
+  // Notifications button
+  document.getElementById('btn-notifications').addEventListener('click', () => {
+    openModal('modal-notifications');
+    renderNotifications();
+  });
+
+  // Map zoom buttons
+  document.getElementById('btn-zoom-in').addEventListener('click', () => {
+    if (window.mapZoom) window.mapZoom = Math.min(window.mapZoom + 0.5, 5);
+    renderMap();
+  });
+  document.getElementById('btn-zoom-out').addEventListener('click', () => {
+    if (window.mapZoom) window.mapZoom = Math.max(window.mapZoom - 0.5, 0.5);
+    renderMap();
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MAIN INIT
+// ═══════════════════════════════════════════════════════════════════
+loadAccount();
+
+// АВТОЗАПУСК — сразу начинаем игру с 3 траками
+Account.nickname = Account.nickname || 'Dispatcher';
+saveAccount();
+
+initLogin();
+initMenu();
+initGameControls();
+
+// Запускаем игру
+clearSave();
+startShift(3);
+
+// Preload distances for common routes
+const topCities = ['Chicago','Houston','Dallas','Atlanta','New York','Los Angeles','Miami','Denver','Seattle','Phoenix'];
+preloadDistances(topCities);
+
+console.log('🚛 Dispatch Office v2.6.0 loaded — AUTOSTART');
 </script>
 
 </body>
