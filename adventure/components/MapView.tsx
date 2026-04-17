@@ -99,6 +99,16 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
   const { trucks, availableLoads, phase, gameMinute } = useGameStore();
   const activeTrucks = phase !== 'menu' ? trucks : [];
   const [legendVisible, setLegendVisible] = useState(true);
+  const legendTimerRef = useRef<any>(null);
+
+  // Автозакрытие через 4 секунды после открытия
+  useEffect(() => {
+    if (legendVisible) {
+      clearTimeout(legendTimerRef.current);
+      legendTimerRef.current = setTimeout(() => setLegendVisible(false), 4000);
+    }
+    return () => clearTimeout(legendTimerRef.current);
+  }, [legendVisible]);
   const trucksRef = useRef(activeTrucks);
   const loadsRef = useRef(availableLoads);
   const gameMinuteRef = useRef(gameMinute);
@@ -727,7 +737,8 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
         border: "1px solid rgba(45,106,79,0.4)", padding: legendVisible ? "8px 12px" : "5px 10px",
         display: "flex", flexDirection: "column", gap: 4,
         fontFamily: "sans-serif", pointerEvents: "auto",
-        transition: "padding 0.2s",
+        transition: "padding 0.2s, opacity 0.6s ease",
+        opacity: legendVisible ? 1 : 0.85,
       } as any} className="map-legend">
         {/* Toggle кнопка */}
         <div
