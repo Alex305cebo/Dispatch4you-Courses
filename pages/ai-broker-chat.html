@@ -1938,28 +1938,48 @@ function startRec(){
       } else if(!ok && isRec){
         // Whisper failed — fall back to browser SR
         useWhisper=false;
-        if(recognition){ try{recognition.start();}catch(e){} }
-        else{ isRec=false; micBtn.classList.remove('rec'); updateWidgetState('idle'); }
+        _startBrowserSR();
       }
     });
   } else {
-    if(!recognition){
-      showNotification('🎙️ Голосовой ввод недоступен. Обновите страницу.','error');
-      isRec=false; micBtn.classList.remove('rec'); updateWidgetState('idle'); return;
-    }
-    startVoiceVisualizer();
-    try{
-      recognition.start();
-    }catch(e){
-      if(e.name==='InvalidStateError'){
-        try{recognition.stop();}catch(ex){}
-        setTimeout(()=>{ try{recognition.start();}catch(ex){ isRec=false; micBtn.classList.remove('rec'); updateWidgetState('idle'); } },200);
-      }else{
-        isRec=false; micBtn.classList.remove('rec'); updateWidgetState('idle');
-        showNotification('❌ Не удалось запустить распознавание речи.','error');
-      }
-    }
+    _startBrowserSR();
   }
+}
+
+// Запускает браузерное распознавание речи — сначала получает разрешение через getUserMedia
+function _startBrowserSR(){
+  if(!recognition){
+    showNotification('🎙️ Голосовой ввод недоступен. Обновите страницу.','error');
+    isRec=false; if(micBtn){micBtn.classList.remove('rec');} updateWidgetState('idle'); return;
+  }
+  // Явно запрашиваем getUserMedia чтобы браузер показал диалог разрешения
+  navigator.mediaDevices.getUserMedia({audio:true,video:false})
+    .then(stream=>{
+      // Разрешение получено — запускаем визуализатор и распознавание
+      micStream=stream;
+      startVoiceVisualizer(stream);
+      try{
+        recognition.start();
+      }catch(e){
+        if(e.name==='InvalidStateError'){
+          try{recognition.stop();}catch(ex){}
+          setTimeout(()=>{ try{recognition.start();}catch(ex){ isRec=false; if(micBtn){micBtn.classList.remove('rec');} updateWidgetState('idle'); } },200);
+        }else{
+          isRec=false; if(micBtn){micBtn.classList.remove('rec');} updateWidgetState('idle');
+          showNotification('❌ Не удалось запустить распознавание речи.','error');
+        }
+      }
+    })
+    .catch(e=>{
+      isRec=false; if(micBtn){micBtn.classList.remove('rec');} updateWidgetState('idle');
+      if(e.name==='NotAllowedError'||e.name==='PermissionDeniedError'){
+        showNotification('🎙️ Разреши доступ к микрофону в браузере и нажми снова.','error');
+      } else if(e.name==='NotFoundError'){
+        showNotification('🎙️ Микрофон не найден. Подключи микрофон.','error');
+      } else {
+        showNotification('🎙️ Не удалось получить доступ к микрофону.','error');
+      }
+    });
 }
 
 function stopRec(){
