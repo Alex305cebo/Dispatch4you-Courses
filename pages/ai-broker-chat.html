@@ -378,10 +378,8 @@
         .tpi-send-btn:active{transform:scale(0.97);}
 
         /* RESPONSIVE */
-        /* ── SHORT VIEWPORT (маленькое окно по высоте) ── */
-        @media(max-height:700px){
-          body{height:auto;min-height:100dvh;overflow-y:auto}
-          .app{height:auto;overflow:visible;flex:none}
+        /* ── SHORT VIEWPORT (маленькое окно по высоте, только десктоп) ── */
+        @media(max-height:700px) and (min-width:769px){
           .app-layout{overflow:visible;flex:none;min-height:0;padding:12px}
           .app-layout.dialog-active{overflow:visible}
           .app-layout.dialog-active .transcript-panel{max-height:calc(100dvh - 64px - 40px);overflow-y:auto}
@@ -392,7 +390,7 @@
           .vcw-mic-container{margin:8px auto 8px}
           .sidebar-tips{margin-top:6px}
         }
-        @media(max-height:580px){
+        @media(max-height:580px) and (min-width:769px){
           .vcw-title{font-size:18px}
           .vcw-subtitle{display:none}
           .vcw-mic-container{margin:6px auto 6px}
@@ -421,220 +419,157 @@
           .app-layout.dialog-active .voice-chat-widget{max-width:min(360px,50vw);min-height:280px}
         }
 
-        /* Mobile (< 768px) */
+        /* ═══════════════════════════════════════════
+           MOBILE — единый no-scroll layout
+           Логика: body = 100dvh, всё внутри flex,
+           ничего не скроллится кроме чата в транскрипте
+           ═══════════════════════════════════════════ */
         @media(max-width:768px){
-          .app{padding:0;height:100dvh;overflow:hidden}
-          .hdr{padding:6px 10px 5px}
-          .av{width:28px;height:28px;font-size:12px}
-          .bn{font-size:12px}
-          .bs{font-size:10px}
-          .msg{max-width:88%;font-size:13px}
-          .input-area{padding:5px 8px 8px}
-          .sbar{padding:4px 8px}
-          .chat{padding:6px 10px}
+          html,body{height:100dvh;overflow:hidden}
+          .app{padding:0;height:100dvh;overflow:hidden;display:flex;flex-direction:column}
+          #shared-nav-container{flex-shrink:0}
 
-          /* Transcript display */
-          .transcript-display{padding:6px 10px;min-height:40px}
-          .transcript-interim{font-size:13px}
-          .transcript-final{font-size:13px}
-          .transcript-panel-interim{font-size:14px;padding:8px 12px;min-height:0}
-          .transcript-panel-interim.show{padding-left:34px}
-
-          /* Phrase hints */
-          .phrase-hints{padding:4px 10px 0}
-          .ph{font-size:10px;padding:4px 9px}
-
-          /* ── ЕДИНЫЙ БЛОК на мобильных ── */
+          /* app-layout занимает всё оставшееся место */
           .app-layout{
+            flex:1;
+            min-height:0;
             flex-direction:column;
-            padding:8px;
+            padding:6px 6px 6px;
             align-items:stretch;
             gap:0;
-            height:100%;
             overflow:hidden;
+            justify-content:flex-start;
           }
 
-          /* Виджет — верхняя часть единого блока */
+          /* ── ВИДЖЕТ (без диалога) — центрирован, не скроллится ── */
           .voice-chat-widget{
-            max-width:100%;
-            width:100%;
-            padding:12px 12px 8px;
-            border-radius:16px;
+            max-width:100%;width:100%;
+            padding:10px 12px 8px;
+            border-radius:14px;
             border:1px solid rgba(255,255,255,.1);
-            box-shadow:0 4px 24px rgba(0,0,0,.4);
-            overflow-y:auto;
+            overflow:hidden;
+            overflow-y:visible;
             align-self:auto;
             flex-shrink:0;
           }
 
-          /* Когда диалог активен — виджет сверху, транскрипт снизу, единый блок */
+          /* ── ДИАЛОГ АКТИВЕН: виджет сверху фиксированный, транскрипт растягивается ── */
+          .app-layout.dialog-active{
+            display:flex;flex-direction:column;
+            height:100%;overflow:hidden;
+          }
           .app-layout.dialog-active .voice-chat-widget{
-            max-width:100%;
-            border-radius:16px 16px 0 0;
-            padding:10px 12px 8px;
+            max-width:100%;width:100%;
+            border-radius:14px 14px 0 0;
+            padding:8px 12px 6px;
             border:1px solid rgba(255,255,255,.1);
             border-bottom:1px solid rgba(255,255,255,.05);
             order:1;
             animation:none;
             align-self:auto;
             flex-shrink:0;
-            overflow-y:auto;
-            max-height:35vh;
+            overflow:hidden;
+            /* высота виджета — фиксированная, подобрана чтобы влезало */
+            height:auto;
+            max-height:none;
           }
           .app-layout.dialog-active .transcript-panel{
             width:100%;
-            height:auto;
             flex:1;
-            min-height:150px;
-            max-height:calc(100dvh - 35vh - 16px);
-            border-radius:0 0 16px 16px;
+            min-height:0;
+            border-radius:0 0 14px 14px;
             border:1px solid rgba(255,255,255,.1);
             border-top:none;
             order:2;
             animation:none;
             overflow:hidden;
+            display:flex;
+            flex-direction:column;
+          }
+          /* чат внутри транскрипта скроллится */
+          .app-layout.dialog-active .transcript-panel-messages{
+            flex:1;min-height:0;overflow-y:auto;
           }
 
-          .sidebar-tips,.phrase-sheet{display:none}
-          .vcw-title{font-size:18px;margin-bottom:6px}
-          .vcw-subtitle{font-size:12px;margin-bottom:10px}
-          .vcw-mic-container{width:60px;height:60px;margin:8px auto 8px}
-          .vcw-mic-container .mic-btn{width:60px;height:60px;font-size:22px}
-          .vcw-features{gap:8px}
-          .vcw-feature-text{font-size:13px}
-          .transcript-panel{border-radius:0;border:none}
-          .transcript-panel-messages .msg{font-size:13px}
-          .load-info-card{padding:8px 10px;margin-bottom:8px}
-          .say-this{padding:8px 10px;margin-bottom:8px}
-          .vcw-status{font-size:11px;margin-top:8px}
-        }
-
-        /* Small Mobile (< 480px) */
-        @media(max-width:480px){
-          .hdr{padding:5px 8px 4px}
-          .hdr-btns{gap:3px}
-          .hb{padding:4px 6px;font-size:10px}
-          .hb .txt{display:none}
-          .av{width:26px;height:26px;font-size:11px}
-          .bn{font-size:11px}
-          .bs{font-size:9px}
-
-          .msg{max-width:92%;font-size:12px;padding:6px 10px}
-          .msg .ts{font-size:9px}
-          .msg.broker .who{font-size:11px}
-
-          .mic-btn{width:34px;height:34px;font-size:14px}
-          .input-area{padding:4px 6px 6px}
-
-          .sc{font-size:11px;padding:4px 8px}
-          .sbar{padding:3px 6px;gap:3px}
-
-          .chat{padding:5px 8px;gap:5px}
-
-          /* Transcript display */
-          .transcript-display{padding:5px 8px;min-height:36px}
-          .transcript-interim{font-size:12px}
-          .transcript-final{font-size:12px}
-          .transcript-panel-interim{font-size:14px;padding:8px 12px}
-          .transcript-panel-interim.show{padding-left:36px}
-
-          /* Typing indicator */
-          .typing{padding:8px 14px}
-          .td{width:6px;height:6px}
-
-          /* Speaking indicator */
-          .speaking-indicator{padding:5px 10px;font-size:10px}
-          .speaking-indicator .wave span{width:2px;height:10px}
-          .speaking-indicator .wave span:nth-child(2){height:14px}
-          .speaking-indicator .wave span:nth-child(3){height:8px}
-
-          /* Phrase hints */
-          .phrase-hints{padding:3px 8px 0;gap:4px}
-          .ph{font-size:10px;padding:4px 8px}
-
-          /* Единый блок 480px */
-          .app-layout{padding:6px;gap:0}
-          .voice-chat-widget{padding:10px 10px 8px;border-radius:14px;max-height:32vh;overflow-y:auto}
-          .app-layout.dialog-active .voice-chat-widget{border-radius:14px 14px 0 0;padding:10px 10px 8px;max-height:32vh}
-          .app-layout.dialog-active .transcript-panel{border-radius:0 0 14px 14px;min-height:140px;max-height:calc(100dvh - 32vh - 12px)}
-
+          /* ── РАЗМЕРЫ ЭЛЕМЕНТОВ ВИДЖЕТА ── */
+          .sidebar-tips,.phrase-sheet,.vcw-subtitle,.vcw-features{display:none}
           .vcw-title{font-size:16px;margin-bottom:4px}
-          .vcw-subtitle{font-size:11px;margin-bottom:8px}
-          .vcw-mic-container{width:56px;height:56px;margin:6px auto 6px}
-          .vcw-mic-container .mic-btn{width:56px;height:56px;font-size:20px}
-          .vcw-feature-icon{width:24px;height:24px;font-size:15px}
-          .vcw-feature-text{font-size:12px}
-          .vcw-status{font-size:10px;margin-top:6px}
-          .transcript-panel-messages .msg{font-size:12px}
+          .vcw-mic-container{width:52px;height:52px;margin:4px auto 4px}
+          .vcw-mic-container .mic-btn{width:52px;height:52px;font-size:20px}
+          .pulse-ring{width:52px;height:52px}
+          .wave-ring{width:52px;height:52px}
+          .vcw-status{font-size:11px;margin-top:4px;min-height:18px}
 
-          .load-info-card{max-width:100%;padding:6px 8px;margin-bottom:6px}
-          .say-this{max-width:100%;padding:6px 8px;margin-bottom:6px}
-          .load-info-grid{grid-template-columns:1fr 1fr}
-          .load-info-item{padding:4px 6px}
-          .load-info-label{font-size:8px}
+          .load-info-card{
+            max-width:100%;padding:6px 10px;margin-bottom:6px;
+            border-radius:10px;
+          }
+          .load-info-badge{font-size:9px;margin-bottom:4px}
+          .load-info-route{font-size:14px;margin-bottom:6px}
+          .load-info-grid{grid-template-columns:repeat(3,1fr);gap:4px}
+          .load-info-item{padding:3px 5px;border-radius:6px}
+          .load-info-label{font-size:7px}
           .load-info-val{font-size:11px}
-          .say-this-text{font-size:12px}
+
+          .say-this{
+            max-width:100%;padding:6px 10px;margin-bottom:0;
+            border-radius:10px;
+          }
+          .say-this-header{margin-bottom:4px}
+          .say-this-text{font-size:12px;line-height:1.4}
+
+          /* транскрипт interim */
+          .transcript-panel-header{padding:8px 12px;font-size:11px}
+          .transcript-panel-interim{font-size:13px;padding:6px 10px;min-height:0}
+          .transcript-panel-interim.show{padding-left:30px}
+          .transcript-panel-messages .msg{font-size:12px;padding:7px 10px}
+          .transcript-panel-messages{padding:8px}
+
+          .hdr{padding:5px 10px 4px}
+          .av{width:26px;height:26px;font-size:11px}
+          .bn{font-size:12px}.bs{font-size:10px}
+          .phrase-hints{display:none}
         }
 
-        /* Extra Small Mobile (< 360px) */
+        /* ── 480px и меньше ── */
+        @media(max-width:480px){
+          .app-layout{padding:4px 4px 4px}
+          .vcw-title{font-size:14px;margin-bottom:2px}
+          .vcw-mic-container{width:48px;height:48px;margin:3px auto 3px}
+          .vcw-mic-container .mic-btn{width:48px;height:48px;font-size:18px}
+          .pulse-ring{width:48px;height:48px}
+          .wave-ring{width:48px;height:48px}
+          .vcw-status{font-size:10px;margin-top:3px;min-height:16px}
+
+          .load-info-route{font-size:13px;margin-bottom:4px}
+          .load-info-grid{gap:3px}
+          .load-info-val{font-size:10px}
+          .load-info-label{font-size:7px}
+
+          .say-this-text{font-size:11px}
+
+          .app-layout.dialog-active .voice-chat-widget{padding:6px 10px 5px}
+          .transcript-panel-messages .msg{font-size:11px;padding:6px 8px}
+        }
+
+        /* ── 360px и меньше ── */
         @media(max-width:360px){
-          .hdr{padding:4px 6px 3px}
-          .hdr-btns{gap:2px}
-          .hb{padding:3px 5px;font-size:9px}
-          .av{width:24px;height:24px;font-size:10px}
-          .av .dot{width:8px;height:8px}
-          .bn{font-size:10px}
-          .bs{font-size:8px}
+          .app-layout{padding:3px}
+          .vcw-title{font-size:13px}
+          .vcw-mic-container{width:44px;height:44px;margin:2px auto 2px}
+          .vcw-mic-container .mic-btn{width:44px;height:44px;font-size:16px}
+          .pulse-ring{width:44px;height:44px}
+          .wave-ring{width:44px;height:44px}
+          .vcw-status{font-size:10px;margin-top:2px}
 
-          .msg{font-size:11px;padding:5px 8px}
-          .msg .ts{font-size:8px}
-          .msg.broker .who{font-size:10px}
+          .load-info-card{padding:5px 8px;margin-bottom:4px}
+          .load-info-route{font-size:12px}
+          .load-info-val{font-size:10px}
+          .say-this{padding:5px 8px}
+          .say-this-text{font-size:11px}
 
-          .mic-btn{width:32px;height:32px;font-size:13px}
-          .input-area{padding:3px 5px 5px}
-
-          .sc{font-size:10px;padding:3px 7px}
-          .sbar{padding:2px 5px;gap:2px}
-
-          .chat{padding:4px 6px;gap:4px}
-
-          /* Transcript display */
-          .transcript-display{padding:4px 6px;min-height:32px}
-          .transcript-interim{font-size:11px}
-          .transcript-final{font-size:11px}
-
-          /* Typing indicator */
-          .typing{padding:6px 12px}
-          .td{width:5px;height:5px}
-
-          /* Speaking indicator */
-          .speaking-indicator{padding:4px 8px;font-size:9px;gap:4px}
-          .speaking-indicator .wave{gap:1px}
-          .speaking-indicator .wave span{width:2px;height:8px}
-          .speaking-indicator .wave span:nth-child(2){height:12px}
-          .speaking-indicator .wave span:nth-child(3){height:6px}
-
-          /* Phrase hints */
-          .phrase-hints{padding:2px 6px 0;gap:3px}
-          .ph{font-size:9px;padding:3px 7px}
-
-          /* Единый блок 360px */
-          .app-layout{padding:4px;gap:0}
-          .voice-chat-widget{padding:8px 8px 6px;border-radius:12px;max-height:30vh;overflow-y:auto}
-          .app-layout.dialog-active .voice-chat-widget{border-radius:12px 12px 0 0;padding:8px 8px 6px;max-height:30vh}
-          .app-layout.dialog-active .transcript-panel{border-radius:0 0 12px 12px;min-height:120px;max-height:calc(100dvh - 30vh - 8px)}
-
-          .vcw-title{font-size:14px;margin-bottom:3px}
-          .vcw-subtitle{font-size:10px;margin-bottom:6px}
-          .vcw-mic-container{width:52px;height:52px;margin:4px auto 4px}
-          .vcw-mic-container .mic-btn{width:52px;height:52px;font-size:18px}
-          .vcw-feature-text{font-size:11px}
-          .vcw-status{font-size:10px}
-          .transcript-panel-messages .msg{font-size:11px}
-
-          .load-info-card{max-width:100%;padding:8px 10px}
-          .say-this{max-width:100%;padding:8px 10px}
-          .load-info-grid{grid-template-columns:1fr 1fr}
+          .hdr{padding:4px 8px 3px}
+          .bn{font-size:11px}.bs{font-size:9px}
         }
         /* Hide footer on chat page */
         footer,.footer-section,.site-footer{display:none!important}
