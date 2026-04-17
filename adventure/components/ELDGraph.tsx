@@ -234,37 +234,87 @@ export default function ELDGraph({ truck, onClose }: { truck: any; onClose: () =
           background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: 14, padding: '14px', marginBottom: 16,
         }}>
-          <div style={{ fontSize: 12, fontWeight: 800, color: '#94a3b8', marginBottom: 10 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, color: '#94a3b8', marginBottom: 12 }}>
             📊 Duty Status Graph
           </div>
+
+          {/* Hour grid header */}
+          <div style={{ display: 'flex', marginLeft: 36, marginBottom: 4 }}>
+            {hourMarkers.map(h => (
+              <div key={h} style={{ flex: h === 24 ? 0 : 1, textAlign: 'left' }}>
+                <span style={{ fontSize: 9, color: '#475569', fontWeight: 600 }}>
+                  {h === 0 ? '12a' : h === 12 ? '12p' : h < 12 ? `${h}a` : h === 24 ? '12a' : `${h-12}p`}
+                </span>
+              </div>
+            ))}
+          </div>
+
           {(Object.keys(STATUS_CONFIG) as DutyStatus[]).map((statusKey, rowIdx) => {
             const cfg = STATUS_CONFIG[statusKey];
+            const rowSegs = segments.filter(s => s.status === statusKey);
+            const totalHours = rowSegs.reduce((s, seg) => s + seg.endHour - seg.startHour, 0);
             return (
               <div key={statusKey} style={{
-                display: 'flex', alignItems: 'center', gap: 8, marginBottom: rowIdx < 3 ? 2 : 0,
+                display: 'flex', alignItems: 'center', gap: 8,
+                marginBottom: rowIdx < 3 ? 6 : 0,
               }}>
-                <span style={{
-                  fontSize: 11, fontWeight: 700, color: cfg.color, width: 28, textAlign: 'center',
-                }}>
+                {/* Icon */}
+                <span style={{ fontSize: 16, width: 24, textAlign: 'center', flexShrink: 0 }}>
                   {cfg.icon}
                 </span>
+
+                {/* Bar track */}
                 <div style={{
-                  flex: 1, height: 20, position: 'relative',
-                  borderBottom: '1px solid rgba(255,255,255,0.06)',
+                  flex: 1, height: 22, position: 'relative',
+                  background: 'rgba(255,255,255,0.04)',
+                  borderRadius: 6,
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  overflow: 'hidden',
                 }}>
-                  {segments.filter(s => s.status === statusKey).map((seg, i) => {
+                  {/* Vertical grid lines */}
+                  {[3,6,9,12,15,18,21].map(h => (
+                    <div key={h} style={{
+                      position: 'absolute', left: `${(h/24)*100}%`, top: 0, bottom: 0,
+                      width: 1, background: 'rgba(255,255,255,0.06)',
+                    }} />
+                  ))}
+
+                  {/* Segments */}
+                  {rowSegs.map((seg, i) => {
                     const left = (seg.startHour / 24) * 100;
                     const width = ((seg.endHour - seg.startHour) / 24) * 100;
+                    const dur = seg.endHour - seg.startHour;
                     return (
                       <div key={i} style={{
                         position: 'absolute', left: `${left}%`, width: `${width}%`,
-                        top: 2, height: 16, borderRadius: 3,
-                        background: `${cfg.color}88`,
-                        border: `1px solid ${cfg.color}`,
-                      }} />
+                        top: 0, bottom: 0,
+                        background: cfg.color,
+                        opacity: 0.9,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        overflow: 'hidden',
+                      }}>
+                        {width > 10 && (
+                          <span style={{
+                            fontSize: 10, fontWeight: 800, color: '#fff',
+                            textShadow: '0 1px 3px rgba(0,0,0,0.7)',
+                            whiteSpace: 'nowrap',
+                          }}>
+                            {dur.toFixed(1)}h
+                          </span>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
+
+                {/* Total hours label */}
+                <span style={{
+                  fontSize: 11, fontWeight: 800,
+                  color: totalHours > 0 ? cfg.color : '#334155',
+                  width: 32, textAlign: 'right', flexShrink: 0,
+                }}>
+                  {totalHours > 0 ? `${totalHours.toFixed(1)}h` : '—'}
+                </span>
               </div>
             );
           })}
