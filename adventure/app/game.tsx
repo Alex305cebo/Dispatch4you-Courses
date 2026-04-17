@@ -100,6 +100,39 @@ export default function GameScreen() {
   const [showStats, setShowStats] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const { currentNickname } = useAccountStore();
+
+  // Таймер для кнопки "Карта" — становится цветной через 10 сек
+  const [mapBtnAge, setMapBtnAge] = useState(0); // 0-10
+  const mapBtnTimerRef = useRef<any>(null);
+
+  function startMapBtnTimer() {
+    setMapBtnAge(0);
+    if (mapBtnTimerRef.current) clearInterval(mapBtnTimerRef.current);
+    mapBtnTimerRef.current = setInterval(() => {
+      setMapBtnAge(prev => {
+        if (prev >= 10) { clearInterval(mapBtnTimerRef.current); return 10; }
+        return prev + 1;
+      });
+    }, 1000);
+  }
+
+  useEffect(() => {
+    startMapBtnTimer();
+    return () => { if (mapBtnTimerRef.current) clearInterval(mapBtnTimerRef.current); };
+  }, []);
+
+  function handleMapTabPress() {
+    switchTab('map');
+    startMapBtnTimer();
+    // Плавный zoom на траки
+    const knoxville = { lng: -83.9207, lat: 35.9606 };
+    const isMobileDevice = width < 900;
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('zoomToTruck', {
+        detail: { ...knoxville, slow: !isMobileDevice, mobile: isMobileDevice }
+      }));
+    }, 100);
+  }
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -466,20 +499,55 @@ export default function GameScreen() {
   );
 
   // ── BOTTOM TABS (mobile) ──────────────────────────────────────────────────
-  const BottomTabs = () => (
-    <View style={s.bottomTabs}>
-      {[{ id: 'map' as Tab, label: 'Карта' }, ...tabs].map(tab => (
-        <TouchableOpacity key={tab.id}
-          style={[s.bottomTab, activeTab === tab.id && s.bottomTabOn]}
-          onPress={() => (tab as any).onPress ? (tab as any).onPress() : switchTab(tab.id)}>
-          <Text style={[s.bottomTabTxt, activeTab === tab.id && s.bottomTabTxtOn]}>{tab.label}</Text>
-          {(tab as any).badge !== undefined && (
-            <View style={s.badge}><Text style={s.badgeTxt}>{(tab as any).badge}</Text></View>
+  const BottomTabs = () => {
+    // Цвет кнопки Карта: от серого к яркому cyan за 10 сек
+    const mapGlow = mapBtnAge / 10; // 0..1
+    const mapColor = mapBtnAge >= 10
+      ? '#06b6d4'
+      : mapBtnAge >= 5
+      ? `rgba(6,182,212,${0.3 + mapGlow * 0.7})`
+      : 'transparent';
+    const mapBorderColor = mapBtnAge >= 3
+      ? `rgba(6,182,212,${mapGlow * 0.8})`
+      : 'rgba(255,255,255,0.08)';
+    const mapTextColor = mapBtnAge >= 5 ? '#fff' : '#94a3b8';
+
+    return (
+      <View style={s.bottomTabs}>
+        {/* Кнопка Карта — особая с таймером */}
+        <TouchableOpacity
+          style={[s.bottomTab, activeTab === 'map' && s.bottomTabOn, {
+            backgroundColor: activeTab === 'map' ? 'rgba(56,189,248,0.18)' : mapBtnAge >= 5 ? `rgba(6,182,212,${mapGlow * 0.15})` : 'rgba(255,255,255,0.04)',
+            borderColor: activeTab === 'map' ? '#38bdf8' : mapBorderColor,
+            shadowColor: mapBtnAge >= 7 ? '#06b6d4' : 'transparent',
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: mapBtnAge >= 7 ? 0.8 : 0,
+            shadowRadius: mapBtnAge >= 7 ? 10 : 0,
+          } as any]}
+          onPress={handleMapTabPress}
+        >
+          <Text style={[s.bottomTabTxt, activeTab === 'map' && s.bottomTabTxtOn, {
+            color: activeTab === 'map' ? '#fff' : mapTextColor,
+          }]}>🗺 Карта</Text>
+          {mapBtnAge >= 10 && activeTab !== 'map' && (
+            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#06b6d4', marginLeft: 4, shadowColor: '#06b6d4', shadowOpacity: 1, shadowRadius: 4 } as any} />
           )}
         </TouchableOpacity>
-      ))}
-    </View>
-  );
+
+        {/* Остальные табы */}
+        {tabs.map(tab => (
+          <TouchableOpacity key={tab.id}
+            style={[s.bottomTab, activeTab === tab.id && s.bottomTabOn]}
+            onPress={() => (tab as any).onPress ? (tab as any).onPress() : switchTab(tab.id)}>
+            <Text style={[s.bottomTabTxt, activeTab === tab.id && s.bottomTabTxtOn]}>{tab.label}</Text>
+            {(tab as any).badge !== undefined && (
+              <View style={s.badge}><Text style={s.badgeTxt}>{(tab as any).badge}</Text></View>
+            )}
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
 
   const mapProps = {
     onTruckInfo: (id: string) => { const t = trucks.find(x => x.id === id); if (t) setDetailTruck(t); },

@@ -648,12 +648,15 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
     zoomControl.homeButton.set("visible", true);
 
     function handleZoomToTruck(e: Event) {
-      const { lng, lat, slow } = (e as CustomEvent).detail;
-      if (slow) {
-        // Плавный zoom: сначала отдаляемся, потом медленно приближаемся
+      const { lng, lat, slow, mobile } = (e as CustomEvent).detail;
+      if (mobile) {
+        // Мобильный: быстрый zoom ближе
+        chart.zoomToGeoPoint({ longitude: lng, latitude: lat }, 6, true);
+      } else if (slow) {
+        // Десктоп медленный: сначала отдаляемся, потом плавно приближаемся
         chart.zoomToGeoPoint({ longitude: -90, latitude: 38 }, 1.2, true);
         setTimeout(() => {
-          chart.zoomToGeoPoint({ longitude: lng, latitude: lat }, 5, true);
+          chart.zoomToGeoPoint({ longitude: lng, latitude: lat }, 4, true);
         }, 1200);
       } else {
         chart.zoomToGeoPoint({ longitude: lng, latitude: lat }, 5, true);
