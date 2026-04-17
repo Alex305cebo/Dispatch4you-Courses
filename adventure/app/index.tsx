@@ -42,7 +42,21 @@ export default function HomeScreen() {
   useEffect(() => { loadFromStorage(); checkSave(); }, []);
 
   useEffect(() => {
-    if (currentNickname) { setScreen('menu'); checkSave(); }
+    if (currentNickname) {
+      setScreen('menu');
+      checkSave();
+      // Автозапуск: если есть сохранение — сразу в игру
+      try {
+        const raw = localStorage.getItem('dispatcher-game-save');
+        if (raw) {
+          const save = JSON.parse(raw);
+          if (save?.version >= 3 && save.phase === 'playing') {
+            const loaded = loadGame();
+            if (loaded) { router.push('/game'); return; }
+          }
+        }
+      } catch {}
+    }
   }, [currentNickname]);
 
   const account = currentNickname ? getAccount(currentNickname) : null;
