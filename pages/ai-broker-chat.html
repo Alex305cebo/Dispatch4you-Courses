@@ -296,7 +296,8 @@
         /* ── TRANSCRIPT PANEL ── */
         .transcript-panel{display:none;flex-direction:column;background:var(--glass);backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);border:1px solid var(--glass-border);border-right:1px solid rgba(255,255,255,.04);border-radius:24px 0 0 24px;overflow:hidden;min-height:0;box-shadow:0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06)}
         .app-layout.dialog-active .transcript-panel{display:flex}
-        .transcript-panel-header{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:8px;flex-shrink:0;text-transform:uppercase;letter-spacing:1px}
+        .transcript-panel-header{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:8px;flex-shrink:0;text-transform:uppercase;letter-spacing:1px;transition:opacity .2s ease}
+        .transcript-panel-header.hidden{display:none}
         .transcript-panel-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px;scroll-behavior:smooth}
         .transcript-panel-messages::-webkit-scrollbar{width:3px}
         .transcript-panel-messages::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
@@ -377,6 +378,12 @@
         }
         .tpi-send-btn:hover{transform:scale(1.05);box-shadow:0 4px 14px rgba(6,182,212,0.6);}
         .tpi-send-btn:active{transform:scale(0.97);}
+        /* live recording dots */
+        .tpi-recording{display:inline-flex;align-items:center;gap:4px;margin-right:6px}
+        .tpi-dot{width:6px;height:6px;border-radius:50%;background:#ef4444;animation:tpi-dot-pulse 1.2s ease-in-out infinite}
+        .tpi-dot:nth-child(2){animation-delay:.2s}
+        .tpi-dot:nth-child(3){animation-delay:.4s}
+        @keyframes tpi-dot-pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.4);opacity:1}}
 
         /* RESPONSIVE */
         /* ── SHORT VIEWPORT (маленькое окно по высоте, только десктоп) ── */
@@ -1232,7 +1239,10 @@
             <!-- Transcript Panel (hidden until dialog starts) -->
             <div class="transcript-panel" id="transcriptPanel">
 
-                <div class="transcript-panel-header">💬 Транскрипт диалога</div>
+                <div class="transcript-panel-header" id="transcriptHeader">
+                    <span class="tph-icon">💬</span>
+                    <span class="tph-label" id="tphLabel">Транскрипт диалога</span>
+                </div>
                 <div class="transcript-panel-interim" id="transcriptInterim"></div>
                 <div class="transcript-panel-messages" id="chat" role="log" aria-live="polite" aria-label="Транскрипт диалога с брокером"></div>
             </div>
@@ -1454,31 +1464,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // TranscriptDisplay Component Methods
 const TranscriptDisplay={
+  _setHeader(visible){
+    const h=$('transcriptHeader');
+    if(h){ if(visible){h.classList.remove('hidden');}else{h.classList.add('hidden');} }
+  },
   showInterim(text){
     const el=$('transcriptInterim');
     if(!el)return;
-    if(!text||text.trim()===''){el.innerHTML='';el.classList.remove('show');return;}
+    if(!text||text.trim()===''){el.innerHTML='';el.classList.remove('show');this._setHeader(true);return;}
     el.innerHTML=`<span class="tpi-text">${text}</span><span class="tpi-cursor"></span>`;
     el.classList.add('show');
+    this._setHeader(false);
+  },
+  showRecording(){
+    // Whisper режим — показываем пульсирующий индикатор пока идёт запись
+    const el=$('transcriptInterim');
+    if(!el)return;
+    el.innerHTML=`<span class="tpi-recording"><span class="tpi-dot"></span><span class="tpi-dot"></span><span class="tpi-dot"></span></span><span class="tpi-text" style="color:#94a3b8;font-style:italic;font-size:14px"> говорите...</span>`;
+    el.classList.add('show');
+    this._setHeader(false);
   },
   showWaiting(text){
-    // Показываем текст + индикатор "жду продолжения..." + кнопка Отправить
     const el=$('transcriptInterim');
     if(!el)return;
     el.innerHTML=`<span class="tpi-text">${text}</span><span class="tpi-waiting"> продолжай...</span><button class="tpi-send-btn" onclick="sendNow()" aria-label="Отправить сообщение">Отправить →</button>`;
     el.classList.add('show');
+    this._setHeader(false);
   },
   showFinal(text){
     const el=$('transcriptInterim');
     if(!el)return;
     el.textContent='';
     el.classList.remove('show');
+    this._setHeader(true);
   },
   clear(){
     const el=$('transcriptInterim');
     if(!el)return;
     el.textContent='';
     el.classList.remove('show');
+    this._setHeader(true);
   }
 };
 
@@ -1574,6 +1599,8 @@ async function startWhisperRec(){
     whisperRecorder.ondataavailable=e=>{ if(e.data.size>0) whisperChunks.push(e.data); };
     whisperRecorder.onstop=()=>{ sendToWhisper(); };
     whisperRecorder.start(250);
+    // Показываем live индикатор записи
+    TranscriptDisplay.showRecording();
     return true;
   }catch(e){
     console.warn('[Whisper] Mic access failed:',e.name, e.message);
