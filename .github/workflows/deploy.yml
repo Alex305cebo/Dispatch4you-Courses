@@ -1,0 +1,107 @@
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-hostinger
+  cancel-in-progress: true
+
+jobs:
+  # ─── 1. Основной сайт + game2.html ───────────────────────────────
+  deploy-site:
+    name: Deploy site to Hostinger
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via rsync
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: >-
+            -avzr
+            --delete
+            --exclude='.git'
+            --exclude='.github'
+            --exclude='.kiro'
+            --exclude='adventure'
+            --exclude='node_modules'
+            --exclude='*.md'
+            --exclude='*.backup'
+            --exclude='*.bak'
+            --exclude='*.old'
+            --exclude='*.albers-backup'
+            --exclude='*.fixed-projection'
+            --exclude='*.v2-debug'
+            --exclude='Old Modules'
+            --exclude='server.py'
+            --exclude='package.json'
+            --exclude='package-lock.json'
+            --exclude='*.py'
+            --exclude='*.ps1'
+            --exclude='*.txt'
+            --exclude='states_extracted.txt'
+            --exclude='MAP_DEBUG_INSTRUCTIONS.html'
+            --exclude='game-test.html'
+            --exclude='test-*.html'
+          path: ./
+          remote_path: ~/domains/dispatch4you.com/public_html/
+          remote_host: ${{ secrets.SSH_HOST }}
+          remote_port: ${{ secrets.SSH_PORT }}
+          remote_user: ${{ secrets.SSH_USERNAME }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+  # ─── 2. React/Expo игра → /game/ ─────────────────────────────────
+  deploy-react-game:
+    name: Build & deploy React game
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: adventure/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: adventure
+
+      - name: Build
+        run: npx expo export --platform web
+        working-directory: adventure
+        env:
+          NODE_ENV: production
+
+      - name: Fix asset paths
+        run: node scripts/fix-paths.js
+        working-directory: adventure
+
+      - name: Add .htaccess for SPA routing
+        run: |
+          cat > adventure/dist/.htaccess << 'EOF'
+          Options -MultiViews
+          RewriteEngine On
+          RewriteBase /game/
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule . index.html [L]
+          EOF
+
+      - name: Deploy to /game/
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avzr --delete
+          path: adventure/dist/
+          remote_path: ~/domains/dispatch4you.com/public_html/game/
+          remote_host: ${{ secrets.SSH_HOST }}
+          remote_port: ${{ secrets.SSH_PORT }}
+          remote_user: ${{ secrets.SSH_USERNAME }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}

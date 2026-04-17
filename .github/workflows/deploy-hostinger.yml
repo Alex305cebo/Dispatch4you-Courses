@@ -1,71 +1,16 @@
-name: Deploy to Hostinger via SSH
+# DEPRECATED — replaced by deploy.yml
+# This file is kept for reference only and will not run.
+name: DEPRECATED - Deploy to Hostinger
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'This workflow is deprecated. Use deploy.yml instead.'
+        required: true
 
 jobs:
-  deploy-site:
+  noop:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Deploy main site via rsync
-        uses: burnett01/rsync-deployments@7.0.1
-        with:
-          switches: -avzr --delete --exclude='.git' --exclude='.github' --exclude='*.md' --exclude='.kiro' --exclude='adventure'
-          path: ./
-          remote_path: ~/domains/dispatch4you.com/public_html/
-          remote_host: ${{ secrets.SSH_HOST }}
-          remote_port: ${{ secrets.SSH_PORT }}
-          remote_user: ${{ secrets.SSH_USERNAME }}
-          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-  deploy-game:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: adventure/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-        working-directory: adventure
-
-      - name: Build game
-        run: |
-          npx expo export --platform web
-          node scripts/fix-paths.js
-        working-directory: adventure
-        env:
-          NODE_ENV: production
-
-      - name: Add .htaccess for proper routing
-        run: |
-          cat > adventure/dist/.htaccess << 'EOF'
-          Options -MultiViews
-          RewriteEngine On
-          RewriteBase /game/
-          RewriteCond %{REQUEST_FILENAME} !-f
-          RewriteCond %{REQUEST_FILENAME} !-d
-          RewriteRule . index.html [L]
-          EOF
-
-      - name: Deploy game to /game folder
-        uses: burnett01/rsync-deployments@7.0.1
-        with:
-          switches: -avzr --delete
-          path: adventure/dist/
-          remote_path: ~/domains/dispatch4you.com/public_html/game/
-          remote_host: ${{ secrets.SSH_HOST }}
-          remote_port: ${{ secrets.SSH_PORT }}
-          remote_user: ${{ secrets.SSH_USERNAME }}
-          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - run: echo "This workflow is deprecated. See deploy.yml"

@@ -1,68 +1,16 @@
-name: Build & Deploy Game to GitHub Pages
+# DEPRECATED — replaced by deploy.yml
+# This file is kept for reference only and will not run.
+name: DEPRECATED - Build & Deploy Game to GitHub Pages
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
+    inputs:
+      confirm:
+        description: 'This workflow is deprecated. Use deploy.yml instead.'
+        required: true
 
 jobs:
-  build:
+  noop:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: adventure/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-        working-directory: adventure
-
-      - name: Build web
-        run: |
-          npx expo export --platform web
-          node scripts/fix-paths-github.js
-        working-directory: adventure
-        env:
-          NODE_ENV: production
-          EXPO_PUBLIC_BASE_URL: /Dispatch4you-Courses
-
-      - name: Add .nojekyll and 404.html for SPA routing
-        run: |
-          touch adventure/dist/.nojekyll
-          cp adventure/dist/index.html adventure/dist/404.html
-          echo "baseUrl set to /Dispatch4you-Courses, SPA routing ready"
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: adventure/dist
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - run: echo "This workflow is deprecated. See deploy.yml"
