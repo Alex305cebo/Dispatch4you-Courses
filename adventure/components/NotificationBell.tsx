@@ -4,6 +4,7 @@ import { Colors } from '../constants/colors';
 import { useGameStore, Notification, formatGameTime } from '../store/gameStore';
 import BrokerCommunicationModal from './BrokerCommunicationModal';
 import DriverCommunicationModal from './DriverCommunicationModal';
+import { ThreadChatPopup } from './EmailPanel';
 
 interface Props {
   onNavigateToTrucks?: () => void;
@@ -54,6 +55,7 @@ export default function NotificationBell({ onNavigateToTrucks, onNavigateToLoads
   const [isOpen, setIsOpen] = useState(false);
   const [selectedBrokerNotification, setSelectedBrokerNotification] = useState<Notification | null>(null);
   const [selectedDriverNotification, setSelectedDriverNotification] = useState<Notification | null>(null);
+  const [selectedEmailNotification, setSelectedEmailNotification] = useState<Notification | null>(null);
   const [sortMode, setSortMode] = useState<'unread' | 'read'>('unread');
   const { notifications, unreadCount, markNotificationRead, markAllNotificationsRead, selectTruck, trucks } = useGameStore();
 
@@ -75,45 +77,9 @@ export default function NotificationBell({ onNavigateToTrucks, onNavigateToLoads
 
   const handleNotificationClick = (notif: Notification) => {
     markNotificationRead(notif.id);
-    
-    // Для определенных типов уведомлений открываем модалку связи с брокером
-    if (notif.type === 'pod_ready' || notif.type === 'detention' || notif.type === 'rate_con') {
-      setSelectedBrokerNotification(notif);
-      setIsOpen(false);
-      return;
-    }
-    
-    // Для голосовых сообщений и текстов от водителей открываем модалку связи с водителем
-    if (notif.type === 'voicemail' || notif.type === 'text') {
-      setSelectedDriverNotification(notif);
-      setIsOpen(false);
-      return;
-    }
-    
-    // Выполняем действие в зависимости от типа уведомления
-    switch (notif.type) {
-      case 'missed_call':
-        // Открываем Load Board для поиска грузов
-        setIsOpen(false);
-        onNavigateToLoads?.();
-        break;
-        
-      case 'urgent':
-        // Открываем События
-        setIsOpen(false);
-        onNavigateToEvents?.();
-        break;
-        
-      case 'email':
-        // Открываем Почту (email tab)
-        setIsOpen(false);
-        onNavigateToLoads?.();
-        break;
-        
-      default:
-        // Просто закрываем уведомление
-        break;
-    }
+    setIsOpen(false);
+    // Все типы открываем в ThreadChat попапе
+    setSelectedEmailNotification(notif);
   };
 
   const getIcon = (type: Notification['type']) => {
@@ -267,6 +233,14 @@ export default function NotificationBell({ onNavigateToTrucks, onNavigateToLoads
         notification={selectedDriverNotification}
         onClose={() => setSelectedDriverNotification(null)}
       />
+
+      {/* Email/Chat Popup — открывается для любого уведомления */}
+      {selectedEmailNotification && (
+        <ThreadChatPopup
+          notification={selectedEmailNotification}
+          onClose={() => setSelectedEmailNotification(null)}
+        />
+      )}
     </>
   );
 }

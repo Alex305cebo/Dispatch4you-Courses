@@ -147,6 +147,32 @@ interface PendingEmailResponse {
   isIssue: boolean;
 }
 
+// Итоговый расчёт доставки
+export interface DeliveryResult {
+  truckId: string;
+  truckName: string;
+  driverName: string;
+  loadId: string;
+  fromCity: string;
+  toCity: string;
+  miles: number;
+  agreedRate: number;
+  // Расходы
+  fuelCost: number;       // ~$0.45/mile дизель
+  driverPay: number;      // ~$0.55/mile
+  dispatchFee: number;    // 8% от rate
+  factoringFee: number;   // 3% от rate
+  lumperCost: number;     // случайно 0 или $150-300
+  detentionPay: number;   // если было detention
+  // Итог
+  grossRevenue: number;
+  totalExpenses: number;
+  netProfit: number;
+  ratePerMile: number;
+  profitPerMile: number;
+  minute: number;
+}
+
 interface GameState {
   // Мета
   phase: 'menu' | 'playing' | 'shift_end';
@@ -186,6 +212,10 @@ interface GameState {
   
   // Отложенные email ответы
   pendingEmailResponses: PendingEmailResponse[];
+
+  // Итоги доставок — показываем попап
+  deliveryResults: DeliveryResult[];
+  dismissDeliveryResult: (loadId: string) => void;
 
   // Переговоры
   negotiation: {
@@ -241,6 +271,7 @@ interface GameState {
   saveGame: () => void;
   loadGame: () => boolean;
   clearSave: () => void;
+  testDeliveryPopup: () => void;
 }
 
 // ─── НАЧАЛЬНЫЕ ДАННЫЕ ────────────────────────────────────────────────────────
@@ -491,610 +522,284 @@ const INITIAL_BROKERS: Broker[] = [
   { id: 'B5', name: 'Dave', company: 'CrossCountry', relationship: 55, callsAnswered: 0, loadsCompleted: 0, avatar: '👨‍💼' },
 ];
 
+// Находим ближайший город к позиции [lng, lat]
+function getNearestCity(lng: number, lat: number): string {
+  let nearest = '';
+  let minDist = Infinity;
+  for (const [name, coords] of Object.entries(CITIES)) {
+    const d = Math.hypot(coords[0] - lng, coords[1] - lat);
+    if (d < minDist) { minDist = d; nearest = name; }
+  }
+  return nearest;
+}
+
 function generateLoads(minute: number): LoadOffer[] {
-  // Расширенный список маршрутов - покрываем все основные города
+  // Только реальные дальние рейсы 400-1500 миль, $2.50-$3.50+/mile
   const routes = [
-    // Из Chicago
-    { from: 'Chicago', to: 'Houston', miles: 1092, base: 3200 },
-    { from: 'Chicago', to: 'Miami', miles: 1377, base: 3800 },
-    { from: 'Chicago', to: 'Denver', miles: 1003, base: 2900 },
-    { from: 'Chicago', to: 'Los Angeles', miles: 2015, base: 5500 },
-    { from: 'Chicago', to: 'Atlanta', miles: 716, base: 2200 },
-    
-    // Из Dallas
-    { from: 'Dallas', to: 'Atlanta', miles: 781, base: 2400 },
-    { from: 'Dallas', to: 'Los Angeles', miles: 1435, base: 3900 },
-    { from: 'Dallas', to: 'Chicago', miles: 967, base: 2800 },
-    { from: 'Dallas', to: 'Miami', miles: 1308, base: 3600 },
-    
-    // Из Atlanta
-    { from: 'Atlanta', to: 'New York', miles: 881, base: 2800 },
-    { from: 'Atlanta', to: 'Dallas', miles: 781, base: 2200 },
-    { from: 'Atlanta', to: 'Miami', miles: 662, base: 2000 },
-    { from: 'Atlanta', to: 'Chicago', miles: 716, base: 2100 },
-    
-    // Из Los Angeles
-    { from: 'Los Angeles', to: 'Dallas', miles: 1435, base: 4100 },
-    { from: 'Los Angeles', to: 'Phoenix', miles: 373, base: 1100 },
-    { from: 'Los Angeles', to: 'Seattle', miles: 1135, base: 3300 },
-    { from: 'Los Angeles', to: 'Denver', miles: 1016, base: 2900 },
-    
-    // Из Houston
-    { from: 'Houston', to: 'Chicago', miles: 1092, base: 3000 },
-    { from: 'Houston', to: 'Atlanta', miles: 789, base: 2300 },
-    { from: 'Houston', to: 'Miami', miles: 1190, base: 3300 },
-    
-    // Из New York
-    { from: 'New York', to: 'Chicago', miles: 790, base: 2600 },
-    { from: 'New York', to: 'Atlanta', miles: 881, base: 2700 },
-    { from: 'New York', to: 'Miami', miles: 1280, base: 3500 },
-    
-    // Из Seattle
-    { from: 'Seattle', to: 'Los Angeles', miles: 1135, base: 3300 },
-    { from: 'Seattle', to: 'Portland', miles: 175, base: 600 },
-    { from: 'Seattle', to: 'Denver', miles: 1306, base: 3600 },
-    
-    // Из Miami
-    { from: 'Miami', to: 'Atlanta', miles: 662, base: 2000 },
-    { from: 'Miami', to: 'Jacksonville', miles: 345, base: 1000 },
-    { from: 'Miami', to: 'New York', miles: 1280, base: 3500 },
-    
-    // Из Denver
-    { from: 'Denver', to: 'Chicago', miles: 1003, base: 2900 },
-    { from: 'Denver', to: 'Salt Lake City', miles: 525, base: 1500 },
-    { from: 'Denver', to: 'Dallas', miles: 781, base: 2200 },
-    
-    // Из Phoenix
-    { from: 'Phoenix', to: 'Los Angeles', miles: 373, base: 1100 },
-    { from: 'Phoenix', to: 'Dallas', miles: 1071, base: 3000 },
-    
-    // Из Portland
-    { from: 'Portland', to: 'Seattle', miles: 175, base: 600 },
-    { from: 'Portland', to: 'Los Angeles', miles: 964, base: 2800 },
-    
-    // Из Jacksonville
-    { from: 'Jacksonville', to: 'Miami', miles: 345, base: 1000 },
-    { from: 'Jacksonville', to: 'Atlanta', miles: 346, base: 1000 },
-    
-    // Из Salt Lake City
-    { from: 'Salt Lake City', to: 'Denver', miles: 525, base: 1500 },
-    { from: 'Salt Lake City', to: 'Los Angeles', miles: 689, base: 2000 },
-
-    // Nashville (стартовый город) → все направления
-    { from: 'Nashville', to: 'Atlanta', miles: 250, base: 800 },
-    { from: 'Nashville', to: 'Chicago', miles: 476, base: 1500 },
-    { from: 'Nashville', to: 'Dallas', miles: 663, base: 2000 },
-    { from: 'Nashville', to: 'Charlotte', miles: 409, base: 1300 },
-    { from: 'Nashville', to: 'Indianapolis', miles: 286, base: 900 },
-    { from: 'Nashville', to: 'Louisville', miles: 175, base: 600 },
-    { from: 'Nashville', to: 'Memphis', miles: 210, base: 700 },
-    { from: 'Nashville', to: 'Birmingham', miles: 191, base: 650 },
-    { from: 'Nashville', to: 'Knoxville', miles: 180, base: 600 },
-    { from: 'Nashville', to: 'St. Louis', miles: 309, base: 1000 },
-    { from: 'Nashville', to: 'Cincinnati', miles: 270, base: 900 },
-    { from: 'Nashville', to: 'Columbus', miles: 330, base: 1050 },
-    { from: 'Nashville', to: 'New York', miles: 900, base: 2700 },
-    { from: 'Nashville', to: 'Miami', miles: 1000, base: 2900 },
-    { from: 'Nashville', to: 'Houston', miles: 790, base: 2300 },
-    { from: 'Nashville', to: 'Kansas City', miles: 550, base: 1700 },
-    { from: 'Nashville', to: 'Denver', miles: 1200, base: 3400 },
-
-    // Юго-восток
-    { from: 'Atlanta', to: 'Charlotte', miles: 245, base: 800 },
-    { from: 'Atlanta', to: 'Birmingham', miles: 147, base: 500 },
-    { from: 'Atlanta', to: 'Savannah', miles: 250, base: 800 },
-    { from: 'Atlanta', to: 'Jacksonville', miles: 346, base: 1100 },
-    { from: 'Atlanta', to: 'Knoxville', miles: 180, base: 600 },
-    { from: 'Atlanta', to: 'Chattanooga', miles: 118, base: 400 },
-    { from: 'Charlotte', to: 'Raleigh', miles: 170, base: 580 },
-    { from: 'Charlotte', to: 'Richmond', miles: 334, base: 1050 },
-    { from: 'Charlotte', to: 'Washington DC', miles: 390, base: 1200 },
-    { from: 'Raleigh', to: 'New York', miles: 530, base: 1650 },
-    { from: 'Raleigh', to: 'Atlanta', miles: 420, base: 1300 },
-    { from: 'Savannah', to: 'Miami', miles: 660, base: 2000 },
-    { from: 'Savannah', to: 'Charlotte', miles: 380, base: 1200 },
-    { from: 'Jacksonville', to: 'Tampa', miles: 200, base: 680 },
-    { from: 'Tampa', to: 'Miami', miles: 280, base: 900 },
-    { from: 'Tampa', to: 'Atlanta', miles: 460, base: 1450 },
-    { from: 'Orlando', to: 'Miami', miles: 235, base: 780 },
-    { from: 'Orlando', to: 'Atlanta', miles: 440, base: 1380 },
-    { from: 'Orlando', to: 'Charlotte', miles: 620, base: 1900 },
-    { from: 'Fort Lauderdale', to: 'Atlanta', miles: 660, base: 2000 },
-    { from: 'Pensacola', to: 'Atlanta', miles: 320, base: 1000 },
-    { from: 'Pensacola', to: 'New Orleans', miles: 200, base: 680 },
-    { from: 'Montgomery', to: 'Atlanta', miles: 160, base: 550 },
-    { from: 'Montgomery', to: 'Nashville', miles: 290, base: 930 },
-    { from: 'Gulfport', to: 'New Orleans', miles: 80, base: 300 },
-    { from: 'Gulfport', to: 'Atlanta', miles: 380, base: 1200 },
-    { from: 'Jackson', to: 'Memphis', miles: 210, base: 700 },
-    { from: 'Jackson', to: 'New Orleans', miles: 185, base: 620 },
-    { from: 'Jackson', to: 'Dallas', miles: 440, base: 1380 },
-
-    // Северо-восток
-    { from: 'New York', to: 'Boston', miles: 215, base: 720 },
-    { from: 'New York', to: 'Philadelphia', miles: 95, base: 350 },
-    { from: 'New York', to: 'Baltimore', miles: 190, base: 640 },
-    { from: 'New York', to: 'Pittsburgh', miles: 370, base: 1150 },
-    { from: 'New York', to: 'Buffalo', miles: 370, base: 1150 },
-    { from: 'Boston', to: 'New York', miles: 215, base: 720 },
-    { from: 'Boston', to: 'Philadelphia', miles: 300, base: 960 },
-    { from: 'Boston', to: 'Providence', miles: 50, base: 200 },
-    { from: 'Philadelphia', to: 'Baltimore', miles: 100, base: 360 },
-    { from: 'Philadelphia', to: 'Pittsburgh', miles: 305, base: 970 },
-    { from: 'Philadelphia', to: 'New York', miles: 95, base: 350 },
-    { from: 'Baltimore', to: 'Pittsburgh', miles: 245, base: 800 },
-    { from: 'Baltimore', to: 'Richmond', miles: 150, base: 520 },
-    { from: 'Pittsburgh', to: 'Cleveland', miles: 130, base: 460 },
-    { from: 'Pittsburgh', to: 'Columbus', miles: 185, base: 620 },
-    { from: 'Pittsburgh', to: 'Detroit', miles: 290, base: 930 },
-    { from: 'Buffalo', to: 'Cleveland', miles: 185, base: 620 },
-    { from: 'Buffalo', to: 'Detroit', miles: 290, base: 930 },
-    { from: 'Albany', to: 'Boston', miles: 170, base: 580 },
-    { from: 'Albany', to: 'New York', miles: 150, base: 520 },
-    { from: 'Newark', to: 'Philadelphia', miles: 90, base: 330 },
-    { from: 'Trenton', to: 'Philadelphia', miles: 35, base: 160 },
-    { from: 'Richmond', to: 'Charlotte', miles: 334, base: 1050 },
-    { from: 'Richmond', to: 'Washington DC', miles: 110, base: 390 },
-    { from: 'Norfolk', to: 'Richmond', miles: 95, base: 350 },
-    { from: 'Norfolk', to: 'Charlotte', miles: 380, base: 1200 },
-    { from: 'Virginia Beach', to: 'Richmond', miles: 100, base: 360 },
-    { from: 'Roanoke', to: 'Charlotte', miles: 200, base: 670 },
-    { from: 'Roanoke', to: 'Richmond', miles: 180, base: 610 },
-    { from: 'Charleston WV', to: 'Pittsburgh', miles: 165, base: 560 },
-    { from: 'Charleston WV', to: 'Columbus', miles: 165, base: 560 },
-    { from: 'Huntington', to: 'Columbus', miles: 150, base: 520 },
-
-    // Средний Запад
-    { from: 'Chicago', to: 'Detroit', miles: 280, base: 900 },
-    { from: 'Chicago', to: 'Indianapolis', miles: 180, base: 610 },
-    { from: 'Chicago', to: 'Milwaukee', miles: 92, base: 340 },
-    { from: 'Chicago', to: 'Minneapolis', miles: 410, base: 1280 },
-    { from: 'Chicago', to: 'Kansas City', miles: 500, base: 1560 },
-    { from: 'Chicago', to: 'Columbus', miles: 355, base: 1110 },
-    { from: 'Chicago', to: 'Cleveland', miles: 345, base: 1080 },
-    { from: 'Detroit', to: 'Cleveland', miles: 170, base: 580 },
-    { from: 'Detroit', to: 'Columbus', miles: 200, base: 670 },
-    { from: 'Detroit', to: 'Indianapolis', miles: 280, base: 900 },
-    { from: 'Detroit', to: 'Grand Rapids', miles: 150, base: 520 },
-    { from: 'Grand Rapids', to: 'Chicago', miles: 180, base: 610 },
-    { from: 'Lansing', to: 'Detroit', miles: 90, base: 330 },
-    { from: 'Cleveland', to: 'Columbus', miles: 145, base: 510 },
-    { from: 'Cleveland', to: 'Cincinnati', miles: 245, base: 800 },
-    { from: 'Columbus', to: 'Cincinnati', miles: 110, base: 390 },
-    { from: 'Columbus', to: 'Indianapolis', miles: 175, base: 590 },
-    { from: 'Cincinnati', to: 'Louisville', miles: 100, base: 360 },
-    { from: 'Cincinnati', to: 'Indianapolis', miles: 110, base: 390 },
-    { from: 'Indianapolis', to: 'Louisville', miles: 115, base: 410 },
-    { from: 'Indianapolis', to: 'St. Louis', miles: 240, base: 790 },
-    { from: 'Indianapolis', to: 'Kansas City', miles: 480, base: 1500 },
-    { from: 'Louisville', to: 'Nashville', miles: 175, base: 600 },
-    { from: 'Louisville', to: 'St. Louis', miles: 265, base: 860 },
-    { from: 'St. Louis', to: 'Kansas City', miles: 250, base: 820 },
-    { from: 'St. Louis', to: 'Memphis', miles: 285, base: 920 },
-    { from: 'St. Louis', to: 'Chicago', miles: 300, base: 960 },
-    { from: 'Kansas City', to: 'Omaha', miles: 185, base: 620 },
-    { from: 'Kansas City', to: 'Wichita', miles: 200, base: 670 },
-    { from: 'Kansas City', to: 'Des Moines', miles: 195, base: 650 },
-    { from: 'Minneapolis', to: 'Chicago', miles: 410, base: 1280 },
-    { from: 'Minneapolis', to: 'Omaha', miles: 370, base: 1160 },
-    { from: 'Minneapolis', to: 'Fargo', miles: 235, base: 780 },
-    { from: 'Minneapolis', to: 'Milwaukee', miles: 335, base: 1060 },
-    { from: 'Milwaukee', to: 'Chicago', miles: 92, base: 340 },
-    { from: 'Madison', to: 'Chicago', miles: 148, base: 520 },
-    { from: 'Madison', to: 'Milwaukee', miles: 78, base: 290 },
-    { from: 'Des Moines', to: 'Chicago', miles: 330, base: 1040 },
-    { from: 'Des Moines', to: 'Omaha', miles: 135, base: 480 },
-    { from: 'Cedar Rapids', to: 'Chicago', miles: 220, base: 740 },
-    { from: 'Omaha', to: 'Kansas City', miles: 185, base: 620 },
-    { from: 'Omaha', to: 'Denver', miles: 540, base: 1680 },
-    { from: 'Lincoln', to: 'Omaha', miles: 55, base: 220 },
-    { from: 'Sioux Falls', to: 'Minneapolis', miles: 245, base: 800 },
-    { from: 'Sioux Falls', to: 'Omaha', miles: 360, base: 1130 },
-    { from: 'Fargo', to: 'Minneapolis', miles: 235, base: 780 },
-    { from: 'Bismarck', to: 'Fargo', miles: 195, base: 650 },
-    { from: 'Duluth', to: 'Minneapolis', miles: 155, base: 540 },
-    { from: 'Wichita', to: 'Oklahoma City', miles: 160, base: 550 },
-    { from: 'Wichita', to: 'Kansas City', miles: 200, base: 670 },
-    { from: 'Topeka', to: 'Kansas City', miles: 65, base: 250 },
-
-    // Юг / Техас
-    { from: 'Dallas', to: 'Houston', miles: 239, base: 800 },
-    { from: 'Dallas', to: 'San Antonio', miles: 275, base: 890 },
-    { from: 'Dallas', to: 'Austin', miles: 195, base: 660 },
-    { from: 'Dallas', to: 'Fort Worth', miles: 35, base: 160 },
-    { from: 'Dallas', to: 'Oklahoma City', miles: 205, base: 690 },
-    { from: 'Dallas', to: 'Lubbock', miles: 320, base: 1020 },
-    { from: 'Dallas', to: 'Amarillo', miles: 360, base: 1130 },
-    { from: 'Houston', to: 'San Antonio', miles: 200, base: 670 },
-    { from: 'Houston', to: 'Austin', miles: 165, base: 570 },
-    { from: 'Houston', to: 'Baton Rouge', miles: 270, base: 880 },
-    { from: 'Houston', to: 'New Orleans', miles: 350, base: 1100 },
-    { from: 'Houston', to: 'Corpus Christi', miles: 210, base: 710 },
-    { from: 'Houston', to: 'Laredo', miles: 340, base: 1070 },
-    { from: 'San Antonio', to: 'Austin', miles: 80, base: 300 },
-    { from: 'San Antonio', to: 'El Paso', miles: 550, base: 1710 },
-    { from: 'San Antonio', to: 'Laredo', miles: 155, base: 540 },
-    { from: 'Austin', to: 'Dallas', miles: 195, base: 660 },
-    { from: 'Austin', to: 'Houston', miles: 165, base: 570 },
-    { from: 'El Paso', to: 'Albuquerque', miles: 265, base: 860 },
-    { from: 'El Paso', to: 'Phoenix', miles: 430, base: 1350 },
-    { from: 'Amarillo', to: 'Albuquerque', miles: 290, base: 930 },
-    { from: 'Amarillo', to: 'Oklahoma City', miles: 260, base: 850 },
-    { from: 'Oklahoma City', to: 'Tulsa', miles: 100, base: 360 },
-    { from: 'Oklahoma City', to: 'Dallas', miles: 205, base: 690 },
-    { from: 'Oklahoma City', to: 'Kansas City', miles: 340, base: 1070 },
-    { from: 'Tulsa', to: 'Kansas City', miles: 250, base: 820 },
-    { from: 'Tulsa', to: 'Dallas', miles: 260, base: 850 },
-    { from: 'Little Rock', to: 'Memphis', miles: 137, base: 480 },
-    { from: 'Little Rock', to: 'Dallas', miles: 320, base: 1020 },
-    { from: 'Little Rock', to: 'Nashville', miles: 360, base: 1130 },
-    { from: 'Shreveport', to: 'Dallas', miles: 190, base: 640 },
-    { from: 'Shreveport', to: 'New Orleans', miles: 335, base: 1060 },
-    { from: 'Lafayette', to: 'New Orleans', miles: 135, base: 480 },
-    { from: 'Baton Rouge', to: 'New Orleans', miles: 80, base: 300 },
-    { from: 'New Orleans', to: 'Houston', miles: 350, base: 1100 },
-    { from: 'New Orleans', to: 'Atlanta', miles: 470, base: 1470 },
-
-    // Запад
-    { from: 'Los Angeles', to: 'San Francisco', miles: 380, base: 1190 },
-    { from: 'Los Angeles', to: 'San Diego', miles: 120, base: 430 },
-    { from: 'Los Angeles', to: 'Las Vegas', miles: 270, base: 880 },
-    { from: 'Los Angeles', to: 'Sacramento', miles: 385, base: 1200 },
-    { from: 'Los Angeles', to: 'Fresno', miles: 220, base: 740 },
-    { from: 'San Francisco', to: 'Sacramento', miles: 90, base: 330 },
-    { from: 'San Francisco', to: 'Portland', miles: 640, base: 1980 },
-    { from: 'San Francisco', to: 'Seattle', miles: 810, base: 2480 },
-    { from: 'San Francisco', to: 'Las Vegas', miles: 570, base: 1770 },
-    { from: 'Sacramento', to: 'Portland', miles: 580, base: 1800 },
-    { from: 'Sacramento', to: 'Reno', miles: 135, base: 480 },
-    { from: 'San Diego', to: 'Phoenix', miles: 355, base: 1110 },
-    { from: 'San Diego', to: 'Los Angeles', miles: 120, base: 430 },
-    { from: 'Las Vegas', to: 'Phoenix', miles: 295, base: 950 },
-    { from: 'Las Vegas', to: 'Salt Lake City', miles: 420, base: 1320 },
-    { from: 'Las Vegas', to: 'Denver', miles: 750, base: 2300 },
-    { from: 'Reno', to: 'Las Vegas', miles: 450, base: 1410 },
-    { from: 'Reno', to: 'Sacramento', miles: 135, base: 480 },
-    { from: 'Phoenix', to: 'Tucson', miles: 115, base: 410 },
-    { from: 'Phoenix', to: 'Albuquerque', miles: 465, base: 1450 },
-    { from: 'Tucson', to: 'El Paso', miles: 265, base: 860 },
-    { from: 'Tucson', to: 'Phoenix', miles: 115, base: 410 },
-    { from: 'Flagstaff', to: 'Phoenix', miles: 145, base: 510 },
-    { from: 'Flagstaff', to: 'Albuquerque', miles: 325, base: 1030 },
-    { from: 'Albuquerque', to: 'Denver', miles: 450, base: 1410 },
-    { from: 'Albuquerque', to: 'Oklahoma City', miles: 540, base: 1680 },
-    { from: 'Santa Fe', to: 'Albuquerque', miles: 65, base: 250 },
-    { from: 'Las Cruces', to: 'El Paso', miles: 45, base: 190 },
-    { from: 'Salt Lake City', to: 'Boise', miles: 340, base: 1070 },
-    { from: 'Salt Lake City', to: 'Las Vegas', miles: 420, base: 1320 },
-    { from: 'Salt Lake City', to: 'Cheyenne', miles: 440, base: 1380 },
-    { from: 'Provo', to: 'Salt Lake City', miles: 45, base: 190 },
-    { from: 'Ogden', to: 'Salt Lake City', miles: 40, base: 170 },
-    { from: 'Boise', to: 'Portland', miles: 430, base: 1350 },
-    { from: 'Boise', to: 'Seattle', miles: 500, base: 1560 },
-    { from: 'Pocatello', to: 'Boise', miles: 155, base: 540 },
-    { from: 'Portland', to: 'Eugene', miles: 110, base: 390 },
-    { from: 'Portland', to: 'Spokane', miles: 350, base: 1100 },
-    { from: 'Eugene', to: 'Portland', miles: 110, base: 390 },
-    { from: 'Salem', to: 'Portland', miles: 50, base: 200 },
-    { from: 'Seattle', to: 'Spokane', miles: 280, base: 900 },
-    { from: 'Seattle', to: 'Tacoma', miles: 35, base: 160 },
-    { from: 'Seattle', to: 'Yakima', miles: 145, base: 510 },
-    { from: 'Spokane', to: 'Boise', miles: 300, base: 960 },
-    { from: 'Tacoma', to: 'Seattle', miles: 35, base: 160 },
-
-    // Горный запад
-    { from: 'Denver', to: 'Cheyenne', miles: 100, base: 360 },
-    { from: 'Denver', to: 'Colorado Springs', miles: 70, base: 270 },
-    { from: 'Denver', to: 'Albuquerque', miles: 450, base: 1410 },
-    { from: 'Denver', to: 'Boise', miles: 830, base: 2540 },
-    { from: 'Colorado Springs', to: 'Denver', miles: 70, base: 270 },
-    { from: 'Pueblo', to: 'Denver', miles: 110, base: 390 },
-    { from: 'Cheyenne', to: 'Denver', miles: 100, base: 360 },
-    { from: 'Cheyenne', to: 'Salt Lake City', miles: 440, base: 1380 },
-    { from: 'Casper', to: 'Cheyenne', miles: 180, base: 610 },
-    { from: 'Billings', to: 'Denver', miles: 540, base: 1680 },
-    { from: 'Billings', to: 'Boise', miles: 530, base: 1650 },
-    { from: 'Great Falls', to: 'Billings', miles: 225, base: 750 },
-    { from: 'Great Falls', to: 'Boise', miles: 490, base: 1530 },
-    { from: 'Rapid City', to: 'Denver', miles: 390, base: 1220 },
-    { from: 'Rapid City', to: 'Sioux Falls', miles: 350, base: 1100 },
-
-    // Новая Англия
-    { from: 'Boston', to: 'Providence', miles: 50, base: 200 },
-    { from: 'Boston', to: 'Worcester', miles: 45, base: 190 },
-    { from: 'Boston', to: 'Manchester', miles: 55, base: 220 },
-    { from: 'Providence', to: 'Boston', miles: 50, base: 200 },
-    { from: 'Hartford', to: 'New York', miles: 115, base: 410 },
-    { from: 'Hartford', to: 'Boston', miles: 100, base: 360 },
-    { from: 'Bridgeport', to: 'New York', miles: 60, base: 240 },
-    { from: 'Manchester', to: 'Boston', miles: 55, base: 220 },
-    { from: 'Burlington', to: 'Boston', miles: 220, base: 740 },
-    { from: 'Albany', to: 'Buffalo', miles: 300, base: 960 },
-    { from: 'Rochester NY', to: 'Buffalo', miles: 75, base: 280 },
-    { from: 'Rochester NY', to: 'Syracuse', miles: 85, base: 310 },
-    { from: 'Annapolis', to: 'Baltimore', miles: 30, base: 140 },
-    { from: 'Wilmington', to: 'Philadelphia', miles: 30, base: 140 },
-    { from: 'Allentown', to: 'Philadelphia', miles: 60, base: 240 },
-    { from: 'Erie', to: 'Pittsburgh', miles: 130, base: 460 },
-    { from: 'Erie', to: 'Cleveland', miles: 95, base: 350 },
-
-    // Каролины
-    { from: 'Columbia', to: 'Charlotte', miles: 95, base: 350 },
-    { from: 'Columbia', to: 'Atlanta', miles: 215, base: 720 },
-    { from: 'Charleston SC', to: 'Columbia', miles: 115, base: 410 },
-    { from: 'Charleston SC', to: 'Savannah', miles: 105, base: 380 },
-    { from: 'Greensboro', to: 'Charlotte', miles: 90, base: 330 },
-    { from: 'Greensboro', to: 'Raleigh', miles: 80, base: 300 },
-
-    // Кентукки / Теннесси
-    { from: 'Lexington', to: 'Louisville', miles: 80, base: 300 },
-    { from: 'Lexington', to: 'Cincinnati', miles: 85, base: 310 },
-    { from: 'Lexington', to: 'Nashville', miles: 175, base: 590 },
-    { from: 'Bowling Green', to: 'Nashville', miles: 65, base: 250 },
-    { from: 'Bowling Green', to: 'Louisville', miles: 110, base: 390 },
-    { from: 'Knoxville', to: 'Nashville', miles: 180, base: 610 },
-    { from: 'Knoxville', to: 'Charlotte', miles: 185, base: 620 },
-    { from: 'Chattanooga', to: 'Nashville', miles: 135, base: 480 },
-    { from: 'Chattanooga', to: 'Atlanta', miles: 118, base: 420 },
-    { from: 'Chattanooga', to: 'Birmingham', miles: 148, base: 520 },
-
-    // Мичиган / Висконсин
-    { from: 'Milwaukee', to: 'Minneapolis', miles: 335, base: 1060 },
-    { from: 'Milwaukee', to: 'Detroit', miles: 330, base: 1040 },
-    { from: 'Madison', to: 'Minneapolis', miles: 275, base: 890 },
-    { from: 'Grand Rapids', to: 'Detroit', miles: 150, base: 520 },
-    { from: 'Grand Rapids', to: 'Chicago', miles: 180, base: 610 },
-
-    // Мэн / Нью-Гэмпшир / Вермонт
-    { from: 'Portland ME', to: 'Boston', miles: 110, base: 390 },
-    { from: 'Portland ME', to: 'Manchester', miles: 90, base: 330 },
-    { from: 'Bangor', to: 'Portland ME', miles: 130, base: 460 },
-    { from: 'Manchester', to: 'Boston', miles: 55, base: 220 },
-    { from: 'Concord NH', to: 'Boston', miles: 70, base: 270 },
-    { from: 'Burlington VT', to: 'Albany', miles: 100, base: 360 },
-    { from: 'Burlington VT', to: 'Boston', miles: 220, base: 740 },
-    { from: 'Montpelier', to: 'Burlington VT', miles: 40, base: 170 },
-
-    // Делавэр / Мэриленд
-    { from: 'Wilmington DE', to: 'Philadelphia', miles: 30, base: 140 },
-    { from: 'Wilmington DE', to: 'Baltimore', miles: 70, base: 270 },
-    { from: 'Dover DE', to: 'Philadelphia', miles: 85, base: 310 },
-    { from: 'Annapolis MD', to: 'Baltimore', miles: 30, base: 140 },
-    { from: 'Annapolis MD', to: 'Washington DC', miles: 35, base: 160 },
-    { from: 'Washington DC', to: 'New York', miles: 230, base: 770 },
-    { from: 'Washington DC', to: 'Richmond', miles: 110, base: 390 },
-    { from: 'Washington DC', to: 'Philadelphia', miles: 140, base: 500 },
-    { from: 'Washington DC', to: 'Charlotte', miles: 390, base: 1220 },
-    { from: 'Washington DC', to: 'Atlanta', miles: 640, base: 1980 },
-
-    // Западная Вирджиния
-    { from: 'Charleston WV', to: 'Cincinnati', miles: 165, base: 560 },
-    { from: 'Charleston WV', to: 'Richmond', miles: 310, base: 990 },
-    { from: 'Morgantown', to: 'Pittsburgh', miles: 75, base: 280 },
-
-    // Миссисипи / Алабама
-    { from: 'Birmingham', to: 'Nashville', miles: 191, base: 650 },
-    { from: 'Birmingham', to: 'Atlanta', miles: 147, base: 500 },
-    { from: 'Birmingham', to: 'Memphis', miles: 240, base: 790 },
-    { from: 'Birmingham', to: 'New Orleans', miles: 350, base: 1100 },
-    { from: 'Huntsville', to: 'Nashville', miles: 100, base: 360 },
-    { from: 'Huntsville', to: 'Birmingham', miles: 90, base: 330 },
-    { from: 'Mobile', to: 'New Orleans', miles: 145, base: 510 },
-    { from: 'Mobile', to: 'Birmingham', miles: 265, base: 860 },
-    { from: 'Mobile', to: 'Atlanta', miles: 340, base: 1070 },
-    { from: 'Hattiesburg', to: 'New Orleans', miles: 110, base: 390 },
-    { from: 'Hattiesburg', to: 'Mobile', miles: 95, base: 350 },
-    { from: 'Meridian', to: 'Birmingham', miles: 90, base: 330 },
-    { from: 'Meridian', to: 'Jackson', miles: 90, base: 330 },
-
-    // Арканзас
-    { from: 'Fort Smith', to: 'Little Rock', miles: 160, base: 550 },
-    { from: 'Fort Smith', to: 'Oklahoma City', miles: 175, base: 590 },
-    { from: 'Fort Smith', to: 'Dallas', miles: 330, base: 1040 },
-    { from: 'Fayetteville AR', to: 'Little Rock', miles: 200, base: 670 },
-    { from: 'Fayetteville AR', to: 'Kansas City', miles: 280, base: 900 },
-    { from: 'Jonesboro', to: 'Memphis', miles: 70, base: 270 },
-    { from: 'Jonesboro', to: 'Little Rock', miles: 130, base: 460 },
-
-    // Миссури
-    { from: 'Springfield MO', to: 'St. Louis', miles: 215, base: 720 },
-    { from: 'Springfield MO', to: 'Kansas City', miles: 160, base: 550 },
-    { from: 'Springfield MO', to: 'Memphis', miles: 310, base: 990 },
-    { from: 'Joplin', to: 'Kansas City', miles: 155, base: 540 },
-    { from: 'Joplin', to: 'Tulsa', miles: 90, base: 330 },
-    { from: 'Columbia MO', to: 'St. Louis', miles: 125, base: 450 },
-    { from: 'Columbia MO', to: 'Kansas City', miles: 130, base: 460 },
-
-    // Небраска / Канзас
-    { from: 'Lincoln NE', to: 'Kansas City', miles: 195, base: 650 },
-    { from: 'Lincoln NE', to: 'Denver', miles: 490, base: 1530 },
-    { from: 'Grand Island', to: 'Omaha', miles: 150, base: 520 },
-    { from: 'Wichita', to: 'Dallas', miles: 360, base: 1130 },
-    { from: 'Wichita', to: 'Denver', miles: 380, base: 1190 },
-    { from: 'Salina', to: 'Wichita', miles: 95, base: 350 },
-    { from: 'Salina', to: 'Kansas City', miles: 185, base: 620 },
-
-    // Айова
-    { from: 'Iowa City', to: 'Chicago', miles: 220, base: 740 },
-    { from: 'Iowa City', to: 'Des Moines', miles: 110, base: 390 },
-    { from: 'Davenport', to: 'Chicago', miles: 180, base: 610 },
-    { from: 'Davenport', to: 'Des Moines', miles: 165, base: 560 },
-    { from: 'Waterloo IA', to: 'Des Moines', miles: 100, base: 360 },
-    { from: 'Waterloo IA', to: 'Minneapolis', miles: 270, base: 880 },
-
-    // Северная / Южная Дакота
-    { from: 'Sioux City', to: 'Omaha', miles: 100, base: 360 },
-    { from: 'Sioux City', to: 'Sioux Falls', miles: 80, base: 300 },
-    { from: 'Aberdeen SD', to: 'Sioux Falls', miles: 190, base: 640 },
-    { from: 'Aberdeen SD', to: 'Fargo', miles: 190, base: 640 },
-    { from: 'Pierre', to: 'Sioux Falls', miles: 220, base: 740 },
-    { from: 'Pierre', to: 'Rapid City', miles: 180, base: 610 },
-    { from: 'Minot', to: 'Bismarck', miles: 110, base: 390 },
-    { from: 'Minot', to: 'Fargo', miles: 190, base: 640 },
-    { from: 'Grand Forks', to: 'Fargo', miles: 80, base: 300 },
-    { from: 'Grand Forks', to: 'Minneapolis', miles: 330, base: 1040 },
-
-    // Монтана / Вайоминг
-    { from: 'Missoula', to: 'Billings', miles: 345, base: 1080 },
-    { from: 'Missoula', to: 'Boise', miles: 340, base: 1070 },
-    { from: 'Missoula', to: 'Spokane', miles: 200, base: 670 },
-    { from: 'Helena MT', to: 'Billings', miles: 225, base: 750 },
-    { from: 'Helena MT', to: 'Missoula', miles: 115, base: 410 },
-    { from: 'Butte', to: 'Missoula', miles: 65, base: 250 },
-    { from: 'Butte', to: 'Billings', miles: 225, base: 750 },
-    { from: 'Casper WY', to: 'Denver', miles: 180, base: 610 },
-    { from: 'Casper WY', to: 'Billings', miles: 225, base: 750 },
-    { from: 'Casper WY', to: 'Salt Lake City', miles: 380, base: 1190 },
-    { from: 'Cheyenne WY', to: 'Denver', miles: 100, base: 360 },
-    { from: 'Cheyenne WY', to: 'Omaha', miles: 490, base: 1530 },
-    { from: 'Laramie', to: 'Cheyenne WY', miles: 50, base: 200 },
-    { from: 'Rock Springs', to: 'Salt Lake City', miles: 175, base: 590 },
-    { from: 'Rock Springs', to: 'Casper WY', miles: 190, base: 640 },
-
-    // Айдахо
-    { from: 'Twin Falls', to: 'Boise', miles: 130, base: 460 },
-    { from: 'Twin Falls', to: 'Salt Lake City', miles: 215, base: 720 },
-    { from: 'Idaho Falls', to: 'Salt Lake City', miles: 200, base: 670 },
-    { from: 'Idaho Falls', to: 'Boise', miles: 285, base: 920 },
-    { from: 'Coeur d Alene', to: 'Spokane', miles: 35, base: 160 },
-    { from: 'Coeur d Alene', to: 'Boise', miles: 330, base: 1040 },
-
-    // Нью-Мексико
-    { from: 'Albuquerque', to: 'El Paso', miles: 265, base: 860 },
-    { from: 'Albuquerque', to: 'Phoenix', miles: 465, base: 1450 },
-    { from: 'Albuquerque', to: 'Dallas', miles: 650, base: 2010 },
-    { from: 'Santa Fe NM', to: 'Albuquerque', miles: 65, base: 250 },
-    { from: 'Santa Fe NM', to: 'Denver', miles: 390, base: 1220 },
-    { from: 'Roswell', to: 'Albuquerque', miles: 200, base: 670 },
-    { from: 'Roswell', to: 'El Paso', miles: 200, base: 670 },
-    { from: 'Las Cruces NM', to: 'El Paso', miles: 45, base: 190 },
-    { from: 'Las Cruces NM', to: 'Albuquerque', miles: 225, base: 750 },
-
-    // Юта
-    { from: 'Provo UT', to: 'Salt Lake City', miles: 45, base: 190 },
-    { from: 'Provo UT', to: 'Las Vegas', miles: 400, base: 1250 },
-    { from: 'Ogden UT', to: 'Salt Lake City', miles: 40, base: 170 },
-    { from: 'Ogden UT', to: 'Boise', miles: 310, base: 990 },
-    { from: 'St. George UT', to: 'Las Vegas', miles: 120, base: 430 },
-    { from: 'St. George UT', to: 'Salt Lake City', miles: 305, base: 970 },
-
-    // Невада
-    { from: 'Henderson NV', to: 'Las Vegas', miles: 15, base: 100 },
-    { from: 'Henderson NV', to: 'Phoenix', miles: 295, base: 950 },
-    { from: 'Sparks NV', to: 'Reno', miles: 10, base: 80 },
-    { from: 'Sparks NV', to: 'Sacramento', miles: 140, base: 490 },
-    { from: 'Carson City', to: 'Reno', miles: 30, base: 140 },
-    { from: 'Carson City', to: 'Sacramento', miles: 130, base: 460 },
-
-    // Колорадо
-    { from: 'Fort Collins', to: 'Denver', miles: 65, base: 250 },
-    { from: 'Fort Collins', to: 'Cheyenne WY', miles: 45, base: 190 },
-    { from: 'Boulder CO', to: 'Denver', miles: 30, base: 140 },
-    { from: 'Colorado Springs CO', to: 'Denver', miles: 70, base: 270 },
-    { from: 'Colorado Springs CO', to: 'Albuquerque', miles: 380, base: 1190 },
-    { from: 'Pueblo CO', to: 'Denver', miles: 110, base: 390 },
-    { from: 'Grand Junction', to: 'Denver', miles: 245, base: 800 },
-    { from: 'Grand Junction', to: 'Salt Lake City', miles: 280, base: 900 },
-
-    // Аризона
-    { from: 'Tucson AZ', to: 'Phoenix', miles: 115, base: 410 },
-    { from: 'Tucson AZ', to: 'El Paso', miles: 265, base: 860 },
-    { from: 'Tucson AZ', to: 'Los Angeles', miles: 490, base: 1530 },
-    { from: 'Mesa AZ', to: 'Phoenix', miles: 20, base: 110 },
-    { from: 'Flagstaff AZ', to: 'Phoenix', miles: 145, base: 510 },
-    { from: 'Flagstaff AZ', to: 'Las Vegas', miles: 255, base: 840 },
-    { from: 'Yuma', to: 'Phoenix', miles: 185, base: 620 },
-    { from: 'Yuma', to: 'San Diego', miles: 175, base: 590 },
-
-    // Калифорния (дополнительно)
-    { from: 'Bakersfield', to: 'Los Angeles', miles: 110, base: 390 },
-    { from: 'Bakersfield', to: 'Fresno', miles: 110, base: 390 },
-    { from: 'Fresno CA', to: 'Los Angeles', miles: 220, base: 740 },
-    { from: 'Fresno CA', to: 'San Francisco', miles: 185, base: 620 },
-    { from: 'Stockton', to: 'Sacramento', miles: 50, base: 200 },
-    { from: 'Stockton', to: 'San Francisco', miles: 80, base: 300 },
-    { from: 'Modesto', to: 'Sacramento', miles: 90, base: 330 },
-    { from: 'Modesto', to: 'San Francisco', miles: 90, base: 330 },
-    { from: 'Riverside', to: 'Los Angeles', miles: 60, base: 240 },
-    { from: 'Riverside', to: 'San Diego', miles: 90, base: 330 },
-    { from: 'San Bernardino', to: 'Los Angeles', miles: 65, base: 250 },
-    { from: 'San Bernardino', to: 'Las Vegas', miles: 200, base: 670 },
-    { from: 'Long Beach', to: 'Los Angeles', miles: 25, base: 130 },
-    { from: 'Long Beach', to: 'San Diego', miles: 100, base: 360 },
-    { from: 'Anaheim', to: 'Los Angeles', miles: 30, base: 140 },
-    { from: 'Santa Barbara', to: 'Los Angeles', miles: 95, base: 350 },
-    { from: 'San Jose', to: 'San Francisco', miles: 50, base: 200 },
-    { from: 'San Jose', to: 'Los Angeles', miles: 340, base: 1070 },
-    { from: 'Oakland', to: 'San Francisco', miles: 15, base: 100 },
-    { from: 'Oakland', to: 'Sacramento', miles: 80, base: 300 },
-    { from: 'Redding', to: 'Sacramento', miles: 160, base: 550 },
-    { from: 'Redding', to: 'Portland', miles: 280, base: 900 },
-    { from: 'Eureka CA', to: 'Sacramento', miles: 280, base: 900 },
-    { from: 'Eureka CA', to: 'Portland', miles: 380, base: 1190 },
-
-    // Орегон (дополнительно)
-    { from: 'Medford OR', to: 'Portland', miles: 275, base: 890 },
-    { from: 'Medford OR', to: 'Sacramento', miles: 310, base: 990 },
-    { from: 'Bend OR', to: 'Portland', miles: 160, base: 550 },
-    { from: 'Bend OR', to: 'Boise', miles: 280, base: 900 },
-    { from: 'Corvallis', to: 'Portland', miles: 85, base: 310 },
-    { from: 'Astoria', to: 'Portland', miles: 95, base: 350 },
-
-    // Вашингтон (дополнительно)
-    { from: 'Bellingham', to: 'Seattle', miles: 90, base: 330 },
-    { from: 'Bellingham', to: 'Vancouver BC', miles: 55, base: 220 },
-    { from: 'Olympia', to: 'Seattle', miles: 60, base: 240 },
-    { from: 'Olympia', to: 'Portland', miles: 110, base: 390 },
-    { from: 'Kennewick', to: 'Spokane', miles: 130, base: 460 },
-    { from: 'Kennewick', to: 'Portland', miles: 215, base: 720 },
-    { from: 'Yakima WA', to: 'Seattle', miles: 145, base: 510 },
-    { from: 'Yakima WA', to: 'Spokane', miles: 150, base: 520 },
-
-    // Теннесси (дополнительно)
-    { from: 'Memphis', to: 'Nashville', miles: 210, base: 700 },
-    { from: 'Memphis', to: 'Atlanta', miles: 395, base: 1240 },
-    { from: 'Memphis', to: 'Dallas', miles: 470, base: 1470 },
-    { from: 'Memphis', to: 'Chicago', miles: 530, base: 1650 },
-    { from: 'Memphis', to: 'New Orleans', miles: 395, base: 1240 },
-    { from: 'Memphis', to: 'St. Louis', miles: 285, base: 920 },
-    { from: 'Memphis', to: 'Houston', miles: 570, base: 1770 },
-    { from: 'Clarksville TN', to: 'Nashville', miles: 50, base: 200 },
-    { from: 'Murfreesboro', to: 'Nashville', miles: 35, base: 160 },
-    { from: 'Johnson City', to: 'Knoxville', miles: 90, base: 330 },
-    { from: 'Johnson City', to: 'Charlotte', miles: 200, base: 670 },
-
-    // Луизиана (дополнительно)
-    { from: 'New Orleans', to: 'Memphis', miles: 395, base: 1240 },
-    { from: 'New Orleans', to: 'Dallas', miles: 505, base: 1570 },
-    { from: 'New Orleans', to: 'Miami', miles: 860, base: 2620 },
-    { from: 'Baton Rouge LA', to: 'Houston', miles: 270, base: 880 },
-    { from: 'Baton Rouge LA', to: 'New Orleans', miles: 80, base: 300 },
-    { from: 'Shreveport LA', to: 'Memphis', miles: 320, base: 1020 },
-    { from: 'Shreveport LA', to: 'Houston', miles: 240, base: 790 },
-
-    // Флорида (дополнительно)
-    { from: 'Tampa FL', to: 'Orlando', miles: 85, base: 310 },
-    { from: 'Tampa FL', to: 'Jacksonville', miles: 200, base: 670 },
-    { from: 'Tampa FL', to: 'Miami', miles: 280, base: 900 },
-    { from: 'Tampa FL', to: 'Atlanta', miles: 460, base: 1440 },
-    { from: 'Tampa FL', to: 'Charlotte', miles: 620, base: 1920 },
-    { from: 'Orlando FL', to: 'Jacksonville', miles: 140, base: 490 },
-    { from: 'Orlando FL', to: 'Tampa', miles: 85, base: 310 },
-    { from: 'Orlando FL', to: 'Miami', miles: 235, base: 780 },
-    { from: 'Gainesville FL', to: 'Jacksonville', miles: 70, base: 270 },
-    { from: 'Gainesville FL', to: 'Tampa', miles: 130, base: 460 },
-    { from: 'Tallahassee', to: 'Jacksonville', miles: 165, base: 560 },
-    { from: 'Tallahassee', to: 'Atlanta', miles: 270, base: 880 },
-    { from: 'Tallahassee', to: 'New Orleans', miles: 380, base: 1190 },
-    { from: 'Fort Myers', to: 'Miami', miles: 110, base: 390 },
-    { from: 'Fort Myers', to: 'Tampa', miles: 130, base: 460 },
-    { from: 'West Palm Beach', to: 'Miami', miles: 70, base: 270 },
-    { from: 'West Palm Beach', to: 'Orlando', miles: 170, base: 580 },
-    { from: 'Daytona Beach', to: 'Orlando', miles: 60, base: 240 },
-    { from: 'Daytona Beach', to: 'Jacksonville', miles: 90, base: 330 },
-    { from: 'Pensacola FL', to: 'Mobile', miles: 60, base: 240 },
-    { from: 'Pensacola FL', to: 'Tallahassee', miles: 200, base: 670 },
+    // ── MIDWEST HUB: Chicago ──
+    { from: 'Chicago', to: 'Houston',       miles: 1092 },
+    { from: 'Chicago', to: 'Dallas',        miles: 967  },
+    { from: 'Chicago', to: 'Atlanta',       miles: 716  },
+    { from: 'Chicago', to: 'Miami',         miles: 1377 },
+    { from: 'Chicago', to: 'Denver',        miles: 1003 },
+    { from: 'Chicago', to: 'Los Angeles',   miles: 2015 },
+    { from: 'Chicago', to: 'Seattle',       miles: 2065 },
+    { from: 'Chicago', to: 'Phoenix',       miles: 1750 },
+    { from: 'Chicago', to: 'New York',      miles: 790  },
+    { from: 'Chicago', to: 'Nashville',     miles: 476  },
+    { from: 'Chicago', to: 'Memphis',       miles: 530  },
+    { from: 'Chicago', to: 'Kansas City',   miles: 500  },
+    { from: 'Chicago', to: 'Minneapolis',   miles: 410  },
+    { from: 'Chicago', to: 'Detroit',       miles: 280  },
+    { from: 'Chicago', to: 'Columbus',      miles: 355  },
+    { from: 'Chicago', to: 'Indianapolis',  miles: 180  },
+    { from: 'Chicago', to: 'St. Louis',     miles: 300  },
+    // ── SOUTH: Dallas / Houston ──
+    { from: 'Dallas', to: 'Chicago',        miles: 967  },
+    { from: 'Dallas', to: 'Atlanta',        miles: 781  },
+    { from: 'Dallas', to: 'Los Angeles',    miles: 1435 },
+    { from: 'Dallas', to: 'Miami',          miles: 1308 },
+    { from: 'Dallas', to: 'Denver',         miles: 781  },
+    { from: 'Dallas', to: 'Phoenix',        miles: 1071 },
+    { from: 'Dallas', to: 'Nashville',      miles: 663  },
+    { from: 'Dallas', to: 'Kansas City',    miles: 500  },
+    { from: 'Dallas', to: 'New York',       miles: 1550 },
+    { from: 'Dallas', to: 'Seattle',        miles: 2100 },
+    { from: 'Dallas', to: 'Memphis',        miles: 470  },
+    { from: 'Dallas', to: 'New Orleans',    miles: 505  },
+    { from: 'Houston', to: 'Chicago',       miles: 1092 },
+    { from: 'Houston', to: 'Atlanta',       miles: 789  },
+    { from: 'Houston', to: 'Miami',         miles: 1190 },
+    { from: 'Houston', to: 'Los Angeles',   miles: 1550 },
+    { from: 'Houston', to: 'Denver',        miles: 1020 },
+    { from: 'Houston', to: 'Nashville',     miles: 790  },
+    { from: 'Houston', to: 'New York',      miles: 1630 },
+    { from: 'Houston', to: 'Phoenix',       miles: 1175 },
+    { from: 'Houston', to: 'Seattle',       miles: 2340 },
+    { from: 'Houston', to: 'Kansas City',   miles: 740  },
+    // ── SOUTHEAST: Atlanta ──
+    { from: 'Atlanta', to: 'Chicago',       miles: 716  },
+    { from: 'Atlanta', to: 'Dallas',        miles: 781  },
+    { from: 'Atlanta', to: 'New York',      miles: 881  },
+    { from: 'Atlanta', to: 'Miami',         miles: 662  },
+    { from: 'Atlanta', to: 'Houston',       miles: 789  },
+    { from: 'Atlanta', to: 'Los Angeles',   miles: 1940 },
+    { from: 'Atlanta', to: 'Denver',        miles: 1400 },
+    { from: 'Atlanta', to: 'Nashville',     miles: 250  },
+    { from: 'Atlanta', to: 'Memphis',       miles: 395  },
+    { from: 'Atlanta', to: 'Charlotte',     miles: 245  },
+    { from: 'Atlanta', to: 'Philadelphia',  miles: 1000 },
+    { from: 'Atlanta', to: 'Boston',        miles: 1100 },
+    { from: 'Atlanta', to: 'Kansas City',   miles: 800  },
+    { from: 'Atlanta', to: 'Seattle',       miles: 2620 },
+    // ── NORTHEAST: New York / Philadelphia / Boston ──
+    { from: 'New York', to: 'Chicago',      miles: 790  },
+    { from: 'New York', to: 'Atlanta',      miles: 881  },
+    { from: 'New York', to: 'Miami',        miles: 1280 },
+    { from: 'New York', to: 'Dallas',       miles: 1550 },
+    { from: 'New York', to: 'Houston',      miles: 1630 },
+    { from: 'New York', to: 'Los Angeles',  miles: 2800 },
+    { from: 'New York', to: 'Denver',       miles: 1780 },
+    { from: 'New York', to: 'Nashville',    miles: 900  },
+    { from: 'New York', to: 'Charlotte',    miles: 630  },
+    { from: 'New York', to: 'Columbus',     miles: 530  },
+    { from: 'New York', to: 'Detroit',      miles: 600  },
+    { from: 'New York', to: 'Kansas City',  miles: 1200 },
+    { from: 'Philadelphia', to: 'Chicago',  miles: 760  },
+    { from: 'Philadelphia', to: 'Atlanta',  miles: 1000 },
+    { from: 'Philadelphia', to: 'Miami',    miles: 1250 },
+    { from: 'Philadelphia', to: 'Dallas',   miles: 1500 },
+    { from: 'Philadelphia', to: 'Nashville',miles: 870  },
+    { from: 'Philadelphia', to: 'Columbus', miles: 460  },
+    { from: 'Boston', to: 'Chicago',        miles: 980  },
+    { from: 'Boston', to: 'Atlanta',        miles: 1100 },
+    { from: 'Boston', to: 'Miami',          miles: 1500 },
+    { from: 'Boston', to: 'Dallas',         miles: 1750 },
+    { from: 'Boston', to: 'Nashville',      miles: 1050 },
+    // ── WEST: Los Angeles / San Francisco / Seattle ──
+    { from: 'Los Angeles', to: 'Chicago',   miles: 2015 },
+    { from: 'Los Angeles', to: 'Dallas',    miles: 1435 },
+    { from: 'Los Angeles', to: 'Houston',   miles: 1550 },
+    { from: 'Los Angeles', to: 'Atlanta',   miles: 1940 },
+    { from: 'Los Angeles', to: 'New York',  miles: 2800 },
+    { from: 'Los Angeles', to: 'Denver',    miles: 1016 },
+    { from: 'Los Angeles', to: 'Seattle',   miles: 1135 },
+    { from: 'Los Angeles', to: 'Phoenix',   miles: 373  },
+    { from: 'Los Angeles', to: 'Las Vegas', miles: 270  },
+    { from: 'Los Angeles', to: 'Salt Lake City', miles: 689 },
+    { from: 'Los Angeles', to: 'Kansas City',    miles: 1630 },
+    { from: 'Los Angeles', to: 'Nashville',      miles: 1980 },
+    { from: 'Los Angeles', to: 'Miami',          miles: 2750 },
+    { from: 'San Francisco', to: 'Los Angeles',  miles: 380  },
+    { from: 'San Francisco', to: 'Seattle',      miles: 810  },
+    { from: 'San Francisco', to: 'Denver',       miles: 1240 },
+    { from: 'San Francisco', to: 'Dallas',       miles: 1770 },
+    { from: 'San Francisco', to: 'Chicago',      miles: 2130 },
+    { from: 'San Francisco', to: 'Phoenix',      miles: 750  },
+    { from: 'San Francisco', to: 'Las Vegas',    miles: 570  },
+    { from: 'San Francisco', to: 'Salt Lake City', miles: 750 },
+    { from: 'San Francisco', to: 'Atlanta',      miles: 2490 },
+    { from: 'San Francisco', to: 'New York',     miles: 2900 },
+    { from: 'Seattle', to: 'Los Angeles',        miles: 1135 },
+    { from: 'Seattle', to: 'Denver',             miles: 1306 },
+    { from: 'Seattle', to: 'Chicago',            miles: 2065 },
+    { from: 'Seattle', to: 'Dallas',             miles: 2100 },
+    { from: 'Seattle', to: 'Phoenix',            miles: 1420 },
+    { from: 'Seattle', to: 'Salt Lake City',     miles: 840  },
+    { from: 'Seattle', to: 'Las Vegas',          miles: 1120 },
+    { from: 'Seattle', to: 'Atlanta',            miles: 2620 },
+    { from: 'Seattle', to: 'New York',           miles: 2850 },
+    { from: 'Seattle', to: 'Houston',            miles: 2340 },
+    // ── MOUNTAIN: Denver / Phoenix / Las Vegas ──
+    { from: 'Denver', to: 'Chicago',             miles: 1003 },
+    { from: 'Denver', to: 'Dallas',              miles: 781  },
+    { from: 'Denver', to: 'Los Angeles',         miles: 1016 },
+    { from: 'Denver', to: 'Seattle',             miles: 1306 },
+    { from: 'Denver', to: 'Atlanta',             miles: 1400 },
+    { from: 'Denver', to: 'Houston',             miles: 1020 },
+    { from: 'Denver', to: 'Kansas City',         miles: 600  },
+    { from: 'Denver', to: 'Salt Lake City',      miles: 525  },
+    { from: 'Denver', to: 'Phoenix',             miles: 600  },
+    { from: 'Denver', to: 'New York',            miles: 1780 },
+    { from: 'Denver', to: 'Nashville',           miles: 1200 },
+    { from: 'Denver', to: 'Minneapolis',         miles: 920  },
+    { from: 'Phoenix', to: 'Los Angeles',        miles: 373  },
+    { from: 'Phoenix', to: 'Dallas',             miles: 1071 },
+    { from: 'Phoenix', to: 'Denver',             miles: 600  },
+    { from: 'Phoenix', to: 'Las Vegas',          miles: 295  },
+    { from: 'Phoenix', to: 'Chicago',            miles: 1750 },
+    { from: 'Phoenix', to: 'Houston',            miles: 1175 },
+    { from: 'Phoenix', to: 'Atlanta',            miles: 1800 },
+    { from: 'Phoenix', to: 'Seattle',            miles: 1420 },
+    { from: 'Phoenix', to: 'Salt Lake City',     miles: 680  },
+    { from: 'Las Vegas', to: 'Los Angeles',      miles: 270  },
+    { from: 'Las Vegas', to: 'Denver',           miles: 750  },
+    { from: 'Las Vegas', to: 'Phoenix',          miles: 295  },
+    { from: 'Las Vegas', to: 'Salt Lake City',   miles: 420  },
+    { from: 'Las Vegas', to: 'Seattle',          miles: 1120 },
+    { from: 'Las Vegas', to: 'Dallas',           miles: 1230 },
+    { from: 'Las Vegas', to: 'Chicago',          miles: 1760 },
+    { from: 'Salt Lake City', to: 'Los Angeles', miles: 689  },
+    { from: 'Salt Lake City', to: 'Denver',      miles: 525  },
+    { from: 'Salt Lake City', to: 'Seattle',     miles: 840  },
+    { from: 'Salt Lake City', to: 'Las Vegas',   miles: 420  },
+    { from: 'Salt Lake City', to: 'Phoenix',     miles: 680  },
+    { from: 'Salt Lake City', to: 'Chicago',     miles: 1400 },
+    { from: 'Salt Lake City', to: 'Dallas',      miles: 1230 },
+    // ── MIDWEST: Kansas City / Minneapolis / St. Louis ──
+    { from: 'Kansas City', to: 'Chicago',        miles: 500  },
+    { from: 'Kansas City', to: 'Dallas',         miles: 500  },
+    { from: 'Kansas City', to: 'Denver',         miles: 600  },
+    { from: 'Kansas City', to: 'Atlanta',        miles: 800  },
+    { from: 'Kansas City', to: 'Los Angeles',    miles: 1630 },
+    { from: 'Kansas City', to: 'Nashville',      miles: 550  },
+    { from: 'Kansas City', to: 'Houston',        miles: 740  },
+    { from: 'Kansas City', to: 'Minneapolis',    miles: 440  },
+    { from: 'Kansas City', to: 'New York',       miles: 1200 },
+    { from: 'Minneapolis', to: 'Chicago',        miles: 410  },
+    { from: 'Minneapolis', to: 'Denver',         miles: 920  },
+    { from: 'Minneapolis', to: 'Dallas',         miles: 1100 },
+    { from: 'Minneapolis', to: 'Atlanta',        miles: 1100 },
+    { from: 'Minneapolis', to: 'Kansas City',    miles: 440  },
+    { from: 'Minneapolis', to: 'Detroit',        miles: 700  },
+    { from: 'Minneapolis', to: 'Seattle',        miles: 1650 },
+    { from: 'Minneapolis', to: 'Los Angeles',    miles: 1940 },
+    { from: 'St. Louis', to: 'Chicago',          miles: 300  },
+    { from: 'St. Louis', to: 'Dallas',           miles: 630  },
+    { from: 'St. Louis', to: 'Atlanta',          miles: 560  },
+    { from: 'St. Louis', to: 'Nashville',        miles: 309  },
+    { from: 'St. Louis', to: 'Kansas City',      miles: 250  },
+    { from: 'St. Louis', to: 'Memphis',          miles: 285  },
+    { from: 'St. Louis', to: 'Denver',           miles: 860  },
+    { from: 'St. Louis', to: 'Houston',          miles: 800  },
+    // ── SOUTHEAST: Nashville / Memphis / Charlotte ──
+    { from: 'Nashville', to: 'Chicago',          miles: 476  },
+    { from: 'Nashville', to: 'Atlanta',          miles: 250  },
+    { from: 'Nashville', to: 'Dallas',           miles: 663  },
+    { from: 'Nashville', to: 'Houston',          miles: 790  },
+    { from: 'Nashville', to: 'New York',         miles: 900  },
+    { from: 'Nashville', to: 'Miami',            miles: 1000 },
+    { from: 'Nashville', to: 'Los Angeles',      miles: 1980 },
+    { from: 'Nashville', to: 'Denver',           miles: 1200 },
+    { from: 'Nashville', to: 'Kansas City',      miles: 550  },
+    { from: 'Nashville', to: 'Charlotte',        miles: 409  },
+    { from: 'Nashville', to: 'Memphis',          miles: 210  },
+    { from: 'Nashville', to: 'Indianapolis',     miles: 286  },
+    { from: 'Nashville', to: 'Columbus',         miles: 330  },
+    { from: 'Nashville', to: 'Philadelphia',     miles: 870  },
+    { from: 'Memphis', to: 'Chicago',            miles: 530  },
+    { from: 'Memphis', to: 'Atlanta',            miles: 395  },
+    { from: 'Memphis', to: 'Dallas',             miles: 470  },
+    { from: 'Memphis', to: 'Houston',            miles: 570  },
+    { from: 'Memphis', to: 'Nashville',          miles: 210  },
+    { from: 'Memphis', to: 'New Orleans',        miles: 395  },
+    { from: 'Memphis', to: 'Kansas City',        miles: 450  },
+    { from: 'Memphis', to: 'St. Louis',          miles: 285  },
+    { from: 'Memphis', to: 'Los Angeles',        miles: 1820 },
+    { from: 'Charlotte', to: 'Atlanta',          miles: 245  },
+    { from: 'Charlotte', to: 'New York',         miles: 630  },
+    { from: 'Charlotte', to: 'Chicago',          miles: 780  },
+    { from: 'Charlotte', to: 'Nashville',        miles: 409  },
+    { from: 'Charlotte', to: 'Miami',            miles: 650  },
+    { from: 'Charlotte', to: 'Dallas',           miles: 1100 },
+    { from: 'Charlotte', to: 'Houston',          miles: 1100 },
+    { from: 'Charlotte', to: 'Philadelphia',     miles: 480  },
+    // ── GREAT LAKES: Detroit / Columbus / Indianapolis ──
+    { from: 'Detroit', to: 'Chicago',            miles: 280  },
+    { from: 'Detroit', to: 'Atlanta',            miles: 730  },
+    { from: 'Detroit', to: 'Dallas',             miles: 1200 },
+    { from: 'Detroit', to: 'New York',           miles: 600  },
+    { from: 'Detroit', to: 'Nashville',          miles: 480  },
+    { from: 'Detroit', to: 'Columbus',           miles: 200  },
+    { from: 'Detroit', to: 'Indianapolis',       miles: 280  },
+    { from: 'Detroit', to: 'Houston',            miles: 1300 },
+    { from: 'Detroit', to: 'Miami',              miles: 1380 },
+    { from: 'Columbus', to: 'Chicago',           miles: 355  },
+    { from: 'Columbus', to: 'Atlanta',           miles: 590  },
+    { from: 'Columbus', to: 'New York',          miles: 530  },
+    { from: 'Columbus', to: 'Nashville',         miles: 330  },
+    { from: 'Columbus', to: 'Dallas',            miles: 1100 },
+    { from: 'Columbus', to: 'Houston',           miles: 1200 },
+    { from: 'Columbus', to: 'Miami',             miles: 1200 },
+    { from: 'Indianapolis', to: 'Chicago',       miles: 180  },
+    { from: 'Indianapolis', to: 'Atlanta',       miles: 490  },
+    { from: 'Indianapolis', to: 'Nashville',     miles: 286  },
+    { from: 'Indianapolis', to: 'Dallas',        miles: 900  },
+    { from: 'Indianapolis', to: 'Houston',       miles: 1000 },
+    { from: 'Indianapolis', to: 'New York',      miles: 730  },
+    { from: 'Indianapolis', to: 'Miami',         miles: 1200 },
+    // ── FLORIDA: Miami / Jacksonville / Tampa ──
+    { from: 'Miami', to: 'Atlanta',              miles: 662  },
+    { from: 'Miami', to: 'New York',             miles: 1280 },
+    { from: 'Miami', to: 'Chicago',              miles: 1377 },
+    { from: 'Miami', to: 'Dallas',               miles: 1308 },
+    { from: 'Miami', to: 'Houston',              miles: 1190 },
+    { from: 'Miami', to: 'Nashville',            miles: 1000 },
+    { from: 'Miami', to: 'Charlotte',            miles: 650  },
+    { from: 'Miami', to: 'Los Angeles',          miles: 2750 },
+    { from: 'Miami', to: 'Denver',               miles: 2000 },
+    { from: 'Jacksonville', to: 'Atlanta',       miles: 346  },
+    { from: 'Jacksonville', to: 'New York',      miles: 1000 },
+    { from: 'Jacksonville', to: 'Chicago',       miles: 1050 },
+    { from: 'Jacksonville', to: 'Dallas',        miles: 1000 },
+    { from: 'Jacksonville', to: 'Houston',       miles: 870  },
+    { from: 'Jacksonville', to: 'Nashville',     miles: 600  },
+    { from: 'Tampa', to: 'Atlanta',              miles: 460  },
+    { from: 'Tampa', to: 'New York',             miles: 1200 },
+    { from: 'Tampa', to: 'Chicago',              miles: 1250 },
+    { from: 'Tampa', to: 'Dallas',               miles: 1100 },
+    { from: 'Tampa', to: 'Houston',              miles: 1000 },
+    // ── NEW ORLEANS / BATON ROUGE ──
+    { from: 'New Orleans', to: 'Atlanta',        miles: 470  },
+    { from: 'New Orleans', to: 'Houston',        miles: 350  },
+    { from: 'New Orleans', to: 'Dallas',         miles: 505  },
+    { from: 'New Orleans', to: 'Chicago',        miles: 920  },
+    { from: 'New Orleans', to: 'Nashville',      miles: 530  },
+    { from: 'New Orleans', to: 'Miami',          miles: 860  },
+    { from: 'New Orleans', to: 'Los Angeles',    miles: 1900 },
+    { from: 'New Orleans', to: 'Memphis',        miles: 395  },
   ];
+
 
   const commodities = [
     'Медицинское оборудование', 'Электроника', 'Продукты питания',
@@ -1105,16 +810,22 @@ function generateLoads(minute: number): LoadOffer[] {
 
   const equipment: Array<'Dry Van' | 'Reefer' | 'Flatbed'> = ['Dry Van', 'Dry Van', 'Dry Van', 'Reefer', 'Flatbed'];
 
-  // Генерируем 40-50 грузов случайным образом
-  const numLoads = 40 + Math.floor(Math.random() * 11);
+  // Генерируем 60-80 грузов случайным образом
+  const numLoads = 60 + Math.floor(Math.random() * 21);
   const loads: LoadOffer[] = [];
   
   for (let i = 0; i < numLoads; i++) {
     const route = routes[Math.floor(Math.random() * routes.length)];
     const eq = equipment[Math.floor(Math.random() * equipment.length)];
-    const market = route.base + Math.floor(Math.random() * 400 - 200);
-    const posted = Math.floor(market * (0.75 + Math.random() * 0.1)); // брокер занижает на 15-25%
-    const min = Math.floor(market * 0.85);
+    // $2.50 - $3.50/mile рыночная ставка, Reefer/Flatbed дороже
+    const ratePerMile = eq === 'Dry Van'
+      ? 2.50 + Math.random() * 1.00          // $2.50–$3.50
+      : eq === 'Reefer'
+      ? 3.00 + Math.random() * 1.00          // $3.00–$4.00
+      : 3.20 + Math.random() * 1.20;         // $3.20–$4.40 Flatbed
+    const market = Math.round(route.miles * ratePerMile / 50) * 50; // округляем до $50
+    const posted = Math.round(market * (0.78 + Math.random() * 0.08) / 50) * 50; // брокер занижает на 14-22%
+    const min = Math.round(market * 0.88 / 50) * 50;
     
     loads.push({
       id: `L${minute}-${i}-${Math.random().toString(36).substr(2, 9)}`,
@@ -1132,7 +843,7 @@ function generateLoads(minute: number): LoadOffer[] {
       miles: route.miles,
       pickupTime: '08:00 AM',
       deliveryTime: 'Tomorrow 14:00',
-      expiresAt: minute + 60 + Math.floor(Math.random() * 120),
+      expiresAt: minute + 120 + Math.floor(Math.random() * 180), // живут 2-5 часов
       isUrgent: Math.random() > 0.85,
     });
   }
@@ -1169,6 +880,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   notifications: [],
   unreadCount: 0,
   pendingEmailResponses: [],
+  deliveryResults: [],
+
+  dismissDeliveryResult: (loadId: string) => {
+    set(s => ({ deliveryResults: s.deliveryResults.filter(r => r.loadId !== loadId) }));
+  },
 
   startShift: async (truckCount: number = 3, sessionName: string = '') => {
     console.log(`🎮 Starting shift with ${truckCount} trucks, session: "${sessionName}"`);
@@ -1246,7 +962,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       reputation: 100,
       sessionName: sessionName || `Смена · ${truckCount} трака`,
       trucks: trucksWithRoutes,
-      availableLoads: generateLoads(0),
+      availableLoads: [
+        ...generateLoads(0),
+        ...generateLoads(1),
+        ...generateLoads(2),
+      ],
       activeLoads: selectedActiveLoads,
       bookedLoads: [],
       activeEvents: [],
@@ -1254,6 +974,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       notifications: initialEmails,
       unreadCount: initialEmails.filter(e => !e.read).length,
       pendingEmailResponses: [],
+      deliveryResults: [],
     });
   },
 
@@ -1277,6 +998,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const HOS_REST = 600; // 10 часов отдыха
 
     // Обновляем прогресс траков
+    const newDeliveryResults: DeliveryResult[] = [];
     const updatedTrucks = await Promise.all(trucks.map(async (truck) => {
 
       // ── HOS: трак исчерпал лимит вождения — принудительный отдых ──
@@ -1362,7 +1084,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (truck.status === 'at_delivery' && truck.currentLoad) {
         const deliveryArrivalMinute = (truck as any).deliveryArrivalMinute ?? newMinute;
         // Случайная длительность разгрузки: 30-120 мин (задаётся при первом тике)
-        const unloadDuration = (truck as any).unloadDuration ?? (30 + Math.floor(Math.random() * 91));
+        const unloadDuration = (truck as any).unloadDuration ?? (5 + Math.floor(Math.random() * 11));
         const waitTime = newMinute - deliveryArrivalMinute;
 
         // Detention: после 120 игровых минут (2 часа) — уведомление
@@ -1378,19 +1100,43 @@ export const useGameStore = create<GameState>((set, get) => ({
           return { ...truck, deliveryArrivalMinute, unloadDuration, detentionNotified: true } as any;
         }
 
+        
         // Разгрузка завершена
         if (waitTime >= unloadDuration) {
           const detentionHours = Math.max(0, Math.floor((waitTime - 120) / 60));
           const detentionPay = detentionHours * 75;
+          const load = truck.currentLoad!;
+          const miles = load.miles || 0;
+          const agreedRate = load.agreedRate || 0;
+          const fuelCost = Math.round(miles * 0.45);
+          const driverPay = Math.round(miles * 0.55);
+          const dispatchFee = Math.round(agreedRate * 0.08);
+          const factoringFee = Math.round(agreedRate * 0.03);
+          const lumperCost = Math.random() > 0.7 ? (Math.random() > 0.5 ? 300 : 150) : 0;
+          const grossRevenue = agreedRate + detentionPay;
+          const totalExpenses = fuelCost + driverPay + dispatchFee + factoringFee + lumperCost;
+          const netProfit = grossRevenue - totalExpenses;
+          const deliveryResult: DeliveryResult = {
+            truckId: truck.id, truckName: truck.name, driverName: truck.driver,
+            loadId: load.id, fromCity: load.fromCity, toCity: load.toCity,
+            miles, agreedRate, fuelCost, driverPay, dispatchFee, factoringFee,
+            lumperCost, detentionPay, grossRevenue, totalExpenses, netProfit,
+            ratePerMile: miles > 0 ? Math.round((agreedRate / miles) * 100) / 100 : 0,
+            profitPerMile: miles > 0 ? Math.round((netProfit / miles) * 100) / 100 : 0,
+            minute: newMinute,
+          };
+          console.log('🎉 DeliveryResult created:', deliveryResult.loadId, deliveryResult.netProfit);
+          newDeliveryResults.push(deliveryResult);
+          get().addMoney(netProfit, `Доставка ${load.fromCity}→${load.toCity}`);
           get().addNotification({
             type: 'email', priority: 'low',
-            from: truck.currentLoad.brokerName,
-            subject: `✅ ${truck.name} разгружен — свободен`,
-            message: `${truck.driver}: разгрузился в ${truck.currentLoad.toCity}, BOL подписан. Свободен — ищи следующий груз.${detentionPay > 0 ? ` Detention: $${detentionPay} — выставь брокеру!` : ''}`,
+            from: load.brokerName,
+            subject: `✅ ${truck.name} доставил — ${load.fromCity}→${load.toCity}`,
+            message: `${truck.driver}: разгрузился в ${load.toCity}, BOL подписан. Net: $${netProfit.toLocaleString()}${detentionPay > 0 ? ` + detention $${detentionPay}` : ''}`,
             actionRequired: false,
             relatedTruckId: truck.id,
           });
-          const activeLoads = get().activeLoads.filter(l => l.id !== truck.currentLoad!.id);
+          const activeLoads = get().activeLoads.filter((l: any) => l.id !== load.id);
           set({ activeLoads });
           return {
             ...truck,
@@ -1399,7 +1145,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             destinationCity: null,
             progress: 0,
             routePath: null,
-            currentCity: truck.currentLoad.toCity,
+            currentCity: load.toCity,
             idleSinceMinute: newMinute,
             idleWarningLevel: 0,
             deliveryArrivalMinute: undefined,
@@ -1645,7 +1391,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           const lng = p1[0] + (p2[0] - p1[0]) * segmentProgress;
           const lat = p1[1] + (p2[1] - p1[1]) * segmentProgress;
           
-          return { ...truck, progress: newProgress, position: [lng, lat] as [number, number], hoursLeft: newHoursLeft };
+          return { ...truck, progress: newProgress, position: [lng, lat] as [number, number], hoursLeft: newHoursLeft, currentCity: getNearestCity(lng, lat) };
         } else if (truck.destinationCity && CITIES[truck.destinationCity]) {
           // Fallback: линейное движение если нет routePath
           const dest = CITIES[truck.destinationCity];
@@ -1654,7 +1400,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           const t = Math.min(totalProgress, 1);
           const lng = startPos[0] + (dest[0] - startPos[0]) * t;
           const lat = startPos[1] + (dest[1] - startPos[1]) * t;
-          return { ...truck, progress: Math.min(newProgress, 0.99), position: [lng, lat] as [number, number], hoursLeft: newHoursLeft };
+          return { ...truck, progress: Math.min(newProgress, 0.99), position: [lng, lat] as [number, number], hoursLeft: newHoursLeft, currentCity: getNearestCity(lng, lat) };
         } else {
           return truck;
         }
@@ -1665,9 +1411,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Убираем истёкшие грузы
     const freshLoads = availableLoads.filter(l => l.expiresAt > newMinute);
 
-    // Добавляем новые грузы каждые 12 минут (≈ 10 реальных секунд)
-    const shouldAddLoads = Math.floor(newMinute / 12) > Math.floor(gameMinute / 12);
-    const newLoads = shouldAddLoads ? generateLoads(newMinute).slice(0, 5) : [];
+    // Добавляем новые грузы каждые 6 минут или если мало
+    const shouldAddLoads = Math.floor(newMinute / 6) > Math.floor(gameMinute / 6);
+    const tooFewLoads = freshLoads.length < 80;
+    const newLoads = (shouldAddLoads || tooFewLoads)
+      ? generateLoads(newMinute).slice(0, tooFewLoads ? 40 : 20)
+      : [];
 
     // Генерация случайных уведомлений
     if (Math.random() < 0.02) { // 2% шанс каждую минуту
@@ -1789,11 +1538,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       setTimeout(() => get().triggerRandomEvent(), 500);
     }
 
-    set({
+    set((s: any) => ({
       gameMinute: newMinute,
       trucks: updatedTrucks,
       availableLoads: [...freshLoads, ...newLoads],
-    });
+      ...(newDeliveryResults.length > 0 ? { deliveryResults: [...(s.deliveryResults || []), ...newDeliveryResults] } : {}),
+    }));
     
     // Автосохранение каждые 60 игровых минут (≈ 50 реальных секунд)
     if (Math.floor(newMinute / 60) > Math.floor(gameMinute / 60)) {
@@ -2228,7 +1978,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   refreshLoadBoard: () => {
-    set({ availableLoads: generateLoads(get().gameMinute) });
+    const minute = get().gameMinute;
+    set({ availableLoads: [
+      ...generateLoads(minute),
+      ...generateLoads(minute + 1),
+    ]});
   },
 
   setLoadBoardSearch: (city: string) => {
@@ -2251,7 +2005,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       status: truck.status === 'waiting' ? 'idle' as any : truck.status,
     }));
     set({
-      phase: 'new_day',  // специальная фаза для popup
+      phase: 'playing',  // остаёмся в игре — новый день
       day: newDay,
       gameMinute: 0,     // время сбрасывается на 08:00
       trucks: updatedTrucks,
@@ -2347,7 +2101,12 @@ export const useGameStore = create<GameState>((set, get) => ({
         totalLost: saveData.totalLost,
         financeLog: saveData.financeLog,
         reputation: saveData.reputation,
-        trucks: saveData.trucks,
+        trucks: saveData.trucks.map((t: any) => ({
+          ...t,
+          // Сбрасываем outOfOrderUntil если оно устарело или некорректно
+          outOfOrderUntil: (t.outOfOrderUntil && t.outOfOrderUntil > saveData.gameMinute) ? t.outOfOrderUntil : 0,
+          idleWarningLevel: t.idleWarningLevel ?? 0,
+        })),
         availableLoads: saveData.availableLoads.length > 0 
           ? saveData.availableLoads.filter((l: any) => l.expiresAt > saveData.gameMinute)
           : generateLoads(saveData.gameMinute),
@@ -2359,6 +2118,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         notifications: saveData.notifications,
         unreadCount: saveData.unreadCount,
         pendingEmailResponses: saveData.pendingEmailResponses || [],
+        deliveryResults: [],
       });
       console.log('✅ Game loaded');
       return true;
@@ -2375,6 +2135,24 @@ export const useGameStore = create<GameState>((set, get) => ({
     } catch (error) {
       console.error('❌ Failed to clear save:', error);
     }
+  },
+
+  dismissDeliveryResult: (loadId: string) => {
+    set((s: any) => ({
+      deliveryResults: (s.deliveryResults || []).filter((r: DeliveryResult) => r.loadId !== loadId),
+    }));
+  },
+
+  testDeliveryPopup: () => {
+    const testResult: DeliveryResult = {
+      truckId: 'T1', truckName: 'Truck 1047', driverName: 'John Martinez',
+      loadId: `TEST-${Date.now()}`, fromCity: 'Chicago', toCity: 'Houston',
+      miles: 1092, agreedRate: 2700,
+      fuelCost: 491, driverPay: 601, dispatchFee: 216, factoringFee: 81, lumperCost: 0,
+      detentionPay: 0, grossRevenue: 2700, totalExpenses: 1389, netProfit: 1311,
+      ratePerMile: 2.47, profitPerMile: 1.20, minute: get().gameMinute,
+    };
+    set((s: any) => ({ deliveryResults: [...(s.deliveryResults || []), testResult] }));
   },
 
   addNotification: (notification) => {

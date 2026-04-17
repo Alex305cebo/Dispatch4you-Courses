@@ -4,17 +4,17 @@ import {
   useWindowDimensions, Platform,
 } from 'react-native';
 
-// Error boundary
 class ErrorBoundary extends Component<{children: any; name: string}, {error: string | null}> {
   constructor(props: any) { super(props); this.state = { error: null }; }
   static getDerivedStateFromError(e: any) { return { error: e?.message || String(e) }; }
   render() {
     if (this.state.error) {
-      return <View style={{padding:20,backgroundColor:'#1a0000'}}><Text style={{color:'#f87171',fontSize:12}}>❌ {this.props.name}: {this.state.error}</Text></View>;
+      return <View style={{padding:20,backgroundColor:'#1a0000'}}><Text style={{color:'#f87171',fontSize:12}}>Error: {this.state.error}</Text></View>;
     }
     return this.props.children;
   }
 }
+
 import { useRouter } from 'expo-router';
 import { Colors } from '../constants/colors';
 import { useGameStore, formatGameTime, formatTimeDual, formatTimeShort, ActiveLoad } from '../store/gameStore';
@@ -32,24 +32,30 @@ import ComplianceDashboard from '../components/ComplianceDashboard';
 import FleetOverview from '../components/FleetOverview';
 import GameMenu from '../components/GameMenu';
 import TruckDetailModal from '../components/TruckDetailModal';
+import DeliveryResultPopup from '../components/DeliveryResultPopup';
 
 type Tab = 'map' | 'loadboard' | 'email' | 'trucks';
 
 const STATUS_COLOR: Record<string, string> = {
-  idle: '#94a3b8', driving: '#38bdf8', loaded: '#4ade80',
-  at_pickup: '#fbbf24', at_delivery: '#c084fc',
+  idle: '#64748b', driving: '#38bdf8', loaded: '#34d399',
+  at_pickup: '#fbbf24', at_delivery: '#a78bfa',
   breakdown: '#f87171', waiting: '#fb923c',
 };
-const STATUS_ICON: Record<string, string> = {
-  idle: '⚪', driving: '🔵', loaded: '🟢',
-  at_pickup: '🟡', at_delivery: '🟣',
-  breakdown: '🔴', waiting: '🟠',
-};
-const STATUS_SHORT: Record<string, string> = {
+const STATUS_LABEL: Record<string, string> = {
   idle: 'Свободен', driving: 'К погрузке', loaded: 'В пути',
   at_pickup: 'Погрузка', at_delivery: 'Разгрузка',
   breakdown: 'Поломка', waiting: 'Detention',
 };
+
+function getTruckColor(truck: any): string {
+  const outOfOrder = (truck as any).outOfOrderUntil;
+  if (outOfOrder && typeof outOfOrder === 'number' && outOfOrder > 0) return '#ff0000';
+  const w = (truck as any).idleWarningLevel ?? 0;
+  if (w === 3) return '#ef4444';
+  if (w === 2) return '#f97316';
+  if (w === 1) return '#fbbf24';
+  return STATUS_COLOR[truck.status] || '#64748b';
+}
 
 export default function GameScreen() {
   const router = useRouter();
@@ -58,9 +64,10 @@ export default function GameScreen() {
 
   const {
     phase, gameMinute, balance, reputation,
-    trucks, activeEvents, availableLoads, negotiation, bookedLoads, activeLoads,
-    tickClock, selectedTruckId, selectTruck, notifications, sessionName, score, refreshLoadBoard, setLoadBoardSearch,
-    timeSpeed, setTimeSpeed,
+    trucks, availableLoads, negotiation, bookedLoads, activeLoads,
+    tickClock, selectedTruckId, selectTruck, notifications, sessionName,
+    refreshLoadBoard, setLoadBoardSearch, timeSpeed, setTimeSpeed, loadGame,
+    deliveryResults,
   } = useGameStore();
 
   const [activeTab, setActiveTab] = useState<Tab>('map');
@@ -69,220 +76,398 @@ export default function GameScreen() {
   const [showCompliance, setShowCompliance] = useState(false);
   const [showEvents, setShowEvents] = useState(false);
   const [showMyLoads, setShowMyLoads] = useState(false);
+  const [showEmail, setShowEmail] = useState(false);
   const [detailTruck, setDetailTruck] = useState<any>(null);
-  const [timeFormat, setTimeFormat] = useState<'us' | 'eu'>('us');
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (availableLoads.length < 5) refreshLoadBoard();
+    // При рефреше — восстанавливаем сохранение только если phase === 'menu' (store в дефолтном состоянии)
+    if (phase === 'menu') {
+      const loaded = loadGame();
+      if (!loaded) {
+        setTimeout(() => router.replace('/'), 100);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
+  useEffect(() => { if (availableLoads.length < 5) refreshLoadBoard(); }, []);
   useEffect(() => {
-    clockRef.current = setInterval(() => { tickClock(); }, 1000);
+    clockRef.current = setInterval(() => tickClock(), 1000);
     return () => { if (clockRef.current) clearInterval(clockRef.current); };
   }, []);
-
-  // Сохраняем при закрытии/перезагрузке вкладки
   useEffect(() => {
-    const handleUnload = () => { useGameStore.getState().saveGame(); };
-    window.addEventListener('beforeunload', handleUnload);
-    return () => window.removeEventListener('beforeunload', handleUnload);
+    // Автосохранение каждые 30 секунд
+    const saveInterval = setInterval(() => {
+      if (useGameStore.getState().phase === 'playing') {
+        useGameStore.getState().saveGame();
+      }
+    }, 30000);
+    return () => clearInterval(saveInterval);
   }, []);
-
   useEffect(() => {
-    if (phase === 'shift_end') router.replace('/shift-end');
-  }, [phase]);
+    const fn = () => useGameStore.getState().saveGame();
+    window.addEventListener('beforeunload', fn);
+    return () => window.removeEventListener('beforeunload', fn);
+  }, []);
+  useEffect(() => { if (phase === 'shift_end') router.replace('/shift-end'); }, [phase]);
 
   const progress = gameMinute / SHIFT_DURATION;
   const idleTrucks = trucks.filter(t => t.status === 'idle').length;
-  const activeTrucks = trucks.filter(t => t.status === 'driving' || t.status === 'loaded').length;
   const totalLoads = bookedLoads.length + activeLoads.length;
-  const emailNotifications = notifications.filter(n =>
-    (n.type === 'email' || n.type === 'pod_ready' || n.type === 'rate_con' || n.type === 'detention') && !n.read
-  );
+  const unreadEmails = notifications.filter(n =>
+    ['email','pod_ready','rate_con','detention'].includes(n.type) && !n.read
+  ).length;
 
-  const tabs: { id: Tab; icon: string; label: string; badge?: number }[] = [
-    { id: 'map',       icon: '🗺️',  label: 'Карта' },
-    { id: 'loadboard', icon: '📋',  label: 'Грузы',  badge: availableLoads.length },
-    { id: 'email',     icon: '📧',  label: 'Почта',  badge: emailNotifications.length || undefined },
-    { id: 'trucks',    icon: '🚛',  label: 'Траки',  badge: idleTrucks > 0 ? idleTrucks : undefined },
+  function handleTruckClick(truck: any) {
+    selectTruck(truck.id);
+    setDetailTruck(truck);
+    if (!isWide) setActiveTab('map');
+    window.dispatchEvent(new CustomEvent('zoomToTruck', {
+      detail: { lng: truck.position[0], lat: truck.position[1] }
+    }));
+  }
+
+  const tabs: { id: Tab; label: string; badge?: number; onPress?: () => void }[] = [
+    { id: 'loadboard', label: 'Грузы',  badge: availableLoads.length },
+    { id: 'email',     label: 'Почта',  badge: unreadEmails || undefined, onPress: () => setShowEmail(true) },
+    { id: 'trucks',    label: 'Траки',  badge: idleTrucks > 0 ? idleTrucks : undefined },
   ];
 
-  const isMobile = width < 600;
+  // ── TOP BAR ──────────────────────────────────────────────────────────────
+  const TopBar = () => {
+    const hosWarnings = trucks.filter(t => (t as any).idleWarningLevel > 0 || t.hoursLeft < 3).length;
+    const progressPct = Math.min(progress * 100, 100);
+    const timeColor = progressPct > 80 ? '#f87171' : progressPct > 60 ? '#fbbf24' : '#38bdf8';
 
-  // Компонент перемотки времени
-  const SpeedControl = () => (
-    <View style={styles.speedWrap}>
-      {([1, 2, 5] as const).map(s => (
-        <TouchableOpacity
-          key={s}
-          style={[styles.speedBtn, timeSpeed === s && styles.speedBtnActive]}
-          onPress={() => setTimeSpeed(s)}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.speedBtnText, timeSpeed === s && styles.speedBtnTextActive]}>
-            {s === 1 ? '▶ ×1' : s === 2 ? '⏩ ×2' : '⏭ ×5'}
-          </Text>
+    return (
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        height: 56, paddingLeft: 16, paddingRight: 12,
+        background: 'linear-gradient(180deg, rgba(15,25,50,0.98) 0%, rgba(10,18,38,0.98) 100%)',
+        borderBottom: '1px solid rgba(56,189,248,0.12)',
+        boxShadow: '0 1px 20px rgba(0,0,0,0.4)',
+        position: 'relative', overflow: 'hidden',
+        fontFamily: 'sans-serif',
+      } as any}>
+
+        {/* Фоновое свечение */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'radial-gradient(ellipse 60% 100% at 50% 0%, rgba(56,189,248,0.06) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        } as any} />
+
+        {/* Время */}
+        <div style={{ minWidth: 80, flexShrink: 0 } as any}>
+          <div style={{
+            fontSize: 20, fontWeight: 900, color: '#fff',
+            letterSpacing: 0.5, lineHeight: 1,
+            textShadow: `0 0 20px ${timeColor}88`,
+          } as any}>{formatTimeShort(gameMinute)}</div>
+          {sessionName ? (
+            <div style={{ fontSize: 9, color: '#38bdf8', fontWeight: 700, marginTop: 2, opacity: 0.8 } as any}>
+              {sessionName}
+            </div>
+          ) : null}
+        </div>
+
+        {/* Прогресс смены */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 } as any}>
+          {/* Трек */}
+          <div style={{
+            height: 6, background: 'rgba(255,255,255,0.06)',
+            borderRadius: 3, overflow: 'hidden', position: 'relative',
+          } as any}>
+            <div style={{
+              height: '100%', width: `${progressPct}%`,
+              background: `linear-gradient(90deg, #0ea5e9, ${timeColor})`,
+              borderRadius: 3,
+              boxShadow: `0 0 8px ${timeColor}88`,
+              transition: 'width 0.5s ease',
+            } as any} />
+            {/* Маркеры часов */}
+            {[25, 50, 75].map(p => (
+              <div key={p} style={{
+                position: 'absolute', top: 0, bottom: 0,
+                left: `${p}%`, width: 1,
+                background: 'rgba(255,255,255,0.15)',
+              } as any} />
+            ))}
+          </div>
+          {/* Кнопки скорости */}
+          <div style={{ display: 'flex', gap: 4 } as any}>
+            {([1, 2, 5] as const).map(sp => (
+              <button key={sp}
+                onClick={() => setTimeSpeed(sp)}
+                style={{
+                  padding: '2px 9px',
+                  background: timeSpeed === sp
+                    ? 'linear-gradient(135deg, rgba(56,189,248,0.25), rgba(14,165,233,0.15))'
+                    : 'rgba(255,255,255,0.04)',
+                  border: timeSpeed === sp ? '1px solid rgba(56,189,248,0.5)' : '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 6, cursor: 'pointer',
+                  fontSize: 10, fontWeight: 800,
+                  color: timeSpeed === sp ? '#38bdf8' : '#475569',
+                  boxShadow: timeSpeed === sp ? '0 0 8px rgba(56,189,248,0.2)' : 'none',
+                  transition: 'all 0.15s',
+                } as any}>
+                {sp === 1 ? '×1' : sp === 2 ? '×2' : '×5'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Статы */}
+        <div style={{ display: 'flex', gap: 6, flexShrink: 0 } as any}>
+          {/* Баланс */}
+          <div style={{
+            padding: '5px 10px',
+            background: balance >= 0
+              ? 'linear-gradient(135deg, rgba(52,211,153,0.12), rgba(16,185,129,0.06))'
+              : 'linear-gradient(135deg, rgba(248,113,113,0.12), rgba(239,68,68,0.06))',
+            border: `1px solid ${balance >= 0 ? 'rgba(52,211,153,0.25)' : 'rgba(248,113,113,0.25)'}`,
+            borderRadius: 10,
+            boxShadow: balance >= 0 ? '0 0 12px rgba(52,211,153,0.08)' : 'none',
+          } as any}>
+            <div style={{ fontSize: 9, color: '#64748b', fontWeight: 600, marginBottom: 1 } as any}>БАЛАНС</div>
+            <div style={{
+              fontSize: 13, fontWeight: 900,
+              color: balance >= 0 ? '#34d399' : '#f87171',
+            } as any}>
+              ${balance >= 1000 ? `${(balance/1000).toFixed(1)}k` : balance.toLocaleString()}
+            </div>
+          </div>
+
+          {/* Грузы */}
+          <div style={{
+            padding: '5px 10px',
+            background: 'linear-gradient(135deg, rgba(56,189,248,0.1), rgba(14,165,233,0.05))',
+            border: '1px solid rgba(56,189,248,0.2)',
+            borderRadius: 10,
+          } as any}>
+            <div style={{ fontSize: 9, color: '#64748b', fontWeight: 600, marginBottom: 1 } as any}>ГРУЗЫ</div>
+            <div style={{ fontSize: 13, fontWeight: 900, color: '#38bdf8' } as any}>{totalLoads}</div>
+          </div>
+
+          {/* Репутация */}
+          <div style={{
+            padding: '5px 10px',
+            background: reputation > 70
+              ? 'linear-gradient(135deg, rgba(52,211,153,0.1), rgba(16,185,129,0.05))'
+              : reputation > 40
+              ? 'linear-gradient(135deg, rgba(251,191,36,0.1), rgba(245,158,11,0.05))'
+              : 'linear-gradient(135deg, rgba(248,113,113,0.1), rgba(239,68,68,0.05))',
+            border: `1px solid ${reputation > 70 ? 'rgba(52,211,153,0.2)' : reputation > 40 ? 'rgba(251,191,36,0.2)' : 'rgba(248,113,113,0.2)'}`,
+            borderRadius: 10,
+          } as any}>
+            <div style={{ fontSize: 9, color: '#64748b', fontWeight: 600, marginBottom: 1 } as any}>РЕПУТ.</div>
+            <div style={{
+              fontSize: 13, fontWeight: 900,
+              color: reputation > 70 ? '#34d399' : reputation > 40 ? '#fbbf24' : '#f87171',
+            } as any}>{reputation}%</div>
+          </div>
+
+          {/* Предупреждения HOS */}
+          {hosWarnings > 0 && (
+            <div style={{
+              padding: '5px 10px',
+              background: 'linear-gradient(135deg, rgba(248,113,113,0.15), rgba(239,68,68,0.08))',
+              border: '1px solid rgba(248,113,113,0.35)',
+              borderRadius: 10,
+              boxShadow: '0 0 12px rgba(248,113,113,0.15)',
+              animation: 'pulse 1.5s infinite',
+            } as any}>
+              <div style={{ fontSize: 9, color: '#f87171', fontWeight: 600, marginBottom: 1 } as any}>⚠️ HOS</div>
+              <div style={{ fontSize: 13, fontWeight: 900, color: '#f87171' } as any}>{hosWarnings}</div>
+            </div>
+          )}
+        </div>
+
+        {/* Действия */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 } as any}>
+          <button
+            onClick={() => useGameStore.getState().testDeliveryPopup()}
+            style={{
+              padding: '4px 8px', fontSize: 9, fontWeight: 700,
+              background: 'rgba(251,191,36,0.15)', border: '1px solid rgba(251,191,36,0.3)',
+              borderRadius: 6, color: '#fbbf24', cursor: 'pointer',
+            } as any}
+          >TEST P&L</button>
+          <NotificationBell
+            onNavigateToTrucks={() => setActiveTab('trucks')}
+            onNavigateToLoads={() => setActiveTab('email')}
+            onNavigateToEvents={() => setShowEvents(true)}
+          />
+          <GameMenu
+            onOpenFleet={() => setShowFleet(true)}
+            onOpenCompliance={() => setShowCompliance(true)}
+            onOpenEvents={() => setShowEvents(true)}
+            onOpenMyLoads={() => setShowMyLoads(true)}
+            onExit={() => { if (clockRef.current) clearInterval(clockRef.current); }}
+          />
+        </div>
+
+        <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }`}</style>
+      </div>
+    );
+  };
+
+  // ── TRUCK STRIP ───────────────────────────────────────────────────────────
+  const TruckStrip = () => (
+    <div style={{
+      display: 'flex', overflowX: 'auto', gap: 8,
+      padding: '8px 12px',
+      background: 'linear-gradient(180deg, rgba(10,18,38,0.98) 0%, rgba(8,14,30,0.98) 100%)',
+      borderBottom: '1px solid rgba(56,189,248,0.08)',
+      scrollbarWidth: 'none',
+    } as any}>
+      {trucks.map(truck => {
+        const color = getTruckColor(truck);
+        const hos = Math.max(0, truck.hoursLeft);
+        const hosColor = hos < 2 ? '#f87171' : hos < 4 ? '#fbbf24' : '#34d399';
+        const isSelected = selectedTruckId === truck.id;
+        const isMoving = truck.status === 'driving' || truck.status === 'loaded';
+        const isAlert = (truck as any).idleWarningLevel > 0 || truck.status === 'breakdown';
+        const name = truck.name.replace('Truck ', 'T');
+        const progressPct = Math.round(truck.progress * 100);
+
+        return (
+          <div key={truck.id}
+            onClick={() => handleTruckClick(truck)}
+            style={{
+              minWidth: 120, flexShrink: 0,
+              borderRadius: 12, overflow: 'hidden',
+              background: isSelected
+                ? `linear-gradient(135deg, rgba(${parseInt(color.slice(1,3),16)},${parseInt(color.slice(3,5),16)},${parseInt(color.slice(5,7),16)},0.15), rgba(10,18,38,0.9))`
+                : 'linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))',
+              border: `1px solid ${isSelected ? color + '66' : isAlert ? color + '44' : 'rgba(255,255,255,0.07)'}`,
+              boxShadow: isSelected ? `0 0 16px ${color}33, inset 0 0 20px ${color}08` : isAlert ? `0 0 10px ${color}22` : 'none',
+              cursor: 'pointer', transition: 'all 0.2s',
+              fontFamily: 'sans-serif',
+            } as any}>
+
+            {/* Цветная полоска сверху с градиентом */}
+            <div style={{
+              height: 3, width: '100%',
+              background: `linear-gradient(90deg, ${color}, ${color}88)`,
+              boxShadow: `0 0 6px ${color}`,
+            } as any} />
+
+            <div style={{ padding: '7px 9px', display: 'flex', flexDirection: 'column', gap: 3 } as any}>
+              {/* Имя + статус */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' } as any}>
+                <span style={{ fontSize: 13, fontWeight: 900, color: '#fff', letterSpacing: 0.3 } as any}>{name}</span>
+                <span style={{
+                  fontSize: 8, fontWeight: 700, color: color,
+                  background: `${color}18`, padding: '1px 5px', borderRadius: 4,
+                } as any}>●</span>
+              </div>
+
+              {/* Статус */}
+              <span style={{ fontSize: 10, fontWeight: 700, color } as any}>
+                {STATUS_LABEL[truck.status]}
+              </span>
+
+              {/* Маршрут */}
+              {truck.destinationCity ? (
+                <span style={{ fontSize: 9, color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
+                  → {truck.destinationCity}
+                </span>
+              ) : null}
+
+              {/* HOS */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 } as any}>
+                <span style={{ fontSize: 9, fontWeight: 700, color: hosColor } as any}>
+                  ⏱ {Math.round(hos * 10) / 10}h
+                </span>
+                {isAlert && (
+                  <span style={{ fontSize: 9, color: color, fontWeight: 800 } as any}>⚠️</span>
+                )}
+              </div>
+
+              {/* Прогресс маршрута */}
+              {isMoving && (
+                <div style={{
+                  height: 3, background: 'rgba(255,255,255,0.07)',
+                  borderRadius: 2, overflow: 'hidden', marginTop: 2,
+                } as any}>
+                  <div style={{
+                    height: '100%', width: `${progressPct}%`,
+                    background: `linear-gradient(90deg, ${color}88, ${color})`,
+                    borderRadius: 2,
+                    boxShadow: `0 0 4px ${color}`,
+                    transition: 'width 0.5s',
+                  } as any} />
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  // ── SIDE TABS (desktop) ───────────────────────────────────────────────────
+  const SideTabs = () => (
+    <View style={s.sideTabs}>
+      {tabs.map(tab => (
+        <TouchableOpacity key={tab.id}
+          style={[s.sideTab, activeTab === tab.id && s.sideTabOn]}
+          onPress={() => tab.onPress ? tab.onPress() : setActiveTab(tab.id)}>
+          <Text style={[s.sideTabTxt, activeTab === tab.id && s.sideTabTxtOn]}>{tab.label}</Text>
+          {tab.badge !== undefined && (
+            <View style={s.badge}><Text style={s.badgeTxt}>{tab.badge}</Text></View>
+          )}
         </TouchableOpacity>
       ))}
     </View>
   );
 
-  // Обработчик клика на трак в HUD
-  function handleTruckTabClick(truck: any) {
-    selectTruck(truck.id);
-    setDetailTruck(truck);
-    if (!isWide) setActiveTab('map');
-    // Центрируем карту на траке через custom event
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('zoomToTruck', {
-        detail: { lng: truck.position[0], lat: truck.position[1] }
-      }));
-    }
-  }
+  // ── BOTTOM TABS (mobile) ──────────────────────────────────────────────────
+  const BottomTabs = () => (
+    <View style={s.bottomTabs}>
+      {[{ id: 'map' as Tab, label: 'Карта' }, ...tabs].map(tab => (
+        <TouchableOpacity key={tab.id}
+          style={[s.bottomTab, activeTab === tab.id && s.bottomTabOn]}
+          onPress={() => (tab as any).onPress ? (tab as any).onPress() : setActiveTab(tab.id)}>
+          <Text style={[s.bottomTabTxt, activeTab === tab.id && s.bottomTabTxtOn]}>{tab.label}</Text>
+          {(tab as any).badge !== undefined && (
+            <View style={s.badge}><Text style={s.badgeTxt}>{(tab as any).badge}</Text></View>
+          )}
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+
+  const mapProps = {
+    onTruckInfo: (id: string) => { const t = trucks.find(x => x.id === id); if (t) setDetailTruck(t); },
+    onFindLoad: (city: string) => { setLoadBoardSearch(city); setActiveTab('loadboard'); },
+  };
 
   return (
-    <View style={styles.container}>
+    <View style={s.root}>
 
       {isWide ? (
-        /* ══════════ DESKTOP LAYOUT — 2 колонки на всю высоту ══════════ */
-        <View style={styles.desktopRoot}>
-
-          {/* ЛЕВАЯ КОЛОНКА: время + табы траков + карта */}
-          <View style={styles.leftCol}>
-            {/* HUD: время + прогресс */}
-            <View style={styles.hud}>
-              <View style={styles.hudRow1}>
-                <View style={styles.hudTimeWrap}>
-                  <TouchableOpacity onPress={() => setTimeFormat(f => f === 'us' ? 'eu' : 'us')} activeOpacity={0.7}>
-                    <Text style={styles.hudTime}>
-                      {timeFormat === 'us' ? formatTimeShort(gameMinute) : formatTimeDual(gameMinute).split(' (')[0]}
-                    </Text>
-                  </TouchableOpacity>
-                  {sessionName ? <Text style={styles.hudSession}>{sessionName}</Text> : null}
-                  <View style={styles.shiftBarRow}>
-                    <View style={styles.shiftBar}>
-                      <View style={[styles.shiftBarFill, { width: `${Math.min(progress * 100, 100)}%` as any }]} />
-                    </View>
-                    <SpeedControl />
-                  </View>
-                </View>
-              </View>
-              {/* Табы траков */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}
-                style={styles.truckTabsScroll} contentContainerStyle={styles.truckTabsContent}>
-                {trucks.map(truck => {
-                  const idleWarn = (truck as any).idleWarningLevel ?? 0;
-                  const outOfOrder = (truck as any).outOfOrderUntil > 0;
-                  const color = outOfOrder ? '#ff0000'
-                    : idleWarn === 3 ? '#ef4444'
-                    : idleWarn === 2 ? '#f97316'
-                    : idleWarn === 1 ? '#fbbf24'
-                    : STATUS_COLOR[truck.status] || '#94a3b8';
-                  const hos = Math.max(0, truck.hoursLeft);
-                  const hosRounded = Math.round(hos * 10) / 10;
-                  const hosColor = hos < 2 ? '#f87171' : hos < 4 ? '#fbbf24' : '#4ade80';
-                  const isSelected = selectedTruckId === truck.id;
-                  const isMoving = truck.status === 'driving' || truck.status === 'loaded';
-                  const shortName = truck.name.replace('Truck ', 'T');
-                  return (
-                    <TouchableOpacity key={truck.id}
-                      style={[styles.truckTab, isSelected && styles.truckTabSelected, { borderColor: isSelected ? color : 'rgba(255,255,255,0.08)' }]}
-                      onPress={() => handleTruckTabClick(truck)} activeOpacity={0.75}>
-                      {/* Маркер как на карте */}
-                      <View style={styles.truckMarkerRow}>
-                        <View style={[styles.truckMarker, { backgroundColor: color, shadowColor: color }]}>
-                          <Text style={styles.truckMarkerText}>{shortName}</Text>
-                        </View>
-                      </View>
-                      <Text style={[styles.truckTabStatus, { color }]}>{STATUS_SHORT[truck.status]}</Text>
-                      {truck.destinationCity ? <Text style={styles.truckTabRoute} numberOfLines={1}>→ {truck.destinationCity}</Text> : null}
-                      <View style={styles.truckTabHos}>
-                        <Text style={[styles.truckTabHosText, { color: hosColor }]}>⏰ {hosRounded}h</Text>
-                      </View>
-                      {isMoving && (
-                        <View style={styles.truckProgress}>
-                          <View style={[styles.truckProgressFill, { width: `${Math.round(truck.progress * 100)}%` as any, backgroundColor: color }]} />
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </View>
-            {/* Карта — занимает всё оставшееся место */}
-            <View style={styles.mapArea}>
-              <ErrorBoundary name="MapView"><MapView
-                onTruckInfo={(truckId) => {
-                  const truck = trucks.find(t => t.id === truckId);
-                  if (truck) setDetailTruck(truck);
-                }}
-                onFindLoad={(city) => {
-                  setLoadBoardSearch(city);
-                  setActiveTab('loadboard');
-                }}
-              /></ErrorBoundary>
+        /* ══ DESKTOP ══ */
+        <View style={s.desktop}>
+          {/* Левая колонка: топбар + траки + карта */}
+          <View style={s.leftCol}>
+            <TopBar />
+            <TruckStrip />
+            <View style={s.mapArea}>
+              <ErrorBoundary name="Map"><MapView {...mapProps} /></ErrorBoundary>
             </View>
           </View>
 
-          {/* ПРАВАЯ КОЛОНКА: статы + меню + контент */}
-          <View style={styles.rightCol}>
-            {/* Шапка правой колонки: статы + уведомления + гамбургер */}
-            <View style={styles.rightHeader}>
-              <View style={styles.hudStats}>
-                <View style={styles.hudStatChip}>
-                  <Text style={styles.hudStatEmoji}>💰</Text>
-                  <Text style={[styles.hudStatNum, { color: balance < 0 ? Colors.danger : '#4ade80' }]}>
-                    ${balance >= 1000 ? `${(balance/1000).toFixed(1)}k` : balance}
-                  </Text>
-                </View>
-                <View style={styles.hudStatChip}>
-                  <Text style={styles.hudStatEmoji}>📦</Text>
-                  <Text style={styles.hudStatNum}>{totalLoads}</Text>
-                </View>
-                <View style={styles.hudStatChip}>
-                  <Text style={styles.hudStatEmoji}>⭐</Text>
-                  <Text style={[styles.hudStatNum, {
-                    color: reputation > 70 ? '#4ade80' : reputation > 40 ? '#fbbf24' : '#f87171'
-                  }]}>{reputation}%</Text>
-                </View>
-              </View>
-              <View style={styles.hudActions}>
-                <NotificationBell
-                  onNavigateToTrucks={() => setActiveTab('trucks')}
-                  onNavigateToLoads={() => setActiveTab('email')}
-                  onNavigateToEvents={() => setShowEvents(true)}
-                />
-                <GameMenu
-                  onOpenFleet={() => setShowFleet(true)}
-                  onOpenCompliance={() => setShowCompliance(true)}
-                  onOpenEvents={() => setShowEvents(true)}
-                  onOpenMyLoads={() => setShowMyLoads(true)}
-                />
-              </View>
-            </View>
-            {/* Табы навигации */}
-            <View style={styles.sideTabs}>
-              {tabs.slice(1).map(tab => (
-                <TouchableOpacity key={tab.id}
-                  style={[styles.sideTab, activeTab === tab.id && styles.sideTabActive]}
-                  onPress={() => setActiveTab(tab.id)}>
-                  <Text style={styles.sideTabIcon}>{tab.icon}</Text>
-                  <Text style={[styles.sideTabText, activeTab === tab.id && styles.sideTabTextActive]}>{tab.label}</Text>
-                  {tab.badge !== undefined && (
-                    <View style={styles.badge}><Text style={styles.badgeText}>{tab.badge}</Text></View>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-            {/* Контент — на всю оставшуюся высоту */}
-            <View style={styles.sidePanelContent}>
-              {activeTab === 'loadboard' && <ErrorBoundary name="LoadBoardPanel"><LoadBoardPanel onNegotiate={setPendingLoad} /></ErrorBoundary>}
-              {activeTab === 'email' && <ErrorBoundary name="EmailPanel"><EmailPanel /></ErrorBoundary>}
-              {activeTab === 'trucks' && <ErrorBoundary name="TruckPanel"><TruckPanel onSwitchToLoadBoard={() => setActiveTab('loadboard')} /></ErrorBoundary>}
-              {(activeTab === 'map') && (
-                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ color: Colors.textDim, fontSize: 14 }}>Выбери раздел выше</Text>
+          {/* Правая колонка: табы + контент */}
+          <View style={s.rightCol}>
+            <SideTabs />
+            <View style={s.panelContent}>
+              {activeTab === 'loadboard' && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} /></ErrorBoundary>}
+              {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => setActiveTab('loadboard')} /></ErrorBoundary>}
+              {activeTab === 'map'       && (
+                <View style={s.emptyPanel}>
+                  <Text style={s.emptyTxt}>Выбери раздел</Text>
                 </View>
               )}
             </View>
@@ -290,367 +475,193 @@ export default function GameScreen() {
         </View>
 
       ) : (
-        /* ══════════ MOBILE LAYOUT ══════════ */
-        <View style={{ flex: 1 }}>
-          <View style={[styles.hud, { paddingTop: Platform.OS === 'ios' ? 48 : 10 }]}>
-            <View style={styles.hudRow1}>
-              <View style={styles.hudTimeWrap}>
-                <TouchableOpacity onPress={() => setTimeFormat(f => f === 'us' ? 'eu' : 'us')} activeOpacity={0.7}>
-                  <Text style={styles.hudTime}>
-                    {timeFormat === 'us' ? formatTimeShort(gameMinute) : formatTimeDual(gameMinute).split(' (')[0]}
-                  </Text>
-                </TouchableOpacity>
-                {sessionName ? <Text style={styles.hudSession}>{sessionName}</Text> : null}
-                <View style={styles.shiftBarRow}>
-                  <View style={styles.shiftBar}>
-                    <View style={[styles.shiftBarFill, { width: `${Math.min(progress * 100, 100)}%` as any }]} />
-                  </View>
-                  <SpeedControl />
-                </View>
-              </View>
-              <View style={styles.hudStats}>
-                <View style={styles.hudStatChip}>
-                  <Text style={styles.hudStatEmoji}>💰</Text>
-                  <Text style={[styles.hudStatNum, { color: balance < 0 ? Colors.danger : '#4ade80' }]}>
-                    ${balance >= 1000 ? `${(balance/1000).toFixed(1)}k` : balance}
-                  </Text>
-                </View>
-                <View style={styles.hudStatChip}>
-                  <Text style={styles.hudStatEmoji}>📦</Text>
-                  <Text style={styles.hudStatNum}>{totalLoads}</Text>
-                </View>
-                <View style={styles.hudStatChip}>
-                  <Text style={styles.hudStatEmoji}>⭐</Text>
-                  <Text style={[styles.hudStatNum, {
-                    color: reputation > 70 ? '#4ade80' : reputation > 40 ? '#fbbf24' : '#f87171'
-                  }]}>{reputation}%</Text>
-                </View>
-              </View>
-              <View style={styles.hudActions}>
-                <NotificationBell
-                  onNavigateToTrucks={() => setActiveTab('trucks')}
-                  onNavigateToLoads={() => setActiveTab('email')}
-                  onNavigateToEvents={() => setShowEvents(true)}
-                />
-                <GameMenu
-                  onOpenFleet={() => setShowFleet(true)}
-                  onOpenCompliance={() => setShowCompliance(true)}
-                  onOpenEvents={() => setShowEvents(true)}
-                  onOpenMyLoads={() => setShowMyLoads(true)}
-                  onExit={() => { if (clockRef.current) clearInterval(clockRef.current); }}
-                />
-              </View>
-            </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}
-              style={styles.truckTabsScroll} contentContainerStyle={styles.truckTabsContent}>
-              {trucks.map(truck => {
-                const color = STATUS_COLOR[truck.status] || '#94a3b8';
-                const hos = Math.max(0, truck.hoursLeft);
-                const hosRounded = Math.round(hos * 10) / 10;
-                const hosColor = hos < 2 ? '#f87171' : hos < 4 ? '#fbbf24' : '#4ade80';
-                const isSelected = selectedTruckId === truck.id;
-                return (
-                  <TouchableOpacity key={truck.id}
-                    style={[styles.truckTab, isSelected && styles.truckTabSelected, { borderColor: isSelected ? color : 'rgba(255,255,255,0.08)' }]}
-                    onPress={() => handleTruckTabClick(truck)} activeOpacity={0.75}>
-                    <View style={[styles.truckDot, { backgroundColor: color }]} />
-                    <Text style={styles.truckTabName}>{truck.name.replace('Truck ', 'T')}</Text>
-                    <Text style={[styles.truckTabStatus, { color }]}>{STATUS_SHORT[truck.status]}</Text>
-                    {truck.destinationCity ? <Text style={styles.truckTabRoute} numberOfLines={1}>→ {truck.destinationCity}</Text> : null}
-                    <View style={styles.truckTabHos}>
-                      <Text style={[styles.truckTabHosText, { color: hosColor }]}>⏰ {hosRounded}h</Text>
-                    </View>
-                    {(truck.status === 'driving' || truck.status === 'loaded') && (
-                      <View style={styles.truckProgress}>
-                        <View style={[styles.truckProgressFill, { width: `${Math.round(truck.progress * 100)}%` as any, backgroundColor: color }]} />
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
+        /* ══ MOBILE ══ */
+        <View style={s.mobile}>
+          <TopBar />
+          <TruckStrip />
+          <View style={s.mobileContent}>
+            {activeTab === 'map'       && <ErrorBoundary name="Map"><MapView {...mapProps} /></ErrorBoundary>}
+            {activeTab === 'loadboard' && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} /></ErrorBoundary>}
+            {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => setActiveTab('loadboard')} /></ErrorBoundary>}
           </View>
-          <View style={styles.mobileLayout}>
-            {activeTab === 'map' && <ErrorBoundary name="MapView"><MapView
-                onTruckInfo={(truckId) => {
-                  const truck = trucks.find(t => t.id === truckId);
-                  if (truck) setDetailTruck(truck);
-                }}
-                onFindLoad={(city) => {
-                  setLoadBoardSearch(city);
-                  setActiveTab('loadboard');
-                }}
-              /></ErrorBoundary>}
-            {activeTab === 'loadboard' && <ErrorBoundary name="LoadBoardPanel"><LoadBoardPanel onNegotiate={setPendingLoad} /></ErrorBoundary>}
-            {activeTab === 'email' && <ErrorBoundary name="EmailPanel"><EmailPanel /></ErrorBoundary>}
-            {activeTab === 'trucks' && <ErrorBoundary name="TruckPanel"><TruckPanel onSwitchToLoadBoard={() => setActiveTab('loadboard')} /></ErrorBoundary>}
-            <View style={styles.bottomTabs}>
-              {tabs.map(tab => (
-                <TouchableOpacity key={tab.id}
-                  style={[styles.bottomTab, activeTab === tab.id && styles.bottomTabActive]}
-                  onPress={() => setActiveTab(tab.id)}>
-                  <Text style={styles.bottomTabIcon}>{tab.icon}</Text>
-                  <Text style={[styles.bottomTabText, activeTab === tab.id && styles.bottomTabTextActive]}>{tab.label}</Text>
-                  {tab.badge !== undefined && (
-                    <View style={styles.badge}><Text style={styles.badgeText}>{tab.badge}</Text></View>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
+          <BottomTabs />
         </View>
       )}
 
       {/* ── MODALS ── */}
-      {negotiation.open && <ErrorBoundary name="NegotiationModal"><NegotiationModal onAssign={(load) => setPendingLoad(load)} /></ErrorBoundary>}
+      {negotiation.open && <ErrorBoundary name="Neg"><NegotiationModal onAssign={setPendingLoad} /></ErrorBoundary>}
       {pendingLoad && !negotiation.open && (
-        <ErrorBoundary name="AssignModal"><AssignModal load={pendingLoad} onClose={() => setPendingLoad(null)} /></ErrorBoundary>
+        <ErrorBoundary name="Assign"><AssignModal load={pendingLoad} onClose={() => setPendingLoad(null)} /></ErrorBoundary>
       )}
-
-      {/* Карточка трака при клике в HUD */}
       {detailTruck && (
-        <TruckDetailModal
-          truck={detailTruck}
-          onClose={() => setDetailTruck(null)}
-          onFindLoad={(city) => { setLoadBoardSearch(city); setDetailTruck(null); setActiveTab('loadboard'); }}
-        />
+        <TruckDetailModal truck={detailTruck} onClose={() => setDetailTruck(null)}
+          onFindLoad={(city) => { setLoadBoardSearch(city); setDetailTruck(null); setActiveTab('loadboard'); }} />
       )}
-
-      {showFleet && (
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowFleet(false)}>
-          <TouchableOpacity style={styles.modalContainer} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
-            <TouchableOpacity style={styles.modalClose} onPress={() => setShowFleet(false)}>
-              <Text style={styles.modalCloseText}>✕</Text>
-            </TouchableOpacity>
-            <FleetOverview />
-          </TouchableOpacity>
-        </TouchableOpacity>
-      )}
-      {showCompliance && (
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowCompliance(false)}>
-          <TouchableOpacity style={styles.modalContainer} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
-            <TouchableOpacity style={styles.modalClose} onPress={() => setShowCompliance(false)}>
-              <Text style={styles.modalCloseText}>✕</Text>
-            </TouchableOpacity>
-            <ComplianceDashboard />
-          </TouchableOpacity>
-        </TouchableOpacity>
-      )}
-      {showEvents && (
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowEvents(false)}>
-          <TouchableOpacity style={styles.modalContainer} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
-            <TouchableOpacity style={styles.modalClose} onPress={() => setShowEvents(false)}>
-              <Text style={styles.modalCloseText}>✕</Text>
-            </TouchableOpacity>
-            <EventsPanel />
-          </TouchableOpacity>
-        </TouchableOpacity>
-      )}
-      {showMyLoads && (
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowMyLoads(false)}>
-          <TouchableOpacity style={styles.modalContainer} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
-            <TouchableOpacity style={styles.modalClose} onPress={() => setShowMyLoads(false)}>
-              <Text style={styles.modalCloseText}>✕</Text>
-            </TouchableOpacity>
-            <MyLoadsPanel />
-          </TouchableOpacity>
-        </TouchableOpacity>
-      )}
-
+      {showFleet && <Modal onClose={() => setShowFleet(false)}><FleetOverview /></Modal>}
+      {showCompliance && <Modal onClose={() => setShowCompliance(false)}><ComplianceDashboard /></Modal>}
+      {showEvents && <Modal onClose={() => setShowEvents(false)}><EventsPanel /></Modal>}
+      {showMyLoads && <Modal onClose={() => setShowMyLoads(false)}><MyLoadsPanel /></Modal>}
+      <EmailPanel visible={showEmail} onClose={() => setShowEmail(false)} />
+      <DeliveryResultPopup key={deliveryResults[0]?.loadId ?? 'empty'} />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg },
+function Modal({ children, onClose }: { children: any; onClose: () => void }) {
+  return (
+    <TouchableOpacity style={s.overlay} activeOpacity={1} onPress={onClose}>
+      <TouchableOpacity style={s.modalBox} activeOpacity={1} onPress={e => e.stopPropagation()}>
+        <TouchableOpacity style={s.modalCloseBtn} onPress={onClose}>
+          <Text style={s.modalCloseTxt}>✕</Text>
+        </TouchableOpacity>
+        {children}
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+}
 
-  // ══ HUD ══
-  hud: {
-    backgroundColor: 'rgba(5,10,20,0.98)',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(6,182,212,0.15)',
-    paddingBottom: 0,
-  },
+const BG = '#0a0a0f';
+const BG2 = '#111118';
+const BORDER = 'rgba(255,255,255,0.07)';
+const PRIMARY = '#38bdf8';
 
-  // Row 1
-  hudRow1: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    height: 52,
-    gap: 8,
-  },
-  hudBack: {
-    width: 30, height: 30, borderRadius: 15,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-  },
-  hudBackText: { fontSize: 12, color: Colors.textMuted },
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: BG },
 
-  hudTimeWrap: { flex: 1, minWidth: 0 },
-  hudTime: { fontSize: 14, fontWeight: '900', color: '#fff', letterSpacing: 0.3 },
-  hudSession: { fontSize: 9, color: Colors.primary, fontWeight: '700', marginTop: 1 },
-  shiftBar: {
-    height: 3, backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 2, overflow: 'hidden', flex: 1,
+  // ── TOP BAR ──
+  topBar: {
+    flexDirection: 'row', alignItems: 'center',
+    height: 52, paddingHorizontal: 14, gap: 10,
+    backgroundColor: BG2,
+    borderBottomWidth: 1, borderBottomColor: BORDER,
   },
-  shiftBarRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4,
+  timeBlock: { minWidth: 70 },
+  timeText: { fontSize: 16, fontWeight: '800', color: '#fff', letterSpacing: 0.5 },
+  sessionText: { fontSize: 9, color: PRIMARY, fontWeight: '700', marginTop: 1 },
+
+  progressWrap: { flex: 1, gap: 4 },
+  progressTrack: {
+    height: 3, backgroundColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 2, overflow: 'hidden',
   },
-  shiftBarFill: { height: '100%', backgroundColor: Colors.primary, borderRadius: 2 },
-
-  hudStats: { flexDirection: 'row', gap: 6, flexShrink: 0 },
-  hudStatChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 3,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)',
-  },
-  hudStatEmoji: { fontSize: 11 },
-  hudStatNum: { fontSize: 12, fontWeight: '800', color: '#fff' },
-
-  hudActions: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0 },
-
-  // Speed control
-  speedWrap: { flexDirection: 'row', gap: 2, alignItems: 'center' },
+  progressFill: { height: '100%', backgroundColor: PRIMARY, borderRadius: 2 },
+  speedRow: { flexDirection: 'row', gap: 3 },
   speedBtn: {
-    paddingHorizontal: 5, paddingVertical: 2,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 6, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center', minWidth: 26,
+    paddingHorizontal: 7, paddingVertical: 2,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 5, borderWidth: 1, borderColor: BORDER,
   },
-  speedBtnActive: {
-    backgroundColor: 'rgba(6,182,212,0.2)',
-    borderColor: '#06b6d4',
-  },
-  speedBtnText: { fontSize: 9, color: '#94a3b8' },
-  speedBtnLabel: { fontSize: 8, fontWeight: '800', color: '#94a3b8' },
-  speedBtnTextActive: { color: '#06b6d4' },
+  speedBtnOn: { backgroundColor: 'rgba(56,189,248,0.15)', borderColor: PRIMARY },
+  speedTxt: { fontSize: 10, color: '#64748b', fontWeight: '700' },
+  speedTxtOn: { color: PRIMARY },
 
-  // Row 2 — truck tabs
-  truckTabsScroll: { maxHeight: 80 },
-  truckTabsContent: {
-    paddingHorizontal: 8, paddingBottom: 8, gap: 6, flexDirection: 'row',
-  },
-  truckTab: {
-    minWidth: 100, paddingHorizontal: 10, paddingVertical: 8,
+  statsRow: { flexDirection: 'row', gap: 6 },
+  statChip: {
+    paddingHorizontal: 8, paddingVertical: 4,
     backgroundColor: 'rgba(255,255,255,0.04)',
-    borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
-    gap: 3,
+    borderRadius: 8, borderWidth: 1, borderColor: BORDER,
   },
-  truckTabSelected: {
-    backgroundColor: 'rgba(6,182,212,0.08)',
-  },
-  truckMarkerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
-  truckMarker: {
-    paddingHorizontal: 8, paddingVertical: 3,
-    borderRadius: 6,
-    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.9)',
-    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.6, shadowRadius: 6,
-  },
-  truckMarkerText: { fontSize: 10, fontWeight: '900', color: '#fff' },
-  truckDot: { width: 7, height: 7, borderRadius: 4, position: 'absolute', top: 8, right: 8 },
-  truckTabName: { fontSize: 12, fontWeight: '800', color: '#fff' },
-  truckTabStatus: { fontSize: 10, fontWeight: '700' },
-  truckTabRoute: { fontSize: 9, color: '#94a3b8', marginTop: 1 },
-  truckTabHos: { marginTop: 2 },
-  truckTabHosText: { fontSize: 9, fontWeight: '700' },
-  truckProgress: {
-    height: 3, backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 2, overflow: 'hidden', marginTop: 4,
-  },
-  truckProgressFill: { height: '100%', borderRadius: 2 },
+  statVal: { fontSize: 12, fontWeight: '800', color: '#e2e8f0' },
 
-  // Desktop 2-column full-height layout
-  desktopRoot: { flex: 1, flexDirection: 'row' },
+  actionsRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+
+  // ── TRUCK STRIP ──
+  truckStrip: { maxHeight: 90, backgroundColor: BG2, borderBottomWidth: 1, borderBottomColor: BORDER },
+  truckStripContent: { paddingHorizontal: 10, paddingVertical: 8, gap: 8, flexDirection: 'row' },
+  truckCard: {
+    width: 110, borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderWidth: 1, borderColor: BORDER,
+    overflow: 'hidden',
+  },
+  truckCardOn: { backgroundColor: 'rgba(56,189,248,0.06)' },
+  truckCardBar: { height: 3, width: '100%' },
+  truckCardBody: { padding: 8, gap: 2 },
+  truckCardName: { fontSize: 12, fontWeight: '900', color: '#fff' },
+  truckCardStatus: { fontSize: 10, fontWeight: '700' },
+  truckCardRoute: { fontSize: 9, color: '#64748b' },
+  truckCardHos: { fontSize: 9, fontWeight: '700', marginTop: 2 },
+  truckCardProgress: {
+    height: 2, backgroundColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 1, overflow: 'hidden', marginTop: 4,
+  },
+  truckCardProgressFill: { height: '100%', borderRadius: 1 },
+
+  // ── DESKTOP ──
+  desktop: { flex: 1, flexDirection: 'row' },
   leftCol: { flex: 1, flexDirection: 'column' },
+  mapArea: { flex: 1 },
   rightCol: {
-    width: 420,
-    borderLeftWidth: 1,
-    borderLeftColor: 'rgba(6,182,212,0.25)',
-    flexDirection: 'column',
-    backgroundColor: 'rgba(5,10,20,0.98)',
-  },
-  rightHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 0,
-    height: 52,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(6,182,212,0.15)',
-    backgroundColor: 'rgba(5,10,20,0.98)',
+    width: 400, flexDirection: 'column',
+    backgroundColor: BG2,
+    borderLeftWidth: 1, borderLeftColor: BORDER,
   },
 
-  // Desktop (old, kept for reference)
-  desktopLayout: { flex: 1, flexDirection: 'row' },
-  mapArea: { flex: 1 },
-  sidePanel: {
-    width: 420, borderLeftWidth: 1, borderLeftColor: Colors.border, flexDirection: 'column',
-  },
   sideTabs: {
-    flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: Colors.border,
-    backgroundColor: 'rgba(5,10,20,0.95)', paddingHorizontal: 6, paddingTop: 6, gap: 4,
+    flexDirection: 'row', gap: 4,
+    paddingHorizontal: 10, paddingVertical: 8,
+    borderBottomWidth: 1, borderBottomColor: BORDER,
   },
   sideTab: {
-    flex: 1, paddingVertical: 10, alignItems: 'center',
-    flexDirection: 'column', justifyContent: 'center', gap: 2,
-    borderRadius: 10, marginBottom: 4,
+    flex: 1, paddingVertical: 8, alignItems: 'center',
+    borderRadius: 8, borderWidth: 1, borderColor: 'transparent',
+    flexDirection: 'row', justifyContent: 'center', gap: 5,
   },
-  sideTabActive: {
-    backgroundColor: 'rgba(6,182,212,0.12)',
-    borderWidth: 1, borderColor: 'rgba(6,182,212,0.35)',
+  sideTabOn: {
+    backgroundColor: 'rgba(56,189,248,0.1)',
+    borderColor: 'rgba(56,189,248,0.3)',
   },
-  sideTabIcon: { fontSize: 16 },
-  sideTabText: { fontSize: 11, color: Colors.textDim, fontWeight: '700' },
-  sideTabTextActive: { color: Colors.primary },
-  sidePanelContent: { flex: 1 },
+  sideTabTxt: { fontSize: 12, fontWeight: '700', color: '#64748b' },
+  sideTabTxtOn: { color: PRIMARY },
+  panelContent: { flex: 1 },
+  emptyPanel: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  emptyTxt: { fontSize: 14, color: '#334155' },
 
-  // Mobile
-  mobileLayout: { flex: 1 },
+  // ── MOBILE ──
+  mobile: { flex: 1, flexDirection: 'column' },
+  mobileContent: { flex: 1 },
   bottomTabs: {
-    flexDirection: 'row',
-    borderTopWidth: 1, borderTopColor: 'rgba(6,182,212,0.2)',
-    backgroundColor: 'rgba(5,10,20,0.98)',
+    flexDirection: 'row', gap: 4,
+    paddingHorizontal: 8, paddingVertical: 6,
     paddingBottom: Platform.OS === 'ios' ? 24 : 6,
-    paddingTop: 6, paddingHorizontal: 8, gap: 6,
+    backgroundColor: BG2,
+    borderTopWidth: 1, borderTopColor: BORDER,
   },
   bottomTab: {
     flex: 1, paddingVertical: 8, alignItems: 'center',
-    flexDirection: 'column', justifyContent: 'center', gap: 3,
-    borderRadius: 14, borderWidth: 1, borderColor: 'transparent',
+    borderRadius: 10, borderWidth: 1, borderColor: 'transparent',
+    flexDirection: 'row', justifyContent: 'center', gap: 5,
   },
-  bottomTabActive: {
-    backgroundColor: 'rgba(6,182,212,0.12)', borderColor: 'rgba(6,182,212,0.35)',
+  bottomTabOn: {
+    backgroundColor: 'rgba(56,189,248,0.1)',
+    borderColor: 'rgba(56,189,248,0.3)',
   },
-  bottomTabIcon: { fontSize: 18 },
-  bottomTabText: { fontSize: 11, color: Colors.textDim, fontWeight: '700' },
-  bottomTabTextActive: { color: Colors.primary },
+  bottomTabTxt: { fontSize: 12, fontWeight: '700', color: '#64748b' },
+  bottomTabTxtOn: { color: PRIMARY },
 
+  // ── BADGE ──
   badge: {
-    backgroundColor: Colors.primary, borderRadius: 8,
+    backgroundColor: PRIMARY, borderRadius: 8,
     paddingHorizontal: 5, paddingVertical: 1, minWidth: 16, alignItems: 'center',
   },
-  badgeText: { fontSize: 9, fontWeight: '800', color: '#fff' },
+  badgeTxt: { fontSize: 9, fontWeight: '900', color: '#000' },
 
-  modalOverlay: {
+  // ── MODAL ──
+  overlay: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0,0,0,0.75)',
     justifyContent: 'center', alignItems: 'center', padding: 20,
   },
-  modalContainer: {
-    backgroundColor: Colors.bgCard, borderRadius: 16,
-    borderWidth: 1, borderColor: Colors.border,
-    width: '100%', maxWidth: 600, maxHeight: '80%', position: 'relative',
+  modalBox: {
+    backgroundColor: '#13131a', borderRadius: 16,
+    borderWidth: 1, borderColor: BORDER,
+    width: '100%', maxWidth: 600, maxHeight: '85%', overflow: 'hidden',
   },
-  modalClose: {
-    position: 'absolute', top: 12, right: 12,
-    width: 32, height: 32, borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+  modalCloseBtn: {
+    position: 'absolute', top: 12, right: 12, zIndex: 10,
+    width: 28, height: 28, borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center', justifyContent: 'center',
   },
-  modalCloseText: { fontSize: 18, color: Colors.textMuted },
+  modalCloseTxt: { fontSize: 12, color: '#94a3b8', fontWeight: '700' },
 });
-

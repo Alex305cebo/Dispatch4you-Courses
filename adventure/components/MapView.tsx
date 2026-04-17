@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState, useCallback } from "react";
 import { View, StyleSheet, Platform, Text } from "react-native";
 import { useGameStore } from "../store/gameStore";
 import { CITIES, CITY_STATE } from "../constants/config";
@@ -30,8 +30,12 @@ const HUBS = [
   "Portland","San Francisco","Las Vegas","Salt Lake City",
 ];
 
+// Штаты с высокими ставками (surge zones) — ротируются случайно при старте
+const SURGE_STATES = ["TX","CA","FL","IL","GA","OH","PA","TN","NC","MO"];
+
 function getTruckColor(truck: any): string {
-  if ((truck as any).outOfOrderUntil > 0) return "#ff0000";
+  const outOfOrder = (truck as any).outOfOrderUntil;
+  if (outOfOrder && typeof outOfOrder === 'number' && outOfOrder > 0) return "#ff0000";
   const warn = (truck as any).idleWarningLevel ?? 0;
   if (warn === 3) return "#ef4444";
   if (warn === 2) return "#f97316";
@@ -51,6 +55,17 @@ const STATE_NAMES: Record<string, string> = {
   SD:"South Dakota", TN:"Tennessee", TX:"Texas", UT:"Utah", VT:"Vermont",
   VA:"Virginia", WA:"Washington", WV:"West Virginia", WI:"Wisconsin", WY:"Wyoming",
 };
+
+// Случайные погодные/трафик события на маршрутах
+const ROUTE_EVENTS = ["⛈","🌨","🚧","🌫","⚠️"];
+function getRouteEvent(truckId: string): string | null {
+  const hash = truckId.charCodeAt(truckId.length - 1);
+  if (hash % 5 === 0) return ROUTE_EVENTS[hash % ROUTE_EVENTS.length];
+  return null;
+}
+
+// История маршрутов трака за смену
+const routeHistory: Record<string, Array<[number, number]>> = {};
 
 export default function MapView({ onTruckInfo, onFindLoad }: {
   onTruckInfo?: (truckId: string) => void;
@@ -75,17 +90,68 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
   const chartRef = useRef<any>(null);
   const truckSeriesRef = useRef<any>(null);
   const routeSeriesRef = useRef<any>(null);
+  const historySeriesRef = useRef<any>(null);
+  const polygonSeriesRef = useRef<any>(null);
   const intervalRef = useRef<any>(null);
+  const antLinesRef = useRef<any[]>([]); // ссылки на анимированные линии
+  const extraSeriesRef = useRef<any[]>([]); // серии миль и погоды — удаляем при rebuild
 
-  const { trucks, availableLoads, phase } = useGameStore();
-  const activeTrucks = phase === 'playing' ? trucks : [];
+  const { trucks, availableLoads, phase, gameMinute } = useGameStore();
+  const activeTrucks = phase !== 'menu' ? trucks : [];
   const trucksRef = useRef(activeTrucks);
   const loadsRef = useRef(availableLoads);
+  const gameMinuteRef = useRef(gameMinute);
   trucksRef.current = activeTrucks;
   loadsRef.current = availableLoads;
+  gameMinuteRef.current = gameMinute;
 
   const [selectedTruck, setSelectedTruck] = useState<any>(null);
   const [selectedState, setSelectedState] = useState<any>(null);
+  const [toasts, setToasts] = useState<Array<{ id: string; msg: string; color: string }>>([]);
+  // Surge zones — 3 случайных штата
+  const [surgeStates] = useState<string[]>(() => {
+    const shuffled = [...SURGE_STATES].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 3);
+  });
+
+  // Добавить тост-уведомление
+  const addToast = useCallback((msg: string, color = "#06b6d4") => {
+    const id = Math.random().toString(36).slice(2);
+    setToasts(prev => [...prev.slice(-3), { id, msg, color }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+  }, []);
+
+  // Слушаем события из store для тостов
+  useEffect(() => {
+    function handleMapToast(e: Event) {
+      const { message, color } = (e as CustomEvent).detail;
+      addToast(message, color);
+    }
+    window.addEventListener('mapToast', handleMapToast);
+    return () => window.removeEventListener('mapToast', handleMapToast);
+  }, [addToast]);
+
+  // Форсируем обновление карты когда траки появляются/меняются
+  useEffect(() => {
+    if (activeTrucks.length > 0 && chartRef.current && rootRef.current) {
+      rebuildTruckSeries(rootRef.current, chartRef.current);
+      rebuildRoutes(rootRef.current, chartRef.current);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTrucks.length]);
+  useEffect(() => {
+    activeTrucks.forEach(t => {
+      if (t.status === "loaded" || t.status === "driving") {
+        if (!routeHistory[t.id]) routeHistory[t.id] = [];
+        const last = routeHistory[t.id].at(-1);
+        const [lng, lat] = t.position;
+        if (!last || Math.hypot(last[0] - lng, last[1] - lat) > 0.3) {
+          routeHistory[t.id].push([lng, lat]);
+          if (routeHistory[t.id].length > 200) routeHistory[t.id].shift();
+        }
+      }
+    });
+  }, [activeTrucks]);
 
   // Строим pointData из текущих траков
   function buildPointData() {
@@ -121,8 +187,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
         driver: t.driver,
         status: t.status,
         statusLabel: STATUS_LABEL[t.status] || t.status,
-        colorHex,
-        colorInt,
+        colorHex, colorInt,
         idleWarning: (t as any).idleWarningLevel ?? 0,
         active: t.status === "loaded" || t.status === "driving",
         breakdown: t.status === "breakdown",
@@ -132,19 +197,60 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
         destinationCity: t.destinationCity || "",
         hoursLeft: t.hoursLeft,
         currentLoad: t.currentLoad,
+        routeEvent: getRouteEvent(t.id),
       };
     });
   }
 
-  // Пересоздаём серию маршрутов по routePath из store
+  // История маршрутов — полупрозрачный след
+  function rebuildHistory(root: any, chart: any) {
+    if (historySeriesRef.current) {
+      const idx = chart.series.indexOf(historySeriesRef.current);
+      if (idx >= 0) chart.series.removeIndex(idx);
+      historySeriesRef.current.dispose();
+      historySeriesRef.current = null;
+    }
+    const ts = trucksRef.current;
+    const trucksWithHistory = ts.filter(t => routeHistory[t.id]?.length >= 2);
+    if (trucksWithHistory.length === 0) return;
+
+    const historySeries = chart.series.push(am5map.MapLineSeries.new(root, {}));
+    historySeries.mapLines.template.setAll({ strokeWidth: 1, strokeOpacity: 0.2 });
+
+    trucksWithHistory.forEach(t => {
+      const colorInt = parseInt(getTruckColor(t).replace("#", ""), 16);
+      const item = historySeries.pushDataItem({
+        geometry: { type: "LineString", coordinates: routeHistory[t.id] },
+      });
+      item.get("mapLine")?.setAll({
+        stroke: am5.color(colorInt),
+        strokeOpacity: 0.22,
+        strokeWidth: 1.5,
+        strokeDasharray: [2, 6],
+      });
+    });
+    historySeriesRef.current = historySeries;
+  }
+
+  // Маршруты с анимацией "муравьи"
   function rebuildRoutes(root: any, chart: any) {
+    antLinesRef.current = []; // сбрасываем список анимируемых линий
+
+    // Удаляем старые серии миль и погоды
+    extraSeriesRef.current.forEach(s => {
+      try {
+        const idx = chart.series.indexOf(s);
+        if (idx >= 0) chart.series.removeIndex(idx);
+        s.dispose();
+      } catch (_) {}
+    });
+    extraSeriesRef.current = [];
     if (routeSeriesRef.current) {
       const idx = chart.series.indexOf(routeSeriesRef.current);
       if (idx >= 0) chart.series.removeIndex(idx);
       routeSeriesRef.current.dispose();
       routeSeriesRef.current = null;
     }
-
     const ts = trucksRef.current;
     const trucksWithRoute = ts.filter(t =>
       (t.status === "loaded" || t.status === "driving") &&
@@ -152,74 +258,134 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
     );
     if (trucksWithRoute.length === 0) return;
 
-    // Одна серия на все маршруты
     const routeSeries = chart.series.push(am5map.MapLineSeries.new(root, {}));
-
-    // Стиль по умолчанию через template
-    routeSeries.mapLines.template.setAll({
-      strokeWidth: 2.5,
-      strokeOpacity: 0.7,
-    });
+    routeSeries.mapLines.template.setAll({ strokeWidth: 2.5, strokeOpacity: 0.7 });
 
     trucksWithRoute.forEach(t => {
       const colorInt = parseInt(getTruckColor(t).replace("#", ""), 16);
       const path = t.routePath!;
       const startIdx = Math.max(0, Math.floor(t.progress * (path.length - 1)) - 1);
 
-      // Пройденная часть — тусклая пунктирная
+      // Пройденная часть — тусклая
       if (startIdx >= 2) {
-        const donePath = path.slice(0, startIdx + 1);
         const doneItem = routeSeries.pushDataItem({
-          geometry: { type: "LineString", coordinates: donePath },
+          geometry: { type: "LineString", coordinates: path.slice(0, startIdx + 1) },
         });
         doneItem.get("mapLine")?.setAll({
-          stroke: am5.color(colorInt),
-          strokeOpacity: 0.18,
-          strokeWidth: 1.5,
-          strokeDasharray: [4, 4],
+          stroke: am5.color(colorInt), strokeOpacity: 0.15,
+          strokeWidth: 1.5, strokeDasharray: [4, 4],
         });
       }
 
-      // Оставшаяся часть — яркая
+      // Оставшаяся часть — анимированные "муравьи"
       const remainingPath = path.slice(startIdx);
       if (remainingPath.length >= 2) {
-        const activeItem = routeSeries.pushDataItem({
+        // Фоновая линия
+        const bgItem = routeSeries.pushDataItem({
           geometry: { type: "LineString", coordinates: remainingPath },
         });
-        activeItem.get("mapLine")?.setAll({
-          stroke: am5.color(colorInt),
-          strokeOpacity: 0.85,
-          strokeWidth: 3,
+        bgItem.get("mapLine")?.setAll({
+          stroke: am5.color(colorInt), strokeOpacity: 0.25, strokeWidth: 3,
         });
+        // Анимированный пунктир поверх — сохраняем ссылку
+        const antItem = routeSeries.pushDataItem({
+          geometry: { type: "LineString", coordinates: remainingPath },
+        });
+        const antLine = antItem.get("mapLine");
+        if (antLine) {
+          antLine.setAll({
+            stroke: am5.color(colorInt), strokeOpacity: 0.9,
+            strokeWidth: 3, strokeDasharray: [8, 8],
+            strokeDashoffset: 0,
+          });
+          antLinesRef.current.push(antLine);
+        }
+
+
       }
     });
 
     routeSeriesRef.current = routeSeries;
   }
 
-  // Пересоздаём серию траков — единственный надёжный способ обновить цвета в amCharts5
+  // Обновляем цвета штатов (тепловая карта + surge zones)
+  function updatePolygonColors() {
+    const ps = polygonSeriesRef.current;
+    if (!ps) return;
+    const ls = loadsRef.current;
+    const ts = trucksRef.current;
+
+    // Считаем активность по штатам
+    const stateActivity: Record<string, number> = {};
+    ls.forEach(l => {
+      const s = CITY_STATE[l.fromCity];
+      if (s) stateActivity[s] = (stateActivity[s] || 0) + 1;
+    });
+    ts.forEach(t => {
+      const s = CITY_STATE[t.currentCity];
+      if (s) stateActivity[s] = (stateActivity[s] || 0) + 0.5;
+    });
+    const maxActivity = Math.max(1, ...Object.values(stateActivity));
+
+    ps.mapPolygons.each((polygon: any) => {
+      const rawId = polygon.dataItem?.get("id") as string ?? "";
+      const stateId = rawId.replace("US-", "");
+      const activity = stateActivity[stateId] || 0;
+      const isSurge = surgeStates.includes(stateId);
+
+      if (isSurge) {
+        // Surge zone — ЯРКИЙ оранжево-красный, ВСЕГДА ВИДИМЫЙ
+        polygon.setAll({ 
+          fill: am5.color(0xff6b35), 
+          fillOpacity: 0.85,
+          stroke: am5.color(0xffa500),
+          strokeWidth: 2,
+          strokeOpacity: 1,
+        });
+      } else if (activity > 0) {
+        // Тепловая карта — ЯРКИЕ цвета от зелёного к голубому
+        const t = activity / maxActivity;
+        // Используем более яркую палитру: от зелёного (#10b981) к голубому (#06b6d4)
+        const r = Math.round(16 + t * (6 - 16));
+        const g = Math.round(185 + t * (182 - 185));
+        const b = Math.round(129 + t * (212 - 129));
+        const hex = (r << 16) | (g << 8) | b;
+        polygon.setAll({ 
+          fill: am5.color(hex), 
+          fillOpacity: 0.7,
+          stroke: am5.color(0x64748b),
+          strokeWidth: 1.5,
+          strokeOpacity: 1,
+        });
+      } else {
+        // Неактивные штаты — ВИДИМЫЙ серо-синий
+        polygon.setAll({ 
+          fill: am5.color(0x334155), // Светлее чем было!
+          fillOpacity: 0.9,
+          stroke: am5.color(0x64748b),
+          strokeWidth: 1.5,
+          strokeOpacity: 0.9,
+        });
+      }
+    });
+  }
+
+  // Серия траков
   function rebuildTruckSeries(root: any, chart: any) {
-    // Удаляем старую серию
     if (truckSeriesRef.current) {
       chart.series.removeIndex(chart.series.indexOf(truckSeriesRef.current));
       truckSeriesRef.current.dispose();
       truckSeriesRef.current = null;
     }
-
     const pointData = buildPointData();
-
     const truckSeries = chart.series.push(
-      am5map.MapPointSeries.new(root, {
-        latitudeField: "lat",
-        longitudeField: "lng",
-      })
+      am5map.MapPointSeries.new(root, { latitudeField: "lat", longitudeField: "lng" })
     );
 
     truckSeries.bullets.push((_root: any, _s: any, dataItem: any) => {
       const d = dataItem.dataContext as any;
       const container = am5.Container.new(root, { cursorOverStyle: "pointer" });
 
-      // Пульс для едущих траков
       if (d.active) {
         const pulse = container.children.push(am5.Circle.new(root, {
           radius: 14, fill: am5.color(d.colorInt), fillOpacity: 0,
@@ -227,8 +393,6 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
         pulse.animate({ key: "radius", from: 8, to: 20, duration: 1400, loops: Infinity });
         pulse.animate({ key: "fillOpacity", from: 0.35, to: 0, duration: 1400, loops: Infinity });
       }
-
-      // Пульс-тревога
       if (d.idleWarning > 0) {
         const warnColor = d.idleWarning >= 3 ? 0xef4444 : d.idleWarning === 2 ? 0xf97316 : 0xfbbf24;
         const warnSpeed = d.idleWarning >= 3 ? 600 : d.idleWarning === 2 ? 800 : 1200;
@@ -239,112 +403,63 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
         alertPulse.animate({ key: "fillOpacity", from: 0.5, to: 0, duration: warnSpeed, loops: Infinity });
       }
 
-      // Точка-якорь
       container.children.push(am5.Circle.new(root, {
-        radius: 5,
-        fill: am5.color(d.colorInt),
-        stroke: am5.color(0xffffff),
-        strokeWidth: 2,
+        radius: 5, fill: am5.color(d.colorInt),
+        stroke: am5.color(0xffffff), strokeWidth: 2,
       }));
 
-      // Строка 1: имя трака
-      const line1 = d.truckName;
-
-      // Строка 2: маршрут (если едет) или город (если стоит)
       let line2 = d.currentCity;
       if ((d.status === "loaded" || d.status === "driving") && d.destinationCity) {
-        // Сокращаем города до 3 букв
-        const from = d.currentCity.substring(0, 3).toUpperCase();
-        const to = d.destinationCity.substring(0, 3).toUpperCase();
-        line2 = `${from}→${to}`;
-      } else if (d.status === "at_pickup") {
-        line2 = "📦 Погрузка";
-      } else if (d.status === "at_delivery") {
-        line2 = "🏁 Разгрузка";
-      } else if (d.status === "waiting") {
-        line2 = "⏱ Detention";
-      } else if (d.status === "breakdown") {
-        line2 = "⚠️ Поломка";
+        const fromState = CITY_STATE[d.currentCity] || "";
+        const toState = CITY_STATE[d.destinationCity] || "";
+        line2 = `${d.currentCity.substring(0,3).toUpperCase()}, ${fromState}→${d.destinationCity.substring(0,3).toUpperCase()}, ${toState}`;
+      } else if (d.status === "at_pickup") { line2 = "📦 Погрузка"; }
+      else if (d.status === "at_delivery") { line2 = "🏁 Разгрузка"; }
+      else if (d.status === "waiting") { line2 = "⏱ Detention"; }
+      else if (d.status === "breakdown") { line2 = "⚠️ Поломка"; }
+      else {
+        const state = CITY_STATE[d.currentCity] || "";
+        line2 = state ? `${d.currentCity}, ${state}` : d.currentCity;
       }
 
-      // Строка 3: прогресс или HOS
-      let line3 = "";
-      if (d.milesLeft > 0) {
-        line3 = `${d.milesLeft}mi · ${d.hoursLeft}h HOS`;
-      } else {
-        line3 = `${d.hoursLeft}h HOS`;
-      }
+      const line3 = d.milesLeft > 0 ? `${d.milesLeft}mi · ${d.hoursLeft}h HOS` : `${d.hoursLeft}h HOS`;
 
-      // Карточка над точкой — центрирована по X над точкой
-      const CARD_W = 76;
-      const CARD_H = 56;
-      const CX = CARD_W / 2; // центр карточки по X
+      const CARD_W = 76, CARD_H = 56, CX = CARD_W / 2;
       const card = container.children.push(am5.Container.new(root, {
-        dy: -CARD_H - 10,
-        dx: -(CARD_W / 2),
+        dy: -CARD_H - 10, dx: -(CARD_W / 2),
       }));
-
-      // Фон карточки
       card.children.push(am5.RoundedRectangle.new(root, {
         width: CARD_W, height: CARD_H,
         fill: am5.color(0x0d1f35), fillOpacity: 0.96,
         stroke: am5.color(d.colorInt), strokeWidth: 1.5,
-        cornerRadiusTL: 7, cornerRadiusTR: 7,
-        cornerRadiusBL: 7, cornerRadiusBR: 7,
+        cornerRadiusTL: 7, cornerRadiusTR: 7, cornerRadiusBL: 7, cornerRadiusBR: 7,
       }));
-
-      // Цветная полоска сверху
       card.children.push(am5.RoundedRectangle.new(root, {
-        width: CARD_W, height: 6,
-        fill: am5.color(d.colorInt), fillOpacity: 1,
-        cornerRadiusTL: 7, cornerRadiusTR: 7,
-        cornerRadiusBL: 0, cornerRadiusBR: 0,
+        width: CARD_W, height: 6, fill: am5.color(d.colorInt), fillOpacity: 1,
+        cornerRadiusTL: 7, cornerRadiusTR: 7, cornerRadiusBL: 0, cornerRadiusBR: 0,
       }));
-
-      // Имя трака — центр
       card.children.push(am5.Label.new(root, {
-        text: line1,
-        fill: am5.color(0xffffff),
-        fontSize: 11, fontWeight: "800",
-        centerX: am5.percent(50), x: CX,
-        y: 9,
+        text: d.truckName, fill: am5.color(0xffffff),
+        fontSize: 11, fontWeight: "800", centerX: am5.percent(50), x: CX, y: 9,
       }));
-
-      // Статус
-      const statusText = STATUS_LABEL[d.status] || d.status;
       card.children.push(am5.Label.new(root, {
-        text: `● ${statusText}`,
-        fill: am5.color(d.colorInt),
-        fontSize: 8, fontWeight: "700",
-        centerX: am5.percent(50), x: CX,
-        y: 22,
+        text: `● ${STATUS_LABEL[d.status] || d.status}`,
+        fill: am5.color(d.colorInt), fontSize: 8, fontWeight: "700",
+        centerX: am5.percent(50), x: CX, y: 22,
       }));
-
-      // Маршрут
       card.children.push(am5.Label.new(root, {
-        text: line2,
-        fill: am5.color(0xe2e8f0),
-        fontSize: 9, fontWeight: "600",
-        centerX: am5.percent(50), x: CX,
-        y: 33,
+        text: line2, fill: am5.color(0xe2e8f0),
+        fontSize: 9, fontWeight: "600", centerX: am5.percent(50), x: CX, y: 33,
       }));
-
-      // Мили / HOS
       card.children.push(am5.Label.new(root, {
-        text: line3,
-        fill: am5.color(0x64748b),
-        fontSize: 7,
-        centerX: am5.percent(50), x: CX,
-        y: 45,
+        text: line3, fill: am5.color(0x94a3b8),
+        fontSize: 7, centerX: am5.percent(50), x: CX, y: 45,
       }));
 
-      // Клик
       container.events.on("click", () => {
         setSelectedTruck(d);
-        const c = chartRef.current;
-        if (c) c.zoomToGeoPoint({ longitude: d.lng, latitude: d.lat }, 4, true);
+        chartRef.current?.zoomToGeoPoint({ longitude: d.lng, latitude: d.lat }, 4, true);
       });
-
       return am5.Bullet.new(root, { sprite: container });
     });
 
@@ -369,18 +484,55 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
     chartRef.current = chart;
 
     chart.set("background", am5.Rectangle.new(root, {
-      fill: am5.color(0x0a1628), fillOpacity: 1,
+      fill: am5.color(0x0f172a), fillOpacity: 1, // Немного светлее чем было 0x0a1628
     }));
 
-    // Штаты
+    // Штаты — ОСНОВНОЙ СЛОЙ КАРТЫ
     const polygonSeries = chart.series.push(
       am5map.MapPolygonSeries.new(root, { geoJSON: am5geodata_usaLow })
     );
+    polygonSeriesRef.current = polygonSeries;
+    
+    // Базовые настройки для всех штатов — СВЕТЛЕЕ!
     polygonSeries.mapPolygons.template.setAll({
-      fill: am5.color(0x1a3a2a), stroke: am5.color(0x2d6a4f),
-      strokeWidth: 0.8, fillOpacity: 0.9, interactive: true,
+      fill: am5.color(0x334155), // Светло-серый синий (было 0x1e3a5f)
+      fillOpacity: 0.9,
+      stroke: am5.color(0x64748b), // Серые границы
+      strokeWidth: 1.5,
+      strokeOpacity: 1,
+      interactive: true,
+      tooltipText: "{name}",
     });
-    polygonSeries.mapPolygons.template.states.create("hover", { fill: am5.color(0x2d6a4f) });
+    
+    // Hover эффект
+    polygonSeries.mapPolygons.template.states.create("hover", { 
+      fill: am5.color(0x2563eb), // Ярко-синий при наведении
+      fillOpacity: 1,
+      strokeWidth: 2.5,
+      stroke: am5.color(0x06b6d4),
+      strokeOpacity: 1,
+    });
+
+    // Двойной клик — зум + попап штата
+    polygonSeries.mapPolygons.template.events.on("dblclick", (ev: any) => {
+      const rawId = ev.target.dataItem?.get("id") as string;
+      const stateName = ev.target.dataItem?.get("name");
+      if (!rawId) return;
+      const stateId = rawId.replace("US-", "");
+      const ts = trucksRef.current;
+      const ls = loadsRef.current;
+      // Зум на штат через goHome + небольшой зум
+      chart.zoomToGeoPoint({ longitude: -98, latitude: 38 }, 3, true);
+      setSelectedState({
+        id: stateId, name: stateName,
+        trucks: ts.filter(t => CITY_STATE[t.currentCity] === stateId || CITY_STATE[t.destinationCity || ""] === stateId),
+        inboundTrucks: ts.filter(t => CITY_STATE[t.destinationCity || ""] === stateId && CITY_STATE[t.currentCity] !== stateId),
+        loads: ls.filter(l => CITY_STATE[l.fromCity] === stateId),
+        isSurge: surgeStates.includes(stateId),
+      });
+    });
+
+    // Одиночный клик — попап без зума
     polygonSeries.mapPolygons.template.events.on("click", (ev: any) => {
       const rawId = ev.target.dataItem?.get("id") as string;
       const stateName = ev.target.dataItem?.get("name");
@@ -393,13 +545,33 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
         trucks: ts.filter(t => CITY_STATE[t.currentCity] === stateId || CITY_STATE[t.destinationCity || ""] === stateId),
         inboundTrucks: ts.filter(t => CITY_STATE[t.destinationCity || ""] === stateId && CITY_STATE[t.currentCity] !== stateId),
         loads: ls.filter(l => CITY_STATE[l.fromCity] === stateId),
+        isSurge: surgeStates.includes(stateId),
       });
     });
 
-    // Сетка
+    // Подписи штатов
+    const stateLabelSeries = chart.series.push(
+      am5map.MapPointSeries.new(root, { polygonIdField: "id" })
+    );
+    stateLabelSeries.bullets.push((_root: any, _s: any, dataItem: any) => {
+      const rawId = (dataItem.dataContext as any)?.id as string ?? "";
+      const stateCode = rawId.replace("US-", "");
+      return am5.Bullet.new(root, {
+        sprite: am5.Label.new(root, {
+          text: stateCode, fill: am5.color(0xe2e8f0), fillOpacity: 0.7,
+          fontSize: 10, fontWeight: "700",
+          centerX: am5.percent(50), centerY: am5.percent(50),
+        }),
+      });
+    });
+    stateLabelSeries.data.setAll(
+      am5geodata_usaLow.features.map((f: any) => ({ id: f.id ?? "" }))
+    );
+
+    // Сетка — делаем более заметной
     const graticuleSeries = chart.series.push(am5map.GraticuleSeries.new(root, {}));
     graticuleSeries.mapLines.template.setAll({
-      stroke: am5.color(0x2d6a4f), strokeOpacity: 0.06, strokeWidth: 0.5,
+      stroke: am5.color(0x64748b), strokeOpacity: 0.25, strokeWidth: 0.8,
     });
 
     // Города
@@ -409,16 +581,29 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
     citySeries.bullets.push((_root: any, _s: any, dataItem: any) => {
       const d = dataItem.dataContext as any;
       if (!d.major) return am5.Bullet.new(root, { sprite: am5.Circle.new(root, { radius: 0 }) });
-      const label = am5.Label.new(root, {
-        text: d.name,
-        fill: am5.color(0xffffff),
-        fillOpacity: 0.45,
-        fontSize: 9,
-        fontWeight: "400",
-        centerX: am5.percent(50),
+      
+      const container = am5.Container.new(root, {});
+      
+      // Точка города
+      container.children.push(am5.Circle.new(root, {
+        radius: 2.5,
+        fill: am5.color(0x94a3b8),
+        fillOpacity: 0.8,
+      }));
+      
+      // Название города
+      container.children.push(am5.Label.new(root, {
+        text: d.name, 
+        fill: am5.color(0x94a3b8), 
+        fillOpacity: 0.6,
+        fontSize: 9, 
+        fontWeight: "500",
+        centerX: am5.percent(50), 
         centerY: am5.percent(50),
-      });
-      return am5.Bullet.new(root, { sprite: label });
+        dy: 12,
+      }));
+      
+      return am5.Bullet.new(root, { sprite: container });
     });
     citySeries.data.setAll(
       Object.entries(CITIES).map(([name, coords]) => ({
@@ -426,57 +611,151 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
       }))
     );
 
-    // Zoom controls
     const zoomControl = chart.set("zoomControl", am5map.ZoomControl.new(root, {}));
     zoomControl.homeButton.set("visible", true);
 
-    // Слушаем событие центрирования на траке из HUD
     function handleZoomToTruck(e: Event) {
       const { lng, lat } = (e as CustomEvent).detail;
       chart.zoomToGeoPoint({ longitude: lng, latitude: lat }, 5, true);
     }
     window.addEventListener('zoomToTruck', handleZoomToTruck);
 
-    // Первое создание серий
+    // Первый рендер
+    rebuildHistory(root, chart);
     rebuildRoutes(root, chart);
     rebuildTruckSeries(root, chart);
+    setTimeout(() => updatePolygonColors(), 500);
 
-    // Обновление каждые 2 секунды
+    // Анимация муравьёв — обновляем strokeDashoffset на живых линиях каждые 60ms
+    let dashOffset = 0;
+    const antInterval = window.setInterval(() => {
+      dashOffset = (dashOffset - 2 + 10000) % 10000;
+      antLinesRef.current.forEach(line => {
+        try { line.set("strokeDashoffset", dashOffset); } catch (_) {}
+      });
+    }, 60);
+
+    // Полное обновление каждые 2 секунды
     intervalRef.current = setInterval(() => {
+      rebuildHistory(root, chart);
       rebuildRoutes(root, chart);
       rebuildTruckSeries(root, chart);
+      updatePolygonColors();
     }, 2000);
 
     return () => {
       clearInterval(intervalRef.current);
+      clearInterval(antInterval);
       window.removeEventListener('zoomToTruck', handleZoomToTruck);
       root.dispose();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Статистика для мини-легенды
+  const totalMilesInFlight = activeTrucks.reduce((sum, t) => {
+    if ((t.status === "loaded" || t.status === "driving") && t.currentLoad) {
+      const dest = t.destinationCity ? CITIES[t.destinationCity] : null;
+      const ml = dest ? Math.round(Math.hypot(dest[0] - t.position[0], dest[1] - t.position[1]) * 55) : 0;
+      return sum + ml;
+    }
+    return sum;
+  }, 0);
+  const expectedRevenue = activeTrucks.reduce((sum, t) => {
+    return sum + (t.currentLoad?.agreedRate || 0);
+  }, 0);
+
+  // Таймер смены: SHIFT_DURATION = 1440 минут
+  const minutesLeft = Math.max(0, Math.floor(1440 - gameMinute));
+  const hoursLeft = Math.floor(minutesLeft / 60);
+  const minsLeft = Math.floor(minutesLeft % 60);
+  const shiftProgress = Math.min(1, Math.max(0, gameMinute / 1440));
+  const timerColor = minutesLeft < 60 ? "#ef4444" : minutesLeft < 120 ? "#f97316" : "#06b6d4";
+
   return (
     <View style={styles.container}>
       <div ref={divRef} style={{ width: "100%", height: "100%", display: "block" } as any} />
 
-      {/* Легенда */}
+      {/* Мини-таймер смены — верхний центр */}
+      {phase === 'playing' && (
+        <div style={{
+          position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)",
+          background: "rgba(10,22,40,0.92)", borderRadius: 20,
+          border: `1px solid ${timerColor}55`, padding: "5px 14px",
+          display: "flex", alignItems: "center", gap: 8,
+          fontFamily: "sans-serif", pointerEvents: "none", zIndex: 10,
+        } as any} className="map-timer">
+          <span style={{ fontSize: 11, color: timerColor, fontWeight: 800 } as any}>
+            ⏰ {hoursLeft}h {minsLeft.toString().padStart(2,"0")}m до конца смены
+          </span>
+          <div style={{ width: 60, height: 4, background: "rgba(255,255,255,0.1)", borderRadius: 2 } as any}>
+            <div style={{
+              width: `${shiftProgress * 100}%`, height: "100%",
+              background: timerColor, borderRadius: 2, transition: "width 0.5s",
+            } as any} />
+          </div>
+        </div>
+      )}
+
+      {/* Мини-легенда со статистикой — левый нижний угол */}
       <div style={{
         position: "absolute", bottom: 12, left: 12,
         background: "rgba(10,22,40,0.92)", borderRadius: 12,
         border: "1px solid rgba(45,106,79,0.4)", padding: "8px 12px",
         display: "flex", flexDirection: "column", gap: 4, pointerEvents: "none",
-      } as any}>
+        fontFamily: "sans-serif",
+      } as any} className="map-legend">
         {Object.entries(STATUS_LABEL).map(([s, l]) => {
-          const n = trucks.filter(t => t.status === s).length;
+          const n = activeTrucks.filter(t => t.status === s).length;
           return (
             <div key={s} style={{ display: "flex", alignItems: "center", gap: 6 } as any}>
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: STATUS_COLOR[s] } as any} />
-              <span style={{ fontSize: 10, color: "#94a3b8", fontFamily: "sans-serif" } as any}>{STATUS_EMOJI[s]} {l}</span>
-              {n > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: STATUS_COLOR[s], marginLeft: "auto", paddingLeft: 8, fontFamily: "sans-serif" } as any}>{n}</span>}
+              <span style={{ fontSize: 10, color: "#94a3b8" } as any}>{STATUS_EMOJI[s]} {l}</span>
+              {n > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: STATUS_COLOR[s], marginLeft: "auto", paddingLeft: 8 } as any}>{n}</span>}
             </div>
           );
         })}
+        {/* Статистика */}
+        {phase === 'playing' && (
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: 4, paddingTop: 6, display: "flex", flexDirection: "column", gap: 3 } as any}>
+            <div style={{ fontSize: 10, color: "#38bdf8" } as any}>
+              🛣 В пути: <span style={{ fontWeight: 700 } as any}>{totalMilesInFlight.toLocaleString()} mi</span>
+            </div>
+            <div style={{ fontSize: 10, color: "#4ade80" } as any}>
+              💰 Ожидается: <span style={{ fontWeight: 700 } as any}>${expectedRevenue.toLocaleString()}</span>
+            </div>
+          </div>
+        )}
+        {/* Surge legend */}
+        {surgeStates.length > 0 && (
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: 4, paddingTop: 6 } as any}>
+            <div style={{ fontSize: 9, color: "#ff6b35", fontWeight: 700 } as any}>
+              🔥 Surge: {surgeStates.join(", ")}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Тосты — правый верхний угол (если нет попапа штата) */}
+      {!selectedState && (
+        <div style={{
+          position: "absolute", top: 12, right: 12,
+          display: "flex", flexDirection: "column", gap: 6,
+          zIndex: 1001, fontFamily: "sans-serif", pointerEvents: "none",
+        } as any} className="map-toasts">
+          {toasts.map(t => (
+            <div key={t.id} style={{
+              background: "rgba(8,14,28,0.95)", border: `1px solid ${t.color}55`,
+              borderLeft: `3px solid ${t.color}`, borderRadius: 8,
+              padding: "7px 12px", fontSize: 12, color: "#e2e8f0",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
+              animation: "fadeInSlide 0.3s ease",
+            } as any}>
+              {t.msg}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Плашка трака */}
       {selectedTruck && (
@@ -485,11 +764,16 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
           background: "rgba(8,14,28,0.96)", border: `1px solid ${selectedTruck.colorHex}`,
           borderRadius: 12, padding: "10px 14px", display: "flex", alignItems: "center", gap: 12,
           zIndex: 1000, boxShadow: "0 4px 20px rgba(0,0,0,0.5)", fontFamily: "sans-serif", whiteSpace: "nowrap",
-        } as any}>
+        } as any} className="map-truck-card">
           <div style={{ width: 8, height: 8, borderRadius: "50%", background: selectedTruck.colorHex } as any} />
           <div style={{ display: "flex", flexDirection: "column", gap: 2 } as any}>
             <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" } as any}>🚛 {selectedTruck.truckName}</span>
-            <span style={{ fontSize: 11, color: selectedTruck.colorHex } as any}>{selectedTruck.statusLabel} · {selectedTruck.currentCity}</span>
+            <span style={{ fontSize: 11, color: selectedTruck.colorHex } as any}>
+              {selectedTruck.statusLabel} · {selectedTruck.currentCity}{CITY_STATE[selectedTruck.currentCity] ? `, ${CITY_STATE[selectedTruck.currentCity]}` : ""}
+            </span>
+            {selectedTruck.routeEvent && (
+              <span style={{ fontSize: 10, color: "#fbbf24" } as any}>{selectedTruck.routeEvent} На маршруте</span>
+            )}
           </div>
           <button onClick={() => onTruckInfo?.(selectedTruck.truckId)} style={{
             background: "rgba(6,182,212,0.15)", border: "1px solid rgba(6,182,212,0.4)",
@@ -513,22 +797,26 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
         <div style={{
           position: "absolute", top: 12, right: 12,
           background: "rgba(8,14,28,0.97)", borderRadius: 16,
-          border: "2px solid rgba(6,182,212,0.35)",
+          border: `2px solid ${selectedState.isSurge ? "rgba(255,107,53,0.5)" : "rgba(6,182,212,0.35)"}`,
           padding: "14px 16px", width: 280, zIndex: 1000,
           boxShadow: "0 8px 32px rgba(0,0,0,0.7)",
-          fontFamily: "sans-serif",
-          maxHeight: "80vh", overflowY: "auto",
-        } as any}>
-          {/* Заголовок */}
+          fontFamily: "sans-serif", maxHeight: "80vh", overflowY: "auto",
+        } as any} className="map-state-popup">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 } as any}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 } as any}>
-              <span style={{ fontSize: 20, fontWeight: 900, color: "#06b6d4" } as any}>{selectedState.id}</span>
+              <span style={{ fontSize: 20, fontWeight: 900, color: selectedState.isSurge ? "#ff6b35" : "#06b6d4" } as any}>
+                {selectedState.id}
+              </span>
               <span style={{ fontSize: 13, color: "#94a3b8" } as any}>{STATE_NAMES[selectedState.id] || selectedState.name}</span>
+              {selectedState.isSurge && (
+                <span style={{ fontSize: 10, fontWeight: 700, color: "#ff6b35", background: "rgba(255,107,53,0.15)", padding: "2px 6px", borderRadius: 4 } as any}>
+                  🔥 SURGE
+                </span>
+              )}
             </div>
             <span onClick={() => setSelectedState(null)} style={{ cursor: "pointer", fontSize: 18, color: "#64748b" } as any}>✕</span>
           </div>
 
-          {/* Траки В штате */}
           {selectedState.trucks.length > 0 && (
             <div style={{ marginBottom: 12 } as any}>
               <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 } as any}>
@@ -545,7 +833,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
                       padding: "7px 10px", marginBottom: 5,
                       border: `1px solid ${color}33`,
                       display: "flex", flexDirection: "column", gap: 3,
-                      cursor: "pointer", transition: "background 0.15s",
+                      cursor: "pointer",
                     } as any}
                     onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
                     onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
@@ -556,16 +844,14 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
                         {STATUS_LABEL[t.status] || t.status}
                       </span>
                     </div>
-                    <div style={{ fontSize: 10, color: "#94a3b8" } as any}>
-                      👤 {t.driver} · ⏱ {t.hoursLeft}h HOS
-                    </div>
+                    <div style={{ fontSize: 10, color: "#94a3b8" } as any}>👤 {t.driver} · ⏱ {t.hoursLeft}h HOS</div>
                     {t.currentLoad && (
                       <div style={{ fontSize: 10, color: "#4ade80" } as any}>
-                        📦 {t.currentLoad.fromCity} → {t.currentLoad.toCity} · ${t.currentLoad.agreedRate?.toLocaleString()}
+                        📦 {t.currentLoad.fromCity}, {CITY_STATE[t.currentLoad.fromCity] || ""} → {t.currentLoad.toCity}, {CITY_STATE[t.currentLoad.toCity] || ""} · ${t.currentLoad.agreedRate?.toLocaleString()}
                       </div>
                     )}
                     {!t.currentLoad && t.currentCity && (
-                      <div style={{ fontSize: 10, color: "#94a3b8" } as any}>📍 {t.currentCity}</div>
+                      <div style={{ fontSize: 10, color: "#94a3b8" } as any}>📍 {t.currentCity}{CITY_STATE[t.currentCity] ? `, ${CITY_STATE[t.currentCity]}` : ""}</div>
                     )}
                     {isIdle && (
                       <button
@@ -584,7 +870,6 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
             </div>
           )}
 
-          {/* Траки едущие В штат */}
           {selectedState.inboundTrucks?.length > 0 && (
             <div style={{ marginBottom: 12 } as any}>
               <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 } as any}>
@@ -592,17 +877,17 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
               </div>
               {selectedState.inboundTrucks.map((t: any) => (
                 <div key={t.id} style={{ fontSize: 10, color: "#38bdf8", marginBottom: 3 } as any}>
-                  🚛 {t.name} · {t.driver} → {t.destinationCity}
+                  🚛 {t.name} · {t.driver} → {t.destinationCity}{CITY_STATE[t.destinationCity] ? `, ${CITY_STATE[t.destinationCity]}` : ""}
                 </div>
               ))}
             </div>
           )}
 
-          {/* Грузы из штата */}
           {selectedState.loads.length > 0 && (
             <div>
               <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 } as any}>
                 📋 ГРУЗЫ ИЗ ШТАТА ({selectedState.loads.length})
+                {selectedState.isSurge && <span style={{ color: "#ff6b35", marginLeft: 4 } as any}>🔥 +15% ставки</span>}
               </div>
               {selectedState.loads.slice(0, 4).map((l: any) => (
                 <div key={l.id}
@@ -612,20 +897,20 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
                     padding: "6px 10px", marginBottom: 5,
                     border: "1px solid rgba(255,255,255,0.07)",
                     display: "flex", justifyContent: "space-between", alignItems: "center",
-                    cursor: "pointer", transition: "background 0.15s",
+                    cursor: "pointer",
                   } as any}
                   onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.09)")}
                   onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
                 >
                   <div style={{ display: "flex", flexDirection: "column", gap: 2 } as any}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: "#e2e8f0" } as any}>
-                      {l.fromCity} → {l.toCity}
+                      {l.fromCity}, {CITY_STATE[l.fromCity] || ""} → {l.toCity}, {CITY_STATE[l.toCity] || ""}
                     </span>
                     <span style={{ fontSize: 9, color: "#64748b" } as any}>
                       {l.miles}mi · {l.equipment} · {l.commodity}
                     </span>
                   </div>
-                  <span style={{ fontSize: 12, fontWeight: 800, color: "#4ade80" } as any}>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: selectedState.isSurge ? "#ff6b35" : "#4ade80" } as any}>
                     ${l.postedRate?.toLocaleString()}
                   </span>
                 </div>
@@ -645,6 +930,96 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
           )}
         </div>
       )}
+
+      {/* CSS для анимации тостов */}
+      <style>{`
+        @keyframes fadeInSlide {
+          from { opacity: 0; transform: translateX(20px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        
+        /* Адаптивность для мобильных */
+        @media (max-width: 768px) {
+          .map-timer {
+            top: 6px !important;
+            padding: 4px 10px !important;
+            border-radius: 14px !important;
+          }
+          .map-timer span {
+            font-size: 9px !important;
+          }
+          .map-timer > div {
+            width: 40px !important;
+            height: 3px !important;
+          }
+          
+          .map-legend {
+            bottom: 8px !important;
+            left: 8px !important;
+            padding: 6px 8px !important;
+            border-radius: 8px !important;
+            max-width: calc(100vw - 16px);
+          }
+          .map-legend > div {
+            font-size: 9px !important;
+          }
+          .map-legend > div > div {
+            width: 6px !important;
+            height: 6px !important;
+          }
+          
+          .map-toasts {
+            top: 8px !important;
+            right: 8px !important;
+            left: 8px !important;
+            max-width: calc(100vw - 16px);
+          }
+          .map-toasts > div {
+            font-size: 11px !important;
+            padding: 6px 10px !important;
+          }
+          
+          .map-truck-card {
+            bottom: 10px !important;
+            left: 8px !important;
+            right: 8px !important;
+            transform: none !important;
+            width: calc(100vw - 16px) !important;
+            padding: 8px 10px !important;
+            gap: 8px !important;
+            flex-wrap: wrap;
+          }
+          .map-truck-card > div > span:first-child {
+            font-size: 12px !important;
+          }
+          .map-truck-card > div > span:nth-child(2) {
+            font-size: 10px !important;
+          }
+          .map-truck-card button {
+            font-size: 11px !important;
+            padding: 5px 10px !important;
+          }
+          
+          .map-state-popup {
+            top: 8px !important;
+            right: 8px !important;
+            left: 8px !important;
+            width: calc(100vw - 16px) !important;
+            max-width: none !important;
+            padding: 12px !important;
+            max-height: calc(100vh - 80px) !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .map-timer span {
+            font-size: 8px !important;
+          }
+          .map-legend {
+            font-size: 8px !important;
+          }
+        }
+      `}</style>
     </View>
   );
 }

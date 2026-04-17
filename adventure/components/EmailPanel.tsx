@@ -66,9 +66,54 @@ function getPhraseTiles(notif: Notification): string[] {
     return ['Hi,', 'Rate Con received.', 'Confirmed.', 'Driver will be at pickup by', 'today', 'tomorrow', 'at 8:00 AM', 'at 10:00 AM', 'Please send updated Rate Con.', 'All good, thank you!', 'Best regards,'];
   if (msg.includes('issue') || msg.includes('problem') || msg.includes('complaint'))
     return ['Hi,', 'Apologies for the inconvenience.', 'Driver had a breakdown.', 'There was a traffic delay.', 'We will do better next time.', 'Driver arrived', '30 minutes late', '1 hour late', 'due to traffic.', 'Thank you for your patience.'];
-  if (msg.includes('load') || msg.includes('available') || msg.includes('груз'))
-    return ['Hi,', 'I have a truck available.', 'Dry Van', 'Reefer', 'available in', 'Chicago', 'Dallas', 'Atlanta', 'What is the rate?', 'Can you do', '$2.50/mile?', '$3.00/mile?', 'Send me the Rate Con.', 'Thank you!'];
+  if (msg.includes('load') || msg.includes('available') || msg.includes('груз') || msg.includes('новый груз'))
+    return ['Interested!', 'What\'s the rate?', 'Can you do $2.80/mile?', 'Can you do $3.00/mile?', 'Can you do $3.20/mile?', 'I have a Dry Van available.', 'I have a Reefer available.', 'Truck available today.', 'Truck available tomorrow.', 'Send me the Rate Con.', 'What\'s the pickup time?', 'Any detention policy?', 'We\'ll take it!', 'Pass on this one.'];
   return ['Hi,', 'Got it,', 'Confirmed.', 'Thank you for the update.', 'Driver is on the way.', 'Will keep you posted.', 'Please send details.', 'Rate Con received.', 'POD will follow.', 'Let me know.', 'Best regards,', 'Thanks!'];
+}
+
+// Ответы брокера на сообщения о грузе
+function getBrokerLoadReply(playerMsg: string, notif: Notification): string | null {
+  const m = playerMsg.toLowerCase();
+  const orig = ((notif.message || '') + ' ' + (notif.subject || '')).toLowerCase();
+
+  // Извлекаем данные груза из оригинального сообщения
+  const rateMatch = orig.match(/\$[\d,]+/);
+  const origRate = rateMatch ? rateMatch[0] : '$2,500';
+  const milesMatch = orig.match(/(\d+)\s*mi/);
+  const miles = milesMatch ? parseInt(milesMatch[1]) : 800;
+
+  if (m.includes('pass') || m.includes('не интересует')) {
+    return `No problem! Let me know if you need loads in the future. We work a lot in this lane.`;
+  }
+  if (m.includes('interested') || m.includes('интересует') || m.includes('we\'ll take')) {
+    return `Great! I can confirm the load. Rate is ${origRate} all-in. Pickup today at 10:00 AM. Can you confirm your truck info and driver name?`;
+  }
+  if (m.includes('rate con') || m.includes('send me')) {
+    return `Sure! I'll send the Rate Con right now. Please confirm your MC# and truck plate so I can fill it out.`;
+  }
+  if (m.includes('pickup time') || m.includes('pickup')) {
+    return `Pickup is today at 10:00 AM. Shipper is open until 4:00 PM. Driver needs to call ahead 30 min before arrival.`;
+  }
+  if (m.includes('detention')) {
+    return `Detention is $50/hour after 2 free hours. Driver must check in on time and get BOL stamped to qualify.`;
+  }
+  if (m.includes('2.80') || m.includes('2.50')) {
+    const counter = Math.round(miles * 2.95 / 50) * 50;
+    return `I can't go that low on this one — shipper is tight on budget. Best I can do is $${counter.toLocaleString()} flat. That's ${(counter/miles).toFixed(2)}/mile. Works for you?`;
+  }
+  if (m.includes('3.00') || m.includes('3.20') || m.includes('3.50')) {
+    return `${origRate} is already my best rate on this lane. But I'll see what I can do — let me check with my shipper. Give me 5 minutes.`;
+  }
+  if (m.includes('dry van') || m.includes('reefer') || m.includes('truck available')) {
+    return `Perfect! Load requires ${orig.includes('reefer') ? 'Reefer, temp 34°F' : 'Dry Van, no hazmat'}. ${miles} miles, ${origRate} all-in. Ready to book?`;
+  }
+  if (m.includes('tomorrow')) {
+    return `Shipper needs pickup today — can't push to tomorrow. If you have a truck available today, we can make it work!`;
+  }
+  if (m.includes('today') || m.includes('confirm') || m.includes('confirmed')) {
+    return `Confirmed! I'll send the Rate Con to your email within 10 minutes. Driver should call the shipper at (555) 234-5678 before arrival.`;
+  }
+  return `Got it! Let me check on my end and get back to you shortly. This is a good lane — we move a lot of freight here.`;
 }
 
 function getDriverResponses(notif: Notification) {
@@ -271,7 +316,23 @@ function ThreadChat({ thread, onClose }: { thread: Thread; onClose: () => void }
 
 // ─── Главный компонент ────────────────────────────────────────────────────────
 
-export default function EmailPanel() {
+// Экспортируемый попап для открытия из NotificationBell
+export function ThreadChatPopup({ notification, onClose }: { notification: Notification; onClose: () => void }) {
+  // Строим мини-тред из одного уведомления
+  const allNotifs = useGameStore(s => s.notifications);
+  // Ищем все сообщения от того же отправителя
+  const related = allNotifs.filter(n => n.from === notification.from || n.id === notification.id);
+  const thread: Thread = {
+    key: notification.from + notification.subject,
+    from: notification.from,
+    messages: related.length > 0 ? related : [notification],
+    lastMessage: notification,
+    unreadCount: notification.read ? 0 : 1,
+  };
+  return <ThreadChat thread={thread} onClose={onClose} />;
+}
+
+export default function EmailPanel({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const { notifications, markNotificationRead } = useGameStore();
   const [selectedThread, setSelectedThread] = useState<Thread | null>(null);
 
@@ -290,73 +351,87 @@ export default function EmailPanel() {
   }
 
   return (
-    <View style={s.container}>
-      <View style={s.header}>
-        <View>
-          <Text style={s.headerTitle}>📧 Почта</Text>
-          <Text style={s.headerSub}>{totalUnread > 0 ? `${totalUnread} непрочитанных` : 'Всё прочитано'}</Text>
-        </View>
-      </View>
-
-      <ScrollView style={s.list}>
-        {threads.length === 0 && (
-          <View style={s.empty}>
-            <Text style={s.emptyIcon}>📭</Text>
-            <Text style={s.emptyTitle}>Нет сообщений</Text>
-          </View>
-        )}
-        {threads.map(thread => {
-          const last = thread.lastMessage;
-          const hasUnread = thread.unreadCount > 0;
-          const isUrgent = last.priority === 'critical' || last.priority === 'high';
-          return (
-            <TouchableOpacity
-              key={thread.key}
-              style={[s.threadCard, hasUnread && s.threadCardUnread, isUrgent && s.threadCardUrgent]}
-              onPress={() => openThread(thread)}
-              activeOpacity={0.75}
-            >
-              {/* Аватар */}
-              <View style={[s.avatar, { backgroundColor: hasUnread ? 'rgba(6,182,212,0.2)' : 'rgba(255,255,255,0.06)' }]}>
-                <Text style={s.avatarIcon}>{getEmailIcon(last.type)}</Text>
+    <>
+      <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+        <View style={s.overlay}>
+          <View style={s.sheet}>
+            {/* Шапка */}
+            <View style={s.header}>
+              <View>
+                <Text style={s.headerTitle}>📧 Почта</Text>
+                <Text style={s.headerSub}>{totalUnread > 0 ? `${totalUnread} непрочитанных` : 'Всё прочитано'}</Text>
               </View>
+              <TouchableOpacity style={s.closeBtn} onPress={onClose}>
+                <Text style={s.closeBtnText}>✕</Text>
+              </TouchableOpacity>
+            </View>
 
-              {/* Контент */}
-              <View style={s.threadContent}>
-                <View style={s.threadTop}>
-                  <Text style={[s.threadFrom, hasUnread && s.threadFromUnread]} numberOfLines={1}>{last.from}</Text>
-                  <Text style={s.threadTime}>{last.minute < 0 ? 'До смены' : `+${Math.round(last.minute)} мин`}</Text>
-                </View>
-                <Text style={[s.threadSubject, hasUnread && s.threadSubjectUnread]} numberOfLines={1}>{last.subject}</Text>
-                <Text style={s.threadPreview} numberOfLines={1}>{last.message}</Text>
-              </View>
-
-              {/* Бейдж */}
-              {hasUnread && (
-                <View style={s.badge}>
-                  <Text style={s.badgeText}>{thread.unreadCount}</Text>
+            <ScrollView style={s.list}>
+              {threads.length === 0 && (
+                <View style={s.empty}>
+                  <Text style={s.emptyIcon}>📭</Text>
+                  <Text style={s.emptyTitle}>Нет сообщений</Text>
                 </View>
               )}
-            </TouchableOpacity>
-          );
-        })}
-        <View style={{ height: 20 }} />
-      </ScrollView>
+              {threads.map(thread => {
+                const last = thread.lastMessage;
+                const hasUnread = thread.unreadCount > 0;
+                const isUrgent = last.priority === 'critical' || last.priority === 'high';
+                return (
+                  <TouchableOpacity
+                    key={thread.key}
+                    style={[s.threadCard, hasUnread && s.threadCardUnread, isUrgent && s.threadCardUrgent]}
+                    onPress={() => openThread(thread)}
+                    activeOpacity={0.75}
+                  >
+                    <View style={[s.avatar, { backgroundColor: hasUnread ? 'rgba(6,182,212,0.2)' : 'rgba(255,255,255,0.06)' }]}>
+                      <Text style={s.avatarIcon}>{getEmailIcon(last.type)}</Text>
+                    </View>
+                    <View style={s.threadContent}>
+                      <View style={s.threadTop}>
+                        <Text style={[s.threadFrom, hasUnread && s.threadFromUnread]} numberOfLines={1}>{last.from}</Text>
+                        <Text style={s.threadTime}>{last.minute < 0 ? 'До смены' : `+${Math.round(last.minute)} мин`}</Text>
+                      </View>
+                      <Text style={[s.threadSubject, hasUnread && s.threadSubjectUnread]} numberOfLines={1}>{last.subject}</Text>
+                      <Text style={s.threadPreview} numberOfLines={1}>{last.message}</Text>
+                    </View>
+                    {hasUnread && (
+                      <View style={s.badge}>
+                        <Text style={s.badgeText}>{thread.unreadCount}</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+              <View style={{ height: 20 }} />
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
       {selectedThread && (
         <ThreadChat thread={selectedThread} onClose={() => setSelectedThread(null)} />
       )}
-    </View>
+    </>
   );
 }
 
 // ─── Стили списка ─────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg },
-  header: { padding: 14, borderBottomWidth: 1, borderBottomColor: Colors.border },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  sheet: {
+    backgroundColor: '#0d1f35', borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    maxHeight: '85%', borderWidth: 1, borderColor: 'rgba(6,182,212,0.3)',
+  },
+  header: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    padding: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)',
+  },
   headerTitle: { fontSize: 16, fontWeight: '900', color: '#fff' },
-  headerSub: { fontSize: 11, color: Colors.textDim, marginTop: 2 },
+  headerSub: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
+  closeBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' },
+  closeBtnText: { fontSize: 14, color: '#94a3b8', fontWeight: '700' },
   list: { flex: 1 },
   empty: { alignItems: 'center', padding: 60, gap: 8 },
   emptyIcon: { fontSize: 48 },
@@ -365,8 +440,8 @@ const s = StyleSheet.create({
   threadCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     padding: 12, marginHorizontal: 10, marginVertical: 4,
-    backgroundColor: Colors.bgCard, borderRadius: 14,
-    borderWidth: 1, borderColor: Colors.border,
+    backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 14,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
   },
   threadCardUnread: { backgroundColor: 'rgba(6,182,212,0.05)', borderColor: 'rgba(6,182,212,0.25)' },
   threadCardUrgent: { borderColor: 'rgba(239,68,68,0.4)', backgroundColor: 'rgba(239,68,68,0.05)' },
@@ -378,10 +453,10 @@ const s = StyleSheet.create({
   threadTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   threadFrom: { fontSize: 13, fontWeight: '600', color: '#94a3b8', flex: 1 },
   threadFromUnread: { color: '#06b6d4', fontWeight: '800' },
-  threadTime: { fontSize: 10, color: '#475569' },
+  threadTime: { fontSize: 10, color: '#94a3b8' },
   threadSubject: { fontSize: 13, fontWeight: '600', color: '#cbd5e1' },
   threadSubjectUnread: { color: '#fff', fontWeight: '800' },
-  threadPreview: { fontSize: 11, color: '#475569' },
+  threadPreview: { fontSize: 11, color: '#94a3b8' },
 
   badge: { backgroundColor: '#06b6d4', borderRadius: 10, minWidth: 20, height: 20, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
   badgeText: { fontSize: 10, fontWeight: '900', color: '#fff' },

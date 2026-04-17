@@ -13,7 +13,7 @@ const CONFIG = {
   
   // Настройки приложения
   APP_NAME: 'Курсы Диспетчера',
-  APP_VERSION: '1.0.0',
+  APP_VERSION: '1.1.0',
   
   // Таймауты
   REQUEST_TIMEOUT: 30000, // 30 секунд

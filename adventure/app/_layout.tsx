@@ -17,13 +17,13 @@ function AutoRestore() {
 
   useEffect(() => {
     try {
+      // Принудительно очищаем любое старое сохранение
       const raw = localStorage.getItem('dispatcher-game-save');
       if (!raw) return;
       const save = JSON.parse(raw);
-      if (!save?.version || save.version < 3) return;
-      if (save.phase !== 'playing') return;
-      // Не восстанавливаем старые сохранения с > 5 траками
-      if (save.trucks && save.trucks.length > 5) {
+
+      // Сбрасываем если: старая версия, не playing, или > 5 траков (старое сохранение)
+      if (!save?.version || save.version < 3 || save.phase !== 'playing' || (save.trucks && save.trucks.length > 5)) {
         localStorage.removeItem('dispatcher-game-save');
         return;
       }

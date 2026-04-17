@@ -20,7 +20,18 @@ export default function HomeScreen() {
   const TRUCK_COUNT = 3;
 
   function checkSave() {
-    try { setHasSave(!!localStorage.getItem('dispatcher-game-save')); } catch { setHasSave(false); }
+    try {
+      const raw = localStorage.getItem('dispatcher-game-save');
+      if (!raw) { setHasSave(false); return; }
+      const save = JSON.parse(raw);
+      // Сбрасываем старые сохранения с > 5 траков
+      if (!save?.version || save.version < 3 || (save.trucks && save.trucks.length > 5)) {
+        localStorage.removeItem('dispatcher-game-save');
+        setHasSave(false);
+        return;
+      }
+      setHasSave(true);
+    } catch { setHasSave(false); }
   }
 
   useEffect(() => { loadFromStorage(); checkSave(); }, []);

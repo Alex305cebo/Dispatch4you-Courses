@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкция по отладке карты</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #0a1428;
+            color: #e2e8f0;
+            line-height: 1.6;
+        }
+        h1 { color: #06b6d4; }
+        h2 { color: #38bdf8; margin-top: 30px; }
+        code {
+            background: rgba(56,189,248,0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #06b6d4;
+            font-family: 'Courier New', monospace;
+        }
+        .step {
+            background: rgba(255,255,255,0.05);
+            border-left: 3px solid #06b6d4;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .warning {
+            background: rgba(251,191,36,0.1);
+            border-left: 3px solid #fbbf24;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background: rgba(52,211,153,0.1);
+            border-left: 3px solid #34d399;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🗺️ Инструкция по отладке карты в game2.html</h1>
+    
+    <div class="warning">
+        <strong>⚠️ ВАЖНО:</strong> Браузер кэширует JavaScript! Нужно принудительно обновить страницу.
+    </div>
+
+    <h2>Шаг 1: Очистить кэш браузера</h2>
+    <div class="step">
+        <p><strong>Windows/Linux:</strong> Нажмите <code>Ctrl + Shift + R</code> или <code>Ctrl + F5</code></p>
+        <p><strong>Mac:</strong> Нажмите <code>Cmd + Shift + R</code></p>
+        <p><strong>Или:</strong> Откройте DevTools (F12) → вкладка Network → поставьте галочку "Disable cache" → обновите страницу</p>
+    </div>
+
+    <h2>Шаг 2: Открыть game2.html</h2>
+    <div class="step">
+        <p>Откройте файл <code>game2.html</code> в браузере</p>
+        <p>Запустите игру (создайте новую сессию или загрузите сохранение)</p>
+    </div>
+
+    <h2>Шаг 3: Проверить карту</h2>
+    <div class="step">
+        <p>На карте должны быть видны:</p>
+        <ul>
+            <li>✅ Все штаты США (синие области)</li>
+            <li>✅ Границы штатов (светло-синие линии)</li>
+            <li>✅ Дороги (оранжевые линии)</li>
+            <li>✅ Мичиган полностью (включая Upper Peninsula)</li>
+            <li>✅ Восточное побережье не обрезано</li>
+        </ul>
+    </div>
+
+    <h2>Шаг 4: Использовать кнопку перерисовки</h2>
+    <div class="step">
+        <p>Справа внизу на карте есть кнопка <code>🔄</code></p>
+        <p>Нажмите её — карта перерисуется и сбросит зум</p>
+    </div>
+
+    <h2>Шаг 5: Проверить консоль</h2>
+    <div class="step">
+        <p>Откройте консоль браузера (F12 → Console)</p>
+        <p>Должны быть сообщения:</p>
+        <ul>
+            <li><code>✅ initMap() завершён, вызываю renderMap()</code></li>
+            <li><code>🗺️ RENDERMAP v2.0 — Штатов: 48</code></li>
+            <li><code>🔄 Принудительная перерисовка через 100ms</code></li>
+        </ul>
+        <p>Введите в консоли: <code>debugProjection()</code></p>
+        <p>Должны появиться координаты углов карты</p>
+    </div>
+
+    <h2>Что изменилось в коде:</h2>
+    <div class="success">
+        <ul>
+            <li>✅ Расширены границы проекции: lng от -126° до -65°, lat от 24° до 50°</li>
+            <li>✅ Добавлен padding 3% со всех сторон</li>
+            <li>✅ Штаты стали ярче: <code>rgba(40,60,95,0.95)</code></li>
+            <li>✅ Границы штатов ярче и толще: <code>rgba(120,150,190,0.7)</code>, 1.8px</li>
+            <li>✅ Добавлена принудительная очистка canvas</li>
+            <li>✅ Добавлена кнопка перерисовки 🔄</li>
+            <li>✅ Добавлена функция отладки <code>debugProjection()</code></li>
+            <li>✅ Добавлены console.log для отслеживания</li>
+        </ul>
+    </div>
+
+    <h2>Если карта всё ещё не отображается:</h2>
+    <div class="warning">
+        <ol>
+            <li>Проверьте что файл <code>us-map-data.js</code> загружается (в консоли не должно быть ошибок 404)</li>
+            <li>Проверьте что <code>window.US_STATES</code> определён (введите в консоли: <code>Object.keys(window.US_STATES || {}).length</code>)</li>
+            <li>Проверьте размер canvas (введите в консоли: <code>mapW</code> и <code>mapH</code>)</li>
+            <li>Нажмите кнопку 🔄 для принудительной перерисовки</li>
+        </ol>
+    </div>
+
+    <h2>Бэкапы:</h2>
+    <div class="step">
+        <ul>
+            <li><code>game2.html.backup</code> — самая первая версия</li>
+            <li><code>game2.html.albers-backup</code> — версия с Albers проекцией</li>
+            <li><code>game2.html.fixed-projection</code> — версия с исправленной проекцией</li>
+            <li><code>game2.html.v2-debug</code> — текущая версия с отладкой</li>
+        </ul>
+    </div>
+</body>
+</html>

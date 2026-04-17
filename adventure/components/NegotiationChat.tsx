@@ -250,8 +250,8 @@ export default function NegotiationChat({ visible, load, onClose, onAccepted }: 
 }
 
 const s = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-end' },
-  modal: { backgroundColor: '#080e1c', borderTopLeftRadius: 22, borderTopRightRadius: 22, borderWidth: 1, borderColor: '#1e2d45', maxHeight: '90%' },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center', padding: 16 },
+  modal: { backgroundColor: '#080e1c', borderRadius: 22, borderWidth: 1, borderColor: '#1e2d45', maxHeight: '90%', width: '100%', maxWidth: 520 },
 
   header: { flexDirection: 'row', alignItems: 'flex-start', padding: 14, borderBottomWidth: 1, borderBottomColor: '#1e2d45', gap: 10 },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },

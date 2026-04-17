@@ -330,6 +330,20 @@ export default function LoadBoardPanel({ onNegotiate }: Props) {
 
   const isFiltering = searchFrom.trim() !== '' || searchTo.trim() !== '' || deadheadRadius !== null;
 
+  // Если фильтр дал мало результатов — добавляем похожие грузы из общего пула
+  const displayLoads = (() => {
+    if (!isFiltering || filteredLoads.length >= 5) return filteredLoads;
+    // Добавляем грузы из того же штата или близкие
+    const stateCode = searchFrom.trim()
+      ? (CITY_STATE[Object.keys(CITIES).find(c => c.toLowerCase().includes(searchFrom.toLowerCase())) || ''] || searchFrom.toUpperCase().slice(0,2))
+      : '';
+    const nearby = availableLoads.filter(l =>
+      !filteredLoads.includes(l) &&
+      (stateCode ? (CITY_STATE[l.fromCity] || '') === stateCode : true)
+    ).slice(0, 8 - filteredLoads.length);
+    return [...filteredLoads, ...nearby];
+  })();
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -387,7 +401,7 @@ export default function LoadBoardPanel({ onNegotiate }: Props) {
         </View>
       )}
 
-      {filteredLoads.length === 0 ? (
+      {filteredLoads.length === 0 && displayLoads.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyIcon}>{isFiltering ? '🔍' : '📭'}</Text>
           <Text style={styles.emptyTitle}>{isFiltering ? 'Ничего не найдено' : 'Нет грузов'}</Text>
@@ -395,7 +409,7 @@ export default function LoadBoardPanel({ onNegotiate }: Props) {
         </View>
       ) : (
         <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
-          {filteredLoads.map(load => (
+          {displayLoads.map(load => (
             <LoadRow
               key={load.id}
               load={load}

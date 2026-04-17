@@ -1613,7 +1613,18 @@ async function startWhisperRec(){
     whisperRecorder.start(250);
     return true;
   }catch(e){
-    console.warn('[Whisper] Mic access failed, falling back to browser SR:',e.message);
+    console.warn('[Whisper] Mic access failed:',e.name, e.message);
+    if(e.name==='NotAllowedError'||e.name==='PermissionDeniedError'){
+      showNotification('🎙️ Доступ к микрофону заблокирован. Нажми на иконку 🔒 в адресной строке и разреши микрофон.','error');
+      isRec=false; micBtn.classList.remove('rec'); updateWidgetState('idle');
+      return false;
+    }
+    if(e.name==='NotFoundError'){
+      showNotification('🎙️ Микрофон не найден. Подключи микрофон и обнови страницу.','error');
+      isRec=false; micBtn.classList.remove('rec'); updateWidgetState('idle');
+      return false;
+    }
+    // Other errors — fall back to browser SR silently
     useWhisper=false;
     return false;
   }
@@ -1828,7 +1839,12 @@ async function startScenario(s){
 }
 
 function toggleMic(){
-  if(!dialogActive){startScenario(scen);setTimeout(()=>startRec(),500);return;}
+  if(!dialogActive){
+    // Must call startRec() synchronously from user gesture to get mic permission
+    startScenario(scen);
+    startRec();
+    return;
+  }
   if(isRec){stopRec();}
   else{startRec();}
 }
@@ -1836,10 +1852,20 @@ function toggleMic(){
 let audioCtx=null, analyser=null, micStream=null, voiceRafId=null;
 const waveRings=()=>document.querySelectorAll('.wave-ring');
 
-function startVoiceVisualizer(){
+function startVoiceVisualizer(existingStream){
   if(audioCtx) return; // уже запущен
-  navigator.mediaDevices.getUserMedia({audio:true,video:false}).then(stream=>{
-    micStream=stream;
+  const useStream = existingStream || null;
+  if(useStream){
+    _initVisualizer(useStream);
+  } else {
+    navigator.mediaDevices.getUserMedia({audio:true,video:false}).then(stream=>{
+      micStream=stream;
+      _initVisualizer(stream);
+    }).catch(()=>{}); // нет доступа — тихо игнорируем
+  }
+}
+
+function _initVisualizer(stream){
     audioCtx=new(window.AudioContext||window.webkitAudioContext)();
     analyser=audioCtx.createAnalyser();
     analyser.fftSize=256;
@@ -1852,21 +1878,18 @@ function startVoiceVisualizer(){
     function tick(){
       voiceRafId=requestAnimationFrame(tick);
       analyser.getByteFrequencyData(data);
-      // Средняя громкость 0..255
       let sum=0; for(let i=0;i<data.length;i++) sum+=data[i];
-      const vol=sum/data.length; // 0..255
-      const norm=Math.min(vol/60,1); // нормализуем: тихо=0, громко=1
+      const vol=sum/data.length;
+      const norm=Math.min(vol/60,1);
 
       rings.forEach((r,i)=>{
-        const delay=i*0.08; // каждое кольцо чуть позже
-        const scale=1+norm*(1.2+i*0.35); // чем дальше кольцо — тем шире
+        const scale=1+norm*(1.2+i*0.35);
         const opacity=norm*(0.9-i*0.18);
         r.style.transform=`scale(${scale.toFixed(3)})`;
         r.style.opacity=opacity.toFixed(3);
       });
     }
     tick();
-  }).catch(()=>{}); // нет доступа — тихо игнорируем
 }
 
 function stopVoiceVisualizer(){
@@ -1885,11 +1908,12 @@ function startRec(){
   micBtn.setAttribute('aria-pressed','true');
   micBtn.setAttribute('aria-label','Деактивировать микрофон');
   updateWidgetState('recording');
-  startVoiceVisualizer();
 
   if(useWhisper){
     startWhisperRec().then(ok=>{
-      if(!ok){
+      if(ok && whisperStream){
+        startVoiceVisualizer(whisperStream);
+      } else if(!ok && isRec){
         // Whisper failed — fall back to browser SR
         useWhisper=false;
         if(recognition){ try{recognition.start();}catch(e){} }
@@ -1901,6 +1925,7 @@ function startRec(){
       showNotification('🎙️ Голосовой ввод недоступен. Обновите страницу.','error');
       isRec=false; micBtn.classList.remove('rec'); updateWidgetState('idle'); return;
     }
+    startVoiceVisualizer();
     try{
       recognition.start();
     }catch(e){

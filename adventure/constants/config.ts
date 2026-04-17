@@ -48,10 +48,10 @@ export const CITY_STATE: Record<string, string> = {
   'Cheyenne': 'WY', 'Casper': 'WY',
 };
 
-// Хелпер: "Miami FL" (БЕЗ ЗАПЯТОЙ!)
+// Хелпер: "Miami, FL" (С ЗАПЯТОЙ!)
 export function cityState(city: string): string {
   const state = CITY_STATE[city];
-  return state ? `${city} ${state}` : city;
+  return state ? `${city}, ${state}` : city;
 }
 
 // Игровое время:
