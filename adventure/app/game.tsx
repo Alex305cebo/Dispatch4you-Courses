@@ -66,17 +66,17 @@ function getDriverAvatar(truckId: string): string {
   return avatars[n % avatars.length];
 }
 
-// Эмоция водителя по настроению (mood 0-100)
+// Telegram animated emoji по настроению (mood 0-100)
 function getMoodEmoji(mood: number, status: string): string {
-  if (status === 'breakdown') return '😤';
-  if (status === 'waiting') return '😒';
-  if (mood >= 90) return '😄';
-  if (mood >= 75) return '🙂';
-  if (mood >= 60) return '😐';
-  if (mood >= 45) return '😕';
-  if (mood >= 30) return '😟';
-  if (mood >= 15) return '😠';
-  return '🤬';
+  if (status === 'breakdown') return '/assets/emojis/exploding.webp';
+  if (status === 'waiting')   return '/assets/emojis/tired.webp';
+  if (mood >= 85) return '/assets/emojis/happy.webp';
+  if (mood >= 70) return '/assets/emojis/smile.webp';
+  if (mood >= 55) return '/assets/emojis/neutral.webp';
+  if (mood >= 40) return '/assets/emojis/worried.webp';
+  if (mood >= 25) return '/assets/emojis/sad.webp';
+  if (mood >= 10) return '/assets/emojis/angry.webp';
+  return '/assets/emojis/rage.webp';
 }
 
 function getTruckColor(truck: any): string {
@@ -449,12 +449,15 @@ export default function GameScreen() {
             } as any} />
 
             <div style={{ padding: '7px 9px', display: 'flex', flexDirection: 'column', gap: 3 } as any}>
-              {/* Имя + эмодзи водителя + настроение */}
+              {/* Имя + Telegram animated emoji */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' } as any}>
                 <span style={{ fontSize: 13, fontWeight: 900, color: '#fff', letterSpacing: 0.3 } as any}>{name}</span>
-                <span style={{ fontSize: 14, lineHeight: 1 } as any} title={`Настроение: ${mood}%`}>
-                  {avatar}{moodEmoji}
-                </span>
+                <img
+                  src={moodEmoji}
+                  width={28} height={28}
+                  title={`Настроение: ${mood}%`}
+                  style={{ imageRendering: 'auto', flexShrink: 0 } as any}
+                />
               </div>
 
               {/* Статус */}

@@ -145,6 +145,7 @@ interface PendingEmailResponse {
   isPOD: boolean;
   isRateCon: boolean;
   isIssue: boolean;
+  replyToNotifId?: string; // id уведомления-треда куда добавить ответ
 }
 
 // Итоговый расчёт доставки
@@ -261,6 +262,7 @@ interface GameState {
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
   clearNotifications: () => void;
+  addReplyToNotification: (notifId: string, reply: NotificationReply) => void;
   sendEmail: (params: { to: string; subject: string; body: string; isReply: boolean; replyToId?: string }) => void;
 
   refreshLoadBoard: () => void;
@@ -1512,14 +1514,30 @@ export const useGameStore = create<GameState>((set, get) => ({
         priority = 'low';
       }
       
-      get().addNotification({
-        type: 'email',
-        priority,
-        from: response.from,
-        subject: response.subject,
-        message,
-        actionRequired: false,
-      });
+      // Если есть replyToNotifId — добавляем ответ брокера в тот же тред
+      if (response.replyToNotifId) {
+        get().addReplyToNotification(response.replyToNotifId, {
+          from: response.from,
+          message,
+          minute: newMinute,
+          isMe: false,
+        });
+        // Помечаем тред как непрочитанный (новый ответ)
+        const notifications = get().notifications.map(n =>
+          n.id === response.replyToNotifId ? { ...n, read: false } : n
+        );
+        set({ notifications, unreadCount: notifications.filter(n => !n.read).length });
+      } else {
+        // Нет треда — создаём новое уведомление (старое поведение для случайных событий)
+        get().addNotification({
+          type: 'email',
+          priority,
+          from: response.from,
+          subject: response.subject,
+          message,
+          actionRequired: false,
+        });
+      }
     });
     
     // Обновляем список отложенных ответов
@@ -2289,14 +2307,29 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ notifications: [], unreadCount: 0 });
   },
 
+  addReplyToNotification: (notifId: string, reply: NotificationReply) => {
+    const notifications = get().notifications.map(n =>
+      n.id === notifId
+        ? { ...n, replies: [...(n.replies || []), reply] }
+        : n
+    );
+    set({ notifications });
+  },
+
   sendEmail: (params: { to: string; subject: string; body: string; isReply: boolean; replyToId?: string }) => {
     const { to, subject, body, isReply, replyToId } = params;
     
     console.log(`📧 Email sent to ${to}: ${subject}`);
     
-    // Если это ответ на уведомление - отмечаем исходное уведомление как прочитанное
+    // Если это ответ — добавляем сообщение игрока в тред (не создаём новое уведомление)
     if (replyToId) {
       get().markNotificationRead(replyToId);
+      get().addReplyToNotification(replyToId, {
+        from: 'Я',
+        message: body,
+        minute: get().gameMinute,
+        isMe: true,
+      });
     }
     
     // Определяем тип запроса по теме письма
@@ -2305,20 +2338,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     const isRateConRequest = subject.toLowerCase().includes('rate con');
     const isIssueReport = subject.toLowerCase().includes('issue') || subject.toLowerCase().includes('problem');
     
-    // Добавляем уведомление об отправке
-    get().addNotification({
-      type: 'email',
-      priority: 'low',
-      from: 'Система',
-      subject: '✓ Письмо отправлено',
-      message: `Ваше письмо "${subject}" отправлено ${to}`,
-      actionRequired: false,
-    });
-    
     // Планируем ответ брокера через игровое время (2-5 минут)
     const responseTime = get().gameMinute + Math.floor(Math.random() * 3) + 2;
     
-    // Создаём отложенный ответ
+    // Создаём отложенный ответ — привязываем к тому же треду
     const pendingResponse: PendingEmailResponse = {
       triggerAt: responseTime,
       from: to,
@@ -2327,9 +2350,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       isPOD: isPODRequest,
       isRateCon: isRateConRequest,
       isIssue: isIssueReport,
+      replyToNotifId: replyToId, // ответ брокера идёт в тот же тред
     };
     
-    // Добавляем в список отложенных ответов
     set({ 
       pendingEmailResponses: [...get().pendingEmailResponses, pendingResponse] 
     });

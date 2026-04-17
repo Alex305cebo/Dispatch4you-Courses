@@ -18,8 +18,10 @@ function getEmailIcon(type: string) {
 }
 
 function threadKey(n: Notification): string {
-  // Группируем по отправителю (нормализуем)
-  return n.from?.trim().toLowerCase() || 'unknown';
+  // Группируем по отправителю + грузу (один тред = один брокер + один груз)
+  const sender = n.from?.trim().toLowerCase() || 'unknown';
+  const load = n.relatedLoadId ? `-${n.relatedLoadId}` : '';
+  return `${sender}${load}`;
 }
 
 interface Thread {
@@ -154,8 +156,11 @@ function getDriverResponses(notif: Notification) {
 function ThreadChat({ thread, onClose }: { thread: Thread; onClose: () => void }) {
   const { sendEmail, addMoney, addNotification, markNotificationRead } = useGameStore();
   const { removeMoney } = useGameStore.getState();
+  // Подписываемся на живые данные треда из стора
+  const liveNotifs = useGameStore(s => s.notifications);
 
   const lastMsg = thread.messages[thread.messages.length - 1];
+  const rootMsg = thread.messages[0]; // корневое сообщение треда
   const isDriver = lastMsg.type === 'text' || lastMsg.type === 'voicemail';
   const isCall = lastMsg.type === 'missed_call';
   const hasRateCon = thread.messages.some(m => m.type === 'rate_con' || m.subject?.toLowerCase().includes('rate con'));
@@ -177,7 +182,8 @@ function ThreadChat({ thread, onClose }: { thread: Thread; onClose: () => void }
 
   function handleSend() {
     if (!bodyText.trim()) return;
-    sendEmail({ to: lastMsg.from, subject: `Re: ${lastMsg.subject}`, body: bodyText, isReply: true, replyToId: lastMsg.id });
+    // Отправляем ответ в тот же тред (replyToId = id корневого сообщения)
+    sendEmail({ to: lastMsg.from, subject: `Re: ${lastMsg.subject}`, body: bodyText, isReply: true, replyToId: rootMsg.id });
     setSent(true);
     setTimeout(() => { setSent(false); setSelected([]); }, 1200);
   }
@@ -202,6 +208,10 @@ function ThreadChat({ thread, onClose }: { thread: Thread; onClose: () => void }
 
   const result = chosen !== null ? driverResponses[chosen] : null;
 
+  // Живые replies из стора (обновляются в реальном времени)
+  const liveRoot = liveNotifs.find(n => n.id === rootMsg.id);
+  const allReplies = liveRoot?.replies || rootMsg.replies || [];
+  
   return (
     <Modal visible animationType="slide" transparent onRequestClose={onClose}>
       <View style={cs.overlay}>
@@ -212,7 +222,7 @@ function ThreadChat({ thread, onClose }: { thread: Thread; onClose: () => void }
               <Text style={cs.headerIcon}>{getEmailIcon(lastMsg.type)}</Text>
               <View>
                 <Text style={cs.headerFrom}>{thread.from}</Text>
-                <Text style={cs.headerSub}>{thread.messages.length} сообщ.</Text>
+                <Text style={cs.headerSub}>{thread.messages.length + allReplies.length} сообщ.</Text>
               </View>
             </View>
             <View style={cs.headerRight}>
@@ -239,6 +249,21 @@ function ThreadChat({ thread, onClose }: { thread: Thread; onClose: () => void }
                       {!isMe && <Text style={cs.bubbleSubject}>{msg.subject}</Text>}
                       <Text style={[cs.bubbleText, isMe && cs.bubbleTextMe]}>{msg.message}</Text>
                       <Text style={cs.bubbleTime}>{msg.minute < 0 ? 'До смены' : `+${Math.round(msg.minute)} мин`}</Text>
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
+            {/* Replies (ответы игрока и брокера в треде) */}
+            {allReplies.map((reply, i) => {
+              const isMe = reply.isMe === true || reply.from === 'Я';
+              return (
+                <View key={`reply-${i}`} style={[cs.bubble, isMe ? cs.bubbleMe : cs.bubbleThem]}>
+                  <View style={[cs.bubbleInner, isMe ? cs.bubbleInnerMe : cs.bubbleInnerThem]}>
+                    {!isMe && <Text style={cs.bubbleIcon}>📧</Text>}
+                    <View style={{ flex: 1 }}>
+                      <Text style={[cs.bubbleText, isMe && cs.bubbleTextMe]}>{reply.message}</Text>
+                      <Text style={cs.bubbleTime}>{reply.minute < 0 ? 'До смены' : `+${Math.round(reply.minute)} мин`}</Text>
                     </View>
                   </View>
                 </View>
@@ -318,16 +343,17 @@ function ThreadChat({ thread, onClose }: { thread: Thread; onClose: () => void }
 
 // Экспортируемый попап для открытия из NotificationBell
 export function ThreadChatPopup({ notification, onClose }: { notification: Notification; onClose: () => void }) {
-  // Строим мини-тред из одного уведомления
+  // Строим тред из всех уведомлений с тем же ключом (отправитель + груз)
   const allNotifs = useGameStore(s => s.notifications);
-  // Ищем все сообщения от того же отправителя
-  const related = allNotifs.filter(n => n.from === notification.from || n.id === notification.id);
+  const key = threadKey(notification);
+  const related = allNotifs.filter(n => threadKey(n) === key);
+  const sorted = [...(related.length > 0 ? related : [notification])].sort((a, b) => a.minute - b.minute);
   const thread: Thread = {
-    key: notification.from + notification.subject,
+    key,
     from: notification.from,
-    messages: related.length > 0 ? related : [notification],
-    lastMessage: notification,
-    unreadCount: notification.read ? 0 : 1,
+    messages: sorted,
+    lastMessage: sorted[sorted.length - 1],
+    unreadCount: sorted.filter(n => !n.read).length,
   };
   return <ThreadChat thread={thread} onClose={onClose} />;
 }
@@ -500,7 +526,7 @@ const cs = StyleSheet.create({
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   headerIcon: { fontSize: 28 },
   headerFrom: { fontSize: 15, fontWeight: '800', color: '#fff' },
-  headerSub: { fontSize: 11, color: '#64748b', marginTop: 1 },
+  headerSub: { fontSize: 11, color: '#94a3b8', marginTop: 1 },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   rateConBtn: { paddingVertical: 6, paddingHorizontal: 10, backgroundColor: 'rgba(251,191,36,0.15)', borderRadius: 8, borderWidth: 1, borderColor: 'rgba(251,191,36,0.4)' },
   rateConBtnText: { fontSize: 11, fontWeight: '700', color: '#fbbf24' },
@@ -518,7 +544,7 @@ const cs = StyleSheet.create({
   bubbleSubject: { fontSize: 11, fontWeight: '700', color: '#06b6d4', marginBottom: 2 },
   bubbleText: { fontSize: 13, color: '#e2e8f0', lineHeight: 18 },
   bubbleTextMe: { color: '#fff' },
-  bubbleTime: { fontSize: 9, color: '#475569', marginTop: 3 },
+  bubbleTime: { fontSize: 10, color: '#94a3b8', marginTop: 3 },
 
   replyZone: { padding: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)', gap: 8 },
 
