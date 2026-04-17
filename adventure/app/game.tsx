@@ -67,16 +67,17 @@ function getDriverAvatar(truckId: string): string {
 }
 
 // Telegram animated emoji по настроению (mood 0-100)
+const BASE = typeof window !== 'undefined' && window.location.pathname.startsWith('/game') ? '/game' : '';
 function getMoodEmoji(mood: number, status: string): string {
-  if (status === 'breakdown') return '/assets/emojis/exploding.webp';
-  if (status === 'waiting')   return '/assets/emojis/tired.webp';
-  if (mood >= 85) return '/assets/emojis/happy.webp';
-  if (mood >= 70) return '/assets/emojis/smile.webp';
-  if (mood >= 55) return '/assets/emojis/neutral.webp';
-  if (mood >= 40) return '/assets/emojis/worried.webp';
-  if (mood >= 25) return '/assets/emojis/sad.webp';
-  if (mood >= 10) return '/assets/emojis/angry.webp';
-  return '/assets/emojis/rage.webp';
+  if (status === 'breakdown') return `${BASE}/assets/emojis/exploding.webp`;
+  if (status === 'waiting')   return `${BASE}/assets/emojis/tired.webp`;
+  if (mood >= 85) return `${BASE}/assets/emojis/happy.webp`;
+  if (mood >= 70) return `${BASE}/assets/emojis/smile.webp`;
+  if (mood >= 55) return `${BASE}/assets/emojis/neutral.webp`;
+  if (mood >= 40) return `${BASE}/assets/emojis/worried.webp`;
+  if (mood >= 25) return `${BASE}/assets/emojis/sad.webp`;
+  if (mood >= 10) return `${BASE}/assets/emojis/angry.webp`;
+  return `${BASE}/assets/emojis/rage.webp`;
 }
 
 function getTruckColor(truck: any): string {
