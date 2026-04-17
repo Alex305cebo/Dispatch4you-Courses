@@ -730,10 +730,38 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
         {/* Toggle кнопка */}
         <div
           onClick={() => setLegendVisible(v => !v)}
-          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, cursor: "pointer", userSelect: "none" } as any}
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+            cursor: "pointer", userSelect: "none",
+            background: legendVisible
+              ? "transparent"
+              : "linear-gradient(135deg, rgba(6,182,212,0.25), rgba(99,102,241,0.2))",
+            borderRadius: legendVisible ? 0 : 8,
+            padding: legendVisible ? "0" : "4px 6px",
+            margin: legendVisible ? "0" : "-2px",
+            border: legendVisible ? "none" : "1px solid rgba(6,182,212,0.4)",
+            transition: "all 0.2s",
+          } as any}
         >
-          <span style={{ fontSize: 10, fontWeight: 700, color: "#64748b", letterSpacing: 0.5 } as any}>ЛЕГЕНДА</span>
-          <span style={{ fontSize: 10, color: "#64748b", lineHeight: 1 } as any}>{legendVisible ? "▲" : "▼"}</span>
+          <span style={{
+            fontSize: legendVisible ? 10 : 12,
+            fontWeight: 800,
+            background: "linear-gradient(90deg, #06b6d4, #818cf8)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            letterSpacing: 0.8,
+          } as any}>
+            {legendVisible ? "ЛЕГЕНДА" : "🗺 ЛЕГЕНДА"}
+          </span>
+          <span style={{
+            fontSize: legendVisible ? 10 : 14,
+            background: "linear-gradient(135deg, #06b6d4, #818cf8)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            fontWeight: 900,
+            lineHeight: 1,
+            filter: legendVisible ? "none" : "drop-shadow(0 0 4px rgba(6,182,212,0.8))",
+          } as any}>{legendVisible ? "▲" : "▼"}</span>
         </div>
         {legendVisible && (<>
         {Object.entries(STATUS_LABEL).map(([s, l]) => {
