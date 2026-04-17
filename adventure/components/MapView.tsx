@@ -98,6 +98,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
 
   const { trucks, availableLoads, phase, gameMinute } = useGameStore();
   const activeTrucks = phase !== 'menu' ? trucks : [];
+  const [legendVisible, setLegendVisible] = useState(true);
   const trucksRef = useRef(activeTrucks);
   const loadsRef = useRef(availableLoads);
   const gameMinuteRef = useRef(gameMinute);
@@ -721,10 +722,20 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
       <div style={{
         position: "absolute", bottom: 12, left: 12,
         background: "rgba(10,22,40,0.92)", borderRadius: 12,
-        border: "1px solid rgba(45,106,79,0.4)", padding: "8px 12px",
-        display: "flex", flexDirection: "column", gap: 4, pointerEvents: "none",
-        fontFamily: "sans-serif",
+        border: "1px solid rgba(45,106,79,0.4)", padding: legendVisible ? "8px 12px" : "5px 10px",
+        display: "flex", flexDirection: "column", gap: 4,
+        fontFamily: "sans-serif", pointerEvents: "auto",
+        transition: "padding 0.2s",
       } as any} className="map-legend">
+        {/* Toggle кнопка */}
+        <div
+          onClick={() => setLegendVisible(v => !v)}
+          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, cursor: "pointer", userSelect: "none" } as any}
+        >
+          <span style={{ fontSize: 10, fontWeight: 700, color: "#64748b", letterSpacing: 0.5 } as any}>ЛЕГЕНДА</span>
+          <span style={{ fontSize: 10, color: "#64748b", lineHeight: 1 } as any}>{legendVisible ? "▲" : "▼"}</span>
+        </div>
+        {legendVisible && (<>
         {Object.entries(STATUS_LABEL).map(([s, l]) => {
           const n = activeTrucks.filter(t => t.status === s).length;
           return (
@@ -754,6 +765,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
             </div>
           </div>
         )}
+        </>)}
       </div>
 
       {/* Тосты — правый верхний угол (если нет попапа штата) */}
