@@ -410,7 +410,11 @@ export default function EmailPanel({ visible, onClose, inline }: { visible?: boo
   if (inline) {
     return (
       <>
-        <View style={s.sheet}>{listContent}</View>
+        <Modal visible animationType="fade" transparent onRequestClose={() => {}}>
+          <View style={s.overlay}>
+            <View style={s.sheet}>{listContent}</View>
+          </View>
+        </Modal>
         {selectedThread && (
           <ThreadChat thread={selectedThread} onClose={() => setSelectedThread(null)} />
         )}
@@ -438,10 +442,19 @@ export default function EmailPanel({ visible, onClose, inline }: { visible?: boo
 // ─── Стили списка ─────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  overlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.75)',
+    justifyContent: 'center', alignItems: 'center',
+    padding: 16,
+  },
   sheet: {
-    backgroundColor: '#0d1f35', borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    maxHeight: '85%', borderWidth: 1, borderColor: 'rgba(6,182,212,0.3)',
+    backgroundColor: '#0d1f35',
+    borderRadius: 20,
+    width: '100%',
+    maxWidth: 420,
+    maxHeight: '80%' as any,
+    borderWidth: 1, borderColor: 'rgba(6,182,212,0.3)',
+    overflow: 'hidden',
   },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
