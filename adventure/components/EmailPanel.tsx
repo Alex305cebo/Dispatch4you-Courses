@@ -332,7 +332,7 @@ export function ThreadChatPopup({ notification, onClose }: { notification: Notif
   return <ThreadChat thread={thread} onClose={onClose} />;
 }
 
-export default function EmailPanel({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+export default function EmailPanel({ visible, onClose, inline }: { visible?: boolean; onClose?: () => void; inline?: boolean }) {
   const { notifications, markNotificationRead } = useGameStore();
   const [selectedThread, setSelectedThread] = useState<Thread | null>(null);
 
@@ -350,61 +350,80 @@ export default function EmailPanel({ visible, onClose }: { visible: boolean; onC
     setSelectedThread(thread);
   }
 
-  return (
+  const listContent = (
     <>
-      <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-        <View style={s.overlay}>
-          <View style={s.sheet}>
-            {/* Шапка */}
-            <View style={s.header}>
-              <View>
-                <Text style={s.headerTitle}>📧 Почта</Text>
-                <Text style={s.headerSub}>{totalUnread > 0 ? `${totalUnread} непрочитанных` : 'Всё прочитано'}</Text>
-              </View>
-              <TouchableOpacity style={s.closeBtn} onPress={onClose}>
-                <Text style={s.closeBtnText}>✕</Text>
-              </TouchableOpacity>
-            </View>
+      {/* Шапка */}
+      <View style={s.header}>
+        <View>
+          <Text style={s.headerTitle}>📧 Почта</Text>
+          <Text style={s.headerSub}>{totalUnread > 0 ? `${totalUnread} непрочитанных` : 'Всё прочитано'}</Text>
+        </View>
+        {!inline && onClose && (
+          <TouchableOpacity style={s.closeBtn} onPress={onClose}>
+            <Text style={s.closeBtnText}>✕</Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
-            <ScrollView style={s.list}>
-              {threads.length === 0 && (
-                <View style={s.empty}>
-                  <Text style={s.emptyIcon}>📭</Text>
-                  <Text style={s.emptyTitle}>Нет сообщений</Text>
+      <ScrollView style={s.list}>
+        {threads.length === 0 && (
+          <View style={s.empty}>
+            <Text style={s.emptyIcon}>📭</Text>
+            <Text style={s.emptyTitle}>Нет сообщений</Text>
+          </View>
+        )}
+        {threads.map(thread => {
+          const last = thread.lastMessage;
+          const hasUnread = thread.unreadCount > 0;
+          const isUrgent = last.priority === 'critical' || last.priority === 'high';
+          return (
+            <TouchableOpacity
+              key={thread.key}
+              style={[s.threadCard, hasUnread && s.threadCardUnread, isUrgent && s.threadCardUrgent]}
+              onPress={() => openThread(thread)}
+              activeOpacity={0.75}
+            >
+              <View style={[s.avatar, { backgroundColor: hasUnread ? 'rgba(6,182,212,0.2)' : 'rgba(255,255,255,0.06)' }]}>
+                <Text style={s.avatarIcon}>{getEmailIcon(last.type)}</Text>
+              </View>
+              <View style={s.threadContent}>
+                <View style={s.threadTop}>
+                  <Text style={[s.threadFrom, hasUnread && s.threadFromUnread]} numberOfLines={1}>{last.from}</Text>
+                  <Text style={s.threadTime}>{last.minute < 0 ? 'До смены' : `+${Math.round(last.minute)} мин`}</Text>
+                </View>
+                <Text style={[s.threadSubject, hasUnread && s.threadSubjectUnread]} numberOfLines={1}>{last.subject}</Text>
+                <Text style={s.threadPreview} numberOfLines={1}>{last.message}</Text>
+              </View>
+              {hasUnread && (
+                <View style={s.badge}>
+                  <Text style={s.badgeText}>{thread.unreadCount}</Text>
                 </View>
               )}
-              {threads.map(thread => {
-                const last = thread.lastMessage;
-                const hasUnread = thread.unreadCount > 0;
-                const isUrgent = last.priority === 'critical' || last.priority === 'high';
-                return (
-                  <TouchableOpacity
-                    key={thread.key}
-                    style={[s.threadCard, hasUnread && s.threadCardUnread, isUrgent && s.threadCardUrgent]}
-                    onPress={() => openThread(thread)}
-                    activeOpacity={0.75}
-                  >
-                    <View style={[s.avatar, { backgroundColor: hasUnread ? 'rgba(6,182,212,0.2)' : 'rgba(255,255,255,0.06)' }]}>
-                      <Text style={s.avatarIcon}>{getEmailIcon(last.type)}</Text>
-                    </View>
-                    <View style={s.threadContent}>
-                      <View style={s.threadTop}>
-                        <Text style={[s.threadFrom, hasUnread && s.threadFromUnread]} numberOfLines={1}>{last.from}</Text>
-                        <Text style={s.threadTime}>{last.minute < 0 ? 'До смены' : `+${Math.round(last.minute)} мин`}</Text>
-                      </View>
-                      <Text style={[s.threadSubject, hasUnread && s.threadSubjectUnread]} numberOfLines={1}>{last.subject}</Text>
-                      <Text style={s.threadPreview} numberOfLines={1}>{last.message}</Text>
-                    </View>
-                    {hasUnread && (
-                      <View style={s.badge}>
-                        <Text style={s.badgeText}>{thread.unreadCount}</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-              <View style={{ height: 20 }} />
-            </ScrollView>
+            </TouchableOpacity>
+          );
+        })}
+        <View style={{ height: 20 }} />
+      </ScrollView>
+    </>
+  );
+
+  if (inline) {
+    return (
+      <>
+        <View style={s.sheet}>{listContent}</View>
+        {selectedThread && (
+          <ThreadChat thread={selectedThread} onClose={() => setSelectedThread(null)} />
+        )}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Modal visible={!!visible} animationType="slide" transparent onRequestClose={onClose}>
+        <View style={s.overlay}>
+          <View style={s.sheet}>
+            {listContent}
           </View>
         </View>
       </Modal>

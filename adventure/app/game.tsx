@@ -201,7 +201,7 @@ export default function GameScreen() {
 
   const tabs: { id: Tab; label: string; badge?: number; onPress?: () => void }[] = [
     { id: 'loadboard', label: 'Грузы',  badge: availableLoads.length },
-    { id: 'email',     label: 'Почта',  badge: unreadEmails || undefined, onPress: () => setShowEmail(true) },
+    { id: 'email',     label: 'Почта',  badge: unreadEmails || undefined },
     { id: 'trucks',    label: 'Траки',  badge: idleTrucks > 0 ? idleTrucks : undefined },
   ];
 
@@ -356,15 +356,7 @@ export default function GameScreen() {
         </div>
 
         {/* Действия */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 } as any}>
-          <button
-            onClick={() => useGameStore.getState().testDeliveryPopup()}
-            style={{
-              padding: '4px 8px', fontSize: 9, fontWeight: 700,
-              background: 'rgba(251,191,36,0.15)', border: '1px solid rgba(251,191,36,0.3)',
-              borderRadius: 6, color: '#fbbf24', cursor: 'pointer',
-            } as any}
-          >TEST P&L</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 } as any}>
           <NotificationBell
             onNavigateToTrucks={() => switchTab('trucks')}
             onNavigateToLoads={() => switchTab('email')}
@@ -575,6 +567,7 @@ export default function GameScreen() {
             <View style={s.panelContent}>
               {activeTab === 'loadboard' && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} /></ErrorBoundary>}
               {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
+              {activeTab === 'email'     && <ErrorBoundary name="Email"><EmailPanel inline /></ErrorBoundary>}
               {activeTab === 'map'       && (
                 <View style={s.emptyPanel}>
                   <Text style={s.emptyTxt}>Выбери раздел</Text>
@@ -593,6 +586,7 @@ export default function GameScreen() {
             {activeTab === 'map'       && <ErrorBoundary name="Map"><MapView {...mapProps} /></ErrorBoundary>}
             {activeTab === 'loadboard' && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} /></ErrorBoundary>}
             {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
+            {activeTab === 'email'     && <ErrorBoundary name="Email"><EmailPanel inline /></ErrorBoundary>}
           </View>
           <BottomTabs />
         </View>
@@ -632,7 +626,6 @@ export default function GameScreen() {
       {showCompliance && <Modal onClose={() => setShowCompliance(false)}><ComplianceDashboard /></Modal>}
       {showEvents && <Modal onClose={() => setShowEvents(false)}><EventsPanel /></Modal>}
       {showMyLoads && <Modal onClose={() => setShowMyLoads(false)}><MyLoadsPanel /></Modal>}
-      <EmailPanel visible={showEmail} onClose={() => setShowEmail(false)} />
       <DeliveryResultPopup key={deliveryResults[0]?.loadId ?? 'empty'} />
       <ShiftEndPopup />
       {showStats && <StatsPopup onClose={() => setShowStats(false)} />}

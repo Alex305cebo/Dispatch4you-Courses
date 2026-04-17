@@ -670,6 +670,15 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
     rebuildTruckSeries(root, chart);
     setTimeout(() => updatePolygonColors(), 500);
 
+    // Автозум при первом открытии на мобильном (ширина < 900px)
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 900;
+    if (isMobile) {
+      // Knoxville, TN — стартовый город
+      setTimeout(() => {
+        chart.zoomToGeoPoint({ longitude: -83.9207, latitude: 35.9606 }, 5, true);
+      }, 800);
+    }
+
     // Анимация муравьёв — обновляем strokeDashoffset на живых линиях каждые 60ms
     let dashOffset = 0;
     const antInterval = window.setInterval(() => {

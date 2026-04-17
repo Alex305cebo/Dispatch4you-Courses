@@ -185,22 +185,22 @@ export default function GameMenu({ onOpenFleet, onOpenCompliance, onOpenEvents, 
 
 const styles = StyleSheet.create({
   hamburger: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: 'rgba(56,189,248,0.1)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(56,189,248,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 4,
-    padding: 8,
+    gap: 5,
+    padding: 10,
   },
   hamburgerLine: {
     width: 20,
-    height: 2,
-    backgroundColor: '#fff',
-    borderRadius: 1,
+    height: 2.5,
+    backgroundColor: '#38bdf8',
+    borderRadius: 2,
   },
 
   overlay: {
