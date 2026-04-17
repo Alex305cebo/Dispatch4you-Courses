@@ -9,9 +9,13 @@ import am5geodata_usaLow from "@amcharts/amcharts5-geodata/usaLow";
 import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 
 const STATUS_COLOR: Record<string, string> = {
-  idle: "#94a3b8", driving: "#38bdf8", loaded: "#4ade80",
-  at_pickup: "#fbbf24", at_delivery: "#c084fc",
-  breakdown: "#f87171", waiting: "#fb923c",
+  idle:        '#38bdf8', // голубой — свободен
+  driving:     '#818cf8', // индиго — едет к погрузке
+  loaded:      '#4ade80', // зелёный — везёт груз
+  at_pickup:   '#fbbf24', // жёлтый — на погрузке
+  at_delivery: '#c084fc', // фиолетовый — на разгрузке
+  breakdown:   '#f87171', // красный — поломка
+  waiting:     '#fb923c', // оранжевый — detention
 };
 const STATUS_LABEL: Record<string, string> = {
   idle: "Свободен", driving: "Едет к погрузке", loaded: "Везёт груз",
@@ -101,6 +105,15 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
   const [legendVisible, setLegendVisible] = useState(true);
   const legendTimerRef = useRef<any>(null);
 
+  // Авто-fade кнопок управления картой
+  const [mapBtnsVisible, setMapBtnsVisible] = useState(true);
+  const mapBtnsTimerRef = useRef<any>(null);
+  const resetMapBtnsTimer = () => {
+    setMapBtnsVisible(true);
+    clearTimeout(mapBtnsTimerRef.current);
+    mapBtnsTimerRef.current = setTimeout(() => setMapBtnsVisible(false), 4000);
+  };
+
   // Автозакрытие через 4 секунды после открытия
   useEffect(() => {
     if (legendVisible) {
@@ -109,6 +122,12 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
     }
     return () => clearTimeout(legendTimerRef.current);
   }, [legendVisible]);
+
+  // Запускаем таймер fade кнопок при маунте
+  useEffect(() => {
+    mapBtnsTimerRef.current = setTimeout(() => setMapBtnsVisible(false), 4000);
+    return () => clearTimeout(mapBtnsTimerRef.current);
+  }, []);
   const trucksRef = useRef(activeTrucks);
   const loadsRef = useRef(availableLoads);
   const gameMinuteRef = useRef(gameMinute);
@@ -121,9 +140,14 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
   onFindLoadRef.current = onFindLoad;
 
   const [selectedTruck, setSelectedTruck] = useState<any>(null);
+  const selectedTruckRef = useRef<any>(null); // кликнутый трак (зафиксирован)
   const [selectedState, setSelectedState] = useState<any>(null);
-  const truckClickedRef = useRef(false); // флаг: клик был на траке, не на штате
+  const [followTruck, setFollowTruck] = useState(false);
+  const followTruckIdRef = useRef<string | null>(null); // id трака для авто-слежения после назначения
+  const followIntervalRef = useRef<any>(null);
+  const truckClickedRef = useRef(false);
   const [toasts, setToasts] = useState<Array<{ id: string; msg: string; color: string }>>([]);
+  const zoomLevelRef = useRef(1);
   // Surge zones — 3 случайных штата
   const [surgeStates] = useState<string[]>(() => {
     const shuffled = [...SURGE_STATES].sort(() => Math.random() - 0.5);
@@ -147,8 +171,69 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
     return () => window.removeEventListener('mapToast', handleMapToast);
   }, [addToast]);
 
-  // Форсируем обновление карты когда траки появляются/меняются
+  // Следование за траком
   useEffect(() => {
+    if (followIntervalRef.current) clearInterval(followIntervalRef.current);
+    if (!followTruck) return;
+    followIntervalRef.current = setInterval(() => {
+      const chart = chartRef.current;
+      if (!chart) return;
+      const trucks = trucksRef.current;
+      // Приоритет: назначенный трак → выбранный трак → первый активный
+      const targetId = followTruckIdRef.current ?? selectedTruck?.truckId;
+      const target = targetId
+        ? trucks.find((t: any) => t.id === targetId)
+        : trucks.find((t: any) => t.status === 'loaded' || t.status === 'driving');
+      if (target) {
+        chart.zoomToGeoPoint({ longitude: target.position[0], latitude: target.position[1] }, 5, true);
+      }
+    }, 2000);
+    return () => clearInterval(followIntervalRef.current);
+  }, [followTruck, selectedTruck]);
+
+  // Слушаем событие назначения груза — включаем слежение за конкретным траком
+  useEffect(() => {
+    function handleFollowAssigned(e: Event) {
+      const { truckId } = (e as CustomEvent).detail;
+      followTruckIdRef.current = truckId;
+      setFollowTruck(true);
+    }
+    window.addEventListener('followAssignedTruck', handleFollowAssigned);
+    return () => window.removeEventListener('followAssignedTruck', handleFollowAssigned);
+  }, []);
+
+  // Синхронизируем данные закреплённой карточки при каждом обновлении траков
+  useEffect(() => {
+    if (!selectedTruckRef.current) return;
+    const id = selectedTruckRef.current.truckId;
+    const updated = activeTrucks.find((t: any) => t.id === id);
+    if (!updated) return;
+    const dest = updated.destinationCity ? CITIES[updated.destinationCity] : null;
+    const milesLeft = dest
+      ? Math.round(Math.hypot(dest[0] - updated.position[0], dest[1] - updated.position[1]) * 55)
+      : 0;
+    const colorHex = getTruckColor(updated);
+    const colorInt = parseInt(colorHex.replace("#", ""), 16);
+    const updatedCard = {
+      ...selectedTruckRef.current,
+      status: updated.status,
+      statusLabel: STATUS_LABEL[updated.status] || updated.status,
+      currentCity: updated.currentCity,
+      destinationCity: updated.destinationCity || "",
+      hoursLeft: updated.hoursLeft,
+      milesLeft,
+      colorHex,
+      colorInt,
+      currentLoad: updated.currentLoad,
+    };
+    selectedTruckRef.current = updatedCard;
+    setSelectedTruck(updatedCard);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTrucks]);
+  const chartInitializedRef = useRef(false);
+  useEffect(() => {
+    // Пропускаем первый вызов — он совпадает с инициализацией карты
+    if (!chartInitializedRef.current) return;
     if (activeTrucks.length > 0 && chartRef.current && rootRef.current) {
       rebuildTruckSeries(rootRef.current, chartRef.current);
       rebuildRoutes(rootRef.current, chartRef.current);
@@ -386,7 +471,26 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
     });
   }
 
-  // Серия траков
+  // Серия траков — 3 варианта карточек через amCharts bullets
+  // Плавная смена варианта карточек: fade out серии → rebuild → fade in
+  function switchCardVariant(root: any, chart: any) {
+    const oldSeries = truckSeriesRef.current;
+    if (!oldSeries) {
+      rebuildTruckSeries(root, chart);
+      return;
+    }
+    // Fade out всей серии целиком — это работает надёжно в amCharts5
+    oldSeries.animate({ key: "opacity" as any, to: 0, duration: 280 });
+    setTimeout(() => {
+      rebuildTruckSeries(root, chart);
+      const newSeries = truckSeriesRef.current;
+      if (!newSeries) return;
+      // Стартуем с opacity=0 и плавно показываем
+      newSeries.set("opacity" as any, 0);
+      newSeries.animate({ key: "opacity" as any, from: 0, to: 1, duration: 350 });
+    }, 290);
+  }
+
   function rebuildTruckSeries(root: any, chart: any) {
     if (truckSeriesRef.current) {
       chart.series.removeIndex(chart.series.indexOf(truckSeriesRef.current));
@@ -394,6 +498,9 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
       truckSeriesRef.current = null;
     }
     const pointData = buildPointData();
+    const zoom = zoomLevelRef.current;
+    const variant = zoom < 2 ? 'micro' : zoom < 4 ? 'medium' : 'large';
+
     const truckSeries = chart.series.push(
       am5map.MapPointSeries.new(root, { latitudeField: "lat", longitudeField: "lng" })
     );
@@ -402,6 +509,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
       const d = dataItem.dataContext as any;
       const container = am5.Container.new(root, { cursorOverStyle: "pointer" });
 
+      // Пульс для активных траков
       if (d.active) {
         const pulse = container.children.push(am5.Circle.new(root, {
           radius: 14, fill: am5.color(d.colorInt), fillOpacity: 0,
@@ -409,6 +517,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
         pulse.animate({ key: "radius", from: 8, to: 20, duration: 1400, loops: Infinity });
         pulse.animate({ key: "fillOpacity", from: 0.35, to: 0, duration: 1400, loops: Infinity });
       }
+      // Предупреждение idle
       if (d.idleWarning > 0) {
         const warnColor = d.idleWarning >= 3 ? 0xef4444 : d.idleWarning === 2 ? 0xf97316 : 0xfbbf24;
         const warnSpeed = d.idleWarning >= 3 ? 600 : d.idleWarning === 2 ? 800 : 1200;
@@ -419,76 +528,207 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
         alertPulse.animate({ key: "fillOpacity", from: 0.5, to: 0, duration: warnSpeed, loops: Infinity });
       }
 
+      // Точка трака
       container.children.push(am5.Circle.new(root, {
-        radius: 5, fill: am5.color(d.colorInt),
+        radius: variant === 'micro' ? 5 : 6,
+        fill: am5.color(d.colorInt),
         stroke: am5.color(0xffffff), strokeWidth: 2,
       }));
 
-      let line2 = d.currentCity;
+      // Текстовые строки
+      const fromState = CITY_STATE[d.currentCity] || "";
+      const toState   = CITY_STATE[d.destinationCity] || "";
+      let routeShort  = fromState ? `${d.currentCity}, ${fromState}` : d.currentCity;
       if ((d.status === "loaded" || d.status === "driving") && d.destinationCity) {
-        const fromState = CITY_STATE[d.currentCity] || "";
-        const toState = CITY_STATE[d.destinationCity] || "";
-        line2 = `${d.currentCity.substring(0,3).toUpperCase()}, ${fromState}→${d.destinationCity.substring(0,3).toUpperCase()}, ${toState}`;
-      } else if (d.status === "at_pickup") { line2 = "📦 Погрузка"; }
-      else if (d.status === "at_delivery") { line2 = "🏁 Разгрузка"; }
-      else if (d.status === "waiting") { line2 = "⏱ Detention"; }
-      else if (d.status === "breakdown") { line2 = "⚠️ Поломка"; }
-      else {
-        const state = CITY_STATE[d.currentCity] || "";
-        line2 = state ? `${d.currentCity}, ${state}` : d.currentCity;
+        routeShort = `${d.currentCity.substring(0,3).toUpperCase()},${fromState}→${d.destinationCity.substring(0,3).toUpperCase()},${toState}`;
+      } else if (d.status === "at_pickup")  { routeShort = "Погрузка"; }
+      else if (d.status === "at_delivery")  { routeShort = "Разгрузка"; }
+      else if (d.status === "waiting")      { routeShort = "Detention"; }
+      else if (d.status === "breakdown")    { routeShort = "Поломка"; }
+
+      const routeFull = d.destinationCity
+        ? `${d.currentCity}, ${fromState} → ${d.destinationCity}, ${toState}`
+        : routeShort;
+      const hosRounded = Math.round(d.hoursLeft * 10) / 10;
+      const hosLine = d.milesLeft > 0 ? `${d.milesLeft}mi · ${hosRounded}h HOS` : `${hosRounded}h HOS`;
+
+      const onClick = () => {
+        truckClickedRef.current = true;
+        // Если кликнули на другой трак — сбрасываем авто-слежение за назначенным
+        if (followTruckIdRef.current && followTruckIdRef.current !== d.truckId) {
+          followTruckIdRef.current = null;
+          setFollowTruck(false);
+        }
+        // Поднимаем карточку трака поверх всего
+        setSelectedTruck(d);
+        selectedTruckRef.current = d;
+        onTruckInfoRef.current?.(d.truckId);
+        const zl = variant === 'micro' ? 3 : 5;
+        chartRef.current?.zoomToGeoPoint({ longitude: d.lng, latitude: d.lat }, zl, true);
+        setTimeout(() => { truckClickedRef.current = false; }, 100);
+      };
+
+      const onHover = () => {
+        // При наведении — показываем карточку, но не фиксируем (если уже есть кликнутая — не перебиваем)
+        if (!selectedTruckRef.current) {
+          setSelectedTruck(d);
+        }
+      };
+      const onHoverOut = () => {
+        // Убираем только если это hover-карточка (не кликнутая)
+        if (!selectedTruckRef.current) {
+          setSelectedTruck(null);
+        }
+      };
+
+      // ── MICRO: только ID ──────────────────────────────────────────────
+      if (variant === 'micro') {
+        const W = 46, H = 22;
+        const card = container.children.push(am5.Container.new(root, {
+          width: W, height: H,
+          dy: -(H + 8), dx: -(W / 2),
+          interactive: true, cursorOverStyle: "pointer",
+        }));
+        // Фон
+        card.children.push(am5.RoundedRectangle.new(root, {
+          width: W, height: H,
+          fill: am5.color(0x0d1f35), fillOpacity: 0.95,
+          stroke: am5.color(d.colorInt), strokeWidth: 1.5,
+          cornerRadiusTL: 5, cornerRadiusTR: 5, cornerRadiusBL: 5, cornerRadiusBR: 5,
+        }));
+        // Полоска
+        card.children.push(am5.RoundedRectangle.new(root, {
+          width: W, height: 4, y: 0,
+          fill: am5.color(d.colorInt),
+          cornerRadiusTL: 5, cornerRadiusTR: 5, cornerRadiusBL: 0, cornerRadiusBR: 0,
+        }));
+        // ID
+        card.children.push(am5.Label.new(root, {
+          text: d.truckName,
+          fill: am5.color(0xffffff), fontSize: 9, fontWeight: "900",
+          x: am5.percent(50), centerX: am5.percent(50),
+          y: am5.percent(50), centerY: am5.percent(50),
+          dy: 2,
+        }));
+        card.events.on("click", onClick);
+        card.events.on("pointerover", onHover);
+        card.events.on("pointerout", onHoverOut);
+
+      // ── MEDIUM: ID + статус + маршрут + HOS ──────────────────────────
+      } else if (variant === 'medium') {
+        const W = 82, H = 60;
+        const card = container.children.push(am5.Container.new(root, {
+          width: W, height: H,
+          dy: -(H + 10), dx: -(W / 2),
+          interactive: true, cursorOverStyle: "pointer",
+        }));
+        card.children.push(am5.RoundedRectangle.new(root, {
+          width: W, height: H,
+          fill: am5.color(0x0d1f35), fillOpacity: 0.96,
+          stroke: am5.color(d.colorInt), strokeWidth: 1.5,
+          cornerRadiusTL: 7, cornerRadiusTR: 7, cornerRadiusBL: 7, cornerRadiusBR: 7,
+        }));
+        // Полоска
+        card.children.push(am5.RoundedRectangle.new(root, {
+          width: W, height: 6, y: 0,
+          fill: am5.color(d.colorInt),
+          cornerRadiusTL: 7, cornerRadiusTR: 7, cornerRadiusBL: 0, cornerRadiusBR: 0,
+        }));
+        // ID
+        card.children.push(am5.Label.new(root, {
+          text: d.truckName, fill: am5.color(0xffffff),
+          fontSize: 11, fontWeight: "800",
+          x: am5.percent(50), centerX: am5.percent(50), y: 10, centerY: 0,
+        }));
+        // Статус
+        card.children.push(am5.Label.new(root, {
+          text: `● ${STATUS_LABEL[d.status] || d.status}`,
+          fill: am5.color(d.colorInt), fontSize: 8, fontWeight: "700",
+          x: am5.percent(50), centerX: am5.percent(50), y: 24, centerY: 0,
+        }));
+        // Маршрут
+        card.children.push(am5.Label.new(root, {
+          text: routeShort, fill: am5.color(0xe2e8f0),
+          fontSize: 8, fontWeight: "600",
+          x: am5.percent(50), centerX: am5.percent(50), y: 36, centerY: 0,
+          oversizedBehavior: "truncate", maxWidth: W - 8,
+        }));
+        // HOS
+        card.children.push(am5.Label.new(root, {
+          text: hosLine, fill: am5.color(0x94a3b8),
+          fontSize: 7,
+          x: am5.percent(50), centerX: am5.percent(50), y: 48, centerY: 0,
+        }));
+        card.events.on("click", onClick);
+        card.events.on("pointerover", onHover);
+        card.events.on("pointerout", onHoverOut);
+
+      // ── LARGE: полная инфа + водитель ────────────────────────────────
+      } else {
+        const W = 140, H = 96;
+        const card = container.children.push(am5.Container.new(root, {
+          width: W, height: H,
+          dy: -(H + 12), dx: -(W / 2),
+          interactive: true, cursorOverStyle: "pointer",
+        }));
+        // Свечение
+        card.children.push(am5.RoundedRectangle.new(root, {
+          width: W + 6, height: H + 6, x: -3, y: -3,
+          fill: am5.color(d.colorInt), fillOpacity: 0.15,
+          cornerRadiusTL: 12, cornerRadiusTR: 12, cornerRadiusBL: 12, cornerRadiusBR: 12,
+        }));
+        // Фон
+        card.children.push(am5.RoundedRectangle.new(root, {
+          width: W, height: H,
+          fill: am5.color(0x0d1f35), fillOpacity: 0.98,
+          stroke: am5.color(d.colorInt), strokeWidth: 2,
+          cornerRadiusTL: 9, cornerRadiusTR: 9, cornerRadiusBL: 9, cornerRadiusBR: 9,
+        }));
+        // Полоска
+        card.children.push(am5.RoundedRectangle.new(root, {
+          width: W, height: 8, y: 0,
+          fill: am5.color(d.colorInt),
+          cornerRadiusTL: 9, cornerRadiusTR: 9, cornerRadiusBL: 0, cornerRadiusBR: 0,
+        }));
+        // ID
+        card.children.push(am5.Label.new(root, {
+          text: d.truckName, fill: am5.color(0xffffff),
+          fontSize: 15, fontWeight: "900",
+          x: am5.percent(50), centerX: am5.percent(50), y: 12, centerY: 0,
+        }));
+        // Статус
+        card.children.push(am5.Label.new(root, {
+          text: `● ${STATUS_LABEL[d.status] || d.status}`,
+          fill: am5.color(d.colorInt), fontSize: 11, fontWeight: "700",
+          x: am5.percent(50), centerX: am5.percent(50), y: 30, centerY: 0,
+        }));
+        // Маршрут
+        card.children.push(am5.Label.new(root, {
+          text: routeFull, fill: am5.color(0xe2e8f0),
+          fontSize: 10, fontWeight: "600",
+          x: am5.percent(50), centerX: am5.percent(50), y: 46, centerY: 0,
+          oversizedBehavior: "truncate", maxWidth: W - 12,
+        }));
+        // Водитель
+        card.children.push(am5.Label.new(root, {
+          text: `\u{1F464} ${d.driver}`, fill: am5.color(0x94a3b8),
+          fontSize: 10, fontWeight: "600",
+          x: am5.percent(50), centerX: am5.percent(50), y: 62, centerY: 0,
+        }));
+        // HOS
+        card.children.push(am5.Label.new(root, {
+          text: hosLine, fill: am5.color(0x64748b),
+          fontSize: 10,
+          x: am5.percent(50), centerX: am5.percent(50), y: 78, centerY: 0,
+        }));
+        card.events.on("click", onClick);
+        card.events.on("pointerover", onHover);
+        card.events.on("pointerout", onHoverOut);
       }
 
-      const hosRounded = Math.round(d.hoursLeft * 10) / 10;
-      const line3 = d.milesLeft > 0 ? `${d.milesLeft}mi · ${hosRounded}h HOS` : `${hosRounded}h HOS`;
-
-      const CARD_W = 76, CARD_H = 56, CX = CARD_W / 2;
-      const card = container.children.push(am5.Container.new(root, {
-        dy: -CARD_H - 10, dx: -(CARD_W / 2),
-        interactive: true, cursorOverStyle: "pointer",
-      }));
-      card.children.push(am5.RoundedRectangle.new(root, {
-        width: CARD_W, height: CARD_H,
-        fill: am5.color(0x0d1f35), fillOpacity: 0.96,
-        stroke: am5.color(d.colorInt), strokeWidth: 1.5,
-        cornerRadiusTL: 7, cornerRadiusTR: 7, cornerRadiusBL: 7, cornerRadiusBR: 7,
-        interactive: true, cursorOverStyle: "pointer",
-      }));
-      card.children.push(am5.RoundedRectangle.new(root, {
-        width: CARD_W, height: 6, fill: am5.color(d.colorInt), fillOpacity: 1,
-        cornerRadiusTL: 7, cornerRadiusTR: 7, cornerRadiusBL: 0, cornerRadiusBR: 0,
-      }));
-      card.children.push(am5.Label.new(root, {
-        text: d.truckName, fill: am5.color(0xffffff),
-        fontSize: 11, fontWeight: "800", centerX: am5.percent(50), x: CX, y: 9,
-      }));
-      card.children.push(am5.Label.new(root, {
-        text: `● ${STATUS_LABEL[d.status] || d.status}`,
-        fill: am5.color(d.colorInt), fontSize: 8, fontWeight: "700",
-        centerX: am5.percent(50), x: CX, y: 22,
-      }));
-      card.children.push(am5.Label.new(root, {
-        text: line2, fill: am5.color(0xe2e8f0),
-        fontSize: 9, fontWeight: "600", centerX: am5.percent(50), x: CX, y: 33,
-      }));
-      card.children.push(am5.Label.new(root, {
-        text: line3, fill: am5.color(0x94a3b8),
-        fontSize: 7, centerX: am5.percent(50), x: CX, y: 45,
-      }));
-
-      // Клик на карточку тоже открывает инфо
-      card.events.on("click", (ev: any) => {
-        truckClickedRef.current = true;
-        onTruckInfoRef.current?.(d.truckId);
-        chartRef.current?.zoomToGeoPoint({ longitude: d.lng, latitude: d.lat }, 4, true);
-        setTimeout(() => { truckClickedRef.current = false; }, 100);
-      });
-
-      container.events.on("click", (ev: any) => {
-        truckClickedRef.current = true;
-        onTruckInfoRef.current?.(d.truckId);
-        chartRef.current?.zoomToGeoPoint({ longitude: d.lng, latitude: d.lat }, 4, true);
-        setTimeout(() => { truckClickedRef.current = false; }, 100);
-      });
+      container.events.on("click", onClick);
+      container.events.on("pointerover", onHover);
+      container.events.on("pointerout", onHoverOut);
       return am5.Bullet.new(root, { sprite: container });
     });
 
@@ -515,8 +755,19 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
     chartRef.current = chart;
 
     chart.set("background", am5.Rectangle.new(root, {
-      fill: am5.color(0x0f172a), fillOpacity: 1, // Немного светлее чем было 0x0a1628
+      fill: am5.color(0x0f172a), fillOpacity: 1,
+      interactive: true,
     }));
+
+    // Клик по пустому месту карты — сбрасываем слежение и закреплённую карточку
+    chart.get("background")?.events.on("click", () => {
+      if (followTruckIdRef.current) {
+        followTruckIdRef.current = null;
+        setFollowTruck(false);
+      }
+      selectedTruckRef.current = null;
+      setSelectedTruck(null);
+    });
 
     // Штаты — ОСНОВНОЙ СЛОЙ КАРТЫ
     const polygonSeries = chart.series.push(
@@ -532,7 +783,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
       strokeWidth: 1.5,
       strokeOpacity: 1,
       interactive: true,
-      tooltipText: "{name}",
+      // tooltipText убран — используем свой попап при клике, чтобы не перекрывал карточки траков
     });
     
     // Hover эффект
@@ -567,6 +818,11 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
     polygonSeries.mapPolygons.template.events.on("click", (ev: any) => {
       // Если клик был на карточке трака — не открываем попап штата
       if (truckClickedRef.current) return;
+      // Клик по штату = клик не на трак → сбрасываем авто-слежение
+      if (followTruckIdRef.current) {
+        followTruckIdRef.current = null;
+        setFollowTruck(false);
+      }
       const rawId = ev.target.dataItem?.get("id") as string;
       const stateName = ev.target.dataItem?.get("name");
       if (!rawId) return;
@@ -644,8 +900,12 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
       }))
     );
 
+    // Убираем дефолтный ZoomControl amCharts — используем свои кнопки
     const zoomControl = chart.set("zoomControl", am5map.ZoomControl.new(root, {}));
-    zoomControl.homeButton.set("visible", true);
+    zoomControl.homeButton.set("visible", false);
+    zoomControl.plusButton.set("visible", false);
+    zoomControl.minusButton.set("visible", false);
+    zoomControl.set("forceHidden" as any, true);
 
     function handleZoomToTruck(e: Event) {
       const { lng, lat, slow, mobile } = (e as CustomEvent).detail;
@@ -675,22 +935,28 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
     rebuildRoutes(root, chart);
     rebuildTruckSeries(root, chart);
     setTimeout(() => updatePolygonColors(), 500);
+    // Помечаем что инициализация завершена — теперь useEffect[activeTrucks.length] может работать
+    setTimeout(() => { chartInitializedRef.current = true; }, 100);
 
-    // Автозум при первом открытии на мобильном (ширина < 900px)
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 900;
-    if (isMobile) {
-      setTimeout(() => {
-        // Зумим на центр траков
-        const ts = trucksRef.current;
-        if (ts.length > 0) {
-          const avgLng = ts.reduce((s, t) => s + t.position[0], 0) / ts.length;
-          const avgLat = ts.reduce((s, t) => s + t.position[1], 0) / ts.length;
-          chart.zoomToGeoPoint({ longitude: avgLng, latitude: avgLat }, 5, true);
-        } else {
-          chart.zoomToGeoPoint({ longitude: -83.9207, latitude: 35.9606 }, 5, true);
-        }
-      }, 800);
-    }
+    // Автозум на траки при открытии карты
+    setTimeout(() => {
+      const ts = trucksRef.current;
+      if (ts.length === 0) return;
+
+      const avgLng = ts.reduce((s, t) => s + t.position[0], 0) / ts.length;
+      const avgLat = ts.reduce((s, t) => s + t.position[1], 0) / ts.length;
+
+      // Считаем разброс траков чтобы подобрать уровень зума
+      const maxDist = ts.reduce((max, t) => {
+        const d = Math.hypot(t.position[0] - avgLng, t.position[1] - avgLat);
+        return Math.max(max, d);
+      }, 0);
+
+      // Чем меньше разброс — тем сильнее зум (3–6)
+      const zoomLevel = maxDist < 3 ? 6 : maxDist < 8 ? 4 : maxDist < 15 ? 3 : 2;
+
+      chart.zoomToGeoPoint({ longitude: avgLng, latitude: avgLat }, zoomLevel, true);
+    }, 800);
 
     // Анимация муравьёв — обновляем strokeDashoffset на живых линиях каждые 60ms
     let dashOffset = 0;
@@ -701,12 +967,21 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
       });
     }, 60);
 
-    // Полное обновление каждые 2 секунды
+    // Полное обновление каждые 2 секунды + отслеживание zoom для смены варианта карточек
+    let lastVariant = 'medium';
     intervalRef.current = setInterval(() => {
+      const newZoom = chartRef.current?.get("zoomLevel") ?? 1;
+      const newVariant = newZoom < 2 ? 'micro' : newZoom < 4 ? 'medium' : 'large';
+      zoomLevelRef.current = newZoom;
       rebuildHistory(root, chart);
       rebuildRoutes(root, chart);
-      rebuildTruckSeries(root, chart);
       updatePolygonColors();
+      if (newVariant !== lastVariant) {
+        lastVariant = newVariant;
+        switchCardVariant(root, chart);
+      } else {
+        rebuildTruckSeries(root, chart);
+      }
     }, 2000);
 
     return () => {
@@ -737,6 +1012,21 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
   const minsLeft = Math.floor(minutesLeft % 60);
   const shiftProgress = Math.min(1, Math.max(0, gameMinute / 1440));
   const timerColor = minutesLeft < 60 ? "#ef4444" : minutesLeft < 120 ? "#f97316" : "#06b6d4";
+
+  const mapBtnStyle = (active = false) => ({
+    width: 44, height: 44, borderRadius: 12,
+    background: active
+      ? "linear-gradient(135deg, rgba(6,182,212,0.35), rgba(14,165,233,0.2))"
+      : "linear-gradient(160deg, rgba(15,28,55,0.97), rgba(10,20,42,0.97))",
+    border: active ? "1.5px solid rgba(6,182,212,0.8)" : "1.5px solid rgba(56,189,248,0.2)",
+    boxShadow: active
+      ? "0 0 14px rgba(6,182,212,0.6), inset 0 1px 0 rgba(255,255,255,0.08)"
+      : "0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)",
+    cursor: "pointer", fontSize: 20, fontWeight: 700, color: "#fff",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    transition: "all 0.15s", padding: 0,
+    animation: active ? "follow-pulse 1.5s ease-in-out infinite" : "none",
+  } as any);
 
   return (
     <View style={styles.container}>
@@ -866,15 +1156,76 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
         </div>
       )}
 
-      {/* Плашка трака */}
+      {/* Невидимая зона активации кнопок когда они прозрачные */}
+      {!mapBtnsVisible && (
+        <div
+          onMouseEnter={resetMapBtnsTimer}
+          onTouchStart={resetMapBtnsTimer}
+          style={{
+            position: "absolute", right: 10, bottom: 10,
+            width: 56, height: 220,
+            zIndex: 201, pointerEvents: "auto", cursor: "pointer",
+          } as any}
+        />
+      )}
+      {/* Кнопки управления картой — все 4 компактно внизу справа */}
+      <div
+        onMouseEnter={resetMapBtnsTimer}
+        onMouseLeave={resetMapBtnsTimer}
+        onTouchStart={resetMapBtnsTimer}
+        style={{
+          position: "absolute", right: 10, bottom: 10,
+          zIndex: 200,
+          pointerEvents: mapBtnsVisible ? "auto" : "none",
+          display: "flex", flexDirection: "column", gap: 6,
+          background: "rgba(8,16,32,0.7)",
+          borderRadius: 16,
+          border: "1px solid rgba(56,189,248,0.12)",
+          padding: "8px 6px",
+          backdropFilter: "blur(8px)",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+          opacity: mapBtnsVisible ? 1 : 0.12,
+          transition: "opacity 0.6s ease",
+        } as any}>
+        {/* 🏠 Home */}
+        <button onClick={() => { resetMapBtnsTimer(); chartRef.current?.goHome(); }} title="Обзор"
+          style={mapBtnStyle()}>🏠</button>
+        {/* + Zoom in */}
+        <button onClick={() => { resetMapBtnsTimer(); chartRef.current?.zoomIn(); }} title="Приблизить"
+          style={{ ...mapBtnStyle(), fontSize: 22, fontWeight: 900, color: "#38bdf8" }}>＋</button>
+        {/* − Zoom out */}
+        <button onClick={() => { resetMapBtnsTimer(); chartRef.current?.zoomOut(); }} title="Отдалить"
+          style={{ ...mapBtnStyle(), fontSize: 22, fontWeight: 900, color: "#94a3b8" }}>－</button>
+        {/* 🎯 Follow */}
+        <button
+          onClick={() => { resetMapBtnsTimer(); followTruckIdRef.current = null; setFollowTruck(f => !f); }}
+          title={followTruck ? "Отключить слежение" : "Следить за траком"}
+          style={mapBtnStyle(followTruck)}
+        >🎯</button>
+      </div>
+
+      {/* Плашка трака — поверх всего при клике/hover */}
       {selectedTruck && (
         <div style={{
           position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)",
-          background: "rgba(8,14,28,0.96)", border: `1px solid ${selectedTruck.colorHex}`,
-          borderRadius: 12, padding: "10px 14px", display: "flex", alignItems: "center", gap: 12,
-          zIndex: 1000, boxShadow: "0 4px 20px rgba(0,0,0,0.5)", fontFamily: "sans-serif", whiteSpace: "nowrap",
+          background: "rgba(8,14,28,0.98)",
+          border: `2px solid ${selectedTruck.colorHex}`,
+          borderRadius: 14, padding: "10px 14px", display: "flex", alignItems: "center", gap: 12,
+          zIndex: 9999,
+          boxShadow: `0 0 0 1px ${selectedTruck.colorHex}44, 0 8px 32px rgba(0,0,0,0.7), 0 0 24px ${selectedTruck.colorHex}33`,
+          fontFamily: "sans-serif", whiteSpace: "nowrap",
+          transition: "border-color 0.2s, box-shadow 0.2s",
         } as any} className="map-truck-card">
-          <div style={{ width: 8, height: 8, borderRadius: "50%", background: selectedTruck.colorHex } as any} />
+          {/* Индикатор "закреплено" */}
+          {selectedTruckRef.current?.truckId === selectedTruck.truckId && (
+            <div style={{
+              position: "absolute", top: -8, left: "50%", transform: "translateX(-50%)",
+              background: selectedTruck.colorHex, borderRadius: 4,
+              padding: "1px 8px", fontSize: 9, fontWeight: 800, color: "#000",
+              letterSpacing: 0.5, whiteSpace: "nowrap",
+            } as any}>📌 ЗАКРЕПЛЕНО</div>
+          )}
+          <div style={{ width: 10, height: 10, borderRadius: "50%", background: selectedTruck.colorHex, flexShrink: 0, boxShadow: `0 0 8px ${selectedTruck.colorHex}` } as any} />
           <div style={{ display: "flex", flexDirection: "column", gap: 2 } as any}>
             <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" } as any}>🚛 {selectedTruck.truckName}</span>
             <span style={{ fontSize: 11, color: selectedTruck.colorHex } as any}>
@@ -890,14 +1241,14 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
             fontSize: 12, fontWeight: 700, cursor: "pointer",
           } as any}>📋 Инфо</button>
           {(selectedTruck.status === "idle" || selectedTruck.status === "at_delivery") && (
-            <button onClick={() => { onFindLoad?.(selectedTruck.currentCity); setSelectedTruck(null); chartRef.current?.goHome(); }} style={{
+            <button onClick={() => { onFindLoad?.(selectedTruck.currentCity); setSelectedTruck(null); selectedTruckRef.current = null; chartRef.current?.goHome(); }} style={{
               background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.4)",
               borderRadius: 8, padding: "6px 12px", color: "#4ade80",
               fontSize: 12, fontWeight: 700, cursor: "pointer",
             } as any}>🔍 Найти груз</button>
           )}
-          <span onClick={() => { setSelectedTruck(null); chartRef.current?.goHome(); }}
-            style={{ cursor: "pointer", fontSize: 16, color: "#64748b", paddingLeft: 4 } as any}>✕</span>
+          <span onClick={() => { setSelectedTruck(null); selectedTruckRef.current = null; }}
+            style={{ cursor: "pointer", fontSize: 18, color: "#64748b", paddingLeft: 4, lineHeight: 1 } as any}>✕</span>
         </div>
       )}
 
@@ -1045,6 +1396,26 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
         @keyframes fadeInSlide {
           from { opacity: 0; transform: translateX(20px); }
           to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes follow-pulse {
+          0%,100% { box-shadow: 0 0 14px rgba(6,182,212,0.6); }
+          50% { box-shadow: 0 0 24px rgba(6,182,212,1), 0 0 40px rgba(6,182,212,0.4); }
+        }
+        /* Подгоняем ZoomControl под наш стиль */
+        .am5-zoomtools-button {
+          width: 32px !important;
+          height: 32px !important;
+          border-radius: 8px !important;
+        }
+        /* Скрываем дефолтные кнопки зума amCharts */
+        .am5-zoomtools,
+        [class*="am5-zoomtools"],
+        .am5-zoom-control,
+        [class*="am5-zoom"] {
+          display: none !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+          visibility: hidden !important;
         }
 
         /* Скрываем логотип amCharts */

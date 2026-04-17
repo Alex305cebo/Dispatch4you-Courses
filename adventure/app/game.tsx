@@ -43,9 +43,13 @@ import { useAccountStore } from '../store/accountStore';
 type Tab = 'map' | 'loadboard' | 'email' | 'trucks';
 
 const STATUS_COLOR: Record<string, string> = {
-  idle: '#64748b', driving: '#38bdf8', loaded: '#34d399',
-  at_pickup: '#fbbf24', at_delivery: '#a78bfa',
-  breakdown: '#f87171', waiting: '#fb923c',
+  idle:        '#38bdf8', // голубой — свободен, ждёт груза (позитивно)
+  driving:     '#818cf8', // индиго — едет к погрузке
+  loaded:      '#34d399', // зелёный — везёт груз (деньги идут)
+  at_pickup:   '#fbbf24', // жёлтый — на погрузке
+  at_delivery: '#a78bfa', // фиолетовый — на разгрузке
+  breakdown:   '#f87171', // красный — поломка
+  waiting:     '#fb923c', // оранжевый — detention
 };
 const STATUS_LABEL: Record<string, string> = {
   idle: 'Свободен', driving: 'К погрузке', loaded: 'В пути',
@@ -66,28 +70,32 @@ function getDriverAvatar(truckId: string): string {
   return avatars[n % avatars.length];
 }
 
-// Telegram animated emoji по настроению (mood 0-100)
-const BASE = typeof window !== 'undefined' && window.location.pathname.startsWith('/game') ? '/game' : '';
+// Google Noto Animated Emoji — CDN (Apache 2.0, бесплатно)
+const NOTO = 'https://fonts.gstatic.com/s/e/notoemoji/latest';
 function getMoodEmoji(mood: number, status: string): string {
-  if (status === 'breakdown') return `${BASE}/assets/emojis/exploding.webp`;
-  if (status === 'waiting')   return `${BASE}/assets/emojis/tired.webp`;
-  if (mood >= 85) return `${BASE}/assets/emojis/happy.webp`;
-  if (mood >= 70) return `${BASE}/assets/emojis/smile.webp`;
-  if (mood >= 55) return `${BASE}/assets/emojis/neutral.webp`;
-  if (mood >= 40) return `${BASE}/assets/emojis/worried.webp`;
-  if (mood >= 25) return `${BASE}/assets/emojis/sad.webp`;
-  if (mood >= 10) return `${BASE}/assets/emojis/angry.webp`;
-  return `${BASE}/assets/emojis/rage.webp`;
+  if (status === 'breakdown') return `${NOTO}/1f92f/512.webp`; // 🤯 exploding
+  if (status === 'waiting')   return `${NOTO}/1f62b/512.webp`; // 😫 tired
+  if (status === 'at_pickup') return `${NOTO}/1f4aa/512.webp`; // 💪 loading
+  if (mood >= 90) return `${NOTO}/1f929/512.webp`; // 🤩 star-struck
+  if (mood >= 75) return `${NOTO}/1f604/512.webp`; // 😄 grinning
+  if (mood >= 60) return `${NOTO}/1f60a/512.webp`; // 😊 smiling
+  if (mood >= 45) return `${NOTO}/1f610/512.webp`; // 😐 neutral
+  if (mood >= 30) return `${NOTO}/1f615/512.webp`; // 😕 confused
+  if (mood >= 15) return `${NOTO}/1f620/512.webp`; // 😠 angry
+  return `${NOTO}/1f621/512.webp`;                  // 😡 rage (red)
 }
 
 function getTruckColor(truck: any): string {
   const outOfOrder = (truck as any).outOfOrderUntil;
-  if (outOfOrder && typeof outOfOrder === 'number' && outOfOrder > 0) return '#ff0000';
+  if (outOfOrder && typeof outOfOrder === 'number' && outOfOrder > 0) return '#ef4444';
+  // idleWarning — только уровень 3 (5+ часов) даёт красный, остальное мягче
   const w = (truck as any).idleWarningLevel ?? 0;
-  if (w === 3) return '#ef4444';
-  if (w === 2) return '#f97316';
-  if (w === 1) return '#fbbf24';
-  return STATUS_COLOR[truck.status] || '#64748b';
+  if (w === 3) return '#ef4444'; // 5+ часов — красный
+  if (w === 2) return '#fb923c'; // 4+ часов — оранжевый
+  if (w === 1) return '#fbbf24'; // 3+ часов — жёлтый
+  // breakdown всегда красный независимо от warning
+  if (truck.status === 'breakdown') return '#f87171';
+  return STATUS_COLOR[truck.status] || '#38bdf8';
 }
 
 export default function GameScreen() {
@@ -100,7 +108,7 @@ export default function GameScreen() {
     trucks, availableLoads, negotiation, bookedLoads, activeLoads,
     tickClock, selectedTruckId, selectTruck, notifications, sessionName,
     refreshLoadBoard, setLoadBoardSearch, timeSpeed, setTimeSpeed, loadGame,
-    deliveryResults,
+    deliveryResults, totalEarned,
   } = useGameStore();
 
   const [activeTab, setActiveTab] = useState<Tab>(() => {
@@ -170,7 +178,27 @@ export default function GameScreen() {
   }
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const pausedRef = useRef(false);
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [pausedSeconds, setPausedSeconds] = useState(0);
+  const pauseTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => { pausedRef.current = paused; }, [paused]);
+
+  // Таймер паузы — считает секунды пока игра на паузе
+  useEffect(() => {
+    if (paused) {
+      setPausedSeconds(0);
+      pauseTimerRef.current = setInterval(() => {
+        setPausedSeconds(s => s + 1);
+      }, 1000);
+    } else {
+      setPausedSeconds(0);
+      if (pauseTimerRef.current) { clearInterval(pauseTimerRef.current); pauseTimerRef.current = null; }
+    }
+    return () => { if (pauseTimerRef.current) clearInterval(pauseTimerRef.current); };
+  }, [paused]);
 
   useEffect(() => {
     // При рефреше — восстанавливаем сохранение только если phase === 'menu' (store в дефолтном состоянии)
@@ -184,7 +212,7 @@ export default function GameScreen() {
   }, []);
   useEffect(() => { if (availableLoads.length < 5) refreshLoadBoard(); }, []);
   useEffect(() => {
-    clockRef.current = setInterval(() => tickClock(), 1000);
+    clockRef.current = setInterval(() => { if (!pausedRef.current) tickClock(); }, 1000);
     return () => { if (clockRef.current) clearInterval(clockRef.current); };
   }, []);
 
@@ -302,31 +330,59 @@ export default function GameScreen() {
           </div>
           {/* Кнопки скорости */}
           <div style={{ display: 'flex', gap: 3 } as any}>
-            {([1, 2, 5] as const).map(sp => (
-              <button key={sp}
-                onClick={() => setTimeSpeed(sp)}
-                style={{
-                  padding: isWide ? '2px 9px' : '2px 7px',
-                  display: (!isWide && timeSpeed !== sp) ? 'none' : 'block',
-                  background: timeSpeed === sp
-                    ? 'linear-gradient(135deg, rgba(56,189,248,0.25), rgba(14,165,233,0.15))'
-                    : 'rgba(255,255,255,0.04)',
-                  border: timeSpeed === sp ? '1px solid rgba(56,189,248,0.5)' : '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: 6, cursor: 'pointer',
-                  fontSize: 10, fontWeight: 800,
-                  color: timeSpeed === sp ? '#38bdf8' : '#475569',
-                  transition: 'all 0.15s',
-                } as any}>
-                {sp === 1 ? '×1' : sp === 2 ? '×2' : '×5'}
-              </button>
-            ))}
-            {/* На мобильных — кнопка переключения скорости */}
-            {!isWide && (
-              <button onClick={() => setTimeSpeed(timeSpeed === 1 ? 2 : timeSpeed === 2 ? 5 : 1)} style={{
-                padding: '2px 8px',
-                background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.3)',
-                borderRadius: 6, cursor: 'pointer', fontSize: 10, fontWeight: 800, color: '#38bdf8',
-              } as any}>×{timeSpeed} ▶</button>
+            {isWide ? (
+              // Десктоп — все 3 кнопки
+              ([1, 2, 5] as const).map(sp => (
+                <button key={sp}
+                  onClick={() => setTimeSpeed(sp)}
+                  style={{
+                    padding: '2px 9px',
+                    background: timeSpeed === sp
+                      ? 'linear-gradient(135deg, rgba(56,189,248,0.25), rgba(14,165,233,0.15))'
+                      : 'rgba(255,255,255,0.04)',
+                    border: timeSpeed === sp ? '1px solid rgba(56,189,248,0.5)' : '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: 6, cursor: 'pointer',
+                    fontSize: 10, fontWeight: 800,
+                    color: timeSpeed === sp ? '#38bdf8' : '#475569',
+                    transition: 'all 0.15s',
+                  } as any}>
+                  {sp === 1 ? '×1' : sp === 2 ? '×2' : '×5'}
+                </button>
+              ))
+            ) : (
+              // Мобильный — кнопка скорости + кнопка пауза/старт
+              <>
+                <button
+                  onClick={() => setTimeSpeed(timeSpeed === 1 ? 2 : timeSpeed === 2 ? 5 : 1)}
+                  style={{
+                    padding: '3px 10px', borderRadius: 8, cursor: 'pointer',
+                    background: 'linear-gradient(135deg, rgba(56,189,248,0.2), rgba(14,165,233,0.1))',
+                    border: '1px solid rgba(56,189,248,0.4)',
+                    fontSize: 11, fontWeight: 900, color: '#38bdf8',
+                  } as any}>
+                  ×{timeSpeed}
+                </button>
+                <button
+                  onClick={() => setPaused(p => !p)}
+                  style={{
+                    width: 30, height: 26, borderRadius: 8, cursor: 'pointer',
+                    background: paused && pausedSeconds >= 10
+                      ? 'linear-gradient(135deg, rgba(239,68,68,0.35), rgba(220,38,38,0.2))'
+                      : paused
+                      ? 'linear-gradient(135deg, rgba(74,222,128,0.2), rgba(34,197,94,0.1))'
+                      : 'rgba(255,255,255,0.06)',
+                    border: paused && pausedSeconds >= 10
+                      ? '1px solid rgba(239,68,68,0.8)'
+                      : paused ? '1px solid rgba(74,222,128,0.5)' : '1px solid rgba(255,255,255,0.15)',
+                    fontSize: 13,
+                    color: paused && pausedSeconds >= 10 ? '#f87171' : paused ? '#4ade80' : '#94a3b8',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    animation: paused && pausedSeconds >= 10 ? 'pauseUrgent 0.8s ease-in-out infinite' : 'none',
+                    boxShadow: paused && pausedSeconds >= 10 ? '0 0 12px rgba(239,68,68,0.7), 0 0 24px rgba(239,68,68,0.4)' : 'none',
+                  } as any}>
+                  {paused ? '▶' : '⏸'}
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -347,6 +403,21 @@ export default function GameScreen() {
               ${balance >= 1000 ? `${(balance/1000).toFixed(1)}k` : balance.toLocaleString()}
             </div>
           </button>
+
+          {/* Заработано за смену */}
+          {totalEarned > 0 && (
+            <button onClick={() => setShowStats(true)} style={{
+              padding: isWide ? '5px 10px' : '4px 8px',
+              background: 'linear-gradient(135deg, rgba(251,191,36,0.12), rgba(245,158,11,0.06))',
+              border: '1px solid rgba(251,191,36,0.25)',
+              borderRadius: 10, cursor: 'pointer', textAlign: 'left',
+            } as any}>
+              {isWide && <div style={{ fontSize: 9, color: '#64748b', fontWeight: 600, marginBottom: 1 } as any}>ЗАРАБОТАНО</div>}
+              <div style={{ fontSize: isWide ? 13 : 12, fontWeight: 900, color: '#fbbf24' } as any}>
+                💰 ${totalEarned >= 1000 ? `${(totalEarned/1000).toFixed(1)}k` : totalEarned.toLocaleString()}
+              </div>
+            </button>
+          )}
 
           {/* HOS */}
           {hosWarnings > 0 && (
@@ -400,7 +471,39 @@ export default function GameScreen() {
           </button>
         </div>
 
-        <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }`}</style>
+        <style>{`
+          @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+          @keyframes pauseUrgent {
+            0%   { box-shadow: 0 0 8px rgba(239,68,68,0.6), 0 0 16px rgba(239,68,68,0.3); background: linear-gradient(135deg, rgba(239,68,68,0.35), rgba(220,38,38,0.2)); border-color: rgba(239,68,68,0.8); }
+            50%  { box-shadow: 0 0 18px rgba(239,68,68,1), 0 0 36px rgba(239,68,68,0.6); background: linear-gradient(135deg, rgba(239,68,68,0.6), rgba(220,38,38,0.4)); border-color: rgba(239,68,68,1); }
+            100% { box-shadow: 0 0 8px rgba(239,68,68,0.6), 0 0 16px rgba(239,68,68,0.3); background: linear-gradient(135deg, rgba(239,68,68,0.35), rgba(220,38,38,0.2)); border-color: rgba(239,68,68,0.8); }
+          }
+          @keyframes emoji-bounce {
+            0%,100% { transform: translateY(0) scale(1); }
+            40% { transform: translateY(-5px) scale(1.15); }
+            60% { transform: translateY(-3px) scale(1.1); }
+          }
+          @keyframes emoji-shake {
+            0%,100% { transform: rotate(0deg) scale(1); }
+            20% { transform: rotate(-8deg) scale(1.1); }
+            40% { transform: rotate(8deg) scale(1.1); }
+            60% { transform: rotate(-5deg) scale(1.05); }
+            80% { transform: rotate(5deg) scale(1.05); }
+          }
+          @keyframes emoji-pulse {
+            0%,100% { transform: scale(1); opacity:1; }
+            50% { transform: scale(1.2); opacity:0.9; }
+          }
+          @keyframes emoji-swing {
+            0%,100% { transform: rotate(0deg); transform-origin: top center; }
+            25% { transform: rotate(10deg); }
+            75% { transform: rotate(-10deg); }
+          }
+          .emoji-anim-0 { animation: emoji-bounce 1.8s ease-in-out 0s infinite; }
+          .emoji-anim-1 { animation: emoji-shake 2.2s ease-in-out 0.3s infinite; }
+          .emoji-anim-2 { animation: emoji-pulse 1.5s ease-in-out 0.7s infinite; }
+          .emoji-anim-3 { animation: emoji-swing 2.5s ease-in-out 0.1s infinite; }
+        `}</style>
       </div>
     );
   };
@@ -424,7 +527,9 @@ export default function GameScreen() {
         const progressPct = Math.round(truck.progress * 100);
         const mood = truck.mood ?? 80;
         const moodEmoji = getMoodEmoji(mood, truck.status);
-        // Номер трака: из id берём цифры → TRK 345
+        // Уникальный CSS класс анимации по индексу трака
+        const truckIdx = trucks.indexOf(truck);
+        const animClass = `emoji-anim-${truckIdx % 4}`;
         const truckNum = truck.id.replace(/\D/g, '').padStart(3, '0').slice(-3);
         // Трейлер: детерминированный по id
         const trailerNum = String((parseInt(truckNum) * 7 + 100) % 900 + 100);
@@ -466,6 +571,7 @@ export default function GameScreen() {
                   src={moodEmoji}
                   width={26} height={26}
                   title={`Настроение: ${mood}%`}
+                  className={animClass}
                   style={{ imageRendering: 'auto', flexShrink: 0 } as any}
                 />
               </div>
@@ -596,6 +702,24 @@ export default function GameScreen() {
     onFindLoad: (city: string) => { setLoadBoardSearch(city); switchTab('loadboard'); },
   };
 
+  function handleAssigned(truckId: string) {
+    const truck = trucks.find(t => t.id === truckId);
+    if (truck) {
+      selectTruck(truckId);
+      switchTab('map');
+      setTimeout(() => {
+        // Зумируем на трак
+        window.dispatchEvent(new CustomEvent('zoomToTruck', {
+          detail: { lng: truck.position[0], lat: truck.position[1] }
+        }));
+        // Включаем слежение за этим траком
+        window.dispatchEvent(new CustomEvent('followAssignedTruck', {
+          detail: { truckId }
+        }));
+      }, 300);
+    }
+  }
+
   return (
     <View style={s.root}>
 
@@ -615,7 +739,7 @@ export default function GameScreen() {
           <View style={s.rightCol}>
             <SideTabs />
             <View style={s.panelContent}>
-              {activeTab === 'loadboard' && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} /></ErrorBoundary>}
+              {activeTab === 'loadboard' && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} onAssigned={handleAssigned} /></ErrorBoundary>}
               {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
               {activeTab === 'email'     && <ErrorBoundary name="Email"><EmailPanel inline /></ErrorBoundary>}
               {activeTab === 'map'       && (
@@ -634,7 +758,7 @@ export default function GameScreen() {
           <TruckStrip />
           <View style={s.mobileContent}>
             {activeTab === 'map'       && <ErrorBoundary name="Map"><MapView {...mapProps} /></ErrorBoundary>}
-            {activeTab === 'loadboard' && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} /></ErrorBoundary>}
+            {activeTab === 'loadboard' && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} onAssigned={handleAssigned} /></ErrorBoundary>}
             {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
             {activeTab === 'email'     && <ErrorBoundary name="Email"><EmailPanel inline /></ErrorBoundary>}
           </View>
@@ -655,16 +779,8 @@ export default function GameScreen() {
           load={pendingLoad}
           onClose={() => setPendingLoad(null)}
           onAssigned={(truckId) => {
-            const truck = trucks.find(t => t.id === truckId);
-            if (truck) {
-              selectTruck(truckId);
-              switchTab('map');
-              setTimeout(() => {
-                window.dispatchEvent(new CustomEvent('zoomToTruck', {
-                  detail: { lng: truck.position[0], lat: truck.position[1] }
-                }));
-              }, 300);
-            }
+            setPendingLoad(null);
+            handleAssigned(truckId);
           }}
         /></ErrorBoundary>
       )}

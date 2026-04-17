@@ -120,6 +120,8 @@ export default function DeliveryResultPopup() {
                   <PnlRow label={`Водитель (${result.miles}mi × $0.55)`} value={-result.driverPay} color="#f87171" />
                   <PnlRow label="Dispatch Fee (8%)" value={-result.dispatchFee} color="#f87171" />
                   <PnlRow label="Factoring Fee (3%)" value={-result.factoringFee} color="#f87171" />
+                  <PnlRow label="Truck Payment (8%)" value={-result.truckPayment} color="#f87171" />
+                  <PnlRow label="Trailer Payment (5%)" value={-result.trailerPayment} color="#f87171" />
                   {result.lumperCost > 0 && <PnlRow label="Lumper (разгрузка)" value={-result.lumperCost} color="#f87171" />}
                   <PnlRow label="TOTAL EXPENSES" value={-result.totalExpenses} color="#f87171" bold />
                 </View>

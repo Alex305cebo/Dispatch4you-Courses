@@ -9,6 +9,7 @@ import AssignModal from './AssignModal';
 
 interface Props {
   onNegotiate: (load: ActiveLoad) => void;
+  onAssigned?: (truckId: string) => void;
 }
 
 function LoadRow({ load, onCall, isExpanded, onToggle }: { 
@@ -236,7 +237,7 @@ function CitySearchInput({
   );
 }
 
-export default function LoadBoardPanel({ onNegotiate }: Props) {
+export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
   const { availableLoads, trucks, refreshLoadBoard, bookLoad, loadBoardSearchFrom, setLoadBoardSearch } = useGameStore();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchFrom, setSearchFrom] = useState('');
@@ -432,6 +433,10 @@ export default function LoadBoardPanel({ onNegotiate }: Props) {
         <AssignModal
           load={pendingLoad}
           onClose={() => setPendingLoad(null)}
+          onAssigned={(truckId) => {
+            setPendingLoad(null);
+            onAssigned?.(truckId);
+          }}
         />
       )}
     </View>

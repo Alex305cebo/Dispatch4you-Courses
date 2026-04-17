@@ -47,11 +47,12 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
   const idleHours = (truck as any).idleSinceMinute !== undefined
     ? Math.round(((truck as any).idleSinceMinute ?? 0) / 60 * 10) / 10 : 0;
 
-  function getAiMessage(): { icon: string; title: string; text: string; color: string } {
+  function getAiMessage(): { icon: string; title: string; text: string; color: string; action?: () => void; actionLabel?: string } {
     if (needsRest) return {
       icon: '😴', color: '#ef4444',
       title: 'Требуется отдых',
       text: `У ${truck!.driver} осталось ${truck!.hoursLeft.toFixed(1)}ч HOS. Нельзя назначать длинные рейсы. После отдыха (10ч) — полный сброс HOS.`,
+      action: () => setShowHOS(true), actionLabel: '⏱ Открыть HOS',
     };
     if (truck.status === 'idle') {
       const idleWarn = (truck as any).idleWarningLevel ?? 0;
@@ -59,27 +60,32 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
         icon: '🚨', color: '#ef4444',
         title: 'Критично — трак стоит слишком долго!',
         text: `${truck.driver} свободен уже более 5 часов в ${cityState(truck.currentCity)}. Каждый час простоя = потеря денег. Срочно найди груз!`,
+        action: () => onFindLoad(truck!.currentCity), actionLabel: '🔍 Найти груз',
       };
       if (idleWarn >= 1) return {
         icon: '⚠️', color: '#f97316',
         title: 'Трак простаивает',
         text: `${truck.driver} ждёт груз в ${cityState(truck.currentCity)}. Найди загрузку — чем быстрее, тем лучше. Deadhead 0 миль = идеально.`,
+        action: () => onFindLoad(truck!.currentCity), actionLabel: '🔍 Найти груз',
       };
       return {
         icon: '✅', color: '#4ade80',
         title: 'Готов к следующему грузу',
         text: `${truck.driver} свободен в ${cityState(truck.currentCity)}. Ищи груз из этого города — 0 deadhead миль. HOS: ${truck.hoursLeft.toFixed(0)}ч.`,
+        action: () => onFindLoad(truck!.currentCity), actionLabel: '🔍 Найти груз',
       };
     }
     if (truck.status === 'at_delivery') return {
       icon: '📦', color: '#fbbf24',
       title: 'Разгружается — готовь следующий груз',
       text: `${truck.driver} на разгрузке в ${cityState(truck.currentCity)}. Самое время найти следующий груз из этого города — трак скоро освободится!`,
+      action: () => onFindLoad(truck!.currentCity), actionLabel: '🔍 Найти груз',
     };
     if (truck.status === 'at_pickup') return {
       icon: '🔄', color: '#f59e0b',
       title: 'Загружается',
       text: `${truck.driver} на погрузке в ${cityState(truck.currentCity)}. Груз: ${truck.currentLoad?.toCity ? `→ ${cityState(truck.currentLoad.toCity)}` : '—'}. Скоро выедет.`,
+      action: () => setShowSMS(true), actionLabel: '💬 SMS водителю',
     };
     if (truck.status === 'loaded') {
       const pct = Math.round(truck.progress * 100);
@@ -88,22 +94,26 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
         icon: '🎯', color: '#06b6d4',
         title: 'Скоро прибудет — ищи следующий груз!',
         text: `${truck.driver} проехал ${pct}% маршрута. ETA ~${eta}ч до ${cityState(truck.currentLoad?.toCity || '')}. Самое время найти следующий груз из точки доставки!`,
+        action: () => onFindLoad(truck!.currentLoad?.toCity || truck!.currentCity), actionLabel: '🔍 Найти груз',
       };
       return {
         icon: '🚛', color: '#38bdf8',
         title: 'В пути с грузом',
         text: `${truck.driver} везёт груз в ${cityState(truck.currentLoad?.toCity || '')}. Прогресс: ${pct}%, ETA ~${eta}ч. Мониторь HOS и детали доставки.`,
+        action: () => setShowSMS(true), actionLabel: '💬 SMS водителю',
       };
     }
     if (truck.status === 'driving') return {
       icon: '🔵', color: '#38bdf8',
       title: 'Едет к погрузке',
       text: `${truck.driver} едет к pickup в ${cityState(truck.destinationCity || '')}. Убедись что Rate Con подписан и водитель знает детали загрузки.`,
+      action: () => setShowSMS(true), actionLabel: '💬 SMS водителю',
     };
     if (truck.status === 'breakdown') return {
       icon: '🔧', color: '#ef4444',
       title: 'Поломка — требуется действие',
       text: `${truck.driver} сломался! Свяжись с техпомощью, уведоми брокера о задержке. Зафиксируй время для страховки.`,
+      action: () => setShowCall(true), actionLabel: '📞 Позвонить водителю',
     };
     return {
       icon: '🤖', color: '#06b6d4',
@@ -154,16 +164,37 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
             </View>
 
             {/* ── AI ДИСПЕТЧЕР (сразу после статуса) ── */}
-            <View style={[s.aiCard, { borderColor: ai.color + '44', backgroundColor: ai.color + '12' }]}>
+            <TouchableOpacity
+              activeOpacity={ai.action ? 0.75 : 1}
+              onPress={ai.action}
+              disabled={!ai.action}
+              style={[s.aiCard, {
+                borderColor: ai.color + '66',
+                backgroundColor: ai.color + '14',
+                shadowColor: ai.color,
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: ai.action ? 0.55 : 0.2,
+                shadowRadius: ai.action ? 12 : 4,
+                elevation: ai.action ? 8 : 2,
+              }]}
+            >
               <View style={s.aiHeader}>
                 <Text style={s.aiIcon}>{ai.icon}</Text>
                 <View style={{ flex: 1 }}>
                   <Text style={s.aiLabel}>🤖 AI Диспетчер</Text>
                   <Text style={[s.aiTitle, { color: ai.color }]}>{ai.title}</Text>
                 </View>
+                {ai.action && (
+                  <Text style={{ fontSize: 18, color: ai.color, opacity: 0.8 }}>›</Text>
+                )}
               </View>
               <Text style={s.aiText}>{ai.text}</Text>
-            </View>
+              {ai.action && ai.actionLabel && (
+                <View style={[s.aiActionBtn, { borderColor: ai.color + '55', backgroundColor: ai.color + '20' }]}>
+                  <Text style={[s.aiActionBtnText, { color: ai.color }]}>{ai.actionLabel}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
 
             {/* ── БЕЙДЖИ ── */}
             <View style={s.badgesRow}>
@@ -338,4 +369,6 @@ const s = StyleSheet.create({
   aiLabel: { fontSize: 10, fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 0.8 },
   aiTitle: { fontSize: 14, fontWeight: '900', marginTop: 1 },
   aiText: { fontSize: 13, color: '#e2e8f0', lineHeight: 20 },
+  aiActionBtn: { marginTop: 4, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1, alignSelf: 'flex-start' },
+  aiActionBtnText: { fontSize: 13, fontWeight: '800' },
 });

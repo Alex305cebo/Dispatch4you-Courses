@@ -95,14 +95,7 @@ jobs:
 
       - name: Add .htaccess for SPA routing
         run: |
-          cat > adventure/dist/.htaccess << 'EOF'
-Options -MultiViews
-RewriteEngine On
-RewriteBase /game/
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /game/index.html [L]
-EOF
+          printf 'Options -MultiViews\nRewriteEngine On\nRewriteBase /game/\nRewriteCond %%{REQUEST_FILENAME} !-f\nRewriteCond %%{REQUEST_FILENAME} !-d\nRewriteRule . /game/index.html [L]\n' > adventure/dist/.htaccess
 
       - name: Deploy to /game/
         uses: burnett01/rsync-deployments@7.0.1

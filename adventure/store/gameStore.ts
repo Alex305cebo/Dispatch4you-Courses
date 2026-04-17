@@ -1,5 +1,6 @@
 ﻿import { create } from 'zustand';
 import { SHIFT_DURATION, SHIFT_START_HOUR, SHIFT_START_MINUTE, CITIES, TIME_SCALE } from '../constants/config';
+import { findNearestTruckStop } from '../constants/truckStops';
 
 // ─── ТИПЫ ───────────────────────────────────────────────────────────────────
 
@@ -34,10 +35,26 @@ export interface Truck {
   totalMiles: number; // всего миль проехано
   totalDeliveries: number; // всего доставок
   hosViolations: number; // количество нарушений HOS
+  tripExpenses: Array<{ label: string; amount: number; minute: number }>; // доп. расходы за поездку
   lastInspection: number; // минута последней инспекции
   idleSinceMinute?: number; // минута когда трак встал (для idle warning)
   outOfOrderUntil?: number; // минута до которой трак out of order (police inspection)
   idleWarningLevel?: 0 | 1 | 2 | 3; // 0=ok, 1=yellow, 2=orange, 3=red
+
+  // ── HOS STOP SYSTEM ──
+  hosStopId?: string;           // ID truck stop где трак отдыхает
+  hosStopName?: string;         // Название truck stop
+  hosStopType?: 'truck_stop' | 'rest_area'; // тип остановки
+  hosStopPosition?: [number, number]; // координаты truck stop
+  hosRestUntilMinute?: number;  // до какой игровой минуты трак отдыхает
+  drivingToHosStop?: boolean;   // трак едет к truck stop (HOS заканчивается)
+  hosStopDestination?: [number, number]; // куда едет на truck stop
+  hosStopDestName?: string;     // название truck stop куда едет
+  resumeAfterRest?: boolean;    // после отдыха продолжить маршрут
+  preRestStatus?: string;       // статус до отдыха (чтобы восстановить)
+  preRestDestCity?: string;     // город назначения до отдыха
+  preRestProgress?: number;     // прогресс маршрута до отдыха
+  preRestRoutePath?: Array<[number, number]> | null; // маршрут до отдыха
 }
 
 export interface LoadOffer {
@@ -165,6 +182,13 @@ export interface DeliveryResult {
   factoringFee: number;   // 3% от rate
   lumperCost: number;     // случайно 0 или $150-300
   detentionPay: number;   // если было detention
+  roadsideCost: number;    // roadside assistance
+  tireCost: number;        // замена шин
+  otherRepairCost: number; // прочие ремонты
+  lateDeliveryFine: number; // штраф за опоздание
+  tripExtraExpenses: number; // сумма всех доп. расходов
+  truckPayment: number;   // выплата за трак ~8% от гросса
+  trailerPayment: number; // выплата за трейлер ~5% от гросса
   // Итог
   grossRevenue: number;
   totalExpenses: number;
@@ -434,7 +458,7 @@ const INITIAL_TRUCKS: Truck[] = [
     id: 'T1', name: 'Truck 1047', driver: 'John Martinez',
     status: 'idle', position: CITIES['Knoxville'],
     currentCity: 'Knoxville', destinationCity: null,
-    progress: 0, currentLoad: null, hoursLeft: 11, mood: 100, routePath: null,
+    progress: 0, currentLoad: null, hoursLeft: 11, mood: 65, routePath: null,
     safetyScore: 95, fuelEfficiency: 6.8, onTimeRate: 98, complianceRate: 100,
     totalMiles: 45230, totalDeliveries: 156, hosViolations: 0, lastInspection: 0,
     idleSinceMinute: 0,
@@ -443,7 +467,7 @@ const INITIAL_TRUCKS: Truck[] = [
     id: 'T2', name: 'Truck 2023', driver: 'Carlos Rivera',
     status: 'idle', position: CITIES['Knoxville'],
     currentCity: 'Knoxville', destinationCity: null,
-    progress: 0, currentLoad: null, hoursLeft: 11, mood: 100, routePath: null,
+    progress: 0, currentLoad: null, hoursLeft: 11, mood: 68, routePath: null,
     safetyScore: 92, fuelEfficiency: 7.1, onTimeRate: 96, complianceRate: 98,
     totalMiles: 38450, totalDeliveries: 142, hosViolations: 0, lastInspection: 0,
     idleSinceMinute: 0,
@@ -452,7 +476,7 @@ const INITIAL_TRUCKS: Truck[] = [
     id: 'T3', name: 'Truck 3012', driver: 'Mike Chen',
     status: 'idle', position: CITIES['Knoxville'],
     currentCity: 'Knoxville', destinationCity: null,
-    progress: 0, currentLoad: null, hoursLeft: 11, mood: 100, routePath: null,
+    progress: 0, currentLoad: null, hoursLeft: 11, mood: 63, routePath: null,
     safetyScore: 98, fuelEfficiency: 7.3, onTimeRate: 99, complianceRate: 100,
     totalMiles: 52100, totalDeliveries: 178, hosViolations: 0, lastInspection: 0,
     idleSinceMinute: 0,
@@ -462,7 +486,7 @@ const INITIAL_TRUCKS: Truck[] = [
     id: 'T4', name: 'Truck 4034', driver: 'Tom Wilson',
     status: 'loaded', position: CITIES['Houston'],
     currentCity: 'Houston', destinationCity: 'Chicago',
-    progress: 0.25, currentLoad: INITIAL_LOAD_4, hoursLeft: 10, mood: 100, routePath: null,
+    progress: 0.25, currentLoad: INITIAL_LOAD_4, hoursLeft: 10, mood: 67, routePath: null,
     safetyScore: 88, fuelEfficiency: 6.5, onTimeRate: 94, complianceRate: 96,
     totalMiles: 41200, totalDeliveries: 135, hosViolations: 2, lastInspection: 0,
   },
@@ -471,7 +495,7 @@ const INITIAL_TRUCKS: Truck[] = [
     id: 'T5', name: 'Truck 5056', driver: 'Lisa Brown',
     status: 'idle', position: CITIES['Miami'],
     currentCity: 'Miami', destinationCity: null,
-    progress: 0, currentLoad: null, hoursLeft: 11, mood: 92, routePath: null,
+    progress: 0, currentLoad: null, hoursLeft: 11, mood: 64, routePath: null,
     safetyScore: 97, fuelEfficiency: 7.0, onTimeRate: 97, complianceRate: 100,
     totalMiles: 48900, totalDeliveries: 165, hosViolations: 0, lastInspection: 0,
     idleSinceMinute: 0,
@@ -481,7 +505,7 @@ const INITIAL_TRUCKS: Truck[] = [
     id: 'T6', name: 'Truck 6078', driver: 'David Martinez',
     status: 'loaded', position: CITIES['Seattle'],
     currentCity: 'Seattle', destinationCity: 'Phoenix',
-    progress: 0.3, currentLoad: INITIAL_LOAD_6, hoursLeft: 7, mood: 88, routePath: null,
+    progress: 0.3, currentLoad: INITIAL_LOAD_6, hoursLeft: 7, mood: 66, routePath: null,
     safetyScore: 90, fuelEfficiency: 6.9, onTimeRate: 95, complianceRate: 97,
     totalMiles: 39800, totalDeliveries: 148, hosViolations: 1, lastInspection: 0,
   },
@@ -490,7 +514,7 @@ const INITIAL_TRUCKS: Truck[] = [
     id: 'T7', name: 'Truck 7089', driver: 'James Anderson',
     status: 'driving', position: CITIES['Kansas City'],
     currentCity: 'Kansas City', destinationCity: 'Memphis',
-    progress: 0.4, currentLoad: null, hoursLeft: 11, mood: 95, routePath: null,
+    progress: 0.4, currentLoad: null, hoursLeft: 11, mood: 70, routePath: null,
     safetyScore: 96, fuelEfficiency: 7.2, onTimeRate: 98, complianceRate: 100,
     totalMiles: 44500, totalDeliveries: 152, hosViolations: 0, lastInspection: 0,
   },
@@ -499,7 +523,7 @@ const INITIAL_TRUCKS: Truck[] = [
     id: 'T8', name: 'Truck 8091', driver: 'Maria Garcia',
     status: 'idle', position: CITIES['Las Vegas'],
     currentCity: 'Las Vegas', destinationCity: null,
-    progress: 0, currentLoad: null, hoursLeft: 11, mood: 100, routePath: null,
+    progress: 0, currentLoad: null, hoursLeft: 11, mood: 65, routePath: null,
     safetyScore: 99, fuelEfficiency: 7.4, onTimeRate: 99, complianceRate: 100,
     totalMiles: 51200, totalDeliveries: 171, hosViolations: 0, lastInspection: 0,
     idleSinceMinute: 0,
@@ -509,7 +533,7 @@ const INITIAL_TRUCKS: Truck[] = [
     id: 'T9', name: 'Truck 9102', driver: 'Robert Johnson',
     status: 'loaded', position: CITIES['Indianapolis'],
     currentCity: 'Indianapolis', destinationCity: 'Atlanta',
-    progress: 0.2, currentLoad: INITIAL_LOAD_9, hoursLeft: 10, mood: 90, routePath: null,
+    progress: 0.2, currentLoad: INITIAL_LOAD_9, hoursLeft: 10, mood: 62, routePath: null,
     safetyScore: 93, fuelEfficiency: 6.8, onTimeRate: 96, complianceRate: 98,
     totalMiles: 42300, totalDeliveries: 145, hosViolations: 1, lastInspection: 0,
   },
@@ -928,6 +952,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Берём траки из INITIAL_TRUCKS с их реальными позициями и маршрутами
     const allTrucks = INITIAL_TRUCKS.slice(0, truckCount).map(truck => ({
       ...truck,
+      // Новая смена — водители отдохнули, настроение хорошее
+      mood: 75 + Math.floor(Math.random() * 15), // 75–90
+      hoursLeft: 11,
+      idleWarningLevel: 0 as 0 | 1 | 2 | 3,
+      outOfOrderUntil: 0,
+      status: truck.status === 'breakdown' ? 'idle' as const : truck.status,
       // Рандомная скорость 0.75–1.25 для каждого трака
       speedMultiplier: 0.75 + Math.random() * 0.5,
     }));
@@ -1003,41 +1033,168 @@ export const useGameStore = create<GameState>((set, get) => ({
     const newDeliveryResults: DeliveryResult[] = [];
     const updatedTrucks = await Promise.all(trucks.map(async (truck) => {
 
-      // ── HOS: трак исчерпал лимит вождения — принудительный отдых ──
+      // ── HOS: трак едет к Truck Stop (HOS ≤ 1.5ч) ──
+      if ((truck as any).drivingToHosStop && truck.status !== 'waiting') {
+        const stopPos = (truck as any).hosStopDestination as [number, number] | undefined;
+        if (stopPos) {
+          const dx = truck.position[0] - stopPos[0];
+          const dy = truck.position[1] - stopPos[1];
+          const distDeg = Math.sqrt(dx * dx + dy * dy);
+          // Прибыл на Truck Stop (< 0.15 градуса ≈ ~10 миль)
+          if (distDeg < 0.15 || truck.hoursLeft <= 0) {
+            const stopName = (truck as any).hosStopDestName ?? 'Truck Stop';
+            const stopType = (truck as any).hosStopType ?? 'truck_stop';
+            get().addNotification({
+              type: 'urgent', priority: 'high',
+              from: `${truck.driver}`,
+              subject: `🛑 ${truck.name} на отдыхе — ${stopName}`,
+              message: `${truck.driver} припарковался на ${stopType === 'truck_stop' ? 'Truck Stop' : 'Rest Area'} "${stopName}". Обязательный отдых 10 часов. HOS будет сброшен.`,
+              actionRequired: false,
+              relatedTruckId: truck.id,
+            });
+            return {
+              ...truck,
+              status: 'waiting' as TruckStatus,
+              position: stopPos,
+              hosRestStartMinute: newMinute,
+              hosStopPosition: stopPos,
+              hosStopName: stopName,
+              hosStopType: stopType,
+              drivingToHosStop: false,
+              destinationCity: null,
+              routePath: null,
+            } as any;
+          }
+          // Продолжаем движение к Truck Stop
+          const speedMult = (truck as any).speedMultiplier ?? 1.0;
+          const MILES_PER_TICK_HOS = (10 * TICK_MINUTES) / 3;
+          const totalMilesDeg = Math.sqrt(
+            Math.pow((stopPos[0] - truck.position[0]) * 69, 2) +
+            Math.pow((stopPos[1] - truck.position[1]) * 69, 2)
+          );
+          const totalMiles = Math.max(totalMilesDeg, 10);
+          const progressPerTick = (MILES_PER_TICK_HOS / totalMiles) * speedMult;
+          const t = Math.min(1, progressPerTick);
+          const newLng = truck.position[0] + (stopPos[0] - truck.position[0]) * t;
+          const newLat = truck.position[1] + (stopPos[1] - truck.position[1]) * t;
+          const newHoursLeft = Math.max(0, truck.hoursLeft - TICK_MINUTES / 60);
+          return {
+            ...truck,
+            position: [newLng, newLat] as [number, number],
+            hoursLeft: Math.round(newHoursLeft * 10) / 10,
+          } as any;
+        }
+      }
+
+      // ── HOS: предупреждение при 1.5ч — трак едет на ближайший Truck Stop ──
+      if ((truck.status === 'driving' || truck.status === 'loaded') &&
+          truck.hoursLeft <= 1.5 && truck.hoursLeft > 0 &&
+          !(truck as any).drivingToHosStop) {
+        const nearestStop = findNearestTruckStop(truck.position[0], truck.position[1], 'truck_stop');
+        get().addNotification({
+          type: 'urgent', priority: 'high',
+          from: `${truck.driver} (ELD)`,
+          subject: `⚠️ HOS — ${truck.name} едет на Truck Stop`,
+          message: `${truck.driver} — осталось ${truck.hoursLeft.toFixed(1)}ч HOS. Трак направляется на "${nearestStop.name}" (${nearestStop.highway}, ${nearestStop.nearCity}). Обязательный отдых 10 часов.`,
+          actionRequired: false,
+          relatedTruckId: truck.id,
+        });
+        return {
+          ...truck,
+          drivingToHosStop: true,
+          hosStopDestination: nearestStop.position,
+          hosStopDestName: nearestStop.name,
+          hosStopType: nearestStop.type,
+          // Сохраняем текущий маршрут чтобы восстановить после отдыха
+          preRestStatus: truck.status,
+          preRestDestCity: truck.destinationCity,
+          preRestProgress: truck.progress,
+          preRestRoutePath: truck.routePath,
+          resumeAfterRest: !!truck.currentLoad,
+        } as any;
+      }
+
+      // ── HOS: трак исчерпал лимит — экстренная остановка ──
       if ((truck.status === 'driving' || truck.status === 'loaded') && truck.hoursLeft <= 0) {
+        const nearestStop = findNearestTruckStop(truck.position[0], truck.position[1]);
         get().addNotification({
           type: 'urgent', priority: 'critical',
           from: `${truck.driver} (ELD)`,
           subject: `🚨 HOS нарушение — ${truck.name} остановлен`,
-          message: `${truck.driver} исчерпал 11-часовой лимит вождения. Трак остановлен по требованию ELD. Обязательный отдых 10 часов.`,
+          message: `${truck.driver} исчерпал 11-часовой лимит вождения. ELD заблокировал трак. Остановился на "${nearestStop.name}" (${nearestStop.highway}). Обязательный отдых 10 часов. Нарушение записано!`,
           actionRequired: true,
           relatedTruckId: truck.id,
         });
         return {
           ...truck,
           status: 'waiting' as TruckStatus,
+          position: nearestStop.position,
           hosRestStartMinute: newMinute,
+          hosStopPosition: nearestStop.position,
+          hosStopName: nearestStop.name,
+          hosStopType: nearestStop.type,
+          drivingToHosStop: false,
+          hosViolations: truck.hosViolations + 1,
+          complianceRate: Math.max(0, truck.complianceRate - 15),
         } as any;
       }
 
-      // ── HOS: трак на отдыхе — ждём 10 часов (600 игровых минут) ──
+      // ── HOS: трак на отдыхе на Truck Stop — ждём 10 часов ──
       if (truck.status === 'waiting') {
         const restStart = (truck as any).hosRestStartMinute ?? newMinute;
-        const restDone = newMinute - restStart >= HOS_REST;
+        const restElapsed = newMinute - restStart;
+        const restDone = restElapsed >= HOS_REST;
         if (restDone) {
+          const stopName = (truck as any).hosStopName ?? 'Truck Stop';
+          const shouldResume = (truck as any).resumeAfterRest && truck.currentLoad;
+          const preRestDest = (truck as any).preRestDestCity;
+          const preRestPath = (truck as any).preRestRoutePath;
+
           get().addNotification({
             type: 'email', priority: 'medium',
             from: `${truck.driver}`,
-            subject: `✅ ${truck.name} отдохнул — готов к работе`,
-            message: `${truck.driver} завершил обязательный отдых (10 часов). HOS сброшен. Трак готов к движению.`,
+            subject: `✅ ${truck.name} отдохнул — выезжает с ${stopName}`,
+            message: `${truck.driver} завершил 10-часовой отдых на "${stopName}". HOS сброшен до 11 часов. ${shouldResume ? `Продолжает маршрут в ${preRestDest}.` : 'Ждёт новый груз.'}`,
             actionRequired: false,
             relatedTruckId: truck.id,
           });
+
+          if (shouldResume && preRestDest) {
+            // Восстанавливаем маршрут после отдыха
+            return {
+              ...truck,
+              status: (truck as any).preRestStatus ?? 'loaded' as TruckStatus,
+              hoursLeft: 11,
+              hosRestStartMinute: undefined,
+              hosStopPosition: undefined,
+              hosStopName: undefined,
+              hosStopType: undefined,
+              resumeAfterRest: undefined,
+              preRestStatus: undefined,
+              preRestDestCity: undefined,
+              preRestProgress: undefined,
+              preRestRoutePath: undefined,
+              destinationCity: preRestDest,
+              progress: (truck as any).preRestProgress ?? 0,
+              routePath: preRestPath ?? null,
+            } as any;
+          }
+
           return {
             ...truck,
-            status: truck.currentLoad ? 'loaded' as TruckStatus : 'idle' as TruckStatus,
+            status: 'idle' as TruckStatus,
             hoursLeft: 11,
             hosRestStartMinute: undefined,
+            hosStopPosition: undefined,
+            hosStopName: undefined,
+            hosStopType: undefined,
+            resumeAfterRest: undefined,
+            preRestStatus: undefined,
+            preRestDestCity: undefined,
+            preRestProgress: undefined,
+            preRestRoutePath: undefined,
+            idleSinceMinute: newMinute,
+            idleWarningLevel: 0,
           } as any;
         }
         return truck;
@@ -1115,14 +1272,17 @@ export const useGameStore = create<GameState>((set, get) => ({
           const dispatchFee = Math.round(agreedRate * 0.08);
           const factoringFee = Math.round(agreedRate * 0.03);
           const lumperCost = Math.random() > 0.7 ? (Math.random() > 0.5 ? 300 : 150) : 0;
+          // Выплаты за трак (~8%) и трейлер (~5%) от гросса — итого ~13%
+          const truckPayment = Math.round(agreedRate * 0.08);
+          const trailerPayment = Math.round(agreedRate * 0.05);
           const grossRevenue = agreedRate + detentionPay;
-          const totalExpenses = fuelCost + driverPay + dispatchFee + factoringFee + lumperCost;
+          const totalExpenses = fuelCost + driverPay + dispatchFee + factoringFee + lumperCost + truckPayment + trailerPayment;
           const netProfit = grossRevenue - totalExpenses;
           const deliveryResult: DeliveryResult = {
             truckId: truck.id, truckName: truck.name, driverName: truck.driver,
             loadId: load.id, fromCity: load.fromCity, toCity: load.toCity,
             miles, agreedRate, fuelCost, driverPay, dispatchFee, factoringFee,
-            lumperCost, detentionPay, grossRevenue, totalExpenses, netProfit,
+            lumperCost, detentionPay, truckPayment, trailerPayment, grossRevenue, totalExpenses, netProfit,
             ratePerMile: miles > 0 ? Math.round((agreedRate / miles) * 100) / 100 : 0,
             profitPerMile: miles > 0 ? Math.round((netProfit / miles) * 100) / 100 : 0,
             minute: newMinute,
@@ -1266,12 +1426,28 @@ export const useGameStore = create<GameState>((set, get) => ({
           }
         }
 
-        return { ...truck, idleSinceMinute: idleSince, idleWarningLevel } as any;
+        // Mood дрейф: при простое падает медленно, стремится к 65 как норме
+        const TARGET_MOOD = 65;
+        let newMood = truck.mood ?? 65;
+        if (idleHours > 1) {
+          // Простой > 1 часа — mood падает (0.5 за тик ~каждые 5 мин)
+          newMood = Math.max(20, newMood - 0.3);
+        } else if (newMood > TARGET_MOOD) {
+          // Выше нормы — медленно возвращается к 65
+          newMood = Math.max(TARGET_MOOD, newMood - 0.5);
+        } else if (newMood < TARGET_MOOD) {
+          // Ниже нормы — медленно восстанавливается
+          newMood = Math.min(TARGET_MOOD, newMood + 0.2);
+        }
+
+        return { ...truck, idleSinceMinute: idleSince, idleWarningLevel, mood: Math.round(newMood) } as any;
       }
 
       // Сбрасываем idle счётчик когда трак начинает ехать
-      if (truck.status !== 'idle' && (truck as any).idleSinceMinute !== undefined) {
-        return { ...truck, idleSinceMinute: undefined, idleWarningLevel: 0 } as any;
+      if ((truck as any).idleSinceMinute !== undefined) {
+        // В пути — mood чуть растёт (водитель доволен что едет)
+        const drivingMood = Math.min(72, (truck.mood ?? 65) + 0.1);
+        return { ...truck, idleSinceMinute: undefined, idleWarningLevel: 0, mood: Math.round(drivingMood) } as any;
       }
 
       // Двигаем трак только если он реально едет с грузом
@@ -2091,7 +2267,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
       const state = get();
       const saveData = {
-        version: 3,
+        version: 4,
         phase: state.phase,
         day: state.day,
         gameMinute: state.gameMinute,
@@ -2132,7 +2308,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       const saveData = JSON.parse(saved);
 
       // Сбрасываем старые сохранения без версии или с устаревшей версией
-      if (!saveData.version || saveData.version < 3) {
+      if (!saveData.version || saveData.version < 4) {
         localStorage.removeItem('dispatcher-game-save');
         console.log('🔄 Old save detected, resetting...');
         return false;
@@ -2183,7 +2359,14 @@ export const useGameStore = create<GameState>((set, get) => ({
           ...t,
           // Сбрасываем outOfOrderUntil если оно устарело или некорректно
           outOfOrderUntil: (t.outOfOrderUntil && t.outOfOrderUntil > saveData.gameMinute) ? t.outOfOrderUntil : 0,
-          idleWarningLevel: t.idleWarningLevel ?? 0,
+          // Если трак был в поломке — восстанавливаем в idle (новая смена = свежий старт)
+          status: t.status === 'breakdown' ? 'idle' : t.status,
+          // Восстанавливаем HOS и настроение до нормы
+          hoursLeft: Math.max(t.hoursLeft ?? 11, 8),
+          mood: Math.max(t.mood ?? 75, 70),
+          // Сбрасываем idle счётчик — чтобы не было красного с первой секунды
+          idleSinceMinute: saveData.gameMinute,
+          idleWarningLevel: 0,
         })),
         availableLoads: saveData.availableLoads.length > 0 
           ? saveData.availableLoads.filter((l: any) => l.expiresAt > saveData.gameMinute)
