@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'rea
 import { Colors } from '../constants/colors';
 import { useGameStore, Notification, formatGameTime } from '../store/gameStore';
 // import BrokerCommunicationModal from './BrokerCommunicationModal';
-import DriverCommunicationModal from './DriverCommunicationModal';
 import { ThreadChatPopup } from './EmailPanel';
 
 interface Props {
@@ -221,18 +220,6 @@ export default function NotificationBell({ onNavigateToTrucks, onNavigateToLoads
           </View>
         </View>
       </Modal>
-
-      {/* Broker Communication Modal */}
-      <BrokerCommunicationModal
-        notification={selectedBrokerNotification}
-        onClose={() => setSelectedBrokerNotification(null)}
-      />
-
-      {/* Driver Communication Modal */}
-      <DriverCommunicationModal
-        notification={selectedDriverNotification}
-        onClose={() => setSelectedDriverNotification(null)}
-      />
 
       {/* Email/Chat Popup — открывается для любого уведомления */}
       {selectedEmailNotification && (

@@ -17,6 +17,7 @@ export default function HomeScreen() {
   const [nicknameInput, setNicknameInput] = useState('');
   const [error, setError] = useState('');
   const [hasSave, setHasSave] = useState(false);
+  const [loading, setLoading] = useState(false);
   const TRUCK_COUNT = 3;
 
   function checkSave() {
@@ -61,10 +62,15 @@ export default function HomeScreen() {
     else handleNewShift();
   }
 
-  function handleNewShift() {
-    startShift(TRUCK_COUNT, `${currentNickname} · ${TRUCK_COUNT} трака`);
-    setHasSave(false);
-    router.push('/game');
+  async function handleNewShift() {
+    setLoading(true);
+    try {
+      await startShift(TRUCK_COUNT, `${currentNickname} · ${TRUCK_COUNT} трака`);
+      setHasSave(false);
+      router.push('/game');
+    } finally {
+      setLoading(false);
+    }
   }
 
   // ─── LOGIN ───────────────────────────────────────────────────────────────
@@ -157,12 +163,12 @@ export default function HomeScreen() {
               </LinearGradient>
             </TouchableOpacity>
           )}
-          <TouchableOpacity style={s.newBtn} onPress={handleNewShift} activeOpacity={0.8}>
+          <TouchableOpacity style={s.newBtn} onPress={handleNewShift} activeOpacity={0.8} disabled={loading}>
             <LinearGradient colors={Colors.gradSuccess} style={s.actionBtnGrad} start={{x:0,y:0}} end={{x:1,y:1}}>
-              <Text style={s.actionBtnIcon}>🚀</Text>
+              <Text style={s.actionBtnIcon}>{loading ? '⏳' : '🚀'}</Text>
               <View>
-                <Text style={s.actionBtnTitle}>{hasSave ? 'Новая смена' : 'Начать игру'}</Text>
-                <Text style={s.actionBtnSub}>3 трака · стандарт</Text>
+                <Text style={s.actionBtnTitle}>{loading ? 'Загрузка...' : (hasSave ? 'Новая смена' : 'Начать игру')}</Text>
+                <Text style={s.actionBtnSub}>{loading ? 'Строим маршруты траков' : '3 трака · стандарт'}</Text>
               </View>
             </LinearGradient>
           </TouchableOpacity>
