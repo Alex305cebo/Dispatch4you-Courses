@@ -743,7 +743,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
 
       {/* Мини-легенда со статистикой — левый нижний угол */}
       <div style={{
-        position: "absolute", bottom: 12, left: 12,
+        position: "absolute", bottom: 8, left: 8,
         background: "rgba(10,22,40,0.92)", borderRadius: 12,
         border: "1px solid rgba(45,106,79,0.4)",
         padding: legendVisible ? "8px 12px" : "5px 10px",
@@ -1053,7 +1053,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
           }
           
           .map-legend {
-            bottom: 76px !important;
+            bottom: 8px !important;
             left: 8px !important;
             padding: 6px 8px !important;
             border-radius: 8px !important;
@@ -1112,7 +1112,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
           }
           .map-legend {
             font-size: 8px !important;
-            bottom: 76px !important;
+            bottom: 8px !important;
           }
         }
 
