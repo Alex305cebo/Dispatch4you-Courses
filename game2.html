@@ -274,7 +274,7 @@ input{font-family:inherit;outline:none}
 }
 .truck-strip::-webkit-scrollbar{display:none}
 .truck-card{
-  min-width:118px;flex-shrink:0;border-radius:12px;overflow:hidden;
+  flex:1;min-width:0;border-radius:12px;overflow:hidden;
   background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);
   cursor:pointer;transition:all 0.2s;
 }
@@ -358,9 +358,13 @@ input{font-family:inherit;outline:none}
 @media(max-width:900px){
   .right-panel{display:none}
   .bottom-tabs{display:flex}
-  .map-area{display:flex}
-  .map-area.mobile-active{display:flex}
-  .mobile-panel{display:none;overflow:hidden;flex-direction:column}
+  /* На мобильных game-body — стек, не flex-row */
+  .game-body{position:relative}
+  /* Карта скрыта по умолчанию, видна только с классом mobile-active */
+  .map-area{display:none}
+  .map-area.mobile-active{display:flex;width:100%;height:100%}
+  /* Панель занимает весь экран */
+  .mobile-panel{display:none;overflow:hidden;flex-direction:column;width:100%;flex:1}
 
   /* Компактный topbar */
   .topbar{height:40px;gap:6px;padding:0 8px}
@@ -375,7 +379,7 @@ input{font-family:inherit;outline:none}
 
   /* Компактный truck strip */
   .truck-strip{padding:4px 8px;gap:6px}
-  .truck-card{min-width:100px;border-radius:10px}
+  .truck-card{border-radius:10px}
   .truck-card-bar{height:2px}
   .truck-card-body{padding:4px 7px;gap:2px}
   .truck-card-name{font-size:12px}
@@ -405,7 +409,7 @@ input{font-family:inherit;outline:none}
 
   /* Ещё компактнее truck strip */
   .truck-strip{padding:3px 6px;gap:4px}
-  .truck-card{min-width:88px;border-radius:8px}
+  .truck-card{border-radius:8px}
   .truck-card-body{padding:3px 5px;gap:1px}
   .truck-card-name{font-size:11px}
   .truck-card-status{font-size:9px}
@@ -1192,6 +1196,7 @@ input{font-family:inherit;outline:none}
       <div class="panel-tabs">
         <button class="panel-tab on" data-tab="loadboard">Грузы <span class="tab-badge" id="badge-loads">0</span></button>
         <button class="panel-tab" data-tab="email">Почта <span class="tab-badge" id="badge-email" style="display:none">0</span></button>
+        <button class="panel-tab" data-tab="myloads">Мои <span class="tab-badge" id="badge-myloads" style="display:none">0</span></button>
         <button class="panel-tab" data-tab="trucks">Траки <span class="tab-badge" id="badge-idle" style="display:none">0</span></button>
       </div>
       <div class="panel-content" id="panel-content"></div>
@@ -1269,6 +1274,17 @@ input{font-family:inherit;outline:none}
       <button class="modal-close" onclick="closeModal('modal-event')">✕</button>
     </div>
     <div class="modal-body" id="modal-event-body"></div>
+  </div>
+</div>
+
+<!-- HOS GRAPH MODAL -->
+<div class="modal-overlay" id="modal-hos">
+  <div class="modal-box" style="max-width:460px">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-hos-title">HOS Status</div>
+      <button class="modal-close" onclick="closeModal('modal-hos')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-hos-body"></div>
   </div>
 </div>
 
@@ -3865,6 +3881,13 @@ function updateBadges() {
     emailB.style.display = unread > 0 ? 'inline-block' : 'none';
   }
 
+  const myLoadsB = document.getElementById('badge-myloads');
+  const myLoadsCount = G.bookedLoads.length + G.activeLoads.length;
+  if (myLoadsB) {
+    myLoadsB.textContent = myLoadsCount;
+    myLoadsB.style.display = myLoadsCount > 0 ? 'inline-block' : 'none';
+  }
+
   const idleB = document.getElementById('badge-idle');
   const idle = G.trucks.filter(t => t.status === 'idle').length;
   if (idleB) {
@@ -3893,6 +3916,7 @@ function renderPanel(tab) {
 
   if (currentTab === 'loadboard') content.innerHTML = renderLoadBoard();
   else if (currentTab === 'email') content.innerHTML = renderEmailPanel();
+  else if (currentTab === 'myloads') content.innerHTML = renderMyLoadsPanel();
   else if (currentTab === 'trucks') content.innerHTML = renderTrucksPanel();
 
   attachPanelEvents();
@@ -4102,10 +4126,25 @@ function refreshLoadBoard() {
 function switchTab(tab) {
   currentTab = tab;
   renderPanel(tab);
+  // Sync desktop panel tabs
+  document.querySelectorAll('.panel-tab').forEach(btn => {
+    btn.classList.toggle('on', btn.dataset.tab === tab);
+  });
   // Sync bottom tabs
   document.querySelectorAll('.bottom-tab').forEach(btn => {
     btn.classList.toggle('on', btn.dataset.tab === tab);
   });
+  // На мобильных — показываем панель, скрываем карту
+  const mapArea = document.getElementById('map-area');
+  const mp = document.getElementById('mobile-panel');
+  if (mapArea && mp) {
+    mapArea.classList.remove('mobile-active');
+    mp.style.display = 'flex';
+    mp.innerHTML = currentTab === 'loadboard' ? renderLoadBoard()
+      : currentTab === 'email' ? renderEmailPanel()
+      : renderTrucksPanel();
+    attachPanelEvents();
+  }
 }
 
 // Найти груз для конкретного трака — предзаполняет поиск городом трака
@@ -4244,16 +4283,21 @@ function showTruckDetail(truck) {
   const color = getTruckColor(truck);
   const hos = Math.max(0, truck.hoursLeft);
   const hosColor = hos < 2 ? '#f87171' : hos < 4 ? '#fbbf24' : '#34d399';
+  const pct = Math.round(truck.progress * 100);
 
   document.getElementById('modal-truck-title').textContent = truck.name;
-  document.getElementById('modal-truck-body').innerHTML = `
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+  document.getElementById('modal-truck-body').innerHTML =
+    `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
       <div style="font-size:36px">🚛</div>
-      <div>
+      <div style="flex:1">
         <div style="font-size:18px;font-weight:800;color:#fff">${truck.name}</div>
         <div style="font-size:13px;color:var(--text-muted)">👤 ${truck.driver}</div>
         <div style="font-size:12px;font-weight:700;color:${color};margin-top:2px">${STATUS_LABEL[truck.status]}</div>
       </div>
+      <button onclick="closeModal('modal-truck-detail');showHOSGraph('${truck.id}')"
+        style="padding:8px 12px;border-radius:10px;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.25);font-size:12px;font-weight:700;color:var(--primary);cursor:pointer">
+        ⏱ HOS
+      </button>
     </div>
     <div class="truck-detail-stats">
       <div class="truck-stat-card">
@@ -4272,19 +4316,33 @@ function showTruckDetail(truck) {
         <div class="truck-stat-label">ДОСТАВОК</div>
         <div class="truck-stat-val">${truck.totalDeliveries}</div>
       </div>
-    </div>
-    ${truck.currentLoad ? `
-      <div style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);border-radius:12px;padding:12px;margin-bottom:12px">
-        <div style="font-size:13px;font-weight:700;color:var(--success);margin-bottom:6px">📦 Текущий груз</div>
-        <div style="font-size:15px;font-weight:800;color:#fff">${truck.currentLoad.fromCity} → ${truck.currentLoad.toCity}</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${truck.currentLoad.commodity} · $${truck.currentLoad.agreedRate.toLocaleString()} · ${Math.round(truck.progress*100)}% выполнено</div>
-      </div>` : `
-      <div style="background:rgba(100,116,139,0.1);border:1px solid rgba(100,116,139,0.2);border-radius:12px;padding:12px;margin-bottom:12px;text-align:center">
-        <div style="color:var(--text-dim);font-size:13px">Нет активного груза</div>
-        <button class="btn-find-load" style="margin-top:8px" onclick="closeModal('modal-truck-detail');findLoadForTruck('${truck.id}')">🔍 Найти груз</button>
-      </div>`}
-    <div style="font-size:11px;color:var(--text-dim)">Всего миль: ${truck.totalMiles.toLocaleString()} · HOS нарушений: ${truck.hosViolations}</div>
-    ${truck.currentLoad ? `<button style="width:100%;margin-top:12px;padding:10px;border-radius:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);font-size:13px;font-weight:700;color:var(--danger)" onclick="closeModal('modal-truck-detail');showCancelLoadModal(G.trucks.find(t=>t.id==='${truck.id}').currentLoad)">🚫 Отменить груз</button>` : ''}`;
+    </div>` +
+    (truck.currentLoad
+      ? `<div style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);border-radius:12px;padding:12px;margin-bottom:12px">
+          <div style="font-size:13px;font-weight:700;color:var(--success);margin-bottom:6px">📦 Текущий груз</div>
+          <div style="font-size:15px;font-weight:800;color:#fff">${truck.currentLoad.fromCity} → ${truck.currentLoad.toCity}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${truck.currentLoad.commodity} · $${truck.currentLoad.agreedRate.toLocaleString()} · ${pct}% выполнено</div>
+          <div style="margin-top:8px;height:6px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#34d399,#4ade80);border-radius:3px"></div>
+          </div>
+        </div>`
+      : `<div style="background:rgba(100,116,139,0.1);border:1px solid rgba(100,116,139,0.2);border-radius:12px;padding:12px;margin-bottom:12px;text-align:center">
+          <div style="color:var(--text-dim);font-size:13px">Нет активного груза</div>
+          <button class="btn-find-load" style="margin-top:8px" onclick="closeModal('modal-truck-detail');findLoadForTruck('${truck.id}')">🔍 Найти груз</button>
+        </div>`) +
+    `<div style="font-size:11px;color:var(--text-dim);margin-bottom:10px">Всего миль: ${truck.totalMiles.toLocaleString()} · HOS нарушений: ${truck.hosViolations}</div>
+    <div style="display:flex;gap:8px">
+      <button onclick="closeModal('modal-truck-detail');showHOSGraph('${truck.id}')"
+        style="flex:1;padding:10px;border-radius:10px;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.2);font-size:13px;font-weight:700;color:var(--primary);cursor:pointer">
+        ⏱ HOS График
+      </button>` +
+    (truck.currentLoad
+      ? `<button onclick="closeModal('modal-truck-detail');showCancelLoadModal(G.trucks.find(t=>t.id==='${truck.id}').currentLoad)"
+          style="flex:1;padding:10px;border-radius:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);font-size:13px;font-weight:700;color:var(--danger);cursor:pointer">
+          🚫 Отменить груз
+        </button>`
+      : '') +
+    `</div>`;
 
   openModal('modal-truck-detail');
 }
@@ -4413,8 +4471,178 @@ function dismissDelivery() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// SHIFT END
+// HOS GRAPH
 // ═══════════════════════════════════════════════════════════════════
+function showHOSGraph(truckId) {
+  const truck = G.trucks.find(t => t.id === truckId);
+  if (!truck) return;
+
+  const hos = Math.max(0, truck.hoursLeft);
+  const drivingLimit = 11, onDutyLimit = 14, restRequired = 10;
+  const drivingUsed = Math.max(0, drivingLimit - hos);
+  const onDutyUsed = Math.min(onDutyLimit, drivingUsed + 1.5);
+  const statusColor = hos >= 4 ? '#34d399' : hos >= 2 ? '#fbbf24' : '#f87171';
+  const statusLabel = hos >= 4 ? '✅ Compliant' : hos >= 2 ? '⚠️ Running Low' : '🚨 Critical';
+
+  function bar(label, used, total) {
+    const pct = Math.min(100, (used / total) * 100);
+    const rem = Math.max(0, total - used);
+    const c = rem >= 4 ? '#34d399' : rem >= 2 ? '#fbbf24' : '#f87171';
+    return `<div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px">
+        <span style="font-size:13px;font-weight:700;color:#fff">${label}</span>
+        <span style="font-size:13px;font-weight:800;color:${c}">${used.toFixed(1)}h / ${total}h</span>
+      </div>
+      <div style="height:18px;border-radius:9px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);overflow:hidden;position:relative">
+        <div style="height:100%;width:${pct}%;border-radius:9px;background:linear-gradient(90deg,${c}cc,${c});transition:width 0.4s ease"></div>
+        <span style="position:absolute;right:8px;top:0;bottom:0;display:flex;align-items:center;font-size:11px;font-weight:800;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.5)">${rem.toFixed(1)}h left</span>
+      </div>
+    </div>`;
+  }
+
+  const el = document.getElementById('modal-hos-body');
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div>
+        <div style="font-size:18px;font-weight:900;color:#fff">⏱ HOS Status</div>
+        <div style="font-size:13px;color:#94a3b8;font-weight:600;margin-top:2px">${truck.name} · ${truck.driver}</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin-bottom:18px;background:${statusColor}0a;border:1px solid ${statusColor}22">
+      <span style="font-size:14px;font-weight:800;color:${statusColor}">${statusLabel}</span>
+      <span style="margin-left:auto;font-size:13px;font-weight:800;color:${statusColor}">${hos.toFixed(1)}h available</span>
+    </div>
+    ${bar('🚛 Driving (11h limit)', drivingUsed, drivingLimit)}
+    ${bar('📋 On-Duty (14h limit)', onDutyUsed, onDutyLimit)}
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px">
+        <span style="font-size:13px;font-weight:700;color:#fff">😴 Required Rest (10h)</span>
+        <span style="font-size:13px;font-weight:800;color:var(--primary)">10h required</span>
+      </div>
+      <div style="height:18px;border-radius:9px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);overflow:hidden">
+        <div style="height:100%;width:${Math.min(100, (drivingUsed / drivingLimit) * 100)}%;border-radius:9px;background:linear-gradient(90deg,var(--primary)cc,var(--primary))"></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px">
+      <div style="background:${truck.hosViolations > 0 ? 'rgba(248,113,113,0.08)' : 'rgba(52,211,153,0.08)'};border:1px solid ${truck.hosViolations > 0 ? 'rgba(248,113,113,0.2)' : 'rgba(52,211,153,0.2)'};border-radius:12px;padding:10px 12px">
+        <div style="font-size:12px;color:#94a3b8;font-weight:600;margin-bottom:4px">⚠️ Violations</div>
+        <div style="font-size:20px;font-weight:900;color:${truck.hosViolations > 0 ? '#f87171' : '#34d399'}">${truck.hosViolations}</div>
+      </div>
+      <div style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.2);border-radius:12px;padding:10px 12px">
+        <div style="font-size:12px;color:#94a3b8;font-weight:600;margin-bottom:4px">📊 Safety Score</div>
+        <div style="font-size:20px;font-weight:900;color:${truck.safetyScore >= 95 ? '#34d399' : '#fbbf24'}">${truck.safetyScore}%</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px 12px">
+        <div style="font-size:12px;color:#94a3b8;font-weight:600;margin-bottom:4px">🛣 Total Miles</div>
+        <div style="font-size:16px;font-weight:900;color:#fff">${truck.totalMiles.toLocaleString()}</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px 12px">
+        <div style="font-size:12px;color:#94a3b8;font-weight:600;margin-bottom:4px">📦 Deliveries</div>
+        <div style="font-size:16px;font-weight:900;color:#fff">${truck.totalDeliveries}</div>
+      </div>
+    </div>
+    <div style="margin-top:16px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06)">
+      <div style="font-size:12px;color:#94a3b8;line-height:1.5">
+        <span style="font-weight:700;color:#fff">FMCSA Rules:</span>
+        11h driving / 14h on-duty window / 10h consecutive rest required. 30-min break after 8h driving.
+      </div>
+    </div>`;
+
+  document.getElementById('modal-hos-title').textContent = truck.name + ' — HOS';
+  openModal('modal-hos');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MY LOADS PANEL
+// ═══════════════════════════════════════════════════════════════════
+function renderMyLoadsPanel() {
+  const unassigned = G.bookedLoads.filter(l => !l.truckId);
+  const active = G.activeLoads;
+
+  let html = `<div style="padding:10px">`;
+
+  // Шапка
+  html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 2px;margin-bottom:10px">
+    <span style="font-size:13px;font-weight:800;color:#fff">📦 Мои грузы</span>
+    <span style="font-size:11px;color:var(--text-dim)">${unassigned.length} ждут · ${active.length} в работе</span>
+  </div>`;
+
+  // Ожидают назначения
+  if (unassigned.length > 0) {
+    html += `<div style="font-size:10px;font-weight:700;color:var(--warning);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">⏳ Ожидают водителя (${unassigned.length})</div>`;
+    unassigned.forEach(load => {
+      html += `<div style="background:rgba(249,115,22,0.04);border:1px solid rgba(249,115,22,0.3);border-radius:14px;padding:12px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:15px;font-weight:900;color:#fff">${load.fromCity} → ${load.toCity}</span>
+          <span style="font-size:16px;font-weight:900;color:var(--success)">$${load.agreedRate.toLocaleString()}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${load.commodity} · ${load.miles} mi · ${load.equipment}</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">Брокер: ${load.brokerName} @ ${load.brokerCompany}</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="openAssignModal(G.bookedLoads.find(l=>l.id==='${load.id}'))"
+            style="flex:1;padding:9px;border-radius:10px;background:var(--primary);border:none;font-size:13px;font-weight:800;color:#fff;cursor:pointer">
+            🚛 Назначить водителя
+          </button>
+          <button onclick="cancelBookedLoad('${load.id}')"
+            style="padding:9px 12px;border-radius:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);font-size:13px;font-weight:700;color:var(--danger);cursor:pointer">
+            🚫
+          </button>
+        </div>
+      </div>`;
+    });
+  }
+
+  // В работе
+  if (active.length > 0) {
+    html += `<div style="font-size:10px;font-weight:700;color:var(--success);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;margin-top:${unassigned.length > 0 ? '8px' : '0'}">🚛 В работе (${active.length})</div>`;
+    active.forEach(load => {
+      const truck = G.trucks.find(t => t.id === load.truckId);
+      const pct = truck ? Math.round(truck.progress * 100) : 0;
+      const phaseLabel = { to_pickup:'🔵 Едет к погрузке', loading:'🟡 Грузится', to_delivery:'🟢 Везёт груз', unloading:'🟣 Разгружается', done:'✅ Доставлено' };
+      html += `<div style="background:rgba(52,211,153,0.03);border:1px solid rgba(52,211,153,0.2);border-radius:14px;padding:12px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:15px;font-weight:900;color:#fff">${load.fromCity} → ${load.toCity}</span>
+          <span style="font-size:16px;font-weight:900;color:var(--success)">$${load.agreedRate.toLocaleString()}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">${load.commodity} · ${load.miles} mi</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:12px;font-weight:700;color:#e2e8f0">${phaseLabel[load.phase] || load.phase}</span>
+          ${truck ? `<span style="font-size:11px;color:var(--primary)">🚛 ${truck.name} · ${truck.driver}</span>` : ''}
+        </div>
+        ${truck && (truck.status === 'driving' || truck.status === 'loaded') ? `
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;height:4px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#34d399,#4ade80);border-radius:2px"></div>
+          </div>
+          <span style="font-size:10px;color:var(--text-dim);width:28px">${pct}%</span>
+        </div>` : ''}
+      </div>`;
+    });
+  }
+
+  if (unassigned.length === 0 && active.length === 0) {
+    html += `<div style="text-align:center;padding:40px 20px">
+      <div style="font-size:40px;margin-bottom:8px">📋</div>
+      <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:4px">Нет грузов</div>
+      <div style="font-size:12px;color:var(--text-dim)">Найди груз на Load Board и договорись с брокером</div>
+    </div>`;
+  }
+
+  html += '</div>';
+  return html;
+}
+
+function cancelBookedLoad(loadId) {
+  const load = G.bookedLoads.find(l => l.id === loadId);
+  if (!load) return;
+  G.bookedLoads = G.bookedLoads.filter(l => l.id !== loadId);
+  G.availableLoads.push({ ...load, agreedRate: load.postedRate, truckId: null });
+  updateBadges();
+  renderPanel();
+  showToast('🚫 Груз отменён', 'warning');
+}
+
+
 function showShiftEnd() {
   const net = G.totalEarned - G.totalLost;
   const perTruck = net / G.trucks.length;
@@ -4495,6 +4723,10 @@ function showScreen(name) {
   const el = document.getElementById('screen-' + name);
   if (el) el.classList.add('active');
   if (name === 'game') {
+    // На мобильных — карта активна по умолчанию
+    const mapArea = document.getElementById('map-area');
+    if (mapArea) mapArea.classList.add('mobile-active');
+    document.querySelectorAll('.bottom-tab').forEach(b => b.classList.toggle('on', b.dataset.tab === 'map'));
     // Первый вызов — быстро
     setTimeout(() => { initMap(); renderPanel(); renderTruckStrip(); renderTopBar(); updateBadges(); }, 50);
     // Второй вызов — после полного рендера DOM
@@ -4565,16 +4797,12 @@ function startShift(truckCount, sessionName) {
   saveGame();
   showScreen('game');
   
-  // Показываем Morning Briefing, а часы запускаем после его завершения
   setTimeout(() => { initMap(); renderPanel(); renderTruckStrip(); renderTopBar(); updateBadges(); }, 100);
   setTimeout(() => { renderMap(); if (window._startMapAnim) window._startMapAnim(); }, 300);
   
-  // Show Morning Briefing
-  setTimeout(() => { showMorningBriefing(); }, 500);
-  
-  // Брифинг — после отрисовки карты
+  // Morning Briefing — запускаем часы после закрытия
   setTimeout(() => {
-    openBriefing(() => {
+    showMorningBriefing(() => {
       startClock();
       showToast('🚀 Смена началась! Удачи, диспетчер!', 'success');
     });
@@ -4676,17 +4904,18 @@ function initGameControls() {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
 
-  // Bottom tabs (mobile)
+  // Bottom tabs (mobile) — единственный обработчик
   document.querySelectorAll('.bottom-tab').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.bottom-tab').forEach(b => b.classList.toggle('on', b === btn));
       const tab = btn.dataset.tab;
+      const mapArea = document.getElementById('map-area');
+      const mp = document.getElementById('mobile-panel');
       if (tab === 'map') {
-        document.getElementById('map-area').classList.add('mobile-active');
-        document.getElementById('mobile-panel').style.display = 'none';
+        mapArea.classList.add('mobile-active');
+        mp.style.display = 'none';
       } else {
-        document.getElementById('map-area').classList.remove('mobile-active');
-        const mp = document.getElementById('mobile-panel');
+        mapArea.classList.remove('mobile-active');
         mp.style.display = 'flex';
         currentTab = tab;
         mp.innerHTML = currentTab === 'loadboard' ? renderLoadBoard()
@@ -4730,41 +4959,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (Account.nickname) {
     showMenu();
   }
-
-  // Мобильные табы
-  document.querySelectorAll('.bottom-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      const tabName = tab.dataset.tab;
-      
-      // Переключаем активный таб
-      document.querySelectorAll('.bottom-tab').forEach(t => t.classList.remove('on'));
-      tab.classList.add('on');
-      
-      // Показываем нужный контент
-      const mapArea = document.getElementById('map-area');
-      const mobilePanel = document.getElementById('mobile-panel');
-      
-      if (tabName === 'map') {
-        mapArea.classList.add('mobile-active');
-        mobilePanel.style.display = 'none';
-      } else {
-        mapArea.classList.remove('mobile-active');
-        mobilePanel.style.display = 'flex';
-        
-        // Загружаем контент в мобильную панель
-        const panelContent = document.getElementById('panel-content');
-        mobilePanel.innerHTML = panelContent.innerHTML;
-        
-        // Переключаем таб в десктопной панели тоже
-        document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('on'));
-        const desktopTab = document.querySelector(`.panel-tab[data-tab="${tabName}"]`);
-        if (desktopTab) {
-          desktopTab.classList.add('on');
-          desktopTab.click();
-        }
-      }
-    });
-  });
 
   // Инициализация карты
   if (typeof initMap === 'function') {

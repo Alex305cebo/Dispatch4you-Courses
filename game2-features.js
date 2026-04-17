@@ -27,8 +27,11 @@ const MB_WEATHER_ALERTS = [
 
 let _mbStep = 0;
 
-function showMorningBriefing() {
+let _mbOnComplete = null;
+
+function showMorningBriefing(onComplete) {
   _mbStep = 0;
+  _mbOnComplete = onComplete || null;
   renderMorningBriefingStep();
   openModal('modal-morning-briefing');
 }
@@ -148,6 +151,7 @@ function renderMBTasks() {
 function nextMBStep() {
   if (_mbStep >= MB_STEPS.length - 1) {
     closeModal('modal-morning-briefing');
+    if (_mbOnComplete) { _mbOnComplete(); _mbOnComplete = null; }
     return;
   }
   _mbStep++;
@@ -156,6 +160,7 @@ function nextMBStep() {
 
 function skipMorningBriefing() {
   closeModal('modal-morning-briefing');
+  if (_mbOnComplete) { _mbOnComplete(); _mbOnComplete = null; }
 }
 
 // ═══════════════════════════════════════════════════════════════════
