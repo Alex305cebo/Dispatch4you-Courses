@@ -734,11 +734,15 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
       <div style={{
         position: "absolute", bottom: 12, left: 12,
         background: "rgba(10,22,40,0.92)", borderRadius: 12,
-        border: "1px solid rgba(45,106,79,0.4)", padding: legendVisible ? "8px 12px" : "5px 10px",
+        border: "1px solid rgba(45,106,79,0.4)",
+        padding: legendVisible ? "8px 12px" : "5px 10px",
         display: "flex", flexDirection: "column", gap: 4,
         fontFamily: "sans-serif", pointerEvents: "auto",
         transition: "padding 0.2s, opacity 0.6s ease",
         opacity: legendVisible ? 1 : 0.85,
+        overflow: "hidden",
+        maxWidth: 180,
+        minWidth: legendVisible ? 160 : 0,
       } as any} className="map-legend">
         {/* Toggle кнопка */}
         <div
@@ -801,7 +805,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
         {/* Surge legend */}
         {surgeStates.length > 0 && (
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: 4, paddingTop: 6 } as any}>
-            <div style={{ fontSize: 9, color: "#ff6b35", fontWeight: 700 } as any}>
+            <div style={{ fontSize: 9, color: "#ff6b35", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } as any}>
               🔥 Surge: {surgeStates.join(", ")}
             </div>
           </div>
