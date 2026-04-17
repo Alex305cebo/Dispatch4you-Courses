@@ -37,6 +37,8 @@ import ShiftEndPopup from '../components/ShiftEndPopup';
 import StatsPopup from '../components/StatsPopup';
 import SettingsPopup from '../components/SettingsPopup';
 import HelpPopup from '../components/HelpPopup';
+import WelcomePopup, { shouldShowWelcome } from '../components/WelcomePopup';
+import { useAccountStore } from '../store/accountStore';
 
 type Tab = 'map' | 'loadboard' | 'email' | 'trucks';
 
@@ -96,6 +98,8 @@ export default function GameScreen() {
   const [showEmail, setShowEmail] = useState(false);
   const [detailTruck, setDetailTruck] = useState<any>(null);
   const [showStats, setShowStats] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const { currentNickname } = useAccountStore();
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -114,6 +118,21 @@ export default function GameScreen() {
   useEffect(() => {
     clockRef.current = setInterval(() => tickClock(), 1000);
     return () => { if (clockRef.current) clearInterval(clockRef.current); };
+  }, []);
+
+  // Welcome popup + плавный zoom на Knoxville при первом запуске
+  useEffect(() => {
+    if (!shouldShowWelcome()) return;
+    // t=1.5s — медленный zoom на Knoxville
+    const zoomTimer = setTimeout(() => {
+      const knoxville = { lng: -83.9207, lat: 35.9606 };
+      window.dispatchEvent(new CustomEvent('zoomToTruck', {
+        detail: { ...knoxville, slow: true }
+      }));
+    }, 1500);
+    // t=5s — показываем popup
+    const popupTimer = setTimeout(() => setShowWelcome(true), 5000);
+    return () => { clearTimeout(zoomTimer); clearTimeout(popupTimer); };
   }, []);
   useEffect(() => {
     // Автосохранение каждые 30 секунд
@@ -512,9 +531,30 @@ export default function GameScreen() {
       )}
 
       {/* ── MODALS ── */}
+      {showWelcome && (
+        <WelcomePopup
+          nickname={currentNickname || 'Dispatcher'}
+          onClose={() => setShowWelcome(false)}
+        />
+      )}
       {negotiation.open && <ErrorBoundary name="Neg"><NegotiationModal onAssign={setPendingLoad} /></ErrorBoundary>}
       {pendingLoad && !negotiation.open && (
-        <ErrorBoundary name="Assign"><AssignModal load={pendingLoad} onClose={() => setPendingLoad(null)} /></ErrorBoundary>
+        <ErrorBoundary name="Assign"><AssignModal
+          load={pendingLoad}
+          onClose={() => setPendingLoad(null)}
+          onAssigned={(truckId) => {
+            const truck = trucks.find(t => t.id === truckId);
+            if (truck) {
+              selectTruck(truckId);
+              switchTab('map');
+              setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('zoomToTruck', {
+                  detail: { lng: truck.position[0], lat: truck.position[1] }
+                }));
+              }, 300);
+            }
+          }}
+        /></ErrorBoundary>
       )}
       {detailTruck && (
         <TruckDetailModal truck={detailTruck} onClose={() => setDetailTruck(null)}

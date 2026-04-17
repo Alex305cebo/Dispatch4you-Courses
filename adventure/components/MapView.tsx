@@ -648,8 +648,16 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
     zoomControl.homeButton.set("visible", true);
 
     function handleZoomToTruck(e: Event) {
-      const { lng, lat } = (e as CustomEvent).detail;
-      chart.zoomToGeoPoint({ longitude: lng, latitude: lat }, 5, true);
+      const { lng, lat, slow } = (e as CustomEvent).detail;
+      if (slow) {
+        // Плавный zoom: сначала отдаляемся, потом медленно приближаемся
+        chart.zoomToGeoPoint({ longitude: -90, latitude: 38 }, 1.2, true);
+        setTimeout(() => {
+          chart.zoomToGeoPoint({ longitude: lng, latitude: lat }, 5, true);
+        }, 1200);
+      } else {
+        chart.zoomToGeoPoint({ longitude: lng, latitude: lat }, 5, true);
+      }
     }
     window.addEventListener('zoomToTruck', handleZoomToTruck);
 
@@ -740,9 +748,8 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
         fontFamily: "sans-serif", pointerEvents: "auto",
         transition: "padding 0.2s, opacity 0.6s ease",
         opacity: legendVisible ? 1 : 0.85,
-        overflow: "hidden",
-        maxWidth: 180,
-        minWidth: legendVisible ? 160 : 0,
+        maxWidth: 175,
+        zIndex: 100,
       } as any} className="map-legend">
         {/* Toggle кнопка */}
         <div
@@ -1047,14 +1054,10 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
             left: 8px !important;
             padding: 6px 8px !important;
             border-radius: 8px !important;
-            max-width: calc(100vw - 16px);
-          }
-          .map-legend > div {
-            font-size: 9px !important;
+            max-width: 160px !important;
           }
           .map-legend > div > div {
-            width: 6px !important;
-            height: 6px !important;
+            font-size: 9px !important;
           }
           
           .map-toasts {
@@ -1106,6 +1109,15 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
           }
           .map-legend {
             font-size: 8px !important;
+            bottom: 76px !important;
+          }
+        }
+
+        /* Десктоп — легенда строго внизу */
+        @media (min-width: 769px) {
+          .map-legend {
+            bottom: 12px !important;
+            left: 12px !important;
           }
         }
       `}</style>

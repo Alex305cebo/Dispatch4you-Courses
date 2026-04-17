@@ -429,29 +429,28 @@ const INITIAL_LOAD_6: ActiveLoad = {
 
 const INITIAL_TRUCKS: Truck[] = [
   {
-    // T1 — едет с грузом к delivery
     id: 'T1', name: 'Truck 1047', driver: 'John Martinez',
-    status: 'loaded', position: CITIES['Chicago'],
-    currentCity: 'Chicago', destinationCity: 'Dallas',
-    progress: 0.15, currentLoad: INITIAL_LOAD_1, hoursLeft: 11, mood: 90, routePath: null,
+    status: 'idle', position: CITIES['Knoxville'],
+    currentCity: 'Knoxville', destinationCity: null,
+    progress: 0, currentLoad: null, hoursLeft: 11, mood: 100, routePath: null,
     safetyScore: 95, fuelEfficiency: 6.8, onTimeRate: 98, complianceRate: 100,
     totalMiles: 45230, totalDeliveries: 156, hosViolations: 0, lastInspection: 0,
-  },
+    idleSinceMinute: 0,
+  } as any,
   {
-    // T2 — едет с грузом к delivery
     id: 'T2', name: 'Truck 2023', driver: 'Carlos Rivera',
-    status: 'loaded', position: CITIES['Atlanta'],
-    currentCity: 'Atlanta', destinationCity: 'New York',
-    progress: 0.2, currentLoad: INITIAL_LOAD_2, hoursLeft: 9, mood: 85, routePath: null,
+    status: 'idle', position: CITIES['Knoxville'],
+    currentCity: 'Knoxville', destinationCity: null,
+    progress: 0, currentLoad: null, hoursLeft: 11, mood: 100, routePath: null,
     safetyScore: 92, fuelEfficiency: 7.1, onTimeRate: 96, complianceRate: 98,
-    totalMiles: 38450, totalDeliveries: 142, hosViolations: 1, lastInspection: 0,
-  },
+    totalMiles: 38450, totalDeliveries: 142, hosViolations: 0, lastInspection: 0,
+    idleSinceMinute: 0,
+  } as any,
   {
-    // T3 — свободен, только что разгрузился — ищет груз
     id: 'T3', name: 'Truck 3012', driver: 'Mike Chen',
-    status: 'idle', position: CITIES['Denver'],
-    currentCity: 'Denver', destinationCity: null,
-    progress: 0, currentLoad: null, hoursLeft: 11, mood: 95, routePath: null,
+    status: 'idle', position: CITIES['Knoxville'],
+    currentCity: 'Knoxville', destinationCity: null,
+    progress: 0, currentLoad: null, hoursLeft: 11, mood: 100, routePath: null,
     safetyScore: 98, fuelEfficiency: 7.3, onTimeRate: 99, complianceRate: 100,
     totalMiles: 52100, totalDeliveries: 178, hosViolations: 0, lastInspection: 0,
     idleSinceMinute: 0,
@@ -902,24 +901,24 @@ export const useGameStore = create<GameState>((set, get) => ({
     const initialEmails: Notification[] = [
       {
         id: 'INIT-EMAIL-1',
-        type: 'rate_con',
-        from: 'Sarah (QuickLoad)',
-        subject: 'Rate Con готов',
-        message: 'Rate Con на груз Chicago → Houston подписан. Проверь детали.',
-        minute: -65,
+        type: 'email',
+        from: 'Tom (FastFreight LLC)',
+        subject: '👋 Привет! Есть груз из Knoxville',
+        message: `Привет!\n\nЯ Tom из FastFreight. Слышал, у тебя траки в Knoxville, TN?\n\nЕсть отличный груз:\nKnoxville, TN → Atlanta, GA\n$1,850 · 180 mi · Dry Van\nPickup сегодня 9:00 AM\n\nЕсли интересует — открой Load Board, найди груз и назначь трак. Работаем!`,
+        minute: -5,
         read: false,
-        priority: 'medium',
+        priority: 'high',
         actionRequired: true,
       },
       {
         id: 'INIT-EMAIL-2',
         type: 'email',
-        from: 'Tom (FastFreight)',
-        subject: 'Новый груз — Dallas → Atlanta',
-        message: 'Есть груз Dallas → Atlanta, $2,400, 781 mi. Dry Van. Pickup сегодня 10:00. Интересует?',
-        minute: -30,
+        from: 'Sarah (QuickLoad Inc)',
+        subject: '📋 Добро пожаловать в смену!',
+        message: `Доброе утро!\n\nЯ Sarah, твой брокер из QuickLoad.\n\nСегодня хороший рынок в Tennessee и Georgia — ставки выше нормы на 10-15%.\n\nЕсли нужна помощь с грузом — пиши. Удачной смены! 🚛`,
+        minute: -2,
         read: false,
-        priority: 'medium',
+        priority: 'low',
         actionRequired: false,
       },
     ];
@@ -1409,15 +1408,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       return truck;
     }));
 
-    // Убираем истёкшие грузы
+    // Убираем истёкшие грузы (но не добавляем новые автоматически)
     const freshLoads = availableLoads.filter(l => l.expiresAt > newMinute);
-
-    // Добавляем новые грузы каждые 6 минут или если мало
-    const shouldAddLoads = Math.floor(newMinute / 6) > Math.floor(gameMinute / 6);
-    const tooFewLoads = freshLoads.length < 80;
-    const newLoads = (shouldAddLoads || tooFewLoads)
-      ? generateLoads(newMinute).slice(0, tooFewLoads ? 40 : 20)
-      : [];
+    const newLoads: any[] = [];
 
     // Генерация случайных уведомлений
     if (Math.random() < 0.02) { // 2% шанс каждую минуту

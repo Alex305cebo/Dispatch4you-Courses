@@ -244,20 +244,19 @@ export default function LoadBoardPanel({ onNegotiate }: Props) {
   const [deadheadRadius, setDeadheadRadius] = useState<number | null>(null);
   const [chatLoad, setChatLoad] = useState<LoadOffer | null>(null);
   const [pendingLoad, setPendingLoad] = useState<ActiveLoad | null>(null);
-  const [countdown, setCountdown] = useState(5);
+  const [countdown, setCountdown] = useState<number | null>(null);
   const countdownRef = useRef<any>(null);
 
-  function startCountdown() {
-    setCountdown(5);
+  function handleRefresh() {
+    refreshLoadBoard();
+    // Показываем анимацию "обновлено" на 2 секунды
+    setCountdown(2);
     if (countdownRef.current) clearInterval(countdownRef.current);
     countdownRef.current = setInterval(() => {
       setCountdown(prev => {
-        if (prev <= 1) {
+        if (prev === null || prev <= 1) {
           clearInterval(countdownRef.current);
-          refreshLoadBoard();
-          // restart
-          setTimeout(() => startCountdown(), 100);
-          return 5;
+          return null;
         }
         return prev - 1;
       });
@@ -265,7 +264,6 @@ export default function LoadBoardPanel({ onNegotiate }: Props) {
   }
 
   useEffect(() => {
-    startCountdown();
     return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
   }, []);
 
@@ -354,9 +352,9 @@ export default function LoadBoardPanel({ onNegotiate }: Props) {
             {isFiltering ? `${filteredLoads.length} из ${availableLoads.length}` : availableLoads.length} грузов · {availableTrucks}/{totalTrucks} доступно
           </Text>
         </View>
-        <TouchableOpacity style={styles.refreshBtn} onPress={() => { refreshLoadBoard(); startCountdown(); }}>
+        <TouchableOpacity style={styles.refreshBtn} onPress={handleRefresh}>
           <Text style={styles.refreshIcon}>🔄</Text>
-          <Text style={styles.refreshCountdown}>{countdown}s</Text>
+          <Text style={styles.refreshCountdown}>{countdown !== null ? `${countdown}s` : '↺'}</Text>
         </TouchableOpacity>
       </View>
 

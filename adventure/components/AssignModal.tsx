@@ -6,9 +6,10 @@ import { useGameStore, ActiveLoad } from '../store/gameStore';
 interface Props {
   load: ActiveLoad;
   onClose: () => void;
+  onAssigned?: (truckId: string) => void;
 }
 
-export default function AssignModal({ load, onClose }: Props) {
+export default function AssignModal({ load, onClose, onAssigned }: Props) {
   const { trucks, assignLoadToTruck } = useGameStore();
   // Включаем траки которые скоро освободятся
   const availableTrucks = trucks.filter(t => 
@@ -18,6 +19,7 @@ export default function AssignModal({ load, onClose }: Props) {
   async function handleAssign(truckId: string) {
     await assignLoadToTruck(load, truckId);
     onClose();
+    onAssigned?.(truckId);
   }
 
   return (
