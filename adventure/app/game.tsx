@@ -421,11 +421,18 @@ export default function GameScreen() {
         const isSelected = selectedTruckId === truck.id;
         const isMoving = truck.status === 'driving' || truck.status === 'loaded';
         const isAlert = (truck as any).idleWarningLevel > 0 || truck.status === 'breakdown';
-        const name = truck.name.replace('Truck ', 'T');
         const progressPct = Math.round(truck.progress * 100);
         const mood = truck.mood ?? 80;
-        const avatar = getDriverAvatar(truck.id);
         const moodEmoji = getMoodEmoji(mood, truck.status);
+        // Номер трака: из id берём цифры → TRK 345
+        const truckNum = truck.id.replace(/\D/g, '').padStart(3, '0').slice(-3);
+        // Трейлер: детерминированный по id
+        const trailerNum = String((parseInt(truckNum) * 7 + 100) % 900 + 100);
+        // Имя + первая буква фамилии: "John M."
+        const nameParts = (truck.driver || truck.name).split(' ');
+        const driverName = nameParts.length >= 2
+          ? `${nameParts[0]} ${nameParts[1][0]}.`
+          : nameParts[0];
 
         return (
           <div key={truck.id}
@@ -450,15 +457,27 @@ export default function GameScreen() {
             } as any} />
 
             <div style={{ padding: '7px 9px', display: 'flex', flexDirection: 'column', gap: 3 } as any}>
-              {/* Имя + Telegram animated emoji */}
+              {/* Имя водителя + emoji */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' } as any}>
-                <span style={{ fontSize: 13, fontWeight: 900, color: '#fff', letterSpacing: 0.3 } as any}>{name}</span>
+                <span style={{ fontSize: 12, fontWeight: 800, color: '#fff', letterSpacing: 0.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 80 } as any}>
+                  {driverName}
+                </span>
                 <img
                   src={moodEmoji}
-                  width={28} height={28}
+                  width={26} height={26}
                   title={`Настроение: ${mood}%`}
                   style={{ imageRendering: 'auto', flexShrink: 0 } as any}
                 />
+              </div>
+
+              {/* TRK + TRL номера */}
+              <div style={{ display: 'flex', gap: 5, alignItems: 'center' } as any}>
+                <span style={{ fontSize: 9, fontWeight: 700, color: '#38bdf8', background: 'rgba(56,189,248,0.12)', padding: '1px 5px', borderRadius: 4 } as any}>
+                  TRK {truckNum}
+                </span>
+                <span style={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: 4 } as any}>
+                  TRL {trailerNum}
+                </span>
               </div>
 
               {/* Статус */}
