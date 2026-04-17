@@ -9,6 +9,8 @@ interface Props {
   onNavigateToTrucks?: () => void;
   onNavigateToLoads?: () => void;
   onNavigateToEvents?: () => void;
+  forceOpen?: boolean;
+  onClose?: () => void;
 }
 
 // ─── Компонент одного уведомления ────────────────────────────────────────────
@@ -50,7 +52,7 @@ function NotifItem({ notif, onPress, getIcon, getPriorityColor }: {
   );
 }
 
-export default function NotificationBell({ onNavigateToTrucks, onNavigateToLoads, onNavigateToEvents }: Props) {
+export default function NotificationBell({ onNavigateToTrucks, onNavigateToLoads, onNavigateToEvents, forceOpen, onClose }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedBrokerNotification, setSelectedBrokerNotification] = useState<Notification | null>(null);
   const [selectedDriverNotification, setSelectedDriverNotification] = useState<Notification | null>(null);
@@ -105,24 +107,15 @@ export default function NotificationBell({ onNavigateToTrucks, onNavigateToLoads
     return colors[priority];
   };
 
+  const open = isOpen || !!forceOpen;
+  const handleClose = () => { setIsOpen(false); onClose?.(); };
+
   return (
     <>
-      {/* Bell Button */}
-      <TouchableOpacity
-        style={styles.bellBtn}
-        onPress={() => setIsOpen(true)}
-        activeOpacity={0.85}
-      >
-        <Text style={styles.bellIcon}>🔔</Text>
-        {unreadCount > 0 && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
-          </View>
-        )}
-      </TouchableOpacity>
+      {/* Bell Button — скрыта, управляется из TopBar */}
 
       {/* Notification Panel */}
-      <Modal transparent animationType="fade" visible={isOpen} onRequestClose={() => setIsOpen(false)}>
+      <Modal transparent animationType="fade" visible={open} onRequestClose={handleClose}>
         <View style={styles.overlay}>
           <View style={styles.panel}>
             {/* Header */}
@@ -137,7 +130,7 @@ export default function NotificationBell({ onNavigateToTrucks, onNavigateToLoads
                     <Text style={styles.markAllText}>✓ Все</Text>
                   </TouchableOpacity>
                 )}
-                <TouchableOpacity onPress={() => setIsOpen(false)} style={styles.closeBtn}>
+                <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
                   <Text style={styles.closeBtnText}>✕</Text>
                 </TouchableOpacity>
               </View>

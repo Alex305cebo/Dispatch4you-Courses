@@ -649,17 +649,23 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
 
     function handleZoomToTruck(e: Event) {
       const { lng, lat, slow, mobile } = (e as CustomEvent).detail;
+      // Если координаты не переданы — зумим на центр всех траков
+      const targetLng = lng ?? (trucksRef.current.length > 0
+        ? trucksRef.current.reduce((s, t) => s + t.position[0], 0) / trucksRef.current.length
+        : -83.9207);
+      const targetLat = lat ?? (trucksRef.current.length > 0
+        ? trucksRef.current.reduce((s, t) => s + t.position[1], 0) / trucksRef.current.length
+        : 35.9606);
+
       if (mobile) {
-        // Мобильный: быстрый zoom ближе
-        chart.zoomToGeoPoint({ longitude: lng, latitude: lat }, 6, true);
+        chart.zoomToGeoPoint({ longitude: targetLng, latitude: targetLat }, 6, true);
       } else if (slow) {
-        // Десктоп медленный: сначала отдаляемся, потом плавно приближаемся
         chart.zoomToGeoPoint({ longitude: -90, latitude: 38 }, 1.2, true);
         setTimeout(() => {
-          chart.zoomToGeoPoint({ longitude: lng, latitude: lat }, 4, true);
+          chart.zoomToGeoPoint({ longitude: targetLng, latitude: targetLat }, 4, true);
         }, 1200);
       } else {
-        chart.zoomToGeoPoint({ longitude: lng, latitude: lat }, 5, true);
+        chart.zoomToGeoPoint({ longitude: targetLng, latitude: targetLat }, 5, true);
       }
     }
     window.addEventListener('zoomToTruck', handleZoomToTruck);
@@ -673,9 +679,16 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
     // Автозум при первом открытии на мобильном (ширина < 900px)
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 900;
     if (isMobile) {
-      // Knoxville, TN — стартовый город
       setTimeout(() => {
-        chart.zoomToGeoPoint({ longitude: -83.9207, latitude: 35.9606 }, 5, true);
+        // Зумим на центр траков
+        const ts = trucksRef.current;
+        if (ts.length > 0) {
+          const avgLng = ts.reduce((s, t) => s + t.position[0], 0) / ts.length;
+          const avgLat = ts.reduce((s, t) => s + t.position[1], 0) / ts.length;
+          chart.zoomToGeoPoint({ longitude: avgLng, latitude: avgLat }, 5, true);
+        } else {
+          chart.zoomToGeoPoint({ longitude: -83.9207, latitude: 35.9606 }, 5, true);
+        }
       }, 800);
     }
 

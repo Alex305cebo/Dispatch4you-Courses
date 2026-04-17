@@ -96,6 +96,8 @@ export default function GameScreen() {
   const [showEvents, setShowEvents] = useState(false);
   const [showMyLoads, setShowMyLoads] = useState(false);
   const [showEmail, setShowEmail] = useState(false);
+  const [showBell, setShowBell] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const [detailTruck, setDetailTruck] = useState<any>(null);
   const [showStats, setShowStats] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
@@ -121,17 +123,23 @@ export default function GameScreen() {
     return () => { if (mapBtnTimerRef.current) clearInterval(mapBtnTimerRef.current); };
   }, []);
 
+  function getTrucksCenter() {
+    if (trucks.length === 0) return { lng: -83.9207, lat: 35.9606 }; // Knoxville fallback
+    const avgLng = trucks.reduce((s, t) => s + t.position[0], 0) / trucks.length;
+    const avgLat = trucks.reduce((s, t) => s + t.position[1], 0) / trucks.length;
+    return { lng: avgLng, lat: avgLat };
+  }
+
   function handleMapTabPress() {
     switchTab('map');
     startMapBtnTimer();
-    // Плавный zoom на траки
-    const knoxville = { lng: -83.9207, lat: 35.9606 };
+    const center = getTrucksCenter();
     const isMobileDevice = width < 900;
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent('zoomToTruck', {
-        detail: { ...knoxville, slow: !isMobileDevice, mobile: isMobileDevice }
+        detail: { ...center, slow: !isMobileDevice, mobile: isMobileDevice }
       }));
-    }, 100);
+    }, 150);
   }
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -153,14 +161,13 @@ export default function GameScreen() {
     return () => { if (clockRef.current) clearInterval(clockRef.current); };
   }, []);
 
-  // Welcome popup + плавный zoom на Knoxville при первом запуске
+  // Welcome popup + плавный zoom на траки при первом запуске
   useEffect(() => {
     if (!shouldShowWelcome()) return;
-    // t=1.5s — медленный zoom на Knoxville
+    // t=1.5s — медленный zoom на центр траков
     const zoomTimer = setTimeout(() => {
-      const knoxville = { lng: -83.9207, lat: 35.9606 };
       window.dispatchEvent(new CustomEvent('zoomToTruck', {
-        detail: { ...knoxville, slow: true }
+        detail: { slow: true } // lng/lat не передаём — MapView вычислит центр сам
       }));
     }, 1500);
     // t=5s — показываем popup
@@ -292,6 +299,7 @@ export default function GameScreen() {
         {/* Статы */}
         <div style={{ display: 'flex', gap: 6, flexShrink: 0 } as any}>
           {/* Баланс */}
+          {/* Баланс */}
           <div style={{
             padding: '5px 10px',
             background: balance >= 0
@@ -357,21 +365,35 @@ export default function GameScreen() {
 
         {/* Действия */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 } as any}>
-          <NotificationBell
-            onNavigateToTrucks={() => switchTab('trucks')}
-            onNavigateToLoads={() => switchTab('email')}
-            onNavigateToEvents={() => setShowEvents(true)}
-          />
-          <GameMenu
-            onOpenFleet={() => setShowFleet(true)}
-            onOpenCompliance={() => setShowCompliance(true)}
-            onOpenEvents={() => setShowEvents(true)}
-            onOpenMyLoads={() => setShowMyLoads(true)}
-            onOpenStats={() => setShowStats(true)}
-            onOpenSettings={() => setShowSettings(true)}
-            onOpenHelp={() => setShowHelp(true)}
-            onExit={() => { if (clockRef.current) clearInterval(clockRef.current); }}
-          />
+          {/* Колокольчик */}
+          <button onClick={() => setShowBell(true)} style={{
+            position: 'relative', width: 42, height: 42, borderRadius: 21,
+            background: 'rgba(6,182,212,0.15)', border: '1px solid rgba(6,182,212,0.3)',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 20,
+          } as any}>
+            🔔
+            {unreadEmails > 0 && (
+              <span style={{
+                position: 'absolute', top: -4, right: -4,
+                background: '#ef4444', borderRadius: 12, minWidth: 20, height: 20,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 10, fontWeight: 800, color: '#fff', padding: '0 4px',
+                border: '2px solid #0a0f1e',
+              } as any}>{unreadEmails > 9 ? '9+' : unreadEmails}</span>
+            )}
+          </button>
+          {/* Гамбургер */}
+          <button onClick={() => setShowMenu(true)} style={{
+            width: 42, height: 42, borderRadius: 12,
+            background: 'rgba(56,189,248,0.1)', border: '1.5px solid rgba(56,189,248,0.3)',
+            cursor: 'pointer', display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', gap: 5, padding: 10,
+          } as any}>
+            {[0,1,2].map(i => (
+              <span key={i} style={{ width: 20, height: 2.5, background: '#38bdf8', borderRadius: 2, display: 'block' } as any} />
+            ))}
+          </button>
         </div>
 
         <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }`}</style>
@@ -631,6 +653,26 @@ export default function GameScreen() {
       {showStats && <StatsPopup onClose={() => setShowStats(false)} />}
       {showSettings && <SettingsPopup onClose={() => setShowSettings(false)} />}
       {showHelp && <HelpPopup onClose={() => setShowHelp(false)} />}
+      {/* Колокольчик и меню — вне TopBar div чтобы Modal работал корректно */}
+      <NotificationBell
+        onNavigateToTrucks={() => switchTab('trucks')}
+        onNavigateToLoads={() => switchTab('email')}
+        onNavigateToEvents={() => setShowEvents(true)}
+        forceOpen={showBell}
+        onClose={() => setShowBell(false)}
+      />
+      <GameMenu
+        forceOpen={showMenu}
+        onClose={() => setShowMenu(false)}
+        onOpenFleet={() => setShowFleet(true)}
+        onOpenCompliance={() => setShowCompliance(true)}
+        onOpenEvents={() => setShowEvents(true)}
+        onOpenMyLoads={() => setShowMyLoads(true)}
+        onOpenStats={() => setShowStats(true)}
+        onOpenSettings={() => setShowSettings(true)}
+        onOpenHelp={() => setShowHelp(true)}
+        onExit={() => { if (clockRef.current) clearInterval(clockRef.current); }}
+      />
     </View>
   );
 }

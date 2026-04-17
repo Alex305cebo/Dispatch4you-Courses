@@ -13,17 +13,18 @@ interface GameMenuProps {
   onOpenSettings?: () => void;
   onOpenHelp?: () => void;
   onExit?: () => void;
+  forceOpen?: boolean;
+  onClose?: () => void;
 }
 
-export default function GameMenu({ onOpenFleet, onOpenCompliance, onOpenEvents, onOpenMyLoads, onOpenStats, onOpenSettings, onOpenHelp, onExit }: GameMenuProps) {
+export default function GameMenu({ onOpenFleet, onOpenCompliance, onOpenEvents, onOpenMyLoads, onOpenStats, onOpenSettings, onOpenHelp, onExit, forceOpen, onClose }: GameMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const { gameMinute, balance, reputation, trucks, activeLoads, bookedLoads, activeEvents } = useGameStore();
 
+  const open = isOpen || !!forceOpen;
   const handleOpen = () => setIsOpen(true);
-  const handleClose = () => {
-    setIsOpen(false);
-  };
+  const handleClose = () => { setIsOpen(false); onClose?.(); };
 
   const activeTrucks = trucks.filter(t => t.status === 'driving' || t.status === 'loaded').length;
   const totalLoads = bookedLoads.length + activeLoads.length;
@@ -85,20 +86,11 @@ export default function GameMenu({ onOpenFleet, onOpenCompliance, onOpenEvents, 
 
   return (
     <>
-      {/* Hamburger Button */}
-      <TouchableOpacity 
-        style={styles.hamburger} 
-        onPress={handleOpen}
-        activeOpacity={0.7}
-      >
-        <View style={styles.hamburgerLine} />
-        <View style={styles.hamburgerLine} />
-        <View style={styles.hamburgerLine} />
-      </TouchableOpacity>
+      {/* Hamburger Button — скрыта, управляется из TopBar */}
 
       {/* Menu Modal */}
       <Modal
-        visible={isOpen}
+        visible={open}
         transparent
         animationType="fade"
         onRequestClose={handleClose}

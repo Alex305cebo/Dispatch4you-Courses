@@ -410,11 +410,7 @@ export default function EmailPanel({ visible, onClose, inline }: { visible?: boo
   if (inline) {
     return (
       <>
-        <Modal visible animationType="fade" transparent onRequestClose={() => {}}>
-          <View style={s.overlay}>
-            <View style={s.sheet}>{listContent}</View>
-          </View>
-        </Modal>
+        <View style={{ flex: 1, backgroundColor: '#0d1f35', overflow: 'hidden' } as any}>{listContent}</View>
         {selectedThread && (
           <ThreadChat thread={selectedThread} onClose={() => setSelectedThread(null)} />
         )}
