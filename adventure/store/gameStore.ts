@@ -979,6 +979,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   tickClock: async () => {
+    if (get().phase !== 'playing') return; // не тикаем если смена завершена
     const { gameMinute, trucks, availableLoads, activeLoads, timeSpeed } = get();
     // 1 день = 20 реальных минут = 1200 тиков
     // 1 тик = 1440/1200 = 1.2 игровых минуты
@@ -1552,137 +1553,192 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   triggerRandomEvent: () => {
-    const { trucks, activeLoads } = get();
+    const { trucks, activeLoads, gameMinute } = get();
     const drivingTrucks = trucks.filter(t => t.status === 'driving' || t.status === 'loaded');
+    const allActiveTrucks = trucks.filter(t => t.status !== 'idle');
     
-    if (drivingTrucks.length === 0) return; // Нет траков в пути — нечего ломать
+    if (allActiveTrucks.length === 0) return;
     
-    const eventTypes = [
-      'breakdown', 'detention', 'driver_question', 'weather_delay', 
-      'inspection', 'fuel_issue', 'broker_call', 'rate_increase'
+    // Взвешенные вероятности — частые события чаще
+    const eventPool = [
+      'driver_question', 'driver_question', 'driver_question',
+      'broker_call', 'broker_call',
+      'detention', 'detention',
+      'weather_delay', 'weather_delay',
+      'inspection',
+      'fuel_issue',
+      'breakdown',
+      'rate_increase',
+      'tire_blowout',
+      'traffic_jam',
+      'shipper_closed',
     ];
     
-    const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
-    const truck = drivingTrucks[Math.floor(Math.random() * drivingTrucks.length)];
+    const eventType = eventPool[Math.floor(Math.random() * eventPool.length)];
+    const truck = drivingTrucks.length > 0
+      ? drivingTrucks[Math.floor(Math.random() * drivingTrucks.length)]
+      : allActiveTrucks[Math.floor(Math.random() * allActiveTrucks.length)];
     
     switch (eventType) {
-      case 'breakdown':
+      case 'breakdown': {
+        // Реальная поломка — трак останавливается
+        const repairCost = 300 + Math.floor(Math.random() * 700);
+        const updatedTrucks = trucks.map(t =>
+          t.id === truck.id ? { ...t, status: 'breakdown' as any, outOfOrderUntil: gameMinute + 60 + Math.floor(Math.random() * 120) } : t
+        );
+        set({ trucks: updatedTrucks });
+        get().removeMoney(repairCost, `Ремонт ${truck.name} — поломка двигателя`);
         get().addNotification({
-          type: 'text',
-          priority: 'critical',
-          from: truck.driver,
-          subject: '🚨 Поломка трака',
-          message: `${truck.name} сломался! Двигатель перегрелся. Нужна техпомощь или ремонт. Что делать?`,
-          actionRequired: true,
-          relatedTruckId: truck.id,
+          type: 'text', priority: 'critical', from: truck.driver,
+          subject: '🚨 Поломка трака!',
+          message: `${truck.name} сломался возле ${truck.currentCity}! Двигатель перегрелся. Вызвал техпомощь, ремонт ~$${repairCost}. Простой 1-3 часа.`,
+          actionRequired: true, relatedTruckId: truck.id,
+        });
+        window.dispatchEvent(new CustomEvent('mapToast', { detail: { message: `🚨 ${truck.name} сломался!`, color: '#ef4444' } }));
+        break;
+      }
+        
+      case 'tire_blowout': {
+        const cost = 200 + Math.floor(Math.random() * 300);
+        get().removeMoney(cost, `Замена шины ${truck.name}`);
+        get().addNotification({
+          type: 'text', priority: 'high', from: truck.driver,
+          subject: '💥 Пробило колесо',
+          message: `Пробило шину на трассе. Уже меняю, задержка ~40 минут. Стоимость: $${cost}.`,
+          actionRequired: false, relatedTruckId: truck.id,
+        });
+        window.dispatchEvent(new CustomEvent('mapToast', { detail: { message: `💥 ${truck.name} — пробило колесо`, color: '#f97316' } }));
+        break;
+      }
+        
+      case 'detention': {
+        const hours = 2 + Math.floor(Math.random() * 3);
+        const detentionPay = hours * 50;
+        get().addNotification({
+          type: 'text', priority: 'high', from: truck.driver,
+          subject: '⏰ Detention',
+          message: `Жду на ${truck.currentLoad?.fromCity || truck.currentCity} уже ${hours} часов. Detention $${detentionPay}. Требовать оплату у брокера?`,
+          actionRequired: true, relatedTruckId: truck.id,
         });
         break;
+      }
         
-      case 'detention':
-        get().addNotification({
-          type: 'text',
-          priority: 'high',
-          from: truck.driver,
-          subject: '⏰ Задержка на погрузке',
-          message: `Жду на ${truck.currentLoad?.fromCity || truck.currentCity} уже 3 часа. Detention начался. Требовать оплату?`,
-          actionRequired: true,
-          relatedTruckId: truck.id,
-        });
-        break;
-        
-      case 'driver_question':
+      case 'driver_question': {
         const questions = [
           'Где остановиться на ночь? HOS заканчивается через 2 часа.',
-          'Груз тяжелее чем в BOL. Везти или отказаться?',
+          'Груз тяжелее чем в BOL на 800 lbs. Везти или отказаться?',
           'На весах показали перегруз 500 фунтов. Что делать?',
           'Шиппер просит подписать дополнительные документы. Подписывать?',
+          'Ресивер закрыт, охранник говорит приезжать завтра. Что делать?',
+          'Lumper fee $250 — шиппер говорит мы платим. Правда?',
+          'GPS показывает объезд +40 миль. Ехать по GPS или по старому маршруту?',
         ];
         get().addNotification({
-          type: 'text',
-          priority: 'medium',
-          from: truck.driver,
+          type: 'text', priority: 'medium', from: truck.driver,
           subject: '❓ Вопрос водителя',
           message: questions[Math.floor(Math.random() * questions.length)],
-          actionRequired: true,
-          relatedTruckId: truck.id,
+          actionRequired: true, relatedTruckId: truck.id,
         });
         break;
+      }
         
-      case 'weather_delay':
+      case 'weather_delay': {
+        const delays = [
+          { weather: 'Сильный снегопад', hours: 2 },
+          { weather: 'Ледяной дождь', hours: 3 },
+          { weather: 'Торнадо предупреждение', hours: 1 },
+          { weather: 'Густой туман', hours: 1 },
+        ];
+        const d = delays[Math.floor(Math.random() * delays.length)];
         get().addNotification({
-          type: 'text',
-          priority: 'medium',
-          from: truck.driver,
-          subject: '🌨️ Погода',
-          message: 'Сильный снегопад. Дорога закрыта. Жду когда откроют. Задержка ~2 часа.',
-          actionRequired: false,
-          relatedTruckId: truck.id,
+          type: 'text', priority: 'medium', from: truck.driver,
+          subject: `🌨️ ${d.weather}`,
+          message: `${d.weather} на маршруте. Дорога опасна. Задержка ~${d.hours} часа.`,
+          actionRequired: false, relatedTruckId: truck.id,
         });
+        window.dispatchEvent(new CustomEvent('mapToast', { detail: { message: `🌨️ ${truck.name} — ${d.weather}`, color: '#5ac8fa' } }));
         break;
+      }
         
-      case 'inspection':
+      case 'inspection': {
+        const passed = Math.random() > 0.3;
+        const fine = passed ? 0 : 250 + Math.floor(Math.random() * 500);
+        if (!passed) {
+          get().removeMoney(fine, `Штраф DOT инспекция — ${truck.name}`);
+          const updatedTrucks = trucks.map(t =>
+            t.id === truck.id ? { ...t, safetyScore: Math.max(50, (t.safetyScore || 100) - 5), hosViolations: (t.hosViolations || 0) + 1 } : t
+          );
+          set({ trucks: updatedTrucks });
+        }
         get().addNotification({
-          type: 'text',
-          priority: 'high',
-          from: truck.driver,
-          subject: '🚔 DOT инспекция',
-          message: 'Остановили на весах. Проверяют документы и трак. Жду результата.',
-          actionRequired: false,
-          relatedTruckId: truck.id,
+          type: 'text', priority: 'high', from: truck.driver,
+          subject: passed ? '🚔 DOT инспекция — ОК' : '🚔 DOT инспекция — ШТРАФ!',
+          message: passed
+            ? 'Остановили на весах. Всё чисто, отпустили через 20 минут.'
+            : `Инспекция нашла нарушение. Штраф $${fine}. Safety score снижен.`,
+          actionRequired: false, relatedTruckId: truck.id,
         });
         break;
+      }
         
       case 'fuel_issue':
         get().addNotification({
-          type: 'text',
-          priority: 'medium',
-          from: truck.driver,
+          type: 'text', priority: 'medium', from: truck.driver,
           subject: '⛽ Топливо',
-          message: 'Топливная карта не работает. Заправиться за наличные или ждать?',
-          actionRequired: true,
-          relatedTruckId: truck.id,
+          message: 'Топливная карта не работает на этой заправке. Заправиться за наличные ($180) или искать другую?',
+          actionRequired: true, relatedTruckId: truck.id,
         });
         break;
         
-      case 'broker_call':
+      case 'traffic_jam':
+        get().addNotification({
+          type: 'text', priority: 'low', from: truck.driver,
+          subject: '🚗 Пробка',
+          message: `Пробка на I-${Math.floor(Math.random() * 95) + 5}. Задержка ~45 минут. Навигатор ищет объезд.`,
+          actionRequired: false, relatedTruckId: truck.id,
+        });
+        break;
+        
+      case 'shipper_closed':
+        get().addNotification({
+          type: 'text', priority: 'high', from: truck.driver,
+          subject: '🔒 Шиппер закрыт',
+          message: `Приехал на ${truck.currentLoad?.fromCity || truck.currentCity} — ворота закрыты, никого нет. Звоню брокеру. Что делать?`,
+          actionRequired: true, relatedTruckId: truck.id,
+        });
+        break;
+        
+      case 'broker_call': {
         const brokerNames = ['Tom (FastFreight)', 'Sarah (LoadMax)', 'Mike (FreightPro)', 'Lisa (CargoLink)'];
         get().addNotification({
-          type: 'missed_call',
-          priority: 'medium',
+          type: 'missed_call', priority: 'medium',
           from: brokerNames[Math.floor(Math.random() * brokerNames.length)],
           subject: '📞 Пропущенный звонок',
           message: 'Брокер звонил 2 раза. Возможно срочный груз или вопрос по текущей доставке.',
           actionRequired: true,
         });
         break;
+      }
         
       case 'rate_increase':
         if (truck.currentLoad) {
           const bonus = 100 + Math.floor(Math.random() * 200);
           get().addNotification({
-            type: 'email',
-            priority: 'high',
+            type: 'email', priority: 'high',
             from: `${truck.currentLoad.brokerName} - ${truck.currentLoad.brokerCompany}`,
             subject: '💰 Повышение ставки!',
-            message: `Good news! Shipper increased the rate by ${bonus}. Your new total: ${(truck.currentLoad.agreedRate + bonus).toLocaleString()}`,
-            actionRequired: false,
-            relatedTruckId: truck.id,
-            relatedLoadId: truck.currentLoad.id,
+            message: `Good news! Shipper increased the rate by $${bonus}. Your new total: $${(truck.currentLoad.agreedRate + bonus).toLocaleString()}`,
+            actionRequired: false, relatedTruckId: truck.id, relatedLoadId: truck.currentLoad.id,
           });
-          // Обновляем ставку груза
           const updatedTrucks = trucks.map(t => {
             if (t.id === truck.id && t.currentLoad) {
-              return {
-                ...t,
-                currentLoad: {
-                  ...t.currentLoad,
-                  agreedRate: t.currentLoad.agreedRate + bonus,
-                },
-              };
+              return { ...t, currentLoad: { ...t.currentLoad, agreedRate: t.currentLoad.agreedRate + bonus } };
             }
             return t;
           });
           set({ trucks: updatedTrucks });
+          get().addMoney(bonus, `Rate increase — ${truck.name}`);
+          window.dispatchEvent(new CustomEvent('mapToast', { detail: { message: `💰 ${truck.name} +$${bonus} rate increase!`, color: '#30d158' } }));
         }
         break;
     }
@@ -1994,23 +2050,26 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   endShift: () => {
-    // Вместо завершения игры — начинаем новый день
     const state = get();
-    const newDay = (state.day || 1) + 1;
-    // Сбрасываем время на начало нового дня, обновляем HOS всех траков
-    const updatedTrucks = state.trucks.map(truck => ({
-      ...truck,
-      hoursLeft: 11, // HOS сброшен — новый день
-      // Если трак был на отдыхе — освобождаем
-      status: truck.status === 'waiting' ? 'idle' as any : truck.status,
-    }));
-    set({
-      phase: 'playing',  // остаёмся в игре — новый день
-      day: newDay,
-      gameMinute: 0,     // время сбрасывается на 08:00
-      trucks: updatedTrucks,
-    });
-    get().saveGame();
+    // Если мы уже на экране shift_end — значит нажали "Новая смена"
+    if (state.phase === 'shift_end') {
+      const newDay = (state.day || 1) + 1;
+      const updatedTrucks = state.trucks.map(truck => ({
+        ...truck,
+        hoursLeft: 11,
+        status: truck.status === 'waiting' ? 'idle' as any : truck.status,
+      }));
+      set({
+        phase: 'playing',
+        day: newDay,
+        gameMinute: 0,
+        trucks: updatedTrucks,
+      });
+      get().saveGame();
+      return;
+    }
+    // Первый вызов — показываем попап итогов
+    set({ phase: 'shift_end' });
   },
 
   saveGame: () => {

@@ -6,6 +6,7 @@ import {
 import { Colors } from '../constants/colors';
 import { useGameStore, LoadOffer, ActiveLoad } from '../store/gameStore';
 import { cityState } from '../constants/config';
+import BrokerProfileModal from './BrokerProfileModal';
 
 interface Props {
   onAssign: (load: ActiveLoad) => void;
@@ -20,6 +21,7 @@ export default function NegotiationModal({ onAssign }: Props) {
   const [chat, setChat] = useState<ChatMsg[]>([]);
   const [typing, setTyping] = useState(false);
   const [done, setDone] = useState(false);
+  const [showBrokerProfile, setShowBrokerProfile] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(300)).current;
@@ -137,6 +139,7 @@ export default function NegotiationModal({ onAssign }: Props) {
   const moodEmoji = { happy: '😊', neutral: '😐', annoyed: '😤', angry: '😠' }[negotiation.brokerMood];
 
   return (
+    <>
     <Modal transparent animationType="none" visible>
       <View style={styles.overlay}>
         <Animated.View style={[styles.modal, { transform: [{ translateY: slideAnim }, { translateX: shakeAnim }] }]}>
@@ -152,6 +155,9 @@ export default function NegotiationModal({ onAssign }: Props) {
                 <Text style={styles.brokerName}>{broker?.name}</Text>
                 <Text style={styles.brokerCompany}>{broker?.company}</Text>
               </View>
+              <TouchableOpacity onPress={() => setShowBrokerProfile(true)} style={{ padding: 4 }}>
+                <Text style={{ fontSize: 16 }}>ℹ️</Text>
+              </TouchableOpacity>
               <Text style={styles.moodEmoji}>{moodEmoji}</Text>
             </View>
             <TouchableOpacity onPress={() => { closeNegotiation(); }} style={styles.closeBtn}>
@@ -250,6 +256,8 @@ export default function NegotiationModal({ onAssign }: Props) {
         </Animated.View>
       </View>
     </Modal>
+    {showBrokerProfile && broker && <BrokerProfileModal broker={broker} onClose={() => setShowBrokerProfile(false)} />}
+    </>
   );
 }
 

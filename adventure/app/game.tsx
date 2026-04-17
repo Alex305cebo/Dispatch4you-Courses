@@ -33,6 +33,10 @@ import FleetOverview from '../components/FleetOverview';
 import GameMenu from '../components/GameMenu';
 import TruckDetailModal from '../components/TruckDetailModal';
 import DeliveryResultPopup from '../components/DeliveryResultPopup';
+import ShiftEndPopup from '../components/ShiftEndPopup';
+import StatsPopup from '../components/StatsPopup';
+import SettingsPopup from '../components/SettingsPopup';
+import HelpPopup from '../components/HelpPopup';
 
 type Tab = 'map' | 'loadboard' | 'email' | 'trucks';
 
@@ -78,6 +82,9 @@ export default function GameScreen() {
   const [showMyLoads, setShowMyLoads] = useState(false);
   const [showEmail, setShowEmail] = useState(false);
   const [detailTruck, setDetailTruck] = useState<any>(null);
+  const [showStats, setShowStats] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -109,7 +116,7 @@ export default function GameScreen() {
     window.addEventListener('beforeunload', fn);
     return () => window.removeEventListener('beforeunload', fn);
   }, []);
-  useEffect(() => { if (phase === 'shift_end') router.replace('/shift-end'); }, [phase]);
+  // shift_end теперь показывается как попап поверх карты (ShiftEndPopup)
 
   const progress = gameMinute / SHIFT_DURATION;
   const idleTrucks = trucks.filter(t => t.status === 'idle').length;
@@ -303,6 +310,9 @@ export default function GameScreen() {
             onOpenCompliance={() => setShowCompliance(true)}
             onOpenEvents={() => setShowEvents(true)}
             onOpenMyLoads={() => setShowMyLoads(true)}
+            onOpenStats={() => setShowStats(true)}
+            onOpenSettings={() => setShowSettings(true)}
+            onOpenHelp={() => setShowHelp(true)}
             onExit={() => { if (clockRef.current) clearInterval(clockRef.current); }}
           />
         </div>
@@ -503,6 +513,10 @@ export default function GameScreen() {
       {showMyLoads && <Modal onClose={() => setShowMyLoads(false)}><MyLoadsPanel /></Modal>}
       <EmailPanel visible={showEmail} onClose={() => setShowEmail(false)} />
       <DeliveryResultPopup key={deliveryResults[0]?.loadId ?? 'empty'} />
+      <ShiftEndPopup />
+      {showStats && <StatsPopup onClose={() => setShowStats(false)} />}
+      {showSettings && <SettingsPopup onClose={() => setShowSettings(false)} />}
+      {showHelp && <HelpPopup onClose={() => setShowHelp(false)} />}
     </View>
   );
 }

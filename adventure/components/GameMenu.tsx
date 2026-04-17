@@ -9,10 +9,13 @@ interface GameMenuProps {
   onOpenCompliance?: () => void;
   onOpenEvents?: () => void;
   onOpenMyLoads?: () => void;
+  onOpenStats?: () => void;
+  onOpenSettings?: () => void;
+  onOpenHelp?: () => void;
   onExit?: () => void;
 }
 
-export default function GameMenu({ onOpenFleet, onOpenCompliance, onOpenEvents, onOpenMyLoads, onExit }: GameMenuProps) {
+export default function GameMenu({ onOpenFleet, onOpenCompliance, onOpenEvents, onOpenMyLoads, onOpenStats, onOpenSettings, onOpenHelp, onExit }: GameMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const { gameMinute, balance, reputation, trucks, activeLoads, bookedLoads, activeEvents } = useGameStore();
@@ -57,19 +60,19 @@ export default function GameMenu({ onOpenFleet, onOpenCompliance, onOpenEvents, 
     { 
       icon: '📈', 
       label: 'Статистика', 
-      action: () => { handleClose(); /* TODO: открыть статистику */ },
+      action: () => { handleClose(); onOpenStats?.(); },
       color: Colors.success 
     },
     { 
       icon: '⚙️', 
       label: 'Настройки', 
-      action: () => { handleClose(); /* TODO: открыть настройки */ },
+      action: () => { handleClose(); onOpenSettings?.(); },
       color: Colors.textMuted 
     },
     { 
       icon: '❓', 
       label: 'Помощь', 
-      action: () => { handleClose(); /* TODO: открыть помощь */ },
+      action: () => { handleClose(); onOpenHelp?.(); },
       color: Colors.warning 
     },
     { 

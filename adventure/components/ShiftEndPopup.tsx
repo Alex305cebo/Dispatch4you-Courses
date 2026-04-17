@@ -1,0 +1,312 @@
+import React, { useEffect, useState } from 'react';
+import { useGameStore } from '../store/gameStore';
+import { Colors } from '../constants/colors';
+
+/* ── Грейд по прибыли на трак ── */
+function calcGrade(profit: number, truckCount: number) {
+  const perTruck = truckCount > 0 ? profit / truckCount : 0;
+  if (perTruck >= 4000) return { grade: 'S', color: '#fbbf24', emoji: '🏆', label: 'Легенда!' };
+  if (perTruck >= 2500) return { grade: 'A', color: '#30d158', emoji: '🥇', label: 'Отличная работа!' };
+  if (perTruck >= 1500) return { grade: 'B', color: '#0a84ff', emoji: '🥈', label: 'Хороший результат.' };
+  if (perTruck >= 500)  return { grade: 'C', color: '#ff9f0a', emoji: '🥉', label: 'Неплохо, но можно лучше.' };
+  return { grade: 'D', color: '#ff453a', emoji: '📚', label: 'Нужна практика.' };
+}
+
+export default function ShiftEndPopup() {
+  const {
+    phase, balance, totalEarned, totalLost, reputation, financeLog,
+    trucks, score, sessionName, day, startShift, endShift,
+  } = useGameStore();
+
+  const [show, setShow] = useState(false);
+  const [animStage, setAnimStage] = useState(0); // 0=hidden, 1=backdrop, 2=card, 3=content
+
+  useEffect(() => {
+    if (phase === 'shift_end') {
+      setShow(true);
+      setTimeout(() => setAnimStage(1), 50);
+      setTimeout(() => setAnimStage(2), 200);
+      setTimeout(() => setAnimStage(3), 500);
+    } else {
+      setAnimStage(0);
+      setTimeout(() => setShow(false), 400);
+    }
+  }, [phase]);
+
+  if (!show) return null;
+
+  const profit = totalEarned - totalLost;
+  const truckCount = trucks.length;
+  const { grade, color, emoji, label } = calcGrade(profit, truckCount);
+  const perTruck = truckCount > 0 ? Math.round(profit / truckCount) : 0;
+  const deliveries = trucks.reduce((sum, t) => sum + (t.totalDeliveries || 0), 0);
+  const totalMiles = trucks.reduce((sum, t) => sum + (t.totalMiles || 0), 0);
+
+  const incomes = financeLog.filter(f => f.type === 'income');
+  const expenses = financeLog.filter(f => f.type === 'expense');
+
+  const handleNewShift = () => {
+    endShift();
+  };
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9999,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    }}>
+
+      {/* BACKDROP */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'rgba(0,0,0,0.75)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        opacity: animStage >= 1 ? 1 : 0,
+        transition: 'opacity 0.4s ease',
+      } as any} />
+
+      {/* CARD */}
+      <div style={{
+        position: 'relative',
+        width: '90%', maxWidth: 480,
+        maxHeight: '90vh',
+        overflowY: 'auto',
+        background: 'linear-gradient(170deg, #1a1f2e 0%, #0d1117 50%, #0a0e16 100%)',
+        border: `1px solid ${color}33`,
+        borderRadius: 24,
+        boxShadow: `0 0 60px ${color}22, 0 25px 80px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06)`,
+        opacity: animStage >= 2 ? 1 : 0,
+        transform: animStage >= 2 ? 'scale(1) translateY(0)' : 'scale(0.85) translateY(30px)',
+        transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        scrollbarWidth: 'none',
+      } as any}>
+
+        {/* Glow top */}
+        <div style={{
+          position: 'absolute', top: -1, left: '10%', right: '10%', height: 2,
+          background: `linear-gradient(90deg, transparent, ${color}, transparent)`,
+          borderRadius: 2,
+        } as any} />
+
+        <div style={{ padding: '28px 24px 20px' }}>
+
+          {/* ── GRADE BADGE ── */}
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            opacity: animStage >= 3 ? 1 : 0,
+            transform: animStage >= 3 ? 'translateY(0)' : 'translateY(20px)',
+            transition: 'all 0.6s ease 0.1s',
+          } as any}>
+            <div style={{ fontSize: 48, marginBottom: 8, filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))' }}>{emoji}</div>
+            <div style={{
+              width: 72, height: 72, borderRadius: 36,
+              border: `3px solid ${color}`,
+              background: `radial-gradient(circle, ${color}20 0%, transparent 70%)`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: `0 0 30px ${color}33, inset 0 0 20px ${color}11`,
+              marginBottom: 12,
+            }}>
+              <span style={{ fontSize: 36, fontWeight: 900, color, textShadow: `0 0 20px ${color}88` }}>{grade}</span>
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', marginBottom: 4 }}>
+              Смена завершена!
+            </div>
+            <div style={{ fontSize: 14, color: Colors.textMuted, marginBottom: 6 }}>{label}</div>
+            <div style={{
+              fontSize: 12, color: '#5ac8fa', fontWeight: 700,
+              background: 'rgba(90,200,250,0.1)', padding: '4px 14px', borderRadius: 12,
+              border: '1px solid rgba(90,200,250,0.2)',
+            }}>
+              {sessionName || 'Сессия'} · День {day} · {truckCount} траков
+            </div>
+          </div>
+
+          {/* ── MAIN STATS GRID ── */}
+          <div style={{
+            display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
+            gap: 8, marginTop: 20,
+            opacity: animStage >= 3 ? 1 : 0,
+            transform: animStage >= 3 ? 'translateY(0)' : 'translateY(15px)',
+            transition: 'all 0.5s ease 0.3s',
+          } as any}>
+            {[
+              { label: 'Доход', value: `$${totalEarned.toLocaleString()}`, clr: Colors.success },
+              { label: 'Расходы', value: `-$${totalLost.toLocaleString()}`, clr: Colors.danger },
+              { label: 'На трак', value: `$${perTruck.toLocaleString()}`, clr: color },
+            ].map((s, i) => (
+              <div key={i} style={{
+                background: `${s.clr}0a`, border: `1px solid ${s.clr}22`,
+                borderRadius: 14, padding: '10px 8px', textAlign: 'center',
+              } as any}>
+                <div style={{ fontSize: 10, color: Colors.textMuted, fontWeight: 600, marginBottom: 4 }}>{s.label}</div>
+                <div style={{ fontSize: 16, fontWeight: 900, color: s.clr }}>{s.value}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── PROFIT BAR ── */}
+          <div style={{
+            marginTop: 14, padding: '14px 16px',
+            background: profit >= 0
+              ? 'linear-gradient(135deg, rgba(48,209,88,0.08), rgba(48,209,88,0.02))'
+              : 'linear-gradient(135deg, rgba(255,69,58,0.08), rgba(255,69,58,0.02))',
+            border: `1px solid ${profit >= 0 ? 'rgba(48,209,88,0.2)' : 'rgba(255,69,58,0.2)'}`,
+            borderRadius: 16,
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            opacity: animStage >= 3 ? 1 : 0,
+            transition: 'all 0.5s ease 0.4s',
+          } as any}>
+            <span style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>💰 Чистая прибыль</span>
+            <span style={{
+              fontSize: 22, fontWeight: 900,
+              color: profit >= 0 ? Colors.success : Colors.danger,
+              textShadow: `0 0 20px ${profit >= 0 ? Colors.successGlow : Colors.dangerGlow}`,
+            }}>{profit >= 0 ? '+' : ''}${profit.toLocaleString()}</span>
+          </div>
+
+          {/* ── SECONDARY STATS ── */}
+          <div style={{
+            display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr',
+            gap: 6, marginTop: 12,
+            opacity: animStage >= 3 ? 1 : 0,
+            transition: 'all 0.5s ease 0.45s',
+          } as any}>
+            {[
+              { label: 'Репутация', value: `${reputation}%`, clr: reputation > 70 ? Colors.success : Colors.warning },
+              { label: 'Очки', value: score.toString(), clr: Colors.primary },
+              { label: 'Доставки', value: deliveries.toString(), clr: '#5ac8fa' },
+              { label: 'Мили', value: totalMiles.toLocaleString(), clr: Colors.purple },
+            ].map((s, i) => (
+              <div key={i} style={{
+                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+                borderRadius: 10, padding: '8px 4px', textAlign: 'center',
+              } as any}>
+                <div style={{ fontSize: 9, color: Colors.textDim, fontWeight: 600, marginBottom: 3 }}>{s.label}</div>
+                <div style={{ fontSize: 14, fontWeight: 900, color: s.clr }}>{s.value}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── TRUCK STATS ── */}
+          <div style={{
+            marginTop: 14,
+            opacity: animStage >= 3 ? 1 : 0,
+            transition: 'all 0.5s ease 0.5s',
+          } as any}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: Colors.textMuted, marginBottom: 8 }}>🚛 Траки</div>
+            {trucks.map((truck, i) => (
+              <div key={truck.id} style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '8px 10px', marginBottom: 4,
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.06)',
+                borderRadius: 10,
+              }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: '#fff' }}>{truck.name}</div>
+                  <div style={{ fontSize: 10, color: Colors.textDim }}>{truck.driver}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 11, color: Colors.textMuted, fontWeight: 700 }}>
+                    {(truck.totalMiles || 0).toLocaleString()} mi
+                  </div>
+                  <div style={{ fontSize: 10, color: Colors.textDim }}>
+                    {truck.totalDeliveries || 0} доставок
+                  </div>
+                </div>
+                <div style={{
+                  padding: '4px 8px', borderRadius: 8,
+                  background: (truck.safetyScore || 100) >= 90 ? 'rgba(48,209,88,0.12)' : 'rgba(255,159,10,0.12)',
+                }}>
+                  <span style={{
+                    fontSize: 12, fontWeight: 900,
+                    color: (truck.safetyScore || 100) >= 90 ? Colors.success : Colors.warning,
+                  }}>{truck.safetyScore || 100}%</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── FINANCE DETAILS (collapsible) ── */}
+          {(incomes.length > 0 || expenses.length > 0) && (
+            <div style={{
+              marginTop: 14,
+              opacity: animStage >= 3 ? 1 : 0,
+              transition: 'all 0.5s ease 0.55s',
+            } as any}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: Colors.textMuted, marginBottom: 8 }}>📊 Детали</div>
+
+              {incomes.length > 0 && (
+                <div style={{ marginBottom: 8 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: Colors.success, marginBottom: 4 }}>Доходы</div>
+                  {incomes.map((f, i) => (
+                    <div key={i} style={{
+                      display: 'flex', justifyContent: 'space-between', padding: '4px 8px',
+                      borderBottom: '1px solid rgba(255,255,255,0.04)',
+                    }}>
+                      <span style={{ fontSize: 11, color: Colors.textSecondary, flex: 1 }}>{f.description}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: Colors.success }}>+${f.amount.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {expenses.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: Colors.danger, marginBottom: 4 }}>Расходы</div>
+                  {expenses.map((f, i) => (
+                    <div key={i} style={{
+                      display: 'flex', justifyContent: 'space-between', padding: '4px 8px',
+                      borderBottom: '1px solid rgba(255,255,255,0.04)',
+                    }}>
+                      <span style={{ fontSize: 11, color: Colors.textSecondary, flex: 1 }}>{f.description}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: Colors.danger }}>-${f.amount.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── BUTTONS ── */}
+          <div style={{
+            display: 'flex', flexDirection: 'column', gap: 8, marginTop: 20,
+            opacity: animStage >= 3 ? 1 : 0,
+            transition: 'all 0.5s ease 0.6s',
+          } as any}>
+            <button onClick={handleNewShift} style={{
+              padding: '14px 0', borderRadius: 16, border: 'none', cursor: 'pointer',
+              background: `linear-gradient(135deg, ${Colors.success}, ${Colors.successDark})`,
+              color: '#fff', fontSize: 15, fontWeight: 900,
+              boxShadow: `0 4px 20px ${Colors.successGlow}`,
+              transition: 'transform 0.15s, box-shadow 0.15s',
+            }}>
+              🔄 Новая смена
+            </button>
+            <button onClick={() => {
+              useGameStore.getState().clearSave();
+              window.location.href = '/game/';
+            }} style={{
+              padding: '12px 0', borderRadius: 14, cursor: 'pointer',
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: Colors.textMuted, fontSize: 13, fontWeight: 700,
+              transition: 'all 0.15s',
+            }}>
+              🏠 Главное меню
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes shiftEndPulse {
+          0%, 100% { box-shadow: 0 0 30px ${color}22; }
+          50% { box-shadow: 0 0 50px ${color}33; }
+        }
+      `}</style>
+    </div>
+  );
+}

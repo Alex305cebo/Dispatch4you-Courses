@@ -1,172 +1,210 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Animated } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import { useGameStore } from '../store/gameStore';
 import { Colors } from '../constants/colors';
-import { useGameStore, Notification } from '../store/gameStore';
 
 interface Props {
-  visible: boolean;
-  notification: Notification | null;
+  contactName: string;
+  contactRole: 'driver' | 'broker';
+  truckId?: string;
   onClose: () => void;
-  onNegotiate?: () => void;
 }
 
-export default function CallModal({ visible, notification, onClose, onNegotiate }: Props) {
-  const { markNotificationRead, addNotification, brokers } = useGameStore();
-  const [called, setCalled] = useState(false);
-  const [ignored, setIgnored] = useState(false);
+type CallState = 'ringing' | 'connected' | 'ended';
 
-  if (!notification) return null;
+const DRIVER_RESPONSES: Record<string, string[]> = {
+  'Where are you?': ['I\'m about 30 miles from the delivery point. Should be there in 40 minutes.', 'Just passed the weigh station. All clear, moving good.', 'Stuck in traffic on I-40. Might be 20 minutes late.'],
+  'How\'s the load?': ['Load is secure, no issues. Temperature is holding steady.', 'All good. Had to re-strap at the last stop but everything\'s tight now.', 'Slight concern — load shifted a bit. I\'ll check at next stop.'],
+  'ETA update?': ['Looking at about 2 hours to delivery. Traffic is light.', 'GPS says 3.5 hours but I think I can make it in 3.', 'Might be late — construction zone ahead, 1 lane only.'],
+  'Take a break': ['Copy that, I\'ll pull over at the next rest area. Need fuel anyway.', 'Roger. There\'s a Pilot about 15 miles ahead, I\'ll stop there.', 'Understood. HOS is getting tight anyway, good call.'],
+  'Any problems?': ['Nope, smooth sailing today. Truck\'s running great.', 'Check engine light came on briefly but went off. Keeping an eye on it.', 'Tire pressure warning on rear axle. I\'ll check it at next stop.'],
+};
 
-  const brokerName = notification.from.split(' - ')[0] || notification.from;
-  const brokerCompany = notification.from.split(' - ')[1] || '';
-  const broker = brokers.find(b => b.name === brokerName);
+const BROKER_RESPONSES: Record<string, string[]> = {
+  'Load status?': ['Driver is on schedule, should deliver on time.', 'We\'re tracking the load — everything looks good.', 'There was a slight delay at pickup but we\'re making up time.'],
+  'Rate negotiation': ['I can bump it up $100 but that\'s my max.', 'Let me check with the shipper... I might have some room.', 'Rate is firm on this one, sorry. But I have a backhaul that pays well.'],
+  'Detention claim': ['Send me the BOL with timestamps and I\'ll process it.', 'We cover detention after 2 hours at $50/hr. Send documentation.', 'I\'ll need to verify with the shipper first. Give me 30 minutes.'],
+  'New loads?': ['I have a load from Dallas to Atlanta, 780 miles, $2,400. Interested?', 'Nothing right now but I\'ll have something tomorrow morning.', 'Got a hot load — needs to move today. Chicago to Memphis, $1,800.'],
+  'POD status': ['POD received, invoice is being processed. Payment in 30 days.', 'Haven\'t received the POD yet. Can your driver send it?', 'POD looks good. I\'ll send the check this week.'],
+};
 
-  function handleCallback() {
-    setCalled(true);
-    markNotificationRead(notification!.id);
+export default function CallModal({ contactName, contactRole, truckId, onClose }: Props) {
+  const { addNotification } = useGameStore();
+  const [callState, setCallState] = useState<CallState>('ringing');
+  const [messages, setMessages] = useState<Array<{ from: string; text: string }>>([]);
+  const [callDuration, setCallDuration] = useState(0);
+  const timerRef = useRef<any>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-    // Брокер отвечает — добавляем email с предложением
+  const responses = contactRole === 'driver' ? DRIVER_RESPONSES : BROKER_RESPONSES;
+  const quickActions = Object.keys(responses);
+
+  useEffect(() => {
+    // Ring for 2 seconds then connect
+    const ringTimer = setTimeout(() => {
+      setCallState('connected');
+      setMessages([{ from: contactName, text: contactRole === 'driver' ? 'Hey boss, what\'s up?' : `Hi, ${contactName} speaking. How can I help?` }]);
+    }, 2000);
+    return () => clearTimeout(ringTimer);
+  }, []);
+
+  useEffect(() => {
+    if (callState === 'connected') {
+      timerRef.current = setInterval(() => setCallDuration(d => d + 1), 1000);
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [callState]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+  }, [messages]);
+
+  const handleQuickAction = (action: string) => {
+    const opts = responses[action];
+    const response = opts[Math.floor(Math.random() * opts.length)];
+
+    setMessages(prev => [
+      ...prev,
+      { from: 'You', text: action },
+    ]);
+
+    // Simulate typing delay
     setTimeout(() => {
-      addNotification({
-        type: 'email',
-        priority: 'high',
-        from: notification!.from,
-        subject: `Re: Перезвонил — есть груз для тебя`,
-        message: `Привет! Рад что перезвонил.\n\nЕсть хороший груз — проверь Load Board, я только что выложил. Ставка хорошая, давай обсудим.\n\nЖду!\n${brokerName}`,
-        actionRequired: false,
-      });
-      onClose();
-    }, 1500);
-  }
+      setMessages(prev => [...prev, { from: contactName, text: response }]);
+    }, 800 + Math.random() * 1200);
+  };
 
-  function handleIgnore() {
-    setIgnored(true);
-    markNotificationRead(notification!.id);
+  const handleEndCall = () => {
+    setCallState('ended');
+    if (timerRef.current) clearInterval(timerRef.current);
 
-    // Репутация с брокером падает
+    // Log call as notification
+    const summary = messages.filter(m => m.from === contactName).map(m => m.text).join(' | ');
     addNotification({
-      type: 'email',
-      priority: 'low',
-      from: notification!.from,
-      subject: 'Не дозвонился...',
-      message: `Привет, пытался дозвониться несколько раз — не берёшь трубку.\n\nЕсли будешь свободен — напиши, есть груз.\n\n${brokerName}`,
+      type: 'text', priority: 'low', from: contactName,
+      subject: `📞 Звонок (${Math.floor(callDuration / 60)}:${(callDuration % 60).toString().padStart(2, '0')})`,
+      message: summary || 'Quick call, no details.',
       actionRequired: false,
+      relatedTruckId: truckId,
     });
 
-    setTimeout(() => onClose(), 800);
-  }
+    setTimeout(onClose, 1500);
+  };
+
+  const formatDuration = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <View style={styles.modal}>
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9999,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    }}>
+      <div style={{
+        position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)',
+        backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+      } as any} />
 
-          {/* Звонящий */}
-          <View style={styles.callerWrap}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{broker?.avatar || '📞'}</Text>
-            </View>
-            <Text style={styles.callerName}>{brokerName}</Text>
-            {brokerCompany ? <Text style={styles.callerCompany}>{brokerCompany}</Text> : null}
-            <View style={styles.missedBadge}>
-              <Text style={styles.missedText}>📵 Пропущенный звонок</Text>
-            </View>
-          </View>
+      <div style={{
+        position: 'relative', width: '90%', maxWidth: 380,
+        background: 'linear-gradient(170deg, #1a1f2e, #0d1117)',
+        border: `1px solid ${callState === 'ringing' ? 'rgba(48,209,88,0.3)' : callState === 'connected' ? 'rgba(10,132,255,0.3)' : 'rgba(255,69,58,0.3)'}`,
+        borderRadius: 24, boxShadow: '0 20px 60px rgba(0,0,0,0.7)',
+        overflow: 'hidden',
+      }}>
+        {/* Call header */}
+        <div style={{
+          padding: '20px 20px 14px', textAlign: 'center',
+          background: callState === 'ringing'
+            ? 'linear-gradient(180deg, rgba(48,209,88,0.08), transparent)'
+            : callState === 'connected'
+            ? 'linear-gradient(180deg, rgba(10,132,255,0.08), transparent)'
+            : 'linear-gradient(180deg, rgba(255,69,58,0.08), transparent)',
+        } as any}>
+          <div style={{
+            width: 56, height: 56, borderRadius: 28, margin: '0 auto 10px',
+            background: `linear-gradient(135deg, ${Colors.primary}33, ${Colors.primary}11)`,
+            border: `2px solid ${Colors.primary}44`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 26,
+          }}>{contactRole === 'driver' ? '🚛' : '💼'}</div>
+          <div style={{ fontSize: 16, fontWeight: 900, color: '#fff' }}>{contactName}</div>
+          <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>
+            {contactRole === 'driver' ? 'Driver' : 'Broker'}
+          </div>
+          <div style={{
+            fontSize: 13, fontWeight: 700, marginTop: 6,
+            color: callState === 'ringing' ? Colors.success : callState === 'connected' ? Colors.primary : Colors.danger,
+          }}>
+            {callState === 'ringing' ? '📞 Calling...' : callState === 'connected' ? `🔊 ${formatDuration(callDuration)}` : '📵 Call Ended'}
+          </div>
+        </div>
 
-          {/* Сообщение */}
-          <View style={styles.messageWrap}>
-            <Text style={styles.message}>{notification.message}</Text>
-          </View>
+        {/* Chat area */}
+        {callState === 'connected' && (
+          <div ref={scrollRef} style={{
+            maxHeight: 200, overflowY: 'auto', padding: '0 16px 10px',
+            scrollbarWidth: 'none',
+          } as any}>
+            {messages.map((m, i) => (
+              <div key={i} style={{
+                display: 'flex', justifyContent: m.from === 'You' ? 'flex-end' : 'flex-start',
+                marginBottom: 6,
+              }}>
+                <div style={{
+                  maxWidth: '80%', padding: '8px 12px', borderRadius: 14,
+                  background: m.from === 'You' ? 'rgba(10,132,255,0.2)' : 'rgba(255,255,255,0.06)',
+                  border: `1px solid ${m.from === 'You' ? 'rgba(10,132,255,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                }}>
+                  <div style={{ fontSize: 12, color: '#e2e8f0', lineHeight: 1.4 }}>{m.text}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
-          {/* Кнопки */}
-          {!called && !ignored ? (
-            <View style={styles.btns}>
-              <TouchableOpacity style={styles.ignoreBtn} onPress={handleIgnore}>
-                <Text style={styles.ignoreBtnText}>🚫 Игнорировать</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.callBtn} onPress={handleCallback}>
-                <Text style={styles.callBtnText}>📞 Перезвонить</Text>
-              </TouchableOpacity>
-            </View>
-          ) : called ? (
-            <View style={styles.calledWrap}>
-              <Text style={styles.calledText}>✅ Перезвонил! Брокер ответил — проверь почту.</Text>
-            </View>
+        {/* Quick actions */}
+        {callState === 'connected' && (
+          <div style={{
+            padding: '8px 16px 12px', display: 'flex', flexWrap: 'wrap', gap: 6,
+            borderTop: '1px solid rgba(255,255,255,0.06)',
+          } as any}>
+            {quickActions.map((action, i) => (
+              <button key={i} onClick={() => handleQuickAction(action)} style={{
+                padding: '6px 12px', borderRadius: 16, cursor: 'pointer',
+                background: 'rgba(10,132,255,0.1)', border: '1px solid rgba(10,132,255,0.25)',
+                color: Colors.primary, fontSize: 11, fontWeight: 700,
+                transition: 'all 0.15s',
+              }}>{action}</button>
+            ))}
+          </div>
+        )}
+
+        {/* End call button */}
+        <div style={{ padding: '12px 20px 20px', display: 'flex', justifyContent: 'center' }}>
+          {callState !== 'ended' ? (
+            <button onClick={handleEndCall} style={{
+              width: 56, height: 56, borderRadius: 28, cursor: 'pointer',
+              background: 'linear-gradient(135deg, #ff453a, #d93025)',
+              border: 'none', boxShadow: '0 4px 16px rgba(255,69,58,0.4)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 22, color: '#fff',
+            }}>📵</button>
           ) : (
-            <View style={styles.calledWrap}>
-              <Text style={[styles.calledText, { color: Colors.danger }]}>❌ Проигнорировано. Репутация упала.</Text>
-            </View>
+            <div style={{ fontSize: 13, color: '#64748b', fontWeight: 600 }}>
+              Call ended · {formatDuration(callDuration)}
+            </div>
           )}
+        </div>
+      </div>
 
-          {/* Закрыть */}
-          <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-            <Text style={styles.closeBtnText}>Закрыть</Text>
-          </TouchableOpacity>
-
-        </View>
-      </View>
-    </Modal>
+      {/* Ringing animation */}
+      {callState === 'ringing' && (
+        <style>{`
+          @keyframes ringPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(48,209,88,0.4); }
+            50% { box-shadow: 0 0 0 20px rgba(48,209,88,0); }
+          }
+        `}</style>
+      )}
+    </div>
   );
 }
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.8)',
-    justifyContent: 'center', alignItems: 'center', padding: 24,
-  },
-  modal: {
-    backgroundColor: '#080e1c', borderRadius: 24,
-    borderWidth: 1, borderColor: '#1e2d45',
-    width: '100%', maxWidth: 360, padding: 24, alignItems: 'center',
-    shadowColor: '#06b6d4', shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3, shadowRadius: 24, elevation: 20,
-  },
-  callerWrap: { alignItems: 'center', marginBottom: 20 },
-  avatar: {
-    width: 72, height: 72, borderRadius: 36,
-    backgroundColor: 'rgba(6,182,212,0.15)',
-    borderWidth: 2, borderColor: 'rgba(6,182,212,0.4)',
-    alignItems: 'center', justifyContent: 'center', marginBottom: 12,
-  },
-  avatarText: { fontSize: 36 },
-  callerName: { fontSize: 20, fontWeight: '900', color: '#fff', marginBottom: 4 },
-  callerCompany: { fontSize: 13, color: Colors.textMuted, marginBottom: 10 },
-  missedBadge: {
-    paddingHorizontal: 12, paddingVertical: 4,
-    backgroundColor: 'rgba(239,68,68,0.15)',
-    borderRadius: 20, borderWidth: 1, borderColor: 'rgba(239,68,68,0.3)',
-  },
-  missedText: { fontSize: 12, color: '#ef4444', fontWeight: '700' },
-  messageWrap: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderRadius: 12, borderWidth: 1, borderColor: '#1e2d45',
-    padding: 14, width: '100%', marginBottom: 20,
-  },
-  message: { fontSize: 13, color: Colors.textMuted, lineHeight: 20, textAlign: 'center' },
-  btns: { flexDirection: 'row', gap: 12, width: '100%', marginBottom: 12 },
-  ignoreBtn: {
-    flex: 1, paddingVertical: 14, borderRadius: 14,
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    borderWidth: 1, borderColor: 'rgba(239,68,68,0.3)',
-    alignItems: 'center',
-  },
-  ignoreBtnText: { fontSize: 13, fontWeight: '700', color: '#ef4444' },
-  callBtn: {
-    flex: 1, paddingVertical: 14, borderRadius: 14,
-    backgroundColor: '#22c55e', alignItems: 'center',
-  },
-  callBtnText: { fontSize: 13, fontWeight: '800', color: '#fff' },
-  calledWrap: {
-    padding: 14, borderRadius: 12,
-    backgroundColor: 'rgba(34,197,94,0.08)',
-    borderWidth: 1, borderColor: 'rgba(34,197,94,0.2)',
-    width: '100%', marginBottom: 12, alignItems: 'center',
-  },
-  calledText: { fontSize: 13, color: '#4ade80', fontWeight: '700', textAlign: 'center' },
-  closeBtn: {
-    paddingVertical: 10, paddingHorizontal: 24,
-    borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1, borderColor: '#1e2d45',
-  },
-  closeBtnText: { fontSize: 13, color: Colors.textMuted, fontWeight: '600' },
-});

@@ -101,12 +101,17 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
   const trucksRef = useRef(activeTrucks);
   const loadsRef = useRef(availableLoads);
   const gameMinuteRef = useRef(gameMinute);
+  const onTruckInfoRef = useRef(onTruckInfo);
+  const onFindLoadRef = useRef(onFindLoad);
   trucksRef.current = activeTrucks;
   loadsRef.current = availableLoads;
   gameMinuteRef.current = gameMinute;
+  onTruckInfoRef.current = onTruckInfo;
+  onFindLoadRef.current = onFindLoad;
 
   const [selectedTruck, setSelectedTruck] = useState<any>(null);
   const [selectedState, setSelectedState] = useState<any>(null);
+  const truckClickedRef = useRef(false); // флаг: клик был на траке, не на штате
   const [toasts, setToasts] = useState<Array<{ id: string; msg: string; color: string }>>([]);
   // Surge zones — 3 случайных штата
   const [surgeStates] = useState<string[]>(() => {
@@ -422,17 +427,20 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
         line2 = state ? `${d.currentCity}, ${state}` : d.currentCity;
       }
 
-      const line3 = d.milesLeft > 0 ? `${d.milesLeft}mi · ${d.hoursLeft}h HOS` : `${d.hoursLeft}h HOS`;
+      const hosRounded = Math.round(d.hoursLeft * 10) / 10;
+      const line3 = d.milesLeft > 0 ? `${d.milesLeft}mi · ${hosRounded}h HOS` : `${hosRounded}h HOS`;
 
       const CARD_W = 76, CARD_H = 56, CX = CARD_W / 2;
       const card = container.children.push(am5.Container.new(root, {
         dy: -CARD_H - 10, dx: -(CARD_W / 2),
+        interactive: true, cursorOverStyle: "pointer",
       }));
       card.children.push(am5.RoundedRectangle.new(root, {
         width: CARD_W, height: CARD_H,
         fill: am5.color(0x0d1f35), fillOpacity: 0.96,
         stroke: am5.color(d.colorInt), strokeWidth: 1.5,
         cornerRadiusTL: 7, cornerRadiusTR: 7, cornerRadiusBL: 7, cornerRadiusBR: 7,
+        interactive: true, cursorOverStyle: "pointer",
       }));
       card.children.push(am5.RoundedRectangle.new(root, {
         width: CARD_W, height: 6, fill: am5.color(d.colorInt), fillOpacity: 1,
@@ -456,9 +464,19 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
         fontSize: 7, centerX: am5.percent(50), x: CX, y: 45,
       }));
 
-      container.events.on("click", () => {
-        setSelectedTruck(d);
+      // Клик на карточку тоже открывает инфо
+      card.events.on("click", (ev: any) => {
+        truckClickedRef.current = true;
+        onTruckInfoRef.current?.(d.truckId);
         chartRef.current?.zoomToGeoPoint({ longitude: d.lng, latitude: d.lat }, 4, true);
+        setTimeout(() => { truckClickedRef.current = false; }, 100);
+      });
+
+      container.events.on("click", (ev: any) => {
+        truckClickedRef.current = true;
+        onTruckInfoRef.current?.(d.truckId);
+        chartRef.current?.zoomToGeoPoint({ longitude: d.lng, latitude: d.lat }, 4, true);
+        setTimeout(() => { truckClickedRef.current = false; }, 100);
       });
       return am5.Bullet.new(root, { sprite: container });
     });
@@ -534,6 +552,8 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
 
     // Одиночный клик — попап без зума
     polygonSeries.mapPolygons.template.events.on("click", (ev: any) => {
+      // Если клик был на карточке трака — не открываем попап штата
+      if (truckClickedRef.current) return;
       const rawId = ev.target.dataItem?.get("id") as string;
       const stateName = ev.target.dataItem?.get("name");
       if (!rawId) return;

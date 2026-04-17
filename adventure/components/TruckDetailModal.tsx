@@ -2,7 +2,11 @@
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { Truck } from '../store/gameStore';
 import { cityState } from '../constants/config';
-import DriverScorecard from './DriverScorecard';
+import HOSGraph from './HOSGraph';
+import ELDGraph from './ELDGraph';
+import DriverCommunicationModal from './DriverCommunicationModal';
+import CallModal from './CallModal';
+import CancelLoadModal from './CancelLoadModal';
 
 interface Props {
   truck: Truck | null;
@@ -24,7 +28,11 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) {
-  const [showScorecard, setShowScorecard] = useState(false);
+  const [showHOS, setShowHOS] = useState(false);
+  const [showELD, setShowELD] = useState(false);
+  const [showSMS, setShowSMS] = useState(false);
+  const [showCall, setShowCall] = useState(false);
+  const [showCancelLoad, setShowCancelLoad] = useState(false);
   if (!truck) return null;
 
   const hoursWorked = 11 - truck.hoursLeft;
@@ -207,16 +215,38 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
                   <Text style={s.findBtnArrow}>→</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity style={s.statsBtn} onPress={() => setShowScorecard(true)} activeOpacity={0.85}>
-                <Text style={s.statsBtnText}>📊 Driver Performance & Stats</Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TouchableOpacity style={[s.actionBtn, { borderColor: 'rgba(10,132,255,0.3)', backgroundColor: 'rgba(10,132,255,0.08)' }]} onPress={() => setShowSMS(true)} activeOpacity={0.85}>
+                  <Text style={[s.actionBtnText, { color: '#0a84ff' }]}>💬 SMS</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[s.actionBtn, { borderColor: 'rgba(48,209,88,0.3)', backgroundColor: 'rgba(48,209,88,0.08)' }]} onPress={() => setShowCall(true)} activeOpacity={0.85}>
+                  <Text style={[s.actionBtnText, { color: '#30d158' }]}>📞 Звонок</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TouchableOpacity style={[s.actionBtn, { borderColor: 'rgba(6,182,212,0.3)', backgroundColor: 'rgba(6,182,212,0.08)' }]} onPress={() => setShowHOS(true)} activeOpacity={0.85}>
+                  <Text style={[s.actionBtnText, { color: '#06b6d4' }]}>⏱ HOS</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[s.actionBtn, { borderColor: 'rgba(191,90,242,0.3)', backgroundColor: 'rgba(191,90,242,0.08)' }]} onPress={() => setShowELD(true)} activeOpacity={0.85}>
+                  <Text style={[s.actionBtnText, { color: '#bf5af2' }]}>📟 ELD</Text>
+                </TouchableOpacity>
+              </View>
+              {truck.currentLoad && (
+                <TouchableOpacity style={[s.actionBtn, { borderColor: 'rgba(255,69,58,0.25)', backgroundColor: 'rgba(255,69,58,0.06)' }]} onPress={() => setShowCancelLoad(true)} activeOpacity={0.85}>
+                  <Text style={[s.actionBtnText, { color: '#ff453a' }]}>⚠️ Отменить груз (TONU)</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
           </ScrollView>
         </TouchableOpacity>
       </TouchableOpacity>
 
-      {showScorecard && <DriverScorecard truck={truck} onClose={() => setShowScorecard(false)} />}
+      {showHOS && <HOSGraph truck={truck} onClose={() => setShowHOS(false)} />}
+      {showELD && <ELDGraph truck={truck} onClose={() => setShowELD(false)} />}
+      {showSMS && <DriverCommunicationModal truck={truck} onClose={() => setShowSMS(false)} onCall={() => { setShowSMS(false); setShowCall(true); }} />}
+      {showCall && <CallModal contactName={truck.driver} contactRole="driver" truckId={truck.id} onClose={() => setShowCall(false)} />}
+      {showCancelLoad && truck.currentLoad && <CancelLoadModal load={truck.currentLoad} onClose={() => setShowCancelLoad(false)} />}
     </Modal>
   );
 }
@@ -298,6 +328,8 @@ const s = StyleSheet.create({
   findBtnArrow: { fontSize: 18, color: '#4ade80', fontWeight: '900' },
   statsBtn: { padding: 12, backgroundColor: 'rgba(6,182,212,0.08)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(6,182,212,0.2)', alignItems: 'center' },
   statsBtnText: { fontSize: 13, fontWeight: '700', color: '#06b6d4' },
+  actionBtn: { flex: 1, padding: 10, borderRadius: 12, borderWidth: 1, alignItems: 'center' },
+  actionBtnText: { fontSize: 13, fontWeight: '700' },
 
   // AI
   aiCard: { margin: 12, marginBottom: 0, padding: 12, borderRadius: 12, borderWidth: 1.5, gap: 8 },
