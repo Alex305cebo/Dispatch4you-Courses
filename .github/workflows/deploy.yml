@@ -11,8 +11,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ─── 1. Статический сайт (game2.html, pages, css, js...) ─────────
   deploy-site:
-    name: Deploy static site to Hostinger
+    name: Deploy static site
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -48,6 +49,57 @@ jobs:
             --exclude='test-*.html'
           path: ./
           remote_path: ~/domains/dispatch4you.com/public_html/
+          remote_host: ${{ secrets.SSH_HOST }}
+          remote_port: ${{ secrets.SSH_PORT }}
+          remote_user: ${{ secrets.SSH_USERNAME }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+  # ─── 2. React/Expo (game1.html) → /game/ ─────────────────────────
+  deploy-react-game:
+    name: Build & deploy React game (game1)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: adventure/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: adventure
+
+      - name: Build
+        run: npx expo export --platform web
+        working-directory: adventure
+        env:
+          NODE_ENV: production
+
+      - name: Fix asset paths
+        run: node scripts/fix-paths.js
+        working-directory: adventure
+
+      - name: Add .htaccess for SPA routing
+        run: |
+          cat > adventure/dist/.htaccess << 'EOF'
+          Options -MultiViews
+          RewriteEngine On
+          RewriteBase /game/
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule . index.html [L]
+          EOF
+
+      - name: Deploy to /game/
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avzr --delete
+          path: adventure/dist/
+          remote_path: ~/domains/dispatch4you.com/public_html/game/
           remote_host: ${{ secrets.SSH_HOST }}
           remote_port: ${{ secrets.SSH_PORT }}
           remote_user: ${{ secrets.SSH_USERNAME }}
