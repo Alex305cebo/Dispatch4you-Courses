@@ -125,8 +125,8 @@
         .mic-btn:disabled{opacity:.3;cursor:not-allowed;transform:none;animation:none;filter:grayscale(.5)}
 
         /* ── APP LAYOUT ── */
-        .app-layout{display:flex;justify-content:center;align-items:center;flex:1;min-height:0;overflow:auto;overflow-x:hidden;padding:20px;transition:all .5s cubic-bezier(.4,0,.2,1)}
-        .app-layout.dialog-active{align-items:stretch;max-height:none;overflow:hidden;overflow-y:auto}
+        .app-layout{display:flex;justify-content:center;align-items:center;flex:1;min-height:0;overflow:hidden;overflow-x:hidden;padding:20px;transition:all .5s cubic-bezier(.4,0,.2,1)}
+        .app-layout.dialog-active{align-items:stretch;overflow:hidden}
         .app-layout.dialog-active .transcript-panel{display:flex;width:min(420px,44vw);flex-shrink:0;animation:slideInLeft .5s cubic-bezier(.4,0,.2,1)}
         .app-layout.dialog-active .voice-chat-widget{max-width:min(420px,52vw);animation:slideRight .5s cubic-bezier(.4,0,.2,1)}
         /* Before dialog: widget centered; after: stretch to match transcript panel height */
@@ -139,8 +139,10 @@
         .voice-chat-widget{
           display:flex;flex-direction:column;
           align-items:center;justify-content:flex-start;
-          text-align:center;padding:20px 20px 0;
+          text-align:center;padding:20px 20px 16px;
           max-width:480px;width:100%;min-width:0;
+          /* Ограничиваем высоту чтобы влезало без скролла */
+          max-height:calc(100dvh - var(--nav) - 40px);
           background:var(--glass);
           backdrop-filter:blur(40px) saturate(1.8);
           -webkit-backdrop-filter:blur(40px) saturate(1.8);
@@ -149,12 +151,11 @@
           transition:all .5s cubic-bezier(.4,0,.2,1);
           box-shadow:0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06);
           position:relative;
-          overflow-y:auto;
-          overflow-x:hidden;
+          overflow:hidden;
         }
         .voice-chat-widget::-webkit-scrollbar{width:3px}
         .voice-chat-widget::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
-        .app-layout.dialog-active .voice-chat-widget{border-radius:0 24px 24px 0;border-left:1px solid rgba(255,255,255,.05);justify-content:flex-start}
+        .app-layout.dialog-active .voice-chat-widget{border-radius:0 24px 24px 0;border-left:1px solid rgba(255,255,255,.05);justify-content:flex-start;max-height:none;overflow-y:auto}
 
         /* ── MIC CONTAINER & PULSE RINGS ── */
         .vcw-mic-container{position:relative;width:72px;height:72px;margin:16px auto 12px;display:flex;align-items:center;justify-content:center;overflow:visible}
@@ -380,24 +381,24 @@
         /* RESPONSIVE */
         /* ── SHORT VIEWPORT (маленькое окно по высоте, только десктоп) ── */
         @media(max-height:700px) and (min-width:769px){
-          .app-layout{overflow:visible;flex:none;min-height:0;padding:12px}
-          .app-layout.dialog-active{overflow:visible}
-          .app-layout.dialog-active .transcript-panel{max-height:calc(100dvh - 64px - 40px);overflow-y:auto}
+          .app-layout{overflow:hidden;padding:12px}
+          .app-layout.dialog-active .transcript-panel{max-height:calc(100dvh - 64px - 24px);overflow-y:auto}
           .app-layout.dialog-active .voice-chat-widget{max-height:none;overflow-y:auto}
-          .voice-chat-widget{overflow-y:auto}
+          .voice-chat-widget{max-height:calc(100dvh - 64px - 24px)}
           .vcw-title{font-size:22px}
           .vcw-subtitle{margin-bottom:16px;font-size:13px}
           .vcw-mic-container{margin:8px auto 8px}
           .sidebar-tips{margin-top:6px}
         }
-        @media(max-height:580px) and (min-width:769px){
+        @media(max-height:640px) and (min-width:769px){
           .vcw-title{font-size:18px}
           .vcw-subtitle{display:none}
-          .vcw-mic-container{margin:6px auto 6px}
+          .vcw-mic-container{margin:4px auto 4px}
           .sidebar-tips{display:none}
           .say-this{margin-bottom:6px}
           .load-info-card{margin-bottom:6px}
           .app-layout{padding:8px}
+          .voice-chat-widget{padding:14px 20px 12px}
         }
 
         /* ── SMALL DESKTOP (1024-1200px) ── */
