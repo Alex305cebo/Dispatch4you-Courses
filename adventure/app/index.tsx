@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '../constants/colors';
@@ -16,7 +16,14 @@ export default function HomeScreen() {
   const [error, setError] = useState('');
   const [hasSave, setHasSave] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showNewProfileModal, setShowNewProfileModal] = useState(false);
+  const [newProfileName, setNewProfileName] = useState('');
+  const [newProfileError, setNewProfileError] = useState('');
   const TRUCK_COUNT = 3;
+
+  const scrollRef = useRef<ScrollView>(null);
+  const inputRef = useRef<TextInput>(null);
+  const modalInputRef = useRef<TextInput>(null);
 
   function checkSave() {
     try {
@@ -52,6 +59,28 @@ export default function HomeScreen() {
 
   const account = currentNickname ? getAccount(currentNickname) : null;
 
+  function handleEmptySlot() {
+    // Открываем модалку для создания нового профиля
+    setNewProfileName('');
+    setNewProfileError('');
+    setShowNewProfileModal(true);
+    setTimeout(() => modalInputRef.current?.focus(), 100);
+  }
+
+  function handleCreateProfile() {
+    const nick = newProfileName.trim();
+    if (!nick || nick.length < 2) { setNewProfileError('Минимум 2 символа'); return; }
+    if (nick.length > 20) { setNewProfileError('Максимум 20 символов'); return; }
+    
+    // Проверяем что такого профиля ещё нет
+    const exists = accounts.some(acc => acc && acc.nickname.toLowerCase() === nick.toLowerCase());
+    if (exists) { setNewProfileError('Профиль уже существует'); return; }
+    
+    setNewProfileError('');
+    login(nick);
+    setShowNewProfileModal(false);
+  }
+
   function handleLogin() {
     const nick = nicknameInput.trim();
     if (!nick || nick.length < 2) { setError('Минимум 2 символа'); return; }
@@ -77,7 +106,7 @@ export default function HomeScreen() {
 
   return (
     <View style={s.root}>
-      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
         {/* Hero */}
         <View style={s.hero}>
@@ -101,7 +130,7 @@ export default function HomeScreen() {
                   key={i}
                   style={[s.slot, isActive && s.slotActive, acc && !isActive && s.slotFilled]}
                   activeOpacity={0.8}
-                  onPress={() => { if (acc) login(acc.nickname); }}
+                  onPress={() => { if (acc) login(acc.nickname); else handleEmptySlot(); }}
                 >
                   {acc ? (
                     <>
@@ -119,7 +148,7 @@ export default function HomeScreen() {
                       <View style={s.slotEmpty}>
                         <Text style={s.slotEmptyIcon}>+</Text>
                       </View>
-                      <Text style={s.slotEmptyText}>Пустой слот</Text>
+                      <Text style={s.slotEmptyText}>Новый{'\n'}профиль</Text>
                     </>
                   )}
                 </TouchableOpacity>
@@ -146,13 +175,14 @@ export default function HomeScreen() {
               onPress={() => { logout(); setNicknameInput(''); }}
               style={s.logoutBtn} activeOpacity={0.7}
             >
-              <Text style={s.logoutText}>Выйти</Text>
+              <Text style={s.logoutText}>Сменить</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <View style={s.loginBlock}>
             <Text style={s.inputLabel}>Никнейм</Text>
             <TextInput
+              ref={inputRef}
               style={s.input}
               value={nicknameInput}
               onChangeText={v => { setNicknameInput(v); setError(''); }}
@@ -246,6 +276,56 @@ export default function HomeScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Модалка создания профиля */}
+      <Modal
+        visible={showNewProfileModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowNewProfileModal(false)}
+      >
+        <View style={s.modalOverlay}>
+          <View style={s.modalCard}>
+            <Text style={s.modalTitle}>Новый профиль</Text>
+            <Text style={s.modalDesc}>Придумай никнейм для диспетчера</Text>
+            
+            <TextInput
+              ref={modalInputRef}
+              style={s.modalInput}
+              value={newProfileName}
+              onChangeText={v => { setNewProfileName(v); setNewProfileError(''); }}
+              placeholder="Dispatcher_Pro"
+              placeholderTextColor={Colors.textDim}
+              maxLength={20}
+              autoCapitalize="none"
+              autoCorrect={false}
+              onSubmitEditing={handleCreateProfile}
+            />
+            {newProfileError ? <Text style={s.modalError}>{newProfileError}</Text> : null}
+            
+            <View style={s.modalButtons}>
+              <TouchableOpacity
+                style={s.modalBtnCancel}
+                onPress={() => setShowNewProfileModal(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={s.modalBtnCancelText}>Отмена</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[s.modalBtnCreate, !newProfileName.trim() && s.modalBtnDisabled]}
+                onPress={handleCreateProfile}
+                disabled={!newProfileName.trim()}
+                activeOpacity={0.8}
+              >
+                <LinearGradient colors={Colors.gradPrimary} style={s.modalBtnGrad} start={{x:0,y:0}} end={{x:1,y:1}}>
+                  <Text style={s.modalBtnCreateText}>Создать</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -395,4 +475,52 @@ const s = StyleSheet.create({
   },
   slotEmptyIcon: { fontSize: 20, color: 'rgba(255,255,255,0.2)', fontWeight: '300' },
   slotEmptyText: { fontSize: 10, color: 'rgba(255,255,255,0.2)', textAlign: 'center' },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: Colors.bgCard,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 24,
+    gap: 16,
+  },
+  modalTitle: { fontSize: 20, fontWeight: '800', color: Colors.text, textAlign: 'center' },
+  modalDesc: { fontSize: 13, color: Colors.textMuted, textAlign: 'center', marginTop: -8 },
+  modalInput: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: Colors.text,
+    fontWeight: '600',
+  },
+  modalError: { fontSize: 12, color: Colors.danger, textAlign: 'center', marginTop: -8 },
+  modalButtons: { flexDirection: 'row', gap: 10, marginTop: 8 },
+  modalBtnCancel: {
+    flex: 1,
+    paddingVertical: 14,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+  },
+  modalBtnCancelText: { fontSize: 15, fontWeight: '600', color: Colors.textMuted },
+  modalBtnCreate: { flex: 1, borderRadius: 12, overflow: 'hidden' },
+  modalBtnDisabled: { opacity: 0.35 },
+  modalBtnGrad: { paddingVertical: 14, alignItems: 'center' },
+  modalBtnCreateText: { fontSize: 15, fontWeight: '700', color: '#fff' },
 });

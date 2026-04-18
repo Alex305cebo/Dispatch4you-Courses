@@ -53,7 +53,7 @@ function LoadRow({ load, onCall, isExpanded, onToggle, scrollViewRef, onLayout, 
   return (
     <View
       ref={rowRef}
-      style={[styles.loadRow, load.isUrgent && styles.loadRowUrgent]}
+      style={[styles.loadRow, load.isUrgent && styles.loadRowUrgent, isExpanded && styles.loadRowExpanded]}
       onLayout={(e) => onLayout(e.nativeEvent.layout.y)}
     >
       {/* Компактная строка */}
@@ -250,6 +250,16 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
   useEffect(() => {
     return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
   }, []);
+
+  // Автоматически раскрыть первый груз при первом входе
+  useEffect(() => {
+    try {
+      const isFirstTime = !localStorage.getItem('dispatch-guide-done');
+      if (isFirstTime && availableLoads.length > 0 && !expandedId) {
+        setExpandedId(availableLoads[0].id);
+      }
+    } catch {}
+  }, [availableLoads, expandedId]);
 
   // При монтировании — применить предзаполненный поиск из стора
   useEffect(() => {
@@ -711,6 +721,11 @@ const styles = StyleSheet.create({
   loadRowUrgent: {
     borderColor: 'rgba(249,115,22,0.4)',
     backgroundColor: 'rgba(249,115,22,0.05)',
+  },
+  loadRowExpanded: {
+    borderColor: '#ef4444',
+    borderWidth: 2,
+    backgroundColor: 'rgba(239,68,68,0.08)',
   },
 
   loadHeader: {

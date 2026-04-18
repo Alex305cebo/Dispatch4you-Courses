@@ -132,6 +132,8 @@ export default function GameScreen() {
   const guideCurrentStepRef = useRef<number>(0); // текущий раскрытый шаг в гайде
 
   const [activeTab, setActiveTab] = useState<Tab>(() => {
+    // Если первый запуск — открываем loadboard
+    if (shouldShowGuide()) return 'loadboard';
     try {
       const saved = localStorage.getItem('dispatch-active-tab') as Tab;
       if (saved) return saved;
@@ -161,6 +163,10 @@ export default function GameScreen() {
   const [showStats, setShowStats] = useState(false);
   const { currentNickname } = useAccountStore();
   const activeGuideStep = useGuideStore(s => s.activeStep);
+  
+  // Отслеживание индикаторов траков для уведомлений
+  const [truckIndicators, setTruckIndicators] = useState<Record<string, string>>({});
+  const [indicatorNotifications, setIndicatorNotifications] = useState<Record<string, {text: string, timestamp: number}>>({});
 
   // Таймер для кнопки "Карта" — становится цветной через 10 сек
   const [mapBtnAge, setMapBtnAge] = useState(0); // 0-10
@@ -241,6 +247,56 @@ export default function GameScreen() {
     clockRef.current = setInterval(() => { if (!pausedRef.current) tickClock(); }, 1000);
     return () => { if (clockRef.current) clearInterval(clockRef.current); };
   }, []);
+
+  // Функция для получения текущего индикатора трака
+  function getTruckIndicator(truck: any, hos: number, progressPct: number, mood: number): {icon: string, text: string} | null {
+    if (truck.status === 'breakdown') return {icon: '🔧', text: 'Поломка!'};
+    if (hos <= 0) return {icon: '🛑', text: 'HOS закончился'};
+    if (truck.fuelLevel && truck.fuelLevel < 10) return {icon: '🆘', text: 'Топливо на нуле'};
+    if (mood < 20) return {icon: '😡', text: 'Водитель зол'};
+    if (truck.status === 'waiting' && truck.detentionMinutes > 120) return {icon: '⏰', text: 'Долгий detention'};
+    if (truck.status === 'waiting') return {icon: '⏱️', text: 'Detention'};
+    if (hos > 0 && hos < 1) return {icon: '🚨', text: 'HOS критичен'};
+    if (hos >= 1 && hos < 2) return {icon: '😴', text: 'Мало HOS'};
+    if (hos >= 2 && hos < 3) return {icon: '⚠️', text: 'HOS заканчивается'};
+    if (truck.idleWarningLevel > 2 && truck.status === 'idle') return {icon: '😴', text: 'Долгий простой'};
+    if (truck.onNightStop) return {icon: '🌙', text: 'Ночёвка'};
+    if (truck.status === 'at_pickup') return {icon: '📦', text: 'Погрузка'};
+    if (truck.status === 'at_delivery') return {icon: '🏁', text: 'Разгрузка'};
+    if (truck.status === 'loaded' && progressPct > 90) return {icon: '🔥', text: 'Почти доехал'};
+    if (truck.status === 'loaded') return {icon: '🚚', text: 'Везёт груз'};
+    if (truck.status === 'driving') return {icon: '🚛', text: 'К погрузке'};
+    if (truck.status === 'idle' && hos > 8) return {icon: '✅', text: 'Готов'};
+    if (mood >= 80) return {icon: '😊', text: 'Отличное настроение'};
+    return null;
+  }
+
+  // Отслеживание изменений индикаторов
+  useEffect(() => {
+    trucks.forEach(truck => {
+      const hos = Math.max(0, truck.hoursLeft);
+      const progressPct = Math.round(truck.progress * 100);
+      const mood = truck.mood ?? 80;
+      const indicator = getTruckIndicator(truck, hos, progressPct, mood);
+      const currentKey = indicator ? `${indicator.icon}` : 'none';
+      const prevKey = truckIndicators[truck.id] || 'none';
+      
+      if (currentKey !== prevKey && currentKey !== 'none') {
+        setIndicatorNotifications(prev => ({
+          ...prev,
+          [truck.id]: { text: indicator!.text, timestamp: Date.now() }
+        }));
+        setTimeout(() => {
+          setIndicatorNotifications(prev => {
+            const newState = {...prev};
+            if (newState[truck.id]?.timestamp === indicator!.text as any) delete newState[truck.id];
+            return newState;
+          });
+        }, 3000);
+      }
+      setTruckIndicators(prev => ({...prev, [truck.id]: currentKey}));
+    });
+  }, [trucks.map(t => `${t.id}-${t.status}-${t.hoursLeft}-${t.progress}`).join(',')]);
 
   // Плавный zoom на траки при первом запуске
   useEffect(() => {
@@ -549,6 +605,11 @@ export default function GameScreen() {
             50%  { box-shadow: 0 0 18px rgba(239,68,68,1), 0 0 36px rgba(239,68,68,0.6); background: linear-gradient(135deg, rgba(239,68,68,0.6), rgba(220,38,38,0.4)); border-color: rgba(239,68,68,1); }
             100% { box-shadow: 0 0 8px rgba(239,68,68,0.6), 0 0 16px rgba(239,68,68,0.3); background: linear-gradient(135deg, rgba(239,68,68,0.35), rgba(220,38,38,0.2)); border-color: rgba(239,68,68,0.8); }
           }
+          @keyframes indicatorPulse {
+            0% { opacity: 0; transform: translateY(-5px) scale(0.8); }
+            50% { opacity: 1; transform: translateY(0) scale(1.05); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+          }
           @keyframes emoji-bounce {
             0%,100% { transform: translateY(0) scale(1); }
             40% { transform: translateY(-5px) scale(1.15); }
@@ -590,7 +651,32 @@ export default function GameScreen() {
       WebkitOverflowScrolling: 'touch',
       touchAction: 'pan-x',
       msOverflowStyle: 'none',
-    } as any}>
+      scrollSnapType: 'x mandatory',
+      scrollBehavior: 'smooth',
+      cursor: 'grab',
+    } as any}
+    onMouseDown={(e: any) => {
+      const el = e.currentTarget;
+      el.style.cursor = 'grabbing';
+      const startX = e.pageX - el.offsetLeft;
+      const scrollLeft = el.scrollLeft;
+      
+      const handleMouseMove = (e: MouseEvent) => {
+        const x = e.pageX - el.offsetLeft;
+        const walk = (x - startX) * 2;
+        el.scrollLeft = scrollLeft - walk;
+      };
+      
+      const handleMouseUp = () => {
+        el.style.cursor = 'grab';
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+      
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }}
+    >
       {trucks.map(truck => {
         const color = getTruckColor(truck, gameMinute);
         const hos = Math.max(0, truck.hoursLeft);
@@ -652,18 +738,86 @@ export default function GameScreen() {
                 {(truck as any).onNightStop ? '🌙 Ночёвка' : (truck as any).hosRestUntilMinute > 0 ? '😴 HOS отдых' : STATUS_LABEL[truck.status]}
               </span>
 
-              {/* Маршрут — только на десктопе */}
-              {isWide && truck.destinationCity && !(truck as any).onNightStop && !((truck as any).hosRestUntilMinute > 0) && (
-                <span style={{ fontSize: 11, color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
-                  → {truck.destinationCity}
-                </span>
-              )}
-
-              {/* HOS + alert */}
+              {/* Маршрут или местоположение */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 } as any}>
-                <span style={{ fontSize: isWide ? 12 : 11, fontWeight: 800, color: hosColor } as any}>⏱ {Math.round(hos * 10) / 10}h</span>
-                {isAlert && <span style={{ fontSize: 11, color, fontWeight: 900 } as any}>⚠️</span>}
+                {truck.destinationCity ? (
+                  <span style={{ fontSize: isWide ? 11 : 10, fontWeight: 700, color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
+                    {truck.currentCity ? `${truck.currentCity} → ${truck.destinationCity}` : `→ ${truck.destinationCity}`}
+                  </span>
+                ) : (
+                  <span style={{ fontSize: isWide ? 11 : 10, fontWeight: 700, color: '#94a3b8' } as any}>
+                    📍 {truck.currentCity || 'В пути'}
+                  </span>
+                )}
+                {/* Индикаторы — приоритет от критичных к информационным */}
+                
+                {/* КРИТИЧНЫЕ ПРОБЛЕМЫ */}
+                {truck.status === 'breakdown' && <span style={{ fontSize: 13 } as any}>🔧</span>}
+                {hos <= 0 && <span style={{ fontSize: 13 } as any}>🛑</span>}
+                {(truck as any).fuelLevel && (truck as any).fuelLevel < 10 && <span style={{ fontSize: 13 } as any}>🆘</span>}
+                {mood < 20 && <span style={{ fontSize: 13 } as any}>😡</span>}
+                
+                {/* ПРЕДУПРЕЖДЕНИЯ */}
+                {truck.status === 'waiting' && (truck as any).detentionMinutes > 120 && <span style={{ fontSize: 13 } as any}>⏰</span>}
+                {truck.status === 'waiting' && (truck as any).detentionMinutes <= 120 && <span style={{ fontSize: 13 } as any}>⏱️</span>}
+                {hos > 0 && hos < 1 && <span style={{ fontSize: 13 } as any}>🚨</span>}
+                {hos >= 1 && hos < 2 && <span style={{ fontSize: 13 } as any}>😴</span>}
+                {hos >= 2 && hos < 3 && <span style={{ fontSize: 13 } as any}>⚠️</span>}
+                {(truck as any).fuelLevel && (truck as any).fuelLevel >= 10 && (truck as any).fuelLevel < 20 && <span style={{ fontSize: 13 } as any}>⛽</span>}
+                {(truck as any).idleWarningLevel > 2 && truck.status === 'idle' && <span style={{ fontSize: 13 } as any}>😴</span>}
+                {(truck as any).idleWarningLevel === 2 && truck.status === 'idle' && <span style={{ fontSize: 13 } as any}>💤</span>}
+                {(truck as any).idleWarningLevel === 1 && truck.status === 'idle' && <span style={{ fontSize: 13 } as any}>💭</span>}
+                {mood >= 20 && mood < 40 && <span style={{ fontSize: 13 } as any}>😤</span>}
+                {mood >= 40 && mood < 60 && truck.status !== 'idle' && <span style={{ fontSize: 13 } as any}>😐</span>}
+                
+                {/* СТАТУСЫ РАБОТЫ */}
+                {(truck as any).onNightStop && <span style={{ fontSize: 13 } as any}>🌙</span>}
+                {(truck as any).hosRestUntilMinute > 0 && !((truck as any).onNightStop) && <span style={{ fontSize: 13 } as any}>💤</span>}
+                {truck.status === 'at_pickup' && <span style={{ fontSize: 13 } as any}>📦</span>}
+                {truck.status === 'at_delivery' && <span style={{ fontSize: 13 } as any}>🏁</span>}
+                {truck.status === 'loaded' && progressPct > 90 && <span style={{ fontSize: 13 } as any}>🔥</span>}
+                {truck.status === 'loaded' && progressPct > 70 && progressPct <= 90 && <span style={{ fontSize: 13 } as any}>🚚</span>}
+                {truck.status === 'loaded' && progressPct > 50 && progressPct <= 70 && <span style={{ fontSize: 13 } as any}>🛣️</span>}
+                {truck.status === 'loaded' && progressPct <= 50 && <span style={{ fontSize: 13 } as any}>🗺️</span>}
+                {truck.status === 'driving' && progressPct > 80 && <span style={{ fontSize: 13 } as any}>🏃</span>}
+                {truck.status === 'driving' && progressPct <= 80 && <span style={{ fontSize: 13 } as any}>🚛</span>}
+                
+                {/* ПОЗИТИВНЫЕ ИНДИКАТОРЫ */}
+                {truck.status === 'idle' && !(truck as any).idleWarningLevel && hos > 8 && <span style={{ fontSize: 13 } as any}>✅</span>}
+                {mood >= 80 && <span style={{ fontSize: 13 } as any}>😊</span>}
+                {mood >= 60 && mood < 80 && truck.status === 'loaded' && <span style={{ fontSize: 13 } as any}>🙂</span>}
+                {hos >= 10 && truck.status === 'loaded' && <span style={{ fontSize: 13 } as any}>💪</span>}
+                
+                {/* СПЕЦИАЛЬНЫЕ УСЛОВИЯ */}
+                {(truck as any).weather === 'snow' && <span style={{ fontSize: 13 } as any}>❄️</span>}
+                {(truck as any).weather === 'rain' && <span style={{ fontSize: 13 } as any}>🌧️</span>}
+                {(truck as any).weather === 'fog' && <span style={{ fontSize: 13 } as any}>🌫️</span>}
+                {(truck as any).inspection && <span style={{ fontSize: 13 } as any}>🔍</span>}
+                {(truck as any).trafficJam && <span style={{ fontSize: 13 } as any}>🚦</span>}
+                {(truck as any).accident && <span style={{ fontSize: 13 } as any}>🚧</span>}
+                {(truck as any).needsMaintenance && <span style={{ fontSize: 13 } as any}>🔩</span>}
+                {(truck as any).newMessage && <span style={{ fontSize: 13 } as any}>💬</span>}
+                {(truck as any).urgentLoad && <span style={{ fontSize: 13 } as any}>⚡</span>}
+                {(truck as any).bonusEarned && <span style={{ fontSize: 13 } as any}>💰</span>}
               </div>
+
+              {/* Уведомление о новом индикаторе */}
+              {indicatorNotifications[truck.id] && (
+                <div style={{
+                  fontSize: 8,
+                  fontWeight: 700,
+                  color: '#06b6d4',
+                  background: 'rgba(6,182,212,0.15)',
+                  border: '1px solid rgba(6,182,212,0.3)',
+                  borderRadius: 4,
+                  padding: '2px 4px',
+                  marginTop: -2,
+                  animation: 'indicatorPulse 0.5s ease-out',
+                  textAlign: 'center',
+                } as any}>
+                  {indicatorNotifications[truck.id].text}
+                </div>
+              )}
 
               {/* Прогресс — только на десктопе */}
               {isWide && isMoving && !(truck as any).onNightStop && !((truck as any).hosRestUntilMinute > 0) && (

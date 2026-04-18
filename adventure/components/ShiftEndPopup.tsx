@@ -89,7 +89,7 @@ export default function ShiftEndPopup() {
           borderRadius: 2,
         } as any} />
 
-        <div style={{ padding: '28px 24px 20px' }}>
+        <div style={{ padding: '20px 20px 16px' }}>
 
           {/* ── GRADE BADGE ── */}
           <div style={{
@@ -98,24 +98,24 @@ export default function ShiftEndPopup() {
             transform: animStage >= 3 ? 'translateY(0)' : 'translateY(20px)',
             transition: 'all 0.6s ease 0.1s',
           } as any}>
-            <div style={{ fontSize: 48, marginBottom: 8, filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))' }}>{emoji}</div>
+            <div style={{ fontSize: 36, marginBottom: 6, filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))' }}>{emoji}</div>
             <div style={{
-              width: 72, height: 72, borderRadius: 36,
+              width: 56, height: 56, borderRadius: 28,
               border: `3px solid ${color}`,
               background: `radial-gradient(circle, ${color}20 0%, transparent 70%)`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               boxShadow: `0 0 30px ${color}33, inset 0 0 20px ${color}11`,
-              marginBottom: 12,
+              marginBottom: 8,
             }}>
-              <span style={{ fontSize: 36, fontWeight: 900, color, textShadow: `0 0 20px ${color}88` }}>{grade}</span>
+              <span style={{ fontSize: 28, fontWeight: 900, color, textShadow: `0 0 20px ${color}88` }}>{grade}</span>
             </div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', marginBottom: 4 }}>
+            <div style={{ fontSize: 18, fontWeight: 900, color: '#fff', marginBottom: 3 }}>
               Смена завершена!
             </div>
-            <div style={{ fontSize: 14, color: Colors.textMuted, marginBottom: 6 }}>{label}</div>
+            <div style={{ fontSize: 13, color: Colors.textMuted, marginBottom: 4 }}>{label}</div>
             <div style={{
-              fontSize: 12, color: '#5ac8fa', fontWeight: 700,
-              background: 'rgba(90,200,250,0.1)', padding: '4px 14px', borderRadius: 12,
+              fontSize: 11, color: '#5ac8fa', fontWeight: 700,
+              background: 'rgba(90,200,250,0.1)', padding: '3px 12px', borderRadius: 10,
               border: '1px solid rgba(90,200,250,0.2)',
             }}>
               {sessionName || 'Сессия'} · День {day} · {truckCount} траков
@@ -125,7 +125,7 @@ export default function ShiftEndPopup() {
           {/* ── MAIN STATS GRID ── */}
           <div style={{
             display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
-            gap: 8, marginTop: 20,
+            gap: 6, marginTop: 12,
             opacity: animStage >= 3 ? 1 : 0,
             transform: animStage >= 3 ? 'translateY(0)' : 'translateY(15px)',
             transition: 'all 0.5s ease 0.3s',
@@ -137,29 +137,29 @@ export default function ShiftEndPopup() {
             ].map((s, i) => (
               <div key={i} style={{
                 background: `${s.clr}0a`, border: `1px solid ${s.clr}22`,
-                borderRadius: 14, padding: '10px 8px', textAlign: 'center',
+                borderRadius: 12, padding: '8px 6px', textAlign: 'center',
               } as any}>
-                <div style={{ fontSize: 10, color: Colors.textMuted, fontWeight: 600, marginBottom: 4 }}>{s.label}</div>
-                <div style={{ fontSize: 16, fontWeight: 900, color: s.clr }}>{s.value}</div>
+                <div style={{ fontSize: 10, color: Colors.textMuted, fontWeight: 600, marginBottom: 3 }}>{s.label}</div>
+                <div style={{ fontSize: 15, fontWeight: 900, color: s.clr }}>{s.value}</div>
               </div>
             ))}
           </div>
 
           {/* ── PROFIT BAR ── */}
           <div style={{
-            marginTop: 14, padding: '14px 16px',
+            marginTop: 10, padding: '10px 14px',
             background: profit >= 0
               ? 'linear-gradient(135deg, rgba(48,209,88,0.08), rgba(48,209,88,0.02))'
               : 'linear-gradient(135deg, rgba(255,69,58,0.08), rgba(255,69,58,0.02))',
             border: `1px solid ${profit >= 0 ? 'rgba(48,209,88,0.2)' : 'rgba(255,69,58,0.2)'}`,
-            borderRadius: 16,
+            borderRadius: 14,
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             opacity: animStage >= 3 ? 1 : 0,
             transition: 'all 0.5s ease 0.4s',
           } as any}>
-            <span style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>💰 Чистая прибыль</span>
+            <span style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>💰 Чистая прибыль</span>
             <span style={{
-              fontSize: 22, fontWeight: 900,
+              fontSize: 18, fontWeight: 900,
               color: profit >= 0 ? Colors.success : Colors.danger,
               textShadow: `0 0 20px ${profit >= 0 ? Colors.successGlow : Colors.dangerGlow}`,
             }}>{profit >= 0 ? '+' : ''}${profit.toLocaleString()}</span>
@@ -168,7 +168,7 @@ export default function ShiftEndPopup() {
           {/* ── SECONDARY STATS ── */}
           <div style={{
             display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr',
-            gap: 6, marginTop: 12,
+            gap: 5, marginTop: 8,
             opacity: animStage >= 3 ? 1 : 0,
             transition: 'all 0.5s ease 0.45s',
           } as any}>
@@ -180,47 +180,47 @@ export default function ShiftEndPopup() {
             ].map((s, i) => (
               <div key={i} style={{
                 background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
-                borderRadius: 10, padding: '8px 4px', textAlign: 'center',
+                borderRadius: 8, padding: '6px 3px', textAlign: 'center',
               } as any}>
-                <div style={{ fontSize: 9, color: Colors.textDim, fontWeight: 600, marginBottom: 3 }}>{s.label}</div>
-                <div style={{ fontSize: 14, fontWeight: 900, color: s.clr }}>{s.value}</div>
+                <div style={{ fontSize: 9, color: Colors.textDim, fontWeight: 600, marginBottom: 2 }}>{s.label}</div>
+                <div style={{ fontSize: 13, fontWeight: 900, color: s.clr }}>{s.value}</div>
               </div>
             ))}
           </div>
 
           {/* ── TRUCK STATS ── */}
           <div style={{
-            marginTop: 14,
+            marginTop: 10,
             opacity: animStage >= 3 ? 1 : 0,
             transition: 'all 0.5s ease 0.5s',
           } as any}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: Colors.textMuted, marginBottom: 8 }}>🚛 Траки</div>
+            <div style={{ fontSize: 11, fontWeight: 800, color: Colors.textMuted, marginBottom: 6 }}>🚛 Траки</div>
             {trucks.map((truck, i) => (
               <div key={truck.id} style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '8px 10px', marginBottom: 4,
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '6px 8px', marginBottom: 3,
                 background: 'rgba(255,255,255,0.03)',
                 border: '1px solid rgba(255,255,255,0.06)',
-                borderRadius: 10,
+                borderRadius: 8,
               }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: '#fff' }}>{truck.name}</div>
-                  <div style={{ fontSize: 10, color: Colors.textDim }}>{truck.driver}</div>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: '#fff' }}>{truck.name}</div>
+                  <div style={{ fontSize: 9, color: Colors.textDim }}>{truck.driver}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 11, color: Colors.textMuted, fontWeight: 700 }}>
+                  <div style={{ fontSize: 10, color: Colors.textMuted, fontWeight: 700 }}>
                     {(truck.totalMiles || 0).toLocaleString()} mi
                   </div>
-                  <div style={{ fontSize: 10, color: Colors.textDim }}>
+                  <div style={{ fontSize: 9, color: Colors.textDim }}>
                     {truck.totalDeliveries || 0} доставок
                   </div>
                 </div>
                 <div style={{
-                  padding: '4px 8px', borderRadius: 8,
+                  padding: '3px 6px', borderRadius: 6,
                   background: (truck.safetyScore || 100) >= 90 ? 'rgba(48,209,88,0.12)' : 'rgba(255,159,10,0.12)',
                 }}>
                   <span style={{
-                    fontSize: 12, fontWeight: 900,
+                    fontSize: 11, fontWeight: 900,
                     color: (truck.safetyScore || 100) >= 90 ? Colors.success : Colors.warning,
                   }}>{truck.safetyScore || 100}%</span>
                 </div>
@@ -231,22 +231,22 @@ export default function ShiftEndPopup() {
           {/* ── FINANCE DETAILS (collapsible) ── */}
           {(incomes.length > 0 || expenses.length > 0) && (
             <div style={{
-              marginTop: 14,
+              marginTop: 10,
               opacity: animStage >= 3 ? 1 : 0,
               transition: 'all 0.5s ease 0.55s',
             } as any}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: Colors.textMuted, marginBottom: 8 }}>📊 Детали</div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: Colors.textMuted, marginBottom: 6 }}>📊 Детали</div>
 
               {incomes.length > 0 && (
-                <div style={{ marginBottom: 8 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: Colors.success, marginBottom: 4 }}>Доходы</div>
+                <div style={{ marginBottom: 6 }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: Colors.success, marginBottom: 3 }}>Доходы</div>
                   {incomes.map((f, i) => (
                     <div key={i} style={{
-                      display: 'flex', justifyContent: 'space-between', padding: '4px 8px',
+                      display: 'flex', justifyContent: 'space-between', padding: '3px 6px',
                       borderBottom: '1px solid rgba(255,255,255,0.04)',
                     }}>
-                      <span style={{ fontSize: 11, color: Colors.textSecondary, flex: 1 }}>{f.description}</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: Colors.success }}>+${f.amount.toLocaleString()}</span>
+                      <span style={{ fontSize: 10, color: Colors.textSecondary, flex: 1 }}>{f.description}</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: Colors.success }}>+${f.amount.toLocaleString()}</span>
                     </div>
                   ))}
                 </div>
@@ -254,14 +254,14 @@ export default function ShiftEndPopup() {
 
               {expenses.length > 0 && (
                 <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: Colors.danger, marginBottom: 4 }}>Расходы</div>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: Colors.danger, marginBottom: 3 }}>Расходы</div>
                   {expenses.map((f, i) => (
                     <div key={i} style={{
-                      display: 'flex', justifyContent: 'space-between', padding: '4px 8px',
+                      display: 'flex', justifyContent: 'space-between', padding: '3px 6px',
                       borderBottom: '1px solid rgba(255,255,255,0.04)',
                     }}>
-                      <span style={{ fontSize: 11, color: Colors.textSecondary, flex: 1 }}>{f.description}</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: Colors.danger }}>-${f.amount.toLocaleString()}</span>
+                      <span style={{ fontSize: 10, color: Colors.textSecondary, flex: 1 }}>{f.description}</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: Colors.danger }}>-${f.amount.toLocaleString()}</span>
                     </div>
                   ))}
                 </div>
@@ -271,14 +271,14 @@ export default function ShiftEndPopup() {
 
           {/* ── BUTTONS ── */}
           <div style={{
-            display: 'flex', flexDirection: 'column', gap: 8, marginTop: 20,
+            display: 'flex', flexDirection: 'column', gap: 6, marginTop: 14,
             opacity: animStage >= 3 ? 1 : 0,
             transition: 'all 0.5s ease 0.6s',
           } as any}>
             <button onClick={handleNewShift} style={{
-              padding: '14px 0', borderRadius: 16, border: 'none', cursor: 'pointer',
+              padding: '12px 0', borderRadius: 14, border: 'none', cursor: 'pointer',
               background: `linear-gradient(135deg, ${Colors.success}, ${Colors.successDark})`,
-              color: '#fff', fontSize: 15, fontWeight: 900,
+              color: '#fff', fontSize: 14, fontWeight: 900,
               boxShadow: `0 4px 20px ${Colors.successGlow}`,
               transition: 'transform 0.15s, box-shadow 0.15s',
             }}>
@@ -288,10 +288,10 @@ export default function ShiftEndPopup() {
               useGameStore.getState().clearSave();
               window.location.href = '/game/';
             }} style={{
-              padding: '12px 0', borderRadius: 14, cursor: 'pointer',
+              padding: '10px 0', borderRadius: 12, cursor: 'pointer',
               background: 'rgba(255,255,255,0.04)',
               border: '1px solid rgba(255,255,255,0.1)',
-              color: Colors.textMuted, fontSize: 13, fontWeight: 700,
+              color: Colors.textMuted, fontSize: 12, fontWeight: 700,
               transition: 'all 0.15s',
             }}>
               🏠 Главное меню
