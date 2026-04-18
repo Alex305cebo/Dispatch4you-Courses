@@ -6,19 +6,24 @@ import { useGameStore, LoadOffer, ActiveLoad } from '../store/gameStore';
 import { cityState, CITY_STATE, CITIES } from '../constants/config';
 import NegotiationChat from './NegotiationChat';
 import AssignModal from './AssignModal';
+import GuideSpotlight from './GuideSpotlight';
+import { useGuideStore } from '../store/guideStore';
 
 interface Props {
   onNegotiate: (load: ActiveLoad) => void;
   onAssigned?: (truckId: string) => void;
 }
 
-function LoadRow({ load, onCall, isExpanded, onToggle }: { 
+function LoadRow({ load, onCall, isExpanded, onToggle, scrollViewRef }: { 
   load: LoadOffer; 
   onCall: () => void; 
   isExpanded: boolean;
   onToggle: () => void;
+  scrollViewRef: React.RefObject<ScrollView>;
 }) {
+  const rowRef = useRef<View>(null);
   const { trucks, gameMinute } = useGameStore();
+  const activeStep = useGuideStore(s => s.activeStep);
   // Включаем траки которые скоро освободятся (at_delivery, at_pickup)
   const availableTrucks = trucks.filter(t => 
     t.status === 'idle' || t.status === 'at_delivery' || t.status === 'at_pickup'
@@ -31,11 +36,27 @@ function LoadRow({ load, onCall, isExpanded, onToggle }: {
   const equipmentIcon = load.equipment === 'Reefer' ? '❄️' : load.equipment === 'Flatbed' ? '🏗️' : '📦';
 
   return (
-    <View style={[styles.loadRow, load.isUrgent && styles.loadRowUrgent]}>
+    <View ref={rowRef} style={[styles.loadRow, load.isUrgent && styles.loadRowUrgent]}>
       {/* Компактная строка */}
       <TouchableOpacity 
         style={styles.loadHeader}
-        onPress={onToggle}
+        onPress={() => {
+          onToggle();
+          // Если раскрываем — скроллим чтобы кнопка была видна
+          if (!isExpanded) {
+            setTimeout(() => {
+              if (rowRef.current && scrollViewRef.current) {
+                rowRef.current.measureLayout(
+                  scrollViewRef.current as any,
+                  (_x, y, _w, h) => {
+                    (scrollViewRef.current as any).scrollTo({ y: y + h - 60, animated: true });
+                  },
+                  () => {}
+                );
+              }
+            }, 50);
+          }
+        }}
         activeOpacity={0.7}
       >
         <View style={styles.loadHeaderLeft}>
@@ -104,9 +125,16 @@ function LoadRow({ load, onCall, isExpanded, onToggle }: {
             onPress={availableTrucks > 0 ? onCall : undefined}
             activeOpacity={0.8}
           >
-            <Text style={styles.callBtnText}>
-              {availableTrucks > 0 ? '📞 Позвонить брокеру' : '🚫 Нет свободных траков'}
-            </Text>
+            <GuideSpotlight
+              step={['find_load', 'negotiate']}
+              tip="Нажми — начни переговоры!"
+              tipPosition="top"
+              style={{ borderRadius: 10 }}
+            >
+              <Text style={styles.callBtnText}>
+                {availableTrucks > 0 ? '📞 Позвонить брокеру' : '🚫 Нет свободных траков'}
+              </Text>
+            </GuideSpotlight>
           </TouchableOpacity>
         </View>
       )}
@@ -239,7 +267,9 @@ function CitySearchInput({
 
 export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
   const { availableLoads, trucks, refreshLoadBoard, bookLoad, loadBoardSearchFrom, setLoadBoardSearch } = useGameStore();
+  const activeStep = useGuideStore(s => s.activeStep);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
   const [searchFrom, setSearchFrom] = useState('');
   const [searchTo, setSearchTo] = useState('');
   const [deadheadRadius, setDeadheadRadius] = useState<number | null>(null);
@@ -353,10 +383,26 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
             {isFiltering ? `${filteredLoads.length} из ${availableLoads.length}` : availableLoads.length} грузов · {availableTrucks}/{totalTrucks} доступно
           </Text>
         </View>
-        <TouchableOpacity style={styles.refreshBtn} onPress={handleRefresh}>
-          <Text style={styles.refreshIcon}>🔄</Text>
-          <Text style={styles.refreshCountdown}>{countdown !== null ? `${countdown}s` : '↺'}</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+          {/* Авто-поиск для свободного трака */}
+          <TouchableOpacity
+            style={styles.autoSearchBtn}
+            onPress={() => {
+              const idleTruck = trucks.find(t => t.status === 'idle');
+              if (idleTruck && idleTruck.currentCity) {
+                setSearchFrom(idleTruck.currentCity);
+              }
+            }}
+          >
+            <Text style={styles.autoSearchIcon}>🚛</Text>
+            <Text style={styles.autoSearchText}>Авто</Text>
+          </TouchableOpacity>
+          {/* Обновить */}
+          <TouchableOpacity style={styles.refreshBtn} onPress={handleRefresh}>
+            <Text style={styles.refreshIcon}>🔄</Text>
+            <Text style={styles.refreshCountdown}>{countdown !== null ? `${countdown}s` : 'Обновить'}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Поиск */}
@@ -407,7 +453,24 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
           <Text style={styles.emptySub}>{isFiltering ? 'Попробуй другой город' : 'Нажми 🔄 чтобы обновить'}</Text>
         </View>
       ) : (
-        <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
+        <ScrollView ref={scrollViewRef} style={styles.list} showsVerticalScrollIndicator={false}>
+          {/* Подсказка гайда */}
+          {(activeStep === 'find_load' || activeStep === 'negotiate') && (
+            <View style={{
+              margin: 10, marginBottom: 4,
+              padding: 10, borderRadius: 10,
+              backgroundColor: 'rgba(6,182,212,0.1)',
+              borderWidth: 1, borderColor: 'rgba(6,182,212,0.4)',
+              flexDirection: 'row', alignItems: 'center', gap: 8,
+            }}>
+              <Text style={{ fontSize: 18 }}>👆</Text>
+              <Text style={{ fontSize: 12, color: '#67e8f9', fontWeight: '700', flex: 1 }}>
+                {activeStep === 'find_load'
+                  ? 'Нажми на любой груз ▶ чтобы раскрыть детали'
+                  : 'Нажми «📞 Позвонить брокеру» чтобы начать переговоры'}
+              </Text>
+            </View>
+          )}
           {displayLoads.map(load => (
             <LoadRow
               key={load.id}
@@ -415,6 +478,7 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
               onCall={() => handleCall(load)}
               isExpanded={expandedId === load.id}
               onToggle={() => setExpandedId(expandedId === load.id ? null : load.id)}
+              scrollViewRef={scrollViewRef}
             />
           ))}
         </ScrollView>
@@ -517,9 +581,9 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 16, fontWeight: '900', color: '#fff' },
   headerSub: { fontSize: 11, color: Colors.textDim, marginTop: 2 },
   refreshBtn: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
+    height: 62,
+    paddingHorizontal: 16,
+    borderRadius: 16,
     backgroundColor: 'rgba(6,182,212,0.15)',
     borderWidth: 2,
     borderColor: 'rgba(6,182,212,0.5)',
@@ -527,11 +591,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 2,
   },
-  refreshIcon: { fontSize: 18 },
+  refreshIcon: { fontSize: 22 },
   refreshCountdown: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '900',
     color: '#06b6d4',
+  },
+  autoSearchBtn: {
+    width: 62,
+    height: 62,
+    borderRadius: 16,
+    backgroundColor: 'rgba(74,222,128,0.12)',
+    borderWidth: 2,
+    borderColor: 'rgba(74,222,128,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 2,
+  },
+  autoSearchIcon: { fontSize: 22 },
+  autoSearchText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#4ade80',
   },
 
   allBusy: {

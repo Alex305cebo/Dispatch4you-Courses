@@ -37,8 +37,11 @@ import ShiftEndPopup from '../components/ShiftEndPopup';
 import StatsPopup from '../components/StatsPopup';
 import SettingsPopup from '../components/SettingsPopup';
 import HelpPopup from '../components/HelpPopup';
-import WelcomePopup, { shouldShowWelcome } from '../components/WelcomePopup';
+import GuidePanel, { shouldShowGuide, shouldShowWelcome } from '../components/WelcomePopup';
 import { useAccountStore } from '../store/accountStore';
+import GuideSpotlight from '../components/GuideSpotlight';
+import { useGuideStore } from '../store/guideStore';
+import GuideBubble from '../components/GuideBubble';
 
 type Tab = 'map' | 'loadboard' | 'email' | 'trucks';
 
@@ -86,17 +89,16 @@ function getMoodEmoji(mood: number, status: string, truck?: any): string {
   return `${NOTO}/1f621/512.webp`;                  // 😡 rage (red)
 }
 
-function getTruckColor(truck: any): string {
+function getTruckColor(truck: any, gameMinute = 0): string {
   const outOfOrder = (truck as any).outOfOrderUntil;
-  if (outOfOrder && typeof outOfOrder === 'number' && outOfOrder > 0) return '#ef4444';
+  if (outOfOrder && typeof outOfOrder === 'number' && outOfOrder > gameMinute) return '#ef4444';
   // Ночёвка / HOS-стоп — серо-синий
   if ((truck as any).onNightStop || (truck as any).hosRestUntilMinute > 0) return '#64748b';
   // idleWarning — только уровень 3 (5+ часов) даёт красный, остальное мягче
   const w = (truck as any).idleWarningLevel ?? 0;
-  if (w === 3) return '#ef4444'; // 5+ часов — красный
-  if (w === 2) return '#fb923c'; // 4+ часов — оранжевый
-  if (w === 1) return '#fbbf24'; // 3+ часов — жёлтый
-  // breakdown всегда красный независимо от warning
+  if (w === 3) return '#ef4444';
+  if (w === 2) return '#fb923c';
+  if (w === 1) return '#fbbf24';
   if (truck.status === 'breakdown') return '#f87171';
   return STATUS_COLOR[truck.status] || '#38bdf8';
 }
@@ -114,19 +116,31 @@ export default function GameScreen() {
     deliveryResults, totalEarned,
   } = useGameStore();
 
+  const [guideVisible, setGuideVisible] = useState(() => shouldShowGuide());
+  const [showGuidePopup, setShowGuidePopup] = useState(() => shouldShowGuide());
+  const [timeFormat, setTimeFormat] = useState<'12h' | '24h'>(() => {
+    try { return (localStorage.getItem('dispatch-time-format') as '12h' | '24h') || '12h'; } catch { return '12h'; }
+  });
+  const [guideForceStep, setGuideForceStep] = useState<number | null>(null);
+  const guideCurrentStepRef = useRef<number>(0); // текущий раскрытый шаг в гайде
+
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     try {
       const saved = localStorage.getItem('dispatch-active-tab') as Tab;
       if (saved) return saved;
     } catch {}
-    // Десктоп (≥900px) → trucks, мобильный → map
     return (typeof window !== 'undefined' && window.innerWidth >= 900) ? 'trucks' : 'map';
   });
 
   // Сохраняем активную вкладку при каждом переключении
   const switchTab = (tab: Tab) => {
     setActiveTab(tab);
-    try { localStorage.setItem('dispatch-active-tab', tab); } catch {}
+    try {
+      localStorage.setItem('dispatch-active-tab', tab);
+      // Отмечаем посещение для гайда
+      if (tab === 'email') localStorage.setItem('guide-email-visited', '1');
+      if (tab === 'map')   localStorage.setItem('guide-map-visited', '1');
+    } catch {}
   };
   const [pendingLoad, setPendingLoad] = useState<ActiveLoad | null>(null);
   const [showFleet, setShowFleet] = useState(false);
@@ -138,8 +152,8 @@ export default function GameScreen() {
   const [showMenu, setShowMenu] = useState(false);
   const [detailTruck, setDetailTruck] = useState<any>(null);
   const [showStats, setShowStats] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(false);
   const { currentNickname } = useAccountStore();
+  const activeGuideStep = useGuideStore(s => s.activeStep);
 
   // Таймер для кнопки "Карта" — становится цветной через 10 сек
   const [mapBtnAge, setMapBtnAge] = useState(0); // 0-10
@@ -219,18 +233,15 @@ export default function GameScreen() {
     return () => { if (clockRef.current) clearInterval(clockRef.current); };
   }, []);
 
-  // Welcome popup + плавный zoom на траки при первом запуске
+  // Плавный zoom на траки при первом запуске
   useEffect(() => {
-    if (!shouldShowWelcome()) return;
-    // t=1.5s — медленный zoom на центр траков
+    if (!shouldShowGuide()) return;
     const zoomTimer = setTimeout(() => {
       window.dispatchEvent(new CustomEvent('zoomToTruck', {
-        detail: { slow: true } // lng/lat не передаём — MapView вычислит центр сам
+        detail: { slow: true }
       }));
     }, 1500);
-    // t=5s — показываем popup
-    const popupTimer = setTimeout(() => setShowWelcome(true), 5000);
-    return () => { clearTimeout(zoomTimer); clearTimeout(popupTimer); };
+    return () => clearTimeout(zoomTimer);
   }, []);
   useEffect(() => {
     // Автосохранение каждые 30 секунд
@@ -294,18 +305,39 @@ export default function GameScreen() {
           pointerEvents: 'none',
         } as any} />
 
-        {/* Время */}
-        <div style={{ minWidth: isWide ? 80 : 60, flexShrink: 0 } as any}>
+        {/* Время — клик переключает 12h/24h */}
+        <div
+          style={{ minWidth: isWide ? 86 : 64, flexShrink: 0, cursor: 'pointer', userSelect: 'none' } as any}
+          onClick={() => {
+            const next = timeFormat === '12h' ? '24h' : '12h';
+            setTimeFormat(next);
+            try { localStorage.setItem('dispatch-time-format', next); } catch {}
+          }}
+          title="Нажми чтобы переключить формат"
+        >
           <div style={{
             fontSize: isWide ? 20 : 16, fontWeight: 900, color: '#fff',
             letterSpacing: 0.5, lineHeight: 1,
             textShadow: `0 0 20px ${timeColor}88`,
-          } as any}>{formatTimeShort(gameMinute)}</div>
-          {sessionName && isWide ? (
-            <div style={{ fontSize: 9, color: '#38bdf8', fontWeight: 700, marginTop: 2, opacity: 0.8 } as any}>
-              {sessionName}
-            </div>
-          ) : null}
+            transition: 'opacity 0.15s',
+          } as any}>
+            {(() => {
+              const roundedMinute = Math.round(gameMinute);
+              const totalMinutes = 8 * 60 + 0 + roundedMinute; // SHIFT_START_HOUR=8
+              const hours = Math.floor(totalMinutes / 60) % 24;
+              const mins = totalMinutes % 60;
+              const m = mins.toString().padStart(2, '0');
+              if (timeFormat === '24h') {
+                return `${hours.toString().padStart(2, '0')}:${m}`;
+              }
+              const ampm = hours >= 12 ? 'PM' : 'AM';
+              const h12 = hours % 12 || 12;
+              return `${h12}:${m} ${ampm}`;
+            })()}
+          </div>
+          <div style={{ fontSize: 9, color: '#38bdf8', fontWeight: 700, marginTop: 2, opacity: 0.6 } as any}>
+            {timeFormat === '24h' ? '24h ↺' : '12h ↺'}
+          </div>
         </div>
 
         {/* Прогресс смены */}
@@ -445,11 +477,29 @@ export default function GameScreen() {
           <button onClick={() => setShowBell(true)} style={{
             position: 'relative', width: isWide ? 42 : 36, height: isWide ? 42 : 36,
             borderRadius: isWide ? 21 : 18,
-            background: 'rgba(6,182,212,0.15)', border: '1px solid rgba(6,182,212,0.3)',
+            background: activeGuideStep === 'resolve_event'
+              ? 'rgba(6,182,212,0.25)'
+              : 'rgba(6,182,212,0.15)',
+            border: activeGuideStep === 'resolve_event'
+              ? '2px solid rgba(6,182,212,0.9)'
+              : '1px solid rgba(6,182,212,0.3)',
             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: isWide ? 20 : 17,
+            boxShadow: activeGuideStep === 'resolve_event'
+              ? '0 0 16px rgba(6,182,212,0.6)'
+              : 'none',
+            animation: activeGuideStep === 'resolve_event' ? 'spotlightPulse 1.4s ease-in-out infinite' : 'none',
           } as any}>
             🔔
+            {activeGuideStep === 'resolve_event' && (
+              <span style={{
+                position: 'absolute', top: -18, left: '50%', transform: 'translateX(-50%)',
+                fontSize: 10, fontWeight: 800, color: '#06b6d4',
+                background: 'rgba(6,182,212,0.15)',
+                padding: '2px 6px', borderRadius: 6, whiteSpace: 'nowrap',
+                pointerEvents: 'none',
+              } as any}>👆 Нажми</span>
+            )}
             {unreadEmails > 0 && (
               <span style={{
                 position: 'absolute', top: -3, right: -3,
@@ -476,6 +526,14 @@ export default function GameScreen() {
 
         <style>{`
           @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+          @keyframes guideBtnPulse {
+            0%,100% { box-shadow: 0 0 10px rgba(129,140,248,0.3); }
+            50%      { box-shadow: 0 0 18px rgba(129,140,248,0.6), 0 0 0 3px rgba(129,140,248,0.15); }
+          }
+          @keyframes spotlightPulse {
+            0%,100% { box-shadow: 0 0 8px rgba(6,182,212,0.4), 0 0 0 2px rgba(6,182,212,0.2); }
+            50%      { box-shadow: 0 0 20px rgba(6,182,212,0.8), 0 0 0 4px rgba(6,182,212,0.15); }
+          }
           @keyframes pauseUrgent {
             0%   { box-shadow: 0 0 8px rgba(239,68,68,0.6), 0 0 16px rgba(239,68,68,0.3); background: linear-gradient(135deg, rgba(239,68,68,0.35), rgba(220,38,38,0.2)); border-color: rgba(239,68,68,0.8); }
             50%  { box-shadow: 0 0 18px rgba(239,68,68,1), 0 0 36px rgba(239,68,68,0.6); background: linear-gradient(135deg, rgba(239,68,68,0.6), rgba(220,38,38,0.4)); border-color: rgba(239,68,68,1); }
@@ -521,7 +579,7 @@ export default function GameScreen() {
       scrollbarWidth: 'none',
     } as any}>
       {trucks.map(truck => {
-        const color = getTruckColor(truck);
+        const color = getTruckColor(truck, gameMinute);
         const hos = Math.max(0, truck.hoursLeft);
         const hosColor = hos < 2 ? '#f87171' : hos < 4 ? '#fbbf24' : '#34d399';
         const isSelected = selectedTruckId === truck.id;
@@ -638,18 +696,35 @@ export default function GameScreen() {
   );
 
   // ── SIDE TABS (desktop) ───────────────────────────────────────────────────
+  const GUIDE_TAB_STEPS: Record<string, string[]> = {
+    loadboard: ['find_load', 'negotiate'],
+    email:     ['check_email'],
+    trucks:    ['assign_truck', 'resolve_event', 'end_shift'],
+    map:       ['watch_map', 'get_paid'],
+  };
+
   const SideTabs = () => (
     <View style={s.sideTabs}>
-      {tabs.map(tab => (
-        <TouchableOpacity key={tab.id}
-          style={[s.sideTab, activeTab === tab.id && s.sideTabOn]}
-          onPress={() => tab.onPress ? tab.onPress() : switchTab(tab.id)}>
-          <Text style={[s.sideTabTxt, activeTab === tab.id && s.sideTabTxtOn]}>{tab.label}</Text>
-          {tab.badge !== undefined && (
-            <View style={s.badge}><Text style={s.badgeTxt}>{tab.badge}</Text></View>
-          )}
-        </TouchableOpacity>
-      ))}
+      {tabs.map(tab => {
+        const isGuideActive = GUIDE_TAB_STEPS[tab.id]?.includes(activeGuideStep as string);
+        return (
+          <TouchableOpacity key={tab.id}
+            style={[s.sideTab, activeTab === tab.id && s.sideTabOn,
+              isGuideActive && { borderColor: 'rgba(6,182,212,0.7)', backgroundColor: 'rgba(6,182,212,0.08)' } as any
+            ]}
+            onPress={() => tab.onPress ? tab.onPress() : switchTab(tab.id)}>
+            <Text style={[s.sideTabTxt, activeTab === tab.id && s.sideTabTxtOn,
+              isGuideActive && { color: '#06b6d4' } as any
+            ]}>{tab.label}</Text>
+            {isGuideActive && activeTab !== tab.id && (
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#06b6d4', marginLeft: 4 } as any} />
+            )}
+            {tab.badge !== undefined && (
+              <View style={s.badge}><Text style={s.badgeTxt}>{tab.badge}</Text></View>
+            )}
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 
@@ -690,16 +765,27 @@ export default function GameScreen() {
         </TouchableOpacity>
 
         {/* Остальные табы */}
-        {tabs.map(tab => (
-          <TouchableOpacity key={tab.id}
-            style={[s.bottomTab, activeTab === tab.id && s.bottomTabOn]}
-            onPress={() => (tab as any).onPress ? (tab as any).onPress() : switchTab(tab.id)}>
-            <Text style={[s.bottomTabTxt, activeTab === tab.id && s.bottomTabTxtOn]}>{tab.label}</Text>
-            {(tab as any).badge !== undefined && (
-              <View style={s.badge}><Text style={s.badgeTxt}>{(tab as any).badge}</Text></View>
-            )}
-          </TouchableOpacity>
-        ))}
+        {tabs.map(tab => {
+          const isGuideActive = GUIDE_TAB_STEPS[tab.id]?.includes(activeGuideStep as string);
+          return (
+            <TouchableOpacity key={tab.id}
+              style={[s.bottomTab, activeTab === tab.id && s.bottomTabOn,
+                isGuideActive && { borderColor: 'rgba(6,182,212,0.7)', backgroundColor: 'rgba(6,182,212,0.1)' } as any
+              ]}
+              onPress={() => (tab as any).onPress ? (tab as any).onPress() : switchTab(tab.id)}>
+              <Text style={[s.bottomTabTxt, activeTab === tab.id && s.bottomTabTxtOn,
+                isGuideActive && { color: '#06b6d4' } as any
+              ]}>{tab.label}</Text>
+              {isGuideActive && activeTab !== tab.id && (
+                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#06b6d4', marginLeft: 4,
+                  shadowColor: '#06b6d4', shadowOpacity: 1, shadowRadius: 4 } as any} />
+              )}
+              {(tab as any).badge !== undefined && (
+                <View style={s.badge}><Text style={s.badgeTxt}>{(tab as any).badge}</Text></View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
       </View>
     );
   };
@@ -707,6 +793,8 @@ export default function GameScreen() {
   const mapProps = {
     onTruckInfo: (id: string) => { const t = trucks.find(x => x.id === id); if (t) setDetailTruck(t); },
     onFindLoad: (city: string) => { setLoadBoardSearch(city); switchTab('loadboard'); },
+    onGuideOpen: () => { setGuideVisible(true); setShowGuidePopup(true); },
+    guideActive: guideVisible,
   };
 
   function handleAssigned(truckId: string) {
@@ -778,11 +866,108 @@ export default function GameScreen() {
       )}
 
       {/* ── MODALS ── */}
-      {showWelcome && (
-        <WelcomePopup
-          nickname={currentNickname || 'Dispatcher'}
-          onClose={() => setShowWelcome(false)}
-        />
+      {/* Guide Popup */}
+      {showGuidePopup && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9998,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,0.55)',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        } as any}>
+          <div style={{
+            width: '92%', maxWidth: 440,
+            maxHeight: '88vh',
+            background: 'linear-gradient(160deg, #1a2540 0%, #141d35 100%)',
+            border: '1px solid rgba(99,120,200,0.4)',
+            borderRadius: 22,
+            boxShadow: '0 8px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06)',
+            overflow: 'hidden',
+            display: 'flex', flexDirection: 'column',
+          } as any}>
+
+            {/* Header bar */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '12px 14px 10px', flexShrink: 0,
+              background: 'rgba(255,255,255,0.04)',
+              borderBottom: '1px solid rgba(255,255,255,0.08)',
+            }}>
+              {/* Title */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 18 }}>📖</span>
+                <span style={{ fontSize: 13, fontWeight: 800, color: '#c7d2fe', letterSpacing: 0.3 }}>
+                  Гайд диспетчера
+                </span>
+              </div>
+
+              {/* Buttons */}
+              <div style={{ display: 'flex', gap: 6 }}>
+                {/* Refresh — шаг назад */}
+                <button
+                  title="Вернуться на шаг назад"
+                  onClick={() => {
+                    const next = Math.max(0, guideCurrentStepRef.current - 1);
+                    guideCurrentStepRef.current = next;
+                    setGuideForceStep(next);
+                  }}
+                  style={{
+                    width: 30, height: 30, borderRadius: 8,
+                    background: 'rgba(99,102,241,0.15)',
+                    border: '1px solid rgba(99,102,241,0.4)',
+                    cursor: 'pointer', fontSize: 15, color: '#a5b4fc',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.15s',
+                  } as any}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.background = 'rgba(99,102,241,0.3)';
+                    (e.currentTarget as HTMLElement).style.transform = 'rotate(-180deg)';
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.background = 'rgba(99,102,241,0.15)';
+                    (e.currentTarget as HTMLElement).style.transform = 'rotate(0deg)';
+                  }}
+                >↺</button>
+
+                {/* Close */}
+                <button
+                  onClick={() => setShowGuidePopup(false)}
+                  style={{
+                    width: 30, height: 30, borderRadius: 8,
+                    background: 'rgba(255,255,255,0.07)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    cursor: 'pointer', fontSize: 14, color: '#94a3b8',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontWeight: 700, transition: 'all 0.15s',
+                  } as any}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.15)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(239,68,68,0.4)';
+                    (e.currentTarget as HTMLElement).style.color = '#f87171';
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.07)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)';
+                    (e.currentTarget as HTMLElement).style.color = '#94a3b8';
+                  }}
+                >✕</button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+              <GuidePanel
+                nickname={currentNickname || 'Dispatcher'}
+                truckCount={trucks.length || 3}
+                onSwitchTab={(tab) => { setShowGuidePopup(false); switchTab(tab as any); }}
+                onAllDone={() => { setGuideVisible(false); setShowGuidePopup(false); }}
+                forceStep={guideForceStep}
+                onStepChange={(step) => { guideCurrentStepRef.current = step; }}
+              />
+            </div>
+          </div>
+        </div>
       )}
       {negotiation.open && <ErrorBoundary name="Neg"><NegotiationModal onAssign={setPendingLoad} /></ErrorBoundary>}
       {pendingLoad && !negotiation.open && (
@@ -826,8 +1011,11 @@ export default function GameScreen() {
         onOpenStats={() => setShowStats(true)}
         onOpenSettings={() => setShowSettings(true)}
         onOpenHelp={() => setShowHelp(true)}
+        onOpenGuide={() => { setGuideVisible(true); setShowGuidePopup(true); }}
         onExit={() => { if (clockRef.current) clearInterval(clockRef.current); }}
       />
+      {/* Guide Bubble — контекстные подсказки */}
+      {guideVisible && <GuideBubble />}
     </View>
   );
 }
@@ -1003,3 +1191,4 @@ const s = StyleSheet.create({
   },
   modalCloseTxt: { fontSize: 12, color: '#94a3b8', fontWeight: '700' },
 });
+

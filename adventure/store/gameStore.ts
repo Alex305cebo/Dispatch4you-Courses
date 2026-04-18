@@ -2,6 +2,23 @@
 import { SHIFT_DURATION, SHIFT_START_HOUR, SHIFT_START_MINUTE, CITIES, TIME_SCALE } from '../constants/config';
 import { findNearestTruckStop } from '../constants/truckStops';
 
+// ─── OSRM fetch с таймаутом 3 сек — если зависает, возвращает null ──────────
+async function fetchRoute(fromLng: number, fromLat: number, toLng: number, toLat: number): Promise<Array<[number,number]> | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 3000);
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?overview=full&geometries=geojson`;
+    const res = await fetch(url, { signal: controller.signal });
+    const data = await res.json();
+    if (data.routes?.[0]) return data.routes[0].geometry.coordinates;
+  } catch {
+    // таймаут или сеть — используем линейное движение
+  } finally {
+    clearTimeout(timeout);
+  }
+  return null;
+}
+
 // ─── ТИПЫ ───────────────────────────────────────────────────────────────────
 
 export type TruckStatus =
@@ -255,6 +272,22 @@ interface GameState {
   deliveryResults: DeliveryResult[];
   dismissDeliveryResult: (loadId: string) => void;
 
+  // Погода
+  activeWeatherZones: WeatherZone[];
+
+  // Driver Marketplace
+  driverCandidates: DriverCandidate[];
+  hireDriver: (candidateId: string, truckId: string) => void;
+  refreshDriverMarket: () => void;
+
+  // Factoring
+  pendingFactoringOffers: FactoringOffer[];
+  acceptFactoring: (offerId: string) => void;
+  declineFactoring: (offerId: string) => void;
+
+  // Breakdown repair choice
+  repairBreakdown: (truckId: string, choice: 'roadside' | 'tow') => void;
+
   // Переговоры
   negotiation: {
     open: boolean;
@@ -474,7 +507,7 @@ const INITIAL_TRUCKS: Truck[] = [
     progress: 0, currentLoad: null, hoursLeft: 11, mood: 65, routePath: null,
     safetyScore: 95, fuelEfficiency: 6.8, onTimeRate: 98, complianceRate: 100,
     totalMiles: 45230, totalDeliveries: 156, hosViolations: 0, lastInspection: 0,
-    idleSinceMinute: 0,
+    idleSinceMinute: undefined,
   } as any,
   {
     id: 'T2', name: 'Truck 2023', driver: 'Carlos Rivera',
@@ -483,7 +516,7 @@ const INITIAL_TRUCKS: Truck[] = [
     progress: 0, currentLoad: null, hoursLeft: 11, mood: 68, routePath: null,
     safetyScore: 92, fuelEfficiency: 7.1, onTimeRate: 96, complianceRate: 98,
     totalMiles: 38450, totalDeliveries: 142, hosViolations: 0, lastInspection: 0,
-    idleSinceMinute: 0,
+    idleSinceMinute: undefined,
   } as any,
   {
     id: 'T3', name: 'Truck 3012', driver: 'Mike Chen',
@@ -492,7 +525,7 @@ const INITIAL_TRUCKS: Truck[] = [
     progress: 0, currentLoad: null, hoursLeft: 11, mood: 63, routePath: null,
     safetyScore: 98, fuelEfficiency: 7.3, onTimeRate: 99, complianceRate: 100,
     totalMiles: 52100, totalDeliveries: 178, hosViolations: 0, lastInspection: 0,
-    idleSinceMinute: 0,
+    idleSinceMinute: undefined,
   } as any,
   {
     // T4 — едет с грузом к delivery
@@ -511,7 +544,7 @@ const INITIAL_TRUCKS: Truck[] = [
     progress: 0, currentLoad: null, hoursLeft: 11, mood: 64, routePath: null,
     safetyScore: 97, fuelEfficiency: 7.0, onTimeRate: 97, complianceRate: 100,
     totalMiles: 48900, totalDeliveries: 165, hosViolations: 0, lastInspection: 0,
-    idleSinceMinute: 0,
+    idleSinceMinute: undefined,
   } as any,
   {
     // T6 — едет с грузом к delivery
@@ -539,7 +572,7 @@ const INITIAL_TRUCKS: Truck[] = [
     progress: 0, currentLoad: null, hoursLeft: 11, mood: 65, routePath: null,
     safetyScore: 99, fuelEfficiency: 7.4, onTimeRate: 99, complianceRate: 100,
     totalMiles: 51200, totalDeliveries: 171, hosViolations: 0, lastInspection: 0,
-    idleSinceMinute: 0,
+    idleSinceMinute: undefined,
   } as any,
   {
     // T9 — едет с грузом к delivery
@@ -965,13 +998,15 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Берём траки из INITIAL_TRUCKS с их реальными позициями и маршрутами
     const allTrucks = INITIAL_TRUCKS.slice(0, truckCount).map(truck => ({
       ...truck,
-      // Новая смена — водители отдохнули, настроение хорошее
-      mood: 75 + Math.floor(Math.random() * 15), // 75–90
+      mood: 75 + Math.floor(Math.random() * 15),
       hoursLeft: 11,
       idleWarningLevel: 0 as 0 | 1 | 2 | 3,
       outOfOrderUntil: 0,
       status: truck.status === 'breakdown' ? 'idle' as const : truck.status,
-      // Рандомная скорость 0.75–1.25 для каждого трака
+      // Едущие траки — без idle счётчика, стоящие — начинают отсчёт с текущей минуты
+      idleSinceMinute: (truck.status === 'driving' || truck.status === 'loaded' || truck.status === 'at_pickup' || truck.status === 'at_delivery')
+        ? undefined
+        : 0,
       speedMultiplier: 0.75 + Math.random() * 0.5,
     }));
 
@@ -979,16 +1014,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     const trucksWithRoutes = await Promise.all(allTrucks.map(async (truck) => {
       if ((truck.status === 'driving' || truck.status === 'loaded') && truck.destinationCity && CITIES[truck.destinationCity]) {
         const dest = CITIES[truck.destinationCity];
-        try {
-          const url = `https://router.project-osrm.org/route/v1/driving/${truck.position[0]},${truck.position[1]};${dest[0]},${dest[1]}?overview=full&geometries=geojson`;
-          const res = await fetch(url);
-          const data = await res.json();
-          if (data.routes && data.routes[0]) {
-            console.log(`✅ Route loaded for ${truck.id}: ${truck.currentCity} → ${truck.destinationCity}`);
-            return { ...truck, routePath: data.routes[0].geometry.coordinates };
-          }
-        } catch (e) {
-          console.warn(`⚠️ Route failed for ${truck.id}, using linear movement`);
+        const routePath = await fetchRoute(truck.position[0], truck.position[1], dest[0], dest[1]);
+        if (routePath) {
+          console.log(`✅ Route loaded for ${truck.id}: ${truck.currentCity} → ${truck.destinationCity}`);
+          return { ...truck, routePath };
         }
       }
       return truck;
@@ -1025,9 +1054,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   tickClock: async () => {
     if (get().phase !== 'playing') return; // не тикаем если смена завершена
     const { gameMinute, trucks, availableLoads, activeLoads, timeSpeed } = get();
-    // 1 день = 20 реальных минут = 1200 тиков
-    // 1 тик = 1440/1200 = 1.2 игровых минуты
-    const TICK_MINUTES = 1.2 * (timeSpeed ?? 1);
+    // 1 день = 24 реальных минуты = 1440 тиков
+    // 1 тик = 1440/1440 = 1.0 игровых минуты
+    const TICK_MINUTES = 1.0 * (timeSpeed ?? 1);
     const newMinute = Math.round((gameMinute + TICK_MINUTES) * 10) / 10;
 
     if (newMinute >= SHIFT_DURATION) {
@@ -1421,14 +1450,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           const deliveryCity = CITIES[truck.currentLoad.toCity];
           let routePath: Array<[number, number]> | null = null;
           if (deliveryCity) {
-            try {
-              const url = `https://router.project-osrm.org/route/v1/driving/${truck.position[0]},${truck.position[1]};${deliveryCity[0]},${deliveryCity[1]}?overview=full&geometries=geojson`;
-              const res = await fetch(url);
-              const data = await res.json();
-              if (data.routes && data.routes[0]) {
-                routePath = data.routes[0].geometry.coordinates;
-              }
-            } catch {}
+            routePath = await fetchRoute(truck.position[0], truck.position[1], deliveryCity[0], deliveryCity[1]);
           }
           get().addNotification({
             type: 'email', priority: 'low',
@@ -1540,7 +1562,7 @@ export const useGameStore = create<GameState>((set, get) => ({
               factoredAmount: Math.round(agreedRate * 0.97),
               expiresAt: newMinute + 60,
             };
-            set(s => ({ pendingFactoringOffers: [...(s as any).pendingFactoringOffers, factoringOffer] }));
+            set(s => ({ pendingFactoringOffers: [...((s as any).pendingFactoringOffers ?? []), factoringOffer] }));
           }
           get().addNotification({
             type: 'email', priority: 'low',
@@ -1579,19 +1601,8 @@ export const useGameStore = create<GameState>((set, get) => ({
           let routePath: Array<[number, number]> | null = null;
           
           if (pickupCity) {
-            try {
-              const url = `https://router.project-osrm.org/route/v1/driving/${truck.position[0]},${truck.position[1]};${pickupCity[0]},${pickupCity[1]}?overview=full&geometries=geojson`;
-              const res = await fetch(url);
-              const data = await res.json();
-              if (data.routes && data.routes[0]) {
-                routePath = data.routes[0].geometry.coordinates;
-                if (routePath) {
-                  console.log(`✅ Pre-planned load activated for ${truck.id}: ${routePath.length} points`);
-                }
-              }
-            } catch (err) {
-              console.warn('Failed to load route for pre-planned load');
-            }
+            routePath = await fetchRoute(truck.position[0], truck.position[1], pickupCity[0], pickupCity[1]);
+            if (routePath) console.log(`✅ Pre-planned load activated for ${truck.id}: ${routePath.length} points`);
           }
           
           // Уведомление о начале движения
@@ -1617,7 +1628,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       
       // ── IDLE WARNING: трак стоит слишком долго ──────────────────────
       if (truck.status === 'idle') {
-        const idleSince = (truck as any).idleSinceMinute ?? newMinute;
+        const rawIdleSince = (truck as any).idleSinceMinute;
+        // idleSinceMinute=0 — значение по умолчанию, не реальный простой; используем newMinute
+        const idleSince = (rawIdleSince && rawIdleSince > 0) ? rawIdleSince : newMinute;
         const idleMinutes = newMinute - idleSince;
         const idleHours = idleMinutes / 60;
 
@@ -1696,10 +1709,13 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
 
       // Сбрасываем idle счётчик когда трак начинает ехать
-      if ((truck as any).idleSinceMinute !== undefined) {
-        // В пути — mood чуть растёт (водитель доволен что едет)
+      if (truck.status === 'driving' || truck.status === 'loaded' ||
+          truck.status === 'at_pickup' || truck.status === 'at_delivery') {
         const drivingMood = Math.min(72, (truck.mood ?? 65) + 0.1);
-        return { ...truck, idleSinceMinute: undefined, idleWarningLevel: 0, mood: Math.round(drivingMood) } as any;
+        // Всегда сбрасываем idleWarningLevel для едущих траков
+        if ((truck as any).idleSinceMinute !== undefined || (truck as any).idleWarningLevel > 0) {
+          return { ...truck, idleSinceMinute: undefined, idleWarningLevel: 0, mood: Math.round(drivingMood) } as any;
+        }
       }
 
       // Двигаем трак только если он реально едет с грузом
@@ -1744,11 +1760,33 @@ export const useGameStore = create<GameState>((set, get) => ({
         // 10 миль/игровую минуту × 1.2 мин/тик = 12 миль/тик
         // Каждый трак имеет свой speedMultiplier для рандомизации
         const speedMult = (truck as any).speedMultiplier ?? 1.0;
-        const progressPerTick = (MILES_PER_TICK / totalMiles) * speedMult;
+
+        // ── WEATHER: проверяем активные погодные зоны ──
+        const activeWeather = get().activeWeatherZones ?? [];
+        const truckStateCode = CITY_STATE_MAP[truck.currentCity] ?? '';
+        const weatherZone = activeWeather.find((z: WeatherZone) =>
+          z.endMinute > newMinute && z.states.includes(truckStateCode)
+        );
+        const weatherSpeedMult = weatherZone ? weatherZone.speedMult : 1.0;
+        const weatherHosMult = weatherZone ? weatherZone.hosMult : 1.0;
+        // Уведомляем о погоде один раз при входе в зону
+        if (weatherZone && !((truck as any)[`wn_${truckStateCode}`])) {
+          get().addNotification({
+            type: 'text', priority: 'high', from: truck.driver,
+            subject: `${weatherZone.event} — ${truck.name} замедлился`,
+            message: `${weatherZone.event} на маршруте (${truckStateCode}). Скорость снижена до ${Math.round(weatherSpeedMult * 100)}%. Будь осторожен!`,
+            actionRequired: false, relatedTruckId: truck.id,
+          });
+          window.dispatchEvent(new CustomEvent('mapToast', {
+            detail: { message: `${weatherZone.event} — ${truck.name} замедлен`, color: '#5ac8fa' }
+          }));
+        }
+
+        const progressPerTick = (MILES_PER_TICK / totalMiles) * speedMult * weatherSpeedMult;
         const newProgress = Math.min(1, truck.progress + progressPerTick);
 
-        // Уменьшаем HOS: 1.2 игровых минуты = 1.2/60 часа
-        const newHoursLeft = Math.round(Math.max(0, truck.hoursLeft - TICK_MINUTES / 60) * 10) / 10;
+        // Уменьшаем HOS: 1.2 игровых минуты = 1.2/60 часа (погода увеличивает расход)
+        const newHoursLeft = Math.round(Math.max(0, truck.hoursLeft - (TICK_MINUTES / 60) * weatherHosMult) * 10) / 10;
 
         if (newProgress >= 1) {
           // Трак приехал в пункт назначения
@@ -1779,19 +1817,8 @@ export const useGameStore = create<GameState>((set, get) => ({
           if (newStatus === 'at_pickup' && truck.currentLoad) {
             const deliveryCity = CITIES[truck.currentLoad.toCity];
             if (deliveryCity) {
-              try {
-                const url = `https://router.project-osrm.org/route/v1/driving/${to[0]},${to[1]};${deliveryCity[0]},${deliveryCity[1]}?overview=full&geometries=geojson`;
-                const res = await fetch(url);
-                const data = await res.json();
-                if (data.routes && data.routes[0]) {
-                  nextRoutePath = data.routes[0].geometry.coordinates;
-                  if (nextRoutePath) {
-                    console.log(`✅ Loaded delivery route for ${truck.id}: ${nextRoutePath.length} points`);
-                  }
-                }
-              } catch (err) {
-                console.warn('Failed to load delivery route');
-              }
+              nextRoutePath = await fetchRoute(to[0], to[1], deliveryCity[0], deliveryCity[1]);
+              if (nextRoutePath) console.log(`✅ Loaded delivery route for ${truck.id}: ${nextRoutePath.length} points`);
             }
           }
           
@@ -1821,7 +1848,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           const lng = p1[0] + (p2[0] - p1[0]) * segmentProgress;
           const lat = p1[1] + (p2[1] - p1[1]) * segmentProgress;
           
-          return { ...truck, progress: newProgress, position: [lng, lat] as [number, number], hoursLeft: newHoursLeft, currentCity: getNearestCity(lng, lat) };
+          return { ...truck, progress: newProgress, position: [lng, lat] as [number, number], hoursLeft: newHoursLeft, currentCity: getNearestCity(lng, lat), [`wn_${truckStateCode}`]: weatherZone ? true : (truck as any)[`wn_${truckStateCode}`] } as any;
         } else if (truck.destinationCity && CITIES[truck.destinationCity]) {
           // Fallback: линейное движение если нет routePath
           const dest = CITIES[truck.destinationCity];
@@ -1830,7 +1857,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           const t = Math.min(totalProgress, 1);
           const lng = startPos[0] + (dest[0] - startPos[0]) * t;
           const lat = startPos[1] + (dest[1] - startPos[1]) * t;
-          return { ...truck, progress: Math.min(newProgress, 0.99), position: [lng, lat] as [number, number], hoursLeft: newHoursLeft, currentCity: getNearestCity(lng, lat) };
+          return { ...truck, progress: Math.min(newProgress, 0.99), position: [lng, lat] as [number, number], hoursLeft: newHoursLeft, currentCity: getNearestCity(lng, lat) } as any;
         } else {
           return truck;
         }
@@ -2313,34 +2340,25 @@ case 'detention': {
     // Snap текущую позицию трака к дороге
     let snappedPosition = truck.position;
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2000);
       const url = `https://router.project-osrm.org/nearest/v1/driving/${truck.position[0]},${truck.position[1]}?number=1`;
-      const res = await fetch(url);
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeout);
       const data = await res.json();
       if (data.waypoints && data.waypoints[0]) {
         snappedPosition = data.waypoints[0].location as [number, number];
       }
-    } catch (err) {
-      console.warn('Failed to snap truck to road');
+    } catch {
+      // используем оригинальную позицию
     }
 
     // Загружаем маршрут до pickup
     const pickupCity = CITIES[load.fromCity];
     let routePath: Array<[number, number]> | null = null;
     if (pickupCity && !isPrePlanning) {
-      // Загружаем маршрут только если трак свободен (не pre-planning)
-      try {
-        const url = `https://router.project-osrm.org/route/v1/driving/${snappedPosition[0]},${snappedPosition[1]};${pickupCity[0]},${pickupCity[1]}?overview=full&geometries=geojson`;
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data.routes && data.routes[0]) {
-          routePath = data.routes[0].geometry.coordinates;
-          if (routePath) {
-            console.log(`✅ Loaded route for ${truckId} to pickup: ${routePath.length} points`);
-          }
-        }
-      } catch (err) {
-        console.warn('Failed to load route to pickup');
-      }
+      routePath = await fetchRoute(snappedPosition[0], snappedPosition[1], pickupCity[0], pickupCity[1]);
+      if (routePath) console.log(`✅ Loaded route for ${truckId} to pickup: ${routePath.length} points`);
     }
 
     const activeLoad = { ...load, truckId };
@@ -2586,6 +2604,9 @@ case 'detention': {
         unreadCount: state.unreadCount,
         pendingEmailResponses: state.pendingEmailResponses,
         savedAt: Date.now(),
+        activeWeatherZones: state.activeWeatherZones,
+        driverCandidates: state.driverCandidates,
+        pendingFactoringOffers: state.pendingFactoringOffers,
       };
       localStorage.setItem('dispatcher-game-save', JSON.stringify(saveData));
       console.log('✅ Game saved');
@@ -2626,15 +2647,11 @@ case 'detention': {
           if ((truck.status === 'driving' || truck.status === 'loaded') && truck.destinationCity && !truck.routePath) {
             const dest = CITIES[truck.destinationCity];
             if (dest) {
-              try {
-                const url = `https://router.project-osrm.org/route/v1/driving/${truck.position[0]},${truck.position[1]};${dest[0]},${dest[1]}?overview=full&geometries=geojson`;
-                const res = await fetch(url);
-                const data = await res.json();
-                if (data.routes && data.routes[0]) {
-                  console.log(`✅ Restored route for ${truck.id}`);
-                  return { ...truck, routePath: data.routes[0].geometry.coordinates };
-                }
-              } catch {}
+              const routePath = await fetchRoute(truck.position[0], truck.position[1], dest[0], dest[1]);
+              if (routePath) {
+                console.log(`✅ Restored route for ${truck.id}`);
+                return { ...truck, routePath };
+              }
             }
           }
           return truck;
@@ -2662,8 +2679,10 @@ case 'detention': {
           // Восстанавливаем HOS и настроение до нормы
           hoursLeft: Math.max(t.hoursLeft ?? 11, 8),
           mood: Math.max(t.mood ?? 75, 70),
-          // Сбрасываем idle счётчик — чтобы не было красного с первой секунды
-          idleSinceMinute: saveData.gameMinute,
+          // Едущие траки — сбрасываем idle счётчик полностью
+          idleSinceMinute: (t.status === 'driving' || t.status === 'loaded' || t.status === 'at_pickup' || t.status === 'at_delivery')
+            ? undefined
+            : saveData.gameMinute,
           idleWarningLevel: 0,
         })),
         availableLoads: saveData.availableLoads.length > 0 

@@ -37,13 +37,32 @@ const HUBS = [
 // Штаты с высокими ставками (surge zones) — ротируются случайно при старте
 const SURGE_STATES = ["TX","CA","FL","IL","GA","OH","PA","TN","NC","MO"];
 
-function getTruckColor(truck: any): string {
+function getTruckColor(truck: any, gameMinute = 0): string {
   const outOfOrder = (truck as any).outOfOrderUntil;
-  if (outOfOrder && typeof outOfOrder === 'number' && outOfOrder > 0) return "#ff0000";
   const warn = (truck as any).idleWarningLevel ?? 0;
+  // DEBUG
+  if (typeof window !== 'undefined') {
+    (window as any).__truckDebug = (window as any).__truckDebug || {};
+    (window as any).__truckDebug[truck.id] = {
+      status: truck.status,
+      outOfOrderUntil: outOfOrder,
+      idleWarningLevel: warn,
+      idleSinceMinute: (truck as any).idleSinceMinute,
+      onNightStop: (truck as any).onNightStop,
+      gameMinute,
+    };
+  }
+  // outOfOrder — только если реально сейчас заблокирован
+  if (outOfOrder && typeof outOfOrder === 'number' && outOfOrder > gameMinute) return "#ff0000";
+  // Ночёвка / HOS-стоп / обязательный перерыв — серо-синий
+  if ((truck as any).onNightStop || (truck as any).onMandatoryBreak) return "#64748b";
+  if (truck.status === 'waiting') return "#64748b";
+  // idleWarning
   if (warn === 3) return "#ef4444";
   if (warn === 2) return "#f97316";
   if (warn === 1) return "#fbbf24";
+  // breakdown
+  if (truck.status === 'breakdown') return "#f87171";
   return STATUS_COLOR[truck.status] || "#94a3b8";
 }
 
@@ -71,9 +90,11 @@ function getRouteEvent(truckId: string): string | null {
 // История маршрутов трака за смену
 const routeHistory: Record<string, Array<[number, number]>> = {};
 
-export default function MapView({ onTruckInfo, onFindLoad }: {
+export default function MapView({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
   onTruckInfo?: (truckId: string) => void;
   onFindLoad?: (city: string) => void;
+  onGuideOpen?: () => void;
+  guideActive?: boolean;
 }) {
   if (Platform.OS !== "web") {
     return (
@@ -82,12 +103,14 @@ export default function MapView({ onTruckInfo, onFindLoad }: {
       </View>
     );
   }
-  return <MapAmCharts onTruckInfo={onTruckInfo} onFindLoad={onFindLoad} />;
+  return <MapAmCharts onTruckInfo={onTruckInfo} onFindLoad={onFindLoad} onGuideOpen={onGuideOpen} guideActive={guideActive} />;
 }
 
-function MapAmCharts({ onTruckInfo, onFindLoad }: {
+function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
   onTruckInfo?: (truckId: string) => void;
   onFindLoad?: (city: string) => void;
+  onGuideOpen?: () => void;
+  guideActive?: boolean;
 }) {
   const divRef = useRef<any>(null);
   const rootRef = useRef<any>(null);
@@ -99,6 +122,13 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
   const intervalRef = useRef<any>(null);
   const antLinesRef = useRef<any[]>([]); // ссылки на анимированные линии
   const extraSeriesRef = useRef<any[]>([]); // серии миль и погоды — удаляем при rebuild
+  // Карточки: Set видимых truckId + таймеры автоскрытия
+  const visibleCardsRef = useRef<Set<string>>(new Set());
+  const cardTimersRef = useRef<Record<string, any>>({});
+  // Предыдущие статусы для детекции изменений
+  const prevTruckStatusRef = useRef<Record<string, string>>({});
+  const prevHosRef = useRef<Record<string, number>>({});
+  const prevIdleWarnRef = useRef<Record<string, number>>({});
 
   const { trucks, availableLoads, phase, gameMinute } = useGameStore();
   const activeTrucks = phase !== 'menu' ? trucks : [];
@@ -227,7 +257,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
     const milesLeft = dest
       ? Math.round(Math.hypot(dest[0] - updated.position[0], dest[1] - updated.position[1]) * 55)
       : 0;
-    const colorHex = getTruckColor(updated);
+    const colorHex = getTruckColor(updated, gameMinuteRef.current);
     const colorInt = parseInt(colorHex.replace("#", ""), 16);
     const updatedCard = {
       ...selectedTruckRef.current,
@@ -255,6 +285,73 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTrucks.length]);
+
+  // Хелпер: показать карточку на N секунд
+  function showCard(truckId: string, durationMs = 15000) {
+    visibleCardsRef.current.add(truckId);
+    clearTimeout(cardTimersRef.current[truckId]);
+    cardTimersRef.current[truckId] = setTimeout(() => {
+      visibleCardsRef.current.delete(truckId);
+      if (rootRef.current && chartRef.current) {
+        rebuildTruckSeries(rootRef.current, chartRef.current);
+      }
+    }, durationMs);
+    if (rootRef.current && chartRef.current) {
+      rebuildTruckSeries(rootRef.current, chartRef.current);
+    }
+  }
+
+  // Умное появление карточек по событиям
+  useEffect(() => {
+    if (!chartInitializedRef.current) return;
+    activeTrucks.forEach((t: any) => {
+      const prevStatus = prevTruckStatusRef.current[t.id];
+      const prevHos = prevHosRef.current[t.id] ?? 11;
+      const prevWarn = prevIdleWarnRef.current[t.id] ?? 0;
+      const warn = t.idleWarningLevel ?? 0;
+
+      // 🚨 Поломка — показать 10 сек
+      if (t.status === 'breakdown' && prevStatus !== 'breakdown') {
+        showCard(t.id, 30000);
+      }
+      // 📦 Прибыл на погрузку
+      else if (t.status === 'at_pickup' && prevStatus !== 'at_pickup') {
+        showCard(t.id, 18000);
+      }
+      // 🏭 Прибыл на разгрузку
+      else if (t.status === 'at_delivery' && prevStatus !== 'at_delivery') {
+        showCard(t.id, 18000);
+      }
+      // ⏰ Detention — статус waiting появился
+      else if (t.status === 'waiting' && prevStatus !== 'waiting' && prevStatus !== undefined) {
+        showCard(t.id, 24000);
+      }
+      // 🌙 Ночёвка началась
+      else if (t.onNightStop && !prevTruckStatusRef.current[t.id + '_night']) {
+        prevTruckStatusRef.current[t.id + '_night'] = 'shown';
+        showCard(t.id, 21000);
+      }
+      // ⚠️ HOS упал ниже 2ч
+      else if (t.hoursLeft < 2 && prevHos >= 2) {
+        showCard(t.id, 24000);
+      }
+      // 🔴 idleWarning достиг уровня 3
+      else if (warn === 3 && prevWarn < 3) {
+        showCard(t.id, 24000);
+      }
+      // ✅ Трак стал idle (только что доставил)
+      else if (t.status === 'idle' && (prevStatus === 'at_delivery' || prevStatus === 'loaded')) {
+        showCard(t.id, 15000);
+      }
+
+      // Обновляем предыдущие значения
+      prevTruckStatusRef.current[t.id] = t.status;
+      prevHosRef.current[t.id] = t.hoursLeft;
+      prevIdleWarnRef.current[t.id] = warn;
+      if (!t.onNightStop) delete prevTruckStatusRef.current[t.id + '_night'];
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTrucks]);
   useEffect(() => {
     activeTrucks.forEach(t => {
       if (t.status === "loaded" || t.status === "driving") {
@@ -293,7 +390,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
       const milesLeft = dest
         ? Math.round(Math.hypot(dest[0] - t.position[0], dest[1] - t.position[1]) * 55)
         : 0;
-      const colorHex = getTruckColor(t);
+      const colorHex = getTruckColor(t, gameMinuteRef.current);
       const colorInt = parseInt(colorHex.replace("#", ""), 16);
       return {
         lat: t.position[1] + jLat,
@@ -334,7 +431,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
     historySeries.mapLines.template.setAll({ strokeWidth: 1, strokeOpacity: 0.2 });
 
     trucksWithHistory.forEach(t => {
-      const colorInt = parseInt(getTruckColor(t).replace("#", ""), 16);
+      const colorInt = parseInt(getTruckColor(t, gameMinuteRef.current).replace("#", ""), 16);
       const item = historySeries.pushDataItem({
         geometry: { type: "LineString", coordinates: routeHistory[t.id] },
       });
@@ -378,7 +475,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
     routeSeries.mapLines.template.setAll({ strokeWidth: 2.5, strokeOpacity: 0.7 });
 
     trucksWithRoute.forEach(t => {
-      const colorInt = parseInt(getTruckColor(t).replace("#", ""), 16);
+      const colorInt = parseInt(getTruckColor(t, gameMinuteRef.current).replace("#", ""), 16);
       const path = t.routePath!;
       const startIdx = Math.max(0, Math.floor(t.progress * (path.length - 1)) - 1);
 
@@ -424,12 +521,58 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
     routeSeriesRef.current = routeSeries;
   }
 
-  // Обновляем цвета штатов (тепловая карта + surge zones)
+  // Обновляем цвета штатов по времени суток
   function updatePolygonColors() {
     const ps = polygonSeriesRef.current;
     if (!ps) return;
     const ls = loadsRef.current;
     const ts = trucksRef.current;
+
+    // Игровое время: gameMinute=0 → 08:43
+    const gm = gameMinuteRef.current;
+    const totalMinutes = (gm + 8 * 60 + 43) % (24 * 60);
+    const hour = totalMinutes / 60; // дробный час 0..24
+
+    // Палитра по времени суток [baseColor, weakColor, strongColor]
+    // 06-09 Рассвет — розово-оранжевый
+    // 09-12 Утро — голубой
+    // 12-15 День — ярко-синий
+    // 15-18 Послеполудень — золотой
+    // 18-21 Закат — оранжево-красный
+    // 21-24 Вечер — фиолетовый
+    // 00-03 Ночь — тёмно-синий
+    // 03-06 Предрассвет — тёмно-фиолетовый
+    type Palette = [number, number, number];
+    const TIMES: Array<{ h: number; p: Palette }> = [
+      { h: 0,  p: [0x0a0f2e, 0x1e3a8a, 0x3b82f6] }, // ночь
+      { h: 3,  p: [0x1a0a2e, 0x4c1d95, 0x7c3aed] }, // предрассвет
+      { h: 6,  p: [0x431407, 0xc2410c, 0xfb923c] }, // рассвет
+      { h: 9,  p: [0x0c2340, 0x0369a1, 0x38bdf8] }, // утро
+      { h: 12, p: [0x1e3a5f, 0x0284c7, 0x06b6d4] }, // день
+      { h: 15, p: [0x422006, 0xb45309, 0xfbbf24] }, // послеполудень
+      { h: 18, p: [0x450a0a, 0xb91c1c, 0xf97316] }, // закат
+      { h: 21, p: [0x1e1b4b, 0x4338ca, 0x818cf8] }, // вечер
+      { h: 24, p: [0x0a0f2e, 0x1e3a8a, 0x3b82f6] }, // ночь (замыкание)
+    ];
+
+    // Интерполируем между двумя соседними временными точками
+    let i = 0;
+    for (let k = 0; k < TIMES.length - 1; k++) {
+      if (hour >= TIMES[k].h && hour < TIMES[k + 1].h) { i = k; break; }
+    }
+    const t0 = TIMES[i], t1 = TIMES[i + 1];
+    const frac = (hour - t0.h) / (t1.h - t0.h);
+
+    function lerpColor(c0: number, c1: number, f: number): number {
+      const r = Math.round(((c0 >> 16) & 0xff) + f * (((c1 >> 16) & 0xff) - ((c0 >> 16) & 0xff)));
+      const g = Math.round(((c0 >> 8) & 0xff) + f * (((c1 >> 8) & 0xff) - ((c0 >> 8) & 0xff)));
+      const b = Math.round((c0 & 0xff) + f * ((c1 & 0xff) - (c0 & 0xff)));
+      return (r << 16) | (g << 8) | b;
+    }
+
+    const baseColor   = lerpColor(t0.p[0], t1.p[0], frac);
+    const weakColor   = lerpColor(t0.p[1], t1.p[1], frac);
+    const strongColor = lerpColor(t0.p[2], t1.p[2], frac);
 
     // Считаем активность по штатам
     const stateActivity: Record<string, number> = {};
@@ -450,7 +593,6 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
       const isSurge = surgeStates.includes(stateId);
 
       if (isSurge) {
-        // Surge zone — ЯРКИЙ оранжево-красный, ВСЕГДА ВИДИМЫЙ
         polygon.setAll({ 
           fill: am5.color(0xff6b35), 
           fillOpacity: 0.85,
@@ -459,24 +601,25 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
           strokeOpacity: 1,
         });
       } else if (activity > 0) {
-        // Тепловая карта — ЯРКИЕ цвета от зелёного к голубому
+        // Тепловая карта — интерполяция между слабым и сильным цветом палитры
         const t = activity / maxActivity;
-        // Используем более яркую палитру: от зелёного (#10b981) к голубому (#06b6d4)
-        const r = Math.round(16 + t * (6 - 16));
-        const g = Math.round(185 + t * (182 - 185));
-        const b = Math.round(129 + t * (212 - 129));
+        const r1 = (weakColor >> 16) & 0xff, g1 = (weakColor >> 8) & 0xff, b1 = weakColor & 0xff;
+        const r2 = (strongColor >> 16) & 0xff, g2 = (strongColor >> 8) & 0xff, b2 = strongColor & 0xff;
+        const r = Math.round(r1 + t * (r2 - r1));
+        const g = Math.round(g1 + t * (g2 - g1));
+        const b = Math.round(b1 + t * (b2 - b1));
         const hex = (r << 16) | (g << 8) | b;
         polygon.setAll({ 
           fill: am5.color(hex), 
-          fillOpacity: 0.7,
+          fillOpacity: 0.75,
           stroke: am5.color(0x64748b),
           strokeWidth: 1.5,
           strokeOpacity: 1,
         });
       } else {
-        // Неактивные штаты — ВИДИМЫЙ серо-синий
+        // Неактивные штаты — базовый цвет палитры
         polygon.setAll({ 
-          fill: am5.color(0x334155), // Светлее чем было!
+          fill: am5.color(baseColor),
           fillOpacity: 0.9,
           stroke: am5.color(0x64748b),
           strokeWidth: 1.5,
@@ -543,12 +686,40 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
         alertPulse.animate({ key: "fillOpacity", from: 0.5, to: 0, duration: warnSpeed, loops: Infinity });
       }
 
-      // Точка трака
-      container.children.push(am5.Circle.new(root, {
-        radius: variant === 'micro' ? 5 : 6,
-        fill: am5.color(d.colorInt),
-        stroke: am5.color(0xffffff), strokeWidth: 2,
+      // Эмодзи трака по статусу
+      const truckEmoji = (() => {
+        if (d.breakdown) return "🔧";
+        if (d.waiting) return "⏳";
+        if (d.status === "at_pickup") return "📦";
+        if (d.status === "at_delivery") return "🏭";
+        if (d.status === "loaded") return "🚛";
+        if (d.status === "driving") return "🚚";
+        if ((d as any).onNightStop) return "🌙";
+        return "🅿️";
+      })();
+
+      const emojiSize = variant === 'micro' ? 16 : variant === 'medium' ? 20 : 26;
+      const dyBase = -(emojiSize / 2);
+
+      const emojiLabel = container.children.push(am5.Label.new(root, {
+        text: truckEmoji,
+        fontSize: emojiSize,
+        centerX: am5.percent(50),
+        centerY: am5.percent(50),
+        dy: dyBase,
       }));
+
+      // Анимация по статусу
+      if (d.status === "driving" || d.status === "loaded") {
+        // Покачивание вверх-вниз для едущих
+        emojiLabel.animate({ key: "dy" as any, from: dyBase - 2, to: dyBase + 2, duration: 600, loops: Infinity, easing: am5.ease.sinInOut });
+      } else if (d.status === "at_pickup" || d.status === "at_delivery") {
+        // Пульсация для погрузки/разгрузки
+        emojiLabel.animate({ key: "scale" as any, from: 0.9, to: 1.2, duration: 700, loops: Infinity, easing: am5.ease.sinInOut });
+      } else if (d.breakdown) {
+        // Вращение для поломки
+        emojiLabel.animate({ key: "rotation" as any, from: -15, to: 15, duration: 400, loops: Infinity, easing: am5.ease.sinInOut });
+      }
 
       // Текстовые строки
       const fromState = CITY_STATE[d.currentCity] || "";
@@ -569,12 +740,12 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
 
       const onClick = () => {
         truckClickedRef.current = true;
-        // Если кликнули на другой трак — сбрасываем авто-слежение за назначенным
         if (followTruckIdRef.current && followTruckIdRef.current !== d.truckId) {
           followTruckIdRef.current = null;
           setFollowTruck(false);
         }
-        // Поднимаем карточку трака поверх всего
+        // Показываем карточку на 5 секунд
+        showCard(d.truckId, 15000);
         setSelectedTruck(d);
         selectedTruckRef.current = d;
         onTruckInfoRef.current?.(d.truckId);
@@ -584,17 +755,14 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
       };
 
       const onHover = () => {
-        // При наведении — показываем карточку, но не фиксируем (если уже есть кликнутая — не перебиваем)
-        if (!selectedTruckRef.current) {
-          setSelectedTruck(d);
-        }
+        if (!selectedTruckRef.current) setSelectedTruck(d);
       };
       const onHoverOut = () => {
-        // Убираем только если это hover-карточка (не кликнутая)
-        if (!selectedTruckRef.current) {
-          setSelectedTruck(null);
-        }
+        if (!selectedTruckRef.current) setSelectedTruck(null);
       };
+
+      // Карточка видна только если truckId в visibleCardsRef
+      const cardVisible = visibleCardsRef.current.has(d.truckId);
 
       // ── MICRO: только ID ──────────────────────────────────────────────
       if (variant === 'micro') {
@@ -603,6 +771,8 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
           width: W, height: H,
           dy: -(H + 8), dx: -(W / 2),
           interactive: true, cursorOverStyle: "pointer",
+          visible: cardVisible,
+          opacity: cardVisible ? 1 : 0,
         }));
         // Фон
         card.children.push(am5.RoundedRectangle.new(root, {
@@ -636,6 +806,8 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
           width: W, height: H,
           dy: -(H + 10), dx: -(W / 2),
           interactive: true, cursorOverStyle: "pointer",
+          visible: cardVisible,
+          opacity: cardVisible ? 1 : 0,
         }));
         card.children.push(am5.RoundedRectangle.new(root, {
           width: W, height: H,
@@ -685,6 +857,8 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
           width: W, height: H,
           dy: -(H + 12), dx: -(W / 2),
           interactive: true, cursorOverStyle: "pointer",
+          visible: cardVisible,
+          opacity: cardVisible ? 1 : 0,
         }));
         // Свечение
         card.children.push(am5.RoundedRectangle.new(root, {
@@ -982,7 +1156,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
       });
     }, 60);
 
-    // Полное обновление каждые 2 секунды + отслеживание zoom для смены варианта карточек
+    // Траки и маршруты — каждые 2 секунды (плавное движение)
     let lastVariant = 'medium';
     intervalRef.current = setInterval(() => {
       const newZoom = chartRef.current?.get("zoomLevel") ?? 1;
@@ -990,7 +1164,6 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
       zoomLevelRef.current = newZoom;
       rebuildHistory(root, chart);
       rebuildRoutes(root, chart);
-      updatePolygonColors();
       if (newVariant !== lastVariant) {
         lastVariant = newVariant;
         switchCardVariant(root, chart);
@@ -999,9 +1172,15 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
       }
     }, 2000);
 
+    // Цвета штатов — каждые 10 секунд (плавная смена по времени суток)
+    const colorInterval = setInterval(() => {
+      updatePolygonColors();
+    }, 10000);
+
     return () => {
       clearInterval(intervalRef.current);
       clearInterval(antInterval);
+      clearInterval(colorInterval);
       window.removeEventListener('zoomToTruck', handleZoomToTruck);
       root.dispose();
     };
@@ -1047,24 +1226,54 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
     <View style={styles.container}>
       <div ref={divRef} style={{ width: "100%", height: "100%", display: "block" } as any} />
 
-      {/* Мини-таймер смены — верхний центр */}
+      {/* Мини-таймер смены + кнопка гайда — верхний центр */}
       {phase === 'playing' && (
         <div style={{
           position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)",
-          background: "rgba(10,22,40,0.92)", borderRadius: 20,
-          border: `1px solid ${timerColor}55`, padding: "5px 14px",
-          display: "flex", alignItems: "center", gap: 8,
-          fontFamily: "sans-serif", pointerEvents: "none", zIndex: 10,
-        } as any} className="map-timer">
-          <span style={{ fontSize: 11, color: timerColor, fontWeight: 800 } as any}>
-            ⏰ {hoursLeft}h {minsLeft.toString().padStart(2,"0")}m до конца смены
-          </span>
-          <div style={{ width: 60, height: 4, background: "rgba(255,255,255,0.1)", borderRadius: 2 } as any}>
-            <div style={{
-              width: `${shiftProgress * 100}%`, height: "100%",
-              background: timerColor, borderRadius: 2, transition: "width 0.5s",
-            } as any} />
+          display: "flex", alignItems: "center", gap: 6,
+          fontFamily: "sans-serif", zIndex: 10,
+        } as any}>
+          {/* Таймер */}
+          <div style={{
+            background: "rgba(10,22,40,0.92)", borderRadius: 20,
+            border: `1px solid ${timerColor}55`, padding: "5px 14px",
+            display: "flex", alignItems: "center", gap: 8,
+            pointerEvents: "none",
+          } as any} className="map-timer">
+            <span style={{ fontSize: 11, color: timerColor, fontWeight: 800 } as any}>
+              ⏰ {hoursLeft}h {minsLeft.toString().padStart(2,"0")}m до конца смены
+            </span>
+            <div style={{ width: 60, height: 4, background: "rgba(255,255,255,0.1)", borderRadius: 2 } as any}>
+              <div style={{
+                width: `${shiftProgress * 100}%`, height: "100%",
+                background: timerColor, borderRadius: 2, transition: "width 0.5s",
+              } as any} />
+            </div>
           </div>
+
+          {/* Кнопка гайда — только пока не пройден */}
+          {guideActive && onGuideOpen && (
+            <button
+              onClick={onGuideOpen}
+              style={{
+                background: "rgba(10,22,40,0.92)",
+                border: "1px solid rgba(129,140,248,0.45)",
+                borderRadius: 20, padding: "5px 12px",
+                display: "flex", alignItems: "center", gap: 5,
+                cursor: "pointer",
+                animation: "guideBtnPulse 2.5s ease-in-out infinite",
+              } as any}
+            >
+              <span style={{ fontSize: 13 } as any}>📖</span>
+              <span style={{ fontSize: 11, fontWeight: 800, color: "#a5b4fc" } as any}>Гайд</span>
+              <span style={{
+                background: "linear-gradient(135deg, #818cf8, #6366f1)",
+                borderRadius: 8, minWidth: 14, height: 14,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 8, fontWeight: 900, color: "#fff",
+              } as any}>?</span>
+            </button>
+          )}
         </div>
       )}
 
@@ -1303,7 +1512,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
                 🚛 ТРАКИ В ШТАТЕ ({selectedState.trucks.length})
               </div>
               {selectedState.trucks.map((t: any) => {
-                const color = getTruckColor(t);
+                const color = getTruckColor(t, gameMinuteRef.current);
                 const isIdle = t.status === "idle";
                 return (
                   <div key={t.id}
@@ -1421,6 +1630,29 @@ function MapAmCharts({ onTruckInfo, onFindLoad }: {
           0%,100% { box-shadow: 0 0 14px rgba(6,182,212,0.6); }
           50% { box-shadow: 0 0 24px rgba(6,182,212,1), 0 0 40px rgba(6,182,212,0.4); }
         }
+        @keyframes truckDrive {
+          0%   { transform: translateX(0px) rotate(0deg); }
+          25%  { transform: translateX(2px) rotate(1deg); }
+          75%  { transform: translateX(-2px) rotate(-1deg); }
+          100% { transform: translateX(0px) rotate(0deg); }
+        }
+        @keyframes truckBounce {
+          0%,100% { transform: translateY(0px); }
+          50%     { transform: translateY(-3px); }
+        }
+        @keyframes truckPulse {
+          0%,100% { transform: scale(1); }
+          50%     { transform: scale(1.2); }
+        }
+        @keyframes truckSpin {
+          0%   { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        .truck-driving { animation: truckDrive 0.6s ease-in-out infinite; display:inline-block; }
+        .truck-loaded  { animation: truckBounce 1s ease-in-out infinite; display:inline-block; }
+        .truck-pickup  { animation: truckPulse 0.8s ease-in-out infinite; display:inline-block; }
+        .truck-repair  { animation: truckSpin 2s linear infinite; display:inline-block; }
+        .truck-idle    { opacity: 0.85; display:inline-block; }
         /* Подгоняем ZoomControl под наш стиль */
         .am5-zoomtools-button {
           width: 32px !important;
@@ -1545,3 +1777,5 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg, overflow: "hidden" as any },
   text: { color: Colors.textMuted, fontSize: 16 },
 });
+
+

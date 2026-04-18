@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Platform }
 import { useRouter } from 'expo-router';
 import { Colors } from '../constants/colors';
 import { useGameStore, formatGameTime } from '../store/gameStore';
+import { useAccountStore } from '../store/accountStore';
+import { shouldShowGuide } from './WelcomePopup';
 
 interface GameMenuProps {
   onOpenFleet?: () => void;
@@ -12,15 +14,18 @@ interface GameMenuProps {
   onOpenStats?: () => void;
   onOpenSettings?: () => void;
   onOpenHelp?: () => void;
+  onOpenGuide?: () => void;
   onExit?: () => void;
   forceOpen?: boolean;
   onClose?: () => void;
 }
 
-export default function GameMenu({ onOpenFleet, onOpenCompliance, onOpenEvents, onOpenMyLoads, onOpenStats, onOpenSettings, onOpenHelp, onExit, forceOpen, onClose }: GameMenuProps) {
+export default function GameMenu({ onOpenFleet, onOpenCompliance, onOpenEvents, onOpenMyLoads, onOpenStats, onOpenSettings, onOpenHelp, onOpenGuide, onExit, forceOpen, onClose }: GameMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const router = useRouter();
   const { gameMinute, balance, reputation, trucks, activeLoads, bookedLoads, activeEvents } = useGameStore();
+  const { logout } = useAccountStore();
 
   const open = isOpen || !!forceOpen;
   const handleOpen = () => setIsOpen(true);
@@ -28,61 +33,96 @@ export default function GameMenu({ onOpenFleet, onOpenCompliance, onOpenEvents, 
 
   const activeTrucks = trucks.filter(t => t.status === 'driving' || t.status === 'loaded').length;
   const totalLoads = bookedLoads.length + activeLoads.length;
+  const guideActive = shouldShowGuide(); // гайд ещё не пройден
 
   const menuItems = [
+    {
+      icon: '📖',
+      label: 'Гайд диспетчера',
+      action: () => { handleClose(); onOpenGuide?.(); },
+      color: '#818cf8',
+      badge: undefined,
+      isGuide: true,
+    },
     { 
       icon: '🚛', 
       label: 'Fleet Overview', 
       action: () => { handleClose(); onOpenFleet?.(); },
       color: Colors.primary,
-      badge: activeTrucks
+      badge: activeTrucks,
+      isGuide: false,
     },
     { 
       icon: '📦', 
       label: 'Мои грузы', 
       action: () => { handleClose(); onOpenMyLoads?.(); },
       color: Colors.success,
-      badge: bookedLoads.filter(l => !l.truckId).length || undefined
+      badge: bookedLoads.filter(l => !l.truckId).length || undefined,
+      isGuide: false,
     },
     { 
       icon: '📊', 
       label: 'HOS & Compliance', 
       action: () => { handleClose(); onOpenCompliance?.(); },
       color: Colors.warning,
-      badge: trucks.filter(t => t.hoursLeft < 4 || t.hosViolations > 0).length || undefined
+      badge: trucks.filter(t => t.hoursLeft < 4 || t.hosViolations > 0).length || undefined,
+      isGuide: false,
     },
     { 
       icon: '⚡', 
       label: 'События', 
       action: () => { handleClose(); onOpenEvents?.(); },
       color: Colors.danger,
-      badge: activeEvents.filter(e => e.urgency === 'critical' || e.urgency === 'high').length || undefined
+      badge: activeEvents.filter(e => e.urgency === 'critical' || e.urgency === 'high').length || undefined,
+      isGuide: false,
     },
     { 
       icon: '📈', 
       label: 'Статистика', 
       action: () => { handleClose(); onOpenStats?.(); },
-      color: Colors.success 
+      color: Colors.success,
+      isGuide: false,
     },
     { 
       icon: '⚙️', 
       label: 'Настройки', 
       action: () => { handleClose(); onOpenSettings?.(); },
-      color: Colors.textMuted 
+      color: Colors.textMuted,
+      isGuide: false,
     },
     { 
       icon: '❓', 
       label: 'Помощь', 
       action: () => { handleClose(); onOpenHelp?.(); },
-      color: Colors.warning 
+      color: Colors.warning,
+      isGuide: false,
     },
     { 
       icon: '🚪', 
       label: 'Выйти из игры', 
-      action: () => { handleClose(); onExit?.(); router.replace('/'); },
-      color: Colors.danger 
+      action: () => { setShowExitConfirm(true); },
+      color: Colors.danger,
+      isGuide: false,
     },
   ];
+
+  function handleExitToMenu() {
+    setShowExitConfirm(false);
+    handleClose();
+    onExit?.();
+    // Очищаем сохранение игры чтобы не было автоперехода обратно
+    try { localStorage.removeItem('dispatcher-game-save'); } catch {}
+    router.replace('/');
+  }
+
+  function handleExitAndLogout() {
+    setShowExitConfirm(false);
+    handleClose();
+    onExit?.();
+    try { localStorage.removeItem('dispatcher-game-save'); } catch {}
+    logout();
+    router.replace('/');
+  }
 
   return (
     <>
@@ -147,17 +187,44 @@ export default function GameMenu({ onOpenFleet, onOpenCompliance, onOpenEvents, 
             {menuItems.map((item, index) => (
               <TouchableOpacity
                 key={index}
-                style={styles.menuItem}
+                style={[
+                  styles.menuItem,
+                  item.isGuide && {
+                    backgroundColor: 'rgba(129,140,248,0.1)',
+                    borderColor: guideActive ? 'rgba(129,140,248,0.5)' : 'rgba(129,140,248,0.25)',
+                    marginBottom: 14,
+                  },
+                ]}
                 onPress={item.action}
                 activeOpacity={0.7}
               >
                 <View style={styles.menuItemContent}>
                   <Text style={styles.menuItemIcon}>{item.icon}</Text>
-                  <Text style={styles.menuItemLabel}>{item.label}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[
+                      styles.menuItemLabel,
+                      item.isGuide && { color: '#c7d2fe', fontWeight: '800' },
+                    ]}>
+                      {item.label}
+                    </Text>
+                    {item.isGuide && (
+                      <Text style={{ fontSize: 11, color: guideActive ? '#818cf8' : '#4ade80', fontWeight: '600', marginTop: 1 }}>
+                        {guideActive ? '● В процессе — продолжи обучение' : '✓ Пройден — можно повторить'}
+                      </Text>
+                    )}
+                  </View>
                   {item.badge !== undefined && item.badge > 0 && (
                     <View style={[styles.menuBadge, { backgroundColor: item.color }]}>
                       <Text style={styles.menuBadgeText}>{item.badge}</Text>
                     </View>
+                  )}
+                  {item.isGuide && guideActive && (
+                    <View style={{
+                      width: 8, height: 8, borderRadius: 4,
+                      backgroundColor: '#818cf8',
+                      marginLeft: 6,
+                      shadowColor: '#818cf8', shadowOpacity: 1, shadowRadius: 4,
+                    } as any} />
                   )}
                 </View>
                 <Text style={[styles.menuItemArrow, { color: item.color }]}>›</Text>
@@ -170,7 +237,39 @@ export default function GameMenu({ onOpenFleet, onOpenCompliance, onOpenEvents, 
             <Text style={styles.footerText}>Dispatcher Training Game v1.0</Text>
           </View>
         </View>
+
+        {/* Exit Confirmation — поверх панели, внутри того же Modal */}
+        {showExitConfirm && (
+          <>
+            <TouchableOpacity
+              style={[styles.overlay, { backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 100 }]}
+              activeOpacity={1}
+              onPress={() => setShowExitConfirm(false)}
+            />
+            <View style={[styles.exitConfirmWrap, { zIndex: 101 }]}>
+              <TouchableOpacity activeOpacity={1} style={styles.exitConfirmPanel}>
+                <Text style={styles.exitConfirmTitle}>🚪 Выйти из игры?</Text>
+                <Text style={styles.exitConfirmSub}>Прогресс текущей смены будет потерян.</Text>
+
+                <TouchableOpacity style={styles.exitBtnMenu} onPress={handleExitToMenu} activeOpacity={0.8}>
+                  <Text style={styles.exitBtnMenuText}>🏠 Выйти в главное меню</Text>
+                  <Text style={styles.exitBtnMenuSub}>аккаунт сохранится</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.exitBtnLogout} onPress={handleExitAndLogout} activeOpacity={0.8}>
+                  <Text style={styles.exitBtnLogoutText}>🔄 Сменить учётную запись</Text>
+                  <Text style={styles.exitBtnLogoutSub}>выйти и войти под другим никнеймом</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.exitBtnCancel} onPress={() => setShowExitConfirm(false)} activeOpacity={0.7}>
+                  <Text style={styles.exitBtnCancelText}>Отмена</Text>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
       </Modal>
+
     </>
   );
 }
@@ -326,6 +425,91 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 11,
     color: Colors.textDim,
+    fontWeight: '600',
+  },
+
+  // Exit Confirm
+  exitConfirmWrap: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 101,
+  },
+  exitConfirmPanel: {
+    width: 320,
+    backgroundColor: '#0f172a',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    padding: 24,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.8,
+    shadowRadius: 24,
+  },
+  exitConfirmTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  exitConfirmSub: {
+    fontSize: 13,
+    color: '#94a3b8',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  exitBtnMenu: {
+    backgroundColor: 'rgba(56,189,248,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(56,189,248,0.3)',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    gap: 3,
+  },
+  exitBtnMenuText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#38bdf8',
+  },
+  exitBtnMenuSub: {
+    fontSize: 11,
+    color: '#94a3b8',
+  },
+  exitBtnLogout: {
+    backgroundColor: 'rgba(251,191,36,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(251,191,36,0.25)',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    gap: 3,
+  },
+  exitBtnLogoutText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#fbbf24',
+  },
+  exitBtnLogoutSub: {
+    fontSize: 11,
+    color: '#94a3b8',
+  },
+  exitBtnCancel: {
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  exitBtnCancelText: {
+    fontSize: 14,
+    color: '#64748b',
     fontWeight: '600',
   },
 });

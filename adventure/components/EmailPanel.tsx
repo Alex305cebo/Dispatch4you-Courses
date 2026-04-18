@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Modal 
 import { Colors } from '../constants/colors';
 import { useGameStore, Notification } from '../store/gameStore';
 import RateConModal from './RateConModal';
+import { useGuideStore } from '../store/guideStore';
 
 // ─── Утилиты ─────────────────────────────────────────────────────────────────
 
@@ -361,6 +362,7 @@ export function ThreadChatPopup({ notification, onClose }: { notification: Notif
 export default function EmailPanel({ visible, onClose, inline }: { visible?: boolean; onClose?: () => void; inline?: boolean }) {
   const { notifications, markNotificationRead } = useGameStore();
   const [selectedThread, setSelectedThread] = useState<Thread | null>(null);
+  const activeStep = useGuideStore(s => s.activeStep);
 
   const allEmails = notifications.filter(n =>
     n.type === 'email' || n.type === 'pod_ready' || n.type === 'rate_con' ||
@@ -398,34 +400,58 @@ export default function EmailPanel({ visible, onClose, inline }: { visible?: boo
             <Text style={s.emptyTitle}>Нет сообщений</Text>
           </View>
         )}
-        {threads.map(thread => {
+        {/* Подсказка гайда */}
+        {activeStep === 'check_email' && threads.length > 0 && (
+          <View style={{
+            margin: 10, marginBottom: 4,
+            padding: 10, borderRadius: 10,
+            backgroundColor: 'rgba(6,182,212,0.1)',
+            borderWidth: 1, borderColor: 'rgba(6,182,212,0.4)',
+            flexDirection: 'row', alignItems: 'center', gap: 8,
+          }}>
+            <Text style={{ fontSize: 18 }}>👆</Text>
+            <Text style={{ fontSize: 12, color: '#67e8f9', fontWeight: '700', flex: 1 }}>
+              Нажми на письмо чтобы открыть и прочитать
+            </Text>
+          </View>
+        )}
+        {threads.map((thread, idx) => {
           const last = thread.lastMessage;
           const hasUnread = thread.unreadCount > 0;
           const isUrgent = last.priority === 'critical' || last.priority === 'high';
+          const isGuideTarget = activeStep === 'check_email' && hasUnread && idx === 0;
           return (
-            <TouchableOpacity
-              key={thread.key}
-              style={[s.threadCard, hasUnread && s.threadCardUnread, isUrgent && s.threadCardUrgent]}
-              onPress={() => openThread(thread)}
-              activeOpacity={0.75}
-            >
-              <View style={[s.avatar, { backgroundColor: hasUnread ? 'rgba(6,182,212,0.2)' : 'rgba(255,255,255,0.06)' }]}>
-                <Text style={s.avatarIcon}>{getEmailIcon(last.type)}</Text>
-              </View>
-              <View style={s.threadContent}>
-                <View style={s.threadTop}>
-                  <Text style={[s.threadFrom, hasUnread && s.threadFromUnread]} numberOfLines={1}>{last.from}</Text>
-                  <Text style={s.threadTime}>{last.minute < 0 ? 'До смены' : `+${Math.round(last.minute)} мин`}</Text>
+            <View key={thread.key} style={isGuideTarget ? {
+              margin: 10, marginVertical: 4,
+              borderRadius: 14,
+              borderWidth: 2, borderColor: 'rgba(6,182,212,0.7)',
+              shadowColor: '#06b6d4', shadowOpacity: 0.5, shadowRadius: 10,
+            } as any : {}}>
+              <TouchableOpacity
+                style={[s.threadCard, hasUnread && s.threadCardUnread, isUrgent && s.threadCardUrgent,
+                  isGuideTarget && { margin: 0, borderWidth: 0 }
+                ]}
+                onPress={() => openThread(thread)}
+                activeOpacity={0.75}
+              >
+                <View style={[s.avatar, { backgroundColor: hasUnread ? 'rgba(6,182,212,0.2)' : 'rgba(255,255,255,0.06)' }]}>
+                  <Text style={s.avatarIcon}>{getEmailIcon(last.type)}</Text>
                 </View>
-                <Text style={[s.threadSubject, hasUnread && s.threadSubjectUnread]} numberOfLines={1}>{last.subject}</Text>
-                <Text style={s.threadPreview} numberOfLines={1}>{last.message}</Text>
-              </View>
-              {hasUnread && (
-                <View style={s.badge}>
-                  <Text style={s.badgeText}>{thread.unreadCount}</Text>
+                <View style={s.threadContent}>
+                  <View style={s.threadTop}>
+                    <Text style={[s.threadFrom, hasUnread && s.threadFromUnread]} numberOfLines={1}>{last.from}</Text>
+                    <Text style={s.threadTime}>{last.minute < 0 ? 'До смены' : `+${Math.round(last.minute)} мин`}</Text>
+                  </View>
+                  <Text style={[s.threadSubject, hasUnread && s.threadSubjectUnread]} numberOfLines={1}>{last.subject}</Text>
+                  <Text style={s.threadPreview} numberOfLines={1}>{last.message}</Text>
                 </View>
-              )}
-            </TouchableOpacity>
+                {hasUnread && (
+                  <View style={s.badge}>
+                    <Text style={s.badgeText}>{thread.unreadCount}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
           );
         })}
         <View style={{ height: 20 }} />
