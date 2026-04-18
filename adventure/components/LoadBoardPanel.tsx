@@ -49,12 +49,25 @@ function LoadRow({ load, onCall, isExpanded, onToggle, scrollViewRef }: {
                 rowRef.current.measureLayout(
                   scrollViewRef.current as any,
                   (_x, y, _w, h) => {
-                    (scrollViewRef.current as any).scrollTo({ y: y + h - 60, animated: true });
+                    // Скроллим так чтобы вся раскрытая карточка была видна
+                    (scrollViewRef.current as any).scrollTo({ y: y, animated: true });
                   },
                   () => {}
                 );
               }
-            }, 50);
+            }, 100);
+            // Второй скролл — после рендера деталей, чтобы кнопка "Позвонить" была видна
+            setTimeout(() => {
+              if (rowRef.current && scrollViewRef.current) {
+                rowRef.current.measureLayout(
+                  scrollViewRef.current as any,
+                  (_x, y, _w, h) => {
+                    (scrollViewRef.current as any).scrollTo({ y: y + h - 200, animated: true });
+                  },
+                  () => {}
+                );
+              }
+            }, 350);
           }
         }}
         activeOpacity={0.7}
@@ -154,9 +167,9 @@ const deadheadStyles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    gap: 5,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
     flexWrap: 'wrap',
@@ -510,9 +523,9 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
 
 const searchStyles = StyleSheet.create({
   container: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    gap: 5,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
@@ -526,7 +539,7 @@ const searchStyles = StyleSheet.create({
     borderColor: Colors.border,
     borderRadius: 8,
     paddingHorizontal: 10,
-    paddingVertical: 7,
+    paddingVertical: 6,
     fontSize: 12,
     color: '#fff',
     paddingRight: 28,
@@ -575,16 +588,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 14,
+    padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
-  headerTitle: { fontSize: 16, fontWeight: '900', color: '#fff' },
+  headerTitle: { fontSize: 15, fontWeight: '900', color: '#fff' },
   headerSub: { fontSize: 11, color: Colors.textDim, marginTop: 2 },
   refreshBtn: {
-    height: 62,
-    paddingHorizontal: 16,
-    borderRadius: 16,
+    height: 46,
+    paddingHorizontal: 12,
+    borderRadius: 12,
     backgroundColor: 'rgba(6,182,212,0.15)',
     borderWidth: 2,
     borderColor: 'rgba(6,182,212,0.5)',
@@ -592,16 +605,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 2,
   },
-  refreshIcon: { fontSize: 22 },
+  refreshIcon: { fontSize: 18 },
   refreshCountdown: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '900',
     color: '#06b6d4',
   },
   autoSearchBtn: {
-    width: 62,
-    height: 62,
-    borderRadius: 16,
+    width: 46,
+    height: 46,
+    borderRadius: 12,
     backgroundColor: 'rgba(74,222,128,0.12)',
     borderWidth: 2,
     borderColor: 'rgba(74,222,128,0.45)',
@@ -609,9 +622,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 2,
   },
-  autoSearchIcon: { fontSize: 22 },
+  autoSearchIcon: { fontSize: 18 },
   autoSearchText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '900',
     color: '#4ade80',
   },
@@ -700,7 +713,8 @@ const styles = StyleSheet.create({
   loadDetails: {
     padding: 12,
     paddingTop: 0,
-    gap: 10,
+    paddingBottom: 14,
+    gap: 8,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.05)',
   },
@@ -737,16 +751,16 @@ const styles = StyleSheet.create({
 
   callBtn: {
     backgroundColor: Colors.primary,
-    borderRadius: 10,
-    paddingVertical: 12,
+    borderRadius: 12,
+    paddingVertical: 14,
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 6,
   },
   callBtnOff: {
     backgroundColor: Colors.bgCardHover,
   },
   callBtnText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '800',
     color: '#fff',
   },

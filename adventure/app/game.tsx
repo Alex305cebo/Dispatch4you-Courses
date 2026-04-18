@@ -582,8 +582,8 @@ export default function GameScreen() {
   // ── TRUCK STRIP ───────────────────────────────────────────────────────────
   const TruckStrip = () => (
     <div style={{
-      display: 'flex', overflowX: 'auto', gap: 10,
-      padding: '10px 12px',
+      display: 'flex', overflowX: 'auto', gap: 8,
+      padding: '8px 10px',
       background: 'linear-gradient(180deg, rgba(10,18,38,0.98) 0%, rgba(8,14,30,0.98) 100%)',
       borderBottom: '1px solid rgba(56,189,248,0.12)',
       scrollbarWidth: 'none',
@@ -611,8 +611,8 @@ export default function GameScreen() {
           <div key={truck.id}
             onClick={() => handleTruckClick(truck)}
             style={{
-              minWidth: 160, flexShrink: 0,
-              borderRadius: 16, overflow: 'hidden',
+              minWidth: 140, flexShrink: 0,
+              borderRadius: 14, overflow: 'hidden',
               background: isSelected
                 ? `linear-gradient(135deg, rgba(${parseInt(color.slice(1,3),16)},${parseInt(color.slice(3,5),16)},${parseInt(color.slice(5,7),16)},0.22), rgba(10,18,38,0.97))`
                 : 'rgba(255,255,255,0.05)',
@@ -625,12 +625,12 @@ export default function GameScreen() {
             {/* Цветная полоска сверху */}
             <div style={{ height: 5, width: '100%', background: `linear-gradient(90deg, ${color}, ${color}66)`, boxShadow: `0 0 10px ${color}` } as any} />
 
-            <div style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6 } as any}>
+            <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 4 } as any}>
 
               {/* Emoji настроения — отдельно сверху, не накладывается */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' } as any}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 } as any}>
-                  <span style={{ fontSize: 14, fontWeight: 900, color: '#fff', letterSpacing: 0.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
+                  <span style={{ fontSize: 13, fontWeight: 900, color: '#fff', letterSpacing: 0.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
                     {driverName}
                   </span>
                   <div style={{ display: 'flex', gap: 4 } as any}>
@@ -639,13 +639,13 @@ export default function GameScreen() {
                   </div>
                 </div>
                 {/* Emoji — с отступом, не накладывается */}
-                <div style={{ marginLeft: 8, flexShrink: 0 } as any}>
-                  <img src={moodEmoji} width={30} height={30} className={animClass} style={{ imageRendering: 'auto', display: 'block' } as any} />
+                <div style={{ marginLeft: 6, flexShrink: 0 } as any}>
+                  <img src={moodEmoji} width={26} height={26} className={animClass} style={{ imageRendering: 'auto', display: 'block' } as any} />
                 </div>
               </div>
 
               {/* Статус */}
-              <span style={{ fontSize: 13, fontWeight: 800, color, lineHeight: 1.2 } as any}>
+              <span style={{ fontSize: 12, fontWeight: 800, color, lineHeight: 1.2 } as any}>
                 {(truck as any).onNightStop ? '🌙 Ночёвка' : (truck as any).hosRestUntilMinute > 0 ? '😴 HOS отдых' : STATUS_LABEL[truck.status]}
               </span>
 
@@ -657,9 +657,9 @@ export default function GameScreen() {
               )}
 
               {/* HOS + alert */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 } as any}>
-                <span style={{ fontSize: 13, fontWeight: 800, color: hosColor } as any}>⏱ {Math.round(hos * 10) / 10}h</span>
-                {isAlert && <span style={{ fontSize: 13, color, fontWeight: 900 } as any}>⚠️</span>}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 } as any}>
+                <span style={{ fontSize: 12, fontWeight: 800, color: hosColor } as any}>⏱ {Math.round(hos * 10) / 10}h</span>
+                {isAlert && <span style={{ fontSize: 12, color, fontWeight: 900 } as any}>⚠️</span>}
               </div>
 
               {/* Прогресс */}
