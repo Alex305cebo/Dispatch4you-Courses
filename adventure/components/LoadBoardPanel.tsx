@@ -14,17 +14,18 @@ interface Props {
   onAssigned?: (truckId: string) => void;
 }
 
-function LoadRow({ load, onCall, isExpanded, onToggle, scrollViewRef }: { 
+function LoadRow({ load, onCall, isExpanded, onToggle, scrollViewRef, onLayout, rowY }: { 
   load: LoadOffer; 
   onCall: () => void; 
   isExpanded: boolean;
   onToggle: () => void;
   scrollViewRef: React.RefObject<ScrollView>;
+  onLayout: (y: number) => void;
+  rowY: number;
 }) {
   const rowRef = useRef<View>(null);
   const { trucks, gameMinute } = useGameStore();
   const activeStep = useGuideStore(s => s.activeStep);
-  // Включаем траки которые скоро освободятся (at_delivery, at_pickup)
   const availableTrucks = trucks.filter(t => 
     t.status === 'idle' || t.status === 'at_delivery' || t.status === 'at_pickup'
   ).length;
@@ -35,41 +36,30 @@ function LoadRow({ load, onCall, isExpanded, onToggle, scrollViewRef }: {
   const rpmColor = rpm >= 2.5 ? Colors.success : rpm >= 2.0 ? Colors.warning : Colors.danger;
   const equipmentIcon = load.equipment === 'Reefer' ? '❄️' : load.equipment === 'Flatbed' ? '🏗️' : '📦';
 
+  function handleToggle() {
+    onToggle();
+    if (!isExpanded) {
+      // Скроллим к карточке сразу
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ y: Math.max(0, rowY - 8), animated: true });
+      }, 50);
+      // Второй скролл после рендера деталей (~180px высота деталей)
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ y: Math.max(0, rowY - 8), animated: true });
+      }, 300);
+    }
+  }
+
   return (
-    <View ref={rowRef} style={[styles.loadRow, load.isUrgent && styles.loadRowUrgent]}>
+    <View
+      ref={rowRef}
+      style={[styles.loadRow, load.isUrgent && styles.loadRowUrgent]}
+      onLayout={(e) => onLayout(e.nativeEvent.layout.y)}
+    >
       {/* Компактная строка */}
       <TouchableOpacity 
         style={styles.loadHeader}
-        onPress={() => {
-          onToggle();
-          // Если раскрываем — скроллим чтобы кнопка была видна
-          if (!isExpanded) {
-            setTimeout(() => {
-              if (rowRef.current && scrollViewRef.current) {
-                rowRef.current.measureLayout(
-                  scrollViewRef.current as any,
-                  (_x, y, _w, h) => {
-                    // Скроллим так чтобы вся раскрытая карточка была видна
-                    (scrollViewRef.current as any).scrollTo({ y: y, animated: true });
-                  },
-                  () => {}
-                );
-              }
-            }, 100);
-            // Второй скролл — после рендера деталей, чтобы кнопка "Позвонить" была видна
-            setTimeout(() => {
-              if (rowRef.current && scrollViewRef.current) {
-                rowRef.current.measureLayout(
-                  scrollViewRef.current as any,
-                  (_x, y, _w, h) => {
-                    (scrollViewRef.current as any).scrollTo({ y: y + h - 200, animated: true });
-                  },
-                  () => {}
-                );
-              }
-            }, 350);
-          }
-        }}
+        onPress={handleToggle}
         activeOpacity={0.7}
       >
         <View style={styles.loadHeaderLeft}>
@@ -231,6 +221,7 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
   const activeStep = useGuideStore(s => s.activeStep);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+  const rowPositions = useRef<Record<string, number>>({});
   const [searchFrom, setSearchFrom] = useState('');
   const [searchTo, setSearchTo] = useState('');
   const [deadheadRadius, setDeadheadRadius] = useState<number | null>(null);
@@ -469,6 +460,8 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
               isExpanded={expandedId === load.id}
               onToggle={() => setExpandedId(expandedId === load.id ? null : load.id)}
               scrollViewRef={scrollViewRef}
+              onLayout={(y) => { rowPositions.current[load.id] = y; }}
+              rowY={rowPositions.current[load.id] ?? 0}
             />
           ))}
         </ScrollView>
