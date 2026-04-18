@@ -163,59 +163,6 @@ const ALL_CITIES = Object.entries(CITY_STATE).map(([city, state]) => ({
   label: `${city}, ${state}`,
 }));
 
-const deadheadStyles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    gap: 5,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    flexWrap: 'wrap',
-  },
-  label: {
-    fontSize: 11,
-    color: Colors.textDim,
-    fontWeight: '600',
-    marginRight: 2,
-  },
-  btn: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.bgCard,
-  },
-  btnActive: {
-    borderColor: Colors.primary,
-    backgroundColor: 'rgba(6,182,212,0.15)',
-  },
-  btnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: Colors.textDim,
-  },
-  btnTextActive: {
-    color: Colors.primary,
-  },
-  clearBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(239,68,68,0.4)',
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    marginLeft: 4,
-  },
-  clearText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#ef4444',
-  },
-});
-
 function CitySearchInput({
   value,
   onChange,
@@ -287,6 +234,7 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
   const [searchFrom, setSearchFrom] = useState('');
   const [searchTo, setSearchTo] = useState('');
   const [deadheadRadius, setDeadheadRadius] = useState<number | null>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
   const [chatLoad, setChatLoad] = useState<LoadOffer | null>(null);
   const [pendingLoad, setPendingLoad] = useState<ActiveLoad | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -387,72 +335,100 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
     return [...filteredLoads, ...nearby];
   })();
 
+  // Количество активных фильтров для бейджа
+  const activeFiltersCount = (searchFrom.trim() ? 1 : 0) + (searchTo.trim() ? 1 : 0) + (deadheadRadius ? 1 : 0);
+
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* ── КОМПАКТНЫЙ HEADER (одна строка) ── */}
       <View style={styles.header}>
-        <View>
+        {/* Левая часть: заголовок + счётчик */}
+        <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={styles.headerTitle}>📋 Load Board</Text>
-          <Text style={styles.headerSub}>
-            {isFiltering ? `${filteredLoads.length} из ${availableLoads.length}` : availableLoads.length} грузов · {availableTrucks}/{totalTrucks} доступно
+          <Text style={styles.headerSub} numberOfLines={1}>
+            {isFiltering ? `${filteredLoads.length}/${availableLoads.length}` : availableLoads.length} грузов · {availableTrucks}/{totalTrucks} траков
           </Text>
         </View>
-        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-          {/* Авто-поиск для свободного трака */}
+
+        {/* Правая часть: 3 иконки-кнопки */}
+        <View style={styles.headerBtns}>
+          {/* Авто */}
           <TouchableOpacity
-            style={styles.autoSearchBtn}
+            style={styles.iconBtn}
             onPress={() => {
               const idleTruck = trucks.find(t => t.status === 'idle');
               if (idleTruck && idleTruck.currentCity) {
                 setSearchFrom(idleTruck.currentCity);
+                setFilterOpen(true);
               }
             }}
           >
-            <Text style={styles.autoSearchIcon}>🚛</Text>
-            <Text style={styles.autoSearchText}>Авто</Text>
+            <Text style={styles.iconBtnEmoji}>🚛</Text>
           </TouchableOpacity>
+
+          {/* Фильтр */}
+          <TouchableOpacity
+            style={[styles.iconBtn, filterOpen && styles.iconBtnActive, activeFiltersCount > 0 && styles.iconBtnFiltered]}
+            onPress={() => setFilterOpen(v => !v)}
+          >
+            <Text style={styles.iconBtnEmoji}>🔍</Text>
+            {activeFiltersCount > 0 && (
+              <View style={styles.filterBadge}>
+                <Text style={styles.filterBadgeTxt}>{activeFiltersCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
           {/* Обновить */}
-          <TouchableOpacity style={styles.refreshBtn} onPress={handleRefresh}>
-            <Text style={styles.refreshIcon}>🔄</Text>
-            <Text style={styles.refreshCountdown}>{countdown !== null ? `${countdown}s` : 'Обновить'}</Text>
+          <TouchableOpacity style={[styles.iconBtn, styles.iconBtnRefresh]} onPress={handleRefresh}>
+            <Text style={styles.iconBtnEmoji}>{countdown !== null ? `${countdown}` : '🔄'}</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Поиск */}
-      <View style={searchStyles.container}>
-        <CitySearchInput
-          value={searchFrom}
-          onChange={setSearchFrom}
-          placeholder="🔍 Откуда (город или штат)"
-        />
-        <CitySearchInput
-          value={searchTo}
-          onChange={setSearchTo}
-          placeholder="🔍 Куда (город или штат)"
-        />
-      </View>
-
-      {/* Deadhead radius фильтр */}
-      <View style={deadheadStyles.row}>
-        <Text style={deadheadStyles.label}>📍 Deadhead:</Text>
-        {[100, 150, 200].map(r => (
-          <TouchableOpacity
-            key={r}
-            style={[deadheadStyles.btn, deadheadRadius === r && deadheadStyles.btnActive]}
-            onPress={() => setDeadheadRadius(deadheadRadius === r ? null : r)}
-          >
-            <Text style={[deadheadStyles.btnText, deadheadRadius === r && deadheadStyles.btnTextActive]}>
-              {r}mi
-            </Text>
-          </TouchableOpacity>
-        ))}
-        {deadheadRadius !== null && (
-          <TouchableOpacity style={deadheadStyles.clearBtn} onPress={() => setDeadheadRadius(null)}>
-            <Text style={deadheadStyles.clearText}>✕ Сброс</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+      {/* ── КОЛЛАПСИРУЕМАЯ ПАНЕЛЬ ФИЛЬТРОВ ── */}
+      {filterOpen && (
+        <View style={styles.filterPanel}>
+          <View style={filterStyles.row}>
+            <View style={{ flex: 1 }}>
+              <CitySearchInput
+                value={searchFrom}
+                onChange={setSearchFrom}
+                placeholder="🔍 Откуда"
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <CitySearchInput
+                value={searchTo}
+                onChange={setSearchTo}
+                placeholder="🔍 Куда"
+              />
+            </View>
+          </View>
+          <View style={filterStyles.deadheadRow}>
+            <Text style={filterStyles.label}>📍</Text>
+            {[100, 150, 200].map(r => (
+              <TouchableOpacity
+                key={r}
+                style={[filterStyles.dhBtn, deadheadRadius === r && filterStyles.dhBtnActive]}
+                onPress={() => setDeadheadRadius(deadheadRadius === r ? null : r)}
+              >
+                <Text style={[filterStyles.dhTxt, deadheadRadius === r && filterStyles.dhTxtActive]}>
+                  {r}mi
+                </Text>
+              </TouchableOpacity>
+            ))}
+            {activeFiltersCount > 0 && (
+              <TouchableOpacity
+                style={filterStyles.clearAll}
+                onPress={() => { setSearchFrom(''); setSearchTo(''); setDeadheadRadius(null); }}
+              >
+                <Text style={filterStyles.clearAllTxt}>✕ Сброс</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      )}
 
       {availableTrucks === 0 && availableLoads.length > 0 && (
         <View style={styles.allBusy}>
@@ -521,6 +497,58 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
   );
 }
 
+const filterStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 6,
+  },
+  deadheadRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    flexWrap: 'wrap',
+  },
+  label: {
+    fontSize: 13,
+    color: Colors.textDim,
+  },
+  dhBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.bgCard,
+  },
+  dhBtnActive: {
+    borderColor: Colors.primary,
+    backgroundColor: 'rgba(6,182,212,0.15)',
+  },
+  dhTxt: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.textDim,
+  },
+  dhTxtActive: {
+    color: Colors.primary,
+  },
+  clearAll: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.4)',
+    backgroundColor: 'rgba(239,68,68,0.1)',
+    marginLeft: 2,
+  },
+  clearAllTxt: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#ef4444',
+  },
+});
+
 const searchStyles = StyleSheet.create({
   container: {
     paddingHorizontal: 8,
@@ -538,15 +566,15 @@ const searchStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: 8,
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 6,
     fontSize: 12,
     color: '#fff',
-    paddingRight: 28,
+    paddingRight: 24,
   },
   clearBtn: {
     position: 'absolute',
-    right: 8,
+    right: 6,
     top: 0,
     bottom: 0,
     justifyContent: 'center',
@@ -586,48 +614,74 @@ const styles = StyleSheet.create({
 
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
+    gap: 8,
   },
-  headerTitle: { fontSize: 15, fontWeight: '900', color: '#fff' },
-  headerSub: { fontSize: 11, color: Colors.textDim, marginTop: 2 },
-  refreshBtn: {
-    height: 46,
-    paddingHorizontal: 12,
-    borderRadius: 12,
+  headerTitle: { fontSize: 14, fontWeight: '900', color: '#fff' },
+  headerSub: { fontSize: 10, color: Colors.textDim, marginTop: 1 },
+
+  headerBtns: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  iconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconBtnActive: {
     backgroundColor: 'rgba(6,182,212,0.15)',
-    borderWidth: 2,
     borderColor: 'rgba(6,182,212,0.5)',
-    justifyContent: 'center',
+  },
+  iconBtnFiltered: {
+    backgroundColor: 'rgba(6,182,212,0.2)',
+    borderColor: '#06b6d4',
+  },
+  iconBtnRefresh: {
+    backgroundColor: 'rgba(6,182,212,0.1)',
+    borderColor: 'rgba(6,182,212,0.3)',
+  },
+  iconBtnEmoji: { fontSize: 17 },
+
+  filterBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#06b6d4',
     alignItems: 'center',
-    gap: 2,
-  },
-  refreshIcon: { fontSize: 18 },
-  refreshCountdown: {
-    fontSize: 11,
-    fontWeight: '900',
-    color: '#06b6d4',
-  },
-  autoSearchBtn: {
-    width: 46,
-    height: 46,
-    borderRadius: 12,
-    backgroundColor: 'rgba(74,222,128,0.12)',
-    borderWidth: 2,
-    borderColor: 'rgba(74,222,128,0.45)',
     justifyContent: 'center',
-    alignItems: 'center',
-    gap: 2,
   },
-  autoSearchIcon: { fontSize: 18 },
-  autoSearchText: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: '#4ade80',
+  filterBadgeTxt: { fontSize: 9, fontWeight: '900', color: '#000' },
+
+  filterPanel: {
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    backgroundColor: 'rgba(6,182,212,0.04)',
   },
+
+  // старые стили кнопок (оставляем для совместимости, но не используются)
+  refreshBtn: { height: 36, paddingHorizontal: 10, borderRadius: 10, backgroundColor: 'rgba(6,182,212,0.15)', borderWidth: 1, borderColor: 'rgba(6,182,212,0.5)', justifyContent: 'center', alignItems: 'center', gap: 2 },
+  refreshIcon: { fontSize: 16 },
+  refreshCountdown: { fontSize: 10, fontWeight: '900', color: '#06b6d4' },
+  autoSearchBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(74,222,128,0.12)', borderWidth: 1, borderColor: 'rgba(74,222,128,0.45)', justifyContent: 'center', alignItems: 'center', gap: 2 },
+  autoSearchIcon: { fontSize: 16 },
+  autoSearchText: { fontSize: 9, fontWeight: '900', color: '#4ade80' },
 
   allBusy: {
     margin: 10,
