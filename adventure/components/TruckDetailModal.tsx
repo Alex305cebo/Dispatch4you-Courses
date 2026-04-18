@@ -14,6 +14,11 @@ interface Props {
   onFindLoad: (city: string) => void;
 }
 
+// Хук для live-подписки на трак по id
+function useLiveTruck(id: string | undefined): Truck | null {
+  return useGameStore(s => id ? (s.trucks.find(t => t.id === id) ?? null) : null);
+}
+
 const STATUS_COLOR: Record<string, string> = {
   loaded: '#67e8f9', driving: '#06b6d4', at_delivery: '#fbbf24',
   at_pickup: '#f59e0b', idle: '#4ade80', breakdown: '#ef4444', waiting: '#fb923c',
@@ -27,7 +32,7 @@ const STATUS_LABEL: Record<string, string> = {
   at_pickup: 'На погрузке', idle: 'Свободен', breakdown: 'Поломка', waiting: 'Detention',
 };
 
-export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) {
+export default function TruckDetailModal({ truck: truckProp, onClose, onFindLoad }: Props) {
   const [showHOSELD, setShowHOSELD] = useState(false);
   const [hoseldTab, setHoseldTab] = useState<'hos' | 'eld'>('hos');
   const [showSMS, setShowSMS] = useState(false);
@@ -35,6 +40,11 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
   const [showCancelLoad, setShowCancelLoad] = useState(false);
   const [showMechanic, setShowMechanic] = useState(false);
   const { gameMinute, removeMoney } = useGameStore();
+
+  // Live-подписка: всегда берём актуальный трак из store
+  const liveTruck = useLiveTruck(truckProp?.id);
+  const truck = liveTruck ?? truckProp;
+
   if (!truck) return null;
 
   const isBreakdown = truck.status === 'breakdown';

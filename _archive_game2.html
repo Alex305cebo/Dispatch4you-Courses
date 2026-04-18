@@ -4664,58 +4664,9 @@ function renderLoadBoard() {
       <span style="font-size:11px;color:var(--text-dim)">RPM ↓</span>
     </div>
     ${loads.length ? cards : '<div style="text-align:center;padding:40px;color:var(--text-dim)">Нет грузов по фильтру</div>'}
-    const equipClass = load.equipment === 'Reefer' ? 'reefer' : load.equipment === 'Flatbed' ? 'flatbed' : '';
-    const expiresIn = Math.max(0, load.expiresAt - G.gameMinute);
-    const broker = G.brokers.find(b => b.id === load.brokerId);
-    const brokerRel = broker ? broker.relationship : 50;
-    const relColor = brokerRel > 70 ? '#34d399' : brokerRel > 40 ? '#fbbf24' : '#f87171';
-    
-    return `<div class="load-card ${load.isUrgent?'urgent-load':''}" onclick="onLoadCardClick('${load.id}')">
-      <div class="load-card-header">
-        <div>
-          <div class="load-route">${load.fromCity} → ${load.toCity}</div>
-          <div style="font-size:12px;color:var(--text-dim);margin-top:2px">
-            <span style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted" onclick="event.stopPropagation();showBrokerProfile('${load.brokerId}')">${load.brokerName}</span> @ ${load.brokerCompany} 
-            <span style="color:${relColor};font-weight:700">★${brokerRel}%</span>
-          </div>
-        </div>
-        <div>
-          <div class="load-rate">$${load.postedRate.toLocaleString()}</div>
-          <div style="font-size:12px;color:var(--text-muted);text-align:right;margin-top:2px">
-            ~$${load.marketRate.toLocaleString()}
-          </div>
-        </div>
-      </div>
-      <div class="load-meta">
-        <span class="load-tag">${load.miles} mi</span>
-        <span class="load-tag ${equipClass}">${load.equipment}</span>
-        <span class="load-tag">${load.commodity}</span>
-        <span class="load-tag">${(load.weight/1000).toFixed(0)}k lbs</span>
-        ${load.isUrgent ? '<span class="load-tag urgent">🔥 URGENT</span>' : ''}
-        ${expiresIn < 30 ? `<span class="load-tag" style="background:rgba(248,113,113,0.15);color:#f87171">⏰ ${expiresIn}m</span>` : ''}
-      </div>
-      <div class="load-card-footer">
-        <div>
-          <span class="load-rpm" style="font-size:13px;font-weight:700;color:var(--primary)">$${rpm}/mi</span>
-          <span class="load-rpm" style="margin-left:6px;color:var(--text-dim)">рынок $${marketRpm}/mi</span>
-        </div>
-        <button class="btn-negotiate" onclick="event.stopPropagation();onNegotiateClick('${load.id}')">💬 Переговоры</button>
-      </div>
-    </div>`;
-  }).join('');
-
-  return `<div class="loadboard-wrap">
-    <div class="lb-search">
-      <input class="lb-search-input" id="lb-search-input" placeholder="🔍 Поиск по городу..." value="${G.loadBoardSearch}">
-      <button class="lb-refresh-btn" onclick="refreshLoadBoard()">↻ Обновить</button>
-    </div>
-    <div style="padding:0 10px 8px;display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:11px;color:var(--text-dim)">Найдено: ${loads.length} грузов</span>
-      <span style="font-size:12px;color:var(--text-dim)">Сортировка: RPM ↓</span>
-    </div>
-    ${loads.length ? cards : '<div style="text-align:center;padding:40px;color:var(--text-dim)">Нет доступных грузов</div>'}
   </div>`;
 }
+
 
 function renderEmailPanel() {
   const unread = G.notifications.filter(n => !n.read);

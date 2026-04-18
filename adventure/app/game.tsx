@@ -582,10 +582,10 @@ export default function GameScreen() {
   // ── TRUCK STRIP ───────────────────────────────────────────────────────────
   const TruckStrip = () => (
     <div style={{
-      display: 'flex', overflowX: 'auto', gap: 8,
-      padding: '8px 12px',
+      display: 'flex', overflowX: 'auto', gap: 10,
+      padding: '10px 12px',
       background: 'linear-gradient(180deg, rgba(10,18,38,0.98) 0%, rgba(8,14,30,0.98) 100%)',
-      borderBottom: '1px solid rgba(56,189,248,0.08)',
+      borderBottom: '1px solid rgba(56,189,248,0.12)',
       scrollbarWidth: 'none',
     } as any}>
       {trucks.map(truck => {
@@ -598,13 +598,10 @@ export default function GameScreen() {
         const progressPct = Math.round(truck.progress * 100);
         const mood = truck.mood ?? 80;
         const moodEmoji = getMoodEmoji(mood, truck.status, truck);
-        // Уникальный CSS класс анимации по индексу трака
         const truckIdx = trucks.indexOf(truck);
         const animClass = `emoji-anim-${truckIdx % 4}`;
         const truckNum = truck.id.replace(/\D/g, '').padStart(3, '0').slice(-3);
-        // Трейлер: детерминированный по id
         const trailerNum = String((parseInt(truckNum) * 7 + 100) % 900 + 100);
-        // Имя + первая буква фамилии: "John M."
         const nameParts = (truck.driver || truck.name).split(' ');
         const driverName = nameParts.length >= 2
           ? `${nameParts[0]} ${nameParts[1][0]}.`
@@ -614,88 +611,61 @@ export default function GameScreen() {
           <div key={truck.id}
             onClick={() => handleTruckClick(truck)}
             style={{
-              minWidth: 120, flexShrink: 0,
-              borderRadius: 12, overflow: 'hidden',
+              minWidth: 160, flexShrink: 0,
+              borderRadius: 16, overflow: 'hidden',
               background: isSelected
-                ? `linear-gradient(135deg, rgba(${parseInt(color.slice(1,3),16)},${parseInt(color.slice(3,5),16)},${parseInt(color.slice(5,7),16)},0.15), rgba(10,18,38,0.9))`
-                : 'linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))',
-              border: `1px solid ${isSelected ? color + '66' : isAlert ? color + '44' : 'rgba(255,255,255,0.07)'}`,
-              boxShadow: isSelected ? `0 0 16px ${color}33, inset 0 0 20px ${color}08` : isAlert ? `0 0 10px ${color}22` : 'none',
+                ? `linear-gradient(135deg, rgba(${parseInt(color.slice(1,3),16)},${parseInt(color.slice(3,5),16)},${parseInt(color.slice(5,7),16)},0.22), rgba(10,18,38,0.97))`
+                : 'rgba(255,255,255,0.05)',
+              border: `2px solid ${isSelected ? color + 'cc' : isAlert ? color + '77' : 'rgba(255,255,255,0.12)'}`,
+              boxShadow: isSelected ? `0 0 24px ${color}55` : isAlert ? `0 0 14px ${color}44` : 'none',
               cursor: 'pointer', transition: 'all 0.2s',
               fontFamily: 'sans-serif',
             } as any}>
 
-            {/* Цветная полоска сверху с градиентом */}
-            <div style={{
-              height: 3, width: '100%',
-              background: `linear-gradient(90deg, ${color}, ${color}88)`,
-              boxShadow: `0 0 6px ${color}`,
-            } as any} />
+            {/* Цветная полоска сверху */}
+            <div style={{ height: 5, width: '100%', background: `linear-gradient(90deg, ${color}, ${color}66)`, boxShadow: `0 0 10px ${color}` } as any} />
 
-            <div style={{ padding: '7px 9px', display: 'flex', flexDirection: 'column', gap: 3 } as any}>
-              {/* Имя водителя + emoji */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' } as any}>
-                <span style={{ fontSize: 12, fontWeight: 800, color: '#fff', letterSpacing: 0.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 80 } as any}>
-                  {driverName}
-                </span>
-                <img
-                  src={moodEmoji}
-                  width={26} height={26}
-                  title={`Настроение: ${mood}%`}
-                  className={animClass}
-                  style={{ imageRendering: 'auto', flexShrink: 0 } as any}
-                />
-              </div>
+            <div style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6 } as any}>
 
-              {/* TRK + TRL номера */}
-              <div style={{ display: 'flex', gap: 5, alignItems: 'center' } as any}>
-                <span style={{ fontSize: 9, fontWeight: 700, color: '#38bdf8', background: 'rgba(56,189,248,0.12)', padding: '1px 5px', borderRadius: 4 } as any}>
-                  TRK {truckNum}
-                </span>
-                <span style={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: 4 } as any}>
-                  TRL {trailerNum}
-                </span>
+              {/* Emoji настроения — отдельно сверху, не накладывается */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' } as any}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 } as any}>
+                  <span style={{ fontSize: 14, fontWeight: 900, color: '#fff', letterSpacing: 0.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
+                    {driverName}
+                  </span>
+                  <div style={{ display: 'flex', gap: 4 } as any}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#38bdf8', background: 'rgba(56,189,248,0.15)', padding: '2px 6px', borderRadius: 4 } as any}>TRK {truckNum}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#cbd5e1', background: 'rgba(255,255,255,0.08)', padding: '2px 6px', borderRadius: 4 } as any}>TRL {trailerNum}</span>
+                  </div>
+                </div>
+                {/* Emoji — с отступом, не накладывается */}
+                <div style={{ marginLeft: 8, flexShrink: 0 } as any}>
+                  <img src={moodEmoji} width={30} height={30} className={animClass} style={{ imageRendering: 'auto', display: 'block' } as any} />
+                </div>
               </div>
 
               {/* Статус */}
-              <span style={{ fontSize: 10, fontWeight: 700, color } as any}>
-                {(truck as any).onNightStop
-                  ? '🌙 Ночёвка'
-                  : (truck as any).hosRestUntilMinute > 0
-                  ? '😴 HOS отдых'
-                  : STATUS_LABEL[truck.status]}
+              <span style={{ fontSize: 13, fontWeight: 800, color, lineHeight: 1.2 } as any}>
+                {(truck as any).onNightStop ? '🌙 Ночёвка' : (truck as any).hosRestUntilMinute > 0 ? '😴 HOS отдых' : STATUS_LABEL[truck.status]}
               </span>
 
               {/* Маршрут */}
-              {truck.destinationCity && !(truck as any).onNightStop && !((truck as any).hosRestUntilMinute > 0) ? (
-                <span style={{ fontSize: 9, color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
+              {truck.destinationCity && !(truck as any).onNightStop && !((truck as any).hosRestUntilMinute > 0) && (
+                <span style={{ fontSize: 12, color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
                   → {truck.destinationCity}
                 </span>
-              ) : null}
+              )}
 
-              {/* HOS */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 } as any}>
-                <span style={{ fontSize: 9, fontWeight: 700, color: hosColor } as any}>
-                  ⏱ {Math.round(hos * 10) / 10}h
-                </span>
-                {isAlert && (
-                  <span style={{ fontSize: 9, color: color, fontWeight: 800 } as any}>⚠️</span>
-                )}
+              {/* HOS + alert */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 } as any}>
+                <span style={{ fontSize: 13, fontWeight: 800, color: hosColor } as any}>⏱ {Math.round(hos * 10) / 10}h</span>
+                {isAlert && <span style={{ fontSize: 13, color, fontWeight: 900 } as any}>⚠️</span>}
               </div>
 
-              {/* Прогресс маршрута */}
+              {/* Прогресс */}
               {isMoving && !(truck as any).onNightStop && !((truck as any).hosRestUntilMinute > 0) && (
-                <div style={{
-                  height: 3, background: 'rgba(255,255,255,0.07)',
-                  borderRadius: 2, overflow: 'hidden', marginTop: 2,
-                } as any}>
-                  <div style={{
-                    height: '100%', width: `${progressPct}%`,
-                    background: `linear-gradient(90deg, ${color}88, ${color})`,
-                    borderRadius: 2,
-                    boxShadow: `0 0 4px ${color}`,
-                    transition: 'width 0.5s',
-                  } as any} />
+                <div style={{ height: 5, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' } as any}>
+                  <div style={{ height: '100%', width: `${progressPct}%`, background: `linear-gradient(90deg, ${color}88, ${color})`, borderRadius: 3, boxShadow: `0 0 6px ${color}`, transition: 'width 0.5s' } as any} />
                 </div>
               )}
             </div>
@@ -849,14 +819,9 @@ export default function GameScreen() {
           <View style={s.rightCol}>
             <SideTabs />
             <View style={s.panelContent}>
-              {activeTab === 'loadboard' && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} onAssigned={handleAssigned} /></ErrorBoundary>}
+              {(activeTab === 'loadboard' || activeTab === 'map') && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} onAssigned={handleAssigned} /></ErrorBoundary>}
               {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
               {activeTab === 'email'     && <ErrorBoundary name="Email"><EmailPanel inline /></ErrorBoundary>}
-              {activeTab === 'map'       && (
-                <View style={s.emptyPanel}>
-                  <Text style={s.emptyTxt}>Выбери раздел</Text>
-                </View>
-              )}
             </View>
           </View>
         </View>

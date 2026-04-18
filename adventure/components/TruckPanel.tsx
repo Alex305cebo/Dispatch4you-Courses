@@ -151,52 +151,52 @@ const styles = StyleSheet.create({
   headerSub: { fontSize: 12, color: '#94a3b8' },
 
   card: {
-    backgroundColor: Colors.bgCard, borderRadius: 16,
-    borderWidth: 1.5, borderColor: Colors.border, padding: 16, gap: 10,
+    backgroundColor: Colors.bgCard, borderRadius: 18,
+    borderWidth: 2, borderColor: Colors.border, padding: 18, gap: 12,
   },
-  cardSelected: { borderColor: Colors.primary, backgroundColor: 'rgba(6,182,212,0.07)' },
+  cardSelected: { borderColor: Colors.primary, backgroundColor: 'rgba(6,182,212,0.09)', borderWidth: 2 },
 
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  truckName: { fontSize: 16, fontWeight: '800', color: '#fff', flex: 1, marginRight: 8 },
+  truckName: { fontSize: 17, fontWeight: '900', color: '#fff', flex: 1, marginRight: 8 },
   statusBadge: {
-    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, borderWidth: 1.5,
+    paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10, borderWidth: 2,
   },
-  statusText: { fontSize: 12, fontWeight: '700' },
+  statusText: { fontSize: 13, fontWeight: '800' },
 
-  route: { fontSize: 13, color: '#e2e8f0' },
+  route: { fontSize: 14, color: '#e2e8f0', fontWeight: '600' },
 
   progressWrap: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  progressTrack: { flex: 1, height: 6, backgroundColor: Colors.bgCardHover, borderRadius: 3, overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: 3 },
-  progressText: { fontSize: 12, color: '#94a3b8', width: 34 },
+  progressTrack: { flex: 1, height: 8, backgroundColor: Colors.bgCardHover, borderRadius: 4, overflow: 'hidden' },
+  progressFill: { height: '100%', borderRadius: 4 },
+  progressText: { fontSize: 13, color: '#e2e8f0', fontWeight: '700', width: 36 },
 
-  metrics: { flexDirection: 'row', gap: 8 },
+  metrics: { flexDirection: 'row', gap: 10 },
   metric: {
-    backgroundColor: Colors.bg, borderRadius: 10, padding: 10, alignItems: 'center', minWidth: 68,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: Colors.bg, borderRadius: 12, padding: 12, alignItems: 'center', minWidth: 72,
+    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.08)',
   },
-  metricVal: { fontSize: 15, fontWeight: '800', color: '#fff' },
-  metricLabel: { fontSize: 11, color: '#94a3b8', fontWeight: '600', marginTop: 2 },
+  metricVal: { fontSize: 16, fontWeight: '900', color: '#fff' },
+  metricLabel: { fontSize: 12, color: '#cbd5e1', fontWeight: '700', marginTop: 3 },
 
   loadInfo: {
-    backgroundColor: 'rgba(6,182,212,0.08)', borderRadius: 10,
-    borderWidth: 1, borderColor: 'rgba(6,182,212,0.25)', padding: 10,
+    backgroundColor: 'rgba(6,182,212,0.1)', borderRadius: 12,
+    borderWidth: 1.5, borderColor: 'rgba(6,182,212,0.3)', padding: 12,
   },
-  loadInfoText: { fontSize: 13, color: '#67e8f9' },
+  loadInfoText: { fontSize: 14, color: '#67e8f9', fontWeight: '600' },
 
   detailBtn: {
-    backgroundColor: 'rgba(6,182,212,0.12)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(6,182,212,0.35)',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    backgroundColor: 'rgba(6,182,212,0.14)',
+    borderWidth: 2,
+    borderColor: 'rgba(6,182,212,0.4)',
+    borderRadius: 14,
+    paddingVertical: 13,
+    paddingHorizontal: 16,
     alignItems: 'center',
     marginTop: 2,
   },
   detailBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '800',
     color: '#67e8f9',
   },
 });

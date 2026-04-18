@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, TextInput, Animated } from 'react-native';
 import { useGameStore } from '../store/gameStore';
 import { formatTimeShort } from '../store/gameStore';
@@ -123,7 +123,7 @@ export default function MechanicChatModal({
   useEffect(() => {
     if (roadsideOrdered && messages.length === 0) {
       addMechanicMsg(`Hey dispatcher, this is ${mechanicName}. I'm already en route. ETA ~${etaArrival}h.`);
-      scheduleStageProgression('driving');
+      // Диспетчер подтверждает шаги вручную
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -230,30 +230,79 @@ export default function MechanicChatModal({
     }, 1000 + Math.random() * 800);
   }
 
+  // Ручное подтверждение шагов — диспетчер кликает на кружок
+  function handleStepClick(targetStage: RepairStage, stepIdx: number) {
+    if (!called && stepIdx !== 1) return; // шаг 1 (Оплата) — особый
+    const targetIdx = stageOrder.indexOf(targetStage);
+    if (targetIdx <= stageIdx) return;
+
+    // Шаг 1 = Оплата — вызываем roadside и списываем деньги
+    if (stepIdx === 1 && !called) {
+      setCalled(true);
+      onCallRoadside(); // списывает деньги в TruckDetailModal
+      animateLine(0, 400);
+      setStage('driving');
+      stageScriptIdx.current = 0;
+      const script = getStageScript('driving', mechanicName, eta, repairCost, repairLabel);
+      addDispatcherMsg(`Оплата подтверждена — $${repairCost}. Выезжай!`);
+      setTyping(true);
+      setTimeout(() => { setTyping(false); addMechanicMsg(script[0]); }, 1200);
+      setTimeout(() => { setTyping(true); setTimeout(() => { setTyping(false); addMechanicMsg(script[1]); }, 1200); }, 3000);
+      return;
+    }
+
+    // Остальные шаги
+    animateLine(targetIdx - 1, 400);
+    setStage(targetStage);
+    stageScriptIdx.current = 0;
+    const script = getStageScript(targetStage, mechanicName, eta, repairCost, repairLabel);
+    setTyping(true);
+    setTimeout(() => {
+      setTyping(false);
+      addMechanicMsg(script[0]);
+      if (script[1]) {
+        setTimeout(() => {
+          setTyping(true);
+          setTimeout(() => { setTyping(false); addMechanicMsg(script[1]); }, 1500);
+        }, 2500);
+      }
+      if (targetStage === 'done') {
+        setTimeout(() => {
+          addMechanicMsg(script[2] || 'Safe travels!');
+          setTimeout(() => {
+            onRepairComplete?.();
+            setClosing(true);
+            setTimeout(onClose, 2500);
+          }, 3000);
+        }, 5000);
+      }
+    }, 1200);
+  }
+
   function handleCallRoadside() {
     setCalled(true);
     setStage('driving');
     stageScriptIdx.current = 0;
     onCallRoadside();
-    // Анимируем первую линию (Вызов → Едет) мгновенно
     animateLine(0, 500);
     const script = getStageScript('driving', mechanicName, eta, repairCost, repairLabel);
     setTimeout(() => addMechanicMsg(script[0]), 600);
     setTimeout(() => { setTyping(true); setTimeout(() => { setTyping(false); addMechanicMsg(script[1]); }, 1200); }, 2500);
     setTimeout(() => { setTyping(true); setTimeout(() => { setTyping(false); addMechanicMsg(script[2]); }, 1200); }, 5000);
-    scheduleStageProgression('driving');
+    // Диспетчер подтверждает шаги вручную — авто-прогрессия отключена
   }
 
-  // Шаги прогресса
-  const STEPS: { label: string; icon: string; s: RepairStage }[] = [
-    { label: 'Вызов',    icon: '📞', s: 'driving'   },
-    { label: 'Едет',     icon: '🚐', s: 'driving'   },
-    { label: 'На месте', icon: '🔧', s: 'arrived'   },
-    { label: 'Ремонт',   icon: '⚙️', s: 'repairing' },
-    { label: 'Готово',   icon: '✅', s: 'done'      },
+  // Шаги прогресса — каждый шаг имеет уникальный индекс 0..4
+  const STEPS = [
+    { label: 'Вызов',    icon: '📞', stageNeeded: 'pending'   as RepairStage },
+    { label: 'Оплата',   icon: '💳', stageNeeded: 'driving'   as RepairStage },
+    { label: 'На месте', icon: '🔧', stageNeeded: 'arrived'   as RepairStage },
+    { label: 'Ремонт',   icon: '⚙️', stageNeeded: 'repairing' as RepairStage },
+    { label: 'Готово',   icon: '✅', stageNeeded: 'done'      as RepairStage },
   ];
   const stageOrder: RepairStage[] = ['pending', 'driving', 'arrived', 'repairing', 'done'];
   const stageIdx = stageOrder.indexOf(stage);
+  // i=0 Вызов, i=1 Оплата, i=2 На месте, i=3 Ремонт, i=4 Готово
 
   const quickReplies = QUICK_REPLIES[stage];
 
@@ -310,50 +359,69 @@ export default function MechanicChatModal({
             {/* Прогресс-шаги с линиями */}
             <View style={s.steps}>
               {STEPS.map((step, i) => {
-                const stepStageIdx = stageOrder.indexOf(step.s);
-                const isDone = stageIdx >= stepStageIdx && called;
-                const isCurrent = stageIdx === stepStageIdx && called;
-                const isLast = i === STEPS.length - 1;
+                // i=0 Вызов, i=1 Едет, i=2 На месте, i=3 Ремонт, i=4 Готово
+                // stageIdx: 0=pending,1=driving,2=arrived,3=repairing,4=done
+                // Шаг i выполнен если: i=0 → called; i>0 → stageIdx >= i
+                const isDone = i === 0 ? called : (called && stageIdx >= i);
+                const isCurrent = called && stageIdx === i && i > 0;
+                // Следующий шаг который нужно подтвердить
+                const isNext = i === 0
+                  ? false // Вызов — не кликабелен (это просто старт)
+                  : i === 1
+                    ? !called // Оплата — кликабельна пока не оплачено
+                    : called && !isDone && stageIdx === i - 1; // остальные — следующий шаг
+
+                const targetStage = stageOrder[i] as RepairStage;
+
                 return (
-                  <View key={i} style={s.stepWrap}>
-                    {/* Линия слева (кроме первого) */}
+                  <React.Fragment key={i}>
+                    {/* Линия между шагами */}
                     {i > 0 && (
                       <View style={s.lineTrack}>
                         <Animated.View style={[
                           s.lineFill,
                           { width: lineAnims[i - 1].interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) },
-                          isDone ? s.lineFillDone : s.lineFillCurrent,
+                          called && stageIdx >= i ? s.lineFillDone : s.lineFillCurrent,
                         ]} />
                       </View>
                     )}
-                    <View style={s.step}>
-                      <View style={[s.stepDot, isDone && s.stepDotDone, isCurrent && s.stepDotCurrent]}>
+                    {/* Кружок */}
+                    <TouchableOpacity
+                      onPress={() => isNext && handleStepClick(targetStage, i)}
+                      disabled={!isNext}
+                      activeOpacity={isNext ? 0.7 : 1}
+                      style={s.step}
+                    >
+                      <View style={[
+                        s.stepDot,
+                        isDone && s.stepDotDone,
+                        isCurrent && s.stepDotCurrent,
+                        isNext && { borderColor: 'rgba(251,191,36,0.9)', borderWidth: 2, backgroundColor: 'rgba(251,191,36,0.12)' },
+                      ]}>
                         <Text style={{ fontSize: 10 }}>{step.icon}</Text>
                       </View>
-                      <Text style={[s.stepLabel, isDone && { color: '#4ade80' }, isCurrent && { color: '#38bdf8' }]}>
+                      <Text style={[
+                        s.stepLabel,
+                        isDone && { color: '#4ade80' },
+                        isCurrent && { color: '#38bdf8' },
+                        isNext && { color: '#fbbf24' },
+                      ]}>
                         {step.label}
                       </Text>
-                    </View>
-                    {/* Линия справа (кроме последнего) */}
-                    {!isLast && (
-                      <View style={s.lineTrack}>
-                        <Animated.View style={[
-                          s.lineFill,
-                          { width: lineAnims[i].interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) },
-                          stageIdx > stepStageIdx && called ? s.lineFillDone : s.lineFillCurrent,
-                        ]} />
-                      </View>
-                    )}
-                  </View>
+                      {isNext && (
+                        <Text style={{ fontSize: 8, color: '#fbbf24', marginTop: 1 }}>👆 tap</Text>
+                      )}
+                    </TouchableOpacity>
+                  </React.Fragment>
                 );
               })}
             </View>
 
-            {/* Кнопка вызова */}
+            {/* Подсказка для первого шага */}
             {!called && (
-              <TouchableOpacity style={s.callBtn} onPress={handleCallRoadside} activeOpacity={0.8}>
-                <Text style={s.callBtnText}>🔧 Вызвать техпомощь · ${repairCost}</Text>
-              </TouchableOpacity>
+              <Text style={{ fontSize: 11, color: '#fbbf24', textAlign: 'center', marginTop: 8 }}>
+                👆 Нажми на кружок 💳 Оплата чтобы вызвать техпомощь · ${repairCost}
+              </Text>
             )}
           </View>
 

@@ -882,31 +882,28 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
 
       // ── MICRO: только ID ──────────────────────────────────────────────
       if (variant === 'micro') {
-        const W = 46, H = 22;
+        const W = 52, H = 26;
         const card = container.children.push(am5.Container.new(root, {
           width: W, height: H,
-          dy: -(H + 8), dx: -(W / 2),
+          dy: -(H + 14), dx: -(W / 2),
           interactive: true, cursorOverStyle: "pointer",
           visible: cardVisible,
           opacity: cardVisible ? 1 : 0,
         }));
-        // Фон
         card.children.push(am5.RoundedRectangle.new(root, {
           width: W, height: H,
           fill: am5.color(0x0d1f35), fillOpacity: 0.95,
           stroke: am5.color(d.colorInt), strokeWidth: 1.5,
-          cornerRadiusTL: 5, cornerRadiusTR: 5, cornerRadiusBL: 5, cornerRadiusBR: 5,
+          cornerRadiusTL: 6, cornerRadiusTR: 6, cornerRadiusBL: 6, cornerRadiusBR: 6,
         }));
-        // Полоска
         card.children.push(am5.RoundedRectangle.new(root, {
           width: W, height: 4, y: 0,
           fill: am5.color(d.colorInt),
-          cornerRadiusTL: 5, cornerRadiusTR: 5, cornerRadiusBL: 0, cornerRadiusBR: 0,
+          cornerRadiusTL: 6, cornerRadiusTR: 6, cornerRadiusBL: 0, cornerRadiusBR: 0,
         }));
-        // ID
         card.children.push(am5.Label.new(root, {
           text: d.truckName,
-          fill: am5.color(0xffffff), fontSize: 9, fontWeight: "900",
+          fill: am5.color(0xffffff), fontSize: 11, fontWeight: "900",
           x: am5.percent(50), centerX: am5.percent(50),
           y: am5.percent(50), centerY: am5.percent(50),
           dy: 2,
@@ -917,10 +914,10 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
 
       // ── MEDIUM: ID + статус + маршрут + HOS ──────────────────────────
       } else if (variant === 'medium') {
-        const W = 82, H = 60;
+        const W = 100, H = 72;
         const card = container.children.push(am5.Container.new(root, {
           width: W, height: H,
-          dy: -(H + 10), dx: -(W / 2),
+          dy: -(H + 16), dx: -(W / 2),
           interactive: true, cursorOverStyle: "pointer",
           visible: cardVisible,
           opacity: cardVisible ? 1 : 0,
@@ -928,39 +925,34 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         card.children.push(am5.RoundedRectangle.new(root, {
           width: W, height: H,
           fill: am5.color(0x0d1f35), fillOpacity: 0.96,
-          stroke: am5.color(d.colorInt), strokeWidth: 1.5,
-          cornerRadiusTL: 7, cornerRadiusTR: 7, cornerRadiusBL: 7, cornerRadiusBR: 7,
+          stroke: am5.color(d.colorInt), strokeWidth: 2,
+          cornerRadiusTL: 9, cornerRadiusTR: 9, cornerRadiusBL: 9, cornerRadiusBR: 9,
         }));
-        // Полоска
         card.children.push(am5.RoundedRectangle.new(root, {
           width: W, height: 6, y: 0,
           fill: am5.color(d.colorInt),
-          cornerRadiusTL: 7, cornerRadiusTR: 7, cornerRadiusBL: 0, cornerRadiusBR: 0,
+          cornerRadiusTL: 9, cornerRadiusTR: 9, cornerRadiusBL: 0, cornerRadiusBR: 0,
         }));
-        // ID
         card.children.push(am5.Label.new(root, {
           text: d.truckName, fill: am5.color(0xffffff),
-          fontSize: 11, fontWeight: "800",
-          x: am5.percent(50), centerX: am5.percent(50), y: 10, centerY: 0,
+          fontSize: 13, fontWeight: "800",
+          x: am5.percent(50), centerX: am5.percent(50), y: 12, centerY: 0,
         }));
-        // Статус
         card.children.push(am5.Label.new(root, {
           text: `● ${STATUS_LABEL[d.status] || d.status}`,
-          fill: am5.color(d.colorInt), fontSize: 8, fontWeight: "700",
-          x: am5.percent(50), centerX: am5.percent(50), y: 24, centerY: 0,
+          fill: am5.color(d.colorInt), fontSize: 10, fontWeight: "700",
+          x: am5.percent(50), centerX: am5.percent(50), y: 30, centerY: 0,
         }));
-        // Маршрут
         card.children.push(am5.Label.new(root, {
           text: routeShort, fill: am5.color(0xe2e8f0),
-          fontSize: 8, fontWeight: "600",
-          x: am5.percent(50), centerX: am5.percent(50), y: 36, centerY: 0,
+          fontSize: 10, fontWeight: "600",
+          x: am5.percent(50), centerX: am5.percent(50), y: 44, centerY: 0,
           oversizedBehavior: "truncate", maxWidth: W - 8,
         }));
-        // HOS
         card.children.push(am5.Label.new(root, {
           text: hosLine, fill: am5.color(0x94a3b8),
-          fontSize: 7,
-          x: am5.percent(50), centerX: am5.percent(50), y: 48, centerY: 0,
+          fontSize: 10,
+          x: am5.percent(50), centerX: am5.percent(50), y: 58, centerY: 0,
         }));
         card.events.on("click", onClick);
         card.events.on("pointerover", onHover);
@@ -968,63 +960,59 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
 
       // ── LARGE: полная инфа + водитель ────────────────────────────────
       } else {
-        const W = 140, H = 96;
+        const W = 160, H = 110;
         const card = container.children.push(am5.Container.new(root, {
           width: W, height: H,
-          dy: -(H + 12), dx: -(W / 2),
+          dy: -(H + 18), dx: -(W / 2),
           interactive: true, cursorOverStyle: "pointer",
           visible: cardVisible,
           opacity: cardVisible ? 1 : 0,
         }));
-        // Свечение
         card.children.push(am5.RoundedRectangle.new(root, {
           width: W + 6, height: H + 6, x: -3, y: -3,
           fill: am5.color(d.colorInt), fillOpacity: 0.15,
-          cornerRadiusTL: 12, cornerRadiusTR: 12, cornerRadiusBL: 12, cornerRadiusBR: 12,
+          cornerRadiusTL: 14, cornerRadiusTR: 14, cornerRadiusBL: 14, cornerRadiusBR: 14,
         }));
-        // Фон
         card.children.push(am5.RoundedRectangle.new(root, {
           width: W, height: H,
           fill: am5.color(0x0d1f35), fillOpacity: 0.98,
-          stroke: am5.color(d.colorInt), strokeWidth: 2,
-          cornerRadiusTL: 9, cornerRadiusTR: 9, cornerRadiusBL: 9, cornerRadiusBR: 9,
+          stroke: am5.color(d.colorInt), strokeWidth: 2.5,
+          cornerRadiusTL: 11, cornerRadiusTR: 11, cornerRadiusBL: 11, cornerRadiusBR: 11,
         }));
-        // Полоска
         card.children.push(am5.RoundedRectangle.new(root, {
           width: W, height: 8, y: 0,
           fill: am5.color(d.colorInt),
-          cornerRadiusTL: 9, cornerRadiusTR: 9, cornerRadiusBL: 0, cornerRadiusBR: 0,
+          cornerRadiusTL: 11, cornerRadiusTR: 11, cornerRadiusBL: 0, cornerRadiusBR: 0,
         }));
-        // ID
         card.children.push(am5.Label.new(root, {
           text: d.truckName, fill: am5.color(0xffffff),
-          fontSize: 15, fontWeight: "900",
-          x: am5.percent(50), centerX: am5.percent(50), y: 12, centerY: 0,
+          fontSize: 16, fontWeight: "900",
+          x: am5.percent(50), centerX: am5.percent(50), y: 14, centerY: 0,
         }));
         // Статус
         card.children.push(am5.Label.new(root, {
           text: `● ${STATUS_LABEL[d.status] || d.status}`,
-          fill: am5.color(d.colorInt), fontSize: 11, fontWeight: "700",
-          x: am5.percent(50), centerX: am5.percent(50), y: 30, centerY: 0,
+          fill: am5.color(d.colorInt), fontSize: 12, fontWeight: "700",
+          x: am5.percent(50), centerX: am5.percent(50), y: 34, centerY: 0,
         }));
         // Маршрут
         card.children.push(am5.Label.new(root, {
           text: routeFull, fill: am5.color(0xe2e8f0),
-          fontSize: 10, fontWeight: "600",
-          x: am5.percent(50), centerX: am5.percent(50), y: 46, centerY: 0,
+          fontSize: 11, fontWeight: "600",
+          x: am5.percent(50), centerX: am5.percent(50), y: 52, centerY: 0,
           oversizedBehavior: "truncate", maxWidth: W - 12,
         }));
         // Водитель
         card.children.push(am5.Label.new(root, {
-          text: `\u{1F464} ${d.driver}`, fill: am5.color(0x94a3b8),
-          fontSize: 10, fontWeight: "600",
-          x: am5.percent(50), centerX: am5.percent(50), y: 62, centerY: 0,
+          text: `\u{1F464} ${d.driver}`, fill: am5.color(0xe2e8f0),
+          fontSize: 11, fontWeight: "600",
+          x: am5.percent(50), centerX: am5.percent(50), y: 70, centerY: 0,
         }));
         // HOS
         card.children.push(am5.Label.new(root, {
-          text: hosLine, fill: am5.color(0x64748b),
-          fontSize: 10,
-          x: am5.percent(50), centerX: am5.percent(50), y: 78, centerY: 0,
+          text: hosLine, fill: am5.color(0x94a3b8),
+          fontSize: 11,
+          x: am5.percent(50), centerX: am5.percent(50), y: 88, centerY: 0,
         }));
         card.events.on("click", onClick);
         card.events.on("pointerover", onHover);
@@ -1698,44 +1686,49 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
           <div style={{
             background: "rgba(8,14,28,0.98)",
             border: `2px solid ${selectedTruck.colorHex}`,
-            borderRadius: 14, padding: "10px 14px", display: "flex", alignItems: "center", gap: 12,
-            boxShadow: `0 0 0 1px ${selectedTruck.colorHex}44, 0 8px 32px rgba(0,0,0,0.7), 0 0 24px ${selectedTruck.colorHex}33`,
+            borderRadius: 16, padding: "12px 16px",
+            display: "flex", alignItems: "center", gap: 14,
+            boxShadow: `0 0 0 1px ${selectedTruck.colorHex}33, 0 8px 32px rgba(0,0,0,0.8), 0 0 28px ${selectedTruck.colorHex}44`,
             whiteSpace: "nowrap",
             transition: "border-color 0.2s, box-shadow 0.2s",
+            position: "relative",
           } as any} className="map-truck-card">
             {/* Индикатор "закреплено" */}
             {selectedTruckRef.current?.truckId === selectedTruck.truckId && (
               <div style={{
-                position: "absolute", top: -8, left: "50%", transform: "translateX(-50%)",
-                background: selectedTruck.colorHex, borderRadius: 4,
-                padding: "1px 8px", fontSize: 9, fontWeight: 800, color: "#000",
+                position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)",
+                background: selectedTruck.colorHex, borderRadius: 5,
+                padding: "2px 10px", fontSize: 10, fontWeight: 800, color: "#000",
                 letterSpacing: 0.5, whiteSpace: "nowrap",
               } as any}>📌 ЗАКРЕПЛЕНО</div>
             )}
-            <div style={{ width: 10, height: 10, borderRadius: "50%", background: selectedTruck.colorHex, flexShrink: 0, boxShadow: `0 0 8px ${selectedTruck.colorHex}` } as any} />
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 } as any}>
-              <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" } as any}>🚛 {selectedTruck.truckName}</span>
-              <span style={{ fontSize: 11, color: selectedTruck.colorHex } as any}>
+            {/* Цветной индикатор */}
+            <div style={{ width: 12, height: 12, borderRadius: "50%", background: selectedTruck.colorHex, flexShrink: 0, boxShadow: `0 0 10px ${selectedTruck.colorHex}` } as any} />
+            {/* Инфо */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 3 } as any}>
+              <span style={{ fontSize: 15, fontWeight: 900, color: "#fff" } as any}>🚛 {selectedTruck.truckName}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: selectedTruck.colorHex } as any}>
                 {selectedTruck.statusLabel} · {selectedTruck.currentCity}{CITY_STATE[selectedTruck.currentCity] ? `, ${CITY_STATE[selectedTruck.currentCity]}` : ""}
               </span>
               {selectedTruck.routeEvent && (
-                <span style={{ fontSize: 10, color: "#fbbf24" } as any}>{selectedTruck.routeEvent} На маршруте</span>
+                <span style={{ fontSize: 11, color: "#fbbf24" } as any}>{selectedTruck.routeEvent} На маршруте</span>
               )}
             </div>
+            {/* Кнопки */}
             <button onClick={() => onTruckInfo?.(selectedTruck.truckId)} style={{
-              background: "rgba(6,182,212,0.15)", border: "1px solid rgba(6,182,212,0.4)",
-              borderRadius: 8, padding: "6px 12px", color: "#06b6d4",
-              fontSize: 12, fontWeight: 700, cursor: "pointer",
+              background: "rgba(6,182,212,0.18)", border: "1.5px solid rgba(6,182,212,0.5)",
+              borderRadius: 10, padding: "8px 14px", color: "#06b6d4",
+              fontSize: 13, fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap",
             } as any}>📋 Инфо</button>
             {(selectedTruck.status === "idle" || selectedTruck.status === "at_delivery") && (
               <button onClick={() => { onFindLoad?.(selectedTruck.currentCity); setSelectedTruck(null); selectedTruckRef.current = null; chartRef.current?.goHome(); }} style={{
-                background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.4)",
-                borderRadius: 8, padding: "6px 12px", color: "#4ade80",
-                fontSize: 12, fontWeight: 700, cursor: "pointer",
-              } as any}>🔍 Найти груз</button>
+                background: "rgba(74,222,128,0.18)", border: "1.5px solid rgba(74,222,128,0.5)",
+                borderRadius: 10, padding: "8px 14px", color: "#4ade80",
+                fontSize: 13, fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap",
+              } as any}>🔍 Груз</button>
             )}
             <span onClick={() => { setSelectedTruck(null); selectedTruckRef.current = null; }}
-              style={{ cursor: "pointer", fontSize: 18, color: "#64748b", paddingLeft: 4, lineHeight: 1 } as any}>✕</span>
+              style={{ cursor: "pointer", fontSize: 20, color: "#64748b", paddingLeft: 4, lineHeight: 1, flexShrink: 0 } as any}>✕</span>
           </div>
 
           {/* Стрелка вправо */}
