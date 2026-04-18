@@ -256,6 +256,20 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
     return () => window.removeEventListener('mapToast', handleMapToast);
   }, [addToast]);
 
+  // Сброс follow при ручном wheel-зуме (мышь/пинч на мобильном)
+  useEffect(() => {
+    const el = divRef.current;
+    if (!el) return;
+    const onWheel = () => {
+      if (followTruckIdRef.current) {
+        followTruckIdRef.current = null;
+        setFollowTruck(false);
+      }
+    };
+    el.addEventListener('wheel', onWheel, { passive: true });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, []);
+
   // Факт о штате при слежении за траком
   useEffect(() => {
     if (!followTruck) { setStateFact(""); clearInterval(factTimerRef.current); return; }
@@ -1045,15 +1059,30 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
       interactive: true,
     }));
 
-    // Клик по пустому месту карты — сбрасываем слежение и закреплённую карточку
+    // Клик по пустому месту карты — только закрываем карточку, follow НЕ сбрасываем
     chart.get("background")?.events.on("click", () => {
+      selectedTruckRef.current = null;
+      setSelectedTruck(null);
+    });
+
+    // Ручной pan/zoom — сбрасываем follow (пользователь сам управляет картой)
+    let userInteracting = false;
+    chart.get("background")?.events.on("pointerdown", () => { userInteracting = true; });
+    chart.events.on("panstarted", () => {
+      if (!userInteracting) return;
       if (followTruckIdRef.current) {
         followTruckIdRef.current = null;
         setFollowTruck(false);
       }
-      selectedTruckRef.current = null;
-      setSelectedTruck(null);
     });
+    chart.events.on("zoomstarted", () => {
+      if (!userInteracting) return;
+      if (followTruckIdRef.current) {
+        followTruckIdRef.current = null;
+        setFollowTruck(false);
+      }
+    });
+    chart.get("background")?.events.on("pointerup", () => { userInteracting = false; });
 
     // Штаты — ОСНОВНОЙ СЛОЙ КАРТЫ
     const polygonSeries = chart.series.push(
