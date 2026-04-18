@@ -1,35 +1,15 @@
 #!/usr/bin/env node
-// Local test: remove /game/ prefix
-
+// Фиксирует пути для локального сервера (без /game/ префикса)
 const fs = require('fs');
 const path = require('path');
 
-const distPath = path.join(__dirname, '../dist');
+const indexPath = path.join(__dirname, '../dist/index.html');
+let html = fs.readFileSync(indexPath, 'utf8');
 
-function fixContent(content) {
-  // /game/_expo/ → /_expo/
-  content = content.replace(/\/game\/_expo\//g, '/_expo/');
-  content = content.replace(/\/game\/favicon/g, '/favicon');
-  content = content.replace(/\/game\/assets\//g, '/assets/');
-  return content;
-}
+html = html.replace(/href="\/game\/_expo\//g, 'href="/_expo/');
+html = html.replace(/src="\/game\/_expo\//g, 'src="/_expo/');
+html = html.replace(/href="\/game\/favicon\.ico"/g, 'href="/favicon.ico"');
+html = html.replace(/href="\/game\/favicon\.png"/g, 'href="/favicon.png"');
 
-function fixFile(filePath) {
-  const content = fs.readFileSync(filePath, 'utf8');
-  const fixed = fixContent(content);
-  if (fixed !== content) {
-    fs.writeFileSync(filePath, fixed, 'utf8');
-    console.log(`  ✅ Fixed: ${path.relative(distPath, filePath)}`);
-  }
-}
-
-// index.html
-fixFile(path.join(distPath, 'index.html'));
-
-// JS бандлы
-const jsDir = path.join(distPath, '_expo/static/js/web');
-if (fs.existsSync(jsDir)) {
-  fs.readdirSync(jsDir).filter(f => f.endsWith('.js')).forEach(f => fixFile(path.join(jsDir, f)));
-}
-
-console.log('✅ Done. Paths fixed for local testing');
+fs.writeFileSync(indexPath, html, 'utf8');
+console.log('✅ Paths fixed for LOCAL server (no /game/ prefix)');

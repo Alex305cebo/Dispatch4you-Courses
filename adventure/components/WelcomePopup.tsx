@@ -34,15 +34,24 @@ export default function GuidePanel({ nickname, truckCount, onSwitchTab, onAllDon
     if (i !== null) onStepChange?.(i);
   }
 
-  // Посещение вкладок — сохраняем в localStorage чтобы не сбрасывалось
-  const [emailVisited, setEmailVisited] = useState(() => {
-    try { return !!localStorage.getItem('guide-email-visited'); } catch { return false; }
-  });
-  const [mapVisited, setMapVisited] = useState(() => {
-    try { return !!localStorage.getItem('guide-map-visited'); } catch { return false; }
-  });
+  const gameMinute     = useGameStore(s => s.gameMinute);
+
+  // Посещение вкладок — сохраняем в localStorage, но сбрасываем при новой игре
+  const [emailVisited, setEmailVisited] = useState(false);
+  const [mapVisited, setMapVisited] = useState(false);
+
+  // Читаем из localStorage только если игра уже шла (не первые минуты)
+  useEffect(() => {
+    if (gameMinute > 5) {
+      try {
+        if (localStorage.getItem('guide-email-visited')) setEmailVisited(true);
+        if (localStorage.getItem('guide-map-visited')) setMapVisited(true);
+      } catch {}
+    }
+  }, []);
 
   const activeLoads    = useGameStore(s => s.activeLoads);
+  const bookedLoads    = useGameStore(s => s.bookedLoads);
   const trucks         = useGameStore(s => s.trucks);
   const totalEarned    = useGameStore(s => s.totalEarned);
   const notifications  = useGameStore(s => s.notifications);
@@ -54,7 +63,9 @@ export default function GuidePanel({ nickname, truckCount, onSwitchTab, onAllDon
   const triggerBubble  = useGuideStore(s => s.triggerBubble);
 
   const hasTruckMoving  = trucks.some(t => ['loaded','driving','at_pickup','at_delivery'].includes(t.status));
-  const hasAssignedLoad = activeLoads.length > 0 || hasTruckMoving;
+  // Только грузы назначенные игроком (не начальные INIT-)
+  const playerAssignedLoad = activeLoads.some(l => !l.id.startsWith('INIT-'));
+  const hasAssignedLoad = playerAssignedLoad || bookedLoads.length > 0;
   const hasEarned       = totalEarned > 0;
   const shiftGoal       = truckCount * 2500;
   const goalReached     = totalEarned >= shiftGoal;
@@ -85,7 +96,7 @@ export default function GuidePanel({ nickname, truckCount, onSwitchTab, onAllDon
       desc: 'После сделки появится окно выбора трака. Нажми на свободный трак — он сразу отправится на погрузку.',
       tab: 'trucks',
       cta: '→ Открыть Траки',
-      done: hasTruckMoving,
+      done: playerAssignedLoad,
       doneLabel: 'Трак в пути',
     },
     {
@@ -138,6 +149,7 @@ export default function GuidePanel({ nickname, truckCount, onSwitchTab, onAllDon
   const allDone = completedCount === steps.length;
 
   // Авто-раскрываем первый невыполненный шаг — только если пользователь не навигирует вручную
+  const didAutoExpand = useRef(false);
   useEffect(() => {
     if (isForcedRef.current) return;
     const firstPending = steps.findIndex(s => !s.done);
@@ -145,6 +157,7 @@ export default function GuidePanel({ nickname, truckCount, onSwitchTab, onAllDon
       setExpanded(firstPending);
       setGuideStep(steps[firstPending].id);
     }
+    didAutoExpand.current = true;
   }, [completedCount]);
 
   // Принудительный шаг от кнопки ↺ — блокируем авто-переключение

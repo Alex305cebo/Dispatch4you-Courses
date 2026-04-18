@@ -8,8 +8,68 @@ import * as am5map from "@amcharts/amcharts5/map";
 import am5geodata_usaLow from "@amcharts/amcharts5-geodata/usaLow";
 import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 
+// ── ФАКТЫ О ШТАТАХ США (для облачка при слежении) ──────────────────────────
+const STATE_FACTS: Record<string, string[]> = {
+  TX: ["🤠 Техас — крупнейший штат по грузоперевозкам в США. Более 800 млн тонн в год.", "🛢️ Нефтяной хаб: Хьюстон — крупнейший порт по тоннажу в США.", "🌵 I-10 через Техас — одна из самых загруженных фрейт-трасс страны.", "🏭 Техас производит больше нефти, чем большинство стран ОПЕК.", "🚛 Каждый 8-й трак в США зарегистрирован в Техасе."],
+  CA: ["🌉 Калифорния — #1 по объёму импорта через порты Лос-Анджелес и Лонг-Бич.", "🍊 Центральная долина: 25% всех продуктов питания США выращено здесь.", "🚛 I-5 — главная артерия West Coast, 24/7 поток рефрижераторов.", "💻 Silicon Valley генерирует огромный поток электроники и tech-грузов.", "🌊 Порт LA обрабатывает 40% всего импорта США из Азии."],
+  FL: ["🍊 Флорида — главный поставщик цитрусовых в США. Миллионы тонн ежегодно.", "🏖️ Майами — ворота в Латинскую Америку для грузоперевозок.", "🚛 I-95 вдоль побережья — один из самых загруженных коридоров East Coast.", "🌴 Туристическая индустрия генерирует огромный поток потребительских товаров.", "⚡ Флорида — лидер по солнечной энергетике, растёт спрос на оборудование."],
+  IL: ["🌽 Чикаго — крупнейший железнодорожный хаб Северной Америки.", "🏙️ O'Hare — один из самых загруженных аэропортов для авиагрузов.", "🌾 Иллинойс производит 10% всей кукурузы США.", "🚛 I-80 через Иллинойс — главный трансконтинентальный маршрут.", "🏭 Чикаго — центр металлургии и машиностроения Среднего Запада."],
+  OH: ["🏭 Огайо — сердце «Ржавого пояса», крупный производитель стали и авто.", "🚛 I-70 и I-71 пересекаются в Колумбусе — крупнейший логистический узел.", "🚗 Огайо — 3-й по объёму производства автомобилей штат.", "📦 Колумбус — один из крупнейших дистрибуционных центров Amazon.", "🌽 Огайо входит в топ-5 по производству кукурузы и сои."],
+  TN: ["🎸 Нэшвилл — не только музыка, но и крупный логистический хаб юго-востока.", "🚛 I-40 через Теннесси — главный маршрут между East и West Coast.", "📦 Мемфис — штаб-квартира FedEx, крупнейший авиагрузовой хаб мира.", "🏭 Теннесси — крупный производитель автомобилей (Volkswagen, Nissan).", "🌊 Река Миссисипи на западе — важный водный путь для баржевых грузов."],
+  GA: ["✈️ Атланта — крупнейший авиационный хаб мира по пассажиропотоку.", "🍑 Джорджия — главный производитель персиков и арахиса в США.", "🚛 I-75 и I-85 сходятся в Атланте — крупнейший дорожный узел юга.", "📦 Атланта — региональный дистрибуционный центр для всего юго-востока.", "🏭 Порт Саванна — 4-й по загруженности контейнерный порт США."],
+  NC: ["🚬 Северная Каролина — исторически крупнейший производитель табака.", "🏭 Charlotte — финансовый центр и крупный логистический хаб.", "🌲 Мебельная столица США — High Point, NC. Огромный поток мебели.", "🚛 I-85 — главная артерия Piedmont Corridor между Charlotte и Atlanta.", "✈️ Charlotte Douglas — один из крупнейших хабов American Airlines."],
+  PA: ["🏭 Пенсильвания — исторический центр сталелитейной промышленности США.", "🚛 I-76 (Pennsylvania Turnpike) — одна из первых платных дорог страны.", "🏙️ Филадельфия — крупный порт и дистрибуционный центр East Coast.", "⛽ Пенсильвания — крупный производитель природного газа (сланец Марселлус).", "🍄 Кеннет-Сквер — «грибная столица мира», 60% грибов США."],
+  NY: ["🗽 Нью-Йорк — крупнейший потребительский рынок США, огромный спрос на доставку.", "🚢 Порт Нью-Йорк/Нью-Джерси — 3-й по загруженности порт США.", "🚛 I-87 и I-95 — главные грузовые коридоры северо-востока.", "🍎 Штат Нью-Йорк — 2-й по производству яблок в США.", "🏭 Буффало — крупный промышленный центр у границы с Канадой."],
+  TX: ["🤠 Техас — крупнейший штат по грузоперевозкам в США.", "🛢️ Хьюстон — нефтехимический хаб #1 в Северной Америке.", "🌵 I-10 через Техас — одна из самых загруженных фрейт-трасс.", "🚛 Ламаредо — крупнейший сухопутный пограничный переход США/Мексика.", "🏭 Техас производит 40% всей нефти США."],
+  MO: ["🌉 Сент-Луис — исторические «Ворота на Запад», крупный речной порт.", "🚛 I-70 пересекает Миссури — главный трансконтинентальный маршрут.", "🌽 Миссури входит в топ-10 по производству кукурузы и сои.", "✈️ Канзас-Сити — крупный авиагрузовой и железнодорожный хаб.", "🏭 Миссури — крупный производитель автомобилей и авиационных компонентов."],
+  KY: ["🐎 Кентукки — «Лошадиная столица мира», огромный поток спецгрузов.", "📦 Луисвилл — штаб-квартира UPS, крупнейший авиагрузовой хаб UPS.", "🚛 I-65 через Кентукки — главный коридор между Чикаго и Нэшвиллом.", "🥃 Кентукки производит 95% всего бурбона в мире.", "🏭 Кентукки — крупный производитель автомобилей (Toyota, Ford)."],
+  IN: ["🏎️ Индианаполис — «Перекрёсток Америки», 5 Interstate сходятся в одной точке.", "🚛 I-65, I-70, I-74 делают Индиану ключевым транзитным штатом.", "🌽 Индиана входит в топ-5 по производству кукурузы и сои.", "🏭 Крупный производитель стали — Gary, IN у озера Мичиган.", "📦 Индианаполис — один из крупнейших дистрибуционных центров Среднего Запада."],
+  MI: ["🚗 Детройт — «Автомобильная столица мира», Ford, GM, Chrysler.", "🏭 Мичиган производит больше автомобилей, чем любой другой штат.", "🌊 Мичиган граничит с 4 из 5 Великих озёр — огромный водный транспорт.", "🚛 I-75 — главный коридор для автокомпонентов между Детройтом и Канадой.", "🍒 Мичиган — #1 по производству вишни в США."],
+  WI: ["🧀 Висконсин — «Молочный штат», производит 25% всего сыра США.", "🚛 I-94 — главный коридор между Чикаго и Миннеаполисом.", "🌲 Висконсин — крупный производитель бумаги и древесины.", "🏭 Милуоки — исторический центр пивоварения и машиностроения.", "🌽 Висконсин входит в топ-10 по производству кукурузы."],
+  MN: ["🌾 Миннесота — крупнейший производитель сахарной свёклы в США.", "🚛 I-35 — главный коридор между Канзас-Сити и Канадой.", "❄️ Зимой температура падает до -40°F — особые требования к грузовикам.", "🏭 Миннеаполис — крупный центр пищевой промышленности (General Mills, Cargill).", "🌊 Дулут — крупнейший порт на Великих озёрах по тоннажу."],
+  IA: ["🌽 Айова — #1 по производству кукурузы и свинины в США.", "🚛 I-80 пересекает Айову — главный трансконтинентальный маршрут.", "🐷 Айова производит 30% всей свинины США.", "🌾 Айова — крупнейший производитель этанола из кукурузы.", "🏭 Де-Мойн — крупный страховой и финансовый центр Среднего Запада."],
+  KS: ["🌾 Канзас — «Пшеничный штат», производит 20% всей пшеницы США.", "🚛 I-70 пересекает Канзас — исторический маршрут на Запад.", "🐄 Канзас — крупнейший производитель говядины в США.", "🌪️ Торнадо Аллея — особые риски для грузоперевозок весной.", "✈️ Уичита — «Авиационная столица мира», Boeing, Cessna, Learjet."],
+  NE: ["🌽 Небраска — 3-й по производству кукурузы штат в США.", "🐄 Небраска — крупнейший производитель говядины по объёму переработки.", "🚛 I-80 через Небраску — главный трансконтинентальный маршрут.", "🌾 Омаха — крупнейший в мире центр переработки мяса.", "🏦 Омаха — штаб-квартира Berkshire Hathaway и Union Pacific Railroad."],
+  CO: ["⛰️ Колорадо — горные перевалы создают сложности для грузовиков зимой.", "🚛 I-70 через Скалистые горы — один из самых сложных маршрутов США.", "🌿 Колорадо — крупный производитель пшеницы и сахарной свёклы.", "⛷️ Горнолыжные курорты генерируют огромный поток туристических грузов.", "🛢️ Колорадо — крупный производитель нефти и природного газа."],
+  AZ: ["☀️ Аризона — один из самых быстрорастущих штатов, огромный строительный бум.", "🚛 I-10 через Аризону — главный маршрут между LA и Техасом.", "🌵 Феникс — крупный дистрибуционный хаб для юго-запада США.", "🔋 Аризона — лидер по производству солнечных панелей.", "🏭 Тусон — крупный центр аэрокосмической промышленности."],
+  NV: ["🎰 Лас-Вегас генерирует огромный поток продуктов питания и товаров.", "🚛 I-15 — главный коридор между Лас-Вегасом и Лос-Анджелесом.", "⚡ Невада — лидер по производству лития для электробатарей.", "🏭 Reno — крупный логистический хаб (Tesla Gigafactory, Amazon).", "🌵 Невада — крупнейший производитель золота в США."],
+  WA: ["🍎 Вашингтон — #1 по производству яблок в США, 60% всего урожая.", "🚛 I-5 — главный коридор West Coast от Канады до Мексики.", "✈️ Сиэтл — штаб-квартира Boeing, огромный поток авиакомпонентов.", "☕ Сиэтл — кофейная столица США, Starbucks и сотни обжарочных.", "🌊 Порт Сиэтл — крупный контейнерный порт для торговли с Азией."],
+  OR: ["🌲 Орегон — крупнейший производитель пиломатериалов в США.", "🚛 I-5 через Орегон — главный коридор West Coast.", "🍇 Орегон — крупный производитель вина, особенно Pinot Noir.", "🏭 Портленд — крупный порт на реке Колумбия для зерновых грузов.", "🌲 Орегон производит 25% всей древесины США."],
+  VA: ["🏛️ Вирджиния — крупный центр федеральных контрактов и оборонной промышленности.", "🚛 I-95 через Вирджинию — главный коридор East Coast.", "🚢 Норфолк — крупнейшая военно-морская база в мире.", "🍗 Вирджиния — крупный производитель птицы и морепродуктов.", "💻 Northern Virginia — «Дата-центр мира», 70% мирового интернет-трафика."],
+  MD: ["🦀 Мэриленд — знаменит крабами Chesapeake Bay, огромный поток морепродуктов.", "🚛 I-95 через Балтимор — один из самых загруженных коридоров East Coast.", "🚢 Порт Балтимор — крупнейший порт по импорту автомобилей в США.", "🏛️ Близость к Вашингтону генерирует огромный поток правительственных грузов.", "⚗️ Мэриленд — крупный центр биотехнологий и фармацевтики."],
+  SC: ["🚢 Порт Чарлстон — один из самых быстрорастущих контейнерных портов США.", "🚛 I-26 и I-95 — главные коридоры для грузов юго-востока.", "🏭 Южная Каролина — крупный производитель автомобилей (BMW, Volvo, Mercedes).", "🍑 Южная Каролина — крупный производитель персиков и табака.", "✈️ Гринвилл-Спартанбург — крупный авиационный и производственный хаб."],
+  AL: ["🚗 Алабама — крупный производитель автомобилей (Mercedes, Honda, Hyundai).", "🚛 I-65 — главный коридор между Чикаго и Мобилом.", "🚢 Порт Мобил — крупный порт Мексиканского залива для стали и угля.", "🌾 Алабама — крупный производитель арахиса и хлопка.", "🏭 Хантсвилл — крупный центр аэрокосмической промышленности (NASA)."],
+  MS: ["🎵 Миссисипи — родина блюза, джаза и рок-н-ролла.", "🚛 I-55 — главный коридор между Чикаго и Новым Орлеаном.", "🌊 Река Миссисипи — крупнейший водный путь для баржевых грузов.", "🌾 Миссисипи — крупный производитель хлопка и сои.", "🐟 Миссисипи — крупнейший производитель сома в США."],
+  LA: ["🚢 Порт Нового Орлеана — 5-й по тоннажу порт в мире.", "🛢️ Луизиана — крупный производитель нефти и природного газа.", "🚛 I-10 через Луизиану — главный коридор вдоль Мексиканского залива.", "🦞 Луизиана производит 90% всех раков в США.", "🌾 Луизиана — крупный производитель сахарного тростника и риса."],
+  AR: ["🐔 Арканзас — крупнейший производитель бройлеров в США (Tyson Foods).", "🚛 I-40 пересекает Арканзас — главный трансконтинентальный маршрут.", "🌾 Арканзас — крупный производитель риса и соевых бобов.", "🏪 Бентонвилл — штаб-квартира Walmart, крупнейшего ритейлера мира.", "🌊 Река Арканзас — важный водный путь для баржевых грузов."],
+  OK: ["🛢️ Оклахома — крупный производитель нефти и природного газа.", "🚛 I-40 через Оклахому — историческая «Route 66».", "🌾 Оклахома — крупный производитель пшеницы и скота.", "🌪️ Торнадо Аллея — особые риски для грузоперевозок.", "🏭 Талса — крупный нефтехимический и авиационный центр."],
+  NM: ["🌵 Нью-Мексико — крупный производитель чили и пекана.", "🚛 I-40 и I-25 пересекаются в Альбукерке — ключевой узел юго-запада.", "🛢️ Нью-Мексико — крупный производитель нефти и природного газа.", "☢️ Лос-Аламос — центр ядерных исследований, особые грузы.", "🌞 Нью-Мексико — лидер по солнечной энергетике на юго-западе."],
+  WV: ["⛏️ Западная Вирджиния — исторический центр угольной промышленности.", "🚛 I-79 и I-77 — главные коридоры через горы Аппалачи.", "🌲 Западная Вирджиния — крупный производитель пиломатериалов.", "⚗️ Чарлстон — крупный центр химической промышленности.", "🏔️ Горный рельеф создаёт сложности для грузовиков — крутые подъёмы."],
+  UT: ["⛷️ Юта — «Лучший снег на Земле», огромный поток туристических грузов.", "🚛 I-15 — главный коридор между Лас-Вегасом и Солт-Лейк-Сити.", "⛏️ Юта — крупный производитель меди, золота и серебра.", "🏭 Солт-Лейк-Сити — крупный дистрибуционный хаб для Горного Запада.", "🌵 Юта — крупный производитель соли (Большое Солёное озеро)."],
+  ID: ["🥔 Айдахо — #1 по производству картофеля в США, 30% всего урожая.", "🚛 I-84 — главный коридор между Портлендом и Солт-Лейк-Сити.", "🌲 Айдахо — крупный производитель пиломатериалов и бумаги.", "🐟 Айдахо — крупный производитель форели.", "⛏️ Айдахо — крупный производитель серебра и фосфатов."],
+  MT: ["🐄 Монтана — крупный производитель пшеницы и скота.", "🚛 I-90 и I-15 — главные коридоры через Монтану.", "⛏️ Монтана — крупный производитель меди и угля.", "🌲 Монтана — крупный производитель пиломатериалов.", "🦌 Монтана — крупнейший штат по площади к востоку от Скалистых гор."],
+  WY: ["🛢️ Вайоминг — крупный производитель нефти, газа и угля.", "🚛 I-80 через Вайоминг — один из самых сложных зимних маршрутов.", "🐄 Вайоминг — крупный производитель скота.", "⛏️ Вайоминг — крупнейший производитель угля в США.", "🌋 Йеллоустон генерирует огромный поток туристических грузов летом."],
+  SD: ["🌽 Южная Дакота — крупный производитель кукурузы и пшеницы.", "🚛 I-90 — главный коридор через Южную Дакоту.", "🐄 Южная Дакота — крупный производитель скота.", "🏔️ Маунт-Рашмор генерирует огромный туристический поток.", "🌾 Южная Дакота входит в топ-10 по производству сои."],
+  ND: ["🛢️ Северная Дакота — крупный производитель нефти (сланец Баккен).", "🌾 Северная Дакота — #1 по производству подсолнечника и канолы.", "🚛 I-94 — главный коридор через Северную Дакоту.", "🌾 Северная Дакота — крупный производитель пшеницы и ячменя.", "❄️ Суровые зимы создают особые условия для грузоперевозок."],
+  NH: ["🍁 Нью-Гэмпшир — крупный производитель кленового сиропа.", "🚛 I-93 — главный коридор между Бостоном и Монреалем.", "🌲 Нью-Гэмпшир — крупный производитель пиломатериалов.", "🏔️ Гора Вашингтон — самые сильные ветры в мире, сложные условия.", "🍎 Нью-Гэмпшир — крупный производитель яблок и тыкв."],
+  VT: ["🍁 Вермонт — #1 по производству кленового сиропа в США.", "🚛 I-89 — главный коридор через Вермонт.", "🧀 Вермонт — крупный производитель сыра и молочных продуктов.", "🌲 Вермонт — крупный производитель пиломатериалов.", "🍎 Вермонт — крупный производитель яблок и сидра."],
+  ME: ["🦞 Мэн — #1 по производству омаров в США, 90% всего улова.", "🚛 I-95 — главный коридор через Мэн.", "🌲 Мэн — крупный производитель пиломатериалов и бумаги.", "🫐 Мэн — #1 по производству черники в США.", "🐟 Мэн — крупный производитель морепродуктов."],
+  MA: ["🦞 Массачусетс — крупный производитель морепродуктов (Бостон).", "🚛 I-90 (Mass Pike) — главный коридор через Массачусетс.", "💊 Массачусетс — крупный центр биотехнологий и фармацевтики.", "🎓 Бостон — крупный центр образования, огромный поток книг и оборудования.", "🏭 Массачусетс — исторический центр текстильной промышленности."],
+  CT: ["🏭 Коннектикут — крупный производитель вертолётов (Sikorsky).", "🚛 I-95 — главный коридор East Coast через Коннектикут.", "💊 Коннектикут — крупный центр фармацевтики и страхования.", "⚓ Гротон — крупнейший производитель подводных лодок в США.", "🎓 Йель и другие университеты генерируют огромный поток грузов."],
+  RI: ["🦞 Род-Айленд — крупный производитель морепродуктов.", "🚛 I-95 — главный коридор через Род-Айленд.", "🏭 Провиденс — исторический центр ювелирной промышленности.", "⚓ Ньюпорт — крупный военно-морской центр.", "🎓 Браун и RISD генерируют поток образовательных грузов."],
+  DE: ["🏭 Делавэр — крупный химический центр (DuPont).", "🚛 I-95 — главный коридор East Coast через Делавэр.", "🏦 Делавэр — «корпоративная столица» США, 60% Fortune 500 зарегистрированы здесь.", "🌽 Делавэр — крупный производитель кукурузы и сои.", "🐔 Делавэр — крупный производитель бройлеров."],
+  NJ: ["🏭 Нью-Джерси — крупный фармацевтический центр (Johnson & Johnson, Merck).", "🚛 I-95 и I-78 — главные коридоры через Нью-Джерси.", "🚢 Порт Нью-Джерси — крупнейший порт East Coast.", "🍅 Нью-Джерси — «Садовый штат», крупный производитель томатов.", "🏭 Нью-Джерси — крупный нефтеперерабатывающий центр."],
+};
+
+// Получить случайный факт для штата
+function getStateFact(stateCode: string): string {
+  const facts = STATE_FACTS[stateCode];
+  if (!facts || facts.length === 0) return `📍 Штат ${stateCode} — часть великой американской дорожной сети.`;
+  return facts[Math.floor(Math.random() * facts.length)];
+}
+
 const STATUS_COLOR: Record<string, string> = {
-  idle:        '#38bdf8', // голубой — свободен
+  idle:        '#94a3b8', // серый — свободен
   driving:     '#818cf8', // индиго — едет к погрузке
   loaded:      '#4ade80', // зелёный — везёт груз
   at_pickup:   '#fbbf24', // жёлтый — на погрузке
@@ -38,31 +98,21 @@ const HUBS = [
 const SURGE_STATES = ["TX","CA","FL","IL","GA","OH","PA","TN","NC","MO"];
 
 function getTruckColor(truck: any, gameMinute = 0): string {
-  const outOfOrder = (truck as any).outOfOrderUntil;
-  const warn = (truck as any).idleWarningLevel ?? 0;
-  // DEBUG
-  if (typeof window !== 'undefined') {
-    (window as any).__truckDebug = (window as any).__truckDebug || {};
-    (window as any).__truckDebug[truck.id] = {
-      status: truck.status,
-      outOfOrderUntil: outOfOrder,
-      idleWarningLevel: warn,
-      idleSinceMinute: (truck as any).idleSinceMinute,
-      onNightStop: (truck as any).onNightStop,
-      gameMinute,
-    };
-  }
-  // outOfOrder — только если реально сейчас заблокирован
-  if (outOfOrder && typeof outOfOrder === 'number' && outOfOrder > gameMinute) return "#ff0000";
-  // Ночёвка / HOS-стоп / обязательный перерыв — серо-синий
+  // Ночёвка / обязательный перерыв / detention — серо-синий (проверяем первым)
   if ((truck as any).onNightStop || (truck as any).onMandatoryBreak) return "#64748b";
   if (truck.status === 'waiting') return "#64748b";
-  // idleWarning
-  if (warn === 3) return "#ef4444";
-  if (warn === 2) return "#f97316";
-  if (warn === 1) return "#fbbf24";
   // breakdown
   if (truck.status === 'breakdown') return "#f87171";
+  // outOfOrder — только если реально сейчас заблокирован И gameMinute > 0
+  const outOfOrder = (truck as any).outOfOrderUntil;
+  if (gameMinute > 0 && outOfOrder && typeof outOfOrder === 'number' && outOfOrder > gameMinute) return "#ff0000";
+  // idleWarning — только для idle траков
+  if (truck.status === 'idle') {
+    const warn = (truck as any).idleWarningLevel ?? 0;
+    if (warn === 3) return "#ef4444";
+    if (warn === 2) return "#f97316";
+    if (warn === 1) return "#fbbf24";
+  }
   return STATUS_COLOR[truck.status] || "#94a3b8";
 }
 
@@ -120,8 +170,10 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
   const historySeriesRef = useRef<any>(null);
   const polygonSeriesRef = useRef<any>(null);
   const intervalRef = useRef<any>(null);
-  const antLinesRef = useRef<any[]>([]); // ссылки на анимированные линии
-  const extraSeriesRef = useRef<any[]>([]); // серии миль и погоды — удаляем при rebuild
+  const antLinesRef = useRef<any[]>([]);
+  const extraSeriesRef = useRef<any[]>([]);
+  const antIntervalRef = useRef<any>(null);
+  const colorIntervalRef = useRef<any>(null);
   // Карточки: Set видимых truckId + таймеры автоскрытия
   const visibleCardsRef = useRef<Set<string>>(new Set());
   const cardTimersRef = useRef<Record<string, any>>({});
@@ -173,8 +225,11 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
   const selectedTruckRef = useRef<any>(null); // кликнутый трак (зафиксирован)
   const [selectedState, setSelectedState] = useState<any>(null);
   const [followTruck, setFollowTruck] = useState(false);
-  const followTruckIdRef = useRef<string | null>(null); // id трака для авто-слежения после назначения
+  const followTruckIdRef = useRef<string | null>(null);
   const followIntervalRef = useRef<any>(null);
+  const [stateFact, setStateFact] = useState<string>("");
+  const factTimerRef = useRef<any>(null);
+  const lastFactStateRef = useRef<string>("");
   const truckClickedRef = useRef(false);
   const [toasts, setToasts] = useState<Array<{ id: string; msg: string; color: string }>>([]);
   const zoomLevelRef = useRef(1);
@@ -200,6 +255,33 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
     window.addEventListener('mapToast', handleMapToast);
     return () => window.removeEventListener('mapToast', handleMapToast);
   }, [addToast]);
+
+  // Факт о штате при слежении за траком
+  useEffect(() => {
+    if (!followTruck) { setStateFact(""); clearInterval(factTimerRef.current); return; }
+    const updateFact = () => {
+      const targetId = followTruckIdRef.current ?? selectedTruckRef.current?.truckId;
+      const truck = trucksRef.current.find((t: any) => t.id === targetId) ?? trucksRef.current[0];
+      if (!truck) return;
+      const stateCode = CITY_STATE[truck.currentCity] ?? "";
+      if (!stateCode) return;
+      if (stateCode !== lastFactStateRef.current) {
+        lastFactStateRef.current = stateCode;
+        setStateFact(getStateFact(stateCode));
+      }
+    };
+    updateFact();
+    clearInterval(factTimerRef.current);
+    factTimerRef.current = setInterval(() => {
+      const targetId = followTruckIdRef.current ?? selectedTruckRef.current?.truckId;
+      const truck = trucksRef.current.find((t: any) => t.id === targetId) ?? trucksRef.current[0];
+      if (!truck) return;
+      const stateCode = CITY_STATE[truck.currentCity] ?? "";
+      if (stateCode) setStateFact(getStateFact(stateCode));
+    }, 12000);
+    return () => clearInterval(factTimerRef.current);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [followTruck]);
 
   // Следование за траком
   useEffect(() => {
@@ -701,6 +783,9 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
       const emojiSize = variant === 'micro' ? 16 : variant === 'medium' ? 20 : 26;
       const dyBase = -(emojiSize / 2);
 
+      // Большая прозрачная hit-area — добавляется ПОСЛЕ определения onClick/onHover ниже
+      const hitRadius = variant === 'micro' ? 20 : 28;
+
       const emojiLabel = container.children.push(am5.Label.new(root, {
         text: truckEmoji,
         fontSize: emojiSize,
@@ -748,6 +833,10 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
         showCard(d.truckId, 15000);
         setSelectedTruck(d);
         selectedTruckRef.current = d;
+        // Если слежение активно — переключаем на кликнутый трак
+        if (followTruckIdRef.current !== null || followTruck) {
+          followTruckIdRef.current = d.truckId;
+        }
         onTruckInfoRef.current?.(d.truckId);
         const zl = variant === 'micro' ? 3 : 5;
         chartRef.current?.zoomToGeoPoint({ longitude: d.lng, latitude: d.lat }, zl, true);
@@ -760,6 +849,17 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
       const onHoverOut = () => {
         if (!selectedTruckRef.current) setSelectedTruck(null);
       };
+
+      // Большая прозрачная hit-area для удобного нажатия на мобильном
+      container.children.push(am5.Circle.new(root, {
+        radius: hitRadius,
+        fill: am5.color(0xffffff),
+        fillOpacity: 0,
+        strokeOpacity: 0,
+        dy: -(hitRadius * 0.6),
+        interactive: true,
+        cursorOverStyle: "pointer",
+      })).events.on("click", onClick);
 
       // Карточка видна только если truckId в visibleCardsRef
       const cardVisible = visibleCardsRef.current.has(d.truckId);
@@ -1147,9 +1247,14 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
       chart.zoomToGeoPoint({ longitude: avgLng, latitude: avgLat }, zoomLevel, true);
     }, 800);
 
+    // Очищаем старые интервалы если компонент ремаунтился
+    if (antIntervalRef.current) { clearInterval(antIntervalRef.current); antIntervalRef.current = null; }
+    if (colorIntervalRef.current) { clearInterval(colorIntervalRef.current); colorIntervalRef.current = null; }
+    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+
     // Анимация муравьёв — обновляем strokeDashoffset на живых линиях каждые 60ms
     let dashOffset = 0;
-    const antInterval = window.setInterval(() => {
+    antIntervalRef.current = window.setInterval(() => {
       dashOffset = (dashOffset - 2 + 10000) % 10000;
       antLinesRef.current.forEach(line => {
         try { line.set("strokeDashoffset", dashOffset); } catch (_) {}
@@ -1173,14 +1278,17 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
     }, 2000);
 
     // Цвета штатов — каждые 10 секунд (плавная смена по времени суток)
-    const colorInterval = setInterval(() => {
+    colorIntervalRef.current = setInterval(() => {
       updatePolygonColors();
     }, 10000);
 
     return () => {
       clearInterval(intervalRef.current);
-      clearInterval(antInterval);
-      clearInterval(colorInterval);
+      clearInterval(antIntervalRef.current);
+      clearInterval(colorIntervalRef.current);
+      intervalRef.current = null;
+      antIntervalRef.current = null;
+      colorIntervalRef.current = null;
       window.removeEventListener('zoomToTruck', handleZoomToTruck);
       root.dispose();
     };
@@ -1233,23 +1341,70 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
           display: "flex", alignItems: "center", gap: 6,
           fontFamily: "sans-serif", zIndex: 10,
         } as any}>
-          {/* Таймер */}
+
+          {/* Облачко Zoom */}
           <div style={{
-            background: "rgba(10,22,40,0.92)", borderRadius: 20,
-            border: `1px solid ${timerColor}55`, padding: "5px 14px",
-            display: "flex", alignItems: "center", gap: 8,
-            pointerEvents: "none",
-          } as any} className="map-timer">
-            <span style={{ fontSize: 11, color: timerColor, fontWeight: 800 } as any}>
-              ⏰ {hoursLeft}h {minsLeft.toString().padStart(2,"0")}m до конца смены
-            </span>
-            <div style={{ width: 60, height: 4, background: "rgba(255,255,255,0.1)", borderRadius: 2 } as any}>
-              <div style={{
-                width: `${shiftProgress * 100}%`, height: "100%",
-                background: timerColor, borderRadius: 2, transition: "width 0.5s",
-              } as any} />
-            </div>
-          </div>
+            background: "rgba(10,22,40,0.55)",
+            border: "1px solid rgba(56,189,248,0.15)",
+            borderRadius: 20, padding: "3px 7px",
+            display: "flex", alignItems: "center", gap: 4,
+            opacity: 0.5, transition: "opacity 0.2s",
+          } as any}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = "1"}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = "0.5"}
+          >
+            <span style={{ fontSize: 8, fontWeight: 700, color: "#38bdf8", letterSpacing: 1 } as any}>ZOOM</span>
+            <div style={{ display: "flex", gap: 3 } as any}>
+          {([
+            { label: "x1", title: "Вся карта", zoom: 1 },
+            { label: "x2", title: "Все траки", zoom: null },
+            { label: "x3", title: "Ближний вид", zoom: 6 },
+          ] as const).map((btn, i) => (
+            <button
+              key={i}
+              title={btn.title}
+              onClick={() => {
+                const chart = chartRef.current;
+                if (!chart) return;
+                if (btn.zoom === 1) {
+                  chart.zoomToGeoPoint({ longitude: -98, latitude: 38 }, 1, true);
+                } else if (btn.zoom === null) {
+                  const ts = trucksRef.current;
+                  if (ts.length === 0) return;
+                  const avgLng = ts.reduce((s: number, t: any) => s + t.position[0], 0) / ts.length;
+                  const avgLat = ts.reduce((s: number, t: any) => s + t.position[1], 0) / ts.length;
+                  const maxDist = ts.reduce((max: number, t: any) => Math.max(max, Math.hypot(t.position[0] - avgLng, t.position[1] - avgLat)), 0);
+                  const zl = maxDist < 3 ? 6 : maxDist < 8 ? 4 : maxDist < 15 ? 3 : 2;
+                  chart.zoomToGeoPoint({ longitude: avgLng, latitude: avgLat }, zl, true);
+                } else {
+                  const ts = trucksRef.current;
+                  const target = selectedTruckRef.current
+                    ? ts.find((t: any) => t.id === selectedTruckRef.current?.truckId)
+                    : ts.find((t: any) => t.status === 'loaded' || t.status === 'driving') ?? ts[0];
+                  if (target) chart.zoomToGeoPoint({ longitude: target.position[0], latitude: target.position[1] }, 7, true);
+                }
+              }}
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(56,189,248,0.3)",
+                borderRadius: 10, width: 26, height: 22,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", fontSize: 9, fontWeight: 800, color: "#38bdf8",
+                transition: "all 0.15s", padding: 0,
+              } as any}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.background = "rgba(6,182,212,0.25)";
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(6,182,212,0.8)";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.background = "rgba(10,22,40,0.92)";
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(56,189,248,0.35)";
+              }}
+            >
+              {btn.label}
+            </button>
+          ))}
+          </div></div>
 
           {/* Кнопка гайда — только пока не пройден */}
           {guideActive && onGuideOpen && (
@@ -1409,7 +1564,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
           backdropFilter: "blur(8px)",
           boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
           opacity: mapBtnsVisible ? 1 : 0.12,
-          transition: "opacity 0.6s ease",
+          transition: "opacity 0.6s ease, border-color 0.3s ease",
         } as any}>
         {/* 🏠 Home */}
         <button onClick={() => { resetMapBtnsTimer(); chartRef.current?.goHome(); }} title="Обзор"
@@ -1420,64 +1575,172 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
         {/* − Zoom out */}
         <button onClick={() => { resetMapBtnsTimer(); chartRef.current?.zoomOut(); }} title="Отдалить"
           style={{ ...mapBtnStyle(), fontSize: 22, fontWeight: 900, color: "#94a3b8" }}>－</button>
-        {/* 🎯 Follow */}
-        <button
-          onClick={() => {
-            resetMapBtnsTimer();
-            const next = !followTruck;
-            if (!next) followTruckIdRef.current = null; // сбрасываем только при выключении
-            setFollowTruck(next);
-          }}
-          title={followTruck ? "Отключить слежение" : "Следить за траком"}
-          style={mapBtnStyle(followTruck)}
-        >🎯</button>
+        {/* placeholder для сохранения высоты контейнера */}
+        <div style={{ width: 44, height: 44 } as any} />
       </div>
 
-      {/* Плашка трака — поверх всего при клике/hover */}
+      {/* 🎯 Follow — отдельный элемент поверх контейнера, всегда видим когда активен */}
+      <button
+        onClick={() => {
+          resetMapBtnsTimer();
+          const next = !followTruck;
+          if (next) {
+            // При включении — берём трак из открытой карточки, иначе первый активный
+            const cardTruckId = selectedTruckRef.current?.truckId ?? null;
+            const firstActive = trucksRef.current.find((t: any) =>
+              t.status === 'loaded' || t.status === 'driving'
+            );
+            followTruckIdRef.current = cardTruckId ?? firstActive?.id ?? null;
+          } else {
+            followTruckIdRef.current = null;
+          }
+          setFollowTruck(next);
+        }}
+        title={followTruck
+          ? `Отключить слежение${followTruckIdRef.current ? ` (${trucksRef.current.find((t: any) => t.id === followTruckIdRef.current)?.name ?? ''})` : ''}`
+          : "Следить за траком"}
+        style={followTruck ? {
+          position: "absolute", right: 16, bottom: 16, zIndex: 202,
+          width: 44, height: 44, borderRadius: 12,
+          background: "linear-gradient(135deg, rgba(251,146,60,0.6), rgba(234,88,12,0.45))",
+          border: "2px solid rgba(251,146,60,0.95)",
+          boxShadow: "0 0 20px rgba(251,146,60,0.8), 0 0 8px rgba(251,146,60,0.5)",
+          cursor: "pointer", fontSize: 22, fontWeight: 700, color: "#fff",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          padding: 0, opacity: 1, pointerEvents: "auto",
+          animation: "follow-pulse-orange 1s ease-in-out infinite",
+        } as any : {
+          position: "absolute", right: 16, bottom: 16, zIndex: 202,
+          width: 44, height: 44, borderRadius: 12,
+          background: "linear-gradient(160deg, rgba(15,28,55,0.97), rgba(10,20,42,0.97))",
+          border: "1.5px solid rgba(56,189,248,0.2)",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)",
+          cursor: "pointer", fontSize: 22, fontWeight: 700, color: "#fff",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          padding: 0, opacity: mapBtnsVisible ? 1 : 0.12,
+          pointerEvents: mapBtnsVisible ? "auto" : "none",
+          transition: "opacity 0.6s ease",
+        } as any}
+      >🎯</button>
+
       {selectedTruck && (
         <div style={{
           position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)",
-          background: "rgba(8,14,28,0.98)",
-          border: `2px solid ${selectedTruck.colorHex}`,
-          borderRadius: 14, padding: "10px 14px", display: "flex", alignItems: "center", gap: 12,
-          zIndex: 9999,
-          boxShadow: `0 0 0 1px ${selectedTruck.colorHex}44, 0 8px 32px rgba(0,0,0,0.7), 0 0 24px ${selectedTruck.colorHex}33`,
-          fontFamily: "sans-serif", whiteSpace: "nowrap",
-          transition: "border-color 0.2s, box-shadow 0.2s",
-        } as any} className="map-truck-card">
-          {/* Индикатор "закреплено" */}
-          {selectedTruckRef.current?.truckId === selectedTruck.truckId && (
-            <div style={{
-              position: "absolute", top: -8, left: "50%", transform: "translateX(-50%)",
-              background: selectedTruck.colorHex, borderRadius: 4,
-              padding: "1px 8px", fontSize: 9, fontWeight: 800, color: "#000",
-              letterSpacing: 0.5, whiteSpace: "nowrap",
-            } as any}>📌 ЗАКРЕПЛЕНО</div>
-          )}
-          <div style={{ width: 10, height: 10, borderRadius: "50%", background: selectedTruck.colorHex, flexShrink: 0, boxShadow: `0 0 8px ${selectedTruck.colorHex}` } as any} />
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 } as any}>
-            <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" } as any}>🚛 {selectedTruck.truckName}</span>
-            <span style={{ fontSize: 11, color: selectedTruck.colorHex } as any}>
-              {selectedTruck.statusLabel} · {selectedTruck.currentCity}{CITY_STATE[selectedTruck.currentCity] ? `, ${CITY_STATE[selectedTruck.currentCity]}` : ""}
-            </span>
-            {selectedTruck.routeEvent && (
-              <span style={{ fontSize: 10, color: "#fbbf24" } as any}>{selectedTruck.routeEvent} На маршруте</span>
+          display: "flex", alignItems: "center", gap: 8,
+          zIndex: 9999, fontFamily: "sans-serif",
+        } as any}>
+          {/* Стрелка влево */}
+          <button
+            onClick={() => {
+              const trucks = trucksRef.current;
+              if (!trucks.length) return;
+              const idx = trucks.findIndex((t: any) => t.id === selectedTruck.truckId);
+              const prev = trucks[(idx - 1 + trucks.length) % trucks.length];
+              chartRef.current?.zoomToGeoPoint({ longitude: prev.position[0], latitude: prev.position[1] }, 5, true);
+              showCard(prev.id, 15000);
+              if (followTruckIdRef.current) followTruckIdRef.current = prev.id;
+            }}
+            style={{
+              width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+              background: "rgba(8,14,28,0.95)", border: "1.5px solid rgba(56,189,248,0.3)",
+              color: "#e2e8f0", fontSize: 20, fontWeight: 900, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
+            } as any}
+          >‹</button>
+
+          {/* Карточка */}
+          <div style={{
+            background: "rgba(8,14,28,0.98)",
+            border: `2px solid ${selectedTruck.colorHex}`,
+            borderRadius: 14, padding: "10px 14px", display: "flex", alignItems: "center", gap: 12,
+            boxShadow: `0 0 0 1px ${selectedTruck.colorHex}44, 0 8px 32px rgba(0,0,0,0.7), 0 0 24px ${selectedTruck.colorHex}33`,
+            whiteSpace: "nowrap",
+            transition: "border-color 0.2s, box-shadow 0.2s",
+          } as any} className="map-truck-card">
+            {/* Индикатор "закреплено" */}
+            {selectedTruckRef.current?.truckId === selectedTruck.truckId && (
+              <div style={{
+                position: "absolute", top: -8, left: "50%", transform: "translateX(-50%)",
+                background: selectedTruck.colorHex, borderRadius: 4,
+                padding: "1px 8px", fontSize: 9, fontWeight: 800, color: "#000",
+                letterSpacing: 0.5, whiteSpace: "nowrap",
+              } as any}>📌 ЗАКРЕПЛЕНО</div>
             )}
-          </div>
-          <button onClick={() => onTruckInfo?.(selectedTruck.truckId)} style={{
-            background: "rgba(6,182,212,0.15)", border: "1px solid rgba(6,182,212,0.4)",
-            borderRadius: 8, padding: "6px 12px", color: "#06b6d4",
-            fontSize: 12, fontWeight: 700, cursor: "pointer",
-          } as any}>📋 Инфо</button>
-          {(selectedTruck.status === "idle" || selectedTruck.status === "at_delivery") && (
-            <button onClick={() => { onFindLoad?.(selectedTruck.currentCity); setSelectedTruck(null); selectedTruckRef.current = null; chartRef.current?.goHome(); }} style={{
-              background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.4)",
-              borderRadius: 8, padding: "6px 12px", color: "#4ade80",
+            <div style={{ width: 10, height: 10, borderRadius: "50%", background: selectedTruck.colorHex, flexShrink: 0, boxShadow: `0 0 8px ${selectedTruck.colorHex}` } as any} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 } as any}>
+              <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" } as any}>🚛 {selectedTruck.truckName}</span>
+              <span style={{ fontSize: 11, color: selectedTruck.colorHex } as any}>
+                {selectedTruck.statusLabel} · {selectedTruck.currentCity}{CITY_STATE[selectedTruck.currentCity] ? `, ${CITY_STATE[selectedTruck.currentCity]}` : ""}
+              </span>
+              {selectedTruck.routeEvent && (
+                <span style={{ fontSize: 10, color: "#fbbf24" } as any}>{selectedTruck.routeEvent} На маршруте</span>
+              )}
+            </div>
+            <button onClick={() => onTruckInfo?.(selectedTruck.truckId)} style={{
+              background: "rgba(6,182,212,0.15)", border: "1px solid rgba(6,182,212,0.4)",
+              borderRadius: 8, padding: "6px 12px", color: "#06b6d4",
               fontSize: 12, fontWeight: 700, cursor: "pointer",
-            } as any}>🔍 Найти груз</button>
-          )}
-          <span onClick={() => { setSelectedTruck(null); selectedTruckRef.current = null; }}
-            style={{ cursor: "pointer", fontSize: 18, color: "#64748b", paddingLeft: 4, lineHeight: 1 } as any}>✕</span>
+            } as any}>📋 Инфо</button>
+            {(selectedTruck.status === "idle" || selectedTruck.status === "at_delivery") && (
+              <button onClick={() => { onFindLoad?.(selectedTruck.currentCity); setSelectedTruck(null); selectedTruckRef.current = null; chartRef.current?.goHome(); }} style={{
+                background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.4)",
+                borderRadius: 8, padding: "6px 12px", color: "#4ade80",
+                fontSize: 12, fontWeight: 700, cursor: "pointer",
+              } as any}>🔍 Найти груз</button>
+            )}
+            <span onClick={() => { setSelectedTruck(null); selectedTruckRef.current = null; }}
+              style={{ cursor: "pointer", fontSize: 18, color: "#64748b", paddingLeft: 4, lineHeight: 1 } as any}>✕</span>
+          </div>
+
+          {/* Стрелка вправо */}
+          <button
+            onClick={() => {
+              const trucks = trucksRef.current;
+              if (!trucks.length) return;
+              const idx = trucks.findIndex((t: any) => t.id === selectedTruck.truckId);
+              const next = trucks[(idx + 1) % trucks.length];
+              chartRef.current?.zoomToGeoPoint({ longitude: next.position[0], latitude: next.position[1] }, 5, true);
+              showCard(next.id, 15000);
+              if (followTruckIdRef.current) followTruckIdRef.current = next.id;
+            }}
+            style={{
+              width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+              background: "rgba(8,14,28,0.95)", border: "1.5px solid rgba(56,189,248,0.3)",
+              color: "#e2e8f0", fontSize: 20, fontWeight: 900, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
+            } as any}
+          >›</button>
+        </div>
+      )}
+
+      {/* Облачко с фактом о штате — при слежении */}
+      {followTruck && stateFact && (
+        <div style={{
+          position: "absolute", bottom: 80, left: "50%", transform: "translateX(-50%)",
+          background: "rgba(8,14,28,0.95)",
+          border: "1px solid rgba(56,189,248,0.3)",
+          borderRadius: 16, padding: "10px 16px",
+          maxWidth: 320, zIndex: 9998,
+          fontFamily: "sans-serif",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+          animation: "factFadeIn 0.4s ease",
+        } as any}>
+          {/* Хвостик облачка */}
+          <div style={{
+            position: "absolute", bottom: -8, left: "50%", transform: "translateX(-50%)",
+            width: 0, height: 0,
+            borderLeft: "8px solid transparent",
+            borderRight: "8px solid transparent",
+            borderTop: "8px solid rgba(56,189,248,0.3)",
+          } as any} />
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#38bdf8", marginBottom: 4, letterSpacing: 0.5 } as any}>
+            📍 {lastFactStateRef.current} · Интересный факт
+          </div>
+          <div style={{ fontSize: 12, color: "#e2e8f0", lineHeight: 1.5 } as any}>
+            {stateFact}
+          </div>
         </div>
       )}
 
@@ -1629,6 +1892,14 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
         @keyframes follow-pulse {
           0%,100% { box-shadow: 0 0 14px rgba(6,182,212,0.6); }
           50% { box-shadow: 0 0 24px rgba(6,182,212,1), 0 0 40px rgba(6,182,212,0.4); }
+        }
+        @keyframes follow-pulse-orange {
+          0%,100% { box-shadow: 0 0 14px rgba(251,146,60,0.7); border-color: rgba(251,146,60,0.9); }
+          50% { box-shadow: 0 0 28px rgba(251,146,60,1), 0 0 50px rgba(251,146,60,0.5); border-color: #fb923c; }
+        }
+        @keyframes factFadeIn {
+          from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+          to   { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
         @keyframes truckDrive {
           0%   { transform: translateX(0px) rotate(0deg); }

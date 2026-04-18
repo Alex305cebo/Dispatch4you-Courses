@@ -6,14 +6,12 @@ import { Colors } from '../constants/colors';
 import { useGameStore } from '../store/gameStore';
 import { useAccountStore } from '../store/accountStore';
 
-type Screen = 'login' | 'menu';
-
 export default function HomeScreen() {
   const router = useRouter();
   const { startShift, loadGame } = useGameStore();
   const { currentNickname, login, logout, getAccount, loadFromStorage } = useAccountStore();
+  const accounts = useAccountStore(s => s.accounts);
 
-  const [screen, setScreen] = useState<Screen>('login');
   const [nicknameInput, setNicknameInput] = useState('');
   const [error, setError] = useState('');
   const [hasSave, setHasSave] = useState(false);
@@ -22,18 +20,13 @@ export default function HomeScreen() {
 
   function checkSave() {
     try {
-      if (typeof window === 'undefined' || !window.localStorage) {
-        setHasSave(false);
-        return;
-      }
+      if (typeof window === 'undefined' || !window.localStorage) { setHasSave(false); return; }
       const raw = localStorage.getItem('dispatcher-game-save');
       if (!raw) { setHasSave(false); return; }
       const save = JSON.parse(raw);
-      // Сбрасываем старые сохранения с > 5 траков
       if (!save?.version || save.version < 3 || (save.trucks && save.trucks.length > 5)) {
         localStorage.removeItem('dispatcher-game-save');
-        setHasSave(false);
-        return;
+        setHasSave(false); return;
       }
       setHasSave(true);
     } catch { setHasSave(false); }
@@ -43,9 +36,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (currentNickname) {
-      setScreen('menu');
       checkSave();
-      // Автозапуск: если есть сохранение — сразу в игру
       try {
         const raw = localStorage.getItem('dispatcher-game-save');
         if (raw) {
@@ -67,7 +58,6 @@ export default function HomeScreen() {
     if (nick.length > 20) { setError('Максимум 20 символов'); return; }
     setError('');
     login(nick);
-    setScreen('menu');
   }
 
   function handleContinue() {
@@ -82,27 +72,85 @@ export default function HomeScreen() {
       await startShift(TRUCK_COUNT, `${currentNickname} · ${TRUCK_COUNT} трака`);
       setHasSave(false);
       router.push('/game');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }
 
-  // ─── LOGIN ───────────────────────────────────────────────────────────────
-  if (screen === 'login') {
-    return (
-      <View style={s.root}>
-        <View style={s.loginWrap}>
-          {/* Logo */}
-          <View style={s.logoMark}>
-            <Text style={s.logoEmoji}>🚛</Text>
+  return (
+    <View style={s.root}>
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+
+        {/* Hero */}
+        <View style={s.hero}>
+          <View style={s.heroIcon}>
+            <Text style={s.heroEmoji}>🚛</Text>
           </View>
-          <Text style={s.appName}>Dispatch Office</Text>
-          <Text style={s.appTagline}>Симулятор диспетчера грузоперевозок</Text>
-
+          <Text style={s.heroTitle}>Dispatch Office</Text>
+          <Text style={s.heroSub}>Симулятор диспетчера грузоперевозок США</Text>
           <View style={s.betaBadge}><Text style={s.betaText}>BETA</Text></View>
+        </View>
 
-          {/* Input */}
-          <View style={s.inputWrap}>
+        {/* Слоты профилей */}
+        <View style={s.slotsSection}>
+          <Text style={s.sectionTitle}>Профили</Text>
+          <View style={s.slotsRow}>
+            {[0, 1, 2].map(i => {
+              const acc = accounts[i] ?? null;
+              const isActive = acc && acc.nickname === currentNickname;
+              return (
+                <TouchableOpacity
+                  key={i}
+                  style={[s.slot, isActive && s.slotActive, acc && !isActive && s.slotFilled]}
+                  activeOpacity={0.8}
+                  onPress={() => { if (acc) login(acc.nickname); }}
+                >
+                  {acc ? (
+                    <>
+                      <View style={[s.slotAvatar, isActive && s.slotAvatarActive]}>
+                        <Text style={s.slotAvatarText}>{acc.nickname[0].toUpperCase()}</Text>
+                      </View>
+                      <Text style={[s.slotName, isActive && s.slotNameActive]} numberOfLines={1}>
+                        {acc.nickname}
+                      </Text>
+                      <Text style={s.slotStats}>${acc.totalEarned.toLocaleString()}</Text>
+                      {isActive && <Text style={s.slotActiveBadge}>● активен</Text>}
+                    </>
+                  ) : (
+                    <>
+                      <View style={s.slotEmpty}>
+                        <Text style={s.slotEmptyIcon}>+</Text>
+                      </View>
+                      <Text style={s.slotEmptyText}>Пустой слот</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Аккаунт или форма входа */}
+        {currentNickname ? (
+          <View style={s.accountCard}>
+            <View style={s.accountAvatar}>
+              <Text style={s.accountAvatarText}>{currentNickname[0].toUpperCase()}</Text>
+            </View>
+            <View style={s.accountInfo}>
+              <Text style={s.accountName}>{currentNickname}</Text>
+              {account && (
+                <Text style={s.accountStats}>
+                  {account.totalShifts} смен · ${account.totalEarned.toLocaleString()}
+                </Text>
+              )}
+            </View>
+            <TouchableOpacity
+              onPress={() => { logout(); setNicknameInput(''); }}
+              style={s.logoutBtn} activeOpacity={0.7}
+            >
+              <Text style={s.logoutText}>Выйти</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={s.loginBlock}>
             <Text style={s.inputLabel}>Никнейм</Text>
             <TextInput
               style={s.input}
@@ -113,89 +161,56 @@ export default function HomeScreen() {
               maxLength={20}
               autoCapitalize="none"
               autoCorrect={false}
+              onSubmitEditing={handleLogin}
             />
             {error ? <Text style={s.errorText}>{error}</Text> : null}
+            <TouchableOpacity
+              style={[s.loginBtn, !nicknameInput.trim() && s.loginBtnDisabled]}
+              onPress={handleLogin}
+              disabled={!nicknameInput.trim()}
+              activeOpacity={0.8}
+            >
+              <LinearGradient colors={Colors.gradPrimary} style={s.loginBtnGrad} start={{x:0,y:0}} end={{x:1,y:1}}>
+                <Text style={s.loginBtnText}>Начать →</Text>
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
+        )}
 
-          <TouchableOpacity
-            style={[s.primaryBtn, !nicknameInput.trim() && s.primaryBtnDisabled]}
-            onPress={handleLogin}
-            disabled={!nicknameInput.trim()}
-            activeOpacity={0.8}
-          >
-            <LinearGradient colors={Colors.gradPrimary} style={s.primaryBtnGrad} start={{x:0,y:0}} end={{x:1,y:1}}>
-              <Text style={s.primaryBtnText}>Начать →</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-
-  // ─── MENU ────────────────────────────────────────────────────────────────
-  return (
-    <View style={s.root}>
-      <ScrollView contentContainerStyle={s.menuScroll} showsVerticalScrollIndicator={false}>
-
-        {/* Hero */}
-        <View style={s.hero}>
-          <View style={s.heroIcon}>
-            <Text style={s.heroEmoji}>🚛</Text>
-          </View>
-          <Text style={s.heroTitle}>Dispatch Office</Text>
-          <Text style={s.heroSub}>Симулятор диспетчера грузоперевозок США</Text>
-        </View>
-
-        {/* Account card */}
-        <View style={s.accountCard}>
-          <View style={s.accountAvatar}>
-            <Text style={s.accountAvatarText}>{(currentNickname || '?')[0].toUpperCase()}</Text>
-          </View>
-          <View style={s.accountInfo}>
-            <Text style={s.accountName}>{currentNickname}</Text>
-            {account && (
-              <Text style={s.accountStats}>
-                {account.totalShifts} смен · ${account.totalEarned.toLocaleString()}
-              </Text>
+        {/* Кнопки действий — только если залогинен */}
+        {currentNickname && (
+          <View style={s.actions}>
+            {hasSave && (
+              <TouchableOpacity style={s.continueBtn} onPress={handleContinue} activeOpacity={0.8}>
+                <LinearGradient colors={Colors.gradPrimary} style={s.actionBtnGrad} start={{x:0,y:0}} end={{x:1,y:1}}>
+                  <Text style={s.actionBtnIcon}>▶</Text>
+                  <View>
+                    <Text style={s.actionBtnTitle}>Продолжить</Text>
+                    <Text style={s.actionBtnSub}>сохранённая сессия</Text>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
             )}
-          </View>
-          <TouchableOpacity onPress={() => { logout(); setScreen('login'); setNicknameInput(''); }} style={s.logoutBtn} activeOpacity={0.7}>
-            <Text style={s.logoutText}>Выйти</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Action buttons */}
-        <View style={s.actions}>
-          {hasSave && (
-            <TouchableOpacity style={s.continueBtn} onPress={handleContinue} activeOpacity={0.8}>
-              <LinearGradient colors={Colors.gradPrimary} style={s.actionBtnGrad} start={{x:0,y:0}} end={{x:1,y:1}}>
-                <Text style={s.actionBtnIcon}>▶</Text>
+            <TouchableOpacity style={s.newBtn} onPress={handleNewShift} activeOpacity={0.8} disabled={loading}>
+              <LinearGradient colors={Colors.gradSuccess} style={s.actionBtnGrad} start={{x:0,y:0}} end={{x:1,y:1}}>
+                <Text style={s.actionBtnIcon}>{loading ? '⏳' : '🚀'}</Text>
                 <View>
-                  <Text style={s.actionBtnTitle}>Продолжить</Text>
-                  <Text style={s.actionBtnSub}>сохранённая сессия</Text>
+                  <Text style={s.actionBtnTitle}>{loading ? 'Загрузка...' : (hasSave ? 'Новая смена' : 'Начать игру')}</Text>
+                  <Text style={s.actionBtnSub}>{loading ? 'Строим маршруты траков' : '3 трака · стандарт'}</Text>
                 </View>
               </LinearGradient>
             </TouchableOpacity>
-          )}
-          <TouchableOpacity style={s.newBtn} onPress={handleNewShift} activeOpacity={0.8} disabled={loading}>
-            <LinearGradient colors={Colors.gradSuccess} style={s.actionBtnGrad} start={{x:0,y:0}} end={{x:1,y:1}}>
-              <Text style={s.actionBtnIcon}>{loading ? '⏳' : '🚀'}</Text>
-              <View>
-                <Text style={s.actionBtnTitle}>{loading ? 'Загрузка...' : (hasSave ? 'Новая смена' : 'Начать игру')}</Text>
-                <Text style={s.actionBtnSub}>{loading ? 'Строим маршруты траков' : '3 трака · стандарт'}</Text>
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
+          </View>
+        )}
 
-        {/* Fleet info */}
+        {/* Флот */}
         <View style={s.section}>
           <Text style={s.sectionTitle}>Твой флот</Text>
           <View style={s.fleetRow}>
             {[
-              { n: '3', label: 'Старт', active: true, price: null },
-              { n: '4', label: '$15,000', active: false, price: '$15k' },
-              { n: '5', label: '$30,000', active: false, price: '$30k' },
+              { n: '3', active: true, price: null },
+              { n: '4', active: false, price: '$15k' },
+              { n: '5', active: false, price: '$30k' },
             ].map((item, i) => (
               <View key={i} style={[s.fleetCard, item.active && s.fleetCardActive, !item.active && s.fleetCardLocked]}>
                 <Text style={[s.fleetNum, item.active && s.fleetNumActive]}>{item.n}</Text>
@@ -208,7 +223,7 @@ export default function HomeScreen() {
           <Text style={s.fleetHint}>Дополнительные траки покупаются за заработанные деньги</Text>
         </View>
 
-        {/* How to play */}
+        {/* Как играть */}
         <View style={s.section}>
           <Text style={s.sectionTitle}>Как играть</Text>
           <View style={s.steps}>
@@ -237,50 +252,9 @@ export default function HomeScreen() {
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.bg },
+  scroll: { padding: 20, paddingTop: 60, alignItems: 'center' },
 
-  // Login
-  loginWrap: {
-    flex: 1, alignItems: 'center', justifyContent: 'center',
-    padding: 32, gap: 12,
-  },
-  logoMark: {
-    width: 80, height: 80, borderRadius: 20,
-    backgroundColor: Colors.bgCard,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 8,
-    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4, shadowRadius: 20,
-  },
-  logoEmoji: { fontSize: 40 },
-  appName: { fontSize: 28, fontWeight: '800', color: Colors.text, letterSpacing: -0.5 },
-  appTagline: { fontSize: 14, color: Colors.textMuted, textAlign: 'center', marginBottom: 4 },
-  betaBadge: {
-    paddingHorizontal: 10, paddingVertical: 3,
-    backgroundColor: 'rgba(255,69,58,0.15)',
-    borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,69,58,0.3)',
-    marginBottom: 8,
-  },
-  betaText: { fontSize: 10, fontWeight: '800', color: Colors.danger, letterSpacing: 2 },
-
-  inputWrap: { width: '100%', maxWidth: 340, gap: 6 },
-  inputLabel: { fontSize: 13, fontWeight: '600', color: Colors.textMuted, marginLeft: 4 },
-  input: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: 14, borderWidth: 1, borderColor: Colors.border,
-    paddingHorizontal: 16, paddingVertical: 14,
-    fontSize: 16, color: Colors.text, fontWeight: '600',
-  },
-  errorText: { fontSize: 12, color: Colors.danger, marginLeft: 4 },
-
-  primaryBtn: { width: '100%', maxWidth: 340, borderRadius: 16, overflow: 'hidden', marginTop: 4 },
-  primaryBtnDisabled: { opacity: 0.35 },
-  primaryBtnGrad: { paddingVertical: 16, alignItems: 'center' },
-  primaryBtnText: { fontSize: 17, fontWeight: '700', color: '#fff', letterSpacing: -0.3 },
-
-  // Menu
-  menuScroll: { padding: 20, paddingTop: 60, alignItems: 'center' },
-
-  hero: { alignItems: 'center', marginBottom: 28, gap: 8 },
+  hero: { alignItems: 'center', marginBottom: 24, gap: 6 },
   heroIcon: {
     width: 72, height: 72, borderRadius: 18,
     backgroundColor: Colors.bgCard,
@@ -292,7 +266,30 @@ const s = StyleSheet.create({
   heroEmoji: { fontSize: 36 },
   heroTitle: { fontSize: 26, fontWeight: '800', color: Colors.text, letterSpacing: -0.5 },
   heroSub: { fontSize: 13, color: Colors.textMuted, textAlign: 'center' },
+  betaBadge: {
+    paddingHorizontal: 10, paddingVertical: 3,
+    backgroundColor: 'rgba(255,69,58,0.15)',
+    borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,69,58,0.3)',
+    marginTop: 4,
+  },
+  betaText: { fontSize: 10, fontWeight: '800', color: Colors.danger, letterSpacing: 2 },
 
+  // Login block (inline)
+  loginBlock: { width: '100%', maxWidth: 400, gap: 8, marginBottom: 20 },
+  inputLabel: { fontSize: 13, fontWeight: '600', color: Colors.textMuted, marginLeft: 4 },
+  input: {
+    backgroundColor: Colors.bgCard,
+    borderRadius: 14, borderWidth: 1, borderColor: Colors.border,
+    paddingHorizontal: 16, paddingVertical: 14,
+    fontSize: 16, color: Colors.text, fontWeight: '600',
+  },
+  errorText: { fontSize: 12, color: Colors.danger, marginLeft: 4 },
+  loginBtn: { borderRadius: 16, overflow: 'hidden', marginTop: 4 },
+  loginBtnDisabled: { opacity: 0.35 },
+  loginBtnGrad: { paddingVertical: 16, alignItems: 'center' },
+  loginBtnText: { fontSize: 17, fontWeight: '700', color: '#fff', letterSpacing: -0.3 },
+
+  // Account card
   accountCard: {
     width: '100%', maxWidth: 400,
     flexDirection: 'row', alignItems: 'center', gap: 12,
@@ -332,7 +329,6 @@ const s = StyleSheet.create({
     fontSize: 13, fontWeight: '700', color: Colors.textMuted,
     textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10, marginLeft: 4,
   },
-
   fleetRow: { flexDirection: 'row', gap: 10, marginBottom: 8 },
   fleetCard: {
     flex: 1, alignItems: 'center', paddingVertical: 14,
@@ -362,4 +358,41 @@ const s = StyleSheet.create({
   stepContent: { flex: 1 },
   stepTitle: { fontSize: 14, fontWeight: '700', color: Colors.text, marginBottom: 2 },
   stepDesc: { fontSize: 12, color: Colors.textMuted, lineHeight: 17 },
+
+  // Profile slots
+  slotsSection: { width: '100%', maxWidth: 400, marginBottom: 20 },
+  slotsRow: { flexDirection: 'row', gap: 10 },
+  slot: {
+    flex: 1, alignItems: 'center', paddingVertical: 14, paddingHorizontal: 6,
+    backgroundColor: Colors.bgCard, borderRadius: 16,
+    borderWidth: 1.5, borderColor: Colors.border,
+    gap: 4, minHeight: 100,
+  },
+  slotFilled: { borderColor: 'rgba(56,189,248,0.3)' },
+  slotActive: {
+    borderColor: Colors.primary,
+    backgroundColor: 'rgba(10,132,255,0.1)',
+    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4, shadowRadius: 10,
+  },
+  slotAvatar: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: 'rgba(56,189,248,0.2)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  slotAvatarActive: { backgroundColor: Colors.primary },
+  slotAvatarText: { fontSize: 16, fontWeight: '800', color: '#fff' },
+  slotName: { fontSize: 11, fontWeight: '700', color: Colors.textMuted, textAlign: 'center' },
+  slotNameActive: { color: Colors.primary },
+  slotStats: { fontSize: 10, color: Colors.textDim },
+  slotActiveBadge: { fontSize: 9, fontWeight: '700', color: '#4ade80' },
+  slotEmpty: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.1)',
+    borderStyle: 'dashed',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  slotEmptyIcon: { fontSize: 20, color: 'rgba(255,255,255,0.2)', fontWeight: '300' },
+  slotEmptyText: { fontSize: 10, color: 'rgba(255,255,255,0.2)', textAlign: 'center' },
 });

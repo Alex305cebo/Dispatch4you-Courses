@@ -916,7 +916,7 @@ input{font-family:inherit;outline:none}
 // ═══════════════════════════════════════════════════════════════════
 const SHIFT_DURATION = 660; // минут (11 часов)
 const SHIFT_START_HOUR = 8;
-const SHIFT_START_MIN = 43;
+const SHIFT_START_MIN = 0;
 const SAVE_KEY = 'dispatch-office-v2-save';
 const ACCOUNT_KEY = 'dispatch-office-v2-account';
 
@@ -1256,19 +1256,26 @@ function formatTime(minute) {
 let clockInterval = null;
 
 function startClock() {
-  if (clockInterval) clearInterval(clockInterval);
-  clockInterval = setInterval(() => {
+  if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
+  clockInterval = setInterval(_clockTick, 1000);
+}
+
+function _clockTick() {
+  try {
     if (G.phase !== 'playing') return;
-    const steps = G.timeSpeed;
+    const steps = G.timeSpeed || 1;
     for (let i = 0; i < steps; i++) {
       G.gameMinute++;
       tickMinute();
+      if (G.phase !== 'playing') break;
     }
     renderTopBar();
     renderTruckStrip();
     renderMap();
-    // Автосохранение каждые 60 секунд реального времени
-  }, 1000);
+  } catch(e) {
+    console.error('[CLOCK ERROR]', e);
+    // НЕ останавливаем интервал — продолжаем тикать
+  }
 }
 
 function stopClock() {
@@ -1374,7 +1381,7 @@ function astarPath(graph,startIdx,endIdx) {
   const open=new Set();
   gScore[startIdx]=0; fScore[startIdx]=_distKm(nodes[startIdx],nodes[endIdx]); open.add(startIdx);
   let iter=0;
-  while(open.size>0&&iter++<60000){
+  while(open.size>0&&iter++<8000){ // лимит снижен до 8000 — достаточно для USA городов
     let cur=-1,minF=Infinity;
     for(const n of open){if(fScore[n]<minF){minF=fScore[n];cur=n;}}
     if(cur===endIdx){
@@ -1438,13 +1445,11 @@ function moveTruck(truck, min) {
   if (load.phase === 'to_delivery' || load.phase === 'to_pickup') {
     truck.progress = Math.min(1, truck.progress + progressPerMin);
 
-    if (!truck.routePath) {
-      truck.routePath = getRoutePath(load.fromCity, load.toCity);
-    }
-
+    // Маршрут строится асинхронно в assignTruckToLoad — здесь только используем
     if (truck.routePath && truck.routePath.length >= 2) {
       truck.position = posOnPath(truck.routePath, truck.progress);
     } else {
+      // Fallback: прямая линия пока маршрут не готов
       const from = CITIES[load.fromCity] || truck.position;
       const to   = CITIES[load.toCity]   || truck.position;
       if (from && to) {
@@ -1816,7 +1821,7 @@ function assignTruckToLoad(truckId, load) {
   truck.currentLoad = load;
   truck.destinationCity = load.toCity;
   truck.progress = 0;
-  truck.routePath = null; // будет построен при первом moveTruck
+  truck.routePath = null;
   truck.idleSinceMinute = null;
   truck.idleWarningLevel = 0;
 
@@ -1829,6 +1834,11 @@ function assignTruckToLoad(truckId, load) {
   renderPanel();
   updateBadges();
   showToast(`🚛 ${truck.name} назначен на груз!`, 'success');
+
+  // Строим маршрут асинхронно — не блокируем главный поток и не останавливаем часы
+  setTimeout(() => {
+    truck.routePath = getRoutePath(load.fromCity, load.toCity);
+  }, 0);
 }
 </script>
 
@@ -1965,7 +1975,6 @@ function renderMap() {
   for (let y = 0; y < mapH; y += 100) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(mapW,y); ctx.stroke(); }
 
   // ── Штаты — заливка (ВИДИМАЯ!) ──────────────────────────────────
-  console.log('Рисуем штаты, количество:', Object.keys(US_STATES).length);
   Object.values(US_STATES).forEach(coords => {
     drawStatePath(ctx, coords);
     ctx.fillStyle = 'rgba(30,50,80,0.95)'; // Светлее и более непрозрачный!
@@ -2654,12 +2663,15 @@ function renderAssignModal(load) {
     ${!availTrucks.length ? '<div style="text-align:center;padding:16px;color:var(--danger)">Нет свободных траков</div>' : ''}`;
 }
 
-// Переопределяем assignTruckToLoad чтобы принимать id строки
-const _origAssign = assignTruckToLoad;
+// assignTruckToLoad вызывается из HTML с (truckId, loadId) — ищем load по id
+const _assignTruckToLoadById = assignTruckToLoad;
 window.assignTruckToLoad = function(truckId, loadId) {
-  const load = G.bookedLoads.find(l => l.id === loadId) || G._pendingAssignLoad;
+  // Если loadId — строка (id), ищем load; если объект — используем напрямую
+  const load = (typeof loadId === 'string')
+    ? (G.bookedLoads.find(l => l.id === loadId) || G._pendingAssignLoad)
+    : loadId;
   if (!load) return;
-  _origAssign(truckId, load);
+  _assignTruckToLoadById(truckId, load);
 };
 
 function showTruckDetail(truck) {
@@ -2896,9 +2908,7 @@ function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = document.getElementById('screen-' + name);
   if (el) el.classList.add('active');
-  if (name === 'game') {
-    setTimeout(() => { initMap(); renderPanel(); renderTruckStrip(); renderTopBar(); updateBadges(); }, 50);
-  }
+  // initMap и render вызываются отдельно из startShift/btn-continue — не дублируем здесь
 }
 </script>
 
@@ -2954,12 +2964,22 @@ function startShift(truckCount, sessionName) {
 
   saveGame();
   showScreen('game');
-  startClock();
+  // Даём браузеру отрисовать экран, потом инициализируем и запускаем
+  setTimeout(() => {
+    initMap();
+    renderPanel();
+    renderTruckStrip();
+    renderTopBar();
+    updateBadges();
+    startClock();
+  }, 50);
 
-  // Автосохранение каждые 30 сек
-  setInterval(() => {
-    if (G.phase === 'playing') saveGame();
-  }, 30000);
+  // Автосохранение каждые 30 сек (только один раз — не накапливаем интервалы)
+  if (!window._autoSaveInterval) {
+    window._autoSaveInterval = setInterval(() => {
+      if (G.phase === 'playing') saveGame();
+    }, 30000);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -3012,8 +3032,14 @@ function initMenu() {
   document.getElementById('btn-continue').addEventListener('click', () => {
     if (loadGame()) {
       showScreen('game');
-      startClock();
-      setTimeout(() => { initMap(); renderPanel(); renderTruckStrip(); renderTopBar(); updateBadges(); }, 50);
+      setTimeout(() => {
+        initMap();
+        renderPanel();
+        renderTruckStrip();
+        renderTopBar();
+        updateBadges();
+        startClock();
+      }, 50);
     } else {
       showToast('Сохранение не найдено', 'error');
     }

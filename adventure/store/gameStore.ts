@@ -1,11 +1,11 @@
 ﻿import { create } from 'zustand';
-import { SHIFT_DURATION, SHIFT_START_HOUR, SHIFT_START_MINUTE, CITIES, TIME_SCALE } from '../constants/config';
+import { SHIFT_DURATION, SHIFT_START_HOUR, SHIFT_START_MINUTE, CITIES, CITY_STATE, TIME_SCALE } from '../constants/config';
 import { findNearestTruckStop } from '../constants/truckStops';
 
 // ─── OSRM fetch с таймаутом 3 сек — если зависает, возвращает null ──────────
 async function fetchRoute(fromLng: number, fromLat: number, toLng: number, toLat: number): Promise<Array<[number,number]> | null> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 3000);
+  const timeout = setTimeout(() => controller.abort(), 800); // быстрый таймаут
   try {
     const url = `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?overview=full&geometries=geojson`;
     const res = await fetch(url, { signal: controller.signal });
@@ -963,6 +963,13 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Всегда сбрасываем старое сохранение и начинаем заново
     get().clearSave();
 
+    // Сбрасываем прогресс гайда
+    try {
+      localStorage.removeItem('guide-email-visited');
+      localStorage.removeItem('guide-map-visited');
+      localStorage.removeItem('dispatch-guide-done');
+    } catch {}
+
     // ── Начальные активные грузы (только едущие траки) ──
     const allInitialLoads = [INITIAL_LOAD_1, INITIAL_LOAD_2, INITIAL_LOAD_4, INITIAL_LOAD_6, INITIAL_LOAD_9];
     const selectedActiveLoads = allInitialLoads
@@ -1051,11 +1058,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     });
   },
 
-  tickClock: async () => {
-    if (get().phase !== 'playing') return; // не тикаем если смена завершена
+  tickClock: () => {
+    if (get().phase !== 'playing') return;
+    try {
     const { gameMinute, trucks, availableLoads, activeLoads, timeSpeed } = get();
-    // 1 день = 24 реальных минуты = 1440 тиков
-    // 1 тик = 1440/1440 = 1.0 игровых минуты
     const TICK_MINUTES = 1.0 * (timeSpeed ?? 1);
     const newMinute = Math.round((gameMinute + TICK_MINUTES) * 10) / 10;
 
@@ -1064,16 +1070,14 @@ export const useGameStore = create<GameState>((set, get) => ({
       return;
     }
 
-    // Скорость: 10 миль/игровую минуту × 1.2 мин/тик = 12 миль/тик, делим на 3 для плавности
+    // Скорость движения
     const MILES_PER_TICK = (10 * TICK_MINUTES) / 3;
-
-    // HOS: 11 часов = 660 игровых минут вождения
     const HOS_MAX_DRIVE = 660;
-    const HOS_REST = 600; // 10 часов отдыха
+    const HOS_REST = 600;
 
-    // Обновляем прогресс траков
+    // Обновляем прогресс траков — СИНХРОННО (без await)
     const newDeliveryResults: DeliveryResult[] = [];
-    const updatedTrucks = await Promise.all(trucks.map(async (truck) => {
+    const updatedTrucks = trucks.map((truck) => {
 
       // ── HOS: трак едет к Truck Stop (HOS ≤ 1.5ч) ──
       if ((truck as any).drivingToHosStop && truck.status !== 'waiting') {
@@ -1086,23 +1090,28 @@ export const useGameStore = create<GameState>((set, get) => ({
           if (distDeg < 0.15 || truck.hoursLeft <= 0) {
             const stopName = (truck as any).hosStopDestName ?? 'Truck Stop';
             const stopType = (truck as any).hosStopType ?? 'truck_stop';
+            const toIdle = (truck as any).toIdleOnArrival === true;
             get().addNotification({
-              type: 'urgent', priority: 'high',
+              type: toIdle ? 'text' : 'urgent', priority: toIdle ? 'medium' : 'high',
               from: `${truck.driver}`,
-              subject: `🛑 ${truck.name} на отдыхе — ${stopName}`,
-              message: `${truck.driver} припарковался на ${stopType === 'truck_stop' ? 'Truck Stop' : 'Rest Area'} "${stopName}". Обязательный отдых 10 часов. HOS будет сброшен.`,
-              actionRequired: false,
+              subject: toIdle ? `🅿️ ${truck.name} на ${stopName} — свободен` : `🛑 ${truck.name} на отдыхе — ${stopName}`,
+              message: toIdle
+                ? `${truck.driver} припарковался на "${stopName}" (${stopType === 'truck_stop' ? 'Truck Stop' : 'Rest Area'}). Трак свободен — назначь новый груз.`
+                : `${truck.driver} припарковался на ${stopType === 'truck_stop' ? 'Truck Stop' : 'Rest Area'} "${stopName}". Обязательный отдых 10 часов. HOS будет сброшен.`,
+              actionRequired: toIdle,
               relatedTruckId: truck.id,
             });
             return {
               ...truck,
-              status: 'waiting' as TruckStatus,
+              status: (toIdle ? 'idle' : 'waiting') as TruckStatus,
               position: stopPos,
-              hosRestStartMinute: newMinute,
+              currentCity: stopName,
+              hosRestStartMinute: toIdle ? undefined : newMinute,
               hosStopPosition: stopPos,
               hosStopName: stopName,
               hosStopType: stopType,
               drivingToHosStop: false,
+              toIdleOnArrival: false,
               destinationCity: null,
               routePath: null,
             } as any;
@@ -1446,11 +1455,17 @@ export const useGameStore = create<GameState>((set, get) => ({
         const pickupArrivalMinute = (truck as any).pickupArrivalMinute ?? newMinute;
         const waitTime = newMinute - pickupArrivalMinute;
         if (waitTime >= 5) {
-          // Загружаем маршрут до delivery
+          // Запускаем маршрут в фоне — трак сразу едет по прямой, маршрут придёт позже
           const deliveryCity = CITIES[truck.currentLoad.toCity];
-          let routePath: Array<[number, number]> | null = null;
           if (deliveryCity) {
-            routePath = await fetchRoute(truck.position[0], truck.position[1], deliveryCity[0], deliveryCity[1]);
+            const truckId = truck.id;
+            fetchRoute(truck.position[0], truck.position[1], deliveryCity[0], deliveryCity[1]).then(routePath => {
+              if (routePath) {
+                useGameStore.setState(s => ({
+                  trucks: s.trucks.map(t => t.id === truckId && t.status === 'loaded' ? { ...t, routePath } as any : t)
+                }));
+              }
+            });
           }
           get().addNotification({
             type: 'email', priority: 'low',
@@ -1465,7 +1480,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             status: 'loaded' as TruckStatus,
             destinationCity: truck.currentLoad.toCity,
             progress: 0,
-            routePath,
+            routePath: null,
             currentLoad: { ...truck.currentLoad, phase: 'to_delivery' as any },
           };
         }
@@ -1596,32 +1611,29 @@ export const useGameStore = create<GameState>((set, get) => ({
       if ((truck.status === 'at_delivery' || truck.status === 'at_pickup') && truck.currentLoad) {
         // Проверяем что это pre-planned груз (phase должна быть 'to_pickup')
         if (truck.currentLoad.phase === 'to_pickup') {
-          // Трак закончил разгрузку/погрузку - начинаем движение к следующему pickup
           const pickupCity = CITIES[truck.currentLoad.fromCity];
-          let routePath: Array<[number, number]> | null = null;
-          
           if (pickupCity) {
-            routePath = await fetchRoute(truck.position[0], truck.position[1], pickupCity[0], pickupCity[1]);
-            if (routePath) console.log(`✅ Pre-planned load activated for ${truck.id}: ${routePath.length} points`);
+            const truckId = truck.id;
+            fetchRoute(truck.position[0], truck.position[1], pickupCity[0], pickupCity[1]).then(routePath => {
+              if (routePath) {
+                useGameStore.setState(s => ({
+                  trucks: s.trucks.map(t => t.id === truckId && t.status === 'driving' ? { ...t, routePath } as any : t)
+                }));
+              }
+            });
           }
-          
-          // Уведомление о начале движения
           get().addNotification({
-            type: 'email',
-            priority: 'low',
-            from: 'Система',
+            type: 'email', priority: 'low', from: 'Система',
             subject: '🚛 Трак в пути',
             message: `${truck.name} закончил операцию и начал движение к ${truck.currentLoad.fromCity}`,
-            actionRequired: false,
-            relatedTruckId: truck.id,
+            actionRequired: false, relatedTruckId: truck.id,
           });
-          
           return {
             ...truck,
             status: 'driving' as TruckStatus,
             destinationCity: truck.currentLoad.fromCity,
             progress: 0,
-            routePath,
+            routePath: null,
           };
         }
       }
@@ -1763,7 +1775,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
         // ── WEATHER: проверяем активные погодные зоны ──
         const activeWeather = get().activeWeatherZones ?? [];
-        const truckStateCode = CITY_STATE_MAP[truck.currentCity] ?? '';
+        const truckStateCode = CITY_STATE[truck.currentCity] ?? '';
         const weatherZone = activeWeather.find((z: WeatherZone) =>
           z.endMinute > newMinute && z.states.includes(truckStateCode)
         );
@@ -1812,13 +1824,18 @@ export const useGameStore = create<GameState>((set, get) => ({
             });
           }
           
-          // Если приехал на pickup - нужно загрузить маршрут до delivery
-          let nextRoutePath: Array<[number, number]> | null = null;
+          // Если приехал на pickup — маршрут до delivery строим в фоне
           if (newStatus === 'at_pickup' && truck.currentLoad) {
             const deliveryCity = CITIES[truck.currentLoad.toCity];
             if (deliveryCity) {
-              nextRoutePath = await fetchRoute(to[0], to[1], deliveryCity[0], deliveryCity[1]);
-              if (nextRoutePath) console.log(`✅ Loaded delivery route for ${truck.id}: ${nextRoutePath.length} points`);
+              const truckId = truck.id;
+              fetchRoute(to[0], to[1], deliveryCity[0], deliveryCity[1]).then(nextRoutePath => {
+                if (nextRoutePath) {
+                  useGameStore.setState(s => ({
+                    trucks: s.trucks.map(t => t.id === truckId ? { ...t, routePath: nextRoutePath } as any : t)
+                  }));
+                }
+              });
             }
           }
           
@@ -1829,7 +1846,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             position: to,
             currentCity: truck.destinationCity,
             destinationCity: null,
-            routePath: nextRoutePath,
+            routePath: null,
             hoursLeft: newHoursLeft,
             pickupArrivalMinute: newStatus === 'at_pickup' ? newMinute : undefined,
             deliveryArrivalMinute: newStatus === 'at_delivery' ? newMinute : undefined,
@@ -1863,7 +1880,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         }
       }
       return truck;
-    }));
+    });
 
     // Убираем истёкшие грузы (но не добавляем новые автоматически)
     const freshLoads = availableLoads.filter(l => l.expiresAt > newMinute);
@@ -2025,6 +2042,14 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Автосохранение каждые 60 игровых минут (≈ 50 реальных секунд)
     if (Math.floor(newMinute / 60) > Math.floor(gameMinute / 60)) {
       get().saveGame();
+    }
+    } catch(e) {
+      // Ошибка в тике — просто двигаем время вперёд
+      const { gameMinute, timeSpeed } = get();
+      const TICK_MINUTES = 1.0 * (timeSpeed ?? 1);
+      const newMinute = Math.round((gameMinute + TICK_MINUTES) * 10) / 10;
+      console.error('tickClock error:', e);
+      set({ gameMinute: newMinute });
     }
   },
 

@@ -71,6 +71,7 @@ function LoadRow({ load, onCall, isExpanded, onToggle, scrollViewRef }: {
         <View style={styles.loadHeaderRight}>
           <Text style={styles.loadRate}>${load.postedRate.toLocaleString()}</Text>
           <Text style={[styles.loadRpm, { color: rpmColor }]}>${rpm.toFixed(2)}/mi</Text>
+          <Text style={styles.marketRate}>~${load.marketRate.toLocaleString()} рынок</Text>
         </View>
         
         <Text style={styles.expandIcon}>{isExpanded ? '▼' : '▶'}</Text>
@@ -683,6 +684,12 @@ const styles = StyleSheet.create({
   loadRpm: {
     fontSize: 10,
     fontWeight: '700',
+  },
+  marketRate: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#64748b',
+    marginTop: 1,
   },
   expandIcon: {
     fontSize: 12,

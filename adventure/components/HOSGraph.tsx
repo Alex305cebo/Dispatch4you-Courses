@@ -45,7 +45,7 @@ function Bar({ label, used, total, unit }: { label: string; used: number; total:
   );
 }
 
-export default function HOSGraph({ truck, onClose }: { truck: any; onClose: () => void }) {
+export default function HOSGraph({ truck, onClose, embedded }: { truck: any; onClose: () => void; embedded?: boolean }) {
   const drivingLimit = 11;
   const onDutyLimit = 14;
   const restRequired = 10;
@@ -67,37 +67,8 @@ export default function HOSGraph({ truck, onClose }: { truck: any; onClose: () =
   const statusColor = drivingRemaining >= 4 ? Colors.success : drivingRemaining >= 2 ? '#ffd60a' : Colors.danger;
   const statusLabel = drivingRemaining >= 4 ? '✅ Compliant' : drivingRemaining >= 2 ? '⚠️ Running Low' : '🚨 Critical';
 
-  return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 9998,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: FONT,
-    }}>
-      {/* Backdrop */}
-      <div onClick={onClose} style={{
-        position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)',
-        backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-      }} />
-
-      {/* Modal */}
-      <div style={{
-        position: 'relative', width: '92%', maxWidth: 460, maxHeight: '88vh',
-        overflowY: 'auto', background: 'linear-gradient(170deg, #1a1f2e, #0d1117)',
-        border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20,
-        boxShadow: '0 20px 60px rgba(0,0,0,0.6)', padding: '24px 20px',
-        scrollbarWidth: 'none',
-      }}>
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-          <div>
-            <span style={{ fontSize: 18, fontWeight: 900, color: '#fff' }}>⏱ HOS Status</span>
-            <div style={{ fontSize: 13, color: '#94a3b8', fontWeight: 600, marginTop: 2 }}>
-              {truck.name} · {truck.driver}
-            </div>
-          </div>
-          <span onClick={onClose} style={{
-            cursor: 'pointer', fontSize: 18, color: '#94a3b8',
-            width: 28, height: 28, borderRadius: 14, background: 'rgba(255,255,255,0.08)',
+  const content = (
+    <div style={{ padding: embedded ? 0 : '24px 20px' }}>
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>✕</span>
         </div>

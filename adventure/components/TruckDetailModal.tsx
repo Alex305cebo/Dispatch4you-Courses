@@ -2,8 +2,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { Truck, useGameStore } from '../store/gameStore';
 import { cityState } from '../constants/config';
-import HOSGraph from './HOSGraph';
-import ELDGraph from './ELDGraph';
+import HOSELDModal from './HOSELDModal';
 import DriverCommunicationModal from './DriverCommunicationModal';
 import CallModal from './CallModal';
 import CancelLoadModal from './CancelLoadModal';
@@ -29,8 +28,8 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) {
-  const [showHOS, setShowHOS] = useState(false);
-  const [showELD, setShowELD] = useState(false);
+  const [showHOSELD, setShowHOSELD] = useState(false);
+  const [hoseldTab, setHoseldTab] = useState<'hos' | 'eld'>('hos');
   const [showSMS, setShowSMS] = useState(false);
   const [showCall, setShowCall] = useState(false);
   const [showCancelLoad, setShowCancelLoad] = useState(false);
@@ -68,6 +67,38 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
     ? (truck.currentLoad.agreedRate / truck.currentLoad.miles).toFixed(2) : '0.00';
   const sc = STATUS_COLOR[truck.status] || '#94a3b8';
   const dest = truck.destinationCity ? ` → ${cityState(truck.destinationCity)}` : '';
+
+  // Вызывается когда MechanicChatModal достигает стадии done
+  const handleRepairComplete = () => {
+    const resumeStatus = truck.currentLoad ? 'loaded' : 'idle';
+    useGameStore.setState(s => ({
+      trucks: s.trucks.map(t => t.id === truck.id ? {
+        ...t,
+        status: resumeStatus as any,
+        outOfOrderUntil: 0,
+        breakdownRoadsideOrdered: false,
+        breakdownLabel: undefined,
+        breakdownRepairCost: undefined,
+        breakdownRepairMinutes: undefined,
+        mood: Math.max(50, (t.mood ?? 65) - 5),
+      } as any : t),
+    }));
+    useGameStore.getState().addNotification({
+      type: 'text', priority: 'medium', from: truck.driver,
+      subject: `✅ ${truck.name} отремонтирован — готов к работе`,
+      message: truck.currentLoad
+        ? `Ремонт завершён. ${truck.driver} продолжает маршрут в ${truck.currentLoad.toCity}.`
+        : `Ремонт завершён. ${truck.driver} свободен — назначь новый груз.`,
+      actionRequired: !truck.currentLoad,
+      relatedTruckId: truck.id,
+    });
+    window.dispatchEvent(new CustomEvent('mapToast', {
+      detail: {
+        message: `✅ ${truck.name} отремонтирован — ${truck.currentLoad ? 'продолжает маршрут' : 'свободен'}`,
+        color: '#4ade80',
+      }
+    }));
+  };
   const canFind = truck.status === 'idle' || truck.status === 'at_delivery' || truck.status === 'at_pickup';
 
   function getAiMessage(): { icon: string; title: string; text: string; color: string; action?: () => void; actionLabel?: string } {
@@ -75,7 +106,7 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
       icon: '😴', color: '#ef4444',
       title: 'Требуется отдых',
       text: `У ${truck!.driver} осталось ${truck!.hoursLeft.toFixed(1)}ч HOS. Нельзя назначать длинные рейсы. После отдыха (10ч) — полный сброс HOS.`,
-      action: () => setShowHOS(true), actionLabel: '⏱ Открыть HOS',
+      action: () => { setHoseldTab('hos'); setShowHOSELD(true); }, actionLabel: '⏱ Открыть HOS',
     };
     if (truck.status === 'idle') {
       const idleWarn = (truck as any).idleWarningLevel ?? 0;
@@ -291,6 +322,8 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
             {/* ── ДЕЙСТВИЯ ── */}
             <View style={s.section}>
               <Text style={s.sectionTitle}>✅ Действия</Text>
+
+              {/* Найти груз */}
               {canFind && (
                 <TouchableOpacity style={s.findBtn} onPress={() => onFindLoad(truck.currentCity)} activeOpacity={0.85}>
                   <Text style={s.findBtnIcon}>🔍</Text>
@@ -301,22 +334,55 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
                   <Text style={s.findBtnArrow}>→</Text>
                 </TouchableOpacity>
               )}
+
+              {/* Водитель — SMS + Звонок */}
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                <TouchableOpacity style={[s.actionBtn, { borderColor: 'rgba(10,132,255,0.3)', backgroundColor: 'rgba(10,132,255,0.08)' }]} onPress={() => setShowSMS(true)} activeOpacity={0.85}>
-                  <Text style={[s.actionBtnText, { color: '#0a84ff' }]}>💬 SMS</Text>
+                <TouchableOpacity 
+                  style={[s.actionBtn, { flex: 2, backgroundColor: 'rgba(6,182,212,0.12)', borderColor: 'rgba(6,182,212,0.4)' }]} 
+                  onPress={() => setShowSMS(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={{ fontSize: 20, marginBottom: 2 }}>💬</Text>
+                  <Text style={[s.actionBtnText, { color: '#06b6d4' }]}>SMS Водителю</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[s.actionBtn, { borderColor: 'rgba(48,209,88,0.3)', backgroundColor: 'rgba(48,209,88,0.08)' }]} onPress={() => setShowCall(true)} activeOpacity={0.85}>
-                  <Text style={[s.actionBtnText, { color: '#30d158' }]}>📞 Звонок</Text>
+                <TouchableOpacity 
+                  style={[s.actionBtn, { flex: 1, backgroundColor: 'rgba(236,72,153,0.12)', borderColor: 'rgba(236,72,153,0.4)' }]} 
+                  onPress={() => {}}
+                  activeOpacity={0.8}
+                >
+                  <Text style={{ fontSize: 24, marginBottom: 2 }}>📞</Text>
+                  <Text style={[s.actionBtnText, { color: '#ec4899', fontSize: 12 }]}>Звонок</Text>
                 </TouchableOpacity>
               </View>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                <TouchableOpacity style={[s.actionBtn, { borderColor: 'rgba(6,182,212,0.3)', backgroundColor: 'rgba(6,182,212,0.08)' }]} onPress={() => setShowHOS(true)} activeOpacity={0.85}>
-                  <Text style={[s.actionBtnText, { color: '#06b6d4' }]}>⏱ HOS</Text>
+
+              {/* HOS + ELD */}
+              <TouchableOpacity 
+                style={[s.actionBtn, { backgroundColor: 'rgba(168,85,247,0.12)', borderColor: 'rgba(168,85,247,0.4)', flexDirection: 'row', alignItems: 'center', gap: 10 }]} 
+                onPress={() => { setHoseldTab('hos'); setShowHOSELD(true); }}
+                activeOpacity={0.8}
+              >
+                <Text style={{ fontSize: 22 }}>📊</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.actionBtnText, { color: '#a855f7' }]}>HOS + ELD График</Text>
+                  <Text style={{ fontSize: 11, color: '#94a3b8', marginTop: 1 }}>{truck.hoursLeft.toFixed(1)}h осталось</Text>
+                </View>
+                <Text style={{ fontSize: 16, color: '#a855f7' }}>→</Text>
+              </TouchableOpacity>
+
+              {/* Брокер — только если есть груз */}
+              {truck.currentLoad && (
+                <TouchableOpacity 
+                  style={[s.actionBtn, { backgroundColor: 'rgba(251,146,60,0.12)', borderColor: 'rgba(251,146,60,0.4)' }]} 
+                  onPress={() => {}}
+                  activeOpacity={0.8}
+                >
+                  <Text style={{ fontSize: 20, marginBottom: 2 }}>📞</Text>
+                  <Text style={[s.actionBtnText, { color: '#fb923c' }]}>Связь с брокером</Text>
+                  <Text style={{ fontSize: 11, color: '#94a3b8', marginTop: 1 }}>{truck.currentLoad.brokerName}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[s.actionBtn, { borderColor: 'rgba(191,90,242,0.3)', backgroundColor: 'rgba(191,90,242,0.08)' }]} onPress={() => setShowELD(true)} activeOpacity={0.85}>
-                  <Text style={[s.actionBtnText, { color: '#bf5af2' }]}>📟 ELD</Text>
-                </TouchableOpacity>
-              </View>
+              )}
+
+              {/* TONU */}
               {truck.currentLoad && (
                 <TouchableOpacity style={[s.actionBtn, { borderColor: 'rgba(255,69,58,0.25)', backgroundColor: 'rgba(255,69,58,0.06)' }]} onPress={() => setShowCancelLoad(true)} activeOpacity={0.85}>
                   <Text style={[s.actionBtnText, { color: '#ff453a' }]}>⚠️ Отменить груз (TONU)</Text>
@@ -328,8 +394,7 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
         </TouchableOpacity>
       </TouchableOpacity>
 
-      {showHOS && <HOSGraph truck={truck} onClose={() => setShowHOS(false)} />}
-      {showELD && <ELDGraph truck={truck} onClose={() => setShowELD(false)} />}
+      {showHOSELD && <HOSELDModal truck={truck} onClose={() => setShowHOSELD(false)} initialTab={hoseldTab} />}
       {showSMS && <DriverCommunicationModal truck={truck} onClose={() => setShowSMS(false)} onCall={() => { setShowSMS(false); setShowCall(true); }} />}
       {showCall && <CallModal contactName={truck.driver} contactRole="driver" truckId={truck.id} onClose={() => setShowCall(false)} />}
       {showCancelLoad && truck.currentLoad && <CancelLoadModal load={truck.currentLoad} onClose={() => setShowCancelLoad(false)} />}
@@ -342,6 +407,7 @@ export default function TruckDetailModal({ truck, onClose, onFindLoad }: Props) 
           roadsideOrdered={roadsideOrdered}
           onClose={() => setShowMechanic(false)}
           onCallRoadside={callRoadside}
+          onRepairComplete={handleRepairComplete}
         />
       )}
     </Modal>
@@ -411,8 +477,8 @@ const s = StyleSheet.create({
   findBtnArrow: { fontSize: 18, color: '#4ade80', fontWeight: '900' },
   statsBtn: { padding: 12, backgroundColor: 'rgba(6,182,212,0.08)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(6,182,212,0.2)', alignItems: 'center' },
   statsBtnText: { fontSize: 13, fontWeight: '700', color: '#06b6d4' },
-  actionBtn: { flex: 1, padding: 10, borderRadius: 12, borderWidth: 1, alignItems: 'center' },
-  actionBtnText: { fontSize: 13, fontWeight: '700' },
+  actionBtn: { flex: 1, padding: 12, borderRadius: 12, borderWidth: 1, alignItems: 'center' },
+  actionBtnText: { fontSize: 14, fontWeight: '700' },
   aiCard: { margin: 12, marginBottom: 0, padding: 12, borderRadius: 12, borderWidth: 1.5, gap: 8 },
   aiHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   aiIcon: { fontSize: 26 },

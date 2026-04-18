@@ -90,16 +90,17 @@ function getMoodEmoji(mood: number, status: string, truck?: any): string {
 }
 
 function getTruckColor(truck: any, gameMinute = 0): string {
-  const outOfOrder = (truck as any).outOfOrderUntil;
-  if (outOfOrder && typeof outOfOrder === 'number' && outOfOrder > gameMinute) return '#ef4444';
-  // Ночёвка / HOS-стоп — серо-синий
-  if ((truck as any).onNightStop || (truck as any).hosRestUntilMinute > 0) return '#64748b';
-  // idleWarning — только уровень 3 (5+ часов) даёт красный, остальное мягче
-  const w = (truck as any).idleWarningLevel ?? 0;
-  if (w === 3) return '#ef4444';
-  if (w === 2) return '#fb923c';
-  if (w === 1) return '#fbbf24';
+  if ((truck as any).onNightStop || (truck as any).onMandatoryBreak) return '#64748b';
+  if (truck.status === 'waiting') return '#64748b';
   if (truck.status === 'breakdown') return '#f87171';
+  const outOfOrder = (truck as any).outOfOrderUntil;
+  if (gameMinute > 0 && outOfOrder && typeof outOfOrder === 'number' && outOfOrder > gameMinute) return '#ef4444';
+  if (truck.status === 'idle') {
+    const w = (truck as any).idleWarningLevel ?? 0;
+    if (w === 3) return '#ef4444';
+    if (w === 2) return '#fb923c';
+    if (w === 1) return '#fbbf24';
+  }
   return STATUS_COLOR[truck.status] || '#38bdf8';
 }
 
@@ -200,6 +201,7 @@ export default function GameScreen() {
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [pausedSeconds, setPausedSeconds] = useState(0);
   const pauseTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const saveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => { pausedRef.current = paused; }, [paused]);
 
@@ -229,6 +231,7 @@ export default function GameScreen() {
   }, []);
   useEffect(() => { if (availableLoads.length < 5) refreshLoadBoard(); }, []);
   useEffect(() => {
+    if (clockRef.current) clearInterval(clockRef.current);
     clockRef.current = setInterval(() => { if (!pausedRef.current) tickClock(); }, 1000);
     return () => { if (clockRef.current) clearInterval(clockRef.current); };
   }, []);
@@ -244,13 +247,14 @@ export default function GameScreen() {
     return () => clearTimeout(zoomTimer);
   }, []);
   useEffect(() => {
-    // Автосохранение каждые 30 секунд
-    const saveInterval = setInterval(() => {
+    // Очищаем старый интервал если был
+    if (saveIntervalRef.current) clearInterval(saveIntervalRef.current);
+    saveIntervalRef.current = setInterval(() => {
       if (useGameStore.getState().phase === 'playing') {
         useGameStore.getState().saveGame();
       }
     }, 30000);
-    return () => clearInterval(saveInterval);
+    return () => { if (saveIntervalRef.current) clearInterval(saveIntervalRef.current); };
   }, []);
   useEffect(() => {
     const fn = () => useGameStore.getState().saveGame();

@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Modal } from 'react-native';
 import { Colors } from '../constants/colors';
 import { useGameStore, Notification } from '../store/gameStore';
 import RateConModal from './RateConModal';
 import { useGuideStore } from '../store/guideStore';
+import { findNearestTruckStop } from '../constants/truckStops';
 
 // ─── Утилиты ─────────────────────────────────────────────────────────────────
 
@@ -19,10 +20,12 @@ function getEmailIcon(type: string) {
 }
 
 function threadKey(n: Notification): string {
-  // Группируем по отправителю + грузу (один тред = один брокер + один груз)
+  // Один тред = один отправитель + один трак/груз
   const sender = n.from?.trim().toLowerCase() || 'unknown';
-  const load = n.relatedLoadId ? `-${n.relatedLoadId}` : '';
-  return `${sender}${load}`;
+  const truck = n.relatedTruckId ? `t-${n.relatedTruckId}` : '';
+  const load = n.relatedLoadId ? `l-${n.relatedLoadId}` : '';
+  // Если есть и трак и груз — группируем по траку (водитель всегда один тред)
+  return truck ? `${sender}-${truck}` : load ? `${sender}-${load}` : sender;
 }
 
 interface Thread {
@@ -145,6 +148,12 @@ function getDriverResponses(notif: Notification) {
       { text: 'Найди следующий груз для этого трака.', icon: '📋', outcome: 'Водитель ждёт следующего груза. POD не отправлен — штраф.', money: -50, mood: 0, correct: false },
       { text: 'Скажи водителю отдохнуть — он заслужил.', icon: '😴', outcome: 'Водитель доволен. Настроение +15. Трак простаивает 2 часа.', money: 0, mood: 15, correct: false },
     ];
+  if (msg.includes('ворота закрыты') || msg.includes('шиппер закрыт') || msg.includes('никого нет'))
+    return [
+      { text: 'Ищи кого-то на территории — я звоню брокеру прямо сейчас.', icon: '📞', outcome: 'Нашли охранника — открыл ворота. Брокер подтвердил загрузку. Задержка 40 мин, загрузка идёт.', money: 0, mood: 5, correct: true, action: 'shipper_found' },
+      { text: 'Ждём максимум 2 часа — если никого нет, отменяем и запрашиваем TONU.', icon: '⏱️', outcome: 'Через 2 часа никто не появился. TONU $150 получен. Трак свободен — ищи новый груз.', money: 150, mood: -5, correct: true, action: 'tonu_cancel' },
+      { text: 'Свяжусь с брокером — прошу загрузку на завтра утром + Layover компенсацию.', icon: '🏨', outcome: 'Брокер согласился: загрузка завтра в 8 AM. Layover $200 добавлен в Rate Con. Водитель ночует рядом.', money: 200, mood: 0, correct: true, action: 'layover' },
+    ];
   return [
     { text: 'Понял, продолжай по плану.', icon: '✅', outcome: 'Водитель продолжает маршрут.', money: 0, mood: 5, correct: true },
     { text: 'Уточни детали — позвони мне.', icon: '📞', outcome: 'Водитель перезвонил. Ситуация прояснилась.', money: 0, mood: 5, correct: true },
@@ -155,7 +164,7 @@ function getDriverResponses(notif: Notification) {
 // ─── Чат-попап треда ─────────────────────────────────────────────────────────
 
 function ThreadChat({ thread, onClose }: { thread: Thread; onClose: () => void }) {
-  const { sendEmail, addMoney, addNotification, markNotificationRead } = useGameStore();
+  const { sendEmail, addMoney, addNotification, markNotificationRead, addReplyToNotification } = useGameStore();
   const { removeMoney } = useGameStore.getState();
   // Подписываемся на живые данные треда из стора
   const liveNotifs = useGameStore(s => s.notifications);
@@ -171,6 +180,12 @@ function ThreadChat({ thread, onClose }: { thread: Thread; onClose: () => void }
   const [chosen, setChosen] = useState<number | null>(null);
   const [callDone, setCallDone] = useState(false);
   const [rateConOpen, setRateConOpen] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+
+  // Автоскролл вниз при новых сообщениях
+  useEffect(() => {
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
+  }, [thread.messages.length, allReplies.length]);
 
   const tiles = getPhraseTiles(lastMsg);
   const driverResponses = getDriverResponses(lastMsg);
@@ -187,6 +202,7 @@ function ThreadChat({ thread, onClose }: { thread: Thread; onClose: () => void }
     sendEmail({ to: lastMsg.from, subject: `Re: ${lastMsg.subject}`, body: bodyText, isReply: true, replyToId: rootMsg.id });
     setSent(true);
     setTimeout(() => { setSent(false); setSelected([]); }, 1200);
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 200);
   }
 
   function handleDriverChoice(idx: number) {
@@ -195,16 +211,96 @@ function ThreadChat({ thread, onClose }: { thread: Thread; onClose: () => void }
     const r = driverResponses[idx];
     if (r.money > 0) addMoney(r.money, `Решение: ${r.text.slice(0, 30)}`);
     if (r.money < 0) removeMoney(Math.abs(r.money), `Решение: ${r.text.slice(0, 30)}`);
-    addNotification({ type: 'text', from: lastMsg.from, subject: `Re: ${lastMsg.subject}`, message: r.outcome, priority: 'low', actionRequired: false });
+
+    // Добавляем ответ диспетчера и реакцию водителя в тот же тред (не новое уведомление)
+    addReplyToNotification(rootMsg.id, {
+      from: 'Я',
+      message: r.text,
+      minute: useGameStore.getState().gameMinute,
+      isMe: true,
+    });
+    setTimeout(() => {
+      addReplyToNotification(rootMsg.id, {
+        from: lastMsg.from,
+        message: r.outcome,
+        minute: useGameStore.getState().gameMinute,
+        isMe: false,
+      });
+    }, 800);
+
+    // Применяем действие на трак
+    const truckId = lastMsg.relatedTruckId;
+    if (truckId && (r as any).action) {
+      const action = (r as any).action;
+      const { trucks } = useGameStore.getState();
+      const truck = trucks.find(t => t.id === truckId);
+      if (!truck) return;
+
+      if (action === 'tonu_cancel') {
+        const nearestStop = findNearestTruckStop(truck.position[0], truck.position[1], 'truck_stop');
+        const loadId = truck.currentLoad?.id;
+        useGameStore.setState(s => ({
+          trucks: s.trucks.map(t => t.id === truckId
+            ? {
+                ...t,
+                status: 'driving' as any,
+                currentLoad: null,
+                destinationCity: null,
+                hosStopDestination: nearestStop.position,
+                hosStopDestName: nearestStop.name,
+                hosStopType: nearestStop.type,
+                drivingToHosStop: true,
+                toIdleOnArrival: true,   // после прибытия → idle, не HOS отдых
+                routePath: undefined,
+              }
+            : t
+          ),
+          activeLoads: s.activeLoads.filter((l: any) => l.id !== loadId),
+          bookedLoads: s.bookedLoads.filter((l: any) => l.id !== loadId),
+        }));
+        window.dispatchEvent(new CustomEvent('mapToast', {
+          detail: { message: `🚛 ${truck.name} → ${nearestStop.name} (${nearestStop.highway}) — TONU $150 получен`, color: '#fbbf24' }
+        }));
+      } else if (action === 'layover') {
+        // Трак ждёт до утра — статус waiting
+        useGameStore.setState(s => ({
+          trucks: s.trucks.map(t => t.id === truckId
+            ? { ...t, status: 'waiting' as any }
+            : t
+          ),
+        }));
+        window.dispatchEvent(new CustomEvent('mapToast', { detail: { message: `🏨 ${truck.name} — Layover. Загрузка завтра в 8 AM`, color: '#818cf8' } }));
+      } else if (action === 'shipper_found') {
+        // Трак продолжает — переходит на at_pickup
+        useGameStore.setState(s => ({
+          trucks: s.trucks.map(t => t.id === truckId
+            ? { ...t, status: 'at_pickup' as any }
+            : t
+          ),
+        }));
+        window.dispatchEvent(new CustomEvent('mapToast', { detail: { message: `✅ ${truck.name} — загрузка началась`, color: '#4ade80' } }));
+      }
+    }
   }
 
   function handleCall(callback: boolean) {
     setCallDone(true);
-    if (callback) {
-      addNotification({ type: 'email', from: lastMsg.from, subject: `Re: ${lastMsg.subject}`, message: 'Брокер ответил на звонок. Обсудили детали груза. Ожидай Rate Con.', priority: 'low', actionRequired: false });
-    } else {
-      addNotification({ type: 'email', from: lastMsg.from, subject: `Missed call ignored`, message: 'Брокер не дождался ответа. Репутация -2.', priority: 'low', actionRequired: false });
-    }
+    addReplyToNotification(rootMsg.id, {
+      from: 'Я',
+      message: callback ? '📞 Перезвонил брокеру' : '🙈 Проигнорировал звонок',
+      minute: useGameStore.getState().gameMinute,
+      isMe: true,
+    });
+    setTimeout(() => {
+      addReplyToNotification(rootMsg.id, {
+        from: lastMsg.from,
+        message: callback
+          ? 'Брокер ответил на звонок. Обсудили детали груза. Ожидай Rate Con.'
+          : 'Брокер не дождался ответа. Репутация -2.',
+        minute: useGameStore.getState().gameMinute,
+        isMe: false,
+      });
+    }, 800);
   }
 
   const result = chosen !== null ? driverResponses[chosen] : null;
@@ -239,7 +335,7 @@ function ThreadChat({ thread, onClose }: { thread: Thread; onClose: () => void }
           </View>
 
           {/* История сообщений */}
-          <ScrollView style={cs.messages} showsVerticalScrollIndicator={false}>
+          <ScrollView ref={scrollRef} style={cs.messages} showsVerticalScrollIndicator={false}>
             {thread.messages.map((msg, i) => {
               const isMe = msg.from === 'Я' || (msg as any).isMe;
               return (
@@ -545,8 +641,8 @@ const s = StyleSheet.create({
 // ─── Стили чата ───────────────────────────────────────────────────────────────
 
 const cs = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: '#0d1f35', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '85%', borderWidth: 1, borderColor: 'rgba(6,182,212,0.3)' },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 16 },
+  sheet: { backgroundColor: '#0d1f35', borderRadius: 20, maxHeight: '88%', width: '100%', maxWidth: 480, borderWidth: 1, borderColor: 'rgba(6,182,212,0.3)' },
 
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)' },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
