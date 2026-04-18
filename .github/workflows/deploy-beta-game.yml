@@ -1,0 +1,81 @@
+name: Deploy BETA Game v2.2.0-beta.1
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deploy environment'
+        required: true
+        default: 'beta'
+        type: choice
+        options:
+          - beta
+          - production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 🔄 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: adventure/package-lock.json
+
+      - name: 📥 Install dependencies
+        working-directory: adventure
+        run: npm ci
+
+      - name: 🏗️ Build game
+        working-directory: adventure
+        run: npm run build:web
+
+      - name: 📋 Copy interactive-feedback files
+        run: |
+          cp interactive-feedback.css adventure/dist/
+          cp interactive-feedback.js adventure/dist/
+
+      - name: 📦 Create deployment archive
+        run: |
+          cd adventure/dist
+          zip -r ../../game-beta-deploy.zip .
+          cd ../..
+
+      - name: 🚀 Deploy to Hostinger via SFTP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          username: ${{ secrets.SFTP_USERNAME }}
+          server: ${{ secrets.SFTP_SERVER }}
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          local_path: './adventure/dist/*'
+          remote_path: '/domains/dispatch4you.com/public_html/adventure/dist'
+          sftp_only: true
+          delete_remote_files: false
+
+      - name: ✅ Deployment complete
+        run: |
+          echo "🎉 BETA v2.2.0-beta.1 deployed successfully!"
+          echo "🌐 Check: https://dispatch4you.com/game"
+
+      - name: 📊 Create deployment summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** 2.2.0-beta.1" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Time:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ What's new:" >> $GITHUB_STEP_SUMMARY
+          echo "- Interactive feedback system" >> $GITHUB_STEP_SUMMARY
+          echo "- Ripple effect on click" >> $GITHUB_STEP_SUMMARY
+          echo "- Enlarged close buttons (48×56px)" >> $GITHUB_STEP_SUMMARY
+          echo "- Mobile vibration" >> $GITHUB_STEP_SUMMARY
+          echo "- Improved hover effects" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🌐 **Live URL:** https://dispatch4you.com/game" >> $GITHUB_STEP_SUMMARY

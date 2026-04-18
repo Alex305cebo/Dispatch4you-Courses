@@ -1772,24 +1772,24 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
       )}
 
       {/* Факт о штате — компактный тег снизу слева, не мешает карте */}
-      <div style={{
+      <div className="map-state-fact" style={{
         position: "absolute", bottom: 70, left: 12,
-        maxWidth: 220, zIndex: 200,
+        maxWidth: "calc(100vw - 24px)", zIndex: 200,
         fontFamily: "sans-serif",
         opacity: (followTruck && stateFact) ? 1 : 0,
         pointerEvents: "none",
         transition: "opacity 0.6s ease",
       } as any}>
         <div style={{
-          background: "rgba(8,14,28,0.75)",
-          border: "1px solid rgba(56,189,248,0.2)",
-          borderRadius: 10, padding: "6px 10px",
-          backdropFilter: "blur(6px)",
+          background: "rgba(8,14,28,0.85)",
+          border: "1px solid rgba(56,189,248,0.3)",
+          borderRadius: 12, padding: "10px 14px",
+          backdropFilter: "blur(8px)",
         } as any}>
-          <div style={{ fontSize: 9, fontWeight: 700, color: "#38bdf8", marginBottom: 2, letterSpacing: 0.5, opacity: 0.8 } as any}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#38bdf8", marginBottom: 4, letterSpacing: 0.5 } as any}>
             📍 {lastFactStateRef.current}
           </div>
-          <div style={{ fontSize: 11, color: "#cbd5e1", lineHeight: 1.4 } as any}>
+          <div style={{ fontSize: 13, color: "#e2e8f0", lineHeight: 1.5 } as any}>
             {stateFact}
           </div>
         </div>
@@ -2070,6 +2070,22 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
             max-width: none !important;
             padding: 12px !important;
             max-height: calc(100vh - 80px) !important;
+          }
+          
+          .map-state-fact {
+            bottom: 60px !important;
+            left: 8px !important;
+            right: 8px !important;
+            max-width: calc(100vw - 16px) !important;
+          }
+          .map-state-fact > div {
+            padding: 10px 12px !important;
+          }
+          .map-state-fact > div > div:first-child {
+            font-size: 11px !important;
+          }
+          .map-state-fact > div > div:last-child {
+            font-size: 12px !important;
           }
         }
         

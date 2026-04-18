@@ -1,0 +1,429 @@
+/* ============================================
+   ГЛОБАЛЬНАЯ СИСТЕМА ВИЗУАЛЬНОЙ ОБРАТНОЙ СВЯЗИ
+   Для всех кликабельных элементов проекта
+   ============================================ */
+
+/* === БАЗОВЫЕ ПРАВИЛА ДЛЯ ВСЕХ КНОПОК === */
+button,
+.btn,
+[role="button"],
+.clickable {
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Hover эффект для desktop */
+button:hover,
+.btn:hover,
+[role="button"]:hover,
+.clickable:hover {
+    transform: translateY(-2px) scale(1.02);
+    filter: brightness(1.15);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Active эффект (нажатие) - БОЛЕЕ ВЫРАЖЕННЫЙ */
+button:active,
+.btn:active,
+[role="button"]:active,
+.clickable:active {
+    transform: scale(0.95) translateY(2px);
+    filter: brightness(0.9);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.08s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Ripple эффект при клике - БОЛЕЕ ЯРКИЙ */
+button::after,
+.btn::after,
+[role="button"]::after,
+.clickable::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    transition: width 0.5s ease, height 0.5s ease, opacity 0.5s ease;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+button:active::after,
+.btn:active::after,
+[role="button"]:active::after,
+.clickable:active::after {
+    width: 300px;
+    height: 300px;
+    opacity: 1;
+    transition: width 0s, height 0s, opacity 0.4s ease;
+}
+
+/* === КАРТОЧКИ ТРАКОВ === */
+.truck-card,
+[class*="truck-card"],
+[onclick*="assignLoad"],
+[onclick*="viewTruck"] {
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.truck-card:hover,
+[class*="truck-card"]:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(6, 182, 212, 0.25) !important;
+    border-color: rgba(6, 182, 212, 0.5) !important;
+}
+
+.truck-card:active,
+[class*="truck-card"]:active {
+    transform: scale(0.98) translateY(0);
+    box-shadow: 0 2px 8px rgba(6, 182, 212, 0.15) !important;
+    transition: all 0.08s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* === ЗЕЛЁНЫЕ КНОПКИ "НАЗНАЧИТЬ" - УЛУЧШЕННЫЕ === */
+button[style*="rgb(34, 197, 94)"],
+button[style*="#22c55e"],
+.assign-btn,
+.btn-green,
+[onclick*="assignLoad"] button {
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+}
+
+button[style*="rgb(34, 197, 94)"]:hover,
+button[style*="#22c55e"]:hover,
+.assign-btn:hover,
+.btn-green:hover {
+    box-shadow: 0 8px 24px rgba(34, 197, 94, 0.6) !important;
+    background: rgb(22, 163, 74) !important;
+    transform: translateY(-3px) scale(1.03) !important;
+}
+
+button[style*="rgb(34, 197, 94)"]:active,
+button[style*="#22c55e"]:active,
+.assign-btn:active,
+.btn-green:active {
+    box-shadow: 0 2px 6px rgba(34, 197, 94, 0.3) !important;
+    background: rgb(21, 128, 61) !important;
+    transform: scale(0.94) translateY(2px) !important;
+}
+
+/* === СИНИЕ КНОПКИ (PRIMARY) - УЛУЧШЕННЫЕ === */
+button[style*="rgb(6, 182, 212)"],
+button[style*="#06b6d4"],
+.primary-btn,
+.btn-blue {
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.4);
+}
+
+button[style*="rgb(6, 182, 212)"]:hover,
+button[style*="#06b6d4"]:hover,
+.primary-btn:hover,
+.btn-blue:hover {
+    box-shadow: 0 8px 24px rgba(6, 182, 212, 0.6) !important;
+    background: rgb(8, 145, 178) !important;
+    transform: translateY(-3px) scale(1.03) !important;
+}
+
+button[style*="rgb(6, 182, 212)"]:active,
+button[style*="#06b6d4"]:active,
+.primary-btn:active,
+.btn-blue:active {
+    box-shadow: 0 2px 6px rgba(6, 182, 212, 0.3) !important;
+    background: rgb(14, 116, 144) !important;
+    transform: scale(0.94) translateY(2px) !important;
+}
+
+/* === КРАСНЫЕ КНОПКИ (DANGER) - УЛУЧШЕННЫЕ === */
+button[style*="rgb(239, 68, 68)"],
+button[style*="#ef4444"],
+.danger-btn,
+.btn-red {
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+button[style*="rgb(239, 68, 68)"]:hover,
+button[style*="#ef4444"]:hover,
+.danger-btn:hover,
+.btn-red:hover {
+    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.6) !important;
+    background: rgb(220, 38, 38) !important;
+    transform: translateY(-3px) scale(1.03) !important;
+}
+
+button[style*="rgb(239, 68, 68)"]:active,
+button[style*="#ef4444"]:active,
+.danger-btn:active,
+.btn-red:active {
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3) !important;
+    background: rgb(185, 28, 28) !important;
+    transform: scale(0.94) translateY(2px) !important;
+}
+
+/* === КАРТОЧКИ ГРУЗОВ === */
+[onclick*="selectLoad"],
+.load-card,
+[class*="load-card"] {
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[onclick*="selectLoad"]:hover,
+.load-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(6, 182, 212, 0.2) !important;
+    border-color: rgba(6, 182, 212, 0.4) !important;
+}
+
+[onclick*="selectLoad"]:active,
+.load-card:active {
+    transform: scale(0.99) translateY(0);
+    box-shadow: 0 2px 8px rgba(6, 182, 212, 0.1) !important;
+    transition: all 0.08s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* === ЭЛЕМЕНТЫ НАВИГАЦИИ === */
+nav button,
+.nav-btn,
+[class*="nav-"] button {
+    transition: all 0.15s ease;
+}
+
+nav button:hover,
+.nav-btn:hover {
+    background: rgba(6, 182, 212, 0.15) !important;
+}
+
+nav button:active,
+.nav-btn:active {
+    background: rgba(6, 182, 212, 0.25) !important;
+    transform: scale(0.95);
+}
+
+/* === ТАБЫ И ПЕРЕКЛЮЧАТЕЛИ === */
+[role="tab"],
+.tab,
+[class*="tab-"] {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+[role="tab"]:hover,
+.tab:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+[role="tab"]:active,
+.tab:active {
+    background: rgba(255, 255, 255, 0.08) !important;
+    transform: scale(0.98);
+}
+
+/* === ИКОНКИ И МАЛЕНЬКИЕ КНОПКИ - УЛУЧШЕННЫЕ === */
+.icon-btn,
+button[style*="width: 40px"],
+button[style*="width: 36px"],
+button[style*="width: 32px"] {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.icon-btn:hover,
+button[style*="width: 40px"]:hover,
+button[style*="width: 36px"]:hover,
+button[style*="width: 32px"]:hover {
+    transform: scale(1.15) rotate(5deg);
+    background: rgba(6, 182, 212, 0.25) !important;
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+}
+
+.icon-btn:active,
+button[style*="width: 40px"]:active,
+button[style*="width: 36px"]:active,
+button[style*="width: 32px"]:active {
+    transform: scale(0.9) rotate(0deg);
+    background: rgba(6, 182, 212, 0.4) !important;
+    box-shadow: 0 2px 4px rgba(6, 182, 212, 0.2);
+}
+
+/* === МОДАЛЬНЫЕ ОКНА - OVERLAY === */
+[onclick*="closeModal"],
+[onclick*="hideModal"],
+.modal-overlay {
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+/* === ЧЕКБОКСЫ И RADIO === */
+input[type="checkbox"],
+input[type="radio"] {
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+input[type="checkbox"]:hover,
+input[type="radio"]:hover {
+    transform: scale(1.1);
+}
+
+input[type="checkbox"]:active,
+input[type="radio"]:active {
+    transform: scale(0.95);
+}
+
+/* === ССЫЛКИ === */
+a {
+    transition: all 0.15s ease;
+}
+
+a:hover {
+    filter: brightness(1.2);
+}
+
+a:active {
+    filter: brightness(0.9);
+    transform: scale(0.98);
+}
+
+/* === DISABLED СОСТОЯНИЕ === */
+button:disabled,
+.btn:disabled,
+[disabled] {
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
+    transform: none !important;
+    filter: none !important;
+    pointer-events: none;
+}
+
+/* === МОБИЛЬНЫЕ УСТРОЙСТВА === */
+@media (max-width: 768px) {
+    /* Увеличенная область нажатия */
+    button,
+    .btn,
+    [role="button"],
+    .clickable {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* БОЛЕЕ ВЫРАЖЕННЫЙ feedback на мобильных */
+    button:active,
+    .btn:active,
+    [role="button"]:active,
+    .clickable:active {
+        transform: scale(0.92) !important;
+        opacity: 0.75 !important;
+        filter: brightness(0.85) !important;
+    }
+    
+    /* Убираем hover эффекты на touch устройствах */
+    @media (hover: none) {
+        button:hover,
+        .btn:hover,
+        [role="button"]:hover,
+        .clickable:hover {
+            transform: none;
+            filter: none;
+            box-shadow: none;
+        }
+    }
+}
+
+/* === АНИМАЦИЯ ЗАГРУЗКИ - УЛУЧШЕННАЯ === */
+@keyframes pulse-click {
+    0% { 
+        opacity: 1; 
+        transform: scale(1); 
+    }
+    50% { 
+        opacity: 0.7; 
+        transform: scale(0.94); 
+        filter: brightness(0.9);
+    }
+    100% { 
+        opacity: 1; 
+        transform: scale(1); 
+        filter: brightness(1);
+    }
+}
+
+.clicking {
+    animation: pulse-click 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* === КНОПКИ ЗАКРЫТИЯ (КРЕСТИКИ) - УВЕЛИЧЕННЫЕ === */
+.modal-close,
+button[onclick*="closeModal"],
+button[onclick*="hideModal"],
+[class*="close-btn"],
+button:has(> :only-child):is(:has(> :only-child:is([innerHTML*="✕"], [innerHTML*="×"], [innerHTML*="✖"]))),
+button[aria-label*="close" i],
+button[aria-label*="закрыть" i] {
+    min-width: 48px !important;
+    min-height: 48px !important;
+    font-size: 24px !important;
+    font-weight: 400 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 12px !important;
+    border-radius: 12px !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+    border: 2px solid rgba(239, 68, 68, 0.3) !important;
+    color: #ef4444 !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.modal-close:hover,
+button[onclick*="closeModal"]:hover,
+button[onclick*="hideModal"]:hover,
+[class*="close-btn"]:hover {
+    background: rgba(239, 68, 68, 0.2) !important;
+    border-color: rgba(239, 68, 68, 0.5) !important;
+    transform: scale(1.1) rotate(90deg) !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+}
+
+.modal-close:active,
+button[onclick*="closeModal"]:active,
+button[onclick*="hideModal"]:active,
+[class*="close-btn"]:active {
+    background: rgba(239, 68, 68, 0.3) !important;
+    transform: scale(0.95) rotate(90deg) !important;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2) !important;
+}
+
+/* Мобильные - ещё больше */
+@media (max-width: 768px) {
+    .modal-close,
+    button[onclick*="closeModal"],
+    button[onclick*="hideModal"],
+    [class*="close-btn"] {
+        min-width: 56px !important;
+        min-height: 56px !important;
+        font-size: 28px !important;
+        padding: 16px !important;
+        border-radius: 14px !important;
+        border-width: 3px !important;
+    }
+}
+
+/* === ФОКУС ДЛЯ ACCESSIBILITY === */
+button:focus-visible,
+.btn:focus-visible,
+[role="button"]:focus-visible {
+    outline: 2px solid #06b6d4;
+    outline-offset: 2px;
+}
