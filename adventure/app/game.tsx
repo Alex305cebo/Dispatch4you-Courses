@@ -117,7 +117,13 @@ export default function GameScreen() {
     deliveryResults, totalEarned,
   } = useGameStore();
 
-  const [guideVisible, setGuideVisible] = useState(() => shouldShowGuide());
+  const [guideVisible, setGuideVisible] = useState(() => {
+    try {
+      const saved = localStorage.getItem('dispatch-guide-show');
+      if (saved !== null) return saved === '1';
+    } catch {}
+    return shouldShowGuide();
+  });
   const [showGuidePopup, setShowGuidePopup] = useState(() => shouldShowGuide());
   const [timeFormat, setTimeFormat] = useState<'12h' | '24h'>(() => {
     try { return (localStorage.getItem('dispatch-time-format') as '12h' | '24h') || '12h'; } catch { return '12h'; }
@@ -795,7 +801,8 @@ export default function GameScreen() {
   };
 
   const mapProps = {
-    onTruckInfo: (id: string) => { const t = trucks.find(x => x.id === id); if (t) setDetailTruck(t); },
+    onTruckInfo: (id: string) => { const t = trucks.find(x => x.id === id); if (t) setDetailTruck(t); selectTruck(id); },
+    onTruckSelect: (id: string) => { selectTruck(id); },
     onFindLoad: (city: string) => { setLoadBoardSearch(city); switchTab('loadboard'); },
     onGuideOpen: () => { setGuideVisible(true); setShowGuidePopup(true); },
     guideActive: guideVisible,
@@ -906,6 +913,39 @@ export default function GameScreen() {
                 </span>
               </div>
 
+              {/* Кнопки + тоггл */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+
+                {/* Тоггл "показывать при старте" */}
+                <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' } as any}>
+                  <div
+                    onClick={() => {
+                      const next = !guideVisible;
+                      setGuideVisible(next);
+                      try { localStorage.setItem('dispatch-guide-show', next ? '1' : '0'); } catch {}
+                    }}
+                    style={{
+                      width: 32, height: 18, borderRadius: 9,
+                      background: guideVisible ? 'rgba(99,102,241,0.7)' : 'rgba(255,255,255,0.12)',
+                      border: `1px solid ${guideVisible ? 'rgba(99,102,241,0.9)' : 'rgba(255,255,255,0.2)'}`,
+                      position: 'relative', cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    } as any}
+                  >
+                    <div style={{
+                      position: 'absolute', top: 2,
+                      left: guideVisible ? 15 : 2,
+                      width: 12, height: 12, borderRadius: 6,
+                      background: '#fff',
+                      transition: 'left 0.2s',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                    } as any} />
+                  </div>
+                  <span style={{ fontSize: 11, color: '#94a3b8', userSelect: 'none' } as any}>
+                    авто
+                  </span>
+                </label>
+
               {/* Buttons */}
               <div style={{ display: 'flex', gap: 6 }}>
                 {/* Refresh — шаг назад */}
@@ -957,6 +997,7 @@ export default function GameScreen() {
                   }}
                 >✕</button>
               </div>
+              </div> {/* конец внешнего flex кнопок + тоггл */}
             </div>
 
             {/* Content */}

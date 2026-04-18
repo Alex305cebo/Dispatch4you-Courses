@@ -140,8 +140,9 @@ function getRouteEvent(truckId: string): string | null {
 // История маршрутов трака за смену
 const routeHistory: Record<string, Array<[number, number]>> = {};
 
-export default function MapView({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
+export default function MapView({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guideActive }: {
   onTruckInfo?: (truckId: string) => void;
+  onTruckSelect?: (truckId: string) => void;
   onFindLoad?: (city: string) => void;
   onGuideOpen?: () => void;
   guideActive?: boolean;
@@ -153,11 +154,12 @@ export default function MapView({ onTruckInfo, onFindLoad, onGuideOpen, guideAct
       </View>
     );
   }
-  return <MapAmCharts onTruckInfo={onTruckInfo} onFindLoad={onFindLoad} onGuideOpen={onGuideOpen} guideActive={guideActive} />;
+  return <MapAmCharts onTruckInfo={onTruckInfo} onTruckSelect={onTruckSelect} onFindLoad={onFindLoad} onGuideOpen={onGuideOpen} guideActive={guideActive} />;
 }
 
-function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
+function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guideActive }: {
   onTruckInfo?: (truckId: string) => void;
+  onTruckSelect?: (truckId: string) => void;
   onFindLoad?: (city: string) => void;
   onGuideOpen?: () => void;
   guideActive?: boolean;
@@ -214,11 +216,13 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
   const loadsRef = useRef(availableLoads);
   const gameMinuteRef = useRef(gameMinute);
   const onTruckInfoRef = useRef(onTruckInfo);
+  const onTruckSelectRef = useRef(onTruckSelect);
   const onFindLoadRef = useRef(onFindLoad);
   trucksRef.current = activeTrucks;
   loadsRef.current = availableLoads;
   gameMinuteRef.current = gameMinute;
   onTruckInfoRef.current = onTruckInfo;
+  onTruckSelectRef.current = onTruckSelect;
   onFindLoadRef.current = onFindLoad;
 
   const [selectedTruck, setSelectedTruck] = useState<any>(null);
@@ -848,7 +852,8 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
           followTruckIdRef.current = d.truckId;
           setFollowTruck(true);
         }
-        onTruckInfoRef.current?.(d.truckId);
+        // Только выделяем в хабе — модалку НЕ открываем
+        onTruckSelectRef.current?.(d.truckId);
         const zl = variant === 'micro' ? 3 : 5;
         chartRef.current?.zoomToGeoPoint({ longitude: d.lng, latitude: d.lat }, zl, true);
         setTimeout(() => { truckClickedRef.current = false; }, 100);
@@ -1658,9 +1663,27 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
               if (!trucks.length) return;
               const idx = trucks.findIndex((t: any) => t.id === selectedTruck.truckId);
               const prev = trucks[(idx - 1 + trucks.length) % trucks.length];
-              chartRef.current?.zoomToGeoPoint({ longitude: prev.position[0], latitude: prev.position[1] }, 5, true);
+              const colorHex = getTruckColor(prev, gameMinuteRef.current);
+              const colorInt = parseInt(colorHex.replace('#',''), 16);
+              const dest = prev.destinationCity ? CITIES[prev.destinationCity] : null;
+              const milesLeft = dest ? Math.round(Math.hypot(dest[0]-prev.position[0], dest[1]-prev.position[1])*55) : 0;
+              const card = {
+                lat: prev.position[1], lng: prev.position[0],
+                truckId: prev.id, truckName: prev.name.replace('Truck ','T'),
+                driver: prev.driver, status: prev.status,
+                statusLabel: STATUS_LABEL[prev.status] || prev.status,
+                colorHex, colorInt, milesLeft,
+                currentCity: prev.currentCity, destinationCity: prev.destinationCity || '',
+                hoursLeft: prev.hoursLeft, currentLoad: prev.currentLoad,
+                idleWarning: (prev as any).idleWarningLevel ?? 0,
+                routeEvent: getRouteEvent(prev.id),
+              };
+              setSelectedTruck(card);
+              selectedTruckRef.current = card;
               showCard(prev.id, 15000);
-              if (followTruckIdRef.current) followTruckIdRef.current = prev.id;
+              if (followTruckIdRef.current !== null) { followTruckIdRef.current = prev.id; setFollowTruck(true); }
+              chartRef.current?.zoomToGeoPoint({ longitude: prev.position[0], latitude: prev.position[1] }, 5, true);
+              onTruckSelectRef.current?.(prev.id);
             }}
             style={{
               width: 40, height: 40, borderRadius: 12, flexShrink: 0,
@@ -1722,9 +1745,27 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
               if (!trucks.length) return;
               const idx = trucks.findIndex((t: any) => t.id === selectedTruck.truckId);
               const next = trucks[(idx + 1) % trucks.length];
-              chartRef.current?.zoomToGeoPoint({ longitude: next.position[0], latitude: next.position[1] }, 5, true);
+              const colorHex = getTruckColor(next, gameMinuteRef.current);
+              const colorInt = parseInt(colorHex.replace('#',''), 16);
+              const dest = next.destinationCity ? CITIES[next.destinationCity] : null;
+              const milesLeft = dest ? Math.round(Math.hypot(dest[0]-next.position[0], dest[1]-next.position[1])*55) : 0;
+              const card = {
+                lat: next.position[1], lng: next.position[0],
+                truckId: next.id, truckName: next.name.replace('Truck ','T'),
+                driver: next.driver, status: next.status,
+                statusLabel: STATUS_LABEL[next.status] || next.status,
+                colorHex, colorInt, milesLeft,
+                currentCity: next.currentCity, destinationCity: next.destinationCity || '',
+                hoursLeft: next.hoursLeft, currentLoad: next.currentLoad,
+                idleWarning: (next as any).idleWarningLevel ?? 0,
+                routeEvent: getRouteEvent(next.id),
+              };
+              setSelectedTruck(card);
+              selectedTruckRef.current = card;
               showCard(next.id, 15000);
-              if (followTruckIdRef.current) followTruckIdRef.current = next.id;
+              if (followTruckIdRef.current !== null) { followTruckIdRef.current = next.id; setFollowTruck(true); }
+              chartRef.current?.zoomToGeoPoint({ longitude: next.position[0], latitude: next.position[1] }, 5, true);
+              onTruckSelectRef.current?.(next.id);
             }}
             style={{
               width: 40, height: 40, borderRadius: 12, flexShrink: 0,
@@ -1737,34 +1778,29 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
         </div>
       )}
 
-      {/* Облачко с фактом о штате — при слежении */}
-      {followTruck && stateFact && (
+      {/* Факт о штате — компактный тег снизу слева, не мешает карте */}
+      <div style={{
+        position: "absolute", bottom: 70, left: 12,
+        maxWidth: 220, zIndex: 200,
+        fontFamily: "sans-serif",
+        opacity: (followTruck && stateFact) ? 1 : 0,
+        pointerEvents: "none",
+        transition: "opacity 0.6s ease",
+      } as any}>
         <div style={{
-          position: "absolute", bottom: 80, left: "50%", transform: "translateX(-50%)",
-          background: "rgba(8,14,28,0.95)",
-          border: "1px solid rgba(56,189,248,0.3)",
-          borderRadius: 16, padding: "10px 16px",
-          maxWidth: 320, zIndex: 9998,
-          fontFamily: "sans-serif",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
-          animation: "factFadeIn 0.4s ease",
+          background: "rgba(8,14,28,0.75)",
+          border: "1px solid rgba(56,189,248,0.2)",
+          borderRadius: 10, padding: "6px 10px",
+          backdropFilter: "blur(6px)",
         } as any}>
-          {/* Хвостик облачка */}
-          <div style={{
-            position: "absolute", bottom: -8, left: "50%", transform: "translateX(-50%)",
-            width: 0, height: 0,
-            borderLeft: "8px solid transparent",
-            borderRight: "8px solid transparent",
-            borderTop: "8px solid rgba(56,189,248,0.3)",
-          } as any} />
-          <div style={{ fontSize: 10, fontWeight: 700, color: "#38bdf8", marginBottom: 4, letterSpacing: 0.5 } as any}>
-            📍 {lastFactStateRef.current} · Интересный факт
+          <div style={{ fontSize: 9, fontWeight: 700, color: "#38bdf8", marginBottom: 2, letterSpacing: 0.5, opacity: 0.8 } as any}>
+            📍 {lastFactStateRef.current}
           </div>
-          <div style={{ fontSize: 12, color: "#e2e8f0", lineHeight: 1.5 } as any}>
+          <div style={{ fontSize: 11, color: "#cbd5e1", lineHeight: 1.4 } as any}>
             {stateFact}
           </div>
         </div>
-      )}
+      </div>
 
       {/* Попап штата */}
       {selectedState && (
@@ -2013,24 +2049,24 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
           }
           
           .map-truck-card {
-            bottom: 76px !important;
+            bottom: 100px !important;
             left: 8px !important;
             right: 8px !important;
             transform: none !important;
             width: calc(100vw - 16px) !important;
-            padding: 8px 10px !important;
-            gap: 8px !important;
+            padding: 12px 14px !important;
+            gap: 10px !important;
             flex-wrap: wrap;
           }
           .map-truck-card > div > span:first-child {
-            font-size: 12px !important;
+            font-size: 15px !important;
           }
           .map-truck-card > div > span:nth-child(2) {
-            font-size: 10px !important;
+            font-size: 13px !important;
           }
           .map-truck-card button {
-            font-size: 11px !important;
-            padding: 5px 10px !important;
+            font-size: 13px !important;
+            padding: 8px 14px !important;
           }
           
           .map-state-popup {

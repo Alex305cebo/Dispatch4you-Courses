@@ -38,8 +38,8 @@ export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, isMobile && { fontSize: 14 }]}>🚛 Мои траки</Text>
-        <Text style={[styles.headerSub, isMobile && { fontSize: 10 }]}>{trucks.filter(t => t.status === 'idle').length} свободно</Text>
+        <Text style={styles.headerTitle}>🚛 Мои траки</Text>
+        <Text style={styles.headerSub}>{trucks.filter(t => t.status === 'idle').length} свободно</Text>
       </View>
 
       {trucks.map(truck => (
@@ -50,9 +50,9 @@ export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}
         >
           {/* Статус */}
           <View style={styles.cardTop}>
-            <Text style={[styles.truckName, isMobile && { fontSize: 13 }]}>{truck.name} - {truck.driver}</Text>
+            <Text style={styles.truckName}>{truck.name} - {truck.driver}</Text>
             <View style={[styles.statusBadge, { borderColor: (truck as any).onNightStop || (truck as any).hosRestUntilMinute > 0 ? '#64748b' : STATUS_COLOR[truck.status] }]}>
-              <Text style={[styles.statusText, { color: (truck as any).onNightStop || (truck as any).hosRestUntilMinute > 0 ? '#94a3b8' : STATUS_COLOR[truck.status] }, isMobile && { fontSize: 9 }]}>
+              <Text style={[styles.statusText, { color: (truck as any).onNightStop || (truck as any).hosRestUntilMinute > 0 ? '#94a3b8' : STATUS_COLOR[truck.status] }]}>
                 {(truck as any).onNightStop
                   ? '🌙 Ночёвка'
                   : (truck as any).hosRestUntilMinute > 0
@@ -63,7 +63,7 @@ export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}
           </View>
 
           {/* Маршрут */}
-          <Text style={[styles.route, isMobile && { fontSize: 11 }]}>
+          <Text style={styles.route}>
             📍 {cityState(truck.currentCity)}
             {truck.destinationCity ? ` → ${truck.destinationCity}` : ''}
           </Text>
@@ -84,21 +84,21 @@ export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}
           {/* Метрики */}
           <View style={styles.metrics}>
             <View style={styles.metric}>
-              <Text style={[styles.metricVal, truck.hoursLeft < 4 && { color: Colors.danger }, isMobile && { fontSize: 12 }]}>
+              <Text style={[styles.metricVal, truck.hoursLeft < 4 && { color: Colors.danger }]}>
                 {(Math.round(truck.hoursLeft * 10) / 10).toFixed(1)}ч
               </Text>
-              <Text style={[styles.metricLabel, isMobile && { fontSize: 8 }]}>HOS</Text>
+              <Text style={styles.metricLabel}>HOS</Text>
             </View>
             <View style={styles.metric}>
-              <Text style={[styles.metricVal, { color: truck.mood > 70 ? Colors.success : truck.mood > 40 ? Colors.warning : Colors.danger }, isMobile && { fontSize: 12 }]}>
+              <Text style={[styles.metricVal, { color: truck.mood > 70 ? Colors.success : truck.mood > 40 ? Colors.warning : Colors.danger }]}>
                 {truck.mood}%
               </Text>
-              <Text style={[styles.metricLabel, isMobile && { fontSize: 8 }]}>Настроение</Text>
+              <Text style={styles.metricLabel}>Настроение</Text>
             </View>
             {truck.currentLoad && (
               <View style={styles.metric}>
-                <Text style={[styles.metricVal, isMobile && { fontSize: 12 }]}>${truck.currentLoad.agreedRate.toLocaleString()}</Text>
-                <Text style={[styles.metricLabel, isMobile && { fontSize: 8 }]}>Ставка</Text>
+                <Text style={styles.metricVal}>${truck.currentLoad.agreedRate.toLocaleString()}</Text>
+                <Text style={styles.metricLabel}>Ставка</Text>
               </View>
             )}
           </View>
@@ -112,13 +112,13 @@ export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}
             }}
             activeOpacity={0.7}
           >
-            <Text style={[styles.detailBtnText, isMobile && { fontSize: 11 }]}>📊 Подробнее (HOS, Аналитика)</Text>
+            <Text style={styles.detailBtnText}>📊 Подробнее (HOS, Аналитика)</Text>
           </TouchableOpacity>
 
           {/* Текущий груз */}
           {truck.currentLoad && (
             <View style={styles.loadInfo}>
-              <Text style={[styles.loadInfoText, isMobile && { fontSize: 10 }]}>
+              <Text style={styles.loadInfoText}>
                 📦 {truck.currentLoad.commodity} · {cityState(truck.currentLoad.fromCity)} → {cityState(truck.currentLoad.toCity)}
               </Text>
             </View>
@@ -142,59 +142,60 @@ export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
-  content: { padding: 12, gap: 10 },
+  content: { padding: 12, gap: 12 },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
-  headerTitle: { fontSize: 15, fontWeight: '800', color: '#fff' },
-  headerSub: { fontSize: 11, color: Colors.textDim },
+  headerTitle: { fontSize: 16, fontWeight: '800', color: '#fff' },
+  headerSub: { fontSize: 12, color: '#94a3b8' },
 
   card: {
-    backgroundColor: Colors.bgCard, borderRadius: 14,
-    borderWidth: 1, borderColor: Colors.border, padding: 14, gap: 6,
+    backgroundColor: Colors.bgCard, borderRadius: 16,
+    borderWidth: 1.5, borderColor: Colors.border, padding: 16, gap: 10,
   },
-  cardSelected: { borderColor: Colors.primary, backgroundColor: 'rgba(6,182,212,0.05)' },
+  cardSelected: { borderColor: Colors.primary, backgroundColor: 'rgba(6,182,212,0.07)' },
 
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  truckName: { fontSize: 14, fontWeight: '800', color: '#fff', flex: 1, marginRight: 8 },
+  truckName: { fontSize: 16, fontWeight: '800', color: '#fff', flex: 1, marginRight: 8 },
   statusBadge: {
-    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, borderWidth: 1,
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, borderWidth: 1.5,
   },
-  statusText: { fontSize: 10, fontWeight: '700' },
+  statusText: { fontSize: 12, fontWeight: '700' },
 
-  route: { fontSize: 12, color: Colors.textSecondary },
+  route: { fontSize: 13, color: '#e2e8f0' },
 
   progressWrap: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  progressTrack: { flex: 1, height: 4, backgroundColor: Colors.bgCardHover, borderRadius: 2, overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: 2 },
-  progressText: { fontSize: 10, color: Colors.textDim, width: 30 },
+  progressTrack: { flex: 1, height: 6, backgroundColor: Colors.bgCardHover, borderRadius: 3, overflow: 'hidden' },
+  progressFill: { height: '100%', borderRadius: 3 },
+  progressText: { fontSize: 12, color: '#94a3b8', width: 34 },
 
   metrics: { flexDirection: 'row', gap: 8 },
   metric: {
-    backgroundColor: Colors.bg, borderRadius: 8, padding: 8, alignItems: 'center', minWidth: 60,
+    backgroundColor: Colors.bg, borderRadius: 10, padding: 10, alignItems: 'center', minWidth: 68,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
   },
-  metricVal: { fontSize: 13, fontWeight: '800', color: '#fff' },
-  metricLabel: { fontSize: 9, color: Colors.textDim, fontWeight: '600' },
+  metricVal: { fontSize: 15, fontWeight: '800', color: '#fff' },
+  metricLabel: { fontSize: 11, color: '#94a3b8', fontWeight: '600', marginTop: 2 },
 
   loadInfo: {
-    backgroundColor: 'rgba(6,182,212,0.08)', borderRadius: 8,
-    borderWidth: 1, borderColor: 'rgba(6,182,212,0.2)', padding: 8,
+    backgroundColor: 'rgba(6,182,212,0.08)', borderRadius: 10,
+    borderWidth: 1, borderColor: 'rgba(6,182,212,0.25)', padding: 10,
   },
-  loadInfoText: { fontSize: 11, color: '#67e8f9' },
+  loadInfoText: { fontSize: 13, color: '#67e8f9' },
 
   detailBtn: {
     backgroundColor: 'rgba(6,182,212,0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(6,182,212,0.3)',
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    borderWidth: 1.5,
+    borderColor: 'rgba(6,182,212,0.35)',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 2,
   },
   detailBtnText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
     color: '#67e8f9',
   },

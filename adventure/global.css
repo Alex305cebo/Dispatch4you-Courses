@@ -14,12 +14,33 @@ body {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  /* Запрет скролла и движения всего UI на мобильных */
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
                'Helvetica Neue', 'Segoe UI', system-ui, sans-serif;
 }
 
 html {
   background-color: #000000;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  /* Запрет pull-to-refresh и overscroll на iOS/Android */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: auto;
+}
+
+/* Корневой React контейнер — строго по размеру экрана */
+#root, [data-reactroot], .css-view-175oi2r:first-child {
+  height: 100% !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
 }
 
 /* ── Scrollbar — thin & elegant ─────────────────────────────── */
@@ -87,7 +108,29 @@ html {
   50%       { box-shadow: 0 0 20px rgba(10,132,255,0.6); }
 }
 
+@keyframes factFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-4px); }
+}
+
+@keyframes follow-pulse-orange {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(251,146,60,0.5); }
+  50%       { box-shadow: 0 0 0 8px rgba(251,146,60,0); }
+}
+
 /* ── Map styles ──────────────────────────────────────────────── */
+
+/* Карта — разрешаем touch внутри контейнера amCharts */
+[id^="chartdiv"], .am5-layer-30, .am5-layer-40,
+[class*="am5"] {
+  touch-action: pan-x pan-y pinch-zoom !important;
+}
+
 .usa-map-react path {
   transition: all 0.2s ease;
 }
