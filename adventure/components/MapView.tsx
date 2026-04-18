@@ -825,17 +825,14 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
 
       const onClick = () => {
         truckClickedRef.current = true;
-        if (followTruckIdRef.current && followTruckIdRef.current !== d.truckId) {
-          followTruckIdRef.current = null;
-          setFollowTruck(false);
-        }
-        // Показываем карточку на 5 секунд
+        // Показываем карточку
         showCard(d.truckId, 15000);
         setSelectedTruck(d);
         selectedTruckRef.current = d;
-        // Если слежение активно — переключаем на кликнутый трак
+        // Если слежение активно — переключаем на кликнутый трак (не выключаем!)
         if (followTruckIdRef.current !== null || followTruck) {
           followTruckIdRef.current = d.truckId;
+          setFollowTruck(true);
         }
         onTruckInfoRef.current?.(d.truckId);
         const zl = variant === 'micro' ? 3 : 5;
@@ -1107,11 +1104,7 @@ function MapAmCharts({ onTruckInfo, onFindLoad, onGuideOpen, guideActive }: {
     polygonSeries.mapPolygons.template.events.on("click", (ev: any) => {
       // Если клик был на карточке трака — не открываем попап штата
       if (truckClickedRef.current) return;
-      // Клик по штату = клик не на трак → сбрасываем авто-слежение
-      if (followTruckIdRef.current) {
-        followTruckIdRef.current = null;
-        setFollowTruck(false);
-      }
+      // Клик по штату НЕ сбрасывает слежение — пользователь просто смотрит инфо о штате
       const rawId = ev.target.dataItem?.get("id") as string;
       const stateName = ev.target.dataItem?.get("name");
       if (!rawId) return;
