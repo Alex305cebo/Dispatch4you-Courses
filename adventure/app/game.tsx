@@ -583,10 +583,13 @@ export default function GameScreen() {
   const TruckStrip = () => (
     <div style={{
       display: 'flex', overflowX: 'auto', gap: 8,
-      padding: '8px 10px',
+      padding: isWide ? '8px 10px' : '6px 10px',
       background: 'linear-gradient(180deg, rgba(10,18,38,0.98) 0%, rgba(8,14,30,0.98) 100%)',
       borderBottom: '1px solid rgba(56,189,248,0.12)',
       scrollbarWidth: 'none',
+      WebkitOverflowScrolling: 'touch',
+      touchAction: 'pan-x',
+      msOverflowStyle: 'none',
     } as any}>
       {trucks.map(truck => {
         const color = getTruckColor(truck, gameMinute);
@@ -611,8 +614,8 @@ export default function GameScreen() {
           <div key={truck.id}
             onClick={() => handleTruckClick(truck)}
             style={{
-              minWidth: 140, flexShrink: 0,
-              borderRadius: 14, overflow: 'hidden',
+              minWidth: isWide ? 140 : 120, flexShrink: 0,
+              borderRadius: 12, overflow: 'hidden',
               background: isSelected
                 ? `linear-gradient(135deg, rgba(${parseInt(color.slice(1,3),16)},${parseInt(color.slice(3,5),16)},${parseInt(color.slice(5,7),16)},0.22), rgba(10,18,38,0.97))`
                 : 'rgba(255,255,255,0.05)',
@@ -625,7 +628,7 @@ export default function GameScreen() {
             {/* Цветная полоска сверху */}
             <div style={{ height: 5, width: '100%', background: `linear-gradient(90deg, ${color}, ${color}66)`, boxShadow: `0 0 10px ${color}` } as any} />
 
-            <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 4 } as any}>
+            <div style={{ padding: isWide ? '8px 10px' : '6px 8px', display: 'flex', flexDirection: 'column', gap: isWide ? 4 : 3 } as any}>
 
               {/* Emoji настроения — отдельно сверху, не накладывается */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' } as any}>
@@ -633,14 +636,14 @@ export default function GameScreen() {
                   <span style={{ fontSize: 13, fontWeight: 900, color: '#fff', letterSpacing: 0.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
                     {driverName}
                   </span>
-                  <div style={{ display: 'flex', gap: 4 } as any}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: '#38bdf8', background: 'rgba(56,189,248,0.15)', padding: '2px 6px', borderRadius: 4 } as any}>TRK {truckNum}</span>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: '#cbd5e1', background: 'rgba(255,255,255,0.08)', padding: '2px 6px', borderRadius: 4 } as any}>TRL {trailerNum}</span>
+                  <div style={{ display: 'flex', gap: 3 } as any}>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: '#38bdf8', background: 'rgba(56,189,248,0.15)', padding: '1px 5px', borderRadius: 4 } as any}>TRK {truckNum}</span>
+                    {isWide && <span style={{ fontSize: 9, fontWeight: 700, color: '#cbd5e1', background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4 } as any}>TRL {trailerNum}</span>}
                   </div>
                 </div>
                 {/* Emoji — с отступом, не накладывается */}
                 <div style={{ marginLeft: 6, flexShrink: 0 } as any}>
-                  <img src={moodEmoji} width={26} height={26} className={animClass} style={{ imageRendering: 'auto', display: 'block' } as any} />
+                  <img src={moodEmoji} width={isWide ? 26 : 22} height={isWide ? 26 : 22} className={animClass} style={{ imageRendering: 'auto', display: 'block' } as any} />
                 </div>
               </div>
 
@@ -649,22 +652,22 @@ export default function GameScreen() {
                 {(truck as any).onNightStop ? '🌙 Ночёвка' : (truck as any).hosRestUntilMinute > 0 ? '😴 HOS отдых' : STATUS_LABEL[truck.status]}
               </span>
 
-              {/* Маршрут */}
-              {truck.destinationCity && !(truck as any).onNightStop && !((truck as any).hosRestUntilMinute > 0) && (
-                <span style={{ fontSize: 12, color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
+              {/* Маршрут — только на десктопе */}
+              {isWide && truck.destinationCity && !(truck as any).onNightStop && !((truck as any).hosRestUntilMinute > 0) && (
+                <span style={{ fontSize: 11, color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
                   → {truck.destinationCity}
                 </span>
               )}
 
               {/* HOS + alert */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 } as any}>
-                <span style={{ fontSize: 12, fontWeight: 800, color: hosColor } as any}>⏱ {Math.round(hos * 10) / 10}h</span>
-                {isAlert && <span style={{ fontSize: 12, color, fontWeight: 900 } as any}>⚠️</span>}
+                <span style={{ fontSize: isWide ? 12 : 11, fontWeight: 800, color: hosColor } as any}>⏱ {Math.round(hos * 10) / 10}h</span>
+                {isAlert && <span style={{ fontSize: 11, color, fontWeight: 900 } as any}>⚠️</span>}
               </div>
 
-              {/* Прогресс */}
-              {isMoving && !(truck as any).onNightStop && !((truck as any).hosRestUntilMinute > 0) && (
-                <div style={{ height: 5, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' } as any}>
+              {/* Прогресс — только на десктопе */}
+              {isWide && isMoving && !(truck as any).onNightStop && !((truck as any).hosRestUntilMinute > 0) && (
+                <div style={{ height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' } as any}>
                   <div style={{ height: '100%', width: `${progressPct}%`, background: `linear-gradient(90deg, ${color}88, ${color})`, borderRadius: 3, boxShadow: `0 0 6px ${color}`, transition: 'width 0.5s' } as any} />
                 </div>
               )}
