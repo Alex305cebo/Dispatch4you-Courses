@@ -786,22 +786,20 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         alertPulse.animate({ key: "fillOpacity", from: 0.5, to: 0, duration: warnSpeed, loops: Infinity });
       }
 
-      // Эмодзи трака по статусу
+      // Эмодзи трака по статусу (текстовый — стабильный)
       const truckEmoji = (() => {
         if (d.breakdown) return "🔧";
         if (d.waiting) return "⏳";
         if (d.status === "at_pickup") return "📦";
         if (d.status === "at_delivery") return "🏭";
         if (d.status === "loaded") return "🚛";
-        if (d.status === "driving") return "🚚";
+        if (d.status === "driving") return "🚛";
         if ((d as any).onNightStop) return "🌙";
         return "🅿️";
       })();
 
       const emojiSize = variant === 'micro' ? 16 : variant === 'medium' ? 20 : 26;
       const dyBase = -(emojiSize / 2);
-
-      // Большая прозрачная hit-area — добавляется ПОСЛЕ определения onClick/onHover ниже
       const hitRadius = variant === 'micro' ? 20 : 28;
 
       const emojiLabel = container.children.push(am5.Label.new(root, {
@@ -1351,17 +1349,34 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
 
     // Траки и маршруты — каждые 2 секунды (плавное движение)
     let lastVariant = 'medium';
+    // Отслеживаем статусы для минимального rebuild
+    let lastStatusKey = '';
     intervalRef.current = setInterval(() => {
       const newZoom = chartRef.current?.get("zoomLevel") ?? 1;
       const newVariant = newZoom < 2 ? 'micro' : newZoom < 4 ? 'medium' : 'large';
       zoomLevelRef.current = newZoom;
       rebuildHistory(root, chart);
       rebuildRoutes(root, chart);
-      if (newVariant !== lastVariant) {
+
+      // Ключ статусов — меняется только при смене статуса/количества
+      const statusKey = trucksRef.current.map(t => `${t.id}:${t.status}:${(t as any).onNightStop ? 'n' : ''}`).join('|');
+      const variantChanged = newVariant !== lastVariant;
+
+      if (variantChanged) {
         lastVariant = newVariant;
+        lastStatusKey = statusKey;
         switchCardVariant(root, chart);
-      } else {
+      } else if (statusKey !== lastStatusKey) {
+        // Статус изменился — пересоздаём серию (меняется иконка)
+        lastStatusKey = statusKey;
         rebuildTruckSeries(root, chart);
+      } else {
+        // Только позиции — обновляем данные без пересоздания bullets
+        if (truckSeriesRef.current) {
+          try {
+            truckSeriesRef.current.data.setAll(buildPointData());
+          } catch (_) {}
+        }
       }
     }, 2000);
 

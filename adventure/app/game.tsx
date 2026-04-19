@@ -21,6 +21,7 @@ import { useGameStore, formatGameTime, formatTimeDual, formatTimeShort, ActiveLo
 import { SHIFT_DURATION, CITY_STATE } from '../constants/config';
 import MapView from '../components/MapView';
 import TruckPanel from '../components/TruckPanel';
+import TruckStripComponent from '../components/TruckStripComponent';
 import LoadBoardPanel from '../components/LoadBoardPanel';
 import EventsPanel from '../components/EventsPanel';
 import NegotiationModal from '../components/NegotiationModal';
@@ -73,20 +74,35 @@ function getDriverAvatar(truckId: string): string {
   return avatars[n % avatars.length];
 }
 
-// Google Noto Animated Emoji — CDN (Apache 2.0, бесплатно)
-const NOTO = 'https://fonts.gstatic.com/s/e/notoemoji/latest';
+// Microsoft Fluent Animated Emojis — CDN URLs
+const FLUENT = 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis';
+const E = {
+  pilot:     `${FLUENT}/People/Pilot.png`,
+  sleeping:  `${FLUENT}/Smilies/Zzz.png`,
+  explode:   `${FLUENT}/Smilies/Exploding%20Head.png`,
+  tired:     `${FLUENT}/Smilies/Tired%20Face.png`,
+  biceps:    `${FLUENT}/Smilies/Smiling%20Face%20with%20Sunglasses.png`,
+  strstruck: `${FLUENT}/Smilies/Star-Struck.png`,
+  happy:     `${FLUENT}/Smilies/Beaming%20Face%20with%20Smiling%20Eyes.png`,
+  smile:     `${FLUENT}/Smilies/Slightly%20Smiling%20Face.png`,
+  neutral:   `${FLUENT}/Smilies/Neutral%20Face.png`,
+  worried:   `${FLUENT}/Smilies/Worried%20Face.png`,
+  angry:     `${FLUENT}/Smilies/Angry%20Face.png`,
+  rage:      `${FLUENT}/Smilies/Enraged%20Face.png`,
+};
 function getMoodEmoji(mood: number, status: string, truck?: any): string {
-  if (truck && ((truck as any).onNightStop || (truck as any).hosRestUntilMinute > 0)) return `${NOTO}/1f634/512.webp`; // 😴 sleeping
-  if (status === 'breakdown') return `${NOTO}/1f92f/512.webp`; // 🤯 exploding
-  if (status === 'waiting')   return `${NOTO}/1f62b/512.webp`; // 😫 tired
-  if (status === 'at_pickup') return `${NOTO}/1f4aa/512.webp`; // 💪 loading
-  if (mood >= 90) return `${NOTO}/1f929/512.webp`; // 🤩 star-struck
-  if (mood >= 75) return `${NOTO}/1f604/512.webp`; // 😄 grinning
-  if (mood >= 60) return `${NOTO}/1f60a/512.webp`; // 😊 smiling
-  if (mood >= 45) return `${NOTO}/1f610/512.webp`; // 😐 neutral
-  if (mood >= 30) return `${NOTO}/1f615/512.webp`; // 😕 confused
-  if (mood >= 15) return `${NOTO}/1f620/512.webp`; // 😠 angry
-  return `${NOTO}/1f621/512.webp`;                  // 😡 rage (red)
+  if (truck && ((truck as any).onNightStop || (truck as any).hosRestUntilMinute > 0)) return E.sleeping;
+  if (status === 'breakdown')   return E.explode;
+  if (status === 'waiting')     return E.tired;
+  if (status === 'at_pickup')   return E.biceps;
+  if (status === 'at_delivery') return E.strstruck;
+  if (mood >= 90) return E.strstruck;
+  if (mood >= 75) return E.happy;
+  if (mood >= 60) return E.smile;
+  if (mood >= 45) return E.neutral;
+  if (mood >= 30) return E.worried;
+  if (mood >= 15) return E.angry;
+  return E.rage;
 }
 
 function getTruckColor(truck: any, gameMinute = 0): string {
@@ -640,6 +656,11 @@ export default function GameScreen() {
   };
 
   // ── TRUCK STRIP ───────────────────────────────────────────────────────────
+  // Стабильный ключ — меняется только при смене статуса/позиции, не при каждом тике
+  const truckStripKey = trucks.map(t =>
+    `${t.id}:${t.status}:${t.mood}:${Math.round(t.progress * 20)}:${t.hoursLeft.toFixed(0)}:${t.currentCity}:${t.destinationCity || ''}:${t.currentLoad?.agreedRate || 0}`
+  ).join('|');
+
   const TruckStrip = () => {
     const scrollRef = useRef<HTMLDivElement>(null);
     const isDragging = useRef(false);
@@ -765,8 +786,8 @@ export default function GameScreen() {
         style={{
           display: 'flex', overflowX: 'auto', gap: 8,
           padding: isWide ? '8px 10px' : '7px 10px',
-          background: 'linear-gradient(180deg, rgba(10,18,38,0.98) 0%, rgba(8,14,30,0.98) 100%)',
-          borderBottom: '1px solid rgba(56,189,248,0.12)',
+          background: 'transparent',
+          borderBottom: 'none',
           scrollbarWidth: 'none',
           WebkitOverflowScrolling: 'touch',
           touchAction: 'pan-x',
@@ -856,31 +877,28 @@ export default function GameScreen() {
               transition: 'all 0.2s',
             } as any}
           >
-            {/* ── ЛЕВЫЙ БЛОК: персонаж ── */}
+            {/* ── ЛЕВЫЙ БЛОК: водитель ── */}
             <div style={{
               width: AVATAR_W, flexShrink: 0,
               background: `linear-gradient(180deg, rgba(${parseInt(color.slice(1,3),16)},${parseInt(color.slice(3,5),16)},${parseInt(color.slice(5,7),16)},0.2) 0%, rgba(4,8,20,0.95) 100%)`,
               borderRight: `1px solid ${color}33`,
               display: 'flex', flexDirection: 'column',
               alignItems: 'center', justifyContent: 'center',
-              gap: 6, position: 'relative',
+              gap: 4, position: 'relative',
             } as any}>
-              {/* Статус-точка */}
-              <div style={{
-                position: 'absolute', top: 8, right: 8,
-                width: 10, height: 10, borderRadius: '50%',
-                background: color,
-                boxShadow: `0 0 8px ${color}`,
-              } as any} />
-              {/* Большой эмодзи — место для будущего персонажа */}
+              {/* Эмодзи настроения — маленький в правом верхнем углу */}
+              <div style={{ position: 'absolute', top: 5, right: 5 } as any}>
+                <img src={moodEmoji} width={22} height={22} style={{ display: 'block' } as any} />
+              </div>
+              {/* Пилот — главное изображение водителя */}
               <img
-                src={moodEmoji}
-                width={isWide ? 48 : 38}
-                height={isWide ? 48 : 38}
+                src={E.pilot}
+                width={isWide ? 62 : 52}
+                height={isWide ? 62 : 52}
                 className={animClass}
-                style={{ imageRendering: 'auto', display: 'block', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.6))' } as any}
+                style={{ imageRendering: 'auto', display: 'block', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))' } as any}
               />
-              {/* Статус под эмодзи */}
+              {/* Статус под пилотом */}
               <div style={{
                 fontSize: isWide ? 10 : 9, fontWeight: 700,
                 color: color,
@@ -1177,7 +1195,14 @@ export default function GameScreen() {
           {/* Левая колонка: топбар + траки + карта */}
           <View style={s.leftCol}>
             <TopBar />
-            <TruckStrip />
+            <TruckStripComponent
+              isWide={isWide}
+              scrollPosRef={truckStripScrollPos}
+              onTruckClick={handleTruckClick}
+              selectedTruckId={selectedTruckId}
+              indicatorNotifications={indicatorNotifications}
+              gameMinute={gameMinute}
+            />
             <View style={s.mapArea}>
               <ErrorBoundary name="Map"><MapView {...mapProps} /></ErrorBoundary>
             </View>
@@ -1198,7 +1223,14 @@ export default function GameScreen() {
         /* ══ MOBILE ══ */
         <View style={s.mobile}>
           <TopBar />
-          <TruckStrip />
+          <TruckStripComponent
+            isWide={isWide}
+            scrollPosRef={truckStripScrollPos}
+            onTruckClick={handleTruckClick}
+            selectedTruckId={selectedTruckId}
+            indicatorNotifications={indicatorNotifications}
+            gameMinute={gameMinute}
+          />
           <View style={s.mobileContent}>
             {activeTab === 'map'       && <ErrorBoundary name="Map"><MapView {...mapProps} /></ErrorBoundary>}
             {activeTab === 'loadboard' && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} onAssigned={handleAssigned} /></ErrorBoundary>}
@@ -1457,7 +1489,7 @@ const s = StyleSheet.create({
   actionsRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
 
   // ── TRUCK STRIP ──
-  truckStrip: { maxHeight: 120, backgroundColor: BG2, borderBottomWidth: 1, borderBottomColor: BORDER },
+  truckStrip: { maxHeight: 120, backgroundColor: 'transparent', borderBottomWidth: 0 },
   truckStripContent: { paddingHorizontal: 8, paddingVertical: 6, gap: 6, flexDirection: 'row' },
   truckCard: {
     width: 100, borderRadius: 8,
