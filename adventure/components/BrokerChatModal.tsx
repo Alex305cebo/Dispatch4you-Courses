@@ -66,7 +66,7 @@ export default function BrokerChatModal({ brokerName, truckId, loadInfo, onClose
   const [typing, setTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const qRowRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const qRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -76,16 +76,27 @@ export default function BrokerChatModal({ brokerName, truckId, loadInfo, onClose
 
   // Скролл мышкой по горизонтали для строк подсказок
   useEffect(() => {
-    qRowRefs.current.forEach(el => {
-      if (!el) return;
-      const handler = (e: WheelEvent) => {
-        if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; // уже горизонтальный скролл
-        e.preventDefault();
-        el.scrollLeft += e.deltaY * 1.5;
-      };
-      el.addEventListener('wheel', handler, { passive: false });
-      return () => el.removeEventListener('wheel', handler);
-    });
+    const el = qRef.current;
+    if (!el) return;
+    // Mouse drag
+    let isDown = false, startX = 0, scrollStart = 0;
+    const onMouseDown = (e: MouseEvent) => { isDown = true; startX = e.pageX; scrollStart = el.scrollLeft; el.style.cursor = 'grabbing'; };
+    const onMouseMove = (e: MouseEvent) => { if (!isDown) return; e.preventDefault(); el.scrollLeft = scrollStart - (e.pageX - startX); };
+    const onMouseUp = () => { isDown = false; el.style.cursor = 'grab'; };
+    // Wheel
+    const onWheel = (e: WheelEvent) => { e.preventDefault(); el.scrollLeft += (e.deltaY || e.deltaX) * 1.5; };
+    el.addEventListener('mousedown', onMouseDown);
+    el.addEventListener('mousemove', onMouseMove);
+    el.addEventListener('mouseup', onMouseUp);
+    el.addEventListener('mouseleave', onMouseUp);
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => {
+      el.removeEventListener('mousedown', onMouseDown);
+      el.removeEventListener('mousemove', onMouseMove);
+      el.removeEventListener('mouseup', onMouseUp);
+      el.removeEventListener('mouseleave', onMouseUp);
+      el.removeEventListener('wheel', onWheel);
+    };
   }, []);
 
   const sendMessage = (text: string) => {
@@ -192,38 +203,37 @@ export default function BrokerChatModal({ brokerName, truckId, loadInfo, onClose
           )}
         </div>
 
-        {/* Quick messages — 2 строки со скроллом */}
+        {/* Quick messages — единая строка со скроллом */}
         <style>{`
-          .qrow { display:flex; overflow-x:auto; gap:6px; scrollbar-width:none; padding:0 12px; }
-          .qrow::-webkit-scrollbar { display:none; }
-          .qrow-wrap { position:relative; }
-          .qrow-arrow {
-            position:absolute; right:0; top:0; bottom:0; width:28px;
-            background:linear-gradient(to left, rgba(20,25,34,0.95) 60%, transparent);
-            display:flex; align-items:center; justify-content:flex-end; padding-right:4px;
-            font-size:13px; color:rgba(251,146,60,0.9);
-            cursor:pointer; user-select:none;
-          }
-          .qrow-arrow:hover { color:#fb923c; }
+          .qstrip { display:flex; overflow-x:auto; gap:6px; scrollbar-width:none; padding:0 4px; cursor:grab; user-select:none; }
+          .qstrip:active { cursor:grabbing; }
+          .qstrip::-webkit-scrollbar { display:none; }
         `}</style>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '6px 0 8px', display: 'flex', flexDirection: 'column', gap: 5 } as any}>
-          {[QUICK_MESSAGES.slice(0, Math.ceil(QUICK_MESSAGES.length / 2)), QUICK_MESSAGES.slice(Math.ceil(QUICK_MESSAGES.length / 2))].map((row, ri) => (
-            <div key={ri} className="qrow-wrap">
-              <div className="qrow" ref={el => { qRowRefs.current[ri] = el; }}>
-                {row.map((q, i) => (
-                  <button key={i} onClick={() => sendMessage(q)} style={{
-                    flexShrink: 0, padding: '5px 10px', borderRadius: 10, cursor: 'pointer',
-                    background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.25)',
-                    color: '#fb923c', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
-                  }}>{q}</button>
-                ))}
-              </div>
-              <div className="qrow-arrow" onClick={() => {
-                const el = qRowRefs.current[ri];
-                if (el) el.scrollBy({ left: 120, behavior: 'smooth' });
-              }}>›</div>
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '6px 0 8px' } as any}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, paddingLeft: 8, paddingRight: 8 } as any}>
+            {/* Стрелка влево */}
+            <button onClick={() => qRef.current?.scrollBy({ left: -140, behavior: 'smooth' })} style={{
+              flexShrink: 0, width: 26, height: 26, borderRadius: 8,
+              background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.25)',
+              color: '#fb923c', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            } as any}>‹</button>
+            {/* Скролл-полоса */}
+            <div ref={qRef} className="qstrip" style={{ flex: 1 } as any}>
+              {QUICK_MESSAGES.map((q, i) => (
+                <button key={i} onClick={() => sendMessage(q)} style={{
+                  flexShrink: 0, padding: '6px 12px', borderRadius: 20, cursor: 'pointer',
+                  background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.25)',
+                  color: '#fb923c', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
+                }}>{q}</button>
+              ))}
             </div>
-          ))}
+            {/* Стрелка вправо */}
+            <button onClick={() => qRef.current?.scrollBy({ left: 140, behavior: 'smooth' })} style={{
+              flexShrink: 0, width: 26, height: 26, borderRadius: 8,
+              background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.25)',
+              color: '#fb923c', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            } as any}>›</button>
+          </div>
         </div>
 
         {/* Input */}

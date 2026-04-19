@@ -68,7 +68,7 @@ export default function DriverCommunicationModal({ truck, onClose, onCall }: Pro
   const [messages, setMessages] = useState<Message[]>([]);
   const [typing, setTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const dqRowRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const dqRef = useRef<HTMLDivElement>(null);
 
   // Load existing messages from notifications
   useEffect(() => {
@@ -98,16 +98,25 @@ export default function DriverCommunicationModal({ truck, onClose, onCall }: Pro
 
   // Скролл мышкой по горизонтали
   useEffect(() => {
-    dqRowRefs.current.forEach(el => {
-      if (!el) return;
-      const handler = (e: WheelEvent) => {
-        if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
-        e.preventDefault();
-        el.scrollLeft += e.deltaY * 1.5;
-      };
-      el.addEventListener('wheel', handler, { passive: false });
-      return () => el.removeEventListener('wheel', handler);
-    });
+    const el = dqRef.current;
+    if (!el) return;
+    let isDown = false, startX = 0, scrollStart = 0;
+    const onMouseDown = (e: MouseEvent) => { isDown = true; startX = e.pageX; scrollStart = el.scrollLeft; el.style.cursor = 'grabbing'; };
+    const onMouseMove = (e: MouseEvent) => { if (!isDown) return; e.preventDefault(); el.scrollLeft = scrollStart - (e.pageX - startX); };
+    const onMouseUp = () => { isDown = false; el.style.cursor = 'grab'; };
+    const onWheel = (e: WheelEvent) => { e.preventDefault(); el.scrollLeft += (e.deltaY || e.deltaX) * 1.5; };
+    el.addEventListener('mousedown', onMouseDown);
+    el.addEventListener('mousemove', onMouseMove);
+    el.addEventListener('mouseup', onMouseUp);
+    el.addEventListener('mouseleave', onMouseUp);
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => {
+      el.removeEventListener('mousedown', onMouseDown);
+      el.removeEventListener('mousemove', onMouseMove);
+      el.removeEventListener('mouseup', onMouseUp);
+      el.removeEventListener('mouseleave', onMouseUp);
+      el.removeEventListener('wheel', onWheel);
+    };
   }, []);
 
   const sendMessage = (text: string) => {
@@ -222,41 +231,37 @@ export default function DriverCommunicationModal({ truck, onClose, onCall }: Pro
           )}
         </div>
 
-        {/* Quick replies — 2 строки со скроллом */}
+        {/* Quick replies — единая строка со скроллом */}
         <style>{`
-          .dqrow { display:flex; overflow-x:auto; gap:6px; scrollbar-width:none; padding:0 12px; }
-          .dqrow::-webkit-scrollbar { display:none; }
-          .dqrow-wrap { position:relative; }
-          .dqrow-arrow {
-            position:absolute; right:0; top:0; bottom:0; width:28px;
-            background:linear-gradient(to left, rgba(26,31,46,0.95) 60%, transparent);
-            display:flex; align-items:center; justify-content:flex-end; padding-right:4px;
-            font-size:13px; color:rgba(10,132,255,0.9);
-            cursor:pointer; user-select:none;
-          }
-          .dqrow-arrow:hover { color:#0a84ff; }
+          .dqstrip { display:flex; overflow-x:auto; gap:6px; scrollbar-width:none; padding:0 4px; cursor:grab; user-select:none; }
+          .dqstrip:active { cursor:grabbing; }
+          .dqstrip::-webkit-scrollbar { display:none; }
         `}</style>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '6px 0 8px', display: 'flex', flexDirection: 'column', gap: 5 } as any}>
-          {[QUICK_MESSAGES.slice(0, Math.ceil(QUICK_MESSAGES.length / 2)), QUICK_MESSAGES.slice(Math.ceil(QUICK_MESSAGES.length / 2))].map((row, ri) => (
-            <div key={ri} className="dqrow-wrap">
-              <div className="dqrow" ref={el => { dqRowRefs.current[ri] = el; }}>
-                {row.map((msg, i) => (
-                  <button key={i} onClick={() => sendMessage(msg)} disabled={typing} style={{
-                    flexShrink: 0, padding: '5px 10px', borderRadius: 10,
-                    cursor: typing ? 'not-allowed' : 'pointer',
-                    background: 'rgba(10,132,255,0.08)', border: '1px solid rgba(10,132,255,0.2)',
-                    color: typing ? '#475569' : Colors.primary,
-                    fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
-                    opacity: typing ? 0.5 : 1, transition: 'all 0.15s',
-                  }}>{msg}</button>
-                ))}
-              </div>
-              <div className="dqrow-arrow" onClick={() => {
-                const el = dqRowRefs.current[ri];
-                if (el) el.scrollBy({ left: 120, behavior: 'smooth' });
-              }}>›</div>
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '6px 0 8px' } as any}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, paddingLeft: 8, paddingRight: 8 } as any}>
+            <button onClick={() => dqRef.current?.scrollBy({ left: -140, behavior: 'smooth' })} style={{
+              flexShrink: 0, width: 26, height: 26, borderRadius: 8,
+              background: 'rgba(10,132,255,0.08)', border: '1px solid rgba(10,132,255,0.2)',
+              color: Colors.primary, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            } as any}>‹</button>
+            <div ref={dqRef} className="dqstrip" style={{ flex: 1 } as any}>
+              {QUICK_MESSAGES.map((msg, i) => (
+                <button key={i} onClick={() => sendMessage(msg)} disabled={typing} style={{
+                  flexShrink: 0, padding: '6px 12px', borderRadius: 20,
+                  cursor: typing ? 'not-allowed' : 'pointer',
+                  background: 'rgba(10,132,255,0.08)', border: '1px solid rgba(10,132,255,0.2)',
+                  color: typing ? '#475569' : Colors.primary,
+                  fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
+                  opacity: typing ? 0.5 : 1, transition: 'all 0.15s',
+                }}>{msg}</button>
+              ))}
             </div>
-          ))}
+            <button onClick={() => dqRef.current?.scrollBy({ left: 140, behavior: 'smooth' })} style={{
+              flexShrink: 0, width: 26, height: 26, borderRadius: 8,
+              background: 'rgba(10,132,255,0.08)', border: '1px solid rgba(10,132,255,0.2)',
+              color: Colors.primary, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            } as any}>›</button>
+          </div>
         </div>
       </div>
     </div>
