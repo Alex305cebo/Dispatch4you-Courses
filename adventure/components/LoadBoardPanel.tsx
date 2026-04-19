@@ -82,7 +82,7 @@ function LoadRow({ load, onCall, isExpanded, onToggle, scrollViewRef, onLayout, 
 
       {/* Развёрнутые детали */}
       {isExpanded && (
-        <View style={styles.loadDetails}>
+        <TouchableOpacity style={styles.loadDetails} onPress={handleToggle} activeOpacity={1}>
           {load.isUrgent && (
             <View style={styles.urgentBadge}>
               <Text style={styles.urgentText}>🔥 СРОЧНО +$200</Text>
@@ -140,7 +140,7 @@ function LoadRow({ load, onCall, isExpanded, onToggle, scrollViewRef, onLayout, 
               </Text>
             </GuideSpotlight>
           </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
       )}
     </View>
   );
@@ -251,15 +251,15 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
     return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
   }, []);
 
-  // Автоматически раскрыть первый груз при первом входе
-  useEffect(() => {
-    try {
-      const isFirstTime = !localStorage.getItem('dispatch-guide-done');
-      if (isFirstTime && availableLoads.length > 0 && !expandedId) {
-        setExpandedId(availableLoads[0].id);
-      }
-    } catch {}
-  }, [availableLoads, expandedId]);
+  // Автоматически раскрыть первый груз при первом входе — ОТКЛЮЧЕНО
+  // useEffect(() => {
+  //   try {
+  //     const isFirstTime = !localStorage.getItem('dispatch-guide-done');
+  //     if (isFirstTime && availableLoads.length > 0 && !expandedId) {
+  //       setExpandedId(availableLoads[0].id);
+  //     }
+  //   } catch {}
+  // }, [availableLoads, expandedId]);
 
   // При монтировании — применить предзаполненный поиск из стора
   useEffect(() => {

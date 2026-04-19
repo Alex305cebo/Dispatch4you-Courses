@@ -207,19 +207,33 @@ export default function DriverCommunicationModal({ truck, onClose, onCall }: Pro
           )}
         </div>
 
-        {/* Quick replies */}
-        <div style={{
-          padding: '8px 12px', borderTop: '1px solid rgba(255,255,255,0.06)',
-          display: 'flex', flexWrap: 'wrap', gap: 5,
-          maxHeight: 120, overflowY: 'auto', scrollbarWidth: 'none',
-        } as any}>
-          {QUICK_MESSAGES.map((msg, i) => (
-            <button key={i} onClick={() => sendMessage(msg)} disabled={typing} style={{
-              padding: '6px 10px', borderRadius: 14, cursor: typing ? 'not-allowed' : 'pointer',
-              background: 'rgba(10,132,255,0.08)', border: '1px solid rgba(10,132,255,0.2)',
-              color: typing ? '#475569' : Colors.primary, fontSize: 11, fontWeight: 600,
-              opacity: typing ? 0.5 : 1, transition: 'all 0.15s',
-            }}>{msg}</button>
+        {/* Quick replies — 2 строки со скроллом */}
+        <style>{`
+          .dqrow { display:flex; overflow-x:auto; gap:6px; scrollbar-width:none; padding:0 12px; }
+          .dqrow::-webkit-scrollbar { display:none; }
+          .dqrow-wrap { position:relative; }
+          .dqrow-arrow { position:absolute; right:0; top:0; bottom:0; width:28px;
+            background:linear-gradient(to left, rgba(26,31,46,0.95) 60%, transparent);
+            display:flex; align-items:center; justify-content:flex-end; padding-right:4px;
+            pointer-events:none; font-size:13px; color:rgba(10,132,255,0.7); }
+        `}</style>
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '6px 0 8px', display: 'flex', flexDirection: 'column', gap: 5 } as any}>
+          {[QUICK_MESSAGES.slice(0, Math.ceil(QUICK_MESSAGES.length / 2)), QUICK_MESSAGES.slice(Math.ceil(QUICK_MESSAGES.length / 2))].map((row, ri) => (
+            <div key={ri} className="dqrow-wrap">
+              <div className="dqrow">
+                {row.map((msg, i) => (
+                  <button key={i} onClick={() => sendMessage(msg)} disabled={typing} style={{
+                    flexShrink: 0, padding: '5px 10px', borderRadius: 10,
+                    cursor: typing ? 'not-allowed' : 'pointer',
+                    background: 'rgba(10,132,255,0.08)', border: '1px solid rgba(10,132,255,0.2)',
+                    color: typing ? '#475569' : Colors.primary,
+                    fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
+                    opacity: typing ? 0.5 : 1, transition: 'all 0.15s',
+                  }}>{msg}</button>
+                ))}
+              </div>
+              <div className="dqrow-arrow">›</div>
+            </div>
           ))}
         </div>
       </div>

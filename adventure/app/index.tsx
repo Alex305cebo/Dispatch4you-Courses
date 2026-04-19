@@ -100,6 +100,8 @@ export default function HomeScreen() {
     try {
       await startShift(TRUCK_COUNT, `${currentNickname} · ${TRUCK_COUNT} трака`);
       setHasSave(false);
+      // Сбрасываем вкладку — карта будет главной
+      try { localStorage.removeItem('dispatch-active-tab'); } catch {}
       router.push('/game');
     } finally { setLoading(false); }
   }

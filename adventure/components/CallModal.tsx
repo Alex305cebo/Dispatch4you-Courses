@@ -165,21 +165,36 @@ export default function CallModal({ contactName, contactRole, truckId, onClose }
           </div>
         )}
 
-        {/* Quick actions */}
+        {/* Quick actions — 2 строки со скроллом */}
         {callState === 'connected' && (
-          <div style={{
-            padding: '8px 16px 12px', display: 'flex', flexWrap: 'wrap', gap: 6,
-            borderTop: '1px solid rgba(255,255,255,0.06)',
-          } as any}>
-            {quickActions.map((action, i) => (
-              <button key={i} onClick={() => handleQuickAction(action)} style={{
-                padding: '6px 12px', borderRadius: 16, cursor: 'pointer',
-                background: 'rgba(10,132,255,0.1)', border: '1px solid rgba(10,132,255,0.25)',
-                color: Colors.primary, fontSize: 11, fontWeight: 700,
-                transition: 'all 0.15s',
-              }}>{action}</button>
+          <>
+          <style>{`
+            .cqrow { display:flex; overflow-x:auto; gap:6px; scrollbar-width:none; padding:0 16px; }
+            .cqrow::-webkit-scrollbar { display:none; }
+            .cqrow-wrap { position:relative; }
+            .cqrow-arrow { position:absolute; right:0; top:0; bottom:0; width:28px;
+              background:linear-gradient(to left, rgba(26,31,46,0.95) 60%, transparent);
+              display:flex; align-items:center; justify-content:flex-end; padding-right:4px;
+              pointer-events:none; font-size:13px; color:rgba(10,132,255,0.7); }
+          `}</style>
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '6px 0 10px', display: 'flex', flexDirection: 'column', gap: 5 } as any}>
+            {[quickActions.slice(0, Math.ceil(quickActions.length / 2)), quickActions.slice(Math.ceil(quickActions.length / 2))].map((row, ri) => (
+              <div key={ri} className="cqrow-wrap">
+                <div className="cqrow">
+                  {row.map((action, i) => (
+                    <button key={i} onClick={() => handleQuickAction(action)} style={{
+                      flexShrink: 0, padding: '6px 12px', borderRadius: 16, cursor: 'pointer',
+                      background: 'rgba(10,132,255,0.1)', border: '1px solid rgba(10,132,255,0.25)',
+                      color: Colors.primary, fontSize: 11, fontWeight: 700,
+                      whiteSpace: 'nowrap', transition: 'all 0.15s',
+                    }}>{action}</button>
+                  ))}
+                </div>
+                <div className="cqrow-arrow">›</div>
+              </div>
             ))}
           </div>
+          </>
         )}
 
         {/* End call button */}

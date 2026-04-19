@@ -165,7 +165,6 @@ function getDriverResponses(notif: Notification) {
 
 function ThreadChat({ thread, onClose }: { thread: Thread; onClose: () => void }) {
   const { sendEmail, addMoney, addNotification, markNotificationRead, addReplyToNotification } = useGameStore();
-  const { removeMoney } = useGameStore.getState();
   // Подписываемся на живые данные треда из стора
   const liveNotifs = useGameStore(s => s.notifications);
 
@@ -181,6 +180,10 @@ function ThreadChat({ thread, onClose }: { thread: Thread; onClose: () => void }
   const [callDone, setCallDone] = useState(false);
   const [rateConOpen, setRateConOpen] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+
+  // Живые replies из стора (объявляем ДО useEffect который от них зависит)
+  const liveRoot = liveNotifs.find(n => n.id === rootMsg.id);
+  const allReplies = liveRoot?.replies || rootMsg.replies || [];
 
   // Автоскролл вниз при новых сообщениях
   useEffect(() => {
@@ -210,7 +213,7 @@ function ThreadChat({ thread, onClose }: { thread: Thread; onClose: () => void }
     setChosen(idx);
     const r = driverResponses[idx];
     if (r.money > 0) addMoney(r.money, `Решение: ${r.text.slice(0, 30)}`);
-    if (r.money < 0) removeMoney(Math.abs(r.money), `Решение: ${r.text.slice(0, 30)}`);
+    if (r.money < 0) useGameStore.getState().removeMoney(Math.abs(r.money), `Решение: ${r.text.slice(0, 30)}`);
 
     // Добавляем ответ диспетчера и реакцию водителя в тот же тред (не новое уведомление)
     addReplyToNotification(rootMsg.id, {
@@ -305,10 +308,6 @@ function ThreadChat({ thread, onClose }: { thread: Thread; onClose: () => void }
 
   const result = chosen !== null ? driverResponses[chosen] : null;
 
-  // Живые replies из стора (обновляются в реальном времени)
-  const liveRoot = liveNotifs.find(n => n.id === rootMsg.id);
-  const allReplies = liveRoot?.replies || rootMsg.replies || [];
-  
   return (
     <Modal visible animationType="slide" transparent onRequestClose={onClose}>
       <View style={cs.overlay}>

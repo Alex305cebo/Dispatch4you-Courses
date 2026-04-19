@@ -880,9 +880,14 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
       // Карточка видна только если truckId в visibleCardsRef
       const cardVisible = visibleCardsRef.current.has(d.truckId);
 
-      // ── MICRO: только ID ──────────────────────────────────────────────
+      // HOS цвет: зелёный >4h, жёлтый 2-4h, красный <2h
+      const hosColor = d.hoursLeft > 4 ? 0x22c55e : d.hoursLeft > 2 ? 0xfbbf24 : 0xef4444;
+      // HOS прогресс 0..1 (макс 11ч)
+      const hosFrac = Math.min(1, Math.max(0, d.hoursLeft / 11));
+
+      // ── MICRO: только ID + статус-полоска ─────────────────────────────
       if (variant === 'micro') {
-        const W = 52, H = 26;
+        const W = 58, H = 28;
         const card = container.children.push(am5.Container.new(root, {
           width: W, height: H,
           dy: -(H + 14), dx: -(W / 2),
@@ -890,31 +895,39 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
           visible: cardVisible,
           opacity: cardVisible ? 1 : 0,
         }));
+        // Фон с glassmorphism
         card.children.push(am5.RoundedRectangle.new(root, {
           width: W, height: H,
-          fill: am5.color(0x0d1f35), fillOpacity: 0.95,
-          stroke: am5.color(d.colorInt), strokeWidth: 1.5,
-          cornerRadiusTL: 6, cornerRadiusTR: 6, cornerRadiusBL: 6, cornerRadiusBR: 6,
+          fill: am5.color(0x0a1628), fillOpacity: 0.92,
+          stroke: am5.color(d.colorInt), strokeWidth: 1,
+          cornerRadiusTL: 7, cornerRadiusTR: 7, cornerRadiusBL: 7, cornerRadiusBR: 7,
         }));
+        // Левая цветная полоска
         card.children.push(am5.RoundedRectangle.new(root, {
-          width: W, height: 4, y: 0,
-          fill: am5.color(d.colorInt),
-          cornerRadiusTL: 6, cornerRadiusTR: 6, cornerRadiusBL: 0, cornerRadiusBR: 0,
+          width: 3, height: H,
+          fill: am5.color(d.colorInt), fillOpacity: 1,
+          cornerRadiusTL: 7, cornerRadiusTR: 0, cornerRadiusBL: 7, cornerRadiusBR: 0,
         }));
+        // Имя трака
         card.children.push(am5.Label.new(root, {
           text: d.truckName,
-          fill: am5.color(0xffffff), fontSize: 11, fontWeight: "900",
-          x: am5.percent(50), centerX: am5.percent(50),
+          fill: am5.color(0xffffff), fontSize: 12, fontWeight: "900",
+          x: 10, centerX: 0,
           y: am5.percent(50), centerY: am5.percent(50),
-          dy: 2,
+        }));
+        // Статус-точка справа
+        card.children.push(am5.Circle.new(root, {
+          radius: 3, fill: am5.color(d.colorInt),
+          x: W - 8, y: am5.percent(50), centerY: am5.percent(50),
         }));
         card.events.on("click", onClick);
         card.events.on("pointerover", onHover);
         card.events.on("pointerout", onHoverOut);
 
-      // ── MEDIUM: ID + статус + маршрут + HOS ──────────────────────────
+      // ── MEDIUM: ID + статус-бейдж + маршрут + HOS-бар ────────────────
       } else if (variant === 'medium') {
-        const W = 100, H = 72;
+        const W = 118, H = 82;
+        const STRIP = 4; // ширина левой полоски
         const card = container.children.push(am5.Container.new(root, {
           width: W, height: H,
           dy: -(H + 16), dx: -(W / 2),
@@ -922,45 +935,73 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
           visible: cardVisible,
           opacity: cardVisible ? 1 : 0,
         }));
+        // Внешнее свечение (glow)
+        card.children.push(am5.RoundedRectangle.new(root, {
+          width: W + 4, height: H + 4, x: -2, y: -2,
+          fill: am5.color(d.colorInt), fillOpacity: d.breakdown ? 0.25 : 0.08,
+          cornerRadiusTL: 13, cornerRadiusTR: 13, cornerRadiusBL: 13, cornerRadiusBR: 13,
+        }));
+        // Основной фон
         card.children.push(am5.RoundedRectangle.new(root, {
           width: W, height: H,
-          fill: am5.color(0x0d1f35), fillOpacity: 0.96,
-          stroke: am5.color(d.colorInt), strokeWidth: 2,
-          cornerRadiusTL: 9, cornerRadiusTR: 9, cornerRadiusBL: 9, cornerRadiusBR: 9,
+          fill: am5.color(0x0a1628), fillOpacity: 0.96,
+          stroke: am5.color(d.colorInt), strokeWidth: d.breakdown ? 2 : 1.5,
+          cornerRadiusTL: 10, cornerRadiusTR: 10, cornerRadiusBL: 10, cornerRadiusBR: 10,
         }));
+        // Левая цветная полоска
         card.children.push(am5.RoundedRectangle.new(root, {
-          width: W, height: 6, y: 0,
-          fill: am5.color(d.colorInt),
-          cornerRadiusTL: 9, cornerRadiusTR: 9, cornerRadiusBL: 0, cornerRadiusBR: 0,
+          width: STRIP, height: H,
+          fill: am5.color(d.colorInt), fillOpacity: 1,
+          cornerRadiusTL: 10, cornerRadiusTR: 0, cornerRadiusBL: 10, cornerRadiusBR: 0,
         }));
+        // Строка 1: эмодзи + имя трака
         card.children.push(am5.Label.new(root, {
-          text: d.truckName, fill: am5.color(0xffffff),
-          fontSize: 13, fontWeight: "800",
-          x: am5.percent(50), centerX: am5.percent(50), y: 12, centerY: 0,
+          text: `${truckEmoji} ${d.truckName}`,
+          fill: am5.color(0xffffff), fontSize: 13, fontWeight: "900",
+          x: STRIP + 6, y: 8,
         }));
+        // Строка 2: статус-бейдж (цветной текст)
         card.children.push(am5.Label.new(root, {
-          text: `● ${STATUS_LABEL[d.status] || d.status}`,
+          text: `● ${d.statusLabel}`,
           fill: am5.color(d.colorInt), fontSize: 10, fontWeight: "700",
-          x: am5.percent(50), centerX: am5.percent(50), y: 30, centerY: 0,
+          x: STRIP + 6, y: 26,
         }));
+        // Строка 3: маршрут
         card.children.push(am5.Label.new(root, {
-          text: routeShort, fill: am5.color(0xe2e8f0),
-          fontSize: 10, fontWeight: "600",
-          x: am5.percent(50), centerX: am5.percent(50), y: 44, centerY: 0,
-          oversizedBehavior: "truncate", maxWidth: W - 8,
+          text: routeShort,
+          fill: am5.color(0xe2e8f0), fontSize: 11, fontWeight: "600",
+          x: STRIP + 6, y: 42,
+          oversizedBehavior: "truncate", maxWidth: W - STRIP - 10,
         }));
+        // HOS бар — фон
+        card.children.push(am5.RoundedRectangle.new(root, {
+          width: W - STRIP - 12, height: 5,
+          x: STRIP + 6, y: 60,
+          fill: am5.color(0x1e3a5f), fillOpacity: 0.8,
+          cornerRadiusTL: 3, cornerRadiusTR: 3, cornerRadiusBL: 3, cornerRadiusBR: 3,
+        }));
+        // HOS бар — заполнение
+        const hosBarW = Math.max(4, Math.round((W - STRIP - 12) * hosFrac));
+        card.children.push(am5.RoundedRectangle.new(root, {
+          width: hosBarW, height: 5,
+          x: STRIP + 6, y: 60,
+          fill: am5.color(hosColor), fillOpacity: 0.9,
+          cornerRadiusTL: 3, cornerRadiusTR: 3, cornerRadiusBL: 3, cornerRadiusBR: 3,
+        }));
+        // HOS текст
         card.children.push(am5.Label.new(root, {
-          text: hosLine, fill: am5.color(0x94a3b8),
-          fontSize: 10,
-          x: am5.percent(50), centerX: am5.percent(50), y: 58, centerY: 0,
+          text: `${Math.round(d.hoursLeft * 10) / 10}h HOS${d.milesLeft > 0 ? `  ·  ${d.milesLeft}mi` : ""}`,
+          fill: am5.color(0x94a3b8), fontSize: 10,
+          x: STRIP + 6, y: 68,
         }));
         card.events.on("click", onClick);
         card.events.on("pointerover", onHover);
         card.events.on("pointerout", onHoverOut);
 
-      // ── LARGE: полная инфа + водитель ────────────────────────────────
+      // ── LARGE: полная инфа + водитель + HOS-бар ───────────────────────
       } else {
-        const W = 160, H = 110;
+        const W = 172, H = 118;
+        const STRIP = 5;
         const card = container.children.push(am5.Container.new(root, {
           width: W, height: H,
           dy: -(H + 18), dx: -(W / 2),
@@ -968,51 +1009,70 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
           visible: cardVisible,
           opacity: cardVisible ? 1 : 0,
         }));
+        // Внешнее свечение
         card.children.push(am5.RoundedRectangle.new(root, {
           width: W + 6, height: H + 6, x: -3, y: -3,
-          fill: am5.color(d.colorInt), fillOpacity: 0.15,
-          cornerRadiusTL: 14, cornerRadiusTR: 14, cornerRadiusBL: 14, cornerRadiusBR: 14,
+          fill: am5.color(d.colorInt), fillOpacity: d.breakdown ? 0.3 : 0.1,
+          cornerRadiusTL: 16, cornerRadiusTR: 16, cornerRadiusBL: 16, cornerRadiusBR: 16,
         }));
+        // Основной фон
         card.children.push(am5.RoundedRectangle.new(root, {
           width: W, height: H,
-          fill: am5.color(0x0d1f35), fillOpacity: 0.98,
-          stroke: am5.color(d.colorInt), strokeWidth: 2.5,
-          cornerRadiusTL: 11, cornerRadiusTR: 11, cornerRadiusBL: 11, cornerRadiusBR: 11,
+          fill: am5.color(0x0a1628), fillOpacity: 0.97,
+          stroke: am5.color(d.colorInt), strokeWidth: d.breakdown ? 2.5 : 1.5,
+          cornerRadiusTL: 12, cornerRadiusTR: 12, cornerRadiusBL: 12, cornerRadiusBR: 12,
         }));
+        // Левая цветная полоска
         card.children.push(am5.RoundedRectangle.new(root, {
-          width: W, height: 8, y: 0,
-          fill: am5.color(d.colorInt),
-          cornerRadiusTL: 11, cornerRadiusTR: 11, cornerRadiusBL: 0, cornerRadiusBR: 0,
+          width: STRIP, height: H,
+          fill: am5.color(d.colorInt), fillOpacity: 1,
+          cornerRadiusTL: 12, cornerRadiusTR: 0, cornerRadiusBL: 12, cornerRadiusBR: 0,
         }));
+        // Строка 1: эмодзи + имя трака крупно
         card.children.push(am5.Label.new(root, {
-          text: d.truckName, fill: am5.color(0xffffff),
-          fontSize: 16, fontWeight: "900",
-          x: am5.percent(50), centerX: am5.percent(50), y: 14, centerY: 0,
+          text: `${truckEmoji} ${d.truckName}`,
+          fill: am5.color(0xffffff), fontSize: 15, fontWeight: "900",
+          x: STRIP + 8, y: 8,
         }));
-        // Статус
+        // Строка 2: статус-бейдж
         card.children.push(am5.Label.new(root, {
-          text: `● ${STATUS_LABEL[d.status] || d.status}`,
-          fill: am5.color(d.colorInt), fontSize: 12, fontWeight: "700",
-          x: am5.percent(50), centerX: am5.percent(50), y: 34, centerY: 0,
+          text: `● ${d.statusLabel}`,
+          fill: am5.color(d.colorInt), fontSize: 11, fontWeight: "700",
+          x: STRIP + 8, y: 28,
         }));
-        // Маршрут
+        // Строка 3: маршрут со стрелкой
         card.children.push(am5.Label.new(root, {
-          text: routeFull, fill: am5.color(0xe2e8f0),
-          fontSize: 11, fontWeight: "600",
-          x: am5.percent(50), centerX: am5.percent(50), y: 52, centerY: 0,
-          oversizedBehavior: "truncate", maxWidth: W - 12,
+          text: routeFull,
+          fill: am5.color(0xe2e8f0), fontSize: 11, fontWeight: "600",
+          x: STRIP + 8, y: 46,
+          oversizedBehavior: "truncate", maxWidth: W - STRIP - 14,
         }));
-        // Водитель
+        // Строка 4: водитель
         card.children.push(am5.Label.new(root, {
-          text: `\u{1F464} ${d.driver}`, fill: am5.color(0xe2e8f0),
-          fontSize: 11, fontWeight: "600",
-          x: am5.percent(50), centerX: am5.percent(50), y: 70, centerY: 0,
+          text: `\u{1F464} ${d.driver}`,
+          fill: am5.color(0xb0c4de), fontSize: 11, fontWeight: "500",
+          x: STRIP + 8, y: 63,
         }));
-        // HOS
+        // HOS бар — фон
+        card.children.push(am5.RoundedRectangle.new(root, {
+          width: W - STRIP - 16, height: 6,
+          x: STRIP + 8, y: 82,
+          fill: am5.color(0x1e3a5f), fillOpacity: 0.8,
+          cornerRadiusTL: 3, cornerRadiusTR: 3, cornerRadiusBL: 3, cornerRadiusBR: 3,
+        }));
+        // HOS бар — заполнение
+        const hosBarWL = Math.max(5, Math.round((W - STRIP - 16) * hosFrac));
+        card.children.push(am5.RoundedRectangle.new(root, {
+          width: hosBarWL, height: 6,
+          x: STRIP + 8, y: 82,
+          fill: am5.color(hosColor), fillOpacity: 0.95,
+          cornerRadiusTL: 3, cornerRadiusTR: 3, cornerRadiusBL: 3, cornerRadiusBR: 3,
+        }));
+        // HOS текст + miles
         card.children.push(am5.Label.new(root, {
-          text: hosLine, fill: am5.color(0x94a3b8),
-          fontSize: 11,
-          x: am5.percent(50), centerX: am5.percent(50), y: 88, centerY: 0,
+          text: `⏱ ${Math.round(d.hoursLeft * 10) / 10}h HOS${d.milesLeft > 0 ? `   🛣 ${d.milesLeft} mi` : ""}`,
+          fill: am5.color(0x94a3b8), fontSize: 11,
+          x: STRIP + 8, y: 92,
         }));
         card.events.on("click", onClick);
         card.events.on("pointerover", onHover);
@@ -1447,18 +1507,22 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         </div>
       )}
 
-      {/* Мини-легенда со статистикой — левый нижний угол */}
+      {/* Мини-легенда со статистикой + факт о штате — левый нижний угол */}
       <div style={{
         position: "absolute", bottom: 8, left: 8,
+        display: "flex", alignItems: "flex-end", gap: 6,
+        zIndex: 100, fontFamily: "sans-serif", pointerEvents: "auto",
+      } as any}>
+
+      {/* Легенда */}
+      <div style={{
         background: "rgba(10,22,40,0.92)", borderRadius: 12,
         border: "1px solid rgba(45,106,79,0.4)",
-        padding: legendVisible ? "8px 12px" : "5px 10px",
-        display: "flex", flexDirection: "column", gap: 4,
-        fontFamily: "sans-serif", pointerEvents: "auto",
+        padding: legendVisible ? "clamp(6px,1.2vw,10px) clamp(8px,1.5vw,14px)" : "5px 10px",
+        display: "flex", flexDirection: "column", gap: "clamp(3px,0.5vw,5px)",
         transition: "padding 0.2s, opacity 0.6s ease",
         opacity: legendVisible ? 1 : 0.85,
-        maxWidth: 175,
-        zIndex: 100,
+        maxWidth: "clamp(130px,18vw,180px)",
       } as any} className="map-legend">
         {/* Toggle кнопка */}
         <div
@@ -1469,25 +1533,25 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
             background: legendVisible
               ? "transparent"
               : "linear-gradient(135deg, rgba(6,182,212,0.25), rgba(99,102,241,0.2))",
-            borderRadius: legendVisible ? 0 : 8,
-            padding: legendVisible ? "0" : "4px 6px",
+            borderRadius: legendVisible ? 0 : 6,
+            padding: legendVisible ? "0" : "3px 5px",
             margin: legendVisible ? "0" : "-2px",
             border: legendVisible ? "none" : "1px solid rgba(6,182,212,0.4)",
             transition: "all 0.2s",
           } as any}
         >
           <span style={{
-            fontSize: legendVisible ? 10 : 12,
+            fontSize: "clamp(10px,1.4vw,13px)",
             fontWeight: 800,
             background: "linear-gradient(90deg, #06b6d4, #818cf8)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-            letterSpacing: 0.8,
+            letterSpacing: 0.5,
           } as any}>
             {legendVisible ? "ЛЕГЕНДА" : "🗺 ЛЕГЕНДА"}
           </span>
           <span style={{
-            fontSize: legendVisible ? 10 : 14,
+            fontSize: legendVisible ? "clamp(9px,1.2vw,11px)" : "clamp(11px,1.5vw,14px)",
             background: "linear-gradient(135deg, #06b6d4, #818cf8)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
@@ -1501,19 +1565,19 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
           const n = activeTrucks.filter(t => t.status === s).length;
           return (
             <div key={s} style={{ display: "flex", alignItems: "center", gap: 6 } as any}>
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: STATUS_COLOR[s] } as any} />
-              <span style={{ fontSize: 10, color: "#94a3b8" } as any}>{STATUS_EMOJI[s]} {l}</span>
-              {n > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: STATUS_COLOR[s], marginLeft: "auto", paddingLeft: 8 } as any}>{n}</span>}
+              <div style={{ width: "clamp(7px,1vw,9px)", height: "clamp(7px,1vw,9px)", borderRadius: "50%", background: STATUS_COLOR[s], flexShrink: 0 } as any} />
+              <span style={{ fontSize: "clamp(11px,1.3vw,13px)", color: "#94a3b8" } as any}>{STATUS_EMOJI[s]} {l}</span>
+              {n > 0 && <span style={{ fontSize: "clamp(11px,1.3vw,13px)", fontWeight: 800, color: STATUS_COLOR[s], marginLeft: "auto", paddingLeft: 6 } as any}>{n}</span>}
             </div>
           );
         })}
         {/* Статистика */}
         {phase === 'playing' && (
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: 4, paddingTop: 6, display: "flex", flexDirection: "column", gap: 3 } as any}>
-            <div style={{ fontSize: 10, color: "#38bdf8" } as any}>
+            <div style={{ fontSize: "clamp(11px,1.3vw,13px)", color: "#38bdf8" } as any}>
               🛣 В пути: <span style={{ fontWeight: 700 } as any}>{totalMilesInFlight.toLocaleString()} mi</span>
             </div>
-            <div style={{ fontSize: 10, color: "#4ade80" } as any}>
+            <div style={{ fontSize: "clamp(11px,1.3vw,13px)", color: "#4ade80" } as any}>
               💰 Ожидается: <span style={{ fontWeight: 700 } as any}>${expectedRevenue.toLocaleString()}</span>
             </div>
           </div>
@@ -1521,13 +1585,35 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         {/* Surge legend */}
         {surgeStates.length > 0 && (
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: 4, paddingTop: 6 } as any}>
-            <div style={{ fontSize: 9, color: "#ff6b35", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } as any}>
+            <div style={{ fontSize: "clamp(10px,1.2vw,12px)", color: "#ff6b35", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } as any}>
               🔥 Surge: {surgeStates.join(", ")}
             </div>
           </div>
         )}
         </>)}
       </div>
+
+      {/* Факт о штате — компактно справа от легенды */}
+      <div style={{
+        maxWidth: "clamp(160px,28vw,260px)",
+        opacity: (followTruck && stateFact) ? 1 : 0,
+        pointerEvents: "none",
+        transition: "opacity 0.6s ease",
+        background: "rgba(8,14,28,0.88)",
+        border: "1px solid rgba(56,189,248,0.3)",
+        borderRadius: 10,
+        padding: "clamp(6px,1vw,10px) clamp(8px,1.2vw,12px)",
+        backdropFilter: "blur(8px)",
+      } as any}>
+        <div style={{ fontSize: "clamp(11px,1.3vw,13px)", fontWeight: 700, color: "#38bdf8", marginBottom: 3, letterSpacing: 0.5 } as any}>
+          📍 {lastFactStateRef.current}
+        </div>
+        <div style={{ fontSize: "clamp(12px,1.4vw,14px)", color: "#e2e8f0", lineHeight: 1.5 } as any}>
+          {stateFact}
+        </div>
+      </div>
+
+      </div>{/* конец flex-контейнера легенда+факт */}
 
       {/* Тосты — правый верхний угол (если нет попапа штата) */}
       {!selectedState && (
@@ -1674,9 +1760,9 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
               onTruckSelectRef.current?.(prev.id);
             }}
             style={{
-              width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+              width: 32, height: 32, borderRadius: 8, flexShrink: 0,
               background: "rgba(8,14,28,0.95)", border: "1.5px solid rgba(56,189,248,0.3)",
-              color: "#e2e8f0", fontSize: 20, fontWeight: 900, cursor: "pointer",
+              color: "#e2e8f0", fontSize: 16, fontWeight: 900, cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
               boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
             } as any}
@@ -1686,49 +1772,111 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
           <div style={{
             background: "rgba(8,14,28,0.98)",
             border: `2px solid ${selectedTruck.colorHex}`,
-            borderRadius: 16, padding: "12px 16px",
-            display: "flex", alignItems: "center", gap: 14,
-            boxShadow: `0 0 0 1px ${selectedTruck.colorHex}33, 0 8px 32px rgba(0,0,0,0.8), 0 0 28px ${selectedTruck.colorHex}44`,
-            whiteSpace: "nowrap",
+            borderRadius: 14, padding: "10px 14px",
+            display: "flex", flexDirection: "column", gap: 8,
+            minWidth: 260, maxWidth: 320,
+            boxShadow: `0 0 0 1px ${selectedTruck.colorHex}33, 0 8px 32px rgba(0,0,0,0.85), 0 0 28px ${selectedTruck.colorHex}44`,
             transition: "border-color 0.2s, box-shadow 0.2s",
             position: "relative",
           } as any} className="map-truck-card">
             {/* Индикатор "закреплено" */}
             {selectedTruckRef.current?.truckId === selectedTruck.truckId && (
               <div style={{
-                position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)",
-                background: selectedTruck.colorHex, borderRadius: 5,
-                padding: "2px 10px", fontSize: 10, fontWeight: 800, color: "#000",
-                letterSpacing: 0.5, whiteSpace: "nowrap",
+                position: "absolute", top: -9, left: "50%", transform: "translateX(-50%)",
+                background: selectedTruck.colorHex, borderRadius: 4,
+                padding: "1px 8px", fontSize: 9, fontWeight: 800, color: "#000",
+                letterSpacing: 0.3, whiteSpace: "nowrap",
               } as any}>📌 ЗАКРЕПЛЕНО</div>
             )}
-            {/* Цветной индикатор */}
-            <div style={{ width: 12, height: 12, borderRadius: "50%", background: selectedTruck.colorHex, flexShrink: 0, boxShadow: `0 0 10px ${selectedTruck.colorHex}` } as any} />
-            {/* Инфо */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 3 } as any}>
-              <span style={{ fontSize: 15, fontWeight: 900, color: "#fff" } as any}>🚛 {selectedTruck.truckName}</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: selectedTruck.colorHex } as any}>
-                {selectedTruck.statusLabel} · {selectedTruck.currentCity}{CITY_STATE[selectedTruck.currentCity] ? `, ${CITY_STATE[selectedTruck.currentCity]}` : ""}
+
+            {/* СТРОКА 1: имя трака + статус + закрыть */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "space-between" } as any}>
+              <div style={{ display: "flex", alignItems: "center", gap: 7 } as any}>
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: selectedTruck.colorHex, flexShrink: 0, boxShadow: `0 0 8px ${selectedTruck.colorHex}` } as any} />
+                <span style={{ fontSize: 14, fontWeight: 900, color: "#fff", letterSpacing: 0.3 } as any}>🚛 {selectedTruck.truckName}</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 } as any}>
+                <span style={{
+                  fontSize: 11, fontWeight: 700, color: selectedTruck.colorHex,
+                  background: `${selectedTruck.colorHex}22`, borderRadius: 5,
+                  padding: "2px 7px", whiteSpace: "nowrap",
+                } as any}>{selectedTruck.statusLabel}</span>
+                <span onClick={() => { setSelectedTruck(null); selectedTruckRef.current = null; }}
+                  style={{ cursor: "pointer", fontSize: 15, color: "#94a3b8", lineHeight: 1, flexShrink: 0 } as any}>✕</span>
+              </div>
+            </div>
+
+            {/* СТРОКА 2: водитель */}
+            {selectedTruck.driver && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6 } as any}>
+                <span style={{ fontSize: 12, color: "#94a3b8" } as any}>👤</span>
+                <span style={{ fontSize: 13, color: "#e2e8f0", fontWeight: 600 } as any}>{selectedTruck.driver}</span>
+              </div>
+            )}
+
+            {/* СТРОКА 3: маршрут */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" } as any}>
+              <span style={{ fontSize: 12, color: "#94a3b8" } as any}>📍</span>
+              <span style={{ fontSize: 12, color: "#e2e8f0", fontWeight: 600 } as any}>
+                {selectedTruck.currentCity}{CITY_STATE[selectedTruck.currentCity] ? `, ${CITY_STATE[selectedTruck.currentCity]}` : ""}
               </span>
-              {selectedTruck.routeEvent && (
-                <span style={{ fontSize: 11, color: "#fbbf24" } as any}>{selectedTruck.routeEvent} На маршруте</span>
+              {selectedTruck.destinationCity && (
+                <>
+                  <span style={{ fontSize: 11, color: "#475569" } as any}>→</span>
+                  <span style={{ fontSize: 12, color: "#38bdf8", fontWeight: 600 } as any}>
+                    {selectedTruck.destinationCity}{CITY_STATE[selectedTruck.destinationCity] ? `, ${CITY_STATE[selectedTruck.destinationCity]}` : ""}
+                  </span>
+                  {selectedTruck.milesLeft > 0 && (
+                    <span style={{ fontSize: 11, color: "#64748b" } as any}>· {selectedTruck.milesLeft} mi</span>
+                  )}
+                </>
               )}
             </div>
-            {/* Кнопки */}
-            <button onClick={() => onTruckInfo?.(selectedTruck.truckId)} style={{
-              background: "rgba(6,182,212,0.18)", border: "1.5px solid rgba(6,182,212,0.5)",
-              borderRadius: 10, padding: "8px 14px", color: "#06b6d4",
-              fontSize: 13, fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap",
-            } as any}>📋 Инфо</button>
-            {(selectedTruck.status === "idle" || selectedTruck.status === "at_delivery") && (
-              <button onClick={() => { onFindLoad?.(selectedTruck.currentCity); setSelectedTruck(null); selectedTruckRef.current = null; chartRef.current?.goHome(); }} style={{
-                background: "rgba(74,222,128,0.18)", border: "1.5px solid rgba(74,222,128,0.5)",
-                borderRadius: 10, padding: "8px 14px", color: "#4ade80",
-                fontSize: 13, fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap",
-              } as any}>🔍 Груз</button>
+
+            {/* СТРОКА 4: груз */}
+            {selectedTruck.currentLoad && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6 } as any}>
+                <span style={{ fontSize: 12, color: "#94a3b8" } as any}>📦</span>
+                <span style={{ fontSize: 12, color: "#e2e8f0" } as any}>
+                  {selectedTruck.currentLoad.commodity || "Груз"}
+                  {selectedTruck.currentLoad.rate ? (
+                    <span style={{ color: "#4ade80", fontWeight: 700, marginLeft: 6 } as any}>
+                      ${selectedTruck.currentLoad.rate.toLocaleString()}
+                    </span>
+                  ) : null}
+                </span>
+              </div>
             )}
-            <span onClick={() => { setSelectedTruck(null); selectedTruckRef.current = null; }}
-              style={{ cursor: "pointer", fontSize: 20, color: "#64748b", paddingLeft: 4, lineHeight: 1, flexShrink: 0 } as any}>✕</span>
+
+            {/* СТРОКА 5: HOS + событие */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "space-between" } as any}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 } as any}>
+                <span style={{ fontSize: 12, color: "#94a3b8" } as any}>⏱️</span>
+                <span style={{
+                  fontSize: 13, fontWeight: 700,
+                  color: selectedTruck.hoursLeft <= 2 ? "#ef4444" : selectedTruck.hoursLeft <= 5 ? "#fbbf24" : "#4ade80",
+                } as any}>{selectedTruck.hoursLeft}h HOS</span>
+              </div>
+              {selectedTruck.routeEvent && (
+                <span style={{ fontSize: 11, color: "#fbbf24", fontWeight: 600 } as any}>{selectedTruck.routeEvent}</span>
+              )}
+            </div>
+
+            {/* СТРОКА 6: кнопки */}
+            <div style={{ display: "flex", gap: 6, marginTop: 2 } as any}>
+              <button onClick={() => onTruckInfo?.(selectedTruck.truckId)} style={{
+                flex: 1, background: "rgba(6,182,212,0.15)", border: "1.5px solid rgba(6,182,212,0.45)",
+                borderRadius: 8, padding: "6px 0", color: "#06b6d4",
+                fontSize: 12, fontWeight: 800, cursor: "pointer",
+              } as any}>📋 Детали</button>
+              {(selectedTruck.status === "idle" || selectedTruck.status === "at_delivery") && (
+                <button onClick={() => { onFindLoad?.(selectedTruck.currentCity); setSelectedTruck(null); selectedTruckRef.current = null; chartRef.current?.goHome(); }} style={{
+                  flex: 1, background: "rgba(74,222,128,0.15)", border: "1.5px solid rgba(74,222,128,0.45)",
+                  borderRadius: 8, padding: "6px 0", color: "#4ade80",
+                  fontSize: 12, fontWeight: 800, cursor: "pointer",
+                } as any}>🔍 Найти груз</button>
+              )}
+            </div>
           </div>
 
           {/* Стрелка вправо */}
@@ -1761,9 +1909,9 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
               onTruckSelectRef.current?.(next.id);
             }}
             style={{
-              width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+              width: 32, height: 32, borderRadius: 8, flexShrink: 0,
               background: "rgba(8,14,28,0.95)", border: "1.5px solid rgba(56,189,248,0.3)",
-              color: "#e2e8f0", fontSize: 20, fontWeight: 900, cursor: "pointer",
+              color: "#e2e8f0", fontSize: 16, fontWeight: 900, cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
               boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
             } as any}
@@ -1771,58 +1919,38 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         </div>
       )}
 
-      {/* Факт о штате — компактный тег снизу слева, не мешает карте */}
-      <div className="map-state-fact" style={{
-        position: "absolute", bottom: 70, left: 12,
-        maxWidth: "calc(100vw - 24px)", zIndex: 200,
-        fontFamily: "sans-serif",
-        opacity: (followTruck && stateFact) ? 1 : 0,
-        pointerEvents: "none",
-        transition: "opacity 0.6s ease",
-      } as any}>
-        <div style={{
-          background: "rgba(8,14,28,0.85)",
-          border: "1px solid rgba(56,189,248,0.3)",
-          borderRadius: 12, padding: "10px 14px",
-          backdropFilter: "blur(8px)",
-        } as any}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#38bdf8", marginBottom: 4, letterSpacing: 0.5 } as any}>
-            📍 {lastFactStateRef.current}
-          </div>
-          <div style={{ fontSize: 13, color: "#e2e8f0", lineHeight: 1.5 } as any}>
-            {stateFact}
-          </div>
-        </div>
-      </div>
-
       {/* Попап штата */}
       {selectedState && (
         <div style={{
           position: "absolute", top: 12, right: 12,
           background: "rgba(8,14,28,0.97)", borderRadius: 16,
           border: `2px solid ${selectedState.isSurge ? "rgba(255,107,53,0.5)" : "rgba(6,182,212,0.35)"}`,
-          padding: "14px 16px", width: 280, zIndex: 1000,
+          padding: "16px 18px", width: 320, zIndex: 1000,
           boxShadow: "0 8px 32px rgba(0,0,0,0.7)",
           fontFamily: "sans-serif", maxHeight: "80vh", overflowY: "auto",
+          animation: "statePopupFadeIn 0.3s ease-out",
         } as any} className="map-state-popup">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 } as any}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 } as any}>
-              <span style={{ fontSize: 20, fontWeight: 900, color: selectedState.isSurge ? "#ff6b35" : "#06b6d4" } as any}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 } as any}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 } as any}>
+              <span style={{ fontSize: 22, fontWeight: 900, color: selectedState.isSurge ? "#ff6b35" : "#06b6d4" } as any}>
                 {selectedState.id}
               </span>
-              <span style={{ fontSize: 13, color: "#94a3b8" } as any}>{STATE_NAMES[selectedState.id] || selectedState.name}</span>
+              <span style={{ fontSize: 14, color: "#e2e8f0", fontWeight: 600 } as any}>{STATE_NAMES[selectedState.id] || selectedState.name}</span>
               {selectedState.isSurge && (
-                <span style={{ fontSize: 10, fontWeight: 700, color: "#ff6b35", background: "rgba(255,107,53,0.15)", padding: "2px 6px", borderRadius: 4 } as any}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#ff6b35", background: "rgba(255,107,53,0.15)", padding: "3px 7px", borderRadius: 5 } as any}>
                   🔥 SURGE
                 </span>
               )}
             </div>
-            <span onClick={() => setSelectedState(null)} style={{ cursor: "pointer", fontSize: 18, color: "#64748b" } as any}>✕</span>
+            <span onClick={() => setSelectedState(null)} style={{ cursor: "pointer", fontSize: 20, color: "#94a3b8", transition: "color 0.2s" } as any}
+              onMouseEnter={e => (e.currentTarget.style.color = "#e2e8f0")}
+              onMouseLeave={e => (e.currentTarget.style.color = "#94a3b8")}
+            >✕</span>
           </div>
 
           {selectedState.trucks.length > 0 && (
-            <div style={{ marginBottom: 12 } as any}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 } as any}>
+            <div style={{ marginBottom: 14 } as any}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 } as any}>
                 🚛 ТРАКИ В ШТАТЕ ({selectedState.trucks.length})
               </div>
               {selectedState.trucks.map((t: any) => {
@@ -1832,39 +1960,49 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
                   <div key={t.id}
                     onClick={() => { onTruckInfo?.(t.id); setSelectedState(null); }}
                     style={{
-                      background: "rgba(255,255,255,0.04)", borderRadius: 8,
-                      padding: "7px 10px", marginBottom: 5,
+                      background: "rgba(255,255,255,0.04)", borderRadius: 10,
+                      padding: "9px 12px", marginBottom: 6,
                       border: `1px solid ${color}33`,
-                      display: "flex", flexDirection: "column", gap: 3,
+                      display: "flex", flexDirection: "column", gap: 4,
                       cursor: "pointer",
+                      transition: "all 0.2s ease",
                     } as any}
                     onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
                     onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" } as any}>
-                      <span style={{ fontSize: 12, fontWeight: 800, color: "#fff" } as any}>{t.name}</span>
-                      <span style={{ fontSize: 10, fontWeight: 700, color, background: `${color}22`, padding: "1px 6px", borderRadius: 4 } as any}>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" } as any}>{t.name}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color, background: `${color}22`, padding: "2px 7px", borderRadius: 5 } as any}>
                         {STATUS_LABEL[t.status] || t.status}
                       </span>
                     </div>
-                    <div style={{ fontSize: 10, color: "#94a3b8" } as any}>👤 {t.driver} · ⏱ {t.hoursLeft}h HOS</div>
+                    <div style={{ fontSize: 11, color: "#cbd5e1" } as any}>👤 {t.driver} · ⏱ {t.hoursLeft}h HOS</div>
                     {t.currentLoad && (
-                      <div style={{ fontSize: 10, color: "#4ade80" } as any}>
+                      <div style={{ fontSize: 11, color: "#4ade80", lineHeight: 1.4 } as any}>
                         📦 {t.currentLoad.fromCity}, {CITY_STATE[t.currentLoad.fromCity] || ""} → {t.currentLoad.toCity}, {CITY_STATE[t.currentLoad.toCity] || ""} · ${t.currentLoad.agreedRate?.toLocaleString()}
                       </div>
                     )}
                     {!t.currentLoad && t.currentCity && (
-                      <div style={{ fontSize: 10, color: "#94a3b8" } as any}>📍 {t.currentCity}{CITY_STATE[t.currentCity] ? `, ${CITY_STATE[t.currentCity]}` : ""}</div>
+                      <div style={{ fontSize: 11, color: "#cbd5e1" } as any}>📍 {t.currentCity}{CITY_STATE[t.currentCity] ? `, ${CITY_STATE[t.currentCity]}` : ""}</div>
                     )}
                     {isIdle && (
                       <button
                         onClick={(e) => { e.stopPropagation(); onFindLoad?.(t.currentCity); setSelectedState(null); }}
                         style={{
-                          marginTop: 3, background: "rgba(74,222,128,0.15)",
-                          border: "1px solid rgba(74,222,128,0.4)", borderRadius: 6,
-                          padding: "3px 8px", color: "#4ade80", fontSize: 10,
+                          marginTop: 4, background: "rgba(74,222,128,0.15)",
+                          border: "1px solid rgba(74,222,128,0.4)", borderRadius: 7,
+                          padding: "5px 10px", color: "#4ade80", fontSize: 11,
                           fontWeight: 700, cursor: "pointer", alignSelf: "flex-start",
+                          transition: "all 0.2s ease",
                         } as any}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.background = "rgba(74,222,128,0.25)";
+                          e.currentTarget.style.borderColor = "#4ade80";
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.background = "rgba(74,222,128,0.15)";
+                          e.currentTarget.style.borderColor = "rgba(74,222,128,0.4)";
+                        }}
                       >🔍 Найти груз</button>
                     )}
                   </div>
@@ -1874,12 +2012,12 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
           )}
 
           {selectedState.inboundTrucks?.length > 0 && (
-            <div style={{ marginBottom: 12 } as any}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 } as any}>
+            <div style={{ marginBottom: 14 } as any}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 } as any}>
                 ➡️ ЕДУТ В ШТАТ ({selectedState.inboundTrucks.length})
               </div>
               {selectedState.inboundTrucks.map((t: any) => (
-                <div key={t.id} style={{ fontSize: 10, color: "#38bdf8", marginBottom: 3 } as any}>
+                <div key={t.id} style={{ fontSize: 11, color: "#38bdf8", marginBottom: 4, lineHeight: 1.4 } as any}>
                   🚛 {t.name} · {t.driver} → {t.destinationCity}{CITY_STATE[t.destinationCity] ? `, ${CITY_STATE[t.destinationCity]}` : ""}
                 </div>
               ))}
@@ -1888,7 +2026,7 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
 
           {selectedState.loads.length > 0 && (
             <div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 } as any}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 } as any}>
                 📋 ГРУЗЫ ИЗ ШТАТА ({selectedState.loads.length})
                 {selectedState.isSurge && <span style={{ color: "#ff6b35", marginLeft: 4 } as any}>🔥 +15% ставки</span>}
               </div>
@@ -1896,30 +2034,31 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
                 <div key={l.id}
                   onClick={() => { onFindLoad?.(l.fromCity); setSelectedState(null); }}
                   style={{
-                    background: "rgba(255,255,255,0.04)", borderRadius: 8,
-                    padding: "6px 10px", marginBottom: 5,
+                    background: "rgba(255,255,255,0.04)", borderRadius: 10,
+                    padding: "8px 12px", marginBottom: 6,
                     border: "1px solid rgba(255,255,255,0.07)",
                     display: "flex", justifyContent: "space-between", alignItems: "center",
                     cursor: "pointer",
+                    transition: "all 0.2s ease",
                   } as any}
                   onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.09)")}
                   onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
                 >
-                  <div style={{ display: "flex", flexDirection: "column", gap: 2 } as any}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: "#e2e8f0" } as any}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 3 } as any}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "#e2e8f0", lineHeight: 1.3 } as any}>
                       {l.fromCity}, {CITY_STATE[l.fromCity] || ""} → {l.toCity}, {CITY_STATE[l.toCity] || ""}
                     </span>
-                    <span style={{ fontSize: 9, color: "#64748b" } as any}>
+                    <span style={{ fontSize: 11, color: "#94a3b8" } as any}>
                       {l.miles}mi · {l.equipment} · {l.commodity}
                     </span>
                   </div>
-                  <span style={{ fontSize: 12, fontWeight: 800, color: selectedState.isSurge ? "#ff6b35" : "#4ade80" } as any}>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: selectedState.isSurge ? "#ff6b35" : "#4ade80" } as any}>
                     ${l.postedRate?.toLocaleString()}
                   </span>
                 </div>
               ))}
               {selectedState.loads.length > 4 && (
-                <div style={{ fontSize: 10, color: "#64748b", textAlign: "center", marginTop: 4 } as any}>
+                <div style={{ fontSize: 11, color: "#94a3b8", textAlign: "center", marginTop: 6 } as any}>
                   +{selectedState.loads.length - 4} ещё грузов
                 </div>
               )}
@@ -1927,7 +2066,7 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
           )}
 
           {selectedState.trucks.length === 0 && selectedState.loads.length === 0 && (
-            <div style={{ fontSize: 12, color: "#64748b", textAlign: "center", padding: "12px 0" } as any}>
+            <div style={{ fontSize: 13, color: "#94a3b8", textAlign: "center", padding: "16px 0" } as any}>
               Нет траков и грузов в этом штате
             </div>
           )}
@@ -1939,6 +2078,16 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         @keyframes fadeInSlide {
           from { opacity: 0; transform: translateX(20px); }
           to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes statePopupFadeIn {
+          from { 
+            opacity: 0; 
+            transform: translateY(-10px) scale(0.95); 
+          }
+          to { 
+            opacity: 1; 
+            transform: translateY(0) scale(1); 
+          }
         }
         @keyframes follow-pulse {
           0%,100% { box-shadow: 0 0 14px rgba(6,182,212,0.6); }
@@ -2068,8 +2217,18 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
             left: 8px !important;
             width: calc(100vw - 16px) !important;
             max-width: none !important;
-            padding: 12px !important;
+            padding: 14px !important;
             max-height: calc(100vh - 80px) !important;
+          }
+          .map-state-popup > div:first-child > div:first-child > span:first-child {
+            font-size: 20px !important;
+          }
+          .map-state-popup > div:first-child > div:first-child > span:nth-child(2) {
+            font-size: 13px !important;
+          }
+          .map-state-popup button {
+            font-size: 11px !important;
+            padding: 5px 10px !important;
           }
           
           .map-state-fact {

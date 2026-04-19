@@ -7,6 +7,7 @@ import DriverCommunicationModal from './DriverCommunicationModal';
 import CallModal from './CallModal';
 import CancelLoadModal from './CancelLoadModal';
 import MechanicChatModal from './MechanicChatModal';
+import BrokerChatModal from './BrokerChatModal';
 
 interface Props {
   truck: Truck | null;
@@ -37,6 +38,8 @@ export default function TruckDetailModal({ truck: truckProp, onClose, onFindLoad
   const [hoseldTab, setHoseldTab] = useState<'hos' | 'eld'>('hos');
   const [showSMS, setShowSMS] = useState(false);
   const [showCall, setShowCall] = useState(false);
+  const [showBrokerCall, setShowBrokerCall] = useState(false);
+  const [showBrokerSMS, setShowBrokerSMS] = useState(false);
   const [showCancelLoad, setShowCancelLoad] = useState(false);
   const [showMechanic, setShowMechanic] = useState(false);
   const { gameMinute, removeMoney } = useGameStore();
@@ -345,24 +348,60 @@ export default function TruckDetailModal({ truck: truckProp, onClose, onFindLoad
                 </TouchableOpacity>
               )}
 
-              {/* Водитель — SMS + Звонок */}
+              {/* Водитель + Брокер — 2 карточки рядом */}
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                <TouchableOpacity 
-                  style={[s.actionBtn, { flex: 2, backgroundColor: 'rgba(6,182,212,0.12)', borderColor: 'rgba(6,182,212,0.4)' }]} 
-                  onPress={() => setShowSMS(true)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={{ fontSize: 20, marginBottom: 2 }}>💬</Text>
-                  <Text style={[s.actionBtnText, { color: '#06b6d4' }]}>SMS Водителю</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[s.actionBtn, { flex: 1, backgroundColor: 'rgba(236,72,153,0.12)', borderColor: 'rgba(236,72,153,0.4)' }]} 
-                  onPress={() => {}}
-                  activeOpacity={0.8}
-                >
-                  <Text style={{ fontSize: 24, marginBottom: 2 }}>📞</Text>
-                  <Text style={[s.actionBtnText, { color: '#ec4899', fontSize: 12 }]}>Звонок</Text>
-                </TouchableOpacity>
+
+                {/* Водитель */}
+                <View style={{ flex: 1, backgroundColor: 'rgba(6,182,212,0.08)', borderWidth: 1, borderColor: 'rgba(6,182,212,0.35)', borderRadius: 14, padding: 10, gap: 8 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: '#06b6d4', textAlign: 'center', letterSpacing: 0.5 }}>🚛 ВОДИТЕЛЬ</Text>
+                  <Text style={{ fontSize: 10, color: '#94a3b8', textAlign: 'center', marginTop: -4 }}>{truck.driver}</Text>
+                  <View style={{ flexDirection: 'row', gap: 6 }}>
+                    <TouchableOpacity
+                      style={{ flex: 1, backgroundColor: 'rgba(6,182,212,0.15)', borderWidth: 1, borderColor: 'rgba(6,182,212,0.4)', borderRadius: 10, paddingVertical: 10, alignItems: 'center', gap: 3 }}
+                      onPress={() => setShowSMS(true)} activeOpacity={0.8}
+                    >
+                      <Text style={{ fontSize: 18 }}>💬</Text>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: '#06b6d4' }}>SMS</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={{ flex: 1, backgroundColor: 'rgba(236,72,153,0.15)', borderWidth: 1, borderColor: 'rgba(236,72,153,0.4)', borderRadius: 10, paddingVertical: 10, alignItems: 'center', gap: 3 }}
+                      onPress={() => setShowCall(true)} activeOpacity={0.8}
+                    >
+                      <Text style={{ fontSize: 18 }}>📞</Text>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: '#ec4899' }}>Звонок</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Брокер — только если есть груз */}
+                {truck.currentLoad ? (
+                  <View style={{ flex: 1, backgroundColor: 'rgba(251,146,60,0.08)', borderWidth: 1, borderColor: 'rgba(251,146,60,0.35)', borderRadius: 14, padding: 10, gap: 8 }}>
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: '#fb923c', textAlign: 'center', letterSpacing: 0.5 }}>📋 БРОКЕР</Text>
+                    <Text style={{ fontSize: 10, color: '#94a3b8', textAlign: 'center', marginTop: -4 }}>{truck.currentLoad.brokerName}</Text>
+                    <View style={{ flexDirection: 'row', gap: 6 }}>
+                      <TouchableOpacity
+                        style={{ flex: 1, backgroundColor: 'rgba(251,146,60,0.15)', borderWidth: 1, borderColor: 'rgba(251,146,60,0.4)', borderRadius: 10, paddingVertical: 10, alignItems: 'center', gap: 3 }}
+                        onPress={() => setShowBrokerSMS(true)} activeOpacity={0.8}
+                      >
+                        <Text style={{ fontSize: 18 }}>💬</Text>
+                        <Text style={{ fontSize: 10, fontWeight: '700', color: '#fb923c' }}>SMS</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={{ flex: 1, backgroundColor: 'rgba(251,146,60,0.15)', borderWidth: 1, borderColor: 'rgba(251,146,60,0.4)', borderRadius: 10, paddingVertical: 10, alignItems: 'center', gap: 3 }}
+                        onPress={() => setShowBrokerCall(true)} activeOpacity={0.8}
+                      >
+                        <Text style={{ fontSize: 18 }}>📞</Text>
+                        <Text style={{ fontSize: 10, fontWeight: '700', color: '#fb923c' }}>Звонок</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : (
+                  <View style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.03)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', borderRadius: 14, padding: 10, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 20, marginBottom: 4 }}>📋</Text>
+                    <Text style={{ fontSize: 10, fontWeight: '700', color: '#475569', textAlign: 'center' }}>Нет груза</Text>
+                    <Text style={{ fontSize: 9, color: '#334155', textAlign: 'center', marginTop: 2 }}>Брокер недоступен</Text>
+                  </View>
+                )}
               </View>
 
               {/* HOS + ELD */}
@@ -379,19 +418,6 @@ export default function TruckDetailModal({ truck: truckProp, onClose, onFindLoad
                 <Text style={{ fontSize: 16, color: '#a855f7' }}>→</Text>
               </TouchableOpacity>
 
-              {/* Брокер — только если есть груз */}
-              {truck.currentLoad && (
-                <TouchableOpacity 
-                  style={[s.actionBtn, { backgroundColor: 'rgba(251,146,60,0.12)', borderColor: 'rgba(251,146,60,0.4)' }]} 
-                  onPress={() => {}}
-                  activeOpacity={0.8}
-                >
-                  <Text style={{ fontSize: 20, marginBottom: 2 }}>📞</Text>
-                  <Text style={[s.actionBtnText, { color: '#fb923c' }]}>Связь с брокером</Text>
-                  <Text style={{ fontSize: 11, color: '#94a3b8', marginTop: 1 }}>{truck.currentLoad.brokerName}</Text>
-                </TouchableOpacity>
-              )}
-
               {/* TONU */}
               {truck.currentLoad && (
                 <TouchableOpacity style={[s.actionBtn, { borderColor: 'rgba(255,69,58,0.25)', backgroundColor: 'rgba(255,69,58,0.06)' }]} onPress={() => setShowCancelLoad(true)} activeOpacity={0.85}>
@@ -407,6 +433,8 @@ export default function TruckDetailModal({ truck: truckProp, onClose, onFindLoad
       {showHOSELD && <HOSELDModal truck={truck} onClose={() => setShowHOSELD(false)} initialTab={hoseldTab} />}
       {showSMS && <DriverCommunicationModal truck={truck} onClose={() => setShowSMS(false)} onCall={() => { setShowSMS(false); setShowCall(true); }} />}
       {showCall && <CallModal contactName={truck.driver} contactRole="driver" truckId={truck.id} onClose={() => setShowCall(false)} />}
+      {showBrokerCall && truck.currentLoad && <CallModal contactName={truck.currentLoad.brokerName || 'Broker'} contactRole="broker" truckId={truck.id} onClose={() => setShowBrokerCall(false)} />}
+      {showBrokerSMS && truck.currentLoad && <BrokerChatModal brokerName={truck.currentLoad.brokerName || 'Broker'} truckId={truck.id} loadInfo={{ fromCity: truck.currentLoad.fromCity, toCity: truck.currentLoad.toCity, agreedRate: truck.currentLoad.agreedRate, commodity: truck.currentLoad.commodity }} onClose={() => setShowBrokerSMS(false)} />}
       {showCancelLoad && truck.currentLoad && <CancelLoadModal load={truck.currentLoad} onClose={() => setShowCancelLoad(false)} />}
       {showMechanic && (
         <MechanicChatModal
