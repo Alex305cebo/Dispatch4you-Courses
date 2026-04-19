@@ -1000,7 +1000,10 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
 
       // ── LARGE: полная инфа + водитель + HOS-бар ───────────────────────
       } else {
-        const W = 172, H = 118;
+        const commodity = d.currentLoad?.commodity || "";
+        const rate = d.currentLoad?.rate ? `$${d.currentLoad.rate.toLocaleString()}` : "";
+        const loadLine = commodity ? (rate ? `📦 ${commodity}  ${rate}` : `📦 ${commodity}`) : "";
+        const W = 172, H = loadLine ? 136 : 118;
         const STRIP = 5;
         const card = container.children.push(am5.Container.new(root, {
           width: W, height: H,
@@ -1053,10 +1056,20 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
           fill: am5.color(0xb0c4de), fontSize: 11, fontWeight: "500",
           x: STRIP + 8, y: 63,
         }));
+        // Строка 5: груз + ставка (если есть)
+        if (loadLine) {
+          card.children.push(am5.Label.new(root, {
+            text: loadLine,
+            fill: am5.color(0x4ade80), fontSize: 11, fontWeight: "600",
+            x: STRIP + 8, y: 80,
+            oversizedBehavior: "truncate", maxWidth: W - STRIP - 14,
+          }));
+        }
+        const hosY = loadLine ? 100 : 82;
         // HOS бар — фон
         card.children.push(am5.RoundedRectangle.new(root, {
           width: W - STRIP - 16, height: 6,
-          x: STRIP + 8, y: 82,
+          x: STRIP + 8, y: hosY,
           fill: am5.color(0x1e3a5f), fillOpacity: 0.8,
           cornerRadiusTL: 3, cornerRadiusTR: 3, cornerRadiusBL: 3, cornerRadiusBR: 3,
         }));
@@ -1064,7 +1077,7 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         const hosBarWL = Math.max(5, Math.round((W - STRIP - 16) * hosFrac));
         card.children.push(am5.RoundedRectangle.new(root, {
           width: hosBarWL, height: 6,
-          x: STRIP + 8, y: 82,
+          x: STRIP + 8, y: hosY,
           fill: am5.color(hosColor), fillOpacity: 0.95,
           cornerRadiusTL: 3, cornerRadiusTR: 3, cornerRadiusBL: 3, cornerRadiusBR: 3,
         }));
@@ -1072,7 +1085,7 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         card.children.push(am5.Label.new(root, {
           text: `⏱ ${Math.round(d.hoursLeft * 10) / 10}h HOS${d.milesLeft > 0 ? `   🛣 ${d.milesLeft} mi` : ""}`,
           fill: am5.color(0x94a3b8), fontSize: 11,
-          x: STRIP + 8, y: 92,
+          x: STRIP + 8, y: hosY + 10,
         }));
         card.events.on("click", onClick);
         card.events.on("pointerover", onHover);

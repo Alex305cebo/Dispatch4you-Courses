@@ -68,6 +68,7 @@ export default function DriverCommunicationModal({ truck, onClose, onCall }: Pro
   const [messages, setMessages] = useState<Message[]>([]);
   const [typing, setTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const dqRowRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Load existing messages from notifications
   useEffect(() => {
@@ -94,6 +95,20 @@ export default function DriverCommunicationModal({ truck, onClose, onCall }: Pro
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, typing]);
+
+  // Скролл мышкой по горизонтали
+  useEffect(() => {
+    dqRowRefs.current.forEach(el => {
+      if (!el) return;
+      const handler = (e: WheelEvent) => {
+        if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+        e.preventDefault();
+        el.scrollLeft += e.deltaY * 1.5;
+      };
+      el.addEventListener('wheel', handler, { passive: false });
+      return () => el.removeEventListener('wheel', handler);
+    });
+  }, []);
 
   const sendMessage = (text: string) => {
     setMessages(prev => [...prev, { from: 'dispatcher', text, time: formatNow() }]);
@@ -212,15 +227,19 @@ export default function DriverCommunicationModal({ truck, onClose, onCall }: Pro
           .dqrow { display:flex; overflow-x:auto; gap:6px; scrollbar-width:none; padding:0 12px; }
           .dqrow::-webkit-scrollbar { display:none; }
           .dqrow-wrap { position:relative; }
-          .dqrow-arrow { position:absolute; right:0; top:0; bottom:0; width:28px;
+          .dqrow-arrow {
+            position:absolute; right:0; top:0; bottom:0; width:28px;
             background:linear-gradient(to left, rgba(26,31,46,0.95) 60%, transparent);
             display:flex; align-items:center; justify-content:flex-end; padding-right:4px;
-            pointer-events:none; font-size:13px; color:rgba(10,132,255,0.7); }
+            font-size:13px; color:rgba(10,132,255,0.9);
+            cursor:pointer; user-select:none;
+          }
+          .dqrow-arrow:hover { color:#0a84ff; }
         `}</style>
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '6px 0 8px', display: 'flex', flexDirection: 'column', gap: 5 } as any}>
           {[QUICK_MESSAGES.slice(0, Math.ceil(QUICK_MESSAGES.length / 2)), QUICK_MESSAGES.slice(Math.ceil(QUICK_MESSAGES.length / 2))].map((row, ri) => (
             <div key={ri} className="dqrow-wrap">
-              <div className="dqrow">
+              <div className="dqrow" ref={el => { dqRowRefs.current[ri] = el; }}>
                 {row.map((msg, i) => (
                   <button key={i} onClick={() => sendMessage(msg)} disabled={typing} style={{
                     flexShrink: 0, padding: '5px 10px', borderRadius: 10,
@@ -232,7 +251,10 @@ export default function DriverCommunicationModal({ truck, onClose, onCall }: Pro
                   }}>{msg}</button>
                 ))}
               </div>
-              <div className="dqrow-arrow">›</div>
+              <div className="dqrow-arrow" onClick={() => {
+                const el = dqRowRefs.current[ri];
+                if (el) el.scrollBy({ left: 120, behavior: 'smooth' });
+              }}>›</div>
             </div>
           ))}
         </div>

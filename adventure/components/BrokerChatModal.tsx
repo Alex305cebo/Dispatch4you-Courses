@@ -66,12 +66,27 @@ export default function BrokerChatModal({ brokerName, truckId, loadInfo, onClose
   const [typing, setTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const qRowRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, typing]);
 
   useEffect(() => { setTimeout(() => inputRef.current?.focus(), 100); }, []);
+
+  // Скролл мышкой по горизонтали для строк подсказок
+  useEffect(() => {
+    qRowRefs.current.forEach(el => {
+      if (!el) return;
+      const handler = (e: WheelEvent) => {
+        if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; // уже горизонтальный скролл
+        e.preventDefault();
+        el.scrollLeft += e.deltaY * 1.5;
+      };
+      el.addEventListener('wheel', handler, { passive: false });
+      return () => el.removeEventListener('wheel', handler);
+    });
+  }, []);
 
   const sendMessage = (text: string) => {
     if (!text.trim()) return;
@@ -182,15 +197,19 @@ export default function BrokerChatModal({ brokerName, truckId, loadInfo, onClose
           .qrow { display:flex; overflow-x:auto; gap:6px; scrollbar-width:none; padding:0 12px; }
           .qrow::-webkit-scrollbar { display:none; }
           .qrow-wrap { position:relative; }
-          .qrow-arrow { position:absolute; right:0; top:0; bottom:0; width:28px;
+          .qrow-arrow {
+            position:absolute; right:0; top:0; bottom:0; width:28px;
             background:linear-gradient(to left, rgba(20,25,34,0.95) 60%, transparent);
             display:flex; align-items:center; justify-content:flex-end; padding-right:4px;
-            pointer-events:none; font-size:13px; color:rgba(251,146,60,0.7); }
+            font-size:13px; color:rgba(251,146,60,0.9);
+            cursor:pointer; user-select:none;
+          }
+          .qrow-arrow:hover { color:#fb923c; }
         `}</style>
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '6px 0 8px', display: 'flex', flexDirection: 'column', gap: 5 } as any}>
           {[QUICK_MESSAGES.slice(0, Math.ceil(QUICK_MESSAGES.length / 2)), QUICK_MESSAGES.slice(Math.ceil(QUICK_MESSAGES.length / 2))].map((row, ri) => (
             <div key={ri} className="qrow-wrap">
-              <div className="qrow">
+              <div className="qrow" ref={el => { qRowRefs.current[ri] = el; }}>
                 {row.map((q, i) => (
                   <button key={i} onClick={() => sendMessage(q)} style={{
                     flexShrink: 0, padding: '5px 10px', borderRadius: 10, cursor: 'pointer',
@@ -199,7 +218,10 @@ export default function BrokerChatModal({ brokerName, truckId, loadInfo, onClose
                   }}>{q}</button>
                 ))}
               </div>
-              <div className="qrow-arrow">›</div>
+              <div className="qrow-arrow" onClick={() => {
+                const el = qRowRefs.current[ri];
+                if (el) el.scrollBy({ left: 120, behavior: 'smooth' });
+              }}>›</div>
             </div>
           ))}
         </div>
