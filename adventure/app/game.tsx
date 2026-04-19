@@ -45,10 +45,10 @@ import GuideBubble from '../components/GuideBubble';
 import CharacterDialog from '../components/CharacterDialog';
 import { CHARACTERS, DIALOG_DRIVER_START, DIALOG_BROKER_FIRST_CALL, isDialogShown, markDialogShown } from '../data/dialogs';
 import { getDriverAvatar } from '../utils/driverAvatars';
-import { MessagesModal } from '../components/MessagesModal';
+import { UnifiedChatUI } from '../components/UnifiedChatUI';
 import { createDemoMessages } from '../utils/demoMessages';
 
-type Tab = 'map' | 'loadboard' | 'trucks';
+type Tab = 'map' | 'loadboard' | 'trucks' | 'chat';
 
 const STATUS_COLOR: Record<string, string> = {
   idle:        '#38bdf8', // голубой — свободен, ждёт груза (позитивно)
@@ -129,7 +129,6 @@ export default function GameScreen() {
   const [guideVisible, setGuideVisible] = useState(false);
   const [showDriverDialog, setShowDriverDialog] = useState(false);
   const [chatCharacter, setChatCharacter] = useState<'driver' | 'owner' | 'accountant'>('driver');
-  const [showCharacterPicker, setShowCharacterPicker] = useState(false);
   const dialogCheckDone = useRef(false);
 
   // Автоматически открываем чат для новых игроков (онбординг)
@@ -144,7 +143,7 @@ export default function GameScreen() {
     if (!isOnboardingComplete(nickname)) {
       // Новый игрок — открываем чат автоматически
       const timer = setTimeout(() => {
-        setShowCharacterPicker(true);
+        switchTab('chat');
       }, 1000);
       return () => clearTimeout(timer);
     } else {
@@ -362,8 +361,13 @@ export default function GameScreen() {
     }));
   }
 
+  const unreadChat = notifications.filter(n =>
+    ['email','pod_ready','rate_con','detention','missed_call','voicemail','text','urgent'].includes(n.type) && !n.read
+  ).length;
+
   const tabs: { id: Tab; label: string; badge?: number; onPress?: () => void }[] = [
     { id: 'loadboard', label: 'Грузы',  badge: availableLoads.length },
+    { id: 'chat',      label: '💬 Чат', badge: unreadChat || undefined },
     { id: 'trucks',    label: 'Траки',  badge: idleTrucks > 0 ? idleTrucks : undefined },
   ];
 
@@ -562,7 +566,7 @@ export default function GameScreen() {
         <div style={{ display: 'flex', alignItems: 'center', gap: isWide ? 5 : 3, flexShrink: 0 } as any}>
           {/* Колокольчик */}
           {/* Кнопка чата с персонажами */}
-          <button onClick={() => setShowCharacterPicker(true)} style={{
+          <button onClick={() => switchTab('chat')} style={{
             position: 'relative', width: isWide ? 38 : 32, height: isWide ? 38 : 32,
             borderRadius: isWide ? 19 : 16,
             background: 'linear-gradient(135deg, rgba(88,204,2,0.25), rgba(70,163,2,0.15))',
@@ -575,30 +579,16 @@ export default function GameScreen() {
             {(() => {
               const { useUnifiedChatStore } = require('../store/unifiedChatStore');
               const chatUnread = useUnifiedChatStore.getState().getUnreadCount();
-              const emailUnread = notifications.filter(n =>
-                ['email','pod_ready','rate_con','detention','missed_call','voicemail','text','urgent'].includes(n.type) && !n.read
-              ).length;
-              const unreadCount = chatUnread + emailUnread;
-              return unreadCount > 0 ? (
+              const total = chatUnread + unreadChat;
+              return total > 0 ? (
                 <span style={{
-                  position: 'absolute',
-                  top: -4,
-                  right: -4,
-                  background: '#ef4444',
-                  color: '#fff',
-                  fontSize: 10,
-                  fontWeight: 700,
-                  borderRadius: 10,
-                  minWidth: 18,
-                  height: 18,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '0 4px',
-                  border: '2px solid #0a0e1a',
-                } as any}>
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
+                  position: 'absolute', top: -4, right: -4,
+                  background: '#ef4444', color: '#fff',
+                  fontSize: 10, fontWeight: 700, borderRadius: 10,
+                  minWidth: 18, height: 18,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  padding: '0 4px', border: '2px solid #0a0e1a',
+                } as any}>{total > 99 ? '99+' : total}</span>
               ) : null;
             })()}
           </button>
@@ -1221,6 +1211,7 @@ export default function GameScreen() {
             <View style={s.panelContent}>
               {(activeTab === 'loadboard' || activeTab === 'map') && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} onAssigned={handleAssigned} /></ErrorBoundary>}
               {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
+              {activeTab === 'chat'      && <ErrorBoundary name="Chat"><UnifiedChatUI nickname={sessionName || 'player'} /></ErrorBoundary>}
             </View>
           </View>
         </View>
@@ -1233,6 +1224,7 @@ export default function GameScreen() {
             {activeTab === 'map'       && <ErrorBoundary name="Map"><MapView {...mapProps} /></ErrorBoundary>}
             {activeTab === 'loadboard' && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} onAssigned={handleAssigned} /></ErrorBoundary>}
             {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
+            {activeTab === 'chat'      && <ErrorBoundary name="Chat"><UnifiedChatUI nickname={sessionName || 'player'} /></ErrorBoundary>}
             {/* Карточки траков — поверх карты, сверху */}
             {activeTab === 'map' && (
               <View style={s.truckStripBar} pointerEvents="box-none">
@@ -1248,13 +1240,6 @@ export default function GameScreen() {
       )}
 
       {/* ── MODALS ── */}
-      {/* Messages Modal — Unified Chat */}
-      <MessagesModal
-        visible={showCharacterPicker}
-        nickname={sessionName || 'player'}
-        onClose={() => setShowCharacterPicker(false)}
-      />
-
       {/* Driver Start Dialog — аватар совпадает с карточкой трака */}
       <CharacterDialog
         visible={showDriverDialog}
@@ -1267,7 +1252,7 @@ export default function GameScreen() {
         steps={chatCharacter === 'driver' ? DIALOG_DRIVER_START : DIALOG_DRIVER_START}
         onBack={() => {
           setShowDriverDialog(false);
-          setShowCharacterPicker(true);
+          switchTab('chat');
         }}
         onClose={() => {
           setShowDriverDialog(false);
@@ -1308,7 +1293,7 @@ export default function GameScreen() {
       {/* Колокольчик и меню — вне TopBar div чтобы Modal работал корректно */}
       <NotificationBell
         onNavigateToTrucks={() => switchTab('trucks')}
-        onNavigateToLoads={() => setShowCharacterPicker(true)}
+        onNavigateToLoads={() => switchTab('chat')}
         onNavigateToEvents={() => setShowEvents(true)}
         forceOpen={showBell}
         onClose={() => setShowBell(false)}
