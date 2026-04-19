@@ -1,6 +1,13 @@
 ﻿import { create } from 'zustand';
 import { SHIFT_DURATION, SHIFT_START_HOUR, SHIFT_START_MINUTE, CITIES, CITY_STATE, TIME_SCALE } from '../constants/config';
 import { findNearestTruckStop } from '../constants/truckStops';
+import { 
+  sendLoadOffer, 
+  sendBreakdownAlert, 
+  sendHOSViolation,
+  sendDriverQuestion,
+  sendSystemNotification 
+} from '../utils/chatHelpers';
 
 // ─── OSRM fetch с таймаутом 3 сек — если зависает, возвращает null ──────────
 async function fetchRoute(fromLng: number, fromLat: number, toLng: number, toLat: number): Promise<Array<[number,number]> | null> {
@@ -2124,6 +2131,30 @@ export const useGameStore = create<GameState>((set, get) => ({
         if (!canRoadside) {
           get().removeMoney(bd.tow, 'Эвакуатор — ' + truck.name + ': ' + bd.label);
         }
+        
+        // НОВОЕ: Отправить в чат
+        if (canRoadside) {
+          sendBreakdownAlert({
+            driverName: truck.driver,
+            truckId: truck.id,
+            truckName: truck.name,
+            location: truck.currentCity,
+            issue: bd.label,
+            onCallRoadside: () => {
+              get().repairBreakdown(truck.id, 'roadside');
+            },
+            onCallTow: () => {
+              get().repairBreakdown(truck.id, 'tow');
+            },
+          });
+        } else {
+          sendSystemNotification({
+            title: '🚨 Поломка — ' + truck.name,
+            message: bd.label + ' возле ' + truck.currentCity + '. Вызван эвакуатор ($' + bd.tow + '). Задержка ~' + bd.delayTow + ' мин.',
+            priority: 'urgent',
+          });
+        }
+        
         get().addNotification({
           type: 'text', priority: 'critical', from: truck.driver,
           subject: '🚨 Поломка — ' + truck.name + '!',
@@ -2172,18 +2203,34 @@ case 'detention': {
         
       case 'driver_question': {
         const questions = [
-          'Где остановиться на ночь? HOS заканчивается через 2 часа.',
-          'Груз тяжелее чем в BOL на 800 lbs. Везти или отказаться?',
-          'На весах показали перегруз 500 фунтов. Что делать?',
-          'Шиппер просит подписать дополнительные документы. Подписывать?',
-          'Ресивер закрыт, охранник говорит приезжать завтра. Что делать?',
-          'Lumper fee $250 — шиппер говорит мы платим. Правда?',
-          'GPS показывает объезд +40 миль. Ехать по GPS или по старому маршруту?',
+          { q: 'Где остановиться на ночь? HOS заканчивается через 2 часа.', replies: [
+            { text: 'Найди truck stop', action: 'find_stop', value: 'Найди ближайший truck stop и останавливайся.', icon: '🅿️' },
+            { text: 'Продолжай', action: 'continue', value: 'Продолжай движение, найдём позже.', icon: '🚛' },
+          ]},
+          { q: 'Груз тяжелее чем в BOL на 800 lbs. Везти или отказаться?', replies: [
+            { text: 'Везти', action: 'accept', value: 'Везти, не критично.', icon: '✓' },
+            { text: 'Отказаться', action: 'refuse', value: 'Отказаться, это нарушение.', icon: '✕' },
+            { text: 'Позвони брокеру', action: 'call', value: 'Позвони брокеру и уточни.', icon: '📞' },
+          ]},
+          { q: 'На весах показали перегруз 500 фунтов. Что делать?', replies: [
+            { text: 'Разгрузить часть', action: 'unload', value: 'Разгрузи часть груза.', icon: '📦' },
+            { text: 'Заплатить штраф', action: 'pay', value: 'Заплати штраф и езжай.', icon: '💰' },
+          ]},
         ];
+        const q = questions[Math.floor(Math.random() * questions.length)];
+        
+        // НОВОЕ: Отправить в чат
+        sendDriverQuestion({
+          driverName: truck.driver,
+          truckId: truck.id,
+          question: q.q,
+          quickReplies: q.replies,
+        });
+        
         get().addNotification({
           type: 'text', priority: 'medium', from: truck.driver,
           subject: '❓ Вопрос водителя',
-          message: questions[Math.floor(Math.random() * questions.length)],
+          message: q.q,
           actionRequired: true, relatedTruckId: truck.id,
         });
         break;

@@ -1,7 +1,13 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// TRUCK STRIP — ПРОЗРАЧНЫЕ ПЛАШКИ v3.0 FINAL
+// ═══════════════════════════════════════════════════════════════════════════
+
 import React, { useRef, useEffect, memo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CITY_STATE } from '../constants/config';
 import { getDriverAvatar } from '../utils/driverAvatars';
+
+// VERSION: 3.0 - TRANSPARENT BACKGROUND
 
 const FLUENT = 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis';
 const E = {
@@ -133,6 +139,7 @@ const TruckStripComponent = memo(function TruckStripComponent({
   return (
     <div
       ref={scrollRef}
+      className="truck-strip-scroll"
       style={{
         display: 'flex', overflowX: 'auto', gap: 8,
         padding: isWide ? '8px 10px' : '7px 10px',
@@ -140,6 +147,7 @@ const TruckStripComponent = memo(function TruckStripComponent({
         scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch',
         touchAction: 'pan-x', msOverflowStyle: 'none',
         cursor: 'grab', overscrollBehavior: 'contain',
+        userSelect: 'none', WebkitUserSelect: 'none',
       } as any}
       onMouseDown={e => {
         if (!scrollRef.current) return;
@@ -194,11 +202,13 @@ const TruckStripComponent = memo(function TruckStripComponent({
             )}
             <div
               onClick={() => { if (!isDragging.current && !isTouchDragging.current) onTruckClick(truck); }}
+              className="truck-card-transparent"
               style={{
                 width: isWide ? 360 : 290, height: CARD_H, borderRadius: 16,
-                background: isSelected ? `linear-gradient(135deg,rgba(${r},${g},${b},0.14),rgba(8,14,28,0.98))` : 'rgba(8,14,28,0.95)',
-                border: `2px solid ${isSelected ? color : isAlert ? color+'99' : 'rgba(255,255,255,0.1)'}`,
-                boxShadow: isSelected ? `0 0 0 1px ${color}44,0 8px 32px rgba(0,0,0,0.6)` : '0 4px 20px rgba(0,0,0,0.5)',
+                background: 'transparent',
+                backgroundColor: 'transparent',
+                border: `2px solid ${isSelected ? color : isAlert ? color+'99' : 'rgba(255,255,255,0.3)'}`,
+                boxShadow: 'none',
                 cursor: 'pointer', fontFamily: 'sans-serif',
                 display: 'flex', flexDirection: 'row', overflow: 'hidden', transition: 'border 0.2s',
               } as any}
@@ -206,7 +216,7 @@ const TruckStripComponent = memo(function TruckStripComponent({
               {/* ЛЕВЫЙ БЛОК */}
               <div style={{
                 width: AVATAR_W, flexShrink: 0,
-                background: `linear-gradient(180deg,rgba(${r},${g},${b},0.2),rgba(4,8,20,0.95))`,
+                background: 'transparent',
                 borderRight: `1px solid ${color}33`,
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 gap: 4, position: 'relative',
@@ -217,7 +227,7 @@ const TruckStripComponent = memo(function TruckStripComponent({
                 <img src={getDriverAvatar(truck.id)} width={isWide ? 62 : 52} height={isWide ? 62 : 52}
                   style={{ imageRendering: 'auto', display: 'block', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))' } as any} />
                 <div style={{
-                  fontSize: isWide ? 10 : 9, fontWeight: 700, color, background: `${color}22`,
+                  fontSize: isWide ? 10 : 9, fontWeight: 700, color, background: 'transparent',
                   border: `1px solid ${color}44`, borderRadius: 5, padding: '1px 6px', whiteSpace: 'nowrap',
                 } as any}>{statusLabel}</div>
               </div>
@@ -227,11 +237,11 @@ const TruckStripComponent = memo(function TruckStripComponent({
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 } as any}>
                   <span style={{ fontSize: isWide ? 15 : 13, fontWeight: 900, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>{driverFullName}</span>
                   <div style={{ display: 'flex', gap: 4, flexShrink: 0, marginLeft: 6 } as any}>
-                    <span style={{ fontSize: isWide ? 10 : 9, fontWeight: 700, color: '#38bdf8', background: 'rgba(56,189,248,0.15)', border: '1px solid rgba(56,189,248,0.3)', borderRadius: 4, padding: '1px 5px' } as any}>TRK {truckNum}</span>
-                    <span style={{ fontSize: isWide ? 10 : 9, fontWeight: 700, color: '#94a3b8', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, padding: '1px 5px' } as any}>TRL {trailerNum}</span>
+                    <span style={{ fontSize: isWide ? 10 : 9, fontWeight: 700, color: '#38bdf8', background: 'transparent', border: '1px solid rgba(56,189,248,0.3)', borderRadius: 4, padding: '1px 5px' } as any}>TRK {truckNum}</span>
+                    <span style={{ fontSize: isWide ? 10 : 9, fontWeight: 700, color: '#94a3b8', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, padding: '1px 5px' } as any}>TRL {trailerNum}</span>
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.04)', borderRadius: 6, padding: '3px 7px', marginBottom: 4 } as any}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', borderRadius: 6, padding: '3px 7px', marginBottom: 4 } as any}>
                   <span style={{ fontSize: 10, color: '#64748b', flexShrink: 0 } as any}>📍</span>
                   {truck.destinationCity ? (
                     <span style={{ fontSize: isWide ? 11 : 10, fontWeight: 700, color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
@@ -248,12 +258,12 @@ const TruckStripComponent = memo(function TruckStripComponent({
                     </span>
                     <span style={{ fontSize: 9, fontWeight: 800, color: isMoving ? color : '#64748b' } as any}>{isMoving ? `${progressPct}%` : '—'}</span>
                   </div>
-                  <div style={{ height: 5, background: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' } as any}>
+                  <div style={{ height: 5, background: 'transparent', borderRadius: 3, overflow: 'hidden' } as any}>
                     <div style={{ height: '100%', width: isMoving ? `${progressPct}%` : '0%', background: `linear-gradient(90deg,${color}66,${color})`, borderRadius: 3, transition: 'width 0.8s ease' } as any} />
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 } as any}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, background: `${hosColor}15`, border: `1px solid ${hosColor}44`, borderRadius: 6, padding: '2px 6px' } as any}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, background: 'transparent', border: `1px solid ${hosColor}44`, borderRadius: 6, padding: '2px 6px' } as any}>
                     <span style={{ fontSize: isWide ? 13 : 12, fontWeight: 900, color: hosColor, lineHeight: 1 } as any}>{hos.toFixed(1)}</span>
                     <span style={{ fontSize: 9, fontWeight: 600, color: hosColor, opacity: 0.8 } as any}>h drive</span>
                   </div>
@@ -262,11 +272,11 @@ const TruckStripComponent = memo(function TruckStripComponent({
                     <span style={{ fontSize: isWide ? 12 : 11, fontWeight: 800, color: mood >= 60 ? '#34d399' : mood >= 35 ? '#fbbf24' : '#f87171' } as any}>{mood}%</span>
                   </div>
                   {truck.currentLoad ? (
-                    <div style={{ marginLeft: 'auto', flexShrink: 0, background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 6, padding: '2px 7px' } as any}>
+                    <div style={{ marginLeft: 'auto', flexShrink: 0, background: 'transparent', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 6, padding: '2px 7px' } as any}>
                       <span style={{ fontSize: isWide ? 14 : 13, fontWeight: 900, color: '#4ade80' } as any}>${truck.currentLoad.agreedRate.toLocaleString()}</span>
                     </div>
                   ) : (
-                    <div style={{ marginLeft: 'auto', flexShrink: 0, background: 'rgba(148,163,184,0.08)', border: '1px solid rgba(148,163,184,0.15)', borderRadius: 6, padding: '2px 7px' } as any}>
+                    <div style={{ marginLeft: 'auto', flexShrink: 0, background: 'transparent', border: '1px solid rgba(148,163,184,0.15)', borderRadius: 6, padding: '2px 7px' } as any}>
                       <span style={{ fontSize: 10, fontWeight: 700, color: '#475569' } as any}>Нет груза</span>
                     </div>
                   )}

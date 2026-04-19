@@ -107,17 +107,23 @@ export default function CharacterDialog({ visible, character, steps, onClose, on
         position: 'fixed', inset: 0,
         display: 'flex', flexDirection: 'column',
         justifyContent: 'flex-end',
+        alignItems: 'center',
         zIndex: 9999,
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       } as any}>
 
         {/* Верхняя часть — карта видна */}
-        <div style={{ flex: 1, background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(1px)' } as any} onClick={onClose} />
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(1px)' } as any} onClick={onClose} />
 
-        {/* Drawer 70% */}
+        {/* Drawer — по центру, макс 480px */}
         <div style={{
-          height: '70vh', background: '#fff',
-          borderRadius: '24px 24px 0 0', overflow: 'hidden',
+          position: 'relative',
+          width: '100%',
+          maxWidth: 480,
+          height: '70vh',
+          background: '#fff',
+          borderRadius: '24px 24px 0 0',
+          overflow: 'hidden',
           display: 'flex', flexDirection: 'column',
           boxShadow: '0 -8px 40px rgba(0,0,0,0.3)',
         } as any}>

@@ -22,6 +22,7 @@ import { SHIFT_DURATION, CITY_STATE } from '../constants/config';
 import MapView from '../components/MapView';
 import TruckPanel from '../components/TruckPanel';
 import TruckStripComponent from '../components/TruckStripComponent';
+import TruckCardOverlay from '../components/TruckCardOverlay';
 import LoadBoardPanel from '../components/LoadBoardPanel';
 import EventsPanel from '../components/EventsPanel';
 import NegotiationModal from '../components/NegotiationModal';
@@ -45,6 +46,8 @@ import GuideBubble from '../components/GuideBubble';
 import CharacterDialog from '../components/CharacterDialog';
 import { CHARACTERS, DIALOG_DRIVER_START, DIALOG_BROKER_FIRST_CALL, isDialogShown, markDialogShown } from '../data/dialogs';
 import { getDriverAvatar } from '../utils/driverAvatars';
+import { MessagesModal } from '../components/MessagesModal';
+import { createDemoMessages } from '../utils/demoMessages';
 
 type Tab = 'map' | 'loadboard' | 'email' | 'trucks';
 
@@ -130,19 +133,27 @@ export default function GameScreen() {
   const [showCharacterPicker, setShowCharacterPicker] = useState(false);
   const dialogCheckDone = useRef(false);
 
-  // Показываем диалог водителя при запуске игры (один раз за сессию)
+  // Автоматически открываем чат для новых игроков (онбординг)
   useEffect(() => {
     if (dialogCheckDone.current) return;
     dialogCheckDone.current = true;
 
-    const sessionKey = `dialog-shown-${sessionName || 'default'}`;
-    const shownInThisSession = localStorage.getItem(sessionKey) === '1';
+    // Проверяем завершён ли онбординг
+    const { isOnboardingComplete } = require('../data/onboardingSteps');
+    const nickname = sessionName || 'player';
     
-    if (!shownInThisSession) {
+    if (!isOnboardingComplete(nickname)) {
+      // Новый игрок — открываем чат автоматически
       const timer = setTimeout(() => {
-        setShowDriverDialog(true);
-      }, 1500);
+        setShowCharacterPicker(true);
+      }, 1000);
       return () => clearTimeout(timer);
+    } else {
+      // Опытный игрок — создаём демо-сообщения если нужно
+      const demoTimer = setTimeout(() => {
+        createDemoMessages();
+      }, 2000);
+      return () => clearTimeout(demoTimer);
     }
   }, [sessionName]);
   const [timeFormat, setTimeFormat] = useState<'12h' | '24h'>(() => {
@@ -569,6 +580,31 @@ export default function GameScreen() {
             boxShadow: '0 0 10px rgba(88,204,2,0.3)',
           } as any}>
             💬
+            {(() => {
+              const { useUnifiedChatStore } = require('../store/unifiedChatStore');
+              const unreadCount = useUnifiedChatStore.getState().getUnreadCount();
+              return unreadCount > 0 ? (
+                <span style={{
+                  position: 'absolute',
+                  top: -4,
+                  right: -4,
+                  background: '#ef4444',
+                  color: '#fff',
+                  fontSize: 10,
+                  fontWeight: 700,
+                  borderRadius: 10,
+                  minWidth: 18,
+                  height: 18,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0 4px',
+                  border: '2px solid #0a0e1a',
+                } as any}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              ) : null;
+            })()}
           </button>
           {/* Гамбургер */}
           <button onClick={() => setShowMenu(true)} style={{
@@ -835,20 +871,18 @@ export default function GameScreen() {
               </div>
             )}
 
-          {/* ═══ КАРТОЧКА — UBER/LYFT СТИЛЬ ═══ */}
+          {/* ═══ КАРТОЧКА — UBER/LYFT СТИЛЬ (ПРОЗРАЧНАЯ) ═══ */}
           <div
             onClick={() => { if (!isDragging.current && !isTouchDragging.current) handleTruckClick(truck); }}
             style={{
               width: isWide ? 360 : 290,
               height: CARD_H,
               borderRadius: 16,
-              background: isSelected
-                ? `linear-gradient(135deg, rgba(${parseInt(color.slice(1,3),16)},${parseInt(color.slice(3,5),16)},${parseInt(color.slice(5,7),16)},0.14) 0%, rgba(8,14,28,0.98) 100%)`
-                : 'rgba(8,14,28,0.95)',
-              border: `2px solid ${isSelected ? color : isAlert ? color + '99' : 'rgba(255,255,255,0.1)'}`,
-              boxShadow: isSelected
-                ? `0 0 0 1px ${color}44, 0 8px 32px rgba(0,0,0,0.6), 0 0 20px ${color}33`
-                : '0 4px 20px rgba(0,0,0,0.5)',
+              background: 'transparent',
+              backdropFilter: 'none',
+              WebkitBackdropFilter: 'none',
+              border: `2px solid ${isSelected ? color : isAlert ? color + '99' : 'rgba(255,255,255,0.3)'}`,
+              boxShadow: 'none',
               cursor: 'pointer',
               fontFamily: 'sans-serif',
               display: 'flex', flexDirection: 'row',
@@ -859,7 +893,7 @@ export default function GameScreen() {
             {/* ── ЛЕВЫЙ БЛОК: водитель ── */}
             <div style={{
               width: AVATAR_W, flexShrink: 0,
-              background: `linear-gradient(180deg, rgba(${parseInt(color.slice(1,3),16)},${parseInt(color.slice(3,5),16)},${parseInt(color.slice(5,7),16)},0.2) 0%, rgba(4,8,20,0.95) 100%)`,
+              background: 'transparent',
               borderRight: `1px solid ${color}33`,
               display: 'flex', flexDirection: 'column',
               alignItems: 'center', justifyContent: 'center',
@@ -881,7 +915,7 @@ export default function GameScreen() {
               <div style={{
                 fontSize: isWide ? 10 : 9, fontWeight: 700,
                 color: color,
-                background: `${color}22`,
+                background: 'transparent',
                 border: `1px solid ${color}44`,
                 borderRadius: 5, padding: '1px 6px',
                 whiteSpace: 'nowrap',
@@ -902,13 +936,13 @@ export default function GameScreen() {
                 <div style={{ display: 'flex', gap: 4, flexShrink: 0, marginLeft: 6 } as any}>
                   <span style={{
                     fontSize: isWide ? 10 : 9, fontWeight: 700, color: '#38bdf8',
-                    background: 'rgba(56,189,248,0.15)',
+                    background: 'transparent',
                     border: '1px solid rgba(56,189,248,0.3)',
                     borderRadius: 4, padding: '1px 5px',
                   } as any}>TRK {truckNum}</span>
                   <span style={{
                     fontSize: isWide ? 10 : 9, fontWeight: 700, color: '#94a3b8',
-                    background: 'rgba(255,255,255,0.07)',
+                    background: 'transparent',
                     border: '1px solid rgba(255,255,255,0.12)',
                     borderRadius: 4, padding: '1px 5px',
                   } as any}>TRL {trailerNum}</span>
@@ -918,7 +952,7 @@ export default function GameScreen() {
               {/* ── СТРОКА 2: Маршрут ── */}
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 4,
-                background: 'rgba(255,255,255,0.04)',
+                background: 'transparent',
                 borderRadius: 6, padding: '3px 7px', marginBottom: 4,
               } as any}>
                 <span style={{ fontSize: 10, color: '#64748b', flexShrink: 0 } as any}>📍</span>
@@ -943,7 +977,7 @@ export default function GameScreen() {
                     {isMoving ? `${progressPct}%` : '—'}
                   </span>
                 </div>
-                <div style={{ height: 5, background: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' } as any}>
+                <div style={{ height: 5, background: 'transparent', borderRadius: 3, overflow: 'hidden' } as any}>
                   <div style={{
                     height: '100%',
                     width: isMoving ? `${progressPct}%` : '0%',
@@ -959,7 +993,7 @@ export default function GameScreen() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 } as any}>
                 <div style={{
                   display: 'flex', alignItems: 'baseline', gap: 2,
-                  background: `${hosColor}15`,
+                  background: 'transparent',
                   border: `1px solid ${hosColor}44`,
                   borderRadius: 6, padding: '2px 6px',
                 } as any}>
@@ -974,7 +1008,7 @@ export default function GameScreen() {
                   <div style={{
                     marginLeft: 'auto', flexShrink: 0,
                     display: 'flex', alignItems: 'baseline', gap: 1,
-                    background: 'rgba(74,222,128,0.1)',
+                    background: 'transparent',
                     border: '1px solid rgba(74,222,128,0.3)',
                     borderRadius: 6, padding: '2px 7px',
                   } as any}>
@@ -985,7 +1019,7 @@ export default function GameScreen() {
                 ) : (
                   <div style={{
                     marginLeft: 'auto', flexShrink: 0,
-                    background: 'rgba(148,163,184,0.08)',
+                    background: 'transparent',
                     border: '1px solid rgba(148,163,184,0.15)',
                     borderRadius: 6, padding: '2px 7px',
                   } as any}>
@@ -1171,19 +1205,18 @@ export default function GameScreen() {
       {isWide ? (
         /* ══ DESKTOP ══ */
         <View style={s.desktop}>
-          {/* Левая колонка: топбар + траки + карта */}
+          {/* Левая колонка: топбар + карта + траки */}
           <View style={s.leftCol}>
             <TopBar />
-            <TruckStripComponent
-              isWide={isWide}
-              scrollPosRef={truckStripScrollPos}
-              onTruckClick={handleTruckClick}
-              selectedTruckId={selectedTruckId}
-              indicatorNotifications={indicatorNotifications}
-              gameMinute={gameMinute}
-            />
             <View style={s.mapArea}>
               <ErrorBoundary name="Map"><MapView {...mapProps} /></ErrorBoundary>
+              {/* Карточки траков — поверх карты, сверху */}
+              <View style={s.truckStripBar} pointerEvents="box-none">
+                <TruckCardOverlay
+                  onTruckClick={handleTruckClick}
+                  selectedTruckId={selectedTruckId}
+                />
+              </View>
             </View>
           </View>
 
@@ -1202,75 +1235,32 @@ export default function GameScreen() {
         /* ══ MOBILE ══ */
         <View style={s.mobile}>
           <TopBar />
-          <TruckStripComponent
-            isWide={isWide}
-            scrollPosRef={truckStripScrollPos}
-            onTruckClick={handleTruckClick}
-            selectedTruckId={selectedTruckId}
-            indicatorNotifications={indicatorNotifications}
-            gameMinute={gameMinute}
-          />
           <View style={s.mobileContent}>
             {activeTab === 'map'       && <ErrorBoundary name="Map"><MapView {...mapProps} /></ErrorBoundary>}
             {activeTab === 'loadboard' && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} onAssigned={handleAssigned} /></ErrorBoundary>}
             {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
             {activeTab === 'email'     && <ErrorBoundary name="Email"><EmailPanel inline /></ErrorBoundary>}
+            {/* Карточки траков — поверх карты, сверху */}
+            {activeTab === 'map' && (
+              <View style={s.truckStripBar} pointerEvents="box-none">
+                <TruckCardOverlay
+                  onTruckClick={handleTruckClick}
+                  selectedTruckId={selectedTruckId}
+                />
+              </View>
+            )}
           </View>
           <BottomTabs />
         </View>
       )}
 
       {/* ── MODALS ── */}
-      {/* Character Picker */}
-      {showCharacterPicker && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 9998,
-          display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
-          fontFamily: 'sans-serif',
-        } as any}>
-          <div style={{ flex: 1, background: 'rgba(0,0,0,0.5)' } as any} onClick={() => setShowCharacterPicker(false)} />
-          <div style={{
-            background: '#fff', borderRadius: '24px 24px 0 0',
-            padding: '20px 16px 32px',
-            boxShadow: '0 -8px 40px rgba(0,0,0,0.3)',
-          } as any}>
-            {/* Handle */}
-            <div style={{ width: 40, height: 4, borderRadius: 2, background: '#d1d5db', margin: '0 auto 20px' } as any} />
-            <div style={{ fontSize: 16, fontWeight: 800, color: '#111827', marginBottom: 16, textAlign: 'center' } as any}>
-              С кем поговорить?
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 } as any}>
-              {([
-                { key: 'driver',     emoji: '🚛', label: 'Джон',  sub: 'Водитель трака' },
-                { key: 'owner',      emoji: '💼', label: 'Майк',  sub: 'Владелец компании' },
-                { key: 'accountant', emoji: '💰', label: 'Лиза',  sub: 'Бухгалтер' },
-              ] as const).map(c => (
-                <button key={c.key} onClick={() => {
-                  setChatCharacter(c.key);
-                  setShowCharacterPicker(false);
-                  setShowDriverDialog(true);
-                }} style={{
-                  display: 'flex', alignItems: 'center', gap: 14,
-                  padding: '12px 16px',
-                  background: '#f9fafb', border: '2px solid #e5e7eb',
-                  borderRadius: 16, cursor: 'pointer', textAlign: 'left',
-                  transition: 'all 0.15s',
-                } as any}
-                  onMouseEnter={(e: any) => { e.currentTarget.style.borderColor = '#58cc02'; e.currentTarget.style.background = '#f0fdf4'; }}
-                  onMouseLeave={(e: any) => { e.currentTarget.style.borderColor = '#e5e7eb'; e.currentTarget.style.background = '#f9fafb'; }}
-                >
-                  <span style={{ fontSize: 28 } as any}>{c.emoji}</span>
-                  <div>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: '#111827' } as any}>{c.label}</div>
-                    <div style={{ fontSize: 12, color: '#6b7280' } as any}>{c.sub}</div>
-                  </div>
-                  <span style={{ marginLeft: 'auto', fontSize: 18, color: '#9ca3af' } as any}>›</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Messages Modal — Unified Chat */}
+      <MessagesModal
+        visible={showCharacterPicker}
+        nickname={sessionName || 'player'}
+        onClose={() => setShowCharacterPicker(false)}
+      />
 
       {/* Driver Start Dialog — аватар совпадает с карточкой трака */}
       <CharacterDialog
@@ -1431,8 +1421,8 @@ const s = StyleSheet.create({
 
   // ── DESKTOP ──
   desktop: { flex: 1, flexDirection: 'row' },
-  leftCol: { flex: 1, flexDirection: 'column' },
-  mapArea: { flex: 1 },
+  leftCol: { flex: 1, flexDirection: 'column', backgroundColor: 'transparent' },
+  mapArea: { flex: 1, backgroundColor: 'transparent', position: 'relative' },
   rightCol: {
     width: 400, flexDirection: 'column',
     backgroundColor: BG2,
@@ -1466,8 +1456,21 @@ const s = StyleSheet.create({
   emptyTxt: { fontSize: 14, color: '#334155' },
 
   // ── MOBILE ──
-  mobile: { flex: 1, flexDirection: 'column' },
-  mobileContent: { flex: 1 },
+  mobile: { flex: 1, flexDirection: 'column', backgroundColor: 'transparent' },
+  mobileContent: { flex: 1, backgroundColor: 'transparent', position: 'relative' },
+  mobileTopBar: {
+    position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100,
+  },
+
+  // ── TRUCK STRIP BAR (поверх карты, сверху) ──
+  truckStripBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'transparent',
+    zIndex: 10,
+  },
   bottomTabs: {
     flexDirection: 'row', gap: 5,
     paddingHorizontal: 6, paddingVertical: 6,

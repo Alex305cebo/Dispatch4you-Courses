@@ -776,24 +776,11 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
       const d = dataItem.dataContext as any;
       const container = am5.Container.new(root, { cursorOverStyle: "pointer" });
 
-      // Пульс для активных траков
-      if (d.active) {
-        const pulse = container.children.push(am5.Circle.new(root, {
-          radius: 14, fill: am5.color(d.colorInt), fillOpacity: 0,
-        }));
-        pulse.animate({ key: "radius", from: 8, to: 20, duration: 1400, loops: Infinity });
-        pulse.animate({ key: "fillOpacity", from: 0.35, to: 0, duration: 1400, loops: Infinity });
-      }
-      // Предупреждение idle
-      if (d.idleWarning > 0) {
-        const warnColor = d.idleWarning >= 3 ? 0xef4444 : d.idleWarning === 2 ? 0xf97316 : 0xfbbf24;
-        const warnSpeed = d.idleWarning >= 3 ? 600 : d.idleWarning === 2 ? 800 : 1200;
-        const alertPulse = container.children.push(am5.Circle.new(root, {
-          radius: 16, fill: am5.color(warnColor), fillOpacity: 0,
-        }));
-        alertPulse.animate({ key: "radius", from: 10, to: 24, duration: warnSpeed, loops: Infinity });
-        alertPulse.animate({ key: "fillOpacity", from: 0.5, to: 0, duration: warnSpeed, loops: Infinity });
-      }
+      const emojiSize = variant === 'micro' ? 22 : variant === 'medium' ? 28 : 34;
+      const bgRadius = variant === 'micro' ? 14 : variant === 'medium' ? 18 : 22;
+      // dyBase — смещение маркера вверх от точки на карте
+      const dyBase = -(bgRadius + 4);
+      const hitRadius = variant === 'micro' ? 24 : 32;
 
       // Иконка трака — текстовый эмодзи (стабильно)
       const truckEmoji = (() => {
@@ -804,12 +791,41 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         if (d.status === "loaded") return "🚛";
         if (d.status === "driving") return "🚛";
         if ((d as any).onNightStop) return "🌙";
-        return "🅿️";
+        return "🚛";
       })();
 
-      const emojiSize = variant === 'micro' ? 16 : variant === 'medium' ? 20 : 26;
-      const dyBase = -(emojiSize / 2);
-      const hitRadius = variant === 'micro' ? 20 : 28;
+      // Пульс для активных траков (рисуем первым — он под маркером)
+      if (d.active) {
+        const pulse = container.children.push(am5.Circle.new(root, {
+          radius: bgRadius, fill: am5.color(d.colorInt), fillOpacity: 0,
+          centerX: am5.percent(50), centerY: am5.percent(50),
+          dy: dyBase,
+        }));
+        pulse.animate({ key: "radius" as any, from: bgRadius, to: bgRadius + 10, duration: 2200, loops: Infinity });
+        pulse.animate({ key: "fillOpacity" as any, from: 0.18, to: 0, duration: 2200, loops: Infinity });
+      }
+      // Предупреждение idle — тихое, медленное
+      if (d.idleWarning > 0) {
+        const warnColor = d.idleWarning >= 3 ? 0xef4444 : d.idleWarning === 2 ? 0xf97316 : 0xfbbf24;
+        const warnSpeed = d.idleWarning >= 3 ? 2000 : d.idleWarning === 2 ? 2500 : 3000;
+        const alertPulse = container.children.push(am5.Circle.new(root, {
+          radius: bgRadius, fill: am5.color(warnColor), fillOpacity: 0,
+          centerX: am5.percent(50), centerY: am5.percent(50),
+          dy: dyBase,
+        }));
+        alertPulse.animate({ key: "radius" as any, from: bgRadius, to: bgRadius + 10, duration: warnSpeed, loops: Infinity });
+        alertPulse.animate({ key: "fillOpacity" as any, from: 0.2, to: 0, duration: warnSpeed, loops: Infinity });
+      }
+
+      // Фон-кружок под маркером — без обводки
+      const markerBg = container.children.push(am5.Circle.new(root, {
+        radius: bgRadius,
+        fill: am5.color(0x000000),
+        fillOpacity: 0,
+        strokeWidth: 0,
+        centerX: am5.percent(50), centerY: am5.percent(50),
+        dy: dyBase,
+      }));
 
       const emojiLabel = container.children.push(am5.Label.new(root, {
         text: truckEmoji,
@@ -821,13 +837,12 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
 
       // Анимация по статусу
       if (d.status === "driving" || d.status === "loaded") {
-        // Покачивание вверх-вниз для едущих
         emojiLabel.animate({ key: "dy" as any, from: dyBase - 2, to: dyBase + 2, duration: 600, loops: Infinity, easing: am5.ease.sinInOut });
+        markerBg.animate({ key: "dy" as any, from: dyBase - 2, to: dyBase + 2, duration: 600, loops: Infinity, easing: am5.ease.sinInOut });
       } else if (d.status === "at_pickup" || d.status === "at_delivery") {
-        // Пульсация для погрузки/разгрузки
         emojiLabel.animate({ key: "scale" as any, from: 0.9, to: 1.2, duration: 700, loops: Infinity, easing: am5.ease.sinInOut });
+        markerBg.animate({ key: "scale" as any, from: 0.9, to: 1.1, duration: 700, loops: Infinity, easing: am5.ease.sinInOut });
       } else if (d.breakdown) {
-        // Вращение для поломки
         emojiLabel.animate({ key: "rotation" as any, from: -15, to: 15, duration: 400, loops: Infinity, easing: am5.ease.sinInOut });
       }
 
@@ -879,13 +894,13 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         fill: am5.color(0xffffff),
         fillOpacity: 0,
         strokeOpacity: 0,
-        dy: -(hitRadius * 0.6),
+        dy: -(bgRadius + 4),
         interactive: true,
         cursorOverStyle: "pointer",
       })).events.on("click", onClick);
 
-      // Карточка видна только если truckId в visibleCardsRef
-      const cardVisible = visibleCardsRef.current.has(d.truckId);
+      // Карточки над траками отключены
+      const cardVisible = false;
 
       // HOS цвет: зелёный >4h, жёлтый 2-4h, красный <2h
       const hosColor = d.hoursLeft > 4 ? 0x22c55e : d.hoursLeft > 2 ? 0xfbbf24 : 0xef4444;
@@ -894,10 +909,10 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
 
       // ── MICRO: только ID + статус-полоска ─────────────────────────────
       if (variant === 'micro') {
-        const W = 58, H = 28;
+        const W = 64, H = 30;
         const card = container.children.push(am5.Container.new(root, {
           width: W, height: H,
-          dy: -(H + 14), dx: -(W / 2),
+          dy: -(H + bgRadius * 2 + 10), dx: -(W / 2),
           interactive: true, cursorOverStyle: "pointer",
           visible: cardVisible,
           opacity: cardVisible ? 1 : 0,
@@ -933,11 +948,11 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
 
       // ── MEDIUM: ID + статус-бейдж + маршрут + HOS-бар ────────────────
       } else if (variant === 'medium') {
-        const W = 118, H = 82;
+        const W = 128, H = 88;
         const STRIP = 4; // ширина левой полоски
         const card = container.children.push(am5.Container.new(root, {
           width: W, height: H,
-          dy: -(H + 16), dx: -(W / 2),
+          dy: -(H + bgRadius * 2 + 12), dx: -(W / 2),
           interactive: true, cursorOverStyle: "pointer",
           visible: cardVisible,
           opacity: cardVisible ? 1 : 0,
@@ -1116,13 +1131,21 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
     root.setThemes([am5themes_Animated.new(root)]);
     // Скрываем логотип amCharts
     root._logo?.dispose();
+    // Убираем белый фон amCharts (дефолтный)
+    root.interfaceColors.set("background" as any, am5.color(0x0a1628));
+    root.interfaceColors.set("alternativeBackground" as any, am5.color(0x0a1628));
     rootRef.current = root;
+
+    const isMobileDevice = window.innerWidth < 768;
+    const isTablet = window.innerWidth >= 768 && window.innerWidth < 1200;
+    const homeZoom = isMobileDevice ? 2.5 : isTablet ? 1.8 : 1.5;
+    const minZoom = isMobileDevice ? 2 : isTablet ? 1.5 : 1.2;
 
     const chart = root.container.children.push(
       am5map.MapChart.new(root, {
         panX: "translateX", panY: "translateY",
         projection: am5map.geoAlbersUsa(),
-        homeZoomLevel: 1, wheelY: "zoom", maxZoomLevel: 8,
+        homeZoomLevel: homeZoom, wheelY: "zoom", maxZoomLevel: 8, minZoomLevel: minZoom,
       })
     );
     chartRef.current = chart;
@@ -1304,10 +1327,7 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
       if (mobile) {
         chart.zoomToGeoPoint({ longitude: targetLng, latitude: targetLat }, 6, true);
       } else if (slow) {
-        chart.zoomToGeoPoint({ longitude: -90, latitude: 38 }, 1.2, true);
-        setTimeout(() => {
-          chart.zoomToGeoPoint({ longitude: targetLng, latitude: targetLat }, 4, true);
-        }, 1200);
+        chart.zoomToGeoPoint({ longitude: targetLng, latitude: targetLat }, 3, true);
       } else {
         chart.zoomToGeoPoint({ longitude: targetLng, latitude: targetLat }, 5, true);
       }
@@ -1336,8 +1356,8 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         return Math.max(max, d);
       }, 0);
 
-      // Чем меньше разброс — тем сильнее зум (3–6)
-      const zoomLevel = maxDist < 3 ? 6 : maxDist < 8 ? 4 : maxDist < 15 ? 3 : 2;
+      // Чем меньше разброс — тем сильнее зум (4–7)
+      const zoomLevel = maxDist < 3 ? 7 : maxDist < 8 ? 5 : maxDist < 15 ? 4 : 3;
 
       chart.zoomToGeoPoint({ longitude: avgLng, latitude: avgLat }, zoomLevel, true);
     }, 800);
@@ -1454,70 +1474,6 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
           fontFamily: "sans-serif", zIndex: 10,
         } as any}>
 
-          {/* Облачко Zoom */}
-          <div style={{
-            background: "rgba(10,22,40,0.55)",
-            border: "1px solid rgba(56,189,248,0.15)",
-            borderRadius: 20, padding: "3px 7px",
-            display: "flex", alignItems: "center", gap: 4,
-            opacity: 0.5, transition: "opacity 0.2s",
-          } as any}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = "1"}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = "0.5"}
-          >
-            <span style={{ fontSize: 8, fontWeight: 700, color: "#38bdf8", letterSpacing: 1 } as any}>ZOOM</span>
-            <div style={{ display: "flex", gap: 3 } as any}>
-          {([
-            { label: "x1", title: "Вся карта", zoom: 1 },
-            { label: "x2", title: "Все траки", zoom: null },
-            { label: "x3", title: "Ближний вид", zoom: 6 },
-          ] as const).map((btn, i) => (
-            <button
-              key={i}
-              title={btn.title}
-              onClick={() => {
-                const chart = chartRef.current;
-                if (!chart) return;
-                if (btn.zoom === 1) {
-                  chart.zoomToGeoPoint({ longitude: -98, latitude: 38 }, 1, true);
-                } else if (btn.zoom === null) {
-                  const ts = trucksRef.current;
-                  if (ts.length === 0) return;
-                  const avgLng = ts.reduce((s: number, t: any) => s + t.position[0], 0) / ts.length;
-                  const avgLat = ts.reduce((s: number, t: any) => s + t.position[1], 0) / ts.length;
-                  const maxDist = ts.reduce((max: number, t: any) => Math.max(max, Math.hypot(t.position[0] - avgLng, t.position[1] - avgLat)), 0);
-                  const zl = maxDist < 3 ? 6 : maxDist < 8 ? 4 : maxDist < 15 ? 3 : 2;
-                  chart.zoomToGeoPoint({ longitude: avgLng, latitude: avgLat }, zl, true);
-                } else {
-                  const ts = trucksRef.current;
-                  const target = selectedTruckRef.current
-                    ? ts.find((t: any) => t.id === selectedTruckRef.current?.truckId)
-                    : ts.find((t: any) => t.status === 'loaded' || t.status === 'driving') ?? ts[0];
-                  if (target) chart.zoomToGeoPoint({ longitude: target.position[0], latitude: target.position[1] }, 7, true);
-                }
-              }}
-              style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(56,189,248,0.3)",
-                borderRadius: 10, width: 26, height: 22,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                cursor: "pointer", fontSize: 9, fontWeight: 800, color: "#38bdf8",
-                transition: "all 0.15s", padding: 0,
-              } as any}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.background = "rgba(6,182,212,0.25)";
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(6,182,212,0.8)";
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLElement).style.background = "rgba(10,22,40,0.92)";
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(56,189,248,0.35)";
-              }}
-            >
-              {btn.label}
-            </button>
-          ))}
-          </div></div>
-
           {/* Кнопка гайда — только пока не пройден */}
           {guideActive && onGuideOpen && (
             <button
@@ -1549,6 +1505,8 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         position: "absolute", bottom: 8, left: 8,
         display: "flex", alignItems: "flex-end", gap: 6,
         zIndex: 100, fontFamily: "sans-serif", pointerEvents: "auto",
+        maxWidth: "calc(100% - 70px)", // не выходить за правый край (кнопки справа)
+        overflow: "hidden",
       } as any}>
 
       {/* Легенда */}
@@ -1632,22 +1590,25 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
 
       {/* Факт о штате — компактно справа от легенды */}
       <div style={{
-        maxWidth: "clamp(220px, 45vw, 420px)",
-        minWidth: "clamp(180px, 35vw, 280px)",
+        maxWidth: "clamp(140px, 38vw, 320px)",
+        minWidth: 0,
         opacity: (followTruck && stateFact) ? 1 : 0,
         pointerEvents: "none",
         transition: "opacity 0.6s ease",
         background: "rgba(8,14,28,0.92)",
         border: "1px solid rgba(56,189,248,0.35)",
         borderRadius: 12,
-        padding: "clamp(8px,1.2vw,12px) clamp(10px,1.5vw,16px)",
+        padding: "clamp(6px,1vw,10px) clamp(8px,1.2vw,14px)",
         backdropFilter: "blur(10px)",
         boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+        overflow: "hidden",
       } as any}>
-        <div style={{ fontSize: "clamp(12px,1.4vw,14px)", fontWeight: 700, color: "#38bdf8", marginBottom: 4, letterSpacing: 0.5 } as any}>
+        <div style={{ fontSize: "clamp(11px,1.2vw,13px)", fontWeight: 700, color: "#38bdf8", marginBottom: 3, letterSpacing: 0.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } as any}>
           📍 {lastFactStateRef.current}
         </div>
-        <div style={{ fontSize: "clamp(13px,1.5vw,15px)", color: "#e2e8f0", lineHeight: 1.55, fontWeight: 500 } as any}>
+        <div style={{ fontSize: "clamp(11px,1.3vw,14px)", color: "#e2e8f0", lineHeight: 1.45, fontWeight: 500,
+          display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden",
+        } as any}>
           {stateFact}
         </div>
       </div>
@@ -2193,6 +2154,14 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
           pointer-events: none !important;
         }
         
+        /* Убираем белый фон amCharts контейнера */
+        [class*="am5-"] canvas {
+          background: transparent !important;
+        }
+        div[id^="am5-"] {
+          background: transparent !important;
+        }
+        
         /* Адаптивность для мобильных */
         @media (max-width: 768px) {
           .map-timer {
@@ -2311,7 +2280,7 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg, overflow: "hidden" as any },
+  container: { flex: 1, backgroundColor: '#0a0e1a', overflow: "hidden" as any },
   text: { color: Colors.textMuted, fontSize: 16 },
 });
 
