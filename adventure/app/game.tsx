@@ -43,7 +43,7 @@ import GuideSpotlight from '../components/GuideSpotlight';
 import { useGuideStore } from '../store/guideStore';
 import GuideBubble from '../components/GuideBubble';
 import CharacterDialog from '../components/CharacterDialog';
-import { CHARACTERS, DIALOG_DRIVER_START, isDialogShown, markDialogShown } from '../data/dialogs';
+import { CHARACTERS, DIALOG_DRIVER_START, DIALOG_BROKER_FIRST_CALL, isDialogShown, markDialogShown } from '../data/dialogs';
 import { getDriverAvatar } from '../utils/driverAvatars';
 
 type Tab = 'map' | 'loadboard' | 'email' | 'trucks';
@@ -126,6 +126,8 @@ export default function GameScreen() {
 
   const [guideVisible, setGuideVisible] = useState(false);
   const [showDriverDialog, setShowDriverDialog] = useState(false);
+  const [chatCharacter, setChatCharacter] = useState<'driver' | 'owner' | 'accountant'>('driver');
+  const [showCharacterPicker, setShowCharacterPicker] = useState(false);
   const dialogCheckDone = useRef(false);
 
   // Показываем диалог водителя при запуске игры (один раз за сессию)
@@ -372,6 +374,7 @@ export default function GameScreen() {
       <div style={{
         display: 'flex', alignItems: 'center', gap: isWide ? 12 : 6,
         height: isWide ? 56 : 48, paddingLeft: isWide ? 16 : 10, paddingRight: isWide ? 12 : 8,
+        paddingTop: 'env(safe-area-inset-top)',
         background: 'linear-gradient(180deg, rgba(15,25,50,0.98) 0%, rgba(10,18,38,0.98) 100%)',
         borderBottom: '1px solid rgba(56,189,248,0.12)',
         boxShadow: '0 1px 20px rgba(0,0,0,0.4)',
@@ -555,41 +558,17 @@ export default function GameScreen() {
         {/* Действия */}
         <div style={{ display: 'flex', alignItems: 'center', gap: isWide ? 5 : 3, flexShrink: 0 } as any}>
           {/* Колокольчик */}
-          <button onClick={() => setShowBell(true)} style={{
+          {/* Кнопка чата с персонажами */}
+          <button onClick={() => setShowCharacterPicker(true)} style={{
             position: 'relative', width: isWide ? 38 : 32, height: isWide ? 38 : 32,
             borderRadius: isWide ? 19 : 16,
-            background: activeGuideStep === 'resolve_event'
-              ? 'rgba(6,182,212,0.25)'
-              : 'rgba(6,182,212,0.15)',
-            border: activeGuideStep === 'resolve_event'
-              ? '2px solid rgba(6,182,212,0.9)'
-              : '1px solid rgba(6,182,212,0.3)',
+            background: 'linear-gradient(135deg, rgba(88,204,2,0.25), rgba(70,163,2,0.15))',
+            border: '2px solid rgba(88,204,2,0.5)',
             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: isWide ? 18 : 15,
-            boxShadow: activeGuideStep === 'resolve_event'
-              ? '0 0 16px rgba(6,182,212,0.6)'
-              : 'none',
-            animation: activeGuideStep === 'resolve_event' ? 'spotlightPulse 1.4s ease-in-out infinite' : 'none',
+            boxShadow: '0 0 10px rgba(88,204,2,0.3)',
           } as any}>
-            🔔
-            {activeGuideStep === 'resolve_event' && (
-              <span style={{
-                position: 'absolute', top: -16, left: '50%', transform: 'translateX(-50%)',
-                fontSize: 9, fontWeight: 800, color: '#06b6d4',
-                background: 'rgba(6,182,212,0.15)',
-                padding: '1px 5px', borderRadius: 5, whiteSpace: 'nowrap',
-                pointerEvents: 'none',
-              } as any}>👆 Нажми</span>
-            )}
-            {unreadEmails > 0 && (
-              <span style={{
-                position: 'absolute', top: -3, right: -3,
-                background: '#ef4444', borderRadius: 9, minWidth: 15, height: 15,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 8, fontWeight: 800, color: '#fff', padding: '0 2px',
-                border: '1.5px solid #0a0f1e',
-              } as any}>{unreadEmails > 9 ? '9+' : unreadEmails}</span>
-            )}
+            💬
           </button>
           {/* Гамбургер */}
           <button onClick={() => setShowMenu(true)} style={{
@@ -1242,14 +1221,71 @@ export default function GameScreen() {
       )}
 
       {/* ── MODALS ── */}
+      {/* Character Picker */}
+      {showCharacterPicker && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9998,
+          display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+          fontFamily: 'sans-serif',
+        } as any}>
+          <div style={{ flex: 1, background: 'rgba(0,0,0,0.5)' } as any} onClick={() => setShowCharacterPicker(false)} />
+          <div style={{
+            background: '#fff', borderRadius: '24px 24px 0 0',
+            padding: '20px 16px 32px',
+            boxShadow: '0 -8px 40px rgba(0,0,0,0.3)',
+          } as any}>
+            {/* Handle */}
+            <div style={{ width: 40, height: 4, borderRadius: 2, background: '#d1d5db', margin: '0 auto 20px' } as any} />
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#111827', marginBottom: 16, textAlign: 'center' } as any}>
+              С кем поговорить?
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 } as any}>
+              {([
+                { key: 'driver',     emoji: '🚛', label: 'Джон',  sub: 'Водитель трака' },
+                { key: 'owner',      emoji: '💼', label: 'Майк',  sub: 'Владелец компании' },
+                { key: 'accountant', emoji: '💰', label: 'Лиза',  sub: 'Бухгалтер' },
+              ] as const).map(c => (
+                <button key={c.key} onClick={() => {
+                  setChatCharacter(c.key);
+                  setShowCharacterPicker(false);
+                  setShowDriverDialog(true);
+                }} style={{
+                  display: 'flex', alignItems: 'center', gap: 14,
+                  padding: '12px 16px',
+                  background: '#f9fafb', border: '2px solid #e5e7eb',
+                  borderRadius: 16, cursor: 'pointer', textAlign: 'left',
+                  transition: 'all 0.15s',
+                } as any}
+                  onMouseEnter={(e: any) => { e.currentTarget.style.borderColor = '#58cc02'; e.currentTarget.style.background = '#f0fdf4'; }}
+                  onMouseLeave={(e: any) => { e.currentTarget.style.borderColor = '#e5e7eb'; e.currentTarget.style.background = '#f9fafb'; }}
+                >
+                  <span style={{ fontSize: 28 } as any}>{c.emoji}</span>
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: '#111827' } as any}>{c.label}</div>
+                    <div style={{ fontSize: 12, color: '#6b7280' } as any}>{c.sub}</div>
+                  </div>
+                  <span style={{ marginLeft: 'auto', fontSize: 18, color: '#9ca3af' } as any}>›</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Driver Start Dialog — аватар совпадает с карточкой трака */}
       <CharacterDialog
         visible={showDriverDialog}
         character={{
-          ...CHARACTERS.driver,
-          avatar: trucks.length > 0 ? getDriverAvatar(trucks[0].id) : CHARACTERS.driver.avatar,
+          ...CHARACTERS[chatCharacter],
+          avatar: chatCharacter === 'driver' && trucks.length > 0
+            ? getDriverAvatar(trucks[0].id)
+            : CHARACTERS[chatCharacter].avatar,
         }}
-        steps={DIALOG_DRIVER_START}
+        steps={chatCharacter === 'driver' ? DIALOG_DRIVER_START : DIALOG_DRIVER_START}
+        onBack={() => {
+          setShowDriverDialog(false);
+          setShowCharacterPicker(true);
+        }}
         onClose={() => {
           setShowDriverDialog(false);
           const sessionKey = `dialog-shown-${sessionName || 'default'}`;
@@ -1438,6 +1474,8 @@ const s = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? 20 : 6,
     backgroundColor: BG2,
     borderTopWidth: 1, borderTopColor: BORDER,
+    // @ts-ignore — web safe area
+    paddingBottom: 'max(6px, env(safe-area-inset-bottom))',
   },
   bottomTab: {
     flex: 1, paddingVertical: 8, alignItems: 'center',
