@@ -28,7 +28,6 @@ import EventsPanel from '../components/EventsPanel';
 import NegotiationModal from '../components/NegotiationModal';
 import AssignModal from '../components/AssignModal';
 import MyLoadsPanel from '../components/MyLoadsPanel';
-import EmailPanel from '../components/EmailPanel';
 import NotificationBell from '../components/NotificationBell';
 import ComplianceDashboard from '../components/ComplianceDashboard';
 import FleetOverview from '../components/FleetOverview';
@@ -49,7 +48,7 @@ import { getDriverAvatar } from '../utils/driverAvatars';
 import { MessagesModal } from '../components/MessagesModal';
 import { createDemoMessages } from '../utils/demoMessages';
 
-type Tab = 'map' | 'loadboard' | 'email' | 'trucks';
+type Tab = 'map' | 'loadboard' | 'trucks';
 
 const STATUS_COLOR: Record<string, string> = {
   idle:        '#38bdf8', // голубой — свободен, ждёт груза (позитивно)
@@ -174,9 +173,7 @@ export default function GameScreen() {
     setActiveTab(tab);
     try {
       localStorage.setItem('dispatch-active-tab', tab);
-      // Отмечаем посещение для гайда
-      if (tab === 'email') localStorage.setItem('guide-email-visited', '1');
-      if (tab === 'map')   localStorage.setItem('guide-map-visited', '1');
+      if (tab === 'map') localStorage.setItem('guide-map-visited', '1');
     } catch {}
   };
   const [pendingLoad, setPendingLoad] = useState<ActiveLoad | null>(null);
@@ -355,10 +352,6 @@ export default function GameScreen() {
 
   const progress = gameMinute / SHIFT_DURATION;
   const idleTrucks = trucks.filter(t => t.status === 'idle').length;
-  const totalLoads = bookedLoads.length + activeLoads.length;
-  const unreadEmails = notifications.filter(n =>
-    ['email','pod_ready','rate_con','detention'].includes(n.type) && !n.read
-  ).length;
 
   function handleTruckClick(truck: any) {
     selectTruck(truck.id);
@@ -371,7 +364,6 @@ export default function GameScreen() {
 
   const tabs: { id: Tab; label: string; badge?: number; onPress?: () => void }[] = [
     { id: 'loadboard', label: 'Грузы',  badge: availableLoads.length },
-    { id: 'email',     label: 'Почта',  badge: unreadEmails || undefined },
     { id: 'trucks',    label: 'Траки',  badge: idleTrucks > 0 ? idleTrucks : undefined },
   ];
 
@@ -582,7 +574,11 @@ export default function GameScreen() {
             💬
             {(() => {
               const { useUnifiedChatStore } = require('../store/unifiedChatStore');
-              const unreadCount = useUnifiedChatStore.getState().getUnreadCount();
+              const chatUnread = useUnifiedChatStore.getState().getUnreadCount();
+              const emailUnread = notifications.filter(n =>
+                ['email','pod_ready','rate_con','detention','missed_call','voicemail','text','urgent'].includes(n.type) && !n.read
+              ).length;
+              const unreadCount = chatUnread + emailUnread;
               return unreadCount > 0 ? (
                 <span style={{
                   position: 'absolute',
@@ -1077,7 +1073,6 @@ export default function GameScreen() {
   // ── SIDE TABS (desktop) ───────────────────────────────────────────────────
   const GUIDE_TAB_STEPS: Record<string, string[]> = {
     loadboard: ['find_load', 'negotiate'],
-    email:     ['check_email'],
     trucks:    ['assign_truck', 'resolve_event', 'end_shift'],
     map:       ['watch_map', 'get_paid'],
   };
@@ -1226,7 +1221,6 @@ export default function GameScreen() {
             <View style={s.panelContent}>
               {(activeTab === 'loadboard' || activeTab === 'map') && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} onAssigned={handleAssigned} /></ErrorBoundary>}
               {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
-              {activeTab === 'email'     && <ErrorBoundary name="Email"><EmailPanel inline /></ErrorBoundary>}
             </View>
           </View>
         </View>
@@ -1239,7 +1233,6 @@ export default function GameScreen() {
             {activeTab === 'map'       && <ErrorBoundary name="Map"><MapView {...mapProps} /></ErrorBoundary>}
             {activeTab === 'loadboard' && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} onAssigned={handleAssigned} /></ErrorBoundary>}
             {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
-            {activeTab === 'email'     && <ErrorBoundary name="Email"><EmailPanel inline /></ErrorBoundary>}
             {/* Карточки траков — поверх карты, сверху */}
             {activeTab === 'map' && (
               <View style={s.truckStripBar} pointerEvents="box-none">
@@ -1315,7 +1308,7 @@ export default function GameScreen() {
       {/* Колокольчик и меню — вне TopBar div чтобы Modal работал корректно */}
       <NotificationBell
         onNavigateToTrucks={() => switchTab('trucks')}
-        onNavigateToLoads={() => switchTab('email')}
+        onNavigateToLoads={() => setShowCharacterPicker(true)}
         onNavigateToEvents={() => setShowEvents(true)}
         forceOpen={showBell}
         onClose={() => setShowBell(false)}

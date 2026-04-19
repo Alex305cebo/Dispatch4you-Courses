@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Animated } from 'react-native';
 import { useUnifiedChatStore, ChatThread, ChatMessage } from '../store/unifiedChatStore';
+import { useGameStore, Notification } from '../store/gameStore';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // UNIFIED CHAT UI — Интерфейс в стиле Duolingo для всех диалогов
@@ -57,6 +58,64 @@ export const UnifiedChatUI: React.FC<UnifiedChatUIProps> = ({ nickname, onClose 
   
   // Получаем список тредов
   const allThreads = getAllThreads();
+
+  // ═══ EMAIL ТРЕДЫ из gameStore.notifications ═══
+  const notifications = useGameStore(s => s.notifications);
+  const markNotificationRead = useGameStore(s => s.markNotificationRead);
+
+  // Группируем уведомления в email-треды
+  const emailNotifs = notifications.filter(n =>
+    ['email','pod_ready','rate_con','detention','missed_call','voicemail','text','urgent'].includes(n.type)
+  );
+
+  function getEmailIcon(type: string) {
+    if (type === 'missed_call') return '📵';
+    if (type === 'voicemail') return '📱';
+    if (type === 'text') return '💬';
+    if (type === 'pod_ready') return '📄';
+    if (type === 'rate_con') return '📋';
+    if (type === 'detention') return '⏰';
+    if (type === 'urgent') return '🚨';
+    return '📧';
+  }
+
+  // Группируем по отправителю
+  const emailThreadMap = new Map<string, Notification[]>();
+  emailNotifs.forEach(n => {
+    const key = (n.from || 'unknown').trim().toLowerCase();
+    if (!emailThreadMap.has(key)) emailThreadMap.set(key, []);
+    emailThreadMap.get(key)!.push(n);
+  });
+
+  interface EmailThread {
+    key: string;
+    from: string;
+    messages: Notification[];
+    lastMessage: Notification;
+    unreadCount: number;
+  }
+
+  const emailThreads: EmailThread[] = [];
+  emailThreadMap.forEach((msgs, key) => {
+    const sorted = [...msgs].sort((a, b) => a.minute - b.minute);
+    const last = sorted[sorted.length - 1];
+    emailThreads.push({
+      key,
+      from: last.from || key,
+      messages: sorted,
+      lastMessage: last,
+      unreadCount: sorted.filter(m => !m.read).length,
+    });
+  });
+  emailThreads.sort((a, b) => {
+    if (a.unreadCount > 0 && b.unreadCount === 0) return -1;
+    if (b.unreadCount > 0 && a.unreadCount === 0) return 1;
+    return b.lastMessage.minute - a.lastMessage.minute;
+  });
+
+  const [selectedEmailThread, setSelectedEmailThread] = useState<string | null>(null);
+  const activeEmailThread = selectedEmailThread ? emailThreads.find(t => t.key === selectedEmailThread) : null;
+
   const filteredThreads = allThreads;
   
   const selectedThread = selectedThreadId ? getThread(selectedThreadId) : null;
@@ -193,7 +252,7 @@ export const UnifiedChatUI: React.FC<UnifiedChatUIProps> = ({ nickname, onClose 
   return (
     <>
       {/* ═══ СПИСОК ТРЕДОВ ═══ */}
-      {!selectedThreadId && (
+      {!selectedThreadId && !selectedEmailThread && (
         <>
           {/* Header */}
           <View style={styles.header}>
@@ -214,20 +273,57 @@ export const UnifiedChatUI: React.FC<UnifiedChatUIProps> = ({ nickname, onClose 
           
           {/* Thread List */}
           <ScrollView style={styles.threadList}>
-            {filteredThreads.length === 0 ? (
+            {filteredThreads.length === 0 && emailThreads.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyStateIcon}>💬</Text>
                 <Text style={styles.emptyStateText}>Нет сообщений</Text>
               </View>
             ) : (
-              filteredThreads.map(thread => (
-                <ThreadItem
-                  key={thread.id}
-                  thread={thread}
-                  onPress={() => handleOpenThread(thread.id)}
-                  formatTime={formatTime}
-                />
-              ))
+              <>
+                {filteredThreads.map(thread => (
+                  <ThreadItem
+                    key={thread.id}
+                    thread={thread}
+                    onPress={() => handleOpenThread(thread.id)}
+                    formatTime={formatTime}
+                  />
+                ))}
+                {/* ═══ EMAIL ТРЕДЫ ═══ */}
+                {emailThreads.map(et => (
+                  <TouchableOpacity
+                    key={et.key}
+                    style={[styles.threadItem, et.unreadCount > 0 && styles.threadItemUnread]}
+                    onPress={() => {
+                      setSelectedEmailThread(et.key);
+                      et.messages.forEach(m => { if (!m.read) markNotificationRead(m.id); });
+                    }}
+                  >
+                    <View style={[styles.threadAvatar, et.unreadCount > 0 && styles.threadAvatarUnread]}>
+                      <Text style={styles.threadAvatarText}>{getEmailIcon(et.lastMessage.type)}</Text>
+                      {et.unreadCount > 0 && <View style={styles.threadAvatarDot} />}
+                    </View>
+                    <View style={styles.threadContent}>
+                      <View style={styles.threadHeader}>
+                        <Text style={[styles.threadName, et.unreadCount > 0 && styles.threadNameUnread]} numberOfLines={1}>
+                          {et.from}
+                        </Text>
+                        <Text style={styles.threadTime}>{et.lastMessage.minute}m</Text>
+                      </View>
+                      {et.lastMessage.subject && (
+                        <Text style={styles.threadCompany} numberOfLines={1}>{et.lastMessage.subject}</Text>
+                      )}
+                      <Text style={[styles.threadPreviewText, et.unreadCount > 0 && styles.threadPreviewTextUnread]} numberOfLines={2}>
+                        {et.lastMessage.message}
+                      </Text>
+                    </View>
+                    {et.unreadCount > 0 && (
+                      <View style={styles.threadUnreadBadge}>
+                        <Text style={styles.threadUnreadBadgeText}>{et.unreadCount}</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </>
             )}
           </ScrollView>
           
@@ -284,6 +380,48 @@ export const UnifiedChatUI: React.FC<UnifiedChatUIProps> = ({ nickname, onClose 
         </>
       )}
       
+      {/* ═══ EMAIL ДИАЛОГ ═══ */}
+      {selectedEmailThread && activeEmailThread && (
+        <>
+          <View style={styles.chatHeader}>
+            <TouchableOpacity onPress={() => setSelectedEmailThread(null)} style={styles.backBtn}>
+              <Text style={styles.backBtnText}>←</Text>
+            </TouchableOpacity>
+            <View style={styles.chatHeaderAvatar}>
+              <Text style={styles.chatHeaderAvatarText}>{getEmailIcon(activeEmailThread.lastMessage.type)}</Text>
+            </View>
+            <View style={styles.chatHeaderInfo}>
+              <Text style={styles.chatHeaderName}>{activeEmailThread.from}</Text>
+              {activeEmailThread.lastMessage.subject && (
+                <Text style={styles.chatHeaderCompany} numberOfLines={1}>{activeEmailThread.lastMessage.subject}</Text>
+              )}
+            </View>
+          </View>
+          <ScrollView style={styles.messageList} contentContainerStyle={styles.messageListContent}>
+            {activeEmailThread.messages.map((notif, idx) => (
+              <View key={notif.id} style={styles.messageBubbleContainer}>
+                <View style={styles.messageAvatar}>
+                  <Text style={styles.messageAvatarText}>{getEmailIcon(notif.type)}</Text>
+                </View>
+                <View style={styles.messageBubble}>
+                  {notif.subject && <Text style={styles.messageSubject}>{notif.subject}</Text>}
+                  <Text style={styles.messageText}>{notif.message}</Text>
+                  {notif.replies && notif.replies.map((r, ri) => (
+                    <View key={ri} style={r.isMe ? [styles.messageBubble, styles.messageBubbleOwn, {marginTop:6}] : {marginTop:6, padding:6, background:'rgba(255,255,255,0.04)', borderRadius:8} as any}>
+                      <Text style={r.isMe ? styles.messageTextOwn : styles.messageText}>{r.message}</Text>
+                    </View>
+                  ))}
+                  <View style={styles.messageFooter}>
+                    <Text style={styles.messageTypeIcon}>📧</Text>
+                    <Text style={styles.messageTime}>{notif.minute}m</Text>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        </>
+      )}
+
       {/* ═══ ДИАЛОГ ═══ */}
       {selectedThreadId && selectedThread && (
         <>
