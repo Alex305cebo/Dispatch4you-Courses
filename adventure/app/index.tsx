@@ -5,11 +5,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '../constants/colors';
 import { useGameStore } from '../store/gameStore';
 import { useAccountStore } from '../store/accountStore';
+import TutorialGuide from '../components/TutorialGuide';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { startShift, loadGame } = useGameStore();
-  const { currentNickname, login, logout, getAccount, loadFromStorage } = useAccountStore();
+  const { currentNickname, login, logout, getAccount, loadFromStorage, deleteAccount } = useAccountStore();
   const accounts = useAccountStore(s => s.accounts);
 
   const [nicknameInput, setNicknameInput] = useState('');
@@ -19,6 +20,7 @@ export default function HomeScreen() {
   const [showNewProfileModal, setShowNewProfileModal] = useState(false);
   const [newProfileName, setNewProfileName] = useState('');
   const [newProfileError, setNewProfileError] = useState('');
+  const [showTutorial, setShowTutorial] = useState(false);
   const TRUCK_COUNT = 1;
 
   // Случайный водитель — меняется при каждом открытии экрана
@@ -157,6 +159,20 @@ export default function HomeScreen() {
                       </Text>
                       <Text style={s.slotStats}>${acc.totalEarned.toLocaleString()}</Text>
                       {isActive && <Text style={s.slotActiveBadge}>● активен</Text>}
+                      
+                      {/* Кнопка удаления */}
+                      <TouchableOpacity
+                        style={s.slotDeleteBtn}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`Удалить профиль "${acc.nickname}"?\n\nВсе данные будут потеряны.`)) {
+                            deleteAccount(acc.nickname);
+                          }
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={s.slotDeleteIcon}>×</Text>
+                      </TouchableOpacity>
                     </>
                   ) : (
                     <>
@@ -326,29 +342,37 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Как играть */}
+        {/* Интерактивный гайд */}
         <View style={s.section}>
           <Text style={s.sectionTitle}>Как играть</Text>
-          <View style={s.steps}>
-            {[
-              { icon: '🌅', title: 'Утро диспетчера', desc: 'Проверь статус траков, обработай почту, оцени рынок.' },
-              { icon: '🚛', title: 'Веди флот', desc: 'Траки всегда в движении — пикап, деливери, в пути.' },
-              { icon: '⚡', title: 'Решай проблемы', desc: 'Поломки, detention, задержки — всё как в реальной жизни.' },
-              { icon: '💰', title: 'Зарабатывай', desc: 'Доходы и расходы по каждому траку. Твой P&L — твой рейтинг.' },
-            ].map((step, i) => (
-              <View key={i} style={s.step}>
-                <View style={s.stepIcon}><Text style={s.stepIconText}>{step.icon}</Text></View>
-                <View style={s.stepContent}>
-                  <Text style={s.stepTitle}>{step.title}</Text>
-                  <Text style={s.stepDesc}>{step.desc}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={s.tutorialBtn}
+            onPress={() => setShowTutorial(true)}
+            activeOpacity={0.8}
+          >
+            <View style={s.tutorialBtnIcon}>
+              <Text style={s.tutorialBtnIconText}>📚</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={s.tutorialBtnTitle}>Интерактивный гайд</Text>
+              <Text style={s.tutorialBtnDesc}>Пошаговое обучение с диалогами · 6 шагов</Text>
+            </View>
+            <Text style={s.tutorialBtnArrow}>→</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Tutorial Guide */}
+      <TutorialGuide
+        visible={showTutorial}
+        onClose={() => setShowTutorial(false)}
+        onComplete={() => {
+          setShowTutorial(false);
+          // Можно показать поздравление
+        }}
+      />
 
       {/* Модалка создания профиля */}
       <Modal
@@ -405,7 +429,7 @@ export default function HomeScreen() {
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.bg },
-  scroll: { padding: 16, paddingTop: 40, alignItems: 'center' },
+  scroll: { padding: 16, paddingTop: 40, alignItems: 'center', minHeight: '100%' },
 
   hero: { alignItems: 'center', marginBottom: 16, gap: 4 },
   heroIcon: {
@@ -559,21 +583,29 @@ const s = StyleSheet.create({
   },
   shopBannerBadgeText: { fontSize: 10, fontWeight: '800', color: '#fbbf24' },
 
-  steps: { gap: 6 },
-  step: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: Colors.bgCard, borderRadius: 12,
-    borderWidth: 1, borderColor: Colors.border, padding: 10,
+  // Tutorial button
+  tutorialBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: 'rgba(6,182,212,0.08)',
+    borderWidth: 2,
+    borderColor: 'rgba(6,182,212,0.3)',
+    borderRadius: 14,
+    padding: 14,
   },
-  stepIcon: {
-    width: 34, height: 34, borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    alignItems: 'center', justifyContent: 'center',
+  tutorialBtnIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(6,182,212,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  stepIconText: { fontSize: 17 },
-  stepContent: { flex: 1 },
-  stepTitle: { fontSize: 13, fontWeight: '700', color: Colors.text, marginBottom: 1 },
-  stepDesc: { fontSize: 11, color: Colors.textMuted, lineHeight: 15 },
+  tutorialBtnIconText: { fontSize: 22 },
+  tutorialBtnTitle: { fontSize: 15, fontWeight: '800', color: '#e2e8f0', marginBottom: 2 },
+  tutorialBtnDesc: { fontSize: 12, color: '#94a3b8', lineHeight: 16 },
+  tutorialBtnArrow: { fontSize: 20, color: '#06b6d4', fontWeight: '700' },
 
   // Profile slots
   slotsSection: { width: '100%', maxWidth: 400, marginBottom: 12 },
@@ -602,6 +634,20 @@ const s = StyleSheet.create({
   slotNameActive: { color: Colors.primary },
   slotStats: { fontSize: 9, color: Colors.textDim },
   slotActiveBadge: { fontSize: 8, fontWeight: '700', color: '#4ade80' },
+  slotDeleteBtn: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(239,68,68,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  slotDeleteIcon: { fontSize: 16, color: '#ef4444', fontWeight: '300', lineHeight: 18 },
   slotEmpty: {
     width: 30, height: 30, borderRadius: 15,
     backgroundColor: 'rgba(255,255,255,0.05)',

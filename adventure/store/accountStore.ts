@@ -16,6 +16,7 @@ interface AccountState {
 
   login: (nickname: string) => void;
   logout: () => void;
+  deleteAccount: (nickname: string) => void;
   updateStats: (earned: number, truckCount: number) => void;
   getAccount: (nickname: string) => Account | null;
   loadFromStorage: () => void;
@@ -81,6 +82,19 @@ export const useAccountStore = create<AccountState>((set, get) => ({
     if (typeof window === 'undefined' || !window.localStorage) return;
     set({ currentNickname: null });
     localStorage.removeItem(CURRENT_KEY);
+  },
+
+  deleteAccount: (nickname: string) => {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    const { accounts, currentNickname } = get();
+    const updated = accounts.filter(a => a.nickname !== nickname);
+    set({ accounts: updated });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    // Если удаляем текущий профиль — разлогиниваемся
+    if (currentNickname === nickname) {
+      set({ currentNickname: null });
+      localStorage.removeItem(CURRENT_KEY);
+    }
   },
 
   updateStats: (earned: number, truckCount: number) => {

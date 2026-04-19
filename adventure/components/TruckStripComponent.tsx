@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, memo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CITY_STATE } from '../constants/config';
+import { getDriverAvatar } from '../utils/driverAvatars';
 
 const FLUENT = 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis';
 const E = {
@@ -39,6 +40,9 @@ const E = {
   hot:            `${FLUENT}/Smilies/Hot%20Face.png`,
   cold:           `${FLUENT}/Smilies/Cold%20Face.png`,
 };
+
+// Аватары водителей — вынесены в utils/driverAvatars.ts
+const FLUENT_PROF = 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People%20with%20professions';
 
 // Пулы эмодзи по диапазонам настроения — случайный выбор на основе ID трака
 function getMoodEmoji(mood: number, status: string, truck?: any): string {
@@ -210,7 +214,7 @@ const TruckStripComponent = memo(function TruckStripComponent({
                 <div style={{ position: 'absolute', top: 5, right: 5 } as any}>
                   <img src={moodEmoji} width={22} height={22} style={{ display: 'block' } as any} />
                 </div>
-                <img src={E.pilot} width={isWide ? 62 : 52} height={isWide ? 62 : 52}
+                <img src={getDriverAvatar(truck.id)} width={isWide ? 62 : 52} height={isWide ? 62 : 52}
                   style={{ imageRendering: 'auto', display: 'block', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))' } as any} />
                 <div style={{
                   fontSize: isWide ? 10 : 9, fontWeight: 700, color, background: `${color}22`,

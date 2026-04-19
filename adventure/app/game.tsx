@@ -38,11 +38,13 @@ import ShiftEndPopup from '../components/ShiftEndPopup';
 import StatsPopup from '../components/StatsPopup';
 import SettingsPopup from '../components/SettingsPopup';
 import HelpPopup from '../components/HelpPopup';
-import GuidePanel, { shouldShowGuide, shouldShowWelcome } from '../components/WelcomePopup';
 import { useAccountStore } from '../store/accountStore';
 import GuideSpotlight from '../components/GuideSpotlight';
 import { useGuideStore } from '../store/guideStore';
 import GuideBubble from '../components/GuideBubble';
+import CharacterDialog from '../components/CharacterDialog';
+import { CHARACTERS, DIALOG_DRIVER_START, isDialogShown, markDialogShown } from '../data/dialogs';
+import { getDriverAvatar } from '../utils/driverAvatars';
 
 type Tab = 'map' | 'loadboard' | 'email' | 'trucks';
 
@@ -61,18 +63,7 @@ const STATUS_LABEL: Record<string, string> = {
   breakdown: 'Поломка', waiting: 'Detention',
 };
 
-// Уникальный аватар водителя по ID трака
-const DRIVER_AVATARS: Record<string, string> = {
-  'T1': '👨🏻', 'T2': '👨🏾', 'T3': '👨🏼', 'T4': '👩🏽', 'T5': '👨🏿',
-  'T1047': '👨🏻', 'T2023': '👨🏾', 'T3012': '👨🏼',
-};
-function getDriverAvatar(truckId: string): string {
-  if (DRIVER_AVATARS[truckId]) return DRIVER_AVATARS[truckId];
-  // Фоллбэк по последней цифре ID
-  const avatars = ['👨🏻','👨🏾','👨🏼','👩🏽','👨🏿','👩🏻','👨🏽','👩🏾'];
-  const n = parseInt(truckId.replace(/\D/g,'')) || 0;
-  return avatars[n % avatars.length];
-}
+// Уникальный аватар водителя по ID трака — используем utils/driverAvatars
 
 // Microsoft Fluent Animated Emojis — CDN URLs
 const FLUENT = 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis';
@@ -133,19 +124,28 @@ export default function GameScreen() {
     deliveryResults, totalEarned,
   } = useGameStore();
 
-  const [guideVisible, setGuideVisible] = useState(() => {
-    try {
-      const saved = localStorage.getItem('dispatch-guide-show');
-      if (saved !== null) return saved === '1';
-    } catch {}
-    return shouldShowGuide();
-  });
-  const [showGuidePopup, setShowGuidePopup] = useState(() => shouldShowGuide());
+  const [guideVisible, setGuideVisible] = useState(false);
+  const [showDriverDialog, setShowDriverDialog] = useState(false);
+  const dialogCheckDone = useRef(false);
+
+  // Показываем диалог водителя при запуске игры (один раз за сессию)
+  useEffect(() => {
+    if (dialogCheckDone.current) return;
+    dialogCheckDone.current = true;
+
+    const sessionKey = `dialog-shown-${sessionName || 'default'}`;
+    const shownInThisSession = localStorage.getItem(sessionKey) === '1';
+    
+    if (!shownInThisSession) {
+      const timer = setTimeout(() => {
+        setShowDriverDialog(true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [sessionName]);
   const [timeFormat, setTimeFormat] = useState<'12h' | '24h'>(() => {
     try { return (localStorage.getItem('dispatch-time-format') as '12h' | '24h') || '12h'; } catch { return '12h'; }
   });
-  const [guideForceStep, setGuideForceStep] = useState<number | null>(null);
-  const guideCurrentStepRef = useRef<number>(0); // текущий раскрытый шаг в гайде
   const truckStripScrollPos = useRef<number>(0); // Сохраняем позицию скролла truck strip
 
   const [activeTab, setActiveTab] = useState<Tab>(() => {
@@ -315,7 +315,7 @@ export default function GameScreen() {
 
   // Плавный zoom на траки при первом запуске
   useEffect(() => {
-    if (!shouldShowGuide()) return;
+    if (isDialogShown('driver-start')) return;
     const zoomTimer = setTimeout(() => {
       window.dispatchEvent(new CustomEvent('zoomToTruck', {
         detail: { slow: true }
@@ -1242,143 +1242,26 @@ export default function GameScreen() {
       )}
 
       {/* ── MODALS ── */}
-      {/* Guide Popup */}
-      {showGuidePopup && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 9998,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'rgba(0,0,0,0.55)',
-          backdropFilter: 'blur(6px)',
-          WebkitBackdropFilter: 'blur(6px)',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-        } as any}>
-          <div style={{
-            width: '92%', maxWidth: 440,
-            maxHeight: '88vh',
-            background: 'linear-gradient(160deg, #1a2540 0%, #141d35 100%)',
-            border: '1px solid rgba(99,120,200,0.4)',
-            borderRadius: 22,
-            boxShadow: '0 8px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06)',
-            overflow: 'hidden',
-            display: 'flex', flexDirection: 'column',
-          } as any}>
+      {/* Driver Start Dialog — аватар совпадает с карточкой трака */}
+      <CharacterDialog
+        visible={showDriverDialog}
+        character={{
+          ...CHARACTERS.driver,
+          avatar: trucks.length > 0 ? getDriverAvatar(trucks[0].id) : CHARACTERS.driver.avatar,
+        }}
+        steps={DIALOG_DRIVER_START}
+        onClose={() => {
+          setShowDriverDialog(false);
+          const sessionKey = `dialog-shown-${sessionName || 'default'}`;
+          localStorage.setItem(sessionKey, '1');
+        }}
+        onComplete={() => {
+          setShowDriverDialog(false);
+          const sessionKey = `dialog-shown-${sessionName || 'default'}`;
+          localStorage.setItem(sessionKey, '1');
+        }}
+      />
 
-            {/* Header bar */}
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '12px 14px 10px', flexShrink: 0,
-              background: 'rgba(255,255,255,0.04)',
-              borderBottom: '1px solid rgba(255,255,255,0.08)',
-            }}>
-              {/* Title */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 18 }}>📖</span>
-                <span style={{ fontSize: 13, fontWeight: 800, color: '#c7d2fe', letterSpacing: 0.3 }}>
-                  Гайд диспетчера
-                </span>
-              </div>
-
-              {/* Кнопки + тоггл */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-
-                {/* Тоггл "показывать при старте" */}
-                <label style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer' } as any}>
-                  <div
-                    onClick={() => {
-                      const next = !guideVisible;
-                      setGuideVisible(next);
-                      try { localStorage.setItem('dispatch-guide-show', next ? '1' : '0'); } catch {}
-                    }}
-                    style={{
-                      width: 44, height: 26, borderRadius: 13,
-                      background: guideVisible ? 'rgba(99,102,241,0.8)' : 'rgba(255,255,255,0.15)',
-                      border: `2px solid ${guideVisible ? 'rgba(99,102,241,1)' : 'rgba(255,255,255,0.25)'}`,
-                      position: 'relative', cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    } as any}
-                  >
-                    <div style={{
-                      position: 'absolute', top: 3,
-                      left: guideVisible ? 20 : 3,
-                      width: 16, height: 16, borderRadius: 8,
-                      background: '#fff',
-                      transition: 'left 0.2s',
-                      boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
-                    } as any} />
-                  </div>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#cbd5e1', userSelect: 'none' } as any}>
-                    авто
-                  </span>
-                </label>
-
-              {/* Buttons */}
-              <div style={{ display: 'flex', gap: 8 }}>
-                {/* Refresh — шаг назад */}
-                <button
-                  title="Вернуться на шаг назад"
-                  onClick={() => {
-                    const next = Math.max(0, guideCurrentStepRef.current - 1);
-                    guideCurrentStepRef.current = next;
-                    setGuideForceStep(next);
-                  }}
-                  style={{
-                    width: 40, height: 40, borderRadius: 11,
-                    background: 'rgba(99,102,241,0.2)',
-                    border: '2px solid rgba(99,102,241,0.5)',
-                    cursor: 'pointer', fontSize: 20, color: '#a5b4fc',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'all 0.15s',
-                  } as any}
-                  onMouseEnter={e => {
-                    (e.currentTarget as HTMLElement).style.background = 'rgba(99,102,241,0.35)';
-                    (e.currentTarget as HTMLElement).style.transform = 'rotate(-180deg)';
-                  }}
-                  onMouseLeave={e => {
-                    (e.currentTarget as HTMLElement).style.background = 'rgba(99,102,241,0.2)';
-                    (e.currentTarget as HTMLElement).style.transform = 'rotate(0deg)';
-                  }}
-                >↺</button>
-
-                {/* Close */}
-                <button
-                  onClick={() => setShowGuidePopup(false)}
-                  style={{
-                    width: 40, height: 40, borderRadius: 11,
-                    background: 'rgba(255,255,255,0.08)',
-                    border: '2px solid rgba(255,255,255,0.15)',
-                    cursor: 'pointer', fontSize: 18, color: '#94a3b8',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontWeight: 700, transition: 'all 0.15s',
-                  } as any}
-                  onMouseEnter={e => {
-                    (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.2)';
-                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(239,68,68,0.5)';
-                    (e.currentTarget as HTMLElement).style.color = '#f87171';
-                  }}
-                  onMouseLeave={e => {
-                    (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.08)';
-                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.15)';
-                    (e.currentTarget as HTMLElement).style.color = '#94a3b8';
-                  }}
-                >✕</button>
-              </div>
-              </div> {/* конец внешнего flex кнопок + тоггл */}
-            </div>
-
-            {/* Content */}
-            <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
-              <GuidePanel
-                nickname={currentNickname || 'Dispatcher'}
-                truckCount={trucks.length || 3}
-                onSwitchTab={(tab) => { setShowGuidePopup(false); switchTab(tab as any); }}
-                onAllDone={() => { setGuideVisible(false); setShowGuidePopup(false); }}
-                forceStep={guideForceStep}
-                onStepChange={(step) => { guideCurrentStepRef.current = step; }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
       {negotiation.open && <ErrorBoundary name="Neg"><NegotiationModal onAssign={setPendingLoad} /></ErrorBoundary>}
       {pendingLoad && !negotiation.open && (
         <ErrorBoundary name="Assign"><AssignModal
@@ -1421,7 +1304,7 @@ export default function GameScreen() {
         onOpenStats={() => setShowStats(true)}
         onOpenSettings={() => setShowSettings(true)}
         onOpenHelp={() => setShowHelp(true)}
-        onOpenGuide={() => { setGuideVisible(true); setShowGuidePopup(true); }}
+        onOpenGuide={() => setShowDriverDialog(true)}
         onExit={() => { if (clockRef.current) clearInterval(clockRef.current); }}
       />
       {/* Guide Bubble — контекстные подсказки */}
