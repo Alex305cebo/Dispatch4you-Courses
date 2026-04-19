@@ -173,6 +173,15 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
   const polygonSeriesRef = useRef<any>(null);
   const intervalRef = useRef<any>(null);
   const antLinesRef = useRef<any[]>([]);
+  // Предзагруженная картинка грузовика — загружается один раз
+  const lorryImgRef = useRef<HTMLImageElement | null>(null);
+  const lorryImgReady = useRef(false);
+  if (!lorryImgRef.current && typeof window !== 'undefined') {
+    const img = new window.Image();
+    img.src = 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Articulated%20Lorry.png';
+    img.onload = () => { lorryImgReady.current = true; };
+    lorryImgRef.current = img;
+  }
   const extraSeriesRef = useRef<any[]>([]);
   const antIntervalRef = useRef<any>(null);
   const colorIntervalRef = useRef<any>(null);
@@ -786,12 +795,12 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         alertPulse.animate({ key: "fillOpacity", from: 0.5, to: 0, duration: warnSpeed, loops: Infinity });
       }
 
-      // Эмодзи трака по статусу (текстовый — стабильный)
+      // Иконка трака — текстовый эмодзи (стабильно)
       const truckEmoji = (() => {
         if (d.breakdown) return "🔧";
         if (d.waiting) return "⏳";
         if (d.status === "at_pickup") return "📦";
-        if (d.status === "at_delivery") return "🏭";
+        if (d.status === "at_delivery") return "🏁";
         if (d.status === "loaded") return "🚛";
         if (d.status === "driving") return "🚛";
         if ((d as any).onNightStop) return "🌙";

@@ -4,32 +4,58 @@ import { CITY_STATE } from '../constants/config';
 
 const FLUENT = 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis';
 const E = {
-  pilot:     `${FLUENT}/People/Pilot.png`,
-  sleeping:  `${FLUENT}/Smilies/Zzz.png`,
-  explode:   `${FLUENT}/Smilies/Exploding%20Head.png`,
-  tired:     `${FLUENT}/Smilies/Tired%20Face.png`,
-  biceps:    `${FLUENT}/Smilies/Smiling%20Face%20with%20Sunglasses.png`,
-  strstruck: `${FLUENT}/Smilies/Star-Struck.png`,
-  happy:     `${FLUENT}/Smilies/Beaming%20Face%20with%20Smiling%20Eyes.png`,
-  smile:     `${FLUENT}/Smilies/Slightly%20Smiling%20Face.png`,
-  neutral:   `${FLUENT}/Smilies/Neutral%20Face.png`,
-  worried:   `${FLUENT}/Smilies/Worried%20Face.png`,
-  angry:     `${FLUENT}/Smilies/Angry%20Face.png`,
-  rage:      `${FLUENT}/Smilies/Enraged%20Face.png`,
+  pilot:          `${FLUENT}/People/Pilot.png`,
+  // Специальные состояния
+  sleeping:       `${FLUENT}/Smilies/Zzz.png`,
+  explode:        `${FLUENT}/Smilies/Exploding%20Head.png`,
+  tired:          `${FLUENT}/Smilies/Tired%20Face.png`,
+  strstruck:      `${FLUENT}/Smilies/Star-Struck.png`,
+  // Очень счастливый (90%+)
+  partying:       `${FLUENT}/Smilies/Partying%20Face.png`,
+  money_mouth:    `${FLUENT}/Smilies/Money-Mouth%20Face.png`,
+  // Счастливый (75-90%)
+  grinning:       `${FLUENT}/Smilies/Grinning%20Face.png`,
+  grinning_big:   `${FLUENT}/Smilies/Grinning%20Face%20with%20Big%20Eyes.png`,
+  laughing:       `${FLUENT}/Smilies/Grinning%20Squinting%20Face.png`,
+  // Хорошо (60-75%)
+  wink:           `${FLUENT}/Smilies/Winking%20Face.png`,
+  sunglasses:     `${FLUENT}/Smilies/Smiling%20Face%20with%20Sunglasses.png`,
+  cowboy:         `${FLUENT}/Smilies/Cowboy%20Hat%20Face.png`,
+  // Нейтрально (45-60%)
+  thinking:       `${FLUENT}/Smilies/Thinking%20Face.png`,
+  raised_eyebrow: `${FLUENT}/Smilies/Face%20with%20Raised%20Eyebrow.png`,
+  hushed:         `${FLUENT}/Smilies/Hushed%20Face.png`,
+  // Беспокойство (30-45%)
+  unamused:       `${FLUENT}/Smilies/Unamused%20Face.png`,
+  pensive:        `${FLUENT}/Smilies/Pensive%20Face.png`,
+  worried:        `${FLUENT}/Smilies/Worried%20Face.png`,
+  // Плохо (15-30%)
+  disappointed:   `${FLUENT}/Smilies/Disappointed%20Face.png`,
+  confounded:     `${FLUENT}/Smilies/Confounded%20Face.png`,
+  angry:          `${FLUENT}/Smilies/Angry%20Face.png`,
+  // Критично (<15%)
+  rage:           `${FLUENT}/Smilies/Enraged%20Face.png`,
+  // Погода/условия
+  hot:            `${FLUENT}/Smilies/Hot%20Face.png`,
+  cold:           `${FLUENT}/Smilies/Cold%20Face.png`,
 };
 
+// Пулы эмодзи по диапазонам настроения — случайный выбор на основе ID трака
 function getMoodEmoji(mood: number, status: string, truck?: any): string {
+  const seed = truck?.id ? parseInt(truck.id.replace(/\D/g,'')) || 0 : 0;
+  const pick = (arr: string[]) => arr[seed % arr.length];
+
   if (truck && ((truck as any).onNightStop || (truck as any).hosRestUntilMinute > 0)) return E.sleeping;
   if (status === 'breakdown')   return E.explode;
   if (status === 'waiting')     return E.tired;
-  if (status === 'at_pickup')   return E.biceps;
-  if (status === 'at_delivery') return E.strstruck;
-  if (mood >= 90) return E.strstruck;
-  if (mood >= 75) return E.happy;
-  if (mood >= 60) return E.smile;
-  if (mood >= 45) return E.neutral;
-  if (mood >= 30) return E.worried;
-  if (mood >= 15) return E.angry;
+  if (status === 'at_pickup')   return pick([E.hushed, E.thinking, E.raised_eyebrow]);
+  if (status === 'at_delivery') return pick([E.strstruck, E.partying, E.money_mouth]);
+  if (mood >= 90) return pick([E.partying, E.money_mouth, E.strstruck, E.laughing]);
+  if (mood >= 75) return pick([E.grinning, E.grinning_big, E.laughing, E.cowboy]);
+  if (mood >= 60) return pick([E.wink, E.sunglasses, E.cowboy, E.grinning]);
+  if (mood >= 45) return pick([E.thinking, E.raised_eyebrow, E.hushed]);
+  if (mood >= 30) return pick([E.unamused, E.pensive, E.worried]);
+  if (mood >= 15) return pick([E.disappointed, E.confounded, E.angry]);
   return E.rage;
 }
 
