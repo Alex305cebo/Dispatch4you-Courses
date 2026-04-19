@@ -126,6 +126,20 @@ export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}
         </TouchableOpacity>
       ))}
 
+      {/* Плашка — расширить флот */}
+      <View style={styles.shopBanner}>
+        <View style={styles.shopBannerLeft}>
+          <Text style={styles.shopBannerIcon}>🏪</Text>
+          <View>
+            <Text style={styles.shopBannerTitle}>Расширь флот!</Text>
+            <Text style={styles.shopBannerSub}>Купи ещё траки в магазине и зарабатывай больше</Text>
+          </View>
+        </View>
+        <View style={styles.shopBannerBadge}>
+          <Text style={styles.shopBannerBadgeText}>Скоро</Text>
+        </View>
+      </View>
+
       {/* Модалка с деталями трака */}
       <TruckDetailModal
         truck={detailTruck}
@@ -198,5 +212,51 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
     color: '#67e8f9',
+  },
+
+  shopBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(251,191,36,0.08)',
+    borderWidth: 2,
+    borderColor: 'rgba(251,191,36,0.3)',
+    borderRadius: 18,
+    padding: 16,
+    marginTop: 4,
+  },
+  shopBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  shopBannerIcon: {
+    fontSize: 32,
+  },
+  shopBannerTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#fbbf24',
+    marginBottom: 2,
+  },
+  shopBannerSub: {
+    fontSize: 12,
+    color: '#e2e8f0',
+    fontWeight: '500',
+    lineHeight: 16,
+  },
+  shopBannerBadge: {
+    backgroundColor: 'rgba(251,191,36,0.2)',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(251,191,36,0.4)',
+  },
+  shopBannerBadgeText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#fbbf24',
   },
 });

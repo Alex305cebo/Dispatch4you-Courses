@@ -957,7 +957,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     set(s => ({ deliveryResults: s.deliveryResults.filter(r => r.loadId !== loadId) }));
   },
 
-  startShift: async (truckCount: number = 3, sessionName: string = '') => {
+  startShift: async (truckCount: number = 1, sessionName: string = '') => {
     console.log(`🎮 Starting shift with ${truckCount} trucks, session: "${sessionName}"`);
     
     // Всегда сбрасываем старое сохранение и начинаем заново
@@ -1450,12 +1450,28 @@ export const useGameStore = create<GameState>((set, get) => ({
         return truck;
       }
 
-      // ── at_pickup: автоматически начинаем ехать на delivery через 5 минут ──
+      // ── at_pickup: погрузка длится 45-90 игровых минут (~1 час в среднем) ──
       if (truck.status === 'at_pickup' && truck.currentLoad) {
         const pickupArrivalMinute = (truck as any).pickupArrivalMinute ?? newMinute;
+        // Случайная длительность погрузки задаётся при первом тике: 45-90 мин
+        const loadDuration = (truck as any).loadDuration ?? (45 + Math.floor(Math.random() * 46));
         const waitTime = newMinute - pickupArrivalMinute;
-        if (waitTime >= 5) {
-          // Запускаем маршрут в фоне — трак сразу едет по прямой, маршрут придёт позже
+
+        // Уведомление когда погрузка началась (первый тик)
+        if (!(truck as any).loadDuration) {
+          const hrs = (loadDuration / 60).toFixed(1);
+          get().addNotification({
+            type: 'text', priority: 'low',
+            from: truck.driver,
+            subject: `📦 ${truck.name} на погрузке`,
+            message: `${truck.driver}: "Начали грузить. Примерно ${hrs}ч — буду готов около ${Math.round(loadDuration)} мин."`,
+            actionRequired: false,
+            relatedTruckId: truck.id,
+          });
+        }
+
+        if (waitTime >= loadDuration) {
+          // Погрузка завершена — едем на delivery
           const deliveryCity = CITIES[truck.currentLoad.toCity];
           if (deliveryCity) {
             const truckId = truck.id;
@@ -1481,11 +1497,12 @@ export const useGameStore = create<GameState>((set, get) => ({
             destinationCity: truck.currentLoad.toCity,
             progress: 0,
             routePath: null,
+            loadDuration: undefined,
             currentLoad: { ...truck.currentLoad, phase: 'to_delivery' as any },
-          };
+          } as any;
         }
-        // Ещё ждём — сохраняем время прибытия
-        return { ...truck, pickupArrivalMinute } as any;
+        // Ещё грузимся
+        return { ...truck, pickupArrivalMinute, loadDuration } as any;
       }
 
       // ── at_delivery: разгрузка длится 30-120 игровых минут, detention после 120 мин ──

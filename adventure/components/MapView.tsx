@@ -1608,20 +1608,22 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
 
       {/* Факт о штате — компактно справа от легенды */}
       <div style={{
-        maxWidth: "clamp(160px,28vw,260px)",
+        maxWidth: "clamp(220px, 45vw, 420px)",
+        minWidth: "clamp(180px, 35vw, 280px)",
         opacity: (followTruck && stateFact) ? 1 : 0,
         pointerEvents: "none",
         transition: "opacity 0.6s ease",
-        background: "rgba(8,14,28,0.88)",
-        border: "1px solid rgba(56,189,248,0.3)",
-        borderRadius: 10,
-        padding: "clamp(6px,1vw,10px) clamp(8px,1.2vw,12px)",
-        backdropFilter: "blur(8px)",
+        background: "rgba(8,14,28,0.92)",
+        border: "1px solid rgba(56,189,248,0.35)",
+        borderRadius: 12,
+        padding: "clamp(8px,1.2vw,12px) clamp(10px,1.5vw,16px)",
+        backdropFilter: "blur(10px)",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
       } as any}>
-        <div style={{ fontSize: "clamp(11px,1.3vw,13px)", fontWeight: 700, color: "#38bdf8", marginBottom: 3, letterSpacing: 0.5 } as any}>
+        <div style={{ fontSize: "clamp(12px,1.4vw,14px)", fontWeight: 700, color: "#38bdf8", marginBottom: 4, letterSpacing: 0.5 } as any}>
           📍 {lastFactStateRef.current}
         </div>
-        <div style={{ fontSize: "clamp(12px,1.4vw,14px)", color: "#e2e8f0", lineHeight: 1.5 } as any}>
+        <div style={{ fontSize: "clamp(13px,1.5vw,15px)", color: "#e2e8f0", lineHeight: 1.55, fontWeight: 500 } as any}>
           {stateFact}
         </div>
       </div>
@@ -1737,7 +1739,8 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         } as any}
       >🎯</button>
 
-      {selectedTruck && (
+      {/* TODO: truck popup card — скрыто, будет переработано позже */}
+      {false && selectedTruck && (
         <div style={{
           position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)",
           display: "flex", alignItems: "center", gap: 8,

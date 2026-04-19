@@ -133,13 +133,10 @@ export default function GameScreen() {
   const truckStripScrollPos = useRef<number>(0); // Сохраняем позицию скролла truck strip
 
   const [activeTab, setActiveTab] = useState<Tab>(() => {
-    // Если первый запуск с гайдом — открываем loadboard
-    if (shouldShowGuide()) return 'loadboard';
     try {
       const saved = localStorage.getItem('dispatch-active-tab') as Tab;
       if (saved) return saved;
     } catch {}
-    // По умолчанию — карта на всех устройствах
     return 'map';
   });
 
@@ -767,7 +764,7 @@ export default function GameScreen() {
         ref={scrollRef}
         style={{
           display: 'flex', overflowX: 'auto', gap: 8,
-          padding: isWide ? '8px 10px' : '6px 10px',
+          padding: isWide ? '8px 10px' : '7px 10px',
           background: 'linear-gradient(180deg, rgba(10,18,38,0.98) 0%, rgba(8,14,30,0.98) 100%)',
           borderBottom: '1px solid rgba(56,189,248,0.12)',
           scrollbarWidth: 'none',
@@ -775,7 +772,7 @@ export default function GameScreen() {
           touchAction: 'pan-x',
           msOverflowStyle: 'none',
           cursor: 'grab',
-          overscrollBehavior: 'contain', // Блокируем pull-to-refresh
+          overscrollBehavior: 'contain',
         } as any}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -794,17 +791,24 @@ export default function GameScreen() {
         const moodEmoji = getMoodEmoji(mood, truck.status, truck);
         const truckIdx = trucks.indexOf(truck);
         const animClass = `emoji-anim-${truckIdx % 4}`;
-        const truckNum = truck.id.replace(/\D/g, '').padStart(3, '0').slice(-3);
-        const trailerNum = String((parseInt(truckNum) * 7 + 100) % 900 + 100);
-        const nameParts = (truck.driver || truck.name).split(' ');
-        const driverName = nameParts.length >= 2
-          ? `${nameParts[0]} ${nameParts[1][0]}.`
-          : nameParts[0];
+        // Рандомные номера трака и трейлера на основе ID (стабильные)
+        const idNum = parseInt(truck.id.replace(/\D/g, '')) || 1;
+        const truckNum = String(((idNum * 317 + 100) % 900) + 100);
+        const trailerNum = String(((idNum * 491 + 200) % 900) + 100);
+        // Полное имя водителя
+        const driverFullName = truck.driver || truck.name;
+        const fromSt = CITY_STATE[truck.currentCity] || '';
+        const toSt = truck.destinationCity ? (CITY_STATE[truck.destinationCity] || '') : '';
+        const fromLabel = fromSt ? `${truck.currentCity}, ${fromSt}` : truck.currentCity;
+        const toLabel = toSt ? `${truck.destinationCity}, ${toSt}` : (truck.destinationCity || '');
+        const statusLabel = (truck as any).onNightStop ? '🌙 Ночёвка' : (truck as any).hosRestUntilMinute > 0 ? '😴 HOS отдых' : STATUS_LABEL[truck.status];
+        const CARD_H = isWide ? 120 : 100;
+        const AVATAR_W = isWide ? 90 : 76;
 
         return (
           <div key={truck.id} style={{ position: 'relative', flexShrink: 0 } as any}>
 
-            {/* Облачко-уведомление над карточкой */}
+            {/* Облачко-уведомление */}
             {indicatorNotifications[truck.id] && (
               <div style={{
                 position: 'absolute', bottom: '100%', left: '50%',
@@ -819,7 +823,6 @@ export default function GameScreen() {
                 boxShadow: '0 2px 12px rgba(6,182,212,0.25)',
               } as any}>
                 {indicatorNotifications[truck.id].text}
-                {/* хвостик */}
                 <div style={{
                   position: 'absolute', bottom: -5, left: '50%',
                   transform: 'translateX(-50%)',
@@ -832,113 +835,168 @@ export default function GameScreen() {
               </div>
             )}
 
+          {/* ═══ КАРТОЧКА — UBER/LYFT СТИЛЬ ═══ */}
           <div
-            onClick={() => {
-              if (!isDragging.current && !isTouchDragging.current) {
-                handleTruckClick(truck);
-              }
-            }}
+            onClick={() => { if (!isDragging.current && !isTouchDragging.current) handleTruckClick(truck); }}
             style={{
-              minWidth: isWide ? 130 : 105,
-              borderRadius: 10, overflow: 'hidden',
+              width: isWide ? 360 : 290,
+              height: CARD_H,
+              borderRadius: 16,
               background: isSelected
-                ? `linear-gradient(135deg, rgba(${parseInt(color.slice(1,3),16)},${parseInt(color.slice(3,5),16)},${parseInt(color.slice(5,7),16)},0.22), rgba(10,18,38,0.97))`
-                : 'rgba(255,255,255,0.05)',
-              border: `2px solid ${isSelected ? color + 'cc' : isAlert ? color + '77' : 'rgba(255,255,255,0.12)'}`,
-              boxShadow: isSelected ? `0 0 24px ${color}55` : isAlert ? `0 0 14px ${color}44` : 'none',
-              cursor: 'pointer', transition: 'transform 0.15s',
+                ? `linear-gradient(135deg, rgba(${parseInt(color.slice(1,3),16)},${parseInt(color.slice(3,5),16)},${parseInt(color.slice(5,7),16)},0.14) 0%, rgba(8,14,28,0.98) 100%)`
+                : 'rgba(8,14,28,0.95)',
+              border: `2px solid ${isSelected ? color : isAlert ? color + '99' : 'rgba(255,255,255,0.1)'}`,
+              boxShadow: isSelected
+                ? `0 0 0 1px ${color}44, 0 8px 32px rgba(0,0,0,0.6), 0 0 20px ${color}33`
+                : '0 4px 20px rgba(0,0,0,0.5)',
+              cursor: 'pointer',
               fontFamily: 'sans-serif',
+              display: 'flex', flexDirection: 'row',
+              overflow: 'hidden',
+              transition: 'all 0.2s',
+            } as any}
+          >
+            {/* ── ЛЕВЫЙ БЛОК: персонаж ── */}
+            <div style={{
+              width: AVATAR_W, flexShrink: 0,
+              background: `linear-gradient(180deg, rgba(${parseInt(color.slice(1,3),16)},${parseInt(color.slice(3,5),16)},${parseInt(color.slice(5,7),16)},0.2) 0%, rgba(4,8,20,0.95) 100%)`,
+              borderRight: `1px solid ${color}33`,
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              gap: 6, position: 'relative',
+            } as any}>
+              {/* Статус-точка */}
+              <div style={{
+                position: 'absolute', top: 8, right: 8,
+                width: 10, height: 10, borderRadius: '50%',
+                background: color,
+                boxShadow: `0 0 8px ${color}`,
+              } as any} />
+              {/* Большой эмодзи — место для будущего персонажа */}
+              <img
+                src={moodEmoji}
+                width={isWide ? 48 : 38}
+                height={isWide ? 48 : 38}
+                className={animClass}
+                style={{ imageRendering: 'auto', display: 'block', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.6))' } as any}
+              />
+              {/* Статус под эмодзи */}
+              <div style={{
+                fontSize: isWide ? 10 : 9, fontWeight: 700,
+                color: color,
+                background: `${color}22`,
+                border: `1px solid ${color}44`,
+                borderRadius: 5, padding: '1px 6px',
+                whiteSpace: 'nowrap',
+              } as any}>{statusLabel}</div>
+            </div>
+
+            {/* ── ПРАВЫЙ БЛОК: вся информация ── */}
+            <div style={{
+              flex: 1, display: 'flex', flexDirection: 'column',
+              padding: isWide ? '8px 12px' : '6px 10px', gap: 0, minWidth: 0,
             } as any}>
 
-            {/* Цветная полоска сверху */}
-            <div style={{ height: 4, width: '100%', background: `linear-gradient(90deg, ${color}, ${color}66)`, boxShadow: `0 0 8px ${color}` } as any} />
-
-            <div style={{ padding: isWide ? '7px 9px' : '5px 7px', display: 'flex', flexDirection: 'column', gap: isWide ? 3 : 2 } as any}>
-
-              {/* Emoji настроения — отдельно сверху, не накладывается */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' } as any}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1, minWidth: 0 } as any}>
-                  <span style={{ fontSize: isWide ? 13 : 11, fontWeight: 900, color: '#fff', letterSpacing: 0.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
-                    {driverName}
-                  </span>
-                  <div style={{ display: 'flex', gap: 2 } as any}>
-                    <span style={{ fontSize: 8, fontWeight: 700, color: '#38bdf8', background: 'rgba(56,189,248,0.15)', padding: '1px 4px', borderRadius: 3 } as any}>TRK {truckNum}</span>
-                    {isWide && <span style={{ fontSize: 8, fontWeight: 700, color: '#cbd5e1', background: 'rgba(255,255,255,0.08)', padding: '1px 4px', borderRadius: 3 } as any}>TRL {trailerNum}</span>}
-                  </div>
-                </div>
-                {/* Emoji — с отступом, не накладывается */}
-                <div style={{ marginLeft: 4, flexShrink: 0 } as any}>
-                  <img src={moodEmoji} width={isWide ? 24 : 18} height={isWide ? 24 : 18} className={animClass} style={{ imageRendering: 'auto', display: 'block' } as any} />
+              {/* ── СТРОКА 1: Имя + номера ── */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 } as any}>
+                <span style={{ fontSize: isWide ? 15 : 13, fontWeight: 900, color: '#fff', letterSpacing: -0.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
+                  {driverFullName}
+                </span>
+                <div style={{ display: 'flex', gap: 4, flexShrink: 0, marginLeft: 6 } as any}>
+                  <span style={{
+                    fontSize: isWide ? 10 : 9, fontWeight: 700, color: '#38bdf8',
+                    background: 'rgba(56,189,248,0.15)',
+                    border: '1px solid rgba(56,189,248,0.3)',
+                    borderRadius: 4, padding: '1px 5px',
+                  } as any}>TRK {truckNum}</span>
+                  <span style={{
+                    fontSize: isWide ? 10 : 9, fontWeight: 700, color: '#94a3b8',
+                    background: 'rgba(255,255,255,0.07)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: 4, padding: '1px 5px',
+                  } as any}>TRL {trailerNum}</span>
                 </div>
               </div>
 
-              {/* Статус */}
-              <span style={{ fontSize: isWide ? 12 : 10, fontWeight: 800, color, lineHeight: 1.2 } as any}>
-                {(truck as any).onNightStop ? '🌙 Ночёвка' : (truck as any).hosRestUntilMinute > 0 ? '😴 HOS отдых' : STATUS_LABEL[truck.status]}
-              </span>
+              {/* ── СТРОКА 2: Маршрут ── */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 4,
+                background: 'rgba(255,255,255,0.04)',
+                borderRadius: 6, padding: '3px 7px', marginBottom: 4,
+              } as any}>
+                <span style={{ fontSize: 10, color: '#64748b', flexShrink: 0 } as any}>📍</span>
+                {truck.destinationCity ? (
+                  <span style={{ fontSize: isWide ? 11 : 10, fontWeight: 700, color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
+                    {fromLabel}
+                    <span style={{ color: '#475569', margin: '0 4px' } as any}>→</span>
+                    <span style={{ color: '#38bdf8' } as any}>{toLabel}</span>
+                  </span>
+                ) : (
+                  <span style={{ fontSize: isWide ? 11 : 10, fontWeight: 700, color: '#94a3b8' } as any}>{fromLabel}</span>
+                )}
+              </div>
 
-              {/* Маршрут или местоположение */}
-              {(() => {
-                const fromSt = CITY_STATE[truck.currentCity] || '';
-                const toSt = truck.destinationCity ? (CITY_STATE[truck.destinationCity] || '') : '';
-                const fromLabel = fromSt ? `${truck.currentCity}, ${fromSt}` : truck.currentCity;
-                const toLabel = toSt ? `${truck.destinationCity}, ${toSt}` : truck.destinationCity;
-
-                // Одна иконка — самая приоритетная
-                let icon = '';
-                if (truck.status === 'breakdown') icon = '🔧';
-                else if (hos <= 0) icon = '🛑';
-                else if ((truck as any).fuelLevel && (truck as any).fuelLevel < 10) icon = '🆘';
-                else if (mood < 20) icon = '😡';
-                else if (truck.status === 'waiting' && (truck as any).detentionMinutes > 120) icon = '⏰';
-                else if (truck.status === 'waiting') icon = '⏱️';
-                else if (hos > 0 && hos < 1) icon = '🚨';
-                else if (hos >= 1 && hos < 2) icon = '😴';
-                else if (hos >= 2 && hos < 3) icon = '⚠️';
-                else if ((truck as any).fuelLevel && (truck as any).fuelLevel < 20) icon = '⛽';
-                else if ((truck as any).idleWarningLevel > 2 && truck.status === 'idle') icon = '😴';
-                else if ((truck as any).idleWarningLevel === 2 && truck.status === 'idle') icon = '💤';
-                else if ((truck as any).idleWarningLevel === 1 && truck.status === 'idle') icon = '💭';
-                else if (mood >= 20 && mood < 40) icon = '😤';
-                else if ((truck as any).onNightStop) icon = '🌙';
-                else if ((truck as any).hosRestUntilMinute > 0) icon = '💤';
-                else if (truck.status === 'at_pickup') icon = '📦';
-                else if (truck.status === 'at_delivery') icon = '🏁';
-                else if (truck.status === 'loaded' && progressPct > 90) icon = '🔥';
-                else if (truck.status === 'loaded' && progressPct > 70) icon = '🚚';
-                else if (truck.status === 'loaded' && progressPct > 50) icon = '🛣️';
-                else if (truck.status === 'loaded') icon = '🗺️';
-                else if (truck.status === 'driving' && progressPct > 80) icon = '🏃';
-                else if (truck.status === 'driving') icon = '🚛';
-                else if (truck.status === 'idle' && !(truck as any).idleWarningLevel && hos > 8) icon = '✅';
-                else if (mood >= 80) icon = '😊';
-                else if ((truck as any).weather === 'snow') icon = '❄️';
-                else if ((truck as any).weather === 'rain') icon = '🌧️';
-                else if ((truck as any).trafficJam) icon = '🚦';
-                else if ((truck as any).newMessage) icon = '💬';
-
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 3 } as any}>
-                    {truck.destinationCity ? (
-                      <span style={{ fontSize: isWide ? 10 : 9, fontWeight: 700, color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
-                        {fromLabel} → {toLabel}
-                      </span>
-                    ) : (
-                      <span style={{ fontSize: isWide ? 10 : 9, fontWeight: 700, color: '#94a3b8' } as any}>
-                        📍 {fromLabel || 'В пути'}
-                      </span>
-                    )}
-                    {icon && <span style={{ fontSize: 11 } as any}>{icon}</span>}
-                  </div>
-                );
-              })()}
-
-              {/* Прогресс — только на десктопе */}
-              {isWide && isMoving && !(truck as any).onNightStop && !((truck as any).hosRestUntilMinute > 0) && (
-                <div style={{ height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' } as any}>
-                  <div style={{ height: '100%', width: `${progressPct}%`, background: `linear-gradient(90deg, ${color}88, ${color})`, borderRadius: 3, boxShadow: `0 0 6px ${color}`, transition: 'width 0.5s' } as any} />
+              {/* ── СТРОКА 3: Прогресс-бар ── */}
+              <div style={{ marginBottom: 4 } as any}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 } as any}>
+                  <span style={{ fontSize: 9, color: '#64748b', fontWeight: 600 } as any}>
+                    {isMoving ? 'Прогресс рейса' : truck.status === 'at_pickup' ? 'Погрузка' : truck.status === 'at_delivery' ? 'Разгрузка' : 'Ожидание'}
+                  </span>
+                  <span style={{ fontSize: 9, fontWeight: 800, color: isMoving ? color : '#64748b' } as any}>
+                    {isMoving ? `${progressPct}%` : '—'}
+                  </span>
                 </div>
-              )}
+                <div style={{ height: 5, background: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' } as any}>
+                  <div style={{
+                    height: '100%',
+                    width: isMoving ? `${progressPct}%` : '0%',
+                    background: `linear-gradient(90deg, ${color}66, ${color})`,
+                    borderRadius: 3,
+                    boxShadow: isMoving ? `0 0 6px ${color}88` : 'none',
+                    transition: 'width 0.8s ease',
+                  } as any} />
+                </div>
+              </div>
+
+              {/* ── СТРОКА 4: Drive HOS + Настроение + Ставка ── */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 } as any}>
+                <div style={{
+                  display: 'flex', alignItems: 'baseline', gap: 2,
+                  background: `${hosColor}15`,
+                  border: `1px solid ${hosColor}44`,
+                  borderRadius: 6, padding: '2px 6px',
+                } as any}>
+                  <span style={{ fontSize: isWide ? 13 : 12, fontWeight: 900, color: hosColor, lineHeight: 1 } as any}>{hos.toFixed(1)}</span>
+                  <span style={{ fontSize: 9, fontWeight: 600, color: hosColor, opacity: 0.8 } as any}>h drive</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 2 } as any}>
+                  <span style={{ fontSize: 11 } as any}>😊</span>
+                  <span style={{ fontSize: isWide ? 12 : 11, fontWeight: 800, color: mood >= 60 ? '#34d399' : mood >= 35 ? '#fbbf24' : '#f87171' } as any}>{mood}%</span>
+                </div>
+                {truck.currentLoad ? (
+                  <div style={{
+                    marginLeft: 'auto', flexShrink: 0,
+                    display: 'flex', alignItems: 'baseline', gap: 1,
+                    background: 'rgba(74,222,128,0.1)',
+                    border: '1px solid rgba(74,222,128,0.3)',
+                    borderRadius: 6, padding: '2px 7px',
+                  } as any}>
+                    <span style={{ fontSize: isWide ? 14 : 13, fontWeight: 900, color: '#4ade80', lineHeight: 1 } as any}>
+                      ${truck.currentLoad.agreedRate.toLocaleString()}
+                    </span>
+                  </div>
+                ) : (
+                  <div style={{
+                    marginLeft: 'auto', flexShrink: 0,
+                    background: 'rgba(148,163,184,0.08)',
+                    border: '1px solid rgba(148,163,184,0.15)',
+                    borderRadius: 6, padding: '2px 7px',
+                  } as any}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#475569' } as any}>Нет груза</span>
+                  </div>
+                )}
+              </div>
+
             </div>
           </div>
           </div>
@@ -1189,10 +1247,10 @@ export default function GameScreen() {
               </div>
 
               {/* Кнопки + тоггл */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
 
                 {/* Тоггл "показывать при старте" */}
-                <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' } as any}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer' } as any}>
                   <div
                     onClick={() => {
                       const next = !guideVisible;
@@ -1200,29 +1258,29 @@ export default function GameScreen() {
                       try { localStorage.setItem('dispatch-guide-show', next ? '1' : '0'); } catch {}
                     }}
                     style={{
-                      width: 32, height: 18, borderRadius: 9,
-                      background: guideVisible ? 'rgba(99,102,241,0.7)' : 'rgba(255,255,255,0.12)',
-                      border: `1px solid ${guideVisible ? 'rgba(99,102,241,0.9)' : 'rgba(255,255,255,0.2)'}`,
+                      width: 44, height: 26, borderRadius: 13,
+                      background: guideVisible ? 'rgba(99,102,241,0.8)' : 'rgba(255,255,255,0.15)',
+                      border: `2px solid ${guideVisible ? 'rgba(99,102,241,1)' : 'rgba(255,255,255,0.25)'}`,
                       position: 'relative', cursor: 'pointer',
                       transition: 'all 0.2s',
                     } as any}
                   >
                     <div style={{
-                      position: 'absolute', top: 2,
-                      left: guideVisible ? 15 : 2,
-                      width: 12, height: 12, borderRadius: 6,
+                      position: 'absolute', top: 3,
+                      left: guideVisible ? 20 : 3,
+                      width: 16, height: 16, borderRadius: 8,
                       background: '#fff',
                       transition: 'left 0.2s',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
                     } as any} />
                   </div>
-                  <span style={{ fontSize: 11, color: '#94a3b8', userSelect: 'none' } as any}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#cbd5e1', userSelect: 'none' } as any}>
                     авто
                   </span>
                 </label>
 
               {/* Buttons */}
-              <div style={{ display: 'flex', gap: 6 }}>
+              <div style={{ display: 'flex', gap: 8 }}>
                 {/* Refresh — шаг назад */}
                 <button
                   title="Вернуться на шаг назад"
@@ -1232,19 +1290,19 @@ export default function GameScreen() {
                     setGuideForceStep(next);
                   }}
                   style={{
-                    width: 30, height: 30, borderRadius: 8,
-                    background: 'rgba(99,102,241,0.15)',
-                    border: '1px solid rgba(99,102,241,0.4)',
-                    cursor: 'pointer', fontSize: 15, color: '#a5b4fc',
+                    width: 40, height: 40, borderRadius: 11,
+                    background: 'rgba(99,102,241,0.2)',
+                    border: '2px solid rgba(99,102,241,0.5)',
+                    cursor: 'pointer', fontSize: 20, color: '#a5b4fc',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     transition: 'all 0.15s',
                   } as any}
                   onMouseEnter={e => {
-                    (e.currentTarget as HTMLElement).style.background = 'rgba(99,102,241,0.3)';
+                    (e.currentTarget as HTMLElement).style.background = 'rgba(99,102,241,0.35)';
                     (e.currentTarget as HTMLElement).style.transform = 'rotate(-180deg)';
                   }}
                   onMouseLeave={e => {
-                    (e.currentTarget as HTMLElement).style.background = 'rgba(99,102,241,0.15)';
+                    (e.currentTarget as HTMLElement).style.background = 'rgba(99,102,241,0.2)';
                     (e.currentTarget as HTMLElement).style.transform = 'rotate(0deg)';
                   }}
                 >↺</button>
@@ -1253,21 +1311,21 @@ export default function GameScreen() {
                 <button
                   onClick={() => setShowGuidePopup(false)}
                   style={{
-                    width: 30, height: 30, borderRadius: 8,
-                    background: 'rgba(255,255,255,0.07)',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    cursor: 'pointer', fontSize: 14, color: '#94a3b8',
+                    width: 40, height: 40, borderRadius: 11,
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '2px solid rgba(255,255,255,0.15)',
+                    cursor: 'pointer', fontSize: 18, color: '#94a3b8',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontWeight: 700, transition: 'all 0.15s',
                   } as any}
                   onMouseEnter={e => {
-                    (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.15)';
-                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(239,68,68,0.4)';
+                    (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.2)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(239,68,68,0.5)';
                     (e.currentTarget as HTMLElement).style.color = '#f87171';
                   }}
                   onMouseLeave={e => {
-                    (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.07)';
-                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)';
+                    (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.08)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.15)';
                     (e.currentTarget as HTMLElement).style.color = '#94a3b8';
                   }}
                 >✕</button>
@@ -1399,7 +1457,7 @@ const s = StyleSheet.create({
   actionsRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
 
   // ── TRUCK STRIP ──
-  truckStrip: { maxHeight: 75, backgroundColor: BG2, borderBottomWidth: 1, borderBottomColor: BORDER },
+  truckStrip: { maxHeight: 120, backgroundColor: BG2, borderBottomWidth: 1, borderBottomColor: BORDER },
   truckStripContent: { paddingHorizontal: 8, paddingVertical: 6, gap: 6, flexDirection: 'row' },
   truckCard: {
     width: 100, borderRadius: 8,
