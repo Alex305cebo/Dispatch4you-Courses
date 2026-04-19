@@ -44,7 +44,7 @@ export default function HomeScreen() {
       const raw = localStorage.getItem('dispatcher-game-save');
       if (!raw) { setHasSave(false); return; }
       const save = JSON.parse(raw);
-      if (!save?.version || save.version < 3 || (save.trucks && save.trucks.length > 5)) {
+      if (!save?.version || save.version < 5 || (save.trucks && save.trucks.length > 1)) {
         localStorage.removeItem('dispatcher-game-save');
         setHasSave(false); return;
       }
@@ -61,7 +61,7 @@ export default function HomeScreen() {
         const raw = localStorage.getItem('dispatcher-game-save');
         if (raw) {
           const save = JSON.parse(raw);
-          if (save?.version >= 3 && save.phase === 'playing') {
+          if (save?.version >= 5 && save.phase === 'playing') {
             const loaded = loadGame();
             if (loaded) { router.push('/game'); return; }
           }

@@ -2625,7 +2625,7 @@ case 'detention': {
       }
       const state = get();
       const saveData = {
-        version: 4,
+        version: 5,
         phase: state.phase,
         day: state.day,
         gameMinute: state.gameMinute,
@@ -2669,16 +2669,16 @@ case 'detention': {
       const saveData = JSON.parse(saved);
 
       // Сбрасываем старые сохранения без версии или с устаревшей версией
-      if (!saveData.version || saveData.version < 4) {
+      if (!saveData.version || saveData.version < 5) {
         localStorage.removeItem('dispatcher-game-save');
         console.log('🔄 Old save detected, resetting...');
         return false;
       }
 
-      // Сбрасываем сохранения со старым количеством траков (> 5)
-      if (saveData.trucks && saveData.trucks.length > 5) {
+      // Сбрасываем сохранения со старым количеством траков (> 1 — теперь стартуем с 1)
+      if (saveData.trucks && saveData.trucks.length > 1) {
         localStorage.removeItem('dispatcher-game-save');
-        console.log('🔄 Old save with too many trucks, resetting...');
+        console.log('🔄 Old save with multiple trucks, resetting to 1 truck...');
         return false;
       }
 
