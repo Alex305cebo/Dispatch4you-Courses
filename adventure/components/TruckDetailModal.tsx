@@ -311,9 +311,9 @@ export default function TruckDetailModal({ truck: truckProp, onClose, onFindLoad
             <View style={s.section}>
               <Text style={s.sectionTitle}>⏰ HOS — Hours of Service</Text>
               <View style={s.hosRow}>
-                <HosBar label="Drive" value={truck.hoursLeft} max={11} color={needsRest ? '#ef4444' : '#06b6d4'} />
-                <HosBar label="Shift" value={Math.max(0, 14 - hoursWorked - 1)} max={14} color="#22c55e" />
-                <HosBar label="Cycle" value={52} max={70} color="#94a3b8" />
+                <HosBar label="Drive" value={truck.hoursLeft} max={11} color={needsRest ? '#ef4444' : '#06b6d4'} styles={s} />
+                <HosBar label="Shift" value={Math.max(0, 14 - hoursWorked - 1)} max={14} color="#22c55e" styles={s} />
+                <HosBar label="Cycle" value={52} max={70} color="#94a3b8" styles={s} />
               </View>
               {needsRest && (
                 <Text style={s.hosWarn}>⚠️ Требуется 10-часовой отдых перед следующей сменой</Text>
@@ -328,10 +328,10 @@ export default function TruckDetailModal({ truck: truckProp, onClose, onFindLoad
                   {cityState(truck.currentLoad.fromCity)} → {cityState(truck.currentLoad.toCity)}
                 </Text>
                 <View style={s.loadStats}>
-                  <LoadStat label="Ставка" value={`${truck.currentLoad.agreedRate.toLocaleString()}`} />
-                  <LoadStat label="$/миля" value={`${rpm}`} />
-                  <LoadStat label="Миль" value={String(truck.currentLoad.miles)} />
-                  <LoadStat label="Груз" value={truck.currentLoad.commodity} />
+                  <LoadStat label="Ставка" value={`${truck.currentLoad.agreedRate.toLocaleString()}`} styles={s} />
+                  <LoadStat label="$/миля" value={`${rpm}`} styles={s} />
+                  <LoadStat label="Миль" value={String(truck.currentLoad.miles)} styles={s} />
+                  <LoadStat label="Груз" value={truck.currentLoad.commodity} styles={s} />
                 </View>
               </View>
             )}
@@ -456,23 +456,23 @@ export default function TruckDetailModal({ truck: truckProp, onClose, onFindLoad
   );
 }
 
-function HosBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
+function HosBar({ label, value, max, color, styles }: { label: string; value: number; max: number; color: string; styles: any }) {
   return (
-    <View style={s.hosItem}>
-      <Text style={[s.hosVal, { color }]}>{value.toFixed(0)}h</Text>
-      <View style={s.hosBarTrack}>
-        <View style={[s.hosBarFill, { width: `${Math.min(1, value / max) * 100}%` as any, backgroundColor: color }]} />
+    <View style={styles.hosItem}>
+      <Text style={[styles.hosVal, { color }]}>{value.toFixed(0)}h</Text>
+      <View style={styles.hosBarTrack}>
+        <View style={[styles.hosBarFill, { width: `${Math.min(1, value / max) * 100}%` as any, backgroundColor: color }]} />
       </View>
-      <Text style={s.hosLabel}>{label}</Text>
+      <Text style={styles.hosLabel}>{label}</Text>
     </View>
   );
 }
 
-function LoadStat({ label, value }: { label: string; value: string }) {
+function LoadStat({ label, value, styles }: { label: string; value: string; styles: any }) {
   return (
-    <View style={s.loadStat}>
-      <Text style={s.loadStatVal}>{value}</Text>
-      <Text style={s.loadStatLabel}>{label}</Text>
+    <View style={styles.loadStat}>
+      <Text style={styles.loadStatVal}>{value}</Text>
+      <Text style={styles.loadStatLabel}>{label}</Text>
     </View>
   );
 }
