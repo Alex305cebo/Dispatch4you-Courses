@@ -112,14 +112,31 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
               cursor: 'pointer',
               display: 'flex',
               flexDirection: 'row',
-              overflow: 'hidden',
+              overflow: 'visible',
               fontFamily: 'sans-serif',
               boxShadow: isSelected
-                ? `0 0 16px ${color}55`
-                : isDark ? '0 2px 12px rgba(0,0,0,0.5)' : '0 2px 8px rgba(0,0,0,0.1)',
-              transition: 'border 0.2s, box-shadow 0.2s',
+                ? `0 8px 24px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2), 0 0 16px ${color}44`
+                : isDark
+                  ? '0 8px 24px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3)'
+                  : '0 8px 20px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.1)',
+              transform: 'translateY(-2px)',
+              transition: 'border 0.2s, box-shadow 0.2s, transform 0.2s',
             } as any}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLElement).style.transform = 'translateY(-5px)';
+              (e.currentTarget as HTMLElement).style.boxShadow = isDark
+                ? `0 14px 32px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.4), 0 0 20px ${color}55`
+                : `0 14px 28px rgba(0,0,0,0.22), 0 4px 10px rgba(0,0,0,0.12)`;
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+              (e.currentTarget as HTMLElement).style.boxShadow = isDark
+                ? '0 8px 24px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3)'
+                : '0 8px 20px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.1)';
+            }}
           >
+            {/* Внутренний контейнер с overflow:hidden чтобы не обрезать тень снаружи */}
+            <div style={{ display:'flex', flexDirection:'row', width:'100%', borderRadius:14, overflow:'hidden' } as any}>
             {/* ЛЕВЫЙ БЛОК — аватар */}
             <div style={{
               width: 80, flexShrink: 0,
@@ -134,7 +151,7 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                 style={{ position: 'absolute', top: 4, right: 4 } as any} />
               {/* Аватар */}
               <img src={getDriverAvatar(truck.id)} width={52} height={52}
-                style={{ display: 'block', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.6))' } as any} />
+                style={{ display: 'block' } as any} />
               {/* Статус */}
               <div style={{
                 fontSize: 9, fontWeight: 700, color,
@@ -205,6 +222,7 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                 )}
               </div>
             </div>
+            </div>{/* конец внутреннего overflow:hidden */}
           </div>
         );
       })}
