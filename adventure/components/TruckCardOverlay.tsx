@@ -114,25 +114,15 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
               flexDirection: 'row',
               overflow: 'visible',
               fontFamily: 'sans-serif',
-              boxShadow: isSelected
-                ? `0 8px 24px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2), 0 0 16px ${color}44`
-                : isDark
-                  ? '0 8px 24px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3)'
-                  : '0 8px 20px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.1)',
-              transform: 'translateY(-2px)',
-              transition: 'border 0.2s, box-shadow 0.2s, transform 0.2s',
+              boxShadow: 'none',
+              transform: 'translateY(-3px)',
+              transition: 'border 0.2s, transform 0.15s',
             } as any}
             onMouseEnter={e => {
-              (e.currentTarget as HTMLElement).style.transform = 'translateY(-5px)';
-              (e.currentTarget as HTMLElement).style.boxShadow = isDark
-                ? `0 14px 32px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.4), 0 0 20px ${color}55`
-                : `0 14px 28px rgba(0,0,0,0.22), 0 4px 10px rgba(0,0,0,0.12)`;
+              (e.currentTarget as HTMLElement).style.transform = 'translateY(-6px)';
             }}
             onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
-              (e.currentTarget as HTMLElement).style.boxShadow = isDark
-                ? '0 8px 24px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3)'
-                : '0 8px 20px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.1)';
+              (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)';
             }}
           >
             {/* Внутренний контейнер с overflow:hidden чтобы не обрезать тень снаружи */}
