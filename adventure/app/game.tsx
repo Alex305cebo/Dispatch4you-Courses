@@ -1159,7 +1159,7 @@ export default function GameScreen() {
   // ── BOTTOM TABS (mobile) ──────────────────────────────────────────────────
   const BottomTabs = () => {
     const tabDefs = [
-      { id: 'map',       icon: '🗺',  label: 'Карта',  onPress: handleMapTabPress },
+      { id: 'map',       icon: '🌎',  label: 'Карта',  onPress: handleMapTabPress },
       { id: 'loadboard', icon: '📦',  label: 'Грузы',  badge: tabs.find(t=>t.id==='loadboard')?.badge },
       { id: 'chat',      icon: '💬',  label: 'Связь',  badge: tabs.find(t=>t.id==='chat')?.badge },
       { id: 'trucks',    icon: '🚛',  label: 'Траки',  badge: tabs.find(t=>t.id==='trucks')?.badge },
@@ -1190,23 +1190,36 @@ export default function GameScreen() {
                 paddingVertical: 13,
                 borderRadius: 16,
                 backgroundColor: isOn
-                  ? (themeMode === 'dark' ? 'rgba(6,182,212,0.08)' : T.navActiveBtn)
-                  : T.navInactiveBtn,
-                borderWidth: isOn ? (themeMode === 'dark' ? 1.5 : 0) : 1,
+                  ? (themeMode === 'dark' ? 'rgba(6,182,212,0.1)' : T.navActiveBtn)
+                  : (themeMode === 'dark' ? 'rgba(255,255,255,0.08)' : T.navInactiveBtn),
+                borderWidth: 1.5,
                 borderColor: isOn
                   ? (themeMode === 'dark' ? '#38bdf8' : 'transparent')
-                  : T.navBorder,
+                  : (themeMode === 'dark' ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.1)'),
                 position: 'relative',
-                // тёмная тема — свечение у активной
                 ...(isOn && themeMode === 'dark' ? {
                   shadowColor: '#38bdf8',
-                  shadowOpacity: 0.4,
-                  shadowRadius: 8,
+                  shadowOpacity: 0.5,
+                  shadowRadius: 10,
                   shadowOffset: { width: 0, height: 0 },
                 } : {}),
               } as any}
             >
-              <Text style={{ fontSize: 20, lineHeight: 24 } as any}>{tab.icon}</Text>
+              <div style={{
+                filter: isOn
+                  ? (themeMode === 'dark'
+                    ? 'drop-shadow(3px 6px 10px rgba(255,255,255,0.25)) drop-shadow(0 0 12px rgba(56,189,248,0.7))'
+                    : 'drop-shadow(3px 6px 8px rgba(0,0,0,0.4)) drop-shadow(1px 2px 3px rgba(0,0,0,0.25))')
+                  : (themeMode === 'dark'
+                    ? 'drop-shadow(3px 5px 8px rgba(255,255,255,0.2)) drop-shadow(2px 4px 6px rgba(200,220,255,0.15))'
+                    : 'drop-shadow(3px 5px 6px rgba(0,0,0,0.3)) drop-shadow(1px 2px 3px rgba(0,0,0,0.18))'),
+                transform: isOn ? 'translateY(-3px)' : 'translateY(-1px)',
+                transition: 'transform 0.2s ease, filter 0.2s ease',
+                lineHeight: 0,
+                display: 'inline-block',
+              } as any}>
+                <Text style={{ fontSize: 24, lineHeight: 28 } as any}>{tab.icon}</Text>
+              </div>
               {isOn && (
                 <Text style={{
                   fontSize: 15, fontWeight: '900',
@@ -1217,16 +1230,14 @@ export default function GameScreen() {
               )}
               {tab.badge !== undefined && tab.badge > 0 && (
                 <View style={{
-                  position: 'absolute', top: 6, right: 6,
-                  backgroundColor: themeMode === 'dark'
-                    ? '#38bdf8'
-                    : (isOn ? 'rgba(255,255,255,0.9)' : '#ef4444'),
+                  position: 'absolute', top: 5, right: 5,
+                  backgroundColor: themeMode === 'dark' ? '#38bdf8' : (isOn ? T.primary : '#ef4444'),
                   borderRadius: 9, paddingHorizontal: 5, paddingVertical: 1,
                   minWidth: 18, alignItems: 'center',
                 } as any}>
                   <Text style={{
                     fontSize: 10, fontWeight: '800',
-                    color: themeMode === 'dark' ? '#0f172a' : (isOn ? T.primary : '#fff'),
+                    color: themeMode === 'dark' ? '#0f172a' : '#fff',
                   } as any}>
                     {tab.badge}
                   </Text>
