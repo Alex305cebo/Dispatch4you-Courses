@@ -1099,8 +1099,9 @@ export default function GameScreen() {
       <View style={{
         flexDirection: 'row', gap: 6,
         paddingHorizontal: 8, paddingVertical: 8,
-        backgroundColor: T.navBg,
-        borderTopWidth: 1, borderTopColor: T.navBorder,
+        backgroundColor: themeMode === 'dark' ? '#0d1117' : T.navBg,
+        borderTopWidth: 1,
+        borderTopColor: themeMode === 'dark' ? 'rgba(56,189,248,0.15)' : T.navBorder,
         // @ts-ignore
         paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
       } as any}>
@@ -1118,16 +1119,28 @@ export default function GameScreen() {
                 gap: isOn ? 6 : 0,
                 paddingVertical: 13,
                 borderRadius: 16,
-                backgroundColor: isOn ? T.navActiveBtn : T.navInactiveBtn,
-                borderWidth: isOn ? 0 : 1,
-                borderColor: T.navBorder,
+                backgroundColor: isOn
+                  ? (themeMode === 'dark' ? 'rgba(6,182,212,0.08)' : T.navActiveBtn)
+                  : T.navInactiveBtn,
+                borderWidth: isOn ? (themeMode === 'dark' ? 1.5 : 0) : 1,
+                borderColor: isOn
+                  ? (themeMode === 'dark' ? '#38bdf8' : 'transparent')
+                  : T.navBorder,
                 position: 'relative',
+                // тёмная тема — свечение у активной
+                ...(isOn && themeMode === 'dark' ? {
+                  shadowColor: '#38bdf8',
+                  shadowOpacity: 0.4,
+                  shadowRadius: 8,
+                  shadowOffset: { width: 0, height: 0 },
+                } : {}),
               } as any}
             >
               <Text style={{ fontSize: 20, lineHeight: 24 } as any}>{tab.icon}</Text>
               {isOn && (
                 <Text style={{
-                  fontSize: 15, fontWeight: '900', color: T.navActiveTxt,
+                  fontSize: 15, fontWeight: '900',
+                  color: themeMode === 'dark' ? '#ffffff' : T.navActiveTxt,
                   fontFamily: "'Nunito', -apple-system, sans-serif",
                   letterSpacing: 0.2,
                 } as any}>{tab.label}</Text>
@@ -1135,13 +1148,16 @@ export default function GameScreen() {
               {tab.badge !== undefined && tab.badge > 0 && (
                 <View style={{
                   position: 'absolute', top: 6, right: 6,
-                  backgroundColor: isOn
-                    ? (themeMode === 'dark' ? '#0f172a' : 'rgba(255,255,255,0.9)')
-                    : '#ef4444',
+                  backgroundColor: themeMode === 'dark'
+                    ? '#38bdf8'
+                    : (isOn ? 'rgba(255,255,255,0.9)' : '#ef4444'),
                   borderRadius: 9, paddingHorizontal: 5, paddingVertical: 1,
                   minWidth: 18, alignItems: 'center',
                 } as any}>
-                  <Text style={{ fontSize: 10, fontWeight: '800', color: isOn && themeMode === 'light' ? T.primary : '#fff' } as any}>
+                  <Text style={{
+                    fontSize: 10, fontWeight: '800',
+                    color: themeMode === 'dark' ? '#0f172a' : (isOn ? T.primary : '#fff'),
+                  } as any}>
                     {tab.badge}
                   </Text>
                 </View>

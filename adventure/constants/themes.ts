@@ -141,9 +141,9 @@ export const darkTheme: ThemeColors = {
 
   navBg: '#111118',
   navBorder: 'rgba(255,255,255,0.07)',
-  navActiveBtn: '#ffffff',
-  navActiveTxt: '#0f172a',
-  navInactiveBtn: 'rgba(255,255,255,0.07)',
+  navActiveBtn: 'transparent',
+  navActiveTxt: '#ffffff',
+  navInactiveBtn: 'rgba(255,255,255,0.04)',
 
   panelBg: '#111118',
   panelBorder: 'rgba(255,255,255,0.07)',

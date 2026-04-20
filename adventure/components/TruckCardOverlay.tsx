@@ -1,6 +1,7 @@
 // Карточки траков поверх карты — без фона, только карточки
 import React, { memo } from 'react';
 import { useGameStore } from '../store/gameStore';
+import { useThemeStore } from '../store/themeStore';
 import { CITY_STATE } from '../constants/config';
 import { getDriverAvatar } from '../utils/driverAvatars';
 
@@ -59,6 +60,8 @@ interface Props {
 
 const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selectedTruckId }: Props) {
   const trucks = useGameStore(s => s.trucks);
+  const { mode: themeMode } = useThemeStore();
+  const isDark = themeMode === 'dark';
 
   return (
     <div className="truck-card-scroll" style={{
@@ -103,7 +106,7 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
               width: 300,
               borderRadius: 16,
               border: `2px solid ${isSelected ? color : color + '66'}`,
-              background: 'rgba(255,255,255,0.94)',
+              background: isDark ? 'rgba(15,20,35,0.92)' : 'rgba(255,255,255,0.94)',
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
               cursor: 'pointer',
@@ -111,7 +114,9 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
               flexDirection: 'row',
               overflow: 'hidden',
               fontFamily: 'sans-serif',
-              boxShadow: isSelected ? `0 0 16px ${color}44` : '0 2px 8px rgba(0,0,0,0.1)',
+              boxShadow: isSelected
+                ? `0 0 16px ${color}55`
+                : isDark ? '0 2px 12px rgba(0,0,0,0.5)' : '0 2px 8px rgba(0,0,0,0.1)',
               transition: 'border 0.2s, box-shadow 0.2s',
             } as any}
           >
@@ -145,12 +150,12 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
             } as any}>
               {/* Имя + номера */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' } as any}>
-                <span style={{ fontSize: 13, fontWeight: 900, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 100 } as any}>
+                <span style={{ fontSize: 13, fontWeight: 900, color: isDark ? '#ffffff' : '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 100 } as any}>
                   {driverName}
                 </span>
                 <div style={{ display: 'flex', gap: 3, flexShrink: 0 } as any}>
-                  <span style={{ fontSize: 9, fontWeight: 700, color: '#007aff', border: '1px solid rgba(0,122,255,0.3)', borderRadius: 4, padding: '1px 4px' } as any}>TRK {truckNum}</span>
-                  <span style={{ fontSize: 9, fontWeight: 700, color: '#6b7280', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 4, padding: '1px 4px' } as any}>TRL {trailerNum}</span>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#38bdf8' : '#007aff', border: `1px solid ${isDark ? 'rgba(56,189,248,0.3)' : 'rgba(0,122,255,0.3)'}`, borderRadius: 4, padding: '1px 4px' } as any}>TRK {truckNum}</span>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#94a3b8' : '#6b7280', border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`, borderRadius: 4, padding: '1px 4px' } as any}>TRL {trailerNum}</span>
                 </div>
               </div>
 
@@ -158,13 +163,13 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
               <div style={{ display: 'flex', alignItems: 'center', gap: 3 } as any}>
                 <span style={{ fontSize: 10 } as any}>📍</span>
                 {truck.destinationCity ? (
-                  <span style={{ fontSize: 10, fontWeight: 700, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: isDark ? '#e2e8f0' : '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
                     {fromLabel}
-                    <span style={{ color: '#9ca3af', margin: '0 3px' } as any}>→</span>
-                    <span style={{ color: '#007aff' } as any}>{toLabel}</span>
+                    <span style={{ color: isDark ? '#475569' : '#9ca3af', margin: '0 3px' } as any}>→</span>
+                    <span style={{ color: isDark ? '#38bdf8' : '#007aff' } as any}>{toLabel}</span>
                   </span>
                 ) : (
-                  <span style={{ fontSize: 10, fontWeight: 700, color: '#6b7280' } as any}>{fromLabel}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: isDark ? '#94a3b8' : '#6b7280' } as any}>{fromLabel}</span>
                 )}
               </div>
 
@@ -172,10 +177,10 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
               {isMoving && (
                 <div style={{ marginTop: 1 } as any}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 } as any}>
-                    <span style={{ fontSize: 9, color: '#6b7280', fontWeight: 600 } as any}>Прогресс рейса</span>
+                    <span style={{ fontSize: 9, color: isDark ? '#64748b' : '#6b7280', fontWeight: 600 } as any}>Прогресс рейса</span>
                     <span style={{ fontSize: 9, fontWeight: 800, color } as any}>{progressPct}%</span>
                   </div>
-                  <div style={{ height: 4, background: '#e5e7eb', borderRadius: 2, overflow: 'hidden' } as any}>
+                  <div style={{ height: 4, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 2, overflow: 'hidden' } as any}>
                     <div style={{ height: '100%', width: `${progressPct}%`, background: `linear-gradient(90deg,${color}88,${color})`, borderRadius: 2, transition: 'width 0.8s ease' } as any} />
                   </div>
                 </div>
@@ -188,14 +193,14 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                   <span style={{ fontSize: 9, color: hosColor, opacity: 0.8 } as any}>h drive</span>
                 </div>
                 <span style={{ fontSize: 10 } as any}>😊</span>
-                <span style={{ fontSize: 11, fontWeight: 800, color: mood >= 60 ? '#34d399' : mood >= 35 ? '#fbbf24' : '#f87171' } as any}>{mood}%</span>
+                <span style={{ fontSize: 11, fontWeight: 800, color: mood >= 60 ? (isDark ? '#34d399' : '#16a34a') : mood >= 35 ? '#fbbf24' : '#f87171' } as any}>{mood}%</span>
                 {truck.currentLoad ? (
-                  <div style={{ marginLeft: 'auto', border: '1px solid rgba(52,199,89,0.35)', borderRadius: 6, padding: '1px 7px' } as any}>
-                    <span style={{ fontSize: 13, fontWeight: 900, color: '#16a34a' } as any}>${truck.currentLoad.agreedRate.toLocaleString()}</span>
+                  <div style={{ marginLeft: 'auto', border: `1px solid ${isDark ? 'rgba(74,222,128,0.35)' : 'rgba(52,199,89,0.35)'}`, borderRadius: 6, padding: '1px 7px' } as any}>
+                    <span style={{ fontSize: 13, fontWeight: 900, color: isDark ? '#4ade80' : '#16a34a' } as any}>${truck.currentLoad.agreedRate.toLocaleString()}</span>
                   </div>
                 ) : (
-                  <div style={{ marginLeft: 'auto', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 6, padding: '1px 7px' } as any}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af' } as any}>Нет груза</span>
+                  <div style={{ marginLeft: 'auto', border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`, borderRadius: 6, padding: '1px 7px' } as any}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: isDark ? '#475569' : '#9ca3af' } as any}>Нет груза</span>
                   </div>
                 )}
               </div>
@@ -207,17 +212,17 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
       {/* Купить трак */}
       <div style={{
         flexShrink: 0, width: 72, borderRadius: 12,
-        border: '2px dashed rgba(0,122,255,0.25)',
-        background: 'rgba(0,122,255,0.04)',
+        border: `2px dashed ${isDark ? 'rgba(56,189,248,0.25)' : 'rgba(0,122,255,0.25)'}`,
+        background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,122,255,0.04)',
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
         gap: 4, padding: '8px 4px', cursor: 'pointer',
       } as any}
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,122,255,0.1)'; }}
-        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,122,255,0.04)'; }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(6,182,212,0.08)' : 'rgba(0,122,255,0.1)'; }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,122,255,0.04)'; }}
       >
-        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(0,122,255,0.1)', border: '1.5px solid rgba(0,122,255,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#007aff' } as any}>+</div>
-        <span style={{ fontSize: 9, fontWeight: 700, color: '#007aff', textAlign: 'center', lineHeight: 1.3 } as any}>Купить{'\n'}трак</span>
+        <div style={{ width: 28, height: 28, borderRadius: '50%', background: isDark ? 'rgba(56,189,248,0.12)' : 'rgba(0,122,255,0.1)', border: `1.5px solid ${isDark ? 'rgba(56,189,248,0.35)' : 'rgba(0,122,255,0.35)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: isDark ? '#38bdf8' : '#007aff' } as any}>+</div>
+        <span style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#38bdf8' : '#007aff', textAlign: 'center', lineHeight: 1.3 } as any}>Купить{'\n'}трак</span>
       </div>
     </div>
   );

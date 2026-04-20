@@ -1,12 +1,19 @@
-﻿import { View, Text, StyleSheet, TouchableOpacity, FlatList, useWindowDimensions } from 'react-native';
+﻿import { View, Text, StyleSheet, TouchableOpacity, FlatList, useWindowDimensions, useMemo } from 'react-native';
 import { useState } from 'react';
-import { Colors } from '../constants/colors';
+import { useTheme } from '../hooks/useTheme';
+import { useThemeStore } from '../store/themeStore';
+import { ThemeColors } from '../constants/themes';
 import { useGameStore, ActiveLoad } from '../store/gameStore';
 import { cityState } from '../constants/config';
 import AssignModal from './AssignModal';
 import CancelLoadModal from './CancelLoadModal';
 
 export default function MyLoadsPanel() {
+  const T = useTheme();
+  const { mode: themeMode } = useThemeStore();
+  const isDark = themeMode === 'dark';
+  const styles = (useMemo as any)(() => makeStyles(T, isDark), [T, isDark]);
+
   const { bookedLoads, activeLoads, trucks } = useGameStore();
   const [assignLoad, setAssignLoad] = useState<ActiveLoad | null>(null);
   const [cancelLoad, setCancelLoad] = useState<ActiveLoad | null>(null);
@@ -41,16 +48,10 @@ export default function MyLoadsPanel() {
               <Text style={[styles.loadDetails, isMobile && { fontSize: 11 }]}>{load.commodity} · {load.miles} mi · {load.equipment}</Text>
               <Text style={[styles.loadBroker, isMobile && { fontSize: 10 }]}>Брокер: {load.brokerName}</Text>
               <View style={styles.actionRow}>
-                <TouchableOpacity
-                  style={[styles.assignBtn, { flex: 1 }]}
-                  onPress={() => setAssignLoad(load)}
-                >
+                <TouchableOpacity style={[styles.assignBtn, { flex: 1 }]} onPress={() => setAssignLoad(load)}>
                   <Text style={[styles.assignBtnText, isMobile && { fontSize: 12 }]}>🚛 Назначить водителя</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.cancelBtnSmall}
-                  onPress={() => setCancelLoad(load)}
-                >
+                <TouchableOpacity style={styles.cancelBtnSmall} onPress={() => setCancelLoad(load)}>
                   <Text style={styles.cancelBtnSmallText}>🚫</Text>
                 </TouchableOpacity>
               </View>
@@ -63,7 +64,7 @@ export default function MyLoadsPanel() {
       {assigned.length > 0 && (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View style={[styles.sectionDot, { backgroundColor: Colors.success }]} />
+            <View style={[styles.sectionDot, { backgroundColor: T.success }]} />
             <Text style={[styles.sectionTitle, isMobile && { fontSize: 11 }]}>🚛 В работе</Text>
           </View>
           {assigned.map(load => {
@@ -95,10 +96,7 @@ export default function MyLoadsPanel() {
                   </View>
                 )}
                 {load.phase !== 'done' && (
-                  <TouchableOpacity
-                    style={styles.cancelLoadBtn}
-                    onPress={() => setCancelLoad(load)}
-                  >
+                  <TouchableOpacity style={styles.cancelLoadBtn} onPress={() => setCancelLoad(load)}>
                     <Text style={styles.cancelLoadBtnText}>🚫 Отменить груз</Text>
                   </TouchableOpacity>
                 )}
@@ -116,87 +114,82 @@ export default function MyLoadsPanel() {
         </View>
       )}
 
-      {assignLoad && (
-        <AssignModal load={assignLoad} onClose={() => setAssignLoad(null)} />
-      )}
-
-      {cancelLoad && (
-        <CancelLoadModal load={cancelLoad} onClose={() => setCancelLoad(null)} />
-      )}
+      {assignLoad && <AssignModal load={assignLoad} onClose={() => setAssignLoad(null)} />}
+      {cancelLoad && <CancelLoadModal load={cancelLoad} onClose={() => setCancelLoad(null)} />}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg },
-  header: {
-    padding: 14, borderBottomWidth: 1, borderBottomColor: Colors.border,
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-  },
-  headerTitle: { fontSize: 16, fontWeight: '900', color: '#fff' },
-  headerSub: { fontSize: 11, color: Colors.textDim },
+function makeStyles(T: ThemeColors, isDark: boolean) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: T.bg },
+    header: {
+      padding: 14, borderBottomWidth: 1, borderBottomColor: T.border,
+      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    },
+    headerTitle: { fontSize: 16, fontWeight: '900', color: T.text },
+    headerSub: { fontSize: 11, color: T.textDim },
 
-  section: { padding: 10, gap: 8 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  sectionDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.warning },
-  sectionTitle: { fontSize: 12, fontWeight: '800', color: Colors.textMuted, textTransform: 'uppercase', letterSpacing: 1 },
+    section: { padding: 10, gap: 8 },
+    sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
+    sectionDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: T.warning },
+    sectionTitle: { fontSize: 12, fontWeight: '800', color: T.textMuted, textTransform: 'uppercase', letterSpacing: 1 },
 
-  loadCard: {
-    backgroundColor: '#0d1526', borderRadius: 14,
-    borderWidth: 1, borderColor: '#1e2d45', padding: 14, gap: 6,
-  },
-  loadCardPending: { borderColor: 'rgba(249,115,22,0.4)', backgroundColor: 'rgba(249,115,22,0.04)' },
-  loadCardActive: { borderColor: 'rgba(34,197,94,0.3)', backgroundColor: 'rgba(34,197,94,0.03)' },
+    loadCard: {
+      backgroundColor: isDark ? '#0d1526' : T.bgCard,
+      borderRadius: 14,
+      borderWidth: 1, borderColor: isDark ? '#1e2d45' : T.border,
+      padding: 14, gap: 6,
+    },
+    loadCardPending: {
+      borderColor: 'rgba(249,115,22,0.4)',
+      backgroundColor: isDark ? 'rgba(249,115,22,0.06)' : 'rgba(249,115,22,0.04)',
+    },
+    loadCardActive: {
+      borderColor: isDark ? 'rgba(34,197,94,0.3)' : 'rgba(52,199,89,0.2)',
+      backgroundColor: isDark ? 'rgba(34,197,94,0.04)' : 'rgba(52,199,89,0.03)',
+    },
 
-  loadTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  loadRoute: { fontSize: 15, fontWeight: '900', color: '#fff' },
-  loadRate: { fontSize: 16, fontWeight: '900', color: Colors.success },
-  loadDetails: { fontSize: 12, color: Colors.textMuted },
-  loadBroker: { fontSize: 11, color: Colors.textDim },
+    loadTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    loadRoute: { fontSize: 15, fontWeight: '900', color: T.text },
+    loadRate: { fontSize: 16, fontWeight: '900', color: T.success },
+    loadDetails: { fontSize: 12, color: T.textMuted },
+    loadBroker: { fontSize: 11, color: T.textDim },
 
-  loadStatus: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  loadStatusText: { fontSize: 12, fontWeight: '700', color: Colors.textSecondary },
-  loadTruck: { fontSize: 11, color: Colors.primary },
+    loadStatus: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    loadStatusText: { fontSize: 12, fontWeight: '700', color: T.textSecondary },
+    loadTruck: { fontSize: 11, color: T.primary },
 
-  progressWrap: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  progressTrack: { flex: 1, height: 4, backgroundColor: Colors.bgCardHover, borderRadius: 2, overflow: 'hidden' },
-  progressFill: { height: '100%', backgroundColor: Colors.success, borderRadius: 2 },
-  progressText: { fontSize: 10, color: Colors.textDim, width: 30 },
+    progressWrap: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    progressTrack: { flex: 1, height: 4, backgroundColor: T.bgCardHover, borderRadius: 2, overflow: 'hidden' },
+    progressFill: { height: '100%', backgroundColor: T.success, borderRadius: 2 },
+    progressText: { fontSize: 10, color: T.textDim, width: 30 },
 
-  actionRow: { flexDirection: 'row', gap: 8, marginTop: 4 },
+    actionRow: { flexDirection: 'row', gap: 8, marginTop: 4 },
+    assignBtn: {
+      backgroundColor: T.primary, borderRadius: 10,
+      paddingVertical: 10, alignItems: 'center', marginTop: 4,
+    },
+    assignBtnText: { fontSize: 13, fontWeight: '800', color: '#fff' },
 
-  assignBtn: {
-    backgroundColor: Colors.primary, borderRadius: 10,
-    paddingVertical: 10, alignItems: 'center', marginTop: 4,
-  },
-  assignBtnText: { fontSize: 13, fontWeight: '800', color: '#fff' },
+    cancelBtnSmall: {
+      backgroundColor: 'rgba(239,68,68,0.15)',
+      borderWidth: 1, borderColor: 'rgba(239,68,68,0.3)',
+      borderRadius: 10, paddingVertical: 10, paddingHorizontal: 14,
+      alignItems: 'center', justifyContent: 'center', marginTop: 4,
+    },
+    cancelBtnSmallText: { fontSize: 16 },
 
-  cancelBtnSmall: {
-    backgroundColor: 'rgba(239,68,68,0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(239,68,68,0.3)',
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 4,
-  },
-  cancelBtnSmallText: { fontSize: 16 },
+    cancelLoadBtn: {
+      backgroundColor: isDark ? 'rgba(239,68,68,0.12)' : 'rgba(239,68,68,0.08)',
+      borderWidth: 1, borderColor: 'rgba(239,68,68,0.3)',
+      borderRadius: 8, paddingVertical: 8, alignItems: 'center', marginTop: 8,
+    },
+    cancelLoadBtnText: { fontSize: 12, fontWeight: '700', color: '#ef4444' },
 
-  cancelLoadBtn: {
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(239,68,68,0.25)',
-    borderRadius: 8,
-    paddingVertical: 8,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  cancelLoadBtnText: { fontSize: 12, fontWeight: '700', color: '#ef4444' },
-
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40, gap: 8 },
-  emptyIcon: { fontSize: 40 },
-  emptyTitle: { fontSize: 16, fontWeight: '800', color: '#fff' },
-  emptySub: { fontSize: 12, color: Colors.textDim, textAlign: 'center', lineHeight: 18 },
-});
+    empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40, gap: 8 },
+    emptyIcon: { fontSize: 40 },
+    emptyTitle: { fontSize: 16, fontWeight: '800', color: T.text },
+    emptySub: { fontSize: 12, color: T.textDim, textAlign: 'center', lineHeight: 18 },
+  });
+}

@@ -1525,14 +1525,15 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
 
       {/* Легенда */}
       <div style={{
-        background: "rgba(255,255,255,0.95)", borderRadius: 12,
-        border: "1px solid rgba(0,0,0,0.08)",
+        background: themeMode === 'dark' ? 'rgba(10,15,30,0.92)' : 'rgba(255,255,255,0.95)',
+        borderRadius: 12,
+        border: themeMode === 'dark' ? '1px solid rgba(56,189,248,0.2)' : '1px solid rgba(0,0,0,0.08)',
         padding: legendVisible ? "clamp(6px,1.2vw,10px) clamp(8px,1.5vw,14px)" : "5px 10px",
         display: "flex", flexDirection: "column", gap: "clamp(3px,0.5vw,5px)",
         transition: "padding 0.2s, opacity 0.6s ease",
         opacity: legendVisible ? 1 : 0.9,
         maxWidth: "clamp(130px,18vw,180px)",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+        boxShadow: themeMode === 'dark' ? '0 4px 20px rgba(0,0,0,0.5)' : '0 2px 8px rgba(0,0,0,0.1)',
       } as any} className="map-legend">
         {/* Toggle кнопка */}
         <div
@@ -1540,20 +1541,20 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
           style={{
             display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
             cursor: "pointer", userSelect: "none",
-            background: legendVisible
-              ? "transparent"
-              : "linear-gradient(135deg, rgba(6,182,212,0.25), rgba(99,102,241,0.2))",
+            background: "transparent",
             borderRadius: legendVisible ? 0 : 6,
             padding: legendVisible ? "0" : "3px 5px",
             margin: legendVisible ? "0" : "-2px",
-            border: legendVisible ? "none" : "1px solid rgba(6,182,212,0.4)",
+            border: legendVisible ? "none" : `1px solid ${themeMode === 'dark' ? 'rgba(6,182,212,0.4)' : 'rgba(0,122,255,0.3)'}`,
             transition: "all 0.2s",
           } as any}
         >
           <span style={{
             fontSize: "clamp(10px,1.4vw,13px)",
             fontWeight: 800,
-            background: "linear-gradient(90deg, #06b6d4, #818cf8)",
+            background: themeMode === 'dark'
+              ? "linear-gradient(90deg, #06b6d4, #818cf8)"
+              : "linear-gradient(90deg, #007aff, #6366f1)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             letterSpacing: 0.5,
@@ -1562,12 +1563,13 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
           </span>
           <span style={{
             fontSize: legendVisible ? "clamp(9px,1.2vw,11px)" : "clamp(11px,1.5vw,14px)",
-            background: "linear-gradient(135deg, #06b6d4, #818cf8)",
+            background: themeMode === 'dark'
+              ? "linear-gradient(135deg, #06b6d4, #818cf8)"
+              : "linear-gradient(135deg, #007aff, #6366f1)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             fontWeight: 900,
             lineHeight: 1,
-            filter: legendVisible ? "none" : "drop-shadow(0 0 4px rgba(6,182,212,0.8))",
           } as any}>{legendVisible ? "▲" : "▼"}</span>
         </div>
         {legendVisible && (<>
@@ -1576,25 +1578,25 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
           return (
             <div key={s} style={{ display: "flex", alignItems: "center", gap: 6 } as any}>
               <div style={{ width: "clamp(7px,1vw,9px)", height: "clamp(7px,1vw,9px)", borderRadius: "50%", background: STATUS_COLOR[s], flexShrink: 0 } as any} />
-              <span style={{ fontSize: "clamp(11px,1.3vw,13px)", color: "#374151" } as any}>{STATUS_EMOJI[s]} {l}</span>
+              <span style={{ fontSize: "clamp(11px,1.3vw,13px)", color: themeMode === 'dark' ? "#94a3b8" : "#374151" } as any}>{STATUS_EMOJI[s]} {l}</span>
               {n > 0 && <span style={{ fontSize: "clamp(11px,1.3vw,13px)", fontWeight: 800, color: STATUS_COLOR[s], marginLeft: "auto", paddingLeft: 6 } as any}>{n}</span>}
             </div>
           );
         })}
         {/* Статистика */}
         {phase === 'playing' && (
-          <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)", marginTop: 4, paddingTop: 6, display: "flex", flexDirection: "column", gap: 3 } as any}>
-            <div style={{ fontSize: "clamp(11px,1.3vw,13px)", color: "#007aff" } as any}>
+          <div style={{ borderTop: `1px solid ${themeMode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`, marginTop: 4, paddingTop: 6, display: "flex", flexDirection: "column", gap: 3 } as any}>
+            <div style={{ fontSize: "clamp(11px,1.3vw,13px)", color: themeMode === 'dark' ? "#38bdf8" : "#007aff" } as any}>
               🛣 В пути: <span style={{ fontWeight: 700 } as any}>{totalMilesInFlight.toLocaleString()} mi</span>
             </div>
-            <div style={{ fontSize: "clamp(11px,1.3vw,13px)", color: "#16a34a" } as any}>
+            <div style={{ fontSize: "clamp(11px,1.3vw,13px)", color: themeMode === 'dark' ? "#4ade80" : "#16a34a" } as any}>
               💰 Ожидается: <span style={{ fontWeight: 700 } as any}>${expectedRevenue.toLocaleString()}</span>
             </div>
           </div>
         )}
         {/* Surge legend */}
         {surgeStates.length > 0 && (
-          <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)", marginTop: 4, paddingTop: 6 } as any}>
+          <div style={{ borderTop: `1px solid ${themeMode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`, marginTop: 4, paddingTop: 6 } as any}>
             <div style={{ fontSize: "clamp(10px,1.2vw,12px)", color: "#ff6b35", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } as any}>
               🔥 Surge: {surgeStates.join(", ")}
             </div>
@@ -1934,101 +1936,114 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         </div>
       )}
 
-      {/* Попап штата */}
+      {/* Попап штата — компактный центрированный */}
       {selectedState && (
         <>
-          {/* Backdrop */}
-          <div
-            onClick={() => setSelectedState(null)}
-            style={{ position:"absolute", inset:0, zIndex:999, background:"rgba(0,0,0,0.4)" } as any}
+          <div onClick={() => setSelectedState(null)}
+            style={{ position:"absolute", inset:0, zIndex:999, background:"rgba(0,0,0,0.35)" } as any}
           />
-          {/* Bottom sheet */}
-          <div className="map-state-popup" style={{
-            position:"absolute", bottom:0, left:0, right:0,
-            background:"#ffffff",
-            borderRadius:"16px 16px 0 0",
-            borderTop:`2px solid ${selectedState.isSurge ? "rgba(255,107,53,0.5)" : "rgba(0,122,255,0.3)"}`,
+          <div style={{
+            position:"absolute", top:"50%", left:"50%",
+            transform:"translate(-50%,-50%)",
+            width:"min(260px,82vw)",
+            background: themeMode === 'dark' ? "#0d1117" : "#ffffff",
+            borderRadius:14,
+            border:`1.5px solid ${selectedState.isSurge ? "rgba(249,115,22,0.5)" : themeMode === 'dark' ? "rgba(56,189,248,0.2)" : "rgba(0,122,255,0.18)"}`,
             zIndex:1000, fontFamily:"sans-serif",
-            maxHeight:"52vh", display:"flex", flexDirection:"column",
-            animation:"stateSheetIn 0.25s cubic-bezier(0.32,0.72,0,1)",
-            boxShadow:"0 -4px 24px rgba(0,0,0,0.12)",
+            boxShadow: themeMode === 'dark' ? "0 8px 40px rgba(0,0,0,0.7)" : "0 6px 28px rgba(0,0,0,0.14)",
+            animation:"statePopupIn 0.18s ease",
+            overflow:"hidden",
           } as any}>
-            {/* Handle */}
-            <div style={{ display:"flex", justifyContent:"center", padding:"10px 0 4px" } as any}>
-              <div style={{ width:36, height:4, borderRadius:2, background:"rgba(0,0,0,0.12)" } as any}/>
-            </div>
+
             {/* Header */}
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 16px 10px" } as any}>
-              <div style={{ display:"flex", alignItems:"center", gap:8 } as any}>
-                <span style={{ fontSize:17, fontWeight:900, color: selectedState.isSurge ? "#ea580c" : "#007aff" } as any}>
+            <div style={{
+              display:"flex", alignItems:"center", justifyContent:"space-between",
+              padding:"10px 12px 8px",
+              borderBottom:`1px solid ${themeMode === 'dark' ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
+            } as any}>
+              <div style={{ display:"flex", alignItems:"center", gap:5 } as any}>
+                <span style={{ fontSize:14, fontWeight:900, color: selectedState.isSurge ? "#f97316" : themeMode === 'dark' ? "#38bdf8" : "#007aff" } as any}>
                   {STATE_NAMES[selectedState.id] || selectedState.id}
                 </span>
-                <span style={{ fontSize:11, color:"#9ca3af", fontWeight:600 } as any}>{selectedState.id}</span>
-                {selectedState.isSurge && (
-                  <span style={{ fontSize:10, fontWeight:800, color:"#ea580c", background:"rgba(234,88,12,0.1)", padding:"2px 6px", borderRadius:4 } as any}>🔥 SURGE</span>
-                )}
+                <span style={{ fontSize:9, color: themeMode === 'dark' ? "#475569" : "#9ca3af", background: themeMode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', padding:"1px 4px", borderRadius:3 } as any}>{selectedState.id}</span>
+                {selectedState.isSurge && <span style={{ fontSize:9, fontWeight:800, color:"#f97316", background:"rgba(249,115,22,0.12)", padding:"1px 4px", borderRadius:3 } as any}>🔥 SURGE</span>}
               </div>
-              <span onClick={() => setSelectedState(null)} style={{ cursor:"pointer", fontSize:18, color:"#9ca3af", padding:"4px 8px" } as any}>✕</span>
+              <span onClick={() => setSelectedState(null)} style={{ cursor:"pointer", fontSize:14, color: themeMode === 'dark' ? "#475569" : "#9ca3af", lineHeight:1, padding:"2px 4px" } as any}>✕</span>
             </div>
-            {/* Content */}
-            <div style={{ overflowY:"auto", padding:"0 12px 16px", flex:1 } as any}>
+
+            {/* Body */}
+            <div style={{ padding:"8px 12px 10px", maxHeight:"45vh", overflowY:"auto" } as any}>
+
+              {/* Траки */}
               {selectedState.trucks.length > 0 && (
-                <div style={{ marginBottom:10 } as any}>
-                  <div style={{ fontSize:10, fontWeight:700, color:"#9ca3af", textTransform:"uppercase", letterSpacing:0.8, marginBottom:6 } as any}>
-                    🚛 ТРАКИ · {selectedState.trucks.length}
+                <div style={{ marginBottom:7 } as any}>
+                  <div style={{ fontSize:9, fontWeight:700, color: themeMode === 'dark' ? "#475569" : "#9ca3af", textTransform:"uppercase", letterSpacing:0.7, marginBottom:4 } as any}>
+                    🚛 {selectedState.trucks.length} трак{selectedState.trucks.length > 1 ? 'а' : ''}
                   </div>
                   {selectedState.trucks.map((t: any) => {
                     const color = getTruckColor(t, gameMinuteRef.current);
                     return (
                       <div key={t.id} onClick={() => { onTruckInfo?.(t.id); setSelectedState(null); }}
-                        style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 10px", marginBottom:4, borderRadius:10, background:"#f9fafb", border:`1px solid ${color}33`, cursor:"pointer" } as any}>
-                        <div style={{ minWidth:0 } as any}>
-                          <div style={{ fontSize:13, fontWeight:800, color:"#111827", marginBottom:2 } as any}>{t.name}</div>
-                          <div style={{ fontSize:11, color:"#6b7280" } as any}>
+                        style={{
+                          display:"flex", alignItems:"center", justifyContent:"space-between",
+                          padding:"5px 7px", marginBottom:3, borderRadius:7,
+                          background: themeMode === 'dark' ? 'rgba(255,255,255,0.04)' : '#f9fafb',
+                          border:`1px solid ${color}28`, cursor:"pointer",
+                        } as any}>
+                        <div>
+                          <div style={{ fontSize:11, fontWeight:800, color: themeMode === 'dark' ? '#fff' : '#111827' } as any}>{t.name}</div>
+                          <div style={{ fontSize:9, color: themeMode === 'dark' ? '#64748b' : '#6b7280' } as any}>
                             {t.driver} · {t.hoursLeft}h
-                            {t.currentLoad ? <span style={{ color:"#16a34a" } as any}> · ${t.currentLoad.agreedRate?.toLocaleString()}</span> : null}
+                            {t.currentLoad ? <span style={{ color: themeMode === 'dark' ? '#4ade80' : '#16a34a' } as any}> · ${t.currentLoad.agreedRate?.toLocaleString()}</span> : null}
                           </div>
                         </div>
-                        <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, flexShrink:0, marginLeft:10 } as any}>
-                          <span style={{ fontSize:10, fontWeight:700, color, background:`${color}18`, padding:"2px 7px", borderRadius:4 } as any}>
-                            {STATUS_LABEL[t.status] || t.status}
-                          </span>
-                          {t.status === "idle" && (
-                            <span onClick={(e) => { e.stopPropagation(); onFindLoad?.(t.currentCity); setSelectedState(null); }}
-                              style={{ fontSize:10, fontWeight:700, color:"#007aff", cursor:"pointer" } as any}>+ груз</span>
-                          )}
-                        </div>
+                        <span style={{ fontSize:9, fontWeight:700, color, background:`${color}18`, padding:"1px 5px", borderRadius:3, flexShrink:0, marginLeft:6 } as any}>
+                          {STATUS_LABEL[t.status] || t.status}
+                        </span>
                       </div>
                     );
                   })}
                 </div>
               )}
+
+              {/* Грузы */}
               {selectedState.loads.length > 0 && (
                 <div>
-                  <div style={{ fontSize:10, fontWeight:700, color:"#9ca3af", textTransform:"uppercase", letterSpacing:0.8, marginBottom:6 } as any}>
-                    📋 ГРУЗЫ · {selectedState.loads.length}{selectedState.isSurge ? " 🔥+15%" : ""}
+                  <div style={{ fontSize:9, fontWeight:700, color: themeMode === 'dark' ? "#475569" : "#9ca3af", textTransform:"uppercase", letterSpacing:0.7, marginBottom:4 } as any}>
+                    📋 {selectedState.loads.length} груз{selectedState.loads.length > 1 ? 'а' : ''}{selectedState.isSurge ? " 🔥" : ""}
                   </div>
                   {selectedState.loads.slice(0, 3).map((l: any) => (
                     <div key={l.id} onClick={() => { onFindLoad?.(l.fromCity); setSelectedState(null); }}
-                      style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 10px", marginBottom:4, borderRadius:10, background:"#f9fafb", border:"1px solid rgba(0,0,0,0.06)", cursor:"pointer" } as any}>
+                      style={{
+                        display:"flex", alignItems:"center", justifyContent:"space-between",
+                        padding:"5px 7px", marginBottom:3, borderRadius:7,
+                        background: themeMode === 'dark' ? 'rgba(255,255,255,0.04)' : '#f9fafb',
+                        border:`1px solid ${themeMode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
+                        cursor:"pointer",
+                      } as any}>
                       <div style={{ minWidth:0, flex:1 } as any}>
-                        <div style={{ fontSize:12, fontWeight:700, color:"#111827", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" } as any}>
+                        <div style={{ fontSize:10, fontWeight:700, color: themeMode === 'dark' ? '#e2e8f0' : '#111827', overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" } as any}>
                           {l.fromCity} → {l.toCity}
                         </div>
-                        <div style={{ fontSize:10, color:"#9ca3af", marginTop:2 } as any}>{l.miles}mi · {l.equipment}</div>
+                        <div style={{ fontSize:9, color: themeMode === 'dark' ? '#475569' : '#9ca3af' } as any}>{l.miles}mi · {l.equipment}</div>
                       </div>
-                      <span style={{ fontSize:14, fontWeight:900, color: selectedState.isSurge ? "#ea580c" : "#16a34a", flexShrink:0, marginLeft:12 } as any}>
+                      <span style={{ fontSize:12, fontWeight:900, color: selectedState.isSurge ? "#f97316" : themeMode === 'dark' ? '#4ade80' : '#16a34a', flexShrink:0, marginLeft:8 } as any}>
                         ${l.postedRate?.toLocaleString()}
                       </span>
                     </div>
                   ))}
                   {selectedState.loads.length > 3 && (
-                    <div style={{ fontSize:11, color:"#9ca3af", textAlign:"center", paddingTop:2 } as any}>+{selectedState.loads.length - 3} ещё</div>
+                    <div style={{ fontSize:9, color: themeMode === 'dark' ? '#475569' : '#9ca3af', textAlign:"center", paddingTop:2 } as any}>
+                      +{selectedState.loads.length - 3} ещё
+                    </div>
                   )}
                 </div>
               )}
+
               {selectedState.trucks.length === 0 && selectedState.loads.length === 0 && (
-                <div style={{ fontSize:13, color:"#9ca3af", textAlign:"center", padding:"16px 0" } as any}>Нет траков и грузов</div>
+                <div style={{ fontSize:11, color: themeMode === 'dark' ? '#475569' : '#9ca3af', textAlign:"center", padding:"10px 0" } as any}>
+                  Нет траков и грузов
+                </div>
               )}
             </div>
           </div>
@@ -2043,6 +2058,10 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         @keyframes stateSheetIn {
           from { transform: translateY(100%); }
           to   { transform: translateY(0); }
+        }
+        @keyframes statePopupIn {
+          from { opacity: 0; transform: translate(-50%,-46%) scale(0.95); }
+          to   { opacity: 1; transform: translate(-50%,-50%) scale(1); }
         }
         @keyframes statePopupFadeIn {
           from { opacity: 0; transform: translateX(-50%) translateY(12px); }
