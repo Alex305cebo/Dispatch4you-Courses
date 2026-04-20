@@ -134,7 +134,7 @@ export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}
       <View style={styles.shopBanner}>
         <View style={styles.shopBannerLeft}>
           <Text style={styles.shopBannerIcon}>🏪</Text>
-          <View>
+          <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={styles.shopBannerTitle}>Расширь флот!</Text>
             <Text style={styles.shopBannerSub}>Купи ещё траки в магазине и зарабатывай больше</Text>
           </View>
@@ -236,9 +236,12 @@ function makeStyles(T: ThemeColors) {
     alignItems: 'center',
     gap: 12,
     flex: 1,
+    marginRight: 10,
+    minWidth: 0,
   },
   shopBannerIcon: {
     fontSize: 32,
+    flexShrink: 0,
   },
   shopBannerTitle: {
     fontSize: 15,
@@ -251,6 +254,7 @@ function makeStyles(T: ThemeColors) {
     color: T.textMuted,
     fontWeight: '500',
     lineHeight: 16,
+    flexShrink: 1,
   },
   shopBannerBadge: {
     backgroundColor: 'rgba(255,149,0,0.15)',
@@ -259,6 +263,7 @@ function makeStyles(T: ThemeColors) {
     paddingVertical: 5,
     borderWidth: 1,
     borderColor: 'rgba(255,149,0,0.35)',
+    flexShrink: 0,
   },
   shopBannerBadgeText: {
     fontSize: 12,

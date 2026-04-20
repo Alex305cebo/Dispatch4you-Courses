@@ -168,7 +168,7 @@ const s = StyleSheet.create({
   landscapeBody: { flex: 1, flexDirection: 'row', backgroundColor: 'transparent' },
   landscapeMap: { flex: 1, position: 'relative', backgroundColor: 'transparent' },
   landscapePanel: { width: 320, flexDirection: 'column', backgroundColor: BG2, borderLeftWidth: 1, borderLeftColor: BORDER },
-  mobilePanelOverlay: { position: 'absolute', top: '13%' as any, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(242,242,247,0.96)', borderTopLeftRadius: 20, borderTopRightRadius: 20, overflow: 'hidden', zIndex: 10 },
+  mobilePanelOverlay: { position: 'absolute', top: 128, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(242,242,247,0.96)', borderTopLeftRadius: 20, borderTopRightRadius: 20, overflow: 'hidden', zIndex: 10 },
   mobileTopBar: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100 },
   truckStripBar: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: 'transparent', zIndex: 20 },
   bottomTabs: { flexDirection: 'row', paddingHorizontal: 4, paddingVertical: 5, backgroundColor: BG2, borderTopWidth: 1, borderTopColor: BORDER },
