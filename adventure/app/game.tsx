@@ -532,14 +532,18 @@ export default function GameScreen() {
                   <button key={sp}
                     onClick={() => setTimeSpeed(sp)}
                     style={{
-                      padding: '2px 9px',
+                      padding: '2px 9px', height: 26,
                       background: timeSpeed === sp
-                        ? 'rgba(0,122,255,0.12)'
-                        : '#f3f4f6',
-                      border: timeSpeed === sp ? '1px solid rgba(0,122,255,0.4)' : '1px solid rgba(0,0,0,0.08)',
+                        ? (themeMode === 'dark' ? 'rgba(56,189,248,0.2)' : 'rgba(0,122,255,0.12)')
+                        : (themeMode === 'dark' ? 'rgba(255,255,255,0.07)' : '#f3f4f6'),
+                      border: timeSpeed === sp
+                        ? (themeMode === 'dark' ? '1px solid rgba(56,189,248,0.5)' : '1px solid rgba(0,122,255,0.4)')
+                        : (themeMode === 'dark' ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.08)'),
                       borderRadius: 6, cursor: 'pointer',
                       fontSize: 10, fontWeight: 800,
-                      color: timeSpeed === sp ? '#007aff' : '#6b7280',
+                      color: timeSpeed === sp
+                        ? (themeMode === 'dark' ? '#38bdf8' : '#007aff')
+                        : (themeMode === 'dark' ? '#94a3b8' : '#6b7280'),
                       transition: 'all 0.15s',
                     } as any}>
                     {sp === 1 ? '×1' : sp === 2 ? '×2' : '×5'}
@@ -548,10 +552,15 @@ export default function GameScreen() {
                 <button
                   onClick={() => setPaused(p => !p)}
                   style={{
-                    width: 30, height: 22, borderRadius: 6, cursor: 'pointer',
-                    background: paused ? 'rgba(52,199,89,0.12)' : '#f3f4f6',
-                    border: paused ? '1px solid rgba(52,199,89,0.4)' : '1px solid rgba(0,0,0,0.08)',
-                    fontSize: 11, color: paused ? '#16a34a' : '#6b7280',
+                    width: 30, height: 26, borderRadius: 6, cursor: 'pointer',
+                    background: paused
+                      ? (themeMode === 'dark' ? 'rgba(52,199,89,0.2)' : 'rgba(52,199,89,0.12)')
+                      : (themeMode === 'dark' ? 'rgba(255,255,255,0.07)' : '#f3f4f6'),
+                    border: paused
+                      ? '1px solid rgba(52,199,89,0.5)'
+                      : (themeMode === 'dark' ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.08)'),
+                    fontSize: 11,
+                    color: paused ? '#34c759' : (themeMode === 'dark' ? '#94a3b8' : '#6b7280'),
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   } as any}>
                   {paused ? '▶' : '⏸'}
@@ -564,9 +573,10 @@ export default function GameScreen() {
                   onClick={() => setTimeSpeed(timeSpeed === 1 ? 2 : timeSpeed === 2 ? 5 : timeSpeed === 5 ? 10 : 1)}
                   style={{
                     padding: '3px 10px', borderRadius: 8, cursor: 'pointer',
-                    background: 'rgba(0,122,255,0.1)',
-                    border: '1px solid rgba(0,122,255,0.3)',
-                    fontSize: 11, fontWeight: 900, color: '#007aff',
+                    background: themeMode === 'dark' ? 'rgba(56,189,248,0.15)' : 'rgba(0,122,255,0.1)',
+                    border: themeMode === 'dark' ? '1px solid rgba(56,189,248,0.4)' : '1px solid rgba(0,122,255,0.3)',
+                    fontSize: 11, fontWeight: 900,
+                    color: themeMode === 'dark' ? '#38bdf8' : '#007aff',
                   } as any}>
                   ×{timeSpeed}
                 </button>
@@ -574,9 +584,14 @@ export default function GameScreen() {
                   onClick={() => setPaused(p => !p)}
                   style={{
                     width: 30, height: 26, borderRadius: 8, cursor: 'pointer',
-                    background: paused ? 'rgba(52,199,89,0.12)' : '#f3f4f6',
-                    border: paused ? '1px solid rgba(52,199,89,0.4)' : '1px solid rgba(0,0,0,0.08)',
-                    fontSize: 13, color: paused ? '#16a34a' : '#6b7280',
+                    background: paused
+                      ? (themeMode === 'dark' ? 'rgba(52,199,89,0.2)' : 'rgba(52,199,89,0.12)')
+                      : (themeMode === 'dark' ? 'rgba(255,255,255,0.07)' : '#f3f4f6'),
+                    border: paused
+                      ? '1px solid rgba(52,199,89,0.5)'
+                      : (themeMode === 'dark' ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.08)'),
+                    fontSize: 13,
+                    color: paused ? '#34c759' : (themeMode === 'dark' ? '#94a3b8' : '#6b7280'),
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   } as any}>
                   {paused ? '▶' : '⏸'}
@@ -592,13 +607,15 @@ export default function GameScreen() {
           <button onClick={() => setShowStats(true)} style={{
             padding: isWide ? '4px 8px' : '3px 6px',
             background: balance >= 0
-              ? 'linear-gradient(135deg, rgba(52,211,153,0.12), rgba(16,185,129,0.06))'
-              : 'linear-gradient(135deg, rgba(248,113,113,0.12), rgba(239,68,68,0.06))',
-            border: `1px solid ${balance >= 0 ? 'rgba(52,211,153,0.25)' : 'rgba(248,113,113,0.25)'}`,
+              ? (themeMode === 'dark' ? 'rgba(52,199,89,0.15)' : 'rgba(52,211,153,0.12)')
+              : (themeMode === 'dark' ? 'rgba(255,59,48,0.15)' : 'rgba(248,113,113,0.12)'),
+            border: `1px solid ${balance >= 0
+              ? (themeMode === 'dark' ? 'rgba(52,199,89,0.35)' : 'rgba(52,211,153,0.25)')
+              : (themeMode === 'dark' ? 'rgba(255,59,48,0.35)' : 'rgba(248,113,113,0.25)')}`,
             borderRadius: 8, cursor: 'pointer', textAlign: 'left',
           } as any}>
-            {isWide && <div style={{ fontSize: 8, color: '#6b7280', fontWeight: 600, marginBottom: 1 } as any}>БАЛАНС</div>}
-            <div style={{ fontSize: isWide ? 16 : 13, fontWeight: 900, color: balance >= 0 ? '#16a34a' : '#dc2626' } as any}>
+            {isWide && <div style={{ fontSize: 8, color: themeMode === 'dark' ? '#64748b' : '#6b7280', fontWeight: 600, marginBottom: 1 } as any}>БАЛАНС</div>}
+            <div style={{ fontSize: isWide ? 16 : 13, fontWeight: 900, color: balance >= 0 ? (themeMode === 'dark' ? '#34c759' : '#16a34a') : (themeMode === 'dark' ? '#ff453a' : '#dc2626') } as any}>
               ${balance >= 1000 ? `${(balance/1000).toFixed(1)}k` : balance.toLocaleString()}
             </div>
           </button>
@@ -607,12 +624,12 @@ export default function GameScreen() {
           {totalEarned > 0 && (
             <button onClick={() => setShowStats(true)} style={{
               padding: isWide ? '4px 8px' : '3px 6px',
-              background: 'linear-gradient(135deg, rgba(251,191,36,0.12), rgba(245,158,11,0.06))',
-              border: '1px solid rgba(251,191,36,0.25)',
+              background: themeMode === 'dark' ? 'rgba(251,191,36,0.15)' : 'rgba(251,191,36,0.12)',
+              border: `1px solid ${themeMode === 'dark' ? 'rgba(251,191,36,0.35)' : 'rgba(251,191,36,0.25)'}`,
               borderRadius: 8, cursor: 'pointer', textAlign: 'left',
             } as any}>
-              {isWide && <div style={{ fontSize: 8, color: '#6b7280', fontWeight: 600, marginBottom: 1 } as any}>ЗАРАБОТАНО</div>}
-              <div style={{ fontSize: isWide ? 16 : 13, fontWeight: 900, color: '#b45309' } as any}>
+              {isWide && <div style={{ fontSize: 8, color: themeMode === 'dark' ? '#64748b' : '#6b7280', fontWeight: 600, marginBottom: 1 } as any}>ЗАРАБОТАНО</div>}
+              <div style={{ fontSize: isWide ? 16 : 13, fontWeight: 900, color: themeMode === 'dark' ? '#fbbf24' : '#b45309' } as any}>
                 💰 ${totalEarned >= 1000 ? `${(totalEarned/1000).toFixed(1)}k` : totalEarned.toLocaleString()}
               </div>
             </button>
@@ -658,8 +675,8 @@ export default function GameScreen() {
             style={{
               width: isWide ? 38 : 32, height: isWide ? 38 : 32,
               borderRadius: isWide ? 10 : 8,
-              background: themeMode === 'dark' ? 'rgba(255,214,10,0.12)' : 'rgba(0,0,0,0.06)',
-              border: themeMode === 'dark' ? '1.5px solid rgba(255,214,10,0.4)' : '1.5px solid rgba(0,0,0,0.1)',
+              background: themeMode === 'dark' ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
+              border: themeMode === 'dark' ? '1.5px solid rgba(255,255,255,0.15)' : '1.5px solid rgba(0,0,0,0.1)',
               cursor: 'pointer', display: 'flex',
               alignItems: 'center', justifyContent: 'center', padding: 0,
               fontSize: isWide ? 18 : 16,
