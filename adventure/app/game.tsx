@@ -115,8 +115,10 @@ function getTruckColor(truck: any, gameMinute = 0): string {
 
 export default function GameScreen() {
   const router = useRouter();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isWide = width >= 900;
+  // Landscape на мобильном: телефон повёрнут горизонтально (ширина > высоты, но не десктоп)
+  const isLandscape = !isWide && width > height;
 
   const {
     phase, gameMinute, balance, reputation,
@@ -367,7 +369,7 @@ export default function GameScreen() {
 
   const tabs: { id: Tab; label: string; badge?: number; onPress?: () => void }[] = [
     { id: 'loadboard', label: 'Грузы',  badge: availableLoads.length },
-    { id: 'chat',      label: '💬 Чат', badge: unreadChat || undefined },
+    { id: 'chat',      label: '💬 Связь', badge: unreadChat || undefined },
     { id: 'trucks',    label: 'Траки',  badge: idleTrucks > 0 ? idleTrucks : undefined },
   ];
 
@@ -380,7 +382,7 @@ export default function GameScreen() {
     return (
       <div style={{
         display: 'flex', alignItems: 'center', gap: isWide ? 12 : 6,
-        height: isWide ? 56 : 48, paddingLeft: isWide ? 16 : 10, paddingRight: isWide ? 12 : 8,
+        height: isWide ? 56 : isLandscape ? 38 : 48, paddingLeft: isWide ? 16 : 10, paddingRight: isWide ? 12 : 8,
         paddingTop: 'env(safe-area-inset-top)',
         background: 'linear-gradient(180deg, rgba(15,25,50,0.98) 0%, rgba(10,18,38,0.98) 100%)',
         borderBottom: '1px solid rgba(56,189,248,0.12)',
@@ -457,29 +459,44 @@ export default function GameScreen() {
           {/* Кнопки скорости */}
           <div style={{ display: 'flex', gap: 3 } as any}>
             {isWide ? (
-              // Десктоп — все 3 кнопки
-              ([1, 2, 5] as const).map(sp => (
-                <button key={sp}
-                  onClick={() => setTimeSpeed(sp)}
+              // Десктоп — кнопки скорости + пауза
+              <>
+                {([1, 2, 5] as const).map(sp => (
+                  <button key={sp}
+                    onClick={() => setTimeSpeed(sp)}
+                    style={{
+                      padding: '2px 9px',
+                      background: timeSpeed === sp
+                        ? 'linear-gradient(135deg, rgba(56,189,248,0.25), rgba(14,165,233,0.15))'
+                        : 'rgba(255,255,255,0.04)',
+                      border: timeSpeed === sp ? '1px solid rgba(56,189,248,0.5)' : '1px solid rgba(255,255,255,0.08)',
+                      borderRadius: 6, cursor: 'pointer',
+                      fontSize: 10, fontWeight: 800,
+                      color: timeSpeed === sp ? '#38bdf8' : '#475569',
+                      transition: 'all 0.15s',
+                    } as any}>
+                    {sp === 1 ? '×1' : sp === 2 ? '×2' : '×5'}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setPaused(p => !p)}
                   style={{
-                    padding: '2px 9px',
-                    background: timeSpeed === sp
-                      ? 'linear-gradient(135deg, rgba(56,189,248,0.25), rgba(14,165,233,0.15))'
-                      : 'rgba(255,255,255,0.04)',
-                    border: timeSpeed === sp ? '1px solid rgba(56,189,248,0.5)' : '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: 6, cursor: 'pointer',
-                    fontSize: 10, fontWeight: 800,
-                    color: timeSpeed === sp ? '#38bdf8' : '#475569',
-                    transition: 'all 0.15s',
+                    width: 30, height: 22, borderRadius: 6, cursor: 'pointer',
+                    background: paused
+                      ? 'linear-gradient(135deg, rgba(74,222,128,0.2), rgba(34,197,94,0.1))'
+                      : 'rgba(255,255,255,0.06)',
+                    border: paused ? '1px solid rgba(74,222,128,0.5)' : '1px solid rgba(255,255,255,0.15)',
+                    fontSize: 11, color: paused ? '#4ade80' : '#94a3b8',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                   } as any}>
-                  {sp === 1 ? '×1' : sp === 2 ? '×2' : '×5'}
+                  {paused ? '▶' : '⏸'}
                 </button>
-              ))
+              </>
             ) : (
-              // Мобильный — кнопка скорости + кнопка пауза/старт
+              // Мобильный — кнопка скорости + пауза
               <>
                 <button
-                  onClick={() => setTimeSpeed(timeSpeed === 1 ? 2 : timeSpeed === 2 ? 5 : 1)}
+                  onClick={() => setTimeSpeed(timeSpeed === 1 ? 2 : timeSpeed === 2 ? 5 : timeSpeed === 5 ? 10 : 1)}
                   style={{
                     padding: '3px 10px', borderRadius: 8, cursor: 'pointer',
                     background: 'linear-gradient(135deg, rgba(56,189,248,0.2), rgba(14,165,233,0.1))',
@@ -492,19 +509,12 @@ export default function GameScreen() {
                   onClick={() => setPaused(p => !p)}
                   style={{
                     width: 30, height: 26, borderRadius: 8, cursor: 'pointer',
-                    background: paused && pausedSeconds >= 10
-                      ? 'linear-gradient(135deg, rgba(239,68,68,0.35), rgba(220,38,38,0.2))'
-                      : paused
+                    background: paused
                       ? 'linear-gradient(135deg, rgba(74,222,128,0.2), rgba(34,197,94,0.1))'
                       : 'rgba(255,255,255,0.06)',
-                    border: paused && pausedSeconds >= 10
-                      ? '1px solid rgba(239,68,68,0.8)'
-                      : paused ? '1px solid rgba(74,222,128,0.5)' : '1px solid rgba(255,255,255,0.15)',
-                    fontSize: 13,
-                    color: paused && pausedSeconds >= 10 ? '#f87171' : paused ? '#4ade80' : '#94a3b8',
+                    border: paused ? '1px solid rgba(74,222,128,0.5)' : '1px solid rgba(255,255,255,0.15)',
+                    fontSize: 13, color: paused ? '#4ade80' : '#94a3b8',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    animation: paused && pausedSeconds >= 10 ? 'pauseUrgent 0.8s ease-in-out infinite' : 'none',
-                    boxShadow: paused && pausedSeconds >= 10 ? '0 0 12px rgba(239,68,68,0.7), 0 0 24px rgba(239,68,68,0.4)' : 'none',
                   } as any}>
                   {paused ? '▶' : '⏸'}
                 </button>
@@ -525,7 +535,7 @@ export default function GameScreen() {
             borderRadius: 8, cursor: 'pointer', textAlign: 'left',
           } as any}>
             {isWide && <div style={{ fontSize: 8, color: '#64748b', fontWeight: 600, marginBottom: 1 } as any}>БАЛАНС</div>}
-            <div style={{ fontSize: isWide ? 12 : 11, fontWeight: 900, color: balance >= 0 ? '#34d399' : '#f87171' } as any}>
+            <div style={{ fontSize: isWide ? 16 : 13, fontWeight: 900, color: balance >= 0 ? '#34d399' : '#f87171' } as any}>
               ${balance >= 1000 ? `${(balance/1000).toFixed(1)}k` : balance.toLocaleString()}
             </div>
           </button>
@@ -539,7 +549,7 @@ export default function GameScreen() {
               borderRadius: 8, cursor: 'pointer', textAlign: 'left',
             } as any}>
               {isWide && <div style={{ fontSize: 8, color: '#64748b', fontWeight: 600, marginBottom: 1 } as any}>ЗАРАБОТАНО</div>}
-              <div style={{ fontSize: isWide ? 12 : 11, fontWeight: 900, color: '#fbbf24' } as any}>
+              <div style={{ fontSize: isWide ? 16 : 13, fontWeight: 900, color: '#fbbf24' } as any}>
                 💰 ${totalEarned >= 1000 ? `${(totalEarned/1000).toFixed(1)}k` : totalEarned.toLocaleString()}
               </div>
             </button>
@@ -564,34 +574,6 @@ export default function GameScreen() {
 
         {/* Действия */}
         <div style={{ display: 'flex', alignItems: 'center', gap: isWide ? 5 : 3, flexShrink: 0 } as any}>
-          {/* Колокольчик */}
-          {/* Кнопка чата с персонажами */}
-          <button onClick={() => switchTab('chat')} style={{
-            position: 'relative', width: isWide ? 38 : 32, height: isWide ? 38 : 32,
-            borderRadius: isWide ? 19 : 16,
-            background: 'linear-gradient(135deg, rgba(88,204,2,0.25), rgba(70,163,2,0.15))',
-            border: '2px solid rgba(88,204,2,0.5)',
-            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: isWide ? 18 : 15,
-            boxShadow: '0 0 10px rgba(88,204,2,0.3)',
-          } as any}>
-            💬
-            {(() => {
-              const { useUnifiedChatStore } = require('../store/unifiedChatStore');
-              const chatUnread = useUnifiedChatStore.getState().getUnreadCount();
-              const total = chatUnread + unreadChat;
-              return total > 0 ? (
-                <span style={{
-                  position: 'absolute', top: -4, right: -4,
-                  background: '#ef4444', color: '#fff',
-                  fontSize: 10, fontWeight: 700, borderRadius: 10,
-                  minWidth: 18, height: 18,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  padding: '0 4px', border: '2px solid #0a0e1a',
-                } as any}>{total > 99 ? '99+' : total}</span>
-              ) : null;
-            })()}
-          </button>
           {/* Гамбургер */}
           <button onClick={() => setShowMenu(true)} style={{
             width: isWide ? 38 : 32, height: isWide ? 38 : 32,
@@ -1216,22 +1198,56 @@ export default function GameScreen() {
           </View>
         </View>
 
-      ) : (
-        /* ══ MOBILE ══ */
-        <View style={s.mobile}>
+      ) : isLandscape ? (
+        /* ══ LANDSCAPE MOBILE ══ */
+        <View style={s.mobileLandscape}>
+          {/* Топбар на всю ширину сверху */}
           <TopBar />
-          <View style={s.mobileContent}>
-            {activeTab === 'map'       && <ErrorBoundary name="Map"><MapView {...mapProps} /></ErrorBoundary>}
-            {activeTab === 'loadboard' && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} onAssigned={handleAssigned} /></ErrorBoundary>}
-            {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
-            {activeTab === 'chat'      && <ErrorBoundary name="Chat"><UnifiedChatUI nickname={sessionName || 'player'} /></ErrorBoundary>}
-            {/* Карточки траков — поверх карты, сверху */}
-            {activeTab === 'map' && (
+          {/* Основной контент: карта слева + панель справа */}
+          <View style={s.landscapeBody}>
+            {/* Левая часть: карта */}
+            <View style={s.landscapeMap}>
+              <ErrorBoundary name="Map"><MapView {...mapProps} /></ErrorBoundary>
+              {/* Карточки траков поверх карты */}
               <View style={s.truckStripBar} pointerEvents="box-none">
                 <TruckCardOverlay
                   onTruckClick={handleTruckClick}
                   selectedTruckId={selectedTruckId}
                 />
+              </View>
+            </View>
+            {/* Правая часть: табы + панель */}
+            <View style={s.landscapePanel}>
+              <SideTabs />
+              <View style={s.panelContent}>
+                {(activeTab === 'loadboard' || activeTab === 'map') && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} onAssigned={handleAssigned} /></ErrorBoundary>}
+                {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
+                {activeTab === 'chat'      && <ErrorBoundary name="Chat"><UnifiedChatUI nickname={sessionName || 'player'} /></ErrorBoundary>}
+              </View>
+            </View>
+          </View>
+        </View>
+
+      ) : (
+        /* ══ MOBILE PORTRAIT ══ */
+        <View style={s.mobile}>
+          <TopBar />
+          <View style={s.mobileContent}>
+            {/* Карта — всегда на весь экран */}
+            <ErrorBoundary name="Map"><MapView {...mapProps} /></ErrorBoundary>
+            {/* Карточки траков — поверх всего, сверху */}
+            <View style={s.truckStripBar} pointerEvents="box-none">
+              <TruckCardOverlay
+                onTruckClick={handleTruckClick}
+                selectedTruckId={selectedTruckId}
+              />
+            </View>
+            {/* Панели — поверх карты, с отступом 13% сверху */}
+            {activeTab !== 'map' && (
+              <View style={s.mobilePanelOverlay}>
+                {activeTab === 'loadboard' && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} onAssigned={handleAssigned} /></ErrorBoundary>}
+                {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
+                {activeTab === 'chat'      && <ErrorBoundary name="Chat"><UnifiedChatUI nickname={sessionName || 'player'} /></ErrorBoundary>}
               </View>
             )}
           </View>
@@ -1409,7 +1425,7 @@ const s = StyleSheet.create({
 
   sideTabs: {
     flexDirection: 'row', gap: 6,
-    paddingHorizontal: 10, paddingVertical: 10,
+    paddingHorizontal: 10, paddingVertical: 8,
     borderBottomWidth: 1, borderBottomColor: BORDER,
   },
   sideTab: {
@@ -1433,9 +1449,32 @@ const s = StyleSheet.create({
   emptyPanel: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   emptyTxt: { fontSize: 14, color: '#334155' },
 
-  // ── MOBILE ──
+  // ── MOBILE PORTRAIT ──
   mobile: { flex: 1, flexDirection: 'column', backgroundColor: 'transparent' },
   mobileContent: { flex: 1, backgroundColor: 'transparent', position: 'relative' },
+
+  // ── MOBILE LANDSCAPE ──
+  mobileLandscape: { flex: 1, flexDirection: 'column', backgroundColor: 'transparent' },
+  landscapeBody: { flex: 1, flexDirection: 'row', backgroundColor: 'transparent' },
+  landscapeMap: { flex: 1, position: 'relative', backgroundColor: 'transparent' },
+  landscapePanel: {
+    width: 320,
+    flexDirection: 'column',
+    backgroundColor: BG2,
+    borderLeftWidth: 1,
+    borderLeftColor: BORDER,
+  },
+
+  mobilePanelOverlay: {
+    position: 'absolute',
+    top: '13%' as any,
+    left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(8,12,24,0.82)',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
+    zIndex: 10,
+  },
   mobileTopBar: {
     position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100,
   },
@@ -1447,7 +1486,7 @@ const s = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: 'transparent',
-    zIndex: 10,
+    zIndex: 20,
   },
   bottomTabs: {
     flexDirection: 'row', gap: 5,

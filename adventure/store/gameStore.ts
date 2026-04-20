@@ -240,7 +240,7 @@ interface GameState {
   phase: 'menu' | 'playing' | 'shift_end';
   day: number;
   gameMinute: number; // 0 = 08:43
-  timeSpeed: 1 | 2 | 5;
+  timeSpeed: 1 | 2 | 5 | 10;
   sessionName: string;
 
   // Финансы
@@ -315,7 +315,7 @@ interface GameState {
   startShift: (truckCount?: number, sessionName?: string) => void;
   tickClock: () => void;
   triggerRandomEvent: () => void;
-  setTimeSpeed: (speed: 1 | 2 | 5) => void;
+  setTimeSpeed: (speed: 1 | 2 | 5 | 10) => void;
 
   openNegotiation: (load: LoadOffer) => void;
   makeOffer: (amount: number) => 'accepted' | 'counter' | 'rejected';
@@ -2637,7 +2637,7 @@ case 'detention': {
     set({ loadBoardSearchFrom: city });
   },
 
-  setTimeSpeed: (speed: 1 | 2 | 5) => {
+  setTimeSpeed: (speed: 1 | 2 | 5 | 10) => {
     set({ timeSpeed: speed });
   },
 

@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { View, StyleSheet, Platform, Text } from "react-native";
 import { useGameStore } from "../store/gameStore";
 import { CITIES, CITY_STATE } from "../constants/config";
@@ -1922,173 +1922,117 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
 
       {/* Попап штата */}
       {selectedState && (
-        <div style={{
-          position: "absolute", top: 12, right: 12,
-          background: "rgba(8,14,28,0.97)", borderRadius: 16,
-          border: `2px solid ${selectedState.isSurge ? "rgba(255,107,53,0.5)" : "rgba(6,182,212,0.35)"}`,
-          padding: "16px 18px", width: 320, zIndex: 1000,
-          boxShadow: "0 8px 32px rgba(0,0,0,0.7)",
-          fontFamily: "sans-serif", maxHeight: "80vh", overflowY: "auto",
-          animation: "statePopupFadeIn 0.3s ease-out",
-        } as any} className="map-state-popup">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 } as any}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 } as any}>
-              <span style={{ fontSize: 22, fontWeight: 900, color: selectedState.isSurge ? "#ff6b35" : "#06b6d4" } as any}>
-                {selectedState.id}
-              </span>
-              <span style={{ fontSize: 14, color: "#e2e8f0", fontWeight: 600 } as any}>{STATE_NAMES[selectedState.id] || selectedState.name}</span>
-              {selectedState.isSurge && (
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#ff6b35", background: "rgba(255,107,53,0.15)", padding: "3px 7px", borderRadius: 5 } as any}>
-                  🔥 SURGE
-                </span>
-              )}
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setSelectedState(null)}
+            style={{ position:"absolute", inset:0, zIndex:999, background:"rgba(0,0,0,0.4)" } as any}
+          />
+          {/* Bottom sheet */}
+          <div className="map-state-popup" style={{
+            position:"absolute", bottom:0, left:0, right:0,
+            background:"#0a0f1e",
+            borderRadius:"16px 16px 0 0",
+            borderTop:`2px solid ${selectedState.isSurge ? "rgba(255,107,53,0.7)" : "rgba(6,182,212,0.4)"}`,
+            zIndex:1000, fontFamily:"sans-serif",
+            maxHeight:"52vh", display:"flex", flexDirection:"column",
+            animation:"stateSheetIn 0.25s cubic-bezier(0.32,0.72,0,1)",
+            boxShadow:"0 -8px 40px rgba(0,0,0,0.7)",
+          } as any}>
+            {/* Handle */}
+            <div style={{ display:"flex", justifyContent:"center", padding:"10px 0 4px" } as any}>
+              <div style={{ width:36, height:4, borderRadius:2, background:"rgba(255,255,255,0.15)" } as any}/>
             </div>
-            <span onClick={() => setSelectedState(null)} style={{ cursor: "pointer", fontSize: 20, color: "#94a3b8", transition: "color 0.2s" } as any}
-              onMouseEnter={e => (e.currentTarget.style.color = "#e2e8f0")}
-              onMouseLeave={e => (e.currentTarget.style.color = "#94a3b8")}
-            >✕</span>
-          </div>
-
-          {selectedState.trucks.length > 0 && (
-            <div style={{ marginBottom: 14 } as any}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 } as any}>
-                🚛 ТРАКИ В ШТАТЕ ({selectedState.trucks.length})
+            {/* Header */}
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 16px 10px" } as any}>
+              <div style={{ display:"flex", alignItems:"center", gap:8 } as any}>
+                <span style={{ fontSize:17, fontWeight:900, color: selectedState.isSurge ? "#ff6b35" : "#06b6d4" } as any}>
+                  {STATE_NAMES[selectedState.id] || selectedState.id}
+                </span>
+                <span style={{ fontSize:11, color:"#475569", fontWeight:600 } as any}>{selectedState.id}</span>
+                {selectedState.isSurge && (
+                  <span style={{ fontSize:10, fontWeight:800, color:"#ff6b35", background:"rgba(255,107,53,0.15)", padding:"2px 6px", borderRadius:4 } as any}>🔥 SURGE</span>
+                )}
               </div>
-              {selectedState.trucks.map((t: any) => {
-                const color = getTruckColor(t, gameMinuteRef.current);
-                const isIdle = t.status === "idle";
-                return (
-                  <div key={t.id}
-                    onClick={() => { onTruckInfo?.(t.id); setSelectedState(null); }}
-                    style={{
-                      background: "rgba(255,255,255,0.04)", borderRadius: 10,
-                      padding: "9px 12px", marginBottom: 6,
-                      border: `1px solid ${color}33`,
-                      display: "flex", flexDirection: "column", gap: 4,
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                    } as any}
-                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
-                    onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" } as any}>
-                      <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" } as any}>{t.name}</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color, background: `${color}22`, padding: "2px 7px", borderRadius: 5 } as any}>
-                        {STATUS_LABEL[t.status] || t.status}
+              <span onClick={() => setSelectedState(null)} style={{ cursor:"pointer", fontSize:18, color:"#475569", padding:"4px 8px" } as any}>✕</span>
+            </div>
+            {/* Content */}
+            <div style={{ overflowY:"auto", padding:"0 12px 16px", flex:1 } as any}>
+              {selectedState.trucks.length > 0 && (
+                <div style={{ marginBottom:10 } as any}>
+                  <div style={{ fontSize:10, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:0.8, marginBottom:6 } as any}>
+                    🚛 Траки · {selectedState.trucks.length}
+                  </div>
+                  {selectedState.trucks.map((t: any) => {
+                    const color = getTruckColor(t, gameMinuteRef.current);
+                    return (
+                      <div key={t.id} onClick={() => { onTruckInfo?.(t.id); setSelectedState(null); }}
+                        style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 10px", marginBottom:4, borderRadius:10, background:"rgba(255,255,255,0.04)", border:`1px solid ${color}28`, cursor:"pointer" } as any}>
+                        <div style={{ minWidth:0 } as any}>
+                          <div style={{ fontSize:13, fontWeight:800, color:"#fff", marginBottom:2 } as any}>{t.name}</div>
+                          <div style={{ fontSize:11, color:"#64748b" } as any}>
+                            {t.driver} · {t.hoursLeft}h
+                            {t.currentLoad ? <span style={{ color:"#4ade80" } as any}> · ${t.currentLoad.agreedRate?.toLocaleString()}</span> : null}
+                          </div>
+                        </div>
+                        <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, flexShrink:0, marginLeft:10 } as any}>
+                          <span style={{ fontSize:10, fontWeight:700, color, background:`${color}18`, padding:"2px 7px", borderRadius:4 } as any}>
+                            {STATUS_LABEL[t.status] || t.status}
+                          </span>
+                          {t.status === "idle" && (
+                            <span onClick={(e) => { e.stopPropagation(); onFindLoad?.(t.currentCity); setSelectedState(null); }}
+                              style={{ fontSize:10, fontWeight:700, color:"#4ade80", cursor:"pointer" } as any}>+ груз</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {selectedState.loads.length > 0 && (
+                <div>
+                  <div style={{ fontSize:10, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:0.8, marginBottom:6 } as any}>
+                    📋 Грузы · {selectedState.loads.length}{selectedState.isSurge ? " 🔥+15%" : ""}
+                  </div>
+                  {selectedState.loads.slice(0, 3).map((l: any) => (
+                    <div key={l.id} onClick={() => { onFindLoad?.(l.fromCity); setSelectedState(null); }}
+                      style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 10px", marginBottom:4, borderRadius:10, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.06)", cursor:"pointer" } as any}>
+                      <div style={{ minWidth:0, flex:1 } as any}>
+                        <div style={{ fontSize:12, fontWeight:700, color:"#e2e8f0", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" } as any}>
+                          {l.fromCity} → {l.toCity}
+                        </div>
+                        <div style={{ fontSize:10, color:"#475569", marginTop:2 } as any}>{l.miles}mi · {l.equipment}</div>
+                      </div>
+                      <span style={{ fontSize:14, fontWeight:900, color: selectedState.isSurge ? "#ff6b35" : "#4ade80", flexShrink:0, marginLeft:12 } as any}>
+                        ${l.postedRate?.toLocaleString()}
                       </span>
                     </div>
-                    <div style={{ fontSize: 11, color: "#cbd5e1" } as any}>👤 {t.driver} · ⏱ {t.hoursLeft}h HOS</div>
-                    {t.currentLoad && (
-                      <div style={{ fontSize: 11, color: "#4ade80", lineHeight: 1.4 } as any}>
-                        📦 {t.currentLoad.fromCity}, {CITY_STATE[t.currentLoad.fromCity] || ""} → {t.currentLoad.toCity}, {CITY_STATE[t.currentLoad.toCity] || ""} · ${t.currentLoad.agreedRate?.toLocaleString()}
-                      </div>
-                    )}
-                    {!t.currentLoad && t.currentCity && (
-                      <div style={{ fontSize: 11, color: "#cbd5e1" } as any}>📍 {t.currentCity}{CITY_STATE[t.currentCity] ? `, ${CITY_STATE[t.currentCity]}` : ""}</div>
-                    )}
-                    {isIdle && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onFindLoad?.(t.currentCity); setSelectedState(null); }}
-                        style={{
-                          marginTop: 4, background: "rgba(74,222,128,0.15)",
-                          border: "1px solid rgba(74,222,128,0.4)", borderRadius: 7,
-                          padding: "5px 10px", color: "#4ade80", fontSize: 11,
-                          fontWeight: 700, cursor: "pointer", alignSelf: "flex-start",
-                          transition: "all 0.2s ease",
-                        } as any}
-                        onMouseEnter={e => {
-                          e.currentTarget.style.background = "rgba(74,222,128,0.25)";
-                          e.currentTarget.style.borderColor = "#4ade80";
-                        }}
-                        onMouseLeave={e => {
-                          e.currentTarget.style.background = "rgba(74,222,128,0.15)";
-                          e.currentTarget.style.borderColor = "rgba(74,222,128,0.4)";
-                        }}
-                      >🔍 Найти груз</button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {selectedState.inboundTrucks?.length > 0 && (
-            <div style={{ marginBottom: 14 } as any}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 } as any}>
-                ➡️ ЕДУТ В ШТАТ ({selectedState.inboundTrucks.length})
-              </div>
-              {selectedState.inboundTrucks.map((t: any) => (
-                <div key={t.id} style={{ fontSize: 11, color: "#38bdf8", marginBottom: 4, lineHeight: 1.4 } as any}>
-                  🚛 {t.name} · {t.driver} → {t.destinationCity}{CITY_STATE[t.destinationCity] ? `, ${CITY_STATE[t.destinationCity]}` : ""}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {selectedState.loads.length > 0 && (
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 } as any}>
-                📋 ГРУЗЫ ИЗ ШТАТА ({selectedState.loads.length})
-                {selectedState.isSurge && <span style={{ color: "#ff6b35", marginLeft: 4 } as any}>🔥 +15% ставки</span>}
-              </div>
-              {selectedState.loads.slice(0, 4).map((l: any) => (
-                <div key={l.id}
-                  onClick={() => { onFindLoad?.(l.fromCity); setSelectedState(null); }}
-                  style={{
-                    background: "rgba(255,255,255,0.04)", borderRadius: 10,
-                    padding: "8px 12px", marginBottom: 6,
-                    border: "1px solid rgba(255,255,255,0.07)",
-                    display: "flex", justifyContent: "space-between", alignItems: "center",
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                  } as any}
-                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.09)")}
-                  onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
-                >
-                  <div style={{ display: "flex", flexDirection: "column", gap: 3 } as any}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "#e2e8f0", lineHeight: 1.3 } as any}>
-                      {l.fromCity}, {CITY_STATE[l.fromCity] || ""} → {l.toCity}, {CITY_STATE[l.toCity] || ""}
-                    </span>
-                    <span style={{ fontSize: 11, color: "#94a3b8" } as any}>
-                      {l.miles}mi · {l.equipment} · {l.commodity}
-                    </span>
-                  </div>
-                  <span style={{ fontSize: 13, fontWeight: 800, color: selectedState.isSurge ? "#ff6b35" : "#4ade80" } as any}>
-                    ${l.postedRate?.toLocaleString()}
-                  </span>
-                </div>
-              ))}
-              {selectedState.loads.length > 4 && (
-                <div style={{ fontSize: 11, color: "#94a3b8", textAlign: "center", marginTop: 6 } as any}>
-                  +{selectedState.loads.length - 4} ещё грузов
+                  ))}
+                  {selectedState.loads.length > 3 && (
+                    <div style={{ fontSize:11, color:"#475569", textAlign:"center", paddingTop:2 } as any}>+{selectedState.loads.length - 3} ещё</div>
+                  )}
                 </div>
               )}
+              {selectedState.trucks.length === 0 && selectedState.loads.length === 0 && (
+                <div style={{ fontSize:13, color:"#334155", textAlign:"center", padding:"16px 0" } as any}>Нет траков и грузов</div>
+              )}
             </div>
-          )}
-
-          {selectedState.trucks.length === 0 && selectedState.loads.length === 0 && (
-            <div style={{ fontSize: 13, color: "#94a3b8", textAlign: "center", padding: "16px 0" } as any}>
-              Нет траков и грузов в этом штате
-            </div>
-          )}
-        </div>
+          </div>
+        </>
       )}
-
       {/* CSS для анимации тостов */}
       <style>{`
         @keyframes fadeInSlide {
           from { opacity: 0; transform: translateX(20px); }
           to { opacity: 1; transform: translateX(0); }
         }
+        @keyframes stateSheetIn {
+          from { transform: translateY(100%); }
+          to   { transform: translateY(0); }
+        }
         @keyframes statePopupFadeIn {
-          from { 
-            opacity: 0; 
-            transform: translateY(-10px) scale(0.95); 
-          }
-          to { 
-            opacity: 1; 
-            transform: translateY(0) scale(1); 
-          }
+          from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+          to   { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
         @keyframes follow-pulse {
           0%,100% { box-shadow: 0 0 14px rgba(6,182,212,0.6); }

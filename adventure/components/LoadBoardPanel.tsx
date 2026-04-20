@@ -365,6 +365,7 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
             }}
           >
             <Text style={styles.iconBtnEmoji}>🚛</Text>
+            <Text style={styles.iconBtnLabel}>Авто</Text>
           </TouchableOpacity>
 
           {/* Фильтр */}
@@ -373,6 +374,7 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
             onPress={() => setFilterOpen(v => !v)}
           >
             <Text style={styles.iconBtnEmoji}>🔍</Text>
+            <Text style={[styles.iconBtnLabel, (filterOpen || activeFiltersCount > 0) && { color: '#06b6d4' }]}>Фильтр</Text>
             {activeFiltersCount > 0 && (
               <View style={styles.filterBadge}>
                 <Text style={styles.filterBadgeTxt}>{activeFiltersCount}</Text>
@@ -382,7 +384,8 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
 
           {/* Обновить */}
           <TouchableOpacity style={[styles.iconBtn, styles.iconBtnRefresh]} onPress={handleRefresh}>
-            <Text style={styles.iconBtnEmoji}>{countdown !== null ? `${countdown}` : '🔄'}</Text>
+            <Text style={styles.iconBtnEmojiRefresh}>{countdown !== null ? `${countdown}` : '🔄'}</Text>
+            <Text style={styles.iconBtnLabelRefresh}>Обновить</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -634,14 +637,15 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   iconBtn: {
-    width: 36,
-    height: 36,
+    width: 52,
+    height: 48,
     borderRadius: 10,
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 2,
   },
   iconBtnActive: {
     backgroundColor: 'rgba(6,182,212,0.15)',
@@ -652,10 +656,20 @@ const styles = StyleSheet.create({
     borderColor: '#06b6d4',
   },
   iconBtnRefresh: {
-    backgroundColor: 'rgba(6,182,212,0.1)',
-    borderColor: 'rgba(6,182,212,0.3)',
+    width: 72,
+    height: 48,
+    backgroundColor: 'rgba(6,182,212,0.18)',
+    borderColor: '#06b6d4',
+    borderWidth: 1.5,
+    shadowColor: '#06b6d4',
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 0 },
   },
   iconBtnEmoji: { fontSize: 17 },
+  iconBtnLabel: { fontSize: 10, color: '#94a3b8', fontWeight: '600', lineHeight: 12 },
+  iconBtnEmojiRefresh: { fontSize: 20 },
+  iconBtnLabelRefresh: { fontSize: 11, color: '#06b6d4', fontWeight: '700', lineHeight: 13 },
 
   filterBadge: {
     position: 'absolute',

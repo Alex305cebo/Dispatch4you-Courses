@@ -1,27 +1,32 @@
 import { DialogStep } from '../components/CharacterDialog';
 
-const PROF_BASE = 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People%20with%20professions';
+const AVATARS_BASE = '/assets/avatars';
 
 export const CHARACTERS = {
   driver: {
     name: 'Джон',
     role: 'Водитель трака',
-    avatar: `${PROF_BASE}/Man%20Office%20Worker%20Medium%20Skin%20Tone.png`,
+    avatar: `${AVATARS_BASE}/driver.png`,
   },
   broker: {
     name: 'Сара',
     role: 'Брокер',
-    avatar: `${PROF_BASE}/Woman%20Office%20Worker%20Light%20Skin%20Tone.png`,
+    avatar: `${AVATARS_BASE}/broker.png`,
   },
   owner: {
     name: 'Майк',
     role: 'Владелец компании',
-    avatar: `${PROF_BASE}/Man%20Office%20Worker%20Dark%20Skin%20Tone.png`,
+    avatar: `${AVATARS_BASE}/owner.png`,
   },
   accountant: {
     name: 'Лиза',
     role: 'Бухгалтер',
-    avatar: `${PROF_BASE}/Woman%20Technologist%20Light%20Skin%20Tone.png`,
+    avatar: `${AVATARS_BASE}/accountant.png`,
+  },
+  dispatcher: {
+    name: 'Ты',
+    role: 'Диспетчер',
+    avatar: `${AVATARS_BASE}/dispatcher.png`,
   },
 };
 

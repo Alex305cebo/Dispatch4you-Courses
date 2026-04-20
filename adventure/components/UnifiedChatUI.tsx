@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Animated } from 'react-native';
 import { useUnifiedChatStore, ChatThread, ChatMessage } from '../store/unifiedChatStore';
 import { useGameStore, Notification } from '../store/gameStore';
+import { CHARACTERS } from '../data/dialogs';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // UNIFIED CHAT UI — Интерфейс в стиле Duolingo для всех диалогов
@@ -289,6 +290,15 @@ export const UnifiedChatUI: React.FC<UnifiedChatUIProps> = ({ nickname, onClose 
                   />
                 ))}
                 {/* ═══ EMAIL ТРЕДЫ ═══ */}
+                {emailThreads.length > 0 && filteredThreads.length > 0 && (
+                  <View style={{ height: 1, marginHorizontal: 0, marginVertical: 0 }}>
+                    <View style={{
+                      position: 'absolute', left: 0, right: 0, top: 0, height: 1,
+                      background: 'linear-gradient(90deg, transparent 0%, #06b6d4 30%, #f97316 70%, transparent 100%)',
+                      opacity: 0.5,
+                    } as any} />
+                  </View>
+                )}
                 {emailThreads.map(et => (
                   <TouchableOpacity
                     key={et.key}
@@ -333,15 +343,15 @@ export const UnifiedChatUI: React.FC<UnifiedChatUIProps> = ({ nickname, onClose 
               style={styles.teamButton}
               onPress={() => {
                 const threadId = useUnifiedChatStore.getState().createThread({
-                  participantName: 'Джон',
+                  participantName: CHARACTERS.driver.name,
                   participantRole: 'driver',
-                  participantAvatar: '🚛',
-                  participantCompany: 'Водитель трака',
+                  participantAvatar: CHARACTERS.driver.avatar,
+                  participantCompany: CHARACTERS.driver.role,
                 });
                 handleOpenThread(threadId);
               }}
             >
-              <Text style={styles.teamButtonIcon}>🚛</Text>
+              <img src={CHARACTERS.driver.avatar} width={24} height={24} style={{ objectFit: 'contain', borderRadius: 6 } as any} />
               <Text style={styles.teamButtonText}>Водитель</Text>
             </TouchableOpacity>
             
@@ -349,15 +359,15 @@ export const UnifiedChatUI: React.FC<UnifiedChatUIProps> = ({ nickname, onClose 
               style={styles.teamButton}
               onPress={() => {
                 const threadId = useUnifiedChatStore.getState().createThread({
-                  participantName: 'Майк',
+                  participantName: CHARACTERS.owner.name,
                   participantRole: 'system',
-                  participantAvatar: '💼',
-                  participantCompany: 'Владелец компании',
+                  participantAvatar: CHARACTERS.owner.avatar,
+                  participantCompany: CHARACTERS.owner.role,
                 });
                 handleOpenThread(threadId);
               }}
             >
-              <Text style={styles.teamButtonIcon}>💼</Text>
+              <img src={CHARACTERS.owner.avatar} width={24} height={24} style={{ objectFit: 'contain', borderRadius: 6 } as any} />
               <Text style={styles.teamButtonText}>Владелец</Text>
             </TouchableOpacity>
             
@@ -365,15 +375,15 @@ export const UnifiedChatUI: React.FC<UnifiedChatUIProps> = ({ nickname, onClose 
               style={styles.teamButton}
               onPress={() => {
                 const threadId = useUnifiedChatStore.getState().createThread({
-                  participantName: 'Лиза',
+                  participantName: CHARACTERS.accountant.name,
                   participantRole: 'system',
-                  participantAvatar: '💰',
-                  participantCompany: 'Бухгалтер',
+                  participantAvatar: CHARACTERS.accountant.avatar,
+                  participantCompany: CHARACTERS.accountant.role,
                 });
                 handleOpenThread(threadId);
               }}
             >
-              <Text style={styles.teamButtonIcon}>💰</Text>
+              <img src={CHARACTERS.accountant.avatar} width={24} height={24} style={{ objectFit: 'contain', borderRadius: 6 } as any} />
               <Text style={styles.teamButtonText}>Бухгалтер</Text>
             </TouchableOpacity>
           </View>
@@ -435,7 +445,10 @@ export const UnifiedChatUI: React.FC<UnifiedChatUIProps> = ({ nickname, onClose 
             </TouchableOpacity>
             
             <View style={styles.chatHeaderAvatar}>
-              <Text style={styles.chatHeaderAvatarText}>{selectedThread.participantAvatar}</Text>
+              {selectedThread.participantAvatar.startsWith('http')
+                ? <img src={selectedThread.participantAvatar} width={36} height={36} style={{ objectFit: 'contain' } as any} />
+                : <Text style={styles.chatHeaderAvatarText}>{selectedThread.participantAvatar}</Text>
+              }
             </View>
             
             <View style={styles.chatHeaderInfo}>
@@ -521,7 +534,10 @@ const ThreadItem: React.FC<ThreadItemProps> = ({ thread, onPress, formatTime }) 
     >
       {/* Avatar */}
       <View style={[styles.threadAvatar, hasUnread && styles.threadAvatarUnread]}>
-        <Text style={styles.threadAvatarText}>{thread.participantAvatar}</Text>
+        {thread.participantAvatar.startsWith('http')
+          ? <img src={thread.participantAvatar} width={36} height={36} style={{ objectFit: 'contain' } as any} onError={(e: any) => { e.target.style.opacity = '0'; }} />
+          : <Text style={styles.threadAvatarText}>{thread.participantAvatar}</Text>
+        }
         {hasUnread && <View style={styles.threadAvatarDot} />}
       </View>
       
@@ -586,107 +602,85 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   
   const onButtonPress = (buttonId: string, action: string, data?: any) => {
     handleButtonAction(message.id, buttonId, action, data);
-    
-    // Если онбординг активен — переходим к следующему шагу
     if (onboardingActive) {
-      setTimeout(() => {
-        nextOnboardingStep();
-      }, 500);
+      setTimeout(() => { nextOnboardingStep(); }, 500);
     }
   };
-  
+
+  // Duolingo-style: персонаж + пузырь
+  const isAvatarUrl = avatar.startsWith('http');
+
   return (
-    <View style={[styles.messageBubbleContainer, isOwn && styles.messageBubbleContainerOwn]}>
-      {/* Avatar */}
+    <View style={[
+      styles.messageBubbleContainer,
+      isOwn && styles.messageBubbleContainerOwn,
+      { marginBottom: 20, alignItems: 'flex-end' },
+    ]}>
+      {/* Аватар персонажа (только для входящих) */}
       {!isOwn && showAvatar && (
-        <View style={styles.messageAvatar}>
-          <Text style={styles.messageAvatarText}>{avatar}</Text>
+        <View style={styles.duoAvatar}>
+          {isAvatarUrl
+            ? <img src={avatar} width={52} height={52} style={{ objectFit: 'contain' } as any} onError={(e: any) => { e.target.style.opacity = '0'; }} />
+            : <Text style={styles.duoAvatarEmoji}>{avatar}</Text>
+          }
         </View>
       )}
-      {!isOwn && !showAvatar && <View style={styles.messageAvatarSpacer} />}
-      
-      {/* Bubble */}
-      <View style={[styles.messageBubble, isOwn && styles.messageBubbleOwn]}>
-        {/* Subject (для email) */}
-        {message.subject && (
-          <Text style={styles.messageSubject}>{message.subject}</Text>
-        )}
-        
-        {/* Text */}
-        <Text style={[styles.messageText, isOwn && styles.messageTextOwn]}>
+      {!isOwn && !showAvatar && <View style={{ width: 72 }} />}
+
+      {/* Пузырь */}
+      <View style={[styles.duoBubble, isOwn && styles.duoBubbleOwn]}>
+        {/* Хвостик пузыря */}
+        {!isOwn && <View style={styles.duoTailLeft} />}
+        {isOwn && <View style={styles.duoTailRight} />}
+
+        {/* Иконка звука */}
+        <View style={styles.duoSoundRow}>
+          <View style={styles.duoSoundBtn}>
+            <Text style={styles.duoSoundIcon}>🔊</Text>
+          </View>
+          {message.subject && (
+            <Text style={styles.duoSubject}>{message.subject}</Text>
+          )}
+        </View>
+
+        {/* Текст */}
+        <Text style={[styles.duoText, isOwn && styles.duoTextOwn]}>
           {message.text}
         </Text>
-        
-        {/* ═══ ИНТЕРАКТИВНЫЕ ЭЛЕМЕНТЫ ═══ */}
+
+        {/* Интерактивные элементы */}
         {message.interactive && !message.actionStatus?.completed && (
           <View style={styles.interactiveContainer}>
-            {/* BUTTONS */}
             {message.interactive.type === 'buttons' && message.interactive.buttons && (
-              <InteractiveButtons 
-                buttons={message.interactive.buttons}
-                onPress={onButtonPress}
-              />
+              <InteractiveButtons buttons={message.interactive.buttons} onPress={onButtonPress} />
             )}
-            
-            {/* LOAD CARD */}
             {message.interactive.type === 'load_card' && message.interactive.loadCard && (
-              <LoadCardComponent 
-                loadCard={message.interactive.loadCard}
-                buttons={message.interactive.buttons}
-                onPress={onButtonPress}
-              />
+              <LoadCardComponent loadCard={message.interactive.loadCard} buttons={message.interactive.buttons} onPress={onButtonPress} />
             )}
-            
-            {/* DOCUMENT PREVIEW */}
             {message.interactive.type === 'document' && message.interactive.document && (
-              <DocumentPreviewComponent 
-                document={message.interactive.document}
-                buttons={message.interactive.buttons}
-                onPress={onButtonPress}
-              />
+              <DocumentPreviewComponent document={message.interactive.document} buttons={message.interactive.buttons} onPress={onButtonPress} />
             )}
-            
-            {/* QUICK REPLIES */}
             {message.interactive.type === 'quick_replies' && message.interactive.quickReplies && (
-              <QuickRepliesComponent 
-                replies={message.interactive.quickReplies}
-                onPress={(reply) => handleQuickReply(message.threadId, reply)}
-              />
+              <QuickRepliesComponent replies={message.interactive.quickReplies} onPress={(reply) => handleQuickReply(message.threadId, reply)} />
             )}
-            
-            {/* ALERT */}
             {message.interactive.type === 'alert' && (
-              <AlertComponent 
-                urgency={message.interactive.urgency || 'medium'}
-                buttons={message.interactive.buttons}
-                onPress={onButtonPress}
-              />
+              <AlertComponent urgency={message.interactive.urgency || 'medium'} buttons={message.interactive.buttons} onPress={onButtonPress} />
             )}
           </View>
         )}
-        
-        {/* Action Status (если действие выполнено) */}
+
         {message.actionStatus?.completed && (
           <View style={styles.actionStatusContainer}>
             <Text style={styles.actionStatusIcon}>✓</Text>
-            <Text style={styles.actionStatusText}>
-              {message.actionStatus.result}
-            </Text>
+            <Text style={styles.actionStatusText}>{message.actionStatus.result}</Text>
           </View>
         )}
-        
-        {/* Footer */}
-        <View style={styles.messageFooter}>
-          <Text style={styles.messageTypeIcon}>{getMessageTypeIcon(message.type)}</Text>
-          <Text style={[styles.messageTime, isOwn && styles.messageTimeOwn]}>
-            {formatTime(message.timestamp)}
-          </Text>
-          {message.priority && message.priority !== 'low' && (
-            <View style={[styles.priorityDot, { backgroundColor: getPriorityColor(message.priority) }]} />
-          )}
-        </View>
-        
-        {/* Voicemail */}
+
+        {/* Время */}
+        <Text style={[styles.duoTime, isOwn && styles.duoTimeOwn]}>
+          {formatTime(message.timestamp)}
+        </Text>
+
         {message.type === 'voicemail' && message.duration && (
           <View style={styles.voicemailPlayer}>
             <Text style={styles.voicemailIcon}>▶️</Text>
@@ -694,6 +688,18 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           </View>
         )}
       </View>
+
+      {/* Аватар для исходящих */}
+      {isOwn && showAvatar && (
+        <View style={[styles.duoAvatar, styles.duoAvatarOwn]}>
+          <img
+            src="/assets/avatars/dispatcher.png"
+            width={52} height={52}
+            style={{ objectFit: 'contain' } as any}
+          />
+        </View>
+      )}
+      {isOwn && !showAvatar && <View style={{ width: 72 }} />}
     </View>
   );
 };
@@ -999,8 +1005,8 @@ const styles = StyleSheet.create({
   // ─── TEAM FOOTER (фиксированный внизу) ──────────────────────────────────
   teamFooter: {
     flexDirection: 'row',
-    padding: 12,
-    gap: 8,
+    padding: 8,
+    gap: 6,
     backgroundColor: '#ffffff',
     borderTopWidth: 1,
     borderTopColor: '#e5e7eb',
@@ -1011,20 +1017,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#f9fafb',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    borderRadius: 10,
+    paddingVertical: 7,
+    paddingHorizontal: 6,
     borderWidth: 1,
     borderColor: '#e5e7eb',
+    flexDirection: 'row',
+    gap: 6,
   },
   
   teamButtonIcon: {
-    fontSize: 24,
-    marginBottom: 4,
+    fontSize: 18,
+    marginBottom: 0,
   },
   
   teamButtonText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: '#374151',
     textAlign: 'center',
@@ -1214,23 +1222,135 @@ const styles = StyleSheet.create({
   
   messageList: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#f0f4f8',
   },
   
   messageListContent: {
-    padding: 12,
+    padding: 16,
+    paddingBottom: 24,
   },
   
   messageBubbleContainer: {
     flexDirection: 'row',
-    marginBottom: 8,
+    marginBottom: 20,
     alignItems: 'flex-end',
   },
   
   messageBubbleContainerOwn: {
     justifyContent: 'flex-end',
   },
-  
+
+  // ─── DUOLINGO STYLE ──────────────────────────────────────────────────────
+  duoAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: '#e8f4fd',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+    flexShrink: 0,
+    borderWidth: 2,
+    borderColor: '#d1e8f7',
+  },
+  duoAvatarOwn: {
+    marginRight: 0,
+    marginLeft: 10,
+    backgroundColor: '#e8fdf0',
+    borderColor: '#c3f0d4',
+  },
+  duoAvatarEmoji: {
+    fontSize: 36,
+  },
+  duoBubble: {
+    maxWidth: '72%',
+    backgroundColor: '#ffffff',
+    borderRadius: 18,
+    borderBottomLeftRadius: 4,
+    padding: 14,
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+    position: 'relative',
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  duoBubbleOwn: {
+    backgroundColor: '#e8fdf0',
+    borderColor: '#86efac',
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 4,
+  },
+  duoTailLeft: {
+    position: 'absolute',
+    left: -10,
+    bottom: 4,
+    width: 0,
+    height: 0,
+    borderTopWidth: 8,
+    borderTopColor: 'transparent',
+    borderRightWidth: 12,
+    borderRightColor: '#e2e8f0',
+    borderBottomWidth: 0,
+    borderBottomColor: 'transparent',
+  },
+  duoTailRight: {
+    position: 'absolute',
+    right: -10,
+    bottom: 4,
+    width: 0,
+    height: 0,
+    borderTopWidth: 8,
+    borderTopColor: 'transparent',
+    borderLeftWidth: 12,
+    borderLeftColor: '#86efac',
+    borderBottomWidth: 0,
+    borderBottomColor: 'transparent',
+  },
+  duoSoundRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  duoSoundBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#1cb0f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  duoSoundIcon: {
+    fontSize: 14,
+  },
+  duoSubject: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#58cc02',
+    flex: 1,
+  },
+  duoText: {
+    fontSize: 16,
+    color: '#1e293b',
+    lineHeight: 23,
+    fontWeight: '500',
+  },
+  duoTextOwn: {
+    color: '#166534',
+  },
+  duoTime: {
+    fontSize: 11,
+    color: '#94a3b8',
+    marginTop: 6,
+    textAlign: 'right',
+  },
+  duoTimeOwn: {
+    color: '#4ade80',
+  },
+
+  // legacy (kept for email thread view)
   messageAvatar: {
     width: 32,
     height: 32,
