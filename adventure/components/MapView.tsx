@@ -1443,7 +1443,52 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Статистика для мини-легенды
+  // ── Реакция на смену темы — обновляем фон карты и цвета штатов ──────────
+  useEffect(() => {
+    const chart = chartRef.current;
+    const root = rootRef.current;
+    const ps = polygonSeriesRef.current;
+    if (!chart || !root || !ps) return;
+
+    const isDarkNow = themeMode === 'dark';
+    const bgColor = isDarkNow ? 0x0f172a : 0xb8ccd8;
+
+    // Фон карты
+    chart.get("background")?.setAll({ fill: am5.color(bgColor) });
+    root.interfaceColors.set("background" as any, am5.color(bgColor));
+    root.interfaceColors.set("alternativeBackground" as any, am5.color(bgColor));
+    // Скрываем selection highlight который появляется при смене темы
+    root.interfaceColors.set("primaryButton" as any, am5.color(isDarkNow ? 0x0a84ff : 0x007aff));
+    root.interfaceColors.set("primaryButtonHover" as any, am5.color(isDarkNow ? 0x0a84ff : 0x007aff));
+    root.interfaceColors.set("primaryButtonDown" as any, am5.color(isDarkNow ? 0x0a84ff : 0x007aff));
+    root.interfaceColors.set("secondaryButton" as any, am5.color(bgColor));
+    root.interfaceColors.set("secondaryButtonHover" as any, am5.color(bgColor));
+    root.interfaceColors.set("secondaryButtonDown" as any, am5.color(bgColor));
+    root.interfaceColors.set("secondaryButtonStroke" as any, am5.color(bgColor));
+
+    // Скрываем все дефолтные amCharts UI элементы которые могут появиться
+    try {
+      root.container.children.each((child: any) => {
+        const cls = child?.className ?? '';
+        if (cls.includes('Legend') || cls.includes('Scrollbar') || cls.includes('ZoomControl')) {
+          child.set('visible', false);
+        }
+      });
+    } catch (_) {}
+
+    // Цвета штатов
+    ps.mapPolygons.template.setAll({
+      fill: am5.color(isDarkNow ? 0x334155 : 0x8fafc4),
+      fillOpacity: 0.95,
+      stroke: am5.color(isDarkNow ? 0x64748b : 0x6b8fa8),
+      strokeWidth: 1,
+      strokeOpacity: 1,
+    });
+
+    // Принудительно обновляем цвета через updatePolygonColors
+    setTimeout(() => updatePolygonColors(), 100);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [themeMode]);
   const totalMilesInFlight = activeTrucks.reduce((sum, t) => {
     if ((t.status === "loaded" || t.status === "driving") && t.currentLoad) {
       const dest = t.destinationCity ? CITIES[t.destinationCity] : null;
@@ -2129,6 +2174,27 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
           display: none !important;
           opacity: 0 !important;
           pointer-events: none !important;
+        }
+
+        /* Скрываем дефолтную легенду amCharts */
+        .am5-legend,
+        [class*="am5-legend"],
+        .am5-Legend,
+        [class*="am5-Legend"] {
+          display: none !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+          visibility: hidden !important;
+        }
+
+        /* Скрываем scrollbar amCharts */
+        .am5-scrollbar,
+        [class*="am5-scrollbar"],
+        [class*="am5-Scrollbar"] {
+          display: none !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+          visibility: hidden !important;
         }
         
         /* Убираем белый фон amCharts контейнера */

@@ -396,7 +396,7 @@ export default function MechanicChatModal({
                         s.stepDot,
                         isDone && s.stepDotDone,
                         isCurrent && s.stepDotCurrent,
-                        isNext && { borderColor: 'rgba(251,191,36,0.9)', borderWidth: 2, backgroundColor: 'rgba(251,191,36,0.12)' },
+                        isNext && { borderColor: '#fbbf24', borderWidth: 2.5, backgroundColor: 'rgba(251,191,36,0.22)', shadowColor: '#fbbf24', shadowOpacity: 0.9, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 10 },
                       ]}>
                         <Text style={{ fontSize: 10 }}>{step.icon}</Text>
                       </View>
@@ -409,7 +409,7 @@ export default function MechanicChatModal({
                         {step.label}
                       </Text>
                       {isNext && (
-                        <Text style={{ fontSize: 8, color: '#fbbf24', marginTop: 1 }}>👆 tap</Text>
+                        <Text style={{ fontSize: 10, color: '#fbbf24', marginTop: 2, fontWeight: '700' }}>👆 tap</Text>
                       )}
                     </TouchableOpacity>
                   </React.Fragment>
@@ -417,12 +417,36 @@ export default function MechanicChatModal({
               })}
             </View>
 
-            {/* Подсказка для первого шага */}
-            {!called && (
-              <Text style={{ fontSize: 11, color: '#fbbf24', textAlign: 'center', marginTop: 8 }}>
-                👆 Нажми на кружок 💳 Оплата чтобы вызвать техпомощь · ${repairCost}
-              </Text>
-            )}
+            {/* Подсказка — динамическая для каждого активного шага */}
+            {stage !== 'done' && (() => {
+              const hints: Record<string, string> = {
+                pending:   `👆 Нажми на кружок 💳 Оплата чтобы вызвать техпомощь · $${repairCost}`,
+                driving:   `👆 Нажми на кружок 🔧 На месте когда механик прибудет`,
+                arrived:   `👆 Нажми на кружок ⚙️ Ремонт чтобы начать ремонт`,
+                repairing: `👆 Нажми на кружок ✅ Готово когда ремонт завершён`,
+              };
+              const hint = hints[stage];
+              if (!hint) return null;
+              return (
+                <View style={{
+                  backgroundColor: 'rgba(251,191,36,0.12)',
+                  borderWidth: 1,
+                  borderColor: 'rgba(251,191,36,0.4)',
+                  borderRadius: 8,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  marginTop: 10,
+                  marginHorizontal: 4,
+                }}>
+                  <Text style={{ fontSize: 12, color: '#fbbf24', textAlign: 'center', fontWeight: '600', lineHeight: 18 }}>
+                    {hint}
+                  </Text>
+                  <Text style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center', marginTop: 3 }}>
+                    Каждый шаг нужно подтвердить нажатием
+                  </Text>
+                </View>
+              );
+            })()}
           </View>
 
           {/* ── ЧАТ ── */}
@@ -511,31 +535,31 @@ export default function MechanicChatModal({
 
 const s = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.88)', justifyContent: 'center', alignItems: 'center', padding: 16 },
-  modal: { backgroundColor: '#ffffff', borderRadius: 20, borderWidth: 1.5, borderColor: 'rgba(239,68,68,0.3)', maxHeight: '88%', width: '100%', maxWidth: 480 },
+  modal: { backgroundColor: '#0f172a', borderRadius: 20, borderWidth: 1.5, borderColor: 'rgba(239,68,68,0.35)', maxHeight: '88%', width: '100%', maxWidth: 480 },
 
-  header: { flexDirection: 'row', alignItems: 'center', padding: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.06)' },
+  header: { flexDirection: 'row', alignItems: 'center', padding: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.07)' },
   headerLeft: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(239,68,68,0.15)', borderWidth: 2, borderColor: 'rgba(239,68,68,0.5)', alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 15, fontWeight: '900', color: '#111827' },
-  sub: { fontSize: 11, color: '#6b7280', marginTop: 1 },
-  closeBtn: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center' },
-  closeTxt: { fontSize: 14, color: '#6b7280' },
+  title: { fontSize: 15, fontWeight: '900', color: '#f1f5f9' },
+  sub: { fontSize: 11, color: '#94a3b8', marginTop: 1 },
+  closeBtn: { width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' },
+  closeTxt: { fontSize: 14, color: '#94a3b8' },
 
   statusCard: { margin: 10, padding: 12, borderRadius: 14, borderWidth: 1.5, gap: 10 },
   statusCardPending:  { borderColor: 'rgba(239,68,68,0.5)',  backgroundColor: 'rgba(239,68,68,0.08)'  },
-  statusCardActive:   { borderColor: 'rgba(56,189,248,0.4)', backgroundColor: 'rgba(56,189,248,0.06)' },
-  statusDone:         { borderColor: 'rgba(74,222,128,0.4)', backgroundColor: 'rgba(74,222,128,0.06)' },
+  statusCardActive:   { borderColor: 'rgba(56,189,248,0.35)', backgroundColor: 'rgba(56,189,248,0.06)' },
+  statusDone:         { borderColor: 'rgba(74,222,128,0.35)', backgroundColor: 'rgba(74,222,128,0.06)' },
   statusTitle: { fontSize: 14, fontWeight: '900' },
-  statusSub: { fontSize: 11, color: '#6b7280', marginTop: 2 },
+  statusSub: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
 
   steps: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 2 },
   stepWrap: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   step: { alignItems: 'center', gap: 3 },
-  stepDot: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#f9fafb', borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)', alignItems: 'center', justifyContent: 'center' },
-  stepDotDone:    { backgroundColor: 'rgba(74,222,128,0.2)',  borderColor: 'rgba(74,222,128,0.5)'  },
-  stepDotCurrent: { backgroundColor: 'rgba(56,189,248,0.2)',  borderColor: 'rgba(56,189,248,0.6)'  },
-  stepLabel: { fontSize: 9, color: '#6b7280', fontWeight: '700' },
-  lineTrack: { flex: 1, height: 3, backgroundColor: 'rgba(0,0,0,0.06)', borderRadius: 2, marginBottom: 12, overflow: 'hidden' },
+  stepDot: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.5, shadowRadius: 6, elevation: 5 },
+  stepDotDone:    { backgroundColor: 'rgba(74,222,128,0.18)', borderColor: 'rgba(74,222,128,0.7)',  shadowColor: '#4ade80', shadowOpacity: 0.35, shadowRadius: 5, elevation: 4 },
+  stepDotCurrent: { backgroundColor: 'rgba(56,189,248,0.18)', borderColor: 'rgba(56,189,248,0.8)',  shadowColor: '#38bdf8', shadowOpacity: 0.4,  shadowRadius: 6, elevation: 5 },
+  stepLabel: { fontSize: 9, color: '#94a3b8', fontWeight: '700' },
+  lineTrack: { flex: 1, height: 3, backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 2, marginBottom: 12, overflow: 'hidden' },
   lineFill:        { height: '100%' as any, borderRadius: 2, backgroundColor: 'rgba(56,189,248,0.5)' },
   lineFillDone:    { backgroundColor: '#4ade80' },
   lineFillCurrent: { backgroundColor: '#38bdf8' },
@@ -543,22 +567,22 @@ const s = StyleSheet.create({
   callBtn: { padding: 11, borderRadius: 12, borderWidth: 1.5, borderColor: 'rgba(239,68,68,0.6)', backgroundColor: 'rgba(239,68,68,0.15)', alignItems: 'center' },
   callBtnText: { fontSize: 13, fontWeight: '900', color: '#ef4444' },
 
-  chatHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 7, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.06)' },
-  chatTitle: { fontSize: 11, fontWeight: '800', color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5 },
+  chatHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 7, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.07)' },
+  chatTitle: { fontSize: 11, fontWeight: '800', color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5 },
   onlineDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#4ade80' },
   onlineTxt: { fontSize: 10, color: '#4ade80', fontWeight: '700' },
 
   chatScroll: { maxHeight: 200 },
   emptyChatHint: { padding: 20, alignItems: 'center' },
-  emptyChatTxt: { fontSize: 13, color: '#6b7280', textAlign: 'center' },
+  emptyChatTxt: { fontSize: 13, color: '#64748b', textAlign: 'center' },
 
   bubble: { maxWidth: '80%', padding: 9, borderRadius: 14, gap: 2 },
-  bubbleLeft:  { alignSelf: 'flex-start', backgroundColor: '#f3f4f6', borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)', borderBottomLeftRadius: 4 },
-  bubbleRight: { alignSelf: 'flex-end',   backgroundColor: 'rgba(6,182,212,0.2)',    borderWidth: 1, borderColor: 'rgba(6,182,212,0.35)',    borderBottomRightRadius: 4 },
-  bubbleName: { fontSize: 10, fontWeight: '800', color: '#ef4444', marginBottom: 1 },
-  bubbleText: { fontSize: 12, color: '#374151', lineHeight: 17 },
-  bubbleTime: { fontSize: 9, color: '#6b7280', alignSelf: 'flex-end' },
-  typingDots: { fontSize: 13, color: '#6b7280', letterSpacing: 4 },
+  bubbleLeft:  { alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderBottomLeftRadius: 4 },
+  bubbleRight: { alignSelf: 'flex-end',   backgroundColor: 'rgba(6,182,212,0.18)',   borderWidth: 1, borderColor: 'rgba(6,182,212,0.35)',   borderBottomRightRadius: 4 },
+  bubbleName: { fontSize: 10, fontWeight: '800', color: '#f87171', marginBottom: 1 },
+  bubbleText: { fontSize: 12, color: '#e2e8f0', lineHeight: 17 },
+  bubbleTime: { fontSize: 9, color: '#64748b', alignSelf: 'flex-end' },
+  typingDots: { fontSize: 13, color: '#64748b', letterSpacing: 4 },
 
   closingHint: { padding: 12, alignItems: 'center', backgroundColor: 'rgba(74,222,128,0.08)', borderRadius: 10, marginTop: 4 },
   closingTxt: { fontSize: 12, color: '#4ade80', fontWeight: '700' },
@@ -567,8 +591,8 @@ const s = StyleSheet.create({
   quickBtn: { paddingHorizontal: 10, paddingVertical: 5, backgroundColor: 'rgba(6,182,212,0.1)', borderWidth: 1, borderColor: 'rgba(6,182,212,0.25)', borderRadius: 20 },
   quickBtnTxt: { fontSize: 11, color: '#67e8f9', fontWeight: '600', whiteSpace: 'nowrap' as any },
 
-  inputRow: { flexDirection: 'row', gap: 8, padding: 10, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.06)' },
-  input: { flex: 1, backgroundColor: '#f9fafb', borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9, fontSize: 13, color: '#111827' },
+  inputRow: { flexDirection: 'row', gap: 8, padding: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.07)' },
+  input: { flex: 1, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9, fontSize: 13, color: '#e2e8f0' },
   sendBtn: { width: 42, height: 42, borderRadius: 12, backgroundColor: 'rgba(6,182,212,0.2)', borderWidth: 1, borderColor: 'rgba(6,182,212,0.4)', alignItems: 'center', justifyContent: 'center' },
   sendBtnTxt: { fontSize: 17, color: '#06b6d4' },
 });
