@@ -1,4 +1,4 @@
-// Карточки траков поверх карты — без фона, только карточки
+﻿// Карточки траков поверх карты — без фона, только карточки
 import React, { memo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useThemeStore } from '../store/themeStore';
@@ -114,15 +114,23 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
               flexDirection: 'row',
               overflow: 'visible',
               fontFamily: 'sans-serif',
-              boxShadow: 'none',
+              boxShadow: isDark
+                ? '-10px -2px 20px rgba(0,0,0,0.22), -4px -1px 10px rgba(0,0,0,0.14)'
+                : '-10px -2px 20px rgba(0,0,0,0.09), -4px -1px 10px rgba(0,0,0,0.05)',
               transform: 'translateY(-3px)',
-              transition: 'border 0.2s, transform 0.15s',
+              transition: 'border 0.2s, transform 0.15s, box-shadow 0.15s',
             } as any}
             onMouseEnter={e => {
               (e.currentTarget as HTMLElement).style.transform = 'translateY(-6px)';
+              (e.currentTarget as HTMLElement).style.boxShadow = isDark
+                ? '-12px -3px 26px rgba(0,0,0,0.28), -5px -1px 12px rgba(0,0,0,0.18)'
+                : '-12px -3px 26px rgba(0,0,0,0.11), -5px -1px 12px rgba(0,0,0,0.06)';
             }}
             onMouseLeave={e => {
               (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)';
+              (e.currentTarget as HTMLElement).style.boxShadow = isDark
+                ? '-10px -2px 20px rgba(0,0,0,0.22), -4px -1px 10px rgba(0,0,0,0.14)'
+                : '-10px -2px 20px rgba(0,0,0,0.09), -4px -1px 10px rgba(0,0,0,0.05)';
             }}
           >
             {/* Внутренний контейнер с overflow:hidden чтобы не обрезать тень снаружи */}
@@ -225,9 +233,26 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
         gap: 4, padding: '8px 4px', cursor: 'pointer',
+        boxShadow: isDark
+          ? '-10px -2px 20px rgba(0,0,0,0.22), -4px -1px 10px rgba(0,0,0,0.14)'
+          : '-10px -2px 20px rgba(0,0,0,0.09), -4px -1px 10px rgba(0,0,0,0.05)',
+        transform: 'translateY(-3px)',
+        transition: 'background 0.2s, transform 0.15s, box-shadow 0.15s',
       } as any}
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(6,182,212,0.08)' : 'rgba(0,122,255,0.1)'; }}
-        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,122,255,0.04)'; }}
+        onMouseEnter={e => {
+          (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(6,182,212,0.08)' : 'rgba(0,122,255,0.1)';
+          (e.currentTarget as HTMLElement).style.transform = 'translateY(-6px)';
+          (e.currentTarget as HTMLElement).style.boxShadow = isDark
+            ? '-12px -3px 26px rgba(0,0,0,0.28), -5px -1px 12px rgba(0,0,0,0.18)'
+            : '-12px -3px 26px rgba(0,0,0,0.11), -5px -1px 12px rgba(0,0,0,0.06)';
+        }}
+        onMouseLeave={e => {
+          (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,122,255,0.04)';
+          (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)';
+          (e.currentTarget as HTMLElement).style.boxShadow = isDark
+            ? '-10px -2px 20px rgba(0,0,0,0.22), -4px -1px 10px rgba(0,0,0,0.14)'
+            : '-10px -2px 20px rgba(0,0,0,0.09), -4px -1px 10px rgba(0,0,0,0.05)';
+        }}
       >
         <div style={{ width: 28, height: 28, borderRadius: '50%', background: isDark ? 'rgba(56,189,248,0.12)' : 'rgba(0,122,255,0.1)', border: `1.5px solid ${isDark ? 'rgba(56,189,248,0.35)' : 'rgba(0,122,255,0.35)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: isDark ? '#38bdf8' : '#007aff' } as any}>+</div>
         <span style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#38bdf8' : '#007aff', textAlign: 'center', lineHeight: 1.3 } as any}>Купить{'\n'}трак</span>
