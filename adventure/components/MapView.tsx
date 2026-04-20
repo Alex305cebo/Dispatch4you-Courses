@@ -1329,9 +1329,6 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
     zoomControl.plusButton.set("visible", false);
     zoomControl.minusButton.set("visible", false);
     zoomControl.set("forceHidden" as any, true);
-    zoomControl.set("opacity" as any, 0);
-    zoomControl.set("interactive" as any, false);
-    try { zoomControl.dispose(); } catch (_) {}
 
     function handleZoomToTruck(e: Event) {
       const { lng, lat, slow, mobile } = (e as CustomEvent).detail;
