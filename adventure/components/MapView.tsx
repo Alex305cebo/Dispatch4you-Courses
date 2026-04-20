@@ -1329,6 +1329,9 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
     zoomControl.plusButton.set("visible", false);
     zoomControl.minusButton.set("visible", false);
     zoomControl.set("forceHidden" as any, true);
+    zoomControl.set("opacity" as any, 0);
+    zoomControl.set("interactive" as any, false);
+    try { zoomControl.dispose(); } catch (_) {}
 
     function handleZoomToTruck(e: Event) {
       const { lng, lat, slow, mobile } = (e as CustomEvent).detail;
@@ -1510,12 +1513,19 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
 
   const mapBtnStyle = (active = false) => ({
     width: 44, height: 44, borderRadius: 12,
-    background: active ? "rgba(0,122,255,0.12)" : "rgba(255,255,255,0.95)",
-    border: active ? "1.5px solid rgba(0,122,255,0.6)" : "1.5px solid rgba(0,0,0,0.1)",
+    background: active
+      ? (themeMode === 'dark' ? "rgba(56,189,248,0.15)" : "rgba(0,122,255,0.12)")
+      : (themeMode === 'dark' ? "rgba(15,25,50,0.92)" : "rgba(255,255,255,0.95)"),
+    border: active
+      ? (themeMode === 'dark' ? "1.5px solid rgba(56,189,248,0.7)" : "1.5px solid rgba(0,122,255,0.6)")
+      : (themeMode === 'dark' ? "1.5px solid rgba(255,255,255,0.15)" : "1.5px solid rgba(0,0,0,0.1)"),
     boxShadow: active
-      ? "0 0 10px rgba(0,122,255,0.3)"
-      : "0 2px 6px rgba(0,0,0,0.1)",
-    cursor: "pointer", fontSize: 20, fontWeight: 700, color: active ? "#007aff" : "#374151",
+      ? (themeMode === 'dark' ? "0 0 12px rgba(56,189,248,0.5)" : "0 0 10px rgba(0,122,255,0.3)")
+      : (themeMode === 'dark' ? "0 2px 8px rgba(0,0,0,0.5)" : "0 2px 6px rgba(0,0,0,0.1)"),
+    cursor: "pointer", fontSize: 20, fontWeight: 700,
+    color: active
+      ? (themeMode === 'dark' ? "#38bdf8" : "#007aff")
+      : (themeMode === 'dark' ? "#e2e8f0" : "#374151"),
     display: "flex", alignItems: "center", justifyContent: "center",
     transition: "all 0.15s", padding: 0,
     animation: active ? "follow-pulse 1.5s ease-in-out infinite" : "none",
@@ -1720,11 +1730,11 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
           zIndex: 200,
           pointerEvents: mapBtnsVisible ? "auto" : "none",
           display: "flex", flexDirection: "column", gap: 6,
-          background: "rgba(255,255,255,0.95)",
-          border: "1px solid rgba(0,122,255,0.3)",
+          background: themeMode === 'dark' ? "rgba(10,18,38,0.92)" : "rgba(255,255,255,0.95)",
+          border: themeMode === 'dark' ? "1px solid rgba(56,189,248,0.15)" : "1px solid rgba(0,122,255,0.3)",
           borderRadius: 16, padding: "8px 6px",
           backdropFilter: "blur(8px)",
-          boxShadow: "0 2px 12px rgba(0,0,0,0.1)",
+          boxShadow: themeMode === 'dark' ? "0 4px 20px rgba(0,0,0,0.5)" : "0 2px 12px rgba(0,0,0,0.1)",
           opacity: mapBtnsVisible ? 1 : 0.12,
           transition: "opacity 0.6s ease, border-color 0.3s ease",
         } as any}>
@@ -1733,10 +1743,10 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
           style={mapBtnStyle()}>🏠</button>
         {/* + Zoom in */}
         <button onClick={() => { resetMapBtnsTimer(); chartRef.current?.zoomIn(); }} title="Приблизить"
-          style={{ ...mapBtnStyle(), fontSize: 22, fontWeight: 900, color: "#007aff" }}>＋</button>
+          style={{ ...mapBtnStyle(), fontSize: 22, fontWeight: 900, color: themeMode === 'dark' ? "#38bdf8" : "#007aff" }}>＋</button>
         {/* − Zoom out */}
         <button onClick={() => { resetMapBtnsTimer(); chartRef.current?.zoomOut(); }} title="Отдалить"
-          style={{ ...mapBtnStyle(), fontSize: 22, fontWeight: 900, color: "#6b7280" }}>－</button>
+          style={{ ...mapBtnStyle(), fontSize: 22, fontWeight: 900, color: themeMode === 'dark' ? "#94a3b8" : "#6b7280" }}>－</button>
         {/* placeholder для сохранения высоты контейнера */}
         <div style={{ width: 44, height: 44 } as any} />
       </div>
@@ -1774,10 +1784,11 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         } as any : {
           position: "absolute", right: 16, bottom: 16, zIndex: 202,
           width: 44, height: 44, borderRadius: 12,
-          background: "rgba(255,255,255,0.95)",
-          border: "1.5px solid rgba(0,0,0,0.1)",
-          boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-          cursor: "pointer", fontSize: 22, fontWeight: 700, color: "#374151",
+          background: themeMode === 'dark' ? "rgba(15,25,50,0.92)" : "rgba(255,255,255,0.95)",
+          border: themeMode === 'dark' ? "1.5px solid rgba(255,255,255,0.15)" : "1.5px solid rgba(0,0,0,0.1)",
+          boxShadow: themeMode === 'dark' ? "0 2px 8px rgba(0,0,0,0.5)" : "0 2px 6px rgba(0,0,0,0.1)",
+          cursor: "pointer", fontSize: 22, fontWeight: 700,
+          color: themeMode === 'dark' ? "#e2e8f0" : "#374151",
           display: "flex", alignItems: "center", justifyContent: "center",
           padding: 0, opacity: mapBtnsVisible ? 1 : 0.12,
           pointerEvents: mapBtnsVisible ? "auto" : "none",
