@@ -173,6 +173,13 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
   const historySeriesRef = useRef<any>(null);
   const polygonSeriesRef = useRef<any>(null);
   const intervalRef = useRef<any>(null);
+  const isMountedRef = useRef(true);
+
+  // Сбрасываем isMountedRef при каждом монтировании
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
   const antLinesRef = useRef<any[]>([]);
   // Предзагруженная картинка грузовика — загружается один раз
   const lorryImgRef = useRef<HTMLImageElement | null>(null);
@@ -402,6 +409,7 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
     visibleCardsRef.current.add(truckId);
     clearTimeout(cardTimersRef.current[truckId]);
     cardTimersRef.current[truckId] = setTimeout(() => {
+      if (!isMountedRef.current) return;
       visibleCardsRef.current.delete(truckId);
       if (rootRef.current && chartRef.current) {
         rebuildTruckSeries(rootRef.current, chartRef.current);
@@ -760,14 +768,17 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
       return;
     }
     // Fade out всей серии целиком — это работает надёжно в amCharts5
-    oldSeries.animate({ key: "opacity" as any, to: 0, duration: 280 });
+    try { oldSeries.animate({ key: "opacity" as any, to: 0, duration: 280 }); } catch (_) {}
     setTimeout(() => {
+      if (!isMountedRef.current || !rootRef.current) return;
       rebuildTruckSeries(root, chart);
       const newSeries = truckSeriesRef.current;
       if (!newSeries) return;
       // Стартуем с opacity=0 и плавно показываем
-      newSeries.set("opacity" as any, 0);
-      newSeries.animate({ key: "opacity" as any, from: 0, to: 1, duration: 350 });
+      try {
+        newSeries.set("opacity" as any, 0);
+        newSeries.animate({ key: "opacity" as any, from: 0, to: 1, duration: 350 });
+      } catch (_) {}
     }, 290);
   }
 
@@ -1431,9 +1442,13 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
     }, 10000);
 
     return () => {
+      isMountedRef.current = false;
       clearInterval(intervalRef.current);
       clearInterval(antIntervalRef.current);
       clearInterval(colorIntervalRef.current);
+      // Очищаем все таймеры карточек
+      Object.values(cardTimersRef.current).forEach(t => clearTimeout(t));
+      cardTimersRef.current = {};
       intervalRef.current = null;
       antIntervalRef.current = null;
       colorIntervalRef.current = null;
@@ -1457,14 +1472,6 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
     chart.get("background")?.setAll({ fill: am5.color(bgColor) });
     root.interfaceColors.set("background" as any, am5.color(bgColor));
     root.interfaceColors.set("alternativeBackground" as any, am5.color(bgColor));
-    // Скрываем selection highlight который появляется при смене темы
-    root.interfaceColors.set("primaryButton" as any, am5.color(isDarkNow ? 0x0a84ff : 0x007aff));
-    root.interfaceColors.set("primaryButtonHover" as any, am5.color(isDarkNow ? 0x0a84ff : 0x007aff));
-    root.interfaceColors.set("primaryButtonDown" as any, am5.color(isDarkNow ? 0x0a84ff : 0x007aff));
-    root.interfaceColors.set("secondaryButton" as any, am5.color(bgColor));
-    root.interfaceColors.set("secondaryButtonHover" as any, am5.color(bgColor));
-    root.interfaceColors.set("secondaryButtonDown" as any, am5.color(bgColor));
-    root.interfaceColors.set("secondaryButtonStroke" as any, am5.color(bgColor));
 
     // Скрываем все дефолтные amCharts UI элементы которые могут появиться
     try {
@@ -1472,6 +1479,12 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         const cls = child?.className ?? '';
         if (cls.includes('Legend') || cls.includes('Scrollbar') || cls.includes('ZoomControl')) {
           child.set('visible', false);
+        }
+      });
+      // Скрываем все дочерние элементы root кроме основного chart контейнера
+      root.container.children.each((child: any) => {
+        if (child !== chart) {
+          try { child.set('visible', false); } catch (_) {}
         }
       });
     } catch (_) {}
@@ -2203,6 +2216,14 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
           opacity: 0 !important;
           pointer-events: none !important;
           visibility: hidden !important;
+        }
+
+        /* Скрываем ВСЕ нативные кнопки amCharts */
+        .am5-button,
+        [class*="am5-button"],
+        [class*="am5-Button"],
+        [class*="am5-RoundedRectangle"]:not([class*="am5-MapPolygon"]):not([class*="am5-MapLine"]) {
+          pointer-events: none !important;
         }
         
         /* Убираем белый фон amCharts контейнера */
