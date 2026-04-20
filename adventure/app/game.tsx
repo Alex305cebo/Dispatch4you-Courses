@@ -114,6 +114,76 @@ function getTruckColor(truck: any, gameMinute = 0): string {
   return STATUS_COLOR[truck.status] || '#38bdf8';
 }
 
+// ── STATIC STYLES (defined before GameScreen to avoid TDZ) ──────────────────
+const BG = '#f2f2f7';
+const BG2 = '#ffffff';
+const BORDER = 'rgba(0,0,0,0.08)';
+const PRIMARY = '#007aff';
+
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: BG },
+  topBar: { flexDirection: 'row', alignItems: 'center', height: 44, paddingHorizontal: 10, gap: 8, backgroundColor: BG2, borderBottomWidth: 1, borderBottomColor: BORDER },
+  timeBlock: { minWidth: 60 },
+  timeText: { fontSize: 14, fontWeight: '800', color: '#111827', letterSpacing: 0.3 },
+  sessionText: { fontSize: 8, color: PRIMARY, fontWeight: '700', marginTop: 1 },
+  progressWrap: { flex: 1, gap: 3 },
+  progressTrack: { height: 2, backgroundColor: 'rgba(0,0,0,0.06)', borderRadius: 2, overflow: 'hidden' },
+  progressFill: { height: '100%', backgroundColor: PRIMARY, borderRadius: 2 },
+  speedRow: { flexDirection: 'row', gap: 2 },
+  speedBtn: { paddingHorizontal: 5, paddingVertical: 1, backgroundColor: '#f3f4f6', borderRadius: 4, borderWidth: 1, borderColor: BORDER },
+  speedBtnOn: { backgroundColor: 'rgba(0,122,255,0.12)', borderColor: PRIMARY },
+  speedTxt: { fontSize: 9, color: '#6b7280', fontWeight: '700' },
+  speedTxtOn: { color: PRIMARY },
+  statsRow: { flexDirection: 'row', gap: 5 },
+  statChip: { paddingHorizontal: 6, paddingVertical: 3, backgroundColor: '#f3f4f6', borderRadius: 6, borderWidth: 1, borderColor: BORDER },
+  statVal: { fontSize: 11, fontWeight: '800', color: '#111827' },
+  actionsRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  truckStrip: { maxHeight: 120, backgroundColor: 'transparent', borderBottomWidth: 0 },
+  truckStripContent: { paddingHorizontal: 8, paddingVertical: 6, gap: 6, flexDirection: 'row' },
+  truckCard: { width: 100, borderRadius: 8, backgroundColor: '#f9fafb', borderWidth: 1, borderColor: BORDER, overflow: 'hidden' },
+  truckCardOn: { backgroundColor: 'rgba(0,122,255,0.06)' },
+  truckCardBar: { height: 3, width: '100%' },
+  truckCardBody: { padding: 6, gap: 2 },
+  truckCardName: { fontSize: 11, fontWeight: '900', color: '#111827' },
+  truckCardStatus: { fontSize: 9, fontWeight: '700' },
+  truckCardRoute: { fontSize: 8, color: '#6b7280' },
+  truckCardHos: { fontSize: 8, fontWeight: '700', marginTop: 2 },
+  truckCardProgress: { height: 2, backgroundColor: '#e5e7eb', borderRadius: 1, overflow: 'hidden', marginTop: 4 },
+  truckCardProgressFill: { height: '100%', borderRadius: 1 },
+  desktop: { flex: 1, flexDirection: 'row' },
+  leftCol: { flex: 1, flexDirection: 'column', backgroundColor: 'transparent' },
+  mapArea: { flex: 1, backgroundColor: 'transparent', position: 'relative' },
+  rightCol: { width: 400, flexDirection: 'column', backgroundColor: BG2, borderLeftWidth: 1, borderLeftColor: BORDER },
+  sideTabs: { flexDirection: 'row', gap: 6, paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: BORDER },
+  sideTab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 12, borderWidth: 1.5, borderColor: 'rgba(0,0,0,0.08)', flexDirection: 'row', justifyContent: 'center', gap: 5, backgroundColor: '#f3f4f6' },
+  sideTabOn: { backgroundColor: 'rgba(0,122,255,0.12)', borderColor: '#007aff', shadowColor: '#007aff', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 },
+  sideTabTxt: { fontSize: 13, fontWeight: '700', color: '#6b7280' },
+  sideTabTxtOn: { color: '#007aff', fontWeight: '900' },
+  panelContent: { flex: 1 },
+  emptyPanel: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  emptyTxt: { fontSize: 14, color: '#9ca3af' },
+  mobile: { flex: 1, flexDirection: 'column', backgroundColor: 'transparent' },
+  mobileContent: { flex: 1, backgroundColor: 'transparent', position: 'relative' },
+  mobileLandscape: { flex: 1, flexDirection: 'column', backgroundColor: 'transparent' },
+  landscapeBody: { flex: 1, flexDirection: 'row', backgroundColor: 'transparent' },
+  landscapeMap: { flex: 1, position: 'relative', backgroundColor: 'transparent' },
+  landscapePanel: { width: 320, flexDirection: 'column', backgroundColor: BG2, borderLeftWidth: 1, borderLeftColor: BORDER },
+  mobilePanelOverlay: { position: 'absolute', top: '13%' as any, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(242,242,247,0.96)', borderTopLeftRadius: 20, borderTopRightRadius: 20, overflow: 'hidden', zIndex: 10 },
+  mobileTopBar: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100 },
+  truckStripBar: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: 'transparent', zIndex: 20 },
+  bottomTabs: { flexDirection: 'row', paddingHorizontal: 4, paddingVertical: 5, backgroundColor: BG2, borderTopWidth: 1, borderTopColor: BORDER },
+  bottomTab: { flex: 1, paddingVertical: 9, alignItems: 'center', borderRadius: 10, borderWidth: 0, flexDirection: 'row', justifyContent: 'center', gap: 4, backgroundColor: 'transparent' },
+  bottomTabOn: { backgroundColor: '#fff', borderRadius: 10 },
+  bottomTabTxt: { fontSize: 12, fontWeight: '600', color: '#6b7280' },
+  bottomTabTxtOn: { color: '#111827', fontWeight: '800' },
+  badge: { backgroundColor: '#ef4444', borderRadius: 9, paddingHorizontal: 5, paddingVertical: 1, minWidth: 17, alignItems: 'center' },
+  badgeTxt: { fontSize: 10, fontWeight: '800', color: '#fff' },
+  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalBox: { backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: BORDER, width: '100%', maxWidth: 600, maxHeight: '85%', overflow: 'hidden' },
+  modalCloseBtn: { position: 'absolute', top: 12, right: 12, zIndex: 10, width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(0,0,0,0.06)', alignItems: 'center', justifyContent: 'center' },
+  modalCloseTxt: { fontSize: 12, color: '#6b7280', fontWeight: '700' },
+});
+
 export default function GameScreen() {
   const router = useRouter();
   const { width, height } = useWindowDimensions();
@@ -1378,198 +1448,4 @@ function Modal({ children, onClose }: { children: any; onClose: () => void }) {
     </TouchableOpacity>
   );
 }
-
-const BG = '#f2f2f7';
-const BG2 = '#ffffff';
-const BORDER = 'rgba(0,0,0,0.08)';
-const PRIMARY = '#007aff';
-
-const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: BG },
-
-  // ── TOP BAR ──
-  topBar: {
-    flexDirection: 'row', alignItems: 'center',
-    height: 44, paddingHorizontal: 10, gap: 8,
-    backgroundColor: BG2,
-    borderBottomWidth: 1, borderBottomColor: BORDER,
-  },
-  timeBlock: { minWidth: 60 },
-  timeText: { fontSize: 14, fontWeight: '800', color: '#111827', letterSpacing: 0.3 },
-  sessionText: { fontSize: 8, color: PRIMARY, fontWeight: '700', marginTop: 1 },
-
-  progressWrap: { flex: 1, gap: 3 },
-  progressTrack: {
-    height: 2, backgroundColor: 'rgba(255,255,255,0.07)',
-    borderRadius: 2, overflow: 'hidden',
-  },
-  progressFill: { height: '100%', backgroundColor: PRIMARY, borderRadius: 2 },
-  speedRow: { flexDirection: 'row', gap: 2 },
-  speedBtn: {
-    paddingHorizontal: 5, paddingVertical: 1,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 4, borderWidth: 1, borderColor: BORDER,
-  },
-  speedBtnOn: { backgroundColor: 'rgba(56,189,248,0.15)', borderColor: PRIMARY },
-  speedTxt: { fontSize: 9, color: '#6b7280', fontWeight: '700' },
-  speedTxtOn: { color: PRIMARY },
-
-  statsRow: { flexDirection: 'row', gap: 5 },
-  statChip: {
-    paddingHorizontal: 6, paddingVertical: 3,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderRadius: 6, borderWidth: 1, borderColor: BORDER,
-  },
-  statVal: { fontSize: 11, fontWeight: '800', color: '#111827' },
-
-  actionsRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-
-  // ── TRUCK STRIP ──
-  truckStrip: { maxHeight: 120, backgroundColor: 'transparent', borderBottomWidth: 0 },
-  truckStripContent: { paddingHorizontal: 8, paddingVertical: 6, gap: 6, flexDirection: 'row' },
-  truckCard: {
-    width: 100, borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderWidth: 1, borderColor: BORDER,
-    overflow: 'hidden',
-  },
-  truckCardOn: { backgroundColor: 'rgba(56,189,248,0.06)' },
-  truckCardBar: { height: 3, width: '100%' },
-  truckCardBody: { padding: 6, gap: 2 },
-  truckCardName: { fontSize: 11, fontWeight: '900', color: '#111827' },
-  truckCardStatus: { fontSize: 9, fontWeight: '700' },
-  truckCardRoute: { fontSize: 8, color: '#6b7280' },
-  truckCardHos: { fontSize: 8, fontWeight: '700', marginTop: 2 },
-  truckCardProgress: {
-    height: 2, backgroundColor: 'rgba(255,255,255,0.07)',
-    borderRadius: 1, overflow: 'hidden', marginTop: 4,
-  },
-  truckCardProgressFill: { height: '100%', borderRadius: 1 },
-
-  // ── DESKTOP ──
-  desktop: { flex: 1, flexDirection: 'row' },
-  leftCol: { flex: 1, flexDirection: 'column', backgroundColor: 'transparent' },
-  mapArea: { flex: 1, backgroundColor: 'transparent', position: 'relative' },
-  rightCol: {
-    width: 400, flexDirection: 'column',
-    backgroundColor: BG2,
-    borderLeftWidth: 1, borderLeftColor: BORDER,
-  },
-
-  sideTabs: {
-    flexDirection: 'row', gap: 6,
-    paddingHorizontal: 10, paddingVertical: 8,
-    borderBottomWidth: 1, borderBottomColor: BORDER,
-  },
-  sideTab: {
-    flex: 1, paddingVertical: 10, alignItems: 'center',
-    borderRadius: 12, borderWidth: 1.5, borderColor: 'rgba(0,0,0,0.08)',
-    flexDirection: 'row', justifyContent: 'center', gap: 5,
-    backgroundColor: '#f3f4f6',
-  },
-  sideTabOn: {
-    backgroundColor: 'rgba(0,122,255,0.12)',
-    borderColor: '#007aff',
-    shadowColor: '#007aff',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  sideTabTxt: { fontSize: 13, fontWeight: '700', color: '#6b7280' },
-  sideTabTxtOn: { color: '#007aff', fontWeight: '900' },
-  panelContent: { flex: 1 },
-  emptyPanel: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  emptyTxt: { fontSize: 14, color: '#9ca3af' },
-
-  // ── MOBILE PORTRAIT ──
-  mobile: { flex: 1, flexDirection: 'column', backgroundColor: 'transparent' },
-  mobileContent: { flex: 1, backgroundColor: 'transparent', position: 'relative' },
-
-  // ── MOBILE LANDSCAPE ──
-  mobileLandscape: { flex: 1, flexDirection: 'column', backgroundColor: 'transparent' },
-  landscapeBody: { flex: 1, flexDirection: 'row', backgroundColor: 'transparent' },
-  landscapeMap: { flex: 1, position: 'relative', backgroundColor: 'transparent' },
-  landscapePanel: {
-    width: 320,
-    flexDirection: 'column',
-    backgroundColor: BG2,
-    borderLeftWidth: 1,
-    borderLeftColor: BORDER,
-  },
-
-  mobilePanelOverlay: {
-    position: 'absolute',
-    top: '13%' as any,
-    left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(242,242,247,0.96)',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    overflow: 'hidden',
-    zIndex: 10,
-  },
-  mobileTopBar: {
-    position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100,
-  },
-
-  // ── TRUCK STRIP BAR (поверх карты, сверху) ──
-  truckStripBar: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'transparent',
-    zIndex: 20,
-  },
-  bottomTabs: {
-    flexDirection: 'row',
-    paddingHorizontal: 4,
-    paddingVertical: 5,
-    paddingBottom: Platform.OS === 'ios' ? 20 : 5,
-    backgroundColor: BG2,
-    borderTopWidth: 1, borderTopColor: BORDER,
-    // @ts-ignore
-    paddingBottom: 'max(5px, env(safe-area-inset-bottom))',
-  },
-  // Общая pill-подложка — рисуется через inline style на View-обёртке
-  bottomTab: {
-    flex: 1, paddingVertical: 9, alignItems: 'center',
-    borderRadius: 10, borderWidth: 0,
-    flexDirection: 'row', justifyContent: 'center', gap: 4,
-    backgroundColor: 'transparent',
-  },
-  bottomTabOn: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-  },
-  bottomTabTxt: { fontSize: 12, fontWeight: '600', color: '#6b7280' },
-  bottomTabTxtOn: { color: '#111827', fontWeight: '800' },
-
-  // ── BADGE ──
-  badge: {
-    backgroundColor: '#ef4444',
-    borderRadius: 9, paddingHorizontal: 5, paddingVertical: 1,
-    minWidth: 17, alignItems: 'center',
-  },
-  badgeTxt: { fontSize: 10, fontWeight: '800', color: '#fff' },
-
-  // ── MODAL ──
-  overlay: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.75)',
-    justifyContent: 'center', alignItems: 'center', padding: 20,
-  },
-  modalBox: {
-    backgroundColor: '#ffffff', borderRadius: 16,
-    borderWidth: 1, borderColor: BORDER,
-    width: '100%', maxWidth: 600, maxHeight: '85%', overflow: 'hidden',
-  },
-  modalCloseBtn: {
-    position: 'absolute', top: 12, right: 12, zIndex: 10,
-    width: 28, height: 28, borderRadius: 14,
-    backgroundColor: 'rgba(0,0,0,0.06)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  modalCloseTxt: { fontSize: 12, color: '#6b7280', fontWeight: '700' },
-});
 
