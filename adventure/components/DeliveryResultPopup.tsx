@@ -1,6 +1,8 @@
-﻿import { useState } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useGameStore, DeliveryResult } from '../store/gameStore';
+import { useTheme } from '../hooks/useTheme';
+import { ThemeColors } from '../constants/themes';
 
 // ─── Чат с брокером после доставки ──────────────────────────────────────────
 const BROKER_CHAT = [
@@ -20,6 +22,7 @@ const QUICK_REPLIES_DRIVER = [
 ];
 
 export default function DeliveryResultPopup() {
+  const T = useTheme();
   const { deliveryResults, dismissDeliveryResult } = useGameStore();
   const [tab, setTab] = useState<'pnl' | 'broker' | 'driver'>('pnl');
   const [brokerMsgs, setBrokerMsgs] = useState<string[]>([]);

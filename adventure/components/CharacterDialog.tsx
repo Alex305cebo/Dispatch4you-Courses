@@ -18,7 +18,7 @@ interface CharacterDialogProps {
   onBack?: () => void; // возврат к пикеру персонажей
 }
 
-const PLAYER_AVATAR = '/assets/avatar-dispatcher.png';
+const DISPATCHER_AVATAR = 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People%20with%20professions/Man%20Technologist%20Medium-Light%20Skin%20Tone.png';
 
 export default function CharacterDialog({ visible, character, steps, onClose, onComplete, onBack }: CharacterDialogProps) {
   const { addMessage, getThread, loadFromProfile, saveToProfile } = useChatStore();
@@ -282,8 +282,8 @@ function MessageBubble({ msg, characterAvatar, opacity = 1 }: {
       opacity,
     } as any}>
       <img
-        src={msg.from === 'character' ? characterAvatar : '/assets/avatar-dispatcher.png'}
-        width={52} height={52}
+        src={msg.from === 'character' ? characterAvatar : DISPATCHER_AVATAR}
+        width={72} height={72}
         style={{ flexShrink: 0, objectFit: 'contain' } as any}
         onError={(e: any) => { e.target.style.opacity = '0'; }}
       />

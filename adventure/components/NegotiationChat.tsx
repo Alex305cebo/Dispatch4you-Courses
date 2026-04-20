@@ -1,7 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { Colors } from '../constants/colors';
 import { useGameStore, LoadOffer, ActiveLoad } from '../store/gameStore';
+import { useTheme } from '../hooks/useTheme';
+import { ThemeColors } from '../constants/themes';
 
 interface Message {
   from: 'broker' | 'me';
@@ -44,6 +46,8 @@ function getBrokerReply(myOffer: number, load: LoadOffer, round: number): {
 const MOOD_EMOJI: Record<string, string> = { happy: '😊', neutral: '😐', annoyed: '😤', angry: '😠' };
 
 export default function NegotiationChat({ visible, load, onClose, onAccepted }: Props) {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   const { brokers } = useGameStore();
   const scrollRef = useRef<ScrollView>(null);
   const gameMinute = useGameStore(s => s.gameMinute);
@@ -211,20 +215,21 @@ export default function NegotiationChat({ visible, load, onClose, onAccepted }: 
   );
 }
 
-const s = StyleSheet.create({
+function makeStyles(T: ThemeColors) {
+  return StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center', padding: 16 },
-  modal: { backgroundColor: '#080e1c', borderRadius: 22, borderWidth: 1, borderColor: '#1e2d45', maxHeight: '90%', width: '100%', maxWidth: 520 },
-  header: { flexDirection: 'row', alignItems: 'flex-start', padding: 14, borderBottomWidth: 1, borderBottomColor: '#1e2d45', gap: 10 },
+  modal: { backgroundColor: T.bg, borderRadius: 22, borderWidth: 1, borderColor: T.bgCard, maxHeight: '90%', width: '100%', maxWidth: 520 },
+  header: { flexDirection: 'row', alignItems: 'flex-start', padding: 14, borderBottomWidth: 1, borderBottomColor: T.bgCard, gap: 10 },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   brokerAvatar: { fontSize: 28 },
-  brokerName: { fontSize: 14, fontWeight: '800', color: '#fff' },
-  brokerCompany: { fontSize: 11, color: '#64748b' },
+  brokerName: { fontSize: 14, fontWeight: '800', color: T.text },
+  brokerCompany: { fontSize: 11, color: T.textMuted },
   headerRight: { flex: 1 },
   loadRoute: { fontSize: 12, fontWeight: '700', color: Colors.primary },
-  loadMeta: { fontSize: 10, color: '#94a3b8', marginTop: 2 },
+  loadMeta: { fontSize: 10, color: T.textMuted, marginTop: 2 },
   loadMarket: { fontSize: 10, color: '#4ade80', marginTop: 1 },
-  closeBtn: { width: 26, height: 26, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' },
-  closeBtnText: { fontSize: 13, color: '#94a3b8' },
+  closeBtn: { width: 26, height: 26, borderRadius: 13, backgroundColor: T.border, alignItems: 'center', justifyContent: 'center' },
+  closeBtnText: { fontSize: 13, color: T.textMuted },
   chat: { flex: 1, maxHeight: 300 },
   chatContent: { padding: 14, gap: 10 },
   bubble: { flexDirection: 'row', alignItems: 'flex-end', gap: 6 },
@@ -233,10 +238,10 @@ const s = StyleSheet.create({
   bubbleAvatar: { fontSize: 20, marginBottom: 2 },
   bubbleBody: { maxWidth: '78%', borderRadius: 14, padding: 10 },
   bubbleBodyMe: { backgroundColor: Colors.primary, borderBottomRightRadius: 4 },
-  bubbleBodyBroker: { backgroundColor: '#0d1526', borderWidth: 1, borderColor: '#1e2d45', borderBottomLeftRadius: 4 },
+  bubbleBodyBroker: { backgroundColor: T.bgCard, borderWidth: 1, borderColor: T.border, borderBottomLeftRadius: 4 },
   bubbleText: { fontSize: 13, lineHeight: 19 },
   bubbleTextMe: { color: '#fff', fontWeight: '600' },
-  bubbleTextBroker: { color: '#e2e8f0' },
+  bubbleTextBroker: { color: T.textSecondary },
   dealBanner: { alignItems: 'center', padding: 14, backgroundColor: 'rgba(34,197,94,0.1)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(34,197,94,0.3)', marginTop: 8 },
   dealIcon: { fontSize: 28, marginBottom: 4 },
   dealText: { fontSize: 16, fontWeight: '900', color: '#4ade80' },
@@ -244,17 +249,18 @@ const s = StyleSheet.create({
   rejectBanner: { alignItems: 'center', padding: 14, backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(239,68,68,0.3)', marginTop: 8 },
   rejectIcon: { fontSize: 28, marginBottom: 4 },
   rejectText: { fontSize: 14, fontWeight: '700', color: '#f87171' },
-  actions: { padding: 14, borderTopWidth: 1, borderTopColor: '#1e2d45', gap: 10 },
-  actionsLabel: { fontSize: 10, fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: 0.5 },
+  actions: { padding: 14, borderTopWidth: 1, borderTopColor: T.border, gap: 10 },
+  actionsLabel: { fontSize: 10, fontWeight: '700', color: T.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 },
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  tile: { paddingHorizontal: 14, paddingVertical: 10, backgroundColor: '#0d1526', borderRadius: 12, borderWidth: 1.5, borderColor: '#1e2d45', alignItems: 'center' },
-  tileVal: { fontSize: 14, fontWeight: '800', color: '#fff' },
+  tile: { paddingHorizontal: 14, paddingVertical: 10, backgroundColor: T.bgCard, borderRadius: 12, borderWidth: 1.5, borderColor: T.border, alignItems: 'center' },
+  tileVal: { fontSize: 14, fontWeight: '800', color: T.text },
   tileTag: { fontSize: 9, color: '#4ade80', fontWeight: '700', marginTop: 2 },
   acceptCounterBtn: { paddingVertical: 12, borderRadius: 12, backgroundColor: 'rgba(34,197,94,0.15)', borderWidth: 1, borderColor: 'rgba(34,197,94,0.3)', alignItems: 'center' },
   acceptCounterText: { fontSize: 14, fontWeight: '800', color: '#4ade80' },
-  footer: { flexDirection: 'row', gap: 10, padding: 14, borderTopWidth: 1, borderTopColor: '#1e2d45' },
-  cancelBtn: { flex: 1, paddingVertical: 13, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: '#1e2d45', alignItems: 'center' },
-  cancelText: { fontSize: 14, color: '#94a3b8', fontWeight: '600' },
+  footer: { flexDirection: 'row', gap: 10, padding: 14, borderTopWidth: 1, borderTopColor: T.border },
+  cancelBtn: { flex: 1, paddingVertical: 13, borderRadius: 12, backgroundColor: T.border, borderWidth: 1, borderColor: T.border, alignItems: 'center' },
+  cancelText: { fontSize: 14, color: T.textMuted, fontWeight: '600' },
   confirmBtn: { flex: 2, paddingVertical: 13, borderRadius: 12, backgroundColor: '#22c55e', alignItems: 'center' },
   confirmText: { fontSize: 14, fontWeight: '900', color: '#fff' },
-});
+  });
+}

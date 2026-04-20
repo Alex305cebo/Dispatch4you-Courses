@@ -6,27 +6,47 @@ export const CHARACTERS = {
   driver: {
     name: 'Джон',
     role: 'Водитель трака',
-    avatar: `${AVATARS_BASE}/driver.png`,
+    avatar: 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People%20with%20professions/Man%20Office%20Worker%20Light%20Skin%20Tone.png',
+  },
+  driver2: {
+    name: 'Майк',
+    role: 'Водитель трака',
+    avatar: 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People%20with%20professions/Man%20Pilot%20Dark%20Skin%20Tone.png',
+  },
+  driver3: {
+    name: 'Карлос',
+    role: 'Водитель трака',
+    avatar: 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People%20with%20professions/Older%20Person%20Medium-Light%20Skin%20Tone.png',
+  },
+  mechanic: {
+    name: 'Механик',
+    role: 'Механик',
+    avatar: 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People%20with%20professions/Mechanic%20Light%20Skin%20Tone.png',
   },
   broker: {
     name: 'Сара',
     role: 'Брокер',
-    avatar: `${AVATARS_BASE}/broker.png`,
+    avatar: 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People%20with%20professions/Person%20Light%20Skin%20Tone%2C%20Curly%20Hair.png',
   },
   owner: {
     name: 'Майк',
     role: 'Владелец компании',
-    avatar: `${AVATARS_BASE}/owner.png`,
+    avatar: 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People%20with%20professions/Person%20White%20Hair.png',
+  },
+  system: {
+    name: 'Dispatch Office',
+    role: 'Система',
+    avatar: 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Objects/Telephone.webp',
   },
   accountant: {
     name: 'Лиза',
     role: 'Бухгалтер',
-    avatar: `${AVATARS_BASE}/accountant.png`,
+    avatar: 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People%20with%20professions/Woman%20Curly%20Hair.png',
   },
   dispatcher: {
     name: 'Ты',
     role: 'Диспетчер',
-    avatar: `${AVATARS_BASE}/dispatcher.png`,
+    avatar: 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People%20with%20professions/Man%20Technologist%20Medium-Light%20Skin%20Tone.png',
   },
 };
 

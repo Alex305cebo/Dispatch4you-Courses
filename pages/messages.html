@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+"C:\DispatcherTraining\adventure\assets\graduates.png"<!DOCTYPE html>
 <html lang="ru" style="background:#070b14">
 <head>
     <script src="../site-protection.js"></script>
@@ -132,6 +132,13 @@
         .msg-meta{font-size:12px;color:#64748b;margin-top:4px}
         .msg-row.own .msg-meta{text-align:right;color:#94a3b8}
 
+        /* ═══ MESSAGE DIVIDER ═══ */
+        .msg-divider{
+            width:100%;height:1px;flex-shrink:0;
+            background:linear-gradient(90deg,transparent 0%,rgba(6,182,212,0.35) 30%,rgba(249,115,22,0.35) 70%,transparent 100%);
+            margin:4px 0;
+        }
+
         /* Spacer when no avatar (consecutive messages) */
         .msg-avatar-spacer{width:72px;flex-shrink:0}
 
@@ -213,10 +220,10 @@ import('../shared-nav.js').then(m => m.initSharedNav && m.initSharedNav());
 
 // ═══ AVATARS — local APNG files ═══
 const AVATAR_URLS = {
-    dispatcher: '../adventure/assets/avatars/dispatcher.png',
-    driver:     '../adventure/assets/avatars/driver.png',
-    broker:     '../adventure/assets/avatars/broker.png',
-    system:     '../adventure/assets/avatars/owner.png',
+    dispatcher: 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People%20with%20professions/Man%20Technologist%20Medium-Light%20Skin%20Tone.png',
+    driver:     'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People%20with%20professions/Man%20Office%20Worker%20Light%20Skin%20Tone.png',
+    broker:     'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People%20with%20professions/Person%20Light%20Skin%20Tone%2C%20Curly%20Hair.png',
+          system:     'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Objects/Telephone.webp',
 };
 
 function getAvatarImg(role, size=72) {
@@ -386,6 +393,7 @@ function renderMessages(thread) {
 
         const bubbleSide = isOwn ? 'right' : 'left';
 
+        const divider = i < thread.messages.length - 1 ? '<div class="msg-divider"></div>' : '';
         return `
         <div class="msg-row ${isOwn?'own':''}">
             ${avatarHtml}
@@ -396,7 +404,7 @@ function renderMessages(thread) {
                 </div>
                 <div class="msg-meta">${formatTime(msg.timestamp)}</div>
             </div>
-        </div>`;
+        </div>${divider}`;
     }).join('');
 
     setTimeout(() => { container.scrollTop = container.scrollHeight; }, 80);

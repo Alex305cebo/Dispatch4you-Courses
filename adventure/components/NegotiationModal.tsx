@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   TextInput, Modal, ScrollView, Animated,
@@ -7,6 +7,8 @@ import { Colors } from '../constants/colors';
 import { useGameStore, LoadOffer, ActiveLoad } from '../store/gameStore';
 import { cityState } from '../constants/config';
 import BrokerProfileModal from './BrokerProfileModal';
+import { useTheme } from '../hooks/useTheme';
+import { ThemeColors } from '../constants/themes';
 
 interface Props {
   onAssign: (load: ActiveLoad) => void;
@@ -16,6 +18,8 @@ type MsgType = 'broker' | 'you' | 'system';
 interface ChatMsg { type: MsgType; text: string; amount?: number }
 
 export default function NegotiationModal({ onAssign }: Props) {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
   const { negotiation, makeOffer, closeNegotiation, brokers } = useGameStore();
   const [myOffer, setMyOffer] = useState('');
   const [chat, setChat] = useState<ChatMsg[]>([]);
@@ -261,7 +265,8 @@ export default function NegotiationModal({ onAssign }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(T: ThemeColors) {
+  return StyleSheet.create({
   overlay: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.75)',
     justifyContent: 'center',
@@ -269,9 +274,9 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modal: {
-    backgroundColor: '#080e1c',
+    backgroundColor: T.bg,
     borderRadius: 28,
-    borderWidth: 1, borderColor: '#1e2d45',
+    borderWidth: 1, borderColor: T.bgCard,
     maxHeight: '88%',
     width: '100%',
     maxWidth: 520,
@@ -279,7 +284,7 @@ const styles = StyleSheet.create({
 
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    padding: 18, borderBottomWidth: 1, borderBottomColor: '#1e2d45',
+    padding: 18, borderBottomWidth: 1, borderBottomColor: T.bgCard,
   },
   brokerInfo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatarWrap: { position: 'relative' },
@@ -287,27 +292,27 @@ const styles = StyleSheet.create({
   onlineDot: {
     position: 'absolute', bottom: 0, right: 0,
     width: 10, height: 10, borderRadius: 5,
-    backgroundColor: Colors.success, borderWidth: 2, borderColor: '#080e1c',
+    backgroundColor: Colors.success, borderWidth: 2, borderColor: T.bg,
   },
   onlineDotOff: { backgroundColor: Colors.textDim },
-  brokerName: { fontSize: 16, fontWeight: '800', color: '#fff' },
+  brokerName: { fontSize: 16, fontWeight: '800', color: T.text },
   brokerCompany: { fontSize: 11, color: Colors.textDim, marginTop: 1 },
   moodEmoji: { fontSize: 24, marginLeft: 8 },
   closeBtn: {
     width: 32, height: 32, borderRadius: 16,
-    backgroundColor: Colors.bgCard, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: T.bgCard, alignItems: 'center', justifyContent: 'center',
   },
-  closeBtnText: { fontSize: 14, color: Colors.textMuted },
+  closeBtnText: { fontSize: 14, color: T.textMuted },
 
   loadSummary: {
     margin: 14, padding: 14,
-    backgroundColor: '#0d1526', borderRadius: 14,
-    borderWidth: 1, borderColor: '#1e2d45', gap: 4,
+    backgroundColor: T.bgCard, borderRadius: 14,
+    borderWidth: 1, borderColor: T.border, gap: 4,
   },
-  loadRoute: { fontSize: 16, fontWeight: '900', color: '#fff' },
-  loadDetails: { fontSize: 12, color: Colors.textMuted },
+  loadRoute: { fontSize: 16, fontWeight: '900', color: T.text },
+  loadDetails: { fontSize: 12, color: T.textMuted },
   loadStats: { flexDirection: 'row', gap: 16, marginTop: 4 },
-  loadStat: { fontSize: 12, color: Colors.textMuted },
+  loadStat: { fontSize: 12, color: T.textMuted },
 
   chat: { maxHeight: 220, paddingHorizontal: 14 },
   chatContent: { gap: 10, paddingVertical: 8 },
@@ -317,7 +322,7 @@ const styles = StyleSheet.create({
   msgWrapSystem: { justifyContent: 'center' },
   msgAvatar: { fontSize: 22, marginBottom: 2 },
   msgBubble: {
-    maxWidth: '75%', backgroundColor: '#1e2d45',
+    maxWidth: '75%', backgroundColor: T.bgCard,
     borderRadius: 16, borderBottomLeftRadius: 4,
     padding: 12,
   },
@@ -331,12 +336,12 @@ const styles = StyleSheet.create({
     borderRadius: 10, borderWidth: 1, borderColor: 'rgba(34,197,94,0.3)',
     alignSelf: 'center',
   },
-  msgText: { fontSize: 13, color: Colors.textSecondary, lineHeight: 19 },
+  msgText: { fontSize: 13, color: T.textSecondary, lineHeight: 19 },
   msgTextYou: { color: '#67e8f9' },
   msgTextSystem: { color: Colors.success, fontWeight: '700', fontSize: 12 },
 
   typingBubble: {
-    backgroundColor: '#1e2d45', borderRadius: 16, borderBottomLeftRadius: 4,
+    backgroundColor: T.bgCard, borderRadius: 16, borderBottomLeftRadius: 4,
     padding: 12,
   },
   typingDots: { fontSize: 12, color: Colors.textDim, letterSpacing: 3 },
@@ -345,28 +350,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row', gap: 8, paddingHorizontal: 14, paddingTop: 10,
   },
   quickBtn: {
-    flex: 1, backgroundColor: '#0d1526', borderRadius: 10,
-    borderWidth: 1, borderColor: '#1e2d45',
+    flex: 1, backgroundColor: T.bgCard, borderRadius: 10,
+    borderWidth: 1, borderColor: T.border,
     paddingVertical: 8, alignItems: 'center',
   },
-  quickBtnText: { fontSize: 10, color: Colors.textMuted, fontWeight: '700' },
+  quickBtnText: { fontSize: 10, color: T.textMuted, fontWeight: '700' },
 
   inputRow: {
     flexDirection: 'row', gap: 10, padding: 14, paddingTop: 10,
   },
   inputWrap: {
     flex: 1, flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#0d1526', borderRadius: 14,
-    borderWidth: 1, borderColor: '#1e2d45', paddingHorizontal: 14,
+    backgroundColor: T.bgCard, borderRadius: 14,
+    borderWidth: 1, borderColor: T.border, paddingHorizontal: 14,
   },
   inputDollar: { fontSize: 18, color: Colors.success, fontWeight: '900', marginRight: 4 },
-  input: { flex: 1, fontSize: 20, fontWeight: '800', color: '#fff', paddingVertical: 12 },
+  input: { flex: 1, fontSize: 20, fontWeight: '800', color: T.text, paddingVertical: 12 },
   sendBtn: {
     backgroundColor: Colors.primary, borderRadius: 14,
     paddingHorizontal: 18, justifyContent: 'center',
     shadowColor: Colors.primary, shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.5, shadowRadius: 8, elevation: 5,
   },
-  sendBtnOff: { backgroundColor: Colors.bgCard, shadowOpacity: 0 },
+  sendBtnOff: { backgroundColor: T.bgCard, shadowOpacity: 0 },
   sendBtnText: { fontSize: 13, fontWeight: '800', color: '#fff' },
-});
+  });
+}

@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { Truck, useGameStore } from '../store/gameStore';
 import { cityState } from '../constants/config';
@@ -8,6 +8,8 @@ import CallModal from './CallModal';
 import CancelLoadModal from './CancelLoadModal';
 import MechanicChatModal from './MechanicChatModal';
 import BrokerChatModal from './BrokerChatModal';
+import { useTheme } from '../hooks/useTheme';
+import { ThemeColors } from '../constants/themes';
 
 interface Props {
   truck: Truck | null;
@@ -34,6 +36,8 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export default function TruckDetailModal({ truck: truckProp, onClose, onFindLoad }: Props) {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   const [showHOSELD, setShowHOSELD] = useState(false);
   const [hoseldTab, setHoseldTab] = useState<'hos' | 'eld'>('hos');
   const [showSMS, setShowSMS] = useState(false);
@@ -396,10 +400,10 @@ export default function TruckDetailModal({ truck: truckProp, onClose, onFindLoad
                     </View>
                   </View>
                 ) : (
-                  <View style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.03)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', borderRadius: 14, padding: 10, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.03)', borderWidth: 1, borderColor: T.border, borderRadius: 14, padding: 10, alignItems: 'center', justifyContent: 'center' }}>
                     <Text style={{ fontSize: 20, marginBottom: 4 }}>📋</Text>
-                    <Text style={{ fontSize: 10, fontWeight: '700', color: '#475569', textAlign: 'center' }}>Нет груза</Text>
-                    <Text style={{ fontSize: 9, color: '#334155', textAlign: 'center', marginTop: 2 }}>Брокер недоступен</Text>
+                    <Text style={{ fontSize: 10, fontWeight: '700', color: T.textMuted, textAlign: 'center' }}>Нет груза</Text>
+                    <Text style={{ fontSize: 9, color: T.textDim, textAlign: 'center', marginTop: 2 }}>Брокер недоступен</Text>
                   </View>
                 )}
               </View>
@@ -473,45 +477,46 @@ function LoadStat({ label, value }: { label: string; value: string }) {
   );
 }
 
-const s = StyleSheet.create({
+function makeStyles(T: ThemeColors) {
+  return StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 16 },
-  modal: { backgroundColor: '#111827', borderRadius: 20, width: '100%', maxWidth: 480, maxHeight: '88%', borderWidth: 1.5, borderColor: 'rgba(6,182,212,0.35)' },
-  header: { flexDirection: 'row', alignItems: 'center', padding: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)' },
+  modal: { backgroundColor: T.bgCard, borderRadius: 20, width: '100%', maxWidth: 480, maxHeight: '88%', borderWidth: 1.5, borderColor: 'rgba(6,182,212,0.35)' },
+  header: { flexDirection: 'row', alignItems: 'center', padding: 14, borderBottomWidth: 1, borderBottomColor: T.border },
   headerLeft: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(6,182,212,0.2)', borderWidth: 2, borderColor: '#06b6d4', alignItems: 'center', justifyContent: 'center' },
   avatarText: { fontSize: 24 },
   driverName: { fontSize: 16, fontWeight: '900', color: '#67e8f9' },
-  truckSub: { fontSize: 13, color: '#cbd5e1', marginTop: 1 },
-  closeBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' },
-  closeBtnText: { fontSize: 16, color: '#cbd5e1' },
+  truckSub: { fontSize: 13, color: T.textSecondary, marginTop: 1 },
+  closeBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: T.border, alignItems: 'center', justifyContent: 'center' },
+  closeBtnText: { fontSize: 16, color: T.textSecondary },
   statusBar: { flexDirection: 'row', alignItems: 'center', gap: 10, margin: 12, marginBottom: 0, padding: 12, borderRadius: 12, borderWidth: 1 },
   statusIcon: { fontSize: 22 },
   statusLabel: { fontSize: 14, fontWeight: '700' },
-  statusSub: { fontSize: 13, color: '#cbd5e1', marginTop: 2 },
+  statusSub: { fontSize: 13, color: T.textSecondary, marginTop: 2 },
   restBadge: { paddingHorizontal: 8, paddingVertical: 3, backgroundColor: 'rgba(239,68,68,0.2)', borderRadius: 8 },
   restBadgeText: { fontSize: 12, fontWeight: '800', color: '#ef4444' },
   badgesRow: { flexDirection: 'row', gap: 8, margin: 12, marginBottom: 0 },
-  badge: { flex: 1, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: 8, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
-  badgeText: { fontSize: 13, fontWeight: '800', color: '#e2e8f0' },
-  badgeLabel: { fontSize: 13, color: '#cbd5e1', marginTop: 2, textTransform: 'uppercase' },
-  section: { margin: 12, marginBottom: 0, padding: 12, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)', gap: 8 },
-  sectionTitle: { fontSize: 12, fontWeight: '800', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: 0.5 },
+  badge: { flex: 1, backgroundColor: T.border, borderRadius: 10, padding: 8, alignItems: 'center', borderWidth: 1, borderColor: T.border },
+  badgeText: { fontSize: 13, fontWeight: '800', color: T.text },
+  badgeLabel: { fontSize: 13, color: T.textSecondary, marginTop: 2, textTransform: 'uppercase' },
+  section: { margin: 12, marginBottom: 0, padding: 12, backgroundColor: T.bgCard, borderRadius: 12, borderWidth: 1, borderColor: T.border, gap: 8 },
+  sectionTitle: { fontSize: 12, fontWeight: '800', color: T.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
   hosRow: { flexDirection: 'row', gap: 10 },
   hosItem: { flex: 1, alignItems: 'center', gap: 4 },
   hosVal: { fontSize: 18, fontWeight: '900' },
-  hosBarTrack: { width: '100%', height: 6, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' },
+  hosBarTrack: { width: '100%', height: 6, backgroundColor: T.border, borderRadius: 3, overflow: 'hidden' },
   hosBarFill: { height: '100%', borderRadius: 3 },
-  hosLabel: { fontSize: 13, color: '#cbd5e1', fontWeight: '700', textTransform: 'uppercase' },
+  hosLabel: { fontSize: 13, color: T.textSecondary, fontWeight: '700', textTransform: 'uppercase' },
   hosWarn: { fontSize: 13, color: '#ef4444', fontWeight: '600', textAlign: 'center' },
   loadRoute: { fontSize: 14, fontWeight: '700', color: '#67e8f9' },
   loadStats: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  loadStat: { minWidth: '22%', flex: 1, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: 8, alignItems: 'center' },
-  loadStatVal: { fontSize: 13, fontWeight: '800', color: '#e2e8f0' },
-  loadStatLabel: { fontSize: 13, color: '#cbd5e1', marginTop: 2, textTransform: 'uppercase' },
+  loadStat: { minWidth: '22%', flex: 1, backgroundColor: T.border, borderRadius: 8, padding: 8, alignItems: 'center' },
+  loadStatVal: { fontSize: 13, fontWeight: '800', color: T.text },
+  loadStatLabel: { fontSize: 13, color: T.textSecondary, marginTop: 2, textTransform: 'uppercase' },
   findBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, backgroundColor: 'rgba(34,197,94,0.12)', borderRadius: 12, borderWidth: 1.5, borderColor: 'rgba(34,197,94,0.3)' },
   findBtnIcon: { fontSize: 22 },
   findBtnTitle: { fontSize: 14, fontWeight: '800', color: '#4ade80' },
-  findBtnSub: { fontSize: 13, color: '#cbd5e1' },
+  findBtnSub: { fontSize: 13, color: T.textSecondary },
   findBtnArrow: { fontSize: 18, color: '#4ade80', fontWeight: '900' },
   statsBtn: { padding: 12, backgroundColor: 'rgba(6,182,212,0.08)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(6,182,212,0.2)', alignItems: 'center' },
   statsBtnText: { fontSize: 13, fontWeight: '700', color: '#06b6d4' },
@@ -520,18 +525,19 @@ const s = StyleSheet.create({
   aiCard: { margin: 12, marginBottom: 0, padding: 12, borderRadius: 12, borderWidth: 1.5, gap: 8 },
   aiHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   aiIcon: { fontSize: 26 },
-  aiLabel: { fontSize: 10, fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 0.8 },
+  aiLabel: { fontSize: 10, fontWeight: '800', color: T.textMuted, textTransform: 'uppercase', letterSpacing: 0.8 },
   aiTitle: { fontSize: 14, fontWeight: '900', marginTop: 1 },
-  aiText: { fontSize: 13, color: '#e2e8f0', lineHeight: 20 },
+  aiText: { fontSize: 13, color: T.text, lineHeight: 20 },
   aiActionBtn: { marginTop: 4, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1, alignSelf: 'flex-start' },
   aiActionBtnText: { fontSize: 13, fontWeight: '800' },
   breakdownCard: { margin: 12, marginBottom: 0, padding: 12, borderRadius: 12, borderWidth: 2, borderColor: 'rgba(239,68,68,0.5)', backgroundColor: 'rgba(239,68,68,0.08)', gap: 4 },
   breakdownCardActive: { borderColor: 'rgba(74,222,128,0.4)', backgroundColor: 'rgba(74,222,128,0.06)' },
   breakdownTitle: { fontSize: 15, fontWeight: '900', color: '#ef4444' },
-  breakdownSub: { fontSize: 12, color: '#94a3b8' },
+  breakdownSub: { fontSize: 12, color: T.textMuted },
   roadsideBtn: { flex: 1, padding: 12, borderRadius: 10, borderWidth: 1.5, borderColor: 'rgba(239,68,68,0.5)', backgroundColor: 'rgba(239,68,68,0.12)', alignItems: 'center' },
   roadsideBtnDone: { borderColor: 'rgba(74,222,128,0.4)', backgroundColor: 'rgba(74,222,128,0.08)' },
   roadsideBtnText: { fontSize: 14, fontWeight: '900', color: '#ef4444' },
-  breakdownActionBtn: { flex: 1, padding: 8, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.04)', alignItems: 'center' },
+  breakdownActionBtn: { flex: 1, padding: 8, borderRadius: 8, borderWidth: 1, borderColor: T.border, backgroundColor: T.bgCard, alignItems: 'center' },
   breakdownActionText: { fontSize: 12, fontWeight: '700' },
-});
+  });
+}

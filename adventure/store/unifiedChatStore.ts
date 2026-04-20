@@ -218,8 +218,17 @@ export const useUnifiedChatStore = create<UnifiedChatStore>((set, get) => ({
   createThread: (params) => {
     const threadId = generateThreadId(params.participantName, params.participantRole);
     
-    // Если тред уже существует — возвращаем его ID
+    // Если тред уже существует — обновляем аватар и возвращаем его ID
     if (get().threads[threadId]) {
+      set(state => ({
+        threads: {
+          ...state.threads,
+          [threadId]: {
+            ...state.threads[threadId],
+            participantAvatar: params.participantAvatar || state.threads[threadId].participantAvatar,
+          }
+        }
+      }));
       return threadId;
     }
     
@@ -465,10 +474,51 @@ export const useUnifiedChatStore = create<UnifiedChatStore>((set, get) => ({
   loadFromStorage: (nickname) => {
     try {
       const key = getStorageKey(nickname);
-      const raw = localStorage.getItem(key);
+      const AVATAR_VERSION = 'v4';
+      // Глобальный ключ — не зависит от nickname
+      const GLOBAL_VERSION_KEY = 'chat-avatar-version';
+
+      if (localStorage.getItem(GLOBAL_VERSION_KEY) !== AVATAR_VERSION) {
+        // Сбрасываем все chat-ключи для всех nickname
+        Object.keys(localStorage).forEach(k => {
+          if (k.startsWith('unified-chat-')) localStorage.removeItem(k);
+        });
+        localStorage.setItem(GLOBAL_VERSION_KEY, AVATAR_VERSION);
+        set({ threads: {} });
+        return;
+      }
       
+      const raw = localStorage.getItem(key);
       if (raw) {
-        const threads = JSON.parse(raw);
+        const threads = JSON.parse(raw) as Record<string, ChatThread>;
+
+        // Патч аватаров — обновляем до актуальных URL
+        const AVATAR_PATCH: Record<string, string> = {
+          driver:     'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People%20with%20professions/Man%20Office%20Worker%20Light%20Skin%20Tone.png',
+          broker:     'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People%20with%20professions/Person%20Light%20Skin%20Tone%2C%20Curly%20Hair.png',
+          system:     'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Objects/Telephone.webp',
+          dispatcher: 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People%20with%20professions/Man%20Technologist%20Medium-Light%20Skin%20Tone.png',
+        };
+        // Имена → аватар (для owner/accountant которые role=system)
+        const NAME_PATCH: Record<string, string> = {
+          'Лиза':            'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People%20with%20professions/Woman%20Curly%20Hair.png',
+          'Майк':            'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People%20with%20professions/Person%20White%20Hair.png',
+          'Dispatch Office': 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Objects/Telephone.webp',
+          'Dispatch Office System': 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Objects/Telephone.webp',
+        };
+
+        Object.values(threads).forEach(t => {
+          if (NAME_PATCH[t.participantName]) {
+            t.participantAvatar = NAME_PATCH[t.participantName];
+          } else if (AVATAR_PATCH[t.participantRole]) {
+            t.participantAvatar = AVATAR_PATCH[t.participantRole];
+          }
+          // Принудительно патчим system роль — всегда телефон
+          if (t.participantRole === 'system' && !NAME_PATCH[t.participantName]) {
+            t.participantAvatar = 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Objects/Telephone.webp';
+          }
+        });
+
         set({ threads });
       } else {
         set({ threads: {} });
