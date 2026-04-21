@@ -224,7 +224,7 @@ const TruckStripComponent = memo(function TruckStripComponent({
                 <div style={{ position: 'absolute', top: 5, right: 5 } as any}>
                   <img src={moodEmoji} width={22} height={22} style={{ display: 'block' } as any} />
                 </div>
-                <img src={getDriverAvatar(truck.id)} width={isWide ? 62 : 52} height={isWide ? 62 : 52}
+                <img src={getDriverAvatar(truck.driver || truck.id)} width={isWide ? 62 : 52} height={isWide ? 62 : 52}
                   style={{ imageRendering: 'auto', display: 'block', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))' } as any} />
                 <div style={{
                   fontSize: isWide ? 10 : 9, fontWeight: 700, color, background: 'transparent',
@@ -237,6 +237,9 @@ const TruckStripComponent = memo(function TruckStripComponent({
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 } as any}>
                   <span style={{ fontSize: isWide ? 15 : 13, fontWeight: 900, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>{driverFullName}</span>
                   <div style={{ display: 'flex', gap: 4, flexShrink: 0, marginLeft: 6 } as any}>
+                    {(truck as any).isOldTruck && (
+                      <span style={{ fontSize: 9, fontWeight: 800, color: '#ef4444', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 4, padding: '1px 5px' } as any}>СТАРЫЙ</span>
+                    )}
                     <span style={{ fontSize: isWide ? 10 : 9, fontWeight: 700, color: '#38bdf8', background: 'transparent', border: '1px solid rgba(56,189,248,0.3)', borderRadius: 4, padding: '1px 5px' } as any}>TRK {truckNum}</span>
                     <span style={{ fontSize: isWide ? 10 : 9, fontWeight: 700, color: '#94a3b8', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, padding: '1px 5px' } as any}>TRL {trailerNum}</span>
                   </div>
@@ -289,7 +292,7 @@ const TruckStripComponent = memo(function TruckStripComponent({
 
       {/* Купить трак */}
       <div
-        onClick={() => {}}
+        onClick={() => { const { useGameStore: gs } = require('../store/gameStore'); gs.getState().setGarageOpen(true); }}
         style={{ minWidth: isWide ? 90 : 78, flexShrink: 0, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '2px dashed rgba(56,189,248,0.25)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' } as any}
         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(6,182,212,0.08)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.6)'; }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.25)'; }}

@@ -279,8 +279,20 @@ export default function HomeScreen() {
 
           {/* Карточка трака */}
           <View style={s.truckCard}>
+            {/* Плашка "Старый трак" */}
+            <View style={s.oldTruckBanner}>
+              <Text style={s.oldTruckBannerIcon}>⚠️</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={s.oldTruckBannerTitle}>Старый трак — 2008 год</Text>
+                <Text style={s.oldTruckBannerDesc}>Ломается чаще · Едет медленнее · Водитель жалуется</Text>
+              </View>
+              <View style={s.oldTruckBadge}>
+                <Text style={s.oldTruckBadgeText}>СТАРЫЙ</Text>
+              </View>
+            </View>
+
             <View style={s.truckCardHeader}>
-              <View style={s.truckIconWrap}>
+              <View style={[s.truckIconWrap, { backgroundColor: 'rgba(239,68,68,0.1)' }]}>
                 <Text style={s.truckIconEmoji}>🚚</Text>
               </View>
               <View style={{ flex: 1 }}>
@@ -289,8 +301,8 @@ export default function HomeScreen() {
                   <Text style={s.truckStatusText}>⚪ Свободен · Ждёт груза</Text>
                 </View>
               </View>
-              <View style={s.truckIdBadge}>
-                <Text style={s.truckIdText}>TRK 001</Text>
+              <View style={[s.truckIdBadge, { borderColor: 'rgba(239,68,68,0.3)', backgroundColor: 'rgba(239,68,68,0.1)' }]}>
+                <Text style={[s.truckIdText, { color: '#ef4444' }]}>TRK 001</Text>
               </View>
             </View>
 
@@ -300,12 +312,12 @@ export default function HomeScreen() {
                 <Text style={s.driverAvatarText}>{driver.name.split(' ').map(w => w[0]).join('')}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={s.driverName}>{driver.name} {driver.mood}</Text>
+                <Text style={s.driverName}>{driver.name} 😤</Text>
                 <Text style={s.driverSub}>{driver.cdl} · {driver.exp} · {driver.city}</Text>
               </View>
             </View>
 
-            {/* Метрики */}
+            {/* Метрики — пониженные для старого трака */}
             <View style={s.truckMetrics}>
               <View style={s.truckMetric}>
                 <Text style={s.truckMetricVal}>{driver.miles}</Text>
@@ -313,18 +325,18 @@ export default function HomeScreen() {
               </View>
               <View style={s.truckMetricDivider} />
               <View style={s.truckMetric}>
-                <Text style={s.truckMetricVal}>{driver.safe}%</Text>
-                <Text style={s.truckMetricLabel}>Safety</Text>
+                <Text style={[s.truckMetricVal, { color: '#f97316' }]}>5.2 mpg</Text>
+                <Text style={s.truckMetricLabel}>Расход</Text>
               </View>
               <View style={s.truckMetricDivider} />
               <View style={s.truckMetric}>
-                <Text style={s.truckMetricVal}>11.0ч</Text>
-                <Text style={s.truckMetricLabel}>HOS</Text>
+                <Text style={[s.truckMetricVal, { color: '#f97316' }]}>-20%</Text>
+                <Text style={s.truckMetricLabel}>Скорость</Text>
               </View>
               <View style={s.truckMetricDivider} />
               <View style={s.truckMetric}>
-                <Text style={[s.truckMetricVal, { color: '#4ade80' }]}>Готов</Text>
-                <Text style={s.truckMetricLabel}>Статус</Text>
+                <Text style={[s.truckMetricVal, { color: '#ef4444' }]}>Риск</Text>
+                <Text style={s.truckMetricLabel}>Поломки</Text>
               </View>
             </View>
           </View>
@@ -333,11 +345,11 @@ export default function HomeScreen() {
           <View style={s.shopBanner}>
             <Text style={s.shopBannerEmoji}>🏪</Text>
             <View style={{ flex: 1 }}>
-              <Text style={s.shopBannerTitle}>Магазин флота</Text>
-              <Text style={s.shopBannerDesc}>2-й трак — $15k · 3-й трак — $30k · и больше...</Text>
+              <Text style={s.shopBannerTitle}>Цель: купить новый трак</Text>
+              <Text style={s.shopBannerDesc}>Заработай $15,000 → Гараж → Новый трак без поломок</Text>
             </View>
             <View style={s.shopBannerBadge}>
-              <Text style={s.shopBannerBadgeText}>Скоро</Text>
+              <Text style={s.shopBannerBadgeText}>$15k</Text>
             </View>
           </View>
         </View>
@@ -565,6 +577,23 @@ const s = StyleSheet.create({
   truckMetricVal: { fontSize: 12, fontWeight: '800', color: Colors.text, marginBottom: 1 },
   truckMetricLabel: { fontSize: 9, fontWeight: '600', color: Colors.textDim },
   truckMetricDivider: { width: 1, height: 24, backgroundColor: 'rgba(255,255,255,0.08)' },
+
+  // Old truck banner
+  oldTruckBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: 'rgba(239,68,68,0.08)',
+    borderWidth: 1, borderColor: 'rgba(239,68,68,0.25)',
+    borderRadius: 8, padding: 8, marginBottom: 2,
+  },
+  oldTruckBannerIcon: { fontSize: 16 },
+  oldTruckBannerTitle: { fontSize: 12, fontWeight: '800', color: '#ef4444', marginBottom: 1 },
+  oldTruckBannerDesc: { fontSize: 10, color: '#f97316', lineHeight: 14 },
+  oldTruckBadge: {
+    backgroundColor: 'rgba(239,68,68,0.15)',
+    borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2,
+    borderWidth: 1, borderColor: 'rgba(239,68,68,0.3)',
+  },
+  oldTruckBadgeText: { fontSize: 9, fontWeight: '800', color: '#ef4444', letterSpacing: 0.5 },
 
   // Shop banner
   shopBanner: {

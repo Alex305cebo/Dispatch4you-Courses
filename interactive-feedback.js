@@ -45,9 +45,6 @@
             // Добавляем класс при клике
             element.addEventListener('mousedown', function(e) {
                 this.classList.add('clicking');
-                
-                // Создаём ripple эффект
-                createRipple(e, this);
             });
 
             element.addEventListener('mouseup', function() {
@@ -63,7 +60,6 @@
             // Touch события для мобильных
             element.addEventListener('touchstart', function(e) {
                 this.classList.add('clicking');
-                createRipple(e.touches[0], this);
             }, { passive: true });
 
             element.addEventListener('touchend', function() {
@@ -74,48 +70,7 @@
         });
     }
 
-    // === RIPPLE ЭФФЕКТ - УЛУЧШЕННЫЙ ===
-    function createRipple(event, element) {
-        // Проверяем, не создан ли уже ripple
-        const existingRipple = element.querySelector('.ripple-effect');
-        if (existingRipple) {
-            existingRipple.remove();
-        }
 
-        const ripple = document.createElement('span');
-        ripple.className = 'ripple-effect';
-        
-        const rect = element.getBoundingClientRect();
-        const size = Math.max(rect.width, rect.height) * 2.5;
-        const x = event.clientX - rect.left - size / 2;
-        const y = event.clientY - rect.top - size / 2;
-
-        ripple.style.cssText = `
-            position: absolute;
-            width: ${size}px;
-            height: ${size}px;
-            left: ${x}px;
-            top: ${y}px;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 70%);
-            border-radius: 50%;
-            transform: scale(0);
-            animation: ripple-animation 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: none;
-            z-index: 1000;
-        `;
-
-        // Убеждаемся что элемент имеет position: relative
-        if (getComputedStyle(element).position === 'static') {
-            element.style.position = 'relative';
-        }
-
-        element.appendChild(ripple);
-
-        // Удаляем ripple после анимации
-        setTimeout(() => {
-            ripple.remove();
-        }, 700);
-    }
 
     // === ВИБРАЦИЯ НА МОБИЛЬНЫХ - УСИЛЕННАЯ ===
     function addHapticFeedback() {
@@ -192,20 +147,6 @@
     // === ДОБАВЛЯЕМ CSS АНИМАЦИИ ===
     const style = document.createElement('style');
     style.textContent = `
-        @keyframes ripple-animation {
-            0% {
-                transform: scale(0);
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.8;
-            }
-            100% {
-                transform: scale(1.5);
-                opacity: 0;
-            }
-        }
-
         @keyframes spin {
             to {
                 transform: rotate(360deg);
@@ -265,7 +206,6 @@
 
     // === ЭКСПОРТ ДЛЯ ИСПОЛЬЗОВАНИЯ В ДРУГИХ СКРИПТАХ ===
     window.InteractiveFeedback = {
-        createRipple: createRipple,
         showButtonLoading: showButtonLoading,
         reinit: addClickFeedback
     };

@@ -148,7 +148,7 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
               <img src={moodEmoji} width={20} height={20}
                 style={{ position: 'absolute', top: 4, right: 4 } as any} />
               {/* Аватар */}
-              <img src={getDriverAvatar(truck.id)} width={52} height={52}
+              <img src={getDriverAvatar(truck.driver || truck.id)} width={52} height={52}
                 style={{ display: 'block' } as any} />
               {/* Статус */}
               <div style={{
@@ -228,33 +228,35 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
       {/* Купить трак */}
       <div style={{
         flexShrink: 0, width: 72, borderRadius: 12,
-        border: `2px dashed ${isDark ? 'rgba(56,189,248,0.25)' : 'rgba(0,122,255,0.25)'}`,
-        background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,122,255,0.04)',
+        border: `2px dashed ${isDark ? 'rgba(56,189,248,0.35)' : 'rgba(0,122,255,0.4)'}`,
+        background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.92)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
         gap: 4, padding: '8px 4px', cursor: 'pointer',
         boxShadow: isDark
           ? '-10px -2px 20px rgba(0,0,0,0.22), -4px -1px 10px rgba(0,0,0,0.14)'
-          : '-10px -2px 20px rgba(0,0,0,0.09), -4px -1px 10px rgba(0,0,0,0.05)',
+          : '0 2px 12px rgba(0,0,0,0.1), 0 1px 4px rgba(0,0,0,0.06)',
         transform: 'translateY(-3px)',
         transition: 'background 0.2s, transform 0.15s, box-shadow 0.15s',
       } as any}
         onMouseEnter={e => {
-          (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(6,182,212,0.08)' : 'rgba(0,122,255,0.1)';
+          (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(6,182,212,0.08)' : 'rgba(235,245,255,0.98)';
           (e.currentTarget as HTMLElement).style.transform = 'translateY(-6px)';
           (e.currentTarget as HTMLElement).style.boxShadow = isDark
             ? '-12px -3px 26px rgba(0,0,0,0.28), -5px -1px 12px rgba(0,0,0,0.18)'
-            : '-12px -3px 26px rgba(0,0,0,0.11), -5px -1px 12px rgba(0,0,0,0.06)';
+            : '0 4px 16px rgba(0,122,255,0.15), 0 2px 6px rgba(0,0,0,0.08)';
         }}
         onMouseLeave={e => {
-          (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,122,255,0.04)';
+          (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.92)';
           (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)';
           (e.currentTarget as HTMLElement).style.boxShadow = isDark
             ? '-10px -2px 20px rgba(0,0,0,0.22), -4px -1px 10px rgba(0,0,0,0.14)'
-            : '-10px -2px 20px rgba(0,0,0,0.09), -4px -1px 10px rgba(0,0,0,0.05)';
+            : '0 2px 12px rgba(0,0,0,0.1), 0 1px 4px rgba(0,0,0,0.06)';
         }}
       >
-        <div style={{ width: 28, height: 28, borderRadius: '50%', background: isDark ? 'rgba(56,189,248,0.12)' : 'rgba(0,122,255,0.1)', border: `1.5px solid ${isDark ? 'rgba(56,189,248,0.35)' : 'rgba(0,122,255,0.35)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: isDark ? '#38bdf8' : '#007aff' } as any}>+</div>
+        <div style={{ width: 28, height: 28, borderRadius: '50%', background: isDark ? 'rgba(56,189,248,0.12)' : 'rgba(0,122,255,0.1)', border: `1.5px solid ${isDark ? 'rgba(56,189,248,0.35)' : 'rgba(0,122,255,0.5)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: isDark ? '#38bdf8' : '#007aff' } as any}>+</div>
         <span style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#38bdf8' : '#007aff', textAlign: 'center', lineHeight: 1.3 } as any}>Купить{'\n'}трак</span>
       </div>
     </div>

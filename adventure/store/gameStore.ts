@@ -92,6 +92,12 @@ export interface Truck {
   nightStopName?: string;
   hadNightStop?: boolean;
   nightStopDelayMinutes?: number; // суммарная задержка из-за ночёвок
+
+  // ── OLD TRUCK (стартовый трак нового игрока) ──
+  isOldTruck?: boolean;          // старый трак — чаще ломается, медленнее едет
+  oldTruckComplaintAt?: number;  // минута последней жалобы водителя
+  oldTruckBreakdownChance?: number; // множитель шанса поломки (1.0 = норма, 3.0 = втрое чаще)
+  speedPenalty?: number;         // замедление 0.0–0.3 (0.2 = на 20% медленнее)
 }
 
 export interface LoadOffer {
@@ -351,6 +357,11 @@ interface GameState {
   loadGame: () => boolean;
   clearSave: () => void;
   testDeliveryPopup: () => void;
+
+  // Гараж — покупка нового трака
+  buyNewTruck: () => boolean; // возвращает true если успешно куплен
+  garageOpen: boolean;
+  setGarageOpen: (open: boolean) => void;
 }
 
 // ─── НАЧАЛЬНЫЕ ДАННЫЕ ────────────────────────────────────────────────────────
@@ -515,6 +526,11 @@ const INITIAL_TRUCKS: Truck[] = [
     safetyScore: 95, fuelEfficiency: 6.8, onTimeRate: 98, complianceRate: 100,
     totalMiles: 45230, totalDeliveries: 156, hosViolations: 0, lastInspection: 0,
     idleSinceMinute: undefined,
+    // Старый трак — стартовый для нового игрока
+    isOldTruck: true,
+    oldTruckBreakdownChance: 3.0, // в 3 раза чаще ломается
+    speedPenalty: 0.2,            // на 20% медленнее
+    oldTruckComplaintAt: -999,
   } as any,
   {
     id: 'T2', name: 'Truck 2023', driver: 'Carlos Rivera',
@@ -962,6 +978,70 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   dismissDeliveryResult: (loadId: string) => {
     set(s => ({ deliveryResults: s.deliveryResults.filter(r => r.loadId !== loadId) }));
+  },
+
+  garageOpen: false,
+  setGarageOpen: (open: boolean) => set({ garageOpen: open }),
+
+  buyNewTruck: () => {
+    const { balance, trucks } = get();
+    const NEW_TRUCK_PRICE = 15000;
+    if (balance < NEW_TRUCK_PRICE) return false;
+
+    // Новый трак — нормальный, без флага isOldTruck
+    const newTruckNum = trucks.length + 1;
+    const newTruckId = `T${newTruckNum}`;
+    const driverNames = ['Carlos Rivera', 'Mike Chen', 'Tom Wilson', 'Lisa Brown', 'James Anderson', 'Maria Garcia', 'David Kim', 'Robert Johnson'];
+    const usedDrivers = trucks.map(t => t.driver);
+    const availableDriver = driverNames.find(d => !usedDrivers.includes(d)) ?? `Driver ${newTruckNum}`;
+    const startCity = trucks[0]?.currentCity ?? 'Knoxville';
+    const startPos = CITIES[startCity] ?? CITIES['Knoxville'];
+
+    const newTruck: Truck = {
+      id: newTruckId,
+      name: `Truck ${1000 + newTruckNum * 100 + Math.floor(Math.random() * 99)}`,
+      driver: availableDriver,
+      status: 'idle',
+      position: startPos,
+      currentCity: startCity,
+      destinationCity: null,
+      progress: 0,
+      currentLoad: null,
+      hoursLeft: 11,
+      mood: 80,
+      routePath: null,
+      safetyScore: 98,
+      fuelEfficiency: 7.5,
+      onTimeRate: 100,
+      complianceRate: 100,
+      totalMiles: 0,
+      totalDeliveries: 0,
+      hosViolations: 0,
+      tripExpenses: [],
+      lastInspection: 0,
+      idleSinceMinute: get().gameMinute,
+      idleWarningLevel: 0,
+      outOfOrderUntil: 0,
+      speedMultiplier: 0.9 + Math.random() * 0.2,
+      // isOldTruck НЕ устанавливаем — это новый трак
+    } as any;
+
+    get().removeMoney(NEW_TRUCK_PRICE, `Покупка нового трака — ${newTruck.name}`);
+    set(s => ({ trucks: [...s.trucks, newTruck], garageOpen: false }));
+
+    get().addNotification({
+      type: 'email', priority: 'high',
+      from: 'Гараж',
+      subject: `🚛 Новый трак куплен — ${newTruck.name}!`,
+      message: `Поздравляем! ${newTruck.name} добавлен в твой флот.\nВодитель: ${availableDriver}\nСтатус: Готов к работе\n\nНазначь груз и начни зарабатывать!`,
+      actionRequired: false,
+    });
+
+    window.dispatchEvent(new CustomEvent('mapToast', {
+      detail: { message: `🎉 ${newTruck.name} куплен! Флот растёт!`, color: '#4ade80' }
+    }));
+
+    return true;
   },
 
   startShift: async (truckCount: number = 1, sessionName: string = '') => {
@@ -1797,6 +1877,83 @@ export const useGameStore = create<GameState>((set, get) => ({
         // Каждый трак имеет свой speedMultiplier для рандомизации
         const speedMult = (truck as any).speedMultiplier ?? 1.0;
 
+        // ── OLD TRUCK: замедление и жалобы водителя ──
+        const oldTruckPenalty = (truck as any).isOldTruck ? (1.0 - ((truck as any).speedPenalty ?? 0.2)) : 1.0;
+        // Жалоба водителя старого трака каждые ~60 минут
+        if ((truck as any).isOldTruck) {
+          const lastComplaint = (truck as any).oldTruckComplaintAt ?? -999;
+          if (newMinute - lastComplaint >= 60 + Math.floor(Math.random() * 40)) {
+            const complaints = [
+              'Трак дёргается при разгоне. Когда купим нормальный?',
+              'Кондиционер опять не работает. Жара невыносимая.',
+              'Тормоза скрипят. Надо бы проверить.',
+              'Расход топлива огромный — заправляюсь чаще обычного.',
+              'Двигатель шумит сильнее чем раньше. Что-то не так.',
+              'Коробка передач переключается с трудом. Долго так не протянет.',
+              'Рация барахлит, связь плохая.',
+              'Сиденье сломалось, спина болит после 4 часов езды.',
+            ];
+            const msg = complaints[Math.floor(Math.random() * complaints.length)];
+            get().addNotification({
+              type: 'text', priority: 'low', from: truck.driver,
+              subject: `🔧 ${truck.name} — жалоба на трак`,
+              message: `${truck.driver}: "${msg}"\n\n💡 Подсказка: Заработай $15,000 и купи новый трак в гараже!`,
+              actionRequired: false, relatedTruckId: truck.id,
+            });
+            // Обновляем время последней жалобы
+            const truckId = truck.id;
+            useGameStore.setState(s => ({
+              trucks: s.trucks.map(t => t.id === truckId ? { ...t, oldTruckComplaintAt: newMinute } as any : t)
+            }));
+          }
+          // Повышенный шанс поломки для старого трака: каждые 45 мин ~15% шанс
+          if (Math.floor(newMinute / 45) > Math.floor((newMinute - TICK_MINUTES) / 45)) {
+            if (Math.random() < 0.15) {
+              setTimeout(() => {
+                const state = get();
+                const oldTruck = state.trucks.find(t => t.id === truck.id);
+                if (oldTruck && (oldTruck.status === 'driving' || oldTruck.status === 'loaded')) {
+                  // Форсируем событие поломки для этого трака
+                  const bdTypes = [
+                    { label: 'Двигатель перегрелся',     roadside: 550, tow: 1400, delayRoadside: 90,  delayTow: 240 },
+                    { label: 'Электрика вышла из строя', roadside: 480, tow: 1200, delayRoadside: 75,  delayTow: 210 },
+                    { label: 'Закончилось топливо',      roadside: 150, tow: 0,    delayRoadside: 30,  delayTow: 0   },
+                    { label: 'Утечка масла',             roadside: 320, tow: 900,  delayRoadside: 60,  delayTow: 180 },
+                  ];
+                  const bd = bdTypes[Math.floor(Math.random() * bdTypes.length)];
+                  const canRoadside = bd.roadside > 0;
+                  useGameStore.setState(s => ({
+                    trucks: s.trucks.map(t => t.id === truck.id ? {
+                      ...t, status: 'breakdown' as any,
+                      awaitingRepairChoice: canRoadside,
+                      breakdownType: bd.label,
+                      breakdownCostRoadside: bd.roadside,
+                      breakdownCostTow: bd.tow,
+                      breakdownDelayRoadside: bd.delayRoadside,
+                      breakdownDelayTow: bd.delayTow,
+                      outOfOrderUntil: canRoadside ? undefined : state.gameMinute + bd.delayTow,
+                    } : t),
+                  }));
+                  if (!canRoadside) {
+                    get().removeMoney(bd.tow, `Эвакуатор — ${truck.name}: ${bd.label}`);
+                  }
+                  get().addNotification({
+                    type: 'text', priority: 'critical', from: truck.driver,
+                    subject: `🚨 Поломка — ${truck.name} (старый трак)`,
+                    message: canRoadside
+                      ? `${bd.label} возле ${oldTruck.currentCity}.\n\n🔧 Roadside: $${bd.roadside} (~${bd.delayRoadside} мин)\n🚛 Эвакуатор: $${bd.tow} (~${bd.delayTow} мин)\n\n💡 Это старый трак — он ломается чаще. Купи новый!`
+                      : `${bd.label} возле ${oldTruck.currentCity}. Только эвакуатор ($${bd.tow}). Задержка ~${bd.delayTow} мин.\n\n💡 Старый трак — пора в гараж за новым!`,
+                    actionRequired: canRoadside, relatedTruckId: truck.id,
+                  });
+                  window.dispatchEvent(new CustomEvent('mapToast', {
+                    detail: { message: `🚨 ${truck.name} — ${bd.label} (старый трак)!`, color: '#ef4444' }
+                  }));
+                }
+              }, 200);
+            }
+          }
+        }
+
         // ── WEATHER: проверяем активные погодные зоны ──
         const activeWeather = get().activeWeatherZones ?? [];
         const truckStateCode = CITY_STATE[truck.currentCity] ?? '';
@@ -1818,7 +1975,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           }));
         }
 
-        const progressPerTick = (MILES_PER_TICK / totalMiles) * speedMult * weatherSpeedMult;
+        const progressPerTick = (MILES_PER_TICK / totalMiles) * speedMult * weatherSpeedMult * oldTruckPenalty;
         const newProgress = Math.min(1, truck.progress + progressPerTick);
 
         // Уменьшаем HOS: 1.2 игровых минуты = 1.2/60 часа (погода увеличивает расход)

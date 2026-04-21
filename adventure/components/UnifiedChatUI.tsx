@@ -1134,8 +1134,6 @@ const styles = StyleSheet.create({
   
   threadAvatarUnread: {
     backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: '#58cc02',
   },
   
   threadAvatarText: {
@@ -1143,15 +1141,7 @@ const styles = StyleSheet.create({
   },
   
   threadAvatarDot: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#58cc02',
-    borderWidth: 2,
-    borderColor: '#ffffff',
+    display: 'none',
   },
   
   threadContent: {

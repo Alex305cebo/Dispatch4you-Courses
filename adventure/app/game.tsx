@@ -48,6 +48,7 @@ import { CHARACTERS, DIALOG_DRIVER_START, DIALOG_BROKER_FIRST_CALL, isDialogShow
 import { getDriverAvatar } from '../utils/driverAvatars';
 import { UnifiedChatUI } from '../components/UnifiedChatUI';
 import { createDemoMessages } from '../utils/demoMessages';
+import GarageModal from '../components/GarageModal';
 
 type Tab = 'map' | 'loadboard' | 'trucks' | 'chat';
 
@@ -650,6 +651,31 @@ export default function GameScreen() {
               </div>
             </button>
           )}
+
+          {/* Гараж — кнопка покупки нового трака */}
+          {(() => {
+            const hasOldTruck = trucks.some(t => (t as any).isOldTruck);
+            const canBuy = balance >= 15000;
+            if (!hasOldTruck) return null;
+            return (
+              <button onClick={() => useGameStore.getState().setGarageOpen(true)} style={{
+                padding: isWide ? '4px 8px' : '3px 6px',
+                background: canBuy
+                  ? 'linear-gradient(135deg, rgba(74,222,128,0.2), rgba(22,163,74,0.15))'
+                  : 'rgba(255,255,255,0.05)',
+                border: canBuy
+                  ? '1px solid rgba(74,222,128,0.5)'
+                  : '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 8, cursor: 'pointer', textAlign: 'left',
+                animation: canBuy ? 'pulse 1.5s infinite' : 'none',
+              } as any}>
+                {isWide && <div style={{ fontSize: 8, color: canBuy ? '#4ade80' : '#64748b', fontWeight: 600, marginBottom: 1 } as any}>ГАРАЖ</div>}
+                <div style={{ fontSize: isWide ? 13 : 11, fontWeight: 900, color: canBuy ? '#4ade80' : '#64748b' } as any}>
+                  🏪 {canBuy ? 'Купить!' : '$15k'}
+                </div>
+              </button>
+            );
+          })()}
         </div>
 
         {/* Действия */}
@@ -1393,7 +1419,7 @@ export default function GameScreen() {
         character={{
           ...CHARACTERS[chatCharacter],
           avatar: chatCharacter === 'driver' && trucks.length > 0
-            ? getDriverAvatar(trucks[0].id)
+            ? getDriverAvatar(trucks[0].driver || trucks[0].id)
             : CHARACTERS[chatCharacter].avatar,
         }}
         steps={chatCharacter === 'driver' ? DIALOG_DRIVER_START : DIALOG_DRIVER_START}
@@ -1437,6 +1463,7 @@ export default function GameScreen() {
       {showStats && <StatsPopup onClose={() => setShowStats(false)} />}
       {showSettings && <SettingsPopup onClose={() => setShowSettings(false)} />}
       {showHelp && <HelpPopup onClose={() => setShowHelp(false)} />}
+      <GarageModal />
       {/* Колокольчик и меню — вне TopBar div чтобы Modal работал корректно */}
       <NotificationBell
         onNavigateToTrucks={() => switchTab('trucks')}

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, TextInput, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, TextInput, Animated, Easing } from 'react-native';
 import { useGameStore } from '../store/gameStore';
 import { formatTimeShort } from '../store/gameStore';
 
@@ -111,6 +111,19 @@ export default function MechanicChatModal({
     new Animated.Value(0),
   ]).current;
 
+  // Пульсирующая анимация для активной линии
+  const pulseAnim = useRef(new Animated.Value(0.5)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1, duration: 900, easing: Easing.inOut(Easing.ease), useNativeDriver: false }),
+        Animated.timing(pulseAnim, { toValue: 0.5, duration: 900, easing: Easing.inOut(Easing.ease), useNativeDriver: false }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, []);
+
   const eta = Math.round(repairMinutes / 60 * 10) / 10;
   const etaArrival = Math.max(0.3, Math.round(repairMinutes * 0.35 / 60 * 10) / 10);
 
@@ -150,17 +163,19 @@ export default function MechanicChatModal({
     Animated.timing(lineAnims[lineIdx], {
       toValue: 1,
       duration,
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1), // плавный ease-in-out
       useNativeDriver: false,
     }).start();
   }
 
   // Автоматическое продвижение по стадиям
   function scheduleStageProgression(currentStage: RepairStage) {
+    // Реалистичные задержки: driving→arrived ~35s, arrived→repairing ~30s, repairing→done ~110s
     const delays: Record<RepairStage, number> = {
-      pending: 0,
-      driving:   etaArrival * 60 * 1000 * 0.15,
-      arrived:   8000,
-      repairing: repairMinutes * 1000 * 0.08,
+      pending:   0,
+      driving:   35000,   // механик едет ~35 сек
+      arrived:   30000,   // осмотр и подтверждение ~30 сек
+      repairing: 110000,  // ремонт ~110 сек
       done:      0,
     };
 
@@ -177,11 +192,11 @@ export default function MechanicChatModal({
       repairing: 3, // линия между "Ремонт" и "Готово"
     };
 
-    const delay = Math.max(6000, Math.min(delays[currentStage], 20000));
+    const delay = delays[currentStage] || 45000;
     const next = nextStage[currentStage];
     if (!next) return;
 
-    // Анимируем линию ДО следующей стадии за время delay
+    // Анимируем линию плавно за всё время ожидания
     const lIdx = lineIndex[currentStage];
     if (lIdx !== undefined) animateLine(lIdx, delay);
 
@@ -240,7 +255,7 @@ export default function MechanicChatModal({
     if (stepIdx === 1 && !called) {
       setCalled(true);
       onCallRoadside(); // списывает деньги в TruckDetailModal
-      animateLine(0, 400);
+      animateLine(0, 600);
       setStage('driving');
       stageScriptIdx.current = 0;
       const script = getStageScript('driving', mechanicName, eta, repairCost, repairLabel);
@@ -252,7 +267,7 @@ export default function MechanicChatModal({
     }
 
     // Остальные шаги
-    animateLine(targetIdx - 1, 400);
+    animateLine(targetIdx - 1, 600);
     setStage(targetStage);
     stageScriptIdx.current = 0;
     const script = getStageScript(targetStage, mechanicName, eta, repairCost, repairLabel);
@@ -284,7 +299,7 @@ export default function MechanicChatModal({
     setStage('driving');
     stageScriptIdx.current = 0;
     onCallRoadside();
-    animateLine(0, 500);
+    animateLine(0, 600);
     const script = getStageScript('driving', mechanicName, eta, repairCost, repairLabel);
     setTimeout(() => addMechanicMsg(script[0]), 600);
     setTimeout(() => { setTyping(true); setTimeout(() => { setTyping(false); addMechanicMsg(script[1]); }, 1200); }, 2500);
@@ -378,11 +393,28 @@ export default function MechanicChatModal({
                     {/* Линия между шагами */}
                     {i > 0 && (
                       <View style={s.lineTrack}>
-                        <Animated.View style={[
-                          s.lineFill,
-                          { width: lineAnims[i - 1].interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) },
-                          called && stageIdx >= i ? s.lineFillDone : s.lineFillCurrent,
-                        ]} />
+                        {/* Фоновая полоска с пульсом для активной линии */}
+                        {(() => {
+                          const lineIdx = i - 1;
+                          const isLineDone = called && stageIdx >= i;
+                          const isLineActive = called && stageIdx === i - 1 && lineAnims[lineIdx];
+                          return (
+                            <>
+                              {isLineActive && !isLineDone && (
+                                <Animated.View style={[
+                                  StyleSheet.absoluteFillObject,
+                                  { borderRadius: 2, opacity: pulseAnim,
+                                    backgroundColor: 'rgba(56,189,248,0.18)' }
+                                ]} />
+                              )}
+                              <Animated.View style={[
+                                s.lineFill,
+                                { width: lineAnims[lineIdx].interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) },
+                                isLineDone ? s.lineFillDone : s.lineFillCurrent,
+                              ]} />
+                            </>
+                          );
+                        })()}
                       </View>
                     )}
                     {/* Кружок */}
@@ -559,10 +591,10 @@ const s = StyleSheet.create({
   stepDotDone:    { backgroundColor: 'rgba(74,222,128,0.18)', borderColor: 'rgba(74,222,128,0.7)',  shadowColor: '#4ade80', shadowOpacity: 0.35, shadowRadius: 5, elevation: 4 },
   stepDotCurrent: { backgroundColor: 'rgba(56,189,248,0.18)', borderColor: 'rgba(56,189,248,0.8)',  shadowColor: '#38bdf8', shadowOpacity: 0.4,  shadowRadius: 6, elevation: 5 },
   stepLabel: { fontSize: 9, color: '#94a3b8', fontWeight: '700' },
-  lineTrack: { flex: 1, height: 3, backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 2, marginBottom: 12, overflow: 'hidden' },
+  lineTrack: { flex: 1, height: 4, backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 2, marginBottom: 12, overflow: 'hidden', position: 'relative' },
   lineFill:        { height: '100%' as any, borderRadius: 2, backgroundColor: 'rgba(56,189,248,0.5)' },
-  lineFillDone:    { backgroundColor: '#4ade80' },
-  lineFillCurrent: { backgroundColor: '#38bdf8' },
+  lineFillDone:    { backgroundColor: '#4ade80', shadowColor: '#4ade80', shadowOpacity: 0.6, shadowRadius: 4, elevation: 3 },
+  lineFillCurrent: { backgroundColor: '#38bdf8', shadowColor: '#38bdf8', shadowOpacity: 0.5, shadowRadius: 4, elevation: 3 },
 
   callBtn: { padding: 11, borderRadius: 12, borderWidth: 1.5, borderColor: 'rgba(239,68,68,0.6)', backgroundColor: 'rgba(239,68,68,0.15)', alignItems: 'center' },
   callBtnText: { fontSize: 13, fontWeight: '900', color: '#ef4444' },
