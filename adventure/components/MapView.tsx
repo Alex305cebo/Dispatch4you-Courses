@@ -1132,11 +1132,15 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
           opacity: 1,
         }));
         
+        // Конвертируем hex цвет в число для amCharts
+        const colorHex = activeTooltip.color.replace('#', '');
+        const colorInt = parseInt(colorHex, 16) || 0x06b6d4; // fallback на cyan
+        
         // Фон tooltip
         tooltipContainer.children.push(am5.RoundedRectangle.new(root, {
           width: tooltipW, height: tooltipH,
           fill: am5.color(0x111827), fillOpacity: 0.95,
-          stroke: am5.color(parseInt(activeTooltip.color.replace('#', ''), 16)), strokeWidth: 2,
+          stroke: am5.color(colorInt), strokeWidth: 2,
           cornerRadiusTL: 12, cornerRadiusTR: 12, cornerRadiusBL: 12, cornerRadiusBR: 12,
         }));
         
