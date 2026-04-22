@@ -1,13 +1,14 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
+import {
+  View, Text, StyleSheet, TouchableOpacity,
+  Modal, ScrollView, useWindowDimensions,
+} from 'react-native';
 import { useGameStore } from '../store/gameStore';
-import { Colors } from '../constants/colors';
 import { useTheme } from '../hooks/useTheme';
 import { ThemeColors } from '../constants/themes';
 
 const NEW_TRUCK_PRICE = 15_000;
 
-// Каталог траков в магазине
 const TRUCK_CATALOG = [
   {
     id: 'kenworth-t680',
@@ -15,16 +16,15 @@ const TRUCK_CATALOG = [
     model: 'T680',
     year: '2024',
     price: 15_000,
-    emoji: '🚛',
     badge: 'BESTSELLER',
     badgeColor: '#f97316',
     specs: [
-      { icon: '⚡', label: 'Двигатель', value: 'PACCAR MX-13 455HP' },
-      { icon: '⛽', label: 'Расход', value: '6.8 mpg avg' },
-      { icon: '📦', label: 'Грузоподъёмность', value: '80,000 lbs' },
-      { icon: '🛣️', label: 'Пробег', value: '0 miles' },
+      { icon: '⚡', label: 'Engine', value: 'PACCAR MX-13 455HP' },
+      { icon: '⛽', label: 'MPG', value: '6.8 avg' },
+      { icon: '📦', label: 'GVW', value: '80,000 lbs' },
+      { icon: '🛣️', label: 'Miles', value: '0' },
     ],
-    features: ['Автоматическая КПП', 'Спальная кабина', 'APU система', 'Bluetooth + GPS'],
+    features: ['Auto Trans', 'Sleeper Cab', 'APU', 'GPS'],
     color: '#06b6d4',
   },
   {
@@ -33,28 +33,28 @@ const TRUCK_CATALOG = [
     model: '579',
     year: '2024',
     price: 15_000,
-    emoji: '🚚',
     badge: 'NEW',
     badgeColor: '#4ade80',
     specs: [
-      { icon: '⚡', label: 'Двигатель', value: 'Cummins X15 500HP' },
-      { icon: '⛽', label: 'Расход', value: '7.1 mpg avg' },
-      { icon: '📦', label: 'Грузоподъёмность', value: '80,000 lbs' },
-      { icon: '🛣️', label: 'Пробег', value: '0 miles' },
+      { icon: '⚡', label: 'Engine', value: 'Cummins X15 500HP' },
+      { icon: '⛽', label: 'MPG', value: '7.1 avg' },
+      { icon: '📦', label: 'GVW', value: '80,000 lbs' },
+      { icon: '🛣️', label: 'Miles', value: '0' },
     ],
-    features: ['Аэродинамический дизайн', 'Большая кабина', 'Eco-режим', 'Lane Assist'],
+    features: ['Aerodynamic', 'Large Cab', 'Eco Mode', 'Lane Assist'],
     color: '#8b5cf6',
   },
 ];
 
 export default function GarageModal() {
   const T = useTheme();
-  const styles = useMemo(() => makeStyles(T), [T]);
+  const { height: screenH } = useWindowDimensions();
+  const styles = useMemo(() => makeStyles(T, screenH), [T, screenH]);
+
   const { garageOpen, setGarageOpen, balance, trucks, buyNewTruck } = useGameStore();
 
   const canAfford = balance >= NEW_TRUCK_PRICE;
-  const progress = Math.min(1, balance / NEW_TRUCK_PRICE);
-  const progressPct = Math.round(progress * 100);
+  const progressPct = Math.round(Math.min(1, balance / NEW_TRUCK_PRICE) * 100);
   const currentTruckCount = trucks.length;
 
   function handleBuy() {
@@ -70,342 +70,340 @@ export default function GarageModal() {
       animationType="slide"
       onRequestClose={() => setGarageOpen(false)}
     >
-      <TouchableOpacity
-        style={styles.overlay}
-        activeOpacity={1}
-        onPress={() => setGarageOpen(false)}
-      />
+      <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={() => setGarageOpen(false)} />
+
       <View style={styles.panelWrap}>
-      <View style={styles.panel}>
+        <View style={styles.panel}>
 
-        {/* ── HEADER ── */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.headerLogo}>🏢</Text>
-            <View>
-              <Text style={styles.headerTitle}>TRUCK DEALER</Text>
-              <Text style={styles.headerSub}>Premium Fleet Solutions</Text>
-            </View>
-          </View>
-          <TouchableOpacity onPress={() => setGarageOpen(false)} style={styles.closeBtn}>
-            <Text style={styles.closeBtnText}>✕</Text>
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-
-          {/* ── БАЛАНС ПОКУПАТЕЛЯ ── */}
-          <View style={styles.walletBar}>
-            <View style={styles.walletLeft}>
-              <Text style={styles.walletLabel}>💳 Ваш бюджет</Text>
-              <Text style={[styles.walletValue, { color: canAfford ? '#4ade80' : '#f97316' }]}>
-                ${balance.toLocaleString()}
-              </Text>
-            </View>
-            <View style={styles.walletRight}>
-              {canAfford ? (
-                <View style={styles.walletBadgeGreen}>
-                  <Text style={styles.walletBadgeText}>✓ Достаточно</Text>
-                </View>
-              ) : (
-                <View style={styles.walletBadgeOrange}>
-                  <Text style={styles.walletBadgeText}>Нужно ещё ${(NEW_TRUCK_PRICE - balance).toLocaleString()}</Text>
-                </View>
-              )}
-              {/* Прогресс */}
-              <View style={styles.miniProgressBg}>
-                <View style={[styles.miniProgressFill, { width: `${progressPct}%` as any }]} />
+          {/* HEADER */}
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <Text style={styles.headerLogo}>🏢</Text>
+              <View>
+                <Text style={styles.headerTitle}>TRUCK DEALER</Text>
+                <Text style={styles.headerSub}>Premium Fleet Solutions</Text>
               </View>
-              <Text style={styles.miniProgressLabel}>{progressPct}% накоплено</Text>
             </View>
+            <TouchableOpacity onPress={() => setGarageOpen(false)} style={styles.closeBtn}>
+              <Text style={styles.closeBtnText}>✕</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* ── ЗАГОЛОВОК КАТАЛОГА ── */}
-          <View style={styles.catalogHeader}>
-            <Text style={styles.catalogTitle}>📋 Каталог траков</Text>
-            <Text style={styles.catalogSub}>{TRUCK_CATALOG.length} модели в наличии</Text>
-          </View>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
-          {/* ── КАРТОЧКИ ТОВАРОВ ── */}
-          {TRUCK_CATALOG.map((truck, idx) => (
-            <View key={truck.id} style={[styles.truckCard, { borderColor: canAfford ? truck.color + '55' : 'rgba(255,255,255,0.1)' }]}>
-
-              {/* Бейдж */}
-              <View style={[styles.truckBadge, { backgroundColor: truck.badgeColor + '22', borderColor: truck.badgeColor + '66' }]}>
-                <Text style={[styles.truckBadgeText, { color: truck.badgeColor }]}>{truck.badge}</Text>
+            {/* WALLET */}
+            <View style={styles.walletBar}>
+              <View>
+                <Text style={styles.walletLabel}>💳 Бюджет</Text>
+                <Text style={[styles.walletValue, { color: canAfford ? '#4ade80' : '#f97316' }]}>
+                  ${balance.toLocaleString()}
+                </Text>
               </View>
-
-              {/* Верх карточки — "фото" трака */}
-              <View style={[styles.truckImageArea, { backgroundColor: truck.color + '11' }]}>
-                <Text style={styles.truckEmoji}>{truck.emoji}</Text>
-                <View style={styles.truckTitleBlock}>
-                  <Text style={styles.truckBrand}>{truck.brand}</Text>
-                  <Text style={[styles.truckModel, { color: truck.color }]}>{truck.model}</Text>
-                  <Text style={styles.truckYear}>{truck.year} · Новый</Text>
-                </View>
-              </View>
-
-              {/* Характеристики */}
-              <View style={styles.specsGrid}>
-                {truck.specs.map(s => (
-                  <View key={s.label} style={styles.specItem}>
-                    <Text style={styles.specIcon}>{s.icon}</Text>
-                    <Text style={styles.specLabel}>{s.label}</Text>
-                    <Text style={[styles.specValue, { color: truck.color }]}>{s.value}</Text>
-                  </View>
-                ))}
-              </View>
-
-              {/* Фичи */}
-              <View style={styles.featuresRow}>
-                {truck.features.map(f => (
-                  <View key={f} style={[styles.featureChip, { borderColor: truck.color + '44' }]}>
-                    <Text style={[styles.featureChipText, { color: truck.color }]}>✓ {f}</Text>
-                  </View>
-                ))}
-              </View>
-
-              {/* Цена + кнопка */}
-              <View style={styles.cardFooter}>
-                <View>
-                  <Text style={styles.priceLabel}>Цена</Text>
-                  <Text style={styles.priceValue}>${truck.price.toLocaleString()}</Text>
-                  <Text style={styles.priceNote}>Финансирование доступно</Text>
-                </View>
-                <TouchableOpacity
-                  style={[styles.buyBtn, !canAfford && styles.buyBtnDisabled, { backgroundColor: canAfford ? truck.color : 'rgba(255,255,255,0.08)' }]}
-                  onPress={handleBuy}
-                  disabled={!canAfford}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.buyBtnText}>
-                    {canAfford ? '🛒 Купить' : '🔒 Нет средств'}
+              <View style={styles.walletRight}>
+                <View style={[styles.walletBadge, { backgroundColor: canAfford ? 'rgba(74,222,128,0.12)' : 'rgba(249,115,22,0.12)', borderColor: canAfford ? 'rgba(74,222,128,0.3)' : 'rgba(249,115,22,0.3)' }]}>
+                  <Text style={styles.walletBadgeText}>
+                    {canAfford ? '✓ Достаточно' : `Нужно ещё $${(NEW_TRUCK_PRICE - balance).toLocaleString()}`}
                   </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))}
-
-          {/* ── МОЙ ГАРАЖ ── */}
-          <View style={styles.garageSection}>
-            <View style={styles.garageSectionHeader}>
-              <Text style={styles.garageSectionTitle}>🏠 Мой гараж</Text>
-              <View style={styles.fleetCountBadge}>
-                <Text style={styles.fleetCountText}>{currentTruckCount} {currentTruckCount === 1 ? 'трак' : 'трака'}</Text>
+                </View>
+                <View style={styles.progressBg}>
+                  <View style={[styles.progressFill, { width: `${progressPct}%` as any }]} />
+                </View>
+                <Text style={styles.progressLabel}>{progressPct}% накоплено</Text>
               </View>
             </View>
 
-            {trucks.map(t => {
-              const isOld = (t as any).isOldTruck;
-              return (
-                <View key={t.id} style={[styles.garageRow, isOld && styles.garageRowOld]}>
-                  <View style={[styles.garageIconWrap, { backgroundColor: isOld ? 'rgba(239,68,68,0.1)' : 'rgba(6,182,212,0.1)' }]}>
-                    <Text style={styles.garageIcon}>{isOld ? '🚚' : '🚛'}</Text>
+            {/* CATALOG LABEL */}
+            <View style={styles.sectionRow}>
+              <Text style={styles.sectionTitle}>📋 Каталог</Text>
+              <Text style={styles.sectionSub}>{TRUCK_CATALOG.length} модели в наличии</Text>
+            </View>
+
+            {/* TRUCK CARDS */}
+            {TRUCK_CATALOG.map(truck => (
+              <View key={truck.id} style={[styles.truckCard, { borderColor: canAfford ? truck.color + '55' : 'rgba(255,255,255,0.1)' }]}>
+
+                {/* Badge */}
+                <View style={[styles.badge, { backgroundColor: truck.badgeColor + '22', borderColor: truck.badgeColor + '55' }]}>
+                  <Text style={[styles.badgeText, { color: truck.badgeColor }]}>{truck.badge}</Text>
+                </View>
+
+                {/* PHOTO ZONE — место под фото */}
+                <View style={[styles.photoZone, { backgroundColor: truck.color + '0d' }]}>
+                  {/* Placeholder — заменить на <Image> когда будут фото */}
+                  <View style={styles.photoPlaceholder}>
+                    <Text style={styles.photoPlaceholderIcon}>🚛</Text>
+                    <Text style={[styles.photoPlaceholderText, { color: truck.color + '88' }]}>PHOTO COMING SOON</Text>
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.garageTruckName}>{t.name}</Text>
-                    <Text style={styles.garageTruckDriver}>👤 {t.driver}</Text>
-                  </View>
-                  <View style={[styles.statusBadge, { backgroundColor: isOld ? 'rgba(239,68,68,0.12)' : 'rgba(74,222,128,0.12)', borderColor: isOld ? 'rgba(239,68,68,0.3)' : 'rgba(74,222,128,0.3)' }]}>
-                    <Text style={[styles.statusBadgeText, { color: isOld ? '#ef4444' : '#4ade80' }]}>
-                      {isOld ? '⚠ СТАРЫЙ' : '✓ НОВЫЙ'}
-                    </Text>
+                  {/* Название поверх фото */}
+                  <View style={styles.photoOverlay}>
+                    <Text style={styles.photoBrand}>{truck.brand}</Text>
+                    <Text style={[styles.photoModel, { color: truck.color }]}>{truck.model} · {truck.year}</Text>
                   </View>
                 </View>
-              );
-            })}
-          </View>
 
-          <View style={{ height: 32 }} />
-        </ScrollView>
-      </View>
+                {/* SPECS — горизонтальная строка */}
+                <View style={styles.specsRow}>
+                  {truck.specs.map(s => (
+                    <View key={s.label} style={styles.specItem}>
+                      <Text style={styles.specIcon}>{s.icon}</Text>
+                      <Text style={styles.specLabel}>{s.label}</Text>
+                      <Text style={[styles.specValue, { color: truck.color }]}>{s.value}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                {/* FEATURES — компактные чипы */}
+                <View style={styles.featuresRow}>
+                  {truck.features.map(f => (
+                    <View key={f} style={[styles.chip, { borderColor: truck.color + '44' }]}>
+                      <Text style={[styles.chipText, { color: truck.color }]}>✓ {f}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                {/* FOOTER — цена + кнопка */}
+                <View style={styles.cardFooter}>
+                  <View>
+                    <Text style={styles.priceLabel}>ЦЕНА</Text>
+                    <Text style={styles.priceValue}>${truck.price.toLocaleString()}</Text>
+                    <Text style={styles.priceNote}>Финансирование доступно</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={[styles.buyBtn, { backgroundColor: canAfford ? truck.color : 'rgba(255,255,255,0.07)' }]}
+                    onPress={handleBuy}
+                    disabled={!canAfford}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.buyBtnText}>
+                      {canAfford ? '🛒 Купить' : '🔒 Нет средств'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+
+            {/* MY GARAGE */}
+            <View style={styles.sectionRow}>
+              <Text style={styles.sectionTitle}>🏠 Мой гараж</Text>
+              <View style={styles.countBadge}>
+                <Text style={styles.countBadgeText}>{currentTruckCount} {currentTruckCount === 1 ? 'трак' : 'трака'}</Text>
+              </View>
+            </View>
+
+            <View style={styles.garageList}>
+              {trucks.map(t => {
+                const isOld = (t as any).isOldTruck;
+                return (
+                  <View key={t.id} style={[styles.garageRow, isOld && { backgroundColor: 'rgba(239,68,68,0.04)' }]}>
+                    <View style={[styles.garageIcon, { backgroundColor: isOld ? 'rgba(239,68,68,0.1)' : 'rgba(6,182,212,0.1)' }]}>
+                      <Text style={{ fontSize: 18 }}>{isOld ? '🚚' : '🚛'}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.garageName}>{t.name}</Text>
+                      <Text style={styles.garageDriver}>👤 {t.driver}</Text>
+                    </View>
+                    <View style={[styles.statusBadge, {
+                      backgroundColor: isOld ? 'rgba(239,68,68,0.12)' : 'rgba(74,222,128,0.12)',
+                      borderColor: isOld ? 'rgba(239,68,68,0.3)' : 'rgba(74,222,128,0.3)',
+                    }]}>
+                      <Text style={[styles.statusText, { color: isOld ? '#ef4444' : '#4ade80' }]}>
+                        {isOld ? '⚠ СТАРЫЙ' : '✓ НОВЫЙ'}
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+
+            <View style={{ height: 24 }} />
+          </ScrollView>
+        </View>
       </View>
     </Modal>
   );
 }
 
-function makeStyles(T: ThemeColors) {
+function makeStyles(T: ThemeColors, screenH: number) {
+  // Панель занимает не более 88% высоты экрана, но не менее 400px
+  const panelMaxH = Math.max(400, Math.min(screenH * 0.88, screenH - 60));
+
   return StyleSheet.create({
     overlay: {
       position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.7)',
+      backgroundColor: 'rgba(0,0,0,0.72)',
     },
     panelWrap: {
       position: 'absolute', bottom: 0, left: 0, right: 0,
       alignItems: 'center',
-      paddingHorizontal: 0,
     },
     panel: {
       width: '100%',
       maxWidth: 480,
+      maxHeight: panelMaxH,
       backgroundColor: '#0a0f1e',
-      borderTopLeftRadius: 24, borderTopRightRadius: 24,
+      borderTopLeftRadius: 22, borderTopRightRadius: 22,
       borderWidth: 1, borderColor: 'rgba(6,182,212,0.2)',
-      maxHeight: '92%',
+      overflow: 'hidden',
     },
 
     // Header
     header: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      paddingHorizontal: 16, paddingVertical: 14,
+      paddingHorizontal: 14, paddingVertical: 11,
       borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.07)',
       backgroundColor: 'rgba(6,182,212,0.05)',
     },
-    headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    headerLogo: { fontSize: 28 },
-    headerTitle: { fontSize: 16, fontWeight: '900', color: '#fff', letterSpacing: 1.5 },
-    headerSub: { fontSize: 10, color: '#06b6d4', fontWeight: '600', letterSpacing: 0.5 },
+    headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+    headerLogo: { fontSize: 24 },
+    headerTitle: { fontSize: 14, fontWeight: '900', color: '#fff', letterSpacing: 1.5 },
+    headerSub: { fontSize: 9, color: '#06b6d4', fontWeight: '600', letterSpacing: 0.5 },
     closeBtn: {
-      width: 32, height: 32, borderRadius: 16,
+      width: 30, height: 30, borderRadius: 15,
       backgroundColor: 'rgba(255,255,255,0.07)',
       borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
       alignItems: 'center', justifyContent: 'center',
     },
-    closeBtnText: { fontSize: 14, color: '#94a3b8', fontWeight: '700' },
+    closeBtnText: { fontSize: 13, color: '#94a3b8', fontWeight: '700' },
 
-    // Wallet bar
+    scrollContent: { paddingBottom: 8 },
+
+    // Wallet
     walletBar: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      margin: 14, padding: 14,
+      margin: 12, marginBottom: 8, padding: 12,
       backgroundColor: 'rgba(255,255,255,0.04)',
-      borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+      borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
     },
-    walletLeft: { gap: 2 },
-    walletLabel: { fontSize: 11, color: '#64748b', fontWeight: '600' },
-    walletValue: { fontSize: 26, fontWeight: '900' },
+    walletLabel: { fontSize: 10, color: '#64748b', fontWeight: '600' },
+    walletValue: { fontSize: 22, fontWeight: '900' },
     walletRight: { alignItems: 'flex-end', gap: 4 },
-    walletBadgeGreen: {
-      backgroundColor: 'rgba(74,222,128,0.12)', borderRadius: 8,
-      borderWidth: 1, borderColor: 'rgba(74,222,128,0.3)',
-      paddingHorizontal: 8, paddingVertical: 3,
-    },
-    walletBadgeOrange: {
-      backgroundColor: 'rgba(249,115,22,0.12)', borderRadius: 8,
-      borderWidth: 1, borderColor: 'rgba(249,115,22,0.3)',
+    walletBadge: {
+      borderRadius: 7, borderWidth: 1,
       paddingHorizontal: 8, paddingVertical: 3,
     },
     walletBadgeText: { fontSize: 11, fontWeight: '700', color: '#e2e8f0' },
-    miniProgressBg: {
-      width: 100, height: 4, backgroundColor: 'rgba(255,255,255,0.08)',
+    progressBg: {
+      width: 90, height: 3, backgroundColor: 'rgba(255,255,255,0.08)',
       borderRadius: 2, overflow: 'hidden',
     },
-    miniProgressFill: { height: '100%', backgroundColor: '#06b6d4', borderRadius: 2 },
-    miniProgressLabel: { fontSize: 10, color: '#64748b', fontWeight: '600' },
+    progressFill: { height: '100%', backgroundColor: '#06b6d4', borderRadius: 2 },
+    progressLabel: { fontSize: 9, color: '#64748b', fontWeight: '600' },
 
-    // Catalog header
-    catalogHeader: {
+    // Section row
+    sectionRow: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      paddingHorizontal: 14, marginBottom: 10,
+      paddingHorizontal: 12, marginBottom: 8, marginTop: 4,
     },
-    catalogTitle: { fontSize: 14, fontWeight: '800', color: '#e2e8f0' },
-    catalogSub: { fontSize: 11, color: '#06b6d4', fontWeight: '600' },
+    sectionTitle: { fontSize: 13, fontWeight: '800', color: '#e2e8f0' },
+    sectionSub: { fontSize: 10, color: '#06b6d4', fontWeight: '600' },
 
     // Truck card
     truckCard: {
-      marginHorizontal: 14, marginBottom: 16,
+      marginHorizontal: 12, marginBottom: 12,
       backgroundColor: 'rgba(255,255,255,0.03)',
-      borderRadius: 18, borderWidth: 1.5,
+      borderRadius: 16, borderWidth: 1.5,
       overflow: 'hidden',
     },
-    truckBadge: {
-      position: 'absolute', top: 12, right: 12, zIndex: 10,
-      borderRadius: 6, borderWidth: 1,
-      paddingHorizontal: 8, paddingVertical: 3,
+    badge: {
+      position: 'absolute', top: 10, right: 10, zIndex: 10,
+      borderRadius: 5, borderWidth: 1,
+      paddingHorizontal: 7, paddingVertical: 2,
     },
-    truckBadgeText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
+    badgeText: { fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
 
-    truckImageArea: {
-      flexDirection: 'row', alignItems: 'center', gap: 16,
-      padding: 20, paddingRight: 60,
+    // Photo zone — фиксированная высота под фото
+    photoZone: {
+      height: 130,
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'relative',
     },
-    truckEmoji: { fontSize: 52 },
-    truckTitleBlock: { flex: 1 },
-    truckBrand: { fontSize: 11, fontWeight: '700', color: '#64748b', letterSpacing: 2 },
-    truckModel: { fontSize: 28, fontWeight: '900', letterSpacing: -0.5 },
-    truckYear: { fontSize: 12, color: '#94a3b8', fontWeight: '600', marginTop: 2 },
+    photoPlaceholder: {
+      alignItems: 'center', gap: 4,
+    },
+    photoPlaceholderIcon: { fontSize: 44 },
+    photoPlaceholderText: { fontSize: 9, fontWeight: '700', letterSpacing: 1 },
+    photoOverlay: {
+      position: 'absolute', bottom: 8, left: 12,
+    },
+    photoBrand: { fontSize: 9, fontWeight: '700', color: 'rgba(255,255,255,0.4)', letterSpacing: 2 },
+    photoModel: { fontSize: 18, fontWeight: '900', letterSpacing: -0.3 },
 
-    // Specs grid
-    specsGrid: {
-      flexDirection: 'row', flexWrap: 'wrap',
-      paddingHorizontal: 14, paddingBottom: 10,
+    // Specs — горизонтально в одну строку
+    specsRow: {
+      flexDirection: 'row',
+      paddingHorizontal: 10, paddingVertical: 8,
       gap: 6,
+      borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)',
     },
     specItem: {
-      width: '47%',
+      flex: 1,
       backgroundColor: 'rgba(255,255,255,0.04)',
-      borderRadius: 10, padding: 9,
+      borderRadius: 8, padding: 7,
+      alignItems: 'center',
       borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
     },
-    specIcon: { fontSize: 13, marginBottom: 2 },
-    specLabel: { fontSize: 10, color: '#64748b', fontWeight: '600', marginBottom: 2 },
-    specValue: { fontSize: 11, fontWeight: '800' },
+    specIcon: { fontSize: 11, marginBottom: 1 },
+    specLabel: { fontSize: 8, color: '#64748b', fontWeight: '600' },
+    specValue: { fontSize: 10, fontWeight: '800', textAlign: 'center' },
 
     // Features chips
     featuresRow: {
-      flexDirection: 'row', flexWrap: 'wrap', gap: 6,
-      paddingHorizontal: 14, paddingBottom: 14,
+      flexDirection: 'row', flexWrap: 'wrap', gap: 5,
+      paddingHorizontal: 10, paddingBottom: 10,
     },
-    featureChip: {
+    chip: {
       borderRadius: 20, borderWidth: 1,
-      paddingHorizontal: 10, paddingVertical: 4,
+      paddingHorizontal: 8, paddingVertical: 3,
       backgroundColor: 'rgba(255,255,255,0.03)',
     },
-    featureChipText: { fontSize: 11, fontWeight: '600' },
+    chipText: { fontSize: 10, fontWeight: '600' },
 
     // Card footer
     cardFooter: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      padding: 14, paddingTop: 12,
+      paddingHorizontal: 12, paddingVertical: 10,
       borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)',
       backgroundColor: 'rgba(0,0,0,0.2)',
     },
-    priceLabel: { fontSize: 10, color: '#64748b', fontWeight: '600', letterSpacing: 0.5 },
-    priceValue: { fontSize: 22, fontWeight: '900', color: '#fff' },
-    priceNote: { fontSize: 10, color: '#4ade80', fontWeight: '600', marginTop: 1 },
+    priceLabel: { fontSize: 9, color: '#64748b', fontWeight: '700', letterSpacing: 0.8 },
+    priceValue: { fontSize: 20, fontWeight: '900', color: '#fff' },
+    priceNote: { fontSize: 9, color: '#4ade80', fontWeight: '600' },
     buyBtn: {
-      borderRadius: 12, paddingHorizontal: 20, paddingVertical: 12,
+      borderRadius: 10, paddingHorizontal: 18, paddingVertical: 10,
       alignItems: 'center', justifyContent: 'center',
-      minWidth: 120,
+      minWidth: 110,
     },
-    buyBtnDisabled: {},
-    buyBtnText: { fontSize: 14, fontWeight: '800', color: '#fff' },
+    buyBtnText: { fontSize: 13, fontWeight: '800', color: '#fff' },
 
-    // Garage section
-    garageSection: {
-      marginHorizontal: 14, marginTop: 4,
+    // Garage list
+    countBadge: {
+      backgroundColor: 'rgba(6,182,212,0.12)', borderRadius: 7,
+      borderWidth: 1, borderColor: 'rgba(6,182,212,0.3)',
+      paddingHorizontal: 8, paddingVertical: 2,
+    },
+    countBadgeText: { fontSize: 10, fontWeight: '700', color: '#06b6d4' },
+    garageList: {
+      marginHorizontal: 12,
       backgroundColor: 'rgba(255,255,255,0.03)',
-      borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)',
+      borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)',
       overflow: 'hidden',
     },
-    garageSectionHeader: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      padding: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)',
-      backgroundColor: 'rgba(255,255,255,0.02)',
-    },
-    garageSectionTitle: { fontSize: 13, fontWeight: '800', color: '#e2e8f0' },
-    fleetCountBadge: {
-      backgroundColor: 'rgba(6,182,212,0.12)', borderRadius: 8,
-      borderWidth: 1, borderColor: 'rgba(6,182,212,0.3)',
-      paddingHorizontal: 8, paddingVertical: 3,
-    },
-    fleetCountText: { fontSize: 11, fontWeight: '700', color: '#06b6d4' },
-
     garageRow: {
-      flexDirection: 'row', alignItems: 'center', gap: 12,
-      padding: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)',
+      flexDirection: 'row', alignItems: 'center', gap: 10,
+      paddingHorizontal: 12, paddingVertical: 10,
+      borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)',
     },
-    garageRowOld: { backgroundColor: 'rgba(239,68,68,0.03)' },
-    garageIconWrap: {
-      width: 44, height: 44, borderRadius: 12,
+    garageIcon: {
+      width: 38, height: 38, borderRadius: 10,
       alignItems: 'center', justifyContent: 'center',
     },
-    garageIcon: { fontSize: 22 },
-    garageTruckName: { fontSize: 13, fontWeight: '700', color: '#e2e8f0' },
-    garageTruckDriver: { fontSize: 11, color: '#64748b', marginTop: 2 },
+    garageName: { fontSize: 12, fontWeight: '700', color: '#e2e8f0' },
+    garageDriver: { fontSize: 10, color: '#64748b', marginTop: 1 },
     statusBadge: {
-      borderRadius: 8, borderWidth: 1,
-      paddingHorizontal: 8, paddingVertical: 4,
+      borderRadius: 7, borderWidth: 1,
+      paddingHorizontal: 7, paddingVertical: 3,
     },
-    statusBadgeText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.3 },
+    statusText: { fontSize: 9, fontWeight: '800', letterSpacing: 0.3 },
   });
 }
