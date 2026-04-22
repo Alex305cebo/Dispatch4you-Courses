@@ -156,10 +156,10 @@ const s = StyleSheet.create({
   mapArea: { flex: 1, backgroundColor: 'transparent', position: 'relative' },
   rightCol: { width: 400, flexDirection: 'column', backgroundColor: BG2, borderLeftWidth: 1, borderLeftColor: BORDER },
   sideTabs: { flexDirection: 'row', gap: 6, paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: BORDER },
-  sideTab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 12, borderWidth: 1.5, borderColor: 'rgba(0,0,0,0.08)', flexDirection: 'row', justifyContent: 'center', gap: 5, backgroundColor: '#f3f4f6' },
-  sideTabOn: { backgroundColor: 'rgba(0,122,255,0.12)', borderColor: '#007aff', shadowColor: '#007aff', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 },
-  sideTabTxt: { fontSize: 13, fontWeight: '700', color: '#6b7280' },
-  sideTabTxtOn: { color: '#007aff', fontWeight: '900' },
+  sideTab: { flex: 1, paddingVertical: 13, alignItems: 'center', borderRadius: 16, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.22)', flexDirection: 'row', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.08)' },
+  sideTabOn: { flex: 2, backgroundColor: 'rgba(6,182,212,0.1)', borderColor: '#38bdf8', shadowColor: '#38bdf8', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.5, shadowRadius: 10, elevation: 6 },
+  sideTabTxt: { fontSize: 15, fontWeight: '900', color: '#ffffff' },
+  sideTabTxtOn: { color: '#ffffff', fontWeight: '900' },
   panelContent: { flex: 1 },
   emptyPanel: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   emptyTxt: { fontSize: 14, color: '#9ca3af' },
@@ -441,10 +441,10 @@ export default function GameScreen() {
     ['email','pod_ready','rate_con','detention','missed_call','voicemail','text','urgent'].includes(n.type) && !n.read
   ).length;
 
-  const tabs: { id: Tab; label: string; badge?: number; onPress?: () => void }[] = [
-    { id: 'loadboard', label: 'Грузы',  badge: availableLoads.length },
-    { id: 'chat',      label: '💬 Связь', badge: unreadChat || undefined },
-    { id: 'trucks',    label: 'Траки',  badge: idleTrucks > 0 ? idleTrucks : undefined },
+  const tabs: { id: Tab; label: string; icon: string; badge?: number; onPress?: () => void }[] = [
+    { id: 'loadboard', label: 'Грузы',  icon: '📦', badge: availableLoads.length },
+    { id: 'chat',      label: 'Связь',  icon: '💬', badge: unreadChat || undefined },
+    { id: 'trucks',    label: 'Траки',  icon: '🚛', badge: idleTrucks > 0 ? idleTrucks : undefined },
   ];
 
   // ── TOP BAR ──────────────────────────────────────────────────────────────
@@ -1129,7 +1129,7 @@ export default function GameScreen() {
 
       {/* ── КАРТОЧКА "КУПИТЬ ТРАК" ── */}
       <div
-        onClick={() => {/* TODO: открыть магазин траков */}}
+        onClick={() => useGameStore.getState().setGarageOpen(true)}
         style={{
           minWidth: isWide ? 90 : 78, flexShrink: 0,
           borderRadius: 10, overflow: 'hidden',
@@ -1177,21 +1177,41 @@ export default function GameScreen() {
   const SideTabs = () => (
     <View style={s.sideTabs}>
       {tabs.map(tab => {
+        const isOn = activeTab === tab.id;
         const isGuideActive = GUIDE_TAB_STEPS[tab.id]?.includes(activeGuideStep as string);
         return (
           <TouchableOpacity key={tab.id}
-            style={[s.sideTab, activeTab === tab.id && s.sideTabOn,
-              isGuideActive && { borderColor: 'rgba(0,122,255,0.5)', backgroundColor: 'rgba(0,122,255,0.08)' } as any
+            style={[s.sideTab, isOn && s.sideTabOn,
+              isGuideActive && { borderColor: 'rgba(56,189,248,0.5)', backgroundColor: 'rgba(56,189,248,0.08)' } as any
             ]}
             onPress={() => tab.onPress ? tab.onPress() : switchTab(tab.id)}>
-            <Text style={[s.sideTabTxt, activeTab === tab.id && s.sideTabTxtOn,
-              isGuideActive && { color: '#007aff' } as any
-            ]}>{tab.label}</Text>
-            {isGuideActive && activeTab !== tab.id && (
-              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#007aff', marginLeft: 4 } as any} />
+            <div style={{
+              filter: isOn
+                ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.18)) drop-shadow(0 1px 3px rgba(0,0,0,0.12))'
+                : 'drop-shadow(0 3px 6px rgba(0,0,0,0.13)) drop-shadow(0 1px 2px rgba(0,0,0,0.08))',
+              transform: isOn ? 'translateY(-4px)' : 'translateY(-2px)',
+              transition: 'transform 0.2s ease, filter 0.2s ease',
+              lineHeight: 0, display: 'inline-block',
+            } as any}>
+              <Text style={{ fontSize: 24, lineHeight: 28 } as any}>{tab.icon}</Text>
+            </div>
+            {isOn && (
+              <Text style={[s.sideTabTxt, s.sideTabTxtOn, { color: themeMode === 'dark' ? '#ffffff' : '#1e293b' } as any]}>{tab.label}</Text>
             )}
-            {tab.badge !== undefined && (
-              <View style={s.badge}><Text style={s.badgeTxt}>{tab.badge}</Text></View>
+            {isGuideActive && !isOn && (
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#38bdf8', marginLeft: 4 } as any} />
+            )}
+            {tab.badge !== undefined && tab.badge > 0 && (
+              <View style={{
+                position: 'absolute', top: 5, right: 5,
+                backgroundColor: '#ef4444',
+                borderRadius: 9, paddingHorizontal: 5, paddingVertical: 1,
+                minWidth: 18, alignItems: 'center',
+              } as any}>
+                <Text style={{ fontSize: 10, fontWeight: '800', color: '#fff' } as any}>
+                  {tab.badge}
+                </Text>
+              </View>
             )}
           </TouchableOpacity>
         );
