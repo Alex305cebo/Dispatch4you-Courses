@@ -177,8 +177,8 @@
             filter: brightness(0.9) !important;
         }
 
-        /* Overflow для ripple эффекта */
-        button,
+        /* Overflow для ripple эффекта — не трогаем индикаторы карусели */
+        button:not(.carousel-indicator),
         .btn,
         [role="button"],
         .clickable {
