@@ -58,11 +58,16 @@ export function cityState(city: string): string {
 // 1 день = 1440 игровых минут = 24 реальных минуты = 1440 реальных секунд
 // 1 тик (1 реальная секунда) = 1440/1440 = 1.0 игровых минуты
 export const MINUTES_PER_TICK = 1.0;
-// Длина смены в игровых минутах (24 часа)
-export const SHIFT_DURATION = 1440;
+// Длина рабочего дня в игровых минутах (12 часов)
+export const DAY_DURATION = 720;
+// Длина недели (7 дней)
+export const WEEK_DURATION = 7;
 // Старт смены: 06:00
 export const SHIFT_START_HOUR = 6;
 export const SHIFT_START_MINUTE = 0;
+
+// Для обратной совместимости
+export const SHIFT_DURATION = DAY_DURATION;
 
 // Скорость трака: 10 миль/игровую минуту
 export const TRUCK_SPEED_MPM = 10;

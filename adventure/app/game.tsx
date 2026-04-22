@@ -36,6 +36,7 @@ import GameMenu from '../components/GameMenu';
 import TruckDetailModal from '../components/TruckDetailModal';
 import DeliveryResultPopup from '../components/DeliveryResultPopup';
 import ShiftEndPopup from '../components/ShiftEndPopup';
+import DayEndPopup from '../components/DayEndPopup';
 import StatsPopup from '../components/StatsPopup';
 import SettingsPopup from '../components/SettingsPopup';
 import HelpPopup from '../components/HelpPopup';
@@ -1147,7 +1148,18 @@ export default function GameScreen() {
           return (
             <TouchableOpacity
               key={tab.id}
-              onPress={() => tab.onPress ? tab.onPress() : switchTab(tab.id as Tab)}
+              onPress={() => {
+                if (tab.onPress) {
+                  tab.onPress();
+                } else {
+                  // Если нажали на уже активную вкладку — закрываем её (переходим на карту)
+                  if (isOn) {
+                    handleMapTabPress();
+                  } else {
+                    switchTab(tab.id as Tab);
+                  }
+                }
+              }}
               style={{
                 flex: isOn ? 2 : 1,
                 flexDirection: 'row',
@@ -1482,6 +1494,7 @@ export default function GameScreen() {
       {showEvents && <Modal onClose={() => setShowEvents(false)}><EventsPanel /></Modal>}
       {showMyLoads && <Modal onClose={() => setShowMyLoads(false)}><MyLoadsPanel /></Modal>}
       <DeliveryResultPopup key={deliveryResults[0]?.loadId ?? 'empty'} />
+      <DayEndPopup />
       <ShiftEndPopup />
       {showStats && <StatsPopup onClose={() => setShowStats(false)} />}
       {showSettings && <SettingsPopup onClose={() => setShowSettings(false)} />}

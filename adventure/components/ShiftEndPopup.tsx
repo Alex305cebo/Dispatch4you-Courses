@@ -41,7 +41,11 @@ export default function ShiftEndPopup() {
   const truckCount = trucks.length;
   const { grade, color, emoji, label } = calcGrade(profit, truckCount);
   const perTruck = truckCount > 0 ? Math.round(profit / truckCount) : 0;
-  const deliveries = trucks.reduce((sum, t) => sum + (t.totalDeliveries || 0), 0);
+  
+  // Реальные данные
+  const deliveries = financeLog.filter(f => 
+    f.type === 'income' && f.description.includes('Delivery')
+  ).length;
   const totalMiles = trucks.reduce((sum, t) => sum + (t.totalMiles || 0), 0);
 
   const incomes = financeLog.filter(f => f.type === 'income');
@@ -112,7 +116,7 @@ export default function ShiftEndPopup() {
               <span style={{ fontSize: 28, fontWeight: 900, color, textShadow: `0 0 20px ${color}88` }}>{grade}</span>
             </div>
             <div style={{ fontSize: 18, fontWeight: 900, color: '#111827', marginBottom: 3 }}>
-              Смена завершена!
+              Неделя завершена!
             </div>
             <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 4 }}>{label}</div>
             <div style={{
@@ -120,7 +124,7 @@ export default function ShiftEndPopup() {
               background: 'rgba(0,122,255,0.08)', padding: '3px 12px', borderRadius: 10,
               border: '1px solid rgba(0,122,255,0.2)',
             }}>
-              {sessionName || 'Сессия'} · День {day} · {truckCount} траков
+              {sessionName || 'Сессия'} · Неделя {Math.ceil(day / 7)} · {truckCount} траков
             </div>
           </div>
 
@@ -284,7 +288,7 @@ export default function ShiftEndPopup() {
               boxShadow: `0 4px 20px ${T.successGlow}`,
               transition: 'transform 0.15s, box-shadow 0.15s',
             }}>
-              🔄 Новая смена
+              🔄 Новая неделя
             </button>
             <button onClick={() => {
               useGameStore.getState().clearSave();

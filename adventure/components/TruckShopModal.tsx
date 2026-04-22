@@ -7,11 +7,17 @@ import { useGameStore } from '../store/gameStore';
 import { useTheme } from '../hooks/useTheme';
 import { ThemeColors } from '../constants/themes';
 
+// Функция для получения пути к картинке трака (WebP с fallback на PNG)
+const getTruckImage = (id: number) => {
+  // Для React Native Web используем прямые пути
+  return { uri: `/game/assets/Truck Pic/${id}.webp` };
+};
+
 // ─── ДАННЫЕ ЛОТОВ ───────────────────────────────────────────────────────────
 const LOTS = [
   {
     id: 1,
-    image: require('../Truck Pic/1.png'),
+    image: getTruckImage(1),
     name: 'Peterbilt 379 «Old Red»',
     price: 16_200,
     condition: 'Критическое (Salvage)',
@@ -34,7 +40,7 @@ const LOTS = [
   },
   {
     id: 2,
-    image: require('../Truck Pic/2.png'),
+    image: getTruckImage(2),
     name: 'Freightliner Century «Day Cab White»',
     price: 25_000,
     condition: 'Плохое',
@@ -57,7 +63,7 @@ const LOTS = [
   },
   {
     id: 3,
-    image: require('../Truck Pic/3.png'),
+    image: getTruckImage(3),
     name: 'International 9400i «Sandstorm»',
     price: 32_400,
     condition: 'Удовлетворительное',
@@ -80,7 +86,7 @@ const LOTS = [
   },
   {
     id: 4,
-    image: require('../Truck Pic/4.png'),
+    image: getTruckImage(4),
     name: 'Freightliner FLD 120 «Silver Dust»',
     price: 39_150,
     condition: 'Среднее',
@@ -103,7 +109,7 @@ const LOTS = [
   },
   {
     id: 5,
-    image: require('../Truck Pic/5.png'),
+    image: getTruckImage(5),
     name: 'Freightliner FLD 120 «Forest Green»',
     price: 47_250,
     condition: 'Крепкое рабочее',
@@ -126,7 +132,7 @@ const LOTS = [
   },
   {
     id: 6,
-    image: require('../Truck Pic/6.png'),
+    image: getTruckImage(6),
     name: 'Freightliner FLD 120 «Blue Classic»',
     price: 56_700,
     condition: 'Хорошее',
@@ -149,7 +155,7 @@ const LOTS = [
   },
   {
     id: 7,
-    image: require('../Truck Pic/7.png'),
+    image: getTruckImage(7),
     name: 'Volvo VNL 670 «Burgundy Aero»',
     price: 72_900,
     condition: 'Хорошее',
@@ -172,7 +178,7 @@ const LOTS = [
   },
   {
     id: 8,
-    image: require('../Truck Pic/8.png'),
+    image: getTruckImage(8),
     name: 'Freightliner Cascadia «Green Emerald»',
     price: 91_800,
     condition: 'Очень хорошее',
@@ -195,7 +201,7 @@ const LOTS = [
   },
   {
     id: 9,
-    image: require('../Truck Pic/9.png'),
+    image: getTruckImage(9),
     name: 'Tesla Semi «White Future»',
     price: 209_250,
     condition: 'Идеальное',
@@ -218,7 +224,7 @@ const LOTS = [
   },
   {
     id: 10,
-    image: require('../Truck Pic/10.png'),
+    image: getTruckImage(10),
     name: 'Freightliner Cascadia «Blue Evolution»',
     price: 236_250,
     condition: 'Новое',
@@ -241,7 +247,7 @@ const LOTS = [
   },
   {
     id: 11,
-    image: require('../Truck Pic/11.png'),
+    image: getTruckImage(11),
     name: 'Western Star 57X «Copper King»',
     price: 283_500,
     condition: 'Эксклюзив / Show-truck',
