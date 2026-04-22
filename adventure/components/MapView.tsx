@@ -254,6 +254,9 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
   const lastFactStateRef = useRef<string>("");
   const truckClickedRef = useRef(false);
   const [toasts, setToasts] = useState<Array<{ id: string; msg: string; color: string }>>([]);
+  const [truckTooltips, setTruckTooltips] = useState<Array<{ id: string; truckId: string; msg: string; color: string }>>([]);
+  const truckTooltipsRef = useRef(truckTooltips);
+  truckTooltipsRef.current = truckTooltips;
   const zoomLevelRef = useRef(1);
   // Surge zones — 3 случайных штата
   const [surgeStates] = useState<string[]>(() => {
@@ -271,8 +274,17 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
   // Слушаем события из store для тостов
   useEffect(() => {
     function handleMapToast(e: Event) {
-      const { message, color } = (e as CustomEvent).detail;
-      addToast(message, color);
+      const { message, color, truckId } = (e as CustomEvent).detail;
+      
+      if (truckId) {
+        // Если есть truckId — показываем tooltip над траком
+        const id = Math.random().toString(36).slice(2);
+        setTruckTooltips(prev => [...prev.slice(-2), { id, truckId, msg: message, color }]);
+        setTimeout(() => setTruckTooltips(prev => prev.filter(t => t.id !== id)), 5000);
+      } else {
+        // Иначе — обычный toast в углу
+        addToast(message, color);
+      }
     }
     window.addEventListener('mapToast', handleMapToast);
     return () => window.removeEventListener('mapToast', handleMapToast);
@@ -1107,6 +1119,58 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         cursorOverStyle: "pointer",
       })).events.on("click", onClick);
 
+      // 💬 TOOLTIP НАД ТРАКОМ (для событий)
+      // Проверяем есть ли активный tooltip для этого трака
+      const activeTooltip = truckTooltipsRef.current.find(tt => tt.truckId === d.truckId);
+      if (activeTooltip) {
+        const tooltipW = 200;
+        const tooltipH = 40;
+        const tooltipContainer = container.children.push(am5.Container.new(root, {
+          width: tooltipW, height: tooltipH,
+          dy: -(tooltipH + bgRadius * 2 + 20), 
+          dx: -(tooltipW / 2),
+          opacity: 1,
+        }));
+        
+        // Фон tooltip
+        tooltipContainer.children.push(am5.RoundedRectangle.new(root, {
+          width: tooltipW, height: tooltipH,
+          fill: am5.color(0x111827), fillOpacity: 0.95,
+          stroke: am5.color(parseInt(activeTooltip.color.replace('#', ''), 16)), strokeWidth: 2,
+          cornerRadiusTL: 12, cornerRadiusTR: 12, cornerRadiusBL: 12, cornerRadiusBR: 12,
+        }));
+        
+        // Текст tooltip
+        tooltipContainer.children.push(am5.Label.new(root, {
+          text: activeTooltip.msg.replace(/[✅🚨🔧🚛💬💨🌨️💰]/g, '').trim(),
+          fontSize: 12,
+          fontWeight: "700",
+          fill: am5.color(0xffffff),
+          centerX: am5.percent(50),
+          centerY: am5.percent(50),
+          textAlign: "center",
+          maxWidth: tooltipW - 20,
+          oversizedBehavior: "truncate",
+        }));
+        
+        // Анимация появления
+        tooltipContainer.animate({
+          key: "opacity" as any,
+          from: 0,
+          to: 1,
+          duration: 300,
+          easing: am5.ease.out(am5.ease.cubic)
+        });
+        
+        tooltipContainer.animate({
+          key: "dy" as any,
+          from: -(tooltipH + bgRadius * 2 + 30),
+          to: -(tooltipH + bgRadius * 2 + 20),
+          duration: 400,
+          easing: am5.ease.out(am5.ease.back)
+        });
+      }
+
       // Карточки над траками отключены
       const cardVisible = false;
 
@@ -1878,40 +1942,44 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
 
       </div>{/* конец flex-контейнера легенда+факт */}
 
-      {/* Компактные toast-уведомления — правый верхний угол */}
+      {/* Компактные toast-уведомления — внизу по центру (ближе к тракам) */}
       {!selectedState && toasts.length > 0 && (
         <div style={{
-          position: "absolute", top: 16, right: 16,
+          position: "absolute", bottom: 80, left: "50%", transform: "translateX(-50%)",
           display: "flex", flexDirection: "column", gap: 8,
           zIndex: 1001, fontFamily: "sans-serif", pointerEvents: "none",
-          maxWidth: 320,
+          maxWidth: 400,
         } as any} className="map-toasts">
           {toasts.map(t => (
             <div key={t.id} style={{
               background: "rgba(17,24,39,0.95)", 
-              border: `1px solid ${t.color}`,
-              borderRadius: 12,
-              padding: "10px 14px", 
-              fontSize: 13, 
-              fontWeight: 600,
+              border: `2px solid ${t.color}`,
+              borderRadius: 16,
+              padding: "12px 16px", 
+              fontSize: 14, 
+              fontWeight: 700,
               color: "#fff",
-              boxShadow: `0 4px 12px rgba(0,0,0,0.3), 0 0 0 1px ${t.color}22`,
-              animation: "toastSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+              boxShadow: `0 6px 20px rgba(0,0,0,0.4), 0 0 0 1px ${t.color}44`,
+              animation: "toastBounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
               display: "flex",
               alignItems: "center",
-              gap: 8,
+              gap: 10,
+              textAlign: "center",
             } as any}>
               <span style={{ 
-                fontSize: 16, 
-                filter: "drop-shadow(0 0 4px rgba(255,255,255,0.5))" 
+                fontSize: 18, 
+                filter: "drop-shadow(0 0 6px rgba(255,255,255,0.6))" 
               }}>
                 {t.msg.includes('✅') ? '✅' : 
                  t.msg.includes('🚨') ? '🚨' : 
                  t.msg.includes('🔧') ? '🔧' :
-                 t.msg.includes('🚛') ? '🚛' : '💬'}
+                 t.msg.includes('🚛') ? '🚛' :
+                 t.msg.includes('💨') ? '💨' :
+                 t.msg.includes('🌨️') ? '🌨️' :
+                 t.msg.includes('💰') ? '💰' : '💬'}
               </span>
-              <span style={{ flex: 1, lineHeight: 1.4 }}>
-                {t.msg.replace(/[✅🚨🔧🚛💬]/g, '').trim()}
+              <span style={{ flex: 1, lineHeight: 1.5 }}>
+                {t.msg.replace(/[✅🚨🔧🚛💬💨🌨️💰]/g, '').trim()}
               </span>
             </div>
           ))}
@@ -1919,14 +1987,20 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
       )}
 
       <style>{`
-        @keyframes toastSlideIn {
+        @keyframes toastBounceIn {
           0% {
             opacity: 0;
-            transform: translateX(100%) scale(0.8);
+            transform: scale(0.3) translateY(50px);
+          }
+          50% {
+            transform: scale(1.05) translateY(-5px);
+          }
+          70% {
+            transform: scale(0.95) translateY(2px);
           }
           100% {
             opacity: 1;
-            transform: translateX(0) scale(1);
+            transform: scale(1) translateY(0);
           }
         }
       `}</style>

@@ -1819,7 +1819,9 @@ export const useGameStore = create<GameState>((set, get) => ({
             message: `Ремонт завершён. ${truck.driver} готов продолжить. ${truck.currentLoad ? `Продолжает маршрут в ${truck.currentLoad.toCity}.` : 'Ждёт новый груз.'}`,
             actionRequired: false, relatedTruckId: truck.id,
           });
-          window.dispatchEvent(new CustomEvent('mapToast', { detail: { message: `✅ ${truck.name} отремонтирован!`, color: '#4ade80' } }));
+          window.dispatchEvent(new CustomEvent('mapToast', {
+            detail: { message: `✅ ${truck.name} отремонтирован!`, color: '#4ade80', truckId: truck.id }
+          }));
           return {
             ...truck,
             status: resumeStatus,
@@ -2300,7 +2302,7 @@ export const useGameStore = create<GameState>((set, get) => ({
                     actionRequired: canRoadside, relatedTruckId: truck.id,
                   });
                   window.dispatchEvent(new CustomEvent('mapToast', {
-                    detail: { message: `🚨 ${truck.name} — ${bd.label} (старый трак)!`, color: '#ef4444' }
+                    detail: { message: `🚨 ${truck.name} — ${bd.label} (старый трак)!`, color: '#ef4444', truckId: truck.id }
                   }));
                 }
               }, 200);
@@ -2325,7 +2327,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             actionRequired: false, relatedTruckId: truck.id,
           });
           window.dispatchEvent(new CustomEvent('mapToast', {
-            detail: { message: `${weatherZone.event} — ${truck.name} замедлен`, color: '#5ac8fa' }
+            detail: { message: `${weatherZone.event} — ${truck.name} замедлен`, color: '#5ac8fa', truckId: truck.id }
           }));
         }
 
@@ -2674,7 +2676,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             : bd.label + ' возле ' + truck.currentCity + '. Только эвакуатор ($' + bd.tow + '). Задержка ~' + bd.delayTow + ' мин.',
           actionRequired: canRoadside, relatedTruckId: truck.id,
         });
-        window.dispatchEvent(new CustomEvent('mapToast', { detail: { message: '🚨 ' + truck.name + ' — ' + bd.label + '!', color: '#ef4444' } }));
+        window.dispatchEvent(new CustomEvent('mapToast', { detail: { message: '🚨 ' + truck.name + ' — ' + bd.label + '!', color: '#ef4444', truckId: truck.id } }));
         break;
       }
 
@@ -2696,7 +2698,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           message: 'Пробило ' + (tireCount === 2 ? '2 шины' : 'шину') + ' возле ' + truck.currentCity + '. Мобильный шиномонтаж.\nСтоимость: ' + cost.toLocaleString() + ' (' + tireCount + ' x ' + costPerTire + ')\nЗадержка ~' + (tireCount === 2 ? '90' : '45') + ' мин.',
           actionRequired: false, relatedTruckId: truck.id,
         });
-        window.dispatchEvent(new CustomEvent('mapToast', { detail: { message: '💥 ' + truck.name + ' — пробило ' + (tireCount === 2 ? '2 колеса' : 'колесо') + ' (' + cost.toLocaleString() + ')', color: '#f97316' } }));
+        window.dispatchEvent(new CustomEvent('mapToast', { detail: { message: '💥 ' + truck.name + ' — пробило ' + (tireCount === 2 ? '2 колеса' : 'колесо') + ' (' + cost.toLocaleString() + ')', color: '#f97316', truckId: truck.id } }));
         break;
       }
 
@@ -2761,7 +2763,7 @@ case 'detention': {
           message: `${d.weather} на маршруте. Дорога опасна. Задержка ~${d.hours} часа.`,
           actionRequired: false, relatedTruckId: truck.id,
         });
-        window.dispatchEvent(new CustomEvent('mapToast', { detail: { message: `🌨️ ${truck.name} — ${d.weather}`, color: '#5ac8fa' } }));
+        window.dispatchEvent(new CustomEvent('mapToast', { detail: { message: `🌨️ ${truck.name} — ${d.weather}`, color: '#5ac8fa', truckId: truck.id } }));
         break;
       }
         
@@ -2843,7 +2845,7 @@ case 'detention': {
           });
           set({ trucks: updatedTrucks });
           get().addMoney(bonus, `Rate increase — ${truck.name}`);
-          window.dispatchEvent(new CustomEvent('mapToast', { detail: { message: `💰 ${truck.name} +$${bonus} rate increase!`, color: '#30d158' } }));
+          window.dispatchEvent(new CustomEvent('mapToast', { detail: { message: `💰 ${truck.name} +$${bonus} rate increase!`, color: '#30d158', truckId: truck.id } }));
         }
         break;
     }
@@ -3452,7 +3454,7 @@ case 'detention': {
       actionRequired: false, relatedTruckId: truckId,
     });
     window.dispatchEvent(new CustomEvent('mapToast', {
-      detail: { message: (choice === 'roadside' ? '🔧' : '🚛') + ' ' + truck.name + ' — ремонт $' + cost.toLocaleString(), color: '#fbbf24' }
+      detail: { message: (choice === 'roadside' ? '🔧' : '🚛') + ' ' + truck.name + ' — ремонт $' + cost.toLocaleString(), color: '#fbbf24', truckId: truckId }
     }));
   },
 
@@ -3482,7 +3484,7 @@ case 'detention': {
       actionRequired: false, relatedTruckId: truckId,
     });
     window.dispatchEvent(new CustomEvent('mapToast', {
-      detail: { message: '👤 ' + candidate.name + ' нанят на ' + truck.name, color: '#4ade80' }
+      detail: { message: '👤 ' + candidate.name + ' нанят на ' + truck.name, color: '#4ade80', truckId: truckId }
     }));
   },
 
