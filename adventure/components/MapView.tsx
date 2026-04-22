@@ -940,49 +940,6 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
           }
         }
         
-        // ✨ БЛИК НА ХРОМЕ (shimmer effect)
-        if (d.status === "driving" || d.status === "loaded" || d.status === "idle") {
-          const shimmer = container.children.push(am5.Circle.new(root, {
-            radius: 4,
-            fill: am5.color(0xffffff),
-            fillOpacity: 0,
-            centerX: am5.percent(50),
-            centerY: am5.percent(50),
-            dy: dyBase,
-            dx: -truckWidth * 0.3, // начало слева
-          }));
-          
-          // Блик движется слева направо по траку
-          shimmer.animate({ 
-            key: "dx" as any, 
-            from: -truckWidth * 0.4, 
-            to: truckWidth * 0.4, 
-            duration: 2000, 
-            loops: Infinity, 
-            easing: am5.ease.inOut(am5.ease.cubic)
-          });
-          
-          // Блик появляется и исчезает
-          shimmer.animate({ 
-            key: "fillOpacity" as any, 
-            from: 0, 
-            to: 0.8, 
-            duration: 1000, 
-            loops: Infinity, 
-            easing: am5.ease.inOut(am5.ease.quad)
-          });
-          
-          shimmer.animate({ 
-            key: "fillOpacity" as any, 
-            from: 0.8, 
-            to: 0, 
-            duration: 1000, 
-            loops: Infinity, 
-            delay: 1000,
-            easing: am5.ease.inOut(am5.ease.quad)
-          });
-        }
-        
         // Реалистичная анимация по статусу
         if (d.status === "driving" || d.status === "loaded") {
           // ЕДУЩИЙ ТРАК — комбинированная анимация подвески
@@ -1671,17 +1628,16 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         lastVariant = newVariant;
         lastStatusKey = statusKey;
         switchCardVariant(root, chart);
-      } else if (statusKey !== lastStatusKey) {
-        // Статус изменился — пересоздаём серию (меняется иконка)
-        lastStatusKey = statusKey;
-        rebuildTruckSeries(root, chart);
       } else {
-        // Только позиции — обновляем данные без пересоздания bullets
+        // Только обновляем данные без пересоздания bullets
+        // Пересоздание вызывает моргание — избегаем его
         if (truckSeriesRef.current) {
           try {
             truckSeriesRef.current.data.setAll(buildPointData());
           } catch (_) {}
         }
+        // Обновляем statusKey для следующей проверки
+        lastStatusKey = statusKey;
       }
     }, 2000);
 
