@@ -48,7 +48,7 @@ import { CHARACTERS, DIALOG_DRIVER_START, DIALOG_BROKER_FIRST_CALL, isDialogShow
 import { getDriverAvatar } from '../utils/driverAvatars';
 import { UnifiedChatUI } from '../components/UnifiedChatUI';
 import { createDemoMessages } from '../utils/demoMessages';
-import GarageModal from '../components/GarageModal';
+import TruckShopModal from '../components/TruckShopModal';
 
 type Tab = 'map' | 'loadboard' | 'trucks' | 'chat';
 
@@ -207,7 +207,7 @@ export default function GameScreen() {
   const [chatCharacter, setChatCharacter] = useState<'driver' | 'owner' | 'accountant'>('driver');
   const dialogCheckDone = useRef(false);
 
-  // Автоматически открываем чат для новых игроков (онбординг)
+  // Автоматически создаём демо-сообщения для опытных игроков
   useEffect(() => {
     if (dialogCheckDone.current) return;
     dialogCheckDone.current = true;
@@ -217,11 +217,8 @@ export default function GameScreen() {
     const nickname = sessionName || 'player';
     
     if (!isOnboardingComplete(nickname)) {
-      // Новый игрок — открываем чат автоматически
-      const timer = setTimeout(() => {
-        switchTab('chat');
-      }, 1000);
-      return () => clearTimeout(timer);
+      // Новый игрок — НЕ открываем чат автоматически, пусть сам переключится
+      // Просто ждём когда он откроет чат
     } else {
       // Опытный игрок — создаём демо-сообщения если нужно
       const demoTimer = setTimeout(() => {
@@ -235,13 +232,7 @@ export default function GameScreen() {
   });
   const truckStripScrollPos = useRef<number>(0); // Сохраняем позицию скролла truck strip
 
-  const [activeTab, setActiveTab] = useState<Tab>(() => {
-    try {
-      const saved = localStorage.getItem('dispatch-active-tab') as Tab;
-      if (saved) return saved;
-    } catch {}
-    return 'map';
-  });
+  const [activeTab, setActiveTab] = useState<Tab>('map'); // Всегда начинаем с карты
 
   // Сохраняем активную вкладку при каждом переключении
   const switchTab = (tab: Tab) => {
@@ -651,31 +642,6 @@ export default function GameScreen() {
               </div>
             </button>
           )}
-
-          {/* Гараж — кнопка покупки нового трака */}
-          {(() => {
-            const hasOldTruck = trucks.some(t => (t as any).isOldTruck);
-            const canBuy = balance >= 15000;
-            if (!hasOldTruck) return null;
-            return (
-              <button onClick={() => useGameStore.getState().setGarageOpen(true)} style={{
-                padding: isWide ? '4px 8px' : '3px 6px',
-                background: canBuy
-                  ? 'linear-gradient(135deg, rgba(74,222,128,0.2), rgba(22,163,74,0.15))'
-                  : 'rgba(255,255,255,0.05)',
-                border: canBuy
-                  ? '1px solid rgba(74,222,128,0.5)'
-                  : '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 8, cursor: 'pointer', textAlign: 'left',
-                animation: canBuy ? 'pulse 1.5s infinite' : 'none',
-              } as any}>
-                {isWide && <div style={{ fontSize: 8, color: canBuy ? '#4ade80' : '#64748b', fontWeight: 600, marginBottom: 1 } as any}>ГАРАЖ</div>}
-                <div style={{ fontSize: isWide ? 13 : 11, fontWeight: 900, color: canBuy ? '#4ade80' : '#64748b' } as any}>
-                  🏪 {canBuy ? 'Купить!' : '$15k'}
-                </div>
-              </button>
-            );
-          })()}
         </div>
 
         {/* Действия */}
@@ -1176,7 +1142,6 @@ export default function GameScreen() {
 
   const SideTabs = () => {
     const tabDefs = [
-      { id: 'map',       icon: '🌎', label: 'Карта',   onPress: handleMapTabPress },
       { id: 'loadboard', icon: '📦', label: 'Грузы',   badge: tabs.find(t => t.id === 'loadboard')?.badge },
       { id: 'chat',      icon: '💬', label: 'Связь',   badge: tabs.find(t => t.id === 'chat')?.badge },
       { id: 'trucks',    icon: '🚛', label: 'Траки',   badge: tabs.find(t => t.id === 'trucks')?.badge },
@@ -1287,7 +1252,18 @@ export default function GameScreen() {
           return (
             <TouchableOpacity
               key={tab.id}
-              onPress={() => tab.onPress ? tab.onPress() : switchTab(tab.id as Tab)}
+              onPress={() => {
+                if (tab.onPress) {
+                  tab.onPress();
+                } else {
+                  // Если нажали на уже активную вкладку (кроме карты) — закрываем её (переходим на карту)
+                  if (isOn && tab.id !== 'map') {
+                    handleMapTabPress();
+                  } else {
+                    switchTab(tab.id as Tab);
+                  }
+                }
+              }}
               style={{
                 flex: isOn ? 2 : 1,
                 flexDirection: 'row',
@@ -1523,7 +1499,7 @@ export default function GameScreen() {
       {showStats && <StatsPopup onClose={() => setShowStats(false)} />}
       {showSettings && <SettingsPopup onClose={() => setShowSettings(false)} />}
       {showHelp && <HelpPopup onClose={() => setShowHelp(false)} />}
-      <GarageModal />
+      <TruckShopModal />
       {/* Колокольчик и меню — вне TopBar div чтобы Modal работал корректно */}
       <NotificationBell
         onNavigateToTrucks={() => switchTab('trucks')}

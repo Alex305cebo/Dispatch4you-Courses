@@ -49,6 +49,20 @@ export default function GameMenu({ onOpenFleet, onOpenCompliance, onOpenEvents, 
       isGuide: true,
     },
     { 
+      icon: '🏪', 
+      label: 'Магазин траков', 
+      action: () => { 
+        handleClose(); 
+        const store = useGameStore.getState();
+        console.log('Opening truck shop, current state:', store.truckShopOpen);
+        store.setTruckShopOpen(true);
+        console.log('After setTruckShopOpen(true):', useGameStore.getState().truckShopOpen);
+      },
+      color: '#f59e0b',
+      badge: undefined,
+      isGuide: false,
+    },
+    { 
       icon: '🚛', 
       label: 'Fleet Overview', 
       action: () => { handleClose(); onOpenFleet?.(); },

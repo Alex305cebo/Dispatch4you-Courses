@@ -10,6 +10,7 @@ import MechanicChatModal from './MechanicChatModal';
 import BrokerChatModal from './BrokerChatModal';
 import { useTheme } from '../hooks/useTheme';
 import { ThemeColors } from '../constants/themes';
+import { getDriverAvatar } from '../utils/driverAvatars';
 
 interface Props {
   truck: Truck | null;
@@ -203,7 +204,14 @@ export default function TruckDetailModal({ truck: truckProp, onClose, onFindLoad
           {/* ── ШАПКА ── */}
           <View style={s.header}>
             <View style={s.headerLeft}>
-              <View style={s.avatar}><Text style={s.avatarText}>👤</Text></View>
+              <View style={s.avatar}>
+                <img 
+                  src={getDriverAvatar(truck.driver || truck.id)} 
+                  width={48} 
+                  height={48} 
+                  style={{ display: 'block', borderRadius: 24 } as any} 
+                />
+              </View>
               <View>
                 <Text style={s.driverName}>{truck.driver}</Text>
                 <Text style={s.truckSub}>{truck.name} · {cityState(truck.currentCity)}</Text>
@@ -483,8 +491,7 @@ function makeStyles(T: ThemeColors) {
   modal: { backgroundColor: T.bgCard, borderRadius: 20, width: '100%', maxWidth: 480, maxHeight: '88%', borderWidth: 1.5, borderColor: 'rgba(6,182,212,0.35)' },
   header: { flexDirection: 'row', alignItems: 'center', padding: 14, borderBottomWidth: 1, borderBottomColor: T.border },
   headerLeft: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(6,182,212,0.2)', borderWidth: 2, borderColor: '#06b6d4', alignItems: 'center', justifyContent: 'center' },
-  avatarText: { fontSize: 24 },
+  avatar: { width: 48, height: 48, borderRadius: 24, overflow: 'hidden', borderWidth: 2, borderColor: '#06b6d4' },
   driverName: { fontSize: 16, fontWeight: '900', color: '#67e8f9' },
   truckSub: { fontSize: 13, color: T.textSecondary, marginTop: 1 },
   closeBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: T.border, alignItems: 'center', justifyContent: 'center' },

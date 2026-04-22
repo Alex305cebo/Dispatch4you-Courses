@@ -17,11 +17,14 @@ const MIME_TYPES = {
 };
 
 const server = http.createServer((req, res) => {
-  let filePath = path.join(DIST_DIR, req.url === '/' ? 'index.html' : req.url);
+  // Декодируем %20 и другие URL-encoded символы
+  const decodedUrl = decodeURIComponent(req.url.split('?')[0]);
+  
+  let filePath = path.join(DIST_DIR, decodedUrl === '/' ? 'index.html' : decodedUrl);
   
   // Убираем /game/ префикс если есть
-  if (req.url.startsWith('/game/')) {
-    filePath = path.join(DIST_DIR, req.url.replace('/game/', ''));
+  if (decodedUrl.startsWith('/game/')) {
+    filePath = path.join(DIST_DIR, decodedUrl.replace('/game/', ''));
   }
 
   const ext = path.extname(filePath);

@@ -226,7 +226,13 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
       })}
 
       {/* Купить трак */}
-      <div style={{
+      <div 
+        onClick={() => {
+          console.log('TruckCardOverlay: Buy truck button clicked');
+          useGameStore.getState().setTruckShopOpen(true);
+          console.log('TruckCardOverlay: After setTruckShopOpen, state:', useGameStore.getState().truckShopOpen);
+        }}
+        style={{
         flexShrink: 0, width: 72, borderRadius: 12,
         border: `2px dashed ${isDark ? 'rgba(56,189,248,0.35)' : 'rgba(0,122,255,0.4)'}`,
         background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.92)',

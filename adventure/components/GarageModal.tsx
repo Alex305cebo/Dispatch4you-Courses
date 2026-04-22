@@ -179,6 +179,7 @@ export default function GarageModal() {
   const T = useTheme();
   const styles = useMemo(() => makeStyles(T, screenH), [T, screenH]);
   const { garageOpen, setGarageOpen, balance, trucks, buyNewTruck } = useGameStore();
+  const setTruckShopOpen = useGameStore(s => s.setTruckShopOpen);
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -215,6 +216,26 @@ export default function GarageModal() {
               <Text style={styles.closeBtnText}>✕</Text>
             </TouchableOpacity>
           </View>
+
+          {/* TRUCK SHOP BANNER */}
+          <TouchableOpacity
+            style={{
+              marginHorizontal: 12, marginTop: 10, marginBottom: 2,
+              padding: 11, borderRadius: 12,
+              backgroundColor: 'rgba(245,158,11,0.1)',
+              borderWidth: 1, borderColor: 'rgba(245,158,11,0.35)',
+              flexDirection: 'row', alignItems: 'center', gap: 10,
+            }}
+            onPress={() => { setGarageOpen(false); setTruckShopOpen(true); }}
+            activeOpacity={0.8}
+          >
+            <Text style={{ fontSize: 22 }}>🏪</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: '#fde68a' }}>Truck Shop — Б/У рынок</Text>
+              <Text style={{ fontSize: 10, color: '#94a3b8', marginTop: 1 }}>11 лотов · от $12,000 до $210,000</Text>
+            </View>
+            <Text style={{ fontSize: 18, color: '#f59e0b' }}>→</Text>
+          </TouchableOpacity>
 
           {/* WALLET BAR */}
           <View style={styles.walletBar}>

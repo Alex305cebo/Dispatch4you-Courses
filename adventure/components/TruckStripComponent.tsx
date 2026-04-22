@@ -292,7 +292,15 @@ const TruckStripComponent = memo(function TruckStripComponent({
 
       {/* Купить трак */}
       <div
-        onClick={() => { const { useGameStore: gs } = require('../store/gameStore'); gs.getState().setGarageOpen(true); }}
+        onClick={(e) => { 
+          e.stopPropagation();
+          if (isDragging.current || isTouchDragging.current) return;
+          console.log('TruckStrip: Buy truck button clicked');
+          useGameStore.getState().setTruckShopOpen(true); 
+          console.log('TruckStrip: After setTruckShopOpen, state:', useGameStore.getState().truckShopOpen);
+        }}
+        onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
         style={{ minWidth: isWide ? 90 : 78, flexShrink: 0, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '2px dashed rgba(56,189,248,0.25)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' } as any}
         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(6,182,212,0.08)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.6)'; }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.25)'; }}

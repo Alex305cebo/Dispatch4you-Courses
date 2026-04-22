@@ -362,6 +362,11 @@ interface GameState {
   buyNewTruck: () => boolean; // возвращает true если успешно куплен
   garageOpen: boolean;
   setGarageOpen: (open: boolean) => void;
+
+  // Truck Shop — покупка б/у трака из магазина
+  buyTruckFromShop: (lotId: number, price: number, name: string, isOld: boolean, speedPenalty: number, breakdownChance: number) => boolean;
+  truckShopOpen: boolean;
+  setTruckShopOpen: (open: boolean) => void;
 }
 
 // ─── НАЧАЛЬНЫЕ ДАННЫЕ ────────────────────────────────────────────────────────
@@ -952,7 +957,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   day: 1,
   gameMinute: 0,
   timeSpeed: 1,
-  balance: 0,
+  balance: 15000,
   totalEarned: 0,
   totalLost: 0,
   financeLog: [],
@@ -982,6 +987,74 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   garageOpen: false,
   setGarageOpen: (open: boolean) => set({ garageOpen: open }),
+
+  truckShopOpen: false,
+  setTruckShopOpen: (open: boolean) => {
+    console.log('🏪 gameStore.setTruckShopOpen called with:', open);
+    console.log('🏪 Current state before set:', useGameStore.getState().truckShopOpen);
+    set({ truckShopOpen: open });
+    console.log('🏪 State after set:', useGameStore.getState().truckShopOpen);
+  },
+
+  buyTruckFromShop: (lotId: number, price: number, truckName: string, isOld: boolean, speedPenalty: number, breakdownChance: number) => {
+    const { balance, trucks } = get();
+    if (balance < price) return false;
+
+    const newTruckNum = trucks.length + 1;
+    const newTruckId = `T${newTruckNum}`;
+    const driverNames = ['Carlos Rivera', 'Mike Chen', 'Tom Wilson', 'Lisa Brown', 'James Anderson', 'Maria Garcia', 'David Kim', 'Robert Johnson'];
+    const usedDrivers = trucks.map(t => t.driver);
+    const availableDriver = driverNames.find(d => !usedDrivers.includes(d)) ?? `Driver ${newTruckNum}`;
+    const startCity = trucks[0]?.currentCity ?? 'Knoxville';
+    const startPos = CITIES[startCity] ?? CITIES['Knoxville'];
+
+    const newTruck: Truck = {
+      id: newTruckId,
+      name: truckName,
+      driver: availableDriver,
+      status: 'idle',
+      position: startPos,
+      currentCity: startCity,
+      destinationCity: null,
+      progress: 0,
+      currentLoad: null,
+      hoursLeft: 11,
+      mood: isOld ? 55 : 80,
+      routePath: null,
+      safetyScore: isOld ? 72 : 98,
+      fuelEfficiency: isOld ? 5.5 : 7.0,
+      onTimeRate: 100,
+      complianceRate: 100,
+      totalMiles: 0,
+      totalDeliveries: 0,
+      hosViolations: 0,
+      tripExpenses: [],
+      lastInspection: 0,
+      idleSinceMinute: get().gameMinute,
+      idleWarningLevel: 0,
+      outOfOrderUntil: 0,
+      isOldTruck: isOld,
+      speedPenalty: speedPenalty,
+      oldTruckBreakdownChance: breakdownChance,
+    } as any;
+
+    get().removeMoney(price, `Покупка трака Лот #${lotId} — ${truckName}`);
+    set(s => ({ trucks: [...s.trucks, newTruck], truckShopOpen: false }));
+
+    get().addNotification({
+      type: 'email', priority: 'high',
+      from: 'Truck Shop',
+      subject: `🚛 Куплен Лот #${lotId} — ${truckName}!`,
+      message: `Поздравляем! ${truckName} добавлен в твой флот.\nВодитель: ${availableDriver}\nСтатус: Готов к работе\n\n${isOld ? '⚠️ Старый трак — следи за техническим состоянием!' : '✅ Трак в хорошем состоянии — вперёд на маршрут!'}`,
+      actionRequired: false,
+    });
+
+    window.dispatchEvent(new CustomEvent('mapToast', {
+      detail: { message: `🎉 ${truckName} куплен! Лот #${lotId}`, color: '#4ade80' }
+    }));
+
+    return true;
+  },
 
   buyNewTruck: () => {
     const { balance, trucks } = get();
@@ -1122,7 +1195,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({
       phase: 'playing',
       gameMinute: 0,
-      balance: 0,
+      balance: 15000,
       totalEarned: 0,
       totalLost: 0,
       financeLog: [],

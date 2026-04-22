@@ -131,7 +131,15 @@ export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}
       ))}
 
       {/* Плашка — расширить флот */}
-      <TouchableOpacity style={styles.shopBanner} activeOpacity={0.75} onPress={() => useGameStore.getState().setGarageOpen(true)}>
+      <TouchableOpacity 
+        style={styles.shopBanner} 
+        activeOpacity={0.75} 
+        onPress={() => {
+          console.log('TruckPanel: Shop button clicked');
+          useGameStore.getState().setTruckShopOpen(true);
+          console.log('TruckPanel: After setTruckShopOpen, state:', useGameStore.getState().truckShopOpen);
+        }}
+      >
         <View style={styles.shopBannerLeft}>
           <Text style={styles.shopBannerIcon}>🏪</Text>
           <View style={{ flex: 1, minWidth: 0 }}>
