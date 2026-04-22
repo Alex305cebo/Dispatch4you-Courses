@@ -9,19 +9,27 @@ import {
   sendSystemNotification 
 } from '../utils/chatHelpers';
 
-// ─── OSRM fetch с таймаутом 3 сек — если зависает, возвращает null ──────────
-async function fetchRoute(fromLng: number, fromLat: number, toLng: number, toLat: number): Promise<Array<[number,number]> | null> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 800); // быстрый таймаут
-  try {
-    const url = `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?overview=full&geometries=geojson`;
-    const res = await fetch(url, { signal: controller.signal });
-    const data = await res.json();
-    if (data.routes?.[0]) return data.routes[0].geometry.coordinates;
-  } catch {
-    // таймаут или сеть — используем линейное движение
-  } finally {
-    clearTimeout(timeout);
+// ─── OSRM fetch с retry и увеличенным таймаутом ──────────
+async function fetchRoute(fromLng: number, fromLat: number, toLng: number, toLat: number, retries = 2): Promise<Array<[number,number]> | null> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000); // 3 секунды
+    try {
+      const url = `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?overview=full&geometries=geojson`;
+      const res = await fetch(url, { signal: controller.signal });
+      const data = await res.json();
+      if (data.routes?.[0]) {
+        console.log(`✅ Route loaded: ${data.routes[0].geometry.coordinates.length} points`);
+        return data.routes[0].geometry.coordinates;
+      }
+    } catch (err) {
+      console.warn(`⚠️ fetchRoute attempt ${attempt + 1} failed:`, err);
+      if (attempt === retries) {
+        console.error('❌ All fetchRoute attempts failed — using linear movement');
+      }
+    } finally {
+      clearTimeout(timeout);
+    }
   }
   return null;
 }
