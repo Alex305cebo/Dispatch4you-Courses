@@ -529,13 +529,14 @@ const INITIAL_TRUCKS: Truck[] = [
     currentCity: 'Knoxville', destinationCity: null,
     progress: 0, currentLoad: null, hoursLeft: 11, mood: 65, routePath: null,
     safetyScore: 95, fuelEfficiency: 6.8, onTimeRate: 98, complianceRate: 100,
-    totalMiles: 45230, totalDeliveries: 156, hosViolations: 0, lastInspection: 0,
+    totalMiles: 0, totalDeliveries: 0, hosViolations: 0, lastInspection: 0,
     idleSinceMinute: undefined,
     // Старый трак — стартовый для нового игрока
     isOldTruck: true,
     oldTruckBreakdownChance: 3.0, // в 3 раза чаще ломается
     speedPenalty: 0.2,            // на 20% медленнее
     oldTruckComplaintAt: -999,
+    truckImageId: 1, // Peterbilt 379 «Old Red» — старый трак
   } as any,
   {
     id: 'T2', name: 'Truck 2023', driver: 'Carlos Rivera',
@@ -543,8 +544,9 @@ const INITIAL_TRUCKS: Truck[] = [
     currentCity: 'Knoxville', destinationCity: null,
     progress: 0, currentLoad: null, hoursLeft: 11, mood: 68, routePath: null,
     safetyScore: 92, fuelEfficiency: 7.1, onTimeRate: 96, complianceRate: 98,
-    totalMiles: 38450, totalDeliveries: 142, hosViolations: 0, lastInspection: 0,
+    totalMiles: 0, totalDeliveries: 0, hosViolations: 0, lastInspection: 0,
     idleSinceMinute: undefined,
+    truckImageId: 3, // International 9400i «Sandstorm»
   } as any,
   {
     id: 'T3', name: 'Truck 3012', driver: 'Mike Chen',
@@ -552,8 +554,9 @@ const INITIAL_TRUCKS: Truck[] = [
     currentCity: 'Knoxville', destinationCity: null,
     progress: 0, currentLoad: null, hoursLeft: 11, mood: 63, routePath: null,
     safetyScore: 98, fuelEfficiency: 7.3, onTimeRate: 99, complianceRate: 100,
-    totalMiles: 52100, totalDeliveries: 178, hosViolations: 0, lastInspection: 0,
+    totalMiles: 0, totalDeliveries: 0, hosViolations: 0, lastInspection: 0,
     idleSinceMinute: undefined,
+    truckImageId: 5, // Freightliner FLD 120 «Forest Green»
   } as any,
   {
     // T4 — едет с грузом к delivery
@@ -562,7 +565,8 @@ const INITIAL_TRUCKS: Truck[] = [
     currentCity: 'Houston', destinationCity: 'Chicago',
     progress: 0.25, currentLoad: INITIAL_LOAD_4, hoursLeft: 10, mood: 67, routePath: null,
     safetyScore: 88, fuelEfficiency: 6.5, onTimeRate: 94, complianceRate: 96,
-    totalMiles: 41200, totalDeliveries: 135, hosViolations: 2, lastInspection: 0,
+    totalMiles: 0, totalDeliveries: 0, hosViolations: 0, lastInspection: 0,
+    truckImageId: 6, // Freightliner FLD 120 «Blue Classic»
   },
   {
     // T5 — свободен, только что разгрузился
@@ -571,8 +575,9 @@ const INITIAL_TRUCKS: Truck[] = [
     currentCity: 'Miami', destinationCity: null,
     progress: 0, currentLoad: null, hoursLeft: 11, mood: 64, routePath: null,
     safetyScore: 97, fuelEfficiency: 7.0, onTimeRate: 97, complianceRate: 100,
-    totalMiles: 48900, totalDeliveries: 165, hosViolations: 0, lastInspection: 0,
+    totalMiles: 0, totalDeliveries: 0, hosViolations: 0, lastInspection: 0,
     idleSinceMinute: undefined,
+    truckImageId: 7, // Volvo VNL 670 «Burgundy Aero»
   } as any,
   {
     // T6 — едет с грузом к delivery
@@ -581,7 +586,8 @@ const INITIAL_TRUCKS: Truck[] = [
     currentCity: 'Seattle', destinationCity: 'Phoenix',
     progress: 0.3, currentLoad: INITIAL_LOAD_6, hoursLeft: 7, mood: 66, routePath: null,
     safetyScore: 90, fuelEfficiency: 6.9, onTimeRate: 95, complianceRate: 97,
-    totalMiles: 39800, totalDeliveries: 148, hosViolations: 1, lastInspection: 0,
+    totalMiles: 0, totalDeliveries: 0, hosViolations: 0, lastInspection: 0,
+    truckImageId: 8, // Freightliner Cascadia «Green Emerald»
   },
   {
     // T7 — едет к pickup (deadhead)
@@ -590,7 +596,8 @@ const INITIAL_TRUCKS: Truck[] = [
     currentCity: 'Kansas City', destinationCity: 'Memphis',
     progress: 0.4, currentLoad: null, hoursLeft: 11, mood: 70, routePath: null,
     safetyScore: 96, fuelEfficiency: 7.2, onTimeRate: 98, complianceRate: 100,
-    totalMiles: 44500, totalDeliveries: 152, hosViolations: 0, lastInspection: 0,
+    totalMiles: 0, totalDeliveries: 0, hosViolations: 0, lastInspection: 0,
+    truckImageId: 10, // Freightliner Cascadia «Blue Evolution»
   },
   {
     // T8 — свободен, только что разгрузился
@@ -599,8 +606,9 @@ const INITIAL_TRUCKS: Truck[] = [
     currentCity: 'Las Vegas', destinationCity: null,
     progress: 0, currentLoad: null, hoursLeft: 11, mood: 65, routePath: null,
     safetyScore: 99, fuelEfficiency: 7.4, onTimeRate: 99, complianceRate: 100,
-    totalMiles: 51200, totalDeliveries: 171, hosViolations: 0, lastInspection: 0,
+    totalMiles: 0, totalDeliveries: 0, hosViolations: 0, lastInspection: 0,
     idleSinceMinute: undefined,
+    truckImageId: 4, // Freightliner FLD 120 «Silver Dust»
   } as any,
   {
     // T9 — едет с грузом к delivery
@@ -609,7 +617,8 @@ const INITIAL_TRUCKS: Truck[] = [
     currentCity: 'Indianapolis', destinationCity: 'Atlanta',
     progress: 0.2, currentLoad: INITIAL_LOAD_9, hoursLeft: 10, mood: 62, routePath: null,
     safetyScore: 93, fuelEfficiency: 6.8, onTimeRate: 96, complianceRate: 98,
-    totalMiles: 42300, totalDeliveries: 145, hosViolations: 1, lastInspection: 0,
+    totalMiles: 0, totalDeliveries: 0, hosViolations: 0, lastInspection: 0,
+    truckImageId: 2, // Freightliner Century «Day Cab White»
   },
 ];
 
@@ -1299,6 +1308,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       isOldTruck: isOld,
       speedPenalty: speedPenalty,
       oldTruckBreakdownChance: breakdownChance,
+      truckImageId: lotId, // ID картинки трака (1-11)
     } as any;
 
     get().removeMoney(price, `Покупка трака Лот #${lotId} — ${truckName}`);

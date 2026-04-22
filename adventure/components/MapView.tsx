@@ -265,7 +265,7 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
   const addToast = useCallback((msg: string, color = "#06b6d4") => {
     const id = Math.random().toString(36).slice(2);
     setToasts(prev => [...prev.slice(-3), { id, msg, color }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
   }, []);
 
   // Слушаем события из store для тостов
@@ -530,6 +530,8 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         hoursLeft: t.hoursLeft,
         currentLoad: t.currentLoad,
         routeEvent: getRouteEvent(t.id),
+        truckImageId: (t as any).truckImageId || 1, // ID картинки трака (1-11)
+        onNightStop: (t as any).onNightStop || false, // ночёвка
       };
     });
   }
@@ -809,16 +811,18 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
       const dyBase = -(bgRadius + 4);
       const hitRadius = variant === 'micro' ? 24 : 32;
 
-      // Иконка трака — текстовый эмодзи (стабильно)
+      // Иконка трака — картинка из Truck Shop или эмодзи fallback
+      const truckImageId = (d as any).truckImageId || 1; // ID картинки трака (1-11)
+      // Используем прямые пути для обоих режимов
+      const truckImageUrl = `/game/assets/Truck Pic/${truckImageId}.webp`;
+      
       const truckEmoji = (() => {
         if (d.breakdown) return "🔧";
         if (d.waiting) return "⏳";
         if (d.status === "at_pickup") return "📦";
         if (d.status === "at_delivery") return "🏁";
-        if (d.status === "loaded") return "🚛";
-        if (d.status === "driving") return "🚛";
         if ((d as any).onNightStop) return "🌙";
-        return "🚛";
+        return "🚛"; // fallback
       })();
 
       // Пульс для активных траков (рисуем первым — он под маркером)
@@ -854,23 +858,200 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         dy: dyBase,
       }));
 
-      const emojiLabel = container.children.push(am5.Label.new(root, {
-        text: truckEmoji,
-        fontSize: emojiSize,
-        centerX: am5.percent(50),
-        centerY: am5.percent(50),
-        dy: dyBase,
-      }));
+      // Картинка трака (если не breakdown/waiting/special status)
+      const showTruckImage = !d.breakdown && !d.waiting && d.status !== "at_pickup" && d.status !== "at_delivery" && !(d as any).onNightStop;
+      
+      if (showTruckImage) {
+        // Сбалансированные пропорции трака
+        const truckHeight = emojiSize * 1.2;
+        const truckWidth = truckHeight * 1.5;
+        
+        const truckImg = container.children.push(am5.Picture.new(root, {
+          src: truckImageUrl,
+          width: truckWidth,
+          height: truckHeight,
+          centerX: am5.percent(50),
+          centerY: am5.percent(50),
+          dy: dyBase,
+        }));
+        
+        // 💨 ДЫМ ИЗ ВЫХЛОПНЫХ ТРУБ (только для едущих траков)
+        if (d.status === "driving" || d.status === "loaded") {
+          // Создаём 2 дымовых частицы (левая и правая труба)
+          for (let i = 0; i < 2; i++) {
+            const smokeX = i === 0 ? -truckWidth * 0.15 : truckWidth * 0.15; // позиция труб
+            const smokeY = dyBase - truckHeight * 0.4; // над траком
+            
+            const smoke = container.children.push(am5.Circle.new(root, {
+              radius: 3,
+              fill: am5.color(0x808080),
+              fillOpacity: 0,
+              centerX: am5.percent(50),
+              centerY: am5.percent(50),
+              dx: smokeX,
+              dy: smokeY,
+            }));
+            
+            // Анимация дыма: появление → подъём → исчезновение
+            const smokeDuration = 1200;
+            const smokeDelay = i * 600; // задержка между трубами
+            
+            smoke.animate({ 
+              key: "dy" as any, 
+              from: smokeY, 
+              to: smokeY - 15, 
+              duration: smokeDuration, 
+              loops: Infinity, 
+              delay: smokeDelay,
+              easing: am5.ease.out(am5.ease.cubic)
+            });
+            
+            smoke.animate({ 
+              key: "radius" as any, 
+              from: 2, 
+              to: 6, 
+              duration: smokeDuration, 
+              loops: Infinity, 
+              delay: smokeDelay,
+              easing: am5.ease.linear
+            });
+            
+            smoke.animate({ 
+              key: "fillOpacity" as any, 
+              from: 0.4, 
+              to: 0, 
+              duration: smokeDuration, 
+              loops: Infinity, 
+              delay: smokeDelay,
+              easing: am5.ease.out(am5.ease.quad)
+            });
+          }
+        }
+        
+        // ✨ БЛИК НА ХРОМЕ (shimmer effect)
+        if (d.status === "driving" || d.status === "loaded" || d.status === "idle") {
+          const shimmer = container.children.push(am5.Circle.new(root, {
+            radius: 4,
+            fill: am5.color(0xffffff),
+            fillOpacity: 0,
+            centerX: am5.percent(50),
+            centerY: am5.percent(50),
+            dy: dyBase,
+            dx: -truckWidth * 0.3, // начало слева
+          }));
+          
+          // Блик движется слева направо по траку
+          shimmer.animate({ 
+            key: "dx" as any, 
+            from: -truckWidth * 0.4, 
+            to: truckWidth * 0.4, 
+            duration: 2000, 
+            loops: Infinity, 
+            easing: am5.ease.inOut(am5.ease.cubic)
+          });
+          
+          // Блик появляется и исчезает
+          shimmer.animate({ 
+            key: "fillOpacity" as any, 
+            from: 0, 
+            to: 0.8, 
+            duration: 1000, 
+            loops: Infinity, 
+            easing: am5.ease.inOut(am5.ease.quad)
+          });
+          
+          shimmer.animate({ 
+            key: "fillOpacity" as any, 
+            from: 0.8, 
+            to: 0, 
+            duration: 1000, 
+            loops: Infinity, 
+            delay: 1000,
+            easing: am5.ease.inOut(am5.ease.quad)
+          });
+        }
+        
+        // Реалистичная анимация по статусу
+        if (d.status === "driving" || d.status === "loaded") {
+          // ЕДУЩИЙ ТРАК — комбинированная анимация подвески
+          // 1. Вертикальное покачивание (bounce) — имитация подвески на дороге
+          truckImg.animate({ 
+            key: "dy" as any, 
+            from: dyBase - 1.5, 
+            to: dyBase + 1.5, 
+            duration: 400, 
+            loops: Infinity, 
+            easing: am5.ease.sinInOut 
+          });
+          
+          // 2. Легкое вращение (tilt) — трак слегка наклоняется при движении
+          truckImg.animate({ 
+            key: "rotation" as any, 
+            from: -1.5, 
+            to: 1.5, 
+            duration: 450, 
+            loops: Infinity, 
+            easing: am5.ease.sinInOut 
+          });
+          
+          // 3. Горизонтальное микро-смещение — имитация вибрации двигателя
+          truckImg.animate({ 
+            key: "dx" as any, 
+            from: -0.5, 
+            to: 0.5, 
+            duration: 350, 
+            loops: Infinity, 
+            easing: am5.ease.sinInOut 
+          });
+          
+          // Фон тоже слегка двигается
+          markerBg.animate({ 
+            key: "dy" as any, 
+            from: dyBase - 1, 
+            to: dyBase + 1, 
+            duration: 400, 
+            loops: Infinity, 
+            easing: am5.ease.sinInOut 
+          });
+          
+        } else if (d.status === "idle") {
+          // СТОЯЩИЙ ТРАК — очень легкое покачивание (двигатель работает на холостых)
+          truckImg.animate({ 
+            key: "dy" as any, 
+            from: dyBase - 0.5, 
+            to: dyBase + 0.5, 
+            duration: 1800, 
+            loops: Infinity, 
+            easing: am5.ease.sinInOut 
+          });
+          
+          // Едва заметное вращение
+          truckImg.animate({ 
+            key: "rotation" as any, 
+            from: -0.3, 
+            to: 0.3, 
+            duration: 2000, 
+            loops: Infinity, 
+            easing: am5.ease.sinInOut 
+          });
+        }
+      } else {
+        // Эмодзи для специальных статусов
+        const emojiLabel = container.children.push(am5.Label.new(root, {
+          text: truckEmoji,
+          fontSize: emojiSize,
+          centerX: am5.percent(50),
+          centerY: am5.percent(50),
+          dy: dyBase,
+        }));
 
-      // Анимация по статусу
-      if (d.status === "driving" || d.status === "loaded") {
-        emojiLabel.animate({ key: "dy" as any, from: dyBase - 2, to: dyBase + 2, duration: 600, loops: Infinity, easing: am5.ease.sinInOut });
-        markerBg.animate({ key: "dy" as any, from: dyBase - 2, to: dyBase + 2, duration: 600, loops: Infinity, easing: am5.ease.sinInOut });
-      } else if (d.status === "at_pickup" || d.status === "at_delivery") {
-        emojiLabel.animate({ key: "scale" as any, from: 0.9, to: 1.2, duration: 700, loops: Infinity, easing: am5.ease.sinInOut });
-        markerBg.animate({ key: "scale" as any, from: 0.9, to: 1.1, duration: 700, loops: Infinity, easing: am5.ease.sinInOut });
-      } else if (d.breakdown) {
-        emojiLabel.animate({ key: "rotation" as any, from: -15, to: 15, duration: 400, loops: Infinity, easing: am5.ease.sinInOut });
+        // Анимация по статусу
+        if (d.status === "at_pickup" || d.status === "at_delivery") {
+          emojiLabel.animate({ key: "scale" as any, from: 0.9, to: 1.2, duration: 700, loops: Infinity, easing: am5.ease.sinInOut });
+          markerBg.animate({ key: "scale" as any, from: 0.9, to: 1.1, duration: 700, loops: Infinity, easing: am5.ease.sinInOut });
+        } else if (d.breakdown) {
+          emojiLabel.animate({ key: "rotation" as any, from: -15, to: 15, duration: 400, loops: Infinity, easing: am5.ease.sinInOut });
+        }
       }
 
       // Текстовые строки
@@ -1697,26 +1878,58 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
 
       </div>{/* конец flex-контейнера легенда+факт */}
 
-      {/* Тосты — правый верхний угол (если нет попапа штата) */}
-      {!selectedState && (
+      {/* Компактные toast-уведомления — правый верхний угол */}
+      {!selectedState && toasts.length > 0 && (
         <div style={{
-          position: "absolute", top: 12, right: 12,
-          display: "flex", flexDirection: "column", gap: 6,
+          position: "absolute", top: 16, right: 16,
+          display: "flex", flexDirection: "column", gap: 8,
           zIndex: 1001, fontFamily: "sans-serif", pointerEvents: "none",
+          maxWidth: 320,
         } as any} className="map-toasts">
           {toasts.map(t => (
             <div key={t.id} style={{
-              background: "rgba(255,255,255,0.97)", border: `1px solid ${t.color}44`,
-              borderLeft: `3px solid ${t.color}`, borderRadius: 8,
-              padding: "7px 12px", fontSize: 12, color: "#111827",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              animation: "fadeInSlide 0.3s ease",
+              background: "rgba(17,24,39,0.95)", 
+              border: `1px solid ${t.color}`,
+              borderRadius: 12,
+              padding: "10px 14px", 
+              fontSize: 13, 
+              fontWeight: 600,
+              color: "#fff",
+              boxShadow: `0 4px 12px rgba(0,0,0,0.3), 0 0 0 1px ${t.color}22`,
+              animation: "toastSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
             } as any}>
-              {t.msg}
+              <span style={{ 
+                fontSize: 16, 
+                filter: "drop-shadow(0 0 4px rgba(255,255,255,0.5))" 
+              }}>
+                {t.msg.includes('✅') ? '✅' : 
+                 t.msg.includes('🚨') ? '🚨' : 
+                 t.msg.includes('🔧') ? '🔧' :
+                 t.msg.includes('🚛') ? '🚛' : '💬'}
+              </span>
+              <span style={{ flex: 1, lineHeight: 1.4 }}>
+                {t.msg.replace(/[✅🚨🔧🚛💬]/g, '').trim()}
+              </span>
             </div>
           ))}
         </div>
       )}
+
+      <style>{`
+        @keyframes toastSlideIn {
+          0% {
+            opacity: 0;
+            transform: translateX(100%) scale(0.8);
+          }
+          100% {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+          }
+        }
+      `}</style>
 
       {/* Невидимая зона активации кнопок когда они прозрачные */}
       {!mapBtnsVisible && (
