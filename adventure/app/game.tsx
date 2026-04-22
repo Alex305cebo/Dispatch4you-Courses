@@ -443,11 +443,14 @@ export default function GameScreen() {
     const hosWarnings = trucks.filter(t => (t as any).idleWarningLevel > 0 || t.hoursLeft < 3).length;
     const progressPct = Math.min(progress * 100, 100);
     const timeColor = progressPct > 80 ? '#dc2626' : progressPct > 60 ? '#d97706' : '#007aff';
+    
+    // Определяем очень маленький экран (iPhone XS и меньше)
+    const isVerySmall = width < 380;
 
     return (
       <div style={{
-        display: 'flex', alignItems: 'center', gap: isWide ? 12 : 6,
-        height: isWide ? 56 : isLandscape ? 38 : 48, paddingLeft: isWide ? 16 : 10, paddingRight: isWide ? 12 : 8,
+        display: 'flex', alignItems: 'center', gap: isWide ? 12 : isVerySmall ? 3 : 6,
+        height: isWide ? 56 : isLandscape ? 38 : 48, paddingLeft: isWide ? 16 : isVerySmall ? 6 : 10, paddingRight: isWide ? 12 : isVerySmall ? 6 : 8,
         paddingTop: 'env(safe-area-inset-top)',
         background: T.topBarBg,
         borderBottom: `1px solid ${T.topBarBorder}`,
@@ -461,7 +464,7 @@ export default function GameScreen() {
 
         {/* Время — клик переключает 12h/24h */}
         <div
-          style={{ minWidth: isWide ? 86 : 64, flexShrink: 0, cursor: 'pointer', userSelect: 'none' } as any}
+          style={{ minWidth: isWide ? 86 : isVerySmall ? 56 : 64, flexShrink: 0, cursor: 'pointer', userSelect: 'none' } as any}
           onClick={() => {
             const next = timeFormat === '12h' ? '24h' : '12h';
             setTimeFormat(next);
@@ -470,7 +473,7 @@ export default function GameScreen() {
           title="Нажми чтобы переключить формат"
         >
           <div style={{
-            fontSize: isWide ? 20 : 16, fontWeight: 900, color: T.text,
+            fontSize: isWide ? 20 : isVerySmall ? 14 : 16, fontWeight: 900, color: T.text,
             letterSpacing: 0.5, lineHeight: 1,
             transition: 'opacity 0.15s',
           } as any}>
@@ -488,7 +491,7 @@ export default function GameScreen() {
               return `${h12}:${m} ${ampm}`;
             })()}
           </div>
-          <div style={{ fontSize: 9, color: '#007aff', fontWeight: 700, marginTop: 2, opacity: 0.7 } as any}>
+          <div style={{ fontSize: isVerySmall ? 8 : 9, color: '#007aff', fontWeight: 700, marginTop: 2, opacity: 0.7 } as any}>
             {timeFormat === '24h' ? '24h ↺' : '12h ↺'}
           </div>
         </div>
@@ -564,10 +567,10 @@ export default function GameScreen() {
                 <button
                   onClick={() => setTimeSpeed(timeSpeed === 1 ? 2 : timeSpeed === 2 ? 5 : timeSpeed === 5 ? 10 : 1)}
                   style={{
-                    padding: '3px 10px', borderRadius: 8, cursor: 'pointer',
+                    padding: isVerySmall ? '2px 8px' : '3px 10px', borderRadius: 8, cursor: 'pointer',
                     background: themeMode === 'dark' ? 'rgba(56,189,248,0.15)' : 'rgba(0,122,255,0.1)',
                     border: themeMode === 'dark' ? '1px solid rgba(56,189,248,0.4)' : '1px solid rgba(0,122,255,0.3)',
-                    fontSize: 11, fontWeight: 900,
+                    fontSize: isVerySmall ? 10 : 11, fontWeight: 900,
                     color: themeMode === 'dark' ? '#38bdf8' : '#007aff',
                   } as any}>
                   ×{timeSpeed}
@@ -575,14 +578,14 @@ export default function GameScreen() {
                 <button
                   onClick={() => setPaused(p => !p)}
                   style={{
-                    width: 30, height: 26, borderRadius: 8, cursor: 'pointer',
+                    width: isVerySmall ? 26 : 30, height: 26, borderRadius: 8, cursor: 'pointer',
                     background: paused
                       ? (themeMode === 'dark' ? 'rgba(52,199,89,0.2)' : 'rgba(52,199,89,0.12)')
                       : (themeMode === 'dark' ? 'rgba(255,255,255,0.07)' : '#f3f4f6'),
                     border: paused
                       ? '1px solid rgba(52,199,89,0.5)'
                       : (themeMode === 'dark' ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.08)'),
-                    fontSize: 13,
+                    fontSize: isVerySmall ? 11 : 13,
                     color: paused ? '#34c759' : (themeMode === 'dark' ? '#94a3b8' : '#6b7280'),
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   } as any}>
@@ -594,10 +597,10 @@ export default function GameScreen() {
         </div>
 
         {/* Статы */}
-        <div style={{ display: 'flex', gap: isWide ? 5 : 3, flexShrink: 0 } as any}>
+        <div style={{ display: 'flex', gap: isWide ? 5 : isVerySmall ? 2 : 3, flexShrink: 0 } as any}>
           {/* Баланс */}
           <button onClick={() => setShowStats(true)} style={{
-            padding: isWide ? '4px 8px' : '3px 6px',
+            padding: isWide ? '4px 8px' : isVerySmall ? '3px 5px' : '3px 6px',
             background: balance >= 0
               ? (themeMode === 'dark' ? 'rgba(52,199,89,0.15)' : 'rgba(52,211,153,0.12)')
               : (themeMode === 'dark' ? 'rgba(255,59,48,0.15)' : 'rgba(248,113,113,0.12)'),
@@ -607,7 +610,7 @@ export default function GameScreen() {
             borderRadius: 8, cursor: 'pointer', textAlign: 'left',
           } as any}>
             {isWide && <div style={{ fontSize: 8, color: themeMode === 'dark' ? '#64748b' : '#6b7280', fontWeight: 600, marginBottom: 1 } as any}>БАЛАНС</div>}
-            <div style={{ fontSize: isWide ? 16 : 13, fontWeight: 900, color: balance >= 0 ? (themeMode === 'dark' ? '#34c759' : '#16a34a') : (themeMode === 'dark' ? '#ff453a' : '#dc2626') } as any}>
+            <div style={{ fontSize: isWide ? 16 : isVerySmall ? 11 : 13, fontWeight: 900, color: balance >= 0 ? (themeMode === 'dark' ? '#34c759' : '#16a34a') : (themeMode === 'dark' ? '#ff453a' : '#dc2626') } as any}>
               ${balance >= 1000 ? `${(balance/1000).toFixed(1)}k` : balance.toLocaleString()}
             </div>
           </button>
@@ -615,48 +618,32 @@ export default function GameScreen() {
           {/* Заработано за смену */}
           {totalEarned > 0 && (
             <button onClick={() => setShowStats(true)} style={{
-              padding: isWide ? '4px 8px' : '3px 6px',
+              padding: isWide ? '4px 8px' : isVerySmall ? '3px 5px' : '3px 6px',
               background: themeMode === 'dark' ? 'rgba(251,191,36,0.15)' : 'rgba(251,191,36,0.12)',
               border: `1px solid ${themeMode === 'dark' ? 'rgba(251,191,36,0.35)' : 'rgba(251,191,36,0.25)'}`,
               borderRadius: 8, cursor: 'pointer', textAlign: 'left',
             } as any}>
-              {isWide && <div style={{ fontSize: 8, color: themeMode === 'dark' ? '#64748b' : '#6b7280', fontWeight: 600, marginBottom: 1 } as any}>ЗАРАБОТАНО</div>}
-              <div style={{ fontSize: isWide ? 16 : 13, fontWeight: 900, color: themeMode === 'dark' ? '#fbbf24' : '#b45309' } as any}>
+              {isWide && !isVerySmall && <div style={{ fontSize: 8, color: themeMode === 'dark' ? '#64748b' : '#6b7280', fontWeight: 600, marginBottom: 1 } as any}>ЗАРАБОТАНО</div>}
+              <div style={{ fontSize: isWide ? 16 : isVerySmall ? 11 : 13, fontWeight: 900, color: themeMode === 'dark' ? '#fbbf24' : '#b45309' } as any}>
                 💰 ${totalEarned >= 1000 ? `${(totalEarned/1000).toFixed(1)}k` : totalEarned.toLocaleString()}
-              </div>
-            </button>
-          )}
-
-          {/* HOS */}
-          {hosWarnings > 0 && (
-            <button onClick={() => switchTab('trucks')} style={{
-              padding: isWide ? '4px 8px' : '3px 6px',
-              background: 'linear-gradient(135deg, rgba(248,113,113,0.15), rgba(239,68,68,0.08))',
-              border: '1px solid rgba(248,113,113,0.35)',
-              borderRadius: 8, animation: 'pulse 1.5s infinite',
-              cursor: 'pointer', textAlign: 'left',
-            } as any}>
-              {isWide && <div style={{ fontSize: 8, color: '#dc2626', fontWeight: 600, marginBottom: 1 } as any}>⚠️ HOS</div>}
-              <div style={{ fontSize: isWide ? 12 : 11, fontWeight: 900, color: '#dc2626' } as any}>
-                {!isWide && '⚠️'}{hosWarnings}
               </div>
             </button>
           )}
         </div>
 
         {/* Действия */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: isWide ? 5 : 3, flexShrink: 0 } as any}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: isWide ? 5 : isVerySmall ? 2 : 3, flexShrink: 0 } as any}>
           {/* Гамбургер */}
           <button onClick={() => setShowMenu(true)} style={{
-            width: isWide ? 38 : 32, height: isWide ? 38 : 32,
+            width: isWide ? 38 : isVerySmall ? 28 : 32, height: isWide ? 38 : isVerySmall ? 28 : 32,
             borderRadius: isWide ? 10 : 8,
             background: T.mode === 'dark' ? 'rgba(56,189,248,0.1)' : 'rgba(0,122,255,0.08)',
             border: T.mode === 'dark' ? '1.5px solid rgba(56,189,248,0.3)' : '1.5px solid rgba(0,122,255,0.25)',
             cursor: 'pointer', display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center', gap: isWide ? 4 : 3, padding: 6,
+            alignItems: 'center', justifyContent: 'center', gap: isWide ? 4 : isVerySmall ? 2 : 3, padding: isVerySmall ? 4 : 6,
           } as any}>
             {[0,1,2].map(i => (
-              <span key={i} style={{ width: isWide ? 18 : 14, height: 2, background: T.primary, borderRadius: 2, display: 'block' } as any} />
+              <span key={i} style={{ width: isWide ? 18 : isVerySmall ? 12 : 14, height: 2, background: T.primary, borderRadius: 2, display: 'block' } as any} />
             ))}
           </button>
 
@@ -665,13 +652,13 @@ export default function GameScreen() {
             onClick={toggleTheme}
             title={themeMode === 'light' ? 'Тёмная тема' : 'Светлая тема'}
             style={{
-              width: isWide ? 38 : 32, height: isWide ? 38 : 32,
+              width: isWide ? 38 : isVerySmall ? 28 : 32, height: isWide ? 38 : isVerySmall ? 28 : 32,
               borderRadius: isWide ? 10 : 8,
               background: themeMode === 'dark' ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
               border: themeMode === 'dark' ? '1.5px solid rgba(255,255,255,0.15)' : '1.5px solid rgba(0,0,0,0.1)',
               cursor: 'pointer', display: 'flex',
               alignItems: 'center', justifyContent: 'center', padding: 0,
-              fontSize: isWide ? 18 : 16,
+              fontSize: isWide ? 18 : isVerySmall ? 14 : 16,
               transition: 'all 0.2s',
             } as any}
           >
