@@ -131,7 +131,7 @@ export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}
       ))}
 
       {/* Плашка — расширить флот */}
-      <View style={styles.shopBanner}>
+      <TouchableOpacity style={styles.shopBanner} activeOpacity={0.75} onPress={() => useGameStore.getState().setGarageOpen(true)}>
         <View style={styles.shopBannerLeft}>
           <Text style={styles.shopBannerIcon}>🏪</Text>
           <View style={{ flex: 1, minWidth: 0 }}>
@@ -140,9 +140,9 @@ export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}
           </View>
         </View>
         <View style={styles.shopBannerBadge}>
-          <Text style={styles.shopBannerBadgeText}>Скоро</Text>
+          <Text style={styles.shopBannerBadgeText}>В магазин →</Text>
         </View>
-      </View>
+      </TouchableOpacity>
 
       {/* Модалка с деталями трака */}
       <TruckDetailModal
@@ -257,18 +257,18 @@ function makeStyles(T: ThemeColors) {
     flexShrink: 1,
   },
   shopBannerBadge: {
-    backgroundColor: 'rgba(255,149,0,0.15)',
+    backgroundColor: 'rgba(6,182,212,0.15)',
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderWidth: 1,
-    borderColor: 'rgba(255,149,0,0.35)',
+    borderColor: 'rgba(6,182,212,0.4)',
     flexShrink: 0,
   },
   shopBannerBadgeText: {
     fontSize: 12,
     fontWeight: '800',
-    color: T.warning,
+    color: '#06b6d4',
   },
   });
 }
