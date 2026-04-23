@@ -257,6 +257,47 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         window.dispatchEvent(new CustomEvent('streetViewChanged', { detail: { active: isVisible } }));
       });
 
+      // ── ГРАНИЦА США ─────────────────────────────────────────────────────
+      // Загружаем GeoJSON контур США и рисуем яркую границу поверх карты
+      fetch('https://raw.githubusercontent.com/datasets/geo-boundaries-world-110m/master/countries.geojson')
+        .then(r => r.json())
+        .then(data => {
+          // Фильтруем только США
+          const usaFeature = data.features.find((f: any) =>
+            f.properties?.ISO_A2 === 'US' || f.properties?.iso_a2 === 'US' || f.properties?.ADM0_A3 === 'USA'
+          );
+          if (!usaFeature) return;
+
+          map.data.addGeoJson({ type: 'FeatureCollection', features: [usaFeature] });
+          map.data.setStyle({
+            fillColor: 'transparent',
+            fillOpacity: 0,
+            strokeColor: '#06b6d4',
+            strokeWeight: 2.5,
+            strokeOpacity: 0.85,
+            clickable: false,
+          });
+        })
+        .catch(() => {
+          // Fallback: рисуем упрощённый прямоугольный контур континентальных США
+          const usBorder = new google.maps.Polyline({
+            path: [
+              { lat: 49.0, lng: -125.0 }, { lat: 49.0, lng: -95.2 },
+              { lat: 49.38, lng: -95.2 }, { lat: 49.38, lng: -66.9 },
+              { lat: 44.8, lng: -66.9 }, { lat: 24.5, lng: -81.0 },
+              { lat: 24.4, lng: -87.5 }, { lat: 29.0, lng: -89.5 },
+              { lat: 25.8, lng: -97.4 }, { lat: 32.5, lng: -117.1 },
+              { lat: 49.0, lng: -125.0 },
+            ],
+            geodesic: false,
+            strokeColor: '#06b6d4',
+            strokeOpacity: 0.85,
+            strokeWeight: 2.5,
+            map,
+            clickable: false,
+          });
+        });
+
       console.log('✅ Google Maps инициализирована успешно (спутниковый вид, только США)');
     } catch (error) {
       console.error('❌ Ошибка при инициализации карты:', error);
@@ -875,74 +916,6 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
           🚶
         </button>
       </div>
-
-      {/* Информация о выбранном траке */}
-      {selectedTruck && (
-        <div style={{
-          position: 'absolute',
-          bottom: 16,
-          left: 16,
-          background: 'rgba(15, 23, 42, 0.95)',
-          backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          borderRadius: 12,
-          padding: 16,
-          minWidth: 250,
-          zIndex: 1000,
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h4 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>
-              {selectedTruck.name}
-            </h4>
-            <button
-              onClick={() => setSelectedTruck(null)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#94a3b8',
-                fontSize: 18,
-                cursor: 'pointer',
-                padding: 0,
-              }}
-            >
-              ×
-            </button>
-          </div>
-          <p style={{ margin: '4px 0', fontSize: 13, color: '#e2e8f0' }}>
-            <strong>Статус:</strong> {STATUS_EMOJI[selectedTruck.status]} {STATUS_LABEL[selectedTruck.status]}
-          </p>
-          <p style={{ margin: '4px 0', fontSize: 13, color: '#e2e8f0' }}>
-            <strong>Город:</strong> {selectedTruck.currentCity}
-          </p>
-          {selectedTruck.destination && (
-            <p style={{ margin: '4px 0', fontSize: 13, color: '#e2e8f0' }}>
-              <strong>Пункт назначения:</strong> {selectedTruck.destination}
-            </p>
-          )}
-          <p style={{ margin: '4px 0', fontSize: 13, color: '#e2e8f0' }}>
-            <strong>HOS:</strong> {(selectedTruck.hoursOfService || selectedTruck.hoursLeft || 0).toFixed(1)} / 11 ч
-          </p>
-          {onTruckInfo && (
-            <button
-              onClick={() => onTruckInfo(selectedTruck.id)}
-              style={{
-                marginTop: 12,
-                width: '100%',
-                background: 'linear-gradient(135deg, rgba(6,182,212,0.2), rgba(14,165,233,0.15))',
-                border: '1px solid rgba(6,182,212,0.3)',
-                borderRadius: 8,
-                padding: '8px 12px',
-                color: '#06b6d4',
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              📊 Подробнее
-            </button>
-          )}
-        </div>
-      )}
 
       {/* Сообщение о загрузке с прогресс-баром */}
       {!mapLoaded && (

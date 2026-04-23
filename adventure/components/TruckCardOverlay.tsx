@@ -95,7 +95,9 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
         const toSt = truck.destinationCity ? (CITY_STATE[truck.destinationCity] || '') : '';
         const fromLabel = fromSt ? `${truck.currentCity}, ${fromSt}` : truck.currentCity;
         const toLabel = toSt ? `${truck.destinationCity}, ${toSt}` : (truck.destinationCity || '');
-        const statusLabel = truck.onNightStop ? '🌙 Ночёвка' : STATUS_LABEL[truck.status] || truck.status;
+        const statusLabel = truck.onNightStop ? '🌙 Ночёвка' 
+          : (truck.status === 'waiting' && (truck as any).hosRestStartMinute !== undefined) ? '😴 HOS отдых'
+          : STATUS_LABEL[truck.status] || truck.status;
 
         return (
           <div

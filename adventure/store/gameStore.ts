@@ -1518,7 +1518,8 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     // Обновляем прогресс траков — СИНХРОННО (без await)
     const newDeliveryResults: DeliveryResult[] = [];
-    const updatedTrucks = trucks.map((truck) => {
+    const updatedTrucks = trucks.map((truckOrig) => {
+      let truck = truckOrig;
 
       // ── HOS: трак едет к Truck Stop (HOS ≤ 1.5ч) ──
       if ((truck as any).drivingToHosStop && truck.status !== 'waiting') {
@@ -2184,9 +2185,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (truck.status === 'driving' || truck.status === 'loaded' ||
           truck.status === 'at_pickup' || truck.status === 'at_delivery') {
         const drivingMood = Math.min(72, (truck.mood ?? 65) + 0.1);
-        // Всегда сбрасываем idleWarningLevel для едущих траков
+        // Сбрасываем idleWarningLevel — но НЕ прерываем выполнение через return
         if ((truck as any).idleSinceMinute !== undefined || (truck as any).idleWarningLevel > 0) {
-          return { ...truck, idleSinceMinute: undefined, idleWarningLevel: 0, mood: Math.round(drivingMood) } as any;
+          truck = { ...truck, idleSinceMinute: undefined, idleWarningLevel: 0, mood: Math.round(drivingMood) } as any;
         }
       }
 
