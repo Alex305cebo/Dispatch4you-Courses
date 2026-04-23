@@ -304,6 +304,37 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
 
   // Фильтрация по городу/штату + deadhead radius
   const filteredLoads = availableLoads.filter(load => {
+    // Deadhead radius — если задан, ищем грузы в радиусе от города (игнорируем fromMatch)
+    if (deadheadRadius && searchFrom.trim() !== '') {
+      const searchLower = searchFrom.toLowerCase();
+      const originCity = Object.keys(CITIES).find(c =>
+        c.toLowerCase() === searchLower ||
+        c.toLowerCase().includes(searchLower) ||
+        searchLower.includes(c.toLowerCase())
+      );
+      if (originCity && CITIES[load.fromCity]) {
+        const [ox, oy] = CITIES[originCity];
+        const [fx, fy] = CITIES[load.fromCity];
+        const R = 3958.8;
+        const dLat = (fy - oy) * Math.PI / 180;
+        const dLng = (fx - ox) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(oy * Math.PI / 180) * Math.cos(fy * Math.PI / 180) *
+          Math.sin(dLng/2) * Math.sin(dLng/2);
+        const distMiles = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        if (distMiles > deadheadRadius) return false;
+      }
+      // Фильтр "Куда" если задан
+      if (searchTo.trim() !== '') {
+        const toMatch =
+          load.toCity.toLowerCase().includes(searchTo.toLowerCase()) ||
+          (CITY_STATE[load.toCity] || '').toLowerCase().includes(searchTo.toLowerCase());
+        if (!toMatch) return false;
+      }
+      return true;
+    }
+
+    // Обычный текстовый фильтр без радиуса
     const fromMatch = searchFrom.trim() === '' ||
       load.fromCity.toLowerCase().includes(searchFrom.toLowerCase()) ||
       (CITY_STATE[load.fromCity] || '').toLowerCase().includes(searchFrom.toLowerCase());
@@ -311,22 +342,7 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
       load.toCity.toLowerCase().includes(searchTo.toLowerCase()) ||
       (CITY_STATE[load.toCity] || '').toLowerCase().includes(searchTo.toLowerCase());
 
-    // Deadhead radius фильтр — ищем грузы в радиусе от города поиска
-    let radiusMatch = true;
-    if (deadheadRadius && searchFrom.trim() !== '') {
-      const originCity = Object.keys(CITIES).find(c =>
-        c.toLowerCase().includes(searchFrom.toLowerCase())
-      );
-      if (originCity && CITIES[originCity] && CITIES[load.fromCity]) {
-        const [ox, oy] = CITIES[originCity];
-        const [fx, fy] = CITIES[load.fromCity];
-        // 1 градус ≈ 69 миль
-        const distMiles = Math.round(Math.hypot(fx - ox, fy - oy) * 69);
-        radiusMatch = distMiles <= deadheadRadius;
-      }
-    }
-
-    return fromMatch && toMatch && radiusMatch;
+    return fromMatch && toMatch;
   });
 
   const isFiltering = searchFrom.trim() !== '' || searchTo.trim() !== '' || deadheadRadius !== null;

@@ -46,56 +46,18 @@ const STATUS_EMOJI: Record<string, string> = {
   breakdown: "🔴", waiting: "🟠",
 };
 
-// ── ИКОНКА ТРАКА: Google Maps SymbolPath стрелка с направлением ──────────────
+// ── ИКОНКА ТРАКА: точка + подпись (как city dot в amCharts) ─────────────────
 function getTruckMarkerIcon(google: any, color: string, heading: number = 0) {
   return {
-    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-    scale: 7,
+    path: google.maps.SymbolPath.CIRCLE,
+    scale: 14,
     fillColor: color,
     fillOpacity: 1,
     strokeColor: '#ffffff',
-    strokeWeight: 2,
-    rotation: heading, // направление движения в градусах (0 = север, 90 = восток)
+    strokeWeight: 2.5,
   };
 }
-
-// Вычисляем угол направления от точки A к точке B (в градусах, 0 = север)
-function computeHeading(fromLat: number, fromLng: number, toLat: number, toLng: number): number {
-  const dLng = (toLng - fromLng) * Math.PI / 180;
-  const lat1 = fromLat * Math.PI / 180;
-  const lat2 = toLat * Math.PI / 180;
-  const y = Math.sin(dLng) * Math.cos(lat2);
-  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
-  const heading = Math.atan2(y, x) * 180 / Math.PI;
-  return (heading + 360) % 360;
-}
-function smoothPanTo(map: any, targetLat: number, targetLng: number, duration: number = 1000) {
-  const start = map.getCenter();
-  const startLat = start.lat();
-  const startLng = start.lng();
-  
-  const startTime = Date.now();
-  
-  function animate() {
-    const elapsed = Date.now() - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    
-    // Easing function (ease-out cubic)
-    const eased = 1 - Math.pow(1 - progress, 3);
-    
-    const currentLat = startLat + (targetLat - startLat) * eased;
-    const currentLng = startLng + (targetLng - startLng) * eased;
-    
-    map.setCenter({ lat: currentLat, lng: currentLng });
-    
-    if (progress < 1) {
-      requestAnimationFrame(animate);
-    }
-  }
-  
-  animate();
-}
-
+// ── ФУНКЦИИ УТИЛИТЫ ──────────────────────────────────────────────────────────
 function getTruckColor(truck: any, gameMinute = 0): string {
   // Ночёвка / обязательный перерыв / detention — серо-синий
   if ((truck as any).onNightStop || (truck as any).onMandatoryBreak) return "#64748b";
@@ -155,6 +117,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
 
   const { trucks, availableLoads, phase, gameMinute } = useGameStore();
   const { mode: themeMode, colors: T } = useThemeStore();
+  // Показываем траки всегда кроме главного меню
   const activeTrucks = phase !== 'menu' ? trucks : [];
 
   // ── ЗАГРУЗКА GOOGLE MAPS API ─────────────────────────────────────────────
@@ -316,43 +279,19 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         const newPosition = { lat: truck.position[1], lng: truck.position[0] };
         const newColor = getTruckColor(truck, gameMinute);
         
-        // Обновляем позицию
         marker.setPosition(newPosition);
-        
-        // Обновляем иконку (стрелка по цвету и направлению)
-        let heading = 0;
-        if (truck.destinationCity && CITIES[truck.destinationCity]) {
-          const dest = CITIES[truck.destinationCity];
-          heading = computeHeading(newPosition.lat, newPosition.lng, dest[1], dest[0]);
-        }
-        marker.setIcon(getTruckMarkerIcon(google, newColor, heading));
+        marker.setIcon(getTruckMarkerIcon(google, newColor));
 
-        console.log(`📍 Обновлён маркер ${truck.id}:`, {
-          position: newPosition,
-          color: newColor,
-          status: truck.status,
-        });
-
-        // Если включено слежение за этим траком — плавно центрируем карту
+        // Следование за траком — простой panTo без анимации rAF
         if (followTruck) {
           const targetId = followTruckIdRef.current || selectedTruck?.id;
           if (truck.id === targetId || (!targetId && activeTrucks[0]?.id === truck.id)) {
             const lastPos = lastFollowPositionRef.current;
-            
-            // Проверяем, изменилась ли позиция достаточно сильно
             if (!lastPos || 
                 Math.abs(lastPos.lat - newPosition.lat) > 0.0001 || 
                 Math.abs(lastPos.lng - newPosition.lng) > 0.0001) {
-              
-              // Очень плавное перемещение камеры (2 секунды)
-              smoothPanTo(googleMapRef.current, newPosition.lat, newPosition.lng, 2000);
+              googleMapRef.current.panTo(newPosition);
               lastFollowPositionRef.current = newPosition;
-              
-              // Устанавливаем zoom только если он слишком далёкий
-              const currentZoom = googleMapRef.current.getZoom();
-              if (currentZoom < 8) {
-                googleMapRef.current.setZoom(8);
-              }
             }
           }
         }
@@ -362,20 +301,12 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
 
   // ── СОЗДАНИЕ/УДАЛЕНИЕ МАРКЕРОВ ТРАКОВ ────────────────────────────────────
   useEffect(() => {
-    if (!googleMapRef.current || !mapLoaded) {
-      console.log('⏸️ Ожидание карты для маркеров:', { hasMap: !!googleMapRef.current, mapLoaded });
-      return;
-    }
+    if (!googleMapRef.current || !mapLoaded) return;
 
     const google = window.google;
-    if (!google || !google.maps) {
-      console.error('❌ Google Maps API не доступен для маркеров');
-      return;
-    }
+    if (!google || !google.maps) return;
 
     const map = googleMapRef.current;
-
-    console.log('🔄 Обновление маркеров траков:', activeTrucks.length, 'траков');
 
     // Удаляем старые маркеры траков, которых больше нет
     const currentTruckIds = new Set(activeTrucks.map((t: any) => t.id));
@@ -395,26 +326,12 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         const position = { lat: truck.position[1], lng: truck.position[0] };
         const color = getTruckColor(truck, gameMinute);
         
-        console.log(`➕ Создаём новый маркер для ${truck.id}:`, {
-          name: truck.name,
-          position,
-          color,
-          status: truck.status,
-        });
-        
-        // Вычисляем направление движения
-        let heading = 0;
-        if (truck.destinationCity && CITIES[truck.destinationCity]) {
-          const dest = CITIES[truck.destinationCity];
-          heading = computeHeading(position.lat, position.lng, dest[1], dest[0]);
-        }
-
-        // Стрелка Google Maps по цвету статуса и направлению
+        // Точка без подписи, увеличенная
         marker = new google.maps.Marker({
           position,
           map,
           title: `${truck.name} (${truck.id})`,
-          icon: getTruckMarkerIcon(google, color, heading),
+          icon: getTruckMarkerIcon(google, color),
           zIndex: truck.status === 'loaded' ? 1000 : 500,
           optimized: false,
         });
@@ -425,14 +342,14 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         });
 
         markersRef.current.set(truck.id, marker);
-        console.log(`✅ Маркер создан для ${truck.id}`);
       }
     });
+  }, [activeTrucks.length, mapLoaded]);
 
-    console.log(`📍 Всего маркеров: ${markersRef.current.size}`);
-  }, [activeTrucks.length, mapLoaded]); // Только когда количество траков меняется
+  const directionsRenderersRef = useRef<Map<string, any>>(new Map());
+  const routeCacheRef = useRef<Map<string, string>>(new Map());
 
-  // ── ОТРИСОВКА МАРШРУТОВ ──────────────────────────────────────────────────
+  // ── ОТРИСОВКА МАРШРУТОВ ПО ДОРОГАМ ──────────────────────────────────────
   useEffect(() => {
     if (!googleMapRef.current || !mapLoaded) return;
 
@@ -441,40 +358,68 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
 
     const map = googleMapRef.current;
 
-    // Удаляем старые маршруты
-    polylinesRef.current.forEach((polyline) => {
-      polyline.setMap(null);
-    });
-    polylinesRef.current.clear();
-
-    // Рисуем маршруты для траков с грузом или едущих к погрузке
-    activeTrucks.forEach((truck: any) => {
-      if (truck.status === 'loaded' || truck.status === 'driving') {
-        const origin = truck.currentCity;
-        const destination = truck.status === 'loaded' ? truck.destination : truck.nextPickup;
-
-        if (origin && destination && CITIES[origin] && CITIES[destination]) {
-          const path = [
-            { lat: CITIES[origin][1], lng: CITIES[origin][0] },
-            { lat: CITIES[destination][1], lng: CITIES[destination][0] },
-          ];
-
-          const polyline = new google.maps.Polyline({
-            path,
-            geodesic: true,
-            strokeColor: getTruckColor(truck, gameMinute),
-            strokeOpacity: 0.6,
-            strokeWeight: 3,
-            map,
-          });
-
-          polylinesRef.current.set(truck.id, polyline);
-        }
+    // Удаляем маршруты которых больше нет
+    const activeIds = new Set(
+      activeTrucks
+        .filter((t: any) => (t.status === 'loaded' || t.status === 'driving') && t.destinationCity)
+        .map((t: any) => t.id)
+    );
+    directionsRenderersRef.current.forEach((renderer, truckId) => {
+      if (!activeIds.has(truckId)) {
+        renderer.setMap(null);
+        directionsRenderersRef.current.delete(truckId);
+        routeCacheRef.current.delete(truckId);
       }
     });
 
-    console.log(`🛣️ Отрисовано ${polylinesRef.current.size} маршрутов`);
-  }, [activeTrucks, gameMinute, mapLoaded]);
+    // Рисуем маршруты
+    activeTrucks.forEach((truck: any) => {
+      if (truck.status !== 'loaded' && truck.status !== 'driving') return;
+      if (!truck.destinationCity) return;
+
+      const cacheKey = `${truck.id}:${truck.destinationCity}`;
+      if (routeCacheRef.current.get(truck.id) === cacheKey) return; // уже нарисован
+      routeCacheRef.current.set(truck.id, cacheKey);
+
+      const color = getTruckColor(truck, gameMinute);
+
+      // Удаляем старый
+      const old = directionsRenderersRef.current.get(truck.id);
+      if (old) old.setMap(null);
+
+      // Если есть реальный маршрут из OSRM (routePath) — используем его
+      if (truck.routePath && truck.routePath.length > 1) {
+        const path = truck.routePath.map(([lng, lat]: [number, number]) => ({ lat, lng }));
+        const polyline = new google.maps.Polyline({
+          path,
+          geodesic: false,
+          strokeColor: color,
+          strokeOpacity: 0.8,
+          strokeWeight: 4,
+          map,
+        });
+        directionsRenderersRef.current.set(truck.id, { setMap: (m: any) => polyline.setMap(m) });
+        return;
+      }
+
+      // Fallback — прямая линия между текущей позицией и пунктом назначения
+      const origin = { lat: truck.position[1], lng: truck.position[0] };
+      const dest = CITIES[truck.destinationCity];
+      if (!dest) return;
+      const polyline = new google.maps.Polyline({
+        path: [origin, { lat: dest[1], lng: dest[0] }],
+        geodesic: true,
+        strokeColor: color,
+        strokeOpacity: 0.6,
+        strokeWeight: 3,
+        map,
+      });
+      directionsRenderersRef.current.set(truck.id, { setMap: (m: any) => polyline.setMap(m) });
+    });
+  }, [
+    activeTrucks.map((t: any) => `${t.id}:${t.status}:${t.destinationCity}:${t.routePath?.length ?? 0}`).join('|'),
+    mapLoaded
+  ]);
 
   // ── ОБРАБОТЧИК КЛИКА НА ТРАК ─────────────────────────────────────────────
   const handleTruckClick = useCallback((truck: any) => {
@@ -581,7 +526,12 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
           border-color: rgba(6, 182, 212, 0.4) !important;
         }
 
-        /* ── STREET VIEW: скрываем ВСЁ ── */
+        /* Подписи траков — под точкой как city label */
+        .truck-label {
+          margin-top: 18px !important;
+          text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7) !important;
+          font-family: -apple-system, sans-serif !important;
+        }
         .sv-active .gm-svpc { display: none !important; }
         .sv-active .gm-iv-close { display: none !important; }
         .sv-active .gm-iv-address { display: none !important; }
