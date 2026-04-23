@@ -3157,9 +3157,20 @@ case 'detention': {
   endShift: () => {
     const state = get();
     
-    // Если мы на экране day_end — продолжаем играть
+    // Если мы на экране day_end — продолжаем играть (новый день)
     if (state.phase === 'day_end') {
-      set({ phase: 'playing' });
+      const newDay = (state.day || 1) + 1;
+      const updatedTrucks = state.trucks.map(truck => ({
+        ...truck,
+        hoursLeft: 11,
+        yesterdayMiles: truck.totalMiles || 0,
+      }));
+      set({
+        phase: 'playing',
+        day: newDay,
+        gameMinute: 0,
+        trucks: updatedTrucks,
+      });
       get().saveGame();
       return;
     }

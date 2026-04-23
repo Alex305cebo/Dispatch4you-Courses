@@ -76,15 +76,7 @@ export default function DayEndPopup() {
   }, 0);
 
   const handleContinue = () => {
-    // Сохраняем текущие мили как "вчерашние" для следующего дня
-    const updatedTrucks = trucks.map(t => ({
-      ...t,
-      yesterdayMiles: t.totalMiles || 0,
-    }));
-    useGameStore.setState({ 
-      phase: 'playing',
-      trucks: updatedTrucks,
-    });
+    useGameStore.getState().endShift();
   };
 
   return (
