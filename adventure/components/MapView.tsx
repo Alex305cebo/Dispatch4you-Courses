@@ -268,7 +268,7 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
   const addToast = useCallback((msg: string, color = "#06b6d4") => {
     const id = Math.random().toString(36).slice(2);
     setToasts(prev => [...prev.slice(-3), { id, msg, color }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 12000); // 12 секунд
   }, []);
 
   // Слушаем события из store для тостов
@@ -280,7 +280,7 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         // Если есть truckId — показываем tooltip над траком
         const id = Math.random().toString(36).slice(2);
         setTruckTooltips(prev => [...prev.slice(-2), { id, truckId, msg: message, color }]);
-        setTimeout(() => setTruckTooltips(prev => prev.filter(t => t.id !== id)), 5000);
+        setTimeout(() => setTruckTooltips(prev => prev.filter(t => t.id !== id)), 12000); // 12 секунд
       } else {
         // Иначе — обычный toast в углу
         addToast(message, color);
@@ -887,67 +887,13 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
           dy: dyBase,
         }));
         
-        // 💨 ДЫМ ИЗ ВЫХЛОПНЫХ ТРУБ (только для едущих траков)
+        // Простая анимация по статусу (без дыма)
         if (d.status === "driving" || d.status === "loaded") {
-          // Создаём 2 дымовых частицы (левая и правая труба)
-          for (let i = 0; i < 2; i++) {
-            const smokeX = i === 0 ? -truckWidth * 0.15 : truckWidth * 0.15; // позиция труб
-            const smokeY = dyBase - truckHeight * 0.4; // над траком
-            
-            const smoke = container.children.push(am5.Circle.new(root, {
-              radius: 3,
-              fill: am5.color(0x808080),
-              fillOpacity: 0,
-              centerX: am5.percent(50),
-              centerY: am5.percent(50),
-              dx: smokeX,
-              dy: smokeY,
-            }));
-            
-            // Анимация дыма: появление → подъём → исчезновение
-            const smokeDuration = 1200;
-            const smokeDelay = i * 600; // задержка между трубами
-            
-            smoke.animate({ 
-              key: "dy" as any, 
-              from: smokeY, 
-              to: smokeY - 15, 
-              duration: smokeDuration, 
-              loops: Infinity, 
-              delay: smokeDelay,
-              easing: am5.ease.out(am5.ease.cubic)
-            });
-            
-            smoke.animate({ 
-              key: "radius" as any, 
-              from: 2, 
-              to: 6, 
-              duration: smokeDuration, 
-              loops: Infinity, 
-              delay: smokeDelay,
-              easing: am5.ease.linear
-            });
-            
-            smoke.animate({ 
-              key: "fillOpacity" as any, 
-              from: 0.4, 
-              to: 0, 
-              duration: smokeDuration, 
-              loops: Infinity, 
-              delay: smokeDelay,
-              easing: am5.ease.out(am5.ease.quad)
-            });
-          }
-        }
-        
-        // Реалистичная анимация по статусу
-        if (d.status === "driving" || d.status === "loaded") {
-          // ЕДУЩИЙ ТРАК — комбинированная анимация подвески
-          // 1. Вертикальное покачивание (bounce) — имитация подвески на дороге
+          // ЕДУЩИЙ ТРАК — лёгкое покачивание
           truckImg.animate({ 
             key: "dy" as any, 
-            from: dyBase - 1.5, 
-            to: dyBase + 1.5, 
+            from: dyBase - 1, 
+            to: dyBase + 1, 
             duration: 400, 
             loops: Infinity, 
             easing: am5.ease.sinInOut 
@@ -1075,62 +1021,6 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         interactive: true,
         cursorOverStyle: "pointer",
       })).events.on("click", onClick);
-
-      // 💬 TOOLTIP НАД ТРАКОМ (для событий)
-      // Проверяем есть ли активный tooltip для этого трака
-      const activeTooltip = truckTooltipsRef.current.find(tt => tt.truckId === d.truckId);
-      if (activeTooltip) {
-        const tooltipW = 200;
-        const tooltipH = 40;
-        const tooltipContainer = container.children.push(am5.Container.new(root, {
-          width: tooltipW, height: tooltipH,
-          dy: -(tooltipH + bgRadius * 2 + 20), 
-          dx: -(tooltipW / 2),
-          opacity: 1,
-        }));
-        
-        // Конвертируем hex цвет в число для amCharts
-        const colorHex = activeTooltip.color.replace('#', '');
-        const colorInt = parseInt(colorHex, 16) || 0x06b6d4; // fallback на cyan
-        
-        // Фон tooltip
-        tooltipContainer.children.push(am5.RoundedRectangle.new(root, {
-          width: tooltipW, height: tooltipH,
-          fill: am5.color(0x111827), fillOpacity: 0.95,
-          stroke: am5.color(colorInt), strokeWidth: 2,
-          cornerRadiusTL: 12, cornerRadiusTR: 12, cornerRadiusBL: 12, cornerRadiusBR: 12,
-        }));
-        
-        // Текст tooltip
-        tooltipContainer.children.push(am5.Label.new(root, {
-          text: activeTooltip.msg.replace(/[✅🚨🔧🚛💬💨🌨️💰]/g, '').trim(),
-          fontSize: 12,
-          fontWeight: "700",
-          fill: am5.color(0xffffff),
-          centerX: am5.percent(50),
-          centerY: am5.percent(50),
-          textAlign: "center",
-          maxWidth: tooltipW - 20,
-          oversizedBehavior: "truncate",
-        }));
-        
-        // Анимация появления
-        tooltipContainer.animate({
-          key: "opacity" as any,
-          from: 0,
-          to: 1,
-          duration: 300,
-          easing: am5.ease.out(am5.ease.cubic)
-        });
-        
-        tooltipContainer.animate({
-          key: "dy" as any,
-          from: -(tooltipH + bgRadius * 2 + 30),
-          to: -(tooltipH + bgRadius * 2 + 20),
-          duration: 400,
-          easing: am5.ease.out(am5.ease.back)
-        });
-      }
 
       // Карточки над траками отключены
       const cardVisible = false;
@@ -1629,17 +1519,46 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         lastStatusKey = statusKey;
         switchCardVariant(root, chart);
       } else {
-        // Только обновляем данные без пересоздания bullets
-        // Пересоздание вызывает моргание — избегаем его
+        // Плавное обновление позиций без пересоздания bullets
         if (truckSeriesRef.current) {
           try {
+            const newData = buildPointData();
+            const series = truckSeriesRef.current;
+            
+            // Обновляем каждый dataItem индивидуально с анимацией
+            series.dataItems.forEach((dataItem: any, index: number) => {
+              if (newData[index]) {
+                const newLat = newData[index].lat;
+                const newLng = newData[index].lng;
+                
+                // Используем setAll с анимацией через easing
+                dataItem.dataContext.lat = newLat;
+                dataItem.dataContext.lng = newLng;
+                
+                // Анимируем изменение координат
+                dataItem.animate({
+                  key: 'latitude',
+                  to: newLat,
+                  duration: 4800,
+                  easing: am5.ease.linear
+                });
+                dataItem.animate({
+                  key: 'longitude', 
+                  to: newLng,
+                  duration: 4800,
+                  easing: am5.ease.linear
+                });
+              }
+            });
+          } catch (e) {
+            console.warn('Animation failed, using setAll:', e);
             truckSeriesRef.current.data.setAll(buildPointData());
-          } catch (_) {}
+          }
         }
         // Обновляем statusKey для следующей проверки
         lastStatusKey = statusKey;
       }
-    }, 2000);
+    }, 5000);
 
     // Цвета штатов — каждые 10 секунд (плавная смена по времени суток)
     colorIntervalRef.current = setInterval(() => {
@@ -1905,18 +1824,22 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
       {/* Компактные toast-уведомления — внизу по центру (ближе к тракам) */}
       {!selectedState && toasts.length > 0 && (
         <div style={{
-          position: "absolute", bottom: 80, left: "50%", transform: "translateX(-50%)",
+          position: "absolute", 
+          bottom: window.innerWidth < 768 ? 20 : 80, 
+          left: "50%", 
+          transform: "translateX(-50%)",
           display: "flex", flexDirection: "column", gap: 8,
-          zIndex: 1001, fontFamily: "sans-serif", pointerEvents: "none",
-          maxWidth: 400,
+          zIndex: 1001, fontFamily: "sans-serif",
+          maxWidth: window.innerWidth < 768 ? "90%" : 400,
+          width: window.innerWidth < 768 ? "90%" : "auto",
         } as any} className="map-toasts">
           {toasts.map(t => (
             <div key={t.id} style={{
               background: "rgba(17,24,39,0.95)", 
               border: `2px solid ${t.color}`,
               borderRadius: 16,
-              padding: "12px 16px", 
-              fontSize: 14, 
+              padding: window.innerWidth < 768 ? "10px 14px" : "12px 16px", 
+              fontSize: window.innerWidth < 768 ? 13 : 14, 
               fontWeight: 700,
               color: "#fff",
               boxShadow: `0 6px 20px rgba(0,0,0,0.4), 0 0 0 1px ${t.color}44`,
@@ -1925,9 +1848,25 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
               alignItems: "center",
               gap: 10,
               textAlign: "center",
-            } as any}>
+              cursor: "pointer",
+              pointerEvents: "auto",
+              transition: "transform 0.2s, box-shadow 0.2s",
+            } as any}
+            onClick={() => {
+              // Закрыть toast при клике
+              setToasts(prev => prev.filter(toast => toast.id !== t.id));
+            }}
+            onMouseEnter={(e: any) => {
+              e.currentTarget.style.transform = "scale(1.05)";
+              e.currentTarget.style.boxShadow = `0 8px 24px rgba(0,0,0,0.5), 0 0 0 2px ${t.color}`;
+            }}
+            onMouseLeave={(e: any) => {
+              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.boxShadow = `0 6px 20px rgba(0,0,0,0.4), 0 0 0 1px ${t.color}44`;
+            }}
+            >
               <span style={{ 
-                fontSize: 18, 
+                fontSize: window.innerWidth < 768 ? 16 : 18, 
                 filter: "drop-shadow(0 0 6px rgba(255,255,255,0.6))" 
               }}>
                 {t.msg.includes('✅') ? '✅' : 
@@ -1936,10 +1875,20 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
                  t.msg.includes('🚛') ? '🚛' :
                  t.msg.includes('💨') ? '💨' :
                  t.msg.includes('🌨️') ? '🌨️' :
-                 t.msg.includes('💰') ? '💰' : '💬'}
+                 t.msg.includes('💰') ? '💰' : 
+                 t.msg.includes('📦') ? '📦' :
+                 t.msg.includes('🏁') ? '🏁' :
+                 t.msg.includes('⏳') ? '⏳' :
+                 t.msg.includes('🚫') ? '🚫' :
+                 t.msg.includes('🚔') ? '🚔' :
+                 t.msg.includes('⛽') ? '⛽' :
+                 t.msg.includes('😴') ? '😴' :
+                 t.msg.includes('🌙') ? '🌙' :
+                 t.msg.includes('📞') ? '📞' :
+                 t.msg.includes('⭐') ? '⭐' : '💬'}
               </span>
               <span style={{ flex: 1, lineHeight: 1.5 }}>
-                {t.msg.replace(/[✅🚨🔧🚛💬💨🌨️💰]/g, '').trim()}
+                {t.msg.replace(/[✅🚨🔧🚛💬💨🌨️💰📦🏁⏳🚫🚔⛽😴🌙📞⭐💥🚧🚦⚠️💳👤🎉]/g, '').trim()}
               </span>
             </div>
           ))}
