@@ -15,7 +15,7 @@ function getSavedMode(): ThemeMode {
     const saved = localStorage.getItem('dispatch-theme');
     if (saved === 'dark' || saved === 'light') return saved;
   } catch {}
-  return 'light';
+  return 'dark'; // Тёмная тема по умолчанию
 }
 
 function applyTheme(mode: ThemeMode) {

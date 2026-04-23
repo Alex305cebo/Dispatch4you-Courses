@@ -1519,41 +1519,11 @@ function MapAmCharts({ onTruckInfo, onTruckSelect, onFindLoad, onGuideOpen, guid
         lastStatusKey = statusKey;
         switchCardVariant(root, chart);
       } else {
-        // Плавное обновление позиций без пересоздания bullets
+        // Обновляем данные — траки будут двигаться
         if (truckSeriesRef.current) {
           try {
-            const newData = buildPointData();
-            const series = truckSeriesRef.current;
-            
-            // Обновляем каждый dataItem индивидуально с анимацией
-            series.dataItems.forEach((dataItem: any, index: number) => {
-              if (newData[index]) {
-                const newLat = newData[index].lat;
-                const newLng = newData[index].lng;
-                
-                // Используем setAll с анимацией через easing
-                dataItem.dataContext.lat = newLat;
-                dataItem.dataContext.lng = newLng;
-                
-                // Анимируем изменение координат
-                dataItem.animate({
-                  key: 'latitude',
-                  to: newLat,
-                  duration: 4800,
-                  easing: am5.ease.linear
-                });
-                dataItem.animate({
-                  key: 'longitude', 
-                  to: newLng,
-                  duration: 4800,
-                  easing: am5.ease.linear
-                });
-              }
-            });
-          } catch (e) {
-            console.warn('Animation failed, using setAll:', e);
             truckSeriesRef.current.data.setAll(buildPointData());
-          }
+          } catch (_) {}
         }
         // Обновляем statusKey для следующей проверки
         lastStatusKey = statusKey;
