@@ -1503,8 +1503,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (get().phase !== 'playing') return;
     try {
     const { gameMinute, trucks, availableLoads, activeLoads, timeSpeed } = get();
-    const TICK_MINUTES = 1.0 * (timeSpeed ?? 1);
-    const newMinute = Math.round((gameMinute + TICK_MINUTES) * 10) / 10;
+    // 0.25 минуты за тик × 4 тика/сек = 1 мин/сек (как раньше)
+    const TICK_MINUTES = 0.25 * (timeSpeed ?? 1);
+    const newMinute = Math.round((gameMinute + TICK_MINUTES) * 100) / 100;
 
     if (newMinute >= SHIFT_DURATION) {
       get().endShift();
@@ -2584,8 +2585,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     } catch(e) {
       // Ошибка в тике — просто двигаем время вперёд
       const { gameMinute, timeSpeed } = get();
-      const TICK_MINUTES = 1.0 * (timeSpeed ?? 1);
-      const newMinute = Math.round((gameMinute + TICK_MINUTES) * 10) / 10;
+      const TICK_MINUTES = 0.25 * (timeSpeed ?? 1);
+      const newMinute = Math.round((gameMinute + TICK_MINUTES) * 100) / 100;
       console.error('tickClock error:', e);
       set({ gameMinute: newMinute });
     }

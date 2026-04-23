@@ -324,10 +324,10 @@ export default function GameScreen() {
   useEffect(() => { if (availableLoads.length < 5) refreshLoadBoard(); }, []);
   useEffect(() => {
     if (clockRef.current) clearInterval(clockRef.current);
-    // Таймер всегда идёт — время не останавливается никогда
-    clockRef.current = setInterval(() => { tickClock(); }, 1000);
+    // 250ms тик = 4 тика/сек → плавное движение трака на карте
+    clockRef.current = setInterval(() => { tickClock(); }, 250);
     return () => { if (clockRef.current) clearInterval(clockRef.current); };
-  }, []); // Запускаем один раз при монтировании
+  }, []);
 
   // Функция для получения текущего индикатора трака
   function getTruckIndicator(truck: any, hos: number, progressPct: number, mood: number): {icon: string, text: string} | null {

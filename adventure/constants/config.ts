@@ -70,7 +70,7 @@ export const SHIFT_START_MINUTE = 0;
 export const SHIFT_DURATION = DAY_DURATION;
 
 // Скорость трака: 10 миль/игровую минуту
-export const TRUCK_SPEED_MPM = 10;
+export const TRUCK_SPEED_MPM = 7.5; // -25% от оригинала (было 10)
 
 // HOS правила (в игровых минутах)
 export const HOS_MAX_DRIVE_MINUTES = 660;   // 11 часов = 660 минут вождения

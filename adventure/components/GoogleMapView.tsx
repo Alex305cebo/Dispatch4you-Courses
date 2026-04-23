@@ -214,24 +214,29 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       };
 
       // Создаём карту с центром на США и спутниковым видом
+      // mapId нужен для WebGL/3D режима (tilt + moveCamera)
+      // Используем публичный демо-ключ Google для Vector Maps
       const map = new google.maps.Map(mapRef.current, {
-        center: { lat: 39.8283, lng: -98.5795 }, // Центр США
+        center: { lat: 39.8283, lng: -98.5795 },
         zoom: 5,
-        mapTypeId: 'hybrid', // Спутниковый вид с дорогами
+        mapTypeId: 'hybrid',
+        mapId: '67fdefb40270c0ad2edaab31', // Vector Map ID — поддерживает tilt/heading/moveCamera
         restriction: {
           latLngBounds: usaBounds,
           strictBounds: false,
         },
         minZoom: 4,
         maxZoom: 18,
-        disableDefaultUI: true, // Отключаем все стандартные контролы
+        disableDefaultUI: true,
         zoomControl: false,
         mapTypeControl: false,
         scaleControl: false,
-        streetViewControl: false, // Сделаем кастомный
+        streetViewControl: false,
         rotateControl: false,
         fullscreenControl: false,
         gestureHandling: 'greedy',
+        tilt: 0,
+        heading: 0,
       });
 
       googleMapRef.current = map;
@@ -304,41 +309,141 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
     }
   }, [mapLoaded]);
 
-  // ── ОБНОВЛЕНИЕ МАРКЕРОВ ТРАКОВ (РЕАКТИВНОЕ) ──────────────────────────────
+  // ── АНИМАЦИОННЫЙ ДВИЖОК: плавное движение маркеров ─────────────────────
+  // Хранит предыдущие и целевые позиции для интерполяции
+  const animStateRef = useRef<Map<string, {
+    fromLat: number; fromLng: number;
+    toLat: number;   toLng: number;
+    fromHeading: number; toHeading: number;
+    startTime: number; duration: number;
+  }>>(new Map());
+  const rafRef = useRef<number | null>(null);
+  const lastCameraUpdateRef = useRef<number>(0);
+  const smoothHeadingRef = useRef<number>(0); // сглаженный heading для камеры
+
+  // Линейная интерполяция
+  function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
+
+  // Easing ease-in-out — плавный старт и финиш
+  function easeInOut(t: number) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+
+  // Запускаем анимационный цикл
+  useEffect(() => {
+    if (!mapLoaded) return;
+
+    function animLoop() {
+      const google = window.google;
+      if (!google?.maps || !googleMapRef.current) {
+        rafRef.current = requestAnimationFrame(animLoop);
+        return;
+      }
+
+      const now = performance.now();
+
+      animStateRef.current.forEach((state, truckId) => {
+        const marker = markersRef.current.get(truckId);
+        if (!marker) return;
+
+        const elapsed = now - state.startTime;
+        const t = Math.min(elapsed / state.duration, 1);
+        const e = easeInOut(t);
+
+        // Плавная интерполяция позиции маркера
+        const lat = lerp(state.fromLat, state.toLat, e);
+        const lng = lerp(state.fromLng, state.toLng, e);
+        marker.setPosition({ lat, lng });
+
+        // Камера — только для отслеживаемого трака, каждый кадр
+        if (followTruck && truckId === followTruckIdRef.current) {
+          // Целевой heading из интерполяции
+          let dH = state.toHeading - state.fromHeading;
+          if (dH > 180) dH -= 360;
+          if (dH < -180) dH += 360;
+          const targetHeading = state.fromHeading + dH * t;
+
+          // Low-pass filter: alpha=0.05 → очень плавный поворот камеры
+          let dSmooth = targetHeading - smoothHeadingRef.current;
+          if (dSmooth > 180) dSmooth -= 360;
+          if (dSmooth < -180) dSmooth += 360;
+          smoothHeadingRef.current = smoothHeadingRef.current + dSmooth * 0.05;
+
+          const heading = smoothHeadingRef.current;
+          const headingRad = heading * Math.PI / 180;
+          const offsetDeg = 0.012;
+          const offsetCenter = {
+            lat: lat + offsetDeg * Math.cos(headingRad),
+            lng: lng + offsetDeg * Math.sin(headingRad) / Math.cos(lat * Math.PI / 180),
+          };
+
+          googleMapRef.current.moveCamera({
+            center: offsetCenter,
+            heading,
+            tilt: 45,
+          });
+        }
+      });
+
+      rafRef.current = requestAnimationFrame(animLoop);
+    }
+
+    rafRef.current = requestAnimationFrame(animLoop);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [mapLoaded, followTruck]);
+
+  // ── ОБНОВЛЕНИЕ ЦЕЛЕВЫХ ПОЗИЦИЙ (раз в секунду от gameStore) ─────────────
   useEffect(() => {
     if (!googleMapRef.current || !mapLoaded) return;
 
     const google = window.google;
-    if (!google || !google.maps) return;
+    if (!google?.maps) return;
 
-    console.log('🔄 Обновление позиций маркеров:', activeTrucks.length, 'траков');
-
-    // Обновляем позиции и цвета всех существующих маркеров
     activeTrucks.forEach((truck: any) => {
       const marker = markersRef.current.get(truck.id);
-      if (marker) {
-        const newPosition = { lat: truck.position[1], lng: truck.position[0] };
-        const newColor = getTruckColor(truck, gameMinute);
-        
-        marker.setPosition(newPosition);
-        marker.setIcon(getTruckMarkerIcon(google, newColor));
+      if (!marker) return;
 
-        // Следование за траком — простой panTo без анимации rAF
-        if (followTruck) {
-          const targetId = followTruckIdRef.current || selectedTruck?.id;
-          if (truck.id === targetId || (!targetId && activeTrucks[0]?.id === truck.id)) {
-            const lastPos = lastFollowPositionRef.current;
-            if (!lastPos || 
-                Math.abs(lastPos.lat - newPosition.lat) > 0.0001 || 
-                Math.abs(lastPos.lng - newPosition.lng) > 0.0001) {
-              googleMapRef.current.panTo(newPosition);
-              lastFollowPositionRef.current = newPosition;
-            }
-          }
-        }
+      const newColor = getTruckColor(truck, gameMinute);
+      marker.setIcon(getTruckMarkerIcon(google, newColor));
+
+      const toLat = truck.position[1];
+      const toLng = truck.position[0];
+
+      // Вычисляем heading к пункту назначения
+      let toHeading = 0;
+      if (truck.destinationCity && CITIES[truck.destinationCity]) {
+        const dest = CITIES[truck.destinationCity];
+        const dLng = (dest[0] - toLng) * Math.PI / 180;
+        const lat1 = toLat * Math.PI / 180;
+        const lat2 = dest[1] * Math.PI / 180;
+        const y = Math.sin(dLng) * Math.cos(lat2);
+        const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+        toHeading = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
       }
+
+      const prev = animStateRef.current.get(truck.id);
+
+      // Берём fromLat/fromLng из текущей анимированной позиции (не из маркера!)
+      // Это устраняет рывок при смене тика
+      let fromLat = toLat;
+      let fromLng = toLng;
+      if (prev) {
+        const elapsed = performance.now() - prev.startTime;
+        const t = Math.min(elapsed / prev.duration, 1);
+        const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        fromLat = prev.fromLat + (prev.toLat - prev.fromLat) * e;
+        fromLng = prev.fromLng + (prev.toLng - prev.fromLng) * e;
+      }
+      const fromHeading = prev ? prev.toHeading : toHeading;
+
+      // Duration 400ms — больше перекрытие между тиками = плавнее
+      const speed = useGameStore.getState().timeSpeed || 1;
+      animStateRef.current.set(truck.id, {
+        fromLat, fromLng, toLat, toLng,
+        fromHeading, toHeading,
+        startTime: performance.now(),
+        duration: 400 / speed,
+      });
     });
-  }, [activeTrucks, gameMinute, mapLoaded, followTruck, selectedTruck]);
+  }, [activeTrucks, gameMinute, mapLoaded]);
 
   // ── СОЗДАНИЕ/УДАЛЕНИЕ МАРКЕРОВ ТРАКОВ ────────────────────────────────────
   useEffect(() => {
@@ -495,16 +600,43 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
   useEffect(() => {
     if (!followTruck || !googleMapRef.current || !mapLoaded) return;
 
-    // При включении слежения — сразу центрируем на траке
+    // При включении слежения — навигационный вид
     const targetId = followTruckIdRef.current || selectedTruck?.id;
     const truck = activeTrucks.find((t: any) => t.id === targetId) || activeTrucks[0];
     
     if (truck && googleMapRef.current) {
       const position = { lat: truck.position[1], lng: truck.position[0] };
-      googleMapRef.current.panTo(position);
-      googleMapRef.current.setZoom(8);
+      lastFollowPositionRef.current = null;
+
+      let heading = 0;
+      if (truck.destinationCity && CITIES[truck.destinationCity]) {
+        const dest = CITIES[truck.destinationCity];
+        const dLng = (dest[0] - position.lng) * Math.PI / 180;
+        const lat1 = position.lat * Math.PI / 180;
+        const lat2 = dest[1] * Math.PI / 180;
+        const y = Math.sin(dLng) * Math.cos(lat2);
+        const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+        heading = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+      }
+
+      // Переключаем на roadmap для поддержки tilt
+      googleMapRef.current.setMapTypeId('roadmap');
+
+      const offsetDeg = 0.012;
+      const headingRad = heading * Math.PI / 180;
+      const offsetCenter = {
+        lat: position.lat + offsetDeg * Math.cos(headingRad),
+        lng: position.lng + offsetDeg * Math.sin(headingRad) / Math.cos(position.lat * Math.PI / 180),
+      };
+      // Zoom устанавливаем один раз при включении — RAF больше не трогает zoom
+      googleMapRef.current.moveCamera({
+        center: offsetCenter,
+        heading,
+        tilt: 45,
+        zoom: 14,
+      });
     }
-  }, [followTruck]); // Срабатывает только при включении/выключении слежения
+  }, [followTruck]);
 
   // ── ЗАКРЫТИЕ МЕНЮ ПРИ КЛИКЕ ВНЕ ──────────────────────────────────────────
   useEffect(() => {
@@ -518,6 +650,24 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
     
     return () => document.removeEventListener('click', handleClickOutside);
   }, [mapTypeMenuOpen, followMenuOpen]);
+
+  // Единый стиль для всех 3 квадратных кнопок
+  const btnStyle = (active = false): React.CSSProperties => ({
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    background: active ? 'rgba(6,182,212,0.95)' : 'rgba(15,23,42,0.92)',
+    backdropFilter: 'blur(12px)',
+    border: active ? '1px solid rgba(6,182,212,0.8)' : '1px solid rgba(255,255,255,0.12)',
+    color: '#fff',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative' as const,
+    flexShrink: 0,
+    transition: 'all 0.15s',
+  });
 
   // ── RENDER ───────────────────────────────────────────────────────────────
   return (
@@ -602,105 +752,8 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       {/* Контейнер карты */}
       <div ref={mapRef} style={{ width: '100%', height: '100%' }} className={streetViewActive ? 'sv-active' : ''} />
 
-      {/* Кастомный переключатель типа карты (внизу слева, открывается вверх) */}
-      {!streetViewActive && (
-      <div 
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          position: 'absolute',
-          bottom: 16,
-          left: 16,
-          zIndex: 1000,
-        }}
-      >
-        {/* Меню (открывается вверх) */}
-        {mapTypeMenuOpen && (
-          <div style={{
-            position: 'absolute',
-            bottom: '100%',
-            left: 0,
-            marginBottom: 8,
-            background: 'rgba(15, 23, 42, 0.95)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: 8,
-            overflow: 'hidden',
-            minWidth: 140,
-          }}>
-            {[
-              { id: 'hybrid', label: '🌐 Гибрид', name: 'Гибрид' },
-              { id: 'roadmap', label: '🗺️ Карта', name: 'Карта' },
-              { id: 'satellite', label: '🛰️ Спутник', name: 'Спутник' },
-              { id: 'terrain', label: '⛰️ Рельеф', name: 'Рельеф' },
-            ].map((type) => (
-              <button
-                key={type.id}
-                onClick={() => {
-                  if (googleMapRef.current) {
-                    googleMapRef.current.setMapTypeId(type.id);
-                    setCurrentMapType(type.id as any);
-                    setMapTypeMenuOpen(false);
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  background: currentMapType === type.id ? 'rgba(6, 182, 212, 0.2)' : 'transparent',
-                  border: 'none',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                  color: currentMapType === type.id ? '#38bdf8' : '#e2e8f0',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  if (currentMapType !== type.id) {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (currentMapType !== type.id) {
-                    e.currentTarget.style.background = 'transparent';
-                  }
-                }}
-              >
-                {type.label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Кнопка переключателя */}
-        <button
-          onClick={() => setMapTypeMenuOpen(!mapTypeMenuOpen)}
-          style={{
-            background: 'rgba(15, 23, 42, 0.95)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: 8,
-            padding: '10px 14px',
-            color: '#e2e8f0',
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
-          {currentMapType === 'hybrid' && '🌐 Гибрид'}
-          {currentMapType === 'roadmap' && '🗺️ Карта'}
-          {currentMapType === 'satellite' && '🛰️ Спутник'}
-          {currentMapType === 'terrain' && '⛰️ Рельеф'}
-          <span style={{ fontSize: 10 }}>▲</span>
-        </button>
-      </div>
-      )}
-
-      {/* Кнопки управления (справа снизу) */}
-      <div 
+      {/* 3 квадратные кнопки — справа, снизу вверх */}
+      <div
         onClick={(e) => e.stopPropagation()}
         style={{
           position: 'absolute',
@@ -708,212 +761,165 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
           right: 16,
           zIndex: 1000,
           display: 'flex',
-          flexDirection: 'row',
+          flexDirection: 'column-reverse',
           gap: 8,
-          alignItems: 'flex-end',
         }}
       >
-        {/* Кнопка следования за траком — скрыта в Street View */}
+        {/* 1. Переключатель карты (снизу) */}
         {!streetViewActive && (
-        <div style={{ position: 'relative' }}>
-          {/* Меню выбора трака (открывается вверх) */}
-          {followMenuOpen && activeTrucks.length > 0 && (
-            <div style={{
-              position: 'absolute',
-              bottom: '100%',
-              right: 0,
-              marginBottom: 8,
-              background: 'rgba(15, 23, 42, 0.95)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: 8,
-              overflow: 'hidden',
-              minWidth: 200,
-              maxHeight: 300,
-              overflowY: 'auto',
-            }}>
-              {activeTrucks.map((truck: any) => (
-                <button
-                  key={truck.id}
-                  onClick={() => {
+          <div style={{ position: 'relative' }}>
+            {mapTypeMenuOpen && (
+              <div style={{
+                position: 'absolute',
+                bottom: 0,
+                right: '100%',
+                marginRight: 8,
+                background: 'rgba(15,23,42,0.97)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 10,
+                overflow: 'hidden',
+                minWidth: 130,
+              }}>
+                {[
+                  { id: 'hybrid',   icon: '🌐', label: 'Гибрид'  },
+                  { id: 'roadmap',  icon: '🗺️', label: 'Карта'   },
+                  { id: 'satellite',icon: '🛰️', label: 'Спутник' },
+                  { id: 'terrain',  icon: '⛰️', label: 'Рельеф'  },
+                ].map(t => (
+                  <button key={t.id} onClick={() => {
+                    googleMapRef.current?.setMapTypeId(t.id);
+                    setCurrentMapType(t.id as any);
+                    setMapTypeMenuOpen(false);
+                  }} style={{
+                    width: '100%', padding: '9px 12px',
+                    background: currentMapType === t.id ? 'rgba(6,182,212,0.2)' : 'transparent',
+                    border: 'none', borderBottom: '1px solid rgba(255,255,255,0.05)',
+                    color: currentMapType === t.id ? '#38bdf8' : '#e2e8f0',
+                    fontSize: 12, fontWeight: 700, cursor: 'pointer', textAlign: 'left',
+                    display: 'flex', alignItems: 'center', gap: 8,
+                  }}>
+                    {t.icon} {t.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            <button onClick={() => { setMapTypeMenuOpen(!mapTypeMenuOpen); setFollowMenuOpen(false); }} style={btnStyle()}>
+              <span style={{ fontSize: 20 }}>
+                {currentMapType === 'hybrid' ? '🌐' : currentMapType === 'roadmap' ? '🗺️' : currentMapType === 'satellite' ? '🛰️' : '⛰️'}
+              </span>
+            </button>
+          </div>
+        )}
+
+        {/* 2. Слежение за траком */}
+        {!streetViewActive && (
+          <div style={{ position: 'relative' }}>
+            {followMenuOpen && activeTrucks.length > 0 && (
+              <div style={{
+                position: 'absolute',
+                bottom: 0,
+                right: '100%',
+                marginRight: 8,
+                background: 'rgba(15,23,42,0.97)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 10,
+                overflow: 'hidden',
+                minWidth: 200,
+                maxHeight: 280,
+                overflowY: 'auto',
+              }}>
+                {activeTrucks.map((truck: any) => (
+                  <button key={truck.id} onClick={() => {
                     followTruckIdRef.current = truck.id;
                     setFollowTruck(true);
                     setFollowMenuOpen(false);
                     setSelectedTruck(truck);
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    background: followTruckIdRef.current === truck.id && followTruck ? 'rgba(6, 182, 212, 0.2)' : 'transparent',
-                    border: 'none',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                  }} style={{
+                    width: '100%', padding: '9px 12px',
+                    background: followTruckIdRef.current === truck.id && followTruck ? 'rgba(6,182,212,0.2)' : 'transparent',
+                    border: 'none', borderBottom: '1px solid rgba(255,255,255,0.05)',
                     color: followTruckIdRef.current === truck.id && followTruck ? '#38bdf8' : '#e2e8f0',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!(followTruckIdRef.current === truck.id && followTruck)) {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!(followTruckIdRef.current === truck.id && followTruck)) {
-                      e.currentTarget.style.background = 'transparent';
-                    }
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      background: getTruckColor(truck, gameMinute),
-                    }} />
-                    <span>{truck.name}</span>
-                  </div>
-                  <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
-                    {truck.currentCity} → {truck.destinationCity || 'Свободен'}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Кнопка слежения */}
-          <button
-            onClick={() => {
-              if (followTruck) {
-                // Выключаем слежение
-                setFollowTruck(false);
-                followTruckIdRef.current = null;
-                setFollowMenuOpen(false);
-              } else {
-                // Открываем меню выбора трака
-                setFollowMenuOpen(!followMenuOpen);
-              }
-            }}
-            style={{
-              background: followTruck ? 'rgba(6, 182, 212, 0.95)' : 'rgba(15, 23, 42, 0.95)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: 8,
-              padding: '10px 16px',
-              color: '#fff',
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            {followTruck ? (
-              <>
-                🎯 Слежение ВКЛ
-                {followTruckIdRef.current && (
-                  <span style={{ fontSize: 11, opacity: 0.8 }}>
-                    ({activeTrucks.find((t: any) => t.id === followTruckIdRef.current)?.name})
-                  </span>
-                )}
-              </>
-            ) : (
-              <>
-                🎯 Следить за траком
-                <span style={{ fontSize: 10 }}>▲</span>
-              </>
+                    fontSize: 12, fontWeight: 600, cursor: 'pointer', textAlign: 'left',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: getTruckColor(truck, gameMinute), flexShrink: 0 }} />
+                      <span style={{ fontWeight: 700 }}>{truck.name}</span>
+                    </div>
+                    <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 2, paddingLeft: 16 }}>
+                      {truck.currentCity} → {truck.destinationCity || 'Свободен'}
+                    </div>
+                  </button>
+                ))}
+              </div>
             )}
-          </button>
-        </div>
+            <button
+              onClick={() => {
+                if (followTruck) {
+                  setFollowTruck(false);
+                  followTruckIdRef.current = null;
+                  setFollowMenuOpen(false);
+                  lastFollowPositionRef.current = null;
+                  if (googleMapRef.current) {
+                    googleMapRef.current.moveCamera({ tilt: 0, heading: 0, zoom: 6 });
+                    googleMapRef.current.setMapTypeId(currentMapType);
+                  }
+                } else {
+                  setFollowMenuOpen(!followMenuOpen);
+                  setMapTypeMenuOpen(false);
+                }
+              }}
+              style={btnStyle(followTruck)}
+            >
+              <span style={{ fontSize: 20 }}>🎯</span>
+              {followTruck && (
+                <span style={{ position: 'absolute', top: 4, right: 4, width: 8, height: 8, borderRadius: '50%', background: '#4ade80' }} />
+              )}
+            </button>
+          </div>
         )}
 
-        {/* Кнопка Street View (компактная, справа от слежения) */}
+        {/* 3. Street View (сверху) */}
         <button
           onClick={() => {
             if (!googleMapRef.current) return;
             const google = window.google;
-            if (!google || !google.maps) return;
-
+            if (!google?.maps) return;
             const panorama = googleMapRef.current.getStreetView();
-
             if (streetViewActive) {
-              // Закрываем Street View
               panorama.setVisible(false);
             } else {
-              // Определяем позицию
               let position: {lat: number, lng: number};
               if (selectedTruck) {
                 position = { lat: selectedTruck.position[1], lng: selectedTruck.position[0] };
               } else if (followTruckIdRef.current) {
-                const truck = activeTrucks.find((t: any) => t.id === followTruckIdRef.current);
-                if (truck) {
-                  position = { lat: truck.position[1], lng: truck.position[0] };
-                } else {
-                  position = googleMapRef.current.getCenter().toJSON();
-                }
+                const t = activeTrucks.find((t: any) => t.id === followTruckIdRef.current);
+                position = t ? { lat: t.position[1], lng: t.position[0] } : googleMapRef.current.getCenter().toJSON();
               } else {
                 position = googleMapRef.current.getCenter().toJSON();
               }
-
-              // Ищем ближайшую доступную панораму (радиус 50км)
               const sv = new google.maps.StreetViewService();
-              sv.getPanorama(
-                { location: position, radius: 50000, preference: google.maps.StreetViewPreference.NEAREST },
+              sv.getPanorama({ location: position, radius: 50000, preference: google.maps.StreetViewPreference.NEAREST },
                 (data: any, status: any) => {
                   if (status === google.maps.StreetViewStatus.OK) {
                     panorama.setPosition(data.location.latLng);
-                    panorama.setOptions({
-                      zoomControl: false,
-                      panControl: false,
-                      fullscreenControl: false,
-                      addressControl: false,
-                      linksControl: true,
-                      enableCloseButton: false,
-                      motionTracking: false,
-                      motionTrackingControl: false,
-                    });
+                    panorama.setOptions({ zoomControl: false, panControl: false, fullscreenControl: false, addressControl: false, linksControl: true, enableCloseButton: false, motionTracking: false, motionTrackingControl: false });
                     panorama.setVisible(true);
-                    // Скрываем оставшиеся DOM элементы
                     setTimeout(() => {
-                      document.querySelectorAll('.gm-iv-back-button, .gm-iv-address, .gm-iv-short-address, .gm-svpc').forEach((el: any) => {
-                        el.style.display = 'none';
-                      });
-                      if (mapRef.current) {
-                        mapRef.current.querySelectorAll('.gmnoprint, .gm-style-cc, .gm-style-pbc, .gm-style-pbt').forEach((el: any) => {
-                          el.style.display = 'none';
-                        });
-                      }
+                      document.querySelectorAll('.gm-iv-back-button,.gm-iv-address,.gm-iv-short-address,.gm-svpc').forEach((el: any) => el.style.display = 'none');
+                      mapRef.current?.querySelectorAll('.gmnoprint,.gm-style-cc,.gm-style-pbc,.gm-style-pbt').forEach((el: any) => el.style.display = 'none');
                     }, 400);
                   } else {
-                    console.warn('Street View недоступен в этом месте:', status);
-                    // Показываем уведомление
                     alert('Street View недоступен в этом районе');
                   }
                 }
               );
             }
           }}
-          style={{
-            background: streetViewActive ? 'rgba(6, 182, 212, 0.95)' : 'rgba(15, 23, 42, 0.95)',
-            backdropFilter: 'blur(12px)',
-            border: streetViewActive ? '1px solid rgba(6, 182, 212, 0.8)' : '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: 8,
-            padding: '10px',
-            color: '#fff',
-            fontSize: 18,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 44,
-            height: 44,
-            transition: 'all 0.2s',
-          }}
-          title={streetViewActive ? 'Закрыть Street View' : 'Street View'}
+          style={btnStyle(streetViewActive)}
         >
-          🚶
+          <span style={{ fontSize: 20 }}>🚶</span>
         </button>
       </div>
 
@@ -924,83 +930,39 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          background: 'rgba(15, 23, 42, 0.98)',
-          backdropFilter: 'blur(16px)',
-          border: '2px solid rgba(6, 182, 212, 0.3)',
-          borderRadius: 16,
-          padding: 32,
+          background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
+          border: '1px solid rgba(6,182,212,0.25)',
+          borderRadius: 20,
+          padding: '32px 40px',
           textAlign: 'center',
           zIndex: 2000,
-          minWidth: 320,
-          maxWidth: '90%',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+          minWidth: 260,
+          boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(6,182,212,0.1)',
         }}>
-          <div style={{ marginBottom: 20 }}>
-            <p style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginBottom: 8 }}>
-              🗺️ Загрузка карты
-            </p>
-            <p style={{ margin: 0, fontSize: 13, color: '#94a3b8' }}>
-              Подключение к Google Maps...
-            </p>
+          <div style={{ fontSize: 48, marginBottom: 12, filter: 'drop-shadow(0 0 16px rgba(6,182,212,0.5))' }}>
+            🚛
           </div>
-
-          {/* Прогресс-бар */}
+          <p style={{ margin: '0 0 4px 0', fontSize: 18, fontWeight: 900, color: '#fff' }}>
+            Dispatch Office
+          </p>
+          <p style={{ margin: '0 0 24px 0', fontSize: 12, color: '#38bdf8', fontWeight: 600 }}>
+            Загружаем карту...
+          </p>
           <div style={{
-            width: '100%',
-            height: 8,
-            background: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: 4,
-            overflow: 'hidden',
-            marginBottom: 16,
+            width: '100%', height: 5,
+            background: 'rgba(255,255,255,0.08)',
+            borderRadius: 3, overflow: 'hidden', marginBottom: 10,
           }}>
             <div style={{
-              width: `${loadingProgress}%`,
-              height: '100%',
-              background: 'linear-gradient(90deg, #06b6d4, #0ea5e9)',
-              borderRadius: 4,
-              transition: 'width 0.3s ease',
+              width: `${loadingProgress}%`, height: '100%',
+              background: 'linear-gradient(90deg, #06b6d4, #818cf8)',
+              borderRadius: 3, transition: 'width 0.3s ease',
+              boxShadow: '0 0 8px rgba(6,182,212,0.7)',
             }} />
           </div>
-
-          <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#06b6d4', marginBottom: 16 }}>
-            {loadingProgress}%
+          <p style={{ margin: 0, fontSize: 12, color: '#475569', fontWeight: 700 }}>
+            {loadingProgress < 100 ? `${loadingProgress}%` : '✓ Готово'}
           </p>
-
-          {loadingProgress >= 90 && (
-            <p style={{ margin: 0, fontSize: 11, color: '#64748b', fontStyle: 'italic' }}>
-              Почти готово...
-            </p>
-          )}
-
-          {/* Кнопка диагностики (только если долго грузится) */}
-          {loadingProgress >= 50 && (
-            <button
-              onClick={() => {
-                console.log('=== ДИАГНОСТИКА GOOGLE MAPS ===');
-                console.log('API Key:', GOOGLE_MAPS_API_KEY?.substring(0, 20) + '...');
-                console.log('window.google:', window.google ? 'Есть' : 'Нет');
-                console.log('window.google.maps:', window.google?.maps ? 'Есть' : 'Нет');
-                console.log('mapLoaded:', mapLoaded);
-                console.log('loadingProgress:', loadingProgress);
-                console.log('Скрипт в DOM:', document.querySelector('script[src*="maps.googleapis.com"]') ? 'Да' : 'Нет');
-                const mapDiv = document.querySelector('[style*="width: 100%"][style*="height: 100%"]');
-                console.log('Map container:', mapDiv ? `${mapDiv.offsetWidth}x${mapDiv.offsetHeight}px` : 'Не найден');
-              }}
-              style={{
-                marginTop: 16,
-                background: 'rgba(6, 182, 212, 0.15)',
-                border: '1px solid rgba(6, 182, 212, 0.3)',
-                borderRadius: 8,
-                padding: '8px 16px',
-                color: '#38bdf8',
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              🔍 Диагностика (F12 → Console)
-            </button>
-          )}
         </div>
       )}
     </View>

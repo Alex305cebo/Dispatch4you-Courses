@@ -1,4 +1,4 @@
-﻿import { useMemo } from 'react';
+﻿import { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { Colors } from '../constants/colors';
 import { useTheme } from '../hooks/useTheme';
@@ -16,15 +16,20 @@ export default function AssignModal({ load, onClose, onAssigned }: Props) {
   const T = useTheme();
   const styles = useMemo(() => makeStyles(T), [T]);
   const { trucks, assignLoadToTruck } = useGameStore();
-  // Включаем траки которые скоро освободятся
+  const [assigningId, setAssigningId] = useState<string | null>(null);
+
   const availableTrucks = trucks.filter(t => 
     t.status === 'idle' || t.status === 'at_delivery' || t.status === 'at_pickup'
   );
 
-  async function handleAssign(truckId: string) {
-    await assignLoadToTruck(load, truckId);
+  function handleAssign(truckId: string) {
+    if (assigningId) return; // уже назначаем
+    setAssigningId(truckId);
+    // Закрываем модал сразу — не ждём fetch
     onClose();
     onAssigned?.(truckId);
+    // Назначаем в фоне
+    assignLoadToTruck(load, truckId).catch(() => {});
   }
 
   return (
@@ -49,8 +54,9 @@ export default function AssignModal({ load, onClose, onAssigned }: Props) {
               return (
                 <TouchableOpacity
                   key={truck.id}
-                  style={styles.truckCard}
+                  style={[styles.truckCard, assigningId === truck.id && { borderColor: T.success, borderWidth: 2 }]}
                   onPress={() => handleAssign(truck.id)}
+                  activeOpacity={0.7}
                 >
                   <Text style={styles.truckEmoji}>🚛</Text>
                   <View style={{ flex: 1 }}>
@@ -60,8 +66,10 @@ export default function AssignModal({ load, onClose, onAssigned }: Props) {
                     </Text>
                     <Text style={styles.truckStatus}>{statusBadge}</Text>
                   </View>
-                  <View style={styles.assignBtn}>
-                    <Text style={styles.assignBtnText}>Назначить</Text>
+                  <View style={[styles.assignBtn, assigningId === truck.id && { backgroundColor: '#16a34a' }]} pointerEvents="none">
+                    <Text style={styles.assignBtnText}>
+                      {assigningId === truck.id ? '✓ Назначен' : 'Назначить'}
+                    </Text>
                   </View>
                 </TouchableOpacity>
               );
