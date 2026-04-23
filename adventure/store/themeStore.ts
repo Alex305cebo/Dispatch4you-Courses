@@ -21,6 +21,8 @@ function getSavedMode(): ThemeMode {
 function applyTheme(mode: ThemeMode) {
   try {
     document.documentElement.setAttribute('data-theme', mode);
+    // Применяем цвет фона сразу чтобы не было вспышки светлой темы
+    document.body.style.backgroundColor = mode === 'dark' ? '#0f172a' : '#ffffff';
   } catch {}
 }
 

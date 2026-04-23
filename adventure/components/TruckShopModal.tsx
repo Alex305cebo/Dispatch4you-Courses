@@ -277,16 +277,8 @@ export default function TruckShopModal() {
   const styles = useMemo(() => makeStyles(T, screenH), [T, screenH]);
   const { truckShopOpen, setTruckShopOpen, balance, trucks, buyTruckFromShop } = useGameStore();
 
-  console.log('🏪 TruckShopModal render, truckShopOpen:', truckShopOpen);
-  console.log('🏪 TruckShopModal balance:', balance, 'trucks:', trucks.length);
-
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [boughtId, setBoughtId] = useState<number | null>(null);
-
-  // Debug: log when state changes
-  useEffect(() => {
-    console.log('🏪 TruckShopModal useEffect - truckShopOpen changed to:', truckShopOpen);
-  }, [truckShopOpen]);
 
   function handleBuy(lot: typeof LOTS[0]) {
     if (balance < lot.price) return;

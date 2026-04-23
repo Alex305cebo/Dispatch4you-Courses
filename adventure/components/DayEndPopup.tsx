@@ -14,8 +14,37 @@ export default function DayEndPopup() {
   const [show, setShow] = useState(false);
   const [animStage, setAnimStage] = useState(0);
 
+  // Проверка: показывали ли уже сегодня
+  const shouldShowToday = () => {
+    const lastShown = localStorage.getItem('dayEndPopup_lastShown');
+    const today = new Date().toDateString();
+    
+    if (lastShown === today) {
+      return false; // Уже показывали сегодня
+    }
+    
+    // Сохраняем текущую дату
+    localStorage.setItem('dayEndPopup_lastShown', today);
+    return true;
+  };
+
   useEffect(() => {
     if (phase === 'day_end') {
+      // Проверяем, показывали ли уже сегодня
+      if (!shouldShowToday()) {
+        // Если уже показывали — сразу переходим к playing
+        const updatedTrucks = trucks.map(t => ({
+          ...t,
+          yesterdayMiles: t.totalMiles || 0,
+        }));
+        useGameStore.setState({ 
+          phase: 'playing',
+          trucks: updatedTrucks,
+        });
+        return;
+      }
+      
+      // Показываем попап
       setShow(true);
       setTimeout(() => setAnimStage(1), 50);
       setTimeout(() => setAnimStage(2), 200);
@@ -24,7 +53,7 @@ export default function DayEndPopup() {
       setAnimStage(0);
       setTimeout(() => setShow(false), 400);
     }
-  }, [phase]);
+  }, [phase, trucks]);
 
   if (!show) return null;
 

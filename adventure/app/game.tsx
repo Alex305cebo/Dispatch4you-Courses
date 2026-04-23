@@ -20,7 +20,7 @@ import { Colors } from '../constants/colors';
 import { useThemeStore } from '../store/themeStore';
 import { useGameStore, formatGameTime, formatTimeDual, formatTimeShort, ActiveLoad } from '../store/gameStore';
 import { SHIFT_DURATION, CITY_STATE } from '../constants/config';
-import MapView from '../components/MapView';
+import GoogleMapView from '../components/GoogleMapView';
 import TruckPanel from '../components/TruckPanel';
 import TruckStripComponent from '../components/TruckStripComponent';
 import TruckCardOverlay from '../components/TruckCardOverlay';
@@ -300,28 +300,16 @@ export default function GameScreen() {
   }
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const [paused, setPaused] = useState(false);
-  const pausedRef = useRef(false);
+  const [streetViewActive, setStreetViewActive] = useState(false);
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [pausedSeconds, setPausedSeconds] = useState(0);
-  const pauseTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const saveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => { pausedRef.current = paused; }, [paused]);
-
-  // Таймер паузы — считает секунды пока игра на паузе
+  // Скрываем TruckCardOverlay когда открыт Street View
   useEffect(() => {
-    if (paused) {
-      setPausedSeconds(0);
-      pauseTimerRef.current = setInterval(() => {
-        setPausedSeconds(s => s + 1);
-      }, 1000);
-    } else {
-      setPausedSeconds(0);
-      if (pauseTimerRef.current) { clearInterval(pauseTimerRef.current); pauseTimerRef.current = null; }
-    }
-    return () => { if (pauseTimerRef.current) clearInterval(pauseTimerRef.current); };
-  }, [paused]);
+    const handler = (e: any) => setStreetViewActive(e.detail?.active ?? false);
+    window.addEventListener('streetViewChanged', handler);
+    return () => window.removeEventListener('streetViewChanged', handler);
+  }, []);
 
   useEffect(() => {
     // При рефреше — восстанавливаем сохранение только если phase === 'menu' (store в дефолтном состоянии)
@@ -336,9 +324,10 @@ export default function GameScreen() {
   useEffect(() => { if (availableLoads.length < 5) refreshLoadBoard(); }, []);
   useEffect(() => {
     if (clockRef.current) clearInterval(clockRef.current);
-    clockRef.current = setInterval(() => { if (!pausedRef.current) tickClock(); }, 1000);
+    // Таймер всегда идёт — время не останавливается никогда
+    clockRef.current = setInterval(() => { tickClock(); }, 1000);
     return () => { if (clockRef.current) clearInterval(clockRef.current); };
-  }, []);
+  }, []); // Запускаем один раз при монтировании
 
   // Функция для получения текущего индикатора трака
   function getTruckIndicator(truck: any, hos: number, progressPct: number, mood: number): {icon: string, text: string} | null {
@@ -522,7 +511,7 @@ export default function GameScreen() {
           {/* Кнопки скорости */}
           <div style={{ display: 'flex', gap: 3 } as any}>
             {isWide ? (
-              // Десктоп — кнопки скорости + пауза
+              // Десктоп — кнопки скорости
               <>
                 {([1, 2, 5] as const).map(sp => (
                   <button key={sp}
@@ -545,25 +534,9 @@ export default function GameScreen() {
                     {sp === 1 ? '×1' : sp === 2 ? '×2' : '×5'}
                   </button>
                 ))}
-                <button
-                  onClick={() => setPaused(p => !p)}
-                  style={{
-                    width: 30, height: 26, borderRadius: 6, cursor: 'pointer',
-                    background: paused
-                      ? (themeMode === 'dark' ? 'rgba(52,199,89,0.2)' : 'rgba(52,199,89,0.12)')
-                      : (themeMode === 'dark' ? 'rgba(255,255,255,0.07)' : '#f3f4f6'),
-                    border: paused
-                      ? '1px solid rgba(52,199,89,0.5)'
-                      : (themeMode === 'dark' ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.08)'),
-                    fontSize: 11,
-                    color: paused ? '#34c759' : (themeMode === 'dark' ? '#94a3b8' : '#6b7280'),
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  } as any}>
-                  {paused ? '▶' : '⏸'}
-                </button>
               </>
             ) : (
-              // Мобильный — кнопка скорости + пауза
+              // Мобильный — кнопка скорости
               <>
                 <button
                   onClick={() => setTimeSpeed(timeSpeed === 1 ? 2 : timeSpeed === 2 ? 5 : timeSpeed === 5 ? 10 : 1)}
@@ -575,22 +548,6 @@ export default function GameScreen() {
                     color: themeMode === 'dark' ? '#38bdf8' : '#007aff',
                   } as any}>
                   ×{timeSpeed}
-                </button>
-                <button
-                  onClick={() => setPaused(p => !p)}
-                  style={{
-                    width: isVerySmall ? 26 : 30, height: 26, borderRadius: 8, cursor: 'pointer',
-                    background: paused
-                      ? (themeMode === 'dark' ? 'rgba(52,199,89,0.2)' : 'rgba(52,199,89,0.12)')
-                      : (themeMode === 'dark' ? 'rgba(255,255,255,0.07)' : '#f3f4f6'),
-                    border: paused
-                      ? '1px solid rgba(52,199,89,0.5)'
-                      : (themeMode === 'dark' ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.08)'),
-                    fontSize: isVerySmall ? 11 : 13,
-                    color: paused ? '#34c759' : (themeMode === 'dark' ? '#94a3b8' : '#6b7280'),
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  } as any}>
-                  {paused ? '▶' : '⏸'}
                 </button>
               </>
             )}
@@ -1368,7 +1325,7 @@ export default function GameScreen() {
           <View style={s.leftCol}>
             <TopBar />
             <View style={s.mapArea}>
-              <ErrorBoundary name="Map"><MapView {...mapProps} /></ErrorBoundary>
+              <ErrorBoundary name="Map"><GoogleMapView {...mapProps} /></ErrorBoundary>
               {/* Карточки траков — поверх карты, сверху */}
               <View style={s.truckStripBar} pointerEvents="box-none">
                 <TruckCardOverlay
@@ -1399,7 +1356,7 @@ export default function GameScreen() {
           <View style={s.landscapeBody}>
             {/* Левая часть: карта */}
             <View style={s.landscapeMap}>
-              <ErrorBoundary name="Map"><MapView {...mapProps} /></ErrorBoundary>
+              <ErrorBoundary name="Map"><GoogleMapView {...mapProps} /></ErrorBoundary>
               {/* Карточки траков поверх карты */}
               <View style={s.truckStripBar} pointerEvents="box-none">
                 <TruckCardOverlay
@@ -1426,7 +1383,7 @@ export default function GameScreen() {
           <TopBar />
           <View style={s.mobileContent}>
             {/* Карта — всегда на весь экран */}
-            <ErrorBoundary name="Map"><MapView {...mapProps} /></ErrorBoundary>
+            <ErrorBoundary name="Map"><GoogleMapView {...mapProps} /></ErrorBoundary>
             {/* Карточки траков — поверх всего, сверху */}
             <View style={s.truckStripBar} pointerEvents="box-none">
               <TruckCardOverlay
@@ -1493,9 +1450,16 @@ export default function GameScreen() {
       {showCompliance && <Modal onClose={() => setShowCompliance(false)}><ComplianceDashboard /></Modal>}
       {showEvents && <Modal onClose={() => setShowEvents(false)}><EventsPanel /></Modal>}
       {showMyLoads && <Modal onClose={() => setShowMyLoads(false)}><MyLoadsPanel /></Modal>}
-      <DeliveryResultPopup key={deliveryResults[0]?.loadId ?? 'empty'} />
-      <DayEndPopup />
-      <ShiftEndPopup />
+      
+      {/* Попапы показываются по приоритету: сначала доставки, потом день, потом смена */}
+      {deliveryResults.length > 0 ? (
+        <DeliveryResultPopup key={deliveryResults[0]?.loadId ?? 'empty'} />
+      ) : phase === 'day_end' ? (
+        <DayEndPopup />
+      ) : phase === 'shift_end' ? (
+        <ShiftEndPopup />
+      ) : null}
+      
       {showStats && <StatsPopup onClose={() => setShowStats(false)} />}
       {showSettings && <SettingsPopup onClose={() => setShowSettings(false)} />}
       {showHelp && <HelpPopup onClose={() => setShowHelp(false)} />}
