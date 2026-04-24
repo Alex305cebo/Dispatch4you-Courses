@@ -55,6 +55,18 @@ jobs:
           remote_user: ${{ secrets.SSH_USERNAME }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Force update favicon.ico
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/domains/dispatch4you.com/public_html/
+            cp -f Favicon/favicon.ico favicon.ico
+            echo "Favicon updated: $(stat -c%s favicon.ico) bytes"
+
   # ─── 2. React/Expo (game1.html) → /game/ ─────────────────────────
   deploy-react-game:
     name: Build & deploy React game (game1)
