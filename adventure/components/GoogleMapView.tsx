@@ -877,6 +877,37 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         className={streetViewActive ? 'sv-active' : ''}
       />
 
+      {/* Кнопки zoom — слева снизу */}
+      {!streetViewActive && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            position: 'absolute',
+            bottom: 16,
+            left: 16,
+            zIndex: 1000,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+          }}
+        >
+          <button
+            onTouchStart={(e) => { e.stopPropagation(); const z = (googleMapRef.current?.getZoom() ?? 10) + 1; googleMapRef.current?.setZoom(z); userZoomRef.current = z; }}
+            onClick={() => { const z = (googleMapRef.current?.getZoom() ?? 10) + 1; googleMapRef.current?.setZoom(z); userZoomRef.current = z; }}
+            style={btnStyle()}
+          >
+            <span style={{ fontSize: 22, lineHeight: 1 }}>+</span>
+          </button>
+          <button
+            onTouchStart={(e) => { e.stopPropagation(); const z = (googleMapRef.current?.getZoom() ?? 10) - 1; googleMapRef.current?.setZoom(z); userZoomRef.current = z; }}
+            onClick={() => { const z = (googleMapRef.current?.getZoom() ?? 10) - 1; googleMapRef.current?.setZoom(z); userZoomRef.current = z; }}
+            style={btnStyle()}
+          >
+            <span style={{ fontSize: 22, lineHeight: 1 }}>−</span>
+          </button>
+        </div>
+      )}
+
       {/* 3 квадратные кнопки — справа, снизу вверх */}
       <div
         onClick={(e) => e.stopPropagation()}
