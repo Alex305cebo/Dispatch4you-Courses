@@ -114,6 +114,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
   const [followMenuOpen, setFollowMenuOpen] = useState(false);
   const [currentMapType, setCurrentMapType] = useState<'roadmap' | 'satellite' | 'hybrid' | 'terrain'>('hybrid');
   const [streetViewActive, setStreetViewActive] = useState(false);
+  const [followDragPulse, setFollowDragPulse] = useState(false);
 
   const { trucks, availableLoads, phase, gameMinute } = useGameStore();
   const { mode: themeMode, colors: T } = useThemeStore();
@@ -262,7 +263,13 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         window.dispatchEvent(new CustomEvent('streetViewChanged', { detail: { active: isVisible } }));
       });
 
-      // ── ГРАНИЦА США ─────────────────────────────────────────────────────
+      // При попытке сдвинуть карту во время слежения — пульсируем кнопку
+      map.addListener('dragstart', () => {
+        if (followTruckIdRef.current) {
+          setFollowDragPulse(true);
+          setTimeout(() => setFollowDragPulse(false), 2000);
+        }
+      });
       // Загружаем GeoJSON контур США и рисуем яркую границу поверх карты
       fetch('https://raw.githubusercontent.com/datasets/geo-boundaries-world-110m/master/countries.geojson')
         .then(r => r.json())
@@ -310,22 +317,62 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
   }, [mapLoaded]);
 
   // ── АНИМАЦИОННЫЙ ДВИЖОК: плавное движение маркеров ─────────────────────
-  // Хранит предыдущие и целевые позиции для интерполяции
   const animStateRef = useRef<Map<string, {
     fromLat: number; fromLng: number;
     toLat: number;   toLng: number;
     fromHeading: number; toHeading: number;
     startTime: number; duration: number;
+    // Маршрут по дорогам для интерполяции вдоль пути
+    routePoints: Array<{lat: number, lng: number}> | null;
+    routeFromIdx: number; // индекс начальной точки в маршруте
+    routeToIdx: number;   // индекс конечной точки в маршруте
   }>>(new Map());
   const rafRef = useRef<number | null>(null);
   const lastCameraUpdateRef = useRef<number>(0);
-  const smoothHeadingRef = useRef<number>(0); // сглаженный heading для камеры
+  const smoothHeadingRef = useRef<number>(0);
 
-  // Линейная интерполяция
   function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
-
-  // Easing ease-in-out — плавный старт и финиш
   function easeInOut(t: number) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+
+  // Находим ближайшую точку маршрута к позиции
+  function findNearestRouteIdx(points: Array<{lat: number, lng: number}>, lat: number, lng: number): number {
+    let best = 0, bestDist = Infinity;
+    for (let i = 0; i < points.length; i++) {
+      const d = Math.hypot(points[i].lat - lat, points[i].lng - lng);
+      if (d < bestDist) { bestDist = d; best = i; }
+    }
+    return best;
+  }
+
+  // Интерполяция вдоль маршрута: t=0 → fromIdx, t=1 → toIdx
+  function interpolateRoute(
+    points: Array<{lat: number, lng: number}>,
+    fromIdx: number, toIdx: number, t: number
+  ): {lat: number, lng: number, heading: number} {
+    if (points.length === 0) return { lat: 0, lng: 0, heading: 0 };
+    const start = Math.min(fromIdx, toIdx);
+    const end = Math.max(fromIdx, toIdx);
+    if (start === end) return { ...points[start], heading: 0 };
+
+    const totalPts = end - start;
+    const floatIdx = start + t * totalPts;
+    const i = Math.min(Math.floor(floatIdx), end - 1);
+    const frac = floatIdx - i;
+    const p0 = points[i];
+    const p1 = points[Math.min(i + 1, points.length - 1)];
+    const lat = lerp(p0.lat, p1.lat, frac);
+    const lng = lerp(p0.lng, p1.lng, frac);
+
+    // Heading из направления сегмента
+    const dLng = (p1.lng - p0.lng) * Math.PI / 180;
+    const lat1r = p0.lat * Math.PI / 180;
+    const lat2r = p1.lat * Math.PI / 180;
+    const y = Math.sin(dLng) * Math.cos(lat2r);
+    const x = Math.cos(lat1r) * Math.sin(lat2r) - Math.sin(lat1r) * Math.cos(lat2r) * Math.cos(dLng);
+    const heading = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+
+    return { lat, lng, heading };
+  }
 
   // Запускаем анимационный цикл
   useEffect(() => {
@@ -348,18 +395,25 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         const t = Math.min(elapsed / state.duration, 1);
         const e = easeInOut(t);
 
-        // Плавная интерполяция позиции маркера
-        const lat = lerp(state.fromLat, state.toLat, e);
-        const lng = lerp(state.fromLng, state.toLng, e);
+        // Интерполяция: по маршруту если есть, иначе прямая
+        let lat: number, lng: number, routeHeading: number;
+        if (state.routePoints && state.routePoints.length > 1) {
+          const r = interpolateRoute(state.routePoints, state.routeFromIdx, state.routeToIdx, e);
+          lat = r.lat; lng = r.lng; routeHeading = r.heading;
+        } else {
+          lat = lerp(state.fromLat, state.toLat, e);
+          lng = lerp(state.fromLng, state.toLng, e);
+          routeHeading = state.toHeading;
+        }
         marker.setPosition({ lat, lng });
 
         // Камера — только для отслеживаемого трака, каждый кадр
         if (followTruck && truckId === followTruckIdRef.current) {
-          // Целевой heading из интерполяции
+          // Heading из маршрута или из интерполяции
           let dH = state.toHeading - state.fromHeading;
           if (dH > 180) dH -= 360;
           if (dH < -180) dH += 360;
-          const targetHeading = state.fromHeading + dH * t;
+          const targetHeading = state.routePoints ? routeHeading : (state.fromHeading + dH * t);
 
           // Low-pass filter: alpha=0.05 → очень плавный поворот камеры
           let dSmooth = targetHeading - smoothHeadingRef.current;
@@ -421,26 +475,44 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
 
       const prev = animStateRef.current.get(truck.id);
 
-      // Берём fromLat/fromLng из текущей анимированной позиции (не из маркера!)
-      // Это устраняет рывок при смене тика
+      // Берём fromLat/fromLng из текущей анимированной позиции
       let fromLat = toLat;
       let fromLng = toLng;
       if (prev) {
         const elapsed = performance.now() - prev.startTime;
         const t = Math.min(elapsed / prev.duration, 1);
         const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-        fromLat = prev.fromLat + (prev.toLat - prev.fromLat) * e;
-        fromLng = prev.fromLng + (prev.toLng - prev.fromLng) * e;
+        if (prev.routePoints && prev.routePoints.length > 1) {
+          const r = interpolateRoute(prev.routePoints, prev.routeFromIdx, prev.routeToIdx, e);
+          fromLat = r.lat; fromLng = r.lng;
+        } else {
+          fromLat = prev.fromLat + (prev.toLat - prev.fromLat) * e;
+          fromLng = prev.fromLng + (prev.toLng - prev.fromLng) * e;
+        }
       }
       const fromHeading = prev ? prev.toHeading : toHeading;
 
-      // Duration 400ms — больше перекрытие между тиками = плавнее
+      // Маршрут по дорогам из routePath трака
+      let routePoints: Array<{lat: number, lng: number}> | null = null;
+      let routeFromIdx = 0;
+      let routeToIdx = 0;
+      if (truck.routePath && truck.routePath.length > 1) {
+        routePoints = truck.routePath.map(([lng, lat]: [number, number]) => ({ lat, lng }));
+        routeFromIdx = findNearestRouteIdx(routePoints, fromLat, fromLng);
+        routeToIdx = findNearestRouteIdx(routePoints, toLat, toLng);
+        // Убеждаемся что движемся вперёд
+        if (routeToIdx <= routeFromIdx) routeToIdx = Math.min(routeFromIdx + 1, routePoints.length - 1);
+      }
+
       const speed = useGameStore.getState().timeSpeed || 1;
       animStateRef.current.set(truck.id, {
         fromLat, fromLng, toLat, toLng,
         fromHeading, toHeading,
         startTime: performance.now(),
         duration: 400 / speed,
+        routePoints,
+        routeFromIdx,
+        routeToIdx,
       });
     });
   }, [activeTrucks, gameMinute, mapLoaded]);
@@ -548,19 +620,47 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         return;
       }
 
-      // Fallback — прямая линия между текущей позицией и пунктом назначения
+      // Нет OSRM маршрута — запрашиваем через Google Directions API
       const origin = { lat: truck.position[1], lng: truck.position[0] };
       const dest = CITIES[truck.destinationCity];
       if (!dest) return;
-      const polyline = new google.maps.Polyline({
-        path: [origin, { lat: dest[1], lng: dest[0] }],
-        geodesic: true,
-        strokeColor: color,
-        strokeOpacity: 0.6,
-        strokeWeight: 3,
+      const destination = { lat: dest[1], lng: dest[0] };
+
+      const renderer = new google.maps.DirectionsRenderer({
         map,
+        suppressMarkers: true,
+        preserveViewport: true,
+        polylineOptions: {
+          strokeColor: color,
+          strokeOpacity: 0.85,
+          strokeWeight: 5,
+        },
       });
-      directionsRenderersRef.current.set(truck.id, { setMap: (m: any) => polyline.setMap(m) });
+      directionsRenderersRef.current.set(truck.id, renderer);
+
+      const service = new google.maps.DirectionsService();
+      service.route({
+        origin,
+        destination,
+        travelMode: google.maps.TravelMode.DRIVING,
+        avoidFerries: true,
+      }, (result: any, status: any) => {
+        if (status === 'OK') {
+          renderer.setDirections(result);
+        } else {
+          // Последний fallback — прямая линия
+          renderer.setMap(null);
+          const line = new google.maps.Polyline({
+            path: [origin, destination],
+            geodesic: true,
+            strokeColor: color,
+            strokeOpacity: 0.5,
+            strokeWeight: 3,
+            map,
+          });
+          directionsRenderersRef.current.set(truck.id, { setMap: (m: any) => line.setMap(m) });
+        }
+      });
     });
   }, [
     activeTrucks.map((t: any) => `${t.id}:${t.status}:${t.destinationCity}:${t.routePath?.length ?? 0}`).join('|'),
@@ -619,16 +719,13 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         heading = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
       }
 
-      // Переключаем на roadmap для поддержки tilt
-      googleMapRef.current.setMapTypeId('roadmap');
-
+      // Hybrid + 3D tilt (работает с Vector mapId)
       const offsetDeg = 0.012;
       const headingRad = heading * Math.PI / 180;
       const offsetCenter = {
         lat: position.lat + offsetDeg * Math.cos(headingRad),
         lng: position.lng + offsetDeg * Math.sin(headingRad) / Math.cos(position.lat * Math.PI / 180),
       };
-      // Zoom устанавливаем один раз при включении — RAF больше не трогает zoom
       googleMapRef.current.moveCamera({
         center: offsetCenter,
         heading,
@@ -676,6 +773,18 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       <style>{`
         /* Скрываем логотип Google */
         .gm-style a[href^="https://maps.google.com/maps"] {
+
+        /* Пульс кнопки слежения при попытке сдвинуть карту */
+        @keyframes followPulse {
+          0%   { box-shadow: 0 0 0 0 rgba(6,182,212,0.8), 0 0 0 0 rgba(6,182,212,0.4); }
+          50%  { box-shadow: 0 0 0 8px rgba(6,182,212,0.3), 0 0 0 16px rgba(6,182,212,0.1); }
+          100% { box-shadow: 0 0 0 0 rgba(6,182,212,0), 0 0 0 0 rgba(6,182,212,0); }
+        }
+        .follow-pulse {
+          animation: followPulse 0.6s ease-out 3;
+          background: rgba(6,182,212,1) !important;
+          border-color: #fff !important;
+        }
           display: none !important;
         }
         
@@ -862,8 +971,8 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
                   setFollowMenuOpen(false);
                   lastFollowPositionRef.current = null;
                   if (googleMapRef.current) {
+                    // Сбрасываем tilt/heading, оставляем hybrid
                     googleMapRef.current.moveCamera({ tilt: 0, heading: 0, zoom: 6 });
-                    googleMapRef.current.setMapTypeId(currentMapType);
                   }
                 } else {
                   setFollowMenuOpen(!followMenuOpen);
@@ -871,6 +980,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
                 }
               }}
               style={btnStyle(followTruck)}
+              className={followDragPulse ? 'follow-pulse' : ''}
             >
               <span style={{ fontSize: 20 }}>🎯</span>
               {followTruck && (
