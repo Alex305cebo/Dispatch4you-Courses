@@ -2,8 +2,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const sourceDir = path.join(__dirname, '../Truck Pic');
-const targetDir = path.join(__dirname, '../dist/assets/Truck Pic');
+const sourceDir = path.join(__dirname, '../TruckPic');
+const targetDir = path.join(__dirname, '../dist/assets/TruckPic');
 
 // Создаём папку если её нет
 if (!fs.existsSync(targetDir)) {

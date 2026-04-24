@@ -7,17 +7,19 @@ import { useGameStore } from '../store/gameStore';
 import { useTheme } from '../hooks/useTheme';
 import { ThemeColors } from '../constants/themes';
 
-// Функция для получения пути к картинке трака (WebP с fallback на PNG)
-const getTruckImage = (id: number) => {
-  // Определяем базовый путь в зависимости от окружения
-  // Если в URL есть /game/, значит production на Hostinger
-  const basePath = typeof window !== 'undefined' && window.location.pathname.includes('/game/') 
-    ? '/game/assets/Truck Pic' 
-    : '/assets/Truck Pic';
-  
-  // Кодируем пробел в URL
-  return { uri: `${basePath}/${id}.webp`.replace(/ /g, '%20') };
+// Функция для получения пути к картинке трака — вычисляется динамически при рендере
+const getTruckImageUri = (id: number): string => {
+  // Проверяем pathname в момент вызова (не при загрузке модуля)
+  const isGame = typeof window !== 'undefined' && (
+    window.location.pathname.startsWith('/game') ||
+    window.location.pathname.includes('/game/')
+  );
+  const basePath = isGame ? '/game/assets/TruckPic' : '/assets/TruckPic';
+  return `${basePath}/${id}.webp`;
 };
+
+// Заглушка для совместимости с LOTS_BASE (реальный URI вычисляется при рендере)
+const getTruckImage = (id: number) => ({ uri: String(id) });
 
 // ─── ДАННЫЕ ЛОТОВ ───────────────────────────────────────────────────────────
 const LOTS_BASE = [
@@ -370,7 +372,7 @@ export default function TruckShopModal() {
                   >
                     {/* Фото */}
                     <View style={styles.miniPhotoWrap}>
-                      <Image source={lot.image} style={styles.miniPhoto} resizeMode="cover" />
+                      <Image source={{ uri: getTruckImageUri(lot.id) }} style={styles.miniPhoto} resizeMode="cover" />
                       {/* Имя трака */}
                       <View style={styles.truckNameBadge}>
                         <Text style={styles.truckNameText}>{lot.name.match(/«(.+)»/)?.[1] || lot.name.split(' ').pop()}</Text>
@@ -404,7 +406,7 @@ export default function TruckShopModal() {
 
                       {/* Большое фото */}
                       <View style={styles.bigPhotoWrap}>
-                        <Image source={lot.image} style={styles.bigPhoto} resizeMode="contain" />
+                        <Image source={{ uri: getTruckImageUri(lot.id) }} style={styles.bigPhoto} resizeMode="contain" />
                         {/* Оверлей с инфо — справа внизу */}
                         <View style={styles.bigPhotoOverlay}>
                           <View style={[styles.bigCondBadge, { backgroundColor: lot.conditionColor }]}>
@@ -643,8 +645,7 @@ function makeStyles(T: ThemeColors, screenH: number) {
     },
     bigPhoto: { 
       width: '100%', 
-      height: 'auto',
-      minHeight: 200,
+      height: 200,
     },
     bigPhotoOverlay: {
       position: 'absolute', bottom: 10, right: 12,

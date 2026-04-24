@@ -3,8 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
 
-const sourceDir = path.join(__dirname, '../Truck Pic');
-const optimizedDir = path.join(__dirname, '../Truck Pic Optimized');
+const sourceDir = path.join(__dirname, '../TruckPic');
+const optimizedDir = path.join(__dirname, '../TruckPicOptimized');
 
 // Создаём папку для оптимизированных картинок
 if (!fs.existsSync(optimizedDir)) {
