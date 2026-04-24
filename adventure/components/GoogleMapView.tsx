@@ -235,7 +235,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         streetViewControl: false,
         rotateControl: false,
         fullscreenControl: false,
-        gestureHandling: 'greedy',
+        gestureHandling: 'greedy', // один палец = pan, два пальца = zoom
         tilt: 0,
         heading: 0,
       });
@@ -429,10 +429,13 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
             lng: lng + offsetDeg * Math.sin(headingRad) / Math.cos(lat * Math.PI / 180),
           };
 
+          // Сохраняем текущий zoom пользователя — не перезаписываем его
+          const currentZoom = googleMapRef.current.getZoom() ?? 14;
           googleMapRef.current.moveCamera({
             center: offsetCenter,
             heading,
             tilt: 45,
+            zoom: currentZoom,
           });
         }
       });
@@ -771,6 +774,11 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
     <View style={styles.container}>
       {/* CSS для скрытия элементов Google Maps */}
       <style>{`
+        /* Разрешаем мультитач на карте */
+        .gm-style, .gm-style * {
+          touch-action: pan-x pan-y pinch-zoom !important;
+        }
+
         /* Скрываем логотип Google */
         .gm-style a[href^="https://maps.google.com/maps"] {
 
@@ -859,7 +867,11 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       `}</style>
 
       {/* Контейнер карты */}
-      <div ref={mapRef} style={{ width: '100%', height: '100%' }} className={streetViewActive ? 'sv-active' : ''} />
+      <div
+        ref={mapRef}
+        style={{ width: '100%', height: '100%', touchAction: 'none' }}
+        className={streetViewActive ? 'sv-active' : ''}
+      />
 
       {/* 3 квадратные кнопки — справа, снизу вверх */}
       <div

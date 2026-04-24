@@ -14,7 +14,7 @@ const getTruckImage = (id: number) => {
 };
 
 // ─── ДАННЫЕ ЛОТОВ ───────────────────────────────────────────────────────────
-const LOTS = [
+const LOTS_BASE = [
   {
     id: 1,
     image: getTruckImage(1),
@@ -270,6 +270,9 @@ const LOTS = [
   },
 ];
 
+// +30% к ценам
+const LOTS = LOTS_BASE.map(lot => ({ ...lot, price: Math.round(lot.price * 1.3 / 100) * 100 }));
+
 // ─── КОМПОНЕНТ ──────────────────────────────────────────────────────────────
 export default function TruckShopModal() {
   const { height: screenH } = useWindowDimensions();
@@ -280,8 +283,12 @@ export default function TruckShopModal() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [boughtId, setBoughtId] = useState<number | null>(null);
 
+  // Проверяем какие траки уже куплены (по truckImageId)
+  const ownedLotIds = new Set(trucks.map((t: any) => t.truckImageId).filter(Boolean));
+
   function handleBuy(lot: typeof LOTS[0]) {
     if (balance < lot.price) return;
+    if (ownedLotIds.has(lot.id)) return; // уже куплен
     const ok = buyTruckFromShop(lot.id, lot.price, lot.name, lot.isOld, lot.speedPenalty, lot.breakdownChance);
     if (ok) {
       setBoughtId(lot.id);
@@ -341,7 +348,7 @@ export default function TruckShopModal() {
             {LOTS.map(lot => {
               const isOpen = expandedId === lot.id;
               const canAfford = balance >= lot.price;
-              const alreadyBought = boughtId === lot.id;
+              const alreadyBought = boughtId === lot.id || ownedLotIds.has(lot.id);
 
               return (
                 <View key={lot.id} style={[

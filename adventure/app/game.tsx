@@ -390,13 +390,11 @@ export default function GameScreen() {
     return () => clearTimeout(zoomTimer);
   }, []);
   useEffect(() => {
-    // Очищаем старый интервал если был
     if (saveIntervalRef.current) clearInterval(saveIntervalRef.current);
+    // Сохраняем каждые 60 сек всегда, независимо от фазы
     saveIntervalRef.current = setInterval(() => {
-      if (useGameStore.getState().phase === 'playing') {
-        useGameStore.getState().saveGame();
-      }
-    }, 30000);
+      useGameStore.getState().saveGame();
+    }, 60000);
     return () => { if (saveIntervalRef.current) clearInterval(saveIntervalRef.current); };
   }, []);
   useEffect(() => {
