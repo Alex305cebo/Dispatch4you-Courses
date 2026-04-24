@@ -687,8 +687,102 @@
         function renderQ(){const q=quizData[qIdx];document.getElementById('quizQuestion').textContent=q.q;document.getElementById('quizCounter').textContent=(qIdx+1)+' / '+quizData.length;document.getElementById('quizFeedback').className='quiz-feedback';document.getElementById('quizNext').classList.remove('visible');qAnswered=false;const el=document.getElementById('quizOptions');el.innerHTML='';q.options.forEach((o,i)=>{const btn=document.createElement('button');btn.className='quiz-option';btn.textContent=o;btn.onclick=()=>answerQ(i);el.appendChild(btn);})}
         function answerQ(i){if(qAnswered)return;qAnswered=true;const q=quizData[qIdx];document.querySelectorAll('.quiz-option').forEach((b,j)=>{b.disabled=true;if(j===q.correct)b.classList.add('correct');if(j===i&&i!==q.correct)b.classList.add('wrong');});const fb=document.getElementById('quizFeedback');if(i===q.correct){qScore++;fb.className='quiz-feedback visible success';fb.textContent='✅ Правильно! '+q.explanation;}else{fb.className='quiz-feedback visible error';fb.textContent='❌ Неправильно. '+q.explanation;}if(qIdx<quizData.length-1)document.getElementById('quizNext').classList.add('visible');else setTimeout(showQScore,1500);}
         function nextQ(){qIdx++;renderQ();}
-        function showQScore(){document.getElementById('quizBody').style.display='none';document.getElementById('quizScore').classList.add('visible');document.getElementById('scoreNum').textContent=qScore+'/'+quizData.length;const p=Math.round(qScore/quizData.length*100);document.getElementById('scoreTxt').textContent=p===100?'Идеально! Вы мастер коммуникации.':p>=75?'Отличный результат!':p>=50?'Неплохо, повторите материал.':'Перечитайте модуль.';}
-        function restartQuiz(){qIdx=0;qScore=0;document.getElementById('quizBody').style.display='';document.getElementById('quizScore').classList.remove('visible');renderQ();}
+        function showQScore(){
+            // Создаем popup для результатов
+            const popup = document.createElement('div');
+            popup.id = 'quizResultPopup';
+            popup.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, rgba(10, 14, 26, 0.98), rgba(7, 11, 20, 0.98));
+                border: 2px solid rgba(6, 182, 212, 0.3);
+                border-radius: 24px;
+                padding: 48px 40px;
+                max-width: 500px;
+                width: 90%;
+                z-index: 10000;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(6, 182, 212, 0.1) inset;
+                animation: popupFadeIn 0.4s ease;
+            `;
+            
+            const p = Math.round(qScore/quizData.length*100);
+            const resultText = p===100 ? 'Идеально! Вы мастер коммуникации.' : 
+                              p>=75 ? 'Отличный результат!' : 
+                              p>=50 ? 'Неплохо, повторите материал.' : 
+                              'Перечитайте модуль.';
+            
+            popup.innerHTML = `
+                <div style="text-align: center;">
+                    <div style="font-size: 72px; font-weight: 900; background: linear-gradient(135deg, #10b981, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 16px;">
+                        ${qScore}/${quizData.length}
+                    </div>
+                    <div style="font-size: 20px; font-weight: 600; color: #e2e8f0; margin-bottom: 32px;">
+                        ${resultText}
+                    </div>
+                    <button onclick="closeQuizPopup()" style="padding: 14px 32px; background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 12px; color: #06b6d4; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s;">
+                        Пройти заново
+                    </button>
+                </div>
+            `;
+            
+            // Добавляем overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'quizResultOverlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 9999;
+                animation: overlayFadeIn 0.3s ease;
+            `;
+            overlay.onclick = closeQuizPopup;
+            
+            // Добавляем стили анимации
+            if (!document.getElementById('quizPopupStyles')) {
+                const style = document.createElement('style');
+                style.id = 'quizPopupStyles';
+                style.textContent = `
+                    @keyframes popupFadeIn {
+                        from { opacity: 0; transform: translate(-50%, -45%); }
+                        to { opacity: 1; transform: translate(-50%, -50%); }
+                    }
+                    @keyframes overlayFadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+                    @keyframes popupFadeOut {
+                        from { opacity: 1; transform: translate(-50%, -50%); }
+                        to { opacity: 0; transform: translate(-50%, -55%); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            document.body.appendChild(overlay);
+            document.body.appendChild(popup);
+            
+            // Автозакрытие через 8 секунд
+            setTimeout(closeQuizPopup, 8000);
+        }
+        
+        function closeQuizPopup() {
+            const popup = document.getElementById('quizResultPopup');
+            const overlay = document.getElementById('quizResultOverlay');
+            if (popup) {
+                popup.style.animation = 'popupFadeOut 0.3s ease';
+                setTimeout(() => {
+                    popup.remove();
+                    if (overlay) overlay.remove();
+                    restartQuiz();
+                }, 300);
+            }
+        }
+        function restartQuiz(){qIdx=0;qScore=0;renderQ();}
         document.addEventListener('DOMContentLoaded',renderQ);
     </script>
     <script>
