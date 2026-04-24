@@ -65,7 +65,7 @@ export default function HomeScreen() {
           const save = JSON.parse(raw);
           if (save?.version >= 5 && save.phase === 'playing') {
             const loaded = loadGame();
-            if (loaded) { router.push('/game'); return; }
+            if (loaded) { router.replace('/game'); return; }
           }
         }
       } catch {}
@@ -106,7 +106,7 @@ export default function HomeScreen() {
 
   function handleContinue() {
     const loaded = loadGame();
-    if (loaded) router.push('/game');
+    if (loaded) router.replace('/game');
     else handleNewShift();
   }
 
@@ -117,7 +117,7 @@ export default function HomeScreen() {
       setHasSave(false);
       // Сбрасываем вкладку — карта будет главной
       try { localStorage.removeItem('dispatch-active-tab'); } catch {}
-      router.push('/game');
+      router.replace('/game');
     } finally { setLoading(false); }
   }
 
