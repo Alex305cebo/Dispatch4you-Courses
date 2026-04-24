@@ -208,10 +208,10 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
     try {
       // Границы США (континентальная часть)
       const usaBounds = {
-        north: 49.384358,  // Северная граница (Канада)
-        south: 24.396308,  // Южная граница (Мексика)
-        west: -125.0,      // Западная граница (Тихий океан)
-        east: -66.93457,   // Восточная граница (Атлантика)
+        north: 52.0,    // чуть выше Канады — можно скроллить вверх
+        south: 18.0,    // ниже Мексики — можно скроллить вниз
+        west: -130.0,
+        east: -60.0,
       };
 
       // Создаём карту с центром на США и спутниковым видом
@@ -261,6 +261,11 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         setStreetViewActive(isVisible);
         // Шлём событие наружу чтобы game.tsx мог скрыть TruckCardOverlay
         window.dispatchEvent(new CustomEvent('streetViewChanged', { detail: { active: isVisible } }));
+      });
+
+      // При изменении zoom пользователем — сохраняем в ref
+      map.addListener('zoom_changed', () => {
+        userZoomRef.current = map.getZoom() ?? 14;
       });
 
       // При попытке сдвинуть карту во время слежения — пульсируем кнопку
@@ -330,6 +335,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
   const rafRef = useRef<number | null>(null);
   const lastCameraUpdateRef = useRef<number>(0);
   const smoothHeadingRef = useRef<number>(0);
+  const userZoomRef = useRef<number>(14); // кешируем zoom пользователя
 
   function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
   function easeInOut(t: number) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
@@ -409,17 +415,15 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
 
         // Камера — только для отслеживаемого трака, каждый кадр
         if (followTruck && truckId === followTruckIdRef.current) {
-          // Heading из маршрута или из интерполяции
           let dH = state.toHeading - state.fromHeading;
           if (dH > 180) dH -= 360;
           if (dH < -180) dH += 360;
           const targetHeading = state.routePoints ? routeHeading : (state.fromHeading + dH * t);
 
-          // Low-pass filter: alpha=0.05 → очень плавный поворот камеры
           let dSmooth = targetHeading - smoothHeadingRef.current;
           if (dSmooth > 180) dSmooth -= 360;
           if (dSmooth < -180) dSmooth += 360;
-          smoothHeadingRef.current = smoothHeadingRef.current + dSmooth * 0.05;
+          smoothHeadingRef.current = smoothHeadingRef.current + dSmooth * 0.008;
 
           const heading = smoothHeadingRef.current;
           const headingRad = heading * Math.PI / 180;
@@ -429,8 +433,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
             lng: lng + offsetDeg * Math.sin(headingRad) / Math.cos(lat * Math.PI / 180),
           };
 
-          // Сохраняем текущий zoom пользователя — не перезаписываем его
-          const currentZoom = googleMapRef.current.getZoom() ?? 14;
+          const currentZoom = userZoomRef.current;
           googleMapRef.current.moveCamera({
             center: offsetCenter,
             heading,
@@ -710,6 +713,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
     if (truck && googleMapRef.current) {
       const position = { lat: truck.position[1], lng: truck.position[0] };
       lastFollowPositionRef.current = null;
+      userZoomRef.current = googleMapRef.current.getZoom() ?? 11;
 
       let heading = 0;
       if (truck.destinationCity && CITIES[truck.destinationCity]) {
@@ -733,7 +737,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         center: offsetCenter,
         heading,
         tilt: 45,
-        zoom: 14,
+        zoom: 11,
       });
     }
   }, [followTruck]);
