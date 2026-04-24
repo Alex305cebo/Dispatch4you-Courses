@@ -12,10 +12,11 @@ const getTruckImage = (id: number) => {
   // Определяем базовый путь в зависимости от окружения
   // Если в URL есть /game/, значит production на Hostinger
   const basePath = typeof window !== 'undefined' && window.location.pathname.includes('/game/') 
-    ? '/game/assets/Truck%20Pic' 
-    : '/assets/Truck%20Pic';
+    ? '/game/assets/Truck Pic' 
+    : '/assets/Truck Pic';
   
-  return { uri: `${basePath}/${id}.webp` };
+  // Кодируем пробел в URL
+  return { uri: `${basePath}/${id}.webp`.replace(/ /g, '%20') };
 };
 
 // ─── ДАННЫЕ ЛОТОВ ───────────────────────────────────────────────────────────

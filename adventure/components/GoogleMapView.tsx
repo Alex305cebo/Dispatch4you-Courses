@@ -478,11 +478,11 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
           // ЧЕМ МЕНЬШЕ ZOOM (дальше) → ТЕМ БОЛЬШЕ OFFSET
           let baseOffset;
           if (currentZoom >= 13) {
-            baseOffset = 0.030; // Близко (13-14)
+            baseOffset = 0.045; // Близко (13-14)
           } else if (currentZoom >= 11) {
             baseOffset = 0.045; // Средний (11-12)
           } else {
-            baseOffset = 0.060; // Далеко (10)
+            baseOffset = 0.050; // Далеко (10)
           }
           
           // Увеличиваем offset на мобильных (трак ниже)
@@ -751,15 +751,90 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
     if (infoWindowRef.current && googleMapRef.current) {
       const marker = markersRef.current.get(truck.id);
       if (marker) {
+        // Генерируем сообщение водителя на основе статуса
+        let driverMessage = '';
+        let bgColor = '#ffffff';
+        let borderColor = '#e5e7eb';
+        
+        switch(truck.status) {
+          case 'driving':
+            driverMessage = `On my way to ${truck.destinationCity || 'destination'}! 🚛`;
+            bgColor = '#f0fdf4';
+            borderColor = '#86efac';
+            break;
+          case 'loading':
+            driverMessage = 'Loading cargo at warehouse... 📦';
+            bgColor = '#fef3c7';
+            borderColor = '#fcd34d';
+            break;
+          case 'unloading':
+            driverMessage = 'Unloading now, almost done! 📦';
+            bgColor = '#fef3c7';
+            borderColor = '#fcd34d';
+            break;
+          case 'breakdown':
+            driverMessage = 'Boss, truck broke down! Need help 🔧';
+            bgColor = '#fee2e2';
+            borderColor = '#fca5a5';
+            break;
+          case 'sleeper':
+            driverMessage = 'Taking my 10-hour break... 💤';
+            bgColor = '#dbeafe';
+            borderColor = '#93c5fd';
+            break;
+          case 'available':
+            driverMessage = 'Ready for next load! 👍';
+            bgColor = '#f3f4f6';
+            borderColor = '#d1d5db';
+            break;
+          default:
+            driverMessage = 'Everything good, boss! 👍';
+        }
+        
+        // Рассчитываем расстояние и время если есть пункт назначения
+        let distanceInfo = '';
+        if (truck.destinationCity && CITIES[truck.destinationCity]) {
+          const destCoords = CITIES[truck.destinationCity];
+          const lat1 = truck.position[1];
+          const lon1 = truck.position[0];
+          const lat2 = destCoords[1];
+          const lon2 = destCoords[0];
+          
+          // Формула Haversine для расстояния
+          const R = 3959; // Радиус Земли в милях
+          const dLat = (lat2 - lat1) * Math.PI / 180;
+          const dLon = (lon2 - lon1) * Math.PI / 180;
+          const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon/2) * Math.sin(dLon/2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+          const distance = Math.round(R * c);
+          
+          // Рассчитываем время (средняя скорость 55 mph)
+          const hours = Math.floor(distance / 55);
+          const minutes = Math.round((distance / 55 - hours) * 60);
+          
+          distanceInfo = `
+            <div style="margin-top:6px;padding-top:6px;border-top:1px solid ${borderColor};">
+              <div style="font-size:11px;color:#6b7280;">
+                📍 ${truck.currentCity} → ${truck.destinationCity}
+              </div>
+              <div style="font-size:12px;font-weight:600;color:#111827;margin-top:2px;">
+                🛣️ ${distance} mi · ⏱️ ${hours}h ${minutes}m
+              </div>
+            </div>
+          `;
+        }
+        
         const content = `
-          <div style="padding:8px;min-width:200px;color:#000;">
-            <h3 style="margin:0 0 8px 0;font-size:16px;font-weight:700;">${truck.name}</h3>
-            <p style="margin:4px 0;font-size:13px;"><strong>Водитель:</strong> ${truck.driver}</p>
-            <p style="margin:4px 0;font-size:13px;"><strong>Статус:</strong> ${STATUS_EMOJI[truck.status]} ${STATUS_LABEL[truck.status]}</p>
-            <p style="margin:4px 0;font-size:13px;"><strong>Город:</strong> ${truck.currentCity}</p>
-            ${truck.destinationCity ? `<p style="margin:4px 0;font-size:13px;"><strong>Пункт назначения:</strong> ${truck.destinationCity}</p>` : ''}
-            <p style="margin:4px 0;font-size:13px;"><strong>HOS:</strong> ${truck.hoursLeft.toFixed(1)} / 11 ч</p>
-            <p style="margin:4px 0;font-size:13px;"><strong>Пробег:</strong> ${truck.totalMiles.toLocaleString()} миль</p>
+          <div style="padding:10px 12px;min-width:200px;max-width:280px;background:${bgColor};border:2px solid ${borderColor};border-radius:12px;font-family:system-ui,-apple-system,sans-serif;">
+            <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:6px;">
+              💬 ${truck.driver}
+            </div>
+            <div style="font-size:12px;color:#374151;line-height:1.4;font-style:italic;">
+              "${driverMessage}"
+            </div>
+            ${distanceInfo}
           </div>
         `;
         infoWindowRef.current.setContent(content);
