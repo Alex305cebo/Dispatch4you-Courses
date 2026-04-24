@@ -109,11 +109,12 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
   const [followTruck, setFollowTruck] = useState(false);
   const followTruckIdRef = useRef<string | null>(null);
   const lastFollowPositionRef = useRef<{lat: number, lng: number} | null>(null);
+  const returnToTruckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const userDraggedRef = useRef<boolean>(false);
   const [selectedTruck, setSelectedTruck] = useState<any>(null);
   const [mapTypeMenuOpen, setMapTypeMenuOpen] = useState(false);
   const [followMenuOpen, setFollowMenuOpen] = useState(false);
   const [currentMapType, setCurrentMapType] = useState<'roadmap' | 'satellite' | 'hybrid' | 'terrain'>('hybrid');
-  const [streetViewActive, setStreetViewActive] = useState(false);
   const [followDragPulse, setFollowDragPulse] = useState(false);
 
   const { trucks, availableLoads, phase, gameMinute } = useGameStore();
@@ -214,12 +215,23 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         east: -60.0,
       };
 
+      // Определяем начальный центр карты
+      let initialCenter = { lat: 39.8283, lng: -98.5795 }; // США по умолчанию
+      let initialZoom = 5;
+      
+      // Если есть траки — центрируем на первом
+      if (activeTrucks.length > 0) {
+        const firstTruck = activeTrucks[0];
+        initialCenter = { lat: firstTruck.position[1], lng: firstTruck.position[0] };
+        initialZoom = 8; // Ближе чтобы видеть трак
+      }
+
       // Создаём карту с центром на США и спутниковым видом
       // mapId нужен для WebGL/3D режима (tilt + moveCamera)
       // Используем публичный демо-ключ Google для Vector Maps
       const map = new google.maps.Map(mapRef.current, {
-        center: { lat: 39.8283, lng: -98.5795 },
-        zoom: 5,
+        center: initialCenter,
+        zoom: initialZoom,
         mapTypeId: 'hybrid',
         mapId: '67fdefb40270c0ad2edaab31', // Vector Map ID — поддерживает tilt/heading/moveCamera
         restriction: {
@@ -245,34 +257,34 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       // Создаём InfoWindow для показа информации о траке
       infoWindowRef.current = new google.maps.InfoWindow();
 
-      // Слушаем Street View — скрываем/показываем наши кнопки
-      const panorama = map.getStreetView();
-      panorama.setOptions({
-        zoomControl: false,
-        panControl: false,
-        fullscreenControl: false,
-        addressControl: false,
-        enableCloseButton: false,
-        motionTracking: false,
-        motionTrackingControl: false,
-      });
-      panorama.addListener('visible_changed', () => {
-        const isVisible = panorama.getVisible();
-        setStreetViewActive(isVisible);
-        // Шлём событие наружу чтобы game.tsx мог скрыть TruckCardOverlay
-        window.dispatchEvent(new CustomEvent('streetViewChanged', { detail: { active: isVisible } }));
-      });
-
       // При изменении zoom пользователем — сохраняем в ref
       map.addListener('zoom_changed', () => {
         userZoomRef.current = map.getZoom() ?? 14;
       });
 
-      // При попытке сдвинуть карту во время слежения — пульсируем кнопку
+      // При попытке сдвинуть карту во время слежения — пульсируем кнопку и запускаем таймер возврата
       map.addListener('dragstart', () => {
         if (followTruckIdRef.current) {
           setFollowDragPulse(true);
           setTimeout(() => setFollowDragPulse(false), 2000);
+          
+          // Отмечаем что пользователь сдвинул карту
+          userDraggedRef.current = true;
+          
+          // Очищаем предыдущий таймер если есть
+          if (returnToTruckTimerRef.current) {
+            clearTimeout(returnToTruckTimerRef.current);
+          }
+        }
+      });
+      
+      // После окончания перемещения — запускаем таймер возврата к траку
+      map.addListener('dragend', () => {
+        if (followTruckIdRef.current && userDraggedRef.current) {
+          // Через 3 секунды плавно возвращаемся к траку
+          returnToTruckTimerRef.current = setTimeout(() => {
+            userDraggedRef.current = false;
+          }, 3000);
         }
       });
       // Загружаем GeoJSON контур США и рисуем яркую границу поверх карты
@@ -320,6 +332,19 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       console.error('❌ Ошибка при инициализации карты:', error);
     }
   }, [mapLoaded]);
+
+  // ── ЦЕНТРИРОВАНИЕ НА ПЕРВОМ ТРАКЕ ПРИ ЗАГРУЗКЕ ──────────────────────────
+  useEffect(() => {
+    if (!googleMapRef.current || activeTrucks.length === 0) return;
+    
+    // Центрируем на первом траке только один раз при инициализации
+    const firstTruck = activeTrucks[0];
+    googleMapRef.current.setCenter({ lat: firstTruck.position[1], lng: firstTruck.position[0] });
+    googleMapRef.current.setZoom(8);
+    userZoomRef.current = 8;
+    
+    console.log('🎯 Карта центрирована на первом траке:', firstTruck.id);
+  }, [googleMapRef.current]); // Срабатывает только когда карта инициализирована
 
   // ── АНИМАЦИОННЫЙ ДВИЖОК: плавное движение маркеров ─────────────────────
   const animStateRef = useRef<Map<string, {
@@ -414,7 +439,8 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         marker.setPosition({ lat, lng });
 
         // Камера — только для отслеживаемого трака, каждый кадр
-        if (followTruck && truckId === followTruckIdRef.current) {
+        // Не двигаем камеру если пользователь сдвинул карту
+        if (followTruck && truckId === followTruckIdRef.current && !userDraggedRef.current) {
           let dH = state.toHeading - state.fromHeading;
           if (dH > 180) dH -= 360;
           if (dH < -180) dH += 360;
@@ -873,13 +899,11 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       {/* Контейнер карты */}
       <div
         ref={mapRef}
-        style={{ width: '100%', height: '100%', touchAction: 'none' }}
-        className={streetViewActive ? 'sv-active' : ''}
+        style={{ width: '100%', height: '100%' }}
       />
 
       {/* Кнопки zoom — слева снизу */}
-      {!streetViewActive && (
-        <div
+      <div
           onClick={(e) => e.stopPropagation()}
           style={{
             position: 'absolute',
@@ -906,7 +930,6 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
             <span style={{ fontSize: 22, lineHeight: 1 }}>−</span>
           </button>
         </div>
-      )}
 
       {/* 3 квадратные кнопки — справа, снизу вверх */}
       <div
@@ -922,8 +945,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         }}
       >
         {/* 1. Переключатель карты (снизу) */}
-        {!streetViewActive && (
-          <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative' }}>
             {mapTypeMenuOpen && (
               <div style={{
                 position: 'absolute',
@@ -966,11 +988,9 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
               </span>
             </button>
           </div>
-        )}
 
         {/* 2. Слежение за траком */}
-        {!streetViewActive && (
-          <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative' }}>
             {followMenuOpen && activeTrucks.length > 0 && (
               <div style={{
                 position: 'absolute',
@@ -1017,6 +1037,14 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
                   followTruckIdRef.current = null;
                   setFollowMenuOpen(false);
                   lastFollowPositionRef.current = null;
+                  userDraggedRef.current = false;
+                  
+                  // Очищаем таймер возврата
+                  if (returnToTruckTimerRef.current) {
+                    clearTimeout(returnToTruckTimerRef.current);
+                    returnToTruckTimerRef.current = null;
+                  }
+                  
                   if (googleMapRef.current) {
                     // Сбрасываем tilt/heading, оставляем hybrid
                     googleMapRef.current.moveCamera({ tilt: 0, heading: 0, zoom: 6 });
@@ -1035,49 +1063,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
               )}
             </button>
           </div>
-        )}
 
-        {/* 3. Street View (сверху) */}
-        <button
-          onClick={() => {
-            if (!googleMapRef.current) return;
-            const google = window.google;
-            if (!google?.maps) return;
-            const panorama = googleMapRef.current.getStreetView();
-            if (streetViewActive) {
-              panorama.setVisible(false);
-            } else {
-              let position: {lat: number, lng: number};
-              if (selectedTruck) {
-                position = { lat: selectedTruck.position[1], lng: selectedTruck.position[0] };
-              } else if (followTruckIdRef.current) {
-                const t = activeTrucks.find((t: any) => t.id === followTruckIdRef.current);
-                position = t ? { lat: t.position[1], lng: t.position[0] } : googleMapRef.current.getCenter().toJSON();
-              } else {
-                position = googleMapRef.current.getCenter().toJSON();
-              }
-              const sv = new google.maps.StreetViewService();
-              sv.getPanorama({ location: position, radius: 50000, preference: google.maps.StreetViewPreference.NEAREST },
-                (data: any, status: any) => {
-                  if (status === google.maps.StreetViewStatus.OK) {
-                    panorama.setPosition(data.location.latLng);
-                    panorama.setOptions({ zoomControl: false, panControl: false, fullscreenControl: false, addressControl: false, linksControl: true, enableCloseButton: false, motionTracking: false, motionTrackingControl: false });
-                    panorama.setVisible(true);
-                    setTimeout(() => {
-                      document.querySelectorAll('.gm-iv-back-button,.gm-iv-address,.gm-iv-short-address,.gm-svpc').forEach((el: any) => el.style.display = 'none');
-                      mapRef.current?.querySelectorAll('.gmnoprint,.gm-style-cc,.gm-style-pbc,.gm-style-pbt').forEach((el: any) => el.style.display = 'none');
-                    }, 400);
-                  } else {
-                    alert('Street View недоступен в этом районе');
-                  }
-                }
-              );
-            }
-          }}
-          style={btnStyle(streetViewActive)}
-        >
-          <span style={{ fontSize: 20 }}>🚶</span>
-        </button>
       </div>
 
       {/* Сообщение о загрузке с прогресс-баром */}

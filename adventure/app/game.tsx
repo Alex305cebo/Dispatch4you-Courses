@@ -300,16 +300,8 @@ export default function GameScreen() {
   }
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const [streetViewActive, setStreetViewActive] = useState(false);
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const saveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Скрываем TruckCardOverlay когда открыт Street View
-  useEffect(() => {
-    const handler = (e: any) => setStreetViewActive(e.detail?.active ?? false);
-    window.addEventListener('streetViewChanged', handler);
-    return () => window.removeEventListener('streetViewChanged', handler);
-  }, []);
 
   useEffect(() => {
     // При рефреше — восстанавливаем сохранение только если phase === 'menu' (store в дефолтном состоянии)
