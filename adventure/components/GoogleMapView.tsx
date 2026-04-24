@@ -257,9 +257,22 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       // Создаём InfoWindow для показа информации о траке
       infoWindowRef.current = new google.maps.InfoWindow();
 
-      // При изменении zoom пользователем — сохраняем в ref
+      // При изменении zoom пользователем — сохраняем в ref с ограничениями при слежении
       map.addListener('zoom_changed', () => {
-        userZoomRef.current = map.getZoom() ?? 14;
+        let newZoom = map.getZoom() ?? 13;
+        
+        // Ограничиваем zoom при активном слежении: 10-14
+        if (followTruckIdRef.current) {
+          if (newZoom < 10) {
+            newZoom = 10;
+            map.setZoom(10);
+          } else if (newZoom > 14) {
+            newZoom = 14;
+            map.setZoom(14);
+          }
+        }
+        
+        userZoomRef.current = newZoom;
       });
 
       // При попытке сдвинуть карту во время слежения — пульсируем кнопку и запускаем таймер возврата
@@ -453,13 +466,36 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
 
           const heading = smoothHeadingRef.current;
           const headingRad = heading * Math.PI / 180;
-          const offsetDeg = 0.012;
+          
+          // Offset чтобы трак был внизу экрана (как в Google Navigation)
+          // Адаптивно в зависимости от размера экрана и zoom
+          const currentZoom = userZoomRef.current;
+          const screenHeight = window.innerHeight;
+          const isMobile = screenHeight < 700;
+          
+          // Базовый offset в зависимости от zoom (диапазон 10-14)
+          // ЧЕМ БОЛЬШЕ ZOOM (ближе) → ТЕМ МЕНЬШЕ OFFSET (в градусах)
+          // ЧЕМ МЕНЬШЕ ZOOM (дальше) → ТЕМ БОЛЬШЕ OFFSET
+          let baseOffset;
+          if (currentZoom >= 13) {
+            baseOffset = 0.030; // Близко (13-14)
+          } else if (currentZoom >= 11) {
+            baseOffset = 0.045; // Средний (11-12)
+          } else {
+            baseOffset = 0.060; // Далеко (10)
+          }
+          
+          // Увеличиваем offset на мобильных (трак ниже)
+          // На десктопе уменьшаем (трак выше, больше обзор)
+          const screenMultiplier = isMobile ? 1.2 : 0.9;
+          const offsetDeg = baseOffset * screenMultiplier;
+          
+          // Смещаем центр карты вперёд по направлению движения
           const offsetCenter = {
             lat: lat + offsetDeg * Math.cos(headingRad),
             lng: lng + offsetDeg * Math.sin(headingRad) / Math.cos(lat * Math.PI / 180),
           };
 
-          const currentZoom = userZoomRef.current;
           googleMapRef.current.moveCamera({
             center: offsetCenter,
             heading,
@@ -487,6 +523,10 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       const marker = markersRef.current.get(truck.id);
       if (!marker) return;
 
+      // Если трак сломан или спит — не двигаем его
+      if (truck.status === 'breakdown' || truck.status === 'sleeper') {
+        return;
+      }
       const newColor = getTruckColor(truck, gameMinute);
       marker.setIcon(getTruckMarkerIcon(google, newColor));
 
@@ -1012,6 +1052,16 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
                     setFollowTruck(true);
                     setFollowMenuOpen(false);
                     setSelectedTruck(truck);
+                    
+                    // Устанавливаем оптимальный zoom для навигации (10-14)
+                    if (googleMapRef.current) {
+                      const currentZoom = googleMapRef.current.getZoom() ?? 13;
+                      // Если zoom вне диапазона 10-14, устанавливаем 12
+                      if (currentZoom < 10 || currentZoom > 14) {
+                        googleMapRef.current.setZoom(12);
+                        userZoomRef.current = 12;
+                      }
+                    }
                   }} style={{
                     width: '100%', padding: '9px 12px',
                     background: followTruckIdRef.current === truck.id && followTruck ? 'rgba(6,182,212,0.2)' : 'transparent',

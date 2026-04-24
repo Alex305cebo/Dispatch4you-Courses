@@ -9,8 +9,13 @@ import { ThemeColors } from '../constants/themes';
 
 // Функция для получения пути к картинке трака (WebP с fallback на PNG)
 const getTruckImage = (id: number) => {
-  // Для React Native Web используем прямые пути (пробел закодирован как %20)
-  return { uri: `/game/assets/Truck%20Pic/${id}.webp` };
+  // Определяем базовый путь в зависимости от окружения
+  // Если в URL есть /game/, значит production на Hostinger
+  const basePath = typeof window !== 'undefined' && window.location.pathname.includes('/game/') 
+    ? '/game/assets/Truck%20Pic' 
+    : '/assets/Truck%20Pic';
+  
+  return { uri: `${basePath}/${id}.webp` };
 };
 
 // ─── ДАННЫЕ ЛОТОВ ───────────────────────────────────────────────────────────

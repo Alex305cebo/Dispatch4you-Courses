@@ -10,18 +10,45 @@ if (!fs.existsSync(targetDir)) {
   fs.mkdirSync(targetDir, { recursive: true });
 }
 
-// Копируем все картинки траков (PNG и WebP)
+// Копируем только если файл изменился или отсутствует
 const files = fs.readdirSync(sourceDir);
 let copiedCount = 0;
+let skippedCount = 0;
 
 files.forEach(file => {
   if (file.endsWith('.png') || file.endsWith('.webp')) {
     const sourcePath = path.join(sourceDir, file);
     const targetPath = path.join(targetDir, file);
-    fs.copyFileSync(sourcePath, targetPath);
-    console.log(`✅ Copied: ${file}`);
-    copiedCount++;
+    
+    // Проверяем нужно ли копировать
+    let needsCopy = false;
+    
+    if (!fs.existsSync(targetPath)) {
+      needsCopy = true; // Файл не существует
+    } else {
+      // Сравниваем размер и время модификации
+      const sourceStats = fs.statSync(sourcePath);
+      const targetStats = fs.statSync(targetPath);
+      
+      if (sourceStats.size !== targetStats.size || 
+          sourceStats.mtimeMs > targetStats.mtimeMs) {
+        needsCopy = true; // Файл изменился
+      }
+    }
+    
+    if (needsCopy) {
+      fs.copyFileSync(sourcePath, targetPath);
+      copiedCount++;
+    } else {
+      skippedCount++;
+    }
   }
 });
 
-console.log(`\n✅ ${copiedCount} truck images copied to ${targetDir}`);
+if (copiedCount > 0) {
+  console.log(`✅ ${copiedCount} truck images copied to ${targetDir}`);
+}
+if (skippedCount > 0) {
+  console.log(`⏭️  ${skippedCount} images skipped (already up to date)`);
+}
+
