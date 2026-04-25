@@ -286,7 +286,7 @@ export default function TruckDetailModal({ truck: truckProp, onClose, onFindLoad
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
                   <TouchableOpacity
                     style={[s.roadsideBtn, roadsideOrdered && s.roadsideBtnDone]}
-                    onPress={() => setShowServiceChoice(true)}
+                    onPress={() => roadsideOrdered ? setShowMechanic(true) : setShowServiceChoice(true)}
                     activeOpacity={0.8}
                   >
                     <Text style={[s.roadsideBtnText, roadsideOrdered && { color: '#4ade80' }]}>
@@ -460,6 +460,7 @@ export default function TruckDetailModal({ truck: truckProp, onClose, onFindLoad
           onSelect={async (serviceType: ServiceVehicleType) => {
             await useGameStore.getState().callRoadsideAssist(truck.id, serviceType);
             setShowServiceChoice(false);
+            setShowMechanic(true);
           }}
         />
       )}
@@ -469,7 +470,7 @@ export default function TruckDetailModal({ truck: truckProp, onClose, onFindLoad
           repairCost={repairCost}
           repairLabel={repairLabel}
           repairMinutes={repairMinutes}
-          roadsideOrdered={roadsideOrdered}
+          roadsideOrdered={true}
           onClose={() => setShowMechanic(false)}
           onCallRoadside={callRoadside}
           onRepairComplete={handleRepairComplete}

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, TextInput, Animated, Easing } from 'react-native';
 import { useGameStore } from '../store/gameStore';
 import { formatTimeShort } from '../store/gameStore';
@@ -25,6 +25,8 @@ interface ChatMessage {
 type RepairStage = 'pending' | 'driving' | 'arrived' | 'repairing' | 'done';
 
 const MECHANIC_NAMES = ['Mike (Roadside)', 'Dave (AAA Truck)', 'Tony (Road Rescue)', 'Sam (Fleet Repair)'];
+
+const STAGE_ORDER: RepairStage[] = ['pending', 'driving', 'arrived', 'repairing', 'done'];
 
 // Скрипты по стадиям
 function getStageScript(stage: RepairStage, name: string, eta: number, cost: number, label: string) {
@@ -91,7 +93,11 @@ export default function MechanicChatModal({
   truck, repairCost, repairLabel, repairMinutes,
   roadsideOrdered, onClose, onCallRoadside, onRepairComplete,
 }: Props) {
-  const { gameMinute } = useGameStore();
+  const { gameMinute, dispatchServiceVehicle } = useGameStore();
+  // Подписка на сервисную машину для этого трака
+  const serviceVehicle = useGameStore(s =>
+    s.serviceVehicles.find(v => v.targetTruckId === truck.id) ?? null
+  );
   const mechanicName = useRef(MECHANIC_NAMES[Math.floor(Math.random() * MECHANIC_NAMES.length)]).current;
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -102,6 +108,7 @@ export default function MechanicChatModal({
   const [closing, setClosing] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const stageScriptIdx = useRef(0);
+  const prevSvStatus = useRef<string | null>(null);
 
   // Анимация линий прогресса (4 линии между 5 шагами)
   const lineAnims = useRef([
@@ -126,6 +133,57 @@ export default function MechanicChatModal({
 
   const eta = Math.round(repairMinutes / 60 * 10) / 10;
   const etaArrival = Math.max(0.3, Math.round(repairMinutes * 0.35 / 60 * 10) / 10);
+
+  // ── Синхронизация стадий с реальным статусом сервисной машины из стора ──
+  useEffect(() => {
+    if (!serviceVehicle) return;
+    const svStatus = serviceVehicle.status;
+    if (svStatus === prevSvStatus.current) return;
+    prevSvStatus.current = svStatus;
+
+    const stageMap: Partial<Record<string, RepairStage>> = {
+      en_route:  'driving',
+      arrived:   'arrived',
+      repairing: 'repairing',
+      completed: 'done',
+    };
+    const newStage = stageMap[svStatus];
+    if (!newStage) return;
+
+    const currentIdx = STAGE_ORDER.indexOf(stage);
+    const newIdx = STAGE_ORDER.indexOf(newStage);
+    if (newIdx <= currentIdx) return; // не откатываемся назад
+
+    // Анимируем линию
+    animateLine(newIdx - 1, 800);
+    setStage(newStage);
+    stageScriptIdx.current = 0;
+    setCalled(true);
+
+    const script = getStageScript(newStage, mechanicName, eta, repairCost, repairLabel);
+    setTyping(true);
+    setTimeout(() => {
+      setTyping(false);
+      addMechanicMsg(script[0]);
+      if (script[1]) {
+        setTimeout(() => {
+          setTyping(true);
+          setTimeout(() => { setTyping(false); addMechanicMsg(script[1]); }, 1500);
+        }, 2500);
+      }
+      if (newStage === 'done') {
+        setTimeout(() => {
+          addMechanicMsg(script[2] || 'Safe travels!');
+          setTimeout(() => {
+            onRepairComplete?.();
+            setClosing(true);
+            setTimeout(onClose, 2500);
+          }, 3000);
+        }, 5000);
+      }
+    }, 1200);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceVehicle?.status]);
 
   // Авто-скролл
   useEffect(() => {
@@ -321,9 +379,17 @@ export default function MechanicChatModal({
 
   const quickReplies = QUICK_REPLIES[stage];
 
+  // При закрытии — запускаем машину на карте
+  function handleClose() {
+    if (called) {
+      dispatchServiceVehicle(truck.id);
+    }
+    onClose();
+  }
+
   return (
-    <Modal transparent animationType="fade" visible onRequestClose={onClose}>
-      <TouchableOpacity style={s.overlay} activeOpacity={1} onPress={onClose}>
+    <Modal transparent animationType="fade" visible onRequestClose={handleClose}>
+      <TouchableOpacity style={s.overlay} activeOpacity={1} onPress={handleClose}>
         <TouchableOpacity style={s.modal} activeOpacity={1} onPress={e => e.stopPropagation()}>
 
           {/* ── ШАПКА ── */}
@@ -337,7 +403,7 @@ export default function MechanicChatModal({
                 <Text style={s.sub}>{truck.driver} · {truck.currentCity}</Text>
               </View>
             </View>
-            <TouchableOpacity onPress={onClose} style={s.closeBtn}>
+            <TouchableOpacity onPress={handleClose} style={s.closeBtn}>
               <Text style={s.closeTxt}>✕</Text>
             </TouchableOpacity>
           </View>
@@ -371,6 +437,20 @@ export default function MechanicChatModal({
               </View>
             </View>
 
+            
+            {/* Трекинг сервисной машины */}
+            {serviceVehicle && serviceVehicle.status === 'en_route' && (
+              <View style={{ marginTop: 6, gap: 4 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Text style={{ fontSize: 11, color: '#94a3b8' }}>{'📍 ' + serviceVehicle.fromCity}</Text>
+                  <Text style={{ fontSize: 11, color: '#06b6d4', fontWeight: '700' }}>{Math.round(serviceVehicle.progress * 100) + '% · ETA ~' + Math.round(serviceVehicle.eta * (1 - serviceVehicle.progress)) + ' мин'}</Text>
+                  <Text style={{ fontSize: 11, color: '#94a3b8' }}>{'🚛 ' + truck.name}</Text>
+                </View>
+                <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' }}>
+                  <View style={{ height: '100%' as any, width: (Math.round(serviceVehicle.progress * 100) + '%') as any, backgroundColor: '#06b6d4', borderRadius: 3 }} />
+                </View>
+              </View>
+            )}
             {/* Прогресс-шаги с линиями */}
             <View style={s.steps}>
               {STEPS.map((step, i) => {

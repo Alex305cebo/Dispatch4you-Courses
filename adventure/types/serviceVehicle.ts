@@ -54,6 +54,9 @@ export interface ServiceVehicle {
   
   /** Duration of repair in game minutes */
   repairDuration: number;
+
+  /** If true — vehicle waits on map, doesn't move until dispatcher closes the modal */
+  waitingForDispatch?: boolean;
 }
 
 export interface ServiceVehicleConfig {

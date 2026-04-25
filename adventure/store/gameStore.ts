@@ -316,6 +316,7 @@ interface GameState {
   // Service Vehicles
   callRoadsideAssist: (truckId: string, vehicleType: ServiceVehicleType) => void;
   updateServiceVehicles: () => void;
+  dispatchServiceVehicle: (truckId: string) => void;  // снять waitingForDispatch → машина едет
 
   // Переговоры
   negotiation: {
@@ -3541,6 +3542,7 @@ case 'detention': {
       cost,
       dispatchedAt: gameMinute,
       repairDuration: config.repairDuration,
+      waitingForDispatch: true,  // ждёт пока диспетчер закроет модал
     };
 
     // Add to service vehicles list
@@ -3657,6 +3659,11 @@ case 'detention': {
 
       // Handle en_route status - move vehicle
       if (vehicle.status === 'en_route' || vehicle.status === 'dispatched') {
+        // Не двигаемся пока диспетчер не закрыл модал
+        if (vehicle.waitingForDispatch) {
+          updatedVehicles.push(vehicle);
+          continue;
+        }
         // Замедляем движение — делим на 4 для визуальной реалистичности
         const progressPerMinute = (1 / vehicle.eta) * 0.25;
         const newProgress = Math.min(1, vehicle.progress + progressPerMinute);
@@ -3706,6 +3713,17 @@ case 'detention': {
   },
 
   // ── DRIVER MARKETPLACE ───────────────────────────────────────────────────────
+  dispatchServiceVehicle: (truckId: string) => {
+    // Снимаем флаг waitingForDispatch — машина начинает ехать на карте
+    set(s => ({
+      serviceVehicles: s.serviceVehicles.map(v =>
+        v.targetTruckId === truckId && v.waitingForDispatch
+          ? { ...v, waitingForDispatch: false, status: 'en_route' as const }
+          : v
+      ),
+    }));
+  },
+
   hireDriver: (candidateId: string, truckId: string) => {
     const { driverCandidates, trucks } = get();
     const candidate = driverCandidates.find(d => d.id === candidateId);
