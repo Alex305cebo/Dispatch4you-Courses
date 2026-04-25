@@ -261,7 +261,7 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
         display: 'flex',
         flexDirection: 'row',
         gap: 8,
-        padding: '6px 10px',
+        padding: '14px 10px 6px',
         overflowX: 'auto',
         overflowY: 'visible',
         background: 'transparent',

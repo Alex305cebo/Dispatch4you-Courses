@@ -11,6 +11,7 @@ import {
   getPositionOnRoute,
 } from '../utils/serviceVehicleHelpers';
 import { hybridSave, hybridLoad, startAutoSave, stopAutoSave } from '../utils/firebaseSaveSystem';
+import { sendDriverQuestion, sendBreakdownAlert, sendSystemNotification } from '../utils/chatHelpers';
 // ─── OSRM fetch с retry и увеличенным таймаутом ──────────
 async function fetchRoute(fromLng: number, fromLat: number, toLng: number, toLat: number, retries = 2): Promise<Array<[number,number]> | null> {
   for (let attempt = 0; attempt <= retries; attempt++) {

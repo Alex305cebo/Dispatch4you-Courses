@@ -129,6 +129,15 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
   } | null>(null);
   const cinematicRafRef = useRef<number | null>(null);
 
+  // ── SMOOTH RETURN: плавный возврат камеры к траку после drag ──
+  const smoothReturnRef = useRef<{
+    active: boolean;
+    startTime: number;
+    duration: number;
+    fromLat: number;
+    fromLng: number;
+  } | null>(null);
+
   const { trucks, availableLoads, phase, gameMinute, serviceVehicles } = useGameStore();
   const { mode: themeMode, colors: T } = useThemeStore();
   // Показываем траки всегда кроме главного меню
@@ -304,6 +313,10 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
           if (cinematicZoomRef.current?.active) {
             cinematicZoomRef.current = { ...cinematicZoomRef.current, active: false };
           }
+          // Прерываем smooth return если был активен
+          if (smoothReturnRef.current?.active) {
+            smoothReturnRef.current = { ...smoothReturnRef.current, active: false };
+          }
           setFollowDragPulse(true);
           setTimeout(() => setFollowDragPulse(false), 2000);
           
@@ -322,6 +335,17 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         if (followTruckIdRef.current && userDraggedRef.current) {
           // Через 3 секунды плавно возвращаемся к траку
           returnToTruckTimerRef.current = setTimeout(() => {
+            // Запоминаем текущую позицию камеры для плавного перехода
+            const center = map.getCenter();
+            if (center) {
+              smoothReturnRef.current = {
+                active: true,
+                startTime: performance.now(),
+                duration: 1500, // 1.5 секунды плавный возврат
+                fromLat: center.lat(),
+                fromLng: center.lng(),
+              };
+            }
             userDraggedRef.current = false;
           }, 3000);
         }
@@ -378,31 +402,13 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
     
     // Центрируем на первом траке только один раз при инициализации
     const firstTruck = activeTrucks[0];
-    const position = { lat: firstTruck.position[1], lng: firstTruck.position[0] };
     
-    // Автоматически включаем слежение за первым траком
+    // Включаем слежение — effect [followTruck] запустит cinematic zoom
     followTruckIdRef.current = firstTruck.id;
     userDraggedRef.current = false;
     setFollowTruck(true);
     
-    // Запускаем cinematic zoom-out: начинаем с zoom 17, отдаляемся до 7
-    googleMapRef.current.moveCamera({
-      center: position,
-      zoom: 17,
-      heading: 0,
-      tilt: 0,
-    });
-    userZoomRef.current = 17;
-    
-    cinematicZoomRef.current = {
-      active: true,
-      startTime: performance.now() + 800, // пауза 0.8с на близком zoom
-      startZoom: 17,
-      endZoom: 7,
-      duration: 6000, // 6 секунд zoom-out
-    };
-    
-    console.log('🎯 Карта: cinematic zoom-out на первом траке:', firstTruck.id);
+    console.log('🎯 Карта: автоследование за первым траком:', firstTruck.id);
   }, [googleMapRef.current]); // Срабатывает только когда карта инициализирована
 
   // ── АНИМАЦИОННЫЙ ДВИЖОК: плавное движение маркеров ─────────────────────
@@ -503,39 +509,38 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
           // Cinematic zoom-out анимация
           const cz = cinematicZoomRef.current;
           if (cz?.active) {
-            const elapsed = now - cz.startTime;
-            if (elapsed > 0) {
-              const t = Math.min(elapsed / cz.duration, 1);
-              // easeOutCubic — быстро начинает, медленно заканчивает
-              const e = 1 - Math.pow(1 - t, 3);
-              const zoom = cz.startZoom + (cz.endZoom - cz.startZoom) * e;
+            const czElapsed = now - cz.startTime;
+            if (czElapsed > 0) {
+              const czT = Math.min(czElapsed / cz.duration, 1);
+              const czE = 1 - Math.pow(1 - czT, 3);
+              const zoom = cz.startZoom + (cz.endZoom - cz.startZoom) * czE;
               userZoomRef.current = zoom;
-              if (t >= 1) {
+              if (czT >= 1) {
                 cinematicZoomRef.current = { ...cz, active: false };
               }
             }
           }
 
-          // Навигационный режим: трак внизу экрана, дорога снизу вверх
-          // Heading = направление движения трака
-          let dH = routeHeading - state.fromHeading;
-          if (dH > 180) dH -= 360;
-          if (dH < -180) dH += 360;
-          const smoothHeading = (state.fromHeading + dH * e + 360) % 360;
+          // Плавный возврат к траку после drag
+          let camLat = lat;
+          let camLng = lng;
+          const sr = smoothReturnRef.current;
+          if (sr?.active) {
+            const srElapsed = now - sr.startTime;
+            const srT = Math.min(srElapsed / sr.duration, 1);
+            const srE = srT < 0.5 ? 4 * srT * srT * srT : 1 - Math.pow(-2 * srT + 2, 3) / 2;
+            camLat = sr.fromLat + (lat - sr.fromLat) * srE;
+            camLng = sr.fromLng + (lng - sr.fromLng) * srE;
+            if (srT >= 1) {
+              smoothReturnRef.current = { ...sr, active: false };
+            }
+          }
 
-          // Смещаем центр карты ВПЕРЁД по направлению движения
-          // чтобы трак был в нижней трети экрана
-          const offsetDeg = 0.015; // ~1.5 км вперёд
-          const headingRad = smoothHeading * Math.PI / 180;
-          const offsetCenter = {
-            lat: lat + offsetDeg * Math.cos(headingRad),
-            lng: lng + offsetDeg * Math.sin(headingRad) / Math.cos(lat * Math.PI / 180),
-          };
-
+          // Простое центрирование — трак по центру, без поворота
           googleMapRef.current.moveCamera({
-            center: offsetCenter,
-            heading: smoothHeading,
-            tilt: 45,
+            center: { lat: camLat, lng: camLng },
+            heading: 0,
+            tilt: 0,
             zoom: userZoomRef.current,
           });
         }
@@ -1228,39 +1233,22 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       const position = { lat: truck.position[1], lng: truck.position[0] };
       lastFollowPositionRef.current = null;
 
-      // Навигационный вид: heading = направление трака, tilt = 45°
-      // Вычисляем heading из маршрута если есть
-      let heading = 0;
-      if (truck.routePath && truck.routePath.length > 1) {
-        const progress = truck.progress || 0;
-        const idx = Math.min(Math.floor(progress * (truck.routePath.length - 1)), truck.routePath.length - 2);
-        const p0 = truck.routePath[idx];
-        const p1 = truck.routePath[idx + 1];
-        if (p0 && p1) {
-          const dLng = (p1[0] - p0[0]) * Math.PI / 180;
-          const lat1r = p0[1] * Math.PI / 180;
-          const lat2r = p1[1] * Math.PI / 180;
-          const y = Math.sin(dLng) * Math.cos(lat2r);
-          const x = Math.cos(lat1r) * Math.sin(lat2r) - Math.sin(lat1r) * Math.cos(lat2r) * Math.cos(dLng);
-          heading = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
-        }
-      }
-
-      // Смещаем центр вперёд чтобы трак был внизу экрана
-      const offsetDeg = 0.015;
-      const headingRad = heading * Math.PI / 180;
-      const offsetCenter = {
-        lat: position.lat + offsetDeg * Math.cos(headingRad),
-        lng: position.lng + offsetDeg * Math.sin(headingRad) / Math.cos(position.lat * Math.PI / 180),
-      };
-
+      // Начинаем с близкого zoom, трак по центру, без поворота
       googleMapRef.current.moveCamera({
-        center: offsetCenter,
-        zoom: 12,
-        heading,
-        tilt: 45,
+        center: position,
+        zoom: 17,
+        heading: 0,
+        tilt: 0,
       });
-      userZoomRef.current = 12;
+      userZoomRef.current = 17;
+
+      cinematicZoomRef.current = {
+        active: true,
+        startTime: performance.now() + 600,
+        startZoom: 17,
+        endZoom: 7,
+        duration: 5000,
+      };
     }
   }, [followTruck]);
 
@@ -1289,39 +1277,38 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         userDraggedRef.current = false;
         setSelectedTruck(null);
         cinematicZoomRef.current = null;
+        smoothReturnRef.current = null;
         return;
       }
       const truck = activeTrucks.find((t: any) => t.id === truckId);
-      if (truck) {
-        setSelectedTruck(truck);
-        // Сразу центрируем на траке с близким zoom
-        if (googleMapRef.current) {
-          const position = { lat: truck.position[1], lng: truck.position[0] };
-          googleMapRef.current.moveCamera({
-            center: position,
-            zoom: 17,
-            heading: 0,
-            tilt: 0,
-          });
-          userZoomRef.current = 17;
-          
-          // Запускаем cinematic zoom-out
-          cinematicZoomRef.current = {
-            active: true,
-            startTime: performance.now() + 600,
-            startZoom: 17,
-            endZoom: 7,
-            duration: 5000,
-          };
-        }
-      }
+      if (truck) setSelectedTruck(truck);
+      
+      const wasFollowing = followTruck && followTruckIdRef.current;
       followTruckIdRef.current = truckId;
       userDraggedRef.current = false;
-      setFollowTruck(true);
+      smoothReturnRef.current = null;
+      
+      if (wasFollowing) {
+        // Уже в follow mode — переключаем трак, вручную запускаем cinematic
+        if (truck && googleMapRef.current) {
+          const position = { lat: truck.position[1], lng: truck.position[0] };
+          googleMapRef.current.moveCamera({
+            center: position, zoom: 17, heading: 0, tilt: 0,
+          });
+          userZoomRef.current = 17;
+          cinematicZoomRef.current = {
+            active: true, startTime: performance.now() + 600,
+            startZoom: 17, endZoom: 7, duration: 5000,
+          };
+        }
+      } else {
+        // Включаем follow — effect [followTruck] запустит cinematic
+        setFollowTruck(true);
+      }
     }
     window.addEventListener('followTruckFromCard', handleFollowFromCard);
     return () => window.removeEventListener('followTruckFromCard', handleFollowFromCard);
-  }, [activeTrucks]);
+  }, [activeTrucks, followTruck]);
 
   // Единый стиль для всех 3 квадратных кнопок
   const btnStyle = (active = false): React.CSSProperties => ({
@@ -1554,6 +1541,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
                     setFollowMenuOpen(false);
                     setSelectedTruck(truck);
                     userDraggedRef.current = false;
+                    smoothReturnRef.current = null;
                     
                     // Cinematic zoom-out при выборе трака из меню
                     if (googleMapRef.current) {
@@ -1573,7 +1561,8 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
                         duration: 5000,
                       };
                     }
-                    setFollowTruck(true);
+                    // Не вызываем setFollowTruck если уже true — избегаем двойного cinematic
+                    if (!followTruck) setFollowTruck(true);
                   }} style={{
                     width: '100%', padding: '9px 12px',
                     background: followTruckIdRef.current === truck.id && followTruck ? 'rgba(6,182,212,0.2)' : 'transparent',
@@ -1601,6 +1590,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
                   lastFollowPositionRef.current = null;
                   userDraggedRef.current = false;
                   cinematicZoomRef.current = null;
+                  smoothReturnRef.current = null;
                   
                   // Очищаем таймер возврата
                   if (returnToTruckTimerRef.current) {
@@ -1616,7 +1606,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
                   setFollowMenuOpen(!followMenuOpen);
                   setMapTypeMenuOpen(false);
                 }
-              }}}
+              }}
               style={btnStyle(followTruck)}
               className={followDragPulse ? 'follow-pulse' : ''}
             >
