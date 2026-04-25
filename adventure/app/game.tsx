@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
   useWindowDimensions, Platform,
 } from 'react-native';
+import { getCurrentPerformanceSettings } from '../utils/performanceSettings';
 
 class ErrorBoundary extends Component<{children: any; name: string}, {error: string | null}> {
   constructor(props: any) { super(props); this.state = { error: null }; }
@@ -357,8 +358,10 @@ export default function GameScreen() {
   useEffect(() => { if (availableLoads.length < 5) refreshLoadBoard(); }, []);
   useEffect(() => {
     if (clockRef.current) clearInterval(clockRef.current);
-    // 250ms тик = 4 тика/сек → плавное движение трака на карте
-    clockRef.current = setInterval(() => { tickClock(); }, 250);
+    // Динамический тик на основе производительности устройства
+    const perfSettings = getCurrentPerformanceSettings();
+    console.log(`⚙️ Game tick interval: ${perfSettings.tickInterval}ms (${1000/perfSettings.tickInterval} ticks/sec)`);
+    clockRef.current = setInterval(() => { tickClock(); }, perfSettings.tickInterval);
     return () => { if (clockRef.current) clearInterval(clockRef.current); };
   }, []);
 
