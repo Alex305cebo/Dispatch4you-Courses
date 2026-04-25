@@ -557,7 +557,8 @@ export default function GameScreen() {
                   } as any}>
                   ×{timeSpeed}
                 </button>
-              )}
+              </>
+            )}
             </div>
           </div>
         </div>
