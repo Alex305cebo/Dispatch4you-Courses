@@ -238,6 +238,12 @@ export default function GameScreen() {
   // Сохраняем активную вкладку при каждом переключении
   const switchTab = (tab: Tab) => {
     setActiveTab(tab);
+    
+    // Автоматически открываем правую панель для loadboard и chat
+    if (tab === 'loadboard' || tab === 'chat') {
+      autoExpandRightPanel();
+    }
+    
     try {
       localStorage.setItem('dispatch-active-tab', tab);
       if (tab === 'map') localStorage.setItem('guide-map-visited', '1');
@@ -301,8 +307,42 @@ export default function GameScreen() {
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
+  
+  // Функция для автоматического открытия правой панели
+  const autoExpandRightPanel = () => {
+    if (rightPanelCollapsed) {
+      setRightPanelCollapsed(false);
+    }
+  };
+  
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const saveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  
+  // Автоматически открываем панель при появлении новых непрочитанных сообщений
+  const unreadChat = notifications.filter(n =>
+    ['email','pod_ready','rate_con','detention','missed_call','voicemail','text','urgent'].includes(n.type) && !n.read
+  ).length;
+  
+  const prevUnreadRef = useRef(unreadChat);
+  
+  useEffect(() => {
+    // Если появились новые непрочитанные сообщения - открываем панель
+    if (unreadChat > prevUnreadRef.current && activeTab === 'chat') {
+      autoExpandRightPanel();
+    }
+    prevUnreadRef.current = unreadChat;
+  }, [unreadChat, activeTab]);
+  
+  // Автоматически открываем панель при обновлении списка грузов
+  const prevLoadsCountRef = useRef(availableLoads.length);
+  
+  useEffect(() => {
+    // Если обновился список грузов и мы на loadboard - открываем панель
+    if (availableLoads.length !== prevLoadsCountRef.current && activeTab === 'loadboard') {
+      autoExpandRightPanel();
+    }
+    prevLoadsCountRef.current = availableLoads.length;
+  }, [availableLoads.length, activeTab]);
 
   useEffect(() => {
     // При рефреше — восстанавливаем сохранение только если phase === 'menu' (store в дефолтном состоянии)
@@ -420,10 +460,6 @@ export default function GameScreen() {
       }, 50);
     }
   }
-
-  const unreadChat = notifications.filter(n =>
-    ['email','pod_ready','rate_con','detention','missed_call','voicemail','text','urgent'].includes(n.type) && !n.read
-  ).length;
 
   const tabs: { id: Tab; label: string; icon: string; badge?: number; onPress?: () => void }[] = [
     { id: 'loadboard', label: 'Грузы',  icon: '📦', badge: availableLoads.length },
