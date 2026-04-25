@@ -1,15 +1,15 @@
 ﻿import { create } from 'zustand';
 import { SHIFT_DURATION, SHIFT_START_HOUR, SHIFT_START_MINUTE, CITIES, CITY_STATE, TIME_SCALE } from '../constants/config';
 import { findNearestTruckStop } from '../constants/truckStops';
-import { ServiceVehicle, ServiceVehicleType } from '../types/serviceVehicle';
-import { 
-  sendLoadOffer, 
-  sendBreakdownAlert, 
-  sendHOSViolation,
-  sendDriverQuestion,
-  sendSystemNotification 
-} from '../utils/chatHelpers';
-
+import { ServiceVehicle, ServiceVehicleType, SERVICE_VEHICLE_CONFIGS } from '../types/serviceVehicle';
+import {
+  findNearestCity,
+  calculateDistance,
+  calculateServiceETA,
+  calculateServiceCost,
+  buildSimpleRoute,
+  getPositionOnRoute,
+} from '../utils/serviceVehicleHelpers';
 // ─── OSRM fetch с retry и увеличенным таймаутом ──────────
 async function fetchRoute(fromLng: number, fromLat: number, toLng: number, toLat: number, retries = 2): Promise<Array<[number,number]> | null> {
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -314,7 +314,7 @@ interface GameState {
   repairBreakdown: (truckId: string, choice: 'roadside' | 'tow') => void;
 
   // Service Vehicles
-  callRoadsideAssist: (truckId: string, vehicleType: ServiceVehicleType) => Promise<void>;
+  callRoadsideAssist: (truckId: string, vehicleType: ServiceVehicleType) => void;
   updateServiceVehicles: () => void;
 
   // Переговоры
@@ -3450,38 +3450,20 @@ case 'detention': {
 
   // ── REPAIR BREAKDOWN ────────────────────────────────────────────────────────
   repairBreakdown: (truckId: string, choice: 'roadside' | 'tow') => {
-    const { trucks, gameMinute } = get();
+    const { trucks } = get();
     const truck = trucks.find(t => t.id === truckId);
     if (!truck) return;
-    const cost = choice === 'roadside'
-      ? ((truck as any).breakdownCostRoadside ?? 500)
-      : ((truck as any).breakdownCostTow ?? 1500);
-    const delay = choice === 'roadside'
-      ? ((truck as any).breakdownDelayRoadside ?? 90)
-      : ((truck as any).breakdownDelayTow ?? 240);
-    const label = (truck as any).breakdownType ?? 'Поломка';
-    get().removeMoney(cost, (choice === 'roadside' ? 'Roadside Assist' : 'Эвакуатор') + ' — ' + truck.name + ': ' + label);
+    // Помечаем что выбор сделан
     const updatedTrucks = trucks.map(t =>
-      t.id === truckId ? {
-        ...t,
-        awaitingRepairChoice: false,
-        outOfOrderUntil: gameMinute + delay,
-        tripExpenses: [...((t as any).tripExpenses ?? []), {
-          label: (choice === 'roadside' ? 'Roadside Assist' : 'Эвакуатор') + ' — ' + label,
-          amount: cost, minute: gameMinute,
-        }],
-      } : t
+      t.id === truckId ? { ...t, awaitingRepairChoice: false } : t
     );
     set({ trucks: updatedTrucks });
-    get().addNotification({
-      type: 'text', priority: 'medium', from: truck.driver,
-      subject: (choice === 'roadside' ? '🔧 Roadside вызван' : '🚛 Эвакуатор вызван') + ' — ' + truck.name,
-      message: (choice === 'roadside' ? 'Roadside Assist едет. ' : 'Эвакуатор едет. ') + 'Задержка ~' + delay + ' мин. Стоимость: $' + cost.toLocaleString(),
-      actionRequired: false, relatedTruckId: truckId,
-    });
-    window.dispatchEvent(new CustomEvent('mapToast', {
-      detail: { message: (choice === 'roadside' ? '🔧' : '🚛') + ' ' + truck.name + ' — ремонт $' + cost.toLocaleString(), color: '#fbbf24', truckId: truckId }
-    }));
+    // Вызываем сервисную машину — она едет к траку на карте
+    if (choice === 'roadside') {
+      get().callRoadsideAssist(truckId, 'roadside_assist');
+    } else {
+      get().callRoadsideAssist(truckId, 'tow_truck');
+    }
   },
 
   // ── SERVICE VEHICLE SYSTEM ──────────────────────────────────────────────────
@@ -3489,20 +3471,10 @@ case 'detention': {
    * Call roadside assistance for a broken down truck
    * Creates a service vehicle that drives from nearest city to the truck
    */
-  callRoadsideAssist: async (truckId: string, serviceType: ServiceVehicleType) => {
+  callRoadsideAssist: (truckId: string, serviceType: ServiceVehicleType) => {
     const { trucks, gameMinute, serviceVehicles } = get();
     const truck = trucks.find(t => t.id === truckId);
     if (!truck) return;
-
-    // Import helper functions
-    const { 
-      findNearestCity, 
-      calculateDistance, 
-      calculateServiceETA, 
-      calculateServiceCost,
-      buildSimpleRoute 
-    } = await import('../utils/serviceVehicleHelpers');
-    const { SERVICE_VEHICLE_CONFIGS } = await import('../types/serviceVehicle');
 
     // Find nearest city
     const nearestCity = findNearestCity(truck.position);
@@ -3659,13 +3631,11 @@ case 'detention': {
 
       // Handle en_route status - move vehicle
       if (vehicle.status === 'en_route' || vehicle.status === 'dispatched') {
-        // Calculate how much progress to make this tick
-        // ETA is in game minutes, so progress per minute = 1 / eta
-        const progressPerMinute = 1 / vehicle.eta;
+        // Замедляем движение — делим на 4 для визуальной реалистичности
+        const progressPerMinute = (1 / vehicle.eta) * 0.25;
         const newProgress = Math.min(1, vehicle.progress + progressPerMinute);
 
         // Get new position along route
-        const { getPositionOnRoute } = require('../utils/serviceVehicleHelpers');
         const newPosition = getPositionOnRoute(vehicle.route, newProgress);
 
         // Check if arrived
@@ -3924,6 +3894,5 @@ export function formatTimeWithDate(timeString: string): string {
   // Если не распознали - возвращаем как есть
   return timeString;
 }
-
 
 

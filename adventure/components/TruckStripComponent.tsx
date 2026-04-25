@@ -100,6 +100,7 @@ interface Props {
   selectedTruckId: string | null;
   indicatorNotifications: Record<string, { text: string }>;
   gameMinute: number;
+  trucks?: any[]; // для автоскролла
 }
 
 const TruckStripComponent = memo(function TruckStripComponent({
@@ -143,11 +144,17 @@ const TruckStripComponent = memo(function TruckStripComponent({
       style={{
         display: 'flex', overflowX: 'auto', gap: 8,
         padding: isWide ? '8px 10px' : '7px 10px',
+        // На мобильных добавляем боковые отступы чтобы крайние карточки центровались
+        paddingLeft: isWide ? 10 : 'calc(50% - 155px)',
+        paddingRight: isWide ? 10 : 'calc(50% - 155px)',
         background: 'transparent', borderBottom: 'none',
         scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch',
         touchAction: 'pan-x', msOverflowStyle: 'none',
         cursor: 'grab', overscrollBehavior: 'contain',
         userSelect: 'none', WebkitUserSelect: 'none',
+        // Snap scrolling на мобильных
+        scrollSnapType: isWide ? 'none' : 'x mandatory',
+        scrollBehavior: 'smooth',
       } as any}
       onMouseDown={e => {
         if (!scrollRef.current) return;
@@ -190,7 +197,7 @@ const TruckStripComponent = memo(function TruckStripComponent({
         const r = parseInt(color.slice(1,3),16), g = parseInt(color.slice(3,5),16), b = parseInt(color.slice(5,7),16);
 
         return (
-          <div key={truck.id} style={{ position: 'relative', flexShrink: 0 } as any}>
+          <div key={truck.id} style={{ position: 'relative', flexShrink: 0, scrollSnapAlign: isWide ? 'none' : 'center' } as any}>
             {indicatorNotifications[truck.id] && (
               <div style={{
                 position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
@@ -201,7 +208,19 @@ const TruckStripComponent = memo(function TruckStripComponent({
               } as any}>{indicatorNotifications[truck.id].text}</div>
             )}
             <div
-              onClick={() => { if (!isDragging.current && !isTouchDragging.current) onTruckClick(truck); }}
+              onClick={() => {
+                if (!isDragging.current && !isTouchDragging.current) {
+                  onTruckClick(truck);
+                  // Скроллим карточку в центр полосы
+                  if (!isWide && scrollRef.current) {
+                    const idx = trucks.findIndex(t => t.id === truck.id);
+                    const cardW = (isWide ? 360 : 310) + 8;
+                    const target = idx * cardW - (scrollRef.current.clientWidth / 2) + cardW / 2;
+                    scrollRef.current.scrollTo({ left: target, behavior: 'smooth' });
+                    scrollPosRef.current = target;
+                  }
+                }
+              }}
               className="truck-card-transparent"
               style={{
                 width: isWide ? 360 : 310, height: CARD_H, borderRadius: 16, // Увеличено с 290 до 310 для мобильных

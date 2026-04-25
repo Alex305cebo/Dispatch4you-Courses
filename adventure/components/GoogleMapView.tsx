@@ -3,6 +3,8 @@ import { View, StyleSheet, Platform, Text } from "react-native";
 import { useGameStore } from "../store/gameStore";
 import { useThemeStore } from "../store/themeStore";
 import { CITIES, CITY_STATE } from "../constants/config";
+import { SERVICE_VEHICLE_CONFIGS } from "../types/serviceVehicle";
+import { formatETA } from "../utils/serviceVehicleHelpers";
 
 // ── GOOGLE MAPS API KEY ──────────────────────────────────────────────────────
 // ВАЖНО: Добавьте ключ в .env файл как EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
@@ -169,7 +171,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
 
     // Загружаем скрипт Google Maps (только geometry, без лишних библиотек)
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&callback=initGoogleMap&libraries=geometry&loading=async`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&callback=initGoogleMap&libraries=geometry,marker&loading=async`;
     script.async = true;
     script.defer = true;
     
@@ -506,6 +508,32 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         }
       });
 
+      // ── Анимация сервисных машин по маршруту ──────────────────────────
+      serviceMarkersRef.current.forEach((marker, serviceId) => {
+        const routePoints: Array<{lat: number, lng: number}> | null = (marker as any)._routePoints;
+        if (!routePoints || routePoints.length < 2) return;
+
+        const vehicles = useGameStore.getState().serviceVehicles || [];
+        const vehicle = vehicles.find((v: any) => v.id === serviceId);
+        if (!vehicle) return;
+
+        const progress = Math.max(0, Math.min(1, vehicle.progress));
+        const totalPts = routePoints.length - 1;
+        const floatIdx = progress * totalPts;
+        const i = Math.min(Math.floor(floatIdx), totalPts - 1);
+        const frac = floatIdx - i;
+        const p0 = routePoints[i];
+        const p1 = routePoints[Math.min(i + 1, totalPts)];
+        const lat = lerp(p0.lat, p1.lat, frac);
+        const lng = lerp(p0.lng, p1.lng, frac);
+
+        marker.setPosition({ lat, lng });
+
+        // Двигаем мигалку вместе с маркером
+        const sirenMarker = (marker as any)._sirenMarker;
+        if (sirenMarker) sirenMarker.setPosition({ lat, lng });
+      });
+
       rafRef.current = requestAnimationFrame(animLoop);
     }
 
@@ -590,7 +618,10 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
     });
   }, [activeTrucks, gameMinute, mapLoaded]);
 
-  // ── СОЗДАНИЕ/УДАЛЕНИЕ МАРКЕРОВ ТРАКОВ ────────────────────────────────────
+  // ── СОЗДАНИЕ/УДАЛЕНИЕ/ОБНОВЛЕНИЕ МАРКЕРОВ ТРАКОВ ────────────────────────
+  // Отслеживаем предыдущие статусы для toast при поломке
+  const prevTruckStatusRef = useRef<Map<string, string>>(new Map());
+
   useEffect(() => {
     if (!googleMapRef.current || !mapLoaded) return;
 
@@ -605,19 +636,16 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       if (!currentTruckIds.has(truckId)) {
         marker.setMap(null);
         markersRef.current.delete(truckId);
-        console.log('🗑️ Удалён маркер трака:', truckId);
       }
     });
 
-    // Создаём маркеры для новых траков
     activeTrucks.forEach((truck: any) => {
+      const color = getTruckColor(truck, gameMinute);
       let marker = markersRef.current.get(truck.id);
 
       if (!marker) {
+        // Создаём новый маркер
         const position = { lat: truck.position[1], lng: truck.position[0] };
-        const color = getTruckColor(truck, gameMinute);
-        
-        // Точка без подписи, увеличенная
         marker = new google.maps.Marker({
           position,
           map,
@@ -626,20 +654,115 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
           zIndex: truck.status === 'loaded' ? 1000 : 500,
           optimized: false,
         });
-
-        // Добавляем обработчик клика
-        marker.addListener('click', () => {
-          handleTruckClick(truck);
-        });
-
+        marker.addListener('click', () => handleTruckClick(truck));
         markersRef.current.set(truck.id, marker);
+      } else {
+        // Обновляем иконку при изменении статуса/цвета
+        marker.setIcon(getTruckMarkerIcon(google, color));
+        marker.setZIndex(truck.status === 'loaded' ? 1000 : truck.status === 'breakdown' ? 2000 : 500);
       }
+
+      // Toast при поломке
+      const prevStatus = prevTruckStatusRef.current.get(truck.id);
+      if (truck.status === 'breakdown' && prevStatus && prevStatus !== 'breakdown') {
+        window.dispatchEvent(new CustomEvent('mapToast', {
+          detail: {
+            message: `🚨 ${truck.name} сломался! Открой чат — водитель ждёт ответа.`,
+            color: '#ef4444',
+            duration: 6000,
+          }
+        }));
+      }
+      prevTruckStatusRef.current.set(truck.id, truck.status);
     });
-  }, [activeTrucks.length, mapLoaded]);
+  }, [
+    activeTrucks.length,
+    activeTrucks.map((t: any) => `${t.id}:${t.status}`).join('|'),
+    gameMinute,
+    mapLoaded,
+  ]);
 
   // ── СОЗДАНИЕ/УДАЛЕНИЕ МАРКЕРОВ СЕРВИСНЫХ МАШИН ──────────────────────────
   const serviceMarkersRef = useRef<Map<string, any>>(new Map());
   const servicePolylinesRef = useRef<Map<string, any>>(new Map());
+
+  // ── МИГАЮЩИЕ СИРЕНЫ НАД СЛОМАННЫМИ ТРАКАМИ ───────────────────────────────
+  const sirenMarkersRef = useRef<Map<string, any>>(new Map());
+
+  useEffect(() => {
+    if (!googleMapRef.current || !mapLoaded) return;
+    const google = window.google;
+    if (!google?.maps) return;
+    const map = googleMapRef.current;
+
+    const brokenIds = new Set(activeTrucks.filter((t: any) => t.status === 'breakdown').map((t: any) => t.id));
+
+    // Удаляем сирены для починенных траков
+    sirenMarkersRef.current.forEach((marker, id) => {
+      if (!brokenIds.has(id)) {
+        marker.setMap(null);
+        sirenMarkersRef.current.delete(id);
+      }
+    });
+
+    // Добавляем сирены для сломанных
+    activeTrucks.filter((t: any) => t.status === 'breakdown').forEach((truck: any) => {
+      if (sirenMarkersRef.current.has(truck.id)) return; // уже есть
+
+      const el = document.createElement('div');
+      el.style.cssText = `
+        font-size: 28px;
+        line-height: 1;
+        user-select: none;
+        pointer-events: none;
+        animation: sirenBlink 0.6s ease-in-out infinite alternate;
+        filter: drop-shadow(0 0 6px rgba(239,68,68,0.9));
+        transform-origin: bottom center;
+      `;
+      el.textContent = '🚨';
+
+      // Инжектим CSS анимацию если ещё нет
+      if (!document.getElementById('siren-style')) {
+        const style = document.createElement('style');
+        style.id = 'siren-style';
+        style.textContent = `
+          @keyframes sirenBlink {
+            0%   { transform: scale(1.0) rotate(-8deg); opacity: 1; filter: drop-shadow(0 0 4px rgba(239,68,68,0.9)); }
+            100% { transform: scale(1.3) rotate(8deg);  opacity: 0.7; filter: drop-shadow(0 0 12px rgba(239,68,68,1)); }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+
+      // Создаём обычный Marker с emoji через SVG data URL
+      const sirenSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><text y="28" font-size="28">🚨</text></svg>`;
+      const sirenIcon = {
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(sirenSvg),
+        scaledSize: new google.maps.Size(36, 36),
+        anchor: new google.maps.Point(18, 36),
+      };
+
+      const marker = new google.maps.Marker({
+        position: { lat: truck.position[1], lng: truck.position[0] },
+        map,
+        icon: sirenIcon,
+        zIndex: 3000,
+        optimized: false,
+      });
+      sirenMarkersRef.current.set(truck.id, marker);
+    });
+
+    // Обновляем позиции существующих сирен
+    activeTrucks.filter((t: any) => t.status === 'breakdown').forEach((truck: any) => {
+      const marker = sirenMarkersRef.current.get(truck.id);
+      if (marker) {
+        marker.setPosition({ lat: truck.position[1], lng: truck.position[0] });
+      }
+    });
+  }, [
+    activeTrucks.map((t: any) => `${t.id}:${t.status}:${t.position}`).join('|'),
+    mapLoaded,
+  ]);
 
   useEffect(() => {
     if (!googleMapRef.current || !mapLoaded) return;
@@ -654,6 +777,13 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
     serviceMarkersRef.current.forEach((marker, serviceId) => {
       if (!currentServiceIds.has(serviceId)) {
         marker.setMap(null);
+        // Очищаем мигалку и интервал
+        if ((marker as any)._sirenMarker) {
+          (marker as any)._sirenMarker.setMap(null);
+        }
+        if ((marker as any)._sirenInterval) {
+          clearInterval((marker as any)._sirenInterval);
+        }
         serviceMarkersRef.current.delete(serviceId);
         console.log('🗑️ Удалён маркер сервисной машины:', serviceId);
       }
@@ -667,63 +797,71 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
 
     // Создаём маркеры и маршруты для сервисных машин
     activeServiceVehicles.forEach((vehicle: any) => {
-      // Иконка сервисной машины
-      const serviceIcon = {
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 10,
-        fillColor: '#06b6d4', // cyan для сервиса
-        fillOpacity: 1,
-        strokeColor: '#ffffff',
-        strokeWeight: 2,
-      };
+      const config = SERVICE_VEHICLE_CONFIGS[vehicle.type];
 
       // Создаём или обновляем маркер
       let marker = serviceMarkersRef.current.get(vehicle.id);
-      // vehicle.position хранится как [lng, lat] (GeoJSON стандарт)
       const position = { lat: vehicle.position[1], lng: vehicle.position[0] };
 
       if (!marker) {
+        // HTML элемент с эмодзи и анимацией движения
+        const el = document.createElement('div');
+        el.style.cssText = `
+          font-size: 26px;
+          line-height: 1;
+          user-select: none;
+          animation: serviceMove 0.8s ease-in-out infinite alternate;
+          filter: drop-shadow(0 2px 6px rgba(6,182,212,0.8));
+          transform-origin: bottom center;
+        `;
+        el.textContent = config.icon;
+
+        if (!document.getElementById('service-style')) {
+          const style = document.createElement('style');
+          style.id = 'service-style';
+          style.textContent = `
+            @keyframes serviceMove {
+              0%   { transform: translateY(0px) scale(1.0); }
+              100% { transform: translateY(-5px) scale(1.1); }
+            }
+          `;
+          document.head.appendChild(style);
+        }
+
+        // Создаём обычный Marker с emoji через SVG data URL
+        const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><text y="28" font-size="26">${config.icon}</text></svg>`;
+        const serviceIcon = {
+          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svgIcon),
+          scaledSize: new google.maps.Size(36, 36),
+          anchor: new google.maps.Point(18, 36),
+        };
+
         marker = new google.maps.Marker({
           position,
           map,
-          title: `Service Vehicle: ${vehicle.type}`,
           icon: serviceIcon,
-          zIndex: 1500, // выше траков
+          zIndex: 2500,
           optimized: false,
         });
 
-        // InfoWindow с прогрессом
+        // InfoWindow с прогрессом при клике
         marker.addListener('click', () => {
           const truck = activeTrucks.find((t: any) => t.id === vehicle.targetTruckId);
-          const { SERVICE_VEHICLE_CONFIGS } = require('../types/serviceVehicle');
-          const config = SERVICE_VEHICLE_CONFIGS[vehicle.type];
-          const { formatETA } = require('../utils/serviceVehicleHelpers');
-          
           const remainingMinutes = Math.round(vehicle.eta * (1 - vehicle.progress));
           const progressPercent = Math.round(vehicle.progress * 100);
-
           const content = `
-            <div style="padding:10px 12px;min-width:200px;max-width:280px;background:#f0fdfa;border:2px solid #06b6d4;border-radius:12px;font-family:system-ui,-apple-system,sans-serif;">
-              <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:6px;">
-                ${config.icon} ${config.label}
-              </div>
-              <div style="font-size:12px;color:#374151;line-height:1.4;">
-                ${vehicle.fromCity} → ${truck?.name || 'Truck'}
-              </div>
-              <div style="margin-top:8px;padding-top:8px;border-top:1px solid #06b6d4;">
-                <div style="font-size:11px;color:#6b7280;margin-bottom:4px;">
-                  Progress: ${progressPercent}%
+            <div style="display:flex;align-items:flex-end;gap:10px;padding:8px;background:#fff;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.12);font-family:system-ui,sans-serif;max-width:280px;">
+              <div style="font-size:40px;line-height:1;flex-shrink:0;">${config.icon}</div>
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:2px;">${config.label}</div>
+                <div style="font-size:11px;color:#64748b;margin-bottom:6px;">${vehicle.fromCity} → ${truck?.name || 'Truck'}</div>
+                <div style="width:100%;height:5px;background:#e2e8f0;border-radius:3px;overflow:hidden;margin-bottom:4px;">
+                  <div style="width:${progressPercent}%;height:100%;background:linear-gradient(90deg,#06b6d4,#0891b2);border-radius:3px;transition:width 0.3s;"></div>
                 </div>
-                <div style="width:100%;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden;">
-                  <div style="width:${progressPercent}%;height:100%;background:linear-gradient(90deg,#06b6d4,#0891b2);border-radius:3px;"></div>
-                </div>
-                <div style="font-size:12px;font-weight:600;color:#111827;margin-top:6px;">
-                  ETA: ${formatETA(remainingMinutes)}
-                </div>
+                <div style="font-size:12px;font-weight:700;color:#06b6d4;">ETA: ${formatETA(remainingMinutes)}</div>
               </div>
             </div>
           `;
-          
           if (infoWindowRef.current) {
             infoWindowRef.current.setContent(content);
             infoWindowRef.current.open(map, marker);
@@ -731,9 +869,78 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         });
 
         serviceMarkersRef.current.set(vehicle.id, marker);
+
+        // Мигалка 🚨 над сервисной машиной
+        const sirenSvg2 = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"><text y="22" font-size="22">🚨</text></svg>`;
+        const sirenIcon2 = {
+          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(sirenSvg2),
+          scaledSize: new google.maps.Size(28, 28),
+          anchor: new google.maps.Point(14, 42), // выше основного маркера
+        };
+        const sirenMarker = new google.maps.Marker({
+          position,
+          map,
+          icon: sirenIcon2,
+          zIndex: 2600,
+          optimized: false,
+        });
+        (marker as any)._sirenMarker = sirenMarker;
+
+        // Анимация мигания через setInterval
+        let sirenVisible = true;
+        const sirenInterval = setInterval(() => {
+          sirenVisible = !sirenVisible;
+          sirenMarker.setOpacity(sirenVisible ? 1 : 0.2);
+        }, 500);
+        (marker as any)._sirenInterval = sirenInterval;
+
+        // Строим маршрут по дорогам через Directions API
+        const targetTruck = activeTrucks.find((t: any) => t.id === vehicle.targetTruckId);
+        if (targetTruck) {
+          const directionsService = new google.maps.DirectionsService();
+          const origin = { lat: vehicle.position[1], lng: vehicle.position[0] };
+          const destination = { lat: targetTruck.position[1], lng: targetTruck.position[0] };
+          directionsService.route({
+            origin,
+            destination,
+            travelMode: google.maps.TravelMode.DRIVING,
+          }, (result: any, status: any) => {
+            if (status === 'OK' && result) {
+              // Сохраняем точки маршрута для анимации
+              const routePoints = result.routes[0].overview_path.map((p: any) => ({ lat: p.lat(), lng: p.lng() }));
+              (marker as any)._routePoints = routePoints;
+              (marker as any)._routeIdx = 0;
+
+              // Рисуем polyline по дороге
+              const existingPolyline = servicePolylinesRef.current.get(vehicle.id);
+              if (existingPolyline) existingPolyline.setMap(null);
+
+              const polyline = new google.maps.Polyline({
+                path: routePoints,
+                geodesic: true,
+                strokeColor: '#06b6d4',
+                strokeOpacity: 0,
+                strokeWeight: 0,
+                icons: [{
+                  icon: { path: 'M 0,-1 0,1', strokeOpacity: 0.8, scale: 3, strokeColor: '#06b6d4' },
+                  offset: '0',
+                  repeat: '12px',
+                }],
+                map,
+                zIndex: 100,
+              });
+              servicePolylinesRef.current.set(vehicle.id, polyline);
+            }
+          });
+        }
       } else {
-        // Обновляем позицию существующего маркера
-        marker.setPosition(position);
+        // Позиция обновляется в animLoop по routePoints — ничего не делаем
+        // Но если маршрут ещё не построен — обновляем напрямую
+        if (!(marker as any)._routePoints) {
+          marker.setPosition(position);
+          const sirenMarker = (marker as any)._sirenMarker;
+          if (sirenMarker) sirenMarker.setPosition(position);
+        }
       }
 
       // Рисуем маршрут (polyline) от текущей позиции к траку
@@ -934,11 +1141,11 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
           const minutes = Math.round((distance / 55 - hours) * 60);
           
           distanceInfo = `
-            <div style="margin-top:6px;padding-top:6px;border-top:1px solid ${borderColor};">
-              <div style="font-size:11px;color:#6b7280;">
+            <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,0.08);">
+              <div style="font-size:11px;color:#64748b;margin-bottom:3px;">
                 📍 ${truck.currentCity} → ${truck.destinationCity}
               </div>
-              <div style="font-size:12px;font-weight:600;color:#111827;margin-top:2px;">
+              <div style="font-size:13px;font-weight:700;color:#0f172a;">
                 🛣️ ${distance} mi · ⏱️ ${hours}h ${minutes}m
               </div>
             </div>
@@ -946,14 +1153,28 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         }
         
         const content = `
-          <div style="padding:10px 12px;min-width:200px;max-width:280px;background:${bgColor};border:2px solid ${borderColor};border-radius:12px;font-family:system-ui,-apple-system,sans-serif;">
-            <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:6px;">
-              💬 ${truck.driver}
+          <div style="display:flex;align-items:flex-end;gap:12px;padding:8px;background:rgba(255,255,255,0.98);border-radius:20px;box-shadow:0 8px 24px rgba(0,0,0,0.15);backdrop-filter:blur(12px);font-family:system-ui,-apple-system,sans-serif;max-width:340px;">
+            <!-- Аватар водителя -->
+            <div style="width:64px;height:64px;flex-shrink:0;">
+              <img src="assets/avatars/driver.png" width="64" height="64" style="display:block;object-fit:contain;" alt="driver">
             </div>
-            <div style="font-size:12px;color:#374151;line-height:1.4;font-style:italic;">
-              "${driverMessage}"
+            
+            <!-- Речевой пузырь -->
+            <div style="flex:1;position:relative;">
+              <!-- Хвостик пузыря -->
+              <div style="position:absolute;bottom:12px;left:-8px;width:0;height:0;border-top:8px solid transparent;border-bottom:8px solid transparent;border-right:10px solid #f1f5f9;"></div>
+              
+              <!-- Содержимое пузыря -->
+              <div style="background:#f1f5f9;border:2px solid ${borderColor};border-radius:16px;padding:12px 14px;">
+                <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:4px;">
+                  💬 ${truck.driver}
+                </div>
+                <div style="font-size:13px;color:#334155;line-height:1.5;font-style:italic;">
+                  "${driverMessage}"
+                </div>
+                ${distanceInfo}
+              </div>
             </div>
-            ${distanceInfo}
           </div>
         `;
         infoWindowRef.current.setContent(content);

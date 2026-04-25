@@ -403,9 +403,21 @@ export default function GameScreen() {
     selectTruck(truck.id);
     setDetailTruck(truck);
     if (!isWide) switchTab('map');
+    // Центрируем карту на траке
     window.dispatchEvent(new CustomEvent('zoomToTruck', {
       detail: { lng: truck.position[0], lat: truck.position[1] }
     }));
+    // Скроллим карточку в центр полосы (для десктопа, на мобильном snap сам справится)
+    if (isWide) {
+      setTimeout(() => {
+        const strip = document.querySelector('.truck-strip-scroll-game') as HTMLElement;
+        if (!strip) return;
+        const idx = trucks.findIndex(t => t.id === truck.id);
+        const cardW = 360 + 8; // width + gap
+        const target = idx * cardW - (strip.clientWidth / 2) + cardW / 2;
+        strip.scrollTo({ left: target, behavior: 'smooth' });
+      }, 50);
+    }
   }
 
   const unreadChat = notifications.filter(n =>
@@ -686,15 +698,15 @@ export default function GameScreen() {
       startX.current = e.pageX - scrollRef.current.offsetLeft;
       scrollLeft.current = scrollRef.current.scrollLeft;
       scrollRef.current.style.cursor = 'grabbing';
-      scrollRef.current.style.userSelect = 'none';
+      (scrollRef.current.style as any).userSelect = 'none';
     };
 
     const handleMouseMove = (e: React.MouseEvent) => {
       if (!isDragging.current || !scrollRef.current) return;
       e.preventDefault();
       const x = e.pageX - scrollRef.current.offsetLeft;
-      const walk = (x - startX.current) * 2;
-      dragDistance.current = Math.abs(x - startX.current);
+      const walk = x - startX.current; // без множителя — 1:1 движение
+      dragDistance.current = Math.abs(walk);
       scrollRef.current.scrollLeft = scrollLeft.current - walk;
       truckStripScrollPos.current = scrollRef.current.scrollLeft;
     };
@@ -703,14 +715,14 @@ export default function GameScreen() {
       if (!scrollRef.current) return;
       isDragging.current = false;
       scrollRef.current.style.cursor = 'grab';
-      scrollRef.current.style.userSelect = 'auto';
+      (scrollRef.current.style as any).userSelect = 'auto';
     };
 
     const handleMouseLeave = () => {
       if (!scrollRef.current) return;
       isDragging.current = false;
       scrollRef.current.style.cursor = 'grab';
-      scrollRef.current.style.userSelect = 'auto';
+      (scrollRef.current.style as any).userSelect = 'auto';
     };
 
     // Touch drag — используем useEffect для passive: false
@@ -792,9 +804,13 @@ export default function GameScreen() {
     return (
       <div
         ref={scrollRef}
+        className="truck-strip-scroll-game"
         style={{
           display: 'flex', overflowX: 'auto', gap: 8,
           padding: isWide ? '8px 10px' : '7px 10px',
+          // На мобильных боковые отступы чтобы крайние карточки центровались
+          paddingLeft: isWide ? 10 : 'calc(50% - 145px)',
+          paddingRight: isWide ? 10 : 'calc(50% - 145px)',
           background: 'transparent',
           borderBottom: 'none',
           scrollbarWidth: 'none',
@@ -803,6 +819,9 @@ export default function GameScreen() {
           msOverflowStyle: 'none',
           cursor: 'grab',
           overscrollBehavior: 'contain',
+          // Snap scrolling на мобильных
+          scrollSnapType: isWide ? 'none' : 'x mandatory',
+          scrollBehavior: 'smooth',
         } as any}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -836,7 +855,7 @@ export default function GameScreen() {
         const AVATAR_W = isWide ? 90 : 76;
 
         return (
-          <div key={truck.id} style={{ position: 'relative', flexShrink: 0 } as any}>
+          <div key={truck.id} style={{ position: 'relative', flexShrink: 0, scrollSnapAlign: isWide ? 'none' : 'center' } as any}>
 
             {/* Облачко-уведомление */}
             {indicatorNotifications[truck.id] && (
@@ -867,7 +886,7 @@ export default function GameScreen() {
 
           {/* ═══ КАРТОЧКА — UBER/LYFT СТИЛЬ (ПРОЗРАЧНАЯ) ═══ */}
           <div
-            onClick={() => { if (!isDragging.current && !isTouchDragging.current) handleTruckClick(truck); }}
+            onClick={() => { if (dragDistance.current < 5 && !isTouchDragging.current) handleTruckClick(truck); }}
             style={{
               width: isWide ? 360 : 290,
               height: CARD_H,
@@ -1275,6 +1294,29 @@ export default function GameScreen() {
     );
   };
 
+  // ── TOAST СИСТЕМА ────────────────────────────────────────────────────────
+  const [toasts, setToasts] = useState<Array<{id: number; message: string; color: string}>>([]);
+  const toastIdRef = useRef(0);
+
+  useEffect(() => {
+    function handleMapToast(e: Event) {
+      const { message, color = '#ef4444', duration = 5000 } = (e as CustomEvent).detail;
+      const id = ++toastIdRef.current;
+      setToasts(prev => [...prev, { id, message, color }]);
+      setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), duration);
+    }
+    window.addEventListener('mapToast', handleMapToast);
+    return () => window.removeEventListener('mapToast', handleMapToast);
+  }, []);
+
+  // Авто-переключение на чат при поломке
+  useEffect(() => {
+    const broken = trucks.filter(t => t.status === 'breakdown');
+    if (broken.length > 0 && activeTab !== 'chat') {
+      // Мигаем иконкой чата — badge уже обновится через unreadChat
+    }
+  }, [trucks.map(t => t.status).join(',')]);
+
   const mapProps = {
     onTruckInfo: (id: string) => { const t = trucks.find(x => x.id === id); if (t) setDetailTruck(t); selectTruck(id); },
     onTruckSelect: (id: string) => { selectTruck(id); },
@@ -1391,6 +1433,38 @@ export default function GameScreen() {
             )}
           </View>
           <BottomTabs />
+        </View>
+      )}
+
+      {/* ── TOAST УВЕДОМЛЕНИЯ ── */}
+      {toasts.length > 0 && (
+        <View style={{
+          position: 'absolute', bottom: 90, left: 0, right: 0,
+          alignItems: 'center', gap: 8, pointerEvents: 'none',
+          zIndex: 9999,
+        } as any}>
+          {toasts.map(toast => (
+            <View key={toast.id} style={{
+              backgroundColor: toast.color,
+              borderRadius: 16,
+              paddingHorizontal: 20,
+              paddingVertical: 12,
+              maxWidth: 360,
+              shadowColor: '#000',
+              shadowOpacity: 0.3,
+              shadowRadius: 12,
+              shadowOffset: { width: 0, height: 4 },
+              elevation: 10,
+            } as any}>
+              <Text style={{
+                color: '#fff',
+                fontSize: 15,
+                fontWeight: '700',
+                textAlign: 'center',
+                lineHeight: 20,
+              } as any}>{toast.message}</Text>
+            </View>
+          ))}
         </View>
       )}
 
