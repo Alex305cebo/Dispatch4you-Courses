@@ -2417,12 +2417,27 @@ export const useGameStore = create<GameState>((set, get) => ({
         } else if (truck.destinationCity && CITIES[truck.destinationCity]) {
           // Fallback: линейное движение если нет routePath
           const dest = CITIES[truck.destinationCity];
-          const startPos = truck.routePath ? truck.position : (CITIES[truck.currentCity] || truck.position);
-          const totalProgress = truck.progress + progressPerTick;
-          const t = Math.min(totalProgress, 1);
+          const startPos = CITIES[truck.currentCity] || truck.position;
+          const t = Math.min(newProgress, 1);
           const lng = startPos[0] + (dest[0] - startPos[0]) * t;
           const lat = startPos[1] + (dest[1] - startPos[1]) * t;
-          return { ...truck, progress: Math.min(newProgress, 0.99), position: [lng, lat] as [number, number], hoursLeft: newHoursLeft, currentCity: getNearestCity(lng, lat) } as any;
+          // Если достигли цели — переходим в нужный статус
+          if (newProgress >= 1) {
+            const newStatus = truck.status === 'driving' ? 'at_pickup' as TruckStatus : 'at_delivery' as TruckStatus;
+            return {
+              ...truck,
+              progress: 1,
+              status: newStatus,
+              position: dest as [number, number],
+              currentCity: truck.destinationCity,
+              destinationCity: null,
+              routePath: null,
+              hoursLeft: newHoursLeft,
+              pickupArrivalMinute: newStatus === 'at_pickup' ? newMinute : undefined,
+              deliveryArrivalMinute: newStatus === 'at_delivery' ? newMinute : undefined,
+            };
+          }
+          return { ...truck, progress: newProgress, position: [lng, lat] as [number, number], hoursLeft: newHoursLeft, currentCity: getNearestCity(lng, lat) } as any;
         } else {
           return truck;
         }
@@ -2970,13 +2985,11 @@ case 'detention': {
       // используем оригинальную позицию
     }
 
-    // Загружаем маршрут до pickup
+    // Загружаем маршрут до pickup в фоне (не блокируем назначение)
     const pickupCity = CITIES[load.fromCity];
     let routePath: Array<[number, number]> | null = null;
-    if (pickupCity && !isPrePlanning) {
-      routePath = await fetchRoute(snappedPosition[0], snappedPosition[1], pickupCity[0], pickupCity[1]);
-      if (routePath) console.log(`✅ Loaded route for ${truckId} to pickup: ${routePath.length} points`);
-    }
+    // routePath будет null при старте — трак сразу едет по прямой,
+    // маршрут по дорогам подгрузится через fetchRoute ниже
 
     const activeLoad = { ...load, truckId };
     
@@ -3040,6 +3053,19 @@ case 'detention': {
         activeLoads: [...get().activeLoads, activeLoad],
         bookedLoads,
       });
+      // Загружаем маршрут в фоне — трак уже едет по прямой, маршрут подгрузится
+      if (pickupCity && !isPrePlanning) {
+        fetchRoute(snappedPosition[0], snappedPosition[1], pickupCity[0], pickupCity[1]).then(fetchedRoute => {
+          if (fetchedRoute) {
+            useGameStore.setState(s => ({
+              trucks: s.trucks.map(t =>
+                t.id === truckId && t.status === 'driving' ? { ...t, routePath: fetchedRoute } as any : t
+              )
+            }));
+            console.log(`✅ Route loaded for ${truckId}: ${fetchedRoute.length} points`);
+          }
+        });
+      }
       // Сохраняем сразу после назначения
       setTimeout(() => get().saveGame(), 100);
     }

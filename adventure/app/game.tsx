@@ -300,6 +300,7 @@ export default function GameScreen() {
   }
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const saveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -1354,7 +1355,7 @@ export default function GameScreen() {
         /* ══ DESKTOP ══ */
         <View style={s.desktop}>
           {/* Левая колонка: топбар + карта + траки */}
-          <View style={s.leftCol}>
+          <View style={[s.leftCol, { position: 'relative' }]}>
             <TopBar />
             <View style={s.mapArea}>
               <ErrorBoundary name="Map"><GoogleMapView {...mapProps} /></ErrorBoundary>
@@ -1366,17 +1367,53 @@ export default function GameScreen() {
                 />
               </View>
             </View>
+            {/* Кнопка свернуть/развернуть правую панель */}
+            <div
+              onClick={() => setRightPanelCollapsed(v => !v)}
+              style={{
+                position: 'absolute', right: 0, top: '50%',
+                transform: 'translateY(-50%)',
+                zIndex: 50,
+                width: 20, height: 56,
+                background: themeMode === 'dark' ? 'rgba(15,23,42,0.9)' : 'rgba(255,255,255,0.9)',
+                border: themeMode === 'dark' ? '1px solid rgba(56,189,248,0.3)' : '1px solid rgba(0,0,0,0.12)',
+                borderRight: 'none',
+                borderRadius: '8px 0 0 8px',
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                backdropFilter: 'blur(8px)',
+                transition: 'all 0.2s',
+                boxShadow: '-2px 0 8px rgba(0,0,0,0.15)',
+              } as any}
+              title={rightPanelCollapsed ? 'Развернуть панель' : 'Свернуть панель'}
+            >
+              <span style={{
+                fontSize: 12, color: themeMode === 'dark' ? '#38bdf8' : '#007aff',
+                fontWeight: 900, lineHeight: 1,
+                transform: rightPanelCollapsed ? 'rotate(0deg)' : 'rotate(180deg)',
+                transition: 'transform 0.3s ease',
+                display: 'block',
+              } as any}>‹</span>
+            </div>
           </View>
 
           {/* Правая колонка: табы + контент */}
-          <View style={s.rightCol}>
+          <div style={{
+            width: rightPanelCollapsed ? 0 : 400,
+            minWidth: rightPanelCollapsed ? 0 : 400,
+            overflow: 'hidden',
+            transition: 'width 0.3s ease, min-width 0.3s ease',
+            display: 'flex', flexDirection: 'column',
+            background: themeMode === 'dark' ? '#0d1117' : '#ffffff',
+            borderLeft: themeMode === 'dark' ? '1px solid rgba(56,189,248,0.15)' : '1px solid rgba(0,0,0,0.08)',
+          } as any}>
             <SideTabs />
             <View style={s.panelContent}>
               {(activeTab === 'loadboard' || activeTab === 'map') && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} onAssigned={handleAssigned} /></ErrorBoundary>}
               {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
               {activeTab === 'chat'      && <ErrorBoundary name="Chat"><UnifiedChatUI nickname={sessionName || 'player'} /></ErrorBoundary>}
             </View>
-          </View>
+          </div>
         </View>
 
       ) : isLandscape ? (
