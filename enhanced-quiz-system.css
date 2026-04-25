@@ -1,0 +1,296 @@
+/**
+ * Enhanced Quiz System Styles v1.0
+ * Стили для улучшенной системы квизов с popup
+ */
+
+/* Popup Overlay */
+.quiz-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.quiz-popup-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Popup Content */
+.quiz-popup-content {
+    background: linear-gradient(135deg, rgba(10, 14, 26, 0.98), rgba(15, 23, 42, 0.98));
+    border: 2px solid rgba(6, 182, 212, 0.3);
+    border-radius: 24px;
+    padding: 48px 40px;
+    max-width: 480px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
+                0 0 100px rgba(6, 182, 212, 0.2);
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.quiz-popup-overlay.show .quiz-popup-content {
+    transform: scale(1);
+}
+
+/* Animated Background */
+.quiz-popup-content::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(6, 182, 212, 0.1) 0%, transparent 70%);
+    animation: popup-glow 3s ease-in-out infinite;
+    z-index: 0;
+}
+
+@keyframes popup-glow {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
+        opacity: 0.5;
+    }
+    50% {
+        transform: translate(10%, 10%) scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+/* Score Display */
+.quiz-popup-score {
+    font-size: 72px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #06b6d4, #0ea5e9, #38bdf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 20px;
+    line-height: 1;
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 4px 20px rgba(6, 182, 212, 0.3);
+    animation: score-pulse 0.5s ease-out;
+}
+
+@keyframes score-pulse {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Message */
+.quiz-popup-message {
+    font-size: 20px;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin-bottom: 32px;
+    line-height: 1.4;
+    position: relative;
+    z-index: 1;
+}
+
+/* Retry Button */
+.quiz-popup-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 40px;
+    background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3);
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.quiz-popup-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.quiz-popup-btn:hover::before {
+    left: 100%;
+}
+
+.quiz-popup-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(6, 182, 212, 0.4);
+}
+
+.quiz-popup-btn:active {
+    transform: translateY(0);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .quiz-popup-content {
+        padding: 40px 32px;
+        max-width: 90%;
+    }
+
+    .quiz-popup-score {
+        font-size: 64px;
+    }
+
+    .quiz-popup-message {
+        font-size: 18px;
+        margin-bottom: 28px;
+    }
+
+    .quiz-popup-btn {
+        padding: 14px 32px;
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .quiz-popup-content {
+        padding: 32px 24px;
+        border-radius: 20px;
+    }
+
+    .quiz-popup-score {
+        font-size: 56px;
+        margin-bottom: 16px;
+    }
+
+    .quiz-popup-message {
+        font-size: 16px;
+        margin-bottom: 24px;
+    }
+
+    .quiz-popup-btn {
+        width: 100%;
+        padding: 14px 24px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 360px) {
+    .quiz-popup-content {
+        padding: 28px 20px;
+    }
+
+    .quiz-popup-score {
+        font-size: 48px;
+    }
+
+    .quiz-popup-message {
+        font-size: 15px;
+    }
+}
+
+/* Quiz Progress Indicator (опционально - для отображения прогресса в самом квизе) */
+.quiz-progress-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(6, 182, 212, 0.1);
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #06b6d4;
+    margin-bottom: 16px;
+}
+
+.quiz-progress-indicator .current {
+    color: #ffffff;
+}
+
+.quiz-progress-indicator .separator {
+    color: rgba(6, 182, 212, 0.5);
+}
+
+/* Улучшенные стили для quiz-option (совместимость с существующими) */
+.quiz-option {
+    position: relative;
+    overflow: hidden;
+}
+
+.quiz-option::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(6, 182, 212, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.quiz-option:active::after {
+    width: 300px;
+    height: 300px;
+}
+
+.quiz-option.correct {
+    animation: correct-pulse 0.5s ease-out;
+}
+
+.quiz-option.incorrect {
+    animation: incorrect-shake 0.5s ease-out;
+}
+
+@keyframes correct-pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes incorrect-shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-8px);
+    }
+    75% {
+        transform: translateX(8px);
+    }
+}
