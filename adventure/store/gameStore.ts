@@ -46,30 +46,99 @@ export interface WeatherZone {
   endMinute: number;  // когда заканчивается
 }
 
-// Генерирует 1-2 случайные погодные зоны
+// Генерирует реалистичные погодные зоны с учётом сезона и географии
 function generateWeatherZones(currentMinute: number): WeatherZone[] {
-  const WEATHER_EVENTS = [
-    { event: '🌨️ Снегопад',    speedMult: 0.55, hosMult: 1.3 },
-    { event: '🌧️ Ливень',      speedMult: 0.70, hosMult: 1.1 },
-    { event: '🌫️ Туман',       speedMult: 0.65, hosMult: 1.15 },
-    { event: '🌪️ Сильный ветер', speedMult: 0.75, hosMult: 1.1 },
-    { event: '🧊 Гололёд',     speedMult: 0.45, hosMult: 1.4 },
-    { event: '⛈️ Гроза',       speedMult: 0.60, hosMult: 1.2 },
-  ];
-  const ALL_STATES = ['TX','CA','FL','NY','IL','OH','PA','GA','NC','MI','TN','MO','IN','WI','CO','AZ','WA','OR','NV','UT'];
-  const count = Math.random() < 0.4 ? 2 : 1;
+  const now = new Date();
+  const month = now.getMonth() + 1; // 1-12
+
+  // Сезон
+  const isWinter  = month === 12 || month <= 2;   // дек-фев
+  const isSpring  = month >= 3  && month <= 5;    // мар-май
+  const isSummer  = month >= 6  && month <= 8;    // июн-авг
+  const isFall    = month >= 9  && month <= 11;   // сен-ноя
+
+  // Регионы штатов
+  const NORTH     = ['MN','WI','MI','NY','VT','NH','ME','ND','SD','MT','WY','ID'];
+  const MIDWEST   = ['IL','IN','OH','MO','IA','KS','NE','KY'];
+  const SOUTH     = ['TX','LA','MS','AL','GA','FL','SC','AR','OK','TN','NC'];
+  const WEST      = ['CA','OR','WA','NV','AZ','UT','CO','NM'];
+  const NORTHEAST = ['NY','PA','NJ','CT','MA','RI','VT','NH','ME','MD','DE'];
+  const PLAINS    = ['KS','NE','OK','TX','SD','ND','MO','IA'];
+  const MOUNTAIN  = ['CO','WY','MT','ID','UT','NM','AZ','NV'];
+
+  // Пул событий по сезону
+  type WeatherEvent = { event: string; states: string[]; speedMult: number; hosMult: number; weight: number };
+  const pool: WeatherEvent[] = [];
+
+  if (isWinter) {
+    pool.push(
+      { event: '🌨️ Снегопад',         states: NORTH,     speedMult: 0.50, hosMult: 1.35, weight: 30 },
+      { event: '🧊 Гололёд',           states: NORTH,     speedMult: 0.40, hosMult: 1.45, weight: 20 },
+      { event: '🌨️ Метель',            states: PLAINS,    speedMult: 0.45, hosMult: 1.40, weight: 20 },
+      { event: '❄️ Снег в горах',       states: MOUNTAIN,  speedMult: 0.50, hosMult: 1.30, weight: 15 },
+      { event: '🌧️ Зимний дождь',      states: SOUTH,     speedMult: 0.75, hosMult: 1.10, weight: 10 },
+      { event: '🌫️ Туман',             states: WEST,      speedMult: 0.65, hosMult: 1.15, weight: 10 },
+      { event: '🌨️ Снег на Северо-Востоке', states: NORTHEAST, speedMult: 0.55, hosMult: 1.30, weight: 15 },
+    );
+  } else if (isSpring) {
+    pool.push(
+      { event: '⛈️ Грозы на Юге',      states: SOUTH,     speedMult: 0.60, hosMult: 1.20, weight: 25 },
+      { event: '🌪️ Торнадо-предупреждение', states: PLAINS, speedMult: 0.55, hosMult: 1.35, weight: 15 },
+      { event: '🌧️ Ливень',            states: MIDWEST,   speedMult: 0.70, hosMult: 1.10, weight: 20 },
+      { event: '🌫️ Туман',             states: MIDWEST,   speedMult: 0.65, hosMult: 1.15, weight: 15 },
+      { event: '❄️ Поздний снег',       states: NORTH,     speedMult: 0.60, hosMult: 1.20, weight: 10 },
+      { event: '🌧️ Дожди на Западе',   states: WEST,      speedMult: 0.75, hosMult: 1.10, weight: 15 },
+    );
+  } else if (isSummer) {
+    pool.push(
+      { event: '🌡️ Жара +100°F',       states: SOUTH,     speedMult: 0.85, hosMult: 1.20, weight: 25 },
+      { event: '🌡️ Экстремальная жара', states: [...WEST, 'AZ', 'NV'], speedMult: 0.80, hosMult: 1.25, weight: 20 },
+      { event: '⛈️ Летние грозы',       states: MIDWEST,   speedMult: 0.65, hosMult: 1.15, weight: 20 },
+      { event: '🌪️ Торнадо',           states: PLAINS,    speedMult: 0.50, hosMult: 1.40, weight: 10 },
+      { event: '🌫️ Смог',              states: ['CA','TX','NY'], speedMult: 0.90, hosMult: 1.05, weight: 10 },
+      { event: '🌧️ Тропический ливень', states: ['FL','LA','TX','GA'], speedMult: 0.60, hosMult: 1.20, weight: 15 },
+    );
+  } else { // Fall
+    pool.push(
+      { event: '🌧️ Осенние дожди',     states: NORTHEAST, speedMult: 0.70, hosMult: 1.10, weight: 25 },
+      { event: '🌫️ Густой туман',      states: MIDWEST,   speedMult: 0.60, hosMult: 1.20, weight: 20 },
+      { event: '🌨️ Ранний снег',       states: NORTH,     speedMult: 0.65, hosMult: 1.25, weight: 20 },
+      { event: '⛈️ Шторм',             states: SOUTH,     speedMult: 0.65, hosMult: 1.15, weight: 15 },
+      { event: '🌪️ Сильный ветер',     states: PLAINS,    speedMult: 0.75, hosMult: 1.10, weight: 10 },
+      { event: '🌧️ Дожди на Западе',   states: WEST,      speedMult: 0.75, hosMult: 1.10, weight: 10 },
+    );
+  }
+
+  // Взвешенный случайный выбор
+  function pickWeighted(): WeatherEvent {
+    const total = pool.reduce((s, e) => s + e.weight, 0);
+    let r = Math.random() * total;
+    for (const e of pool) { r -= e.weight; if (r <= 0) return e; }
+    return pool[0];
+  }
+
+  const count = Math.random() < 0.35 ? 2 : 1;
   const zones: WeatherZone[] = [];
+  const usedEvents = new Set<string>();
+
   for (let i = 0; i < count; i++) {
-    const ev = WEATHER_EVENTS[Math.floor(Math.random() * WEATHER_EVENTS.length)];
-    const stateCount = 1 + Math.floor(Math.random() * 3);
-    const shuffled = [...ALL_STATES].sort(() => Math.random() - 0.5);
+    let ev = pickWeighted();
+    // Не повторять одно событие дважды
+    let attempts = 0;
+    while (usedEvents.has(ev.event) && attempts < 5) { ev = pickWeighted(); attempts++; }
+    usedEvents.add(ev.event);
+
+    // Берём 1-3 штата из региона события
+    const regionStates = [...ev.states].sort(() => Math.random() - 0.5);
+    const stateCount = 1 + Math.floor(Math.random() * Math.min(3, regionStates.length));
+
     zones.push({
       id: `weather_${currentMinute}_${i}`,
       event: ev.event,
-      states: shuffled.slice(0, stateCount),
+      states: regionStates.slice(0, stateCount),
       speedMult: ev.speedMult,
       hosMult: ev.hosMult,
-      endMinute: currentMinute + 60 + Math.floor(Math.random() * 120), // 1-3 часа
+      endMinute: currentMinute + 90 + Math.floor(Math.random() * 150), // 1.5-4 часа
     });
   }
   return zones;
