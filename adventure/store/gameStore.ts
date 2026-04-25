@@ -10,6 +10,7 @@ import {
   buildSimpleRoute,
   getPositionOnRoute,
 } from '../utils/serviceVehicleHelpers';
+import { hybridSave, hybridLoad, startAutoSave, stopAutoSave } from '../utils/firebaseSaveSystem';
 // ─── OSRM fetch с retry и увеличенным таймаутом ──────────
 async function fetchRoute(fromLng: number, fromLat: number, toLng: number, toLat: number, retries = 2): Promise<Array<[number,number]> | null> {
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -478,7 +479,7 @@ interface GameState {
   
   // Сохранение и загрузка
   saveGame: () => void;
-  loadGame: () => boolean;
+  loadGame: () => Promise<boolean>;
   clearSave: () => void;
   testDeliveryPopup: () => void;
 
@@ -3358,66 +3359,64 @@ case 'detention': {
   },
 
   saveGame: () => {
-    try {
-      if (typeof window === 'undefined' || !window.localStorage) {
-        console.warn('⚠️ localStorage not available');
-        return;
-      }
-      const state = get();
-      const saveData = {
-        version: 5,
-        phase: state.phase,
-        day: state.day,
-        gameMinute: state.gameMinute,
-        sessionName: state.sessionName,
-        balance: state.balance,
-        totalEarned: state.totalEarned,
-        totalLost: state.totalLost,
-        financeLog: state.financeLog,
-        reputation: state.reputation,
-        trucks: state.trucks,
-        availableLoads: state.availableLoads,
-        activeLoads: state.activeLoads,
-        bookedLoads: state.bookedLoads,
-        brokers: state.brokers,
-        activeEvents: state.activeEvents,
-        resolvedEvents: state.resolvedEvents,
-        notifications: state.notifications,
-        unreadCount: state.unreadCount,
-        pendingEmailResponses: state.pendingEmailResponses,
-        savedAt: Date.now(),
-        activeWeatherZones: state.activeWeatherZones,
-        driverCandidates: state.driverCandidates,
-        pendingFactoringOffers: state.pendingFactoringOffers,
-      };
-      localStorage.setItem('dispatcher-game-save', JSON.stringify(saveData));
-      console.log('✅ Game saved');
-    } catch (error) {
-      console.error('❌ Failed to save game:', error);
-    }
+    const state = get();
+    const saveData = {
+      version: 5,
+      phase: state.phase,
+      day: state.day,
+      gameMinute: state.gameMinute,
+      sessionName: state.sessionName,
+      balance: state.balance,
+      totalEarned: state.totalEarned,
+      totalLost: state.totalLost,
+      financeLog: state.financeLog,
+      reputation: state.reputation,
+      trucks: state.trucks,
+      availableLoads: state.availableLoads,
+      activeLoads: state.activeLoads,
+      bookedLoads: state.bookedLoads,
+      brokers: state.brokers,
+      activeEvents: state.activeEvents,
+      resolvedEvents: state.resolvedEvents,
+      notifications: state.notifications,
+      unreadCount: state.unreadCount,
+      pendingEmailResponses: state.pendingEmailResponses,
+      savedAt: Date.now(),
+      activeWeatherZones: state.activeWeatherZones,
+      driverCandidates: state.driverCandidates,
+      pendingFactoringOffers: state.pendingFactoringOffers,
+    };
+    
+    // Гибридное сохранение: localStorage + Firebase
+    hybridSave(saveData).catch(error => {
+      console.error('❌ Hybrid save failed:', error);
+    });
   },
 
-  loadGame: () => {
+  loadGame: async () => {
     try {
-      if (typeof window === 'undefined' || !window.localStorage) {
-        console.warn('⚠️ localStorage not available');
+      // Гибридная загрузка: сначала Firebase, потом localStorage
+      const saveData = await hybridLoad();
+      
+      if (!saveData) {
+        console.log('ℹ️ No save found');
         return false;
       }
-      const saved = localStorage.getItem('dispatcher-game-save');
-      if (!saved) return false;
-      
-      const saveData = JSON.parse(saved);
 
       // Сбрасываем старые сохранения без версии или с устаревшей версией
       if (!saveData.version || saveData.version < 5) {
-        localStorage.removeItem('dispatcher-game-save');
+        if (typeof window !== 'undefined' && window.localStorage) {
+          localStorage.removeItem('dispatcher-game-save');
+        }
         console.log('🔄 Old save detected, resetting...');
         return false;
       }
 
       // Сбрасываем сохранения со старым количеством траков (> 1 — теперь стартуем с 1)
       if (saveData.trucks && saveData.trucks.length > 1) {
-        localStorage.removeItem('dispatcher-game-save');
+        if (typeof window !== 'undefined' && window.localStorage) {
+          localStorage.removeItem('dispatcher-game-save');
+        }
         console.log('🔄 Old save with multiple trucks, resetting to 1 truck...');
         return false;
       }

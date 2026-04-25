@@ -9,11 +9,13 @@ import {
   getQualityDescription,
   getCurrentPerformanceSettings
 } from '../utils/performanceSettings';
+import SavesManagerPopup from './SavesManagerPopup';
 
 export default function SettingsPopup({ onClose }: { onClose: () => void }) {
   const { timeSpeed, setTimeSpeed, saveGame, clearSave } = useGameStore();
   const [confirmClear, setConfirmClear] = useState(false);
   const [quality, setQuality] = useState<GraphicsQuality>(loadQualitySetting());
+  const [showSavesManager, setShowSavesManager] = useState(false);
 
   const handleQualityChange = (newQuality: GraphicsQuality) => {
     setQuality(newQuality);
@@ -23,6 +25,10 @@ export default function SettingsPopup({ onClose }: { onClose: () => void }) {
   };
 
   const currentSettings = getCurrentPerformanceSettings();
+
+  if (showSavesManager) {
+    return <SavesManagerPopup onClose={() => setShowSavesManager(false)} />;
+  }
 
   return (
     <div style={{
@@ -44,6 +50,24 @@ export default function SettingsPopup({ onClose }: { onClose: () => void }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <span style={{ fontSize: 18, fontWeight: 900, color: '#111827' }}>⚙️ Настройки</span>
           <span onClick={onClose} style={{ cursor: 'pointer', fontSize: 18, color: '#6b7280' }}>✕</span>
+        </div>
+
+        {/* Cloud Saves */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', marginBottom: 8 }}>☁️ Облачные сохранения</div>
+          <button onClick={() => setShowSavesManager(true)} style={{
+            width: '100%', padding: '12px 14px', borderRadius: 10, cursor: 'pointer', textAlign: 'left',
+            background: 'linear-gradient(135deg, rgba(6,182,212,0.1), rgba(14,165,233,0.08))',
+            border: '1px solid rgba(6,182,212,0.3)',
+            color: '#0891b2', fontSize: 13, fontWeight: 700,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <span>💾 Мои сохранения</span>
+            <span style={{ fontSize: 18 }}>→</span>
+          </button>
+          <p style={{ fontSize: 11, color: '#6b7280', margin: '8px 0 0', lineHeight: 1.4 }}>
+            Просмотр истории сохранений и загрузка предыдущих версий
+          </p>
         </div>
 
         {/* Graphics Quality */}

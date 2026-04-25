@@ -348,10 +348,11 @@ export default function GameScreen() {
   useEffect(() => {
     // При рефреше — восстанавливаем сохранение только если phase === 'menu' (store в дефолтном состоянии)
     if (phase === 'menu') {
-      const loaded = loadGame();
-      if (!loaded) {
-        setTimeout(() => router.replace('/'), 100);
-      }
+      loadGame().then(loaded => {
+        if (!loaded) {
+          setTimeout(() => router.replace('/'), 100);
+        }
+      });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
