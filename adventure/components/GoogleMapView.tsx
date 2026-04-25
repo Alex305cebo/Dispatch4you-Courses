@@ -117,10 +117,11 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
   const [currentMapType, setCurrentMapType] = useState<'roadmap' | 'satellite' | 'hybrid' | 'terrain'>('hybrid');
   const [followDragPulse, setFollowDragPulse] = useState(false);
 
-  const { trucks, availableLoads, phase, gameMinute } = useGameStore();
+  const { trucks, availableLoads, phase, gameMinute, serviceVehicles } = useGameStore();
   const { mode: themeMode, colors: T } = useThemeStore();
   // Показываем траки всегда кроме главного меню
   const activeTrucks = phase !== 'menu' ? trucks : [];
+  const activeServiceVehicles = phase !== 'menu' ? (serviceVehicles || []) : [];
 
   // ── ЗАГРУЗКА GOOGLE MAPS API ─────────────────────────────────────────────
   useEffect(() => {
@@ -635,6 +636,122 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       }
     });
   }, [activeTrucks.length, mapLoaded]);
+
+  // ── СОЗДАНИЕ/УДАЛЕНИЕ МАРКЕРОВ СЕРВИСНЫХ МАШИН ──────────────────────────
+  const serviceMarkersRef = useRef<Map<string, any>>(new Map());
+  const servicePolylinesRef = useRef<Map<string, any>>(new Map());
+
+  useEffect(() => {
+    if (!googleMapRef.current || !mapLoaded) return;
+
+    const google = window.google;
+    if (!google || !google.maps) return;
+
+    const map = googleMapRef.current;
+
+    // Удаляем старые маркеры сервисных машин, которых больше нет
+    const currentServiceIds = new Set(activeServiceVehicles.map((v: any) => v.id));
+    serviceMarkersRef.current.forEach((marker, serviceId) => {
+      if (!currentServiceIds.has(serviceId)) {
+        marker.setMap(null);
+        serviceMarkersRef.current.delete(serviceId);
+        console.log('🗑️ Удалён маркер сервисной машины:', serviceId);
+      }
+    });
+    servicePolylinesRef.current.forEach((polyline, serviceId) => {
+      if (!currentServiceIds.has(serviceId)) {
+        polyline.setMap(null);
+        servicePolylinesRef.current.delete(serviceId);
+      }
+    });
+
+    // Создаём маркеры и маршруты для сервисных машин
+    activeServiceVehicles.forEach((vehicle: any) => {
+      // Иконка сервисной машины
+      const serviceIcon = {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 10,
+        fillColor: '#06b6d4', // cyan для сервиса
+        fillOpacity: 1,
+        strokeColor: '#ffffff',
+        strokeWeight: 2,
+      };
+
+      // Создаём или обновляем маркер
+      let marker = serviceMarkersRef.current.get(vehicle.id);
+      const position = { lat: vehicle.position[0], lng: vehicle.position[1] };
+
+      if (!marker) {
+        marker = new google.maps.Marker({
+          position,
+          map,
+          title: `Service Vehicle: ${vehicle.type}`,
+          icon: serviceIcon,
+          zIndex: 1500, // выше траков
+          optimized: false,
+        });
+
+        // InfoWindow с прогрессом
+        marker.addListener('click', () => {
+          const truck = activeTrucks.find((t: any) => t.id === vehicle.targetTruckId);
+          const { SERVICE_VEHICLE_CONFIGS } = require('../types/serviceVehicle');
+          const config = SERVICE_VEHICLE_CONFIGS[vehicle.type];
+          const { formatETA } = require('../utils/serviceVehicleHelpers');
+          
+          const remainingMinutes = Math.round(vehicle.eta * (1 - vehicle.progress));
+          const progressPercent = Math.round(vehicle.progress * 100);
+
+          const content = `
+            <div style="padding:10px 12px;min-width:200px;max-width:280px;background:#f0fdfa;border:2px solid #06b6d4;border-radius:12px;font-family:system-ui,-apple-system,sans-serif;">
+              <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:6px;">
+                ${config.icon} ${config.label}
+              </div>
+              <div style="font-size:12px;color:#374151;line-height:1.4;">
+                ${vehicle.fromCity} → ${truck?.name || 'Truck'}
+              </div>
+              <div style="margin-top:8px;padding-top:8px;border-top:1px solid #06b6d4;">
+                <div style="font-size:11px;color:#6b7280;margin-bottom:4px;">
+                  Progress: ${progressPercent}%
+                </div>
+                <div style="width:100%;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden;">
+                  <div style="width:${progressPercent}%;height:100%;background:linear-gradient(90deg,#06b6d4,#0891b2);border-radius:3px;"></div>
+                </div>
+                <div style="font-size:12px;font-weight:600;color:#111827;margin-top:6px;">
+                  ETA: ${formatETA(remainingMinutes)}
+                </div>
+              </div>
+            </div>
+          `;
+          
+          if (infoWindowRef.current) {
+            infoWindowRef.current.setContent(content);
+            infoWindowRef.current.open(map, marker);
+          }
+        });
+
+        serviceMarkersRef.current.set(vehicle.id, marker);
+      } else {
+        // Обновляем позицию существующего маркера
+        marker.setPosition(position);
+      }
+
+      // Рисуем маршрут (polyline) от текущей позиции к траку
+      let polyline = servicePolylinesRef.current.get(vehicle.id);
+      if (!polyline && vehicle.route && vehicle.route.length > 1) {
+        const path = vehicle.route.map(([lat, lng]: [number, number]) => ({ lat, lng }));
+        polyline = new google.maps.Polyline({
+          path,
+          geodesic: false,
+          strokeColor: '#06b6d4',
+          strokeOpacity: 0.6,
+          strokeWeight: 3,
+          map,
+          zIndex: 100,
+        });
+        servicePolylinesRef.current.set(vehicle.id, polyline);
+      }
+    });
+  }, [activeServiceVehicles.length, activeServiceVehicles.map((v: any) => `${v.id}:${v.progress}`).join('|'), mapLoaded]);
 
   const directionsRenderersRef = useRef<Map<string, any>>(new Map());
   const routeCacheRef = useRef<Map<string, string>>(new Map());
