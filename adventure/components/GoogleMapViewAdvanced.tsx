@@ -375,16 +375,111 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
     if (infoWindowRef.current && googleMapRef.current) {
       const marker = markersRef.current.get(truck.id);
       if (marker) {
+        const statusColor = getTruckColor(truck, gameMinute);
+        const hos = (truck.hoursOfService || truck.hoursLeft || 0).toFixed(1);
+        const hosPercent = ((parseFloat(hos) / 11) * 100).toFixed(0);
+        
         const content = `
-          <div style="padding:12px;min-width:220px;color:#000;font-family:system-ui,-apple-system,sans-serif;">
-            <h3 style="margin:0 0 10px 0;font-size:17px;font-weight:700;color:#0f172a;">${truck.name}</h3>
-            <div style="display:flex;flex-direction:column;gap:6px;">
-              <p style="margin:0;font-size:13px;"><strong>ID:</strong> ${truck.id}</p>
-              <p style="margin:0;font-size:13px;"><strong>Статус:</strong> ${STATUS_LABEL[truck.status]}</p>
-              <p style="margin:0;font-size:13px;"><strong>Город:</strong> ${truck.currentCity}</p>
-              ${truck.destination ? `<p style="margin:0;font-size:13px;"><strong>Пункт назначения:</strong> ${truck.destination}</p>` : ''}
-              <p style="margin:0;font-size:13px;"><strong>HOS:</strong> ${(truck.hoursOfService || truck.hoursLeft || 0).toFixed(1)} / 11 ч</p>
-              <p style="margin:0;font-size:13px;"><strong>Пробег:</strong> ${truck.mileage.toLocaleString()} миль</p>
+          <div style="
+            padding:0;
+            min-width:260px;
+            max-width:280px;
+            font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+            background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border-radius:12px;
+            overflow:hidden;
+            box-shadow:0 8px 24px rgba(0,0,0,0.4);
+          ">
+            <!-- Заголовок с цветной полосой статуса -->
+            <div style="
+              background:${statusColor};
+              padding:12px 16px;
+              border-bottom:1px solid rgba(255,255,255,0.1);
+            ">
+              <h3 style="
+                margin:0;
+                font-size:18px;
+                font-weight:800;
+                color:#fff;
+                text-shadow:0 2px 4px rgba(0,0,0,0.3);
+              ">${truck.name}</h3>
+              <p style="
+                margin:4px 0 0 0;
+                font-size:13px;
+                font-weight:600;
+                color:rgba(255,255,255,0.9);
+                text-transform:uppercase;
+                letter-spacing:0.5px;
+              ">${STATUS_LABEL[truck.status]}</p>
+            </div>
+
+            <!-- Основная информация -->
+            <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
+              
+              <!-- ID трака -->
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">🚛</span>
+                <div style="flex:1;">
+                  <p style="margin:0;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">ID</p>
+                  <p style="margin:2px 0 0 0;font-size:14px;font-weight:700;color:#e2e8f0;">${truck.id}</p>
+                </div>
+              </div>
+
+              <!-- Местоположение -->
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">📍</span>
+                <div style="flex:1;">
+                  <p style="margin:0;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Текущий город</p>
+                  <p style="margin:2px 0 0 0;font-size:14px;font-weight:700;color:#e2e8f0;">${truck.currentCity}</p>
+                </div>
+              </div>
+
+              ${truck.destination ? `
+              <!-- Пункт назначения -->
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">🎯</span>
+                <div style="flex:1;">
+                  <p style="margin:0;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Пункт назначения</p>
+                  <p style="margin:2px 0 0 0;font-size:14px;font-weight:700;color:#06b6d4;">${truck.destination}</p>
+                </div>
+              </div>
+              ` : ''}
+
+              <!-- HOS с прогресс-баром -->
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">⏱️</span>
+                <div style="flex:1;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                    <p style="margin:0;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Hours of Service</p>
+                    <p style="margin:0;font-size:13px;font-weight:700;color:#e2e8f0;">${hos} / 11 ч</p>
+                  </div>
+                  <div style="
+                    width:100%;
+                    height:6px;
+                    background:rgba(255,255,255,0.1);
+                    border-radius:3px;
+                    overflow:hidden;
+                  ">
+                    <div style="
+                      width:${hosPercent}%;
+                      height:100%;
+                      background:${parseFloat(hos) > 8 ? '#4ade80' : parseFloat(hos) > 4 ? '#fbbf24' : '#f87171'};
+                      border-radius:3px;
+                      transition:width 0.3s ease;
+                    "></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Пробег -->
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">📊</span>
+                <div style="flex:1;">
+                  <p style="margin:0;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Пробег</p>
+                  <p style="margin:2px 0 0 0;font-size:14px;font-weight:700;color:#e2e8f0;">${truck.mileage.toLocaleString()} миль</p>
+                </div>
+              </div>
+
             </div>
           </div>
         `;
@@ -392,7 +487,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         infoWindowRef.current.open(googleMapRef.current, marker);
       }
     }
-  }, [onTruckSelect]);
+  }, [onTruckSelect, gameMinute]);
 
   // ── СЛЕДОВАНИЕ ЗА ТРАКОМ (НАЧАЛЬНАЯ ЦЕНТРОВКА) ──────────────────────────
   useEffect(() => {

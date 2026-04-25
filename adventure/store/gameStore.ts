@@ -1,6 +1,7 @@
 ﻿import { create } from 'zustand';
 import { SHIFT_DURATION, SHIFT_START_HOUR, SHIFT_START_MINUTE, CITIES, CITY_STATE, TIME_SCALE } from '../constants/config';
 import { findNearestTruckStop } from '../constants/truckStops';
+import { ServiceVehicle, ServiceVehicleType } from '../types/serviceVehicle';
 import { 
   sendLoadOffer, 
   sendBreakdownAlert, 
@@ -270,6 +271,9 @@ interface GameState {
   // Траки
   trucks: Truck[];
 
+  // Service Vehicles (roadside assist, tow trucks, etc.)
+  serviceVehicles: ServiceVehicle[];
+
   // Load Board
   availableLoads: LoadOffer[];
   activeLoads: ActiveLoad[];
@@ -308,6 +312,10 @@ interface GameState {
 
   // Breakdown repair choice
   repairBreakdown: (truckId: string, choice: 'roadside' | 'tow') => void;
+
+  // Service Vehicles
+  callRoadsideAssist: (truckId: string, vehicleType: ServiceVehicleType) => Promise<void>;
+  updateServiceVehicles: () => void;
 
   // Переговоры
   negotiation: {
@@ -1245,6 +1253,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   reputation: 100,
   sessionName: '',
   trucks: INITIAL_TRUCKS,
+  serviceVehicles: [], // Roadside assist, tow trucks, etc.
   availableLoads: [],
   activeLoads: [],
   bookedLoads: [],
@@ -2561,6 +2570,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       setTimeout(() => get().triggerRandomEvent(), 500);
     }
 
+    // ── UPDATE SERVICE VEHICLES ──
+    // Update roadside assist, tow trucks, mobile mechanics
+    get().updateServiceVehicles();
+
     set((s: any) => ({
       gameMinute: newMinute,
       trucks: updatedTrucks,
@@ -3469,6 +3482,229 @@ case 'detention': {
     window.dispatchEvent(new CustomEvent('mapToast', {
       detail: { message: (choice === 'roadside' ? '🔧' : '🚛') + ' ' + truck.name + ' — ремонт $' + cost.toLocaleString(), color: '#fbbf24', truckId: truckId }
     }));
+  },
+
+  // ── SERVICE VEHICLE SYSTEM ──────────────────────────────────────────────────
+  /**
+   * Call roadside assistance for a broken down truck
+   * Creates a service vehicle that drives from nearest city to the truck
+   */
+  callRoadsideAssist: async (truckId: string, serviceType: ServiceVehicleType) => {
+    const { trucks, gameMinute, serviceVehicles } = get();
+    const truck = trucks.find(t => t.id === truckId);
+    if (!truck) return;
+
+    // Import helper functions
+    const { 
+      findNearestCity, 
+      calculateDistance, 
+      calculateServiceETA, 
+      calculateServiceCost,
+      buildSimpleRoute 
+    } = await import('../utils/serviceVehicleHelpers');
+    const { SERVICE_VEHICLE_CONFIGS } = await import('../types/serviceVehicle');
+
+    // Find nearest city
+    const nearestCity = findNearestCity(truck.position);
+    const cityPosition = CITIES[nearestCity];
+    if (!cityPosition) {
+      console.error('City not found:', nearestCity);
+      return;
+    }
+
+    // Calculate distance, ETA, and cost
+    const distance = calculateDistance(
+      cityPosition[0], cityPosition[1],
+      truck.position[0], truck.position[1]
+    );
+    const eta = calculateServiceETA(distance, serviceType);
+    const gameHour = Math.floor((SHIFT_START_HOUR * 60 + SHIFT_START_MINUTE + gameMinute) / 60) % 24;
+    const cost = calculateServiceCost(distance, serviceType, gameHour);
+
+    // Build route from city to truck
+    const route = buildSimpleRoute(cityPosition, truck.position);
+
+    // Get config for this service type
+    const config = SERVICE_VEHICLE_CONFIGS[serviceType];
+
+    // Create service vehicle
+    const serviceVehicle: ServiceVehicle = {
+      id: `service-${Date.now()}-${Math.random()}`,
+      type: serviceType,
+      position: cityPosition,
+      targetTruckId: truckId,
+      fromCity: nearestCity,
+      status: 'dispatched',
+      route,
+      progress: 0,
+      eta,
+      cost,
+      dispatchedAt: gameMinute,
+      repairDuration: config.repairDuration,
+    };
+
+    // Add to service vehicles list
+    set({ serviceVehicles: [...serviceVehicles, serviceVehicle] });
+
+    // Charge the cost
+    get().removeMoney(cost, `${config.label} — ${truck.name}: ${nearestCity} → ${truck.currentCity}`);
+
+    // Add to trip expenses
+    const updatedTrucks = trucks.map(t =>
+      t.id === truckId ? {
+        ...t,
+        awaitingRepairChoice: false,
+        tripExpenses: [...((t as any).tripExpenses ?? []), {
+          label: `${config.label} — ${nearestCity}`,
+          amount: cost,
+          minute: gameMinute,
+        }],
+      } : t
+    );
+    set({ trucks: updatedTrucks });
+
+    // Send notification
+    get().addNotification({
+      type: 'text',
+      priority: 'high',
+      from: truck.driver,
+      subject: `${config.icon} ${config.label} вызван — ${truck.name}`,
+      message: `${config.label} выезжает из ${nearestCity}. Расстояние: ${Math.round(distance)} миль. ETA: ~${eta} мин. Стоимость: $${cost.toLocaleString()}`,
+      actionRequired: false,
+      relatedTruckId: truckId,
+    });
+
+    // Map toast
+    window.dispatchEvent(new CustomEvent('mapToast', {
+      detail: {
+        message: `${config.icon} ${config.label} → ${truck.name}`,
+        color: '#06b6d4',
+        truckId: truckId,
+      }
+    }));
+  },
+
+  /**
+   * Update all service vehicles - move them along routes, handle arrivals
+   * Called every game tick
+   */
+  updateServiceVehicles: () => {
+    const { serviceVehicles, gameMinute, trucks } = get();
+    if (serviceVehicles.length === 0) return;
+
+    const updatedVehicles: ServiceVehicle[] = [];
+    const updatedTrucks = [...trucks];
+
+    for (const vehicle of serviceVehicles) {
+      // Skip completed or cancelled vehicles
+      if (vehicle.status === 'completed' || vehicle.status === 'cancelled') {
+        continue;
+      }
+
+      // Handle repairing status
+      if (vehicle.status === 'repairing') {
+        const repairEndMinute = (vehicle.repairStartedAt || 0) + vehicle.repairDuration;
+        if (gameMinute >= repairEndMinute) {
+          // Repair complete!
+          const truckIndex = updatedTrucks.findIndex(t => t.id === vehicle.targetTruckId);
+          if (truckIndex !== -1) {
+            updatedTrucks[truckIndex] = {
+              ...updatedTrucks[truckIndex],
+              status: updatedTrucks[truckIndex].currentLoad ? 'loaded' : 'idle',
+              outOfOrderUntil: undefined,
+            };
+
+            // Send completion notification
+            get().addNotification({
+              type: 'text',
+              priority: 'medium',
+              from: updatedTrucks[truckIndex].driver,
+              subject: `✅ Ремонт завершён — ${updatedTrucks[truckIndex].name}`,
+              message: `${updatedTrucks[truckIndex].name} отремонтирован и готов к работе!`,
+              actionRequired: false,
+              relatedTruckId: vehicle.targetTruckId,
+            });
+
+            // Map toast
+            window.dispatchEvent(new CustomEvent('mapToast', {
+              detail: {
+                message: `✅ ${updatedTrucks[truckIndex].name} — ремонт завершён`,
+                color: '#10b981',
+                truckId: vehicle.targetTruckId,
+              }
+            }));
+          }
+
+          // Mark vehicle as completed (will be removed)
+          continue;
+        } else {
+          // Still repairing
+          updatedVehicles.push(vehicle);
+        }
+        continue;
+      }
+
+      // Handle arrived status
+      if (vehicle.status === 'arrived') {
+        // Start repair
+        updatedVehicles.push({
+          ...vehicle,
+          status: 'repairing',
+          repairStartedAt: gameMinute,
+        });
+        continue;
+      }
+
+      // Handle en_route status - move vehicle
+      if (vehicle.status === 'en_route' || vehicle.status === 'dispatched') {
+        // Calculate how much progress to make this tick
+        // ETA is in game minutes, so progress per minute = 1 / eta
+        const progressPerMinute = 1 / vehicle.eta;
+        const newProgress = Math.min(1, vehicle.progress + progressPerMinute);
+
+        // Get new position along route
+        const { getPositionOnRoute } = require('../utils/serviceVehicleHelpers');
+        const newPosition = getPositionOnRoute(vehicle.route, newProgress);
+
+        // Check if arrived
+        if (newProgress >= 1) {
+          updatedVehicles.push({
+            ...vehicle,
+            progress: 1,
+            position: vehicle.route[vehicle.route.length - 1],
+            status: 'arrived',
+          });
+
+          // Send arrival notification
+          const truck = trucks.find(t => t.id === vehicle.targetTruckId);
+          if (truck) {
+            get().addNotification({
+              type: 'text',
+              priority: 'medium',
+              from: truck.driver,
+              subject: `🚗 Помощь прибыла — ${truck.name}`,
+              message: `Сервис прибыл к ${truck.name}. Начинаем ремонт (~${vehicle.repairDuration} мин)...`,
+              actionRequired: false,
+              relatedTruckId: vehicle.targetTruckId,
+            });
+          }
+        } else {
+          // Still moving
+          updatedVehicles.push({
+            ...vehicle,
+            progress: newProgress,
+            position: newPosition,
+            status: 'en_route',
+          });
+        }
+      }
+    }
+
+    // Update state
+    set({ 
+      serviceVehicles: updatedVehicles,
+      trucks: updatedTrucks,
+    });
   },
 
   // ── DRIVER MARKETPLACE ───────────────────────────────────────────────────────
