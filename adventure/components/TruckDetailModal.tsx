@@ -8,9 +8,11 @@ import CallModal from './CallModal';
 import CancelLoadModal from './CancelLoadModal';
 import MechanicChatModal from './MechanicChatModal';
 import BrokerChatModal from './BrokerChatModal';
+import ServiceChoiceModal from './ServiceChoiceModal';
 import { useTheme } from '../hooks/useTheme';
 import { ThemeColors } from '../constants/themes';
 import { getDriverAvatar } from '../utils/driverAvatars';
+import { ServiceVehicleType } from '../types/serviceVehicle';
 
 interface Props {
   truck: Truck | null;
@@ -47,7 +49,8 @@ export default function TruckDetailModal({ truck: truckProp, onClose, onFindLoad
   const [showBrokerSMS, setShowBrokerSMS] = useState(false);
   const [showCancelLoad, setShowCancelLoad] = useState(false);
   const [showMechanic, setShowMechanic] = useState(false);
-  const { gameMinute, removeMoney } = useGameStore();
+  const [showServiceChoice, setShowServiceChoice] = useState(false);
+  const { gameMinute, removeMoney, serviceVehicles } = useGameStore();
 
   // Live-подписка: всегда берём актуальный трак из store
   const liveTruck = useLiveTruck(truckProp?.id);
@@ -283,7 +286,7 @@ export default function TruckDetailModal({ truck: truckProp, onClose, onFindLoad
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
                   <TouchableOpacity
                     style={[s.roadsideBtn, roadsideOrdered && s.roadsideBtnDone]}
-                    onPress={() => setShowMechanic(true)}
+                    onPress={() => setShowServiceChoice(true)}
                     activeOpacity={0.8}
                   >
                     <Text style={[s.roadsideBtnText, roadsideOrdered && { color: '#4ade80' }]}>
@@ -448,6 +451,18 @@ export default function TruckDetailModal({ truck: truckProp, onClose, onFindLoad
       {showBrokerCall && truck.currentLoad && <CallModal contactName={truck.currentLoad.brokerName || 'Broker'} contactRole="broker" truckId={truck.id} onClose={() => setShowBrokerCall(false)} />}
       {showBrokerSMS && truck.currentLoad && <BrokerChatModal brokerName={truck.currentLoad.brokerName || 'Broker'} truckId={truck.id} loadInfo={{ fromCity: truck.currentLoad.fromCity, toCity: truck.currentLoad.toCity, agreedRate: truck.currentLoad.agreedRate, commodity: truck.currentLoad.commodity }} onClose={() => setShowBrokerSMS(false)} />}
       {showCancelLoad && truck.currentLoad && <CancelLoadModal load={truck.currentLoad} onClose={() => setShowCancelLoad(false)} />}
+      {showServiceChoice && (
+        <ServiceChoiceModal
+          visible={showServiceChoice}
+          truckName={truck.name}
+          truckPosition={truck.position}
+          onClose={() => setShowServiceChoice(false)}
+          onSelect={async (serviceType: ServiceVehicleType) => {
+            await useGameStore.getState().callRoadsideAssist(truck.id, serviceType);
+            setShowServiceChoice(false);
+          }}
+        />
+      )}
       {showMechanic && (
         <MechanicChatModal
           truck={truck}
@@ -548,3 +563,4 @@ function makeStyles(T: ThemeColors) {
   breakdownActionText: { fontSize: 12, fontWeight: '700' },
   });
 }
+
