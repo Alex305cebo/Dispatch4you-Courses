@@ -511,8 +511,13 @@ export default function GameScreen() {
               } as any} />
             ))}
           </div>
+
           {/* Кнопки скорости */}
-          <div style={{ display: 'flex', gap: 3 } as any}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 } as any}>
+            <div style={{ fontSize: 8, fontWeight: 700, color: themeMode === 'dark' ? '#64748b' : '#9ca3af', letterSpacing: '0.5px', textTransform: 'uppercase' } as any}>
+              {'Speed \u00b7 ' + (timeSpeed === 1 ? '60' : timeSpeed === 2 ? '120' : timeSpeed === 5 ? '300' : '600') + ' mph'}
+            </div>
+            <div style={{ display: 'flex', gap: 3 } as any}>
             {isWide ? (
               // Десктоп — кнопки скорости
               <>
@@ -552,8 +557,8 @@ export default function GameScreen() {
                   } as any}>
                   ×{timeSpeed}
                 </button>
-              </>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
