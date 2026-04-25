@@ -185,8 +185,8 @@ const TruckStripComponent = memo(function TruckStripComponent({
         const fromLabel = fromSt ? `${truck.currentCity}, ${fromSt}` : truck.currentCity;
         const toLabel = toSt ? `${truck.destinationCity}, ${toSt}` : (truck.destinationCity || '');
         const statusLabel = (truck as any).onNightStop ? '🌙 Ночёвка' : (truck as any).hosRestUntilMinute > 0 ? '😴 HOS отдых' : STATUS_LABEL[truck.status];
-        const CARD_H = isWide ? 120 : 100;
-        const AVATAR_W = isWide ? 90 : 76;
+        const CARD_H = isWide ? 120 : 110; // Увеличено с 100 до 110 для мобильных
+        const AVATAR_W = isWide ? 90 : 80; // Увеличено с 76 до 80
         const r = parseInt(color.slice(1,3),16), g = parseInt(color.slice(3,5),16), b = parseInt(color.slice(5,7),16);
 
         return (
@@ -204,7 +204,7 @@ const TruckStripComponent = memo(function TruckStripComponent({
               onClick={() => { if (!isDragging.current && !isTouchDragging.current) onTruckClick(truck); }}
               className="truck-card-transparent"
               style={{
-                width: isWide ? 360 : 290, height: CARD_H, borderRadius: 16,
+                width: isWide ? 360 : 310, height: CARD_H, borderRadius: 16, // Увеличено с 290 до 310 для мобильных
                 background: 'transparent',
                 backgroundColor: 'transparent',
                 border: `2px solid ${isSelected ? color : isAlert ? color+'99' : 'rgba(255,255,255,0.3)'}`,
@@ -224,63 +224,63 @@ const TruckStripComponent = memo(function TruckStripComponent({
                 <div style={{ position: 'absolute', top: 5, right: 5 } as any}>
                   <img src={moodEmoji} width={22} height={22} style={{ display: 'block' } as any} />
                 </div>
-                <img src={getDriverAvatar(truck.driver || truck.id)} width={isWide ? 62 : 52} height={isWide ? 62 : 52}
+                <img src={getDriverAvatar(truck.driver || truck.id)} width={isWide ? 62 : 56} height={isWide ? 62 : 56} // Увеличено с 52 до 56
                   style={{ imageRendering: 'auto', display: 'block', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))' } as any} />
                 <div style={{
-                  fontSize: isWide ? 10 : 9, fontWeight: 700, color, background: 'transparent',
+                  fontSize: isWide ? 10 : 10, fontWeight: 700, color, background: 'transparent', // Увеличено с 9 до 10
                   border: `1px solid ${color}44`, borderRadius: 5, padding: '1px 6px', whiteSpace: 'nowrap',
                 } as any}>{statusLabel}</div>
               </div>
 
               {/* ПРАВЫЙ БЛОК */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: isWide ? '8px 12px' : '6px 10px', gap: 0, minWidth: 0 } as any}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: isWide ? '8px 12px' : '8px 12px', gap: 0, minWidth: 0 } as any}> {/* Увеличено padding с 6px 10px до 8px 12px */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 } as any}>
-                  <span style={{ fontSize: isWide ? 15 : 13, fontWeight: 900, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>{driverFullName}</span>
+                  <span style={{ fontSize: isWide ? 15 : 14, fontWeight: 900, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>{driverFullName}</span> {/* Увеличено с 13 до 14 */}
                   <div style={{ display: 'flex', gap: 4, flexShrink: 0, marginLeft: 6 } as any}>
                     {(truck as any).isOldTruck && (
                       <span style={{ fontSize: 9, fontWeight: 800, color: '#ef4444', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 4, padding: '1px 5px' } as any}>СТАРЫЙ</span>
                     )}
-                    <span style={{ fontSize: isWide ? 10 : 9, fontWeight: 700, color: '#38bdf8', background: 'transparent', border: '1px solid rgba(56,189,248,0.3)', borderRadius: 4, padding: '1px 5px' } as any}>TRK {truckNum}</span>
-                    <span style={{ fontSize: isWide ? 10 : 9, fontWeight: 700, color: '#94a3b8', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, padding: '1px 5px' } as any}>TRL {trailerNum}</span>
+                    <span style={{ fontSize: isWide ? 10 : 10, fontWeight: 700, color: '#38bdf8', background: 'transparent', border: '1px solid rgba(56,189,248,0.3)', borderRadius: 4, padding: '1px 5px' } as any}>TRK {truckNum}</span> {/* Увеличено с 9 до 10 */}
+                    <span style={{ fontSize: isWide ? 10 : 10, fontWeight: 700, color: '#94a3b8', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, padding: '1px 5px' } as any}>TRL {trailerNum}</span> {/* Увеличено с 9 до 10 */}
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', borderRadius: 6, padding: '3px 7px', marginBottom: 4 } as any}>
                   <span style={{ fontSize: 10, color: '#64748b', flexShrink: 0 } as any}>📍</span>
                   {truck.destinationCity ? (
-                    <span style={{ fontSize: isWide ? 11 : 10, fontWeight: 700, color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
+                    <span style={{ fontSize: isWide ? 11 : 11, fontWeight: 700, color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}> {/* Увеличено с 10 до 11 */}
                       {fromLabel}<span style={{ color: '#475569', margin: '0 4px' } as any}>→</span><span style={{ color: '#38bdf8' } as any}>{toLabel}</span>
                     </span>
                   ) : (
-                    <span style={{ fontSize: isWide ? 11 : 10, fontWeight: 700, color: '#94a3b8' } as any}>{fromLabel}</span>
+                    <span style={{ fontSize: isWide ? 11 : 11, fontWeight: 700, color: '#94a3b8' } as any}>{fromLabel}</span> {/* Увеличено с 10 до 11 */}
                   )}
                 </div>
                 <div style={{ marginBottom: 4 } as any}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 } as any}>
-                    <span style={{ fontSize: 9, color: '#64748b', fontWeight: 600 } as any}>
+                    <span style={{ fontSize: 10, color: '#64748b', fontWeight: 600 } as any}> {/* Увеличено с 9 до 10 */}
                       {isMoving ? 'Прогресс рейса' : truck.status === 'at_pickup' ? 'Погрузка' : truck.status === 'at_delivery' ? 'Разгрузка' : 'Ожидание'}
                     </span>
-                    <span style={{ fontSize: 9, fontWeight: 800, color: isMoving ? color : '#64748b' } as any}>{isMoving ? `${progressPct}%` : '—'}</span>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: isMoving ? color : '#64748b' } as any}>{isMoving ? `${progressPct}%` : '—'}</span> {/* Увеличено с 9 до 10 */}
                   </div>
                   <div style={{ height: 5, background: 'transparent', borderRadius: 3, overflow: 'hidden' } as any}>
                     <div style={{ height: '100%', width: isMoving ? `${progressPct}%` : '0%', background: `linear-gradient(90deg,${color}66,${color})`, borderRadius: 3, transition: 'width 0.8s ease' } as any} />
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 } as any}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, background: 'transparent', border: `1px solid ${hosColor}44`, borderRadius: 6, padding: '2px 6px' } as any}>
-                    <span style={{ fontSize: isWide ? 13 : 12, fontWeight: 900, color: hosColor, lineHeight: 1 } as any}>{hos.toFixed(1)}</span>
-                    <span style={{ fontSize: 9, fontWeight: 600, color: hosColor, opacity: 0.8 } as any}>h drive</span>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, background: 'transparent', border: `1px solid ${hosColor}44`, borderRadius: 6, padding: '3px 8px' } as any}> {/* Увеличено padding с 2px 6px до 3px 8px */}
+                    <span style={{ fontSize: isWide ? 13 : 13, fontWeight: 900, color: hosColor, lineHeight: 1 } as any}>{hos.toFixed(1)}</span> {/* Увеличено с 12 до 13 */}
+                    <span style={{ fontSize: 10, fontWeight: 600, color: hosColor, opacity: 0.8 } as any}>h drive</span> {/* Увеличено с 9 до 10 */}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 2 } as any}>
                     <span style={{ fontSize: 11 } as any}>😊</span>
-                    <span style={{ fontSize: isWide ? 12 : 11, fontWeight: 800, color: mood >= 60 ? '#34d399' : mood >= 35 ? '#fbbf24' : '#f87171' } as any}>{mood}%</span>
+                    <span style={{ fontSize: isWide ? 12 : 12, fontWeight: 800, color: mood >= 60 ? '#34d399' : mood >= 35 ? '#fbbf24' : '#f87171' } as any}>{mood}%</span> {/* Увеличено с 11 до 12 */}
                   </div>
                   {truck.currentLoad ? (
-                    <div style={{ marginLeft: 'auto', flexShrink: 0, background: 'transparent', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 6, padding: '2px 7px' } as any}>
-                      <span style={{ fontSize: isWide ? 14 : 13, fontWeight: 900, color: '#4ade80' } as any}>${truck.currentLoad.agreedRate.toLocaleString()}</span>
+                    <div style={{ marginLeft: 'auto', flexShrink: 0, background: 'transparent', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 6, padding: '3px 9px' } as any}> {/* Увеличено padding с 2px 7px до 3px 9px */}
+                      <span style={{ fontSize: isWide ? 14 : 14, fontWeight: 900, color: '#4ade80' } as any}>${truck.currentLoad.agreedRate.toLocaleString()}</span> {/* Увеличено с 13 до 14 */}
                     </div>
                   ) : (
-                    <div style={{ marginLeft: 'auto', flexShrink: 0, background: 'transparent', border: '1px solid rgba(148,163,184,0.15)', borderRadius: 6, padding: '2px 7px' } as any}>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: '#475569' } as any}>Нет груза</span>
+                    <div style={{ marginLeft: 'auto', flexShrink: 0, background: 'transparent', border: '1px solid rgba(148,163,184,0.15)', borderRadius: 6, padding: '3px 9px' } as any}> {/* Увеличено padding с 2px 7px до 3px 9px */}
+                      <span style={{ fontSize: 11, fontWeight: 700, color: '#475569' } as any}>Нет груза</span> {/* Увеличено с 10 до 11 */}
                     </div>
                   )}
                 </div>
@@ -301,13 +301,13 @@ const TruckStripComponent = memo(function TruckStripComponent({
         }}
         onMouseDown={(e) => e.stopPropagation()}
         onTouchStart={(e) => e.stopPropagation()}
-        style={{ minWidth: isWide ? 90 : 78, flexShrink: 0, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '2px dashed rgba(56,189,248,0.25)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' } as any}
+        style={{ minWidth: isWide ? 90 : 86, flexShrink: 0, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '2px dashed rgba(56,189,248,0.25)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' } as any} {/* Увеличено с 78 до 86 */}
         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(6,182,212,0.08)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.6)'; }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.25)'; }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '8px 6px' } as any}>
-          <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(56,189,248,0.12)', border: '1.5px solid rgba(56,189,248,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: '#38bdf8' } as any}>+</div>
-          <span style={{ fontSize: 9, fontWeight: 700, color: '#38bdf8', textAlign: 'center', lineHeight: 1.3 } as any}>Купить{'\n'}трак</span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '10px 8px' } as any}> {/* Увеличено padding с 8px 6px до 10px 8px */}
+          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(56,189,248,0.12)', border: '1.5px solid rgba(56,189,248,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#38bdf8' } as any}>+</div> {/* Увеличено с 26 до 32, fontSize с 16 до 18 */}
+          <span style={{ fontSize: 10, fontWeight: 700, color: '#38bdf8', textAlign: 'center', lineHeight: 1.3 } as any}>Купить{'\n'}трак</span> {/* Увеличено с 9 до 10 */}
         </div>
       </div>
     </div>
