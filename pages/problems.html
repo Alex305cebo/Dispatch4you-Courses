@@ -625,11 +625,6 @@
                     <div class="case-fb" id="caseFb"></div>
                     <div class="case-nav"><span class="case-counter" id="caseCounter"></span><button class="case-btn" id="caseNext" onclick="nextCaseStep()">Далее →</button></div>
                 </div>
-                <div class="quiz-score" id="caseScore">
-                    <div class="score-number" id="caseScoreNum"></div>
-                    <p id="caseScoreTxt"></p>
-                    <button class="quiz-restart-btn" onclick="restartCase()">Пройти заново</button>
-                </div>
             </div>
         </div>
     </section>
@@ -775,8 +770,44 @@
             else setTimeout(showCaseScore,1500);
         }
         function nextCaseStep(){caseIdx++;renderCase();}
-        function showCaseScore(){document.getElementById('caseBody').style.display='none';document.getElementById('caseScore').classList.add('visible');document.getElementById('caseScoreNum').textContent=caseScore+'/'+caseSteps.length;document.getElementById('caseScoreTxt').textContent=caseScore===caseSteps.length?'Идеально! Вы справились с кризисом как профессионал.':caseScore>=3?'Хороший результат! Большинство решений верные.':'Перечитайте раздел о решении проблем.';}
-        function restartCase(){caseIdx=0;caseScore=0;document.getElementById('caseBody').style.display='';document.getElementById('caseScore').classList.remove('visible');renderCase();}
+        function showCaseScore(){
+            // Создаем popup для результатов
+            const popup=document.createElement('div');
+            popup.id='caseResultPopup';
+            popup.style.cssText=`position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,rgba(10,14,26,0.98),rgba(7,11,20,0.98));border:2px solid rgba(6,182,212,0.3);border-radius:24px;padding:48px 40px;max-width:500px;width:90%;z-index:10000;box-shadow:0 20px 60px rgba(0,0,0,0.5),0 0 0 1px rgba(6,182,212,0.1) inset;animation:popupFadeIn 0.4s ease`;
+            const p=Math.round(caseScore/caseSteps.length*100);
+            const resultText=p===100?'Идеально! Вы справились с кризисом как профессионал.':p>=60?'Хороший результат! Большинство решений верные.':'Перечитайте раздел о решении проблем.';
+            const scoreColor=p===100?'#10b981':p>=60?'#f59e0b':'#ef4444';
+            popup.innerHTML=`<div style="text-align:center;"><div style="font-size:72px;font-weight:900;background:linear-gradient(135deg,${scoreColor},#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px;">${caseScore}/${caseSteps.length}</div><div style="font-size:20px;font-weight:600;color:#e2e8f0;margin-bottom:32px;">${resultText}</div><button onclick="closeCasePopup();restartCase()" style="padding:14px 32px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;">Пройти заново</button></div>`;
+            const overlay=document.createElement('div');
+            overlay.id='caseResultOverlay';
+            overlay.style.cssText=`position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;animation:overlayFadeIn 0.3s ease`;
+            overlay.onclick=closeCasePopup;
+            if(!document.getElementById('casePopupStyles')){
+                const style=document.createElement('style');
+                style.id='casePopupStyles';
+                style.textContent=`@keyframes popupFadeIn{from{opacity:0;transform:translate(-50%,-45%)}to{opacity:1;transform:translate(-50%,-50%)}}@keyframes overlayFadeIn{from{opacity:0}to{opacity:1}}@keyframes popupFadeOut{from{opacity:1;transform:translate(-50%,-50%)}to{opacity:0;transform:translate(-50%,-55%)}}`;
+                document.head.appendChild(style);
+            }
+            document.body.appendChild(overlay);
+            document.body.appendChild(popup);
+        }
+        function closeCasePopup(){
+            const popup=document.getElementById('caseResultPopup');
+            const overlay=document.getElementById('caseResultOverlay');
+            if(popup){
+                popup.style.animation='popupFadeOut 0.3s ease';
+                setTimeout(()=>{
+                    popup.remove();
+                    if(overlay)overlay.remove();
+                },300);
+            }
+        }
+        function restartCase(){
+            caseIdx=0;
+            caseScore=0;
+            renderCase();
+        }
         document.addEventListener('DOMContentLoaded',renderCase);
 
         // LOSS CALCULATOR
