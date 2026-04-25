@@ -37,6 +37,44 @@ async function fetchRoute(fromLng: number, fromLat: number, toLng: number, toLat
 
 // ─── ТИПЫ ───────────────────────────────────────────────────────────────────
 
+export interface WeatherZone {
+  id: string;
+  event: string;
+  states: string[];   // коды штатов где действует погода
+  speedMult: number;  // множитель скорости (0.5 = 50% скорости)
+  hosMult: number;    // множитель расхода HOS
+  endMinute: number;  // когда заканчивается
+}
+
+// Генерирует 1-2 случайные погодные зоны
+function generateWeatherZones(currentMinute: number): WeatherZone[] {
+  const WEATHER_EVENTS = [
+    { event: '🌨️ Снегопад',    speedMult: 0.55, hosMult: 1.3 },
+    { event: '🌧️ Ливень',      speedMult: 0.70, hosMult: 1.1 },
+    { event: '🌫️ Туман',       speedMult: 0.65, hosMult: 1.15 },
+    { event: '🌪️ Сильный ветер', speedMult: 0.75, hosMult: 1.1 },
+    { event: '🧊 Гололёд',     speedMult: 0.45, hosMult: 1.4 },
+    { event: '⛈️ Гроза',       speedMult: 0.60, hosMult: 1.2 },
+  ];
+  const ALL_STATES = ['TX','CA','FL','NY','IL','OH','PA','GA','NC','MI','TN','MO','IN','WI','CO','AZ','WA','OR','NV','UT'];
+  const count = Math.random() < 0.4 ? 2 : 1;
+  const zones: WeatherZone[] = [];
+  for (let i = 0; i < count; i++) {
+    const ev = WEATHER_EVENTS[Math.floor(Math.random() * WEATHER_EVENTS.length)];
+    const stateCount = 1 + Math.floor(Math.random() * 3);
+    const shuffled = [...ALL_STATES].sort(() => Math.random() - 0.5);
+    zones.push({
+      id: `weather_${currentMinute}_${i}`,
+      event: ev.event,
+      states: shuffled.slice(0, stateCount),
+      speedMult: ev.speedMult,
+      hosMult: ev.hosMult,
+      endMinute: currentMinute + 60 + Math.floor(Math.random() * 120), // 1-3 часа
+    });
+  }
+  return zones;
+}
+
 export type TruckStatus =
   | 'idle'        // свободен, ждёт груза
   | 'driving'     // едет к pickup
