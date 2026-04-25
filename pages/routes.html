@@ -2941,24 +2941,46 @@
         }
 
         function showScore() {
-            document.getElementById('quizBody').style.display = 'none';
-            const scoreEl = document.getElementById('quizScore');
-            scoreEl.classList.add('visible');
-            document.getElementById('scoreNumber').textContent = score + '/' + quizData.length;
+            const popup = document.createElement('div');
+            popup.id = 'quizResultPopup';
+            popup.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,rgba(10,14,26,0.98),rgba(7,11,20,0.98));border:2px solid rgba(6,182,212,0.3);border-radius:24px;padding:48px 40px;max-width:500px;width:90%;z-index:10000;box-shadow:0 20px 60px rgba(0,0,0,0.5),0 0 0 1px rgba(6,182,212,0.1) inset;animation:popupFadeIn 0.4s ease`;
             const pct = Math.round((score / quizData.length) * 100);
             let msg = '';
             if (pct === 100) msg = 'Идеально! Вы отлично знаете географию грузоперевозок!';
             else if (pct >= 75) msg = 'Отличный результат! Ещё немного практики и будет идеально.';
             else if (pct >= 50) msg = 'Неплохо, но стоит повторить материал по регионам и лейнам.';
             else msg = 'Рекомендуем перечитать раздел и попробовать снова.';
-            document.getElementById('scoreText').textContent = msg;
+            const scoreColor = pct === 100 ? '#10b981' : pct >= 75 ? '#f59e0b' : '#ef4444';
+            popup.innerHTML = `<div style="text-align:center;"><div style="font-size:72px;font-weight:900;background:linear-gradient(135deg,${scoreColor},#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px;">${score}/${quizData.length}</div><div style="font-size:20px;font-weight:600;color:#e2e8f0;margin-bottom:32px;">${msg}</div><button onclick="closeQuizPopup();restartQuiz()" style="padding:14px 32px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;">Пройти заново</button></div>`;
+            const overlay = document.createElement('div');
+            overlay.id = 'quizResultOverlay';
+            overlay.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;animation:overlayFadeIn 0.3s ease`;
+            overlay.onclick = closeQuizPopup;
+            if (!document.getElementById('quizPopupStyles')) {
+                const style = document.createElement('style');
+                style.id = 'quizPopupStyles';
+                style.textContent = `@keyframes popupFadeIn{from{opacity:0;transform:translate(-50%,-45%)}to{opacity:1;transform:translate(-50%,-50%)}}@keyframes overlayFadeIn{from{opacity:0}to{opacity:1}}@keyframes popupFadeOut{from{opacity:1;transform:translate(-50%,-50%)}to{opacity:0;transform:translate(-50%,-55%)}}`;
+                document.head.appendChild(style);
+            }
+            document.body.appendChild(overlay);
+            document.body.appendChild(popup);
+        }
+
+        function closeQuizPopup() {
+            const popup = document.getElementById('quizResultPopup');
+            const overlay = document.getElementById('quizResultOverlay');
+            if (popup) {
+                popup.style.animation = 'popupFadeOut 0.3s ease';
+                setTimeout(() => {
+                    popup.remove();
+                    if (overlay) overlay.remove();
+                }, 300);
+            }
         }
 
         function restartQuiz() {
             currentQ = 0;
             score = 0;
-            document.getElementById('quizBody').style.display = '';
-            document.getElementById('quizScore').classList.remove('visible');
             renderQuestion();
         }
 
