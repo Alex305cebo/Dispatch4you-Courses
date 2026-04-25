@@ -44,8 +44,7 @@ export default function SavesManagerPopup({ onClose }: SavesManagerPopupProps) {
       const saveData = await loadSaveFromHistory(saveId);
       if (saveData) {
         // Применяем сохранение к store
-        const { set } = useGameStore.getState();
-        set({
+        useGameStore.setState({
           phase: saveData.phase as any,
           day: saveData.day,
           gameMinute: saveData.gameMinute,

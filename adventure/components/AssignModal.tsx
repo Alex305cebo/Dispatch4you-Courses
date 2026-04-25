@@ -35,7 +35,7 @@ export default function AssignModal({ load, onClose, onAssigned }: Props) {
   return (
     <Modal transparent animationType="fade" visible>
       <View style={styles.overlay}>
-        <View style={styles.modal}>
+        <View style={styles.modal} data-onboarding="assign-area">
           <Text style={styles.title}>🚛 Назначить водителя</Text>
           <Text style={styles.sub}>
             {cityState(load.fromCity)} → {cityState(load.toCity)} · ${(load.agreedRate ?? load.postedRate).toLocaleString()}

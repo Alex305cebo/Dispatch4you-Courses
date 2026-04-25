@@ -316,7 +316,7 @@ export default function TruckShopModal() {
       <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={() => setTruckShopOpen(false)} />
 
       <View style={styles.panelWrap}>
-        <View style={styles.panel}>
+        <View style={styles.panel} data-onboarding="truck-shop">
 
           {/* HEADER */}
           <View style={styles.header}>

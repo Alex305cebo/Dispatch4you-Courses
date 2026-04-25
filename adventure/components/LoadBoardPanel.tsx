@@ -132,6 +132,7 @@ function LoadRow({ load, onCall, isExpanded, onToggle, scrollViewRef, onLayout, 
             style={[styles.callBtn, availableTrucks === 0 && styles.callBtnOff]}
             onPress={availableTrucks > 0 ? onCall : undefined}
             activeOpacity={0.8}
+            data-onboarding="call-broker"
           >
             <GuideSpotlight
               step={['find_load', 'negotiate']}

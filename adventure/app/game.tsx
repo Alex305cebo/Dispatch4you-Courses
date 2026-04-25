@@ -51,6 +51,9 @@ import { getDriverAvatar } from '../utils/driverAvatars';
 import { UnifiedChatUI } from '../components/UnifiedChatUI';
 import { createDemoMessages } from '../utils/demoMessages';
 import TruckShopModal from '../components/TruckShopModal';
+import { useOnboardingStore } from '../store/onboardingStore';
+import { ONBOARDING_STEPS } from '../data/onboardingConfig';
+import OnboardingOverlay from '../components/OnboardingOverlay';
 
 type Tab = 'map' | 'loadboard' | 'trucks' | 'chat';
 
@@ -214,11 +217,11 @@ export default function GameScreen() {
     if (dialogCheckDone.current) return;
     dialogCheckDone.current = true;
 
-    // Проверяем завершён ли онбординг
-    const { isOnboardingComplete } = require('../data/onboardingSteps');
+    // Проверяем завершён ли онбординг (новая система — onboardingStore)
     const nickname = sessionName || 'player';
+    const completed = onbCheckCompleted(nickname);
     
-    if (!isOnboardingComplete(nickname)) {
+    if (!completed) {
       // Новый игрок — НЕ открываем чат автоматически, пусть сам переключится
       // Просто ждём когда он откроет чат
     } else {
@@ -262,6 +265,12 @@ export default function GameScreen() {
   const [showStats, setShowStats] = useState(false);
   const { currentNickname } = useAccountStore();
   const activeGuideStep = useGuideStore(s => s.activeStep);
+  
+  // ── ONBOARDING (попапы) ──
+  const onbStep = useOnboardingStore(s => s.step);
+  const onbIsActive = useOnboardingStore(s => s.isActive);
+  const onbInit = useOnboardingStore(s => s.init);
+  const onbCheckCompleted = useOnboardingStore(s => s.checkCompleted);
   
   // Отслеживание индикаторов траков для уведомлений
   const [truckIndicators, setTruckIndicators] = useState<Record<string, string>>({});
@@ -356,6 +365,49 @@ export default function GameScreen() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ── ONBOARDING: инициализация при первом входе ──
+  useEffect(() => {
+    if (phase !== 'playing') return;
+    const nickname = currentNickname || sessionName || 'player';
+    const completed = onbCheckCompleted(nickname);
+    if (!completed) {
+      onbInit();
+    }
+  }, [phase]);
+
+  // ── ONBOARDING: пауза игрового времени ──
+  useEffect(() => {
+    if (onbIsActive) {
+      setTimeSpeed(0 as any);
+    }
+  }, [onbIsActive]);
+
+  // ── ONBOARDING: auto-switch при смене шага ──
+  useEffect(() => {
+    if (!onbIsActive) return;
+    const config = ONBOARDING_STEPS.find(s => s.id === onbStep);
+    if (!config?.autoSwitch) return;
+
+    if (config.autoSwitch.tab) {
+      switchTab(config.autoSwitch.tab);
+    }
+    if (config.autoSwitch.openModal === 'truckShop') {
+      useGameStore.getState().setTruckShopOpen(true);
+    }
+    if (config.autoSwitch.closeTruckShop) {
+      useGameStore.getState().setTruckShopOpen(false);
+    }
+  }, [onbStep, onbIsActive]);
+
+  // ── ONBOARDING: восстановление скорости после завершения ──
+  useEffect(() => {
+    if (!onbIsActive && phase === 'playing') {
+      const currentSpeed = useGameStore.getState().timeSpeed;
+      if (currentSpeed === 0) setTimeSpeed(1);
+    }
+  }, [onbIsActive]);
+
   useEffect(() => { if (availableLoads.length < 5) refreshLoadBoard(); }, []);
   useEffect(() => {
     if (clockRef.current) clearInterval(clockRef.current);
@@ -445,20 +497,25 @@ export default function GameScreen() {
   const idleTrucks = trucks.filter(t => t.status === 'idle').length;
 
   function handleTruckClick(truck: any) {
+    // Если тот же трак — снимаем выделение
+    if (selectedTruckId === truck.id) {
+      selectTruck(null);
+      window.dispatchEvent(new CustomEvent('followTruckFromCard', { detail: { truckId: null } }));
+      return;
+    }
     selectTruck(truck.id);
-    setDetailTruck(truck);
     if (!isWide) switchTab('map');
-    // Центрируем карту на траке
-    window.dispatchEvent(new CustomEvent('zoomToTruck', {
-      detail: { lng: truck.position[0], lat: truck.position[1] }
+    // Включаем follow mode на карте
+    window.dispatchEvent(new CustomEvent('followTruckFromCard', {
+      detail: { truckId: truck.id, lng: truck.position[0], lat: truck.position[1] }
     }));
-    // Скроллим карточку в центр полосы (для десктопа, на мобильном snap сам справится)
+    // Скроллим карточку в центр полосы
     if (isWide) {
       setTimeout(() => {
         const strip = document.querySelector('.truck-strip-scroll-game') as HTMLElement;
         if (!strip) return;
         const idx = trucks.findIndex(t => t.id === truck.id);
-        const cardW = 360 + 8; // width + gap
+        const cardW = 360 + 8;
         const target = idx * cardW - (strip.clientWidth / 2) + cardW / 2;
         strip.scrollTo({ left: target, behavior: 'smooth' });
       }, 50);
@@ -553,7 +610,7 @@ export default function GameScreen() {
           </div>
 
           {/* Кнопки скорости */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 } as any}>
+          <div data-onboarding="time-controls" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 } as any}>
             <div style={{ fontSize: 8, fontWeight: 700, color: themeMode === 'dark' ? '#64748b' : '#9ca3af', letterSpacing: '0.5px', textTransform: 'uppercase' } as any}>
               {'Speed \u00b7 ' + (timeSpeed === 1 ? '60' : timeSpeed === 2 ? '120' : timeSpeed === 5 ? '300' : '600') + ' mph'}
             </div>
@@ -606,7 +663,7 @@ export default function GameScreen() {
         {/* Статы */}
         <div style={{ display: 'flex', gap: isWide ? 5 : isVerySmall ? 2 : 3, flexShrink: 0 } as any}>
           {/* Баланс */}
-          <button onClick={() => setShowStats(true)} style={{
+          <button data-onboarding="balance" onClick={() => setShowStats(true)} style={{
             padding: isWide ? '4px 8px' : isVerySmall ? '3px 5px' : '3px 6px',
             background: balance >= 0
               ? (themeMode === 'dark' ? 'rgba(52,199,89,0.15)' : 'rgba(52,211,153,0.12)')
@@ -852,6 +909,7 @@ export default function GameScreen() {
       <div
         ref={scrollRef}
         className="truck-strip-scroll-game"
+        data-onboarding="truck-strip"
         style={{
           display: 'flex', overflowX: 'auto', gap: 8,
           padding: isWide ? '8px 10px' : '7px 10px',
@@ -902,7 +960,7 @@ export default function GameScreen() {
         const AVATAR_W = isWide ? 90 : 76;
 
         return (
-          <div key={truck.id} style={{ position: 'relative', flexShrink: 0, scrollSnapAlign: isWide ? 'none' : 'center' } as any}>
+          <div key={truck.id} {...(truckIdx === 0 ? { 'data-onboarding': 'truck-card' } : {})} style={{ position: 'relative', flexShrink: 0, scrollSnapAlign: isWide ? 'none' : 'center' } as any}>
 
             {/* Облачко-уведомление */}
             {indicatorNotifications[truck.id] && (
@@ -1161,6 +1219,7 @@ export default function GameScreen() {
           return (
             <TouchableOpacity
               key={tab.id}
+              {...(tab.id === 'loadboard' ? { 'data-onboarding': 'loadboard-tab' } : {})}
               onPress={() => {
                 if (tab.onPress) {
                   tab.onPress();
@@ -1264,6 +1323,7 @@ export default function GameScreen() {
           return (
             <TouchableOpacity
               key={tab.id}
+              {...(tab.id === 'loadboard' ? { 'data-onboarding': 'loadboard-tab' } : {})}
               onPress={() => {
                 if (tab.onPress) {
                   tab.onPress();
@@ -1365,7 +1425,16 @@ export default function GameScreen() {
   }, [trucks.map(t => t.status).join(',')]);
 
   const mapProps = {
-    onTruckInfo: (id: string) => { const t = trucks.find(x => x.id === id); if (t) setDetailTruck(t); selectTruck(id); },
+    onTruckInfo: (id: string) => {
+      selectTruck(id);
+      // Включаем follow mode через event
+      const t = trucks.find(x => x.id === id);
+      if (t) {
+        window.dispatchEvent(new CustomEvent('followTruckFromCard', {
+          detail: { truckId: id, lng: t.position[0], lat: t.position[1] }
+        }));
+      }
+    },
     onTruckSelect: (id: string) => { selectTruck(id); },
     onFindLoad: (city: string) => { setLoadBoardSearch(city); switchTab('loadboard'); },
     onGuideOpen: () => { setGuideVisible(true); setShowGuidePopup(true); },
@@ -1403,7 +1472,7 @@ export default function GameScreen() {
           {/* Левая колонка: топбар + карта + траки */}
           <View style={[s.leftCol, { position: 'relative' }]}>
             <TopBar />
-            <View style={s.mapArea}>
+            <View style={s.mapArea} data-onboarding="map">
               <ErrorBoundary name="Map"><GoogleMapView {...mapProps} /></ErrorBoundary>
               {/* Карточки траков — поверх карты, сверху */}
               <View style={s.truckStripBar} pointerEvents="box-none">
@@ -1612,6 +1681,7 @@ export default function GameScreen() {
       {showHelp && <HelpPopup onClose={() => setShowHelp(false)} />}
       <TruckShopModal />
       {/* Колокольчик и меню — вне TopBar div чтобы Modal работал корректно */}
+      <div data-onboarding="notification-bell" style={{ display: 'contents' }}>
       <NotificationBell
         onNavigateToTrucks={() => switchTab('trucks')}
         onNavigateToLoads={() => switchTab('chat')}
@@ -1619,6 +1689,7 @@ export default function GameScreen() {
         forceOpen={showBell}
         onClose={() => setShowBell(false)}
       />
+      </div>
       <GameMenu
         forceOpen={showMenu}
         onClose={() => setShowMenu(false)}
@@ -1634,6 +1705,8 @@ export default function GameScreen() {
       />
       {/* Guide Bubble — контекстные подсказки */}
       {guideVisible && <GuideBubble />}
+      {/* Onboarding Overlay — попапы онбординга */}
+      {onbIsActive && <OnboardingOverlay />}
     </View>
   );
 }
