@@ -679,7 +679,8 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
 
       // Создаём или обновляем маркер
       let marker = serviceMarkersRef.current.get(vehicle.id);
-      const position = { lat: vehicle.position[0], lng: vehicle.position[1] };
+      // vehicle.position хранится как [lng, lat] (GeoJSON стандарт)
+      const position = { lat: vehicle.position[1], lng: vehicle.position[0] };
 
       if (!marker) {
         marker = new google.maps.Marker({
@@ -738,7 +739,8 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       // Рисуем маршрут (polyline) от текущей позиции к траку
       let polyline = servicePolylinesRef.current.get(vehicle.id);
       if (!polyline && vehicle.route && vehicle.route.length > 1) {
-        const path = vehicle.route.map(([lat, lng]: [number, number]) => ({ lat, lng }));
+        // vehicle.route хранится как [[lng, lat], ...] (GeoJSON стандарт)
+        const path = vehicle.route.map(([lng, lat]: [number, number]) => ({ lat, lng }));
         polyline = new google.maps.Polyline({
           path,
           geodesic: false,

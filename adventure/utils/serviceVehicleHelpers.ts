@@ -43,16 +43,18 @@ function toRad(degrees: number): number {
 
 /**
  * Find the nearest city to a given position
- * @param position [lat, lng]
+ * @param position [lng, lat] (GeoJSON standard)
  * @returns City name
  */
 export function findNearestCity(position: [number, number]): string {
-  const [lat, lng] = position;
+  const [lng, lat] = position; // GeoJSON: [longitude, latitude]
   let nearestCity = 'Knoxville'; // Default fallback
   let minDistance = Infinity;
   
   Object.entries(CITIES).forEach(([cityName, cityPos]) => {
-    const distance = calculateDistance(lat, lng, cityPos[0], cityPos[1]);
+    // CITIES также хранит [lng, lat]
+    const [cityLng, cityLat] = cityPos;
+    const distance = calculateDistance(lat, lng, cityLat, cityLng);
     if (distance < minDistance) {
       minDistance = distance;
       nearestCity = cityName;
@@ -114,9 +116,9 @@ export function calculateServiceCost(
 /**
  * Build a simple straight-line route between two points
  * In production, this would call OSRM API for real routing
- * @param from Starting position [lat, lng]
- * @param to Ending position [lat, lng]
- * @returns Array of route points
+ * @param from Starting position [lng, lat] (GeoJSON standard)
+ * @param to Ending position [lng, lat] (GeoJSON standard)
+ * @returns Array of route points in [lng, lat] format
  */
 export function buildSimpleRoute(
   from: [number, number],
@@ -129,9 +131,10 @@ export function buildSimpleRoute(
   
   for (let i = 0; i <= steps; i++) {
     const t = i / steps;
-    const lat = from[0] + (to[0] - from[0]) * t;
-    const lng = from[1] + (to[1] - from[1]) * t;
-    points.push([lat, lng]);
+    // GeoJSON format: [longitude, latitude]
+    const lng = from[0] + (to[0] - from[0]) * t;
+    const lat = from[1] + (to[1] - from[1]) * t;
+    points.push([lng, lat]);
   }
   
   return points;
@@ -139,9 +142,9 @@ export function buildSimpleRoute(
 
 /**
  * Get position along route based on progress
- * @param route Array of route points
+ * @param route Array of route points in [lng, lat] format (GeoJSON standard)
  * @param progress Progress value (0-1)
- * @returns Current position [lat, lng]
+ * @returns Current position [lng, lat]
  */
 export function getPositionOnRoute(
   route: [number, number][],
@@ -160,13 +163,14 @@ export function getPositionOnRoute(
   }
   
   // Interpolate between two points
+  // GeoJSON format: [longitude, latitude]
   const t = index - lowerIndex;
-  const [lat1, lng1] = route[lowerIndex];
-  const [lat2, lng2] = route[upperIndex];
+  const [lng1, lat1] = route[lowerIndex];
+  const [lng2, lat2] = route[upperIndex];
   
   return [
-    lat1 + (lat2 - lat1) * t,
     lng1 + (lng2 - lng1) * t,
+    lat1 + (lat2 - lat1) * t,
   ];
 }
 

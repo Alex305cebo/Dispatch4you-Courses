@@ -3513,9 +3513,11 @@ case 'detention': {
     }
 
     // Calculate distance, ETA, and cost
+    // cityPosition и truck.position хранятся как [lng, lat] (GeoJSON)
+    // calculateDistance ожидает (lat1, lon1, lat2, lon2)
     const distance = calculateDistance(
-      cityPosition[0], cityPosition[1],
-      truck.position[0], truck.position[1]
+      cityPosition[1], cityPosition[0],
+      truck.position[1], truck.position[0]
     );
     const eta = calculateServiceETA(distance, serviceType);
     const gameHour = Math.floor((SHIFT_START_HOUR * 60 + SHIFT_START_MINUTE + gameMinute) / 60) % 24;

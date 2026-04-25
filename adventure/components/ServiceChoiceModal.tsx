@@ -23,9 +23,11 @@ export default function ServiceChoiceModal({ visible, truckName, truckPosition, 
   // Находим ближайший город и рассчитываем стоимость для каждого типа
   const nearestCity = findNearestCity(truckPosition);
   const cityPosition = CITIES[nearestCity];
+  // cityPosition и truckPosition хранятся как [lng, lat] (GeoJSON)
+  // calculateDistance ожидает (lat1, lon1, lat2, lon2)
   const distance = cityPosition ? calculateDistance(
-    cityPosition[0], cityPosition[1],
-    truckPosition[0], truckPosition[1]
+    cityPosition[1], cityPosition[0],
+    truckPosition[1], truckPosition[0]
   ) : 0;
 
   const gameHour = 12; // Используем дневное время для расчёта (можно улучшить)
