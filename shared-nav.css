@@ -1,4 +1,4 @@
-﻿/* shared-nav.css v8.3 — Desktop mega-dropdown expansion animation */
+﻿/* shared-nav.css v8.4 — Unified compact logo for all screens */
 @import url('https://fonts.googleapis.com/css2?family=Russo+One&display=swap');
 
 :root {
@@ -20,25 +20,113 @@ body {
 }
 .nav-container { max-width: 1280px; margin: 0 auto; padding: 0 24px; height: 100%; }
 .nav-content { display: flex; align-items: center; height: 100%; gap: 20px; }
-.logo { display: flex; align-items: center; gap: 8px; text-decoration: none; flex-shrink: 0; }
-.logo-text { 
+
+/* ═══════════════════════════════════════════════════════════════
+   UNIFIED COMPACT LOGO - КРУТОЙ ЭФФЕКТ С АНИМАЦИЕЙ
+   ═══════════════════════════════════════════════════════════════ */
+.logo { 
     display: flex; 
-    flex-direction: column; 
     align-items: center; 
-    line-height: 1.1;
-}
-.logo-text { font-family: 'Russo One', sans-serif; font-size: 22px; font-weight: 400; color: #ffffff; white-space: nowrap; letter-spacing: 0px; }
-.logo-subtitle {
-    font-size: 11px;
-    font-weight: 500;
-    color: rgba(148, 163, 184, 0.85);
-    letter-spacing: 0.3px;
-    margin-top: 2px;
-    text-align: center;
+    gap: 0; 
+    text-decoration: none; 
+    flex-shrink: 0;
+    padding: 0;
+    background: transparent;
+    border: none;
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 4px 16px rgba(6,182,212,0.5)) 
+            drop-shadow(0 2px 6px rgba(56,189,248,0.3))
+            drop-shadow(0 0 20px rgba(6,182,212,0.2));
+    animation: logo-float 4s ease-in-out infinite, logo-glow 3s ease-in-out infinite;
 }
 
-/* Мобильный pill-контейнер логотипа */
-.logo-pill {
+@keyframes logo-float {
+    0%, 100% { 
+        transform: translateY(0px) scale(1);
+    }
+    25% {
+        transform: translateY(-2px) scale(1.02);
+    }
+    50% { 
+        transform: translateY(-4px) scale(1.03);
+    }
+    75% {
+        transform: translateY(-2px) scale(1.02);
+    }
+}
+
+@keyframes logo-glow {
+    0%, 100% {
+        filter: drop-shadow(0 4px 16px rgba(6,182,212,0.5)) 
+                drop-shadow(0 2px 6px rgba(56,189,248,0.3))
+                drop-shadow(0 0 20px rgba(6,182,212,0.2));
+    }
+    50% {
+        filter: drop-shadow(0 6px 24px rgba(6,182,212,0.7)) 
+                drop-shadow(0 3px 10px rgba(56,189,248,0.5))
+                drop-shadow(0 0 30px rgba(6,182,212,0.4));
+    }
+}
+
+.logo:hover {
+    filter: drop-shadow(0 8px 32px rgba(6,182,212,0.8)) 
+            drop-shadow(0 4px 12px rgba(56,189,248,0.6))
+            drop-shadow(0 0 40px rgba(6,182,212,0.5));
+    transform: translateY(-3px) scale(1.05);
+    animation: none;
+}
+
+.logo-text-wrapper { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: flex-start;
+    line-height: 1;
+    position: relative;
+}
+
+.logo-text { 
+    font-family: 'Russo One', sans-serif; 
+    font-size: 22px; 
+    font-weight: 400; 
+    background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 25%, #38bdf8 50%, #0ea5e9 75%, #06b6d4 100%);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    white-space: nowrap; 
+    letter-spacing: 1px;
+    animation: gradient-shift 4s ease infinite;
+    position: relative;
+}
+
+@keyframes gradient-shift {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+/* Дополнительный эффект свечения за текстом */
+.logo-text::before {
+    content: 'Dispatch4You';
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    background: linear-gradient(135deg, #06b6d4, #0ea5e9, #38bdf8);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: blur(8px);
+    opacity: 0.6;
+    animation: gradient-shift 4s ease infinite;
+}
+
+.logo-subtitle {
     display: none;
 }
 .nav-links { display: none; align-items: center; justify-content: center; gap: 4px; flex: 1; margin: 0 auto; }
@@ -103,10 +191,6 @@ a.nav-btn.active { color: #06b6d4; background: none; }
 .mob-sub { display: flex; align-items: center; gap: 10px; padding: 11px 14px; color: #e2e8f0; text-decoration: none; font-size: 14px; border-radius: 10px; transition: all 0.18s; margin-bottom: 2px; }
 .mob-sub:hover { background: rgba(6,182,212,0.1); color: #e2e8f0; transform: translateX(3px); }
 
-/* Полный и короткий логотип */
-.logo-short { display: none; }
-.logo-full { display: inline; }
-
 @media (min-width: 768px) {
     .nav-links { display: flex; }
     .nav-actions { display: flex; }
@@ -115,6 +199,7 @@ a.nav-btn.active { color: #06b6d4; background: none; }
     .mob-overlay { display: none !important; }
     .mob-xp-wrap { display: none !important; }
 }
+
 @media (max-width: 767px) {
     .nav-links { display: none; }
     .nav-actions { display: none; }
@@ -122,8 +207,6 @@ a.nav-btn.active { color: #06b6d4; background: none; }
     .mob-menu { display: flex; }
     .navbar { position: fixed; top: 0; left: 0; right: 0; }
     .nav-container { padding: 0 12px; }
-    .logo-text { font-size: 18px; }
-    .logo-subtitle { font-size: 9px; }
     .mob-menu { width: 92vw; }
     .nav-content { gap: 8px; }
     .mob-xp-badge { padding: 6px 10px; gap: 8px; }
@@ -133,39 +216,24 @@ a.nav-btn.active { color: #06b6d4; background: none; }
     .burger { width: 36px; height: 36px; }
     .burger span { width: 16px; }
     
-    /* Короткий логотип на мобильных */
-    .logo-text .logo-full { display: inline !important; }
-    .logo-text .logo-short { display: none !important; }
-    .logo-subtitle { display: none !important; }
-    .logo-text { font-size: 15px; }
+    /* Компактный логотип на мобильных */
+    .logo-text {
+        font-size: 18px;
+    }
+}
 
-    /* Pill-контейнер логотипа */
-    .logo {
-        background: transparent;
-        border: none;
-        border-radius: 20px;
-        padding: 5px 12px 5px 8px;
-        gap: 6px;
-        margin-right: auto;
-        filter: drop-shadow(0 4px 12px rgba(6,182,212,0.5)) drop-shadow(0 1px 3px rgba(255,255,255,0.15));
-        animation: logo-float 3s ease-in-out infinite;
+@media (max-width: 480px) {
+    /* Еще более компактный на маленьких экранах */
+    .logo-text {
+        font-size: 16px;
     }
-    @keyframes logo-float {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-4px); }
+}
+
+@media (max-width: 360px) {
+    /* Минимальный размер для очень маленьких экранов */
+    .logo-text {
+        font-size: 15px;
     }
-    .logo-icon-wrap {
-        width: 24px;
-        height: 24px;
-        background: linear-gradient(135deg, #06b6d4, #0ea5e9);
-        border-radius: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 13px;
-        flex-shrink: 0;
-    }
-    .logo-pill { display: flex; }
 }
 
 /* ========================================
