@@ -1,13 +1,23 @@
 import { useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  Modal, ScrollView, useWindowDimensions, Animated,
+  Modal, ScrollView, useWindowDimensions, Animated, Image,
 } from 'react-native';
 import { useGameStore } from '../store/gameStore';
 import { useTheme } from '../hooks/useTheme';
 import { ThemeColors } from '../constants/themes';
 
 const NEW_TRUCK_PRICE = 15_000;
+
+// Функция для получения пути к картинке трака
+const getTruckImageUri = (id: number): string => {
+  const isGame = typeof window !== 'undefined' && (
+    window.location.pathname.startsWith('/game') ||
+    window.location.pathname.includes('/game/')
+  );
+  const basePath = isGame ? '/game/assets/TruckPic' : '/assets/TruckPic';
+  return `${basePath}/${id}.webp`;
+};
 
 const TRUCKS = [
   {
@@ -390,14 +400,19 @@ export default function GarageModal() {
             <View style={styles.garageList}>
               {trucks.map(t => {
                 const isOld = (t as any).isOldTruck;
+                const imgId = (t as any).truckImageId;
                 return (
                   <View key={t.id} style={[styles.garageRow, isOld && { backgroundColor: 'rgba(239,68,68,0.04)' }]}>
                     <View style={[styles.garageIconWrap, { backgroundColor: isOld ? 'rgba(239,68,68,0.1)' : 'rgba(6,182,212,0.1)' }]}>
-                      <Text style={{ fontSize: 18 }}>{isOld ? '🚚' : '🚛'}</Text>
+                      {imgId ? (
+                        <Image source={{ uri: getTruckImageUri(imgId) }} style={{ width: 42, height: 42, borderRadius: 10 } as any} resizeMode="cover" />
+                      ) : (
+                        <Text style={{ fontSize: 18 }}>{isOld ? '🚚' : '🚛'}</Text>
+                      )}
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.garageName}>{t.name}</Text>
-                      <Text style={styles.garageDriver}>👤 {t.driver}</Text>
+                      <Text style={styles.garageDriver}>👤 {t.driver} · 📍 {t.currentCity || '—'}</Text>
                     </View>
                     <View style={[styles.statusBadge, {
                       backgroundColor: isOld ? 'rgba(239,68,68,0.12)' : 'rgba(74,222,128,0.12)',
@@ -605,8 +620,9 @@ function makeStyles(T: ThemeColors, screenH: number) {
       borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)',
     },
     garageIconWrap: {
-      width: 36, height: 36, borderRadius: 9,
+      width: 42, height: 42, borderRadius: 10,
       alignItems: 'center', justifyContent: 'center',
+      overflow: 'hidden',
     },
     garageName: { fontSize: 12, fontWeight: '700', color: '#e2e8f0' },
     garageDriver: { fontSize: 10, color: '#64748b', marginTop: 1 },
