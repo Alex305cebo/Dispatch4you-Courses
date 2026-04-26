@@ -22,6 +22,8 @@
   <div class="nav-item"><button class="nav-btn">Информация <span class="arrow">▾</span></button><div class="dropdown"><a href="{{BASE}}about.html">ℹ️ О курсе</a><a href="{{BASE}}faq.html">❓ Частые вопросы</a><a href="{{BASE}}contacts.html">📩 Написать нам</a><a href="{{BASE}}pricing.html">💎 Планы и цены</a></div></div>
   <a href="{{BASE}}pages/users-stats.html" class="nav-btn" style="text-decoration:none;display:none;">📊 Стат</a>
 </div>
+<a href="{{BASE}}pages/admin.html" id="nav-admin-link" class="nav-btn" style="text-decoration:none;display:none;flex-shrink:0;">⚙️ Админ</a>
+<a href="/game/" id="nav-game-link" class="nav-btn" style="text-decoration:none;display:none;flex-shrink:0;background:linear-gradient(135deg,rgba(6,182,212,0.15),rgba(14,165,233,0.1));border:1px solid rgba(6,182,212,0.35);border-radius:10px;padding:7px 14px;color:#06b6d4;font-weight:700;">🎮 Игра</a>
 <a href="{{BASE}}pages/users-stats.html" class="nav-stats-icon" id="nav-stats-icon" style="display:none" title="Статистика пользователей"><i class="fa fa-chart-bar"></i></a>
 <div class="nav-actions" id="nav-actions-desktop"><a href="{{BASE}}login.html" class="btn-login">Войти</a><a href="{{BASE}}register.html" class="btn-signup">Регистрация</a></div>
 <div class="mob-xp-wrap" id="mob-xp-wrap" style="display:none"><a href="{{BASE}}dashboard.html" class="mob-xp-badge" id="mob-xp-badge"><span class="mob-xp-avatar" id="mob-xp-avatar">👤</span><span class="mob-xp-val" id="mob-xp-val">⚡ 0 XP</span></a></div>
