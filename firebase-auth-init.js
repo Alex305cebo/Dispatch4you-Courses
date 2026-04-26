@@ -168,7 +168,7 @@ function applyUI(user, xpOverride) {
 
         // Desktop — профиль + выйти в одном стиле
         navActions.innerHTML = `
-            <a href="${dashHref}" style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.12));border:1px solid rgba(99,102,241,.3);border-radius:14px;text-decoration:none;transition:all .2s;max-width:200px;overflow:hidden;"
+            <a href="${dashHref}" class="nav-profile-link" style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.12));border:1px solid rgba(99,102,241,.3);border-radius:14px;text-decoration:none;transition:all .2s;max-width:200px;overflow:hidden;"
                onmouseover="this.style.background='linear-gradient(135deg,rgba(99,102,241,.22),rgba(139,92,246,.22))';this.style.borderColor='rgba(99,102,241,.5)'"
                onmouseout="this.style.background='linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.12))';this.style.borderColor='rgba(99,102,241,.3)'">
                 ${avatarHTML}
@@ -177,7 +177,7 @@ function applyUI(user, xpOverride) {
                     <span id="nav-xp-badge" style="font-size:10px;color:#fbbf24;font-weight:700;line-height:1;white-space:nowrap;">⚡ ${xp} XP</span>
                 </div>
             </a>
-            <button id="nav-logout-btn" style="padding:6px 10px;border:1px solid rgba(239,68,68,.3);border-radius:14px;color:#fca5a5;font-size:12px;font-weight:600;background:rgba(239,68,68,.08);cursor:pointer;font-family:inherit;transition:all .2s;white-space:nowrap;flex-shrink:0;"
+            <button id="nav-logout-btn" class="nav-logout-btn" style="padding:6px 10px;border:1px solid rgba(239,68,68,.3);border-radius:14px;color:#fca5a5;font-size:12px;font-weight:600;background:rgba(239,68,68,.08);cursor:pointer;font-family:inherit;transition:all .2s;white-space:nowrap;flex-shrink:0;"
                 onmouseover="this.style.background='rgba(239,68,68,.18)';this.style.borderColor='rgba(239,68,68,.5)'" onmouseout="this.style.background='rgba(239,68,68,.08)';this.style.borderColor='rgba(239,68,68,.3)'">
                 Выйти
             </button>`;
