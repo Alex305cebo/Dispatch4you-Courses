@@ -1,9 +1,9 @@
 ﻿// Карточки траков поверх карты — без фона, только карточки
 // При выборе: карточка выделяется, под ней выпадает панель с событиями/действиями
-import React, { memo, useRef, useEffect } from 'react';
+import React, { memo, useRef, useEffect, useState } from 'react';
 import { useGameStore, GameEvent } from '../store/gameStore';
 import { useThemeStore } from '../store/themeStore';
-import { CITY_STATE } from '../constants/config';
+import { CITY_STATE, CITIES } from '../constants/config';
 import { getDriverAvatar } from '../utils/driverAvatars';
 import { SERVICE_VEHICLE_CONFIGS } from '../types/serviceVehicle';
 
@@ -67,6 +67,339 @@ interface Props {
   selectedTruckId: string | null;
 }
 
+/** Обёртка dropdown с анимацией сворачивания/разворачивания */
+function AnimatedDropdown({ truck, events, isDark, isSelected }: { truck: any; events: GameEvent[]; isDark: boolean; isSelected: boolean }) {
+  const [expanded, setExpanded] = useState(true);
+  const [visible, setVisible] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [contentH, setContentH] = useState(0);
+
+  // При выборе трака — открываем
+  useEffect(() => {
+    if (isSelected) {
+      setVisible(true);
+      setExpanded(true);
+    } else {
+      setExpanded(false);
+      const t = setTimeout(() => setVisible(false), 250);
+      return () => clearTimeout(t);
+    }
+  }, [isSelected]);
+
+  // Измеряем высоту контента
+  useEffect(() => {
+    if (contentRef.current && visible && expanded) {
+      const h = contentRef.current.scrollHeight;
+      if (h > 0) setContentH(h);
+    }
+  });
+
+  if (!visible) return null;
+
+  const color = getTruckColor(truck);
+
+  return (
+    <div>
+      {/* Контент с анимацией */}
+      <div style={{
+        overflow: 'hidden',
+        maxHeight: expanded ? (contentH || 500) : 0,
+        opacity: expanded ? 1 : 0,
+        transition: 'max-height 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease',
+      }}>
+        <div ref={contentRef}>
+          <TruckDropdown truck={truck} events={events} isDark={isDark} />
+        </div>
+      </div>
+
+      {/* Ручка сворачивания — снизу */}
+      <div
+        onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          gap: 4, padding: '3px 0 1px', cursor: 'pointer',
+          opacity: 0.35, transition: 'opacity 0.15s',
+        }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.7'; }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '0.35'; }}
+      >
+        <div style={{
+          width: 24, height: 3, borderRadius: 2,
+          background: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)',
+        }} />
+        <span style={{
+          fontSize: 8, color: isDark ? '#475569' : '#9ca3af',
+          transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+          transition: 'transform 0.2s ease',
+          lineHeight: 1,
+        }}>▼</span>
+      </div>
+    </div>
+  );
+}
+
+/** Познавательные факты для диспетчеров — показываются в dropdown */
+const ROUTE_FACTS = [
+  { icon: '🛣️', title: 'Interstate System', text: 'Чётные номера I-хайвеев идут с запада на восток, нечётные — с юга на север' },
+  { icon: '⛽', title: 'Fuel Stop', text: 'Средний трак расходует 6-8 MPG. На 1000 миль нужно ~150 галлонов ($500+)' },
+  { icon: '📋', title: 'BOL важен', text: 'Bill of Lading — главный документ груза. Без него груз не примут на разгрузке' },
+  { icon: '⚖️', title: 'Весовые станции', text: 'Макс. вес трака в США — 80,000 lbs. Перегруз = штраф до $10,000' },
+  { icon: '🌡️', title: 'Reefer грузы', text: 'Температура в рефрижераторе должна быть точной. Отклонение на 2°F = claim' },
+  { icon: '💰', title: 'Rate per mile', text: 'Хороший RPM для dry van: $2.50+. Ниже $2.00 — убыточный рейс' },
+  { icon: '📱', title: 'ELD обязателен', text: 'С 2019 года ELD обязателен для всех CMV. Штраф за отсутствие — $16,000' },
+  { icon: '🔄', title: 'Deadhead', text: 'Пустой пробег (deadhead) — главный враг прибыли. Идеал: менее 10% от общего' },
+  { icon: '🏢', title: 'Factoring', text: 'Factoring компании платят 97% ставки сразу. Брокеры платят через 30-45 дней' },
+  { icon: '⏱️', title: 'Detention', text: 'После 2ч ожидания можно требовать detention pay: $50-75/час — это стандарт' },
+  { icon: '🗺️', title: 'Truck Stops', text: 'В США ~5,000 truck stops. Pilot/Flying J и Love\'s — крупнейшие сети' },
+  { icon: '🔧', title: 'Pre-trip', text: 'Pre-trip inspection обязателен перед каждым рейсом. Занимает 15-30 минут' },
+  { icon: '📊', title: 'CSA Score', text: 'CSA Score влияет на страховку и доступ к грузам. Ниже 50 — отлично' },
+  { icon: '🌙', title: 'HOS правила', text: '11ч вождения, 14ч на смену, 10ч отдых. 30-мин перерыв после 8ч' },
+  { icon: '💼', title: 'Broker vs Shipper', text: 'Прямые грузы от shipper платят на 15-20% больше чем через брокера' },
+  { icon: '🚛', title: 'Flatbed', text: 'Flatbed грузы платят больше, но требуют tarps и straps. Загрузка дольше' },
+  { icon: '📦', title: 'LTL vs FTL', text: 'FTL (Full Truck Load) — один груз на весь трак. LTL — несколько грузов' },
+  { icon: '🏗️', title: 'Oversize', text: 'Негабаритные грузы требуют спец. разрешения и escort. Ставки x2-x3' },
+];
+
+const LOADING_FACTS = [
+  { icon: '📦', title: 'Погрузка', text: 'Стандартное время погрузки — 2 часа. Всё что дольше — detention' },
+  { icon: '🔍', title: 'Проверь BOL', text: 'Сверь количество паллет, вес и адрес доставки с Rate Con' },
+  { icon: '📸', title: 'Фото груза', text: 'Всегда фотографируй груз при погрузке — защита от damage claims' },
+  { icon: '⚖️', title: 'Вес важен', text: 'Попроси shipper указать точный вес. Перегруз на весовой = задержка' },
+  { icon: '🔒', title: 'Seal number', text: 'Запиши номер пломбы (seal) в BOL. Без него груз могут не принять' },
+  { icon: '🏁', title: 'Разгрузка', text: 'Получи подпись на POD (Proof of Delivery) — без него не получишь оплату' },
+  { icon: '📋', title: 'POD = деньги', text: 'Отправь POD брокеру в тот же день. Чем быстрее — тем быстрее оплата' },
+  { icon: '⏰', title: 'Appointment', text: 'Опоздание на appointment может стоить $200-500 штрафа или отказ в приёме' },
+];
+
+function getDispatchFact(load: any, truck: any, seed: number) {
+  return ROUTE_FACTS[Math.abs(seed) % ROUTE_FACTS.length];
+}
+
+function getLoadingFact(load: any, truck: any, isPU: boolean, seed: number) {
+  const facts = isPU ? LOADING_FACTS.slice(0, 5) : LOADING_FACTS.slice(5);
+  return facts[Math.abs(seed) % facts.length];
+}
+
+/** HUD-плашка с вкладками — Route / Stats / Load / Radio */
+function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any }) {
+  const [activeTab, setActiveTab] = useState<'route' | 'stats' | 'load' | 'radio'>('route');
+  const gameMinute = useGameStore(s => s.gameMinute);
+  const color = getTruckColor(truck);
+
+  // ── Статус ──
+  const statusLabel: Record<string, string> = {
+    idle: 'Available', driving: 'To Pickup', at_pickup: 'Loading',
+    loaded: 'In Transit', at_delivery: 'Unloading', breakdown: 'Breakdown',
+    waiting: 'Detention', in_garage: 'In Garage',
+  };
+  const statusEmoji: Record<string, string> = {
+    idle: '⚪', driving: '🔵', at_pickup: '🟡', loaded: '🟢',
+    at_delivery: '🟣', breakdown: '🔴', waiting: '🟠', in_garage: '🔧',
+  };
+  const sLabel = statusLabel[truck.status] || truck.status;
+  const sEmoji = statusEmoji[truck.status] || '⚪';
+
+  // ── Сообщение водителя ──
+  let driverMessage = '';
+  switch (truck.status) {
+    case 'driving': driverMessage = `On my way to ${truck.destinationCity || 'pickup'}! 🚛`; break;
+    case 'at_pickup': driverMessage = 'At the warehouse, loading up... 📦'; break;
+    case 'loaded': driverMessage = `Hauling to ${truck.destinationCity || 'delivery'}, all good! 👍`; break;
+    case 'at_delivery': driverMessage = 'Unloading now, almost done! 📦'; break;
+    case 'breakdown': driverMessage = 'Boss, truck broke down! Need help ASAP 🔧'; break;
+    case 'waiting': driverMessage = 'Still waiting here... detention clock ticking ⏰'; break;
+    case 'idle': driverMessage = 'Ready for the next load, boss! 👍'; break;
+    case 'in_garage': driverMessage = 'In the shop, getting fixed up 🔧'; break;
+    default: driverMessage = 'Everything good, boss! 👍';
+  }
+  if (truck.onNightStop) driverMessage = 'Parked for the night, getting rest 💤';
+  if (truck.onMandatoryBreak) driverMessage = 'Taking my 30-min break ☕';
+
+  // ── Расстояние и ETA ──
+  let distance = 0, etaH = 0, etaM = 0, hasRoute = false;
+  if (truck.destinationCity && CITIES[truck.destinationCity]) {
+    hasRoute = true;
+    const dc = CITIES[truck.destinationCity];
+    const [lat1, lon1, lat2, lon2] = [truck.position[1], truck.position[0], dc[1], dc[0]];
+    const R = 3959;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+    distance = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    etaH = Math.floor(distance / 55);
+    etaM = Math.round((distance / 55 - etaH) * 60);
+  }
+
+  // ── HOS ──
+  const hosH = Math.floor(truck.hoursLeft);
+  const hosM = Math.round((truck.hoursLeft - hosH) * 60);
+  const hosColor = truck.hoursLeft < 2 ? '#f87171' : truck.hoursLeft < 4 ? '#fbbf24' : '#4ade80';
+
+  // ── Mood ──
+  const mood = truck.mood ?? 75;
+  const moodColor = mood >= 70 ? '#4ade80' : mood >= 40 ? '#fbbf24' : '#f87171';
+  const moodLabel = mood >= 70 ? 'Happy' : mood >= 40 ? 'Neutral' : 'Unhappy';
+
+  // ── Load ──
+  const load = truck.currentLoad;
+  const progress = Math.round((truck.progress || 0) * 100);
+
+  const tabs: Array<{ key: typeof activeTab; icon: string; label: string }> = [
+    { key: 'route', icon: '🛣️', label: 'Route' },
+    { key: 'stats', icon: '📊', label: 'Stats' },
+    { key: 'load', icon: '📦', label: 'Load' },
+    { key: 'radio', icon: '📻', label: 'Radio' },
+  ];
+
+  const row = (label: string, value: string, valueColor?: string): React.ReactNode => (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0' }}>
+      <span style={{ fontSize: 11, color: isDark ? '#94a3b8' : '#6b7280' }}>{label}</span>
+      <span style={{ fontSize: 12, fontWeight: 600, color: valueColor || (isDark ? '#e2e8f0' : '#1f2937') }}>{value}</span>
+    </div>
+  );
+
+  const divider = <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)', margin: '4px 0' }} />;
+
+  return (
+    <div style={{ ...ps, padding: 0, overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
+      {/* Tabs */}
+      <div style={{
+        display: 'flex', borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+      }}>
+        {tabs.map(t => (
+          <button
+            key={t.key}
+            onClick={() => setActiveTab(t.key)}
+            style={{
+              flex: 1, padding: '8px 4px', border: 'none', cursor: 'pointer',
+              background: 'transparent',
+              borderBottom: `2px solid ${activeTab === t.key ? '#06b6d4' : 'transparent'}`,
+              color: activeTab === t.key ? '#06b6d4' : (isDark ? '#64748b' : '#9ca3af'),
+              fontSize: 11, fontWeight: 600, transition: 'color 0.25s, border-color 0.25s',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <span style={{ fontSize: 12 }}>{t.icon}</span>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Panels — fade transition */}
+      <div style={{ position: 'relative', minHeight: 80 }}>
+        {/* ROUTE */}
+        <div style={{
+          padding: '10px 12px',
+          opacity: activeTab === 'route' ? 1 : 0,
+          position: activeTab === 'route' ? 'relative' : 'absolute',
+          top: 0, left: 0, width: '100%',
+          transition: 'opacity 0.3s ease',
+          pointerEvents: activeTab === 'route' ? 'auto' : 'none',
+        }}>
+          {hasRoute ? (<>
+            <div style={{ marginBottom: 6 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280', marginBottom: 3 }}>
+                <span>{truck.currentCity || '—'}</span>
+                <span>{truck.destinationCity || '—'}</span>
+              </div>
+              <div style={{ height: 5, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ height: '100%', borderRadius: 3, background: 'linear-gradient(90deg,#06b6d4,#818cf8)', width: `${progress}%`, transition: 'width 0.5s ease' }} />
+              </div>
+            </div>
+            {row('Distance left', `${distance} mi`, '#06b6d4')}
+            {row('ETA', `${etaH}h ${etaM}m`)}
+          </>) : (
+            <div style={{ textAlign: 'center', padding: '10px 0' }}>
+              <div style={{ fontSize: 18, marginBottom: 4 }}>🅿️</div>
+              <div style={{ fontSize: 11, color: isDark ? '#94a3b8' : '#6b7280' }}>No active route</div>
+              <div style={{ fontSize: 10, color: isDark ? '#64748b' : '#9ca3af', marginTop: 2 }}>📍 {truck.currentCity || 'Unknown'}</div>
+            </div>
+          )}
+          {divider}
+          {row('HOS Remaining', `${hosH}h ${hosM}m`, hosColor)}
+        </div>
+
+        {/* STATS */}
+        <div style={{
+          padding: '10px 12px',
+          opacity: activeTab === 'stats' ? 1 : 0,
+          position: activeTab === 'stats' ? 'relative' : 'absolute',
+          top: 0, left: 0, width: '100%',
+          transition: 'opacity 0.3s ease',
+          pointerEvents: activeTab === 'stats' ? 'auto' : 'none',
+        }}>
+          {row('Total Miles', (truck.totalMiles || 0).toLocaleString())}
+          {row('Deliveries', String(truck.totalDeliveries || 0))}
+          {row('On-Time Rate', `${truck.onTimeRate || 0}%`)}
+          {row('Safety Score', `${truck.safetyScore || 0}/100`)}
+          {row('Fuel', `${truck.fuelEfficiency || 0} MPG`)}
+          {divider}
+          {row(`Mood — ${moodLabel}`, `${mood}%`, moodColor)}
+          <div style={{ height: 4, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 2, overflow: 'hidden', marginTop: 3 }}>
+            <div style={{ height: '100%', borderRadius: 2, background: moodColor, width: `${mood}%`, transition: 'width 0.5s ease' }} />
+          </div>
+        </div>
+
+        {/* LOAD */}
+        <div style={{
+          padding: '10px 12px',
+          opacity: activeTab === 'load' ? 1 : 0,
+          position: activeTab === 'load' ? 'relative' : 'absolute',
+          top: 0, left: 0, width: '100%',
+          transition: 'opacity 0.3s ease',
+          pointerEvents: activeTab === 'load' ? 'auto' : 'none',
+        }}>
+          {load ? (<>
+            {row('Commodity', load.commodity)}
+            {row('Route', `${load.fromCity} → ${load.toCity}`)}
+            {row('Rate', `$${load.agreedRate.toLocaleString()}`, '#06b6d4')}
+            {row('Miles', `${load.miles} mi`)}
+            {row('Rate/Mile', load.miles > 0 ? `$${(load.agreedRate / load.miles).toFixed(2)}/mi` : '—')}
+            {divider}
+            {row('Equipment', load.equipment)}
+            {row('Weight', `${(load.weight || 0).toLocaleString()} lbs`)}
+            {row('Broker', load.brokerCompany || '—')}
+          </>) : (
+            <div style={{ textAlign: 'center', padding: '14px 0' }}>
+              <div style={{ fontSize: 22, marginBottom: 4 }}>📭</div>
+              <div style={{ fontSize: 11, color: isDark ? '#94a3b8' : '#6b7280' }}>No load assigned</div>
+            </div>
+          )}
+        </div>
+
+        {/* RADIO */}
+        <div style={{
+          padding: '10px 12px',
+          opacity: activeTab === 'radio' ? 1 : 0,
+          position: activeTab === 'radio' ? 'relative' : 'absolute',
+          top: 0, left: 0, width: '100%',
+          transition: 'opacity 0.3s ease',
+          pointerEvents: activeTab === 'radio' ? 'auto' : 'none',
+        }}>
+          <div style={{
+            display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 10px',
+            background: isDark ? 'rgba(6,182,212,0.06)' : 'rgba(6,182,212,0.04)',
+            border: `1px solid ${isDark ? 'rgba(6,182,212,0.15)' : 'rgba(6,182,212,0.12)'}`,
+            borderRadius: 8,
+          }}>
+            <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>📻</span>
+            <div>
+              <div style={{ fontSize: 9, color: '#06b6d4', fontWeight: 700, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.5 }}>Last transmission</div>
+              <div style={{ fontSize: 12, color: isDark ? '#e2e8f0' : '#374151', lineHeight: 1.5, fontStyle: 'italic' }}>"{driverMessage}"</div>
+            </div>
+          </div>
+          {divider}
+          {row('Driver', truck.driver)}
+          {row('Location', `📍 ${truck.currentCity || 'En route'}`)}
+          {row('Status', `${sEmoji} ${sLabel}`)}
+          {truck.isOldTruck && row('Truck Condition', '⚠️ Old truck')}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** Выпадающая панель под выбранной карточкой — богатый интерактивный контент */
 function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEvent[]; isDark: boolean }) {
   const resolveEvent = useGameStore(s => s.resolveEvent);
@@ -84,18 +417,18 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
   const onRest = truck.onNightStop || truck.onMandatoryBreak || (truck.hosRestUntilMinute && truck.hosRestUntilMinute > gameMinute);
 
   const actionBtn = (btnColor: string, large = false): any => ({
-    flex: 1, minWidth: large ? 120 : 80, padding: large ? '10px 12px' : '7px 10px',
-    background: btnColor + '15', border: `2px solid ${btnColor}55`, borderRadius: 12,
+    flex: 1, minWidth: large ? 100 : 70, padding: large ? '7px 8px' : '5px 8px',
+    background: btnColor + '15', border: `1.5px solid ${btnColor}55`, borderRadius: 10,
     cursor: 'pointer', transition: 'all 0.15s ease',
-    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
   });
   const ps: any = {
-    marginTop: 6, padding: '10px 12px',
+    marginTop: 6, padding: '8px 10px',
     background: isDark ? 'rgba(15,20,35,0.95)' : 'rgba(255,255,255,0.97)',
     backdropFilter: 'blur(14px)',
     border: `2px solid ${isBreakdown ? '#f8717188' : isWaiting ? '#fb923c88' : color + '44'}`,
-    borderRadius: 14, display: 'flex', flexDirection: 'column', gap: 8,
-    maxWidth: 340, width: '100%', animation: 'dropdownSlide 0.2s ease-out',
+    borderRadius: 14, display: 'flex', flexDirection: 'column', gap: 6,
+    maxWidth: 340, width: '100%',
     boxShadow: isDark ? '0 8px 24px rgba(0,0,0,0.5)' : '0 8px 24px rgba(0,0,0,0.15)',
   };
   const hov = (el: HTMLElement, c: string, on: boolean) => {
@@ -119,28 +452,28 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
             <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280', marginTop: 1 }}>📍 {truck.currentCity} • Водитель ждёт решения</div>
           </div>
         </div>
-        <div style={{ background: isDark ? 'rgba(248,113,113,0.08)' : 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 10, padding: '8px 10px' }}>
-          <p style={{ fontSize: 11, color: isDark ? '#e2e8f0' : '#374151', margin: 0, lineHeight: 1.5 }}>
+        <div style={{ background: isDark ? 'rgba(248,113,113,0.08)' : 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 10, padding: '6px 10px' }}>
+          <p style={{ fontSize: 11, color: isDark ? '#e2e8f0' : '#374151', margin: 0, lineHeight: 1.4 }}>
             Трак остановился. Выберите ремонт — от этого зависит стоимость и время простоя.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 6 }}>
           <button onClick={() => repairBreakdown(truck.id, 'roadside')} style={actionBtn('#4ade80', true)}
             onMouseEnter={e => hov(e.currentTarget as HTMLElement, '#4ade80', true)}
             onMouseLeave={e => hov(e.currentTarget as HTMLElement, '#4ade80', false)}>
-            <span style={{ fontSize: 22 }}>🔧</span>
-            <span style={{ fontSize: 12, fontWeight: 800, color: isDark ? '#4ade80' : '#16a34a' }}>Ремонт на месте</span>
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#f87171' }}>−${cR.toLocaleString()}</span>
-            <span style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280' }}>⏱ ~{dR} мин</span>
+            <span style={{ fontSize: 18 }}>🔧</span>
+            <span style={{ fontSize: 11, fontWeight: 800, color: isDark ? '#4ade80' : '#16a34a' }}>На месте</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#f87171' }}>−${cR.toLocaleString()}</span>
+            <span style={{ fontSize: 9, color: isDark ? '#94a3b8' : '#6b7280' }}>⏱ ~{dR} мин</span>
           </button>
           {cT > 0 && (
             <button onClick={() => repairBreakdown(truck.id, 'tow')} style={actionBtn('#fb923c', true)}
               onMouseEnter={e => hov(e.currentTarget as HTMLElement, '#fb923c', true)}
               onMouseLeave={e => hov(e.currentTarget as HTMLElement, '#fb923c', false)}>
-              <span style={{ fontSize: 22 }}>🚛</span>
-              <span style={{ fontSize: 12, fontWeight: 800, color: isDark ? '#fb923c' : '#c2410c' }}>Эвакуатор</span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: '#f87171' }}>−${cT.toLocaleString()}</span>
-              <span style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280' }}>⏱ ~{dT} мин</span>
+              <span style={{ fontSize: 18 }}>🚛</span>
+              <span style={{ fontSize: 11, fontWeight: 800, color: isDark ? '#fb923c' : '#c2410c' }}>Эвакуатор</span>
+              <span style={{ fontSize: 10, fontWeight: 700, color: '#f87171' }}>−${cT.toLocaleString()}</span>
+              <span style={{ fontSize: 9, color: isDark ? '#94a3b8' : '#6b7280' }}>⏱ ~{dT} мин</span>
             </button>
           )}
         </div>
@@ -181,9 +514,9 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
       
       const handleFollowService = (e: React.MouseEvent) => {
         e.stopPropagation();
-        // Зумим камеру к сервисной машине
+        // Включаем непрерывное слежение за сервисной машиной
         window.dispatchEvent(new CustomEvent('followServiceVehicle', {
-          detail: { lng: activeService.position[0], lat: activeService.position[1] }
+          detail: { serviceId: activeService.id, lng: activeService.position[0], lat: activeService.position[1] }
         }));
       };
       
@@ -324,23 +657,23 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
             </div>
           </div>
           {cR > 0 && (
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 6 }}>
               <button onClick={() => repairBreakdown(truck.id, 'roadside')} style={actionBtn('#4ade80', true)}
                 onMouseEnter={e => hov(e.currentTarget as HTMLElement, '#4ade80', true)}
                 onMouseLeave={e => hov(e.currentTarget as HTMLElement, '#4ade80', false)}>
-                <span style={{ fontSize: 22 }}>🔧</span>
-                <span style={{ fontSize: 12, fontWeight: 800, color: isDark ? '#4ade80' : '#16a34a' }}>Ремонт на месте</span>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#f87171' }}>−${cR.toLocaleString()}</span>
-                <span style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280' }}>⏱ ~{dR} мин</span>
+                <span style={{ fontSize: 18 }}>🔧</span>
+                <span style={{ fontSize: 11, fontWeight: 800, color: isDark ? '#4ade80' : '#16a34a' }}>На месте</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: '#f87171' }}>−${cR.toLocaleString()}</span>
+                <span style={{ fontSize: 9, color: isDark ? '#94a3b8' : '#6b7280' }}>⏱ ~{dR} мин</span>
               </button>
               {cT > 0 && (
                 <button onClick={() => repairBreakdown(truck.id, 'tow')} style={actionBtn('#fb923c', true)}
                   onMouseEnter={e => hov(e.currentTarget as HTMLElement, '#fb923c', true)}
                   onMouseLeave={e => hov(e.currentTarget as HTMLElement, '#fb923c', false)}>
-                  <span style={{ fontSize: 22 }}>🚛</span>
-                  <span style={{ fontSize: 12, fontWeight: 800, color: isDark ? '#fb923c' : '#c2410c' }}>Эвакуатор</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: '#f87171' }}>−${cT.toLocaleString()}</span>
-                  <span style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280' }}>⏱ ~{dT} мин</span>
+                  <span style={{ fontSize: 18 }}>🚛</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: isDark ? '#fb923c' : '#c2410c' }}>Эвакуатор</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#f87171' }}>−${cT.toLocaleString()}</span>
+                  <span style={{ fontSize: 9, color: isDark ? '#94a3b8' : '#6b7280' }}>⏱ ~{dT} мин</span>
                 </button>
               )}
             </div>
@@ -469,83 +802,8 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
       </div>
     );
   }
-  // ═══ В ПУТИ ═══
-  if (isMoving && truck.currentLoad) {
-    const pp = Math.round(truck.progress * 100);
-    const ld = truck.currentLoad;
-    return (
-      <div style={ps} onClick={e => e.stopPropagation()}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 20 }}>{truck.status === 'loaded' ? '🚚' : '🚛'}</span>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 900, color: isDark ? '#34d399' : '#16a34a' }}>{truck.status === 'loaded' ? 'Везёт груз' : 'К погрузке'} — {pp}%</div>
-            <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280', marginTop: 1 }}>{ld.commodity} • {ld.miles} mi • ${ld.agreedRate.toLocaleString()}</div>
-          </div>
-        </div>
-        <div style={{ height: 5, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
-          <div style={{ height: '100%', borderRadius: 3, background: `linear-gradient(90deg, ${color}88, ${color})`, width: `${pp}%`, transition: 'width 0.8s ease' }} />
-        </div>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 10, fontWeight: 700, color: isDark ? '#94a3b8' : '#6b7280', background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', borderRadius: 6, padding: '2px 8px' }}>🏢 {ld.brokerCompany}</span>
-          <span style={{ fontSize: 10, fontWeight: 700, color: isDark ? '#94a3b8' : '#6b7280', background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', borderRadius: 6, padding: '2px 8px' }}>📦 {ld.equipment}</span>
-        </div>
-      </div>
-    );
-  }
-  // ═══ ПОГРУЗКА / РАЗГРУЗКА ═══
-  if (truck.status === 'at_pickup' || truck.status === 'at_delivery') {
-    const isPU = truck.status === 'at_pickup';
-    return (
-      <div style={ps} onClick={e => e.stopPropagation()}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 20 }}>{isPU ? '📦' : '🏁'}</span>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 900, color: isPU ? '#fbbf24' : '#a78bfa' }}>{isPU ? 'На погрузке' : 'На разгрузке'}</div>
-            <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280', marginTop: 1 }}>📍 {truck.currentCity}{truck.currentLoad ? ` • ${truck.currentLoad.commodity}` : ''}</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  // ═══ СОБЫТИЯ (fallback) ═══
-  if (events.length > 0) {
-    return (
-      <div style={ps} onClick={e => e.stopPropagation()}>
-        {events.map(ev => (
-          <div key={ev.id} style={{ background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', border: `1px solid ${URGENCY_COLOR[ev.urgency]}44`, borderRadius: 10, padding: '8px 10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
-              <span style={{ fontSize: 14 }}>{URGENCY_ICON[ev.urgency]}</span>
-              <span style={{ fontSize: 12, fontWeight: 800, color: isDark ? '#fff' : '#111827', flex: 1 }}>{ev.title}</span>
-            </div>
-            <p style={{ fontSize: 11, color: isDark ? '#cbd5e1' : '#4b5563', margin: '0 0 8px', lineHeight: 1.4 }}>{ev.message}</p>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {ev.options.map(opt => {
-                const bc = opt.outcome.isCorrect ? '#4ade80' : opt.outcome.moneyDelta >= 0 ? '#38bdf8' : '#f87171';
-                return (
-                  <button key={opt.id} onClick={e => { e.stopPropagation(); resolveEvent(ev.id, opt.id); }} style={actionBtn(bc)}
-                    onMouseEnter={e => hov(e.currentTarget as HTMLElement, bc, true)}
-                    onMouseLeave={e => hov(e.currentTarget as HTMLElement, bc, false)}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: isDark ? '#e2e8f0' : '#1f2937', textAlign: 'center', lineHeight: 1.3 }}>{opt.text}</span>
-                    {opt.outcome.moneyDelta !== 0 && <span style={{ fontSize: 10, fontWeight: 800, color: opt.outcome.moneyDelta > 0 ? '#4ade80' : '#f87171' }}>{opt.outcome.moneyDelta > 0 ? '+' : ''}{opt.outcome.moneyDelta.toLocaleString()}$</span>}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-  // ═══ ВСЁ ОК ═══
-  return (
-    <div style={{ ...ps, border: `1px solid ${color}44` }} onClick={e => e.stopPropagation()}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <span style={{ fontSize: 14 }}>✅</span>
-        <span style={{ fontSize: 11, fontWeight: 700, color: isDark ? '#4ade80' : '#16a34a' }}>Всё в порядке — следим за траком</span>
-        <span style={{ fontSize: 14 }}>🎯</span>
-      </div>
-    </div>
-  );
+  // ═══ В ПУТИ / ПОГРУЗКА / РАЗГРУЗКА / ВСЁ ОК → HUD-плашка с вкладками ═══
+  return <TruckHUD truck={truck} isDark={isDark} ps={ps} />;
 }
 
 const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selectedTruckId }: Props) {
@@ -629,7 +887,7 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
 
           return (
             <div key={truck.id} data-truck-card style={{
-              flexShrink: 0, width: 300,
+              flexShrink: 0, width: 250,
               display: 'flex', flexDirection: 'column',
             } as any}>
               {/* Карточка трака */}
@@ -679,20 +937,20 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                 {/* Индикатор слежения */}
                 {isSelected && (
                   <div style={{
-                    position: 'absolute', top: -8, right: 10,
-                    display: 'flex', alignItems: 'center', gap: 4,
+                    position: 'absolute', top: -10, right: -6,
+                    display: 'flex', alignItems: 'center', gap: 3,
                     background: isDark ? 'rgba(15,20,35,0.95)' : 'rgba(255,255,255,0.95)',
                     border: `1.5px solid ${color}`,
-                    borderRadius: 8, padding: '2px 8px',
+                    borderRadius: 8, padding: '1px 6px',
                     zIndex: 2,
                   } as any}>
                     <div style={{
-                      width: 6, height: 6, borderRadius: '50%',
+                      width: 5, height: 5, borderRadius: '50%',
                       background: hasUrgent ? '#ef4444' : '#4ade80',
                       animation: 'trackingDot 1.2s ease-in-out infinite',
                     }} />
-                    <span style={{ fontSize: 9, fontWeight: 800, color: isDark ? '#e2e8f0' : '#111827' }}>
-                      {hasUrgent ? '⚠️ ВНИМАНИЕ' : '🎯 СЛЕЖЕНИЕ'}
+                    <span style={{ fontSize: 8, fontWeight: 800, color: isDark ? '#e2e8f0' : '#111827' }}>
+                      {hasUrgent ? '⚠️' : '🎯'}
                     </span>
                   </div>
                 )}
@@ -715,81 +973,81 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                   </div>
                 )}
 
-                <div style={{ display:'flex', flexDirection:'row', width:'100%', borderRadius:14, overflow:'hidden' } as any}>
+                <div style={{ display:'flex', flexDirection:'row', width:'100%', borderRadius:12, overflow:'hidden' } as any}>
                   {/* ЛЕВЫЙ БЛОК — аватар */}
                   <div style={{
-                    width: 80, flexShrink: 0,
+                    width: 62, flexShrink: 0,
                     display: 'flex', flexDirection: 'column',
                     alignItems: 'center', justifyContent: 'center',
-                    gap: 4, padding: '8px 4px',
+                    gap: 3, padding: '6px 3px',
                     borderRight: `1px solid ${color}33`,
                     position: 'relative',
                   } as any}>
-                    <img src={moodEmoji} width={20} height={20}
-                      style={{ position: 'absolute', top: 4, right: 4 } as any} />
-                    <img src={getDriverAvatar(truck.driver || truck.id)} width={52} height={52}
+                    <img src={moodEmoji} width={16} height={16}
+                      style={{ position: 'absolute', top: 3, right: 2 } as any} />
+                    <img src={getDriverAvatar(truck.driver || truck.id)} width={40} height={40}
                       style={{ display: 'block' } as any} />
                     <div style={{
-                      fontSize: 9, fontWeight: 700, color,
-                      border: `1px solid ${color}44`, borderRadius: 5,
-                      padding: '1px 5px', whiteSpace: 'nowrap',
+                      fontSize: 8, fontWeight: 700, color,
+                      border: `1px solid ${color}44`, borderRadius: 4,
+                      padding: '1px 4px', whiteSpace: 'nowrap',
                     } as any}>{statusLabel}</div>
                   </div>
 
                   {/* ПРАВЫЙ БЛОК — инфо */}
                   <div style={{
                     flex: 1, display: 'flex', flexDirection: 'column',
-                    padding: '7px 10px', gap: 3, minWidth: 0,
+                    padding: '5px 8px', gap: 2, minWidth: 0,
                   } as any}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' } as any}>
-                      <span style={{ fontSize: 13, fontWeight: 900, color: isDark ? '#ffffff' : '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 100 } as any}>
+                      <span style={{ fontSize: 11, fontWeight: 900, color: isDark ? '#ffffff' : '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 80 } as any}>
                         {driverName}
                       </span>
-                      <div style={{ display: 'flex', gap: 3, flexShrink: 0 } as any}>
-                        <span style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#38bdf8' : '#007aff', border: `1px solid ${isDark ? 'rgba(56,189,248,0.3)' : 'rgba(0,122,255,0.3)'}`, borderRadius: 4, padding: '1px 4px' } as any}>TRK {truckNum}</span>
-                        <span style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#94a3b8' : '#6b7280', border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`, borderRadius: 4, padding: '1px 4px' } as any}>TRL {trailerNum}</span>
+                      <div style={{ display: 'flex', gap: 2, flexShrink: 0 } as any}>
+                        <span style={{ fontSize: 8, fontWeight: 700, color: isDark ? '#38bdf8' : '#007aff', border: `1px solid ${isDark ? 'rgba(56,189,248,0.3)' : 'rgba(0,122,255,0.3)'}`, borderRadius: 3, padding: '0px 3px' } as any}>TRK {truckNum}</span>
+                        <span style={{ fontSize: 8, fontWeight: 700, color: isDark ? '#94a3b8' : '#6b7280', border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`, borderRadius: 3, padding: '0px 3px' } as any}>TRL {trailerNum}</span>
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 3 } as any}>
-                      <span style={{ fontSize: 10 } as any}>📍</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 2 } as any}>
+                      <span style={{ fontSize: 9 } as any}>📍</span>
                       {truck.destinationCity ? (
-                        <span style={{ fontSize: 10, fontWeight: 700, color: isDark ? '#e2e8f0' : '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
+                        <span style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#e2e8f0' : '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
                           {fromLabel}
                           <span style={{ color: isDark ? '#475569' : '#9ca3af', margin: '0 3px' } as any}>→</span>
                           <span style={{ color: isDark ? '#38bdf8' : '#007aff' } as any}>{toLabel}</span>
                         </span>
                       ) : (
-                        <span style={{ fontSize: 10, fontWeight: 700, color: isDark ? '#94a3b8' : '#6b7280' } as any}>{fromLabel}</span>
+                        <span style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#94a3b8' : '#6b7280' } as any}>{fromLabel}</span>
                       )}
                     </div>
 
                     {isMoving && (
                       <div style={{ marginTop: 1 } as any}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 } as any}>
-                          <span style={{ fontSize: 9, color: isDark ? '#64748b' : '#6b7280', fontWeight: 600 } as any}>Прогресс рейса</span>
-                          <span style={{ fontSize: 9, fontWeight: 800, color } as any}>{progressPct}%</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 1 } as any}>
+                          <span style={{ fontSize: 8, color: isDark ? '#64748b' : '#6b7280', fontWeight: 600 } as any}>Рейс</span>
+                          <span style={{ fontSize: 8, fontWeight: 800, color } as any}>{progressPct}%</span>
                         </div>
-                        <div style={{ height: 4, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 2, overflow: 'hidden' } as any}>
+                        <div style={{ height: 3, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 2, overflow: 'hidden' } as any}>
                           <div style={{ height: '100%', width: `${progressPct}%`, background: `linear-gradient(90deg,${color}88,${color})`, borderRadius: 2, transition: 'width 0.8s ease' } as any} />
                         </div>
                       </div>
                     )}
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 1 } as any}>
-                      <div style={{ border: `1px solid ${hosColor}44`, borderRadius: 6, padding: '1px 6px', display: 'flex', alignItems: 'baseline', gap: 2 } as any}>
-                        <span style={{ fontSize: 12, fontWeight: 900, color: hosColor } as any}>{hos.toFixed(1)}</span>
-                        <span style={{ fontSize: 9, color: hosColor, opacity: 0.8 } as any}>h drive</span>
+                      <div style={{ border: `1px solid ${hosColor}44`, borderRadius: 5, padding: '0px 4px', display: 'flex', alignItems: 'baseline', gap: 1 } as any}>
+                        <span style={{ fontSize: 10, fontWeight: 900, color: hosColor } as any}>{hos.toFixed(1)}</span>
+                        <span style={{ fontSize: 8, color: hosColor, opacity: 0.8 } as any}>h</span>
                       </div>
-                      <span style={{ fontSize: 10 } as any}>😊</span>
-                      <span style={{ fontSize: 11, fontWeight: 800, color: mood >= 60 ? (isDark ? '#34d399' : '#16a34a') : mood >= 35 ? '#fbbf24' : '#f87171' } as any}>{mood}%</span>
+                      <span style={{ fontSize: 9 } as any}>😊</span>
+                      <span style={{ fontSize: 9, fontWeight: 800, color: mood >= 60 ? (isDark ? '#34d399' : '#16a34a') : mood >= 35 ? '#fbbf24' : '#f87171' } as any}>{mood}%</span>
                       {truck.currentLoad ? (
-                        <div style={{ marginLeft: 'auto', border: `1px solid ${isDark ? 'rgba(74,222,128,0.35)' : 'rgba(52,199,89,0.35)'}`, borderRadius: 6, padding: '1px 7px' } as any}>
-                          <span style={{ fontSize: 13, fontWeight: 900, color: isDark ? '#4ade80' : '#16a34a' } as any}>${truck.currentLoad.agreedRate.toLocaleString()}</span>
+                        <div style={{ marginLeft: 'auto', border: `1px solid ${isDark ? 'rgba(74,222,128,0.35)' : 'rgba(52,199,89,0.35)'}`, borderRadius: 5, padding: '0px 5px' } as any}>
+                          <span style={{ fontSize: 11, fontWeight: 900, color: isDark ? '#4ade80' : '#16a34a' } as any}>${truck.currentLoad.agreedRate.toLocaleString()}</span>
                         </div>
                       ) : (
-                        <div style={{ marginLeft: 'auto', border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`, borderRadius: 6, padding: '1px 7px' } as any}>
-                          <span style={{ fontSize: 10, fontWeight: 700, color: isDark ? '#475569' : '#9ca3af' } as any}>Нет груза</span>
+                        <div style={{ marginLeft: 'auto', border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`, borderRadius: 5, padding: '0px 5px' } as any}>
+                          <span style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#475569' : '#9ca3af' } as any}>Нет груза</span>
                         </div>
                       )}
                     </div>
@@ -797,10 +1055,8 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                 </div>
               </div>
 
-              {/* Выпадающая панель под выбранной карточкой */}
-              {isSelected && (
-                <TruckDropdown truck={truck} events={truckEvents} isDark={isDark} />
-              )}
+              {/* Выпадающая панель — анимированная */}
+              <AnimatedDropdown truck={truck} events={truckEvents} isDark={isDark} isSelected={isSelected} />
             </div>
           );
         })}

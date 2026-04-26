@@ -175,7 +175,7 @@ const s = StyleSheet.create({
   landscapeBody: { flex: 1, flexDirection: 'row', backgroundColor: 'transparent' },
   landscapeMap: { flex: 1, position: 'relative', backgroundColor: 'transparent' },
   landscapePanel: { width: 320, flexDirection: 'column', backgroundColor: BG2, borderLeftWidth: 1, borderLeftColor: BORDER },
-  mobilePanelOverlay: { position: 'absolute', top: 128, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(242,242,247,0.96)', borderTopLeftRadius: 20, borderTopRightRadius: 20, overflow: 'hidden', zIndex: 10 },
+  mobilePanelOverlay: { position: 'absolute', top: 48, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(13,17,23,0.98)', borderTopLeftRadius: 20, borderTopRightRadius: 20, overflow: 'hidden', zIndex: 10 },
   mobileTopBar: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100 },
   truckStripBar: { position: 'absolute', top: 0, left: 0, backgroundColor: 'transparent', zIndex: 20, pointerEvents: 'box-none' as any },
   bottomTabs: { flexDirection: 'row', paddingHorizontal: 4, paddingVertical: 5, backgroundColor: BG2, borderTopWidth: 1, borderTopColor: BORDER },
@@ -1410,14 +1410,14 @@ export default function GameScreen() {
   };
 
   // ── TOAST СИСТЕМА ────────────────────────────────────────────────────────
-  const [toasts, setToasts] = useState<Array<{id: number; message: string; color: string}>>([]);
+  const [toasts, setToasts] = useState<Array<{id: number; message: string; color: string; truckId?: string}>>([]);
   const toastIdRef = useRef(0);
 
   useEffect(() => {
     function handleMapToast(e: Event) {
-      const { message, color = '#ef4444', duration = 5000 } = (e as CustomEvent).detail;
+      const { message, color = '#ef4444', duration = 4000, truckId } = (e as CustomEvent).detail;
       const id = ++toastIdRef.current;
-      setToasts(prev => [...prev, { id, message, color }]);
+      setToasts(prev => [...prev, { id, message, color, truckId }]);
       setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), duration);
     }
     window.addEventListener('mapToast', handleMapToast);
@@ -1455,7 +1455,11 @@ export default function GameScreen() {
         }));
       }
     },
-    onTruckSelect: (id: string) => { selectTruck(id); },
+    onTruckSelect: (id: string) => { 
+      // Пустая строка = снять выделение (toggle с карты)
+      if (!id) { selectTruck(null); return; }
+      selectTruck(id); 
+    },
     onFindLoad: (city: string) => { setLoadBoardSearch(city); switchTab('loadboard'); },
     onGuideOpen: () => { setGuideVisible(true); setShowGuidePopup(true); },
     guideActive: guideVisible,
@@ -1624,13 +1628,15 @@ export default function GameScreen() {
           <View style={s.mobileContent}>
             {/* Карта — всегда на весь экран */}
             <ErrorBoundary name="Map"><GoogleMapView {...mapProps} /></ErrorBoundary>
-            {/* Карточки траков — поверх всего, сверху */}
-            <View style={s.truckStripBar} pointerEvents="box-none">
-              <TruckCardOverlay
-                onTruckClick={handleTruckClick}
-                selectedTruckId={selectedTruckId}
-              />
-            </View>
+            {/* Карточки траков — поверх карты, только на вкладке карты */}
+            {activeTab === 'map' && (
+              <View style={s.truckStripBar} pointerEvents="box-none">
+                <TruckCardOverlay
+                  onTruckClick={handleTruckClick}
+                  selectedTruckId={selectedTruckId}
+                />
+              </View>
+            )}
             {/* Панели — поверх карты, с отступом 13% сверху */}
             {activeTab !== 'map' && (
               <View style={s.mobilePanelOverlay}>
@@ -1644,34 +1650,57 @@ export default function GameScreen() {
         </View>
       )}
 
-      {/* ── TOAST УВЕДОМЛЕНИЯ ── */}
+      {/* ── TOAST УВЕДОМЛЕНИЯ — компактные, кликабельные ── */}
       {toasts.length > 0 && (
         <View style={{
-          position: 'absolute', bottom: 90, left: 0, right: 0,
-          alignItems: 'center', gap: 8, pointerEvents: 'none',
+          position: 'absolute', bottom: 80, left: 0, right: 0,
+          alignItems: 'center', gap: 6,
           zIndex: 9999,
-        } as any}>
+        } as any} pointerEvents="box-none">
           {toasts.map(toast => (
-            <View key={toast.id} style={{
-              backgroundColor: toast.color,
-              borderRadius: 16,
-              paddingHorizontal: 20,
-              paddingVertical: 12,
-              maxWidth: 360,
-              shadowColor: '#000',
-              shadowOpacity: 0.3,
-              shadowRadius: 12,
-              shadowOffset: { width: 0, height: 4 },
-              elevation: 10,
-            } as any}>
+            <TouchableOpacity
+              key={toast.id}
+              activeOpacity={0.8}
+              onPress={() => {
+                if (toast.truckId) {
+                  selectTruck(toast.truckId);
+                  switchTab('map');
+                  const t = trucks.find(x => x.id === toast.truckId);
+                  if (t) {
+                    window.dispatchEvent(new CustomEvent('followTruckFromCard', {
+                      detail: { truckId: toast.truckId, lng: t.position[0], lat: t.position[1] }
+                    }));
+                  }
+                }
+                setToasts(prev => prev.filter(x => x.id !== toast.id));
+              }}
+              style={{
+                backgroundColor: toast.color,
+                borderRadius: 12,
+                paddingHorizontal: 14,
+                paddingVertical: 8,
+                maxWidth: 300,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                shadowColor: '#000',
+                shadowOpacity: 0.25,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 3 },
+                elevation: 8,
+              } as any}
+            >
               <Text style={{
                 color: '#fff',
-                fontSize: 15,
+                fontSize: 12,
                 fontWeight: '700',
-                textAlign: 'center',
-                lineHeight: 20,
+                lineHeight: 16,
+                flex: 1,
               } as any}>{toast.message}</Text>
-            </View>
+              {toast.truckId && (
+                <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10, fontWeight: '600' } as any}>→</Text>
+              )}
+            </TouchableOpacity>
           ))}
         </View>
       )}
