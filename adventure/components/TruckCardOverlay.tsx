@@ -1,11 +1,12 @@
 ﻿// Карточки траков поверх карты — без фона, только карточки
 // При выборе: карточка выделяется, под ней выпадает панель с событиями/действиями
 import React, { memo, useRef, useEffect, useState } from 'react';
-import { useGameStore, GameEvent } from '../store/gameStore';
+import { useGameStore, GameEvent, DeliveryResult } from '../store/gameStore';
 import { useThemeStore } from '../store/themeStore';
 import { CITY_STATE, CITIES } from '../constants/config';
 import { getDriverAvatar } from '../utils/driverAvatars';
 import { SERVICE_VEHICLE_CONFIGS } from '../types/serviceVehicle';
+import DayEndBanner from './DayEndPopup';
 
 const FLUENT = 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis';
 const STATUS_COLOR: Record<string, string> = {
@@ -859,9 +860,288 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
   return <TruckHUD truck={truck} isDark={isDark} ps={ps} />;
 }
 
+/** Результат доставки — инлайн под карточкой трака */
+function DeliveryInlineResult({ result, isDark, onDismiss }: { result: DeliveryResult; isDark: boolean; onDismiss: () => void }) {
+  const [tab, setTab] = useState<'pnl' | 'chat'>('pnl');
+  const [msgs, setMsgs] = useState<Array<{text: string; isMe: boolean}>>([
+    { text: `Hey! Driver confirmed delivery in ${result.toCity}. BOL signed. Rate Con was $${result.agreedRate.toLocaleString()} all-in. I'll process the invoice today.`, isMe: false },
+  ]);
+
+  const profitColor = result.netProfit >= 0 ? '#4ade80' : '#f87171';
+  const rpmColor = result.ratePerMile >= 2.5 ? '#4ade80' : result.ratePerMile >= 2.0 ? '#fbbf24' : '#f87171';
+
+  const BG     = isDark ? 'rgba(13,17,23,0.97)' : 'rgba(255,255,255,0.97)';
+  const SURF   = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
+  const BORDER = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+  const TEXT1  = isDark ? '#e2e8f0' : '#111827';
+  const TEXT2  = isDark ? '#94a3b8' : '#6b7280';
+
+  const QUICK = ['Thanks! Send invoice.', 'Confirm detention.', 'POD attached.', 'Great work!'];
+
+  function sendMsg(text: string) {
+    setMsgs(prev => [...prev, { text, isMe: true }]);
+    setTimeout(() => {
+      setMsgs(prev => [...prev, {
+        text: text.includes('invoice') ? 'Invoice will be processed in 30 days.' : text.includes('detention') ? 'Detention approved!' : 'Got it, thanks!',
+        isMe: false,
+      }]);
+    }, 700);
+  }
+
+  return (
+    <div style={{
+      marginTop: 6, width: '100%',
+      background: BG,
+      backdropFilter: 'blur(14px)',
+      WebkitBackdropFilter: 'blur(14px)',
+      border: `2px solid ${profitColor}44`,
+      borderRadius: 14,
+      overflow: 'hidden',
+      animation: 'dropdownSlide 0.3s ease',
+      boxShadow: isDark ? `0 8px 24px rgba(0,0,0,0.5), 0 0 0 1px ${profitColor}22` : `0 4px 16px rgba(0,0,0,0.12)`,
+    } as any} onClick={e => e.stopPropagation()}>
+
+      {/* Header */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '8px 10px',
+        background: `${profitColor}12`,
+        borderBottom: `1px solid ${profitColor}22`,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 14 }}>🎉</span>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 800, color: TEXT1 }}>Доставка завершена!</div>
+            <div style={{ fontSize: 10, color: TEXT2 }}>{result.fromCity} → {result.toCity} · {result.miles} mi</div>
+          </div>
+        </div>
+        <button onClick={onDismiss} style={{
+          width: 22, height: 22, borderRadius: '50%',
+          background: SURF, border: `1px solid ${BORDER}`,
+          cursor: 'pointer', fontSize: 12, color: TEXT2,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>✕</button>
+      </div>
+
+      {/* Summary chips */}
+      <div style={{ display: 'flex', gap: 6, padding: '8px 10px', borderBottom: `1px solid ${BORDER}` }}>
+        {[
+          { label: 'GROSS', val: `$${result.grossRevenue.toLocaleString()}`, color: '#38bdf8' },
+          { label: 'РАСХОДЫ', val: `-$${result.totalExpenses.toLocaleString()}`, color: '#f87171' },
+          { label: 'NET', val: `${result.netProfit >= 0 ? '+' : ''}$${result.netProfit.toLocaleString()}`, color: profitColor },
+          { label: '$/MILE', val: result.ratePerMile.toFixed(2), color: rpmColor },
+        ].map(c => (
+          <div key={c.label} style={{
+            flex: 1, background: SURF, border: `1px solid ${BORDER}`,
+            borderRadius: 8, padding: '5px 4px', textAlign: 'center',
+          } as any}>
+            <div style={{ fontSize: 8, color: TEXT2, fontWeight: 700, letterSpacing: 0.3, marginBottom: 2 }}>{c.label}</div>
+            <div style={{ fontSize: 12, fontWeight: 900, color: c.color }}>{c.val}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', borderBottom: `1px solid ${BORDER}` }}>
+        {[{ key: 'pnl', label: '💰 P&L' }, { key: 'chat', label: '📧 Брокер' }].map(t => (
+          <button key={t.key} onClick={() => setTab(t.key as any)} style={{
+            flex: 1, padding: '7px 4px', border: 'none', cursor: 'pointer',
+            background: 'transparent',
+            borderBottom: `2px solid ${tab === t.key ? '#06b6d4' : 'transparent'}`,
+            color: tab === t.key ? '#06b6d4' : TEXT2,
+            fontSize: 11, fontWeight: 700,
+          }}>{t.label}</button>
+        ))}
+      </div>
+
+      {/* P&L */}
+      {tab === 'pnl' && (
+        <div style={{ padding: '8px 10px', maxHeight: 200, overflowY: 'auto' as any }}>
+          {[
+            { label: 'Agreed Rate', val: result.agreedRate, color: '#4ade80' },
+            result.detentionPay > 0 && { label: 'Detention Pay', val: result.detentionPay, color: '#fbbf24' },
+            { label: 'Топливо', val: -result.fuelCost, color: '#f87171' },
+            { label: 'Водитель', val: -result.driverPay, color: '#f87171' },
+            { label: 'Dispatch Fee (8%)', val: -result.dispatchFee, color: '#f87171' },
+            { label: 'Factoring (3%)', val: -result.factoringFee, color: '#f87171' },
+            { label: 'Truck Payment', val: -result.truckPayment, color: '#f87171' },
+            result.lumperCost > 0 && { label: 'Lumper', val: -result.lumperCost, color: '#f87171' },
+          ].filter(Boolean).map((row: any, i) => (
+            <div key={i} style={{
+              display: 'flex', justifyContent: 'space-between',
+              padding: '3px 0', borderBottom: `1px solid ${BORDER}`,
+            }}>
+              <span style={{ fontSize: 11, color: TEXT2 }}>{row.label}</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: row.color }}>
+                {row.val >= 0 ? '+' : ''}${Math.abs(row.val).toLocaleString()}
+              </span>
+            </div>
+          ))}
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            marginTop: 6, padding: '6px 8px',
+            background: `${profitColor}15`, border: `1px solid ${profitColor}33`, borderRadius: 8,
+          }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color: TEXT1 }}>NET PROFIT</span>
+            <span style={{ fontSize: 16, fontWeight: 900, color: profitColor }}>
+              {result.netProfit >= 0 ? '+' : ''}${result.netProfit.toLocaleString()}
+            </span>
+          </div>
+          <div style={{ fontSize: 11, color: profitColor, textAlign: 'center', marginTop: 6, fontWeight: 700 } as any}>
+            {result.profitPerMile >= 1.0 ? '⭐ Отличная поездка!' : result.profitPerMile >= 0.5 ? '👍 Нормально' : '⚠️ Слабая маржа'}
+          </div>
+        </div>
+      )}
+
+      {/* Chat */}
+      {tab === 'chat' && (
+        <div style={{ padding: '8px 10px' }}>
+          <div style={{ maxHeight: 120, overflowY: 'auto' as any, marginBottom: 8 }}>
+            {msgs.map((m, i) => (
+              <div key={i} style={{
+                display: 'flex', justifyContent: m.isMe ? 'flex-end' : 'flex-start',
+                marginBottom: 4,
+              }}>
+                <div style={{
+                  maxWidth: '80%', padding: '5px 8px', borderRadius: 8, fontSize: 11,
+                  background: m.isMe ? 'rgba(6,182,212,0.15)' : SURF,
+                  border: `1px solid ${m.isMe ? 'rgba(6,182,212,0.3)' : BORDER}`,
+                  color: m.isMe ? '#bae6fd' : TEXT1,
+                  lineHeight: 1.4,
+                }}>{m.text}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap' as any, gap: 4 }}>
+            {QUICK.map(q => (
+              <button key={q} onClick={() => sendMsg(q)} style={{
+                padding: '4px 8px', borderRadius: 6, cursor: 'pointer',
+                background: 'rgba(6,182,212,0.1)', border: '1px solid rgba(6,182,212,0.25)',
+                color: '#38bdf8', fontSize: 10, fontWeight: 600,
+              }}>{q}</button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Close button */}
+      <button onClick={onDismiss} style={{
+        width: '100%', padding: '8px 0', border: 'none', cursor: 'pointer',
+        background: 'rgba(6,182,212,0.08)',
+        borderTop: `1px solid ${BORDER}`,
+        color: '#38bdf8', fontSize: 12, fontWeight: 700,
+      }}>✓ Закрыть и найти следующий груз</button>
+    </div>
+  );
+}
+
+
+/** Баннер итогов недели — под strip карточек */
+function ShiftEndBanner({ isDark }: { isDark: boolean }) {
+  const { phase, totalEarned, totalLost, reputation, trucks, score, sessionName, day, endShift } = useGameStore(s => ({
+    phase: s.phase, totalEarned: s.totalEarned, totalLost: s.totalLost,
+    reputation: s.reputation, trucks: s.trucks, score: s.score,
+    sessionName: s.sessionName, day: s.day, endShift: s.endShift,
+  }));
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    setVisible(phase === 'shift_end');
+  }, [phase]);
+
+  if (!visible) return null;
+
+  const profit = totalEarned - totalLost;
+  const truckCount = trucks.length;
+  const perTruck = truckCount > 0 ? Math.round(profit / truckCount) : 0;
+  const grade = perTruck >= 4000 ? { g: 'S', color: '#fbbf24', emoji: '🏆' }
+    : perTruck >= 2500 ? { g: 'A', color: '#4ade80', emoji: '🥇' }
+    : perTruck >= 1500 ? { g: 'B', color: '#38bdf8', emoji: '🥈' }
+    : perTruck >= 500  ? { g: 'C', color: '#fb923c', emoji: '🥉' }
+    : { g: 'D', color: '#f87171', emoji: '📚' };
+
+  const BG     = isDark ? 'rgba(13,17,23,0.97)' : 'rgba(255,255,255,0.97)';
+  const BORDER = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+  const TEXT1  = isDark ? '#e2e8f0' : '#111827';
+  const TEXT2  = isDark ? '#94a3b8' : '#6b7280';
+
+  return (
+    <div style={{
+      margin: '6px 10px 4px',
+      background: BG,
+      backdropFilter: 'blur(14px)',
+      WebkitBackdropFilter: 'blur(14px)',
+      border: `2px solid ${grade.color}44`,
+      borderRadius: 16,
+      overflow: 'hidden',
+      animation: 'dropdownSlide 0.4s ease',
+      boxShadow: isDark ? '0 8px 24px rgba(0,0,0,0.5)' : '0 4px 16px rgba(0,0,0,0.12)',
+    } as any}>
+
+      {/* Header */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '10px 14px',
+        background: `${grade.color}12`,
+        borderBottom: `1px solid ${BORDER}`,
+      }}>
+        <span style={{ fontSize: 24 }}>{grade.emoji}</span>
+        <div style={{
+          width: 40, height: 40, borderRadius: 20,
+          border: `2px solid ${grade.color}`,
+          background: `${grade.color}20`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 20, fontWeight: 900, color: grade.color }}>{grade.g}</span>
+        </div>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 900, color: TEXT1 }}>Неделя завершена!</div>
+          <div style={{ fontSize: 11, color: TEXT2 }}>{sessionName} · Неделя {Math.ceil(day / 7)} · {truckCount} траков</div>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div style={{ display: 'flex', gap: 6, padding: '10px 14px', borderBottom: `1px solid ${BORDER}` }}>
+        {[
+          { label: 'Доход', val: `$${totalEarned.toLocaleString()}`, color: '#4ade80' },
+          { label: 'Расходы', val: `-$${totalLost.toLocaleString()}`, color: '#f87171' },
+          { label: 'На трак', val: `$${perTruck.toLocaleString()}`, color: grade.color },
+          { label: 'Репутация', val: `${reputation}%`, color: reputation > 70 ? '#4ade80' : '#fbbf24' },
+        ].map(c => (
+          <div key={c.label} style={{
+            flex: 1, background: `${c.color}15`, border: `1px solid ${c.color}30`,
+            borderRadius: 10, padding: '6px 4px', textAlign: 'center',
+          } as any}>
+            <div style={{ fontSize: 9, color: TEXT2, fontWeight: 600, marginBottom: 2 }}>{c.label}</div>
+            <div style={{ fontSize: 13, fontWeight: 900, color: c.color }}>{c.val}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Buttons */}
+      <div style={{ padding: '10px 14px', display: 'flex', gap: 8 }}>
+        <button onClick={endShift} style={{
+          flex: 1, padding: '9px 0', borderRadius: 10, border: 'none', cursor: 'pointer',
+          background: `linear-gradient(135deg, ${grade.color}, ${grade.color}cc)`,
+          color: '#fff', fontSize: 13, fontWeight: 800,
+        }}>🔄 Новая неделя</button>
+        <button onClick={() => { useGameStore.getState().clearSave(); window.location.href = '/game/'; }} style={{
+          flex: 1, padding: '9px 0', borderRadius: 10, cursor: 'pointer',
+          background: isDark ? 'rgba(255,255,255,0.06)' : '#f3f4f6',
+          border: `1px solid ${BORDER}`,
+          color: TEXT2, fontSize: 12, fontWeight: 700,
+        }}>🏠 Меню</button>
+      </div>
+    </div>
+  );
+}
+
 const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selectedTruckId }: Props) {
   const trucks = useGameStore(s => s.trucks);
   const activeEvents = useGameStore(s => s.activeEvents);
+  const deliveryResults = useGameStore(s => s.deliveryResults);
+  const dismissDeliveryResult = useGameStore(s => s.dismissDeliveryResult);
   const { mode: themeMode } = useThemeStore();
   const isDark = themeMode === 'dark';
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -881,6 +1161,23 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
     const target = cardLeft - (containerWidth / 2) + (cardWidth / 2);
     container.scrollTo({ left: target, behavior: 'smooth' });
   }, [selectedTruckId, trucks]);
+
+  // Авто-скролл к карточке трака при появлении результата доставки
+  useEffect(() => {
+    if (deliveryResults.length === 0 || !scrollRef.current) return;
+    const result = deliveryResults[0];
+    const idx = trucks.findIndex(t => t.id === result.truckId);
+    if (idx < 0) return;
+    const container = scrollRef.current;
+    const cards = container.querySelectorAll('[data-truck-card]');
+    const card = cards[idx] as HTMLElement;
+    if (!card) return;
+    const cardLeft = card.offsetLeft;
+    const cardWidth = card.offsetWidth;
+    const containerWidth = container.clientWidth;
+    const target = cardLeft - (containerWidth / 2) + (cardWidth / 2);
+    container.scrollTo({ left: target, behavior: 'smooth' });
+  }, [deliveryResults.length]);
 
   // Блокируем всплытие touch-событий к карте
   useEffect(() => {
@@ -972,6 +1269,9 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
           // События для этого трака
           const truckEvents = activeEvents.filter(e => e.truckId === truck.id);
           const hasUrgent = truckEvents.some(e => e.urgency === 'critical' || e.urgency === 'high');
+
+          // Результат доставки для этого трака
+          const deliveryResult = deliveryResults.find(r => r.truckId === truck.id) || null;
 
           return (
             <div key={truck.id} data-truck-card style={{
@@ -1118,53 +1418,7 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                       </div>
                     )}
 
-                    {/* Кнопка починки — показывается прямо на карточке при поломке */}
-                    {truck.status === 'breakdown' && (truck as any).awaitingRepairChoice && (() => {
-                      const cR = (truck as any).breakdownCostRoadside || 0;
-                      const cT = (truck as any).breakdownCostTow || 0;
-                      const dR = (truck as any).breakdownDelayRoadside || 90;
-                      const dT = (truck as any).breakdownDelayTow || 240;
-                      const repairBreakdown = useGameStore.getState().repairBreakdown;
-                      return (
-                        <div style={{ display: 'flex', gap: 4, marginTop: 2 } as any} onClick={e => e.stopPropagation()}>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); repairBreakdown(truck.id, 'roadside'); }}
-                            style={{
-                              flex: 1, padding: '4px 6px',
-                              background: 'rgba(74,222,128,0.15)',
-                              border: '1.5px solid rgba(74,222,128,0.5)',
-                              borderRadius: 8, cursor: 'pointer',
-                              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
-                            } as any}
-                          >
-                            <span style={{ fontSize: 13 } as any}>🔧</span>
-                            <span style={{ fontSize: 9, fontWeight: 800, color: isDark ? '#4ade80' : '#16a34a' } as any}>На месте</span>
-                            <span style={{ fontSize: 8, fontWeight: 700, color: '#f87171' } as any}>−${cR.toLocaleString()}</span>
-                            <span style={{ fontSize: 8, color: isDark ? '#94a3b8' : '#6b7280' } as any}>~{dR}м</span>
-                          </button>
-                          {cT > 0 && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); repairBreakdown(truck.id, 'tow'); }}
-                              style={{
-                                flex: 1, padding: '4px 6px',
-                                background: 'rgba(251,146,60,0.15)',
-                                border: '1.5px solid rgba(251,146,60,0.5)',
-                                borderRadius: 8, cursor: 'pointer',
-                                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
-                              } as any}
-                            >
-                              <span style={{ fontSize: 13 } as any}>🚛</span>
-                              <span style={{ fontSize: 9, fontWeight: 800, color: isDark ? '#fb923c' : '#c2410c' } as any}>Эвакуатор</span>
-                              <span style={{ fontSize: 8, fontWeight: 700, color: '#f87171' } as any}>−${cT.toLocaleString()}</span>
-                              <span style={{ fontSize: 8, color: isDark ? '#94a3b8' : '#6b7280' } as any}>~{dT}м</span>
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })()}
-
-                    {/* Стандартная строка HOS/mood/ставка — скрываем при поломке с выбором */}
-                    {!(truck.status === 'breakdown' && (truck as any).awaitingRepairChoice) && (
+                    {/* Стандартная строка HOS/mood/ставка */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 1 } as any}>
                       <div style={{ border: `1px solid ${hosColor}44`, borderRadius: 5, padding: '0px 4px', display: 'flex', alignItems: 'baseline', gap: 1 } as any}>
                         <span style={{ fontSize: 10, fontWeight: 900, color: hosColor } as any}>{hos.toFixed(1)}</span>
@@ -1182,13 +1436,21 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                         </div>
                       )}
                     </div>
-                    )}
                   </div>
                 </div>
               </div>
 
               {/* Выпадающая панель — анимированная */}
               <AnimatedDropdown truck={truck} events={truckEvents} isDark={isDark} isSelected={isSelected} />
+
+              {/* Результат доставки — под карточкой */}
+              {deliveryResult && (
+                <DeliveryInlineResult
+                  result={deliveryResult}
+                  isDark={isDark}
+                  onDismiss={() => dismissDeliveryResult(deliveryResult.loadId)}
+                />
+              )}
             </div>
           );
         })}
@@ -1226,6 +1488,9 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
           <span style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#38bdf8' : '#007aff', textAlign: 'center', lineHeight: 1.3 } as any}>Купить{'\n'}трак</span>
         </div>
       </div>
+
+      {/* Баннер итогов дня — под strip карточек */}
+      <DayEndBanner isDark={isDark} />
     </>
   );
 });

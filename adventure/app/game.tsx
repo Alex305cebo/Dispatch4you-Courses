@@ -37,7 +37,6 @@ import GameMenu from '../components/GameMenu';
 import TruckDetailModal from '../components/TruckDetailModal';
 import DeliveryResultPopup from '../components/DeliveryResultPopup';
 import ShiftEndPopup from '../components/ShiftEndPopup';
-import DayEndPopup from '../components/DayEndPopup';
 import StatsPopup from '../components/StatsPopup';
 import SettingsPopup from '../components/SettingsPopup';
 import HelpPopup from '../components/HelpPopup';
@@ -1744,14 +1743,8 @@ export default function GameScreen() {
       {showEvents && <Modal onClose={() => setShowEvents(false)}><EventsPanel /></Modal>}
       {showMyLoads && <Modal onClose={() => setShowMyLoads(false)}><MyLoadsPanel /></Modal>}
       
-      {/* Попапы показываются по приоритету: сначала доставки, потом день, потом смена */}
-      {deliveryResults.length > 0 ? (
-        <DeliveryResultPopup key={deliveryResults[0]?.loadId ?? 'empty'} />
-      ) : phase === 'day_end' ? (
-        <DayEndPopup />
-      ) : phase === 'shift_end' ? (
-        <ShiftEndPopup />
-      ) : null}
+      {/* Попапы — только глобальные (не связанные с траком) */}
+      <ShiftEndPopup />
       
       {showStats && <StatsPopup onClose={() => setShowStats(false)} />}
       {showSettings && <SettingsPopup onClose={() => setShowSettings(false)} />}

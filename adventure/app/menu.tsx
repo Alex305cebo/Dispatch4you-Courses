@@ -5,7 +5,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useWindowDimensio
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useGameStore } from '../store/gameStore';
-import { getCurrentUser } from '../utils/firebaseSaveSystem';
+import { getCurrentUser, signInWithGoogle } from '../utils/firebaseSaveSystem';
 import SavesManagerPopup from '../components/SavesManagerPopup';
 import SettingsPopup from '../components/SettingsPopup';
 import TruckShopModal from '../components/TruckShopModal';
@@ -20,7 +20,10 @@ export default function MainMenu() {
   const { startShift, loadGame } = useGameStore();
   const [hasSave, setHasSave] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [userPhoto, setUserPhoto] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
   const [showSaves, setShowSaves] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -33,7 +36,28 @@ export default function MainMenu() {
       const raw = localStorage.getItem('dispatcher-game-save');
       if (raw) { const s = JSON.parse(raw); if (s?.version >= 5) setHasSave(true); }
     } catch {}
-    try { const u = await getCurrentUser(); setUserEmail(u?.email || null); } catch {}
+    try {
+      const u = await getCurrentUser();
+      if (u) {
+        setUserEmail(u.email || null);
+        setUserName(u.displayName || u.email?.split('@')[0] || null);
+        setUserPhoto(u.photoURL || null);
+      }
+    } catch {}
+  }
+
+  async function handleSignIn() {
+    setSigningIn(true);
+    try {
+      const u = await signInWithGoogle();
+      if (u) {
+        setUserEmail(u.email || null);
+        setUserName(u.displayName || u.email?.split('@')[0] || null);
+        setUserPhoto(u.photoURL || null);
+      }
+    } finally {
+      setSigningIn(false);
+    }
   }
 
   async function handleContinue() {
@@ -141,6 +165,47 @@ export default function MainMenu() {
 
           {/* Разделитель */}
           <View style={s.divider} />
+
+          {/* ── БЛОК ПОЛЬЗОВАТЕЛЯ / ВХОД ── */}
+          {userEmail ? (
+            /* Залогинен — показываем аватар + имя */
+            <View style={s.userRow}>
+              {userPhoto ? (
+                <img src={userPhoto} style={{ width: 32, height: 32, borderRadius: 16, border: '2px solid rgba(99,102,241,0.5)' } as any} />
+              ) : (
+                <View style={s.userAvatar}>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: '#fff' }}>
+                    {(userName || userEmail)[0].toUpperCase()}
+                  </Text>
+                </View>
+              )}
+              <View style={{ flex: 1 }}>
+                <Text style={s.userName} numberOfLines={1}>{userName || userEmail}</Text>
+                <Text style={s.userEmail} numberOfLines={1}>{userEmail}</Text>
+              </View>
+            </View>
+          ) : (
+            /* Не залогинен — кнопка Google */
+            <TouchableOpacity
+              onPress={signingIn ? undefined : handleSignIn}
+              activeOpacity={0.8}
+              style={s.googleBtn}
+            >
+              {signingIn ? (
+                <Text style={s.googleBtnText}>⏳ Входим...</Text>
+              ) : (
+                <>
+                  <svg width="16" height="16" viewBox="0 0 48 48" style={{ flexShrink: 0 } as any}>
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                  </svg>
+                  <Text style={s.googleBtnText}>Войти через Google</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
 
           {/* Пункты меню */}
           <View style={{ gap: itemGap }}>
@@ -368,6 +433,34 @@ const s = StyleSheet.create({
   },
   betaText: { fontSize: 8, fontWeight: '800', color: '#ef4444', letterSpacing: 0.8 },
   emailText: { fontSize: 10, color: '#94a3b8', fontWeight: '600' },
+
+  // User row
+  userRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: 'rgba(99,102,241,0.08)',
+    borderWidth: 1, borderColor: 'rgba(99,102,241,0.2)',
+    borderRadius: 12, padding: 8, marginBottom: 8,
+  },
+  userAvatar: {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: '#6366f1',
+    alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
+  },
+  userName: { fontSize: 12, fontWeight: '700', color: '#e0e7ff' },
+  userEmail: { fontSize: 10, color: '#94a3b8', fontWeight: '500' },
+
+  // Google sign-in button
+  googleBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: '#fff',
+    borderRadius: 10, paddingVertical: 10, paddingHorizontal: 16,
+    marginBottom: 8,
+    // @ts-ignore
+    cursor: 'pointer',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+  },
+  googleBtnText: { fontSize: 13, fontWeight: '700', color: '#1f2937' },
 
   divider: {
     height: 1, backgroundColor: 'rgba(6,182,212,0.2)', marginBottom: 10,
