@@ -51,6 +51,7 @@ import { getDriverAvatar } from '../utils/driverAvatars';
 import { UnifiedChatUI } from '../components/UnifiedChatUI';
 import { createDemoMessages } from '../utils/demoMessages';
 import TruckShopModal from '../components/TruckShopModal';
+import RepairGarageModal from '../components/RepairGarageModal';
 import { useOnboardingStore } from '../store/onboardingStore';
 import { ONBOARDING_STEPS } from '../data/onboardingConfig';
 import OnboardingOverlay from '../components/OnboardingOverlay';
@@ -176,7 +177,7 @@ const s = StyleSheet.create({
   landscapePanel: { width: 320, flexDirection: 'column', backgroundColor: BG2, borderLeftWidth: 1, borderLeftColor: BORDER },
   mobilePanelOverlay: { position: 'absolute', top: 128, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(242,242,247,0.96)', borderTopLeftRadius: 20, borderTopRightRadius: 20, overflow: 'hidden', zIndex: 10 },
   mobileTopBar: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100 },
-  truckStripBar: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: 'transparent', zIndex: 20 },
+  truckStripBar: { position: 'absolute', top: 0, left: 0, backgroundColor: 'transparent', zIndex: 20, pointerEvents: 'box-none' as any },
   bottomTabs: { flexDirection: 'row', paddingHorizontal: 4, paddingVertical: 5, backgroundColor: BG2, borderTopWidth: 1, borderTopColor: BORDER },
   bottomTab: { flex: 1, paddingVertical: 9, alignItems: 'center', borderRadius: 10, borderWidth: 0, flexDirection: 'row', justifyContent: 'center', gap: 4, backgroundColor: 'transparent' },
   bottomTabOn: { backgroundColor: '#fff', borderRadius: 10 },
@@ -545,7 +546,7 @@ export default function GameScreen() {
         background: T.topBarBg,
         borderBottom: `1px solid ${T.topBarBorder}`,
         boxShadow: themeMode === 'dark' ? '0 1px 20px rgba(0,0,0,0.4)' : '0 1px 8px rgba(0,0,0,0.06)',
-        position: 'relative', overflow: 'hidden',
+        position: 'relative', overflow: 'hidden', zIndex: 50,
         fontFamily: 'sans-serif',
       } as any}>
 
@@ -631,6 +632,7 @@ export default function GameScreen() {
                         : (themeMode === 'dark' ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.08)'),
                       borderRadius: 6, cursor: 'pointer',
                       fontSize: 10, fontWeight: 800,
+                      touchAction: 'manipulation',
                       color: timeSpeed === sp
                         ? (themeMode === 'dark' ? '#38bdf8' : '#007aff')
                         : (themeMode === 'dark' ? '#94a3b8' : '#6b7280'),
@@ -927,6 +929,12 @@ export default function GameScreen() {
           // Snap scrolling на мобильных
           scrollSnapType: isWide ? 'none' : 'x mandatory',
           scrollBehavior: 'smooth',
+          // Не блокировать карту справа от карточек
+          width: 'fit-content',
+          maxWidth: '100%',
+          pointerEvents: 'auto',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
         } as any}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -1416,6 +1424,18 @@ export default function GameScreen() {
     return () => window.removeEventListener('mapToast', handleMapToast);
   }, []);
 
+  // Переключение вкладки из внешних компонентов
+  useEffect(() => {
+    function handleSwitchTab(e: Event) {
+      const { tab } = (e as CustomEvent).detail || {};
+      if (tab && ['map', 'loadboard', 'trucks', 'chat'].includes(tab)) {
+        switchTab(tab as Tab);
+      }
+    }
+    window.addEventListener('switchTab', handleSwitchTab);
+    return () => window.removeEventListener('switchTab', handleSwitchTab);
+  }, []);
+
   // Авто-переключение на чат при поломке
   useEffect(() => {
     const broken = trucks.filter(t => t.status === 'breakdown');
@@ -1539,7 +1559,7 @@ export default function GameScreen() {
           {/* Основной контент: карта слева + панель справа */}
           <View style={s.landscapeBody}>
             {/* Левая часть: карта */}
-            <View style={s.landscapeMap}>
+            <View style={[s.landscapeMap, { position: 'relative' } as any]}>
               <ErrorBoundary name="Map"><GoogleMapView {...mapProps} /></ErrorBoundary>
               {/* Карточки траков поверх карты */}
               <View style={s.truckStripBar} pointerEvents="box-none">
@@ -1548,16 +1568,52 @@ export default function GameScreen() {
                   selectedTruckId={selectedTruckId}
                 />
               </View>
+              {/* Кнопка свернуть/развернуть правую панель */}
+              <div
+                onClick={() => setRightPanelCollapsed(v => !v)}
+                style={{
+                  position: 'absolute', right: 0, top: '50%',
+                  transform: 'translateY(-50%)',
+                  zIndex: 50,
+                  width: 20, height: 56,
+                  background: themeMode === 'dark' ? 'rgba(15,23,42,0.9)' : 'rgba(255,255,255,0.9)',
+                  border: themeMode === 'dark' ? '1px solid rgba(56,189,248,0.3)' : '1px solid rgba(0,0,0,0.12)',
+                  borderRight: 'none',
+                  borderRadius: '8px 0 0 8px',
+                  cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  backdropFilter: 'blur(8px)',
+                  transition: 'all 0.2s',
+                  boxShadow: '-2px 0 8px rgba(0,0,0,0.15)',
+                } as any}
+                title={rightPanelCollapsed ? 'Развернуть панель' : 'Свернуть панель'}
+              >
+                <span style={{
+                  fontSize: 12, color: themeMode === 'dark' ? '#38bdf8' : '#007aff',
+                  fontWeight: 900, lineHeight: 1,
+                  transform: rightPanelCollapsed ? 'rotate(0deg)' : 'rotate(180deg)',
+                  transition: 'transform 0.3s ease',
+                  display: 'block',
+                } as any}>‹</span>
+              </div>
             </View>
             {/* Правая часть: табы + панель */}
-            <View style={s.landscapePanel}>
+            <div style={{
+              width: rightPanelCollapsed ? 0 : 320,
+              minWidth: rightPanelCollapsed ? 0 : 320,
+              overflow: 'hidden' as any,
+              transition: 'width 0.3s ease, min-width 0.3s ease',
+              display: 'flex', flexDirection: 'column' as any,
+              background: themeMode === 'dark' ? '#0d1117' : '#ffffff',
+              borderLeft: themeMode === 'dark' ? '1px solid rgba(56,189,248,0.15)' : '1px solid rgba(0,0,0,0.08)',
+            } as any}>
               <SideTabs />
               <View style={s.panelContent}>
                 {(activeTab === 'loadboard' || activeTab === 'map') && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} onAssigned={handleAssigned} /></ErrorBoundary>}
                 {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
                 {activeTab === 'chat'      && <ErrorBoundary name="Chat"><UnifiedChatUI nickname={sessionName || 'player'} /></ErrorBoundary>}
               </View>
-            </View>
+            </div>
           </View>
         </View>
 
@@ -1680,6 +1736,7 @@ export default function GameScreen() {
       {showSettings && <SettingsPopup onClose={() => setShowSettings(false)} />}
       {showHelp && <HelpPopup onClose={() => setShowHelp(false)} />}
       <TruckShopModal />
+      <RepairGarageModal />
       {/* Колокольчик и меню — вне TopBar div чтобы Modal работал корректно */}
       <div data-onboarding="notification-bell" style={{ display: 'contents' }}>
       <NotificationBell

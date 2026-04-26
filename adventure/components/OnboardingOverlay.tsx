@@ -138,11 +138,19 @@ export default function OnboardingOverlay() {
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
-        background: targetRect ? 'transparent' : 'rgba(0,0,0,0.6)',
-        pointerEvents: popupVisible ? 'auto' : 'none',
+        background: 'none',
+        pointerEvents: 'none',
       }}
     >
       {targetRect && <div style={spotlightStyle} />}
+      {!targetRect && (
+        <div style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(0,0,0,0.6)',
+          pointerEvents: 'none',
+          zIndex: 9999,
+        }} />
+      )}
 
       <OnboardingPopup
         step={stepConfig}

@@ -9,6 +9,7 @@ import { getCurrentUser } from '../utils/firebaseSaveSystem';
 import SavesManagerPopup from '../components/SavesManagerPopup';
 import SettingsPopup from '../components/SettingsPopup';
 import TruckShopModal from '../components/TruckShopModal';
+import RepairGarageModal from '../components/RepairGarageModal';
 
 export default function MainMenu() {
   const router = useRouter();
@@ -51,7 +52,7 @@ export default function MainMenu() {
     ...(hasSave ? [{ id:'continue', icon:'▶', label:'Продолжить', sub:'Последнее сохранение', color:'#22c55e', glow:'#22c55e', action: handleContinue, hot: true }] : []),
     { id:'new', icon:'⚡', label: hasSave ? 'Новая игра' : 'Начать игру', sub:'1 трак · Knoxville, TN', color:'#3b82f6', glow:'#60a5fa', action: handleNewGame, hot: !hasSave },
     { id:'saves', icon:'☁', label:'Сохранения', sub: userEmail ? 'Облачная история' : 'Войдите для облака', color:'#a78bfa', glow:'#c4b5fd', action: () => setShowSaves(true) },
-    { id:'garage', icon:'🔧', label:'Гараж', sub:'Управление флотом', color:'#f59e0b', glow:'#fcd34d', action: () => setShowGarage(true), soon: true },
+    { id:'garage', icon:'🔧', label:'Гараж', sub:'Ремонт и улучшения', color:'#f59e0b', glow:'#fcd34d', action: () => { useGameStore.getState().setRepairGarageOpen(true); } },
     { id:'settings', icon:'⚙', label:'Настройки', sub:'Графика · Звук', color:'#06b6d4', glow:'#67e8f9', action: () => setShowSettings(true) },
     { id:'profile', icon:'◉', label:'Профиль', sub:'Статистика · Достижения', color:'#ec4899', glow:'#f9a8d4', action: () => setShowProfile(true), soon: true },
   ];
@@ -236,7 +237,7 @@ export default function MainMenu() {
       {/* Модалки */}
       {showSaves    && <SavesManagerPopup onClose={() => setShowSaves(false)} />}
       {showSettings && <SettingsPopup onClose={() => setShowSettings(false)} />}
-      {showGarage   && <TruckShopModal onClose={() => setShowGarage(false)} />}
+      <RepairGarageModal />
       {showProfile  && (
         <View style={s.modalOverlay}>
           <View style={s.modalBox}>

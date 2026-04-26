@@ -1310,6 +1310,24 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
     return () => window.removeEventListener('followTruckFromCard', handleFollowFromCard);
   }, [activeTrucks, followTruck]);
 
+  // ── FOLLOW SERVICE VEHICLE (zoom to service vehicle position) ──
+  useEffect(() => {
+    function handleFollowService(e: Event) {
+      const { lng, lat } = (e as CustomEvent).detail || {};
+      if (!lng || !lat || !googleMapRef.current || !mapLoaded) return;
+      // Снимаем follow за траком
+      setFollowTruck(false);
+      followTruckIdRef.current = null;
+      // Зумим к сервисной машине
+      googleMapRef.current.moveCamera({
+        center: { lat, lng }, zoom: 14, heading: 0, tilt: 0,
+      });
+      userZoomRef.current = 14;
+    }
+    window.addEventListener('followServiceVehicle', handleFollowService);
+    return () => window.removeEventListener('followServiceVehicle', handleFollowService);
+  }, [mapLoaded]);
+
   // Единый стиль для всех 3 квадратных кнопок
   const btnStyle = (active = false): React.CSSProperties => ({
     width: 44,

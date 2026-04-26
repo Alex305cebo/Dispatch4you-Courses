@@ -153,7 +153,8 @@ export type TruckStatus =
   | 'loaded'      // едет к delivery
   | 'at_delivery' // на разгрузке
   | 'breakdown'   // поломка
-  | 'waiting';    // ждёт (detention)
+  | 'waiting'     // ждёт (detention)
+  | 'in_garage';  // в гараже — ремонт/улучшение
 
 export interface Truck {
   id: string;
@@ -216,6 +217,12 @@ export interface Truck {
   oldTruckComplaintAt?: number;  // минута последней жалобы водителя
   oldTruckBreakdownChance?: number; // множитель шанса поломки (1.0 = норма, 3.0 = втрое чаще)
   speedPenalty?: number;         // замедление 0.0–0.3 (0.2 = на 20% медленнее)
+
+  // ── GARAGE ──
+  garageCity?: string;           // город гаража где трак на ремонте
+  garageEnteredAt?: number;      // игровая минута когда попал в гараж
+  garageRepairDone?: boolean;    // ремонт завершён, можно забрать
+  garageUpgrades?: string[];     // список установленных улучшений
 }
 
 export interface LoadOffer {
@@ -493,6 +500,14 @@ interface GameState {
   buyTruckFromShop: (lotId: number, price: number, name: string, isOld: boolean, speedPenalty: number, breakdownChance: number) => boolean;
   truckShopOpen: boolean;
   setTruckShopOpen: (open: boolean) => void;
+
+  // Repair Garage — ремонт и улучшение траков
+  repairGarageOpen: boolean;
+  setRepairGarageOpen: (open: boolean) => void;
+  repairTruckInGarage: (truckId: string) => void;
+  upgradeTruckInGarage: (truckId: string, upgradeId: string) => void;
+  releaseFromGarage: (truckId: string) => void;
+  sendTruckToGarage: (truckId: string, city: string) => void;
 }
 
 // ─── НАЧАЛЬНЫЕ ДАННЫЕ ────────────────────────────────────────────────────────
@@ -1386,6 +1401,9 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   garageOpen: false,
   setGarageOpen: (open: boolean) => set({ garageOpen: open }),
+
+  repairGarageOpen: false,
+  setRepairGarageOpen: (open: boolean) => set({ repairGarageOpen: open }),
 
   truckShopOpen: false,
   setTruckShopOpen: (open: boolean) => {
@@ -2697,7 +2715,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     // ── UPDATE SERVICE VEHICLES ──
     // Update roadside assist, tow trucks, mobile mechanics
-    get().updateServiceVehicles();
+    // ВАЖНО: вызываем ПОСЛЕ set() чтобы работать с актуальными trucks
 
     set((s: any) => ({
       gameMinute: newMinute,
@@ -2715,6 +2733,9 @@ export const useGameStore = create<GameState>((set, get) => ({
         return active;
       })(),
     }));
+
+    // Service vehicles обновляются ПОСЛЕ основного set() чтобы не было race condition
+    get().updateServiceVehicles();
     
     // Автосохранение каждые 60 игровых минут (≈ 50 реальных секунд)
     if (Math.floor(newMinute / 60) > Math.floor(gameMinute / 60)) {
@@ -3598,6 +3619,8 @@ case 'detention': {
     } else {
       get().callRoadsideAssist(truckId, 'tow_truck');
     }
+    // Сразу отправляем сервисную машину в путь (снимаем waitingForDispatch)
+    get().dispatchServiceVehicle(truckId);
   },
 
   // ── SERVICE VEHICLE SYSTEM ──────────────────────────────────────────────────
@@ -3698,8 +3721,9 @@ case 'detention': {
    * Called every game tick
    */
   updateServiceVehicles: () => {
-    const { serviceVehicles, gameMinute, trucks } = get();
+    const { serviceVehicles, gameMinute, trucks, timeSpeed } = get();
     if (serviceVehicles.length === 0) return;
+    const speedMult = timeSpeed ?? 1;
 
     const updatedVehicles: ServiceVehicle[] = [];
     const updatedTrucks = [...trucks];
@@ -3755,12 +3779,127 @@ case 'detention': {
 
       // Handle arrived status
       if (vehicle.status === 'arrived') {
-        // Start repair
-        updatedVehicles.push({
-          ...vehicle,
-          status: 'repairing',
-          repairStartedAt: gameMinute,
-        });
+        // Tow truck: начинаем везти трак обратно в город
+        if (vehicle.type === 'tow_truck') {
+          const returnRoute = buildSimpleRoute(vehicle.position, CITIES[vehicle.fromCity] || vehicle.route[0]);
+          const returnEta = Math.max(3, Math.round(vehicle.eta * 0.8)); // обратный путь чуть быстрее
+          updatedVehicles.push({
+            ...vehicle,
+            status: 'towing_back' as any,
+            returnRoute,
+            returnProgress: 0,
+            returnEta,
+          });
+          // Уведомление
+          const truck = trucks.find(t => t.id === vehicle.targetTruckId);
+          if (truck) {
+            get().addNotification({
+              type: 'text', priority: 'medium', from: truck.driver,
+              subject: `🚛 Эвакуатор забрал ${truck.name}`,
+              message: `${truck.name} погружен на эвакуатор. Везём в гараж в ${vehicle.fromCity}.`,
+              actionRequired: false, relatedTruckId: vehicle.targetTruckId,
+            });
+          }
+        } else {
+          // Road assist / mobile mechanic: ремонт на месте
+          updatedVehicles.push({
+            ...vehicle,
+            status: 'repairing',
+            repairStartedAt: gameMinute,
+          });
+        }
+        continue;
+      }
+
+      // Handle towing_back status — tow truck moving back to garage city with the truck
+      if ((vehicle.status as string) === 'towing_back') {
+        const returnRoute = (vehicle as any).returnRoute as [number, number][] | undefined;
+        const returnEta = (vehicle as any).returnEta as number || vehicle.eta;
+        const returnProgress = (vehicle as any).returnProgress as number || 0;
+        
+        if (!returnRoute || returnRoute.length === 0) {
+          // Нет маршрута — сразу доставляем в гараж
+          const truckIndex = updatedTrucks.findIndex(t => t.id === vehicle.targetTruckId);
+          const cityPos = CITIES[vehicle.fromCity];
+          if (truckIndex !== -1 && cityPos) {
+            updatedTrucks[truckIndex] = {
+              ...updatedTrucks[truckIndex],
+              status: 'in_garage' as TruckStatus,
+              garageCity: vehicle.fromCity,
+              garageEnteredAt: gameMinute,
+              garageRepairDone: false,
+              currentCity: vehicle.fromCity,
+              position: cityPos,
+              currentLoad: null,
+              routePath: null,
+              progress: 0,
+              destinationCity: null,
+              outOfOrderUntil: undefined,
+            };
+            get().addNotification({
+              type: 'text', priority: 'medium', from: updatedTrucks[truckIndex].driver,
+              subject: `🏗️ ${updatedTrucks[truckIndex].name} доставлен в гараж`,
+              message: `${updatedTrucks[truckIndex].name} доставлен в гараж в ${vehicle.fromCity}. Можно начать ремонт и улучшения.`,
+              actionRequired: true, relatedTruckId: vehicle.targetTruckId,
+            });
+            window.dispatchEvent(new CustomEvent('mapToast', {
+              detail: { message: `🏗️ ${updatedTrucks[truckIndex].name} → Гараж (${vehicle.fromCity})`, color: '#f59e0b', truckId: vehicle.targetTruckId }
+            }));
+          }
+          continue; // completed
+        }
+        
+        const progressPerMinute = (1 / returnEta) * 0.25 * speedMult;
+        const newProgress = Math.min(1, returnProgress + progressPerMinute);
+        const newPosition = getPositionOnRoute(returnRoute, newProgress);
+        
+        // Двигаем и трак вместе с эвакуатором
+        const truckIndex = updatedTrucks.findIndex(t => t.id === vehicle.targetTruckId);
+        if (truckIndex !== -1) {
+          updatedTrucks[truckIndex] = {
+            ...updatedTrucks[truckIndex],
+            position: newPosition,
+          };
+        }
+        
+        if (newProgress >= 1) {
+          // Прибыли в гараж! Обновляем трак напрямую в updatedTrucks
+          const cityPos = CITIES[vehicle.fromCity];
+          if (truckIndex !== -1 && cityPos) {
+            updatedTrucks[truckIndex] = {
+              ...updatedTrucks[truckIndex],
+              status: 'in_garage' as TruckStatus,
+              garageCity: vehicle.fromCity,
+              garageEnteredAt: gameMinute,
+              garageRepairDone: false,
+              currentCity: vehicle.fromCity,
+              position: cityPos,
+              currentLoad: null,
+              routePath: null,
+              progress: 0,
+              destinationCity: null,
+              outOfOrderUntil: undefined,
+            };
+            get().addNotification({
+              type: 'text', priority: 'medium', from: updatedTrucks[truckIndex].driver,
+              subject: `🏗️ ${updatedTrucks[truckIndex].name} доставлен в гараж`,
+              message: `${updatedTrucks[truckIndex].name} доставлен в гараж в ${vehicle.fromCity}. Можно начать ремонт и улучшения.`,
+              actionRequired: true, relatedTruckId: vehicle.targetTruckId,
+            });
+            window.dispatchEvent(new CustomEvent('mapToast', {
+              detail: { message: `🏗️ ${updatedTrucks[truckIndex].name} → Гараж (${vehicle.fromCity})`, color: '#f59e0b', truckId: vehicle.targetTruckId }
+            }));
+          }
+          continue; // completed — vehicle removed
+        } else {
+          updatedVehicles.push({
+            ...vehicle,
+            position: newPosition,
+            returnRoute,
+            returnProgress: newProgress,
+            returnEta,
+          } as any);
+        }
         continue;
       }
 
@@ -3772,7 +3911,7 @@ case 'detention': {
           continue;
         }
         // Замедляем движение — делим на 4 для визуальной реалистичности
-        const progressPerMinute = (1 / vehicle.eta) * 0.25;
+        const progressPerMinute = (1 / vehicle.eta) * 0.25 * speedMult;
         const newProgress = Math.min(1, vehicle.progress + progressPerMinute);
 
         // Get new position along route
@@ -3956,6 +4095,128 @@ case 'detention': {
     set({ 
       pendingEmailResponses: [...get().pendingEmailResponses, pendingResponse] 
     });
+  },
+
+  // ── REPAIR GARAGE ────────────────────────────────────────────────────────────
+  sendTruckToGarage: (truckId: string, city: string) => {
+    const { trucks } = get();
+    const cityPos = CITIES[city];
+    if (!cityPos) return;
+    set({
+      trucks: trucks.map(t =>
+        t.id === truckId ? {
+          ...t,
+          status: 'in_garage' as TruckStatus,
+          garageCity: city,
+          garageEnteredAt: get().gameMinute,
+          garageRepairDone: false,
+          currentCity: city,
+          position: cityPos,
+          currentLoad: null,
+          routePath: null,
+          progress: 0,
+          destinationCity: null,
+          outOfOrderUntil: undefined,
+        } : t
+      ),
+    });
+    const truck = trucks.find(t => t.id === truckId);
+    if (truck) {
+      get().addNotification({
+        type: 'text', priority: 'medium', from: truck.driver,
+        subject: `🏗️ ${truck.name} доставлен в гараж`,
+        message: `${truck.name} доставлен в гараж в ${city}. Можно начать ремонт и улучшения.`,
+        actionRequired: true, relatedTruckId: truckId,
+      });
+      window.dispatchEvent(new CustomEvent('mapToast', {
+        detail: { message: `🏗️ ${truck.name} → Гараж (${city})`, color: '#f59e0b', truckId }
+      }));
+    }
+  },
+
+  repairTruckInGarage: (truckId: string) => {
+    const { trucks, gameMinute } = get();
+    const truck = trucks.find(t => t.id === truckId);
+    if (!truck || truck.status !== 'in_garage') return;
+    const repairCost = truck.isOldTruck ? 2500 : 1200;
+    get().removeMoney(repairCost, `Ремонт в гараже — ${truck.name}`);
+    set({
+      trucks: trucks.map(t =>
+        t.id === truckId ? {
+          ...t,
+          garageRepairDone: true,
+          isOldTruck: false,
+          oldTruckBreakdownChance: undefined,
+          speedPenalty: 0,
+          safetyScore: Math.min(100, (t.safetyScore || 70) + 15),
+        } : t
+      ),
+    });
+    get().addNotification({
+      type: 'text', priority: 'low', from: 'Garage',
+      subject: `🔧 ${truck.name} — ремонт завершён`,
+      message: `Полный ремонт ${truck.name} выполнен. Стоимость: $${repairCost.toLocaleString()}. Трак как новый!`,
+      actionRequired: false, relatedTruckId: truckId,
+    });
+  },
+
+  upgradeTruckInGarage: (truckId: string, upgradeId: string) => {
+    const { trucks } = get();
+    const truck = trucks.find(t => t.id === truckId);
+    if (!truck || truck.status !== 'in_garage') return;
+    const UPGRADES: Record<string, { cost: number; label: string; apply: (t: any) => any }> = {
+      engine: { cost: 3000, label: '⚡ Двигатель +10% скорость', apply: (t: any) => ({ ...t, speedPenalty: Math.max(0, (t.speedPenalty || 0) - 0.1), fuelEfficiency: Math.min(9, (t.fuelEfficiency || 6.5) + 0.5) }) },
+      tires: { cost: 1500, label: '🛞 Новые шины', apply: (t: any) => ({ ...t, safetyScore: Math.min(100, (t.safetyScore || 70) + 10) }) },
+      brakes: { cost: 2000, label: '🛑 Тормоза', apply: (t: any) => ({ ...t, safetyScore: Math.min(100, (t.safetyScore || 70) + 12), complianceRate: Math.min(100, (t.complianceRate || 80) + 5) }) },
+      apu: { cost: 4000, label: '❄️ APU система', apply: (t: any) => ({ ...t, fuelEfficiency: Math.min(9, (t.fuelEfficiency || 6.5) + 0.8) }) },
+      sleeper: { cost: 2500, label: '🛏️ Улучшение кабины', apply: (t: any) => ({ ...t, mood: Math.min(100, (t.mood || 60) + 15) }) },
+      gps: { cost: 800, label: '📡 GPS + ELD', apply: (t: any) => ({ ...t, complianceRate: Math.min(100, (t.complianceRate || 80) + 8) }) },
+    };
+    const upgrade = UPGRADES[upgradeId];
+    if (!upgrade) return;
+    const existing = truck.garageUpgrades || [];
+    if (existing.includes(upgradeId)) return;
+    get().removeMoney(upgrade.cost, `${upgrade.label} — ${truck.name}`);
+    set({
+      trucks: trucks.map(t => {
+        if (t.id !== truckId) return t;
+        const upgraded = upgrade.apply(t);
+        return { ...upgraded, garageUpgrades: [...existing, upgradeId] };
+      }),
+    });
+    get().addNotification({
+      type: 'text', priority: 'low', from: 'Garage',
+      subject: `✅ ${upgrade.label} — ${truck.name}`,
+      message: `Улучшение "${upgrade.label}" установлено на ${truck.name}. Стоимость: $${upgrade.cost.toLocaleString()}.`,
+      actionRequired: false, relatedTruckId: truckId,
+    });
+  },
+
+  releaseFromGarage: (truckId: string) => {
+    const { trucks } = get();
+    const truck = trucks.find(t => t.id === truckId);
+    if (!truck || truck.status !== 'in_garage') return;
+    set({
+      trucks: trucks.map(t =>
+        t.id === truckId ? {
+          ...t,
+          status: 'idle' as TruckStatus,
+          garageCity: undefined,
+          garageEnteredAt: undefined,
+          garageRepairDone: undefined,
+          idleSinceMinute: get().gameMinute,
+        } : t
+      ),
+    });
+    get().addNotification({
+      type: 'text', priority: 'medium', from: truck.driver,
+      subject: `🚛 ${truck.name} выехал из гаража`,
+      message: `${truck.name} готов к работе! Находится в ${truck.garageCity || truck.currentCity}. Назначьте груз.`,
+      actionRequired: true, relatedTruckId: truckId,
+    });
+    window.dispatchEvent(new CustomEvent('mapToast', {
+      detail: { message: `🚛 ${truck.name} — готов к работе!`, color: '#4ade80', truckId }
+    }));
   },
 }));
 

@@ -5,17 +5,18 @@ import { useGameStore, GameEvent } from '../store/gameStore';
 import { useThemeStore } from '../store/themeStore';
 import { CITY_STATE } from '../constants/config';
 import { getDriverAvatar } from '../utils/driverAvatars';
+import { SERVICE_VEHICLE_CONFIGS } from '../types/serviceVehicle';
 
 const FLUENT = 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis';
 const STATUS_COLOR: Record<string, string> = {
   idle: '#38bdf8', driving: '#818cf8', loaded: '#34d399',
   at_pickup: '#fbbf24', at_delivery: '#a78bfa',
-  breakdown: '#f87171', waiting: '#fb923c',
+  breakdown: '#f87171', waiting: '#fb923c', in_garage: '#f59e0b',
 };
 const STATUS_LABEL: Record<string, string> = {
   idle: 'Свободен', driving: 'К погрузке', loaded: 'В пути',
   at_pickup: 'Погрузка', at_delivery: 'Разгрузка',
-  breakdown: 'Поломка', waiting: 'Detention',
+  breakdown: 'Поломка', waiting: 'Detention', in_garage: 'В гараже',
 };
 
 const URGENCY_COLOR: Record<string, string> = {
@@ -71,6 +72,7 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
   const resolveEvent = useGameStore(s => s.resolveEvent);
   const repairBreakdown = useGameStore(s => s.repairBreakdown);
   const gameMinute = useGameStore(s => s.gameMinute);
+  const serviceVehicles = useGameStore(s => s.serviceVehicles);
   const color = getTruckColor(truck);
   const hos = Math.max(0, truck.hoursLeft);
   const mood = truck.mood ?? 80;
@@ -147,9 +149,205 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
   }
   // ═══ ПОЛОМКА — ремонт в процессе ═══
   if (isBreakdown && !awaitingRepair) {
+    // Ищем активную сервисную машину для этого трака
+    const activeService = serviceVehicles.find(v => v.targetTruckId === truck.id && v.status !== 'completed' && v.status !== 'cancelled');
+    
+    if (activeService) {
+      // Сервисная машина вызвана — показываем карточку слежения
+      const config = SERVICE_VEHICLE_CONFIGS[activeService.type];
+      const isEnRoute = activeService.status === 'en_route' || activeService.status === 'dispatched';
+      const isRepairing = activeService.status === 'repairing';
+      const isArrived = activeService.status === 'arrived';
+      const isTowingBack = (activeService.status as string) === 'towing_back';
+      const towReturnProgress = (activeService as any).returnProgress || 0;
+      const towReturnPct = Math.round(towReturnProgress * 100);
+      const progressPct = isTowingBack ? towReturnPct : Math.round(activeService.progress * 100);
+      const etaLeft = isTowingBack
+        ? Math.max(0, Math.round(((activeService as any).returnEta || activeService.eta) * (1 - towReturnProgress)))
+        : Math.max(0, Math.round(activeService.eta * (1 - activeService.progress)));
+      const repairLeft = isRepairing && activeService.repairStartedAt
+        ? Math.max(0, (activeService.repairStartedAt + activeService.repairDuration) - gameMinute)
+        : activeService.repairDuration;
+      
+      const statusColor = isTowingBack ? '#fb923c' : isRepairing ? '#fbbf24' : isArrived ? '#a78bfa' : '#06b6d4';
+      const statusText = isTowingBack ? '🚛 Везём в гараж' : isRepairing ? '⚙️ Идёт ремонт' : isArrived ? '🔧 На месте — начинаем' : '🚗 Едет к траку';
+      const subText = isTowingBack
+        ? `→ ${activeService.fromCity} • ETA ~${etaLeft} мин`
+        : isRepairing
+          ? `Осталось ~${repairLeft} мин`
+          : isArrived
+            ? 'Механик осматривает трак'
+            : `ETA ~${etaLeft} мин • ${Math.round(activeService.progress * activeService.eta)} / ${activeService.eta} мин`;
+      
+      const handleFollowService = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        // Зумим камеру к сервисной машине
+        window.dispatchEvent(new CustomEvent('followServiceVehicle', {
+          detail: { lng: activeService.position[0], lat: activeService.position[1] }
+        }));
+      };
+      
+      return (
+        <div style={ps} onClick={e => e.stopPropagation()}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 20 }}>🚨</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 900, color: '#f87171' }}>{truck.breakdownType || 'Поломка'}</div>
+              <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280', marginTop: 1 }}>📍 {truck.currentCity} • Помощь в пути</div>
+            </div>
+          </div>
+          
+          {/* Карточка сервисной машины — кликабельная */}
+          <div
+            onClick={handleFollowService}
+            style={{
+              background: isDark ? `${statusColor}12` : `${statusColor}08`,
+              border: `2px solid ${statusColor}55`,
+              borderRadius: 14,
+              padding: '10px 12px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              position: 'relative',
+              overflow: 'hidden',
+            } as any}
+            onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
+              (e.currentTarget as HTMLElement).style.background = isDark ? `${statusColor}22` : `${statusColor}15`;
+              (e.currentTarget as HTMLElement).style.transform = 'scale(1.02)';
+              (e.currentTarget as HTMLElement).style.boxShadow = `0 0 16px ${statusColor}33`;
+            }}
+            onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
+              (e.currentTarget as HTMLElement).style.background = isDark ? `${statusColor}12` : `${statusColor}08`;
+              (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+              (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+            }}
+          >
+            {/* Иконка слежения */}
+            <div style={{
+              position: 'absolute', top: 6, right: 8,
+              display: 'flex', alignItems: 'center', gap: 3,
+              background: isDark ? 'rgba(15,20,35,0.8)' : 'rgba(255,255,255,0.9)',
+              borderRadius: 6, padding: '2px 6px',
+              border: `1px solid ${statusColor}44`,
+            } as any}>
+              <div style={{
+                width: 5, height: 5, borderRadius: '50%',
+                background: statusColor,
+                animation: 'trackingDot 1s ease-in-out infinite',
+              }} />
+              <span style={{ fontSize: 8, fontWeight: 800, color: statusColor }}>СЛЕДИТЬ</span>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: 12,
+                background: `${statusColor}20`,
+                border: `1.5px solid ${statusColor}44`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 24, flexShrink: 0,
+              } as any}>
+                {config.icon}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 900, color: statusColor }}>{statusText}</div>
+                <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280', marginTop: 2 }}>{config.label} из {activeService.fromCity}</div>
+                <div style={{ fontSize: 10, color: isDark ? '#cbd5e1' : '#4b5563', marginTop: 1 }}>{subText}</div>
+              </div>
+            </div>
+            
+            {/* Прогресс-бар */}
+            {(isEnRoute || isTowingBack) && (
+              <div style={{ marginTop: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#64748b' : '#9ca3af' }}>Прогресс</span>
+                  <span style={{ fontSize: 9, fontWeight: 800, color: statusColor }}>{progressPct}%</span>
+                </div>
+                <div style={{ height: 5, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%', borderRadius: 3,
+                    background: `linear-gradient(90deg, ${statusColor}88, ${statusColor})`,
+                    width: `${Math.max(3, progressPct)}%`,
+                    transition: 'width 1s ease',
+                  }} />
+                </div>
+              </div>
+            )}
+            
+            {/* Прогресс ремонта */}
+            {isRepairing && activeService.repairStartedAt != null && (
+              <div style={{ marginTop: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#64748b' : '#9ca3af' }}>Ремонт</span>
+                  <span style={{ fontSize: 9, fontWeight: 800, color: '#fbbf24' }}>~{repairLeft} мин</span>
+                </div>
+                <div style={{ height: 5, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%', borderRadius: 3,
+                    background: 'linear-gradient(90deg, #fbbf24, #4ade80)',
+                    width: `${Math.max(5, ((gameMinute - activeService.repairStartedAt) / activeService.repairDuration) * 100)}%`,
+                    transition: 'width 1s ease',
+                  }} />
+                </div>
+              </div>
+            )}
+            
+            <div style={{ marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#94a3b8' : '#6b7280', background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', borderRadius: 6, padding: '2px 7px' }}>
+                💰 ${activeService.cost.toLocaleString()}
+              </span>
+              <span style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#94a3b8' : '#6b7280', background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', borderRadius: 6, padding: '2px 7px' }}>
+                🔧 ~{activeService.repairDuration} мин ремонт
+              </span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
+    // Нет активной сервисной машины — показываем кнопки выбора ремонта
     const outUntil = truck.outOfOrderUntil || 0;
     const minsLeft = Math.max(0, outUntil - gameMinute);
     const totalDelay = truck.breakdownDelayTow || truck.breakdownDelayRoadside || 120;
+    // Если outOfOrderUntil не установлен или уже прошёл — показываем кнопки ремонта
+    if (!outUntil || minsLeft <= 0) {
+      const cR = truck.breakdownCostRoadside || 0;
+      const cT = truck.breakdownCostTow || 0;
+      const dR = truck.breakdownDelayRoadside || 90;
+      const dT = truck.breakdownDelayTow || 240;
+      const bd = truck.breakdownType || 'Поломка';
+      return (
+        <div style={ps} onClick={e => e.stopPropagation()}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 20 }}>🚨</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 900, color: '#f87171' }}>{bd}</div>
+              <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280', marginTop: 1 }}>📍 {truck.currentCity} • Требуется ремонт</div>
+            </div>
+          </div>
+          {cR > 0 && (
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => repairBreakdown(truck.id, 'roadside')} style={actionBtn('#4ade80', true)}
+                onMouseEnter={e => hov(e.currentTarget as HTMLElement, '#4ade80', true)}
+                onMouseLeave={e => hov(e.currentTarget as HTMLElement, '#4ade80', false)}>
+                <span style={{ fontSize: 22 }}>🔧</span>
+                <span style={{ fontSize: 12, fontWeight: 800, color: isDark ? '#4ade80' : '#16a34a' }}>Ремонт на месте</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#f87171' }}>−${cR.toLocaleString()}</span>
+                <span style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280' }}>⏱ ~{dR} мин</span>
+              </button>
+              {cT > 0 && (
+                <button onClick={() => repairBreakdown(truck.id, 'tow')} style={actionBtn('#fb923c', true)}
+                  onMouseEnter={e => hov(e.currentTarget as HTMLElement, '#fb923c', true)}
+                  onMouseLeave={e => hov(e.currentTarget as HTMLElement, '#fb923c', false)}>
+                  <span style={{ fontSize: 22 }}>🚛</span>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: isDark ? '#fb923c' : '#c2410c' }}>Эвакуатор</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#f87171' }}>−${cT.toLocaleString()}</span>
+                  <span style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280' }}>⏱ ~{dT} мин</span>
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
     return (
       <div style={ps} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -159,11 +357,45 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
             <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280', marginTop: 1 }}>📍 {truck.currentCity} • Осталось ~{minsLeft} мин</div>
           </div>
         </div>
-        {outUntil > 0 && (
-          <div style={{ height: 6, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
-            <div style={{ height: '100%', borderRadius: 3, background: 'linear-gradient(90deg, #fbbf24, #4ade80)', width: `${Math.max(5, (1 - minsLeft / totalDelay) * 100)}%`, transition: 'width 1s ease' }} />
+        <div style={{ height: 6, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
+          <div style={{ height: '100%', borderRadius: 3, background: 'linear-gradient(90deg, #fbbf24, #4ade80)', width: `${Math.max(5, (1 - minsLeft / totalDelay) * 100)}%`, transition: 'width 1s ease' }} />
+        </div>
+      </div>
+    );
+  }
+  // ═══ В ГАРАЖЕ ═══
+  if (truck.status === 'in_garage') {
+    const repairDone = truck.garageRepairDone;
+    const city = truck.garageCity || truck.currentCity;
+    const handleOpenGarage = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      useGameStore.getState().setRepairGarageOpen(true);
+    };
+    return (
+      <div style={ps} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 20 }}>🏗️</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 900, color: '#f59e0b' }}>В гараже</div>
+            <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280', marginTop: 1 }}>📍 {city} • {repairDone ? 'Ремонт завершён' : 'Ожидает ремонта'}</div>
           </div>
-        )}
+        </div>
+        <button
+          onClick={handleOpenGarage}
+          style={{
+            width: '100%', padding: '10px 12px',
+            background: isDark ? 'rgba(245,158,11,0.12)' : 'rgba(245,158,11,0.08)',
+            border: '2px solid rgba(245,158,11,0.4)',
+            borderRadius: 12, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            transition: 'all 0.15s ease',
+          } as any}
+          onMouseEnter={(e: any) => { e.currentTarget.style.background = isDark ? 'rgba(245,158,11,0.22)' : 'rgba(245,158,11,0.15)'; e.currentTarget.style.transform = 'scale(1.02)'; }}
+          onMouseLeave={(e: any) => { e.currentTarget.style.background = isDark ? 'rgba(245,158,11,0.12)' : 'rgba(245,158,11,0.08)'; e.currentTarget.style.transform = 'scale(1)'; }}
+        >
+          <span style={{ fontSize: 18 }}>🔧</span>
+          <span style={{ fontSize: 13, fontWeight: 800, color: '#f59e0b' }}>Открыть гараж</span>
+        </button>
       </div>
     );
   }
@@ -207,8 +439,16 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
   if (isIdle) {
     const wl = truck.idleWarningLevel ?? 0;
     const wc = wl >= 3 ? '#ef4444' : wl >= 2 ? '#fb923c' : wl >= 1 ? '#fbbf24' : '#38bdf8';
+    const handleOpenLoadBoard = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      const store = useGameStore.getState();
+      store.setLoadBoardSearch(truck.currentCity);
+      // Переключаем на вкладку loadboard
+      try { localStorage.setItem('dispatch-active-tab', 'loadboard'); } catch {}
+      window.dispatchEvent(new CustomEvent('switchTab', { detail: { tab: 'loadboard' } }));
+    };
     return (
-      <div style={ps} onClick={e => e.stopPropagation()}>
+      <div style={{ ...ps, cursor: 'pointer' }} onClick={handleOpenLoadBoard}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 20 }}>{wl >= 2 ? '😴' : '📋'}</span>
           <div style={{ flex: 1 }}>
@@ -216,11 +456,16 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
             <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280', marginTop: 1 }}>📍 {truck.currentCity} • HOS: {hos.toFixed(1)}h</div>
           </div>
         </div>
-        {wl >= 2 && (
-          <div style={{ background: `${wc}12`, border: `1px solid ${wc}33`, borderRadius: 8, padding: '6px 10px' }}>
-            <p style={{ fontSize: 11, color: isDark ? '#e2e8f0' : '#374151', margin: 0, lineHeight: 1.4 }}>💡 Откройте Load Board — найдите груз из {truck.currentCity}</p>
-          </div>
-        )}
+        <div style={{
+          background: isDark ? 'rgba(56,189,248,0.1)' : 'rgba(0,122,255,0.06)',
+          border: `1.5px solid ${wc}44`,
+          borderRadius: 10, padding: '8px 10px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          transition: 'all 0.15s ease',
+        }}>
+          <span style={{ fontSize: 14 }}>📦</span>
+          <span style={{ fontSize: 12, fontWeight: 800, color: wc }}>Найти груз из {truck.currentCity}</span>
+        </div>
       </div>
     );
   }

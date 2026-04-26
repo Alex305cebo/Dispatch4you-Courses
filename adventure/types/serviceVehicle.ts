@@ -12,6 +12,7 @@ export type ServiceVehicleStatus =
   | 'en_route'     // Moving towards broken truck
   | 'arrived'      // Reached the truck location
   | 'repairing'    // Performing repair work
+  | 'towing_back'  // Tow truck taking truck back to garage city
   | 'completed'    // Repair done, ready to be removed
   | 'cancelled';   // Service was cancelled
 
@@ -57,6 +58,13 @@ export interface ServiceVehicle {
 
   /** If true — vehicle waits on map, doesn't move until dispatcher closes the modal */
   waitingForDispatch?: boolean;
+
+  /** Route back to garage city (for tow trucks) */
+  returnRoute?: [number, number][];
+  /** Progress along return route (0-1) */
+  returnProgress?: number;
+  /** ETA for return trip */
+  returnEta?: number;
 }
 
 export interface ServiceVehicleConfig {
