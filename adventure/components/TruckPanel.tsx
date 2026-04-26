@@ -1,9 +1,8 @@
 ﻿import { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useWindowDimensions } from 'react-native';
-import { Colors } from '../constants/colors';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, useWindowDimensions } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
 import { ThemeColors } from '../constants/themes';
-import { cityState } from '../constants/config';
+import { cityState, CITY_STATE } from '../constants/config';
 import { useGameStore, Truck, TruckStatus } from '../store/gameStore';
 import TruckDetailModal from './TruckDetailModal';
 
@@ -11,148 +10,256 @@ interface TruckPanelProps {
   onSwitchToLoadBoard?: () => void;
 }
 
-const STATUS_LABEL: Record<TruckStatus, string> = {
-  idle: '⚪ Свободен',
-  driving: '🔵 Едет к погрузке',
-  at_pickup: '🟡 На погрузке',
-  loaded: '🟢 Везёт груз',
-  at_delivery: '🟣 На разгрузке',
-  breakdown: '🔴 Поломка',
-  waiting: '🟠 Ожидает',
+const STATUS_LABEL: Record<string, string> = {
+  idle: 'Свободен', driving: 'К погрузке', at_pickup: 'Погрузка',
+  loaded: 'В пути', at_delivery: 'Разгрузка',
+  breakdown: 'Поломка', waiting: 'Detention', in_garage: 'В гараже',
+};
+const STATUS_COLOR: Record<string, string> = {
+  idle: '#38bdf8', driving: '#818cf8', at_pickup: '#fbbf24',
+  loaded: '#4ade80', at_delivery: '#a78bfa',
+  breakdown: '#f87171', waiting: '#fb923c', in_garage: '#f59e0b',
+};
+const STATUS_ICON: Record<string, string> = {
+  idle: '⚪', driving: '🔵', at_pickup: '🟡', loaded: '🟢',
+  at_delivery: '🟣', breakdown: '🔴', waiting: '🟠', in_garage: '🔧',
 };
 
-const STATUS_COLOR: Record<TruckStatus, string> = {
-  idle: '#94a3b8',
-  driving: '#06b6d4',
-  at_pickup: '#f59e0b',
-  loaded: '#22c55e',
-  at_delivery: '#8b5cf6',
-  breakdown: '#ef4444',
-  waiting: '#f97316',
+const getTruckImageUri = (id: number): string => {
+  const isGame = typeof window !== 'undefined' && window.location.pathname.startsWith('/game');
+  return `${isGame ? '/game' : ''}/assets/TruckPic/${id}.webp`;
 };
 
 export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}) {
   const T = useTheme();
-  const { trucks, selectedTruckId, selectTruck, setLoadBoardSearch } = useGameStore();
+  const { trucks, selectedTruckId, selectTruck, setLoadBoardSearch, balance } = useGameStore();
   const [detailTruck, setDetailTruck] = useState<Truck | null>(null);
+  const [filter, setFilter] = useState<'all' | 'active' | 'idle' | 'issue'>('all');
   const { width } = useWindowDimensions();
-  const isMobile = width < 600;
-  const styles = useMemo(() => makeStyles(T), [T]);
+
+  const idleCount = trucks.filter(t => t.status === 'idle').length;
+  const activeCount = trucks.filter(t => ['driving', 'loaded', 'at_pickup', 'at_delivery'].includes(t.status)).length;
+  const issueCount = trucks.filter(t => ['breakdown', 'waiting', 'in_garage'].includes(t.status)).length;
+
+  const filtered = trucks.filter(t => {
+    if (filter === 'idle') return t.status === 'idle';
+    if (filter === 'active') return ['driving', 'loaded', 'at_pickup', 'at_delivery'].includes(t.status);
+    if (filter === 'issue') return ['breakdown', 'waiting', 'in_garage'].includes(t.status);
+    return true;
+  });
+
+  const totalRevenue = trucks.reduce((s, t) => s + (t.currentLoad?.agreedRate || 0), 0);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>🚛 Мои траки</Text>
-        <Text style={styles.headerSub}>{trucks.filter(t => t.status === 'idle').length} свободно</Text>
-      </View>
+    <ScrollView style={{ flex: 1, backgroundColor: T.bg }} contentContainerStyle={{ padding: 10, gap: 8 }}>
 
-      {trucks.map(truck => (
-        <TouchableOpacity
-          key={truck.id}
-          style={[styles.card, selectedTruckId === truck.id && styles.cardSelected]}
-          onPress={() => selectTruck(selectedTruckId === truck.id ? null : truck.id)}
-        >
-          {/* Статус */}
-          <View style={styles.cardTop}>
-            <Text style={styles.truckName}>{truck.name} - {truck.driver}</Text>
-            <View style={[styles.statusBadge, { borderColor: (truck as any).onNightStop || (truck as any).hosRestUntilMinute > 0 ? '#64748b' : STATUS_COLOR[truck.status] }]}>
-              <Text style={[styles.statusText, { color: (truck as any).onNightStop || (truck as any).hosRestUntilMinute > 0 ? '#94a3b8' : STATUS_COLOR[truck.status] }]}>
-                {(truck as any).onNightStop
-                  ? '🌙 Ночёвка'
-                  : (truck as any).hosRestUntilMinute > 0
-                  ? '😴 HOS отдых'
-                  : STATUS_LABEL[truck.status]}
-              </Text>
-            </View>
-          </View>
-
-          {/* Маршрут */}
-          <Text style={styles.route}>
-            📍 {cityState(truck.currentCity)}
-            {truck.destinationCity ? ` → ${truck.destinationCity}` : ''}
-          </Text>
-
-          {/* Прогресс если едет */}
-          {(truck.status === 'driving' || truck.status === 'loaded') && !(truck as any).onNightStop && !((truck as any).hosRestUntilMinute > 0) && (
-            <View style={styles.progressWrap}>
-              <View style={styles.progressTrack}>
-                <View style={[styles.progressFill, {
-                  width: `${truck.progress * 100}%`,
-                  backgroundColor: STATUS_COLOR[truck.status],
-                }]} />
-              </View>
-              <Text style={styles.progressText}>{Math.round(truck.progress * 100)}%</Text>
-            </View>
-          )}
-
-          {/* Метрики */}
-          <View style={styles.metrics}>
-            <View style={styles.metric}>
-              <Text style={[styles.metricVal, truck.hoursLeft < 4 && { color: T.danger }]}>
-                {(Math.round(truck.hoursLeft * 10) / 10).toFixed(1)}ч
-              </Text>
-              <Text style={styles.metricLabel}>HOS</Text>
-            </View>
-            <View style={styles.metric}>
-              <Text style={[styles.metricVal, { color: truck.mood > 70 ? T.success : truck.mood > 40 ? T.warning : T.danger }]}>
-                {truck.mood}%
-              </Text>
-              <Text style={styles.metricLabel}>Настроение</Text>
-            </View>
-            {truck.currentLoad && (
-              <View style={styles.metric}>
-                <Text style={styles.metricVal}>${truck.currentLoad.agreedRate.toLocaleString()}</Text>
-                <Text style={styles.metricLabel}>Ставка</Text>
-              </View>
-            )}
-          </View>
-
-          {/* Кнопка "Подробнее" */}
-          <TouchableOpacity
-            style={styles.detailBtn}
-            onPress={(e) => {
-              e.stopPropagation();
-              setDetailTruck(truck);
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.detailBtnText}>📊 Подробнее (HOS, Аналитика)</Text>
-          </TouchableOpacity>
-
-          {/* Текущий груз */}
-          {truck.currentLoad && (
-            <View style={styles.loadInfo}>
-              <Text style={styles.loadInfoText}>
-                📦 {truck.currentLoad.commodity} · {cityState(truck.currentLoad.fromCity)} → {cityState(truck.currentLoad.toCity)}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      ))}
-
-      {/* Плашка — расширить флот */}
-      <TouchableOpacity 
-        style={styles.shopBanner} 
-        activeOpacity={0.75} 
-        onPress={() => {
-          console.log('TruckPanel: Shop button clicked');
-          useGameStore.getState().setTruckShopOpen(true);
-          console.log('TruckPanel: After setTruckShopOpen, state:', useGameStore.getState().truckShopOpen);
-        }}
-      >
-        <View style={styles.shopBannerLeft}>
-          <Text style={styles.shopBannerIcon}>🏪</Text>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={styles.shopBannerTitle}>Расширь флот!</Text>
-            <Text style={styles.shopBannerSub}>Купи ещё траки в магазине и зарабатывай больше</Text>
+      {/* ── HEADER ── */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+        <View>
+          <Text style={{ fontSize: 15, fontWeight: '900', color: T.text }}>🚛 Флот</Text>
+          <Text style={{ fontSize: 10, color: T.textMuted, marginTop: 1 }}>{trucks.length} траков · ${balance.toLocaleString()}</Text>
+        </View>
+        <View style={{ flexDirection: 'row', gap: 6 }}>
+          <View style={{ backgroundColor: 'rgba(74,222,128,0.1)', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: 'rgba(74,222,128,0.25)' }}>
+            <Text style={{ fontSize: 10, fontWeight: '800', color: '#4ade80' }}>💰 ${totalRevenue.toLocaleString()}</Text>
           </View>
         </View>
-        <View style={styles.shopBannerBadge}>
-          <Text style={styles.shopBannerBadgeText}>В магазин →</Text>
+      </View>
+
+      {/* ── FILTER CHIPS ── */}
+      <View style={{ flexDirection: 'row', gap: 5, marginBottom: 2 }}>
+        {([
+          { key: 'all', label: `Все ${trucks.length}`, color: '#94a3b8' },
+          { key: 'active', label: `В пути ${activeCount}`, color: '#4ade80' },
+          { key: 'idle', label: `Свободны ${idleCount}`, color: '#38bdf8' },
+          { key: 'issue', label: `Проблемы ${issueCount}`, color: '#f87171' },
+        ] as const).map(f => (
+          <TouchableOpacity
+            key={f.key}
+            onPress={() => setFilter(f.key)}
+            style={{
+              paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8,
+              backgroundColor: filter === f.key ? f.color + '20' : 'rgba(255,255,255,0.03)',
+              borderWidth: 1.5,
+              borderColor: filter === f.key ? f.color + '55' : 'rgba(255,255,255,0.06)',
+            }}
+          >
+            <Text style={{ fontSize: 10, fontWeight: '700', color: filter === f.key ? f.color : T.textMuted }}>{f.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* ── TRUCK CARDS ── */}
+      {filtered.map(truck => {
+        const color = STATUS_COLOR[truck.status] || '#94a3b8';
+        const label = (truck as any).onNightStop ? '🌙 Ночёвка'
+          : (truck as any).hosRestUntilMinute > 0 ? '😴 HOS отдых'
+          : `${STATUS_ICON[truck.status] || '⚪'} ${STATUS_LABEL[truck.status] || truck.status}`;
+        const isSelected = selectedTruckId === truck.id;
+        const hos = Math.max(0, truck.hoursLeft);
+        const hosColor = hos < 2 ? '#f87171' : hos < 4 ? '#fbbf24' : '#4ade80';
+        const mood = truck.mood ?? 75;
+        const moodColor = mood >= 70 ? '#4ade80' : mood >= 40 ? '#fbbf24' : '#f87171';
+        const progress = Math.round(truck.progress * 100);
+        const isMoving = truck.status === 'driving' || truck.status === 'loaded';
+        const imgId = (truck as any).truckImageId;
+        const fromSt = CITY_STATE[truck.currentCity] || '';
+        const toSt = truck.destinationCity ? (CITY_STATE[truck.destinationCity] || '') : '';
+        const load = truck.currentLoad;
+
+        return (
+          <TouchableOpacity
+            key={truck.id}
+            onPress={() => selectTruck(isSelected ? null : truck.id)}
+            activeOpacity={0.85}
+            style={{
+              backgroundColor: isSelected ? color + '0A' : T.bgCard,
+              borderRadius: 14, borderWidth: 2,
+              borderColor: isSelected ? color : 'rgba(255,255,255,0.06)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Top row: avatar + info + status */}
+            <View style={{ flexDirection: 'row', padding: 10, gap: 10 }}>
+              {/* Avatar */}
+              <View style={{
+                width: 48, height: 48, borderRadius: 12, overflow: 'hidden',
+                backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1.5, borderColor: color + '33',
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                {imgId ? (
+                  <Image source={{ uri: getTruckImageUri(imgId) }} style={{ width: 48, height: 48 } as any} resizeMode="cover" />
+                ) : (
+                  <Text style={{ fontSize: 24 }}>{truck.status === 'breakdown' ? '🚨' : '🚛'}</Text>
+                )}
+              </View>
+
+              {/* Info */}
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text style={{ fontSize: 13, fontWeight: '900', color: T.text }} numberOfLines={1}>{truck.name}</Text>
+                  <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, backgroundColor: color + '15', borderWidth: 1, borderColor: color + '44' }}>
+                    <Text style={{ fontSize: 9, fontWeight: '800', color }}>{label}</Text>
+                  </View>
+                </View>
+                <Text style={{ fontSize: 10, color: T.textMuted, marginTop: 2 }}>
+                  👤 {truck.driver} · 📍 {truck.currentCity}{fromSt ? `, ${fromSt}` : ''}
+                </Text>
+
+                {/* Route */}
+                {truck.destinationCity && (
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: T.textSecondary, marginTop: 3 }}>
+                    → {truck.destinationCity}{toSt ? `, ${toSt}` : ''}
+                  </Text>
+                )}
+              </View>
+            </View>
+
+            {/* Progress bar */}
+            {isMoving && !(truck as any).onNightStop && !((truck as any).hosRestUntilMinute > 0) && (
+              <View style={{ paddingHorizontal: 10, paddingBottom: 6 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 }}>
+                  <Text style={{ fontSize: 9, color: T.textMuted, fontWeight: '600' }}>Рейс</Text>
+                  <Text style={{ fontSize: 9, fontWeight: '800', color }}>{progress}%</Text>
+                </View>
+                <View style={{ height: 4, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
+                  <View style={{ height: '100%', width: `${progress}%` as any, backgroundColor: color, borderRadius: 2 }} />
+                </View>
+              </View>
+            )}
+
+            {/* Metrics row */}
+            <View style={{
+              flexDirection: 'row', gap: 6, paddingHorizontal: 10, paddingBottom: 8,
+              borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.04)', paddingTop: 8,
+            }}>
+              {/* HOS */}
+              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: 6, borderWidth: 1, borderColor: hosColor + '22' }}>
+                <Text style={{ fontSize: 9, color: T.textMuted }}>⏱</Text>
+                <Text style={{ fontSize: 12, fontWeight: '900', color: hosColor }}>{hos.toFixed(1)}</Text>
+                <Text style={{ fontSize: 8, color: T.textMuted }}>HOS</Text>
+              </View>
+              {/* Mood */}
+              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: 6, borderWidth: 1, borderColor: moodColor + '22' }}>
+                <Text style={{ fontSize: 9 }}>😊</Text>
+                <Text style={{ fontSize: 12, fontWeight: '900', color: moodColor }}>{mood}%</Text>
+              </View>
+              {/* Rate */}
+              {load ? (
+                <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(74,222,128,0.05)', borderRadius: 8, padding: 6, borderWidth: 1, borderColor: 'rgba(74,222,128,0.2)' }}>
+                  <Text style={{ fontSize: 9 }}>💰</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '900', color: '#4ade80' }}>${load.agreedRate.toLocaleString()}</Text>
+                </View>
+              ) : (
+                <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: 6, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' }}>
+                  <Text style={{ fontSize: 9, color: T.textMuted }}>📭 Нет груза</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Load info */}
+            {load && (
+              <View style={{ paddingHorizontal: 10, paddingBottom: 8 }}>
+                <View style={{ backgroundColor: 'rgba(6,182,212,0.06)', borderRadius: 8, padding: 8, borderWidth: 1, borderColor: 'rgba(6,182,212,0.15)' }}>
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: '#06b6d4' }}>
+                    📦 {load.commodity} · {load.equipment} · {load.miles} mi · ${(load.agreedRate / Math.max(1, load.miles)).toFixed(2)}/mi
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {/* Actions — only when selected */}
+            {isSelected && (
+              <View style={{ flexDirection: 'row', gap: 6, paddingHorizontal: 10, paddingBottom: 10 }}>
+                <TouchableOpacity
+                  onPress={(e: any) => { e.stopPropagation(); setDetailTruck(truck); }}
+                  style={{ flex: 1, backgroundColor: 'rgba(6,182,212,0.08)', borderWidth: 1.5, borderColor: 'rgba(6,182,212,0.25)', borderRadius: 10, paddingVertical: 8, alignItems: 'center' }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: '#06b6d4' }}>📊 Аналитика</Text>
+                </TouchableOpacity>
+                {truck.status === 'idle' && (
+                  <TouchableOpacity
+                    onPress={(e: any) => {
+                      e.stopPropagation();
+                      setLoadBoardSearch(truck.currentCity);
+                      onSwitchToLoadBoard?.();
+                    }}
+                    style={{ flex: 1, backgroundColor: 'rgba(74,222,128,0.08)', borderWidth: 1.5, borderColor: 'rgba(74,222,128,0.25)', borderRadius: 10, paddingVertical: 8, alignItems: 'center' }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: '#4ade80' }}>📦 Найти груз</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+          </TouchableOpacity>
+        );
+      })}
+
+      {/* ── SHOP BANNER ── */}
+      <TouchableOpacity
+        activeOpacity={0.75}
+        onPress={() => useGameStore.getState().setTruckShopOpen(true)}
+        style={{
+          flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+          backgroundColor: 'rgba(245,158,11,0.06)', borderWidth: 1.5,
+          borderColor: 'rgba(245,158,11,0.2)', borderRadius: 14, padding: 12, marginTop: 2,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+          <Text style={{ fontSize: 24 }}>🏪</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 12, fontWeight: '800', color: '#fde68a' }}>Расширь флот!</Text>
+            <Text style={{ fontSize: 10, color: T.textMuted }}>Б/У траки от $12,000</Text>
+          </View>
+        </View>
+        <View style={{ backgroundColor: 'rgba(6,182,212,0.12)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: 'rgba(6,182,212,0.3)' }}>
+          <Text style={{ fontSize: 10, fontWeight: '800', color: '#06b6d4' }}>Магазин →</Text>
         </View>
       </TouchableOpacity>
 
-      {/* Модалка с деталями трака */}
+      {/* Detail Modal */}
       <TruckDetailModal
         truck={detailTruck}
         onClose={() => setDetailTruck(null)}
@@ -164,119 +271,4 @@ export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}
       />
     </ScrollView>
   );
-}
-
-function makeStyles(T: ThemeColors) {
-  return StyleSheet.create({
-  container: { flex: 1, backgroundColor: T.bg },
-  content: { padding: 12, gap: 12 },
-  header: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    marginBottom: 6,
-  },
-  headerTitle: { fontSize: 16, fontWeight: '800', color: T.text },
-  headerSub: { fontSize: 12, color: T.textMuted },
-
-  card: {
-    backgroundColor: T.bgCard, borderRadius: 18,
-    borderWidth: 2, borderColor: T.border, padding: 18, gap: 12,
-    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 },
-  },
-  cardSelected: { borderColor: T.primary, backgroundColor: 'rgba(0,122,255,0.06)', borderWidth: 2 },
-
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  truckName: { fontSize: 17, fontWeight: '900', color: T.text, flex: 1, marginRight: 8 },
-  statusBadge: {
-    paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10, borderWidth: 2,
-  },
-  statusText: { fontSize: 13, fontWeight: '800' },
-
-  route: { fontSize: 14, color: T.textSecondary, fontWeight: '600' },
-
-  progressWrap: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  progressTrack: { flex: 1, height: 8, backgroundColor: T.border, borderRadius: 4, overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: 4 },
-  progressText: { fontSize: 13, color: T.textSecondary, fontWeight: '700', width: 36 },
-
-  metrics: { flexDirection: 'row', gap: 10 },
-  metric: {
-    backgroundColor: T.bgCardHover, borderRadius: 12, padding: 12, alignItems: 'center', minWidth: 72,
-    borderWidth: 1.5, borderColor: T.border,
-  },
-  metricVal: { fontSize: 16, fontWeight: '900', color: T.text },
-  metricLabel: { fontSize: 12, color: T.textMuted, fontWeight: '700', marginTop: 3 },
-
-  loadInfo: {
-    backgroundColor: 'rgba(0,122,255,0.07)', borderRadius: 12,
-    borderWidth: 1.5, borderColor: 'rgba(0,122,255,0.2)', padding: 12,
-  },
-  loadInfoText: { fontSize: 14, color: T.primary, fontWeight: '600' },
-
-  detailBtn: {
-    backgroundColor: 'rgba(0,122,255,0.08)',
-    borderWidth: 2,
-    borderColor: 'rgba(0,122,255,0.25)',
-    borderRadius: 14,
-    paddingVertical: 13,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  detailBtnText: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: T.primary,
-  },
-
-  shopBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: 'rgba(255,149,0,0.08)',
-    borderWidth: 2,
-    borderColor: 'rgba(255,149,0,0.25)',
-    borderRadius: 18,
-    padding: 16,
-    marginTop: 4,
-  },
-  shopBannerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-    marginRight: 10,
-    minWidth: 0,
-  },
-  shopBannerIcon: {
-    fontSize: 32,
-    flexShrink: 0,
-  },
-  shopBannerTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: T.warning,
-    marginBottom: 2,
-  },
-  shopBannerSub: {
-    fontSize: 12,
-    color: T.textMuted,
-    fontWeight: '500',
-    lineHeight: 16,
-    flexShrink: 1,
-  },
-  shopBannerBadge: {
-    backgroundColor: 'rgba(6,182,212,0.15)',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderWidth: 1,
-    borderColor: 'rgba(6,182,212,0.4)',
-    flexShrink: 0,
-  },
-  shopBannerBadgeText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#06b6d4',
-  },
-  });
 }

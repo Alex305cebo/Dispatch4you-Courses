@@ -33,13 +33,14 @@ const UPGRADES = [
   { id: 'gps', icon: '📡', label: 'GPS + ELD', desc: '+8% HOS Compliance', cost: 800, color: '#38bdf8' },
 ];
 
-type Tab = 'fleet' | 'repair';
+type Tab = 'fleet' | 'repair' | 'shop';
 
 export default function RepairGarageModal() {
   const T = useTheme();
   const s = useMemo(() => makeStyles(T), [T]);
   const { repairGarageOpen, setRepairGarageOpen, trucks, balance,
     repairTruckInGarage, upgradeTruckInGarage, releaseFromGarage } = useGameStore();
+  const setTruckShopOpen = useGameStore(ss => ss.setTruckShopOpen);
   const [tab, setTab] = useState<Tab>('fleet');
 
   const garageTrucks = trucks.filter(t => t.status === 'in_garage');
@@ -84,6 +85,13 @@ export default function RepairGarageModal() {
                 <Text style={[s.tabCountText, { color: '#f59e0b' }, tab === 'repair' && { color: '#fff' }]}>{garageTrucks.length}</Text>
               </View>
             )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[s.tab, tab === 'shop' && s.tabActive]}
+            onPress={() => { setRepairGarageOpen(false); setTruckShopOpen(true); }}
+            activeOpacity={0.8}
+          >
+            <Text style={[s.tabText, tab === 'shop' && s.tabTextActive]}>🏪 Магазин</Text>
           </TouchableOpacity>
         </View>
 
