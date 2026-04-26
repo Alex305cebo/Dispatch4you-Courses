@@ -1,8 +1,29 @@
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Image } from 'react-native';
 import { useGameStore } from '../store/gameStore';
 import { useTheme } from '../hooks/useTheme';
 import { ThemeColors } from '../constants/themes';
+
+// Функция для получения пути к картинке трака
+const getTruckImageUri = (id: number): string => {
+  const isGame = typeof window !== 'undefined' && (
+    window.location.pathname.startsWith('/game') ||
+    window.location.pathname.includes('/game/')
+  );
+  const basePath = isGame ? '/game/assets/TruckPic' : '/assets/TruckPic';
+  return `${basePath}/${id}.webp`;
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  idle: 'Свободен', driving: 'К погрузке', loaded: 'В пути',
+  at_pickup: 'Погрузка', at_delivery: 'Разгрузка',
+  breakdown: 'Поломка', waiting: 'Ожидание', in_garage: 'В гараже',
+};
+const STATUS_COLOR: Record<string, string> = {
+  idle: '#38bdf8', driving: '#4ade80', loaded: '#4ade80',
+  at_pickup: '#fbbf24', at_delivery: '#fbbf24',
+  breakdown: '#f87171', waiting: '#fb923c', in_garage: '#f59e0b',
+};
 
 const UPGRADES = [
   { id: 'engine', icon: '⚡', label: 'Двигатель', desc: '+10% скорость, +0.5 MPG', cost: 3000, color: '#06b6d4' },
@@ -39,11 +60,41 @@ export default function RepairGarageModal() {
         </View>
 
         <ScrollView style={s.body} contentContainerStyle={{ paddingBottom: 30 }}>
+          {/* ── МОЙ ФЛОТ ── */}
+          <Text style={s.sectionTitle}>🚛 Мой флот — {trucks.length} {trucks.length === 1 ? 'трак' : trucks.length < 5 ? 'трака' : 'траков'}</Text>
+          <View style={{ gap: 6, marginBottom: 16 }}>
+            {trucks.map(truck => {
+              const isOld = (truck as any).isOldTruck;
+              const imgId = (truck as any).truckImageId;
+              const stColor = STATUS_COLOR[truck.status] || '#94a3b8';
+              const stLabel = STATUS_LABEL[truck.status] || truck.status;
+              return (
+                <View key={truck.id} style={s.fleetRow}>
+                  <View style={s.fleetImgWrap}>
+                    {imgId ? (
+                      <Image source={{ uri: getTruckImageUri(imgId) }} style={{ width: 48, height: 48, borderRadius: 10 } as any} resizeMode="cover" />
+                    ) : (
+                      <Text style={{ fontSize: 24 }}>{isOld ? '🚚' : '🚛'}</Text>
+                    )}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.fleetName}>{truck.name}</Text>
+                    <Text style={s.fleetDriver}>👤 {truck.driver} · 📍 {truck.currentCity || '—'}</Text>
+                  </View>
+                  <View style={[s.fleetBadge, { borderColor: stColor + '55', backgroundColor: stColor + '12' }]}>
+                    <Text style={{ fontSize: 9, fontWeight: '800', color: stColor }}>{stLabel}</Text>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+
+          {/* ── РЕМОНТ (траки в гараже) ── */}
           {garageTrucks.length === 0 ? (
             <View style={s.empty}>
-              <Text style={{ fontSize: 40 }}>🏗️</Text>
-              <Text style={s.emptyTitle}>Гараж пуст</Text>
-              <Text style={s.emptyDesc}>Траки попадают в гараж после эвакуации. Здесь можно ремонтировать и улучшать.</Text>
+              <Text style={{ fontSize: 28 }}>🔧</Text>
+              <Text style={s.emptyTitle}>Ремонтная зона пуста</Text>
+              <Text style={s.emptyDesc}>Траки попадают сюда после эвакуации. Здесь можно ремонтировать и улучшать.</Text>
             </View>
           ) : (
             garageTrucks.map(truck => {
@@ -154,9 +205,24 @@ function makeStyles(T: ThemeColors) {
     },
     closeTxt: { fontSize: 16, color: T.textSecondary },
     body: { flex: 1, padding: 16 },
-    empty: { alignItems: 'center', paddingVertical: 40, gap: 8 },
-    emptyTitle: { fontSize: 16, fontWeight: '800', color: T.textSecondary },
-    emptyDesc: { fontSize: 12, color: T.textMuted, textAlign: 'center', maxWidth: 280 },
+    empty: { alignItems: 'center', paddingVertical: 24, gap: 6 },
+    emptyTitle: { fontSize: 14, fontWeight: '800', color: T.textSecondary },
+    emptyDesc: { fontSize: 11, color: T.textMuted, textAlign: 'center', maxWidth: 280 },
+    fleetRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 10,
+      padding: 10, borderRadius: 12,
+      backgroundColor: 'rgba(255,255,255,0.03)',
+      borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
+    },
+    fleetImgWrap: {
+      width: 48, height: 48, borderRadius: 10,
+      backgroundColor: 'rgba(6,182,212,0.08)',
+      alignItems: 'center', justifyContent: 'center',
+      overflow: 'hidden',
+    },
+    fleetName: { fontSize: 13, fontWeight: '800', color: '#e2e8f0' },
+    fleetDriver: { fontSize: 10, color: '#94a3b8', marginTop: 2 },
+    fleetBadge: { borderRadius: 7, borderWidth: 1, paddingHorizontal: 7, paddingVertical: 3 },
     truckCard: {
       backgroundColor: 'rgba(245,158,11,0.04)', borderRadius: 16,
       borderWidth: 1.5, borderColor: 'rgba(245,158,11,0.2)',
