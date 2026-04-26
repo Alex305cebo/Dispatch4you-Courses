@@ -66,153 +66,239 @@ interface Props {
   selectedTruckId: string | null;
 }
 
-/** Выпадающая панель под выбранной карточкой */
+/** Выпадающая панель под выбранной карточкой — богатый интерактивный контент */
 function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEvent[]; isDark: boolean }) {
   const resolveEvent = useGameStore(s => s.resolveEvent);
+  const repairBreakdown = useGameStore(s => s.repairBreakdown);
+  const gameMinute = useGameStore(s => s.gameMinute);
   const color = getTruckColor(truck);
   const hos = Math.max(0, truck.hoursLeft);
-  const hosColor = hos < 2 ? '#f87171' : hos < 4 ? '#fbbf24' : '#34d399';
   const mood = truck.mood ?? 80;
+  const isBreakdown = truck.status === 'breakdown';
+  const awaitingRepair = truck.awaitingRepairChoice;
+  const isWaiting = truck.status === 'waiting';
+  const isIdle = truck.status === 'idle';
+  const isMoving = truck.status === 'driving' || truck.status === 'loaded';
+  const onRest = truck.onNightStop || truck.onMandatoryBreak || (truck.hosRestUntilMinute && truck.hosRestUntilMinute > gameMinute);
 
-  // Статусные чипы
-  const chips: { icon: string; label: string; color: string }[] = [];
-  if (truck.status === 'breakdown') chips.push({ icon: '🔧', label: 'Поломка', color: '#f87171' });
-  if (truck.status === 'waiting') chips.push({ icon: '⏱️', label: 'Detention', color: '#fb923c' });
-  if (truck.onNightStop) chips.push({ icon: '🌙', label: 'Ночёвка', color: '#64748b' });
-  if (truck.onMandatoryBreak) chips.push({ icon: '☕', label: 'Перерыв 30м', color: '#64748b' });
-  if (hos < 2) chips.push({ icon: '🛑', label: `HOS ${hos.toFixed(1)}h`, color: '#f87171' });
-  else if (hos < 4) chips.push({ icon: '⚠️', label: `HOS ${hos.toFixed(1)}h`, color: '#fbbf24' });
-  if (mood < 30) chips.push({ icon: '😡', label: `Настроение ${mood}%`, color: '#f87171' });
-  if (truck.idleWarningLevel >= 2 && truck.status === 'idle') chips.push({ icon: '😴', label: 'Простой', color: '#fb923c' });
+  const actionBtn = (btnColor: string, large = false): any => ({
+    flex: 1, minWidth: large ? 120 : 80, padding: large ? '10px 12px' : '7px 10px',
+    background: btnColor + '15', border: `2px solid ${btnColor}55`, borderRadius: 12,
+    cursor: 'pointer', transition: 'all 0.15s ease',
+    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+  });
+  const ps: any = {
+    marginTop: 6, padding: '10px 12px',
+    background: isDark ? 'rgba(15,20,35,0.95)' : 'rgba(255,255,255,0.97)',
+    backdropFilter: 'blur(14px)',
+    border: `2px solid ${isBreakdown ? '#f8717188' : isWaiting ? '#fb923c88' : color + '44'}`,
+    borderRadius: 14, display: 'flex', flexDirection: 'column', gap: 8,
+    maxWidth: 340, width: '100%', animation: 'dropdownSlide 0.2s ease-out',
+    boxShadow: isDark ? '0 8px 24px rgba(0,0,0,0.5)' : '0 8px 24px rgba(0,0,0,0.15)',
+  };
+  const hov = (el: HTMLElement, c: string, on: boolean) => {
+    el.style.background = c + (on ? '30' : '15');
+    el.style.transform = on ? 'scale(1.02)' : 'scale(1)';
+  };
 
-  const hasContent = events.length > 0 || chips.length > 0;
-  if (!hasContent) {
-    // Если нет событий и проблем — показываем "всё ок"
+  // ═══ ПОЛОМКА — ожидает решения ═══
+  if (isBreakdown && awaitingRepair) {
+    const cR = truck.breakdownCostRoadside || 0;
+    const cT = truck.breakdownCostTow || 0;
+    const dR = truck.breakdownDelayRoadside || 90;
+    const dT = truck.breakdownDelayTow || 240;
+    const bd = truck.breakdownType || 'Поломка';
     return (
-      <div style={{
-        marginTop: 6, padding: '8px 12px',
-        background: isDark ? 'rgba(15,20,35,0.92)' : 'rgba(255,255,255,0.96)',
-        backdropFilter: 'blur(12px)',
-        border: `1px solid ${color}44`,
-        borderRadius: 12,
-        animation: 'dropdownSlide 0.2s ease-out',
-      } as any}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 } as any}>
-          <span style={{ fontSize: 14 }}>✅</span>
-          <span style={{ fontSize: 11, fontWeight: 700, color: isDark ? '#4ade80' : '#16a34a' }}>
-            Всё в порядке — следим за траком
-          </span>
-          <span style={{ fontSize: 14 }}>🎯</span>
+      <div style={ps} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 20 }}>🚨</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 900, color: '#f87171' }}>{bd}</div>
+            <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280', marginTop: 1 }}>📍 {truck.currentCity} • Водитель ждёт решения</div>
+          </div>
+        </div>
+        <div style={{ background: isDark ? 'rgba(248,113,113,0.08)' : 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 10, padding: '8px 10px' }}>
+          <p style={{ fontSize: 11, color: isDark ? '#e2e8f0' : '#374151', margin: 0, lineHeight: 1.5 }}>
+            Трак остановился. Выберите ремонт — от этого зависит стоимость и время простоя.
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => repairBreakdown(truck.id, 'roadside')} style={actionBtn('#4ade80', true)}
+            onMouseEnter={e => hov(e.currentTarget as HTMLElement, '#4ade80', true)}
+            onMouseLeave={e => hov(e.currentTarget as HTMLElement, '#4ade80', false)}>
+            <span style={{ fontSize: 22 }}>🔧</span>
+            <span style={{ fontSize: 12, fontWeight: 800, color: isDark ? '#4ade80' : '#16a34a' }}>Ремонт на месте</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#f87171' }}>−${cR.toLocaleString()}</span>
+            <span style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280' }}>⏱ ~{dR} мин</span>
+          </button>
+          {cT > 0 && (
+            <button onClick={() => repairBreakdown(truck.id, 'tow')} style={actionBtn('#fb923c', true)}
+              onMouseEnter={e => hov(e.currentTarget as HTMLElement, '#fb923c', true)}
+              onMouseLeave={e => hov(e.currentTarget as HTMLElement, '#fb923c', false)}>
+              <span style={{ fontSize: 22 }}>🚛</span>
+              <span style={{ fontSize: 12, fontWeight: 800, color: isDark ? '#fb923c' : '#c2410c' }}>Эвакуатор</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#f87171' }}>−${cT.toLocaleString()}</span>
+              <span style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280' }}>⏱ ~{dT} мин</span>
+            </button>
+          )}
         </div>
       </div>
     );
   }
-
-  return (
-    <div style={{
-      marginTop: 6, padding: '10px 12px',
-      background: isDark ? 'rgba(15,20,35,0.95)' : 'rgba(255,255,255,0.97)',
-      backdropFilter: 'blur(14px)',
-      border: `2px solid ${events.length > 0 ? URGENCY_COLOR[events[0].urgency] + '88' : color + '44'}`,
-      borderRadius: 14,
-      display: 'flex', flexDirection: 'column', gap: 8,
-      maxWidth: 320,
-      animation: 'dropdownSlide 0.2s ease-out',
-      boxShadow: isDark
-        ? '0 8px 24px rgba(0,0,0,0.4)'
-        : '0 8px 24px rgba(0,0,0,0.12)',
-    } as any}>
-      {/* Статусные чипы */}
-      {chips.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 } as any}>
-          {chips.map((chip, i) => (
-            <div key={i} style={{
-              display: 'flex', alignItems: 'center', gap: 3,
-              padding: '3px 8px', borderRadius: 8,
-              background: chip.color + '18',
-              border: `1px solid ${chip.color}44`,
-            } as any}>
-              <span style={{ fontSize: 11 }}>{chip.icon}</span>
-              <span style={{ fontSize: 10, fontWeight: 700, color: chip.color }}>{chip.label}</span>
+  // ═══ ПОЛОМКА — ремонт в процессе ═══
+  if (isBreakdown && !awaitingRepair) {
+    const outUntil = truck.outOfOrderUntil || 0;
+    const minsLeft = Math.max(0, outUntil - gameMinute);
+    const totalDelay = truck.breakdownDelayTow || truck.breakdownDelayRoadside || 120;
+    return (
+      <div style={ps} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 20 }}>⏳</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 900, color: '#fbbf24' }}>{truck.breakdownType || 'Ремонт'}</div>
+            <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280', marginTop: 1 }}>📍 {truck.currentCity} • Осталось ~{minsLeft} мин</div>
+          </div>
+        </div>
+        {outUntil > 0 && (
+          <div style={{ height: 6, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
+            <div style={{ height: '100%', borderRadius: 3, background: 'linear-gradient(90deg, #fbbf24, #4ade80)', width: `${Math.max(5, (1 - minsLeft / totalDelay) * 100)}%`, transition: 'width 1s ease' }} />
+          </div>
+        )}
+      </div>
+    );
+  }
+  // ═══ DETENTION ═══
+  if (isWaiting && truck.currentLoad) {
+    const dm = truck.currentLoad.detentionMinutes || 0;
+    return (
+      <div style={ps} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 20 }}>⏱️</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 900, color: '#fb923c' }}>Detention — {dm} мин</div>
+            <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280', marginTop: 1 }}>📍 {truck.currentCity} • Ожидание {truck.currentLoad.phase === 'loading' ? 'погрузки' : 'разгрузки'}</div>
+          </div>
+        </div>
+        {dm >= 120 && (
+          <div style={{ background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.25)', borderRadius: 8, padding: '6px 10px' }}>
+            <p style={{ fontSize: 11, color: isDark ? '#fbbf24' : '#92400e', margin: 0, lineHeight: 1.4 }}>⚠️ Detention &gt; 2ч. Подайте claim через чат.</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+  // ═══ ОТДЫХ ═══
+  if (onRest) {
+    const mL = Math.max(0, (truck.hosRestUntilMinute || 0) - gameMinute);
+    const lbl = truck.onNightStop ? '🌙 Ночёвка' : truck.onMandatoryBreak ? '☕ Перерыв 30м' : '😴 HOS отдых';
+    return (
+      <div style={ps} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 20 }}>{truck.onNightStop ? '🌙' : '😴'}</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 900, color: isDark ? '#94a3b8' : '#6b7280' }}>{lbl}</div>
+            <div style={{ fontSize: 10, color: isDark ? '#64748b' : '#9ca3af', marginTop: 1 }}>📍 {truck.hosStopName || truck.nightStopName || truck.currentCity} • ~{mL} мин</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  // ═══ IDLE ═══
+  if (isIdle) {
+    const wl = truck.idleWarningLevel ?? 0;
+    const wc = wl >= 3 ? '#ef4444' : wl >= 2 ? '#fb923c' : wl >= 1 ? '#fbbf24' : '#38bdf8';
+    return (
+      <div style={ps} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 20 }}>{wl >= 2 ? '😴' : '📋'}</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 900, color: wc }}>{wl >= 2 ? 'Долгий простой!' : 'Свободен — ищем груз'}</div>
+            <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280', marginTop: 1 }}>📍 {truck.currentCity} • HOS: {hos.toFixed(1)}h</div>
+          </div>
+        </div>
+        {wl >= 2 && (
+          <div style={{ background: `${wc}12`, border: `1px solid ${wc}33`, borderRadius: 8, padding: '6px 10px' }}>
+            <p style={{ fontSize: 11, color: isDark ? '#e2e8f0' : '#374151', margin: 0, lineHeight: 1.4 }}>💡 Откройте Load Board — найдите груз из {truck.currentCity}</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+  // ═══ В ПУТИ ═══
+  if (isMoving && truck.currentLoad) {
+    const pp = Math.round(truck.progress * 100);
+    const ld = truck.currentLoad;
+    return (
+      <div style={ps} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 20 }}>{truck.status === 'loaded' ? '🚚' : '🚛'}</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 900, color: isDark ? '#34d399' : '#16a34a' }}>{truck.status === 'loaded' ? 'Везёт груз' : 'К погрузке'} — {pp}%</div>
+            <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280', marginTop: 1 }}>{ld.commodity} • {ld.miles} mi • ${ld.agreedRate.toLocaleString()}</div>
+          </div>
+        </div>
+        <div style={{ height: 5, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
+          <div style={{ height: '100%', borderRadius: 3, background: `linear-gradient(90deg, ${color}88, ${color})`, width: `${pp}%`, transition: 'width 0.8s ease' }} />
+        </div>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: isDark ? '#94a3b8' : '#6b7280', background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', borderRadius: 6, padding: '2px 8px' }}>🏢 {ld.brokerCompany}</span>
+          <span style={{ fontSize: 10, fontWeight: 700, color: isDark ? '#94a3b8' : '#6b7280', background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', borderRadius: 6, padding: '2px 8px' }}>📦 {ld.equipment}</span>
+        </div>
+      </div>
+    );
+  }
+  // ═══ ПОГРУЗКА / РАЗГРУЗКА ═══
+  if (truck.status === 'at_pickup' || truck.status === 'at_delivery') {
+    const isPU = truck.status === 'at_pickup';
+    return (
+      <div style={ps} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 20 }}>{isPU ? '📦' : '🏁'}</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 900, color: isPU ? '#fbbf24' : '#a78bfa' }}>{isPU ? 'На погрузке' : 'На разгрузке'}</div>
+            <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280', marginTop: 1 }}>📍 {truck.currentCity}{truck.currentLoad ? ` • ${truck.currentLoad.commodity}` : ''}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  // ═══ СОБЫТИЯ (fallback) ═══
+  if (events.length > 0) {
+    return (
+      <div style={ps} onClick={e => e.stopPropagation()}>
+        {events.map(ev => (
+          <div key={ev.id} style={{ background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', border: `1px solid ${URGENCY_COLOR[ev.urgency]}44`, borderRadius: 10, padding: '8px 10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
+              <span style={{ fontSize: 14 }}>{URGENCY_ICON[ev.urgency]}</span>
+              <span style={{ fontSize: 12, fontWeight: 800, color: isDark ? '#fff' : '#111827', flex: 1 }}>{ev.title}</span>
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* События с кнопками действий */}
-      {events.map(event => (
-        <div key={event.id} style={{
-          background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-          border: `1px solid ${URGENCY_COLOR[event.urgency]}55`,
-          borderRadius: 10, padding: '8px 10px',
-        } as any}>
-          {/* Заголовок события */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 } as any}>
-            <span style={{ fontSize: 14 }}>{URGENCY_ICON[event.urgency]}</span>
-            <span style={{
-              fontSize: 12, fontWeight: 800,
-              color: isDark ? '#ffffff' : '#111827',
-              flex: 1,
-            }}>{event.title}</span>
+            <p style={{ fontSize: 11, color: isDark ? '#cbd5e1' : '#4b5563', margin: '0 0 8px', lineHeight: 1.4 }}>{ev.message}</p>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {ev.options.map(opt => {
+                const bc = opt.outcome.isCorrect ? '#4ade80' : opt.outcome.moneyDelta >= 0 ? '#38bdf8' : '#f87171';
+                return (
+                  <button key={opt.id} onClick={e => { e.stopPropagation(); resolveEvent(ev.id, opt.id); }} style={actionBtn(bc)}
+                    onMouseEnter={e => hov(e.currentTarget as HTMLElement, bc, true)}
+                    onMouseLeave={e => hov(e.currentTarget as HTMLElement, bc, false)}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: isDark ? '#e2e8f0' : '#1f2937', textAlign: 'center', lineHeight: 1.3 }}>{opt.text}</span>
+                    {opt.outcome.moneyDelta !== 0 && <span style={{ fontSize: 10, fontWeight: 800, color: opt.outcome.moneyDelta > 0 ? '#4ade80' : '#f87171' }}>{opt.outcome.moneyDelta > 0 ? '+' : ''}{opt.outcome.moneyDelta.toLocaleString()}$</span>}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          <p style={{
-            fontSize: 11, color: isDark ? '#cbd5e1' : '#4b5563',
-            margin: '0 0 8px', lineHeight: 1.4,
-          }}>{event.message}</p>
-
-          {/* Кнопки действий — кольца */}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' } as any}>
-            {event.options.map(opt => {
-              const isPositive = opt.outcome.moneyDelta >= 0;
-              const btnColor = opt.outcome.isCorrect ? '#4ade80' : isPositive ? '#38bdf8' : '#f87171';
-              return (
-                <button
-                  key={opt.id}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    resolveEvent(event.id, opt.id);
-                  }}
-                  style={{
-                    flex: 1, minWidth: 80,
-                    padding: '8px 10px',
-                    background: btnColor + '15',
-                    border: `2px solid ${btnColor}66`,
-                    borderRadius: 10,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s',
-                    display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', gap: 2,
-                  } as any}
-                  onMouseEnter={e => {
-                    (e.currentTarget as HTMLElement).style.background = btnColor + '30';
-                    (e.currentTarget as HTMLElement).style.borderColor = btnColor;
-                    (e.currentTarget as HTMLElement).style.transform = 'scale(1.03)';
-                  }}
-                  onMouseLeave={e => {
-                    (e.currentTarget as HTMLElement).style.background = btnColor + '15';
-                    (e.currentTarget as HTMLElement).style.borderColor = btnColor + '66';
-                    (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
-                  }}
-                >
-                  <span style={{
-                    fontSize: 11, fontWeight: 700,
-                    color: isDark ? '#e2e8f0' : '#1f2937',
-                    textAlign: 'center', lineHeight: 1.3,
-                  }}>{opt.text}</span>
-                  {opt.outcome.moneyDelta !== 0 && (
-                    <span style={{
-                      fontSize: 10, fontWeight: 800,
-                      color: opt.outcome.moneyDelta > 0 ? '#4ade80' : '#f87171',
-                    }}>
-                      {opt.outcome.moneyDelta > 0 ? '+' : ''}{opt.outcome.moneyDelta.toLocaleString()}$
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
+    );
+  }
+  // ═══ ВСЁ ОК ═══
+  return (
+    <div style={{ ...ps, border: `1px solid ${color}44` }} onClick={e => e.stopPropagation()}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ fontSize: 14 }}>✅</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: isDark ? '#4ade80' : '#16a34a' }}>Всё в порядке — следим за траком</span>
+        <span style={{ fontSize: 14 }}>🎯</span>
+      </div>
     </div>
   );
 }
