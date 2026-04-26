@@ -235,23 +235,15 @@ function applyUI(user, xpOverride) {
 
         // Stats icon always visible — no toggle needed
 
-        // Admin link — show for superusers only
+        // Admin/Game — только в бургер-меню
         const role = localStorage.getItem('user_role');
-        const adminLink = document.getElementById('nav-admin-link');
         const mobAdminLink = document.getElementById('mob-admin-link');
+        const mobGameLink = document.getElementById('mob-game-link');
         if (role === 'superuser') {
-            if (adminLink) adminLink.style.display = '';
             if (mobAdminLink) mobAdminLink.style.display = '';
-            const gameLink = document.getElementById('nav-game-link');
-            const mobGameLink = document.getElementById('mob-game-link');
-            if (gameLink) gameLink.style.display = '';
             if (mobGameLink) mobGameLink.style.display = '';
         } else {
-            if (adminLink) adminLink.style.display = 'none';
             if (mobAdminLink) mobAdminLink.style.display = 'none';
-            const gameLink = document.getElementById('nav-game-link');
-            const mobGameLink = document.getElementById('mob-game-link');
-            if (gameLink) gameLink.style.display = 'none';
             if (mobGameLink) mobGameLink.style.display = 'none';
         }
 
@@ -285,13 +277,9 @@ function applyUI(user, xpOverride) {
         // Stats icon always visible — no toggle needed
 
         // Hide admin link when logged out
-        const adminLink2 = document.getElementById('nav-admin-link');
         const mobAdminLink2 = document.getElementById('mob-admin-link');
-        if (adminLink2) adminLink2.style.display = 'none';
         if (mobAdminLink2) mobAdminLink2.style.display = 'none';
-        const gameLink2 = document.getElementById('nav-game-link');
         const mobGameLink2 = document.getElementById('mob-game-link');
-        if (gameLink2) gameLink2.style.display = 'none';
         if (mobGameLink2) mobGameLink2.style.display = 'none';
     }
 }
@@ -309,14 +297,10 @@ document.addEventListener('navLoaded', applyFromCache);
 // Повторная проверка роли — role-guard.js может обновить localStorage позже
 setTimeout(() => {
     const role = localStorage.getItem('user_role');
-    const adminLink = document.getElementById('nav-admin-link');
     const mobAdminLink = document.getElementById('mob-admin-link');
-    const gameLink = document.getElementById('nav-game-link');
     const mobGameLink = document.getElementById('mob-game-link');
     if (role === 'superuser') {
-        if (adminLink) adminLink.style.display = '';
         if (mobAdminLink) mobAdminLink.style.display = '';
-        if (gameLink) gameLink.style.display = '';
         if (mobGameLink) mobGameLink.style.display = '';
     }
 }, 2000);
