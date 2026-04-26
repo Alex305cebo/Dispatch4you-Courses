@@ -1227,9 +1227,9 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       smoothHeadingRef.current = 0;
 
       // Ограничиваем zoom 5-12 в Navigation режиме
-      googleMapRef.current.setOptions({ minZoom: 5, maxZoom: 12 });
+      googleMapRef.current.setOptions({ minZoom: 5, maxZoom: 13 });
       // Устанавливаем начальный zoom подальше
-      const navZoom = 7;
+      const navZoom = 9;
       userZoomRef.current = navZoom;
       googleMapRef.current.setZoom(navZoom);
     }
