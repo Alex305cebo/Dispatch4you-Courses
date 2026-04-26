@@ -183,8 +183,35 @@ function getLoadingFact(load: any, truck: any, isPU: boolean, seed: number) {
 /** HUD-плашка с вкладками — Route / Stats / Load / Radio */
 function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any }) {
   const [activeTab, setActiveTab] = useState<'route' | 'stats' | 'load' | 'radio'>('route');
+  const [collapsed, setCollapsed] = useState(false);
+  const collapseTimerRef = React.useRef<any>(null);
   const gameMinute = useGameStore(s => s.gameMinute);
   const color = getTruckColor(truck);
+
+  // Автосворачивание через 4 секунды после открытия
+  React.useEffect(() => {
+    collapseTimerRef.current = setTimeout(() => setCollapsed(true), 4000);
+    return () => clearTimeout(collapseTimerRef.current);
+  }, []);
+
+  // При смене вкладки — разворачиваем и сбрасываем таймер
+  function handleTabClick(key: typeof activeTab) {
+    setActiveTab(key);
+    setCollapsed(false);
+    clearTimeout(collapseTimerRef.current);
+    collapseTimerRef.current = setTimeout(() => setCollapsed(true), 4000);
+  }
+
+  // При ручном разворачивании — тоже сбрасываем таймер
+  function handleToggleCollapse(e: React.MouseEvent) {
+    e.stopPropagation();
+    const next = !collapsed;
+    setCollapsed(next);
+    clearTimeout(collapseTimerRef.current);
+    if (!next) {
+      collapseTimerRef.current = setTimeout(() => setCollapsed(true), 4000);
+    }
+  }
 
   // ── Статус ──
   const statusLabel: Record<string, string> = {
@@ -262,32 +289,37 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
 
   return (
     <div style={{ ...ps, padding: 0, overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
-      {/* Tabs */}
+
+      {/* ── ТАБЫ — всегда видны ── */}
       <div style={{
-        display: 'flex', borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+        display: 'flex',
+        borderBottom: collapsed ? 'none' : `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
       }}>
         {tabs.map(t => (
           <button
             key={t.key}
-            onClick={() => setActiveTab(t.key)}
+            onClick={() => handleTabClick(t.key)}
             style={{
-              flex: 1, padding: '8px 4px', border: 'none', cursor: 'pointer',
+              flex: 1, padding: collapsed ? '10px 4px' : '8px 4px',
+              border: 'none', cursor: 'pointer',
               background: 'transparent',
               borderBottom: `2px solid ${activeTab === t.key ? '#06b6d4' : 'transparent'}`,
               color: activeTab === t.key ? '#06b6d4' : (isDark ? '#64748b' : '#9ca3af'),
-              fontSize: 11, fontWeight: 600, transition: 'color 0.25s, border-color 0.25s',
+              fontSize: 11, fontWeight: 600,
+              transition: 'color 0.2s, border-color 0.2s, padding 0.2s',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3,
               whiteSpace: 'nowrap',
             }}
           >
-            <span style={{ fontSize: 12 }}>{t.icon}</span>
-            {t.label}
+            <span style={{ fontSize: collapsed ? 16 : 12 }}>{t.icon}</span>
+            {!collapsed && t.label}
           </button>
         ))}
       </div>
 
-      {/* Panels — fade transition */}
-      <div style={{ position: 'relative', minHeight: 80 }}>
+      {/* ── КОНТЕНТ — только когда развёрнуто ── */}
+      {!collapsed && (
+        <div style={{ position: 'relative', minHeight: 80 }}>
         {/* ROUTE */}
         <div style={{
           padding: '10px 12px',
@@ -396,6 +428,27 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
           {truck.isOldTruck && row('Truck Condition', '⚠️ Old truck')}
         </div>
       </div>
+      )}
+
+      {/* Кнопка сворачивания/разворачивания — только когда развёрнуто */}
+      {!collapsed && (
+      <div
+        onClick={handleToggleCollapse}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          gap: 6, padding: '6px 0', cursor: 'pointer',
+          borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+          background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
+          transition: 'all 0.2s ease',
+        }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'; }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)'; }}
+      >
+        <div style={{ width: 32, height: 3, borderRadius: 2, background: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)' }} />
+        <span style={{ fontSize: 10, color: isDark ? '#64748b' : '#9ca3af', fontWeight: 700, lineHeight: 1 }}>▼</span>
+        <div style={{ width: 32, height: 3, borderRadius: 2, background: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)' }} />
+      </div>
+      )}
     </div>
   );
 }
@@ -829,17 +882,49 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
     container.scrollTo({ left: target, behavior: 'smooth' });
   }, [selectedTruckId, trucks]);
 
+  // Блокируем всплытие touch-событий к карте
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    let startX = 0;
+    let startScrollLeft = 0;
+    let isScrolling = false;
+
+    const onTouchStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX;
+      startScrollLeft = el.scrollLeft;
+      isScrolling = false;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      const dx = Math.abs(e.touches[0].clientX - startX);
+      if (dx > 5) {
+        isScrolling = true;
+        e.stopPropagation();
+        // Скроллим вручную
+        el.scrollLeft = startScrollLeft - (e.touches[0].clientX - startX);
+      }
+    };
+    const onTouchEnd = () => { isScrolling = false; };
+
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchmove', onTouchMove, { passive: true, capture: true });
+    el.addEventListener('touchend', onTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove', onTouchMove, true);
+      el.removeEventListener('touchend', onTouchEnd);
+    };
+  }, []);
+
   return (
     <>
       <style>{`
         .truck-card-scroll::-webkit-scrollbar{display:none}
+        .truck-card-scroll { touch-action: pan-x !important; }
+        .truck-card-scroll * { touch-action: pan-x !important; }
         @keyframes dropdownSlide {
           from { opacity: 0; transform: translateY(-8px); }
           to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes selectedPulse {
-          0%, 100% { box-shadow: 0 0 0 0 var(--pulse-color); }
-          50% { box-shadow: 0 0 12px 3px var(--pulse-color); }
         }
         @keyframes trackingDot {
           0%, 100% { opacity: 1; }
@@ -859,7 +944,10 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
         WebkitOverflowScrolling: 'touch',
         touchAction: 'pan-x',
         alignItems: 'flex-start',
-      } as any}>
+      } as any}
+      onTouchStart={e => e.stopPropagation()}
+      onTouchMove={e => e.stopPropagation()}
+      >
         {trucks.map(truck => {
           const color = getTruckColor(truck);
           const hos = Math.max(0, truck.hoursLeft);
@@ -896,9 +984,7 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                 style={{
                   width: '100%',
                   borderRadius: 16,
-                  border: isSelected
-                    ? `2.5px solid ${color}`
-                    : `2px solid ${color}66`,
+                  border: `2px solid ${color}66`,
                   background: isDark ? 'rgba(15,20,35,0.92)' : 'rgba(255,255,255,0.94)',
                   backdropFilter: 'blur(12px)',
                   WebkitBackdropFilter: 'blur(12px)',
@@ -907,12 +993,10 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                   flexDirection: 'row',
                   overflow: 'visible',
                   fontFamily: 'sans-serif',
-                  boxShadow: isSelected
-                    ? `0 0 16px ${color}44, -10px -2px 20px rgba(0,0,0,0.22)`
-                    : isDark
-                      ? '-10px -2px 20px rgba(0,0,0,0.22), -4px -1px 10px rgba(0,0,0,0.14)'
-                      : '-10px -2px 20px rgba(0,0,0,0.09), -4px -1px 10px rgba(0,0,0,0.05)',
-                  transform: isSelected ? 'translateY(-5px)' : 'translateY(-3px)',
+                  boxShadow: isDark
+                    ? '-10px -2px 20px rgba(0,0,0,0.22), -4px -1px 10px rgba(0,0,0,0.14)'
+                    : '-10px -2px 20px rgba(0,0,0,0.09), -4px -1px 10px rgba(0,0,0,0.05)',
+                  transform: 'translateY(-3px)',
                   transition: 'border 0.2s, transform 0.15s, box-shadow 0.25s',
                   position: 'relative',
                   '--pulse-color': color + '55',
@@ -1034,6 +1118,53 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                       </div>
                     )}
 
+                    {/* Кнопка починки — показывается прямо на карточке при поломке */}
+                    {truck.status === 'breakdown' && (truck as any).awaitingRepairChoice && (() => {
+                      const cR = (truck as any).breakdownCostRoadside || 0;
+                      const cT = (truck as any).breakdownCostTow || 0;
+                      const dR = (truck as any).breakdownDelayRoadside || 90;
+                      const dT = (truck as any).breakdownDelayTow || 240;
+                      const repairBreakdown = useGameStore.getState().repairBreakdown;
+                      return (
+                        <div style={{ display: 'flex', gap: 4, marginTop: 2 } as any} onClick={e => e.stopPropagation()}>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); repairBreakdown(truck.id, 'roadside'); }}
+                            style={{
+                              flex: 1, padding: '4px 6px',
+                              background: 'rgba(74,222,128,0.15)',
+                              border: '1.5px solid rgba(74,222,128,0.5)',
+                              borderRadius: 8, cursor: 'pointer',
+                              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
+                            } as any}
+                          >
+                            <span style={{ fontSize: 13 } as any}>🔧</span>
+                            <span style={{ fontSize: 9, fontWeight: 800, color: isDark ? '#4ade80' : '#16a34a' } as any}>На месте</span>
+                            <span style={{ fontSize: 8, fontWeight: 700, color: '#f87171' } as any}>−${cR.toLocaleString()}</span>
+                            <span style={{ fontSize: 8, color: isDark ? '#94a3b8' : '#6b7280' } as any}>~{dR}м</span>
+                          </button>
+                          {cT > 0 && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); repairBreakdown(truck.id, 'tow'); }}
+                              style={{
+                                flex: 1, padding: '4px 6px',
+                                background: 'rgba(251,146,60,0.15)',
+                                border: '1.5px solid rgba(251,146,60,0.5)',
+                                borderRadius: 8, cursor: 'pointer',
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
+                              } as any}
+                            >
+                              <span style={{ fontSize: 13 } as any}>🚛</span>
+                              <span style={{ fontSize: 9, fontWeight: 800, color: isDark ? '#fb923c' : '#c2410c' } as any}>Эвакуатор</span>
+                              <span style={{ fontSize: 8, fontWeight: 700, color: '#f87171' } as any}>−${cT.toLocaleString()}</span>
+                              <span style={{ fontSize: 8, color: isDark ? '#94a3b8' : '#6b7280' } as any}>~{dT}м</span>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Стандартная строка HOS/mood/ставка — скрываем при поломке с выбором */}
+                    {!(truck.status === 'breakdown' && (truck as any).awaitingRepairChoice) && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 1 } as any}>
                       <div style={{ border: `1px solid ${hosColor}44`, borderRadius: 5, padding: '0px 4px', display: 'flex', alignItems: 'baseline', gap: 1 } as any}>
                         <span style={{ fontSize: 10, fontWeight: 900, color: hosColor } as any}>{hos.toFixed(1)}</span>
@@ -1051,6 +1182,7 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                         </div>
                       )}
                     </div>
+                    )}
                   </div>
                 </div>
               </div>

@@ -771,14 +771,15 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         marker.setZIndex(truck.status === 'loaded' ? 1000 : truck.status === 'breakdown' ? 2000 : 500);
       }
 
-      // Toast при поломке
+      // Toast при поломке — с truckId чтобы показывался в карточке, не внизу экрана
       const prevStatus = prevTruckStatusRef.current.get(truck.id);
       if (truck.status === 'breakdown' && prevStatus && prevStatus !== 'breakdown') {
         window.dispatchEvent(new CustomEvent('mapToast', {
           detail: {
-            message: `🚨 ${truck.name} сломался! Открой чат — водитель ждёт ответа.`,
+            message: `🚨 ${truck.name} сломался! Нажми на карточку трака.`,
             color: '#ef4444',
-            duration: 6000,
+            duration: 4000,
+            truckId: truck.id,
           }
         }));
       }
@@ -1225,11 +1226,12 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       });
       smoothHeadingRef.current = 0;
 
-      // Ограничиваем zoom 6-13 в Navigation режиме
-      googleMapRef.current.setOptions({ minZoom: 6, maxZoom: 13 });
-      // Clamp текущий zoom
-      if (userZoomRef.current > 13) { userZoomRef.current = 13; googleMapRef.current.setZoom(13); }
-      if (userZoomRef.current < 6) { userZoomRef.current = 6; googleMapRef.current.setZoom(6); }
+      // Ограничиваем zoom 5-12 в Navigation режиме
+      googleMapRef.current.setOptions({ minZoom: 5, maxZoom: 12 });
+      // Устанавливаем начальный zoom подальше
+      const navZoom = 7;
+      userZoomRef.current = navZoom;
+      googleMapRef.current.setZoom(navZoom);
     }
   }, [followTruck]);
 
@@ -1283,6 +1285,72 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
     window.addEventListener('followTruckFromCard', handleFollowFromCard);
     return () => window.removeEventListener('followTruckFromCard', handleFollowFromCard);
   }, [activeTrucks, followTruck]);
+
+  // ── FOLLOW ASSIGNED TRUCK — с медленным zoom out ──
+  useEffect(() => {
+    function handleFollowAssigned(e: Event) {
+      const { truckId, zoomOut } = (e as CustomEvent).detail || {};
+      if (!truckId || !googleMapRef.current || !mapLoaded) return;
+      
+      const truck = activeTrucks.find((t: any) => t.id === truckId);
+      if (!truck) return;
+      
+      // Центрируем на траке
+      const position = { lat: truck.position[1], lng: truck.position[0] };
+      smoothCamLatRef.current = position.lat;
+      smoothCamLngRef.current = position.lng;
+      centerOnIdRef.current = truckId;
+      lastFollowPositionRef.current = null;
+      setSelectedTruck(truck);
+      
+      // Медленный zoom out если указан параметр
+      if (zoomOut && typeof zoomOut === 'number') {
+        const currentZoom = userZoomRef.current;
+        const targetZoom = Math.max(3, currentZoom * (1 - zoomOut)); // уменьшаем на zoomOut процентов
+        
+        // Запускаем плавную анимацию zoom out (3 секунды)
+        const duration = 3000; // 3 секунды
+        const startTime = Date.now();
+        const startZoom = currentZoom;
+        
+        const animateZoom = () => {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          
+          // Ease-out cubic для плавности
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const newZoom = startZoom + (targetZoom - startZoom) * eased;
+          
+          if (googleMapRef.current) {
+            userZoomRef.current = newZoom;
+            googleMapRef.current.moveCamera({
+              center: position,
+              heading: 0,
+              tilt: 0,
+              zoom: newZoom,
+            });
+          }
+          
+          if (progress < 1) {
+            requestAnimationFrame(animateZoom);
+          }
+        };
+        
+        requestAnimationFrame(animateZoom);
+      } else {
+        // Без zoom out — просто центрируем
+        googleMapRef.current.moveCamera({
+          center: position,
+          heading: 0,
+          tilt: 0,
+          zoom: userZoomRef.current,
+        });
+      }
+    }
+    
+    window.addEventListener('followAssignedTruck', handleFollowAssigned);
+    return () => window.removeEventListener('followAssignedTruck', handleFollowAssigned);
+  }, [activeTrucks, mapLoaded]);
 
   // ── FOLLOW SERVICE VEHICLE — Режим 2: простое центрирование ──
   useEffect(() => {

@@ -38,14 +38,24 @@ export default function MainMenu() {
 
   async function handleContinue() {
     setLoading(true);
-    try { const ok = await loadGame(); if (ok) router.replace('/game'); else alert('Не удалось загрузить'); }
+    try {
+      const ok = await loadGame();
+      if (ok) {
+        sessionStorage.setItem('enteredViaMenu', '1');
+        router.replace('/game');
+      } else alert('Не удалось загрузить');
+    }
     finally { setLoading(false); }
   }
 
   async function handleNewGame() {
     if (hasSave && !window.confirm('⚠️ Начать новую игру? Прогресс будет потерян.')) return;
     setLoading(true);
-    try { await startShift(1, 'Новая смена'); router.replace('/game'); }
+    try {
+      await startShift(1, 'Новая смена');
+      sessionStorage.setItem('enteredViaMenu', '1');
+      router.replace('/game');
+    }
     finally { setLoading(false); }
   }
 
@@ -59,7 +69,7 @@ export default function MainMenu() {
   ];
 
   // Адаптивные размеры
-  const cardMaxW = isLandscape ? 560 : isMobile ? W - 24 : 420;
+  const cardMaxW = isLandscape ? 560 : isMobile ? Math.min(W - 60, 340) : 420;
   const cardPad = isSmall ? 10 : isMobile ? 12 : 16;
   const logoSize = isSmall ? 40 : isMobile ? 46 : 52;
   const titleSize = isSmall ? 18 : isMobile ? 20 : 22;

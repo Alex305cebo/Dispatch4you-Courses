@@ -9,12 +9,11 @@ import { ThemeColors } from '../constants/themes';
 
 // Функция для получения пути к картинке трака — вычисляется динамически при рендере
 const getTruckImageUri = (id: number): string => {
-  // Проверяем pathname в момент вызова (не при загрузке модуля)
   const isGame = typeof window !== 'undefined' && (
     window.location.pathname.startsWith('/game') ||
     window.location.pathname.includes('/game/')
   );
-  const basePath = isGame ? '/game/assets/TruckPic' : '/assets/TruckPic';
+  const basePath = isGame ? '/game/assets/Truck%20Pic' : '/assets/Truck%20Pic';
   return `${basePath}/${id}.webp`;
 };
 

@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, useMemo, Component } from 'react';
+﻿import { useEffect, useRef, useState, useMemo, Component, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
   useWindowDimensions, Platform,
@@ -177,7 +177,7 @@ const s = StyleSheet.create({
   landscapePanel: { width: 320, flexDirection: 'column', backgroundColor: BG2, borderLeftWidth: 1, borderLeftColor: BORDER },
   mobilePanelOverlay: { position: 'absolute', top: 48, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(13,17,23,0.98)', borderTopLeftRadius: 20, borderTopRightRadius: 20, overflow: 'hidden', zIndex: 10 },
   mobileTopBar: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100 },
-  truckStripBar: { position: 'absolute', top: 0, left: 0, backgroundColor: 'transparent', zIndex: 20, pointerEvents: 'box-none' as any },
+  truckStripBar: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: 'transparent', zIndex: 20, pointerEvents: 'box-none' as any },
   bottomTabs: { flexDirection: 'row', paddingHorizontal: 4, paddingVertical: 5, backgroundColor: BG2, borderTopWidth: 1, borderTopColor: BORDER },
   bottomTab: { flex: 1, paddingVertical: 9, alignItems: 'center', borderRadius: 10, borderWidth: 0, flexDirection: 'row', justifyContent: 'center', gap: 4, backgroundColor: 'transparent' },
   bottomTabOn: { backgroundColor: '#fff', borderRadius: 10 },
@@ -239,9 +239,15 @@ export default function GameScreen() {
   const truckStripScrollPos = useRef<number>(0); // Сохраняем позицию скролла truck strip
 
   const [activeTab, setActiveTab] = useState<Tab>('map'); // Всегда начинаем с карты
+  const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
+
+  // Функция для автоматического открытия правой панели
+  const autoExpandRightPanel = useCallback(() => {
+    setRightPanelCollapsed(false);
+  }, []);
 
   // Сохраняем активную вкладку при каждом переключении
-  const switchTab = (tab: Tab) => {
+  const switchTab = useCallback((tab: Tab) => {
     setActiveTab(tab);
     
     // Автоматически открываем правую панель для loadboard и chat
@@ -253,7 +259,7 @@ export default function GameScreen() {
       localStorage.setItem('dispatch-active-tab', tab);
       if (tab === 'map') localStorage.setItem('guide-map-visited', '1');
     } catch {}
-  };
+  }, [autoExpandRightPanel]);
   const [pendingLoad, setPendingLoad] = useState<ActiveLoad | null>(null);
   const [showFleet, setShowFleet] = useState(false);
   const [showCompliance, setShowCompliance] = useState(false);
@@ -317,14 +323,6 @@ export default function GameScreen() {
   }
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
-  
-  // Функция для автоматического открытия правой панели
-  const autoExpandRightPanel = () => {
-    if (rightPanelCollapsed) {
-      setRightPanelCollapsed(false);
-    }
-  };
   
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const saveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -356,6 +354,12 @@ export default function GameScreen() {
   }, [availableLoads.length, activeTab]);
 
   useEffect(() => {
+    // При прямом открытии /game (без прохождения через меню) — всегда на меню
+    const enteredViaMenu = sessionStorage.getItem('enteredViaMenu');
+    if (!enteredViaMenu) {
+      router.replace('/');
+      return;
+    }
     // При рефреше — восстанавливаем сохранение только если phase === 'menu' (store в дефолтном состоянии)
     if (phase === 'menu') {
       loadGame().then(loaded => {
@@ -968,34 +972,7 @@ export default function GameScreen() {
         const AVATAR_W = isWide ? 90 : 76;
 
         return (
-          <div key={truck.id} {...(truckIdx === 0 ? { 'data-onboarding': 'truck-card' } : {})} style={{ position: 'relative', flexShrink: 0, scrollSnapAlign: isWide ? 'none' : 'center' } as any}>
-
-            {/* Облачко-уведомление */}
-            {indicatorNotifications[truck.id] && (
-              <div style={{
-                position: 'absolute', bottom: '100%', left: '50%',
-                transform: 'translateX(-50%)',
-                marginBottom: 6, zIndex: 10,
-                background: 'rgba(255,255,255,0.97)',
-                border: '1px solid rgba(0,122,255,0.4)',
-                borderRadius: 8, padding: '4px 8px',
-                fontSize: 11, fontWeight: 700, color: '#007aff',
-                whiteSpace: 'nowrap', pointerEvents: 'none',
-                animation: 'indicatorPulse 0.4s ease-out',
-                boxShadow: '0 2px 12px rgba(0,0,0,0.12)',
-              } as any}>
-                {indicatorNotifications[truck.id].text}
-                <div style={{
-                  position: 'absolute', bottom: -5, left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: 8, height: 8,
-                  background: 'rgba(255,255,255,0.97)',
-                  border: '1px solid rgba(0,122,255,0.4)',
-                  borderTop: 'none', borderLeft: 'none',
-                  rotate: '45deg',
-                } as any} />
-              </div>
-            )}
+          <div key={truck.id} {...(truckIdx === 0 ? { 'data-onboarding': 'truck-card' } : {})} style={{ position: 'relative', flexShrink: 0, scrollSnapAlign: isWide ? 'none' : 'center', display: 'flex', flexDirection: 'column' } as any}>
 
           {/* ═══ КАРТОЧКА — UBER/LYFT СТИЛЬ (ПРОЗРАЧНАЯ) ═══ */}
           <div
@@ -1156,6 +1133,40 @@ export default function GameScreen() {
 
             </div>
           </div>
+
+          {/* ── Уведомление под карточкой ── */}
+          {indicatorNotifications[truck.id] && (() => {
+            const notif = indicatorNotifications[truck.id];
+            const isUrgent = notif.text.includes('сломал') || notif.text.includes('топлив') || notif.text.includes('HOS') || notif.text.includes('Detention');
+            const bgColor = isUrgent ? 'rgba(239,68,68,0.92)' : 'rgba(251,146,60,0.92)';
+            const borderColor = isUrgent ? 'rgba(239,68,68,0.6)' : 'rgba(251,146,60,0.5)';
+            return (
+              <div
+                onClick={() => handleTruckClick(truck)}
+                style={{
+                  marginTop: 4,
+                  background: bgColor,
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
+                  border: `1px solid ${borderColor}`,
+                  borderRadius: 10,
+                  padding: '7px 10px',
+                  cursor: 'pointer',
+                  animation: 'indicatorPulse 0.4s ease-out',
+                  display: 'flex', alignItems: 'center', gap: 7,
+                  width: isWide ? 360 : 290,
+                } as any}
+              >
+                <span style={{ fontSize: 14, flexShrink: 0 } as any}>🚨</span>
+                <span style={{
+                  fontSize: 11, fontWeight: 700, color: '#fff',
+                  flex: 1, lineHeight: 1.3,
+                } as any}>{notif.text}</span>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', flexShrink: 0 } as any}>→</span>
+              </div>
+            );
+          })()}
+
           </div>
         );
       })}
@@ -1434,7 +1445,7 @@ export default function GameScreen() {
     }
     window.addEventListener('switchTab', handleSwitchTab);
     return () => window.removeEventListener('switchTab', handleSwitchTab);
-  }, []);
+  }, [switchTab]);
 
   // Авто-переключение на чат при поломке
   useEffect(() => {
@@ -1478,7 +1489,7 @@ export default function GameScreen() {
           detail: { lng: truck.position[0], lat: truck.position[1] }
         }));
         window.dispatchEvent(new CustomEvent('followAssignedTruck', {
-          detail: { truckId }
+          detail: { truckId, zoomOut: 0.2 } // медленный zoom out на 20%
         }));
       };
       setTimeout(dispatch, 400);
@@ -1650,30 +1661,18 @@ export default function GameScreen() {
         </View>
       )}
 
-      {/* ── TOAST УВЕДОМЛЕНИЯ — компактные, кликабельные ── */}
-      {toasts.length > 0 && (
+      {/* ── TOAST УВЕДОМЛЕНИЯ — только без truckId (системные) ── */}
+      {toasts.filter(t => !t.truckId).length > 0 && (
         <View style={{
           position: 'absolute', bottom: 80, left: 0, right: 0,
           alignItems: 'center', gap: 6,
           zIndex: 9999,
         } as any} pointerEvents="box-none">
-          {toasts.map(toast => (
+          {toasts.filter(t => !t.truckId).map(toast => (
             <TouchableOpacity
               key={toast.id}
               activeOpacity={0.8}
-              onPress={() => {
-                if (toast.truckId) {
-                  selectTruck(toast.truckId);
-                  switchTab('map');
-                  const t = trucks.find(x => x.id === toast.truckId);
-                  if (t) {
-                    window.dispatchEvent(new CustomEvent('followTruckFromCard', {
-                      detail: { truckId: toast.truckId, lng: t.position[0], lat: t.position[1] }
-                    }));
-                  }
-                }
-                setToasts(prev => prev.filter(x => x.id !== toast.id));
-              }}
+              onPress={() => setToasts(prev => prev.filter(x => x.id !== toast.id))}
               style={{
                 backgroundColor: toast.color,
                 borderRadius: 12,
@@ -1690,16 +1689,9 @@ export default function GameScreen() {
                 elevation: 8,
               } as any}
             >
-              <Text style={{
-                color: '#fff',
-                fontSize: 12,
-                fontWeight: '700',
-                lineHeight: 16,
-                flex: 1,
-              } as any}>{toast.message}</Text>
-              {toast.truckId && (
-                <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10, fontWeight: '600' } as any}>→</Text>
-              )}
+              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700', lineHeight: 16, flex: 1 } as any}>
+                {toast.message}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>

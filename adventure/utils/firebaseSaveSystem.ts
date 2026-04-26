@@ -22,7 +22,7 @@ import {
   Timestamp,
   Firestore
 } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged, User, Auth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User, Auth } from 'firebase/auth';
 
 // Firebase конфигурация (из firebase-auth-init.js)
 const firebaseConfig = {
@@ -102,6 +102,31 @@ export function getCurrentUser(): Promise<User | null> {
       resolve(user);
     });
   });
+}
+
+/**
+ * Войти через Google
+ */
+export async function signInWithGoogle(): Promise<User | null> {
+  try {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    return result.user;
+  } catch (error) {
+    console.error('❌ Google sign-in failed:', error);
+    return null;
+  }
+}
+
+/**
+ * Выйти из аккаунта
+ */
+export async function signOutUser(): Promise<void> {
+  try {
+    await signOut(auth);
+  } catch (error) {
+    console.error('❌ Sign out failed:', error);
+  }
 }
 
 /**
