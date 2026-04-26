@@ -27,8 +27,7 @@ import TruckStripComponent from '../components/TruckStripComponent';
 import TruckCardOverlay from '../components/TruckCardOverlay';
 import LoadBoardPanel from '../components/LoadBoardPanel';
 import EventsPanel from '../components/EventsPanel';
-import NegotiationModal from '../components/NegotiationModal';
-import AssignModal from '../components/AssignModal';
+import NegotiationChat from '../components/NegotiationChat';
 import MyLoadsPanel from '../components/MyLoadsPanel';
 import NotificationBell from '../components/NotificationBell';
 import ComplianceDashboard from '../components/ComplianceDashboard';
@@ -204,7 +203,7 @@ export default function GameScreen() {
     trucks, availableLoads, negotiation, bookedLoads, activeLoads,
     tickClock, selectedTruckId, selectTruck, notifications, sessionName,
     refreshLoadBoard, setLoadBoardSearch, timeSpeed, setTimeSpeed, loadGame,
-    deliveryResults, totalEarned,
+    deliveryResults, totalEarned, closeNegotiation,
   } = useGameStore();
 
   const [guideVisible, setGuideVisible] = useState(false);
@@ -259,7 +258,6 @@ export default function GameScreen() {
       if (tab === 'map') localStorage.setItem('guide-map-visited', '1');
     } catch {}
   }, [autoExpandRightPanel]);
-  const [pendingLoad, setPendingLoad] = useState<ActiveLoad | null>(null);
   const [showFleet, setShowFleet] = useState(false);
   const [showCompliance, setShowCompliance] = useState(false);
   const [showEvents, setShowEvents] = useState(false);
@@ -1558,7 +1556,7 @@ export default function GameScreen() {
           } as any}>
             <SideTabs />
             <View style={s.panelContent}>
-              {(activeTab === 'loadboard' || activeTab === 'map') && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} onAssigned={handleAssigned} /></ErrorBoundary>}
+              {(activeTab === 'loadboard' || activeTab === 'map') && <ErrorBoundary name="Loads"><LoadBoardPanel onAssigned={handleAssigned} /></ErrorBoundary>}
               {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
               {activeTab === 'chat'      && <ErrorBoundary name="Chat"><UnifiedChatUI nickname={sessionName || 'player'} /></ErrorBoundary>}
             </View>
@@ -1623,7 +1621,7 @@ export default function GameScreen() {
             } as any}>
               <SideTabs />
               <View style={s.panelContent}>
-                {(activeTab === 'loadboard' || activeTab === 'map') && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} onAssigned={handleAssigned} /></ErrorBoundary>}
+                {(activeTab === 'loadboard' || activeTab === 'map') && <ErrorBoundary name="Loads"><LoadBoardPanel onAssigned={handleAssigned} /></ErrorBoundary>}
                 {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
                 {activeTab === 'chat'      && <ErrorBoundary name="Chat"><UnifiedChatUI nickname={sessionName || 'player'} /></ErrorBoundary>}
               </View>
@@ -1650,7 +1648,7 @@ export default function GameScreen() {
             {/* Панели — поверх карты, с отступом 13% сверху */}
             {activeTab !== 'map' && (
               <View style={s.mobilePanelOverlay}>
-                {activeTab === 'loadboard' && <ErrorBoundary name="Loads"><LoadBoardPanel onNegotiate={setPendingLoad} onAssigned={handleAssigned} /></ErrorBoundary>}
+                {activeTab === 'loadboard' && <ErrorBoundary name="Loads"><LoadBoardPanel onAssigned={handleAssigned} /></ErrorBoundary>}
                 {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
                 {activeTab === 'chat'      && <ErrorBoundary name="Chat"><UnifiedChatUI nickname={sessionName || 'player'} /></ErrorBoundary>}
               </View>
@@ -1723,16 +1721,18 @@ export default function GameScreen() {
         }}
       />
 
-      {negotiation.open && <ErrorBoundary name="Neg"><NegotiationModal onAssign={setPendingLoad} /></ErrorBoundary>}
-      {pendingLoad && !negotiation.open && (
-        <ErrorBoundary name="Assign"><AssignModal
-          load={pendingLoad}
-          onClose={() => setPendingLoad(null)}
-          onAssigned={(truckId) => {
-            setPendingLoad(null);
-            handleAssigned(truckId);
-          }}
-        /></ErrorBoundary>
+      {negotiation.open && negotiation.load && (
+        <ErrorBoundary name="Neg">
+          <NegotiationChat
+            visible={negotiation.open}
+            load={negotiation.load}
+            onClose={closeNegotiation}
+            onAccepted={(agreedRate) => {
+              // Груз уже назначен внутри NegotiationChat
+              closeNegotiation();
+            }}
+          />
+        </ErrorBoundary>
       )}
       {detailTruck && (
         <TruckDetailModal truck={detailTruck} onClose={() => setDetailTruck(null)}

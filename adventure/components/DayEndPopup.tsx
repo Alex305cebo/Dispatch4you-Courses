@@ -24,7 +24,7 @@ export default function DayEndPopup({ isDark }: { isDark: boolean }) {
 
   return (
     <div style={{
-      margin: '6px 10px 4px',
+      margin: '6px 0 4px',
       background: BG,
       backdropFilter: 'blur(14px)',
       WebkitBackdropFilter: 'blur(14px)',
@@ -51,22 +51,125 @@ export default function DayEndPopup({ isDark }: { isDark: boolean }) {
         </div>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: 'flex', gap: 6, padding: '10px 14px', borderBottom: `1px solid ${BORDER}` }}>
-        {[
-          { label: 'Доход', val: `$${todayIncome.toLocaleString()}`, color: T.success },
-          { label: 'Расходы', val: `-$${todayExpense.toLocaleString()}`, color: T.danger },
-          { label: 'Прибыль', val: `${todayProfit >= 0 ? '+' : ''}$${todayProfit.toLocaleString()}`, color: profitColor },
-          { label: 'Репутация', val: `${reputation}%`, color: reputation > 70 ? T.success : T.warning },
-        ].map(c => (
-          <div key={c.label} style={{
-            flex: 1, background: `${c.color}15`, border: `1px solid ${c.color}30`,
-            borderRadius: 10, padding: '6px 4px', textAlign: 'center',
-          } as any}>
-            <div style={{ fontSize: 9, color: TEXT2, fontWeight: 600, marginBottom: 2 }}>{c.label}</div>
-            <div style={{ fontSize: 13, fontWeight: 900, color: c.color }}>{c.val}</div>
-          </div>
-        ))}
+      {/* Stats — 2 ряда по 2 карточки как в ремонте */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: 8,
+        padding: '12px 14px',
+        borderBottom: `1px solid ${BORDER}`,
+      } as any}>
+        {/* Доход */}
+        <div style={{
+          background: `${T.success}12`,
+          border: `1px solid ${T.success}30`,
+          borderRadius: 12,
+          padding: '12px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          minHeight: 70,
+        } as any}>
+          <div style={{
+            fontSize: 11,
+            color: TEXT2,
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+          }}>Доход</div>
+          <div style={{
+            fontSize: 20,
+            fontWeight: 900,
+            color: T.success,
+            lineHeight: 1,
+          }}>${todayIncome.toLocaleString()}</div>
+        </div>
+
+        {/* Расходы */}
+        <div style={{
+          background: `${T.danger}12`,
+          border: `1px solid ${T.danger}30`,
+          borderRadius: 12,
+          padding: '12px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          minHeight: 70,
+        } as any}>
+          <div style={{
+            fontSize: 11,
+            color: TEXT2,
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+          }}>Расходы</div>
+          <div style={{
+            fontSize: 20,
+            fontWeight: 900,
+            color: T.danger,
+            lineHeight: 1,
+          }}>-${todayExpense.toLocaleString()}</div>
+        </div>
+
+        {/* Прибыль */}
+        <div style={{
+          background: `${profitColor}12`,
+          border: `1px solid ${profitColor}30`,
+          borderRadius: 12,
+          padding: '12px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          minHeight: 70,
+        } as any}>
+          <div style={{
+            fontSize: 11,
+            color: TEXT2,
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+          }}>Прибыль</div>
+          <div style={{
+            fontSize: 20,
+            fontWeight: 900,
+            color: profitColor,
+            lineHeight: 1,
+          }}>{todayProfit >= 0 ? '+' : ''}${todayProfit.toLocaleString()}</div>
+        </div>
+
+        {/* Репутация */}
+        <div style={{
+          background: reputation > 70 ? `${T.success}12` : `${T.warning}12`,
+          border: reputation > 70 ? `1px solid ${T.success}30` : `1px solid ${T.warning}30`,
+          borderRadius: 12,
+          padding: '12px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          minHeight: 70,
+        } as any}>
+          <div style={{
+            fontSize: 11,
+            color: TEXT2,
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+          }}>Репутация</div>
+          <div style={{
+            fontSize: 20,
+            fontWeight: 900,
+            color: reputation > 70 ? T.success : T.warning,
+            lineHeight: 1,
+          }}>{reputation}%</div>
+        </div>
       </div>
 
       {/* Trucks */}

@@ -4,15 +4,14 @@ import { useState, useRef, useEffect, useMemo } from 'react';import {
 import { Colors } from '../constants/colors';
 import { useTheme } from '../hooks/useTheme';
 import { ThemeColors } from '../constants/themes';
-import { useGameStore, LoadOffer, ActiveLoad } from '../store/gameStore';
+import { useGameStore, LoadOffer } from '../store/gameStore';
 import { cityState, CITY_STATE, CITIES } from '../constants/config';
 import NegotiationChat from './NegotiationChat';
-import AssignModal from './AssignModal';
 import GuideSpotlight from './GuideSpotlight';
 import { useGuideStore } from '../store/guideStore';
 
 interface Props {
-  onNegotiate: (load: ActiveLoad) => void;
+  onNegotiate?: (loadId: string) => void;
   onAssigned?: (truckId: string) => void;
 }
 
@@ -227,7 +226,7 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
   const T = useTheme();
   const styles = useMemo(() => makeStyles(T), [T]);
   const filterStyles = useMemo(() => makeFilterStyles(T), [T]);
-  const { availableLoads, trucks, refreshLoadBoard, bookLoad, loadBoardSearchFrom, setLoadBoardSearch } = useGameStore();
+  const { availableLoads, trucks, refreshLoadBoard, loadBoardSearchFrom, setLoadBoardSearch } = useGameStore();
   const activeStep = useGuideStore(s => s.activeStep);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -237,7 +236,6 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
   const [deadheadRadius, setDeadheadRadius] = useState<number | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [chatLoad, setChatLoad] = useState<LoadOffer | null>(null);
-  const [pendingLoad, setPendingLoad] = useState<ActiveLoad | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const countdownRef = useRef<any>(null);
 
@@ -289,17 +287,8 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
   }
 
   function handleNegotiationAccepted(agreedRate: number) {
-    if (!chatLoad) return;
-    const activeLoad: ActiveLoad = {
-      ...chatLoad,
-      agreedRate,
-      truckId: '',
-      phase: 'to_pickup',
-      detentionMinutes: 0,
-      detentionPaid: false,
-    };
-    bookLoad(activeLoad);
-    setPendingLoad(activeLoad);
+    // Груз уже назначен внутри NegotiationChat
+    // Просто закрываем чат
     setChatLoad(null);
   }
 
@@ -513,18 +502,6 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
         onClose={() => setChatLoad(null)}
         onAccepted={handleNegotiationAccepted}
       />
-
-      {/* Назначение трака после сделки */}
-      {pendingLoad && (
-        <AssignModal
-          load={pendingLoad}
-          onClose={() => setPendingLoad(null)}
-          onAssigned={(truckId) => {
-            setPendingLoad(null);
-            onAssigned?.(truckId);
-          }}
-        />
-      )}
     </View>
   );
 }

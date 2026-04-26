@@ -66,7 +66,8 @@ export default function MainMenu() {
       const ok = await loadGame();
       if (ok) {
         sessionStorage.setItem('enteredViaMenu', '1');
-        router.replace('/game');
+        // Небольшая задержка для гарантии монтирования Root Layout
+        setTimeout(() => router.replace('/game'), 50);
       } else alert('Не удалось загрузить');
     }
     finally { setLoading(false); }
@@ -78,7 +79,8 @@ export default function MainMenu() {
     try {
       await startShift(1, 'Новая смена');
       sessionStorage.setItem('enteredViaMenu', '1');
-      router.replace('/game');
+      // Небольшая задержка для гарантии монтирования Root Layout
+      setTimeout(() => router.replace('/game'), 50);
     }
     finally { setLoading(false); }
   }
