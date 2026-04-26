@@ -352,9 +352,10 @@ export default function GameScreen() {
 
   useEffect(() => {
     // При прямом открытии /game (без прохождения через меню) — всегда на меню
+    // Используем setTimeout чтобы дать Root Layout время смонтироваться
     const enteredViaMenu = sessionStorage.getItem('enteredViaMenu');
     if (!enteredViaMenu) {
-      router.replace('/');
+      setTimeout(() => router.replace('/'), 50);
       return;
     }
     // При рефреше — восстанавливаем сохранение только если phase === 'menu' (store в дефолтном состоянии)

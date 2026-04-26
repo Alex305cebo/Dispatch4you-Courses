@@ -79,6 +79,30 @@ function getTruckColor(truck: any, gameMinute = 0): string {
   return STATUS_COLOR[truck.status] || "#94a3b8";
 }
 
+// ── ГЛОБАЛЬНЫЙ ЗАГРУЗЧИК GOOGLE MAPS ────────────────────────────────────────
+// Регистрируем callback ДО добавления скрипта, чтобы избежать race condition
+// когда скрипт загружается из кэша и вызывает callback синхронно
+let _gmapsLoaded = false;
+let _gmapsCallbacks: Array<() => void> = [];
+
+if (typeof window !== 'undefined') {
+  // Устанавливаем глобальный callback сразу при загрузке модуля
+  window.initGoogleMap = () => {
+    console.log('✅ Google Maps API загружен успешно (global callback)');
+    _gmapsLoaded = true;
+    _gmapsCallbacks.forEach(cb => cb());
+    _gmapsCallbacks = [];
+  };
+}
+
+function onGoogleMapsReady(cb: () => void) {
+  if (_gmapsLoaded || (typeof window !== 'undefined' && window.google?.maps)) {
+    cb();
+  } else {
+    _gmapsCallbacks.push(cb);
+  }
+}
+
 // ── ГЛАВНЫЙ КОМПОНЕНТ ────────────────────────────────────────────────────────
 export default function GoogleMapView({ onTruckInfo, onTruckSelect, onFindLoad }: {
   onTruckInfo?: (truckId: string) => void;
@@ -183,13 +207,12 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       });
     }, 200);
 
-    // Создаём callback для инициализации
-    window.initGoogleMap = () => {
-      console.log('✅ Google Maps API загружен успешно');
+    // Подписываемся на готовность через глобальный реестр (безопасно от race condition)
+    onGoogleMapsReady(() => {
       clearInterval(progressInterval);
       setLoadingProgress(100);
       setTimeout(() => setMapLoaded(true), 300); // Небольшая задержка для плавности
-    };
+    });
 
     // Загружаем скрипт Google Maps (только geometry, без лишних библиотек)
     const script = document.createElement('script');
@@ -212,7 +235,6 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
     return () => {
       // Очистка при размонтировании
       clearInterval(progressInterval);
-      delete window.initGoogleMap;
     };
   }, []);
 
