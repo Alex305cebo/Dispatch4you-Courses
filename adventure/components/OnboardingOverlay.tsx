@@ -139,7 +139,7 @@ export default function OnboardingOverlay() {
         inset: 0,
         zIndex: 9999,
         background: targetRect ? 'transparent' : 'rgba(0,0,0,0.6)',
-        pointerEvents: 'auto',
+        pointerEvents: popupVisible ? 'auto' : 'none',
       }}
     >
       {targetRect && <div style={spotlightStyle} />}
