@@ -50,6 +50,7 @@ export default function RootLayout() {
       <AutoRestore />
       <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
         <Stack.Screen name="index" />
+        <Stack.Screen name="menu" />
         <Stack.Screen name="game" />
       </Stack>
     </View>
