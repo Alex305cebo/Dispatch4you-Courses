@@ -91,7 +91,7 @@ export default function MainMenu() {
             width: '100%', height: '100%',
             objectFit: 'cover', opacity: 0.6,
           } as any}
-          src="/game/assets/Truck_loop.mp4"
+          src="/adventure/assets/Truck_loop.mp4"
         />
         {/* Затемнение для читаемости */}
         <LinearGradient
