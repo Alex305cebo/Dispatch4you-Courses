@@ -235,17 +235,7 @@ function applyUI(user, xpOverride) {
 
         // Stats icon always visible — no toggle needed
 
-        // Admin/Game — только в бургер-меню
-        const role = localStorage.getItem('user_role');
-        const mobAdminLink = document.getElementById('mob-admin-link');
-        const mobGameLink = document.getElementById('mob-game-link');
-        if (role === 'superuser') {
-            if (mobAdminLink) mobAdminLink.style.display = '';
-            if (mobGameLink) mobGameLink.style.display = '';
-        } else {
-            if (mobAdminLink) mobAdminLink.style.display = 'none';
-            if (mobGameLink) mobGameLink.style.display = 'none';
-        }
+        // Admin/Game — скрыты для всех
 
     } else {
         // Не залогинен
@@ -276,7 +266,7 @@ function applyUI(user, xpOverride) {
 
         // Stats icon always visible — no toggle needed
 
-        // Hide admin link when logged out
+        // Hide admin/game links everywhere
         const mobAdminLink2 = document.getElementById('mob-admin-link');
         if (mobAdminLink2) mobAdminLink2.style.display = 'none';
         const mobGameLink2 = document.getElementById('mob-game-link');
@@ -294,16 +284,7 @@ window.updateAuthUI = applyFromCache;
 // Повторно применяем после загрузки навигации (nav.html через fetch)
 document.addEventListener('navLoaded', applyFromCache);
 
-// Повторная проверка роли — role-guard.js может обновить localStorage позже
-setTimeout(() => {
-    const role = localStorage.getItem('user_role');
-    const mobAdminLink = document.getElementById('mob-admin-link');
-    const mobGameLink = document.getElementById('mob-game-link');
-    if (role === 'superuser') {
-        if (mobAdminLink) mobAdminLink.style.display = '';
-        if (mobGameLink) mobGameLink.style.display = '';
-    }
-}, 2000);
+// Повторная проверка роли — больше не показываем admin/game нигде
 
 // XP обновление
 document.addEventListener('xpUpdated', (e) => {
