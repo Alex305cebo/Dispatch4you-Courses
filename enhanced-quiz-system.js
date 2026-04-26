@@ -78,6 +78,12 @@
             }
         });
 
+        // Показываем inline feedback
+        const feedback = quizBlock.querySelector('.quiz-feedback');
+        if (feedback) {
+            feedback.classList.add('show');
+        }
+
         // Обновляем состояние
         const isCorrect = selectedAnswer === correctAnswer;
         quizState.answeredQuizzes++;
@@ -89,8 +95,10 @@
             answered: true
         };
 
-        // Показываем popup с результатом
-        showResultPopup(isCorrect);
+        // Показываем popup с результатом после небольшой задержки
+        setTimeout(() => {
+            showResultPopup(isCorrect);
+        }, 300);
     }
 
     function createResultPopup() {
@@ -101,7 +109,10 @@
             <div class="quiz-popup-content">
                 <div class="quiz-popup-score" id="quiz-popup-score">2/8</div>
                 <div class="quiz-popup-message" id="quiz-popup-message">Перечитайте модуль.</div>
-                <button class="quiz-popup-btn" id="quiz-popup-retry">Пройти заново</button>
+                <div class="quiz-popup-buttons">
+                    <button class="quiz-popup-btn quiz-popup-continue" id="quiz-popup-continue">Продолжить</button>
+                    <button class="quiz-popup-btn quiz-popup-retry" id="quiz-popup-retry" style="display:none;">Пройти заново</button>
+                </div>
             </div>
         `;
         document.body.appendChild(popup);
@@ -111,6 +122,11 @@
             if (e.target === popup) {
                 closePopup();
             }
+        });
+
+        // Обработчик кнопки "Продолжить"
+        document.getElementById('quiz-popup-continue').addEventListener('click', function() {
+            closePopup();
         });
 
         // Обработчик кнопки "Пройти заново"
@@ -123,15 +139,20 @@
         const popup = document.getElementById('quiz-result-popup');
         const scoreEl = document.getElementById('quiz-popup-score');
         const messageEl = document.getElementById('quiz-popup-message');
+        const continueBtn = document.getElementById('quiz-popup-continue');
+        const retryBtn = document.getElementById('quiz-popup-retry');
 
         if (!popup) return;
 
         // Обновляем счетчик
         scoreEl.textContent = `${quizState.correctAnswers}/${quizState.totalQuizzes}`;
 
-        // Обновляем сообщение
+        // Обновляем сообщение и кнопки
         if (quizState.answeredQuizzes === quizState.totalQuizzes) {
-            // Все квизы пройдены
+            // Все квизы пройдены - показываем кнопку "Пройти заново"
+            continueBtn.style.display = 'none';
+            retryBtn.style.display = 'inline-flex';
+            
             const percentage = (quizState.correctAnswers / quizState.totalQuizzes) * 100;
             if (percentage >= 80) {
                 messageEl.textContent = 'Отлично! Вы готовы к следующему модулю.';
@@ -144,7 +165,10 @@
                 scoreEl.style.color = '#ef4444';
             }
         } else {
-            // Еще не все квизы пройдены
+            // Еще не все квизы пройдены - показываем кнопку "Продолжить"
+            continueBtn.style.display = 'inline-flex';
+            retryBtn.style.display = 'none';
+            
             if (isCorrect) {
                 messageEl.textContent = 'Правильно! Продолжайте.';
                 scoreEl.style.color = '#10b981';
@@ -156,6 +180,9 @@
 
         // Показываем popup
         popup.classList.add('show');
+        
+        // Блокируем скролл body
+        document.body.style.overflow = 'hidden';
     }
 
     function closePopup() {
@@ -163,6 +190,9 @@
         if (popup) {
             popup.classList.remove('show');
         }
+        
+        // Разблокируем скролл body
+        document.body.style.overflow = '';
     }
 
     function resetAllQuizzes() {
