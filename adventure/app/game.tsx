@@ -1780,8 +1780,6 @@ export default function GameScreen() {
       {showStats && <StatsPopup onClose={() => setShowStats(false)} />}
       {showSettings && <SettingsPopup onClose={() => setShowSettings(false)} />}
       {showHelp && <HelpPopup onClose={() => setShowHelp(false)} />}
-      <ShiftEndPopup isDark={themeMode === 'dark'} />
-      <DayEndPopup isDark={themeMode === 'dark'} />
       <TruckShopModal />
       <RepairGarageModal />
       {/* Колокольчик и меню — вне TopBar div чтобы Modal работал корректно */}

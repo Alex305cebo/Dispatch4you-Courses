@@ -1661,8 +1661,20 @@ export const useGameStore = create<GameState>((set, get) => ({
     const TICK_MINUTES = 0.25 * (timeSpeed ?? 1);
     const newMinute = Math.round((gameMinute + TICK_MINUTES) * 100) / 100;
 
+    // Время НИКОГДА не останавливается — автоматический переход на новый день
     if (newMinute >= SHIFT_DURATION) {
-      get().endShift();
+      const newDay = (get().day || 1) + 1;
+      const updatedTrucks = get().trucks.map(truck => ({
+        ...truck,
+        hoursLeft: 11,
+        yesterdayMiles: truck.totalMiles || 0,
+      }));
+      set({
+        day: newDay,
+        gameMinute: 0,
+        trucks: updatedTrucks,
+      });
+      get().saveGame();
       return;
     }
 
@@ -4251,8 +4263,8 @@ case 'detention': {
       trucks: trucks.map(t => t.id === truckId ? {
         ...t,
         [statKey]: 100,
-        // Если починили надёжность — убираем статус "старого трака" в плане штрафов
-        ...(statKey === 'reliability' ? { isOldTruck: false, oldTruckBreakdownChance: undefined } : {})
+        // Починка надежности просто убирает повышенный шанс поломки, но трак остается "старым"
+        ...(statKey === 'reliability' ? { oldTruckBreakdownChance: 1.0 } : {})
       } : t)
     });
 
