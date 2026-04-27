@@ -105,7 +105,7 @@ function AnimatedDropdown({ truck, events, isDark, isSelected }: { truck: any; e
     <div>
       {/* Контент с анимацией */}
       <div style={{
-        overflow: 'hidden',
+        overflow: expanded ? 'visible' : 'hidden',
         maxHeight: expanded ? (contentH || 500) : 0,
         opacity: expanded ? 1 : 0,
         transition: 'max-height 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease',
@@ -291,35 +291,34 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
   const divider = <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)', margin: '4px 0' }} />;
 
   return (
-    <div style={{ ...ps, padding: 0, overflow: collapsed ? 'visible' : 'hidden' }} onClick={e => e.stopPropagation()}>
+    <div style={{ ...ps, padding: 0, overflow: 'visible' }} onClick={e => e.stopPropagation()}>
 
       {/* ── ТАБЫ — всегда видны ── */}
       <div style={{
         display: 'flex',
-        borderBottom: collapsed ? 'none' : `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-        background: isDark
-          ? 'rgba(15,20,40,0.20)'
-          : 'rgba(255,255,255,0.20)',
-        backdropFilter: 'blur(24px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
         ...(collapsed ? {
+          // СВЁРНУТЫЙ: полная стеклянная таблетка
+          background: isDark ? 'rgba(10,15,30,0.45)' : 'rgba(255,255,255,0.35)',
+          backdropFilter: 'blur(24px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
           borderRadius: 14,
-          margin: '4px 6px',
           border: isDark
-            ? '1px solid rgba(255,255,255,0.14)'
-            : '1px solid rgba(255,255,255,0.55)',
+            ? '1px solid rgba(255,255,255,0.18)'
+            : '1px solid rgba(255,255,255,0.6)',
           boxShadow: isDark
-            ? '0 4px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08)'
-            : '0 4px 24px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.8)',
+            ? '0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.10)'
+            : '0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.9)',
+          padding: '2px',
         } : {
+          // РАЗВЁРНУТЫЙ: только строка табов сверху
+          background: isDark ? 'rgba(10,15,30,0.45)' : 'rgba(255,255,255,0.35)',
+          backdropFilter: 'blur(24px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
           borderRadius: '12px 12px 0 0',
           border: isDark
-            ? '1px solid rgba(255,255,255,0.08)'
-            : '1px solid rgba(255,255,255,0.35)',
+            ? '1px solid rgba(255,255,255,0.12)'
+            : '1px solid rgba(255,255,255,0.5)',
           borderBottom: 'none',
-          boxShadow: isDark
-            ? '0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.05)'
-            : '0 2px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6)',
         }),
       }}>
         {tabs.map(t => (
@@ -519,6 +518,11 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
     borderRadius: 14, display: 'flex', flexDirection: 'column', gap: 6,
     maxWidth: 340, width: '100%',
     boxShadow: isDark ? '0 8px 24px rgba(0,0,0,0.5)' : '0 8px 24px rgba(0,0,0,0.15)',
+  };
+  // ps для TruckHUD — прозрачный, без фона (HUD сам рисует стекло)
+  const psHUD: any = {
+    marginTop: 6,
+    maxWidth: 340, width: '100%',
   };
   const hov = (el: HTMLElement, c: string, on: boolean) => {
     el.style.background = c + (on ? '30' : '15');
@@ -892,7 +896,7 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
     );
   }
   // ═══ В ПУТИ / ПОГРУЗКА / РАЗГРУЗКА / ВСЁ ОК → HUD-плашка с вкладками ═══
-  return <TruckHUD truck={truck} isDark={isDark} ps={ps} />;
+  return <TruckHUD truck={truck} isDark={isDark} ps={psHUD} />;
 }
 
 /** Результат доставки — инлайн под карточкой трака */
@@ -1211,6 +1215,7 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
             <div key={truck.id} data-truck-card style={{
               flexShrink: 0, width: 250,
               display: 'flex', flexDirection: 'column',
+              position: 'relative',
             } as any}>
               {/* Карточка трака */}
               <div
@@ -1252,35 +1257,7 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                   }
                 }}
               >
-                {/* Индикатор слежения — снизу по центру карточки */}
-                {isSelected && (
-                  <div style={{
-                    position: 'absolute', bottom: -20, left: '50%',
-                    transform: 'translateX(-50%)',
-                    display: 'flex', alignItems: 'center', gap: 5,
-                    background: isDark
-                      ? 'rgba(15,20,35,0.55)'
-                      : 'rgba(255,255,255,0.55)',
-                    backdropFilter: 'blur(16px) saturate(180%)',
-                    WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-                    border: `1.5px solid ${color}`,
-                    borderRadius: 10, padding: '3px 10px',
-                    zIndex: 9999,
-                    whiteSpace: 'nowrap',
-                    boxShadow: `0 4px 16px ${color}55, 0 1px 4px rgba(0,0,0,0.25)`,
-                  } as any}>
-                    <div style={{
-                      width: 6, height: 6, borderRadius: '50%',
-                      background: hasUrgent ? '#ef4444' : '#4ade80',
-                      boxShadow: hasUrgent ? '0 0 5px #ef4444' : '0 0 5px #4ade80',
-                      animation: 'trackingDot 1.2s ease-in-out infinite',
-                      flexShrink: 0,
-                    }} />
-                    <span style={{ fontSize: 10, fontWeight: 800, color: isDark ? '#e2e8f0' : '#111827' }}>
-                      {hasUrgent ? '⚠️ Проблема' : '🎯 Слежение'}
-                    </span>
-                  </div>
-                )}
+                {/* Индикатор слежения — УБРАН отсюда, рендерится снаружи карточки */}
 
                 {/* Бейдж количества событий */}
                 {truckEvents.length > 0 && !isSelected && (
@@ -1382,6 +1359,38 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                   </div>
                 </div>
               </div>
+
+              {/* Индикатор слежения — поверх всего, между карточкой и табом */}
+              {isSelected && (
+                <div style={{
+                  position: 'absolute',
+                  bottom: -14,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  background: isDark
+                    ? 'rgba(10,15,30,0.55)'
+                    : 'rgba(255,255,255,0.55)',
+                  backdropFilter: 'blur(16px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+                  border: `1.5px solid ${color}`,
+                  borderRadius: 10, padding: '3px 10px',
+                  zIndex: 9999,
+                  whiteSpace: 'nowrap',
+                  boxShadow: `0 4px 16px ${color}55, 0 1px 4px rgba(0,0,0,0.25)`,
+                } as any}>
+                  <div style={{
+                    width: 6, height: 6, borderRadius: '50%',
+                    background: hasUrgent ? '#ef4444' : '#4ade80',
+                    boxShadow: hasUrgent ? '0 0 5px #ef4444' : '0 0 5px #4ade80',
+                    animation: 'trackingDot 1.2s ease-in-out infinite',
+                    flexShrink: 0,
+                  }} />
+                  <span style={{ fontSize: 10, fontWeight: 800, color: isDark ? '#e2e8f0' : '#111827' }}>
+                    {hasUrgent ? '⚠️ Проблема' : '🎯 Слежение'}
+                  </span>
+                </div>
+              )}
 
               {/* Выпадающая панель — анимированная */}
               <AnimatedDropdown truck={truck} events={truckEvents} isDark={isDark} isSelected={isSelected} />
