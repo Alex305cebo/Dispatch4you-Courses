@@ -884,32 +884,80 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
   if (isIdle) {
     const wl = truck.idleWarningLevel ?? 0;
     const wc = wl >= 3 ? '#ef4444' : wl >= 2 ? '#fb923c' : wl >= 1 ? '#fbbf24' : '#38bdf8';
+    const bookedLoads = useGameStore.getState().bookedLoads;
+    const unbookedLoad = bookedLoads.find(l => !l.truckId || l.truckId === '');
+    
     const handleOpenLoadBoard = (e: React.MouseEvent) => {
       e.stopPropagation();
       const store = useGameStore.getState();
       store.setLoadBoardSearch(truck.currentCity);
-      // Переключаем на вкладку loadboard
       try { localStorage.setItem('dispatch-active-tab', 'loadboard'); } catch {}
       window.dispatchEvent(new CustomEvent('switchTab', { detail: { tab: 'loadboard' } }));
     };
+
+    const handleAssignLoad = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!unbookedLoad) return;
+      useGameStore.getState().assignLoadToTruck(unbookedLoad, truck.id);
+    };
+
+    // Стиль action-pill кнопки
+    const actionPill = (accentColor: string, isWide = false): React.CSSProperties => ({
+      flex: isWide ? 1 : undefined,
+      width: isWide ? undefined : '100%',
+      padding: '10px 14px',
+      background: isDark ? `${accentColor}15` : `${accentColor}10`,
+      border: `1.5px solid ${accentColor}44`,
+      borderRadius: 12,
+      cursor: 'pointer',
+      display: 'flex', alignItems: 'center', gap: 8,
+      transition: 'all 0.15s ease',
+    });
+
     return (
-      <div style={{ ...ps, cursor: 'pointer' }} onClick={handleOpenLoadBoard}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 20 }}>{wl >= 2 ? '😴' : '📋'}</span>
+      <div style={ps} onClick={e => e.stopPropagation()}>
+        {/* Статус */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+          <span style={{ fontSize: 16 }}>{wl >= 2 ? '😴' : '📋'}</span>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 900, color: wc }}>{wl >= 2 ? 'Долгий простой!' : 'Свободен — ищем груз'}</div>
-            <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280', marginTop: 1 }}>📍 {truck.currentCity} • HOS: {hos.toFixed(1)}h</div>
+            <div style={{ fontSize: 12, fontWeight: 900, color: wc }}>{wl >= 2 ? 'Долгий простой!' : 'Свободен'}</div>
+            <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280' }}>📍 {truck.currentCity} • HOS: {hos.toFixed(1)}h</div>
           </div>
         </div>
-        <div style={{
-          background: isDark ? 'rgba(56,189,248,0.1)' : 'rgba(0,122,255,0.06)',
-          border: `1.5px solid ${wc}44`,
-          borderRadius: 10, padding: '8px 10px',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-          transition: 'all 0.15s ease',
-        }}>
-          <span style={{ fontSize: 14 }}>📦</span>
-          <span style={{ fontSize: 12, fontWeight: 800, color: wc }}>Найти груз из {truck.currentCity}</span>
+
+        {/* Action-табы */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {/* 📦 Найти груз — всегда для idle */}
+          <div
+            onClick={handleOpenLoadBoard}
+            style={actionPill('#38bdf8', true)}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1.02)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(56,189,248,0.25)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
+          >
+            <span style={{ fontSize: 18 }}>📦</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: isDark ? '#38bdf8' : '#0284c7' }}>Найти груз</div>
+              <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280' }}>из {truck.currentCity}</div>
+            </div>
+            <span style={{ fontSize: 14, color: isDark ? '#38bdf8' : '#0284c7', opacity: 0.6 }}>→</span>
+          </div>
+
+          {/* 🚛 Назначить трак — если есть забуканный груз */}
+          {unbookedLoad && (
+            <div
+              onClick={handleAssignLoad}
+              style={actionPill('#fb923c', true)}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1.02)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(251,146,60,0.25)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
+            >
+              <span style={{ fontSize: 18 }}>🚛</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 800, color: isDark ? '#fb923c' : '#c2410c' }}>Назначить груз</div>
+                <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280' }}>{unbookedLoad.fromCity} → {unbookedLoad.toCity} • ${unbookedLoad.agreedRate.toLocaleString()}</div>
+              </div>
+              <span style={{ fontSize: 14, color: isDark ? '#fb923c' : '#c2410c', opacity: 0.6 }}>✓</span>
+            </div>
+          )}
         </div>
       </div>
     );
