@@ -105,7 +105,7 @@ function AnimatedDropdown({ truck, events, isDark, isSelected }: { truck: any; e
     <div>
       {/* Контент с анимацией */}
       <div style={{
-        overflow: expanded ? 'visible' : 'hidden',
+        overflow: 'hidden',
         maxHeight: expanded ? (contentH || 500) : 0,
         opacity: expanded ? 1 : 0,
         transition: 'max-height 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease',
@@ -297,7 +297,7 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
       <div style={{
         display: 'flex',
         ...(collapsed ? {
-          // СВЁРНУТЫЙ: полная стеклянная таблетка
+          // СВЁРНУТЫЙ: полная стеклянная таблетка — отдельный элемент
           background: isDark ? 'rgba(10,15,30,0.45)' : 'rgba(255,255,255,0.35)',
           backdropFilter: 'blur(24px) saturate(180%)',
           WebkitBackdropFilter: 'blur(24px) saturate(180%)',
@@ -310,7 +310,7 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
             : '0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.9)',
           padding: '2px',
         } : {
-          // РАЗВЁРНУТЫЙ: только строка табов сверху
+          // РАЗВЁРНУТЫЙ: строка табов — часть общего стеклянного блока
           background: isDark ? 'rgba(10,15,30,0.45)' : 'rgba(255,255,255,0.35)',
           backdropFilter: 'blur(24px) saturate(180%)',
           WebkitBackdropFilter: 'blur(24px) saturate(180%)',
@@ -350,7 +350,18 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
 
       {/* ── КОНТЕНТ — только когда развёрнуто ── */}
       {!collapsed && (
-        <div style={{ position: 'relative', minHeight: 80 }}>
+        <div style={{
+          position: 'relative', minHeight: 80,
+          background: isDark ? 'rgba(10,15,30,0.45)' : 'rgba(255,255,255,0.35)',
+          backdropFilter: 'blur(24px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+          borderRadius: '0 0 12px 12px',
+          border: isDark
+            ? '1px solid rgba(255,255,255,0.12)'
+            : '1px solid rgba(255,255,255,0.5)',
+          borderTop: 'none',
+          overflow: 'hidden',
+        }}>
         {/* ROUTE */}
         <div style={{
           padding: '10px 12px',
@@ -473,11 +484,16 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           gap: 6, padding: '6px 0', cursor: 'pointer',
           borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-          background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
+          background: isDark ? 'rgba(10,15,30,0.45)' : 'rgba(255,255,255,0.35)',
+          backdropFilter: 'blur(24px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+          borderRadius: '0 0 12px 12px',
+          border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(255,255,255,0.5)',
+          borderTop: 'none',
           transition: 'all 0.2s ease',
-        }}
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'; }}
-        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)'; }}
+        } as any}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(10,15,30,0.6)' : 'rgba(255,255,255,0.5)'; }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(10,15,30,0.45)' : 'rgba(255,255,255,0.35)'; }}
       >
         <div style={{ width: 32, height: 3, borderRadius: 2, background: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)' }} />
         <span style={{ fontSize: 10, color: isDark ? '#64748b' : '#9ca3af', fontWeight: 700, lineHeight: 1 }}>▼</span>

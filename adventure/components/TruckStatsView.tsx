@@ -6,10 +6,10 @@
  */
 import { useState } from 'react';
 import { useThemeStore } from '../store/themeStore';
-import { useGameStore } from '../store/gameStore';
+import { useGameStore, Truck } from '../store/gameStore';
 
 interface TruckStatsViewProps {
-  truck: any;
+  truck: Truck;
   onRepair?: () => void;
   onUpgrade?: () => void;
   compact?: boolean; // компактный режим для карточки
@@ -79,10 +79,10 @@ function getStatBorder(value: number, good: number, warn: number, isDark: boolea
 
 function getOverallGrade(truck: any): { grade: string; color: string; label: string } {
   const avg = (
-    (truck.reliability ?? 100) +
-    (truck.comfort ?? 100) +
-    (truck.legalStatus ?? 100) +
-    (truck.performance ?? 100)
+    Math.round(truck.reliability ?? 100) +
+    Math.round(truck.comfort ?? 100) +
+    Math.round(truck.legalStatus ?? 100) +
+    Math.round(truck.performance ?? 100)
   ) / 4;
 
   if (avg >= 85) return { grade: 'A', color: '#30d158', label: 'Отличное состояние' };
@@ -127,7 +127,7 @@ export default function TruckStatsView({ truck, onRepair, onUpgrade, compact = f
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {STATS.map(stat => {
-            const val = truck[stat.key] ?? 100;
+            const val = Math.round(truck[stat.key] ?? 100);
             const color = getStatColor(val, stat.goodThreshold, stat.warnThreshold);
             return (
               <div key={stat.key} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -209,7 +209,7 @@ export default function TruckStatsView({ truck, onRepair, onUpgrade, compact = f
       {/* ── СТАТЫ ── */}
       <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {STATS.map(stat => {
-          const val = truck[stat.key] ?? 100;
+          const val = Math.round(truck[stat.key] ?? 100);
           const color = getStatColor(val, stat.goodThreshold, stat.warnThreshold);
           const bg = getStatBg(val, stat.goodThreshold, stat.warnThreshold, isDark);
           const border = getStatBorder(val, stat.goodThreshold, stat.warnThreshold, isDark);
