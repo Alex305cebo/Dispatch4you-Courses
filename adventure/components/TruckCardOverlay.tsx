@@ -1321,22 +1321,25 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                 {/* Индикатор слежения — снизу по центру карточки */}
                 {isSelected && (
                   <div style={{
-                    position: 'absolute', bottom: -12, left: '50%',
+                    position: 'absolute', bottom: -14, left: '50%',
                     transform: 'translateX(-50%)',
-                    display: 'flex', alignItems: 'center', gap: 3,
-                    background: isDark ? 'rgba(15,20,35,0.95)' : 'rgba(255,255,255,0.95)',
+                    display: 'flex', alignItems: 'center', gap: 5,
+                    background: isDark ? 'rgba(15,20,35,0.96)' : 'rgba(255,255,255,0.96)',
                     border: `1.5px solid ${color}`,
-                    borderRadius: 8, padding: '2px 8px',
-                    zIndex: 2,
+                    borderRadius: 10, padding: '3px 10px',
+                    zIndex: 10,
                     whiteSpace: 'nowrap',
+                    boxShadow: `0 2px 8px ${color}44`,
                   } as any}>
                     <div style={{
-                      width: 5, height: 5, borderRadius: '50%',
+                      width: 6, height: 6, borderRadius: '50%',
                       background: hasUrgent ? '#ef4444' : '#4ade80',
+                      boxShadow: hasUrgent ? '0 0 5px #ef4444' : '0 0 5px #4ade80',
                       animation: 'trackingDot 1.2s ease-in-out infinite',
+                      flexShrink: 0,
                     }} />
-                    <span style={{ fontSize: 8, fontWeight: 800, color: isDark ? '#e2e8f0' : '#111827' }}>
-                      {hasUrgent ? '⚠️' : '🎯'}
+                    <span style={{ fontSize: 10, fontWeight: 800, color: isDark ? '#e2e8f0' : '#111827' }}>
+                      {hasUrgent ? '⚠️ Проблема' : '🎯 Слежение'}
                     </span>
                   </div>
                 )}
