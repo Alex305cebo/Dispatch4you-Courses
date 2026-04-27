@@ -1,4 +1,4 @@
-﻿import { create } from 'zustand';
+﻿﻿import { create } from 'zustand';
 import { SHIFT_DURATION, SHIFT_START_HOUR, SHIFT_START_MINUTE, CITIES, CITY_STATE, TIME_SCALE } from '../constants/config';
 import { findNearestTruckStop } from '../constants/truckStops';
 import { ServiceVehicle, ServiceVehicleType, SERVICE_VEHICLE_CONFIGS } from '../types/serviceVehicle';
@@ -223,6 +223,12 @@ export interface Truck {
   garageEnteredAt?: number;      // игровая минута когда попал в гараж
   garageRepairDone?: boolean;    // ремонт завершён, можно забрать
   garageUpgrades?: string[];     // список установленных улучшений
+
+  // ── ТЕХНИЧЕСКИЕ ХАРАКТЕРИСТИКИ (0-100) ──
+  reliability: number;           // надежность (влияет на поломки)
+  comfort: number;               // комфорт (влияет на настроение водителя)
+  legalStatus: number;           // тех. состояние для инспекций (IFTA, шины, свет)
+  performance: number;           // производительность (влияет на скорость)
 }
 
 export interface LoadOffer {
@@ -1454,6 +1460,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       speedPenalty: speedPenalty,
       oldTruckBreakdownChance: breakdownChance,
       truckImageId: lotId, // ID картинки трака (1-11)
+      // Характеристики: б/у → низкие (30-60), новые → высокие (90-100)
+      reliability: isOld ? 30 + Math.floor(Math.random() * 31) : 90 + Math.floor(Math.random() * 11),
+      comfort:     isOld ? 20 + Math.floor(Math.random() * 31) : 90 + Math.floor(Math.random() * 11),
+      legalStatus: isOld ? 30 + Math.floor(Math.random() * 31) : 90 + Math.floor(Math.random() * 11),
+      performance: isOld ? 30 + Math.floor(Math.random() * 31) : 90 + Math.floor(Math.random() * 11),
     } as any;
 
     get().removeMoney(price, `Покупка трака Лот #${lotId} — ${truckName}`);
@@ -1515,6 +1526,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       outOfOrderUntil: 0,
       speedMultiplier: 0.9 + Math.random() * 0.2,
       // isOldTruck НЕ устанавливаем — это новый трак
+      reliability: 95,
+      comfort: 90,
+      legalStatus: 100,
+      performance: 95,
+      truckImageId: 11, // Красивый новый Cascadia
     } as any;
 
     get().removeMoney(NEW_TRUCK_PRICE, `Покупка нового трака — ${newTruck.name}`);
@@ -2372,27 +2388,60 @@ export const useGameStore = create<GameState>((set, get) => ({
         // Каждый трак имеет свой speedMultiplier для рандомизации
         const speedMult = (truck as any).speedMultiplier ?? 1.0;
 
-        // ── OLD TRUCK: замедление и жалобы водителя ──
-        const oldTruckPenalty = (truck as any).isOldTruck ? (1.0 - ((truck as any).speedPenalty ?? 0.2)) : 1.0;
-        // Жалоба водителя старого трака каждые ~60 минут
-        if ((truck as any).isOldTruck) {
+        // ── ТЕХНИЧЕСКИЕ ПЕНАЛЬТИ И ЖАЛОБЫ ──
+        const performancePenalty = 1.0 - (100 - (truck.performance ?? 100)) / 200; // до -20% скорости
+        
+        // Жалоба водителя если трак плохой (любой стат < 40)
+        const isBadTruck = (
+          (truck.reliability ?? 100) < 40 ||
+          (truck.comfort ?? 100) < 40 ||
+          (truck.legalStatus ?? 100) < 40 ||
+          (truck.performance ?? 100) < 40
+        );
+        
+        if (isBadTruck) {
           const lastComplaint = (truck as any).oldTruckComplaintAt ?? -999;
           if (newMinute - lastComplaint >= 60 + Math.floor(Math.random() * 40)) {
-            const complaints = [
-              'Трак дёргается при разгоне. Когда купим нормальный?',
-              'Кондиционер опять не работает. Жара невыносимая.',
-              'Тормоза скрипят. Надо бы проверить.',
-              'Расход топлива огромный — заправляюсь чаще обычного.',
+            // Выбираем жалобу по самому низкому стату
+            const minStat = Math.min(
+              truck.reliability ?? 100,
+              truck.comfort ?? 100,
+              truck.legalStatus ?? 100,
+              truck.performance ?? 100,
+            );
+            const reliabilityComplaints = [
               'Двигатель шумит сильнее чем раньше. Что-то не так.',
+              'Тормоза скрипят. Надо бы проверить.',
               'Коробка передач переключается с трудом. Долго так не протянет.',
-              'Рация барахлит, связь плохая.',
-              'Сиденье сломалось, спина болит после 4 часов езды.',
+              'Масло подтекает — пятна на асфальте после каждой стоянки.',
             ];
-            const msg = complaints[Math.floor(Math.random() * complaints.length)];
+            const comfortComplaints = [
+              'Кондиционер опять не работает. Жара невыносимая.',
+              'Сиденье сломалось, спина болит после 4 часов езды.',
+              'Рация барахлит, связь плохая.',
+              'Отопление не работает. Ночью замерзаю в кабине.',
+            ];
+            const legalComplaints = [
+              'Фара левая мигает — могут остановить на инспекции.',
+              'Тахограф барахлит, боюсь что ELD выдаст ошибку.',
+              'Шины лысые — на весовой могут завернуть.',
+              'Огни прицепа не все работают. Это нарушение.',
+            ];
+            const performanceComplaints = [
+              'Трак дёргается при разгоне. Когда купим нормальный?',
+              'Расход топлива огромный — заправляюсь чаще обычного.',
+              'На подъёмах теряю скорость — обгоняют все кому не лень.',
+              'Турбина свистит, мощности не хватает.',
+            ];
+            let pool = performanceComplaints;
+            if (minStat === (truck.reliability ?? 100)) pool = reliabilityComplaints;
+            else if (minStat === (truck.comfort ?? 100)) pool = comfortComplaints;
+            else if (minStat === (truck.legalStatus ?? 100)) pool = legalComplaints;
+            const msg = pool[Math.floor(Math.random() * pool.length)];
             get().addNotification({
               type: 'text', priority: 'low', from: truck.driver,
               subject: `🔧 ${truck.name} — жалоба на трак`,
-              message: `${truck.driver}: "${msg}"\n\n💡 Подсказка: Заработай $15,000 и купи новый трак в гараже!`,
+              message: `${truck.driver}: "${msg}"\n\n💡 Подсказка: Отправь трак в гараж на ремонт или купи новый!`,
               actionRequired: false, relatedTruckId: truck.id,
             });
             // Обновляем время последней жалобы
@@ -2401,9 +2450,12 @@ export const useGameStore = create<GameState>((set, get) => ({
               trucks: s.trucks.map(t => t.id === truckId ? { ...t, oldTruckComplaintAt: newMinute } as any : t)
             }));
           }
-          // Повышенный шанс поломки для старого трака: каждые 45 мин ~15% шанс
+
+          // Динамический шанс поломки на основе Reliability
           if (Math.floor(newMinute / 45) > Math.floor((newMinute - TICK_MINUTES) / 45)) {
-            if (Math.random() < 0.15) {
+            // Базовый шанс 5% + до 25% если Reliability=0
+            const breakdownChance = 0.05 + (100 - (truck.reliability ?? 100)) / 400;
+            if (Math.random() < breakdownChance) {
               setTimeout(() => {
                 const state = get();
                 const oldTruck = state.trucks.find(t => t.id === truck.id);
@@ -2449,6 +2501,13 @@ export const useGameStore = create<GameState>((set, get) => ({
           }
         }
 
+        // Влияние комфорта на настроение — плавное по всему диапазону
+        // comfort 100 → нет потери, comfort 0 → -0.15/тик
+        const comfortMoodLoss = (100 - (truck.comfort ?? 100)) / 667;
+        if (comfortMoodLoss > 0) {
+          truck = { ...truck, mood: Math.max(10, (truck.mood ?? 70) - comfortMoodLoss) };
+        }
+
         // ── WEATHER: проверяем активные погодные зоны ──
         const activeWeather = get().activeWeatherZones ?? [];
         const truckStateCode = CITY_STATE[truck.currentCity] ?? '';
@@ -2470,7 +2529,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           }));
         }
 
-        const progressPerTick = (MILES_PER_TICK / totalMiles) * speedMult * weatherSpeedMult * oldTruckPenalty;
+        const progressPerTick = (MILES_PER_TICK / totalMiles) * speedMult * weatherSpeedMult * performancePenalty;
         const newProgress = Math.min(1, truck.progress + progressPerTick);
 
         // Уменьшаем HOS: 1.2 игровых минуты = 1.2/60 часа (погода увеличивает расход)
@@ -2929,12 +2988,14 @@ case 'detention': {
       }
         
       case 'inspection': {
-        const passed = Math.random() > 0.3;
-        const fine = passed ? 0 : 250 + Math.floor(Math.random() * 500);
+        // Шанс пройти инспекцию зависит от legalStatus
+        const passChance = (truck.legalStatus ?? 100) / 100;
+        const passed = Math.random() < passChance;
+        const fine = passed ? 0 : 400 + Math.floor(Math.random() * 800);
         if (!passed) {
           get().removeMoney(fine, `Штраф DOT инспекция — ${truck.name}`);
           const updatedTrucks = trucks.map(t =>
-            t.id === truck.id ? { ...t, safetyScore: Math.max(50, (t.safetyScore || 100) - 5), hosViolations: (t.hosViolations || 0) + 1 } : t
+            t.id === truck.id ? { ...t, safetyScore: Math.max(50, (t.safetyScore || 100) - 5), legalStatus: Math.max(10, t.legalStatus - 15) } : t
           );
           set({ trucks: updatedTrucks });
         }
@@ -4140,6 +4201,10 @@ case 'detention': {
           isOldTruck: false,
           oldTruckBreakdownChance: undefined,
           speedPenalty: 0,
+          reliability: 85,
+          legalStatus: 90,
+          comfort: Math.min(100, (t.comfort || 40) + 10),
+          performance: Math.min(100, (t.performance || 60) + 5),
           safetyScore: Math.min(100, (t.safetyScore || 70) + 15),
         } : t
       ),
@@ -4157,12 +4222,12 @@ case 'detention': {
     const truck = trucks.find(t => t.id === truckId);
     if (!truck || truck.status !== 'in_garage') return;
     const UPGRADES: Record<string, { cost: number; label: string; apply: (t: any) => any }> = {
-      engine: { cost: 3000, label: '⚡ Двигатель +10% скорость', apply: (t: any) => ({ ...t, speedPenalty: Math.max(0, (t.speedPenalty || 0) - 0.1), fuelEfficiency: Math.min(9, (t.fuelEfficiency || 6.5) + 0.5) }) },
-      tires: { cost: 1500, label: '🛞 Новые шины', apply: (t: any) => ({ ...t, safetyScore: Math.min(100, (t.safetyScore || 70) + 10) }) },
-      brakes: { cost: 2000, label: '🛑 Тормоза', apply: (t: any) => ({ ...t, safetyScore: Math.min(100, (t.safetyScore || 70) + 12), complianceRate: Math.min(100, (t.complianceRate || 80) + 5) }) },
-      apu: { cost: 4000, label: '❄️ APU система', apply: (t: any) => ({ ...t, fuelEfficiency: Math.min(9, (t.fuelEfficiency || 6.5) + 0.8) }) },
-      sleeper: { cost: 2500, label: '🛏️ Улучшение кабины', apply: (t: any) => ({ ...t, mood: Math.min(100, (t.mood || 60) + 15) }) },
-      gps: { cost: 800, label: '📡 GPS + ELD', apply: (t: any) => ({ ...t, complianceRate: Math.min(100, (t.complianceRate || 80) + 8) }) },
+      engine: { cost: 3000, label: '⚡ Двигатель +10% скорость', apply: (t: any) => ({ ...t, performance: Math.min(100, (t.performance || 60) + 15), fuelEfficiency: Math.min(9, (t.fuelEfficiency || 6.5) + 0.5) }) },
+      tires: { cost: 1500, label: '🛞 Новые шины', apply: (t: any) => ({ ...t, legalStatus: Math.min(100, (t.legalStatus || 40) + 20), safetyScore: Math.min(100, (t.safetyScore || 70) + 10) }) },
+      brakes: { cost: 2000, label: '🛑 Тормоза', apply: (t: any) => ({ ...t, reliability: Math.min(100, (t.reliability || 40) + 15), safetyScore: Math.min(100, (t.safetyScore || 70) + 12) }) },
+      apu: { cost: 4000, label: '❄️ APU система', apply: (t: any) => ({ ...t, comfort: Math.min(100, (t.comfort || 30) + 10), fuelEfficiency: Math.min(9, (t.fuelEfficiency || 6.5) + 0.8) }) },
+      sleeper: { cost: 2500, label: '🛏️ Улучшение кабины', apply: (t: any) => ({ ...t, comfort: Math.min(100, (t.comfort || 30) + 25), mood: Math.min(100, (t.mood || 60) + 15) }) },
+      gps: { cost: 800, label: '📡 GPS + ELD', apply: (t: any) => ({ ...t, legalStatus: Math.min(100, (t.legalStatus || 40) + 10), complianceRate: Math.min(100, (t.complianceRate || 80) + 8) }) },
     };
     const upgrade = UPGRADES[upgradeId];
     if (!upgrade) return;
@@ -4298,5 +4363,3 @@ export function formatTimeWithDate(timeString: string): string {
   // Если не распознали - возвращаем как есть
   return timeString;
 }
-
-
