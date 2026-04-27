@@ -884,13 +884,22 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
   if (isIdle) {
     const wl = truck.idleWarningLevel ?? 0;
     const wc = wl >= 3 ? '#ef4444' : wl >= 2 ? '#fb923c' : wl >= 1 ? '#fbbf24' : '#38bdf8';
+    const negotiation = useGameStore.getState().negotiation;
     const bookedLoads = useGameStore.getState().bookedLoads;
     const unbookedLoad = bookedLoads.find(l => !l.truckId || l.truckId === '');
+    const hasNegotiation = negotiation.open && negotiation.load;
     
     const handleOpenLoadBoard = (e: React.MouseEvent) => {
       e.stopPropagation();
       const store = useGameStore.getState();
       store.setLoadBoardSearch(truck.currentCity);
+      try { localStorage.setItem('dispatch-active-tab', 'loadboard'); } catch {}
+      window.dispatchEvent(new CustomEvent('switchTab', { detail: { tab: 'loadboard' } }));
+    };
+
+    const handleOpenNegotiation = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      // Переключаем на loadboard где открыт чат переговоров
       try { localStorage.setItem('dispatch-active-tab', 'loadboard'); } catch {}
       window.dispatchEvent(new CustomEvent('switchTab', { detail: { tab: 'loadboard' } }));
     };
@@ -902,9 +911,8 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
     };
 
     // Стиль action-pill кнопки
-    const actionPill = (accentColor: string, isWide = false): React.CSSProperties => ({
-      flex: isWide ? 1 : undefined,
-      width: isWide ? undefined : '100%',
+    const actionPill = (accentColor: string): React.CSSProperties => ({
+      width: '100%',
       padding: '10px 14px',
       background: isDark ? `${accentColor}15` : `${accentColor}10`,
       border: `1.5px solid ${accentColor}44`,
@@ -913,6 +921,15 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
       display: 'flex', alignItems: 'center', gap: 8,
       transition: 'all 0.15s ease',
     });
+
+    const pillHoverOn = (el: HTMLElement, color: string) => {
+      el.style.transform = 'scale(1.02)';
+      el.style.boxShadow = `0 4px 16px ${color}33`;
+    };
+    const pillHoverOff = (el: HTMLElement) => {
+      el.style.transform = 'scale(1)';
+      el.style.boxShadow = 'none';
+    };
 
     return (
       <div style={ps} onClick={e => e.stopPropagation()}>
@@ -927,28 +944,42 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
 
         {/* Action-табы */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {/* 📦 Найти груз — всегда для idle */}
-          <div
-            onClick={handleOpenLoadBoard}
-            style={actionPill('#38bdf8', true)}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1.02)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(56,189,248,0.25)'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
-          >
-            <span style={{ fontSize: 18 }}>📦</span>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: isDark ? '#38bdf8' : '#0284c7' }}>Найти груз</div>
-              <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280' }}>из {truck.currentCity}</div>
+
+          {/* 📞 Брокер — когда идут переговоры */}
+          {hasNegotiation && negotiation.load && (
+            <div
+              onClick={handleOpenNegotiation}
+              style={actionPill('#4ade80')}
+              onMouseEnter={e => pillHoverOn(e.currentTarget as HTMLElement, '#4ade80')}
+              onMouseLeave={e => pillHoverOff(e.currentTarget as HTMLElement)}
+            >
+              <div style={{ position: 'relative' }}>
+                <span style={{ fontSize: 18 }}>📞</span>
+                <div style={{
+                  position: 'absolute', top: -2, right: -4,
+                  width: 8, height: 8, borderRadius: '50%',
+                  background: '#4ade80',
+                  animation: 'trackingDot 1.2s ease-in-out infinite',
+                  boxShadow: '0 0 6px #4ade80',
+                }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 800, color: isDark ? '#4ade80' : '#16a34a' }}>Переговоры</div>
+                <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280' }}>
+                  {negotiation.load.brokerName} • {negotiation.load.fromCity} → {negotiation.load.toCity} • ${negotiation.load.postedRate.toLocaleString()}
+                </div>
+              </div>
+              <span style={{ fontSize: 14, color: isDark ? '#4ade80' : '#16a34a', opacity: 0.6 }}>→</span>
             </div>
-            <span style={{ fontSize: 14, color: isDark ? '#38bdf8' : '#0284c7', opacity: 0.6 }}>→</span>
-          </div>
+          )}
 
           {/* 🚛 Назначить трак — если есть забуканный груз */}
           {unbookedLoad && (
             <div
               onClick={handleAssignLoad}
-              style={actionPill('#fb923c', true)}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1.02)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(251,146,60,0.25)'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
+              style={actionPill('#fb923c')}
+              onMouseEnter={e => pillHoverOn(e.currentTarget as HTMLElement, '#fb923c')}
+              onMouseLeave={e => pillHoverOff(e.currentTarget as HTMLElement)}
             >
               <span style={{ fontSize: 18 }}>🚛</span>
               <div style={{ flex: 1 }}>
@@ -958,6 +989,21 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
               <span style={{ fontSize: 14, color: isDark ? '#fb923c' : '#c2410c', opacity: 0.6 }}>✓</span>
             </div>
           )}
+
+          {/* 📦 Найти груз — всегда для idle */}
+          <div
+            onClick={handleOpenLoadBoard}
+            style={actionPill('#38bdf8')}
+            onMouseEnter={e => pillHoverOn(e.currentTarget as HTMLElement, '#38bdf8')}
+            onMouseLeave={e => pillHoverOff(e.currentTarget as HTMLElement)}
+          >
+            <span style={{ fontSize: 18 }}>📦</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: isDark ? '#38bdf8' : '#0284c7' }}>Найти груз</div>
+              <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280' }}>из {truck.currentCity}</div>
+            </div>
+            <span style={{ fontSize: 14, color: isDark ? '#38bdf8' : '#0284c7', opacity: 0.6 }}>→</span>
+          </div>
         </div>
       </div>
     );
