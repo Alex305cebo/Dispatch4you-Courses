@@ -35,7 +35,6 @@ import FleetOverview from '../components/FleetOverview';
 import GameMenu from '../components/GameMenu';
 import TruckDetailModal from '../components/TruckDetailModal';
 import DeliveryResultPopup from '../components/DeliveryResultPopup';
-import ShiftEndPopup from '../components/ShiftEndPopup';
 import StatsPopup from '../components/StatsPopup';
 import SettingsPopup from '../components/SettingsPopup';
 import HelpPopup from '../components/HelpPopup';
@@ -1778,7 +1777,6 @@ export default function GameScreen() {
       {showMyLoads && <Modal onClose={() => setShowMyLoads(false)}><MyLoadsPanel /></Modal>}
       
       {/* Попапы — только глобальные (не связанные с траком) */}
-      <ShiftEndPopup />
       
       {showStats && <StatsPopup onClose={() => setShowStats(false)} />}
       {showSettings && <SettingsPopup onClose={() => setShowSettings(false)} />}

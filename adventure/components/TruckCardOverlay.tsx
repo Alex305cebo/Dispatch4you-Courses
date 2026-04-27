@@ -7,6 +7,7 @@ import { CITY_STATE, CITIES } from '../constants/config';
 import { getDriverAvatar } from '../utils/driverAvatars';
 import { SERVICE_VEHICLE_CONFIGS } from '../types/serviceVehicle';
 import DayEndBanner from './DayEndPopup';
+import ShiftEndBanner from './ShiftEndPopup';
 
 const FLUENT = 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis';
 const STATUS_COLOR: Record<string, string> = {
@@ -1036,107 +1037,6 @@ function DeliveryInlineResult({ result, isDark, onDismiss }: { result: DeliveryR
 }
 
 
-/** Баннер итогов недели — под strip карточек */
-function ShiftEndBanner({ isDark }: { isDark: boolean }) {
-  const { phase, totalEarned, totalLost, reputation, trucks, score, sessionName, day, endShift } = useGameStore(s => ({
-    phase: s.phase, totalEarned: s.totalEarned, totalLost: s.totalLost,
-    reputation: s.reputation, trucks: s.trucks, score: s.score,
-    sessionName: s.sessionName, day: s.day, endShift: s.endShift,
-  }));
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    setVisible(phase === 'shift_end');
-  }, [phase]);
-
-  if (!visible) return null;
-
-  const profit = totalEarned - totalLost;
-  const truckCount = trucks.length;
-  const perTruck = truckCount > 0 ? Math.round(profit / truckCount) : 0;
-  const grade = perTruck >= 4000 ? { g: 'S', color: '#fbbf24', emoji: '🏆' }
-    : perTruck >= 2500 ? { g: 'A', color: '#4ade80', emoji: '🥇' }
-    : perTruck >= 1500 ? { g: 'B', color: '#38bdf8', emoji: '🥈' }
-    : perTruck >= 500  ? { g: 'C', color: '#fb923c', emoji: '🥉' }
-    : { g: 'D', color: '#f87171', emoji: '📚' };
-
-  const BG     = isDark ? 'rgba(13,17,23,0.97)' : 'rgba(255,255,255,0.97)';
-  const BORDER = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
-  const TEXT1  = isDark ? '#e2e8f0' : '#111827';
-  const TEXT2  = isDark ? '#94a3b8' : '#6b7280';
-
-  return (
-    <div style={{
-      margin: '6px 10px 4px',
-      background: BG,
-      backdropFilter: 'blur(14px)',
-      WebkitBackdropFilter: 'blur(14px)',
-      border: `2px solid ${grade.color}44`,
-      borderRadius: 16,
-      overflow: 'hidden',
-      animation: 'dropdownSlide 0.4s ease',
-      boxShadow: isDark ? '0 8px 24px rgba(0,0,0,0.5)' : '0 4px 16px rgba(0,0,0,0.12)',
-    } as any}>
-
-      {/* Header */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        padding: '10px 14px',
-        background: `${grade.color}12`,
-        borderBottom: `1px solid ${BORDER}`,
-      }}>
-        <span style={{ fontSize: 24 }}>{grade.emoji}</span>
-        <div style={{
-          width: 40, height: 40, borderRadius: 20,
-          border: `2px solid ${grade.color}`,
-          background: `${grade.color}20`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0,
-        }}>
-          <span style={{ fontSize: 20, fontWeight: 900, color: grade.color }}>{grade.g}</span>
-        </div>
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 900, color: TEXT1 }}>Неделя завершена!</div>
-          <div style={{ fontSize: 11, color: TEXT2 }}>{sessionName} · Неделя {Math.ceil(day / 7)} · {truckCount} траков</div>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div style={{ display: 'flex', gap: 6, padding: '10px 14px', borderBottom: `1px solid ${BORDER}` }}>
-        {[
-          { label: 'Доход', val: `$${totalEarned.toLocaleString()}`, color: '#4ade80' },
-          { label: 'Расходы', val: `-$${totalLost.toLocaleString()}`, color: '#f87171' },
-          { label: 'На трак', val: `$${perTruck.toLocaleString()}`, color: grade.color },
-          { label: 'Репутация', val: `${reputation}%`, color: reputation > 70 ? '#4ade80' : '#fbbf24' },
-        ].map(c => (
-          <div key={c.label} style={{
-            flex: 1, background: `${c.color}15`, border: `1px solid ${c.color}30`,
-            borderRadius: 10, padding: '6px 4px', textAlign: 'center',
-          } as any}>
-            <div style={{ fontSize: 9, color: TEXT2, fontWeight: 600, marginBottom: 2 }}>{c.label}</div>
-            <div style={{ fontSize: 13, fontWeight: 900, color: c.color }}>{c.val}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Buttons */}
-      <div style={{ padding: '10px 14px', display: 'flex', gap: 8 }}>
-        <button onClick={endShift} style={{
-          flex: 1, padding: '9px 0', borderRadius: 10, border: 'none', cursor: 'pointer',
-          background: `linear-gradient(135deg, ${grade.color}, ${grade.color}cc)`,
-          color: '#fff', fontSize: 13, fontWeight: 800,
-        }}>🔄 Новая неделя</button>
-        <button onClick={() => { useGameStore.getState().clearSave(); window.location.href = '/game/'; }} style={{
-          flex: 1, padding: '9px 0', borderRadius: 10, cursor: 'pointer',
-          background: isDark ? 'rgba(255,255,255,0.06)' : '#f3f4f6',
-          border: `1px solid ${BORDER}`,
-          color: TEXT2, fontSize: 12, fontWeight: 700,
-        }}>🏠 Меню</button>
-      </div>
-    </div>
-  );
-}
-
 const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selectedTruckId }: Props) {
   const trucks = useGameStore(s => s.trucks);
   const activeEvents = useGameStore(s => s.activeEvents);
@@ -1496,6 +1396,8 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
 
       {/* Баннер итогов дня — под strip карточек */}
       <DayEndBanner isDark={isDark} />
+      {/* Баннер итогов недели — под strip карточек */}
+      <ShiftEndBanner isDark={isDark} />
     </>
   );
 });
