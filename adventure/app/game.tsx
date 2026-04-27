@@ -280,6 +280,16 @@ export default function GameScreen() {
   const [truckIndicators, setTruckIndicators] = useState<Record<string, string>>({});
   const [indicatorNotifications, setIndicatorNotifications] = useState<Record<string, {text: string, timestamp: number}>>({});
 
+  // Состояние слежения за траком (синхронизируется с GoogleMapView через window event)
+  const [isFollowingTruck, setIsFollowingTruck] = useState(false);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      setIsFollowingTruck((e as CustomEvent).detail?.active ?? false);
+    };
+    window.addEventListener('followTruckChanged', handler);
+    return () => window.removeEventListener('followTruckChanged', handler);
+  }, []);
+
   // Таймер для кнопки "Карта" — становится цветной через 10 сек
   const [mapBtnAge, setMapBtnAge] = useState(0); // 0-10
   const mapBtnTimerRef = useRef<any>(null);
@@ -1523,6 +1533,26 @@ export default function GameScreen() {
                   onTruckClick={handleTruckClick}
                   selectedTruckId={selectedTruckId}
                 />
+                {/* Плашка "Отслеживается" — под strip, по центру */}
+                {isFollowingTruck && (
+                  <div style={{
+                    display: 'flex', justifyContent: 'center',
+                    marginTop: -8, pointerEvents: 'none',
+                  } as any}>
+                    <div style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      background: 'rgba(15,23,42,0.85)',
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(74,222,128,0.4)',
+                      borderRadius: 20,
+                      padding: '4px 12px 4px 10px',
+                      boxShadow: '0 2px 12px rgba(74,222,128,0.18)',
+                    } as any}>
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 5px #4ade80', display: 'inline-block', flexShrink: 0 } as any} />
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#4ade80', letterSpacing: 0.3 } as any}>Отслеживается</span>
+                    </div>
+                  </div>
+                )}
               </View>
             </View>
             {/* Кнопка свернуть/развернуть правую панель */}
@@ -1590,6 +1620,26 @@ export default function GameScreen() {
                   onTruckClick={handleTruckClick}
                   selectedTruckId={selectedTruckId}
                 />
+                {/* Плашка "Отслеживается" — под strip, по центру */}
+                {isFollowingTruck && (
+                  <div style={{
+                    display: 'flex', justifyContent: 'center',
+                    marginTop: -8, pointerEvents: 'none',
+                  } as any}>
+                    <div style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      background: 'rgba(15,23,42,0.85)',
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(74,222,128,0.4)',
+                      borderRadius: 20,
+                      padding: '4px 12px 4px 10px',
+                      boxShadow: '0 2px 12px rgba(74,222,128,0.18)',
+                    } as any}>
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 5px #4ade80', display: 'inline-block', flexShrink: 0 } as any} />
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#4ade80', letterSpacing: 0.3 } as any}>Отслеживается</span>
+                    </div>
+                  </div>
+                )}
               </View>
               {/* Кнопка свернуть/развернуть правую панель */}
               <div
@@ -1654,6 +1704,26 @@ export default function GameScreen() {
                   onTruckClick={handleTruckClick}
                   selectedTruckId={selectedTruckId}
                 />
+                {/* Плашка "Отслеживается" — под strip, по центру */}
+                {isFollowingTruck && (
+                  <div style={{
+                    display: 'flex', justifyContent: 'center',
+                    marginTop: -8, pointerEvents: 'none',
+                  } as any}>
+                    <div style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      background: 'rgba(15,23,42,0.85)',
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(74,222,128,0.4)',
+                      borderRadius: 20,
+                      padding: '4px 12px 4px 10px',
+                      boxShadow: '0 2px 12px rgba(74,222,128,0.18)',
+                    } as any}>
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 5px #4ade80', display: 'inline-block', flexShrink: 0 } as any} />
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#4ade80', letterSpacing: 0.3 } as any}>Отслеживается</span>
+                    </div>
+                  </div>
+                )}
               </View>
             )}
             {/* Панели — поверх карты, с отступом 13% сверху */}
