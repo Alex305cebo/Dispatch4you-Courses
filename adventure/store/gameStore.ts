@@ -1794,7 +1794,6 @@ export const useGameStore = create<GameState>((set, get) => ({
         }
       }
 
-      // ── 30-MIN BREAK: ждём пока закончится ──
       if ((truck as any).onMandatoryBreak) {
         const breakStart = (truck as any).mandatoryBreakStartMinute ?? newMinute;
         const breakDuration = (truck as any).mandatoryBreakDuration ?? 30;
@@ -2389,7 +2388,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         const speedMult = (truck as any).speedMultiplier ?? 1.0;
 
         // ── ТЕХНИЧЕСКИЕ ПЕНАЛЬТИ И ЖАЛОБЫ ──
-        const performancePenalty = 1.0 - (100 - (truck.performance ?? 100)) / 200; // до -20% скорости
+        const performancePenalty = 1.0 - (100 - (truck.performance ?? 100)) / 500; // до -20% скорости при 0% performance
         
         // Жалоба водителя если трак плохой (любой стат < 40)
         const isBadTruck = (
@@ -2453,8 +2452,8 @@ export const useGameStore = create<GameState>((set, get) => ({
 
           // Динамический шанс поломки на основе Reliability
           if (Math.floor(newMinute / 45) > Math.floor((newMinute - TICK_MINUTES) / 45)) {
-            // Базовый шанс 5% + до 25% если Reliability=0
-            const breakdownChance = 0.05 + (100 - (truck.reliability ?? 100)) / 400;
+            // Базовый шанс 1% (у новых) + до 30% если Reliability=0
+            const breakdownChance = 0.01 + (100 - (truck.reliability ?? 100)) / 333;
             if (Math.random() < breakdownChance) {
               setTimeout(() => {
                 const state = get();
@@ -2502,8 +2501,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         }
 
         // Влияние комфорта на настроение — плавное по всему диапазону
-        // comfort 100 → нет потери, comfort 0 → -0.15/тик
-        const comfortMoodLoss = (100 - (truck.comfort ?? 100)) / 667;
+        // comfort 100 → нет потери, comfort 0 → ~10% настроения за игровой час
+        const comfortMoodLoss = (100 - (truck.comfort ?? 100)) / 2500;
         if (comfortMoodLoss > 0) {
           truck = { ...truck, mood: Math.max(10, (truck.mood ?? 70) - comfortMoodLoss) };
         }
@@ -2531,6 +2530,20 @@ export const useGameStore = create<GameState>((set, get) => ({
 
         const progressPerTick = (MILES_PER_TICK / totalMiles) * speedMult * weatherSpeedMult * performancePenalty;
         const newProgress = Math.min(1, truck.progress + progressPerTick);
+
+        // ── ЕСТЕСТВЕННЫЙ ИЗНОС (WEAR & TEAR) ──
+        // Характеристики падают пропорционально пройденным милям за тик.
+        // Новый трак (100%) деградирует медленно; убитый б/у (30%) — быстро скатится в красную зону.
+        const milesInTick = progressPerTick * totalMiles;
+        if (milesInTick > 0) {
+          truck = {
+            ...truck,
+            reliability: Math.max(0, (truck.reliability ?? 100) - milesInTick / 500),   // -1 за 500 миль
+            comfort:     Math.max(0, (truck.comfort     ?? 100) - milesInTick / 1000),  // -1 за 1000 миль
+            legalStatus: Math.max(0, (truck.legalStatus ?? 100) - milesInTick / 800),   // -1 за 800 миль
+            performance: Math.max(0, (truck.performance ?? 100) - milesInTick / 1500),  // -1 за 1500 миль
+          };
+        }
 
         // Уменьшаем HOS: 1.2 игровых минуты = 1.2/60 часа (погода увеличивает расход)
         const newHoursLeft = Math.round(Math.max(0, truck.hoursLeft - (TICK_MINUTES / 60) * weatherHosMult) * 10) / 10;
