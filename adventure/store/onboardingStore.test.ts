@@ -12,6 +12,7 @@
 
 import * as fc from 'fast-check';
 import { useOnboardingStore } from './onboardingStore';
+import { ONBOARDING_STEPS, calcPopupPosition } from '../data/onboardingConfig';
 
 // ── Мокаем window для node-окружения ──────────────────────────────────────
 beforeAll(() => {
@@ -100,6 +101,90 @@ test('Property 3: skip() sets isCompleted=true and isActive=false from any step'
       },
     ),
     { numRuns: 50 },
+  );
+});
+
+// ── PROPERTY 2: Скрытие попапа сохраняет активное состояние ──────────────
+test('Property 2: hidePopup() sets popupVisible=false but keeps isActive=true', () => {
+  fc.assert(
+    fc.property(
+      fc.integer({ min: 1, max: 12 }),
+      (currentStep) => {
+        useOnboardingStore.setState({
+          step: currentStep,
+          isActive: true,
+          popupVisible: true,
+        });
+
+        useOnboardingStore.getState().hidePopup();
+
+        const state = useOnboardingStore.getState();
+        expect(state.popupVisible).toBe(false);
+        expect(state.isActive).toBe(true);
+        expect(state.step).toBe(currentStep);
+      }
+    )
+  );
+});
+
+// ── PROPERTY 4: Полнота конфигурации шагов ────────────────────────────────
+test('Property 4: All ONBOARDING_STEPS have required narrative fields', () => {
+  expect(ONBOARDING_STEPS.length).toBe(12);
+  ONBOARDING_STEPS.forEach(step => {
+    expect(step.id).toBeGreaterThan(0);
+    expect(step.character).toBeDefined();
+    expect(step.characterName).toBeTruthy();
+    expect(step.text).toContain('«'); // Проверка стиля прямой речи
+    expect(step.text).toContain('»');
+    expect(step.actionButtonText).toBeTruthy();
+  });
+});
+
+// ── PROPERTY 5: Попап всегда остаётся в пределах Viewport ─────────────────
+test('Property 5: calcPopupPosition always keeps popup within viewport padding', () => {
+  const PADDING = 12;
+  
+  fc.assert(
+    fc.property(
+      // Генерируем случайный viewport
+      fc.record({
+        width: fc.integer({ min: 320, max: 2560 }),
+        height: fc.integer({ min: 480, max: 1440 })
+      }),
+      // Генерируем случайный размер попапа
+      fc.record({
+        width: fc.integer({ min: 200, max: 400 }),
+        height: fc.integer({ min: 100, max: 300 })
+      }),
+      // Генерируем случайный targetRect (может быть null)
+      fc.option(fc.record({
+        top: fc.integer({ min: -100, max: 2000 }),
+        left: fc.integer({ min: -100, max: 3000 }),
+        width: fc.integer({ min: 10, max: 500 }),
+        height: fc.integer({ min: 10, max: 500 }),
+        bottom: fc.integer({ min: 0, max: 2500 }),
+        right: fc.integer({ min: 0, max: 3500 })
+      }), { nil: null }),
+      // Случайная предпочтительная позиция
+      fc.constantFrom('center', 'top', 'bottom', 'left', 'right' as const),
+      (viewport, popupSize, targetRect, prefPos) => {
+        const pos = calcPopupPosition(
+          targetRect as DOMRect | null,
+          popupSize,
+          viewport,
+          prefPos
+        );
+
+        // Проверка левой границы
+        expect(pos.left).toBeGreaterThanOrEqual(PADDING);
+        // Проверка верхней границы
+        expect(pos.top).toBeGreaterThanOrEqual(PADDING);
+        // Проверка правой границы
+        expect(pos.left + popupSize.width).toBeLessThanOrEqual(viewport.width - PADDING);
+        // Проверка нижней границы
+        expect(pos.top + popupSize.height).toBeLessThanOrEqual(viewport.height - PADDING);
+      }
+    )
   );
 });
 
