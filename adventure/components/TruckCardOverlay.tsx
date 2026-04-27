@@ -298,10 +298,10 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
         display: 'flex',
         borderBottom: collapsed ? 'none' : `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
         background: isDark
-          ? 'rgba(15,20,40,0.35)'
-          : 'rgba(255,255,255,0.30)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          ? 'rgba(15,20,40,0.20)'
+          : 'rgba(255,255,255,0.20)',
+        backdropFilter: 'blur(24px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
         ...(collapsed ? {
           borderRadius: 14,
           margin: '4px 6px',
