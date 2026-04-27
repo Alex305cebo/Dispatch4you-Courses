@@ -1318,15 +1318,17 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                   }
                 }}
               >
-                {/* Индикатор слежения */}
+                {/* Индикатор слежения — снизу по центру карточки */}
                 {isSelected && (
                   <div style={{
-                    position: 'absolute', top: -10, right: -6,
+                    position: 'absolute', bottom: -12, left: '50%',
+                    transform: 'translateX(-50%)',
                     display: 'flex', alignItems: 'center', gap: 3,
                     background: isDark ? 'rgba(15,20,35,0.95)' : 'rgba(255,255,255,0.95)',
                     border: `1.5px solid ${color}`,
-                    borderRadius: 8, padding: '1px 6px',
+                    borderRadius: 8, padding: '2px 8px',
                     zIndex: 2,
+                    whiteSpace: 'nowrap',
                   } as any}>
                     <div style={{
                       width: 5, height: 5, borderRadius: '50%',
