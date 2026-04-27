@@ -1,6 +1,6 @@
 ﻿// Карточки траков поверх карты — без фона, только карточки
 // При выборе: карточка выделяется, под ней выпадает панель с событиями/действиями
-import React, { memo, useRef, useEffect, useState } from 'react';
+import React, { memo, useRef, useEffect, useState, useMemo } from 'react';
 import { useGameStore, GameEvent, DeliveryResult } from '../store/gameStore';
 import { useThemeStore } from '../store/themeStore';
 import { CITY_STATE, CITIES } from '../constants/config';
@@ -70,79 +70,6 @@ interface Props {
   selectedTruckId: string | null;
 }
 
-/** Обёртка dropdown с анимацией сворачивания/разворачивания */
-function AnimatedDropdown({ truck, events, isDark, isSelected }: { truck: any; events: GameEvent[]; isDark: boolean; isSelected: boolean }) {
-  const [expanded, setExpanded] = useState(true);
-  const [visible, setVisible] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [contentH, setContentH] = useState(0);
-
-  // При выборе трака — открываем
-  useEffect(() => {
-    if (isSelected) {
-      setVisible(true);
-      setExpanded(true);
-    } else {
-      setExpanded(false);
-      const t = setTimeout(() => setVisible(false), 250);
-      return () => clearTimeout(t);
-    }
-  }, [isSelected]);
-
-  // Измеряем высоту контента
-  useEffect(() => {
-    if (contentRef.current && visible && expanded) {
-      const h = contentRef.current.scrollHeight;
-      if (h > 0) setContentH(h);
-    }
-  });
-
-  if (!visible) return null;
-
-  const color = getTruckColor(truck);
-
-  return (
-    <div>
-      {/* Контент с анимацией */}
-      <div style={{
-        overflow: 'hidden',
-        maxHeight: expanded ? (contentH || 500) : 0,
-        opacity: expanded ? 1 : 0,
-        transition: 'max-height 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease',
-        // Когда expanded — даём overflow visible чтобы не обрезать углы таба
-        ...(expanded ? { overflow: 'visible' } : {}),
-      }}>
-        <div ref={contentRef}>
-          <TruckDropdown truck={truck} events={events} isDark={isDark} />
-        </div>
-      </div>
-
-      {/* Ручка сворачивания — снизу */}
-      <div
-        onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-        style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          gap: 4, padding: '3px 0 1px', cursor: 'pointer',
-          opacity: 0.35, transition: 'opacity 0.15s',
-        }}
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.7'; }}
-        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '0.35'; }}
-      >
-        <div style={{
-          width: 24, height: 3, borderRadius: 2,
-          background: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)',
-        }} />
-        <span style={{
-          fontSize: 8, color: isDark ? '#475569' : '#9ca3af',
-          transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-          transition: 'transform 0.2s ease',
-          lineHeight: 1,
-        }}>▼</span>
-      </div>
-    </div>
-  );
-}
-
 /** Познавательные факты для диспетчеров — показываются в dropdown */
 const ROUTE_FACTS = [
   { icon: '🛣️', title: 'Interstate System', text: 'Чётные номера I-хайвеев идут с запада на восток, нечётные — с юга на север' },
@@ -188,34 +115,13 @@ function getLoadingFact(load: any, truck: any, isPU: boolean, seed: number) {
 /** HUD-плашка с вкладками — Route / Stats / Load / Radio */
 function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any }) {
   const [activeTab, setActiveTab] = useState<'route' | 'stats' | 'load' | 'radio'>('route');
-  const [collapsed, setCollapsed] = useState(false);
-  const collapseTimerRef = React.useRef<any>(null);
+  const collapsed = false; // Всегда развёрнуто
   const gameMinute = useGameStore(s => s.gameMinute);
   const color = getTruckColor(truck);
 
-  // Автосворачивание через 4 секунды после открытия
-  React.useEffect(() => {
-    collapseTimerRef.current = setTimeout(() => setCollapsed(true), 4000);
-    return () => clearTimeout(collapseTimerRef.current);
-  }, []);
-
-  // При смене вкладки — разворачиваем и сбрасываем таймер
+  // При смене вкладки — просто меняем активную вкладку
   function handleTabClick(key: typeof activeTab) {
     setActiveTab(key);
-    setCollapsed(false);
-    clearTimeout(collapseTimerRef.current);
-    collapseTimerRef.current = setTimeout(() => setCollapsed(true), 4000);
-  }
-
-  // При ручном разворачивании — тоже сбрасываем таймер
-  function handleToggleCollapse(e: React.MouseEvent) {
-    e.stopPropagation();
-    const next = !collapsed;
-    setCollapsed(next);
-    clearTimeout(collapseTimerRef.current);
-    if (!next) {
-      collapseTimerRef.current = setTimeout(() => setCollapsed(true), 4000);
-    }
   }
 
   // ── Статус ──
@@ -1211,7 +1117,7 @@ function DeliveryInlineResult({ result, isDark, onDismiss }: { result: DeliveryR
 
 
 const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selectedTruckId }: Props) {
-  const trucks = useGameStore(s => s.trucks);
+  const trucksRaw = useGameStore(s => s.trucks);
   const activeEvents = useGameStore(s => s.activeEvents);
   const deliveryResults = useGameStore(s => s.deliveryResults);
   const dismissDeliveryResult = useGameStore(s => s.dismissDeliveryResult);
@@ -1219,21 +1125,107 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
   const isDark = themeMode === 'dark';
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Авто-скролл к выбранной карточке
+  // Локальный порядок траков для карусели
+  const [truckOrder, setTruckOrder] = useState<string[]>(() => trucksRaw.map(t => t.id));
+  const [animationDirection, setAnimationDirection] = useState<'left' | 'right' | null>(null);
+
+  // Обновляем порядок если изменилось количество траков
+  useEffect(() => {
+    const currentIds = trucksRaw.map(t => t.id);
+    if (truckOrder.length !== currentIds.length) {
+      console.log('Количество траков изменилось, обновляем порядок:', currentIds);
+      setTruckOrder(currentIds);
+    }
+  }, [trucksRaw.length]);
+
+  // Сбрасываем анимацию после её завершения
+  useEffect(() => {
+    if (animationDirection) {
+      const timer = setTimeout(() => setAnimationDirection(null), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [animationDirection]);
+
+  // Сортируем траки согласно локальному порядку
+  const trucks = useMemo(() => {
+    if (truckOrder.length === 0) return trucksRaw;
+    // Сортируем по порядку из truckOrder
+    const sorted = [...trucksRaw].sort((a, b) => {
+      const aIdx = truckOrder.indexOf(a.id);
+      const bIdx = truckOrder.indexOf(b.id);
+      if (aIdx === -1) return 1;
+      if (bIdx === -1) return -1;
+      return aIdx - bIdx;
+    });
+    return sorted;
+  }, [trucksRaw, truckOrder]);
+
+  // Навигация влево ← : текущий трак сдвигается вправо (становится вторым), предыдущий становится первым
+  const handlePrevTruck = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (trucks.length <= 1) return;
+    
+    setAnimationDirection('left');
+    const newOrder = [...truckOrder];
+    // Берём последний элемент и ставим его в начало
+    const lastTruck = newOrder.pop();
+    if (lastTruck) {
+      newOrder.unshift(lastTruck);
+      setTruckOrder(newOrder);
+      // Выбираем новый первый трак
+      onTruckClick(trucksRaw.find(t => t.id === lastTruck)!);
+    }
+  };
+
+  // Навигация вправо → : текущий трак уходит в конец, следующий становится первым
+  const handleNextTruck = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (trucks.length <= 1) return;
+    
+    setAnimationDirection('right');
+    const newOrder = [...truckOrder];
+    // Берём первый элемент и ставим его в конец
+    const firstTruck = newOrder.shift();
+    if (firstTruck) {
+      newOrder.push(firstTruck);
+      setTruckOrder(newOrder);
+      // Выбираем новый первый трак
+      onTruckClick(trucksRaw.find(t => t.id === newOrder[0])!);
+    }
+  };
+
+  // Обработчик клика по карточке — перемещаем её на первое место
+  const handleTruckCardClick = (truck: any) => {
+    console.log('Клик по карточке:', truck.id, 'Текущий порядок:', truckOrder);
+    
+    // Если это уже первая карточка, просто выбираем
+    if (truckOrder[0] === truck.id) {
+      console.log('Это уже первая карточка');
+      onTruckClick(truck);
+      return;
+    }
+
+    // Определяем направление анимации по позиции карточки
+    const currentIndex = truckOrder.indexOf(truck.id);
+    console.log('Индекс карточки:', currentIndex);
+    setAnimationDirection(currentIndex > truckOrder.length / 2 ? 'left' : 'right');
+
+    // Перемещаем выбранную карточку на первое место
+    const newOrder = truckOrder.filter(id => id !== truck.id);
+    newOrder.unshift(truck.id);
+    console.log('Новый порядок:', newOrder);
+    setTruckOrder(newOrder);
+    
+    // Выбираем этот трак
+    onTruckClick(truck);
+  };
+
+  // Авто-скролл к первой карточке (выбранной) при изменении выбора
   useEffect(() => {
     if (!selectedTruckId || !scrollRef.current) return;
-    const idx = trucks.findIndex(t => t.id === selectedTruckId);
-    if (idx < 0) return;
-    const container = scrollRef.current;
-    const cards = container.querySelectorAll('[data-truck-card]');
-    const card = cards[idx] as HTMLElement;
-    if (!card) return;
-    const cardLeft = card.offsetLeft;
-    const cardWidth = card.offsetWidth;
-    const containerWidth = container.clientWidth;
-    const target = cardLeft - (containerWidth / 2) + (cardWidth / 2);
-    container.scrollTo({ left: target, behavior: 'smooth' });
-  }, [selectedTruckId, trucks]);
+    // Выбранная карточка теперь всегда первая, скроллим к началу
+    scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+  }, [selectedTruckId]);
 
   // Авто-скролл к карточке трака при появлении результата доставки
   useEffect(() => {
@@ -1300,6 +1292,52 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
           0%, 100% { opacity: 1; }
           50% { opacity: 0.4; }
         }
+        @keyframes slideInFromLeft {
+          from { 
+            opacity: 0;
+            transform: translateX(-100px) scale(0.9);
+          }
+          to { 
+            opacity: 1;
+            transform: translateX(0) scale(1);
+          }
+        }
+        @keyframes slideInFromRight {
+          from { 
+            opacity: 0;
+            transform: translateX(100px) scale(0.9);
+          }
+          to { 
+            opacity: 1;
+            transform: translateX(0) scale(1);
+          }
+        }
+        @keyframes slideOutToLeft {
+          from { 
+            opacity: 1;
+            transform: translateX(0) scale(1);
+          }
+          to { 
+            opacity: 0;
+            transform: translateX(-100px) scale(0.9);
+          }
+        }
+        @keyframes slideOutToRight {
+          from { 
+            opacity: 1;
+            transform: translateX(0) scale(1);
+          }
+          to { 
+            opacity: 0;
+            transform: translateX(100px) scale(0.9);
+          }
+        }
+        .truck-card-animate {
+          animation: slideInFromRight 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .truck-card-animate-left {
+          animation: slideInFromLeft 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
         .truck-scroll-btn {
           position: absolute; top: 50%; transform: translateY(-50%);
           width: 28px; height: 28px; border-radius: 50%;
@@ -1321,22 +1359,12 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
         .truck-scroll-btn-left { left: 2px; }
         .truck-scroll-btn-right { right: 2px; }
       `}</style>
-      <div style={{ position: 'relative' }}>
-        {/* Стрелка влево */}
-        <button className="truck-scroll-btn truck-scroll-btn-left"
-          onClick={() => scrollRef.current?.scrollBy({ left: -260, behavior: 'smooth' })}>
-          ‹
-        </button>
-        {/* Стрелка вправо */}
-        <button className="truck-scroll-btn truck-scroll-btn-right"
-          onClick={() => scrollRef.current?.scrollBy({ left: 260, behavior: 'smooth' })}>
-          ›
-        </button>
+      {/* Скролл-контейнер — pointerEvents:none чтобы не блокировать карту, auto на карточках */}
       <div ref={scrollRef} className="truck-card-scroll" style={{
         display: 'flex',
         flexDirection: 'row',
         gap: 8,
-        padding: '14px 32px 6px',
+        padding: '14px 4px 6px 36px',
         overflowX: 'auto',
         overflowY: 'visible',
         background: 'transparent',
@@ -1345,11 +1373,13 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
         WebkitOverflowScrolling: 'touch',
         touchAction: 'pan-x',
         alignItems: 'flex-start',
+        pointerEvents: 'none', // Пропускаем клики к карте
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       } as any}
       onTouchStart={e => e.stopPropagation()}
       onTouchMove={e => e.stopPropagation()}
       >
-        {trucks.map(truck => {
+        {trucks.map((truck, index) => {
           const color = getTruckColor(truck);
           const hos = Math.max(0, truck.hoursLeft);
           const hosColor = hos < 2 ? '#f87171' : hos < 4 ? '#fbbf24' : '#34d399';
@@ -1378,14 +1408,51 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
           const deliveryResult = deliveryResults.find(r => r.truckId === truck.id) || null;
 
           return (
-            <div key={truck.id} data-truck-card style={{
+            <div key={truck.id} data-truck-card 
+              className={index === 0 && animationDirection ? (animationDirection === 'left' ? 'truck-card-animate-left' : 'truck-card-animate') : ''}
+              style={{
               flexShrink: 0, width: 250,
               display: 'flex', flexDirection: 'column',
               position: 'relative',
+              pointerEvents: 'auto', // Включаем клики на карточке
             } as any}>
+
+              {/* Стрелки навигации — на выбранной карточке, или на первой если ничего не выбрано. Только если траков > 1 */}
+              {trucks.length > 1 && (truck.id === selectedTruckId || (!selectedTruckId && index === 0)) && (
+                <>
+                  <button
+                    onClick={handlePrevTruck}
+                    style={{
+                      position: 'absolute', left: -32, top: '50%', transform: 'translateY(-50%)',
+                      zIndex: 30, width: 28, height: 28, borderRadius: '50%',
+                      background: 'rgba(13,17,23,0.85)', border: '1px solid rgba(56,189,248,0.35)',
+                      color: '#38bdf8', fontSize: 18, fontWeight: 900, lineHeight: 1,
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      backdropFilter: 'blur(8px)', boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                      transition: 'all 0.15s ease',
+                    } as any}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(56,189,248,0.2)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.7)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(13,17,23,0.85)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.35)'; }}
+                  >‹</button>
+                  <button
+                    onClick={handleNextTruck}
+                    style={{
+                      position: 'absolute', right: -32, top: '50%', transform: 'translateY(-50%)',
+                      zIndex: 30, width: 28, height: 28, borderRadius: '50%',
+                      background: 'rgba(13,17,23,0.85)', border: '1px solid rgba(56,189,248,0.35)',
+                      color: '#38bdf8', fontSize: 18, fontWeight: 900, lineHeight: 1,
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      backdropFilter: 'blur(8px)', boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                      transition: 'all 0.15s ease',
+                    } as any}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(56,189,248,0.2)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.7)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(13,17,23,0.85)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.35)'; }}
+                  >›</button>
+                </>
+              )}
               {/* Карточка трака */}
               <div
-                onClick={() => onTruckClick(truck)}
+                onClick={() => handleTruckCardClick(truck)}
                 style={{
                   width: '100%',
                   borderRadius: 16,
@@ -1552,11 +1619,6 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                 </div>
               </div>
 
-              {/* Выпадающая панель — marginTop даёт место плашке Слежение */}
-              <div style={{ marginTop: 2 }}>
-                <AnimatedDropdown truck={truck} events={truckEvents} isDark={isDark} isSelected={isSelected} />
-              </div>
-
               {/* Результат доставки — под карточкой */}
               {deliveryResult && (
                 <DeliveryInlineResult
@@ -1588,6 +1650,7 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
               : '0 2px 12px rgba(0,0,0,0.1), 0 1px 4px rgba(0,0,0,0.06)',
             transform: 'translateY(-3px)',
             transition: 'background 0.2s, transform 0.15s, box-shadow 0.15s',
+            pointerEvents: 'auto', // Включаем клики на кнопке
           } as any}
           onMouseEnter={e => {
             (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(6,182,212,0.08)' : 'rgba(235,245,255,0.98)';
@@ -1601,8 +1664,8 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
           <div style={{ width: 28, height: 28, borderRadius: '50%', background: isDark ? 'rgba(56,189,248,0.12)' : 'rgba(0,122,255,0.1)', border: `1.5px solid ${isDark ? 'rgba(56,189,248,0.35)' : 'rgba(0,122,255,0.5)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: isDark ? '#38bdf8' : '#007aff' } as any}>+</div>
           <span style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#38bdf8' : '#007aff', textAlign: 'center', lineHeight: 1.3 } as any}>Купить{'\n'}трак</span>
         </div>
-      </div>
-      </div>{/* конец обёртки со стрелками */}
+
+      </div>{/* конец скролл-контейнера */}
 
       {/* Баннер итогов дня — под strip карточек */}
       <DayEndBanner isDark={isDark} />

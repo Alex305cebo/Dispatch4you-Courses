@@ -295,8 +295,15 @@ export default function TruckDetailModal({ truck: truckProp, onClose, onFindLoad
                   </TouchableOpacity>
                 </View>
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                  <TouchableOpacity 
+                    style={[s.breakdownActionBtn, { flex: 2, backgroundColor: 'rgba(74,222,128,0.15)', borderColor: 'rgba(74,222,128,0.4)' }]} 
+                    onPress={handleRepairComplete} 
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[s.breakdownActionText, { color: '#4ade80', fontWeight: '900' }]}>✅ Починить сейчас</Text>
+                  </TouchableOpacity>
                   <TouchableOpacity style={s.breakdownActionBtn} onPress={() => setShowCall(true)} activeOpacity={0.8}>
-                    <Text style={[s.breakdownActionText, { color: '#30d158' }]}>📞 Позвонить</Text>
+                    <Text style={[s.breakdownActionText, { color: '#30d158' }]}>📞 Звонок</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={s.breakdownActionBtn} onPress={() => setShowSMS(true)} activeOpacity={0.8}>
                     <Text style={[s.breakdownActionText, { color: '#0a84ff' }]}>💬 SMS</Text>

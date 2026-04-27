@@ -121,13 +121,26 @@ export default function MainMenu() {
       <View style={s.bg}>
         <video
           autoPlay muted loop playsInline
-          ref={(el) => { if (el && !(el as any)._init) { (el as any)._init = true; el.playbackRate = 0.5; } }}
+          ref={(el) => { 
+            if (el && !(el as any)._init) { 
+              (el as any)._init = true; 
+              el.playbackRate = 0.5;
+              // Fallback: если первый путь не загрузился, пробуем второй
+              el.addEventListener('error', () => {
+                if (el.src.includes('./Truck_loop.mp4')) {
+                  el.src = '/game/Truck_loop.mp4';
+                } else if (el.src.includes('/game/Truck_loop.mp4')) {
+                  el.src = './assets/Truck_loop.mp4';
+                }
+              }, { once: true });
+            }
+          }}
           style={{
             position: 'absolute', inset: 0,
             width: '100%', height: '100%',
             objectFit: 'cover', opacity: 0.6,
           } as any}
-          src="/adventure/assets/Truck_loop.mp4"
+          src="./Truck_loop.mp4"
         />
         {/* Затемнение для читаемости */}
         <LinearGradient

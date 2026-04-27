@@ -2473,11 +2473,14 @@ export const useGameStore = create<GameState>((set, get) => ({
                 const oldTruck = state.trucks.find(t => t.id === truck.id);
                 if (oldTruck && (oldTruck.status === 'driving' || oldTruck.status === 'loaded')) {
                   // Форсируем событие поломки для этого трака
+                  // Цена зависит от safetyScore: 100 → 125$, 0 → 550$
+                  const safetyFactor = 1 - (oldTruck.safetyScore / 100);
+                  const calcCost = (base: number) => Math.round(125 + (base - 125) * safetyFactor);
                   const bdTypes = [
-                    { label: 'Двигатель перегрелся',     roadside: 550, tow: 1400, delayRoadside: 90,  delayTow: 240 },
-                    { label: 'Электрика вышла из строя', roadside: 480, tow: 1200, delayRoadside: 75,  delayTow: 210 },
-                    { label: 'Закончилось топливо',      roadside: 150, tow: 0,    delayRoadside: 30,  delayTow: 0   },
-                    { label: 'Утечка масла',             roadside: 320, tow: 900,  delayRoadside: 60,  delayTow: 180 },
+                    { label: 'Двигатель перегрелся',     roadside: calcCost(550), tow: 1400, delayRoadside: 90,  delayTow: 240 },
+                    { label: 'Электрика вышла из строя', roadside: calcCost(480), tow: 1200, delayRoadside: 75,  delayTow: 210 },
+                    { label: 'Закончилось топливо',      roadside: calcCost(150), tow: 0,    delayRoadside: 30,  delayTow: 0   },
+                    { label: 'Утечка масла',             roadside: calcCost(320), tow: 900,  delayRoadside: 60,  delayTow: 180 },
                   ];
                   const bd = bdTypes[Math.floor(Math.random() * bdTypes.length)];
                   const canRoadside = bd.roadside > 0;
@@ -2865,11 +2868,14 @@ export const useGameStore = create<GameState>((set, get) => ({
     
     switch (eventType) {
       case 'breakdown': {
+        // Цена зависит от safetyScore: 100 → 125$, 0 → 550$
+        const safetyFactor = 1 - (truck.safetyScore / 100);
+        const calcCost = (base: number) => Math.round(125 + (base - 125) * safetyFactor);
         const bdTypes = [
-          { label: 'Двигатель перегрелся',     roadside: 550, tow: 1400, delayRoadside: 90,  delayTow: 240 },
-          { label: 'Отказали тормоза',         roadside: 650, tow: 1600, delayRoadside: 120, delayTow: 300 },
-          { label: 'Электрика вышла из строя', roadside: 480, tow: 1200, delayRoadside: 75,  delayTow: 210 },
-          { label: 'Закончилось топливо',      roadside: 150, tow: 0,    delayRoadside: 30,  delayTow: 0   },
+          { label: 'Двигатель перегрелся',     roadside: calcCost(550), tow: 1400, delayRoadside: 90,  delayTow: 240 },
+          { label: 'Отказали тормоза',         roadside: calcCost(650), tow: 1600, delayRoadside: 120, delayTow: 300 },
+          { label: 'Электрика вышла из строя', roadside: calcCost(480), tow: 1200, delayRoadside: 75,  delayTow: 210 },
+          { label: 'Закончилось топливо',      roadside: calcCost(150), tow: 0,    delayRoadside: 30,  delayTow: 0   },
           { label: 'Трансмиссия',              roadside: 0,   tow: 1800, delayRoadside: 0,   delayTow: 360 },
         ];
         const bd = bdTypes[Math.floor(Math.random() * bdTypes.length)];

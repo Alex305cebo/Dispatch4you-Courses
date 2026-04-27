@@ -2,7 +2,7 @@
 
 ## Обзор
 
-Замена чат-системы онбординга на 12 пошаговых блокирующих попапов в glassmorphism-стиле. Реализация включает Zustand-стор, конфигурацию шагов, три новых компонента (OnboardingOverlay, OnboardingPopup, OnboardingActionButton), интеграцию в game.tsx и добавление `data-onboarding` атрибутов в существующие компоненты.
+Замена чат-системы на нарративный онбординг (12 шагов). Обучение подается через диалоги 4 персонажей (Владелец, Водитель, Брокер, Бухгалтер). Используется существующая база: Zustand-стор, Overlay и Spotlight.
 
 ## Задачи
 
@@ -34,8 +34,8 @@
     - **Validates: Требования 1.5**
 
   - [x] 1.5 Создать `adventure/data/onboardingConfig.ts` — конфигурация 12 шагов
-    - Определить интерфейс `OnboardingStepConfig` с полями: `id`, `icon`, `title`, `text`, `actionButtonText`, `targetSelector`, `popupPosition`, `autoSwitch`
-    - Заполнить массив `ONBOARDING_STEPS` из 12 шагов согласно таблице в дизайн-документе
+    - Определить интерфейс `OnboardingStepConfig` с полями: `id`, `character`, `characterName`, `title`, `text`, `actionButtonText`, `targetSelector`, `popupPosition`, `autoSwitch`
+    - Заполнить массив `ONBOARDING_STEPS` диалогами персонажей: Стив (Owner), Сара (Accountant), Майк (Driver), Лео (Broker)
     - Шаг 2: текст о полном игровом цикле (1 трак → грузы → деньги → 5 траков)
     - Шаг 4: `autoSwitch.openModal = 'truckShop'`
     - Шаг 5: `autoSwitch.closeTruckShop = true`
@@ -60,7 +60,7 @@
 - [x] 3. Создать компоненты онбординга
   - [x] 3.1 Создать `adventure/components/OnboardingPopup.tsx`
     - Glassmorphism-карточка: полупрозрачный фон, `backdrop-filter: blur`, светящаяся рамка `rgba(6,182,212,...)`
-    - Содержимое: иконка + заголовок, текст инструкции, Step_Indicator "N/12", кнопка "Пропустить"
+    - Содержимое: Хедер персонажа (Аватар + Имя), заголовок, текст диалога, Step_Indicator "N/12", кнопка "Пропустить"
     - Анимация появления (scale + opacity, 200–300мс) и исчезновения (150–200мс)
     - Минимальный шрифт 13px для текста, 12px для подписей, цвет не темнее `#94a3b8`
     - Props: `step`, `currentStep`, `totalSteps`, `onSkip`, `visible`, `position`
