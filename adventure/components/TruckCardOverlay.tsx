@@ -908,6 +908,12 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
       e.stopPropagation();
       if (!unbookedLoad) return;
       useGameStore.getState().assignLoadToTruck(unbookedLoad, truck.id);
+      // Переключаем на карту и включаем слежение за траком
+      try { localStorage.setItem('dispatch-active-tab', 'map'); } catch {}
+      window.dispatchEvent(new CustomEvent('switchTab', { detail: { tab: 'map' } }));
+      window.dispatchEvent(new CustomEvent('followTruckFromCard', {
+        detail: { truckId: truck.id, lng: truck.position[0], lat: truck.position[1] }
+      }));
     };
 
     // Стиль action-pill кнопки
