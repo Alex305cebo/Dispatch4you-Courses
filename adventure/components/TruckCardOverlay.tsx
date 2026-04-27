@@ -297,12 +297,12 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
       <div style={{
         display: 'flex',
         borderBottom: collapsed ? 'none' : `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+        background: isDark
+          ? 'rgba(15,20,40,0.35)'
+          : 'rgba(255,255,255,0.30)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
         ...(collapsed ? {
-          background: isDark
-            ? 'rgba(15,20,40,0.35)'
-            : 'rgba(255,255,255,0.30)',
-          backdropFilter: 'blur(20px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
           borderRadius: 14,
           margin: '4px 6px',
           border: isDark
@@ -311,7 +311,16 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
           boxShadow: isDark
             ? '0 4px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08)'
             : '0 4px 24px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.8)',
-        } : {}),
+        } : {
+          borderRadius: '12px 12px 0 0',
+          border: isDark
+            ? '1px solid rgba(255,255,255,0.08)'
+            : '1px solid rgba(255,255,255,0.35)',
+          borderBottom: 'none',
+          boxShadow: isDark
+            ? '0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.05)'
+            : '0 2px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6)',
+        }),
       }}>
         {tabs.map(t => (
           <button
