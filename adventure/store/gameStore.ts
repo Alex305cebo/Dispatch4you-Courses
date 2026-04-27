@@ -3619,8 +3619,6 @@ case 'detention': {
     } else {
       get().callRoadsideAssist(truckId, 'tow_truck');
     }
-    // Сразу отправляем сервисную машину в путь (снимаем waitingForDispatch)
-    get().dispatchServiceVehicle(truckId);
   },
 
   // ── SERVICE VEHICLE SYSTEM ──────────────────────────────────────────────────
@@ -3665,14 +3663,14 @@ case 'detention': {
       position: cityPosition,
       targetTruckId: truckId,
       fromCity: nearestCity,
-      status: 'dispatched',
+      status: 'en_route',
       route,
       progress: 0,
       eta,
       cost,
       dispatchedAt: gameMinute,
       repairDuration: config.repairDuration,
-      waitingForDispatch: true,  // ждёт пока диспетчер закроет модал
+      waitingForDispatch: false,  // сразу едет — не ждёт закрытия модала
     };
 
     // Add to service vehicles list
