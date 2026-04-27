@@ -93,11 +93,10 @@ export default function OnboardingOverlay() {
   );
 
   const handleOverlayClick = useCallback(
-    (e: React.MouseEvent) => {
-      // Клик по оверлею НЕ скрывает попап — попап всегда видим
-      // Продвижение только через Action_Button
+    () => {
+      hidePopup();
     },
-    [],
+    [hidePopup],
   );
 
   const handleNextStep = useCallback(() => {
@@ -110,45 +109,33 @@ export default function OnboardingOverlay() {
 
   if (!isActive) return null;
 
-  // Spotlight cutout via box-shadow trick
-  const spotlightStyle: React.CSSProperties = targetRect
-    ? {
-        position: 'fixed',
-        top: targetRect.top - SPOTLIGHT_PADDING,
-        left: targetRect.left - SPOTLIGHT_PADDING,
-        width: targetRect.width + SPOTLIGHT_PADDING * 2,
-        height: targetRect.height + SPOTLIGHT_PADDING * 2,
-        borderRadius: 12,
-        boxShadow: '0 0 0 9999px rgba(0,0,0,0.6)',
-        zIndex: 10000,
-        pointerEvents: 'none',
-        border: '2px solid rgba(6,182,212,0.5)',
-        animation: 'onbSpotlightPulse 1.8s ease-in-out infinite',
-      }
-    : {};
-
   const hasTarget = !!targetRect;
 
   const content = (
     <div
       ref={overlayRef}
       data-testid="onboarding-overlay"
-      onClick={handleOverlayClick}
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
-        background: 'none',
-        pointerEvents: 'none',
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        pointerEvents: 'auto',
       }}
+      onClick={handleOverlayClick}
     >
-      {targetRect && <div style={spotlightStyle} />}
-      {!targetRect && (
+      {targetRect && (
         <div style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.6)',
+          position: 'fixed',
+          top: targetRect.top - SPOTLIGHT_PADDING,
+          left: targetRect.left - SPOTLIGHT_PADDING,
+          width: targetRect.width + SPOTLIGHT_PADDING * 2,
+          height: targetRect.height + SPOTLIGHT_PADDING * 2,
+          borderRadius: 12,
+          boxShadow: '0 0 0 9999px rgba(0,0,0,0.6)',
+          border: '2px solid rgba(6,182,212,0.5)',
+          animation: 'onbSpotlightPulse 1.8s ease-in-out infinite',
           pointerEvents: 'none',
-          zIndex: 9999,
         }} />
       )}
 

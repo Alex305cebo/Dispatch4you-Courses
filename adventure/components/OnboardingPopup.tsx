@@ -71,6 +71,7 @@ export default function OnboardingPopup({
   return (
     <div
       data-testid="onboarding-popup"
+      onClick={e => e.stopPropagation()}
       style={{
         position: 'fixed',
         top: position.top,

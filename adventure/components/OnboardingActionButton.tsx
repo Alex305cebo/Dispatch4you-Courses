@@ -30,6 +30,7 @@ export default function OnboardingActionButton({
   if (!targetRect) {
     return (
       <div
+        onClick={e => e.stopPropagation()}
         data-testid="onboarding-action-btn"
         style={{
           display: 'flex',
@@ -50,6 +51,7 @@ export default function OnboardingActionButton({
 
   return (
     <div
+      onClick={e => e.stopPropagation()}
       data-testid="onboarding-action-btn"
       style={{
         position: 'fixed',
