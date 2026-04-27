@@ -299,13 +299,18 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
         borderBottom: collapsed ? 'none' : `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
         ...(collapsed ? {
           background: isDark
-            ? 'rgba(15,20,35,0.55)'
-            : 'rgba(255,255,255,0.55)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderRadius: 12,
+            ? 'rgba(15,20,40,0.35)'
+            : 'rgba(255,255,255,0.30)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          borderRadius: 14,
           margin: '4px 6px',
-          border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}`,
+          border: isDark
+            ? '1px solid rgba(255,255,255,0.14)'
+            : '1px solid rgba(255,255,255,0.55)',
+          boxShadow: isDark
+            ? '0 4px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08)'
+            : '0 4px 24px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.8)',
         } : {}),
       }}>
         {tabs.map(t => (
@@ -315,18 +320,21 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
             style={{
               flex: 1, padding: collapsed ? '8px 4px' : '8px 4px',
               border: 'none', cursor: 'pointer',
-              background: 'transparent',
+              background: collapsed && activeTab === t.key
+                ? (isDark ? 'rgba(6,182,212,0.18)' : 'rgba(6,182,212,0.15)')
+                : 'transparent',
+              borderRadius: collapsed ? 10 : 0,
               borderBottom: collapsed ? 'none' : `2px solid ${activeTab === t.key ? '#06b6d4' : 'transparent'}`,
               color: collapsed
-                ? (isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.35)')
+                ? (activeTab === t.key ? '#06b6d4' : (isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.45)'))
                 : (activeTab === t.key ? '#06b6d4' : (isDark ? '#64748b' : '#9ca3af')),
               fontSize: 11, fontWeight: 600,
-              transition: 'color 0.2s, border-color 0.2s, padding 0.2s',
+              transition: 'color 0.2s, border-color 0.2s, background 0.2s',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3,
               whiteSpace: 'nowrap',
             }}
           >
-            <span style={{ fontSize: collapsed ? 14 : 12, opacity: collapsed ? 0.6 : 1 }}>{t.icon}</span>
+            <span style={{ fontSize: collapsed ? 16 : 12, opacity: collapsed ? (activeTab === t.key ? 1 : 0.7) : 1, filter: collapsed && activeTab === t.key ? 'drop-shadow(0 0 4px #06b6d4)' : 'none' }}>{t.icon}</span>
             {!collapsed && t.label}
           </button>
         ))}
@@ -1241,12 +1249,16 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                     position: 'absolute', bottom: -20, left: '50%',
                     transform: 'translateX(-50%)',
                     display: 'flex', alignItems: 'center', gap: 5,
-                    background: isDark ? 'rgba(15,20,35,0.96)' : 'rgba(255,255,255,0.96)',
+                    background: isDark
+                      ? 'rgba(15,20,35,0.55)'
+                      : 'rgba(255,255,255,0.55)',
+                    backdropFilter: 'blur(16px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(16px) saturate(180%)',
                     border: `1.5px solid ${color}`,
                     borderRadius: 10, padding: '3px 10px',
-                    zIndex: 10,
+                    zIndex: 9999,
                     whiteSpace: 'nowrap',
-                    boxShadow: `0 2px 8px ${color}44`,
+                    boxShadow: `0 4px 16px ${color}55, 0 1px 4px rgba(0,0,0,0.25)`,
                   } as any}>
                     <div style={{
                       width: 6, height: 6, borderRadius: '50%',
