@@ -389,11 +389,8 @@ export default function GameScreen() {
   }, [phase]);
 
   // ── ONBOARDING: пауза игрового времени ──
-  useEffect(() => {
-    if (onbIsActive) {
-      setTimeSpeed(0 as any);
-    }
-  }, [onbIsActive]);
+  // Убрана пауза — онбординг не должен останавливать время
+  // (это вызывало баг когда timeSpeed застревал на 0)
 
   // ── ONBOARDING: auto-switch при смене шага ──
   useEffect(() => {
