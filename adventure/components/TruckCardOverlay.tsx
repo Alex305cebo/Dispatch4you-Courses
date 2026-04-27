@@ -1300,12 +1300,43 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
           0%, 100% { opacity: 1; }
           50% { opacity: 0.4; }
         }
+        .truck-scroll-btn {
+          position: absolute; top: 50%; transform: translateY(-50%);
+          width: 28px; height: 28px; border-radius: 50%;
+          background: rgba(13,17,23,0.85);
+          border: 1px solid rgba(56,189,248,0.35);
+          color: #38bdf8; font-size: 14px; font-weight: 900;
+          cursor: pointer; display: flex; align-items: center; justify-content: center;
+          z-index: 10; transition: all 0.15s ease;
+          backdrop-filter: blur(8px);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+          user-select: none;
+        }
+        .truck-scroll-btn:hover {
+          background: rgba(56,189,248,0.2);
+          border-color: rgba(56,189,248,0.7);
+          box-shadow: 0 0 12px rgba(56,189,248,0.3);
+          transform: translateY(-50%) scale(1.1);
+        }
+        .truck-scroll-btn-left { left: 2px; }
+        .truck-scroll-btn-right { right: 2px; }
       `}</style>
+      <div style={{ position: 'relative' }}>
+        {/* Стрелка влево */}
+        <button className="truck-scroll-btn truck-scroll-btn-left"
+          onClick={() => scrollRef.current?.scrollBy({ left: -260, behavior: 'smooth' })}>
+          ‹
+        </button>
+        {/* Стрелка вправо */}
+        <button className="truck-scroll-btn truck-scroll-btn-right"
+          onClick={() => scrollRef.current?.scrollBy({ left: 260, behavior: 'smooth' })}>
+          ›
+        </button>
       <div ref={scrollRef} className="truck-card-scroll" style={{
         display: 'flex',
         flexDirection: 'row',
         gap: 8,
-        padding: '14px 10px 6px',
+        padding: '14px 32px 6px',
         overflowX: 'auto',
         overflowY: 'visible',
         background: 'transparent',
@@ -1571,6 +1602,7 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
           <span style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#38bdf8' : '#007aff', textAlign: 'center', lineHeight: 1.3 } as any}>Купить{'\n'}трак</span>
         </div>
       </div>
+      </div>{/* конец обёртки со стрелками */}
 
       {/* Баннер итогов дня — под strip карточек */}
       <DayEndBanner isDark={isDark} />
