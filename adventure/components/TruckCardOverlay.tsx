@@ -296,12 +296,29 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
   return (
     <div style={{ ...ps, padding: 0, overflow: 'visible' }} onClick={e => e.stopPropagation()}>
 
+      {/* ── SUMMARY CHIPS — только когда развёрнуто ── */}
+      {!collapsed && (
+        <div style={{ display: 'flex', gap: 6, padding: '8px 10px', borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`, background: isDark ? 'rgba(13,17,23,0.97)' : 'rgba(255,255,255,0.97)' }}>
+          {[
+            { label: 'HOS', val: `${Math.floor(truck.hoursLeft)}h ${Math.round((truck.hoursLeft - Math.floor(truck.hoursLeft)) * 60)}m`, color: truck.hoursLeft < 2 ? '#f87171' : truck.hoursLeft < 4 ? '#fbbf24' : '#4ade80' },
+            { label: 'MOOD', val: `${Math.round(truck.mood ?? 75)}%`, color: (truck.mood ?? 75) >= 70 ? '#4ade80' : (truck.mood ?? 75) >= 40 ? '#fbbf24' : '#f87171' },
+            { label: 'РЕЙС', val: `${Math.round((truck.progress || 0) * 100)}%`, color: '#38bdf8' },
+            { label: 'СТАТУС', val: { idle: 'Свободен', driving: 'К погрузке', at_pickup: 'Погрузка', loaded: 'В пути', at_delivery: 'Разгрузка', breakdown: 'Поломка', waiting: 'Detention', in_garage: 'Гараж' }[truck.status as string] || truck.status, color },
+          ].map(c => (
+            <div key={c.label} style={{ flex: 1, background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`, borderRadius: 8, padding: '5px 4px', textAlign: 'center' } as any}>
+              <div style={{ fontSize: 8, color: isDark ? '#94a3b8' : '#6b7280', fontWeight: 700, letterSpacing: 0.3, marginBottom: 2 }}>{c.label}</div>
+              <div style={{ fontSize: 11, fontWeight: 900, color: c.color }}>{c.val}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* ── ТАБЫ — всегда видны ── */}
       <div style={{
         display: 'flex',
         ...(collapsed ? {
-          // СВЁРНУТЫЙ: полная стеклянная таблетка — отдельный элемент
-          background: isDark ? 'rgba(10,15,30,0.45)' : 'rgba(255,255,255,0.35)',
+          // СВЁРНУТЫЙ: стеклянная таблетка
+          background: isDark ? 'rgba(10,15,30,0.55)' : 'rgba(255,255,255,0.45)',
           backdropFilter: 'blur(24px) saturate(180%)',
           WebkitBackdropFilter: 'blur(24px) saturate(180%)',
           borderRadius: 14,
@@ -313,14 +330,14 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
             : '0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.9)',
           padding: '2px',
         } : {
-          // РАЗВЁРНУТЫЙ: строка табов — часть общего стеклянного блока
-          background: isDark ? 'rgba(10,15,30,0.45)' : 'rgba(255,255,255,0.35)',
-          backdropFilter: 'blur(24px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+          // РАЗВЁРНУТЫЙ: строка табов — часть общего блока в стиле P&L
+          background: isDark ? 'rgba(13,17,23,0.97)' : 'rgba(255,255,255,0.97)',
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
           borderRadius: '12px 12px 0 0',
           border: isDark
-            ? '1px solid rgba(255,255,255,0.12)'
-            : '1px solid rgba(255,255,255,0.5)',
+            ? '2px solid rgba(255,255,255,0.08)'
+            : '2px solid rgba(0,0,0,0.08)',
           borderBottom: 'none',
         }),
       }}>
@@ -355,13 +372,13 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
       {!collapsed && (
         <div style={{
           position: 'relative', minHeight: 80,
-          background: isDark ? 'rgba(10,15,30,0.45)' : 'rgba(255,255,255,0.35)',
-          backdropFilter: 'blur(24px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+          background: isDark ? 'rgba(13,17,23,0.97)' : 'rgba(255,255,255,0.97)',
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
           borderRadius: '0 0 12px 12px',
           border: isDark
-            ? '1px solid rgba(255,255,255,0.12)'
-            : '1px solid rgba(255,255,255,0.5)',
+            ? '2px solid rgba(255,255,255,0.08)'
+            : '2px solid rgba(0,0,0,0.08)',
           borderTop: 'none',
           overflow: 'hidden',
         }}>
@@ -498,7 +515,6 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(10,15,30,0.6)' : 'rgba(255,255,255,0.5)'; }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(10,15,30,0.45)' : 'rgba(255,255,255,0.35)'; }}
       >
-        <div style={{ width: 32, height: 3, borderRadius: 2, background: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)' }} />
         <span style={{ fontSize: 10, color: isDark ? '#64748b' : '#9ca3af', fontWeight: 700, lineHeight: 1 }}>▼</span>
         <div style={{ width: 32, height: 3, borderRadius: 2, background: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)' }} />
       </div>
