@@ -118,6 +118,7 @@ export default function NegotiationChat({ visible, load, onClose, onAccepted, pr
 
   useEffect(() => {
     if (visible && load) {
+      // Не сбрасываем если переговоры уже завершены (done !== null)
       setMessages([{
         from: 'broker',
         text: `Hey! I've got a load for you: ${load.fromCity} → ${load.toCity}, ${load.miles} miles, ${load.commodity}. I'm posting at ${load.postedRate.toLocaleString()}. Interested?`,
@@ -139,7 +140,21 @@ export default function NegotiationChat({ visible, load, onClose, onAccepted, pr
         setSelectedTruckId(bestTruck?.id || null);
       }
     }
-  }, [visible, load, preselectedTruckId, trucks, gameMinute]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, load?.id]); // только при смене груза или открытии — НЕ при каждом тике
+
+  // Автовыбор трака при открытии (только если ещё не выбран)
+  useEffect(() => {
+    if (visible && load && !selectedTruckId) {
+      if (preselectedTruckId) {
+        setSelectedTruckId(preselectedTruckId);
+      } else {
+        const bestTruck = selectBestTruck(trucks, load);
+        setSelectedTruckId(bestTruck?.id || null);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, trucks.length]); // обновляем если изменился список траков
 
   useEffect(() => {
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
