@@ -121,10 +121,11 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
       clearTimeout(state.reappearTimerId);
     }
 
-    // Сохранить в localStorage
-    if (state.nickname) {
+    // Сохранить в localStorage (используем nickname из state)
+    const nick = state.nickname;
+    if (nick) {
       try {
-        localStorage.setItem(storageKey(state.nickname), '1');
+        localStorage.setItem(storageKey(nick), '1');
       } catch { /* приватный режим */ }
     }
 
@@ -145,10 +146,11 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
       clearTimeout(state.reappearTimerId);
     }
 
-    // Сохранить в localStorage
-    if (state.nickname) {
+    // Сохранить в localStorage (используем nickname из state)
+    const nick = state.nickname;
+    if (nick) {
       try {
-        localStorage.setItem(storageKey(state.nickname), '1');
+        localStorage.setItem(storageKey(nick), '1');
       } catch { /* приватный режим */ }
     }
 
@@ -162,6 +164,7 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
 
   /** Проверка завершённости онбординга по localStorage */
   checkCompleted: (nickname: string) => {
+    // Всегда сохраняем nickname чтобы skip/complete могли его использовать
     set({ nickname });
     try {
       return localStorage.getItem(storageKey(nickname)) === '1';

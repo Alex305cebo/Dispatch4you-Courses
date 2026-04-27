@@ -421,6 +421,19 @@ export default function GameScreen() {
     }
   }, [onbIsActive]);
 
+  // ── ONBOARDING: восстановление скорости при монтировании (если онбординг уже завершён) ──
+  useEffect(() => {
+    if (phase !== 'playing') return;
+    // Если онбординг не активен — убеждаемся что время идёт
+    if (!onbIsActive) {
+      const currentSpeed = useGameStore.getState().timeSpeed;
+      if (currentSpeed === 0) {
+        setTimeSpeed(1);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
   useEffect(() => { if (availableLoads.length < 5) refreshLoadBoard(); }, []);
   useEffect(() => {
     if (clockRef.current) clearInterval(clockRef.current);

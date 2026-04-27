@@ -10,7 +10,7 @@ import {
   buildSimpleRoute,
   getPositionOnRoute,
 } from '../utils/serviceVehicleHelpers';
-import { hybridSave, hybridLoad, startAutoSave, stopAutoSave } from '../utils/firebaseSaveSystem';
+import { hybridSave, hybridLoad, startAutoSave, stopAutoSave, clearAllSaves } from '../utils/firebaseSaveSystem';
 import { sendDriverQuestion, sendBreakdownAlert, sendSystemNotification } from '../utils/chatHelpers';
 // ─── OSRM fetch с retry и увеличенным таймаутом ──────────
 async function fetchRoute(fromLng: number, fromLat: number, toLng: number, toLat: number, retries = 2): Promise<Array<[number,number]> | null> {
@@ -3383,7 +3383,7 @@ case 'detention': {
   saveGame: () => {
     const state = get();
     const saveData = {
-      version: 5,
+      version: 6,
       phase: state.phase,
       day: state.day,
       gameMinute: state.gameMinute,
@@ -3426,20 +3426,14 @@ case 'detention': {
       }
 
       // Сбрасываем старые сохранения без версии или с устаревшей версией
-      if (!saveData.version || saveData.version < 5) {
+      // Версия 6: сброс из-за перехода на 1 стартовый трак
+      if (!saveData.version || saveData.version < 6) {
         if (typeof window !== 'undefined' && window.localStorage) {
           localStorage.removeItem('dispatcher-game-save');
         }
-        console.log('🔄 Old save detected, resetting...');
-        return false;
-      }
-
-      // Сбрасываем сохранения со старым количеством траков (> 1 — теперь стартуем с 1)
-      if (saveData.trucks && saveData.trucks.length > 1) {
-        if (typeof window !== 'undefined' && window.localStorage) {
-          localStorage.removeItem('dispatcher-game-save');
-        }
-        console.log('🔄 Old save with multiple trucks, resetting to 1 truck...');
+        // Очищаем и Firebase
+        try { clearAllSaves(); } catch (_) {}
+        console.log('🔄 Old save detected (v<6), resetting...');
         return false;
       }
 
