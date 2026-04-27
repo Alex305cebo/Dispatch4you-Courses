@@ -58,7 +58,7 @@ export default function OnboardingPopup({
 
   if (!mounted && !visible) return null;
 
-  const avatar = CHARACTER_AVATARS[step.characterName] ?? { emoji: '👤', color: '#94a3b8' };
+  const avatar = CHARACTER_AVATARS[step.characterName] ?? { emoji: '👤', color: '#94a3b8', animatedUrl: '' };
   const roleLabel = CHARACTER_ROLE_LABEL[step.character] ?? step.character;
 
   const animStyle: React.CSSProperties =
@@ -126,7 +126,11 @@ export default function OnboardingPopup({
               flexShrink: 0,
               boxShadow: `0 0 12px ${avatar.color}33`,
             }}>
-              {avatar.emoji}
+              {avatar.animatedUrl ? (
+                <img src={avatar.animatedUrl} width={32} height={32} style={{ objectFit: 'contain' }} alt={step.characterName} />
+              ) : (
+                avatar.emoji
+              )}
             </div>
 
             {/* Имя + роль */}

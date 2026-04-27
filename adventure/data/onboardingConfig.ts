@@ -182,13 +182,31 @@ export const ONBOARDING_STEPS: OnboardingStepConfig[] = [
   },
 ];
 
+const FLUENT = 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis';
+
 // ═══ АВАТАРЫ ПЕРСОНАЖЕЙ ═══
 
-export const CHARACTER_AVATARS: Record<string, { emoji: string; color: string }> = {
-  'Стив':  { emoji: '👨‍💼', color: '#f59e0b' },  // Владелец — золотой
-  'Майк':  { emoji: '👨‍✈️', color: '#38bdf8' },  // Водитель — голубой
-  'Лео':   { emoji: '🤝', color: '#a78bfa' },    // Брокер — фиолетовый
-  'Сара':  { emoji: '👩‍💻', color: '#34d399' },  // Бухгалтер — зелёный
+export const CHARACTER_AVATARS: Record<string, { emoji: string; color: string; animatedUrl: string }> = {
+  'Стив':  {
+    emoji: '👨‍💼',
+    color: '#f59e0b',
+    animatedUrl: `${FLUENT}/People/Man%20Office%20Worker.png`,
+  },
+  'Майк':  {
+    emoji: '👨‍✈️',
+    color: '#38bdf8',
+    animatedUrl: `${FLUENT}/People/Pilot.png`,
+  },
+  'Лео':   {
+    emoji: '🤝',
+    color: '#a78bfa',
+    animatedUrl: `${FLUENT}/People/Handshake.png`,
+  },
+  'Сара':  {
+    emoji: '👩‍💻',
+    color: '#34d399',
+    animatedUrl: `${FLUENT}/People/Woman%20Technologist.png`,
+  },
 };
 
 export const CHARACTER_ROLE_LABEL: Record<OnboardingCharacter, string> = {
