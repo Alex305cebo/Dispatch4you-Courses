@@ -1329,11 +1329,17 @@ export default function GameScreen() {
       <View style={{
         flexDirection: 'row', gap: 6,
         paddingHorizontal: 8, paddingVertical: 8,
-        backgroundColor: themeMode === 'dark' ? '#0d1117' : T.navBg,
+        backgroundColor: activeTab === 'map'
+          ? (themeMode === 'dark' ? 'rgba(13,17,23,0.55)' : 'rgba(255,255,255,0.55)')
+          : (themeMode === 'dark' ? '#0d1117' : T.navBg),
         borderTopWidth: 1,
-        borderTopColor: themeMode === 'dark' ? 'rgba(56,189,248,0.15)' : T.navBorder,
+        borderTopColor: activeTab === 'map'
+          ? 'rgba(56,189,248,0.08)'
+          : (themeMode === 'dark' ? 'rgba(56,189,248,0.15)' : T.navBorder),
         // @ts-ignore
         paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
+        backdropFilter: activeTab === 'map' ? 'blur(12px)' : 'none',
+        WebkitBackdropFilter: activeTab === 'map' ? 'blur(12px)' : 'none',
       } as any}>
         {tabDefs.map(tab => {
           const isOn = activeTab === tab.id;
@@ -1363,11 +1369,15 @@ export default function GameScreen() {
                 borderRadius: 16,
                 backgroundColor: isOn
                   ? (themeMode === 'dark' ? 'rgba(6,182,212,0.1)' : T.navActiveBtn)
-                  : (themeMode === 'dark' ? 'rgba(255,255,255,0.08)' : T.navInactiveBtn),
+                  : (themeMode === 'dark'
+                      ? (activeTab === 'map' ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.08)')
+                      : T.navInactiveBtn),
                 borderWidth: 1.5,
                 borderColor: isOn
                   ? (themeMode === 'dark' ? '#38bdf8' : 'transparent')
-                  : (themeMode === 'dark' ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.1)'),
+                  : (themeMode === 'dark'
+                      ? (activeTab === 'map' ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.22)')
+                      : 'rgba(0,0,0,0.1)'),
                 position: 'relative',
                 ...(isOn && themeMode === 'dark' ? {
                   shadowColor: '#38bdf8',

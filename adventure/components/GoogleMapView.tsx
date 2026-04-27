@@ -1529,6 +1529,45 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         style={{ width: '100%', height: '100%' }}
       />
 
+      {/* Плашка "Отслеживается" — по центру снизу, заходит на карточку трака */}
+      {followTruck && (
+        <div
+          onClick={(e) => { e.stopPropagation(); }}
+          style={{
+            position: 'absolute',
+            bottom: 72,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1100,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            background: 'rgba(15,23,42,0.88)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(74,222,128,0.45)',
+            borderRadius: 20,
+            paddingLeft: 10,
+            paddingRight: 14,
+            paddingTop: 5,
+            paddingBottom: 5,
+            boxShadow: '0 2px 12px rgba(74,222,128,0.2)',
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <span style={{
+            width: 8, height: 8, borderRadius: '50%',
+            background: '#4ade80',
+            boxShadow: '0 0 6px #4ade80',
+            flexShrink: 0,
+            display: 'inline-block',
+          }} />
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#4ade80', letterSpacing: 0.3 }}>
+            Отслеживается
+          </span>
+        </div>
+      )}
+
       {/* Кнопки zoom — слева снизу */}
       <div
           onClick={(e) => e.stopPropagation()}
@@ -1705,9 +1744,6 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
               className={followDragPulse ? 'follow-pulse' : ''}
             >
               <span style={{ fontSize: 20 }}>🎯</span>
-              {followTruck && (
-                <span style={{ position: 'absolute', top: 4, right: 4, width: 8, height: 8, borderRadius: '50%', background: '#4ade80' }} />
-              )}
             </button>
           </div>
 
