@@ -291,7 +291,7 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
   const divider = <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)', margin: '4px 0' }} />;
 
   return (
-    <div style={{ ...ps, padding: 0, overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
+    <div style={{ ...ps, padding: 0, overflow: collapsed ? 'visible' : 'hidden' }} onClick={e => e.stopPropagation()}>
 
       {/* ── ТАБЫ — всегда видны ── */}
       <div style={{
