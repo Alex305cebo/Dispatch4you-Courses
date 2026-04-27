@@ -38,6 +38,8 @@ import DeliveryResultPopup from '../components/DeliveryResultPopup';
 import StatsPopup from '../components/StatsPopup';
 import SettingsPopup from '../components/SettingsPopup';
 import HelpPopup from '../components/HelpPopup';
+import ShiftEndPopup from '../components/ShiftEndPopup';
+import DayEndPopup from '../components/DayEndPopup';
 import { useAccountStore } from '../store/accountStore';
 import GuideSpotlight from '../components/GuideSpotlight';
 import { useGuideStore } from '../store/guideStore';
@@ -1778,6 +1780,8 @@ export default function GameScreen() {
       {showStats && <StatsPopup onClose={() => setShowStats(false)} />}
       {showSettings && <SettingsPopup onClose={() => setShowSettings(false)} />}
       {showHelp && <HelpPopup onClose={() => setShowHelp(false)} />}
+      <ShiftEndPopup isDark={themeMode === 'dark'} />
+      <DayEndPopup isDark={themeMode === 'dark'} />
       <TruckShopModal />
       <RepairGarageModal />
       {/* Колокольчик и меню — вне TopBar div чтобы Modal работал корректно */}

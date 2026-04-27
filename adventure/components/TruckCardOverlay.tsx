@@ -109,6 +109,8 @@ function AnimatedDropdown({ truck, events, isDark, isSelected }: { truck: any; e
         maxHeight: expanded ? (contentH || 500) : 0,
         opacity: expanded ? 1 : 0,
         transition: 'max-height 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease',
+        // Когда expanded — даём overflow visible чтобы не обрезать углы таба
+        ...(expanded ? { overflow: 'visible' } : {}),
       }}>
         <div ref={contentRef}>
           <TruckDropdown truck={truck} events={events} isDark={isDark} />
@@ -267,6 +269,7 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
 
   // ── Mood ──
   const mood = truck.mood ?? 75;
+  const moodRounded = Math.round(mood);
   const moodColor = mood >= 70 ? '#4ade80' : mood >= 40 ? '#fbbf24' : '#f87171';
   const moodLabel = mood >= 70 ? 'Happy' : mood >= 40 ? 'Neutral' : 'Unhappy';
 
@@ -409,9 +412,9 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
           {row('Safety Score', `${truck.safetyScore || 0}/100`)}
           {row('Fuel', `${truck.fuelEfficiency || 0} MPG`)}
           {divider}
-          {row(`Mood — ${moodLabel}`, `${mood}%`, moodColor)}
+          {row(`Mood — ${moodLabel}`, `${moodRounded}%`, moodColor)}
           <div style={{ height: 4, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 2, overflow: 'hidden', marginTop: 3 }}>
-            <div style={{ height: '100%', borderRadius: 2, background: moodColor, width: `${mood}%`, transition: 'width 0.5s ease' }} />
+            <div style={{ height: '100%', borderRadius: 2, background: moodColor, width: `${moodRounded}%`, transition: 'width 0.5s ease' }} />
           </div>
           {/* Износ трака — компактный вид */}
           <div style={{ marginTop: 8 }}>
@@ -1273,7 +1276,33 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                   }
                 }}
               >
-                {/* Индикатор слежения — УБРАН отсюда, рендерится снаружи карточки */}
+                {/* Индикатор слежения — снизу карточки, поверх таба */}
+                {isSelected && (
+                  <div style={{
+                    position: 'absolute', bottom: -16, left: '50%',
+                    transform: 'translateX(-50%)',
+                    display: 'flex', alignItems: 'center', gap: 5,
+                    background: isDark ? 'rgba(10,15,30,0.85)' : 'rgba(255,255,255,0.85)',
+                    backdropFilter: 'blur(16px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+                    border: `1.5px solid ${color}`,
+                    borderRadius: 10, padding: '3px 10px',
+                    zIndex: 10,
+                    whiteSpace: 'nowrap',
+                    boxShadow: `0 4px 16px ${color}55, 0 1px 4px rgba(0,0,0,0.25)`,
+                  } as any}>
+                    <div style={{
+                      width: 6, height: 6, borderRadius: '50%',
+                      background: hasUrgent ? '#ef4444' : '#4ade80',
+                      boxShadow: hasUrgent ? '0 0 5px #ef4444' : '0 0 5px #4ade80',
+                      animation: 'trackingDot 1.2s ease-in-out infinite',
+                      flexShrink: 0,
+                    }} />
+                    <span style={{ fontSize: 10, fontWeight: 800, color: isDark ? '#e2e8f0' : '#111827' }}>
+                      {hasUrgent ? '⚠️ Проблема' : '🎯 Слежение'}
+                    </span>
+                  </div>
+                )}
 
                 {/* Бейдж количества событий */}
                 {truckEvents.length > 0 && !isSelected && (
@@ -1376,40 +1405,10 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                 </div>
               </div>
 
-              {/* Индикатор слежения — поверх всего, между карточкой и табом */}
-              {isSelected && (
-                <div style={{
-                  position: 'absolute',
-                  bottom: -14,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  display: 'flex', alignItems: 'center', gap: 5,
-                  background: isDark
-                    ? 'rgba(10,15,30,0.55)'
-                    : 'rgba(255,255,255,0.55)',
-                  backdropFilter: 'blur(16px) saturate(180%)',
-                  WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-                  border: `1.5px solid ${color}`,
-                  borderRadius: 10, padding: '3px 10px',
-                  zIndex: 9999,
-                  whiteSpace: 'nowrap',
-                  boxShadow: `0 4px 16px ${color}55, 0 1px 4px rgba(0,0,0,0.25)`,
-                } as any}>
-                  <div style={{
-                    width: 6, height: 6, borderRadius: '50%',
-                    background: hasUrgent ? '#ef4444' : '#4ade80',
-                    boxShadow: hasUrgent ? '0 0 5px #ef4444' : '0 0 5px #4ade80',
-                    animation: 'trackingDot 1.2s ease-in-out infinite',
-                    flexShrink: 0,
-                  }} />
-                  <span style={{ fontSize: 10, fontWeight: 800, color: isDark ? '#e2e8f0' : '#111827' }}>
-                    {hasUrgent ? '⚠️ Проблема' : '🎯 Слежение'}
-                  </span>
-                </div>
-              )}
-
-              {/* Выпадающая панель — анимированная */}
-              <AnimatedDropdown truck={truck} events={truckEvents} isDark={isDark} isSelected={isSelected} />
+              {/* Выпадающая панель — marginTop даёт место плашке Слежение */}
+              <div style={{ marginTop: 4 }}>
+                <AnimatedDropdown truck={truck} events={truckEvents} isDark={isDark} isSelected={isSelected} />
+              </div>
 
               {/* Результат доставки — под карточкой */}
               {deliveryResult && (
