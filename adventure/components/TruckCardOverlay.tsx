@@ -297,24 +297,36 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
       <div style={{
         display: 'flex',
         borderBottom: collapsed ? 'none' : `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+        ...(collapsed ? {
+          background: isDark
+            ? 'rgba(15,20,35,0.55)'
+            : 'rgba(255,255,255,0.55)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderRadius: 12,
+          margin: '4px 6px',
+          border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}`,
+        } : {}),
       }}>
         {tabs.map(t => (
           <button
             key={t.key}
             onClick={() => handleTabClick(t.key)}
             style={{
-              flex: 1, padding: collapsed ? '10px 4px' : '8px 4px',
+              flex: 1, padding: collapsed ? '8px 4px' : '8px 4px',
               border: 'none', cursor: 'pointer',
               background: 'transparent',
-              borderBottom: `2px solid ${activeTab === t.key ? '#06b6d4' : 'transparent'}`,
-              color: activeTab === t.key ? '#06b6d4' : (isDark ? '#64748b' : '#9ca3af'),
+              borderBottom: collapsed ? 'none' : `2px solid ${activeTab === t.key ? '#06b6d4' : 'transparent'}`,
+              color: collapsed
+                ? (isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.35)')
+                : (activeTab === t.key ? '#06b6d4' : (isDark ? '#64748b' : '#9ca3af')),
               fontSize: 11, fontWeight: 600,
               transition: 'color 0.2s, border-color 0.2s, padding 0.2s',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3,
               whiteSpace: 'nowrap',
             }}
           >
-            <span style={{ fontSize: collapsed ? 16 : 12 }}>{t.icon}</span>
+            <span style={{ fontSize: collapsed ? 14 : 12, opacity: collapsed ? 0.6 : 1 }}>{t.icon}</span>
             {!collapsed && t.label}
           </button>
         ))}
@@ -1226,7 +1238,7 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                 {/* Индикатор слежения — снизу по центру карточки */}
                 {isSelected && (
                   <div style={{
-                    position: 'absolute', bottom: -14, left: '50%',
+                    position: 'absolute', bottom: -20, left: '50%',
                     transform: 'translateX(-50%)',
                     display: 'flex', alignItems: 'center', gap: 5,
                     background: isDark ? 'rgba(15,20,35,0.96)' : 'rgba(255,255,255,0.96)',
@@ -1335,7 +1347,7 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                         <span style={{ fontSize: 8, color: hosColor, opacity: 0.8 } as any}>h</span>
                       </div>
                       <span style={{ fontSize: 9 } as any}>😊</span>
-                      <span style={{ fontSize: 9, fontWeight: 800, color: mood >= 60 ? (isDark ? '#34d399' : '#16a34a') : mood >= 35 ? '#fbbf24' : '#f87171' } as any}>{mood}%</span>
+                      <span style={{ fontSize: 9, fontWeight: 800, color: mood >= 60 ? (isDark ? '#34d399' : '#16a34a') : mood >= 35 ? '#fbbf24' : '#f87171' } as any}>{Math.round(mood)}%</span>
                       {truck.currentLoad ? (
                         <div style={{ marginLeft: 'auto', border: `1px solid ${isDark ? 'rgba(74,222,128,0.35)' : 'rgba(52,199,89,0.35)'}`, borderRadius: 5, padding: '0px 5px' } as any}>
                           <span style={{ fontSize: 11, fontWeight: 900, color: isDark ? '#4ade80' : '#16a34a' } as any}>${truck.currentLoad.agreedRate.toLocaleString()}</span>
