@@ -511,6 +511,7 @@ interface GameState {
   repairGarageOpen: boolean;
   setRepairGarageOpen: (open: boolean) => void;
   repairTruckInGarage: (truckId: string) => void;
+  repairSpecificStat: (truckId: string, stat: 'reliability' | 'comfort' | 'legalStatus' | 'performance') => void;
   upgradeTruckInGarage: (truckId: string, upgradeId: string) => void;
   releaseFromGarage: (truckId: string) => void;
   sendTruckToGarage: (truckId: string, city: string) => void;
@@ -4228,6 +4229,36 @@ case 'detention': {
       message: `Полный ремонт ${truck.name} выполнен. Стоимость: $${repairCost.toLocaleString()}. Трак как новый!`,
       actionRequired: false, relatedTruckId: truckId,
     });
+  },
+
+  repairSpecificStat: (truckId: string, statKey: 'reliability' | 'comfort' | 'legalStatus' | 'performance') => {
+    const { trucks, balance } = get();
+    const truck = trucks.find(t => t.id === truckId);
+    if (!truck || truck.status !== 'in_garage') return;
+
+    const costs = {
+      reliability: 800,
+      comfort: 400,
+      legalStatus: 600,
+      performance: 1000
+    };
+    const cost = costs[statKey];
+
+    if (balance < cost) return;
+
+    get().removeMoney(cost, `Ремонт ${statKey} — ${truck.name}`);
+    set({
+      trucks: trucks.map(t => t.id === truckId ? {
+        ...t,
+        [statKey]: 100,
+        // Если починили надёжность — убираем статус "старого трака" в плане штрафов
+        ...(statKey === 'reliability' ? { isOldTruck: false, oldTruckBreakdownChance: undefined } : {})
+      } : t)
+    });
+
+    window.dispatchEvent(new CustomEvent('mapToast', {
+      detail: { message: `🔧 ${truck.name}: ${statKey} восстановлен!`, color: '#10b981' }
+    }));
   },
 
   upgradeTruckInGarage: (truckId: string, upgradeId: string) => {

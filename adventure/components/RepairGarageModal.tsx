@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Image } fr
 import { useGameStore } from '../store/gameStore';
 import { useTheme } from '../hooks/useTheme';
 import { ThemeColors } from '../constants/themes';
+import TruckStatsView from './TruckStatsView';
 
 const getTruckImageUri = (id: number): string => {
   const isGame = typeof window !== 'undefined' && (
@@ -39,7 +40,7 @@ export default function RepairGarageModal() {
   const T = useTheme();
   const s = useMemo(() => makeStyles(T), [T]);
   const { repairGarageOpen, setRepairGarageOpen, trucks, balance,
-    repairTruckInGarage, upgradeTruckInGarage, releaseFromGarage } = useGameStore();
+    repairTruckInGarage, upgradeTruckInGarage, releaseFromGarage, repairSpecificStat } = useGameStore();
   const setTruckShopOpen = useGameStore(ss => ss.setTruckShopOpen);
   const [tab, setTab] = useState<Tab>('fleet');
 
@@ -166,11 +167,60 @@ export default function RepairGarageModal() {
                         <View style={s.stat}><Text style={s.statLabel}>Mood</Text><Text style={s.statVal}>{truck.mood || 60}%</Text></View>
                         <View style={s.stat}><Text style={s.statLabel}>HOS</Text><Text style={s.statVal}>{truck.complianceRate || 80}%</Text></View>
                       </View>
+
+                      {/* ── ХАРАКТЕРИСТИКИ ИЗНОСА ── */}
+                      <TruckStatsView truck={truck} compact={true} />
+
                       {!repairDone && (
-                        <TouchableOpacity style={[s.repairBtn, !canRepair && s.btnDisabled]} onPress={() => canRepair && repairTruckInGarage(truck.id)} activeOpacity={0.8}>
-                          <Text style={s.repairBtnTxt}>🔧 Полный ремонт — ${repairCost.toLocaleString()}</Text>
-                          {truck.isOldTruck && <Text style={s.repairNote}>Старый трак → как новый</Text>}
-                        </TouchableOpacity>
+                        <>
+                          {/* Частичный ремонт — по каждому стату */}
+                          <Text style={s.sectionTitle}>🔩 Частичный ремонт</Text>
+                          <View style={s.partialRepairGrid}>
+                            {([
+                              { key: 'reliability' as const, icon: '🔧', label: 'Надёжность',    cost: 800,  color: '#f87171' },
+                              { key: 'comfort'     as const, icon: '🛋️', label: 'Комфорт',       cost: 400,  color: '#fb923c' },
+                              { key: 'legalStatus' as const, icon: '📋', label: 'Тех. состояние', cost: 600,  color: '#fbbf24' },
+                              { key: 'performance' as const, icon: '⚡', label: 'Производит.',   cost: 1000, color: '#06b6d4' },
+                            ]).map(item => {
+                              const val = Math.round((truck as any)[item.key] ?? 100);
+                              const isMax = val >= 100;
+                              const canBuy = !isMax && balance >= item.cost;
+                              return (
+                                <TouchableOpacity
+                                  key={item.key}
+                                  style={[
+                                    s.partialBtn,
+                                    { borderColor: isMax ? '#4ade8044' : item.color + '44' },
+                                    !canBuy && s.btnDisabled,
+                                  ]}
+                                  onPress={() => canBuy && repairSpecificStat(truck.id, item.key)}
+                                  activeOpacity={canBuy ? 0.75 : 1}
+                                >
+                                  <Text style={{ fontSize: 18 }}>{isMax ? '✅' : item.icon}</Text>
+                                  <Text style={[s.partialBtnLabel, { color: isMax ? '#4ade80' : item.color }]}>
+                                    {item.label}
+                                  </Text>
+                                  <Text style={s.partialBtnVal}>{val}/100</Text>
+                                  {!isMax && (
+                                    <Text style={[s.partialBtnCost, { color: canBuy ? item.color : '#64748b' }]}>
+                                      ${item.cost.toLocaleString()}
+                                    </Text>
+                                  )}
+                                </TouchableOpacity>
+                              );
+                            })}
+                          </View>
+
+                          {/* Полный ремонт */}
+                          <TouchableOpacity
+                            style={[s.repairBtn, !canRepair && s.btnDisabled]}
+                            onPress={() => canRepair && repairTruckInGarage(truck.id)}
+                            activeOpacity={0.8}
+                          >
+                            <Text style={s.repairBtnTxt}>🔧 Полный ремонт — ${repairCost.toLocaleString()}</Text>
+                            {truck.isOldTruck && <Text style={s.repairNote}>Старый трак → все статы 100%</Text>}
+                          </TouchableOpacity>
+                        </>
                       )}
                       <Text style={s.sectionTitle}>⬆️ Улучшения</Text>
                       <View style={s.upgradesGrid}>
@@ -318,5 +368,16 @@ function makeStyles(T: ThemeColors) {
       padding: 14, alignItems: 'center',
     },
     releaseBtnTxt: { fontSize: 14, fontWeight: '900', color: '#4ade80' },
+
+    // Частичный ремонт
+    partialRepairGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+    partialBtn: {
+      width: '48%', borderRadius: 12, borderWidth: 1.5,
+      padding: 10, alignItems: 'center', gap: 3,
+      backgroundColor: 'rgba(255,255,255,0.03)',
+    },
+    partialBtnLabel: { fontSize: 11, fontWeight: '800', textAlign: 'center' },
+    partialBtnVal: { fontSize: 13, fontWeight: '900', color: '#e2e8f0' },
+    partialBtnCost: { fontSize: 11, fontWeight: '700', marginTop: 1 },
   });
 }

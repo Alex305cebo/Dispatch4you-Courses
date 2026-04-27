@@ -8,6 +8,7 @@ import { getDriverAvatar } from '../utils/driverAvatars';
 import { SERVICE_VEHICLE_CONFIGS } from '../types/serviceVehicle';
 import DayEndBanner from './DayEndPopup';
 import ShiftEndBanner from './ShiftEndPopup';
+import TruckStatsView from './TruckStatsView';
 
 const FLUENT = 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis';
 const STATUS_COLOR: Record<string, string> = {
@@ -372,6 +373,10 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
           {row(`Mood — ${moodLabel}`, `${mood}%`, moodColor)}
           <div style={{ height: 4, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 2, overflow: 'hidden', marginTop: 3 }}>
             <div style={{ height: '100%', borderRadius: 2, background: moodColor, width: `${mood}%`, transition: 'width 0.5s ease' }} />
+          </div>
+          {/* Износ трака — компактный вид */}
+          <div style={{ marginTop: 8 }}>
+            <TruckStatsView truck={truck} compact={true} />
           </div>
         </div>
 
