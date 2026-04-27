@@ -1406,7 +1406,7 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
               </div>
 
               {/* Выпадающая панель — marginTop даёт место плашке Слежение */}
-              <div style={{ marginTop: 4 }}>
+              <div style={{ marginTop: 2 }}>
                 <AnimatedDropdown truck={truck} events={truckEvents} isDark={isDark} isSelected={isSelected} />
               </div>
 
