@@ -186,23 +186,23 @@ const FLUENT = 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fl
 
 // ═══ АВАТАРЫ ПЕРСОНАЖЕЙ ═══
 
-export const CHARACTER_AVATARS: Record<string, { emoji: string; color: string; animatedUrl: string }> = {
-  'Стив':  {
+export const CHARACTER_AVATARS: Record<OnboardingCharacter, { emoji: string; color: string; animatedUrl: string }> = {
+  Owner: {
     emoji: '👨‍💼',
     color: '#f59e0b',
     animatedUrl: `${FLUENT}/People/Man%20Office%20Worker.png`,
   },
-  'Майк':  {
+  Driver: {
     emoji: '👨‍✈️',
     color: '#38bdf8',
     animatedUrl: `${FLUENT}/People/Pilot.png`,
   },
-  'Лео':   {
+  Broker: {
     emoji: '🤝',
     color: '#a78bfa',
-    animatedUrl: `${FLUENT}/People/Handshake.png`,
+    animatedUrl: `${FLUENT}/Hand%20gestures/Handshake.png`,
   },
-  'Сара':  {
+  Accountant: {
     emoji: '👩‍💻',
     color: '#34d399',
     animatedUrl: `${FLUENT}/People/Woman%20Technologist.png`,

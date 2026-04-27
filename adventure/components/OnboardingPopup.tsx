@@ -58,7 +58,7 @@ export default function OnboardingPopup({
 
   if (!mounted && !visible) return null;
 
-  const avatar = CHARACTER_AVATARS[step.characterName] ?? { emoji: '👤', color: '#94a3b8', animatedUrl: '' };
+  const avatar = CHARACTER_AVATARS[step.character] ?? { emoji: '👤', color: '#94a3b8', animatedUrl: '' };
   const roleLabel = CHARACTER_ROLE_LABEL[step.character] ?? step.character;
 
   const animStyle: React.CSSProperties =
