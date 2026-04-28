@@ -23,35 +23,29 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 function getStatusMessage(truck: any): string {
-  if (truck.onNightStop) return '🌙 Ночёвка';
-  if (truck.hosRestUntilMinute > 0) return '😴 HOS отдых';
-  if (truck.onMandatoryBreak) return '☕ 30-мин перерыв';
-  if (truck.status === 'breakdown') return '🔧 Поломка!';
-  if (truck.status === 'waiting') return '⏳ Detention';
-  if (truck.status === 'at_pickup') {
-    const city = truck.currentCity ? truck.currentCity.split(',')[0] : '';
-    return `📦 Грузится`;
-  }
-  if (truck.status === 'at_delivery') {
-    return `🏁 Разгрузка`;
-  }
+  if (truck.onNightStop) return 'Водитель спит на стоянке';
+  if (truck.hosRestUntilMinute > 0) return 'Обязательный отдых HOS';
+  if (truck.onMandatoryBreak) return 'Перерыв 30 минут';
+  if (truck.status === 'breakdown') return 'Поломка — нужен ремонт';
+  if (truck.status === 'waiting') return 'Ожидание на стоянке';
+  if (truck.status === 'at_pickup') return 'Идёт погрузка';
+  if (truck.status === 'at_delivery') return 'Идёт разгрузка';
   if (truck.status === 'driving') {
     const city = truck.destinationCity ? truck.destinationCity.split(',')[0] : '';
-    return city ? `🚛 К ${city}` : '🚛 К погрузке';
+    return city ? `Едет на погрузку в ${city}` : 'Едет на погрузку';
   }
   if (truck.status === 'loaded') {
     const city = truck.destinationCity ? truck.destinationCity.split(',')[0] : '';
-    return city ? `📦 → ${city}` : '📦 В пути';
+    return city ? `Везёт груз в ${city}` : 'Везёт груз';
   }
   if (truck.status === 'idle') {
     const w = truck.idleWarningLevel ?? 0;
-    if (w === 3) return '🔴 Нужен груз!';
-    if (w === 2) return '🟠 Нужен груз';
-    if (w === 1) return '🟡 Ищем груз';
-    return '✅ Свободен';
+    if (w >= 2) return 'Срочно нужен груз!';
+    if (w === 1) return 'Ищем подходящий груз';
+    return 'Свободен — ждёт груз';
   }
-  if (truck.status === 'in_garage') return '🔩 В гараже';
-  return '—';
+  if (truck.status === 'in_garage') return 'В гараже на ремонте';
+  return 'Статус неизвестен';
 }
 
 const URGENCY_COLOR: Record<string, string> = {
@@ -1467,6 +1461,10 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
         }
         .truck-scroll-btn-left { left: 2px; }
         .truck-scroll-btn-right { right: 2px; }
+        @keyframes marquee {
+          0% { transform: translateX(0%); }
+          100% { transform: translateX(-50%); }
+        }
       `}</style>
       {/* Скролл-контейнер — pointerEvents:none чтобы не блокировать карту, auto на карточках */}
       <div ref={scrollRef} className="truck-card-scroll" style={{
@@ -1666,11 +1664,20 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                     <img src={getDriverAvatar(truck.driver || truck.id)} width={40} height={40}
                       style={{ display: 'block', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.4))' } as any} />
                     <div style={{
-                      fontSize: 8, fontWeight: 700, color,
+                      fontSize: 10, fontWeight: 700, color,
                       border: `1px solid ${color}44`, borderRadius: 4,
-                      padding: '1px 4px', whiteSpace: 'nowrap', maxWidth: 58,
-                      overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center',
-                    } as any}>{statusLabel}</div>
+                      padding: '2px 4px', maxWidth: 58,
+                      overflow: 'hidden', textAlign: 'center',
+                    } as any}>
+                      {statusLabel.length > 7 ? (
+                        <div style={{
+                          display: 'inline-block', whiteSpace: 'nowrap',
+                          animation: 'marquee 3s linear infinite',
+                        } as any}>{statusLabel}&nbsp;&nbsp;&nbsp;{statusLabel}&nbsp;&nbsp;&nbsp;</div>
+                      ) : (
+                        <span style={{ whiteSpace: 'nowrap' } as any}>{statusLabel}</span>
+                      )}
+                    </div>
                   </div>
 
                   {/* ПРАВЫЙ БЛОК — инфо */}
