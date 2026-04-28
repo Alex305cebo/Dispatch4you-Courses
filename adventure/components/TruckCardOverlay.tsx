@@ -9,7 +9,6 @@ import { SERVICE_VEHICLE_CONFIGS } from '../types/serviceVehicle';
 import DayEndBanner from './DayEndPopup';
 import ShiftEndBanner from './ShiftEndPopup';
 import TruckStatsView from './TruckStatsView';
-import { UnifiedChatUI } from './UnifiedChatUI';
 
 const FLUENT = 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis';
 const STATUS_COLOR: Record<string, string> = {
@@ -147,17 +146,13 @@ function getLoadingFact(load: any, truck: any, isPU: boolean, seed: number) {
 
 /** HUD-плашка с вкладками — Route / Stats / Load / Связь */
 function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any }) {
-  const [activeTab, setActiveTab] = useState<'route' | 'stats' | 'load' | 'chat' | 'deal'>('route');
+  const [activeTab, setActiveTab] = useState<'route' | 'stats' | 'load' | 'deal'>('route');
   const collapsed = false; // Всегда развёрнуто
   const gameMinute = useGameStore(s => s.gameMinute);
   const negotiation = useGameStore(s => s.negotiation);
   const makeOffer = useGameStore(s => s.makeOffer);
   const closeNegotiation = useGameStore(s => s.closeNegotiation);
   const assignLoadToTruck = useGameStore(s => s.assignLoadToTruck);
-  const sessionName = useGameStore(s => s.sessionName);
-  const unreadChatCount = useGameStore(s =>
-    s.notifications.filter((n: any) => ['email','pod_ready','rate_con','detention','missed_call','voicemail','text','urgent'].includes(n.type) && !n.read).length
-  );
   const color = getTruckColor(truck);
 
   // Локальное состояние переговоров внутри HUD
@@ -239,7 +234,7 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
     setIsAssigning(false);
   }
 
-  function handleTabClick(key: 'route' | 'stats' | 'load' | 'chat' | 'deal') {
+  function handleTabClick(key: 'route' | 'stats' | 'load' | 'deal') {
     setActiveTab(key);
   }
 
@@ -306,7 +301,6 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
     { key: 'route', icon: '🛣️', label: 'Route' },
     { key: 'stats', icon: '📊', label: 'Stats' },
     { key: 'load', icon: '📦', label: 'Load' },
-    { key: 'chat', icon: '💬', label: 'Связь', badge: unreadChatCount > 0 },
     ...(activeDealLoad ? [{ key: 'deal' as const, icon: '🤝', label: 'Груз', badge: dealDone !== 'accepted' && dealDone !== 'rejected' }] : []),
   ];
 
@@ -458,20 +452,6 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
               <div style={{ fontSize: 11, color: isDark ? '#94a3b8' : '#6b7280' }}>No load assigned</div>
             </div>
           )}
-        </div>
-
-        {/* СВЯЗЬ — чат с брокерами и водителями */}
-        <div style={{
-          opacity: activeTab === 'chat' ? 1 : 0,
-          position: activeTab === 'chat' ? 'relative' : 'absolute',
-          top: 0, left: 0, width: '100%',
-          transition: 'opacity 0.3s ease',
-          pointerEvents: activeTab === 'chat' ? 'auto' : 'none',
-          height: activeTab === 'chat' ? 'auto' : 0,
-          overflow: 'hidden',
-          minHeight: activeTab === 'chat' ? 280 : 0,
-        }}>
-          <UnifiedChatUI nickname={sessionName || 'player'} />
         </div>
 
         {/* DEAL — переговоры с брокером */}

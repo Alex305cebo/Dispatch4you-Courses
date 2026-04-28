@@ -104,10 +104,16 @@ function onGoogleMapsReady(cb: () => void) {
 }
 
 // ── ГЛАВНЫЙ КОМПОНЕНТ ────────────────────────────────────────────────────────
-export default function GoogleMapView({ onTruckInfo, onTruckSelect, onFindLoad }: {
+export default function GoogleMapView({ onTruckInfo, onTruckSelect, onFindLoad, onToggleChat, onToggleLoadBoard, showChat, showLoadBoard, chatBadge, loadsBadge }: {
   onTruckInfo?: (truckId: string) => void;
   onTruckSelect?: (truckId: string) => void;
   onFindLoad?: (city: string) => void;
+  onToggleChat?: () => void;
+  onToggleLoadBoard?: () => void;
+  showChat?: boolean;
+  showLoadBoard?: boolean;
+  chatBadge?: number;
+  loadsBadge?: number;
 }) {
   if (Platform.OS !== "web") {
     return (
@@ -116,7 +122,7 @@ export default function GoogleMapView({ onTruckInfo, onTruckSelect, onFindLoad }
       </View>
     );
   }
-  return <GoogleMapComponent onTruckInfo={onTruckInfo} onTruckSelect={onTruckSelect} onFindLoad={onFindLoad} />;
+  return <GoogleMapComponent onTruckInfo={onTruckInfo} onTruckSelect={onTruckSelect} onFindLoad={onFindLoad} onToggleChat={onToggleChat} onToggleLoadBoard={onToggleLoadBoard} showChat={showChat} showLoadBoard={showLoadBoard} chatBadge={chatBadge} loadsBadge={loadsBadge} />;
 }
 
 // ── КОМПОНЕНТ GOOGLE MAPS ────────────────────────────────────────────────────
@@ -143,10 +149,74 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
   const [selectedTruck, setSelectedTruck] = useState<any>(null);
   const [mapTypeMenuOpen, setMapTypeMenuOpen] = useState(false);
   const [followMenuOpen, setFollowMenuOpen] = useState(false);
+  // Локальный state кнопок — синхронизируется через window events
+  const [showChat, setShowChatLocal] = useState(false);
+  const [showLoadBoard, setShowLoadBoardLocal] = useState(false);
+  const [chatBadge, setChatBadge] = useState(0);
+  const [loadsBadge, setLoadsBadge] = useState(0);
+
+  // Слушаем обновления badge и состояния панелей из game.tsx
+  useEffect(() => {
+    const onState = (e: Event) => {
+      const d = (e as CustomEvent).detail || {};
+      if (d.showChat !== undefined) setShowChatLocal(d.showChat);
+      if (d.showLoadBoard !== undefined) setShowLoadBoardLocal(d.showLoadBoard);
+      if (d.chatBadge !== undefined) setChatBadge(d.chatBadge);
+      if (d.loadsBadge !== undefined) setLoadsBadge(d.loadsBadge);
+    };
+    window.addEventListener('mapButtonsState', onState);
+    return () => window.removeEventListener('mapButtonsState', onState);
+  }, []);
 
   // Сообщаем наружу об изменении followTruck через window event
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('followTruckChanged', { detail: { active: followTruck } }));
+  }, [followTruck]);
+
+  // Управление слежением снаружи (кнопка в game.tsx)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { action, truckId } = (e as CustomEvent).detail || {};
+      if (action === 'toggle') {
+        if (followTruck) {
+          setFollowTruck(false);
+          followTruckIdRef.current = null;
+          setFollowMenuOpen(false);
+          lastFollowPositionRef.current = null;
+          userDraggedRef.current = false;
+          cinematicZoomRef.current = null;
+          smoothReturnRef.current = null;
+          if (returnToTruckTimerRef.current) { clearTimeout(returnToTruckTimerRef.current); returnToTruckTimerRef.current = null; }
+          if (googleMapRef.current) {
+            googleMapRef.current.moveCamera({ tilt: 0, heading: 0 });
+            googleMapRef.current.setOptions({ minZoom: 3, maxZoom: 21 });
+            userZoomRef.current = Math.max(6, userZoomRef.current);
+          }
+        } else {
+          setFollowMenuOpen(v => !v);
+          setMapTypeMenuOpen(false);
+        }
+      } else if (action === 'select' && truckId) {
+        const trucks = useGameStore.getState().trucks;
+        const truck = trucks.find((t: any) => t.id === truckId);
+        if (truck) {
+          centerOnIdRef.current = null;
+          followServiceIdRef.current = null;
+          followTruckIdRef.current = truckId;
+          setFollowMenuOpen(false);
+          setSelectedTruck(truck);
+          userDraggedRef.current = false;
+          smoothReturnRef.current = null;
+          if (googleMapRef.current) {
+            googleMapRef.current.moveCamera({ center: { lat: truck.position[1], lng: truck.position[0] }, heading: 0, tilt: 65 });
+            smoothHeadingRef.current = 0;
+          }
+          if (!followTruck) setFollowTruck(true);
+        }
+      }
+    };
+    window.addEventListener('toggleFollow', handler);
+    return () => window.removeEventListener('toggleFollow', handler);
   }, [followTruck]);
   const [currentMapType, setCurrentMapType] = useState<'roadmap' | 'satellite' | 'hybrid' | 'terrain'>('hybrid');
   const [followDragPulse, setFollowDragPulse] = useState(false);
@@ -1612,120 +1682,81 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
           </div>
         </div>
 
-      {/* 🎯 Кнопка слежения — справа, выше кнопки Грузы */}
+      {/* 🎯 💬 📦 — кнопки справа снизу */}
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{
-          position: 'absolute',
-          bottom: 72,
-          right: 16,
-          zIndex: 1000,
-        }}
+        style={{ position: 'absolute', bottom: 16, right: 16, zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 6 }}
       >
-        {/* Слежение за траком */}
+        {/* 🎯 Навигация */}
         <div style={{ position: 'relative' }}>
-            {followMenuOpen && activeTrucks.length > 0 && (
-              <div style={{
-                position: 'absolute',
-                bottom: 0,
-                right: '100%',
-                marginRight: 8,
-                background: 'rgba(15,23,42,0.97)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 10,
-                overflow: 'hidden',
-                minWidth: 200,
-                maxHeight: 280,
-                overflowY: 'auto',
-              }}>
-                {activeTrucks.map((truck: any) => (
-                  <button key={truck.id} onClick={() => {
-                    // Режим 1: Google Navigation
-                    centerOnIdRef.current = null;
-                    followServiceIdRef.current = null;
-                    followTruckIdRef.current = truck.id;
-                    setFollowMenuOpen(false);
-                    setSelectedTruck(truck);
-                    userDraggedRef.current = false;
-                    smoothReturnRef.current = null;
-                    
-                    if (googleMapRef.current) {
-                      const position = { lat: truck.position[1], lng: truck.position[0] };
-                      smoothHeadingRef.current = 0;
-                      googleMapRef.current.moveCamera({
-                        center: position,
-                        heading: 0,
-                        tilt: 65,
-                      });
-                    }
-                    if (!followTruck) setFollowTruck(true);
-                  }} style={{
-                    width: '100%', padding: '9px 12px',
-                    background: followTruckIdRef.current === truck.id && followTruck ? 'rgba(6,182,212,0.2)' : 'transparent',
-                    border: 'none', borderBottom: '1px solid rgba(255,255,255,0.05)',
-                    color: followTruckIdRef.current === truck.id && followTruck ? '#38bdf8' : '#e2e8f0',
-                    fontSize: 12, fontWeight: 600, cursor: 'pointer', textAlign: 'left',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: getTruckColor(truck, gameMinute), flexShrink: 0 }} />
-                      <span style={{ fontWeight: 700 }}>{truck.name}</span>
-                    </div>
-                    <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 2, paddingLeft: 16 }}>
-                      {truck.currentCity} → {truck.destinationCity || 'Свободен'}
-                    </div>
-                  </button>
-                ))}
-              </div>
+          {followMenuOpen && activeTrucks.length > 0 && (
+            <div style={{
+              position: 'absolute', bottom: 0, right: '100%', marginRight: 8,
+              background: 'rgba(15,23,42,0.97)', backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10,
+              overflow: 'hidden', minWidth: 200, maxHeight: 280, overflowY: 'auto' as any,
+            }}>
+              {activeTrucks.map((truck: any) => (
+                <button key={truck.id} onClick={() => {
+                  centerOnIdRef.current = null; followServiceIdRef.current = null;
+                  followTruckIdRef.current = truck.id; setFollowMenuOpen(false);
+                  setSelectedTruck(truck); userDraggedRef.current = false; smoothReturnRef.current = null;
+                  if (googleMapRef.current) { googleMapRef.current.moveCamera({ center: { lat: truck.position[1], lng: truck.position[0] }, heading: 0, tilt: 65 }); smoothHeadingRef.current = 0; }
+                  if (!followTruck) setFollowTruck(true);
+                }} style={{ width: '100%', padding: '9px 12px', background: followTruckIdRef.current === truck.id && followTruck ? 'rgba(6,182,212,0.2)' : 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.05)', color: followTruckIdRef.current === truck.id && followTruck ? '#38bdf8' : '#e2e8f0', fontSize: 12, fontWeight: 600, cursor: 'pointer', textAlign: 'left' as any }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: getTruckColor(truck, gameMinute), flexShrink: 0 }} />
+                    <span style={{ fontWeight: 700 }}>{truck.name}</span>
+                  </div>
+                  <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 2, paddingLeft: 16 }}>{truck.currentCity} → {truck.destinationCity || 'Свободен'}</div>
+                </button>
+              ))}
+            </div>
+          )}
+          <button
+            onTouchStart={(e) => { e.stopPropagation(); }}
+            onClick={() => {
+              if (followTruck) {
+                setFollowTruck(false); followTruckIdRef.current = null; setFollowMenuOpen(false);
+                lastFollowPositionRef.current = null; userDraggedRef.current = false;
+                cinematicZoomRef.current = null; smoothReturnRef.current = null;
+                if (returnToTruckTimerRef.current) { clearTimeout(returnToTruckTimerRef.current); returnToTruckTimerRef.current = null; }
+                if (googleMapRef.current) { googleMapRef.current.moveCamera({ tilt: 0, heading: 0 }); googleMapRef.current.setOptions({ minZoom: 3, maxZoom: 21 }); userZoomRef.current = Math.max(6, userZoomRef.current); }
+              } else { setFollowMenuOpen(!followMenuOpen); setMapTypeMenuOpen(false); }
+            }}
+            style={btnStyle(followTruck)}
+            className={followDragPulse ? 'follow-pulse' : ''}
+          >
+            <span style={{ fontSize: 20 }}>🎯</span>
+            {followTruck && (
+              <div style={{ position: 'absolute', top: -3, right: -3, width: 8, height: 8, borderRadius: '50%', background: '#fff', boxShadow: '0 0 0 2px #4ade80, 0 0 6px #4ade80', animation: 'trackingDot 1.2s ease-in-out infinite', zIndex: 10 } as any} />
             )}
-            <button
-              onClick={() => {
-                if (followTruck) {
-                  setFollowTruck(false);
-                  followTruckIdRef.current = null;
-                  setFollowMenuOpen(false);
-                  lastFollowPositionRef.current = null;
-                  userDraggedRef.current = false;
-                  cinematicZoomRef.current = null;
-                  smoothReturnRef.current = null;
-                  
-                  // Очищаем таймер возврата
-                  if (returnToTruckTimerRef.current) {
-                    clearTimeout(returnToTruckTimerRef.current);
-                    returnToTruckTimerRef.current = null;
-                  }
-                  
-                  if (googleMapRef.current) {
-                    // Плавный сброс: tilt → 0, heading → 0, zoom остаётся
-                    googleMapRef.current.moveCamera({ tilt: 0, heading: 0 });
-                    // Снимаем ограничения zoom
-                    googleMapRef.current.setOptions({ minZoom: 3, maxZoom: 21 });
-                    userZoomRef.current = Math.max(6, userZoomRef.current);
-                  }
-                } else {
-                  setFollowMenuOpen(!followMenuOpen);
-                  setMapTypeMenuOpen(false);
-                }
-              }}
-              style={btnStyle(followTruck)}
-              className={followDragPulse ? 'follow-pulse' : ''}
-            >
-              <span style={{ fontSize: 20 }}>🎯</span>
-              {followTruck && (
-                <div style={{
-                  position: 'absolute',
-                  top: -3, right: -3,
-                  width: 10, height: 10,
-                  borderRadius: '50%',
-                  background: '#fff',
-                  boxShadow: '0 0 0 2px #4ade80, 0 0 8px #4ade80',
-                  animation: 'trackingDot 1.2s ease-in-out infinite',
-                  zIndex: 10,
-                } as any} />
-              )}
-            </button>
-          </div>
+          </button>
+        </div>
 
+        {/* 💬 Связь */}
+        <button
+          onTouchStart={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('mapButtonAction', { detail: { action: 'toggleChat' } })); }}
+          onClick={() => window.dispatchEvent(new CustomEvent('mapButtonAction', { detail: { action: 'toggleChat' } }))}
+          style={btnStyle(!!showChat)}
+        >
+          <span style={{ fontSize: 20 }}>💬</span>
+          {chatBadge > 0 && (
+            <div style={{ position: 'absolute', top: -4, right: -4, background: '#ef4444', borderRadius: 7, minWidth: 15, height: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 900, color: '#fff', padding: '0 3px', border: '1.5px solid #0d1117' } as any}>{chatBadge}</div>
+          )}
+        </button>
+
+        {/* 📦 Грузы */}
+        <button
+          onTouchStart={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('mapButtonAction', { detail: { action: 'toggleLoadBoard' } })); }}
+          onClick={() => window.dispatchEvent(new CustomEvent('mapButtonAction', { detail: { action: 'toggleLoadBoard' } }))}
+          style={btnStyle(!!showLoadBoard)}
+        >
+          <span style={{ fontSize: 20 }}>📦</span>
+          {loadsBadge > 0 && (
+            <div style={{ position: 'absolute', top: -4, right: -4, background: '#38bdf8', borderRadius: 7, minWidth: 15, height: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 900, color: '#0f172a', padding: '0 3px', border: '1.5px solid #0d1117' } as any}>{loadsBadge}</div>
+          )}
+        </button>
       </div>
 
       {/* Сообщение о загрузке с прогресс-баром */}

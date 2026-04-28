@@ -1668,6 +1668,11 @@ export const useGameStore = create<GameState>((set, get) => ({
         ...truck,
         hoursLeft: 11,
         yesterdayMiles: truck.totalMiles || 0,
+        // БАГ-ФИX: сбрасываем флаги нового дня
+        nightStopDone: false,
+        mandatoryBreakDone: false,
+        hadNightStop: false,
+        nightStopDelayMinutes: 0,
       }));
       set({
         day: newDay,
@@ -1996,12 +2001,28 @@ export const useGameStore = create<GameState>((set, get) => ({
             mood: Math.max(40, (truck.mood ?? 65) - 10),
           } as any;
         }
+        // БАГ-ФИX: awaitingRepairChoice без ответа > 30 мин — авто-выбираем roadside
+        const awaitingSince = (truck as any).breakdownStartMinute ?? newMinute;
+        if ((truck as any).awaitingRepairChoice && (newMinute - awaitingSince) > 30) {
+          const cost = (truck as any).breakdownCostRoadside ?? 500;
+          const delay = (truck as any).breakdownDelayRoadside ?? 90;
+          get().removeMoney(cost, `Авто-ремонт на месте — ${truck.name}`);
+          return {
+            ...truck,
+            awaitingRepairChoice: false,
+            outOfOrderUntil: newMinute + delay,
+          } as any;
+        }
         return truck;
       }
 
       // ── HOS: трак на отдыхе на Truck Stop — ждём 10 часов ──
       if (truck.status === 'waiting') {
-        const restStart = (truck as any).hosRestStartMinute ?? newMinute;
+        // БАГ-ФИX: если hosRestStartMinute не установлен — устанавливаем сейчас
+        if (!(truck as any).hosRestStartMinute) {
+          return { ...truck, hosRestStartMinute: newMinute } as any;
+        }
+        const restStart = (truck as any).hosRestStartMinute;
         const restElapsed = newMinute - restStart;
         const restDone = restElapsed >= HOS_REST;
         if (restDone) {
@@ -2061,6 +2082,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
 
       // ── at_pickup: погрузка длится 45-90 игровых минут (~1 час в среднем) ──
+      // БАГ-ФИX: если нет груза — сбрасываем в idle
+      if (truck.status === 'at_pickup' && !truck.currentLoad) {
+        return { ...truck, status: 'idle' as TruckStatus, destinationCity: null, progress: 0, routePath: null, idleSinceMinute: newMinute, idleWarningLevel: 0 } as any;
+      }
       if (truck.status === 'at_pickup' && truck.currentLoad) {
         const pickupArrivalMinute = (truck as any).pickupArrivalMinute ?? newMinute;
         // Случайная длительность погрузки задаётся при первом тике: 45-90 мин
@@ -2116,6 +2141,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
 
       // ── at_delivery: разгрузка длится 30-120 игровых минут, detention после 120 мин ──
+      // БАГ-ФИX: если нет груза — сбрасываем в idle
+      if (truck.status === 'at_delivery' && !truck.currentLoad) {
+        return { ...truck, status: 'idle' as TruckStatus, destinationCity: null, progress: 0, routePath: null, idleSinceMinute: newMinute, idleWarningLevel: 0 } as any;
+      }
       if (truck.status === 'at_delivery' && truck.currentLoad) {
         const deliveryArrivalMinute = (truck as any).deliveryArrivalMinute ?? newMinute;
         // Случайная длительность разгрузки: 30-120 мин (задаётся при первом тике)
@@ -2360,7 +2389,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       // Двигаем трак только если он реально едет с грузом
       if ((truck.status === 'driving' || truck.status === 'loaded') && truck.destinationCity) {
         const to = CITIES[truck.destinationCity];
-        if (!to) return truck;
+        // БАГ-ФИX: город назначения не найден в CITIES — сбрасываем в idle
+        if (!to) {
+          console.warn(`⚠️ Truck ${truck.id} stuck: destinationCity "${truck.destinationCity}" not in CITIES`);
+          return { ...truck, status: 'idle' as TruckStatus, destinationCity: null, progress: 0, routePath: null, idleSinceMinute: newMinute, idleWarningLevel: 0 } as any;
+        }
 
         // Защита: loaded без груза — переводим в idle
         if (truck.status === 'loaded' && !truck.currentLoad) {

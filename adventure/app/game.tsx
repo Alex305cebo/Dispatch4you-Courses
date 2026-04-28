@@ -1468,7 +1468,17 @@ export default function GameScreen() {
   useEffect(() => {
     function handleSwitchTab(e: Event) {
       const { tab } = (e as CustomEvent).detail || {};
-      if (tab && ['map', 'loadboard', 'trucks', 'chat'].includes(tab)) {
+      if (tab === 'loadboard') {
+        // В новом layout — открываем floating LoadBoard
+        setShowLoadBoard(true);
+        setShowChat(false);
+      } else if (tab === 'chat') {
+        setShowChat(true);
+        setShowLoadBoard(false);
+      } else if (tab === 'map') {
+        setShowLoadBoard(false);
+        setShowChat(false);
+      } else if (tab && ['trucks'].includes(tab)) {
         switchTab(tab as Tab);
       }
     }
@@ -1487,7 +1497,6 @@ export default function GameScreen() {
   const mapProps = {
     onTruckInfo: (id: string) => {
       selectTruck(id);
-      // Включаем follow mode через event
       const t = trucks.find(x => x.id === id);
       if (t) {
         window.dispatchEvent(new CustomEvent('followTruckFromCard', {
@@ -1496,7 +1505,6 @@ export default function GameScreen() {
       }
     },
     onTruckSelect: (id: string) => { 
-      // Пустая строка = снять выделение (toggle с карты)
       if (!id) { selectTruck(null); return; }
       selectTruck(id); 
     },
@@ -1529,12 +1537,40 @@ export default function GameScreen() {
 
   // Floating LoadBoard state
   const [showLoadBoard, setShowLoadBoard] = useState(false);
+  // Floating Chat state
+  const [showChat, setShowChat] = useState(false);
+
+  // Синхронизируем state кнопок с GoogleMapView
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('mapButtonsState', {
+      detail: {
+        showChat,
+        showLoadBoard,
+        chatBadge: tabs.find(t => t.id === 'chat')?.badge ?? 0,
+        loadsBadge: tabs.find(t => t.id === 'loadboard')?.badge ?? 0,
+      }
+    }));
+  }, [showChat, showLoadBoard, tabs]);
 
   // Закрываем LoadBoard при открытии переговоров
   useEffect(() => {
     const handler = () => setShowLoadBoard(false);
     window.addEventListener('closeLoadBoard', handler);
     return () => window.removeEventListener('closeLoadBoard', handler);
+  }, []);
+
+  // Слушаем кнопки из GoogleMapView
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { action } = (e as CustomEvent).detail || {};
+      if (action === 'toggleChat') {
+        setShowChat(v => { setShowLoadBoard(false); return !v; });
+      } else if (action === 'toggleLoadBoard') {
+        setShowLoadBoard(v => { setShowChat(false); return !v; });
+      }
+    };
+    window.addEventListener('mapButtonAction', handler);
+    return () => window.removeEventListener('mapButtonAction', handler);
   }, []);
 
   return (
@@ -1554,52 +1590,56 @@ export default function GameScreen() {
             />
           </View>
 
-          {/* Кнопки действий — справа снизу поверх карты */}
-          <div style={{
-            position: 'absolute', bottom: 16, right: 16,
-            display: 'flex', flexDirection: 'column', gap: 8,
-            zIndex: 30,
-          } as any}>
-            {/* 📦 Грузы — компактная кнопка как zoom */}
-            <button
-              onClick={() => setShowLoadBoard(v => !v)}
-              style={{
-                width: 44, height: 44, borderRadius: 12,
-                background: showLoadBoard
-                  ? 'rgba(6,182,212,0.25)'
-                  : (themeMode === 'dark' ? 'rgba(15,23,42,0.92)' : 'rgba(255,255,255,0.95)'),
-                border: showLoadBoard
-                  ? '1.5px solid rgba(6,182,212,0.7)'
-                  : (themeMode === 'dark' ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.12)'),
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                cursor: 'pointer',
-                display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center', gap: 1,
-                boxShadow: showLoadBoard
-                  ? '0 0 16px rgba(6,182,212,0.35)'
-                  : '0 2px 8px rgba(0,0,0,0.3)',
-                transition: 'all 0.2s ease',
-                position: 'relative',
-              } as any}
-            >
-              <span style={{ fontSize: 20, lineHeight: 1 } as any}>📦</span>
-              <span style={{ fontSize: 7, fontWeight: 800, color: showLoadBoard ? '#06b6d4' : (themeMode === 'dark' ? '#64748b' : '#9ca3af'), letterSpacing: 0.3, lineHeight: 1 } as any}>
-                {tabs.find(t => t.id === 'loadboard')?.badge > 0 ? tabs.find(t => t.id === 'loadboard')?.badge : 'ГРУЗЫ'}
-              </span>
-              {tabs.find(t => t.id === 'loadboard')?.badge > 0 && (
-                <div style={{
-                  position: 'absolute', top: -5, right: -5,
-                  background: '#38bdf8', borderRadius: 7,
-                  minWidth: 16, height: 16,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 8, fontWeight: 900, color: '#0f172a',
-                  padding: '0 3px',
-                  border: themeMode === 'dark' ? '1.5px solid #0d1117' : '1.5px solid #fff',
-                } as any}>{tabs.find(t => t.id === 'loadboard')?.badge}</div>
-              )}
-            </button>
-          </div>
+          {/* Кнопки справа снизу — перенесены в GoogleMapView */}
+
+          {/* Floating Chat — снизу поверх карты */}
+          {showChat && (
+            <div style={{
+              position: 'absolute',
+              bottom: 0, left: 0, right: 0,
+              height: '70%',
+              background: themeMode === 'dark' ? 'rgba(10,14,23,0.97)' : 'rgba(255,255,255,0.98)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              borderTop: themeMode === 'dark' ? '1px solid rgba(129,140,248,0.2)' : '1px solid rgba(0,0,0,0.1)',
+              borderRadius: '20px 20px 0 0',
+              zIndex: 25,
+              display: 'flex', flexDirection: 'column',
+              boxShadow: '0 -8px 32px rgba(0,0,0,0.3)',
+            } as any}>
+              {/* Header */}
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '10px 16px 6px',
+                borderBottom: themeMode === 'dark' ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
+              } as any}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 } as any}>
+                  <span style={{ fontSize: 16 } as any}>💬</span>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: themeMode === 'dark' ? '#e2e8f0' : '#111827' } as any}>Связь</span>
+                  {tabs.find(t => t.id === 'chat')?.badge > 0 && (
+                    <span style={{ fontSize: 11, fontWeight: 800, color: '#818cf8', background: 'rgba(129,140,248,0.12)', border: '1px solid rgba(129,140,248,0.3)', borderRadius: 6, padding: '1px 7px' } as any}>
+                      {tabs.find(t => t.id === 'chat')?.badge} новых
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowChat(false)}
+                  style={{
+                    width: 28, height: 28, borderRadius: 8,
+                    background: themeMode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                    border: 'none', cursor: 'pointer',
+                    fontSize: 14, color: themeMode === 'dark' ? '#94a3b8' : '#6b7280',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  } as any}
+                >✕</button>
+              </div>
+              <View style={{ flex: 1, overflow: 'hidden' as any }}>
+                <ErrorBoundary name="Chat">
+                  <UnifiedChatUI nickname={sessionName || 'player'} />
+                </ErrorBoundary>
+              </View>
+            </div>
+          )}
 
           {/* Floating LoadBoard — снизу поверх карты */}
           {showLoadBoard && (
@@ -1690,31 +1730,7 @@ export default function GameScreen() {
       )}
 
       {/* ── MODALS ── */}
-      {/* Driver Start Dialog — аватар совпадает с карточкой трака */}
-      <CharacterDialog
-        visible={showDriverDialog}
-        character={{
-          ...CHARACTERS[chatCharacter],
-          avatar: chatCharacter === 'driver' && trucks.length > 0
-            ? getDriverAvatar(trucks[0].driver || trucks[0].id)
-            : CHARACTERS[chatCharacter].avatar,
-        }}
-        steps={chatCharacter === 'driver' ? DIALOG_DRIVER_START : DIALOG_DRIVER_START}
-        onBack={() => {
-          setShowDriverDialog(false);
-          switchTab('chat');
-        }}
-        onClose={() => {
-          setShowDriverDialog(false);
-          const sessionKey = `dialog-shown-${sessionName || 'default'}`;
-          localStorage.setItem(sessionKey, '1');
-        }}
-        onComplete={() => {
-          setShowDriverDialog(false);
-          const sessionKey = `dialog-shown-${sessionName || 'default'}`;
-          localStorage.setItem(sessionKey, '1');
-        }}
-      />
+      {/* Онбординг отключён — будет новая система с пузырями */}
 
       {negotiation.open && negotiation.load && false && (
         <ErrorBoundary name="Neg">
@@ -1768,10 +1784,7 @@ export default function GameScreen() {
         onOpenGuide={() => setShowDriverDialog(true)}
         onExit={() => { if (clockRef.current) clearInterval(clockRef.current); }}
       />
-      {/* Guide Bubble — контекстные подсказки */}
-      {guideVisible && <GuideBubble />}
-      {/* Onboarding Overlay — попапы онбординга */}
-      {onbIsActive && <OnboardingOverlay />}
+      {/* Онбординг отключён */}
     </View>
   );
 }
