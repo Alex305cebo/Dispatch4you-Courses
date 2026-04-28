@@ -1696,6 +1696,18 @@ export const useGameStore = create<GameState>((set, get) => ({
       // ── HOS: трак едет к Truck Stop (HOS ≤ 1.5ч) ──
       if ((truck as any).drivingToHosStop && truck.status !== 'waiting') {
         const stopPos = (truck as any).hosStopDestination as [number, number] | undefined;
+        if (!stopPos) {
+          // Safety: нет координат truck stop — принудительно останавливаем здесь
+          console.warn(`⚠️ Truck ${truck.id} drivingToHosStop without destination, stopping here`);
+          return {
+            ...truck,
+            status: 'waiting' as TruckStatus,
+            hosRestStartMinute: newMinute,
+            hosStopName: 'Rest Area',
+            hosStopPosition: truck.position,
+            drivingToHosStop: false,
+          } as any;
+        }
         if (stopPos) {
           const dx = truck.position[0] - stopPos[0];
           const dy = truck.position[1] - stopPos[1];
@@ -2018,67 +2030,104 @@ export const useGameStore = create<GameState>((set, get) => ({
 
       // ── HOS: трак на отдыхе на Truck Stop — ждём 10 часов ──
       if (truck.status === 'waiting') {
-        // БАГ-ФИX: если hosRestStartMinute не установлен — устанавливаем сейчас
-        if (!(truck as any).hosRestStartMinute) {
+        // ─── СЛУЧАЙ 1: Detention (ожидание на погрузке/разгрузке) ───
+        // Определяем detention по наличию груза БЕЗ hosStopName
+        if (truck.currentLoad && !(truck as any).hosStopName) {
+          const phase = truck.currentLoad.phase;
+          const isDelivery = phase === 'to_delivery' || phase === 'unloading';
+          return {
+            ...truck,
+            status: (isDelivery ? 'at_delivery' : 'at_pickup') as TruckStatus,
+            deliveryArrivalMinute: (truck as any).deliveryArrivalMinute ?? newMinute,
+            pickupArrivalMinute: (truck as any).pickupArrivalMinute ?? newMinute,
+          } as any;
+        }
+
+        // ─── СЛУЧАЙ 2: HOS Rest на Truck Stop ───
+        const restStart = (truck as any).hosRestStartMinute;
+        if (!restStart) {
+          // Первый тик в waiting — фиксируем время начала отдыха
           return { ...truck, hosRestStartMinute: newMinute } as any;
         }
-        const restStart = (truck as any).hosRestStartMinute;
         const restElapsed = newMinute - restStart;
-        const restDone = restElapsed >= HOS_REST;
-        if (restDone) {
+        if (restElapsed >= HOS_REST) {
+          // Отдых завершён
           const stopName = (truck as any).hosStopName ?? 'Truck Stop';
           const shouldResume = (truck as any).resumeAfterRest && truck.currentLoad;
           const preRestDest = (truck as any).preRestDestCity;
           const preRestPath = (truck as any).preRestRoutePath;
+          const preRestProg = (truck as any).preRestProgress ?? 0;
 
           get().addNotification({
             type: 'email', priority: 'medium',
             from: `${truck.driver}`,
             subject: `✅ ${truck.name} отдохнул — выезжает с ${stopName}`,
-            message: `${truck.driver} завершил 10-часовой отдых на "${stopName}". HOS сброшен до 11 часов. ${shouldResume ? `Продолжает маршрут в ${preRestDest}.` : 'Ждёт новый груз.'}`,
-            actionRequired: false,
-            relatedTruckId: truck.id,
+            message: `${truck.driver} завершил 10-часовой отдых. HOS сброшен до 11ч. ${shouldResume ? `Продолжает в ${preRestDest}.` : 'Ждёт груз.'}`,
+            actionRequired: false, relatedTruckId: truck.id,
           });
 
-          if (shouldResume && preRestDest) {
-            // Восстанавливаем маршрут после отдыха
-            return {
-              ...truck,
-              status: (truck as any).preRestStatus ?? 'loaded' as TruckStatus,
-              hoursLeft: 11,
-              hosRestStartMinute: undefined,
-              hosStopPosition: undefined,
-              hosStopName: undefined,
-              hosStopType: undefined,
-              resumeAfterRest: undefined,
-              preRestStatus: undefined,
-              preRestDestCity: undefined,
-              preRestProgress: undefined,
-              preRestRoutePath: undefined,
-              destinationCity: preRestDest,
-              progress: (truck as any).preRestProgress ?? 0,
-              routePath: preRestPath ?? null,
-            } as any;
-          }
-
-          return {
-            ...truck,
-            status: 'idle' as TruckStatus,
+          // Очищаем все HOS-related поля
+          const cleanHos = {
             hoursLeft: 11,
             hosRestStartMinute: undefined,
             hosStopPosition: undefined,
             hosStopName: undefined,
             hosStopType: undefined,
+            hosStopId: undefined,
+            hosRestUntilMinute: undefined,
+            drivingToHosStop: false,
+            hosStopDestination: undefined,
+            hosStopDestName: undefined,
             resumeAfterRest: undefined,
             preRestStatus: undefined,
             preRestDestCity: undefined,
             preRestProgress: undefined,
             preRestRoutePath: undefined,
+          };
+
+          if (shouldResume && preRestDest) {
+            return {
+              ...truck, ...cleanHos,
+              status: ((truck as any).preRestStatus ?? 'loaded') as TruckStatus,
+              destinationCity: preRestDest,
+              progress: preRestProg,
+              routePath: preRestPath ?? null,
+            } as any;
+          }
+          return {
+            ...truck, ...cleanHos,
+            status: 'idle' as TruckStatus,
+            currentLoad: null,
+            destinationCity: null,
+            progress: 0,
+            routePath: null,
             idleSinceMinute: newMinute,
             idleWarningLevel: 0,
           } as any;
         }
-        return truck;
+
+        // ─── СЛУЧАЙ 3: Waiting слишком долго без причины (safety net) ───
+        if (restElapsed >= HOS_REST * 2) {
+          // Зависший трак — принудительно в idle
+          console.warn(`⚠️ Truck ${truck.id} stuck in waiting for ${restElapsed} min, forcing idle`);
+          return {
+            ...truck,
+            status: 'idle' as TruckStatus,
+            hoursLeft: 11,
+            hosRestStartMinute: undefined,
+            hosStopName: undefined,
+            hosStopPosition: undefined,
+            drivingToHosStop: false,
+            currentLoad: null,
+            destinationCity: null,
+            progress: 0,
+            routePath: null,
+            idleSinceMinute: newMinute,
+            idleWarningLevel: 0,
+          } as any;
+        }
+
+        return truck; // Ждём окончания отдыха
       }
 
       // ── at_pickup: погрузка длится 45-90 игровых минут (~1 час в среднем) ──
@@ -2691,6 +2740,23 @@ export const useGameStore = create<GameState>((set, get) => ({
           return truck;
         }
       }
+
+      // ── SAFETY NET: трак в неизвестном состоянии — логируем и сбрасываем ──
+      // Если трак driving/loaded без destinationCity — это баг
+      if ((truck.status === 'driving' || truck.status === 'loaded') && !truck.destinationCity) {
+        console.warn(`⚠️ SAFETY NET: Truck ${truck.id} is ${truck.status} without destinationCity, resetting to idle`);
+        return {
+          ...truck,
+          status: 'idle' as TruckStatus,
+          destinationCity: null,
+          progress: 0,
+          routePath: null,
+          currentLoad: truck.status === 'driving' ? truck.currentLoad : null, // сохраняем груз если driving к pickup
+          idleSinceMinute: newMinute,
+          idleWarningLevel: 0,
+        } as any;
+      }
+
       return truck;
     });
 
