@@ -1418,9 +1418,9 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
     width: 44,
     height: 44,
     borderRadius: 10,
-    background: active ? 'rgba(6,182,212,0.95)' : 'rgba(15,23,42,0.92)',
+    background: 'rgba(15,23,42,0.92)',
     backdropFilter: 'blur(12px)',
-    border: active ? '1px solid rgba(6,182,212,0.8)' : '1px solid rgba(255,255,255,0.12)',
+    border: active ? '1.5px solid #4ade80' : '1px solid rgba(255,255,255,0.12)',
     color: '#fff',
     cursor: 'pointer',
     display: 'flex',
@@ -1454,6 +1454,10 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
           animation: followPulse 0.6s ease-out 3;
           background: rgba(6,182,212,1) !important;
           border-color: #fff !important;
+        }
+        @keyframes trackingDot {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(0.8); }
         }
           display: none !important;
         }
@@ -1534,7 +1538,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         style={{ width: '100%', height: '100%' }}
       />
 
-      {/* Кнопки zoom — слева снизу */}
+      {/* Кнопки zoom + вид карты — слева снизу */}
       <div
           onClick={(e) => e.stopPropagation()}
           style={{
@@ -1561,41 +1565,27 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
           >
             <span style={{ fontSize: 22, lineHeight: 1 }}>−</span>
           </button>
-        </div>
-
-      {/* 3 квадратные кнопки — справа, снизу вверх */}
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          position: 'absolute',
-          bottom: 16,
-          right: 16,
-          zIndex: 1000,
-          display: 'flex',
-          flexDirection: 'column-reverse',
-          gap: 8,
-        }}
-      >
-        {/* 1. Переключатель карты (снизу) */}
-        <div style={{ position: 'relative' }}>
+          {/* Вид карты — под zoom */}
+          <div style={{ position: 'relative' }}>
             {mapTypeMenuOpen && (
               <div style={{
                 position: 'absolute',
                 bottom: 0,
-                right: '100%',
-                marginRight: 8,
+                left: '100%',
+                marginLeft: 8,
                 background: 'rgba(15,23,42,0.97)',
                 backdropFilter: 'blur(12px)',
                 border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: 10,
                 overflow: 'hidden',
                 minWidth: 130,
+                zIndex: 10,
               }}>
                 {[
-                  { id: 'hybrid',   icon: '🌐', label: 'Гибрид'  },
-                  { id: 'roadmap',  icon: '🗺️', label: 'Карта'   },
-                  { id: 'satellite',icon: '🛰️', label: 'Спутник' },
-                  { id: 'terrain',  icon: '⛰️', label: 'Рельеф'  },
+                  { id: 'hybrid',    icon: '🌐', label: 'Гибрид'  },
+                  { id: 'roadmap',   icon: '🗺️', label: 'Карта'   },
+                  { id: 'satellite', icon: '🛰️', label: 'Спутник' },
+                  { id: 'terrain',   icon: '⛰️', label: 'Рельеф'  },
                 ].map(t => (
                   <button key={t.id} onClick={() => {
                     googleMapRef.current?.setMapTypeId(t.id);
@@ -1620,8 +1610,19 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
               </span>
             </button>
           </div>
+        </div>
 
-        {/* 2. Слежение за траком */}
+      {/* 🎯 Кнопка слежения — справа, выше кнопки Грузы */}
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          position: 'absolute',
+          bottom: 72,
+          right: 16,
+          zIndex: 1000,
+        }}
+      >
+        {/* Слежение за траком */}
         <div style={{ position: 'relative' }}>
             {followMenuOpen && activeTrucks.length > 0 && (
               <div style={{
@@ -1710,6 +1711,18 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
               className={followDragPulse ? 'follow-pulse' : ''}
             >
               <span style={{ fontSize: 20 }}>🎯</span>
+              {followTruck && (
+                <div style={{
+                  position: 'absolute',
+                  top: -3, right: -3,
+                  width: 10, height: 10,
+                  borderRadius: '50%',
+                  background: '#fff',
+                  boxShadow: '0 0 0 2px #4ade80, 0 0 8px #4ade80',
+                  animation: 'trackingDot 1.2s ease-in-out infinite',
+                  zIndex: 10,
+                } as any} />
+              )}
             </button>
           </div>
 

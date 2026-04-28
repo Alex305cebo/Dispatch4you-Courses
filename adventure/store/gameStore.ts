@@ -3106,6 +3106,13 @@ case 'detention': {
   },
 
   openNegotiation: (load) => {
+    // Автоматически выбираем idle трак если ни один не выбран
+    const { selectedTruckId, trucks } = get();
+    let truckToSelect = selectedTruckId;
+    if (!truckToSelect) {
+      const idleTruck = trucks.find(t => t.status === 'idle');
+      if (idleTruck) truckToSelect = idleTruck.id;
+    }
     set({
       negotiation: {
         open: true,
@@ -3114,6 +3121,7 @@ case 'detention': {
         round: 0,
         brokerMood: 'neutral',
       },
+      ...(truckToSelect && !selectedTruckId ? { selectedTruckId: truckToSelect } : {}),
     });
   },
 

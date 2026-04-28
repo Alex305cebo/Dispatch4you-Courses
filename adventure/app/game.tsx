@@ -1348,19 +1348,17 @@ export default function GameScreen() {
 
     return (
       <View style={{
-        flexDirection: 'row', gap: 6,
-        paddingHorizontal: 8, paddingVertical: 8,
-        backgroundColor: activeTab === 'map'
-          ? (themeMode === 'dark' ? 'rgba(13,17,23,0.55)' : 'rgba(255,255,255,0.55)')
-          : (themeMode === 'dark' ? '#0d1117' : T.navBg),
-        borderTopWidth: 1,
-        borderTopColor: activeTab === 'map'
-          ? 'rgba(56,189,248,0.08)'
-          : (themeMode === 'dark' ? 'rgba(56,189,248,0.15)' : T.navBorder),
+        flexDirection: 'row',
+        paddingHorizontal: 8,
+        paddingTop: 6,
         // @ts-ignore
-        paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
-        backdropFilter: activeTab === 'map' ? 'blur(12px)' : 'none',
-        WebkitBackdropFilter: activeTab === 'map' ? 'blur(12px)' : 'none',
+        paddingBottom: 'max(6px, env(safe-area-inset-bottom))',
+        backgroundColor: 'rgba(6,9,16,0.88)',
+        backdropFilter: 'blur(28px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.06)',
+        gap: 5,
       } as any}>
         {tabDefs.map(tab => {
           const isOn = activeTab === tab.id;
@@ -1372,73 +1370,75 @@ export default function GameScreen() {
                 if (tab.onPress) {
                   tab.onPress();
                 } else {
-                  // Если нажали на уже активную вкладку (кроме карты) — закрываем её (переходим на карту)
-                  if (isOn && tab.id !== 'map') {
-                    handleMapTabPress();
-                  } else {
-                    switchTab(tab.id as Tab);
-                  }
+                  if (isOn && tab.id !== 'map') handleMapTabPress();
+                  else switchTab(tab.id as Tab);
                 }
               }}
               style={{
-                flex: isOn ? 2 : 1,
-                flexDirection: 'row',
+                flex: 1,
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: isOn ? 6 : 0,
-                paddingVertical: 13,
-                borderRadius: 16,
-                backgroundColor: isOn
-                  ? (themeMode === 'dark' ? 'rgba(6,182,212,0.1)' : T.navActiveBtn)
-                  : (themeMode === 'dark'
-                      ? (activeTab === 'map' ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.08)')
-                      : T.navInactiveBtn),
-                borderWidth: 1.5,
-                borderColor: isOn
-                  ? (themeMode === 'dark' ? '#38bdf8' : 'transparent')
-                  : (themeMode === 'dark'
-                      ? (activeTab === 'map' ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.22)')
-                      : 'rgba(0,0,0,0.1)'),
+                paddingVertical: 5,
+                paddingHorizontal: 2,
+                borderRadius: 12,
                 position: 'relative',
-                ...(isOn && themeMode === 'dark' ? {
-                  shadowColor: '#38bdf8',
-                  shadowOpacity: 0.5,
-                  shadowRadius: 10,
-                  shadowOffset: { width: 0, height: 0 },
-                } : {}),
+                gap: 2,
+                // Активная кнопка — стеклянная карточка
+                backgroundColor: isOn ? 'rgba(6,182,212,0.13)' : 'rgba(255,255,255,0.04)',
+                borderWidth: 1,
+                borderColor: isOn ? 'rgba(6,182,212,0.5)' : 'rgba(255,255,255,0.07)',
+                // @ts-ignore
+                boxShadow: isOn
+                  ? '0 0 12px rgba(6,182,212,0.25), inset 0 1px 0 rgba(255,255,255,0.08)'
+                  : 'inset 0 1px 0 rgba(255,255,255,0.04)',
               } as any}
             >
+              {/* Верхняя полоска-индикатор на активной */}
+              {isOn && (
+                <div style={{
+                  position: 'absolute',
+                  top: -1, left: '25%', right: '25%',
+                  height: 2,
+                  borderRadius: 2,
+                  background: 'linear-gradient(90deg, transparent, #06b6d4, transparent)',
+                } as any} />
+              )}
+
+              {/* Иконка */}
               <div style={{
-                filter: isOn
-                  ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.18)) drop-shadow(0 1px 3px rgba(0,0,0,0.12))'
-                  : 'drop-shadow(0 3px 6px rgba(0,0,0,0.13)) drop-shadow(0 1px 2px rgba(0,0,0,0.08))',
-                transform: isOn ? 'translateY(-4px)' : 'translateY(-2px)',
-                transition: 'transform 0.2s ease, filter 0.2s ease',
+                position: 'relative',
+                transform: isOn ? 'scale(1.1)' : 'scale(0.95)',
+                transition: 'transform 0.2s cubic-bezier(0.34,1.56,0.64,1)',
                 lineHeight: 0,
                 display: 'inline-block',
+                filter: isOn
+                  ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))'
+                  : 'brightness(0.6) drop-shadow(0 1px 2px rgba(0,0,0,0.3))',
               } as any}>
-                <Text style={{ fontSize: 24, lineHeight: 28 } as any}>{tab.icon}</Text>
+                <Text style={{ fontSize: 22, lineHeight: 26 } as any}>{tab.icon}</Text>
               </div>
-              {isOn && (
-                <Text style={{
-                  fontSize: 15, fontWeight: '900',
-                  color: themeMode === 'dark' ? '#ffffff' : '#1e293b',
-                  fontFamily: "'Nunito', -apple-system, sans-serif",
-                  letterSpacing: 0.2,
-                } as any}>{tab.label}</Text>
-              )}
+
+              {/* Лейбл */}
+              <Text style={{
+                fontSize: 9,
+                fontWeight: isOn ? '800' : '500',
+                color: isOn ? '#38bdf8' : 'rgba(255,255,255,0.3)',
+                letterSpacing: 0.4,
+                textTransform: 'uppercase',
+              } as any}>{tab.label}</Text>
+
+              {/* Бейдж */}
               {tab.badge !== undefined && tab.badge > 0 && (
                 <View style={{
-                  position: 'absolute', top: 5, right: 5,
-                  backgroundColor: themeMode === 'dark' ? '#38bdf8' : (isOn ? T.primary : '#ef4444'),
-                  borderRadius: 9, paddingHorizontal: 5, paddingVertical: 1,
-                  minWidth: 18, alignItems: 'center',
+                  position: 'absolute', top: 3, right: 8,
+                  backgroundColor: '#ef4444',
+                  borderRadius: 7, paddingHorizontal: 4, paddingVertical: 1,
+                  minWidth: 15, alignItems: 'center',
+                  borderWidth: 1.5,
+                  borderColor: 'rgba(6,9,16,0.95)',
                 } as any}>
-                  <Text style={{
-                    fontSize: 10, fontWeight: '800',
-                    color: themeMode === 'dark' ? '#0f172a' : '#fff',
-                  } as any}>
-                    {tab.badge}
+                  <Text style={{ fontSize: 8, fontWeight: '900', color: '#fff' } as any}>
+                    {tab.badge > 99 ? '99+' : tab.badge}
                   </Text>
                 </View>
               )}
@@ -1527,168 +1527,131 @@ export default function GameScreen() {
     }
   }
 
+  // Floating LoadBoard state
+  const [showLoadBoard, setShowLoadBoard] = useState(false);
+
+  // Закрываем LoadBoard при открытии переговоров
+  useEffect(() => {
+    const handler = () => setShowLoadBoard(false);
+    window.addEventListener('closeLoadBoard', handler);
+    return () => window.removeEventListener('closeLoadBoard', handler);
+  }, []);
+
   return (
     <View style={s.root}>
+      {/* ══ ЕДИНЫЙ LAYOUT — карта на весь экран ══ */}
+      <View style={{ flex: 1, flexDirection: 'column' as any }}>
+        <TopBar />
+        <View style={{ flex: 1, position: 'relative' as any }}>
+          {/* Карта — всегда на весь экран */}
+          <ErrorBoundary name="Map"><GoogleMapView {...mapProps} /></ErrorBoundary>
 
-      {isWide ? (
-        /* ══ DESKTOP ══ */
-        <View style={s.desktop}>
-          {/* Левая колонка: топбар + карта + траки */}
-          <View style={[s.leftCol, { position: 'relative' }]}>
-            <TopBar />
-            <View style={s.mapArea} data-onboarding="map">
-              <ErrorBoundary name="Map"><GoogleMapView {...mapProps} /></ErrorBoundary>
-              {/* Карточки траков — поверх карты, сверху */}
-              <View style={s.truckStripBar} pointerEvents="box-none">
-                <TruckCardOverlay
-                  onTruckClick={handleTruckClick}
-                  selectedTruckId={selectedTruckId}
-                />
-              </View>
-            </View>
-            {/* Кнопка свернуть/развернуть правую панель */}
-            <div
-              onClick={() => setRightPanelCollapsed(v => !v)}
-              style={{
-                position: 'absolute', right: 0, top: '50%',
-                transform: 'translateY(-50%)',
-                zIndex: 50,
-                width: 20, height: 56,
-                background: themeMode === 'dark' ? 'rgba(15,23,42,0.9)' : 'rgba(255,255,255,0.9)',
-                border: themeMode === 'dark' ? '1px solid rgba(56,189,248,0.3)' : '1px solid rgba(0,0,0,0.12)',
-                borderRight: 'none',
-                borderRadius: '8px 0 0 8px',
-                cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                backdropFilter: 'blur(8px)',
-                transition: 'all 0.2s',
-                boxShadow: '-2px 0 8px rgba(0,0,0,0.15)',
-              } as any}
-              title={rightPanelCollapsed ? 'Развернуть панель' : 'Свернуть панель'}
-            >
-              <span style={{
-                fontSize: 12, color: themeMode === 'dark' ? '#38bdf8' : '#007aff',
-                fontWeight: 900, lineHeight: 1,
-                transform: rightPanelCollapsed ? 'rotate(0deg)' : 'rotate(180deg)',
-                transition: 'transform 0.3s ease',
-                display: 'block',
-              } as any}>‹</span>
-            </div>
+          {/* Карточки траков — поверх карты */}
+          <View style={s.truckStripBar} pointerEvents="box-none">
+            <TruckCardOverlay
+              onTruckClick={handleTruckClick}
+              selectedTruckId={selectedTruckId}
+            />
           </View>
 
-          {/* Правая колонка: табы + контент */}
+          {/* Кнопки действий — справа снизу поверх карты */}
           <div style={{
-            width: rightPanelCollapsed ? 0 : 400,
-            minWidth: rightPanelCollapsed ? 0 : 400,
-            overflow: 'hidden',
-            transition: 'width 0.3s ease, min-width 0.3s ease',
-            display: 'flex', flexDirection: 'column',
-            background: themeMode === 'dark' ? '#0d1117' : '#ffffff',
-            borderLeft: themeMode === 'dark' ? '1px solid rgba(56,189,248,0.15)' : '1px solid rgba(0,0,0,0.08)',
+            position: 'absolute', bottom: 16, right: 16,
+            display: 'flex', flexDirection: 'column', gap: 8,
+            zIndex: 30,
           } as any}>
-            <SideTabs />
-            <View style={s.panelContent}>
-              {(activeTab === 'loadboard' || activeTab === 'map') && <ErrorBoundary name="Loads"><LoadBoardPanel onAssigned={handleAssigned} /></ErrorBoundary>}
-              {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
-              {activeTab === 'chat'      && <ErrorBoundary name="Chat"><UnifiedChatUI nickname={sessionName || 'player'} /></ErrorBoundary>}
-            </View>
-          </div>
-        </View>
-
-      ) : isLandscape ? (
-        /* ══ LANDSCAPE MOBILE ══ */
-        <View style={s.mobileLandscape}>
-          {/* Топбар на всю ширину сверху */}
-          <TopBar />
-          {/* Основной контент: карта слева + панель справа */}
-          <View style={s.landscapeBody}>
-            {/* Левая часть: карта */}
-            <View style={[s.landscapeMap, { position: 'relative' } as any]}>
-              <ErrorBoundary name="Map"><GoogleMapView {...mapProps} /></ErrorBoundary>
-              {/* Карточки траков поверх карты */}
-              <View style={s.truckStripBar} pointerEvents="box-none">
-                <TruckCardOverlay
-                  onTruckClick={handleTruckClick}
-                  selectedTruckId={selectedTruckId}
-                />
-              </View>
-              {/* Кнопка свернуть/развернуть правую панель */}
-              <div
-                onClick={() => setRightPanelCollapsed(v => !v)}
-                style={{
-                  position: 'absolute', right: 0, top: '50%',
-                  transform: 'translateY(-50%)',
-                  zIndex: 50,
-                  width: 20, height: 56,
-                  background: themeMode === 'dark' ? 'rgba(15,23,42,0.9)' : 'rgba(255,255,255,0.9)',
-                  border: themeMode === 'dark' ? '1px solid rgba(56,189,248,0.3)' : '1px solid rgba(0,0,0,0.12)',
-                  borderRight: 'none',
-                  borderRadius: '8px 0 0 8px',
-                  cursor: 'pointer',
+            {/* 📦 Грузы — компактная кнопка как zoom */}
+            <button
+              onClick={() => setShowLoadBoard(v => !v)}
+              style={{
+                width: 44, height: 44, borderRadius: 12,
+                background: showLoadBoard
+                  ? 'rgba(6,182,212,0.25)'
+                  : (themeMode === 'dark' ? 'rgba(15,23,42,0.92)' : 'rgba(255,255,255,0.95)'),
+                border: showLoadBoard
+                  ? '1.5px solid rgba(6,182,212,0.7)'
+                  : (themeMode === 'dark' ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.12)'),
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                cursor: 'pointer',
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center', gap: 1,
+                boxShadow: showLoadBoard
+                  ? '0 0 16px rgba(6,182,212,0.35)'
+                  : '0 2px 8px rgba(0,0,0,0.3)',
+                transition: 'all 0.2s ease',
+                position: 'relative',
+              } as any}
+            >
+              <span style={{ fontSize: 20, lineHeight: 1 } as any}>📦</span>
+              <span style={{ fontSize: 7, fontWeight: 800, color: showLoadBoard ? '#06b6d4' : (themeMode === 'dark' ? '#64748b' : '#9ca3af'), letterSpacing: 0.3, lineHeight: 1 } as any}>
+                {tabs.find(t => t.id === 'loadboard')?.badge > 0 ? tabs.find(t => t.id === 'loadboard')?.badge : 'ГРУЗЫ'}
+              </span>
+              {tabs.find(t => t.id === 'loadboard')?.badge > 0 && (
+                <div style={{
+                  position: 'absolute', top: -5, right: -5,
+                  background: '#38bdf8', borderRadius: 7,
+                  minWidth: 16, height: 16,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  backdropFilter: 'blur(8px)',
-                  transition: 'all 0.2s',
-                  boxShadow: '-2px 0 8px rgba(0,0,0,0.15)',
-                } as any}
-                title={rightPanelCollapsed ? 'Развернуть панель' : 'Свернуть панель'}
-              >
-                <span style={{
-                  fontSize: 12, color: themeMode === 'dark' ? '#38bdf8' : '#007aff',
-                  fontWeight: 900, lineHeight: 1,
-                  transform: rightPanelCollapsed ? 'rotate(0deg)' : 'rotate(180deg)',
-                  transition: 'transform 0.3s ease',
-                  display: 'block',
-                } as any}>‹</span>
-              </div>
-            </View>
-            {/* Правая часть: табы + панель */}
+                  fontSize: 8, fontWeight: 900, color: '#0f172a',
+                  padding: '0 3px',
+                  border: themeMode === 'dark' ? '1.5px solid #0d1117' : '1.5px solid #fff',
+                } as any}>{tabs.find(t => t.id === 'loadboard')?.badge}</div>
+              )}
+            </button>
+          </div>
+
+          {/* Floating LoadBoard — снизу поверх карты */}
+          {showLoadBoard && (
             <div style={{
-              width: rightPanelCollapsed ? 0 : 320,
-              minWidth: rightPanelCollapsed ? 0 : 320,
-              overflow: 'hidden' as any,
-              transition: 'width 0.3s ease, min-width 0.3s ease',
-              display: 'flex', flexDirection: 'column' as any,
-              background: themeMode === 'dark' ? '#0d1117' : '#ffffff',
-              borderLeft: themeMode === 'dark' ? '1px solid rgba(56,189,248,0.15)' : '1px solid rgba(0,0,0,0.08)',
+              position: 'absolute',
+              bottom: 0, left: 0, right: 0,
+              height: '65%',
+              background: themeMode === 'dark' ? 'rgba(10,14,23,0.97)' : 'rgba(255,255,255,0.98)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              borderTop: themeMode === 'dark' ? '1px solid rgba(56,189,248,0.2)' : '1px solid rgba(0,0,0,0.1)',
+              borderRadius: '20px 20px 0 0',
+              zIndex: 25,
+              display: 'flex', flexDirection: 'column',
+              boxShadow: '0 -8px 32px rgba(0,0,0,0.3)',
             } as any}>
-              <SideTabs />
-              <View style={s.panelContent}>
-                {(activeTab === 'loadboard' || activeTab === 'map') && <ErrorBoundary name="Loads"><LoadBoardPanel onAssigned={handleAssigned} /></ErrorBoundary>}
-                {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
-                {activeTab === 'chat'      && <ErrorBoundary name="Chat"><UnifiedChatUI nickname={sessionName || 'player'} /></ErrorBoundary>}
+              {/* Drag handle + close */}
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '10px 16px 6px',
+                borderBottom: themeMode === 'dark' ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
+              } as any}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 } as any}>
+                  <span style={{ fontSize: 16 } as any}>📦</span>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: themeMode === 'dark' ? '#e2e8f0' : '#111827' } as any}>Load Board</span>
+                  {tabs.find(t => t.id === 'loadboard')?.badge > 0 && (
+                    <span style={{ fontSize: 11, fontWeight: 800, color: '#06b6d4', background: 'rgba(6,182,212,0.12)', border: '1px solid rgba(6,182,212,0.3)', borderRadius: 6, padding: '1px 7px' } as any}>
+                      {tabs.find(t => t.id === 'loadboard')?.badge} грузов
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowLoadBoard(false)}
+                  style={{
+                    width: 28, height: 28, borderRadius: 8,
+                    background: themeMode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                    border: 'none', cursor: 'pointer',
+                    fontSize: 14, color: themeMode === 'dark' ? '#94a3b8' : '#6b7280',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  } as any}
+                >✕</button>
+              </div>
+              <View style={{ flex: 1, overflow: 'hidden' as any }}>
+                <ErrorBoundary name="Loads">
+                  <LoadBoardPanel onAssigned={(truckId) => { handleAssigned(truckId); setShowLoadBoard(false); }} />
+                </ErrorBoundary>
               </View>
             </div>
-          </View>
+          )}
         </View>
-
-      ) : (
-        /* ══ MOBILE PORTRAIT ══ */
-        <View style={s.mobile}>
-          <TopBar />
-          <View style={s.mobileContent}>
-            {/* Карта — всегда на весь экран */}
-            <ErrorBoundary name="Map"><GoogleMapView {...mapProps} /></ErrorBoundary>
-            {/* Карточки траков — поверх карты, только на вкладке карты */}
-            {activeTab === 'map' && (
-              <View style={s.truckStripBar} pointerEvents="box-none">
-                <TruckCardOverlay
-                  onTruckClick={handleTruckClick}
-                  selectedTruckId={selectedTruckId}
-                />
-              </View>
-            )}
-            {/* Панели — поверх карты, с отступом 13% сверху */}
-            {activeTab !== 'map' && (
-              <View style={s.mobilePanelOverlay}>
-                {activeTab === 'loadboard' && <ErrorBoundary name="Loads"><LoadBoardPanel onAssigned={handleAssigned} /></ErrorBoundary>}
-                {activeTab === 'trucks'    && <ErrorBoundary name="Trucks"><TruckPanel onSwitchToLoadBoard={() => switchTab('loadboard')} /></ErrorBoundary>}
-                {activeTab === 'chat'      && <ErrorBoundary name="Chat"><UnifiedChatUI nickname={sessionName || 'player'} /></ErrorBoundary>}
-              </View>
-            )}
-          </View>
-          <BottomTabs />
-        </View>
-      )}
+        {/* Bottom tabs убраны — всё управление через карточки траков и кнопки на карте */}
+      </View>
 
       {/* ── TOAST УВЕДОМЛЕНИЯ — только без truckId (системные) ── */}
       {toasts.filter(t => !t.truckId).length > 0 && (
@@ -1753,7 +1716,7 @@ export default function GameScreen() {
         }}
       />
 
-      {negotiation.open && negotiation.load && (
+      {negotiation.open && negotiation.load && false && (
         <ErrorBoundary name="Neg">
           <NegotiationChat
             visible={negotiation.open}

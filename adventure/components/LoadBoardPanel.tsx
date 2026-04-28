@@ -226,7 +226,7 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
   const T = useTheme();
   const styles = useMemo(() => makeStyles(T), [T]);
   const filterStyles = useMemo(() => makeFilterStyles(T), [T]);
-  const { availableLoads, trucks, refreshLoadBoard, loadBoardSearchFrom, setLoadBoardSearch } = useGameStore();
+  const { availableLoads, trucks, refreshLoadBoard, loadBoardSearchFrom, setLoadBoardSearch, openNegotiation } = useGameStore();
   const activeStep = useGuideStore(s => s.activeStep);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -235,7 +235,6 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
   const [searchTo, setSearchTo] = useState('');
   const [deadheadRadius, setDeadheadRadius] = useState<number | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [chatLoad, setChatLoad] = useState<LoadOffer | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const countdownRef = useRef<any>(null);
 
@@ -283,13 +282,16 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
   const totalTrucks = trucks.length;
 
   function handleCall(load: LoadOffer) {
-    setChatLoad(load);
+    // Открываем переговоры через store — TruckHUD подхватит
+    openNegotiation(load);
+    // Закрываем LoadBoard чтобы видеть карту и TruckHUD
+    try { localStorage.setItem('dispatch-active-tab', 'map'); } catch {}
+    window.dispatchEvent(new CustomEvent('closeLoadBoard', {}));
+    window.dispatchEvent(new CustomEvent('switchTab', { detail: { tab: 'map' } }));
   }
 
   function handleNegotiationAccepted(agreedRate: number) {
-    // Груз уже назначен внутри NegotiationChat
-    // Просто закрываем чат
-    setChatLoad(null);
+    // Ничего не делаем — обрабатывается в TruckHUD
   }
 
   // Фильтрация по городу/штату + deadhead radius
@@ -495,13 +497,7 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
         </ScrollView>
       )}
 
-      {/* Чат-переговоры */}
-      <NegotiationChat
-        visible={!!chatLoad}
-        load={chatLoad}
-        onClose={() => setChatLoad(null)}
-        onAccepted={handleNegotiationAccepted}
-      />
+      {/* Чат-переговоры — теперь в TruckHUD */}
     </View>
   );
 }

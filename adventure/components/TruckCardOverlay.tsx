@@ -9,6 +9,7 @@ import { SERVICE_VEHICLE_CONFIGS } from '../types/serviceVehicle';
 import DayEndBanner from './DayEndPopup';
 import ShiftEndBanner from './ShiftEndPopup';
 import TruckStatsView from './TruckStatsView';
+import { UnifiedChatUI } from './UnifiedChatUI';
 
 const FLUENT = 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis';
 const STATUS_COLOR: Record<string, string> = {
@@ -21,6 +22,38 @@ const STATUS_LABEL: Record<string, string> = {
   at_pickup: 'Погрузка', at_delivery: 'Разгрузка',
   breakdown: 'Поломка', waiting: 'Detention', in_garage: 'В гараже',
 };
+
+function getStatusMessage(truck: any): string {
+  if (truck.onNightStop) return '🌙 Ночёвка';
+  if (truck.hosRestUntilMinute > 0) return '😴 HOS отдых';
+  if (truck.onMandatoryBreak) return '☕ 30-мин перерыв';
+  if (truck.status === 'breakdown') return '🔧 Поломка!';
+  if (truck.status === 'waiting') return '⏳ Detention';
+  if (truck.status === 'at_pickup') {
+    const city = truck.currentCity ? truck.currentCity.split(',')[0] : '';
+    return `📦 Грузится`;
+  }
+  if (truck.status === 'at_delivery') {
+    return `🏁 Разгрузка`;
+  }
+  if (truck.status === 'driving') {
+    const city = truck.destinationCity ? truck.destinationCity.split(',')[0] : '';
+    return city ? `🚛 К ${city}` : '🚛 К погрузке';
+  }
+  if (truck.status === 'loaded') {
+    const city = truck.destinationCity ? truck.destinationCity.split(',')[0] : '';
+    return city ? `📦 → ${city}` : '📦 В пути';
+  }
+  if (truck.status === 'idle') {
+    const w = truck.idleWarningLevel ?? 0;
+    if (w === 3) return '🔴 Нужен груз!';
+    if (w === 2) return '🟠 Нужен груз';
+    if (w === 1) return '🟡 Ищем груз';
+    return '✅ Свободен';
+  }
+  if (truck.status === 'in_garage') return '🔩 В гараже';
+  return '—';
+}
 
 const URGENCY_COLOR: Record<string, string> = {
   low: '#94a3b8', medium: '#f59e0b', high: '#f97316', critical: '#ef4444',
@@ -112,15 +145,101 @@ function getLoadingFact(load: any, truck: any, isPU: boolean, seed: number) {
   return facts[Math.abs(seed) % facts.length];
 }
 
-/** HUD-плашка с вкладками — Route / Stats / Load / Radio */
+/** HUD-плашка с вкладками — Route / Stats / Load / Связь */
 function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any }) {
-  const [activeTab, setActiveTab] = useState<'route' | 'stats' | 'load' | 'radio'>('route');
+  const [activeTab, setActiveTab] = useState<'route' | 'stats' | 'load' | 'chat' | 'deal'>('route');
   const collapsed = false; // Всегда развёрнуто
   const gameMinute = useGameStore(s => s.gameMinute);
+  const negotiation = useGameStore(s => s.negotiation);
+  const makeOffer = useGameStore(s => s.makeOffer);
+  const closeNegotiation = useGameStore(s => s.closeNegotiation);
+  const assignLoadToTruck = useGameStore(s => s.assignLoadToTruck);
+  const sessionName = useGameStore(s => s.sessionName);
+  const unreadChatCount = useGameStore(s =>
+    s.notifications.filter((n: any) => ['email','pod_ready','rate_con','detention','missed_call','voicemail','text','urgent'].includes(n.type) && !n.read).length
+  );
   const color = getTruckColor(truck);
 
-  // При смене вкладки — просто меняем активную вкладку
-  function handleTabClick(key: typeof activeTab) {
+  // Локальное состояние переговоров внутри HUD
+  const [dealMessages, setDealMessages] = useState<Array<{ from: 'broker' | 'me'; text: string }>>([]);
+  const [dealDone, setDealDone] = useState<'accepted' | 'rejected' | null>(null);
+  const [dealAgreedRate, setDealAgreedRate] = useState(0);
+  const [dealCurrentOffer, setDealCurrentOffer] = useState(0);
+  const [isAssigning, setIsAssigning] = useState(false);
+  // Сохраняем груз локально — negotiation.load сбрасывается после makeOffer('accepted')
+  const [savedLoad, setSavedLoad] = useState<any>(null);
+
+  // Когда открываются переговоры — переключаемся на вкладку Deal и инициализируем
+  const prevNegOpen = React.useRef(false);
+  useEffect(() => {
+    if (negotiation.open && negotiation.load) {
+      // Инициализируем только если это новый груз (другой id) или первое открытие
+      if (!prevNegOpen.current || (savedLoad && savedLoad.id !== negotiation.load.id)) {
+        setActiveTab('deal');
+        setSavedLoad(negotiation.load);
+        setDealMessages([{
+          from: 'broker',
+          text: `Hey! I've got a load for you: ${negotiation.load.fromCity} → ${negotiation.load.toCity}, ${negotiation.load.miles} miles, ${negotiation.load.commodity}. I'm posting at $${negotiation.load.postedRate.toLocaleString()}. Interested?`,
+        }]);
+        setDealDone(null);
+        setDealAgreedRate(0);
+        setDealCurrentOffer(negotiation.load.postedRate);
+      }
+    }
+    prevNegOpen.current = negotiation.open;
+  }, [negotiation.open, negotiation.load?.id]);
+
+  // Активный груз для переговоров — либо текущий из store, либо сохранённый
+  const activeDealLoad = negotiation.load || savedLoad;
+
+  function handleDealOffer(amount: number) {
+    if (!activeDealLoad || dealDone) return;
+    const load = activeDealLoad;
+    setDealMessages(prev => [...prev, {
+      from: 'me',
+      text: `I can do $${amount.toLocaleString()} for this load. That's ${load.miles} mi at $${(amount / load.miles).toFixed(2)}/mi.`,
+    }]);
+    const result = makeOffer(amount);
+    const neg = useGameStore.getState().negotiation;
+    if (result === 'accepted') {
+      setDealDone('accepted');
+      setDealAgreedRate(amount);
+      setDealMessages(prev => [...prev, { from: 'broker', text: `Deal! $${amount.toLocaleString()} works for me. Sending Rate Con now! 🤝` }]);
+    } else if (result === 'rejected') {
+      setDealDone('rejected');
+      setDealMessages(prev => [...prev, { from: 'broker', text: `Sorry, that's too low. I'll find another carrier.` }]);
+    } else {
+      const counter = neg.currentOffer;
+      setDealCurrentOffer(counter);
+      setDealMessages(prev => [...prev, { from: 'broker', text: `I can't go that low. Best I can do is $${counter.toLocaleString()}. Deal?` }]);
+    }
+  }
+
+  async function handleConfirmDeal() {
+    if (!activeDealLoad || dealAgreedRate === 0 || isAssigning) return;
+    setIsAssigning(true);
+    // Ищем груз в bookedLoads (makeOffer уже добавил его туда)
+    const bookedLoads = useGameStore.getState().bookedLoads;
+    const bookedLoad = bookedLoads.find((l: any) => l.id === activeDealLoad.id && (!l.truckId || l.truckId === ''));
+    if (bookedLoad) {
+      try {
+        await assignLoadToTruck(bookedLoad, truck.id);
+        setSavedLoad(null);
+        setDealDone(null);
+        setDealMessages([]);
+        setActiveTab('route');
+      } catch { setIsAssigning(false); }
+    } else {
+      // Груз уже назначен или не найден — просто закрываем
+      setSavedLoad(null);
+      setDealDone(null);
+      setDealMessages([]);
+      setActiveTab('route');
+    }
+    setIsAssigning(false);
+  }
+
+  function handleTabClick(key: 'route' | 'stats' | 'load' | 'chat' | 'deal') {
     setActiveTab(key);
   }
 
@@ -183,11 +302,12 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
   const load = truck.currentLoad;
   const progress = Math.round((truck.progress || 0) * 100);
 
-  const tabs: Array<{ key: typeof activeTab; icon: string; label: string }> = [
+  const tabs: Array<{ key: typeof activeTab; icon: string; label: string; badge?: boolean }> = [
     { key: 'route', icon: '🛣️', label: 'Route' },
     { key: 'stats', icon: '📊', label: 'Stats' },
     { key: 'load', icon: '📦', label: 'Load' },
-    { key: 'radio', icon: '📻', label: 'Radio' },
+    { key: 'chat', icon: '💬', label: 'Связь', badge: unreadChatCount > 0 },
+    ...(activeDealLoad ? [{ key: 'deal' as const, icon: '🤝', label: 'Груз', badge: dealDone !== 'accepted' && dealDone !== 'rejected' }] : []),
   ];
 
   const row = (label: string, value: string, valueColor?: string): React.ReactNode => (
@@ -202,92 +322,60 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
   return (
     <div style={{ ...ps, padding: 0, overflow: 'visible' }} onClick={e => e.stopPropagation()}>
 
-      {/* ── SUMMARY CHIPS — только когда развёрнуто ── */}
-      {!collapsed && (
-        <div style={{ display: 'flex', gap: 6, padding: '8px 10px', borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`, background: isDark ? 'rgba(13,17,23,0.97)' : 'rgba(255,255,255,0.97)' }}>
-          {[
-            { label: 'HOS', val: `${Math.floor(truck.hoursLeft)}h ${Math.round((truck.hoursLeft - Math.floor(truck.hoursLeft)) * 60)}m`, color: truck.hoursLeft < 2 ? '#f87171' : truck.hoursLeft < 4 ? '#fbbf24' : '#4ade80' },
-            { label: 'MOOD', val: `${Math.round(truck.mood ?? 75)}%`, color: (truck.mood ?? 75) >= 70 ? '#4ade80' : (truck.mood ?? 75) >= 40 ? '#fbbf24' : '#f87171' },
-            { label: 'РЕЙС', val: `${Math.round((truck.progress || 0) * 100)}%`, color: '#38bdf8' },
-            { label: 'СТАТУС', val: { idle: 'Свободен', driving: 'К погрузке', at_pickup: 'Погрузка', loaded: 'В пути', at_delivery: 'Разгрузка', breakdown: 'Поломка', waiting: 'Detention', in_garage: 'Гараж' }[truck.status as string] || truck.status, color },
-          ].map(c => (
-            <div key={c.label} style={{ flex: 1, background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`, borderRadius: 8, padding: '5px 4px', textAlign: 'center' } as any}>
-              <div style={{ fontSize: 8, color: isDark ? '#94a3b8' : '#6b7280', fontWeight: 700, letterSpacing: 0.3, marginBottom: 2 }}>{c.label}</div>
-              <div style={{ fontSize: 11, fontWeight: 900, color: c.color }}>{c.val}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ── ТАБЫ — всегда видны ── */}
+      {/* ── ТАБЫ ── */}
       <div style={{
         display: 'flex',
-        ...(collapsed ? {
-          // СВЁРНУТЫЙ: стеклянная таблетка
-          background: isDark ? 'rgba(10,15,30,0.55)' : 'rgba(255,255,255,0.45)',
-          backdropFilter: 'blur(24px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-          borderRadius: 14,
-          border: isDark
-            ? '1px solid rgba(255,255,255,0.18)'
-            : '1px solid rgba(255,255,255,0.6)',
-          boxShadow: isDark
-            ? '0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.10)'
-            : '0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.9)',
-          padding: '2px',
-        } : {
-          // РАЗВЁРНУТЫЙ: строка табов — часть общего блока в стиле P&L
-          background: isDark ? 'rgba(13,17,23,0.97)' : 'rgba(255,255,255,0.97)',
-          backdropFilter: 'blur(14px)',
-          WebkitBackdropFilter: 'blur(14px)',
-          borderRadius: '12px 12px 0 0',
-          border: isDark
-            ? '2px solid rgba(255,255,255,0.08)'
-            : '2px solid rgba(0,0,0,0.08)',
-          borderBottom: 'none',
-        }),
+        background: isDark ? 'rgba(13,17,23,0.97)' : 'rgba(255,255,255,0.97)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        borderRadius: '12px 12px 0 0',
+        border: isDark ? '2px solid rgba(255,255,255,0.08)' : '2px solid rgba(0,0,0,0.08)',
+        borderBottom: 'none',
       }}>
         {tabs.map(t => (
           <button
             key={t.key}
             onClick={() => handleTabClick(t.key)}
             style={{
-              flex: 1, padding: collapsed ? '8px 4px' : '8px 4px',
+              flex: 1, padding: '8px 4px',
               border: 'none', cursor: 'pointer',
-              background: collapsed && activeTab === t.key
-                ? (isDark ? 'rgba(6,182,212,0.18)' : 'rgba(6,182,212,0.15)')
-                : 'transparent',
-              borderRadius: collapsed ? 10 : 0,
-              borderBottom: collapsed ? 'none' : `2px solid ${activeTab === t.key ? '#06b6d4' : 'transparent'}`,
-              color: collapsed
-                ? (activeTab === t.key ? '#06b6d4' : (isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.45)'))
-                : (activeTab === t.key ? '#06b6d4' : (isDark ? '#64748b' : '#9ca3af')),
+              background: 'transparent',
+              borderRadius: 0,
+              borderBottom: `2px solid ${activeTab === t.key ? '#06b6d4' : 'transparent'}`,
+              color: activeTab === t.key ? '#06b6d4' : (isDark ? '#64748b' : '#9ca3af'),
               fontSize: 11, fontWeight: 600,
-              transition: 'color 0.2s, border-color 0.2s, background 0.2s',
+              transition: 'color 0.2s, border-color 0.2s',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3,
               whiteSpace: 'nowrap',
+              position: 'relative',
             }}
           >
-            <span style={{ fontSize: collapsed ? 16 : 12, opacity: collapsed ? (activeTab === t.key ? 1 : 0.7) : 1, filter: collapsed && activeTab === t.key ? 'drop-shadow(0 0 4px #06b6d4)' : 'none' }}>{t.icon}</span>
-            {!collapsed && t.label}
+            <span style={{ fontSize: 12 }}>{t.icon}</span>
+            {t.label}
+            {(t as any).badge && (
+              <span style={{
+                position: 'absolute', top: 4, right: 4,
+                width: 7, height: 7, borderRadius: '50%',
+                background: '#f59e0b',
+                boxShadow: '0 0 6px #f59e0b',
+                animation: 'trackingDot 1.2s ease-in-out infinite',
+              }} />
+            )}
           </button>
         ))}
       </div>
 
-      {/* ── КОНТЕНТ — только когда развёрнуто ── */}
-      {!collapsed && (
-        <div style={{
-          position: 'relative', minHeight: 80,
-          background: isDark ? 'rgba(13,17,23,0.97)' : 'rgba(255,255,255,0.97)',
-          backdropFilter: 'blur(14px)',
-          WebkitBackdropFilter: 'blur(14px)',
-          borderRadius: '0 0 12px 12px',
-          border: isDark
-            ? '2px solid rgba(255,255,255,0.08)'
-            : '2px solid rgba(0,0,0,0.08)',
-          borderTop: 'none',
-          overflow: 'hidden',
-        }}>
+      {/* ── КОНТЕНТ ── */}
+      <div style={{
+        position: 'relative', minHeight: 80,
+        background: isDark ? 'rgba(13,17,23,0.97)' : 'rgba(255,255,255,0.97)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        borderRadius: '0 0 12px 12px',
+        border: isDark ? '2px solid rgba(255,255,255,0.08)' : '2px solid rgba(0,0,0,0.08)',
+        borderTop: 'none',
+        overflow: 'hidden',
+      }}>
         {/* ROUTE */}
         <div style={{
           padding: '10px 12px',
@@ -372,59 +460,153 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
           )}
         </div>
 
-        {/* RADIO */}
+        {/* СВЯЗЬ — чат с брокерами и водителями */}
         <div style={{
-          padding: '10px 12px',
-          opacity: activeTab === 'radio' ? 1 : 0,
-          position: activeTab === 'radio' ? 'relative' : 'absolute',
+          opacity: activeTab === 'chat' ? 1 : 0,
+          position: activeTab === 'chat' ? 'relative' : 'absolute',
           top: 0, left: 0, width: '100%',
           transition: 'opacity 0.3s ease',
-          pointerEvents: activeTab === 'radio' ? 'auto' : 'none',
+          pointerEvents: activeTab === 'chat' ? 'auto' : 'none',
+          height: activeTab === 'chat' ? 'auto' : 0,
+          overflow: 'hidden',
+          minHeight: activeTab === 'chat' ? 280 : 0,
         }}>
-          <div style={{
-            display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 10px',
-            background: isDark ? 'rgba(6,182,212,0.06)' : 'rgba(6,182,212,0.04)',
-            border: `1px solid ${isDark ? 'rgba(6,182,212,0.15)' : 'rgba(6,182,212,0.12)'}`,
-            borderRadius: 8,
-          }}>
-            <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>📻</span>
-            <div>
-              <div style={{ fontSize: 9, color: '#06b6d4', fontWeight: 700, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.5 }}>Last transmission</div>
-              <div style={{ fontSize: 12, color: isDark ? '#e2e8f0' : '#374151', lineHeight: 1.5, fontStyle: 'italic' }}>"{driverMessage}"</div>
-            </div>
-          </div>
-          {divider}
-          {row('Driver', truck.driver)}
-          {row('Location', `📍 ${truck.currentCity || 'En route'}`)}
-          {row('Status', `${sEmoji} ${sLabel}`)}
-          {truck.isOldTruck && row('Truck Condition', '⚠️ Old truck')}
+          <UnifiedChatUI nickname={sessionName || 'player'} />
         </div>
-      </div>
-      )}
 
-      {/* Кнопка сворачивания/разворачивания — только когда развёрнуто */}
-      {!collapsed && (
-      <div
-        onClick={handleToggleCollapse}
-        style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          gap: 6, padding: '6px 0', cursor: 'pointer',
-          borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-          background: isDark ? 'rgba(10,15,30,0.45)' : 'rgba(255,255,255,0.35)',
-          backdropFilter: 'blur(24px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-          borderRadius: '0 0 12px 12px',
-          border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(255,255,255,0.5)',
-          borderTop: 'none',
-          transition: 'all 0.2s ease',
-        } as any}
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(10,15,30,0.6)' : 'rgba(255,255,255,0.5)'; }}
-        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(10,15,30,0.45)' : 'rgba(255,255,255,0.35)'; }}
-      >
-        <span style={{ fontSize: 10, color: isDark ? '#64748b' : '#9ca3af', fontWeight: 700, lineHeight: 1 }}>▼</span>
-        <div style={{ width: 32, height: 3, borderRadius: 2, background: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)' }} />
+        {/* DEAL — переговоры с брокером */}
+        {activeDealLoad && (
+          <div style={{
+            opacity: activeTab === 'deal' ? 1 : 0,
+            position: activeTab === 'deal' ? 'relative' : 'absolute',
+            top: 0, left: 0, width: '100%',
+            transition: 'opacity 0.3s ease',
+            pointerEvents: activeTab === 'deal' ? 'auto' : 'none',
+            display: 'flex', flexDirection: 'column',
+          }}>
+            {(() => {
+              const load = activeDealLoad;
+              const broker = load.brokerName || 'Broker';
+              const brokerCompany = load.brokerCompany || '';
+              const tiles = [
+                { val: Math.round(load.postedRate * 1.05), tag: '+5%' },
+                { val: Math.round(load.postedRate * 1.10), tag: '+10%' },
+                { val: Math.round(load.postedRate * 1.15), tag: '+15%' },
+                { val: Math.round(load.marketRate), tag: 'Market', isMarket: true },
+              ];
+              return (
+                <>
+                  {/* Заголовок брокера */}
+                  <div style={{ padding: '8px 12px 6px', borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 20 }}>👩‍💼</span>
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 800, color: isDark ? '#e2e8f0' : '#111827' }}>{broker}</div>
+                          <div style={{ fontSize: 10, color: isDark ? '#64748b' : '#9ca3af' }}>{brokerCompany}</div>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 12, fontWeight: 800, color: '#06b6d4' }}>{load.fromCity} → {load.toCity}</div>
+                        <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280' }}>{load.miles} mi · ${load.postedRate.toLocaleString()} (${(load.postedRate/load.miles).toFixed(2)}/mi)</div>
+                        <div style={{ fontSize: 10, color: '#4ade80' }}>Market: ${load.marketRate.toLocaleString()} (${(load.marketRate/load.miles).toFixed(2)}/mi)</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Чат */}
+                  <div style={{ padding: '6px 12px', maxHeight: 110, overflowY: 'auto' as any, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                    {dealMessages.map((msg, i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: msg.from === 'me' ? 'flex-end' : 'flex-start', gap: 5 }}>
+                        {msg.from === 'broker' && <span style={{ fontSize: 14, flexShrink: 0 }}>👩‍💼</span>}
+                        <div style={{
+                          maxWidth: '80%', padding: '5px 9px', borderRadius: msg.from === 'me' ? '10px 10px 2px 10px' : '10px 10px 10px 2px',
+                          background: msg.from === 'me' ? 'rgba(6,182,212,0.2)' : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'),
+                          border: msg.from === 'me' ? '1px solid rgba(6,182,212,0.3)' : `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+                        }}>
+                          <span style={{ fontSize: 11, color: isDark ? '#e2e8f0' : '#374151', lineHeight: 1.4 }}>{msg.text}</span>
+                        </div>
+                      </div>
+                    ))}
+                    {dealDone === 'accepted' && (
+                      <div style={{ textAlign: 'center', padding: '4px 0', fontSize: 12, fontWeight: 800, color: '#4ade80' }}>
+                        🤝 Deal at ${dealAgreedRate.toLocaleString()}!
+                      </div>
+                    )}
+                    {dealDone === 'rejected' && (
+                      <div style={{ textAlign: 'center', padding: '4px 0', fontSize: 12, fontWeight: 800, color: '#f87171' }}>
+                        ❌ No deal. Broker walked away.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Кнопки предложений */}
+                  {!dealDone && (
+                    <div style={{ padding: '6px 12px 10px' }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: isDark ? '#64748b' : '#9ca3af', marginBottom: 5, textTransform: 'uppercase', letterSpacing: 0.5 }}>Твоё предложение:</div>
+                      <div style={{ display: 'flex', gap: 5 }}>
+                        {tiles.map((t, i) => (
+                          <button key={i} onClick={() => handleDealOffer(t.val)} style={{
+                            flex: 1, padding: '6px 4px', borderRadius: 8, cursor: 'pointer',
+                            background: t.isMarket ? 'rgba(74,222,128,0.12)' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+                            border: t.isMarket ? '1.5px solid rgba(74,222,128,0.4)' : `1.5px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+                            transition: 'all 0.15s ease',
+                          }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = t.isMarket ? 'rgba(74,222,128,0.22)' : 'rgba(6,182,212,0.12)'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = t.isMarket ? 'rgba(74,222,128,0.12)' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'); }}
+                          >
+                            <div style={{ fontSize: 11, fontWeight: 900, color: t.isMarket ? '#4ade80' : (isDark ? '#e2e8f0' : '#111827') }}>{t.val.toLocaleString()}</div>
+                            <div style={{ fontSize: 9, fontWeight: 700, color: t.isMarket ? '#4ade80' : '#06b6d4' }}>{t.tag}</div>
+                          </button>
+                        ))}
+                      </div>
+                      {negotiation.round > 0 && !dealDone && dealCurrentOffer > 0 && (
+                        <button onClick={() => handleDealOffer(dealCurrentOffer)} style={{
+                          width: '100%', marginTop: 5, padding: '6px', borderRadius: 8, cursor: 'pointer',
+                          background: 'rgba(74,222,128,0.1)', border: '1.5px solid rgba(74,222,128,0.35)',
+                          fontSize: 11, fontWeight: 800, color: '#4ade80',
+                        }}>
+                          ✅ Принять ${dealCurrentOffer.toLocaleString()}
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Подтверждение сделки */}
+                  {dealDone === 'accepted' && (
+                    <div style={{ padding: '6px 12px 10px', display: 'flex', gap: 6 }}>
+                      <button onClick={closeNegotiation} style={{
+                        flex: 1, padding: '7px', borderRadius: 8, cursor: 'pointer',
+                        background: 'transparent', border: `1px solid ${isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'}`,
+                        fontSize: 11, fontWeight: 700, color: isDark ? '#94a3b8' : '#6b7280',
+                      }}>Отмена</button>
+                      <button onClick={handleConfirmDeal} disabled={isAssigning} style={{
+                        flex: 2, padding: '7px', borderRadius: 8, cursor: isAssigning ? 'default' : 'pointer',
+                        background: isAssigning ? 'rgba(74,222,128,0.1)' : 'rgba(74,222,128,0.2)',
+                        border: '1.5px solid rgba(74,222,128,0.5)',
+                        fontSize: 11, fontWeight: 800, color: '#4ade80',
+                      }}>
+                        {isAssigning ? '⏳ Назначаем...' : `✅ Назначить на ${truck.driver?.split(' ')[0] || 'трак'}`}
+                      </button>
+                    </div>
+                  )}
+
+                  {dealDone === 'rejected' && (
+                    <div style={{ padding: '6px 12px 10px' }}>
+                      <button onClick={closeNegotiation} style={{
+                        width: '100%', padding: '7px', borderRadius: 8, cursor: 'pointer',
+                        background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)',
+                        fontSize: 11, fontWeight: 700, color: '#f87171',
+                      }}>Закрыть</button>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+        )}
       </div>
-      )}
+
     </div>
   );
 }
@@ -435,6 +617,7 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
   const repairBreakdown = useGameStore(s => s.repairBreakdown);
   const gameMinute = useGameStore(s => s.gameMinute);
   const serviceVehicles = useGameStore(s => s.serviceVehicles);
+  const negotiationOpen = useGameStore(s => s.negotiation.open);
   const color = getTruckColor(truck);
   const hos = Math.max(0, truck.hoursLeft);
   const mood = truck.mood ?? 80;
@@ -806,11 +989,9 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
   if (isIdle) {
     const wl = truck.idleWarningLevel ?? 0;
     const wc = wl >= 3 ? '#ef4444' : wl >= 2 ? '#fb923c' : wl >= 1 ? '#fbbf24' : '#38bdf8';
-    const negotiation = useGameStore.getState().negotiation;
     const bookedLoads = useGameStore.getState().bookedLoads;
-    const unbookedLoad = bookedLoads.find(l => !l.truckId || l.truckId === '');
-    const hasNegotiation = negotiation.open && negotiation.load;
-    
+    const unbookedLoad = bookedLoads.find((l: any) => !l.truckId || l.truckId === '');
+
     const handleOpenLoadBoard = (e: React.MouseEvent) => {
       e.stopPropagation();
       const store = useGameStore.getState();
@@ -819,18 +1000,10 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
       window.dispatchEvent(new CustomEvent('switchTab', { detail: { tab: 'loadboard' } }));
     };
 
-    const handleOpenNegotiation = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      // Переключаем на loadboard где открыт чат переговоров
-      try { localStorage.setItem('dispatch-active-tab', 'loadboard'); } catch {}
-      window.dispatchEvent(new CustomEvent('switchTab', { detail: { tab: 'loadboard' } }));
-    };
-
     const handleAssignLoad = (e: React.MouseEvent) => {
       e.stopPropagation();
       if (!unbookedLoad) return;
       useGameStore.getState().assignLoadToTruck(unbookedLoad, truck.id);
-      // Переключаем на карту и включаем слежение за траком
       try { localStorage.setItem('dispatch-active-tab', 'map'); } catch {}
       window.dispatchEvent(new CustomEvent('switchTab', { detail: { tab: 'map' } }));
       window.dispatchEvent(new CustomEvent('followTruckFromCard', {
@@ -838,7 +1011,6 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
       }));
     };
 
-    // Стиль action-pill кнопки
     const actionPill = (accentColor: string): React.CSSProperties => ({
       width: '100%',
       padding: '10px 14px',
@@ -859,6 +1031,11 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
       el.style.boxShadow = 'none';
     };
 
+    // Если есть активные переговоры — показываем HUD с вкладкой Deal
+    if (negotiationOpen) {
+      return <TruckHUD truck={truck} isDark={isDark} ps={psHUD} />;
+    }
+
     return (
       <div style={ps} onClick={e => e.stopPropagation()}>
         {/* Статус */}
@@ -870,37 +1047,7 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
           </div>
         </div>
 
-        {/* Action-табы */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-
-          {/* 📞 Брокер — когда идут переговоры */}
-          {hasNegotiation && negotiation.load && (
-            <div
-              onClick={handleOpenNegotiation}
-              style={actionPill('#4ade80')}
-              onMouseEnter={e => pillHoverOn(e.currentTarget as HTMLElement, '#4ade80')}
-              onMouseLeave={e => pillHoverOff(e.currentTarget as HTMLElement)}
-            >
-              <div style={{ position: 'relative' }}>
-                <span style={{ fontSize: 18 }}>📞</span>
-                <div style={{
-                  position: 'absolute', top: -2, right: -4,
-                  width: 8, height: 8, borderRadius: '50%',
-                  background: '#4ade80',
-                  animation: 'trackingDot 1.2s ease-in-out infinite',
-                  boxShadow: '0 0 6px #4ade80',
-                }} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 12, fontWeight: 800, color: isDark ? '#4ade80' : '#16a34a' }}>Переговоры</div>
-                <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280' }}>
-                  {negotiation.load.brokerName} • {negotiation.load.fromCity} → {negotiation.load.toCity} • ${negotiation.load.postedRate.toLocaleString()}
-                </div>
-              </div>
-              <span style={{ fontSize: 14, color: isDark ? '#4ade80' : '#16a34a', opacity: 0.6 }}>→</span>
-            </div>
-          )}
-
           {/* 🚛 Назначить трак — если есть забуканный груз */}
           {unbookedLoad && (
             <div
@@ -918,7 +1065,7 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
             </div>
           )}
 
-          {/* 📦 Найти груз — всегда для idle */}
+          {/* 📦 Найти груз */}
           <div
             onClick={handleOpenLoadBoard}
             style={actionPill('#38bdf8')}
@@ -1125,98 +1272,80 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
   const isDark = themeMode === 'dark';
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Локальный порядок траков для карусели
-  const [truckOrder, setTruckOrder] = useState<string[]>(() => trucksRaw.map(t => t.id));
+  // Порядок карточек как state — изменение вызывает ре-рендер
+  const [order, setOrder] = useState<string[]>([]);
   const [animationDirection, setAnimationDirection] = useState<'left' | 'right' | null>(null);
 
-  // Обновляем порядок если изменилось количество траков
+  // Инициализация и синхронизация состава траков
   useEffect(() => {
-    const currentIds = trucksRaw.map(t => t.id);
-    if (truckOrder.length !== currentIds.length) {
-      console.log('Количество траков изменилось, обновляем порядок:', currentIds);
-      setTruckOrder(currentIds);
-    }
-  }, [trucksRaw.length]);
+    setOrder(prev => {
+      const rawIds = trucksRaw.map(t => t.id);
+      if (prev.length === 0) return rawIds;
+      const added = rawIds.filter(id => !prev.includes(id));
+      const filtered = prev.filter(id => rawIds.includes(id));
+      if (added.length === 0 && filtered.length === prev.length) return prev; // без изменений
+      return [...filtered, ...added];
+    });
+  }, [trucksRaw.map(t => t.id).join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Сбрасываем анимацию после её завершения
+  // Сортируем траки по order
+  const trucks = useMemo(() => {
+    if (!order.length) return trucksRaw;
+    return [...trucksRaw].sort((a, b) => {
+      const ai = order.indexOf(a.id), bi = order.indexOf(b.id);
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    });
+  }, [trucksRaw, order]);
+
+  // Сбрасываем анимацию
   useEffect(() => {
-    if (animationDirection) {
-      const timer = setTimeout(() => setAnimationDirection(null), 400);
-      return () => clearTimeout(timer);
-    }
+    if (!animationDirection) return;
+    const t = setTimeout(() => setAnimationDirection(null), 400);
+    return () => clearTimeout(t);
   }, [animationDirection]);
 
-  // Сортируем траки согласно локальному порядку
-  const trucks = useMemo(() => {
-    if (truckOrder.length === 0) return trucksRaw;
-    // Сортируем по порядку из truckOrder
-    const sorted = [...trucksRaw].sort((a, b) => {
-      const aIdx = truckOrder.indexOf(a.id);
-      const bIdx = truckOrder.indexOf(b.id);
-      if (aIdx === -1) return 1;
-      if (bIdx === -1) return -1;
-      return aIdx - bIdx;
-    });
-    return sorted;
-  }, [trucksRaw, truckOrder]);
-
-  // Навигация влево ← : текущий трак сдвигается вправо (становится вторым), предыдущий становится первым
+  // ← : последний трак становится первым
   const handlePrevTruck = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (trucks.length <= 1) return;
-    
+    e.preventDefault();
+    if (trucksRaw.length <= 1) return;
+    setOrder(prev => {
+      if (prev.length < 2) return prev;
+      const last = prev[prev.length - 1];
+      const truck = trucksRaw.find(t => t.id === last);
+      if (truck) onTruckClick(truck);
+      return [last, ...prev.slice(0, -1)];
+    });
     setAnimationDirection('left');
-    const newOrder = [...truckOrder];
-    // Берём последний элемент и ставим его в начало
-    const lastTruck = newOrder.pop();
-    if (lastTruck) {
-      newOrder.unshift(lastTruck);
-      setTruckOrder(newOrder);
-      // Выбираем новый первый трак
-      onTruckClick(trucksRaw.find(t => t.id === lastTruck)!);
-    }
   };
 
-  // Навигация вправо → : текущий трак уходит в конец, следующий становится первым
+  // → : первый трак уходит в конец
   const handleNextTruck = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (trucks.length <= 1) return;
-    
+    e.preventDefault();
+    if (trucksRaw.length <= 1) return;
+    setOrder(prev => {
+      if (prev.length < 2) return prev;
+      const [first, ...rest] = prev;
+      const nextId = rest[0];
+      const truck = trucksRaw.find(t => t.id === nextId);
+      if (truck) onTruckClick(truck);
+      return [...rest, first];
+    });
     setAnimationDirection('right');
-    const newOrder = [...truckOrder];
-    // Берём первый элемент и ставим его в конец
-    const firstTruck = newOrder.shift();
-    if (firstTruck) {
-      newOrder.push(firstTruck);
-      setTruckOrder(newOrder);
-      // Выбираем новый первый трак
-      onTruckClick(trucksRaw.find(t => t.id === newOrder[0])!);
-    }
   };
 
-  // Обработчик клика по карточке — перемещаем её на первое место
+  // Клик по карточке — перемещаем на первое место
   const handleTruckCardClick = (truck: any) => {
-    console.log('Клик по карточке:', truck.id, 'Текущий порядок:', truckOrder);
-    
-    // Если это уже первая карточка, просто выбираем
-    if (truckOrder[0] === truck.id) {
-      console.log('Это уже первая карточка');
+    if (order[0] === truck.id) {
       onTruckClick(truck);
       return;
     }
-
-    // Определяем направление анимации по позиции карточки
-    const currentIndex = truckOrder.indexOf(truck.id);
-    console.log('Индекс карточки:', currentIndex);
-    setAnimationDirection(currentIndex > truckOrder.length / 2 ? 'left' : 'right');
-
-    // Перемещаем выбранную карточку на первое место
-    const newOrder = truckOrder.filter(id => id !== truck.id);
-    newOrder.unshift(truck.id);
-    console.log('Новый порядок:', newOrder);
-    setTruckOrder(newOrder);
-    
-    // Выбираем этот трак
+    const idx = order.indexOf(truck.id);
+    setOrder(prev => [truck.id, ...prev.filter(id => id !== truck.id)]);
+    setAnimationDirection(idx > order.length / 2 ? 'left' : 'right');
     onTruckClick(truck);
   };
 
@@ -1381,8 +1510,6 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
       >
         {trucks.map((truck, index) => {
           const color = getTruckColor(truck);
-          const hos = Math.max(0, truck.hoursLeft);
-          const hosColor = hos < 2 ? '#f87171' : hos < 4 ? '#fbbf24' : '#34d399';
           const isSelected = selectedTruckId === truck.id;
           const isMoving = truck.status === 'driving' || truck.status === 'loaded';
           const progressPct = Math.round(truck.progress * 100);
@@ -1396,9 +1523,7 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
           const toSt = truck.destinationCity ? (CITY_STATE[truck.destinationCity] || '') : '';
           const fromLabel = fromSt ? `${truck.currentCity}, ${fromSt}` : truck.currentCity;
           const toLabel = toSt ? `${truck.destinationCity}, ${toSt}` : (truck.destinationCity || '');
-          const statusLabel = truck.onNightStop ? '🌙 Ночёвка' 
-            : (truck.status === 'waiting' && (truck as any).hosRestStartMinute !== undefined) ? '😴 HOS отдых'
-            : STATUS_LABEL[truck.status] || truck.status;
+          const statusLabel = getStatusMessage(truck);
 
           // События для этого трака
           const truckEvents = activeEvents.filter(e => e.truckId === truck.id);
@@ -1410,11 +1535,21 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
           return (
             <div key={truck.id} data-truck-card 
               className={index === 0 && animationDirection ? (animationDirection === 'left' ? 'truck-card-animate-left' : 'truck-card-animate') : ''}
+              onClick={(e) => {
+                console.log('WRAPPER onClick сработал!', truck.id);
+                e.stopPropagation();
+                e.preventDefault();
+                handleTruckCardClick(truck);
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
               style={{
               flexShrink: 0, width: 250,
               display: 'flex', flexDirection: 'column',
               position: 'relative',
               pointerEvents: 'auto', // Включаем клики на карточке
+              cursor: 'pointer',
+              zIndex: 20,
             } as any}>
 
               {/* Стрелки навигации — на выбранной карточке, или на первой если ничего не выбрано. Только если траков > 1 */}
@@ -1452,7 +1587,6 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
               )}
               {/* Карточка трака */}
               <div
-                onClick={() => handleTruckCardClick(truck)}
                 style={{
                   width: '100%',
                   borderRadius: 16,
@@ -1536,34 +1670,38 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                   </div>
                 )}
 
-                <div style={{ display:'flex', flexDirection:'row', width:'100%', borderRadius:12, overflow:'hidden' } as any}>
+                <div style={{ display:'flex', flexDirection:'row', width:'100%', borderRadius:12, overflow:'hidden', pointerEvents: 'none' } as any}>
                   {/* ЛЕВЫЙ БЛОК — аватар */}
                   <div style={{
                     width: 62, flexShrink: 0,
                     display: 'flex', flexDirection: 'column',
                     alignItems: 'center', justifyContent: 'center',
-                    gap: 3, padding: '6px 3px',
+                    gap: 2, padding: '5px 3px',
                     borderRight: `1px solid ${color}33`,
                     position: 'relative',
+                    pointerEvents: 'none',
                   } as any}>
                     <img src={moodEmoji} width={16} height={16}
                       style={{ position: 'absolute', top: 3, right: 2 } as any} />
                     <img src={getDriverAvatar(truck.driver || truck.id)} width={40} height={40}
-                      style={{ display: 'block' } as any} />
+                      style={{ display: 'block', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.4))' } as any} />
                     <div style={{
                       fontSize: 8, fontWeight: 700, color,
                       border: `1px solid ${color}44`, borderRadius: 4,
-                      padding: '1px 4px', whiteSpace: 'nowrap',
+                      padding: '1px 4px', whiteSpace: 'nowrap', maxWidth: 58,
+                      overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center',
                     } as any}>{statusLabel}</div>
                   </div>
 
                   {/* ПРАВЫЙ БЛОК — инфо */}
                   <div style={{
                     flex: 1, display: 'flex', flexDirection: 'column',
-                    padding: '5px 8px', gap: 2, minWidth: 0,
+                    padding: '5px 8px', gap: 1, minWidth: 0,
+                    pointerEvents: 'none',
                   } as any}>
+                    {/* Строка 1: Имя + TRK/TRL */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' } as any}>
-                      <span style={{ fontSize: 11, fontWeight: 900, color: isDark ? '#ffffff' : '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 80 } as any}>
+                      <span style={{ fontSize: 12, fontWeight: 900, color: isDark ? '#ffffff' : '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 80 } as any}>
                         {driverName}
                       </span>
                       <div style={{ display: 'flex', gap: 2, flexShrink: 0 } as any}>
@@ -1572,52 +1710,91 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                       </div>
                     </div>
 
+                    {/* Строка 2: Маршрут */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 2 } as any}>
                       <span style={{ fontSize: 9 } as any}>📍</span>
                       {truck.destinationCity ? (
-                        <span style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#e2e8f0' : '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
+                        <span style={{ fontSize: 10, fontWeight: 800, color: isDark ? '#e2e8f0' : '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
                           {fromLabel}
                           <span style={{ color: isDark ? '#475569' : '#9ca3af', margin: '0 3px' } as any}>→</span>
                           <span style={{ color: isDark ? '#38bdf8' : '#007aff' } as any}>{toLabel}</span>
                         </span>
                       ) : (
-                        <span style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#94a3b8' : '#6b7280' } as any}>{fromLabel}</span>
+                        <span style={{ fontSize: 10, fontWeight: 800, color: isDark ? '#94a3b8' : '#6b7280' } as any}>{fromLabel}</span>
                       )}
                     </div>
 
+                    {/* Строка 3: Прогресс рейса + ставка */}
                     {isMoving && (
-                      <div style={{ marginTop: 1 } as any}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 1 } as any}>
-                          <span style={{ fontSize: 8, color: isDark ? '#64748b' : '#6b7280', fontWeight: 600 } as any}>Рейс</span>
-                          <span style={{ fontSize: 8, fontWeight: 800, color } as any}>{progressPct}%</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 } as any}>
+                        <div style={{ flex: 1 } as any}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 1 } as any}>
+                            <span style={{ fontSize: 8, color: isDark ? '#64748b' : '#6b7280', fontWeight: 600 } as any}>Рейс</span>
+                            <span style={{ fontSize: 8, fontWeight: 800, color } as any}>{progressPct}%</span>
+                          </div>
+                          <div style={{ height: 3, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 2, overflow: 'hidden' } as any}>
+                            <div style={{ height: '100%', width: `${progressPct}%`, background: `linear-gradient(90deg,${color}88,${color})`, borderRadius: 2, transition: 'width 0.8s ease' } as any} />
+                          </div>
                         </div>
-                        <div style={{ height: 3, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 2, overflow: 'hidden' } as any}>
-                          <div style={{ height: '100%', width: `${progressPct}%`, background: `linear-gradient(90deg,${color}88,${color})`, borderRadius: 2, transition: 'width 0.8s ease' } as any} />
+                        {truck.currentLoad ? (
+                          <div style={{ flexShrink: 0, border: `1px solid ${isDark ? 'rgba(74,222,128,0.35)' : 'rgba(52,199,89,0.35)'}`, borderRadius: 5, padding: '0px 5px' } as any}>
+                            <span style={{ fontSize: 11, fontWeight: 900, color: isDark ? '#4ade80' : '#16a34a' } as any}>${truck.currentLoad.agreedRate.toLocaleString()}</span>
+                          </div>
+                        ) : (
+                          <div style={{ flexShrink: 0, border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`, borderRadius: 5, padding: '0px 5px' } as any}>
+                            <span style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#475569' : '#9ca3af' } as any}>Нет груза</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {!isMoving && truck.currentLoad && (
+                      <div style={{ display: 'flex', justifyContent: 'flex-end' } as any}>
+                        <div style={{ border: `1px solid ${isDark ? 'rgba(74,222,128,0.35)' : 'rgba(52,199,89,0.35)'}`, borderRadius: 5, padding: '0px 5px' } as any}>
+                          <span style={{ fontSize: 11, fontWeight: 900, color: isDark ? '#4ade80' : '#16a34a' } as any}>${truck.currentLoad.agreedRate.toLocaleString()}</span>
                         </div>
                       </div>
                     )}
 
-                    {/* Стандартная строка HOS/mood/ставка */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 1 } as any}>
-                      <div style={{ border: `1px solid ${hosColor}44`, borderRadius: 5, padding: '0px 4px', display: 'flex', alignItems: 'baseline', gap: 1 } as any}>
-                        <span style={{ fontSize: 10, fontWeight: 900, color: hosColor } as any}>{hos.toFixed(1)}</span>
-                        <span style={{ fontSize: 8, color: hosColor, opacity: 0.8 } as any}>h</span>
-                      </div>
-                      <span style={{ fontSize: 9 } as any}>😊</span>
-                      <span style={{ fontSize: 9, fontWeight: 800, color: mood >= 60 ? (isDark ? '#34d399' : '#16a34a') : mood >= 35 ? '#fbbf24' : '#f87171' } as any}>{Math.round(mood)}%</span>
-                      {truck.currentLoad ? (
-                        <div style={{ marginLeft: 'auto', border: `1px solid ${isDark ? 'rgba(74,222,128,0.35)' : 'rgba(52,199,89,0.35)'}`, borderRadius: 5, padding: '0px 5px' } as any}>
-                          <span style={{ fontSize: 11, fontWeight: 900, color: isDark ? '#4ade80' : '#16a34a' } as any}>${truck.currentLoad.agreedRate.toLocaleString()}</span>
+                    {/* Строка 4: 3 мини прогресс-бара */}
+                    {(() => {
+                      const techVal = Math.round(Math.max(0, Math.min(100, (truck as any).reliability ?? 80)));
+                      const moodVal = Math.round(Math.max(0, Math.min(100, truck.mood ?? 80)));
+                      const perfVal = Math.round(Math.max(0, Math.min(100, (truck as any).performance ?? 80)));
+                      const techColor = techVal >= 70 ? '#34d399' : techVal >= 40 ? '#fbbf24' : '#f87171';
+                      const moodColor = moodVal >= 70 ? '#34d399' : moodVal >= 40 ? '#fbbf24' : '#f87171';
+                      const perfColor = perfVal >= 70 ? '#818cf8' : perfVal >= 40 ? '#fbbf24' : '#f87171';
+                      const bars = [
+                        { icon: '🚛', label: 'Состояние', val: techVal, color: techColor },
+                        { icon: '😊', label: 'Настроение', val: moodVal, color: moodColor },
+                        { icon: '⚡', label: 'Скорость',   val: perfVal, color: perfColor },
+                      ];
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginTop: 3 } as any}>
+                          {bars.map(b => (
+                            <div key={b.icon} style={{ display: 'flex', alignItems: 'center', gap: 4 } as any}>
+                              <span style={{ fontSize: 10, lineHeight: 1, flexShrink: 0 } as any}>{b.icon}</span>
+                              <span style={{ fontSize: 10, fontWeight: 700, color: isDark ? '#e2e8f0' : '#374151', flexShrink: 0, width: 60, lineHeight: 1 } as any}>{b.label}</span>
+                              <div style={{ flex: 1, maxWidth: 70, height: 5, background: isDark ? 'rgba(255,255,255,0.1)' : '#e5e7eb', borderRadius: 3, overflow: 'hidden', flexShrink: 0 } as any}>
+                                <div style={{ height: '100%', width: `${b.val}%`, background: b.color, borderRadius: 3, transition: 'width 0.8s ease' } as any} />
+                              </div>
+                              <span style={{ fontSize: 10, fontWeight: 800, color: b.color, lineHeight: 1, flexShrink: 0 } as any}>{b.val}%</span>
+                            </div>
+                          ))}
                         </div>
-                      ) : (
-                        <div style={{ marginLeft: 'auto', border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`, borderRadius: 5, padding: '0px 5px' } as any}>
-                          <span style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#475569' : '#9ca3af' } as any}>Нет груза</span>
-                        </div>
-                      )}
-                    </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
+
+              {/* TruckDropdown — панель под выбранной карточкой */}
+              {isSelected && (
+                <TruckDropdown
+                  truck={truck}
+                  events={truckEvents}
+                  isDark={isDark}
+                />
+              )}
 
               {/* Результат доставки — под карточкой */}
               {deliveryResult && (

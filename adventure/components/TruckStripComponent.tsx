@@ -175,8 +175,6 @@ const TruckStripComponent = memo(function TruckStripComponent({
     >
       {trucks.map(truck => {
         const color = getTruckColor(truck);
-        const hos = Math.max(0, truck.hoursLeft);
-        const hosColor = hos < 2 ? '#f87171' : hos < 4 ? '#fbbf24' : '#34d399';
         const isSelected = selectedTruckId === truck.id;
         const isMoving = truck.status === 'driving' || truck.status === 'loaded';
         const isAlert = (truck as any).idleWarningLevel > 0 || truck.status === 'breakdown';
@@ -191,9 +189,9 @@ const TruckStripComponent = memo(function TruckStripComponent({
         const toSt = truck.destinationCity ? (CITY_STATE[truck.destinationCity] || '') : '';
         const fromLabel = fromSt ? `${truck.currentCity}, ${fromSt}` : truck.currentCity;
         const toLabel = toSt ? `${truck.destinationCity}, ${toSt}` : (truck.destinationCity || '');
-        const statusLabel = (truck as any).onNightStop ? '🌙 Ночёвка' : (truck as any).hosRestUntilMinute > 0 ? '😴 HOS отдых' : STATUS_LABEL[truck.status];
-        const CARD_H = isWide ? 120 : 110; // Увеличено с 100 до 110 для мобильных
-        const AVATAR_W = isWide ? 90 : 80; // Увеличено с 76 до 80
+        const statusLabel = getStatusMessage(truck);
+        const CARD_H = isWide ? 128 : 118;
+        const AVATAR_W = isWide ? 90 : 80;
         const r = parseInt(color.slice(1,3),16), g = parseInt(color.slice(3,5),16), b = parseInt(color.slice(5,7),16);
 
         return (
@@ -285,21 +283,44 @@ const TruckStripComponent = memo(function TruckStripComponent({
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 } as any}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, background: 'transparent', border: `1px solid ${hosColor}44`, borderRadius: 6, padding: '3px 8px' } as any}> {/* Увеличено padding с 2px 6px до 3px 8px */}
-                    <span style={{ fontSize: isWide ? 13 : 13, fontWeight: 900, color: hosColor, lineHeight: 1 } as any}>{hos.toFixed(1)}</span> {/* Увеличено с 12 до 13 */}
-                    <span style={{ fontSize: 10, fontWeight: 600, color: hosColor, opacity: 0.8 } as any}>h drive</span> {/* Увеличено с 9 до 10 */}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 2 } as any}>
-                    <span style={{ fontSize: 11 } as any}>😊</span>
-                    <span style={{ fontSize: isWide ? 12 : 12, fontWeight: 800, color: mood >= 60 ? '#34d399' : mood >= 35 ? '#fbbf24' : '#f87171' } as any}>{mood}%</span> {/* Увеличено с 11 до 12 */}
-                  </div>
+                  {/* 3 мини прогресс-бара — столбцом */}
+                  {(() => {
+                    const techVal = Math.round(Math.max(0, Math.min(100, (truck as any).reliability ?? 80)));
+                    const moodVal = Math.round(Math.max(0, Math.min(100, truck.mood ?? 80)));
+                    const perfVal = Math.round(Math.max(0, Math.min(100, (truck as any).performance ?? 80)));
+                    const techColor = techVal >= 70 ? '#34d399' : techVal >= 40 ? '#fbbf24' : '#f87171';
+                    const moodColor = moodVal >= 70 ? '#34d399' : moodVal >= 40 ? '#fbbf24' : '#f87171';
+                    const perfColor = perfVal >= 70 ? '#818cf8' : perfVal >= 40 ? '#fbbf24' : '#f87171';
+                    const bars = [
+                      { icon: '🚛', label: 'Состояние', val: techVal, color: techColor },
+                      { icon: '😊', label: 'Настроение', val: moodVal, color: moodColor },
+                      { icon: '⚡', label: 'Скорость', val: perfVal, color: perfColor },
+                    ];
+                    return (
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3 } as any}>
+                        {bars.map(b => (
+                          <div key={b.icon} style={{ display: 'flex', alignItems: 'center', gap: 4 } as any}>
+                            <span style={{ fontSize: 10, lineHeight: 1, flexShrink: 0, width: 14 } as any}>{b.icon}</span>
+                            {/* Бар с подписью по центру */}
+                            <div style={{ flex: 1, position: 'relative', height: 14, display: 'flex', alignItems: 'center' } as any}>
+                              <div style={{ position: 'absolute', left: 0, right: 0, top: '50%', transform: 'translateY(-50%)', height: 7, background: 'rgba(255,255,255,0.07)', borderRadius: 3, overflow: 'hidden' } as any}>
+                                <div style={{ height: '100%', width: `${b.val}%`, background: b.color, borderRadius: 3, transition: 'width 0.8s ease', opacity: 0.9 } as any} />
+                              </div>
+                              <span style={{ position: 'absolute', left: 0, right: 0, textAlign: 'center', fontSize: 7, fontWeight: 800, color: '#fff', lineHeight: 1, textShadow: '0 1px 3px rgba(0,0,0,0.9)', zIndex: 1, letterSpacing: 0.3 } as any}>{b.label}</span>
+                            </div>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: b.color, lineHeight: 1, flexShrink: 0, width: 28, textAlign: 'right' } as any}>{b.val}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                   {truck.currentLoad ? (
-                    <div style={{ marginLeft: 'auto', flexShrink: 0, background: 'transparent', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 6, padding: '3px 9px' } as any}> {/* Увеличено padding с 2px 7px до 3px 9px */}
-                      <span style={{ fontSize: isWide ? 14 : 14, fontWeight: 900, color: '#4ade80' } as any}>${truck.currentLoad.agreedRate.toLocaleString()}</span> {/* Увеличено с 13 до 14 */}
+                    <div style={{ flexShrink: 0, background: 'transparent', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 6, padding: '3px 9px' } as any}>
+                      <span style={{ fontSize: isWide ? 14 : 13, fontWeight: 900, color: '#4ade80' } as any}>${truck.currentLoad.agreedRate.toLocaleString()}</span>
                     </div>
                   ) : (
-                    <div style={{ marginLeft: 'auto', flexShrink: 0, background: 'transparent', border: '1px solid rgba(148,163,184,0.15)', borderRadius: 6, padding: '3px 9px' } as any}> {/* Увеличено padding с 2px 7px до 3px 9px */}
-                      <span style={{ fontSize: 11, fontWeight: 700, color: '#475569' } as any}>Нет груза</span> {/* Увеличено с 10 до 11 */}
+                    <div style={{ flexShrink: 0, background: 'transparent', border: '1px solid rgba(148,163,184,0.15)', borderRadius: 6, padding: '3px 9px' } as any}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: '#475569' } as any}>Нет груза</span>
                     </div>
                   )}
                 </div>
