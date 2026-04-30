@@ -40,6 +40,7 @@
 
   function showSpinner() {
     if (document.getElementById("rg-spin")) return;
+    if (!document.body) return; // Защита от null
     var el = document.createElement("div");
     el.id = "rg-spin";
     el.style.cssText = "position:fixed;inset:0;z-index:999998;background:#050a12;display:flex;align-items:center;justify-content:center;";
@@ -50,6 +51,7 @@
 
   function showPaywall(role) {
     hideSpinner();
+    if (!document.body) return; // Защита от null
     var isGuest = !role || role === "guest";
     var b = getBase();
     document.body.style.overflow = "hidden";
