@@ -675,7 +675,7 @@ const INITIAL_TRUCKS: Truck[] = [
     id: 'T1', name: 'Truck 1047', driver: 'John Martinez',
     status: 'idle', position: CITIES['Knoxville'],
     currentCity: 'Knoxville', destinationCity: null,
-    progress: 0, currentLoad: null, hoursLeft: 11, mood: 65, routePath: null,
+    progress: 0, currentLoad: null, hoursLeft: 11, mood: 54, routePath: null,
     safetyScore: 95, fuelEfficiency: 6.8, onTimeRate: 98, complianceRate: 100,
     totalMiles: 0, totalDeliveries: 0, hosViolations: 0, lastInspection: 0,
     idleSinceMinute: undefined,
@@ -685,6 +685,12 @@ const INITIAL_TRUCKS: Truck[] = [
     speedPenalty: 0.2,            // на 20% медленнее
     oldTruckComplaintAt: -999,
     truckImageId: 1, // Peterbilt 379 «Old Red» — старый трак
+    // Начальное состояние трака — плохое (для обучения ремонту)
+    reliability: 33,  // Состояние: 33%
+    comfort: 45,      // Комфорт: 45% (влияет на настроение)
+    legalStatus: 50,  // Тех. состояние: 50% (для инспекций)
+    performance: 33,  // Скорость: 33%
+    // Настроение: 54% — меняется в зависимости от ситуации
   } as any,
   {
     id: 'T2', name: 'Truck 2023', driver: 'Carlos Rivera',
@@ -695,6 +701,7 @@ const INITIAL_TRUCKS: Truck[] = [
     totalMiles: 0, totalDeliveries: 0, hosViolations: 0, lastInspection: 0,
     idleSinceMinute: undefined,
     truckImageId: 3, // International 9400i «Sandstorm»
+    reliability: 85, comfort: 80, legalStatus: 90, performance: 85,
   } as any,
   {
     id: 'T3', name: 'Truck 3012', driver: 'Mike Chen',
@@ -705,6 +712,7 @@ const INITIAL_TRUCKS: Truck[] = [
     totalMiles: 0, totalDeliveries: 0, hosViolations: 0, lastInspection: 0,
     idleSinceMinute: undefined,
     truckImageId: 5, // Freightliner FLD 120 «Forest Green»
+    reliability: 90, comfort: 85, legalStatus: 95, performance: 90,
   } as any,
   {
     // T4 — едет с грузом к delivery
@@ -715,6 +723,7 @@ const INITIAL_TRUCKS: Truck[] = [
     safetyScore: 88, fuelEfficiency: 6.5, onTimeRate: 94, complianceRate: 96,
     totalMiles: 0, totalDeliveries: 0, hosViolations: 0, lastInspection: 0,
     truckImageId: 6, // Freightliner FLD 120 «Blue Classic»
+    reliability: 80, comfort: 75, legalStatus: 85, performance: 80,
   },
   {
     // T5 — свободен, только что разгрузился
@@ -726,6 +735,7 @@ const INITIAL_TRUCKS: Truck[] = [
     totalMiles: 0, totalDeliveries: 0, hosViolations: 0, lastInspection: 0,
     idleSinceMinute: undefined,
     truckImageId: 7, // Volvo VNL 670 «Burgundy Aero»
+    reliability: 88, comfort: 90, legalStatus: 92, performance: 88,
   } as any,
   {
     // T6 — едет с грузом к delivery
@@ -736,6 +746,7 @@ const INITIAL_TRUCKS: Truck[] = [
     safetyScore: 90, fuelEfficiency: 6.9, onTimeRate: 95, complianceRate: 97,
     totalMiles: 0, totalDeliveries: 0, hosViolations: 0, lastInspection: 0,
     truckImageId: 8, // Freightliner Cascadia «Green Emerald»
+    reliability: 82, comfort: 78, legalStatus: 88, performance: 82,
   },
   {
     // T7 — едет к pickup (deadhead)
@@ -746,6 +757,7 @@ const INITIAL_TRUCKS: Truck[] = [
     safetyScore: 96, fuelEfficiency: 7.2, onTimeRate: 98, complianceRate: 100,
     totalMiles: 0, totalDeliveries: 0, hosViolations: 0, lastInspection: 0,
     truckImageId: 10, // Freightliner Cascadia «Blue Evolution»
+    reliability: 92, comfort: 88, legalStatus: 94, performance: 92,
   },
   {
     // T8 — свободен, только что разгрузился
@@ -757,6 +769,7 @@ const INITIAL_TRUCKS: Truck[] = [
     totalMiles: 0, totalDeliveries: 0, hosViolations: 0, lastInspection: 0,
     idleSinceMinute: undefined,
     truckImageId: 4, // Freightliner FLD 120 «Silver Dust»
+    reliability: 95, comfort: 92, legalStatus: 98, performance: 95,
   } as any,
   {
     // T9 — едет с грузом к delivery
@@ -767,6 +780,7 @@ const INITIAL_TRUCKS: Truck[] = [
     safetyScore: 93, fuelEfficiency: 6.8, onTimeRate: 96, complianceRate: 98,
     totalMiles: 0, totalDeliveries: 0, hosViolations: 0, lastInspection: 0,
     truckImageId: 2, // Freightliner Century «Day Cab White»
+    reliability: 84, comfort: 80, legalStatus: 86, performance: 84,
   },
 ];
 
@@ -1651,6 +1665,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       pendingEmailResponses: [],
       deliveryResults: [],
     });
+    // Немедленно сохраняем новую сессию
+    setTimeout(() => get().saveGame(), 500);
   },
 
   tickClock: () => {
@@ -1996,21 +2012,49 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (truck.status === 'breakdown') {
         const outUntil = (truck as any).outOfOrderUntil ?? 0;
         if (outUntil > 0 && newMinute >= outUntil) {
-          const resumeStatus = truck.currentLoad ? 'loaded' as TruckStatus : 'idle' as TruckStatus;
+          const hasLoad = !!truck.currentLoad;
+          const resumeStatus = hasLoad ? 'loaded' as TruckStatus : 'idle' as TruckStatus;
+          const destCity = hasLoad ? truck.currentLoad!.toCity : null;
+
           get().addNotification({
             type: 'text', priority: 'medium', from: truck.driver,
             subject: `✅ ${truck.name} отремонтирован — готов к работе`,
-            message: `Ремонт завершён. ${truck.driver} готов продолжить. ${truck.currentLoad ? `Продолжает маршрут в ${truck.currentLoad.toCity}.` : 'Ждёт новый груз.'}`,
+            message: `Ремонт завершён. ${truck.driver} готов продолжить. ${hasLoad ? `Продолжает маршрут в ${destCity}.` : 'Ждёт новый груз.'}`,
             actionRequired: false, relatedTruckId: truck.id,
           });
           window.dispatchEvent(new CustomEvent('mapToast', {
             detail: { message: `✅ ${truck.name} отремонтирован!`, color: '#4ade80', truckId: truck.id }
           }));
+
+          // Если есть груз — восстанавливаем маршрут в фоне
+          if (hasLoad && destCity && CITIES[destCity]) {
+            const truckId = truck.id;
+            const dest = CITIES[destCity];
+            fetchRoute(truck.position[0], truck.position[1], dest[0], dest[1]).then(routePath => {
+              if (routePath) {
+                useGameStore.setState(s => ({
+                  trucks: s.trucks.map(t => t.id === truckId ? { ...t, routePath } as any : t)
+                }));
+              }
+            });
+          }
+
           return {
             ...truck,
             status: resumeStatus,
+            destinationCity: destCity,
             outOfOrderUntil: 0,
+            awaitingRepairChoice: false,
+            breakdownType: undefined,
+            breakdownCostRoadside: undefined,
+            breakdownCostTow: undefined,
+            breakdownDelayRoadside: undefined,
+            breakdownDelayTow: undefined,
+            breakdownStartMinute: undefined,
+            routePath: null, // сбросим — загрузится в фоне
             mood: Math.max(40, (truck.mood ?? 65) - 10),
+            idleSinceMinute: hasLoad ? undefined : newMinute,
+            idleWarningLevel: 0,
           } as any;
         }
         // БАГ-ФИX: awaitingRepairChoice без ответа > 30 мин — авто-выбираем roadside
@@ -2307,6 +2351,8 @@ export const useGameStore = create<GameState>((set, get) => ({
             deliveryArrivalMinute: undefined,
             unloadDuration: undefined,
             detentionNotified: undefined,
+            tripExpenses: [],          // сбрасываем доп. расходы после каждой доставки
+            nightStopDelayMinutes: 0,  // сбрасываем задержку ночёвки
           };
         }
         return { ...truck, deliveryArrivalMinute, unloadDuration } as any;
@@ -2575,6 +2621,7 @@ export const useGameStore = create<GameState>((set, get) => ({
                       breakdownCostTow: bd.tow,
                       breakdownDelayRoadside: bd.delayRoadside,
                       breakdownDelayTow: bd.delayTow,
+                      breakdownStartMinute: state.gameMinute, // Добавляем время начала поломки для safety net
                       outOfOrderUntil: canRoadside ? undefined : state.gameMinute + bd.delayTow,
                     } : t),
                   }));
@@ -2591,6 +2638,10 @@ export const useGameStore = create<GameState>((set, get) => ({
                   });
                   window.dispatchEvent(new CustomEvent('mapToast', {
                     detail: { message: `🚨 ${truck.name} — ${bd.label} (старый трак)!`, color: '#ef4444', truckId: truck.id }
+                  }));
+                  // Открываем EventDialog для поломки
+                  window.dispatchEvent(new CustomEvent('openEventDialog', {
+                    detail: { type: 'breakdown', truckId: truck.id, breakdownType: bd.label }
                   }));
                 }
               }, 200);
@@ -2988,6 +3039,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             breakdownCostTow: bd.tow,
             breakdownDelayRoadside: bd.delayRoadside,
             breakdownDelayTow: bd.delayTow,
+            breakdownStartMinute: gameMinute, // Добавляем время начала поломки для safety net
             outOfOrderUntil: canRoadside ? undefined : gameMinute + bd.delayTow,
           } : t
         );
@@ -3028,6 +3080,10 @@ export const useGameStore = create<GameState>((set, get) => ({
           actionRequired: canRoadside, relatedTruckId: truck.id,
         });
         window.dispatchEvent(new CustomEvent('mapToast', { detail: { message: '🚨 ' + truck.name + ' — ' + bd.label + '!', color: '#ef4444', truckId: truck.id } }));
+        // Открываем EventDialog для поломки
+        window.dispatchEvent(new CustomEvent('openEventDialog', {
+          detail: { type: 'breakdown', truckId: truck.id, breakdownType: bd.label }
+        }));
         break;
       }
 
@@ -3384,6 +3440,24 @@ case 'detention': {
         activeLoads: [...get().activeLoads, activeLoad],
         bookedLoads,
       });
+      
+      // Dispatch события для Toast уведомления
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('loadAssigned', {
+          detail: {
+            truckId: truck.id,
+            truckName: truck.name || truck.driver,
+            loadInfo: {
+              fromCity: load.fromCity,
+              toCity: load.toCity,
+              rate: load.agreedRate,
+              miles: load.miles,
+              commodity: load.commodity,
+            },
+          },
+        }));
+      }
+      
       // Загружаем маршрут в фоне — трак уже едет по прямой, маршрут подгрузится
       if (pickupCity && !isPrePlanning) {
         fetchRoute(snappedPosition[0], snappedPosition[1], pickupCity[0], pickupCity[1]).then(fetchedRoute => {
@@ -3802,7 +3876,7 @@ case 'detention': {
     const { trucks } = get();
     const truck = trucks.find(t => t.id === truckId);
     if (!truck) return;
-    // Помечаем что выбор сделан
+    // Помечаем что выбор сделан, сбрасываем awaitingRepairChoice
     const updatedTrucks = trucks.map(t =>
       t.id === truckId ? { ...t, awaitingRepairChoice: false } : t
     );
@@ -3933,11 +4007,40 @@ case 'detention': {
           // Repair complete!
           const truckIndex = updatedTrucks.findIndex(t => t.id === vehicle.targetTruckId);
           if (truckIndex !== -1) {
+            const repairedTruck = updatedTrucks[truckIndex];
+            const hasLoad = !!repairedTruck.currentLoad;
+            const destCity = hasLoad ? repairedTruck.currentLoad!.toCity : null;
+
             updatedTrucks[truckIndex] = {
-              ...updatedTrucks[truckIndex],
-              status: updatedTrucks[truckIndex].currentLoad ? 'loaded' : 'idle',
-              outOfOrderUntil: undefined,
-            };
+              ...repairedTruck,
+              status: hasLoad ? 'loaded' : 'idle',
+              destinationCity: destCity,
+              outOfOrderUntil: 0,
+              awaitingRepairChoice: false,
+              breakdownType: undefined,
+              breakdownCostRoadside: undefined,
+              breakdownCostTow: undefined,
+              breakdownDelayRoadside: undefined,
+              breakdownDelayTow: undefined,
+              breakdownStartMinute: undefined,
+              routePath: null, // сбросим — загрузится в фоне
+              mood: Math.max(40, (repairedTruck.mood ?? 65) - 10),
+              idleSinceMinute: hasLoad ? undefined : gameMinute,
+              idleWarningLevel: 0,
+            } as any;
+
+            // Восстанавливаем маршрут в фоне
+            if (hasLoad && destCity && CITIES[destCity]) {
+              const truckId = vehicle.targetTruckId;
+              const dest = CITIES[destCity];
+              fetchRoute(repairedTruck.position[0], repairedTruck.position[1], dest[0], dest[1]).then(routePath => {
+                if (routePath) {
+                  useGameStore.setState(s => ({
+                    trucks: s.trucks.map(t => t.id === truckId ? { ...t, routePath } as any : t)
+                  }));
+                }
+              });
+            }
 
             // Send completion notification
             get().addNotification({
@@ -3945,7 +4048,7 @@ case 'detention': {
               priority: 'medium',
               from: updatedTrucks[truckIndex].driver,
               subject: `✅ Ремонт завершён — ${updatedTrucks[truckIndex].name}`,
-              message: `${updatedTrucks[truckIndex].name} отремонтирован и готов к работе!`,
+              message: `${updatedTrucks[truckIndex].name} отремонтирован и готов к работе! ${hasLoad ? `Продолжает маршрут в ${destCity}.` : 'Ждёт новый груз.'}`,
               actionRequired: false,
               relatedTruckId: vehicle.targetTruckId,
             });

@@ -140,8 +140,6 @@ function getLoadingFact(load: any, truck: any, isPU: boolean, seed: number) {
 
 /** HUD-плашка с вкладками — Route / Stats / Load / Связь */
 function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any }) {
-  const [activeTab, setActiveTab] = useState<'route' | 'stats' | 'load' | 'deal'>('route');
-  const collapsed = false; // Всегда развёрнуто
   const gameMinute = useGameStore(s => s.gameMinute);
   const negotiation = useGameStore(s => s.negotiation);
   const makeOffer = useGameStore(s => s.makeOffer);
@@ -149,442 +147,300 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
   const assignLoadToTruck = useGameStore(s => s.assignLoadToTruck);
   const color = getTruckColor(truck);
 
-  // Локальное состояние переговоров внутри HUD
+  const hasActiveDeal = negotiation.open && negotiation.load;
+  const [collapsed, setCollapsed] = useState(true);
+  const collapseTimer = React.useRef<any>(null);
+  const [hosCountdown, setHosCountdown] = useState<number | null>(null);
+
+  const isSelected = useGameStore(s => s.selectedTruckId) === truck.id;
+  const prevSelected = React.useRef(false);
+
+  useEffect(() => {
+    const hosMinutes = Math.round(truck.hoursLeft * 60);
+    setHosCountdown(hosMinutes < 180 ? hosMinutes : null);
+  }, [truck.hoursLeft]);
+
+  useEffect(() => {
+    if (isSelected && !prevSelected.current) {
+      setCollapsed(false);
+      if (collapseTimer.current) clearTimeout(collapseTimer.current);
+      if (!hasActiveDeal) collapseTimer.current = setTimeout(() => setCollapsed(true), 6000);
+    }
+    prevSelected.current = isSelected;
+    return () => { if (collapseTimer.current) clearTimeout(collapseTimer.current); };
+  }, [isSelected]);
+
+  const prevNegOpen = React.useRef(false);
+  useEffect(() => {
+    if (negotiation.open && negotiation.load) {
+      setCollapsed(false);
+      if (collapseTimer.current) clearTimeout(collapseTimer.current);
+    }
+    prevNegOpen.current = negotiation.open;
+  }, [negotiation.open, negotiation.load?.id]);
+
   const [dealMessages, setDealMessages] = useState<Array<{ from: 'broker' | 'me'; text: string }>>([]);
   const [dealDone, setDealDone] = useState<'accepted' | 'rejected' | null>(null);
   const [dealAgreedRate, setDealAgreedRate] = useState(0);
   const [dealCurrentOffer, setDealCurrentOffer] = useState(0);
   const [isAssigning, setIsAssigning] = useState(false);
-  // Сохраняем груз локально — negotiation.load сбрасывается после makeOffer('accepted')
   const [savedLoad, setSavedLoad] = useState<any>(null);
 
-  // Когда открываются переговоры — переключаемся на вкладку Deal и инициализируем
-  const prevNegOpen = React.useRef(false);
   useEffect(() => {
     if (negotiation.open && negotiation.load) {
-      // Инициализируем только если это новый груз (другой id) или первое открытие
       if (!prevNegOpen.current || (savedLoad && savedLoad.id !== negotiation.load.id)) {
-        setActiveTab('deal');
         setSavedLoad(negotiation.load);
-        setDealMessages([{
-          from: 'broker',
-          text: `Hey! I've got a load for you: ${negotiation.load.fromCity} → ${negotiation.load.toCity}, ${negotiation.load.miles} miles, ${negotiation.load.commodity}. I'm posting at $${negotiation.load.postedRate.toLocaleString()}. Interested?`,
-        }]);
-        setDealDone(null);
-        setDealAgreedRate(0);
-        setDealCurrentOffer(negotiation.load.postedRate);
+        setDealMessages([{ from: 'broker', text: `Hey! ${negotiation.load.fromCity} → ${negotiation.load.toCity}, ${negotiation.load.miles} mi. Posting at $${negotiation.load.postedRate.toLocaleString()}. Interested?` }]);
+        setDealDone(null); setDealAgreedRate(0); setDealCurrentOffer(negotiation.load.postedRate);
       }
     }
-    prevNegOpen.current = negotiation.open;
   }, [negotiation.open, negotiation.load?.id]);
 
-  // Активный груз для переговоров — либо текущий из store, либо сохранённый
   const activeDealLoad = negotiation.load || savedLoad;
 
   function handleDealOffer(amount: number) {
     if (!activeDealLoad || dealDone) return;
     const load = activeDealLoad;
-    setDealMessages(prev => [...prev, {
-      from: 'me',
-      text: `I can do $${amount.toLocaleString()} for this load. That's ${load.miles} mi at $${(amount / load.miles).toFixed(2)}/mi.`,
-    }]);
+    setDealMessages(prev => [...prev, { from: 'me', text: `$${amount.toLocaleString()} — $${(amount / load.miles).toFixed(2)}/mi` }]);
     const result = makeOffer(amount);
     const neg = useGameStore.getState().negotiation;
     if (result === 'accepted') {
-      setDealDone('accepted');
-      setDealAgreedRate(amount);
-      setDealMessages(prev => [...prev, { from: 'broker', text: `Deal! $${amount.toLocaleString()} works for me. Sending Rate Con now! 🤝` }]);
+      setDealDone('accepted'); setDealAgreedRate(amount);
+      setDealMessages(prev => [...prev, { from: 'broker', text: `Deal! $${amount.toLocaleString()} ✅` }]);
     } else if (result === 'rejected') {
       setDealDone('rejected');
-      setDealMessages(prev => [...prev, { from: 'broker', text: `Sorry, that's too low. I'll find another carrier.` }]);
+      setDealMessages(prev => [...prev, { from: 'broker', text: `Too low, sorry.` }]);
     } else {
-      const counter = neg.currentOffer;
-      setDealCurrentOffer(counter);
-      setDealMessages(prev => [...prev, { from: 'broker', text: `I can't go that low. Best I can do is $${counter.toLocaleString()}. Deal?` }]);
+      const counter = neg.currentOffer; setDealCurrentOffer(counter);
+      setDealMessages(prev => [...prev, { from: 'broker', text: `Best I can do: $${counter.toLocaleString()}` }]);
     }
   }
 
   async function handleConfirmDeal() {
     if (!activeDealLoad || dealAgreedRate === 0 || isAssigning) return;
     setIsAssigning(true);
-    // Ищем груз в bookedLoads (makeOffer уже добавил его туда)
     const bookedLoads = useGameStore.getState().bookedLoads;
     const bookedLoad = bookedLoads.find((l: any) => l.id === activeDealLoad.id && (!l.truckId || l.truckId === ''));
     if (bookedLoad) {
-      try {
-        await assignLoadToTruck(bookedLoad, truck.id);
-        setSavedLoad(null);
-        setDealDone(null);
-        setDealMessages([]);
-        setActiveTab('route');
-      } catch { setIsAssigning(false); }
-    } else {
-      // Груз уже назначен или не найден — просто закрываем
-      setSavedLoad(null);
-      setDealDone(null);
-      setDealMessages([]);
-      setActiveTab('route');
-    }
+      try { await assignLoadToTruck(bookedLoad, truck.id); setSavedLoad(null); setDealDone(null); setDealMessages([]); }
+      catch { setIsAssigning(false); }
+    } else { setSavedLoad(null); setDealDone(null); setDealMessages([]); }
     setIsAssigning(false);
   }
 
-  function handleTabClick(key: 'route' | 'stats' | 'load' | 'deal') {
-    setActiveTab(key);
-  }
+  const load = truck.currentLoad;
+  const progress = Math.round((truck.progress || 0) * 100);
+  const hosH = Math.floor(truck.hoursLeft);
+  const hosM = Math.round((truck.hoursLeft - hosH) * 60);
+  const hosMinutesTotal = Math.round(truck.hoursLeft * 60);
+  const hosColor = truck.hoursLeft < 2 ? '#f87171' : truck.hoursLeft < 4 ? '#fbbf24' : '#4ade80';
+  const hosWarn = hosMinutesTotal < 180;
+  const detentionMin = load?.detentionMinutes || 0;
+  const detentionPay = detentionMin > 120 ? Math.floor((detentionMin - 120) / 60 * 75) : 0;
+  const tripExpenses: Array<{ label: string; amount: number }> = (truck as any).tripExpenses || [];
+  const totalExpenses = tripExpenses.reduce((s: number, e: any) => s + (e.amount || 0), 0);
 
-  // ── Статус ──
-  const statusLabel: Record<string, string> = {
-    idle: 'Available', driving: 'To Pickup', at_pickup: 'Loading',
-    loaded: 'In Transit', at_delivery: 'Unloading', breakdown: 'Breakdown',
-    waiting: 'Detention', in_garage: 'In Garage',
-  };
-  const statusEmoji: Record<string, string> = {
-    idle: '⚪', driving: '🔵', at_pickup: '🟡', loaded: '🟢',
-    at_delivery: '🟣', breakdown: '🔴', waiting: '🟠', in_garage: '🔧',
-  };
-  const sLabel = statusLabel[truck.status] || truck.status;
-  const sEmoji = statusEmoji[truck.status] || '⚪';
-
-  // ── Сообщение водителя ──
-  let driverMessage = '';
-  switch (truck.status) {
-    case 'driving': driverMessage = `On my way to ${truck.destinationCity || 'pickup'}! 🚛`; break;
-    case 'at_pickup': driverMessage = 'At the warehouse, loading up... 📦'; break;
-    case 'loaded': driverMessage = `Hauling to ${truck.destinationCity || 'delivery'}, all good! 👍`; break;
-    case 'at_delivery': driverMessage = 'Unloading now, almost done! 📦'; break;
-    case 'breakdown': driverMessage = 'Boss, truck broke down! Need help ASAP 🔧'; break;
-    case 'waiting': driverMessage = 'Still waiting here... detention clock ticking ⏰'; break;
-    case 'idle': driverMessage = 'Ready for the next load, boss! 👍'; break;
-    case 'in_garage': driverMessage = 'In the shop, getting fixed up 🔧'; break;
-    default: driverMessage = 'Everything good, boss! 👍';
-  }
-  if (truck.onNightStop) driverMessage = 'Parked for the night, getting rest 💤';
-  if (truck.onMandatoryBreak) driverMessage = 'Taking my 30-min break ☕';
-
-  // ── Расстояние и ETA ──
   let distance = 0, etaH = 0, etaM = 0, hasRoute = false;
   if (truck.destinationCity && CITIES[truck.destinationCity]) {
     hasRoute = true;
     const dc = CITIES[truck.destinationCity];
-    const [lat1, lon1, lat2, lon2] = [truck.position[1], truck.position[0], dc[1], dc[0]];
     const R = 3959;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
-    distance = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-    etaH = Math.floor(distance / 55);
-    etaM = Math.round((distance / 55 - etaH) * 60);
+    const dLat = (dc[1] - truck.position[1]) * Math.PI / 180;
+    const dLon = (dc[0] - truck.position[0]) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(truck.position[1]*Math.PI/180)*Math.cos(dc[1]*Math.PI/180)*Math.sin(dLon/2)**2;
+    distance = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+    etaH = Math.floor(distance / 55); etaM = Math.round((distance / 55 - etaH) * 60);
   }
 
-  // ── HOS ──
-  const hosH = Math.floor(truck.hoursLeft);
-  const hosM = Math.round((truck.hoursLeft - hosH) * 60);
-  const hosColor = truck.hoursLeft < 2 ? '#f87171' : truck.hoursLeft < 4 ? '#fbbf24' : '#4ade80';
+  const BG = isDark ? 'rgba(10,14,26,0.97)' : 'rgba(255,255,255,0.97)';
+  const BORDER_C = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+  const T1 = isDark ? '#e2e8f0' : '#111827';
+  const T2 = isDark ? '#94a3b8' : '#6b7280';
 
-  // ── Mood ──
-  const mood = truck.mood ?? 75;
-  const moodRounded = Math.round(mood);
-  const moodColor = mood >= 70 ? '#4ade80' : mood >= 40 ? '#fbbf24' : '#f87171';
-  const moodLabel = mood >= 70 ? 'Happy' : mood >= 40 ? 'Neutral' : 'Unhappy';
-
-  // ── Load ──
-  const load = truck.currentLoad;
-  const progress = Math.round((truck.progress || 0) * 100);
-
-  const tabs: Array<{ key: typeof activeTab; icon: string; label: string; badge?: boolean }> = [
-    { key: 'route', icon: '🛣️', label: 'Route' },
-    { key: 'stats', icon: '📊', label: 'Stats' },
-    { key: 'load', icon: '📦', label: 'Load' },
-    ...(activeDealLoad ? [{ key: 'deal' as const, icon: '🤝', label: 'Груз', badge: dealDone !== 'accepted' && dealDone !== 'rejected' }] : []),
-  ];
-
-  const row = (label: string, value: string, valueColor?: string): React.ReactNode => (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0' }}>
-      <span style={{ fontSize: 11, color: isDark ? '#94a3b8' : '#6b7280' }}>{label}</span>
-      <span style={{ fontSize: 12, fontWeight: 600, color: valueColor || (isDark ? '#e2e8f0' : '#1f2937') }}>{value}</span>
-    </div>
-  );
-
-  const divider = <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)', margin: '4px 0' }} />;
+  if (collapsed) {
+    return (
+      <div style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: 6, background: BG, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: `1.5px solid ${hosWarn ? '#fbbf2466' : color + '55'}`, borderRadius: '0 0 10px 10px', padding: '5px 10px 5px 8px', cursor: 'pointer', boxShadow: isDark ? '0 2px 12px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.1)', maxWidth: 340, width: '100%', overflow: 'hidden' } as any}
+        onClick={e => { e.stopPropagation(); setCollapsed(false); if (collapseTimer.current) clearTimeout(collapseTimer.current); if (!hasActiveDeal) collapseTimer.current = setTimeout(() => setCollapsed(true), 6000); }}>
+        {hasRoute && <span style={{ fontSize: 9, fontWeight: 700, color: T2, flexShrink: 0, maxWidth: 52, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{truck.currentCity}</span>}
+        {hasRoute ? (
+          <div style={{ flex: 1, position: 'relative', height: 14, display: 'flex', alignItems: 'center' }}>
+            <div style={{ position: 'absolute', left: 0, right: 0, height: 4, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 2, overflow: 'hidden' }}>
+              <div style={{ height: '100%', borderRadius: 2, background: `linear-gradient(90deg,${color}88,${color})`, width: `${progress}%`, transition: 'width 0.5s ease' }} />
+            </div>
+            <div style={{ position: 'absolute', left: `${Math.min(progress, 92)}%`, transform: 'translateX(-50%)', top: -3, fontSize: 8, fontWeight: 800, color: color, background: BG, padding: '0 2px', borderRadius: 3, lineHeight: '1.6' }}>{progress}%</div>
+          </div>
+        ) : <span style={{ fontSize: 9, color: T2, flex: 1 }}>📍 {truck.currentCity}</span>}
+        {hasRoute && <span style={{ fontSize: 9, fontWeight: 700, color: T2, flexShrink: 0, maxWidth: 52, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{truck.destinationCity}</span>}
+        <div style={{ width: 1, height: 14, background: BORDER_C, flexShrink: 0 }} />
+        {hosWarn
+          ? <span style={{ fontSize: 9, fontWeight: 800, color: hosColor, whiteSpace: 'nowrap', flexShrink: 0 }}>⚠️ {hosCountdown ?? hosMinutesTotal} мин</span>
+          : <span style={{ fontSize: 9, fontWeight: 700, color: hosColor, whiteSpace: 'nowrap', flexShrink: 0 }}>{hosH}h {hosM}m</span>}
+        {load && <><div style={{ width: 1, height: 14, background: BORDER_C, flexShrink: 0 }} /><span style={{ fontSize: 9, fontWeight: 800, color: '#4ade80', flexShrink: 0 }}>${load.agreedRate.toLocaleString()}</span></>}
+        <span style={{ fontSize: 9, color: T2, flexShrink: 0, marginLeft: 2 }}>▼</span>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ ...ps, padding: 0, overflow: 'visible' }} onClick={e => e.stopPropagation()}>
+    <div style={{ marginTop: 0, background: BG, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: `1.5px solid ${color}55`, borderRadius: '0 0 12px 12px', overflow: 'hidden', maxWidth: 340, width: '100%', boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.5)' : '0 4px 16px rgba(0,0,0,0.12)', animation: 'dropdownSlide 0.2s ease' } as any} onClick={e => e.stopPropagation()}>
 
-      {/* ── ТАБЫ ── */}
-      <div style={{
-        display: 'flex',
-        background: isDark ? 'rgba(13,17,23,0.97)' : 'rgba(255,255,255,0.97)',
-        backdropFilter: 'blur(14px)',
-        WebkitBackdropFilter: 'blur(14px)',
-        borderRadius: '12px 12px 0 0',
-        border: isDark ? '2px solid rgba(255,255,255,0.08)' : '2px solid rgba(0,0,0,0.08)',
-        borderBottom: 'none',
-      }}>
-        {tabs.map(t => (
-          <button
-            key={t.key}
-            onClick={() => handleTabClick(t.key)}
-            style={{
-              flex: 1, padding: '8px 4px',
-              border: 'none', cursor: 'pointer',
-              background: 'transparent',
-              borderRadius: 0,
-              borderBottom: `2px solid ${activeTab === t.key ? '#06b6d4' : 'transparent'}`,
-              color: activeTab === t.key ? '#06b6d4' : (isDark ? '#64748b' : '#9ca3af'),
-              fontSize: 11, fontWeight: 600,
-              transition: 'color 0.2s, border-color 0.2s',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3,
-              whiteSpace: 'nowrap',
-              position: 'relative',
-            }}
-          >
-            <span style={{ fontSize: 12 }}>{t.icon}</span>
-            {t.label}
-            {(t as any).badge && (
-              <span style={{
-                position: 'absolute', top: 4, right: 4,
-                width: 7, height: 7, borderRadius: '50%',
-                background: '#f59e0b',
-                boxShadow: '0 0 6px #f59e0b',
-                animation: 'trackingDot 1.2s ease-in-out infinite',
-              }} />
+      {activeDealLoad && (
+        <div>
+          <div style={{ padding: '8px 10px 6px', borderBottom: `1px solid ${BORDER_C}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 16 }}>👩‍💼</span>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 800, color: T1 }}>{activeDealLoad.brokerName} · {activeDealLoad.brokerCompany}</div>
+                <div style={{ fontSize: 10, color: '#06b6d4', fontWeight: 700 }}>{activeDealLoad.fromCity} → {activeDealLoad.toCity} · {activeDealLoad.miles} mi</div>
+              </div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 11, fontWeight: 900, color: '#4ade80' }}>${activeDealLoad.postedRate.toLocaleString()}</div>
+              <div style={{ fontSize: 9, color: T2 }}>Market: ${activeDealLoad.marketRate.toLocaleString()}</div>
+            </div>
+          </div>
+          <div style={{ padding: '6px 10px', maxHeight: 90, overflowY: 'auto' as any, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {dealMessages.map((msg, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: msg.from === 'me' ? 'flex-end' : 'flex-start', gap: 4 }}>
+                {msg.from === 'broker' && <span style={{ fontSize: 12, flexShrink: 0 }}>👩‍💼</span>}
+                <div style={{ maxWidth: '82%', padding: '4px 8px', borderRadius: msg.from === 'me' ? '8px 8px 2px 8px' : '8px 8px 8px 2px', background: msg.from === 'me' ? 'rgba(6,182,212,0.18)' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), border: msg.from === 'me' ? '1px solid rgba(6,182,212,0.25)' : `1px solid ${BORDER_C}` }}>
+                  <span style={{ fontSize: 11, color: T1, lineHeight: 1.3 }}>{msg.text}</span>
+                </div>
+              </div>
+            ))}
+            {dealDone === 'accepted' && <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 800, color: '#4ade80' }}>🤝 Deal at ${dealAgreedRate.toLocaleString()}!</div>}
+            {dealDone === 'rejected' && <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 800, color: '#f87171' }}>❌ No deal.</div>}
+          </div>
+          {!dealDone && (
+            <div style={{ padding: '4px 10px 8px', display: 'flex', gap: 4 }}>
+              {[{ val: Math.round(activeDealLoad.postedRate * 1.05), tag: '+5%' }, { val: Math.round(activeDealLoad.postedRate * 1.10), tag: '+10%' }, { val: Math.round(activeDealLoad.postedRate * 1.15), tag: '+15%' }, { val: Math.round(activeDealLoad.marketRate), tag: '🎯', isMarket: true }].map((t, i) => (
+                <button key={i} onClick={() => handleDealOffer(t.val)} style={{ flex: 1, padding: '5px 3px', borderRadius: 7, cursor: 'pointer', background: t.isMarket ? 'rgba(74,222,128,0.12)' : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)'), border: t.isMarket ? '1.5px solid rgba(74,222,128,0.4)' : `1px solid ${BORDER_C}`, transition: 'all 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = t.isMarket ? 'rgba(74,222,128,0.22)' : 'rgba(6,182,212,0.1)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = t.isMarket ? 'rgba(74,222,128,0.12)' : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)'); }}>
+                  <div style={{ fontSize: 10, fontWeight: 900, color: t.isMarket ? '#4ade80' : T1 }}>${t.val.toLocaleString()}</div>
+                  <div style={{ fontSize: 9, color: t.isMarket ? '#4ade80' : '#06b6d4' }}>{t.tag}</div>
+                </button>
+              ))}
+            </div>
+          )}
+          {!dealDone && dealCurrentOffer > 0 && negotiation.round > 0 && (
+            <div style={{ padding: '0 10px 8px' }}>
+              <button onClick={() => handleDealOffer(dealCurrentOffer)} style={{ width: '100%', padding: '6px', borderRadius: 8, cursor: 'pointer', background: 'rgba(74,222,128,0.1)', border: '1.5px solid rgba(74,222,128,0.35)', fontSize: 11, fontWeight: 800, color: '#4ade80' }}>✅ Принять ${dealCurrentOffer.toLocaleString()}</button>
+            </div>
+          )}
+          {dealDone === 'accepted' && (
+            <div style={{ padding: '0 10px 8px', display: 'flex', gap: 6 }}>
+              <button onClick={closeNegotiation} style={{ flex: 1, padding: '6px', borderRadius: 8, cursor: 'pointer', background: 'transparent', border: `1px solid ${BORDER_C}`, fontSize: 11, color: T2 }}>Отмена</button>
+              <button onClick={handleConfirmDeal} disabled={isAssigning} style={{ flex: 2, padding: '6px', borderRadius: 8, cursor: isAssigning ? 'default' : 'pointer', background: 'rgba(74,222,128,0.18)', border: '1.5px solid rgba(74,222,128,0.5)', fontSize: 11, fontWeight: 800, color: '#4ade80' }}>{isAssigning ? '⏳...' : '✅ Назначить'}</button>
+            </div>
+          )}
+          {dealDone === 'rejected' && (
+            <div style={{ padding: '0 10px 8px' }}>
+              <button onClick={closeNegotiation} style={{ width: '100%', padding: '6px', borderRadius: 8, cursor: 'pointer', background: 'transparent', border: `1px solid ${BORDER_C}`, fontSize: 11, color: T2 }}>Закрыть</button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── СЕКЦИЯ 1: Маршрут ── */}
+      {!activeDealLoad && (
+        <div style={{ padding: '8px 10px 6px' }}>
+          {hasRoute ? (
+            <>
+              <div style={{ marginBottom: 5 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: T1 }}>{truck.currentCity}</span>
+                  <span style={{ fontSize: 9, fontWeight: 800, color: color, background: isDark ? `${color}22` : `${color}15`, borderRadius: 4, padding: '1px 5px' }}>{progress}%</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: T1 }}>{truck.destinationCity}</span>
+                </div>
+                <div style={{ height: 5, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', borderRadius: 3, background: `linear-gradient(90deg,${color}77,${color})`, width: `${progress}%`, transition: 'width 0.5s ease' }} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10 }}>
+                <span style={{ fontWeight: 800, color: T1 }}>ETA {etaH > 0 ? `${etaH}h ${etaM}m` : `${etaM}m`}</span>
+                <span style={{ color: T2 }}>·</span>
+                <span style={{ color: T2 }}>{distance} mi left</span>
+                {load && <><span style={{ color: T2 }}>·</span><span style={{ fontWeight: 800, color: '#4ade80' }}>${(load.agreedRate / load.miles).toFixed(2)}/mi</span></>}
+              </div>
+            </>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 13 }}>🅿️</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: T1 }}>📍 {truck.currentCity}</span>
+              <span style={{ fontSize: 10, color: T2, marginLeft: 'auto' }}>Нет маршрута</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── СЕКЦИЯ 2: Груз ── */}
+      {!activeDealLoad && load && (
+        <div style={{ padding: '5px 10px 6px', borderTop: `1px solid ${BORDER_C}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+            <span style={{ fontSize: 11 }}>📦</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: T1 }}>{load.commodity}</span>
+            <span style={{ fontSize: 9, color: T2 }}>·</span>
+            <span style={{ fontSize: 9, color: T2 }}>{(load.weight || 0).toLocaleString()} lbs</span>
+            <span style={{ fontSize: 9, color: T2 }}>·</span>
+            <span style={{ fontSize: 9, fontWeight: 700, color: '#06b6d4' }}>{load.equipment}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ fontSize: 11 }}>💰</span>
+            <span style={{ fontSize: 10, fontWeight: 800, color: '#4ade80' }}>${load.agreedRate.toLocaleString()}</span>
+            <span style={{ fontSize: 9, color: T2 }}>agreed ·</span>
+            <span style={{ fontSize: 9, color: T2 }}>{load.brokerName} <span style={{ color: T1, fontWeight: 700 }}>({load.brokerCompany})</span></span>
+          </div>
+        </div>
+      )}
+
+      {/* ── СЕКЦИЯ 3: Финансы ── */}
+      {!activeDealLoad && (
+        <div style={{ padding: '5px 10px 6px', borderTop: `1px solid ${BORDER_C}` }}>
+          <div style={{ display: 'flex', gap: 5 }}>
+            <div style={{ flex: 1, background: isDark ? `${hosColor}12` : `${hosColor}08`, border: `1px solid ${hosColor}44`, borderRadius: 7, padding: '4px 7px' }}>
+              <div style={{ fontSize: 8, color: T2, fontWeight: 600, marginBottom: 1 }}>HOS</div>
+              <div style={{ fontSize: 12, fontWeight: 900, color: hosColor }}>{hosH}h {hosM}m</div>
+              {hosWarn && <div style={{ fontSize: 8, color: hosColor, fontWeight: 700 }}>⚠️ {hosCountdown ?? hosMinutesTotal} мин</div>}
+            </div>
+            {load && (
+              <div style={{ flex: 1, background: isDark ? 'rgba(74,222,128,0.08)' : 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 7, padding: '4px 7px' }}>
+                <div style={{ fontSize: 8, color: T2, fontWeight: 600, marginBottom: 1 }}>Ставка</div>
+                <div style={{ fontSize: 12, fontWeight: 900, color: '#4ade80' }}>${load.agreedRate.toLocaleString()}</div>
+                <div style={{ fontSize: 8, color: T2 }}>${(load.agreedRate / load.miles).toFixed(2)}/mi</div>
+              </div>
             )}
-          </button>
-        ))}
-      </div>
-
-      {/* ── КОНТЕНТ ── */}
-      <div style={{
-        position: 'relative', minHeight: 80,
-        background: isDark ? 'rgba(13,17,23,0.97)' : 'rgba(255,255,255,0.97)',
-        backdropFilter: 'blur(14px)',
-        WebkitBackdropFilter: 'blur(14px)',
-        borderRadius: '0 0 12px 12px',
-        border: isDark ? '2px solid rgba(255,255,255,0.08)' : '2px solid rgba(0,0,0,0.08)',
-        borderTop: 'none',
-        overflow: 'hidden',
-      }}>
-        {/* ROUTE */}
-        <div style={{
-          padding: '10px 12px',
-          opacity: activeTab === 'route' ? 1 : 0,
-          position: activeTab === 'route' ? 'relative' : 'absolute',
-          top: 0, left: 0, width: '100%',
-          transition: 'opacity 0.3s ease',
-          pointerEvents: activeTab === 'route' ? 'auto' : 'none',
-        }}>
-          {hasRoute ? (<>
-            <div style={{ marginBottom: 6 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280', marginBottom: 3 }}>
-                <span>{truck.currentCity || '—'}</span>
-                <span>{truck.destinationCity || '—'}</span>
+            {detentionMin > 0 && (
+              <div style={{ flex: 1, background: isDark ? 'rgba(251,146,60,0.08)' : 'rgba(251,146,60,0.06)', border: '1px solid rgba(251,146,60,0.3)', borderRadius: 7, padding: '4px 7px' }}>
+                <div style={{ fontSize: 8, color: T2, fontWeight: 600, marginBottom: 1 }}>Detention</div>
+                <div style={{ fontSize: 12, fontWeight: 900, color: '#fb923c' }}>{detentionMin} мин</div>
+                {detentionPay > 0 && <div style={{ fontSize: 8, color: '#4ade80', fontWeight: 700 }}>+${detentionPay}</div>}
               </div>
-              <div style={{ height: 5, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
-                <div style={{ height: '100%', borderRadius: 3, background: 'linear-gradient(90deg,#06b6d4,#818cf8)', width: `${progress}%`, transition: 'width 0.5s ease' }} />
+            )}
+            {totalExpenses > 0 && (
+              <div style={{ flex: 1, background: isDark ? 'rgba(248,113,113,0.08)' : 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: 7, padding: '4px 7px' }}>
+                <div style={{ fontSize: 8, color: T2, fontWeight: 600, marginBottom: 1 }}>Расходы</div>
+                <div style={{ fontSize: 12, fontWeight: 900, color: '#f87171' }}>-${totalExpenses.toLocaleString()}</div>
+                <div style={{ fontSize: 8, color: T2 }}>{tripExpenses.length} позиц.</div>
               </div>
-            </div>
-            {row('Distance left', `${distance} mi`, '#06b6d4')}
-            {row('ETA', `${etaH}h ${etaM}m`)}
-          </>) : (
-            <div style={{ textAlign: 'center', padding: '10px 0' }}>
-              <div style={{ fontSize: 18, marginBottom: 4 }}>🅿️</div>
-              <div style={{ fontSize: 11, color: isDark ? '#94a3b8' : '#6b7280' }}>No active route</div>
-              <div style={{ fontSize: 10, color: isDark ? '#64748b' : '#9ca3af', marginTop: 2 }}>📍 {truck.currentCity || 'Unknown'}</div>
-            </div>
-          )}
-          {divider}
-          {row('HOS Remaining', `${hosH}h ${hosM}m`, hosColor)}
-        </div>
-
-        {/* STATS */}
-        <div style={{
-          padding: '10px 12px',
-          opacity: activeTab === 'stats' ? 1 : 0,
-          position: activeTab === 'stats' ? 'relative' : 'absolute',
-          top: 0, left: 0, width: '100%',
-          transition: 'opacity 0.3s ease',
-          pointerEvents: activeTab === 'stats' ? 'auto' : 'none',
-        }}>
-          {row('Total Miles', (truck.totalMiles || 0).toLocaleString())}
-          {row('Deliveries', String(truck.totalDeliveries || 0))}
-          {row('On-Time Rate', `${truck.onTimeRate || 0}%`)}
-          {row('Safety Score', `${truck.safetyScore || 0}/100`)}
-          {row('Fuel', `${truck.fuelEfficiency || 0} MPG`)}
-          {divider}
-          {row(`Mood — ${moodLabel}`, `${moodRounded}%`, moodColor)}
-          <div style={{ height: 4, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 2, overflow: 'hidden', marginTop: 3 }}>
-            <div style={{ height: '100%', borderRadius: 2, background: moodColor, width: `${moodRounded}%`, transition: 'width 0.5s ease' }} />
-          </div>
-          {/* Износ трака — компактный вид */}
-          <div style={{ marginTop: 8 }}>
-            <TruckStatsView truck={truck} compact={true} />
+            )}
           </div>
         </div>
+      )}
 
-        {/* LOAD */}
-        <div style={{
-          padding: '10px 12px',
-          opacity: activeTab === 'load' ? 1 : 0,
-          position: activeTab === 'load' ? 'relative' : 'absolute',
-          top: 0, left: 0, width: '100%',
-          transition: 'opacity 0.3s ease',
-          pointerEvents: activeTab === 'load' ? 'auto' : 'none',
-        }}>
-          {load ? (<>
-            {row('Commodity', load.commodity)}
-            {row('Route', `${load.fromCity} → ${load.toCity}`)}
-            {row('Rate', `$${load.agreedRate.toLocaleString()}`, '#06b6d4')}
-            {row('Miles', `${load.miles} mi`)}
-            {row('Rate/Mile', load.miles > 0 ? `$${(load.agreedRate / load.miles).toFixed(2)}/mi` : '—')}
-            {divider}
-            {row('Equipment', load.equipment)}
-            {row('Weight', `${(load.weight || 0).toLocaleString()} lbs`)}
-            {row('Broker', load.brokerCompany || '—')}
-          </>) : (
-            <div style={{ textAlign: 'center', padding: '14px 0' }}>
-              <div style={{ fontSize: 22, marginBottom: 4 }}>📭</div>
-              <div style={{ fontSize: 11, color: isDark ? '#94a3b8' : '#6b7280' }}>No load assigned</div>
-            </div>
-          )}
+      {!activeDealLoad && hosWarn && (
+        <div style={{ padding: '4px 10px 5px', borderTop: '1px solid rgba(251,191,36,0.2)', background: isDark ? 'rgba(251,191,36,0.06)' : 'rgba(251,191,36,0.04)', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 11 }}>⚠️</span>
+          <span style={{ fontSize: 10, fontWeight: 700, color: hosColor }}>HOS &lt; 3h — нужен отдых через {hosCountdown ?? hosMinutesTotal} мин</span>
         </div>
+      )}
 
-        {/* DEAL — переговоры с брокером */}
-        {activeDealLoad && (
-          <div style={{
-            opacity: activeTab === 'deal' ? 1 : 0,
-            position: activeTab === 'deal' ? 'relative' : 'absolute',
-            top: 0, left: 0, width: '100%',
-            transition: 'opacity 0.3s ease',
-            pointerEvents: activeTab === 'deal' ? 'auto' : 'none',
-            display: 'flex', flexDirection: 'column',
-          }}>
-            {(() => {
-              const load = activeDealLoad;
-              const broker = load.brokerName || 'Broker';
-              const brokerCompany = load.brokerCompany || '';
-              const tiles = [
-                { val: Math.round(load.postedRate * 1.05), tag: '+5%' },
-                { val: Math.round(load.postedRate * 1.10), tag: '+10%' },
-                { val: Math.round(load.postedRate * 1.15), tag: '+15%' },
-                { val: Math.round(load.marketRate), tag: 'Market', isMarket: true },
-              ];
-              return (
-                <>
-                  {/* Заголовок брокера */}
-                  <div style={{ padding: '8px 12px 6px', borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}` }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 20 }}>👩‍💼</span>
-                        <div>
-                          <div style={{ fontSize: 12, fontWeight: 800, color: isDark ? '#e2e8f0' : '#111827' }}>{broker}</div>
-                          <div style={{ fontSize: 10, color: isDark ? '#64748b' : '#9ca3af' }}>{brokerCompany}</div>
-                        </div>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: 12, fontWeight: 800, color: '#06b6d4' }}>{load.fromCity} → {load.toCity}</div>
-                        <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280' }}>{load.miles} mi · ${load.postedRate.toLocaleString()} (${(load.postedRate/load.miles).toFixed(2)}/mi)</div>
-                        <div style={{ fontSize: 10, color: '#4ade80' }}>Market: ${load.marketRate.toLocaleString()} (${(load.marketRate/load.miles).toFixed(2)}/mi)</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Чат */}
-                  <div style={{ padding: '6px 12px', maxHeight: 110, overflowY: 'auto' as any, display: 'flex', flexDirection: 'column', gap: 5 }}>
-                    {dealMessages.map((msg, i) => (
-                      <div key={i} style={{ display: 'flex', justifyContent: msg.from === 'me' ? 'flex-end' : 'flex-start', gap: 5 }}>
-                        {msg.from === 'broker' && <span style={{ fontSize: 14, flexShrink: 0 }}>👩‍💼</span>}
-                        <div style={{
-                          maxWidth: '80%', padding: '5px 9px', borderRadius: msg.from === 'me' ? '10px 10px 2px 10px' : '10px 10px 10px 2px',
-                          background: msg.from === 'me' ? 'rgba(6,182,212,0.2)' : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'),
-                          border: msg.from === 'me' ? '1px solid rgba(6,182,212,0.3)' : `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
-                        }}>
-                          <span style={{ fontSize: 11, color: isDark ? '#e2e8f0' : '#374151', lineHeight: 1.4 }}>{msg.text}</span>
-                        </div>
-                      </div>
-                    ))}
-                    {dealDone === 'accepted' && (
-                      <div style={{ textAlign: 'center', padding: '4px 0', fontSize: 12, fontWeight: 800, color: '#4ade80' }}>
-                        🤝 Deal at ${dealAgreedRate.toLocaleString()}!
-                      </div>
-                    )}
-                    {dealDone === 'rejected' && (
-                      <div style={{ textAlign: 'center', padding: '4px 0', fontSize: 12, fontWeight: 800, color: '#f87171' }}>
-                        ❌ No deal. Broker walked away.
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Кнопки предложений */}
-                  {!dealDone && (
-                    <div style={{ padding: '6px 12px 10px' }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: isDark ? '#64748b' : '#9ca3af', marginBottom: 5, textTransform: 'uppercase', letterSpacing: 0.5 }}>Твоё предложение:</div>
-                      <div style={{ display: 'flex', gap: 5 }}>
-                        {tiles.map((t, i) => (
-                          <button key={i} onClick={() => handleDealOffer(t.val)} style={{
-                            flex: 1, padding: '6px 4px', borderRadius: 8, cursor: 'pointer',
-                            background: t.isMarket ? 'rgba(74,222,128,0.12)' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
-                            border: t.isMarket ? '1.5px solid rgba(74,222,128,0.4)' : `1.5px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
-                            transition: 'all 0.15s ease',
-                          }}
-                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = t.isMarket ? 'rgba(74,222,128,0.22)' : 'rgba(6,182,212,0.12)'; }}
-                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = t.isMarket ? 'rgba(74,222,128,0.12)' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'); }}
-                          >
-                            <div style={{ fontSize: 11, fontWeight: 900, color: t.isMarket ? '#4ade80' : (isDark ? '#e2e8f0' : '#111827') }}>{t.val.toLocaleString()}</div>
-                            <div style={{ fontSize: 9, fontWeight: 700, color: t.isMarket ? '#4ade80' : '#06b6d4' }}>{t.tag}</div>
-                          </button>
-                        ))}
-                      </div>
-                      {negotiation.round > 0 && !dealDone && dealCurrentOffer > 0 && (
-                        <button onClick={() => handleDealOffer(dealCurrentOffer)} style={{
-                          width: '100%', marginTop: 5, padding: '6px', borderRadius: 8, cursor: 'pointer',
-                          background: 'rgba(74,222,128,0.1)', border: '1.5px solid rgba(74,222,128,0.35)',
-                          fontSize: 11, fontWeight: 800, color: '#4ade80',
-                        }}>
-                          ✅ Принять ${dealCurrentOffer.toLocaleString()}
-                        </button>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Подтверждение сделки */}
-                  {dealDone === 'accepted' && (
-                    <div style={{ padding: '6px 12px 10px', display: 'flex', gap: 6 }}>
-                      <button onClick={closeNegotiation} style={{
-                        flex: 1, padding: '7px', borderRadius: 8, cursor: 'pointer',
-                        background: 'transparent', border: `1px solid ${isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'}`,
-                        fontSize: 11, fontWeight: 700, color: isDark ? '#94a3b8' : '#6b7280',
-                      }}>Отмена</button>
-                      <button onClick={handleConfirmDeal} disabled={isAssigning} style={{
-                        flex: 2, padding: '7px', borderRadius: 8, cursor: isAssigning ? 'default' : 'pointer',
-                        background: isAssigning ? 'rgba(74,222,128,0.1)' : 'rgba(74,222,128,0.2)',
-                        border: '1.5px solid rgba(74,222,128,0.5)',
-                        fontSize: 11, fontWeight: 800, color: '#4ade80',
-                      }}>
-                        {isAssigning ? '⏳ Назначаем...' : `✅ Назначить на ${truck.driver?.split(' ')[0] || 'трак'}`}
-                      </button>
-                    </div>
-                  )}
-
-                  {dealDone === 'rejected' && (
-                    <div style={{ padding: '6px 12px 10px' }}>
-                      <button onClick={closeNegotiation} style={{
-                        width: '100%', padding: '7px', borderRadius: 8, cursor: 'pointer',
-                        background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)',
-                        fontSize: 11, fontWeight: 700, color: '#f87171',
-                      }}>Закрыть</button>
-                    </div>
-                  )}
-                </>
-              );
-            })()}
-          </div>
-        )}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '2px 8px 3px', borderTop: `1px solid ${BORDER_C}`, cursor: 'pointer' }} onClick={e => { e.stopPropagation(); setCollapsed(true); if (collapseTimer.current) clearTimeout(collapseTimer.current); }}>
+        <span style={{ fontSize: 9, color: T2, userSelect: 'none' as any }}>▲ свернуть</span>
       </div>
-
     </div>
   );
 }
-
 /** Выпадающая панель под выбранной карточкой — богатый интерактивный контент */
 function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEvent[]; isDark: boolean }) {
   const resolveEvent = useGameStore(s => s.resolveEvent);
@@ -619,7 +475,7 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
   };
   // ps для TruckHUD — прозрачный, без фона (HUD сам рисует стекло)
   const psHUD: any = {
-    marginTop: 6,
+    marginTop: 0,
     maxWidth: 340, width: '100%',
   };
   const hov = (el: HTMLElement, c: string, on: boolean) => {
@@ -829,8 +685,15 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
     
     // Нет активной сервисной машины — показываем кнопки выбора ремонта
     const outUntil = truck.outOfOrderUntil || 0;
-    const minsLeft = Math.max(0, outUntil - gameMinute);
-    const totalDelay = truck.breakdownDelayTow || truck.breakdownDelayRoadside || 120;
+    // Округляем до целых минут чтобы не дёргаться каждый тик
+    const minsLeft = Math.max(0, Math.round(outUntil - gameMinute));
+    // totalDelay — берём из реального времени ремонта, не из tow/roadside (они могут быть 0)
+    const totalDelay = Math.max(
+      truck.breakdownDelayRoadside || 0,
+      truck.breakdownDelayTow || 0,
+      30 // минимум 30 мин чтобы не делить на 0
+    );
+    const repairProgress = totalDelay > 0 ? Math.min(100, Math.max(0, Math.round((1 - minsLeft / totalDelay) * 100))) : 100;
     // Если outOfOrderUntil не установлен или уже прошёл — показываем кнопки ремонта
     if (!outUntil || minsLeft <= 0) {
       const cR = truck.breakdownCostRoadside || 0;
@@ -874,16 +737,86 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
     }
     return (
       <div style={ps} onClick={e => e.stopPropagation()}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 20 }}>⏳</span>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 900, color: '#fbbf24' }}>{truck.breakdownType || 'Ремонт'}</div>
-            <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280', marginTop: 1 }}>📍 {truck.currentCity} • Осталось ~{minsLeft} мин</div>
+        {/* Заголовок поломки — одна строка */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(251,191,36,0.12)', border: '1.5px solid rgba(251,191,36,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>⏳</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 900, color: '#fbbf24', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{truck.breakdownType || 'Ремонт'}</div>
+            <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280', marginTop: 1, whiteSpace: 'nowrap' }}>📍 {truck.currentCity} · Ремонт в процессе</div>
+          </div>
+          {/* Таймер — фиксированная ширина */}
+          <div style={{ textAlign: 'right', flexShrink: 0, minWidth: 70 }}>
+            <div style={{ fontSize: 15, fontWeight: 900, color: '#fbbf24', whiteSpace: 'nowrap' }}>~{minsLeft} мин</div>
+            <div style={{ fontSize: 9, color: isDark ? '#64748b' : '#9ca3af' }}>осталось</div>
           </div>
         </div>
-        <div style={{ height: 6, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
-          <div style={{ height: '100%', borderRadius: 3, background: 'linear-gradient(90deg, #fbbf24, #4ade80)', width: `${Math.max(5, (1 - minsLeft / totalDelay) * 100)}%`, transition: 'width 1s ease' }} />
+
+        {/* Прогресс-бар ремонта */}
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: isDark ? '#64748b' : '#9ca3af', marginBottom: 4 }}>
+            <span>Прогресс ремонта</span>
+            <span style={{ fontWeight: 700, color: '#4ade80' }}>{repairProgress}%</span>
+          </div>
+          <div style={{ height: 5, background: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
+            <div style={{ height: '100%', borderRadius: 3, background: 'linear-gradient(90deg, #fbbf24, #4ade80)', width: `${Math.max(3, repairProgress)}%`, transition: 'width 1s ease' }} />
+          </div>
         </div>
+
+        {/* Инфо-карточки */}
+        <div style={{ display: 'flex', gap: 5 }}>
+          <div style={{ flex: 1, background: isDark ? 'rgba(251,191,36,0.08)' : 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: 8, padding: '6px 8px' }}>
+            <div style={{ fontSize: 8, color: isDark ? '#94a3b8' : '#6b7280', fontWeight: 600, marginBottom: 2, whiteSpace: 'nowrap' }}>⏱ Простой</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#fbbf24' }}>{totalDelay} мин</div>
+            <div style={{ fontSize: 8, color: isDark ? '#64748b' : '#9ca3af' }}>всего</div>
+          </div>
+          <div style={{ flex: 1, background: isDark ? 'rgba(248,113,113,0.08)' : 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.25)', borderRadius: 8, padding: '6px 8px' }}>
+            <div style={{ fontSize: 8, color: isDark ? '#94a3b8' : '#6b7280', fontWeight: 600, marginBottom: 2, whiteSpace: 'nowrap' }}>💸 Стоимость</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#f87171' }}>${(truck.breakdownCostRoadside || truck.breakdownCostTow || 0).toLocaleString()}</div>
+            <div style={{ fontSize: 8, color: isDark ? '#64748b' : '#9ca3af' }}>ремонт</div>
+          </div>
+          <div style={{ flex: 1, background: isDark ? 'rgba(99,102,241,0.08)' : 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 8, padding: '6px 8px' }}>
+            <div style={{ fontSize: 8, color: isDark ? '#94a3b8' : '#6b7280', fontWeight: 600, marginBottom: 2, whiteSpace: 'nowrap' }}>📍 Локация</div>
+            <div style={{ fontSize: 11, fontWeight: 800, color: '#818cf8', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{truck.currentCity}</div>
+            <div style={{ fontSize: 8, color: isDark ? '#64748b' : '#9ca3af' }}>обочина</div>
+          </div>
+        </div>
+
+        {/* Что происходит */}
+        <div style={{ background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`, borderRadius: 8, padding: '7px 10px' }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: isDark ? '#64748b' : '#9ca3af', marginBottom: 4, textTransform: 'uppercase' as any, letterSpacing: 0.5 }}>Что сейчас происходит</div>
+          {(() => {
+            const bd = (truck.breakdownType || '').toLowerCase();
+            let icon = '🔧', text = 'Механик работает над устранением неисправности.';
+            if (bd.includes('электрик') || bd.includes('electrical')) { icon = '⚡'; text = 'Диагностика электросистемы. Проверяем генератор и аккумулятор.'; }
+            else if (bd.includes('трансмисс') || bd.includes('transmission')) { icon = '⚙️'; text = 'Трак на эвакуаторе. Везём в ближайший сервис для диагностики.'; }
+            else if (bd.includes('перегрел') || bd.includes('engine')) { icon = '🌡️'; text = 'Двигатель остывает. Механик проверяет систему охлаждения.'; }
+            else if (bd.includes('топлив') || bd.includes('fuel') || bd.includes('закончилось')) { icon = '⛽'; text = 'Fuel Delivery едет к траку. Заправим и продолжим маршрут.'; }
+            else if (bd.includes('масл') || bd.includes('oil')) { icon = '🛢️'; text = 'Замена прокладки масляного поддона. Доливаем масло.'; }
+            else if (bd.includes('колес') || bd.includes('шин') || bd.includes('tire')) { icon = '🛞'; text = 'Замена колёс на обочине. Road Side Assist работает.'; }
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 18, flexShrink: 0 }}>{icon}</span>
+                <span style={{ fontSize: 11, color: isDark ? '#e2e8f0' : '#374151', lineHeight: 1.4 }}>{text}</span>
+              </div>
+            );
+          })()}
+        </div>
+
+        {/* Влияние на груз */}
+        {truck.currentLoad && (
+          <div style={{ background: isDark ? 'rgba(248,113,113,0.06)' : 'rgba(248,113,113,0.04)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 8, padding: '6px 10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#f87171' }}>⚠️ Груз задерживается</div>
+                <div style={{ fontSize: 9, color: isDark ? '#94a3b8' : '#6b7280', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{truck.currentLoad.fromCity} → {truck.currentLoad.toCity}</div>
+              </div>
+              <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: 8 }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: '#4ade80' }}>${truck.currentLoad.agreedRate.toLocaleString()}</div>
+                <div style={{ fontSize: 9, color: isDark ? '#64748b' : '#9ca3af' }}>ставка</div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -1245,6 +1178,46 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
   const { mode: themeMode } = useThemeStore();
   const isDark = themeMode === 'dark';
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Mouse drag для ленты карточек
+  const isDragging = useRef(false);
+  const dragStartX = useRef(0);
+  const dragScrollLeft = useRef(0);
+
+  // Toast "Груз назначен" — показываем под карточкой нужного трака
+  const [assignedToast, setAssignedToast] = useState<{
+    truckId: string;
+    truckName: string;
+    loadInfo: { fromCity: string; toCity: string; rate: number; miles: number; commodity: string };
+    timeLeft: number;
+  } | null>(null);
+  const toastTimerRef = useRef<any>(null);
+  const toastCountdownRef = useRef<any>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail?.truckName || !detail?.loadInfo) return;
+      // Очищаем предыдущий таймер
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+      if (toastCountdownRef.current) clearInterval(toastCountdownRef.current);
+      setAssignedToast({ truckId: detail.truckId || '', truckName: detail.truckName, loadInfo: detail.loadInfo, timeLeft: 6 });
+      // Обратный отсчёт
+      toastCountdownRef.current = setInterval(() => {
+        setAssignedToast(prev => prev ? { ...prev, timeLeft: prev.timeLeft - 1 } : null);
+      }, 1000);
+      // Закрываем через 6 сек
+      toastTimerRef.current = setTimeout(() => {
+        clearInterval(toastCountdownRef.current);
+        setAssignedToast(null);
+      }, 6000);
+    };
+    window.addEventListener('loadAssigned', handler);
+    return () => {
+      window.removeEventListener('loadAssigned', handler);
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+      if (toastCountdownRef.current) clearInterval(toastCountdownRef.current);
+    };
+  }, []);
 
   // Порядок карточек как state — изменение вызывает ре-рендер
   const [order, setOrder] = useState<string[]>([]);
@@ -1313,6 +1286,8 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
 
   // Клик по карточке — перемещаем на первое место
   const handleTruckCardClick = (truck: any) => {
+    // Не реагируем на клик если был drag
+    if (isDragging.current) return;
     if (order[0] === truck.id) {
       onTruckClick(truck);
       return;
@@ -1482,9 +1457,36 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
         alignItems: 'flex-start',
         pointerEvents: 'none', // Пропускаем клики к карте
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        cursor: isDragging.current ? 'grabbing' : 'grab',
+        userSelect: 'none',
       } as any}
       onTouchStart={e => e.stopPropagation()}
       onTouchMove={e => e.stopPropagation()}
+      onMouseDown={e => {
+        if (!scrollRef.current) return;
+        isDragging.current = false; // сбрасываем — drag начнётся только при движении
+        dragStartX.current = e.clientX;
+        dragScrollLeft.current = scrollRef.current.scrollLeft;
+        scrollRef.current.style.cursor = 'grabbing';
+      }}
+      onMouseMove={e => {
+        if (!scrollRef.current) return;
+        const dx = Math.abs(e.clientX - dragStartX.current);
+        if (dx > 5) {
+          isDragging.current = true; // помечаем как drag только после 5px
+          scrollRef.current.scrollLeft = dragScrollLeft.current - (e.clientX - dragStartX.current);
+          e.preventDefault();
+        }
+      }}
+      onMouseUp={() => {
+        // Сбрасываем drag с небольшой задержкой чтобы onClick успел проверить
+        setTimeout(() => { isDragging.current = false; }, 50);
+        if (scrollRef.current) scrollRef.current.style.cursor = 'grab';
+      }}
+      onMouseLeave={() => {
+        isDragging.current = false;
+        if (scrollRef.current) scrollRef.current.style.cursor = 'grab';
+      }}
       >
         {trucks.map((truck, index) => {
           const color = getTruckColor(truck);
@@ -1514,12 +1516,11 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
             <div key={truck.id} data-truck-card 
               className={index === 0 && animationDirection ? (animationDirection === 'left' ? 'truck-card-animate-left' : 'truck-card-animate') : ''}
               onClick={(e) => {
-                console.log('WRAPPER onClick сработал!', truck.id);
                 e.stopPropagation();
                 e.preventDefault();
                 handleTruckCardClick(truck);
               }}
-              onMouseDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => { /* не блокируем — нужен drag контейнера */ }}
               onTouchStart={(e) => e.stopPropagation()}
               style={{
               flexShrink: 0, width: 250,
@@ -1602,8 +1603,8 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                   }
                 }}
               >
-                {/* Индикатор слежения — снизу карточки, поверх таба */}
-                {isSelected && (
+                {/* Индикатор слежения — СКРЫТ */}
+                {false && isSelected && (
                   <div style={{
                     position: 'absolute', bottom: -16, left: '50%',
                     transform: 'translateX(-50%)',
@@ -1790,6 +1791,57 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                   isDark={isDark}
                   onDismiss={() => dismissDeliveryResult(deliveryResult.loadId)}
                 />
+              )}
+
+              {/* Toast "Груз назначен" — под карточкой нужного трака */}
+              {assignedToast && (assignedToast.truckId === truck.id || (!assignedToast.truckId && index === 0)) && (
+                <div style={{
+                  marginTop: 0,
+                  background: isDark ? 'rgba(10,14,26,0.97)' : 'rgba(255,255,255,0.97)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  border: '1.5px solid rgba(6,182,212,0.5)',
+                  borderRadius: '0 0 12px 12px',
+                  padding: '10px 12px',
+                  maxWidth: 340, width: '100%',
+                  boxShadow: isDark ? '0 8px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(6,182,212,0.2)' : '0 4px 16px rgba(0,0,0,0.12)',
+                  animation: 'dropdownSlide 0.3s cubic-bezier(0.34,1.56,0.64,1)',
+                  position: 'relative',
+                  cursor: 'pointer',
+                } as any}
+                  onClick={() => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); if (toastCountdownRef.current) clearInterval(toastCountdownRef.current); setAssignedToast(null); }}
+                >
+                  {/* Таймер */}
+                  <div style={{ position: 'absolute', top: 8, right: 10, width: 20, height: 20, borderRadius: '50%', border: '2px solid rgba(6,182,212,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 900, color: '#06b6d4' }}>
+                    {assignedToast.timeLeft}
+                  </div>
+                  {/* Заголовок */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#06b6d4,#0891b2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>✓</div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 900, color: isDark ? '#e2e8f0' : '#111827' }}>Груз назначен!</div>
+                      <div style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280' }}>{assignedToast.truckName}</div>
+                    </div>
+                  </div>
+                  {/* Маршрут + ставка */}
+                  <div style={{ background: isDark ? 'rgba(6,182,212,0.08)' : 'rgba(6,182,212,0.06)', borderRadius: 8, padding: '7px 10px', border: '1px solid rgba(6,182,212,0.2)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: isDark ? '#e2e8f0' : '#111827' }}>{assignedToast.loadInfo.fromCity} → {assignedToast.loadInfo.toCity}</span>
+                      <span style={{ fontSize: 14, fontWeight: 900, color: '#06b6d4' }}>${assignedToast.loadInfo.rate.toLocaleString()}</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, fontSize: 10, color: isDark ? '#94a3b8' : '#6b7280' }}>
+                      <span>{assignedToast.loadInfo.miles} mi</span>
+                      <span>·</span>
+                      <span>${(assignedToast.loadInfo.rate / assignedToast.loadInfo.miles).toFixed(2)}/mi</span>
+                      <span>·</span>
+                      <span>{assignedToast.loadInfo.commodity}</span>
+                    </div>
+                  </div>
+                  {/* Прогресс-бар */}
+                  <div style={{ marginTop: 8, height: 3, background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)', borderRadius: 2, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', background: 'linear-gradient(90deg,#06b6d4,#0891b2)', borderRadius: 2, width: `${(assignedToast.timeLeft / 6) * 100}%`, transition: 'width 1s linear' }} />
+                  </div>
+                </div>
               )}
             </div>
           );

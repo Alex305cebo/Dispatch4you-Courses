@@ -34,7 +34,7 @@ export default function MainMenu() {
   async function checkSaveAndUser() {
     try {
       const raw = localStorage.getItem('dispatcher-game-save');
-      if (raw) { const s = JSON.parse(raw); if (s?.version >= 5) setHasSave(true); }
+      if (raw) { const s = JSON.parse(raw); if (s?.version >= 6 && s?.phase === 'playing') setHasSave(true); }
     } catch {}
     try {
       const u = await getCurrentUser();

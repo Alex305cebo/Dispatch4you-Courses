@@ -54,6 +54,9 @@ import RepairGarageModal from '../components/RepairGarageModal';
 import { useOnboardingStore } from '../store/onboardingStore';
 import { ONBOARDING_STEPS } from '../data/onboardingConfig';
 import OnboardingOverlay from '../components/OnboardingOverlay';
+import EventDialog from '../components/EventDialog';
+import { SCENARIOS, getScenarioByType, getScenarioForBreakdown, EventDialogScenario } from '../data/eventDialogs';
+import LoadAssignedToast from '../components/LoadAssignedToast';
 
 type Tab = 'map' | 'loadboard' | 'trucks' | 'chat';
 
@@ -198,6 +201,7 @@ export default function GameScreen() {
 
   // ── ТЕМА ──────────────────────────────────────────────────────────────────
   const { mode: themeMode, colors: T, toggle: toggleTheme } = useThemeStore();
+  const isDark = themeMode === 'dark';
 
   const {
     phase, gameMinute, balance, reputation,
@@ -362,11 +366,21 @@ export default function GameScreen() {
   }, [availableLoads.length, activeTab]);
 
   useEffect(() => {
-    // При прямом открытии /game (без прохождения через меню) — всегда на меню
-    // Используем setTimeout чтобы дать Root Layout время смонтироваться
+    // При прямом открытии /game (без прохождения через меню)
     const enteredViaMenu = sessionStorage.getItem('enteredViaMenu');
     if (!enteredViaMenu) {
-      setTimeout(() => router.replace('/'), 50);
+      // Пробуем загрузить сохранение — если есть, остаёмся в игре
+      if (phase === 'menu') {
+        loadGame().then(loaded => {
+          if (loaded) {
+            // Сохранение найдено — восстанавливаем сессию
+            sessionStorage.setItem('enteredViaMenu', '1');
+          } else {
+            // Нет сохранения — на меню
+            setTimeout(() => router.replace('/'), 50);
+          }
+        });
+      }
       return;
     }
     // При рефреше — восстанавливаем сохранение только если phase === 'menu' (store в дефолтном состоянии)
@@ -521,10 +535,12 @@ export default function GameScreen() {
   const idleTrucks = trucks.filter(t => t.status === 'idle').length;
 
   function handleTruckClick(truck: any) {
-    // Если тот же трак — снимаем выделение
+    // Если тот же трак — НЕ снимаем выделение, просто фокусируемся на нём
     if (selectedTruckId === truck.id) {
-      selectTruck(null);
-      window.dispatchEvent(new CustomEvent('followTruckFromCard', { detail: { truckId: null } }));
+      // Трак уже выбран — просто центрируем карту на нём
+      window.dispatchEvent(new CustomEvent('followTruckFromCard', {
+        detail: { truckId: truck.id, lng: truck.position[0], lat: truck.position[1] }
+      }));
       return;
     }
     selectTruck(truck.id);
@@ -1539,6 +1555,14 @@ export default function GameScreen() {
   const [showLoadBoard, setShowLoadBoard] = useState(false);
   // Floating Chat state
   const [showChat, setShowChat] = useState(false);
+  // Event Dialog state
+  const [activeEventDialog, setActiveEventDialog] = useState<EventDialogScenario | null>(null);
+  // Load Assigned Toast state
+  const [loadAssignedToast, setLoadAssignedToast] = useState<{
+    visible: boolean;
+    truckName: string;
+    loadInfo: { fromCity: string; toCity: string; rate: number; miles: number; commodity: string };
+  } | null>(null);
 
   // Синхронизируем state кнопок с GoogleMapView
   useEffect(() => {
@@ -1557,6 +1581,40 @@ export default function GameScreen() {
     const handler = () => setShowLoadBoard(false);
     window.addEventListener('closeLoadBoard', handler);
     return () => window.removeEventListener('closeLoadBoard', handler);
+  }, []);
+
+  // Открываем EventDialog при поломке трака
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { type, truckId, breakdownType } = (e as CustomEvent).detail || {};
+      
+      // Используем getScenarioForBreakdown для выбора правильного сценария по типу поломки
+      const scenario = breakdownType 
+        ? getScenarioForBreakdown(breakdownType)
+        : getScenarioByType(type || 'breakdown');
+        
+      if (scenario) {
+        setActiveEventDialog({ ...scenario, _truckId: truckId } as any);
+      }
+    };
+    window.addEventListener('openEventDialog', handler);
+    return () => window.removeEventListener('openEventDialog', handler);
+  }, []);
+
+  // Слушаем событие назначения груза для показа Toast
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && detail.truckName && detail.loadInfo) {
+        setLoadAssignedToast({
+          visible: true,
+          truckName: detail.truckName,
+          loadInfo: detail.loadInfo,
+        });
+      }
+    };
+    window.addEventListener('loadAssigned', handler);
+    return () => window.removeEventListener('loadAssigned', handler);
   }, []);
 
   // Слушаем кнопки из GoogleMapView
@@ -1592,20 +1650,22 @@ export default function GameScreen() {
 
           {/* Кнопки справа снизу — перенесены в GoogleMapView */}
 
-          {/* Floating Chat — снизу поверх карты */}
+          {/* Floating Chat — компактный popup */}
           {showChat && (
             <div style={{
               position: 'absolute',
-              bottom: 0, left: 0, right: 0,
-              height: '70%',
+              bottom: 16, left: '50%', transform: 'translateX(-50%)',
+              width: 'min(420px, calc(100% - 80px))',
+              maxHeight: '55%',
               background: themeMode === 'dark' ? 'rgba(10,14,23,0.97)' : 'rgba(255,255,255,0.98)',
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
-              borderTop: themeMode === 'dark' ? '1px solid rgba(129,140,248,0.2)' : '1px solid rgba(0,0,0,0.1)',
-              borderRadius: '20px 20px 0 0',
+              border: themeMode === 'dark' ? '1px solid rgba(129,140,248,0.25)' : '1px solid rgba(0,0,0,0.1)',
+              borderRadius: 16,
               zIndex: 25,
               display: 'flex', flexDirection: 'column',
-              boxShadow: '0 -8px 32px rgba(0,0,0,0.3)',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
+              overflow: 'hidden',
             } as any}>
               {/* Header */}
               <div style={{
@@ -1641,20 +1701,22 @@ export default function GameScreen() {
             </div>
           )}
 
-          {/* Floating LoadBoard — снизу поверх карты */}
+          {/* Floating LoadBoard — компактный popup */}
           {showLoadBoard && (
             <div style={{
               position: 'absolute',
-              bottom: 0, left: 0, right: 0,
-              height: '65%',
+              bottom: 16, left: '50%', transform: 'translateX(-50%)',
+              width: 'min(420px, calc(100% - 80px))',
+              maxHeight: '55%',
               background: themeMode === 'dark' ? 'rgba(10,14,23,0.97)' : 'rgba(255,255,255,0.98)',
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
-              borderTop: themeMode === 'dark' ? '1px solid rgba(56,189,248,0.2)' : '1px solid rgba(0,0,0,0.1)',
-              borderRadius: '20px 20px 0 0',
+              border: themeMode === 'dark' ? '1px solid rgba(56,189,248,0.25)' : '1px solid rgba(0,0,0,0.1)',
+              borderRadius: 16,
               zIndex: 25,
               display: 'flex', flexDirection: 'column',
-              boxShadow: '0 -8px 32px rgba(0,0,0,0.3)',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
+              overflow: 'hidden',
             } as any}>
               {/* Drag handle + close */}
               <div style={{
@@ -1785,6 +1847,68 @@ export default function GameScreen() {
         onExit={() => { if (clockRef.current) clearInterval(clockRef.current); }}
       />
       {/* Онбординг отключён */}
+      {/* Event Dialog — интерактивные диалоги событий */}
+      {activeEventDialog && (() => {
+        const truck = trucks.find(t => t.id === (activeEventDialog as any)._truckId) || trucks[0];
+        const idNum = parseInt(truck?.id.replace(/\D/g, '') || '1');
+        const truckNum = String(((idNum * 317 + 100) % 900) + 100);
+        const trailerNum = String(((idNum * 491 + 200) % 900) + 100);
+        
+        return (
+          <EventDialog
+            scenario={activeEventDialog}
+            driverName={truck?.driver}
+            truckName={truck?.name}
+            truckNum={truckNum}
+            trailerNum={trailerNum}
+            onComplete={(stars, total) => {
+              // После завершения диалога — автоматически запускаем roadside repair
+              const truckId = (activeEventDialog as any)._truckId;
+              if (truckId) {
+                const truck = trucks.find(t => t.id === truckId);
+                if (truck && truck.status === 'breakdown') {
+                  useGameStore.getState().repairBreakdown(truckId, 'roadside');
+                }
+              }
+              // Также фиксим все застрявшие breakdown траки
+              trucks.forEach(t => {
+                if (t.status === 'breakdown' && (t as any).awaitingRepairChoice) {
+                  useGameStore.getState().repairBreakdown(t.id, 'roadside');
+                }
+              });
+              setActiveEventDialog(null);
+            }}
+            onClose={() => {
+              // При закрытии — тоже запускаем roadside чтобы трак не завис
+              const truckId = (activeEventDialog as any)._truckId;
+              if (truckId) {
+                const truck = trucks.find(t => t.id === truckId);
+                if (truck && truck.status === 'breakdown' && (truck as any).awaitingRepairChoice) {
+                  useGameStore.getState().repairBreakdown(truckId, 'roadside');
+                }
+              }
+              // Фиксим все застрявшие
+              trucks.forEach(t => {
+                if (t.status === 'breakdown' && (t as any).awaitingRepairChoice) {
+                  useGameStore.getState().repairBreakdown(t.id, 'roadside');
+                }
+              });
+              setActiveEventDialog(null);
+            }}
+          />
+        );
+      })()}
+
+      {/* Load Assigned Toast — перенесён в TruckCardOverlay (под карточку трака) */}
+      {/* {loadAssignedToast && (
+        <LoadAssignedToast
+          visible={loadAssignedToast.visible}
+          truckName={loadAssignedToast.truckName}
+          loadInfo={loadAssignedToast.loadInfo}
+          onClose={() => setLoadAssignedToast(null)}
+          isDark={isDark}
+        />
+      )} */}
     </View>
   );
 }

@@ -698,8 +698,8 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
           </div>
         )}
 
-        {/* Кнопка слежения */}
-        <button
+        {/* СКРЫТО: Кнопка слежения */}
+        {/* <button
           onClick={() => {
             if (followTruck) {
               // Выключаем слежение
@@ -741,7 +741,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
               <span style={{ fontSize: 10 }}>▲</span>
             </>
           )}
-        </button>
+        </button> */}
       </div>
 
       {/* Информация о выбранном траке */}
