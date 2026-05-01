@@ -14,29 +14,48 @@ import { hybridSave, hybridLoad, startAutoSave, stopAutoSave, clearAllSaves } fr
 import { sendDriverQuestion, sendBreakdownAlert, sendSystemNotification } from '../utils/chatHelpers';
 import { logger } from '../utils/logger';
 
-// ─── OSRM fetch с retry и увеличенным таймаутом ──────────
-async function fetchRoute(fromLng: number, fromLat: number, toLng: number, toLat: number, retries = 2): Promise<Array<[number,number]> | null> {
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3000); // 3 секунды
-    try {
-      const url = `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?overview=full&geometries=geojson`;
-      const res = await fetch(url, { signal: controller.signal });
-      const data = await res.json();
-      if (data.routes?.[0]) {
-        logger.log(`✅ Route loaded: ${data.routes[0].geometry.coordinates.length} points`);
-        return data.routes[0].geometry.coordinates;
-      }
-    } catch (err) {
-      logger.warn(`⚠️ fetchRoute attempt ${attempt + 1} failed:`, err);
-      if (attempt === retries) {
-        logger.error('❌ All fetchRoute attempts failed — using linear movement');
-      }
-    } finally {
-      clearTimeout(timeout);
+// ─── GOOGLE MAPS DIRECTIONS API (без CORS проблем) ──────────────────────────────────────
+async function fetchRoute(fromLng: number, fromLat: number, toLng: number, toLat: number, retries = 1): Promise<Array<[number,number]> | null> {
+  // Используем Google Maps Directions API вместо OSRM (нет CORS проблем)
+  try {
+    // Проверяем что Google Maps загружен
+    if (typeof google === 'undefined' || !google.maps) {
+      logger.warn('⚠️ Google Maps not loaded yet, using linear movement');
+      return null;
     }
+
+    return new Promise((resolve) => {
+      const directionsService = new google.maps.DirectionsService();
+      
+      directionsService.route(
+        {
+          origin: new google.maps.LatLng(fromLat, fromLng),
+          destination: new google.maps.LatLng(toLat, toLng),
+          travelMode: google.maps.TravelMode.DRIVING,
+        },
+        (result, status) => {
+          if (status === google.maps.DirectionsStatus.OK && result) {
+            // Конвертируем Google Maps route в формат [lng, lat]
+            const route = result.routes[0];
+            const path: Array<[number, number]> = [];
+            
+            route.overview_path.forEach((point: any) => {
+              path.push([point.lng(), point.lat()]);
+            });
+            
+            logger.log(`✅ Route loaded via Google Maps: ${path.length} points`);
+            resolve(path);
+          } else {
+            logger.warn(`⚠️ Google Maps routing failed: ${status}, using linear movement`);
+            resolve(null);
+          }
+        }
+      );
+    });
+  } catch (err) {
+    logger.error('❌ Google Maps routing error:', err);
+    return null;
   }
-  return null;
 }
 
 // ─── ТИПЫ ───────────────────────────────────────────────────────────────────
@@ -1673,7 +1692,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   tickClock: () => {
-    if (get().phase !== 'playing') return;
+    const phase = get().phase;
+    if (phase !== 'playing') {
+      return;
+    }
     try {
     const { gameMinute, trucks, availableLoads, activeLoads, timeSpeed } = get();
     // 0.25 минуты за тик × 4 тика/сек = 1 мин/сек (как раньше)
@@ -1709,6 +1731,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     // Обновляем прогресс траков — СИНХРОННО (без await)
     const newDeliveryResults: DeliveryResult[] = [];
+    console.log(`🚛 Trucks status:`, trucks.map(t => `${t.id}:${t.status}`).join(', '));
     const updatedTrucks = trucks.map((truckOrig) => {
       let truck = truckOrig;
 
@@ -2371,9 +2394,26 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
 
       // Если трак на разгрузке/погрузке и у него уже есть следующий груз - автоматически начинаем движение
+      // НО ТОЛЬКО ЕСЛИ ЗАВЕРШИЛ ТЕКУЩУЮ ОПЕРАЦИЮ (иначе уедет раньше времени!)
       if ((truck.status === 'at_delivery' || truck.status === 'at_pickup') && truck.currentLoad) {
         // Проверяем что это pre-planned груз (phase должна быть 'to_pickup')
         if (truck.currentLoad.phase === 'to_pickup') {
+          // ВАЖНО: Проверяем что погрузка/разгрузка ЗАВЕРШЕНА
+          const isAtPickup = truck.status === 'at_pickup';
+          const isAtDelivery = truck.status === 'at_delivery';
+          const pickupArrivalMinute = (truck as any).pickupArrivalMinute ?? newMinute;
+          const deliveryArrivalMinute = (truck as any).deliveryArrivalMinute ?? newMinute;
+          const loadDuration = (truck as any).loadDuration ?? 60;
+          const unloadDuration = (truck as any).unloadDuration ?? 60;
+          const pickupWaitTime = newMinute - pickupArrivalMinute;
+          const deliveryWaitTime = newMinute - deliveryArrivalMinute;
+          
+          // Если ещё грузится/разгружается — НЕ ДВИГАЕМСЯ
+          if ((isAtPickup && pickupWaitTime < loadDuration) || (isAtDelivery && deliveryWaitTime < unloadDuration)) {
+            return truck; // Ждём завершения операции
+          }
+          
+          // Операция завершена — можно ехать к следующему грузу
           const pickupCity = CITIES[truck.currentLoad.fromCity];
           if (pickupCity) {
             const truckId = truck.id;
@@ -2493,15 +2533,14 @@ export const useGameStore = create<GameState>((set, get) => ({
         }
       }
 
-      // ── BREAKDOWN: трак ждёт ремонт — НЕ ДВИГАЕТСЯ ──
-      // Если трак сломан и ждёт выбора ремонта ИЛИ ждёт приезда ремонтной машины — блокируем движение
-      if (truck.status === 'breakdown') {
-        // Трак не двигается — просто возвращаем его без изменений
-        return truck;
+      // Логируем состояние каждого трака
+      if (truck.status === 'driving' || truck.status === 'loaded') {
+        console.log(`🔍 Truck ${truck.id}: status=${truck.status}, destCity=${truck.destinationCity}, hasLoad=${!!truck.currentLoad}`);
       }
 
       // Двигаем трак только если он реально едет с грузом
       if ((truck.status === 'driving' || truck.status === 'loaded') && truck.destinationCity) {
+        console.log(`🚛 Truck ${truck.id}: status=${truck.status}, dest=${truck.destinationCity}, progress=${truck.progress}`);
         const to = CITIES[truck.destinationCity];
         // БАГ-ФИX: город назначения не найден в CITIES — сбрасываем в idle
         if (!to) {
@@ -2702,6 +2741,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
         const progressPerTick = (MILES_PER_TICK / totalMiles) * speedMult * weatherSpeedMult * performancePenalty;
         const newProgress = Math.min(1, truck.progress + progressPerTick);
+        console.log(`📊 Progress: ${truck.progress.toFixed(4)} + ${progressPerTick.toFixed(6)} = ${newProgress.toFixed(4)}`);
 
         // ── ЕСТЕСТВЕННЫЙ ИЗНОС (WEAR & TEAR) ──
         // Характеристики падают пропорционально пройденным милям за тик.
@@ -2773,26 +2813,20 @@ export const useGameStore = create<GameState>((set, get) => ({
           };
         }
         
-        // Двигаемся по routePath
+        // Двигаемся по routePath используя getPositionOnRoute (как машина ремонта)
         if (truck.routePath && truck.routePath.length > 1) {
-          const totalPoints = truck.routePath.length;
-          const pointIndex = Math.floor(newProgress * (totalPoints - 1));
-          const nextIndex = Math.min(pointIndex + 1, totalPoints - 1);
-          const segmentProgress = (newProgress * (totalPoints - 1)) - pointIndex;
-          
-          const p1 = truck.routePath[pointIndex];
-          const p2 = truck.routePath[nextIndex];
-          const lng = p1[0] + (p2[0] - p1[0]) * segmentProgress;
-          const lat = p1[1] + (p2[1] - p1[1]) * segmentProgress;
-          
-          return { ...truck, progress: newProgress, position: [lng, lat] as [number, number], hoursLeft: newHoursLeft, currentCity: getNearestCity(lng, lat), [`wn_${truckStateCode}`]: weatherZone ? true : (truck as any)[`wn_${truckStateCode}`] } as any;
+          const newPosition = getPositionOnRoute(truck.routePath, newProgress);
+          console.log(`🛣️ Moving on route: progress=${newProgress.toFixed(4)}, points=${truck.routePath.length}`);
+          return { ...truck, progress: newProgress, position: newPosition, hoursLeft: newHoursLeft, currentCity: getNearestCity(newPosition[0], newPosition[1]), [`wn_${truckStateCode}`]: weatherZone ? true : (truck as any)[`wn_${truckStateCode}`] } as any;
         } else if (truck.destinationCity && CITIES[truck.destinationCity]) {
           // Fallback: линейное движение если нет routePath
+          console.log(`📏 LINEAR movement (no route): ${truck.currentCity} → ${truck.destinationCity}`);
           const dest = CITIES[truck.destinationCity];
           const startPos = CITIES[truck.currentCity] || truck.position;
           const t = Math.min(newProgress, 1);
           const lng = startPos[0] + (dest[0] - startPos[0]) * t;
           const lat = startPos[1] + (dest[1] - startPos[1]) * t;
+          console.log(`📍 New position: [${lng.toFixed(4)}, ${lat.toFixed(4)}]`);
           // Если достигли цели — переходим в нужный статус
           if (newProgress >= 1) {
             const newStatus = truck.status === 'driving' ? 'at_pickup' as TruckStatus : 'at_delivery' as TruckStatus;
@@ -2811,8 +2845,12 @@ export const useGameStore = create<GameState>((set, get) => ({
           }
           return { ...truck, progress: newProgress, position: [lng, lat] as [number, number], hoursLeft: newHoursLeft, currentCity: getNearestCity(lng, lat) } as any;
         } else {
+          logger.error(`❌ Truck ${truck.id} has NO movement path: routePath=${!!truck.routePath}, destCity=${truck.destinationCity}`);
           return truck;
         }
+      } else if (truck.status === 'driving' || truck.status === 'loaded') {
+        // Трак в статусе driving/loaded но без destinationCity — это баг
+        logger.warn(`⚠️ Truck ${truck.id} NOT moving: status=${truck.status}, destinationCity=${truck.destinationCity}`);
       }
 
       // ── SAFETY NET: трак в неизвестном состоянии — логируем и сбрасываем ──
@@ -3394,21 +3432,9 @@ case 'detention': {
     // Трак автоматически начнёт движение когда закончит текущую операцию
     const isPrePlanning = truck.status === 'at_delivery' || truck.status === 'at_pickup';
 
-    // Snap текущую позицию трака к дороге
+    // Snap текущую позицию трака к дороге (опционально, не критично)
     let snappedPosition = truck.position;
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 2000);
-      const url = `https://router.project-osrm.org/nearest/v1/driving/${truck.position[0]},${truck.position[1]}?number=1`;
-      const res = await fetch(url, { signal: controller.signal });
-      clearTimeout(timeout);
-      const data = await res.json();
-      if (data.waypoints && data.waypoints[0]) {
-        snappedPosition = data.waypoints[0].location as [number, number];
-      }
-    } catch {
-      // используем оригинальную позицию
-    }
+    // Пропускаем snap - не критично для работы, используем текущую позицию
 
     // Загружаем маршрут до pickup в фоне (не блокируем назначение)
     const pickupCity = CITIES[load.fromCity];
