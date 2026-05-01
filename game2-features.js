@@ -684,8 +684,12 @@ function renderDeliveryResultV2(result) {
       <div class="dr-pnl-row"><span style="font-size:12px;color:#94a3b8">Топливо (${result.miles}mi × $0.45)</span><span style="font-size:12px;font-weight:700;color:#f87171">-$${result.fuelCost.toLocaleString()}</span></div>
       <div class="dr-pnl-row"><span style="font-size:12px;color:#94a3b8">Водитель (${result.miles}mi × $0.55)</span><span style="font-size:12px;font-weight:700;color:#f87171">-$${result.driverPay.toLocaleString()}</span></div>
       <div class="dr-pnl-row"><span style="font-size:12px;color:#94a3b8">Dispatch Fee (8%)</span><span style="font-size:12px;font-weight:700;color:#f87171">-$${result.dispatchFee.toLocaleString()}</span></div>
-      <div class="dr-pnl-row"><span style="font-size:12px;color:#94a3b8">Factoring Fee (3%)</span><span style="font-size:12px;font-weight:700;color:#f87171">-$${result.factoringFee.toLocaleString()}</span></div>
+      <div class="dr-pnl-row"><span style="font-size:12px;color:#94a3b8">Factoring (3%)</span><span style="font-size:12px;font-weight:700;color:#f87171">-$${result.factoringFee.toLocaleString()}</span></div>
+      <div class="dr-pnl-row"><span style="font-size:12px;color:#94a3b8">Truck Payment (8%)</span><span style="font-size:12px;font-weight:700;color:#f87171">-$${result.truckPayment.toLocaleString()}</span></div>
+      <div class="dr-pnl-row"><span style="font-size:12px;color:#94a3b8">Trailer Payment (5%)</span><span style="font-size:12px;font-weight:700;color:#f87171">-$${result.trailerPayment.toLocaleString()}</span></div>
       ${result.lumperCost > 0 ? `<div class="dr-pnl-row"><span style="font-size:12px;color:#94a3b8">Lumper</span><span style="font-size:12px;font-weight:700;color:#f87171">-$${result.lumperCost.toLocaleString()}</span></div>` : ''}
+      ${result.tripExtraExpenses > 0 ? `<div class="dr-pnl-row"><span style="font-size:12px;color:#94a3b8">Доп. расходы в пути</span><span style="font-size:12px;font-weight:700;color:#f87171">-$${result.tripExtraExpenses.toLocaleString()}</span></div>` : ''}
+      ${result.lateDeliveryFine > 0 ? `<div class="dr-pnl-row"><span style="font-size:12px;color:#94a3b8">Штраф за опоздание</span><span style="font-size:12px;font-weight:700;color:#f87171">-$${result.lateDeliveryFine.toLocaleString()}</span></div>` : ''}
       <div class="dr-pnl-row bold"><span style="color:#fff">TOTAL EXPENSES</span><span style="color:#f87171">-$${result.totalExpenses.toLocaleString()}</span></div>
       <div class="dr-net-row" style="border-color:${profitColor}44">
         <span style="font-size:14px;font-weight:900;color:#fff">NET PROFIT</span>

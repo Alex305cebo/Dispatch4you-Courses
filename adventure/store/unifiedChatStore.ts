@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { logger } from '../utils/logger';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // UNIFIED CHAT STORE — Единая система диалогов для всех коммуникаций
@@ -260,7 +261,7 @@ export const useUnifiedChatStore = create<UnifiedChatStore>((set, get) => ({
     const thread = get().threads[threadId];
     
     if (!thread) {
-      console.warn(`Thread ${threadId} not found. Message not added.`);
+      logger.warn(`Thread ${threadId} not found. Message not added.`);
       return;
     }
     
@@ -524,7 +525,7 @@ export const useUnifiedChatStore = create<UnifiedChatStore>((set, get) => ({
         set({ threads: {} });
       }
     } catch (error) {
-      console.error('Failed to load chat from storage:', error);
+      logger.error('Failed to load chat from storage:', error);
       set({ threads: {} });
     }
   },
@@ -535,7 +536,7 @@ export const useUnifiedChatStore = create<UnifiedChatStore>((set, get) => ({
       const threads = get().threads;
       localStorage.setItem(key, JSON.stringify(threads));
     } catch (error) {
-      console.error('Failed to save chat to storage:', error);
+      logger.error('Failed to save chat to storage:', error);
     }
   },
   

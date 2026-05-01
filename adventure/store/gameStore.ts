@@ -12,6 +12,8 @@ import {
 } from '../utils/serviceVehicleHelpers';
 import { hybridSave, hybridLoad, startAutoSave, stopAutoSave, clearAllSaves } from '../utils/firebaseSaveSystem';
 import { sendDriverQuestion, sendBreakdownAlert, sendSystemNotification } from '../utils/chatHelpers';
+import { logger } from '../utils/logger';
+
 // ─── OSRM fetch с retry и увеличенным таймаутом ──────────
 async function fetchRoute(fromLng: number, fromLat: number, toLng: number, toLat: number, retries = 2): Promise<Array<[number,number]> | null> {
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -22,13 +24,13 @@ async function fetchRoute(fromLng: number, fromLat: number, toLng: number, toLat
       const res = await fetch(url, { signal: controller.signal });
       const data = await res.json();
       if (data.routes?.[0]) {
-        console.log(`✅ Route loaded: ${data.routes[0].geometry.coordinates.length} points`);
+        logger.log(`✅ Route loaded: ${data.routes[0].geometry.coordinates.length} points`);
         return data.routes[0].geometry.coordinates;
       }
     } catch (err) {
-      console.warn(`⚠️ fetchRoute attempt ${attempt + 1} failed:`, err);
+      logger.warn(`⚠️ fetchRoute attempt ${attempt + 1} failed:`, err);
       if (attempt === retries) {
-        console.error('❌ All fetchRoute attempts failed — using linear movement');
+        logger.error('❌ All fetchRoute attempts failed — using linear movement');
       }
     } finally {
       clearTimeout(timeout);
@@ -1414,6 +1416,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   notifications: [],
   unreadCount: 0,
   pendingEmailResponses: [],
+  pendingBrokerPayments: [],
   deliveryResults: [],
 
   dismissDeliveryResult: (loadId: string) => {
@@ -1428,10 +1431,10 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   truckShopOpen: false,
   setTruckShopOpen: (open: boolean) => {
-    console.log('🏪 gameStore.setTruckShopOpen called with:', open);
-    console.log('🏪 Current state before set:', useGameStore.getState().truckShopOpen);
+    logger.log('🏪 gameStore.setTruckShopOpen called with:', open);
+    logger.log('🏪 Current state before set:', useGameStore.getState().truckShopOpen);
     set({ truckShopOpen: open });
-    console.log('🏪 State after set:', useGameStore.getState().truckShopOpen);
+    logger.log('🏪 State after set:', useGameStore.getState().truckShopOpen);
   },
 
   buyTruckFromShop: (lotId: number, price: number, truckName: string, isOld: boolean, speedPenalty: number, breakdownChance: number) => {
@@ -1567,7 +1570,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   startShift: async (truckCount: number = 1, sessionName: string = '') => {
-    console.log(`🎮 Starting shift with ${truckCount} trucks, session: "${sessionName}"`);
+    logger.log(`🎮 Starting shift with ${truckCount} trucks, session: "${sessionName}"`);
     
     // Всегда сбрасываем старое сохранение и начинаем заново
     get().clearSave();
@@ -1632,14 +1635,14 @@ export const useGameStore = create<GameState>((set, get) => ({
         const dest = CITIES[truck.destinationCity];
         const routePath = await fetchRoute(truck.position[0], truck.position[1], dest[0], dest[1]);
         if (routePath) {
-          console.log(`✅ Route loaded for ${truck.id}: ${truck.currentCity} → ${truck.destinationCity}`);
+          logger.log(`✅ Route loaded for ${truck.id}: ${truck.currentCity} → ${truck.destinationCity}`);
           return { ...truck, routePath };
         }
       }
       return truck;
     }));
 
-    console.log('✅ All trucks initialized, starting game...');
+    logger.log('✅ All trucks initialized, starting game...');
 
     set({
       phase: 'playing',
@@ -1714,7 +1717,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         const stopPos = (truck as any).hosStopDestination as [number, number] | undefined;
         if (!stopPos) {
           // Safety: нет координат truck stop — принудительно останавливаем здесь
-          console.warn(`⚠️ Truck ${truck.id} drivingToHosStop without destination, stopping here`);
+          logger.warn(`⚠️ Truck ${truck.id} drivingToHosStop without destination, stopping here`);
           return {
             ...truck,
             status: 'waiting' as TruckStatus,
@@ -2014,7 +2017,11 @@ export const useGameStore = create<GameState>((set, get) => ({
         if (outUntil > 0 && newMinute >= outUntil) {
           const hasLoad = !!truck.currentLoad;
           const resumeStatus = hasLoad ? 'loaded' as TruckStatus : 'idle' as TruckStatus;
-          const destCity = hasLoad ? truck.currentLoad!.toCity : null;
+          
+          // Восстанавливаем состояние до поломки
+          const destCity = (truck as any).preBreakdownDestCity || (hasLoad ? truck.currentLoad!.toCity : null);
+          const progress = (truck as any).preBreakdownProgress ?? 0;
+          const routePath = (truck as any).preBreakdownRoutePath ?? null;
 
           get().addNotification({
             type: 'text', priority: 'medium', from: truck.driver,
@@ -2026,14 +2033,14 @@ export const useGameStore = create<GameState>((set, get) => ({
             detail: { message: `✅ ${truck.name} отремонтирован!`, color: '#4ade80', truckId: truck.id }
           }));
 
-          // Если есть груз — восстанавливаем маршрут в фоне
-          if (hasLoad && destCity && CITIES[destCity]) {
+          // Если есть груз — восстанавливаем маршрут в фоне (если его нет)
+          if (hasLoad && destCity && CITIES[destCity] && !routePath) {
             const truckId = truck.id;
             const dest = CITIES[destCity];
-            fetchRoute(truck.position[0], truck.position[1], dest[0], dest[1]).then(routePath => {
-              if (routePath) {
+            fetchRoute(truck.position[0], truck.position[1], dest[0], dest[1]).then(fetchedRoute => {
+              if (fetchedRoute) {
                 useGameStore.setState(s => ({
-                  trucks: s.trucks.map(t => t.id === truckId ? { ...t, routePath } as any : t)
+                  trucks: s.trucks.map(t => t.id === truckId ? { ...t, routePath: fetchedRoute } as any : t)
                 }));
               }
             });
@@ -2043,6 +2050,8 @@ export const useGameStore = create<GameState>((set, get) => ({
             ...truck,
             status: resumeStatus,
             destinationCity: destCity,
+            progress: progress, // Восстанавливаем progress
+            routePath: routePath, // Восстанавливаем маршрут
             outOfOrderUntil: 0,
             awaitingRepairChoice: false,
             breakdownType: undefined,
@@ -2050,6 +2059,9 @@ export const useGameStore = create<GameState>((set, get) => ({
             breakdownCostTow: undefined,
             breakdownDelayRoadside: undefined,
             breakdownDelayTow: undefined,
+            preBreakdownProgress: undefined,
+            preBreakdownDestCity: undefined,
+            preBreakdownRoutePath: undefined,
             breakdownStartMinute: undefined,
             routePath: null, // сбросим — загрузится в фоне
             mood: Math.max(40, (truck.mood ?? 65) - 10),
@@ -2153,7 +2165,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         // ─── СЛУЧАЙ 3: Waiting слишком долго без причины (safety net) ───
         if (restElapsed >= HOS_REST * 2) {
           // Зависший трак — принудительно в idle
-          console.warn(`⚠️ Truck ${truck.id} stuck in waiting for ${restElapsed} min, forcing idle`);
+          logger.warn(`⚠️ Truck ${truck.id} stuck in waiting for ${restElapsed} min, forcing idle`);
           return {
             ...truck,
             status: 'idle' as TruckStatus,
@@ -2299,7 +2311,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             profitPerMile: miles > 0 ? Math.round((adjustedNetProfit / miles) * 100) / 100 : 0,
             minute: newMinute,
           };
-          console.log('🎉 DeliveryResult created:', deliveryResult.loadId, deliveryResult.netProfit);
+          logger.log('🎉 DeliveryResult created:', deliveryResult.loadId, deliveryResult.netProfit);
           newDeliveryResults.push(deliveryResult);
           // Записываем GROSS доход отдельно
           get().addMoney(grossRevenue, `Доставка: ${load.fromCity}→${load.toCity} (${truck.name})`);
@@ -2481,12 +2493,19 @@ export const useGameStore = create<GameState>((set, get) => ({
         }
       }
 
+      // ── BREAKDOWN: трак ждёт ремонт — НЕ ДВИГАЕТСЯ ──
+      // Если трак сломан и ждёт выбора ремонта ИЛИ ждёт приезда ремонтной машины — блокируем движение
+      if (truck.status === 'breakdown') {
+        // Трак не двигается — просто возвращаем его без изменений
+        return truck;
+      }
+
       // Двигаем трак только если он реально едет с грузом
       if ((truck.status === 'driving' || truck.status === 'loaded') && truck.destinationCity) {
         const to = CITIES[truck.destinationCity];
         // БАГ-ФИX: город назначения не найден в CITIES — сбрасываем в idle
         if (!to) {
-          console.warn(`⚠️ Truck ${truck.id} stuck: destinationCity "${truck.destinationCity}" not in CITIES`);
+          logger.warn(`⚠️ Truck ${truck.id} stuck: destinationCity "${truck.destinationCity}" not in CITIES`);
           return { ...truck, status: 'idle' as TruckStatus, destinationCity: null, progress: 0, routePath: null, idleSinceMinute: newMinute, idleWarningLevel: 0 } as any;
         }
 
@@ -2621,8 +2640,12 @@ export const useGameStore = create<GameState>((set, get) => ({
                       breakdownCostTow: bd.tow,
                       breakdownDelayRoadside: bd.delayRoadside,
                       breakdownDelayTow: bd.delayTow,
-                      breakdownStartMinute: state.gameMinute, // Добавляем время начала поломки для safety net
+                      breakdownStartMinute: state.gameMinute,
                       outOfOrderUntil: canRoadside ? undefined : state.gameMinute + bd.delayTow,
+                      // Сохраняем состояние до поломки для восстановления
+                      preBreakdownProgress: t.progress,
+                      preBreakdownDestCity: t.destinationCity,
+                      preBreakdownRoutePath: t.routePath,
                     } : t),
                   }));
                   if (!canRoadside) {
@@ -2795,7 +2818,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       // ── SAFETY NET: трак в неизвестном состоянии — логируем и сбрасываем ──
       // Если трак driving/loaded без destinationCity — это баг
       if ((truck.status === 'driving' || truck.status === 'loaded') && !truck.destinationCity) {
-        console.warn(`⚠️ SAFETY NET: Truck ${truck.id} is ${truck.status} without destinationCity, resetting to idle`);
+        logger.warn(`⚠️ SAFETY NET: Truck ${truck.id} is ${truck.status} without destinationCity, resetting to idle`);
         return {
           ...truck,
           status: 'idle' as TruckStatus,
@@ -2946,6 +2969,17 @@ export const useGameStore = create<GameState>((set, get) => ({
       set({ pendingEmailResponses: remainingResponses });
     }
 
+    // ── PENDING BROKER PAYMENTS: отложенные платежи без setInterval ──
+    const pendingPayments = (get() as any).pendingBrokerPayments ?? [];
+    if (pendingPayments.length > 0) {
+      const duePayments = pendingPayments.filter((p: any) => newMinute >= p.targetMinute);
+      const remainingPayments = pendingPayments.filter((p: any) => newMinute < p.targetMinute);
+      if (duePayments.length > 0) {
+        duePayments.forEach((p: any) => get().addMoney(p.amount, p.label));
+        set({ pendingBrokerPayments: remainingPayments } as any);
+      }
+    }
+
     // Случайные события каждые 32 игровых минуты (50% шанс)
     if (newMinute % 32 === 0 && newMinute > 0 && Math.random() < 0.5) {
       setTimeout(() => get().triggerRandomEvent(), 500);
@@ -2984,7 +3018,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       const { gameMinute, timeSpeed } = get();
       const TICK_MINUTES = 0.25 * (timeSpeed ?? 1);
       const newMinute = Math.round((gameMinute + TICK_MINUTES) * 100) / 100;
-      console.error('tickClock error:', e);
+      logger.error('tickClock error:', e);
       set({ gameMinute: newMinute });
     }
   },
@@ -3039,8 +3073,12 @@ export const useGameStore = create<GameState>((set, get) => ({
             breakdownCostTow: bd.tow,
             breakdownDelayRoadside: bd.delayRoadside,
             breakdownDelayTow: bd.delayTow,
-            breakdownStartMinute: gameMinute, // Добавляем время начала поломки для safety net
+            breakdownStartMinute: gameMinute,
             outOfOrderUntil: canRoadside ? undefined : gameMinute + bd.delayTow,
+            // Сохраняем состояние до поломки для восстановления
+            preBreakdownProgress: t.progress,
+            preBreakdownDestCity: t.destinationCity,
+            preBreakdownRoutePath: t.routePath,
           } : t
         );
         set({ trucks: updatedTrucks });
@@ -3462,12 +3500,20 @@ case 'detention': {
       if (pickupCity && !isPrePlanning) {
         fetchRoute(snappedPosition[0], snappedPosition[1], pickupCity[0], pickupCity[1]).then(fetchedRoute => {
           if (fetchedRoute) {
-            useGameStore.setState(s => ({
-              trucks: s.trucks.map(t =>
-                t.id === truckId && t.status === 'driving' ? { ...t, routePath: fetchedRoute } as any : t
-              )
-            }));
-            console.log(`✅ Route loaded for ${truckId}: ${fetchedRoute.length} points`);
+            useGameStore.setState(s => {
+              // Проверяем что трак всё ещё везёт этот груз (race condition защита)
+              const currentTruck = s.trucks.find(t => t.id === truckId);
+              if (!currentTruck || currentTruck.currentLoad?.id !== load.id) {
+                logger.log(`⚠️ Route loaded but truck ${truckId} already has different load`);
+                return s; // Не обновляем — трак уже на другом грузе
+              }
+              return {
+                trucks: s.trucks.map(t =>
+                  t.id === truckId && t.status === 'driving' ? { ...t, routePath: fetchedRoute } as any : t
+                )
+              };
+            });
+            logger.log(`✅ Route loaded for ${truckId}: ${fetchedRoute.length} points`);
           }
         });
       }
@@ -3685,7 +3731,7 @@ case 'detention': {
     
     // Гибридное сохранение: localStorage + Firebase
     hybridSave(saveData).catch(error => {
-      console.error('❌ Hybrid save failed:', error);
+      logger.error('❌ Hybrid save failed:', error);
     });
   },
 
@@ -3695,7 +3741,7 @@ case 'detention': {
       const saveData = await hybridLoad();
       
       if (!saveData) {
-        console.log('ℹ️ No save found');
+        logger.log('ℹ️ No save found');
         return false;
       }
 
@@ -3707,7 +3753,7 @@ case 'detention': {
         }
         // Очищаем и Firebase
         try { clearAllSaves(); } catch (_) {}
-        console.log('🔄 Old save detected (v<6), resetting...');
+        logger.log('🔄 Old save detected (v<6), resetting...');
         return false;
       }
 
@@ -3720,7 +3766,7 @@ case 'detention': {
             if (dest) {
               const routePath = await fetchRoute(truck.position[0], truck.position[1], dest[0], dest[1]);
               if (routePath) {
-                console.log(`✅ Restored route for ${truck.id}`);
+                logger.log(`✅ Restored route for ${truck.id}`);
                 return { ...truck, routePath };
               }
             }
@@ -3769,10 +3815,10 @@ case 'detention': {
         pendingEmailResponses: saveData.pendingEmailResponses || [],
         deliveryResults: [],
       });
-      console.log('✅ Game loaded');
+      logger.log('✅ Game loaded');
       return true;
     } catch (error) {
-      console.error('❌ Failed to load game:', error);
+      logger.error('❌ Failed to load game:', error);
       return false;
     }
   },
@@ -3780,13 +3826,13 @@ case 'detention': {
   clearSave: () => {
     try {
       if (typeof window === 'undefined' || !window.localStorage) {
-        console.warn('⚠️ localStorage not available');
+        logger.warn('⚠️ localStorage not available');
         return;
       }
       localStorage.removeItem('dispatcher-game-save');
-      console.log('✅ Save cleared');
+      logger.log('✅ Save cleared');
     } catch (error) {
-      console.error('❌ Failed to clear save:', error);
+      logger.error('❌ Failed to clear save:', error);
     }
   },
 
@@ -3903,7 +3949,7 @@ case 'detention': {
     const nearestCity = findNearestCity(truck.position);
     const cityPosition = CITIES[nearestCity];
     if (!cityPosition) {
-      console.error('City not found:', nearestCity);
+      logger.error('City not found:', nearestCity);
       return;
     }
 
@@ -4318,8 +4364,16 @@ case 'detention': {
     const { pendingFactoringOffers } = get();
     const offer = pendingFactoringOffers.find(o => o.id === offerId);
     if (!offer) return;
-    // Деньги придут через 30 игровых дней (в рамках смены — через 720 минут)
-    set({ pendingFactoringOffers: pendingFactoringOffers.filter(o => o.id !== offerId) });
+    // Деньги придут через 720 игровых минут (симуляция 30 дней)
+    const targetMinute = get().gameMinute + 720;
+    set({
+      pendingFactoringOffers: pendingFactoringOffers.filter(o => o.id !== offerId),
+      // Сохраняем отложенный платёж в store — проверяется в tickClock, без setInterval
+      pendingBrokerPayments: [
+        ...((get() as any).pendingBrokerPayments ?? []),
+        { amount: offer.fullAmount, targetMinute, label: 'Broker payment (30 days) — ' + offer.fromCity + '→' + offer.toCity }
+      ],
+    });
     get().addNotification({
       type: 'email', priority: 'low',
       from: 'Broker Payment',
@@ -4327,14 +4381,6 @@ case 'detention': {
       message: 'Полная оплата $' + offer.fullAmount.toLocaleString() + ' будет переведена через 30 дней. Без комиссии factoring.',
       actionRequired: false,
     });
-    // Добавляем деньги через 720 игровых минут (симуляция 30 дней)
-    const targetMinute = get().gameMinute + 720;
-    const checkInterval = setInterval(() => {
-      if (get().gameMinute >= targetMinute) {
-        get().addMoney(offer.fullAmount, 'Broker payment (30 days) — ' + offer.fromCity + '→' + offer.toCity);
-        clearInterval(checkInterval);
-      }
-    }, 5000);
   },
 
   clearNotifications: () => {
@@ -4353,7 +4399,7 @@ case 'detention': {
   sendEmail: (params: { to: string; subject: string; body: string; isReply: boolean; replyToId?: string }) => {
     const { to, subject, body, isReply, replyToId } = params;
     
-    console.log(`📧 Email sent to ${to}: ${subject}`);
+    logger.log(`📧 Email sent to ${to}: ${subject}`);
     
     // Если это ответ — добавляем сообщение игрока в тред (не создаём новое уведомление)
     if (replyToId) {

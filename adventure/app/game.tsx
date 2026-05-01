@@ -1706,7 +1706,8 @@ export default function GameScreen() {
             <div style={{
               position: 'absolute',
               bottom: 16, left: '50%', transform: 'translateX(-50%)',
-              width: 'min(420px, calc(100% - 80px))',
+              width: width < 500 ? 'calc(100% - 32px)' : '420px',
+              maxWidth: width < 500 ? 'calc(100% - 32px)' : '420px',
               maxHeight: '55%',
               background: themeMode === 'dark' ? 'rgba(10,14,23,0.97)' : 'rgba(255,255,255,0.98)',
               backdropFilter: 'blur(20px)',

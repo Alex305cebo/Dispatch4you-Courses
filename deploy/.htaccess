@@ -1,0 +1,193 @@
+# Apache конфигурация для dispatch4you.com
+
+# Включение mod_rewrite
+RewriteEngine On
+
+# favicon.ico -> favicon.svg
+RewriteRule ^favicon\.ico$ favicon.svg [L,T=image/svg+xml]
+
+# ВСЕ редиректы (www, HTTPS) убраны — Hostinger управляет ими на уровне сервера
+
+# ========================================
+# React SPA — /game/ SPA routing fallback
+# Все /game/* запросы которые не файлы → /game/index.html
+# ========================================
+RewriteCond %{REQUEST_URI} ^/game/
+RewriteCond %{DOCUMENT_ROOT}/game/%1 !-f
+RewriteCond %{DOCUMENT_ROOT}/game/%1 !-d
+RewriteRule ^game/(.+)$ /game/index.html [L]
+
+# ========================================
+# Firebase Auth files — serve without extension as HTML
+# ========================================
+<FilesMatch "^(handler|iframe|links)$">
+  ForceType text/html
+</FilesMatch>
+
+# ========================================
+# Clean URLs — /pages/name → /pages/name.html
+# ========================================
+RewriteCond %{REQUEST_URI} !^/game
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.+)$ $1.html [L]
+
+# ========================================
+# Стандартные пути с /pages/
+# ========================================
+
+# Кэширование статических файлов
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpg "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/gif "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType application/x-javascript "access plus 1 year"
+  ExpiresByType text/javascript "access plus 1 year"
+  ExpiresByType audio/mpeg "access plus 1 year"
+  ExpiresByType font/woff "access plus 1 year"
+  ExpiresByType font/woff2 "access plus 1 year"
+  # HTML не кешируем
+  ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+# Добавляем Cache-Control заголовки для лучшего кэширования
+<IfModule mod_headers.c>
+  # Статические ресурсы - агрессивное кэширование
+  <FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|css|js|woff|woff2|mp3)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  
+  # HTML - не кешируем
+  <FilesMatch "\.(html|htm)$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+  </FilesMatch>
+</IfModule>
+
+# Разрешаем запросы к Groq API и Firebase (для симулятора и авторизации)
+<IfModule mod_headers.c>
+  # Разрешаем popup окна для Firebase Authentication
+  Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+  Header always set Cross-Origin-Embedder-Policy "unsafe-none"
+  
+  # CSP управляется на уровне Hostinger — не переопределяем здесь
+  # Header always set Content-Security-Policy "..."
+</IfModule>
+
+# Отключаем кеш для файлов симулятора
+<FilesMatch "(simulator\.html|scenarios-inline\.js|scenarios-data.*\.js)$">
+  <IfModule mod_headers.c>
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </IfModule>
+</FilesMatch>
+
+# Сжатие файлов (Gzip)
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json application/xml application/xhtml+xml application/rss+xml application/atom+xml image/svg+xml
+  
+  # Не сжимаем уже сжатые файлы
+  SetEnvIfNoCase Request_URI \.(?:gif|jpe?g|png|webp|woff2?)$ no-gzip
+  
+  # Убираем баги старых браузеров
+  BrowserMatch ^Mozilla/4 gzip-only-text/html
+  BrowserMatch ^Mozilla/4\.0[678] no-gzip
+  BrowserMatch \bMSIE !no-gzip !gzip-only-text/html
+  
+  # Добавляем заголовок Vary для прокси
+  Header append Vary User-Agent env=!dont-vary
+</IfModule>
+
+# Защита файлов конфигурации
+<FilesMatch "^\.">
+  Order allow,deny
+  Deny from all
+</FilesMatch>
+
+# Защита от просмотра директорий
+Options -Indexes
+
+# Кастомные страницы ошибок
+ErrorDocument 404 /404.html
+ErrorDocument 500 /404.html
+
+# ========================================
+# SEO ОПТИМИЗАЦИЯ
+# ========================================
+
+# Добавляем заголовки безопасности и SEO
+<IfModule mod_headers.c>
+  # X-Content-Type-Options - предотвращает MIME-sniffing
+  Header always set X-Content-Type-Options "nosniff"
+  
+  # X-Frame-Options - защита от clickjacking
+  Header always set X-Frame-Options "SAMEORIGIN"
+  
+  # Referrer Policy - контроль передачи referrer
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  
+  # Permissions Policy - ограничение API браузера
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# Принудительный UTF-8 для текстовых файлов
+AddDefaultCharset UTF-8
+<IfModule mod_mime.c>
+  AddCharset UTF-8 .html .css .js .xml .json .txt
+</IfModule>
+
+# Правильные MIME типы для SEO
+<IfModule mod_mime.c>
+  # Аудио
+  AddType audio/mpeg .mp3
+  AddType audio/ogg .ogg
+  AddType audio/wav .wav
+  
+  # Видео
+  AddType video/mp4 .mp4
+  AddType video/webm .webm
+  
+  # Шрифты
+  AddType font/woff .woff
+  AddType font/woff2 .woff2
+  AddType application/vnd.ms-fontobject .eot
+  AddType font/ttf .ttf
+  AddType font/otf .otf
+  
+  # Изображения
+  AddType image/webp .webp
+  AddType image/svg+xml .svg
+  
+  # Манифесты и конфиги
+  AddType application/manifest+json .webmanifest
+  AddType application/xml .xml
+  AddType text/xml .xml
+</IfModule>
+
+# Редирект старых URL (если были)
+# RewriteRule ^old-page\.html$ /new-page.html [R=301,L]
+
+# Удаление trailing slash для файлов (кроме /game/)
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/game
+RewriteCond %{REQUEST_URI} (.+)/$
+RewriteRule ^ %1 [R=301,L]
+
+# Блокировка доступа к служебным файлам
+<FilesMatch "(^#.*#|\.(bak|conf|dist|fla|in[ci]|log|orig|psd|sh|sql|sw[op])|~)$">
+  Order allow,deny
+  Deny from all
+  Satisfy All
+</FilesMatch>
+
+# Защита от hotlinking изображений (опционально)
+# RewriteCond %{HTTP_REFERER} !^$
+# RewriteCond %{HTTP_REFERER} !^https?://(www\.)?dispatch4you\.com [NC]
+# RewriteRule \.(jpg|jpeg|png|gif|webp|svg)$ - [F,NC]

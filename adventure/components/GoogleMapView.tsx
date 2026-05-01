@@ -5,6 +5,7 @@ import { useThemeStore } from "../store/themeStore";
 import { CITIES, CITY_STATE } from "../constants/config";
 import { SERVICE_VEHICLE_CONFIGS } from "../types/serviceVehicle";
 import { formatETA } from "../utils/serviceVehicleHelpers";
+import { logger } from "../utils/logger";
 
 // ── GOOGLE MAPS API KEY ──────────────────────────────────────────────────────
 // ВАЖНО: Добавьте ключ в .env файл как EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
@@ -13,8 +14,8 @@ const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "AIza
 
 // Проверка наличия API ключа при загрузке модуля
 if (typeof window !== 'undefined') {
-  console.log('🔑 Google Maps API ключ:', GOOGLE_MAPS_API_KEY?.substring(0, 20) + '...');
-  console.log('📦 process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY:', process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY);
+  logger.log('🔑 Google Maps API ключ:', GOOGLE_MAPS_API_KEY?.substring(0, 20) + '...');
+  logger.log('📦 process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY:', process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY);
 }
 
 // ── ТИПЫ ─────────────────────────────────────────────────────────────────────
@@ -88,7 +89,7 @@ let _gmapsCallbacks: Array<() => void> = [];
 if (typeof window !== 'undefined') {
   // Устанавливаем глобальный callback сразу при загрузке модуля
   window.initGoogleMap = () => {
-    console.log('✅ Google Maps API загружен успешно (global callback)');
+    logger.log('✅ Google Maps API загружен успешно (global callback)');
     _gmapsLoaded = true;
     _gmapsCallbacks.forEach(cb => cb());
     _gmapsCallbacks = [];
@@ -252,7 +253,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
 
     // Проверяем, загружен ли уже Google Maps
     if (window.google && window.google.maps) {
-      console.log('✅ Google Maps уже загружен');
+      logger.log('✅ Google Maps уже загружен');
       setMapLoaded(true);
       return;
     }
@@ -260,11 +261,11 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
     // Проверяем, не загружается ли уже скрипт
     const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
     if (existingScript) {
-      console.log('⏳ Google Maps уже загружается...');
+      logger.log('⏳ Google Maps уже загружается...');
       // Ждём когда загрузится
       const checkInterval = setInterval(() => {
         if (window.google && window.google.maps) {
-          console.log('✅ Google Maps загружен (ожидание)');
+          logger.log('✅ Google Maps загружен (ожидание)');
           setMapLoaded(true);
           clearInterval(checkInterval);
         }
@@ -272,7 +273,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       return () => clearInterval(checkInterval);
     }
 
-    console.log('🔄 Начинаем загрузку Google Maps API...');
+    logger.log('🔄 Начинаем загрузку Google Maps API...');
 
     // Симулируем прогресс загрузки
     const progressInterval = setInterval(() => {
@@ -297,15 +298,15 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
     
     // Обработка ошибок загрузки
     script.onerror = (error) => {
-      console.error('❌ Ошибка загрузки Google Maps API:', error);
-      console.error('Проверьте:');
-      console.error('1. API ключ в .env файле');
-      console.error('2. Включены ли Maps JavaScript API и Directions API в Google Cloud Console');
-      console.error('3. Настроены ли ограничения API ключа (HTTP referrers)');
+      logger.error('❌ Ошибка загрузки Google Maps API:', error);
+      logger.error('Проверьте:');
+      logger.error('1. API ключ в .env файле');
+      logger.error('2. Включены ли Maps JavaScript API и Directions API в Google Cloud Console');
+      logger.error('3. Настроены ли ограничения API ключа (HTTP referrers)');
     };
 
     document.head.appendChild(script);
-    console.log('📡 Скрипт Google Maps добавлен в DOM');
+    logger.log('📡 Скрипт Google Maps добавлен в DOM');
 
     return () => {
       // Очистка при размонтировании
@@ -316,17 +317,17 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
   // ── ИНИЦИАЛИЗАЦИЯ КАРТЫ ──────────────────────────────────────────────────
   useEffect(() => {
     if (!mapLoaded || !mapRef.current || googleMapRef.current) {
-      console.log('⏸️ Ожидание инициализации карты:', { mapLoaded, hasMapRef: !!mapRef.current, hasGoogleMapRef: !!googleMapRef.current });
+      logger.log('⏸️ Ожидание инициализации карты:', { mapLoaded, hasMapRef: !!mapRef.current, hasGoogleMapRef: !!googleMapRef.current });
       return;
     }
 
     const google = window.google;
     if (!google || !google.maps) {
-      console.error('❌ Google Maps API не доступен!');
+      logger.error('❌ Google Maps API не доступен!');
       return;
     }
 
-    console.log('🗺️ Инициализация Google Maps...');
+    logger.log('🗺️ Инициализация Google Maps...');
 
     try {
       // Границы США (континентальная часть)
@@ -490,9 +491,9 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
           });
         });
 
-      console.log('✅ Google Maps инициализирована успешно (спутниковый вид, только США)');
+      logger.log('✅ Google Maps инициализирована успешно (спутниковый вид, только США)');
     } catch (error) {
-      console.error('❌ Ошибка при инициализации карты:', error);
+      logger.error('❌ Ошибка при инициализации карты:', error);
     }
   }, [mapLoaded]);
 
@@ -508,7 +509,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
     userDraggedRef.current = false;
     setFollowTruck(true);
     
-    console.log('🎯 Карта: автоследование за первым траком:', firstTruck.id);
+    logger.log('🎯 Карта: автоследование за первым траком:', firstTruck.id);
   }, [googleMapRef.current]); // Срабатывает только когда карта инициализирована
 
   // ── АНИМАЦИОННЫЙ ДВИЖОК: плавное движение маркеров ─────────────────────
@@ -576,7 +577,12 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
   useEffect(() => {
     if (!mapLoaded) return;
 
+    // Защита от двойного запуска в React Strict Mode
+    let cancelled = false;
+
     function animLoop() {
+      if (cancelled) return; // Прерываем если useEffect cleanup вызван
+
       const google = window.google;
       if (!google?.maps || !googleMapRef.current) {
         rafRef.current = requestAnimationFrame(animLoop);
@@ -744,7 +750,10 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
     }
 
     rafRef.current = requestAnimationFrame(animLoop);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+    return () => {
+      cancelled = true; // Отменяем цикл
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, [mapLoaded, followTruck]);
 
   // ── ОБНОВЛЕНИЕ ЦЕЛЕВЫХ ПОЗИЦИЙ (раз в секунду от gameStore) ─────────────
@@ -755,6 +764,9 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
     if (!google?.maps) return;
 
     activeTrucks.forEach((truck: any) => {
+      // Защита от undefined position
+      if (!truck.position || truck.position.length < 2) return;
+      
       const marker = markersRef.current.get(truck.id);
       if (!marker) return;
 
@@ -846,6 +858,9 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
     });
 
     activeTrucks.forEach((truck: any) => {
+      // Защита от undefined position
+      if (!truck.position || truck.position.length < 2) return;
+      
       const color = getTruckColor(truck, gameMinute);
       let marker = markersRef.current.get(truck.id);
 
@@ -992,7 +1007,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
           clearInterval((marker as any)._sirenInterval);
         }
         serviceMarkersRef.current.delete(serviceId);
-        console.log('🗑️ Удалён маркер сервисной машины:', serviceId);
+        logger.log('🗑️ Удалён маркер сервисной машины:', serviceId);
       }
     });
     servicePolylinesRef.current.forEach((polyline, serviceId) => {
@@ -1004,6 +1019,9 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
 
     // Создаём маркеры и маршруты для сервисных машин
     activeServiceVehicles.forEach((vehicle: any) => {
+      // Защита от undefined position
+      if (!vehicle.position || vehicle.position.length < 2) return;
+      
       const config = SERVICE_VEHICLE_CONFIGS[vehicle.type];
 
       // Создаём или обновляем маркер
@@ -1362,21 +1380,44 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       const truck = activeTrucks.find((t: any) => t.id === truckId);
       if (truck) setSelectedTruck(truck);
       
-      // Режим 2: простое центрирование без зума
-      centerOnIdRef.current = truckId;
-      lastFollowPositionRef.current = null;
-      
-      // Центрируем камеру на траке без изменения зума
-      if (truck && googleMapRef.current) {
-        const position = { lat: truck.position[1], lng: truck.position[0] };
-        smoothCamLatRef.current = position.lat;
-        smoothCamLngRef.current = position.lng;
-        googleMapRef.current.moveCamera({
-          center: position,
-          heading: 0,
-          tilt: 0,
-          zoom: userZoomRef.current,
-        });
+      // Если Navigation режим активен (followTruck === true) — переключаем на этот трак
+      if (followTruck) {
+        followTruckIdRef.current = truckId;
+        userDraggedRef.current = false;
+        smoothReturnRef.current = null;
+        if (returnToTruckTimerRef.current) { clearTimeout(returnToTruckTimerRef.current); returnToTruckTimerRef.current = null; }
+        
+        // Центрируем камеру на новый трак с Navigation режимом
+        if (truck && googleMapRef.current) {
+          const position = { lat: truck.position[1], lng: truck.position[0] };
+          smoothCamLatRef.current = position.lat;
+          smoothCamLngRef.current = position.lng;
+          lastFollowPositionRef.current = null;
+          googleMapRef.current.moveCamera({
+            center: position,
+            heading: 0,
+            tilt: 65,
+            zoom: userZoomRef.current,
+          });
+          smoothHeadingRef.current = 0;
+        }
+      } else {
+        // Режим 2: простое центрирование без зума
+        centerOnIdRef.current = truckId;
+        lastFollowPositionRef.current = null;
+        
+        // Центрируем камеру на траке без изменения зума
+        if (truck && googleMapRef.current) {
+          const position = { lat: truck.position[1], lng: truck.position[0] };
+          smoothCamLatRef.current = position.lat;
+          smoothCamLngRef.current = position.lng;
+          googleMapRef.current.moveCamera({
+            center: position,
+            heading: 0,
+            tilt: 0,
+            zoom: userZoomRef.current,
+          });
+        }
       }
     }
     window.addEventListener('followTruckFromCard', handleFollowFromCard);
@@ -1459,6 +1500,8 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       followTruckIdRef.current = null;
       cinematicZoomRef.current = null;
       userDraggedRef.current = false;
+      smoothReturnRef.current = null;
+      if (returnToTruckTimerRef.current) { clearTimeout(returnToTruckTimerRef.current); returnToTruckTimerRef.current = null; }
       // Снимаем ограничения zoom от Navigation режима
       googleMapRef.current.setOptions({ minZoom: 3, maxZoom: 21 });
       // Режим 2: простое центрирование за сервисной машиной
@@ -1482,6 +1525,42 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       window.removeEventListener('stopFollowService', handleStopFollowService);
     };
   }, [mapLoaded]);
+
+  // ── CLEANUP ПРИ РАЗМОНТИРОВАНИИ КОМПОНЕНТА ──────────────────────────────
+  useEffect(() => {
+    return () => {
+      // Очищаем все интервалы мигалок сервисных машин
+      serviceMarkersRef.current.forEach((marker) => {
+        if ((marker as any)._sirenInterval) {
+          clearInterval((marker as any)._sirenInterval);
+        }
+        if ((marker as any)._sirenMarker) {
+          (marker as any)._sirenMarker.setMap(null);
+        }
+        marker.setMap(null);
+      });
+      serviceMarkersRef.current.clear();
+
+      // Очищаем маркеры траков
+      markersRef.current.forEach((marker) => {
+        marker.setMap(null);
+      });
+      markersRef.current.clear();
+
+      // Очищаем маркеры сирен
+      sirenMarkersRef.current.forEach((marker) => {
+        marker.setMap(null);
+      });
+      sirenMarkersRef.current.clear();
+
+      // Очищаем таймер возврата к траку
+      if (returnToTruckTimerRef.current) {
+        clearTimeout(returnToTruckTimerRef.current);
+      }
+
+      logger.log('🧹 GoogleMapView cleanup: все интервалы и маркеры очищены');
+    };
+  }, []);
 
   // Единый стиль для всех 3 квадратных кнопок
   const btnStyle = (active = false): React.CSSProperties => ({

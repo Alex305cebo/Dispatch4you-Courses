@@ -10,6 +10,19 @@ import DayEndBanner from './DayEndPopup';
 import ShiftEndBanner from './ShiftEndPopup';
 import TruckStatsView from './TruckStatsView';
 
+// CSS анимация для breakdown индикатора
+if (typeof document !== 'undefined' && !document.getElementById('breakdown-pulse-style')) {
+  const style = document.createElement('style');
+  style.id = 'breakdown-pulse-style';
+  style.textContent = `
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 const FLUENT = 'https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis';
 const STATUS_COLOR: Record<string, string> = {
   idle: '#38bdf8', driving: '#818cf8', loaded: '#34d399',
@@ -432,6 +445,44 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
         <div style={{ padding: '4px 10px 5px', borderTop: '1px solid rgba(251,191,36,0.2)', background: isDark ? 'rgba(251,191,36,0.06)' : 'rgba(251,191,36,0.04)', display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 11 }}>⚠️</span>
           <span style={{ fontSize: 10, fontWeight: 700, color: hosColor }}>HOS &lt; 3h — нужен отдых через {hosCountdown ?? hosMinutesTotal} мин</span>
+        </div>
+      )}
+
+      {/* Индикатор breakdown — требуется ремонт */}
+      {truck.status === 'breakdown' && truck.awaitingRepairChoice && (
+        <div 
+          style={{ 
+            padding: '6px 10px', 
+            borderTop: '1px solid rgba(248,113,113,0.3)', 
+            background: isDark ? 'rgba(248,113,113,0.08)' : 'rgba(248,113,113,0.06)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 8,
+            cursor: 'pointer',
+            transition: 'background 0.2s'
+          }}
+          onClick={e => { 
+            e.stopPropagation(); 
+            // Открываем dropdown с выбором ремонта
+            setCollapsed(false);
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = isDark ? 'rgba(248,113,113,0.12)' : 'rgba(248,113,113,0.1)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = isDark ? 'rgba(248,113,113,0.08)' : 'rgba(248,113,113,0.06)';
+          }}
+        >
+          <span style={{ fontSize: 16, animation: 'pulse 1.5s ease-in-out infinite' }}>🚨</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, color: '#f87171' }}>
+              {truck.breakdownType || 'Поломка'} — требуется ремонт
+            </div>
+            <div style={{ fontSize: 9, color: isDark ? '#94a3b8' : '#6b7280', marginTop: 1 }}>
+              Нажми чтобы выбрать ремонт
+            </div>
+          </div>
+          <span style={{ fontSize: 11, color: '#f87171' }}>▶</span>
         </div>
       )}
 
@@ -1351,7 +1402,7 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
     el.addEventListener('touchend', onTouchEnd, { passive: true });
     return () => {
       el.removeEventListener('touchstart', onTouchStart);
-      el.removeEventListener('touchmove', onTouchMove, true);
+      el.removeEventListener('touchmove', onTouchMove, { capture: true });
       el.removeEventListener('touchend', onTouchEnd);
     };
   }, []);
