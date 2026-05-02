@@ -17,9 +17,10 @@ interface Props {
   truckName?: string;
   truckNum?: string;    // Номер трака (например "517")
   trailerNum?: string;  // Номер трейлера (например "791")
+  onCallRepair?: () => void; // Callback для вызова ремонта
 }
 
-export default function EventDialog({ scenario, onComplete, onClose, driverName, truckName, truckNum, trailerNum }: Props) {
+export default function EventDialog({ scenario, onComplete, onClose, driverName, truckName, truckNum, trailerNum, onCallRepair }: Props) {
   const [currentStep, setCurrentStep] = useState(0);
   const [visibleMessages, setVisibleMessages] = useState<number>(0);
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
@@ -281,6 +282,32 @@ export default function EventDialog({ scenario, onComplete, onClose, driverName,
             >
               {currentStep < scenario.steps.length - 1 ? 'Далее →' : '✅ Завершить'}
             </button>
+          </div>
+        )}
+
+        {/* ── REPAIR BUTTON для breakdown ── */}
+        {!showAfterCorrect && !showChoices && scenario.type === 'breakdown' && onCallRepair && (
+          <div style={{ padding: '10px 18px 14px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <button
+              onClick={() => {
+                onCallRepair();
+                onClose();
+              }}
+              style={{
+                width: '100%', padding: '14px',
+                background: 'linear-gradient(135deg, #f59e0b, #f97316)',
+                border: 'none', borderRadius: 12,
+                color: '#fff', fontSize: 14, fontWeight: 800,
+                cursor: 'pointer', transition: 'all 0.2s',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}
+            >
+              <span style={{ fontSize: 18 }}>🔧</span>
+              Вызвать ремонт ($500)
+            </button>
+            <div style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center', lineHeight: 1.4 }}>
+              Roadside repair — трак будет отремонтирован на месте за 2-4 часа
+            </div>
           </div>
         )}
 

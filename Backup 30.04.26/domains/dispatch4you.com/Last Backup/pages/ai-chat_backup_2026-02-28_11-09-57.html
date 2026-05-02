@@ -1,0 +1,4847 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Чат Помощник - Dispatcher Training</title>
+  <!-- Google Fonts - Inter (modern, bold) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-weight: 600;
+      /* Bold by default */
+      overflow: hidden;
+      background: #0a0e1a;
+    }
+
+    /* Animated Background */
+    @keyframes backgroundMove {
+
+      0%,
+      100% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+      }
+
+      33% {
+        transform: translate(-8%, 8%) scale(1.08) rotate(2deg);
+      }
+
+      66% {
+        transform: translate(8%, -8%) scale(1.05) rotate(-2deg);
+      }
+    }
+
+    @keyframes fadeOut {
+      from {
+        opacity: 1;
+      }
+
+      to {
+        opacity: 0;
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+    }
+
+    .fade-out {
+      animation: fadeOut 0.8s ease-out forwards;
+    }
+
+    /* Ray Background - Bolt Style */
+    .ray-background {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .ray-bg-base {
+      position: absolute;
+      inset: 0;
+      background: #0a0e1a;
+    }
+
+    .ray-gradient {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background:
+        radial-gradient(circle at 25% 35%, rgba(139, 92, 246, 0.2), transparent 55%),
+        radial-gradient(circle at 75% 65%, rgba(59, 130, 246, 0.18), transparent 55%),
+        radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.12), transparent 60%);
+    }
+
+    .ray-rings {
+      display: none;
+    }
+
+    /* Main Container */
+    .main-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      width: 100%;
+      overflow: hidden;
+      background: #0a0e1a;
+    }
+
+    /* Announcement Badge */
+    .announcement-wrapper {
+      position: absolute;
+      top: 50px;
+      z-index: 10;
+    }
+
+    @media (min-width: 640px) {
+      .announcement-wrapper {
+        top: 70px;
+      }
+    }
+
+    .announcement-badge {
+      display: none;
+      position: relative;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      min-height: 32px;
+      border-radius: 9999px;
+      font-size: 10px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+      backdrop-filter: blur(20px) saturate(140%);
+      box-shadow: inset 0 1px rgba(255, 255, 255, 0.2),
+        inset 0 -1px rgba(0, 0, 0, 0.1),
+        0 8px 32px -8px rgba(0, 0, 0, 0.1),
+        0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    @media (min-width: 640px) {
+      .announcement-badge {
+        gap: 8px;
+        padding: 8px 20px;
+        min-height: 40px;
+        font-size: 11px;
+      }
+    }
+
+    .announcement-badge:hover {
+      transform: scale(1.02);
+    }
+
+    .announcement-badge:active {
+      transform: scale(0.98);
+    }
+
+    .badge-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      pointer-events: none;
+      opacity: 0.7;
+      mix-blend-mode: overlay;
+      background: radial-gradient(ellipse at center top, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+    }
+
+    .badge-glow {
+      position: absolute;
+      top: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      height: 2px;
+      width: 100px;
+      opacity: 0.6;
+      background: linear-gradient(90deg,
+          transparent 0%,
+          rgba(37, 119, 255, 0.8) 20%,
+          rgba(126, 93, 225, 0.8) 50%,
+          rgba(59, 130, 246, 0.8) 80%,
+          transparent 100%);
+      filter: blur(0.5px);
+    }
+
+    .badge-icon {
+      position: relative;
+      z-index: 10;
+      color: white;
+      width: 16px;
+      height: 16px;
+    }
+
+    .badge-text {
+      position: relative;
+      z-index: 10;
+      color: white;
+      font-weight: 500;
+    }
+
+    /* Content Container */
+    .content-container {
+      position: absolute;
+      top: 58%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      padding: 0 16px;
+    }
+
+    @media (min-width: 640px) {
+      .content-container {
+        top: 52%;
+      }
+    }
+
+    /* Title Section - Compact & Modern */
+    .title-section {
+      text-align: center;
+      margin-bottom: 24px;
+      animation: slideInFromTop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes slideInFromTop {
+      0% {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .main-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: white;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+      padding: 0 10px;
+      line-height: 1.2;
+    }
+
+    @media (min-width: 640px) {
+      .main-title {
+        font-size: 42px;
+        padding: 0;
+      }
+    }
+
+    .title-gradient {
+      background: linear-gradient(135deg, #8b5cf6, #6366f1, #3b82f6);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-size: 200% 200%;
+      animation: gradientShift 3s ease infinite;
+    }
+
+    @keyframes gradientShift {
+
+      0%,
+      100% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+    }
+
+    .subtitle {
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.6);
+      padding: 0 10px;
+      max-width: 500px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    @media (min-width: 640px) {
+      .subtitle {
+        font-size: 15px;
+        padding: 0;
+      }
+    }
+
+    /* Chat Input Container */
+    .chat-input-wrapper {
+      display: none;
+      /* Hidden initially, shown when chat starts */
+      width: 100%;
+      max-width: 700px;
+      margin-bottom: 16px;
+      margin-top: 8px;
+    }
+
+    @media (min-width: 640px) {
+      .chat-input-wrapper {
+        margin-bottom: 32px;
+      }
+    }
+
+    .input-container {
+      position: relative;
+      width: 100%;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .input-border-glow {
+      position: absolute;
+      inset: -1px;
+      border-radius: 12px;
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 0.08), transparent);
+      pointer-events: none;
+    }
+
+    @media (min-width: 640px) {
+      .input-border-glow {
+        border-radius: 16px;
+      }
+    }
+
+    .input-box {
+      position: relative;
+      border-radius: 10px;
+      /* Меньше радиус */
+      background: #1e1e22;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 2px 20px rgba(0, 0, 0, 0.4);
+      max-width: 500px;
+      /* Ограничение ширины */
+      margin: 0 auto;
+      /* Центрирование */
+    }
+
+    @media (min-width: 640px) {
+      .input-box {
+        border-radius: 12px;
+        max-width: 600px;
+      }
+    }
+
+    .textarea-wrapper {
+      position: relative;
+    }
+
+    .chat-textarea {
+      width: 100%;
+      resize: none;
+      background: transparent;
+      font-size: 11px;
+      color: white;
+      padding: 14px 14px 10px 14px;
+      border: none;
+      outline: none;
+      min-height: 60px;
+      max-height: 150px;
+      font-family: inherit;
+    }
+
+    @media (min-width: 640px) {
+      .chat-textarea {
+        font-size: 12px;
+        padding: 20px 20px 12px 20px;
+        min-height: 80px;
+        max-height: 200px;
+      }
+    }
+
+    .chat-textarea::placeholder {
+      color: #5a5a5f;
+    }
+
+    .input-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 2px 6px 4px 6px;
+      /* Минимальный padding */
+    }
+
+    @media (min-width: 640px) {
+      .input-controls {
+        padding: 3px 10px 6px 10px;
+      }
+    }
+
+    .left-controls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .attach-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      /* Меньше */
+      height: 24px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #8a8a8f;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    @media (min-width: 640px) {
+      .attach-button {
+        width: 30px;
+        height: 30px;
+      }
+    }
+
+    .attach-button:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: white;
+    }
+
+    .attach-button:active {
+      transform: scale(0.95);
+    }
+
+    /* Pulse and Glow Effect */
+    .pulse-glow {
+      position: relative;
+      animation: pulseGlow 2s ease-in-out infinite;
+    }
+
+    @keyframes pulseGlow {
+
+      0%,
+      100% {
+        box-shadow: 0 0 10px rgba(139, 92, 246, 0.5),
+          0 0 20px rgba(139, 92, 246, 0.3),
+          0 0 30px rgba(139, 92, 246, 0.2);
+        transform: scale(1);
+      }
+
+      50% {
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.8),
+          0 0 30px rgba(139, 92, 246, 0.5),
+          0 0 40px rgba(139, 92, 246, 0.3);
+        transform: scale(1.05);
+      }
+    }
+
+    /* Hint Tooltip */
+    .hint-tooltip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: 12px;
+      padding: 0;
+      background: transparent;
+      border: none;
+      animation: fadeInOut 3s ease-in-out infinite;
+      position: relative;
+      z-index: 10;
+    }
+
+    .hint-arrow {
+      color: rgba(139, 92, 246, 1);
+      animation: arrowBounce 1.5s ease-in-out infinite;
+      flex-shrink: 0;
+      transform: rotate(180deg);
+    }
+
+    .hint-text {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.9);
+      white-space: nowrap;
+      font-weight: 400;
+    }
+
+    @keyframes fadeInOut {
+
+      0%,
+      100% {
+        opacity: 0.7;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+    @keyframes arrowBounce {
+
+      0%,
+      100% {
+        transform: rotate(180deg) translateX(0);
+      }
+
+      50% {
+        transform: rotate(180deg) translateX(-5px);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .hint-tooltip {
+        gap: 6px;
+      }
+
+      .hint-text {
+        font-size: 10px;
+      }
+    }
+
+    .attach-icon {
+      width: 14px;
+      height: 14px;
+      transition: transform 0.2s;
+    }
+
+    @media (min-width: 640px) {
+      .attach-icon {
+        width: 16px;
+        height: 16px;
+      }
+    }
+
+    .attach-icon.rotated {
+      transform: rotate(45deg);
+    }
+
+    .model-selector {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 8px;
+      border-radius: 9999px;
+      font-size: 9px;
+      font-weight: 500;
+      color: #8a8a8f;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    @media (min-width: 640px) {
+      .model-selector {
+        gap: 6px;
+        padding: 6px 10px;
+        font-size: 10px;
+      }
+    }
+
+    .model-selector:hover {
+      color: white;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .model-selector:active {
+      transform: scale(0.95);
+    }
+
+    .model-icon {
+      width: 14px;
+      height: 14px;
+      color: #3b82f6;
+    }
+
+    @media (min-width: 640px) {
+      .model-icon {
+        width: 16px;
+        height: 16px;
+      }
+    }
+
+    .chevron-icon {
+      width: 12px;
+      height: 12px;
+      transition: transform 0.2s;
+    }
+
+    @media (min-width: 640px) {
+      .chevron-icon {
+        width: 14px;
+        height: 14px;
+      }
+    }
+
+    .chevron-icon.rotated {
+      transform: rotate(180deg);
+    }
+
+    /* Model Dropdown */
+    .model-dropdown {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-bottom: 12px;
+      width: 90%;
+      max-width: 500px;
+      background: rgba(26, 26, 30, 0.98);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      overflow: hidden;
+      z-index: 100;
+      display: none;
+    }
+
+    .model-dropdown.active {
+      display: block;
+      animation: slideInUp 0.2s ease-out;
+    }
+
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+    }
+
+    .model-dropdown-header {
+      padding: 16px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #8a8a8f;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .model-options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 16px;
+    }
+
+    @media (max-width: 640px) {
+      .model-options-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .model-option {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 20px 16px;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      width: 100%;
+      text-align: center;
+      color: #a0a0a5;
+      position: relative;
+    }
+
+    .model-option:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(99, 102, 241, 0.3);
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    .model-option.selected {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: rgba(99, 102, 241, 0.5);
+      color: white;
+    }
+
+    .model-option-icon {
+      font-size: 36px;
+      flex-shrink: 0;
+    }
+
+    .model-option-content {
+      flex: 1;
+      width: 100%;
+    }
+
+    .model-option-name {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .model-option-desc {
+      font-size: 11px;
+      color: #6a6a6f;
+      line-height: 1.4;
+    }
+
+    .model-option.selected .model-option-desc {
+      color: #a5b4fc;
+    }
+
+    .model-option-check {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 20px;
+      height: 20px;
+      color: #6366f1;
+      flex-shrink: 0;
+      opacity: 0;
+    }
+
+    .model-option.selected .model-option-check {
+      opacity: 1;
+    }
+
+    .right-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    @media (min-width: 640px) {
+      .right-controls {
+        gap: 8px;
+      }
+    }
+
+    .plan-button {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #6a6a6f;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .plan-button:hover {
+      color: white;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .plan-button.active {
+      color: #6366f1;
+      background: rgba(99, 102, 241, 0.15);
+    }
+
+    @media (max-width: 639px) {
+      .plan-text {
+        display: none;
+      }
+    }
+
+    @media (min-width: 640px) {
+      .plan-button {
+        gap: 6px;
+      }
+    }
+
+    .plan-icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    .plan-text {
+      display: none;
+    }
+
+    @media (min-width: 640px) {
+      .plan-text {
+        display: inline;
+      }
+    }
+
+    .send-button {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      /* Меньше padding */
+      border-radius: 9999px;
+      font-size: 9px;
+      font-weight: 500;
+      background: #1488fc;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 0 20px rgba(20, 136, 252, 0.3);
+    }
+
+    @media (min-width: 640px) {
+      .send-button {
+        gap: 6px;
+        padding: 7px 14px;
+        font-size: 10px;
+      }
+    }
+
+    .send-button:hover {
+      background: #1a94ff;
+    }
+
+    .send-button:active {
+      transform: scale(0.95);
+    }
+
+    .send-button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .send-text {
+      display: none;
+    }
+
+    @media (min-width: 640px) {
+      .send-text {
+        display: inline;
+      }
+    }
+
+    .send-icon {
+      width: 14px;
+      height: 14px;
+    }
+
+    @media (min-width: 640px) {
+      .send-icon {
+        width: 16px;
+        height: 16px;
+      }
+    }
+
+    /* Import Buttons */
+    .import-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    @media (min-width: 640px) {
+      .import-section {
+        flex-direction: row;
+        gap: 16px;
+      }
+    }
+
+    .import-label {
+      font-size: 10px;
+      color: #6a6a6f;
+    }
+
+    @media (min-width: 640px) {
+      .import-label {
+        font-size: 11px;
+      }
+    }
+
+    .import-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      max-width: 600px;
+    }
+
+    @media (min-width: 640px) {
+      .import-buttons {
+        gap: 8px;
+      }
+    }
+
+    .import-button {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      border-radius: 9999px;
+      font-size: 9px;
+      font-weight: 500;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      background: rgba(10, 14, 39, 0.6);
+      color: #a5b4fc;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    @media (min-width: 640px) {
+      .import-button {
+        gap: 6px;
+        padding: 6px 12px;
+        font-size: 10px;
+      }
+    }
+
+    .import-button:hover {
+      background: rgba(139, 92, 246, 0.2);
+      border-color: rgba(139, 92, 246, 0.5);
+      color: white;
+    }
+
+    .import-button:active {
+      transform: scale(0.95);
+    }
+
+    /* Animated Bubbles Section - Compact & Modern */
+    .bubbles-section {
+      width: 100%;
+      max-width: 650px;
+      margin: 0 auto;
+      padding: 16px;
+      min-height: 350px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .bubbles-container {
+      position: relative;
+      width: 100%;
+      height: 350px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px;
+    }
+
+    .bubble {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 20px;
+      border-radius: 20px;
+      background: linear-gradient(135deg,
+          rgba(139, 92, 246, 0.15),
+          rgba(99, 102, 241, 0.1),
+          rgba(59, 130, 246, 0.15));
+      border: 1.5px solid rgba(139, 92, 246, 0.35);
+      color: rgba(255, 255, 255, 0.95);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      opacity: 0;
+      transform: scale(0.85) translateY(15px);
+      animation: bubbleAppear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      box-shadow:
+        0 4px 14px rgba(139, 92, 246, 0.18),
+        0 2px 6px rgba(0, 0, 0, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(16px) saturate(140%);
+      -webkit-backdrop-filter: blur(16px) saturate(140%);
+      text-align: center;
+      line-height: 1.4;
+      max-width: 90%;
+    }
+
+    @keyframes bubbleAppear {
+      0% {
+        opacity: 0;
+        transform: scale(0.85) translateY(15px);
+      }
+
+      60% {
+        transform: scale(1.03) translateY(-3px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .bubble::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 20px;
+      background: linear-gradient(135deg,
+          rgba(139, 92, 246, 0.5),
+          rgba(59, 130, 246, 0.5));
+      opacity: 0;
+      filter: blur(6px);
+      transition: opacity 0.35s;
+      z-index: -1;
+    }
+
+    .bubble:hover {
+      transform: translateY(-3px) scale(1.04);
+      background: linear-gradient(135deg,
+          rgba(139, 92, 246, 0.28),
+          rgba(99, 102, 241, 0.2),
+          rgba(59, 130, 246, 0.28));
+      border-color: rgba(139, 92, 246, 0.55);
+      box-shadow:
+        0 8px 28px rgba(139, 92, 246, 0.35),
+        0 4px 12px rgba(0, 0, 0, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      color: #fff;
+    }
+
+    .bubble:hover::before {
+      opacity: 1;
+    }
+
+    .bubble:active {
+      transform: translateY(-1px) scale(1.01);
+    }
+
+    .bubble.bubble-hidden {
+      animation: bubbleDisappear 0.45s cubic-bezier(0.4, 0, 1, 1) forwards;
+    }
+
+    @keyframes bubbleDisappear {
+      0% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+
+      100% {
+        opacity: 0;
+        transform: scale(0.85) translateY(-15px);
+      }
+    }
+
+    /* Responsive bubble sizes */
+    @media (min-width: 640px) {
+      .bubble {
+        padding: 14px 24px;
+        font-size: 13px;
+        border-radius: 22px;
+      }
+
+      .bubbles-container {
+        height: 380px;
+        gap: 12px;
+      }
+
+      .bubbles-section {
+        max-width: 750px;
+        min-height: 380px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .bubble {
+        padding: 10px 16px;
+        font-size: 11px;
+        max-width: 95%;
+      }
+
+      .bubbles-container {
+        height: 320px;
+        gap: 8px;
+        padding: 12px;
+      }
+
+      .bubbles-section {
+        min-height: 320px;
+      }
+    }
+
+    .import-icon {
+      width: 14px;
+      height: 14px;
+    }
+
+    @media (min-width: 640px) {
+      .import-icon {
+        width: 16px;
+        height: 16px;
+      }
+    }
+
+    /* SVG Icons */
+    .icon-bolt {
+      fill: currentColor;
+    }
+
+    .icon-zap {
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .icon-lightbulb {
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .icon-send {
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .icon-plus {
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .icon-chevron {
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .icon-github {
+      fill: currentColor;
+    }
+
+    .icon-home {
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    /* Back Button */
+    .back-button {
+      display: none;
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 20;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 500;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(15, 15, 15, 0.8);
+      backdrop-filter: blur(20px);
+      color: #8a8a8f;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .back-button:hover {
+      background: rgba(26, 26, 30, 0.9);
+      color: white;
+      transform: translateX(-2px);
+    }
+
+    .back-icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Reset Button */
+    .reset-button {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 500;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      background: rgba(15, 15, 15, 0.8);
+      backdrop-filter: blur(20px);
+      color: #a5b4fc;
+      cursor: pointer;
+      transition: all 0.2s;
+      opacity: 0.3;
+    }
+
+    .reset-button.active {
+      display: flex;
+    }
+
+    .reset-button:hover,
+    .reset-button:active {
+      background: rgba(139, 92, 246, 0.2);
+      border-color: rgba(139, 92, 246, 0.5);
+      color: white;
+      opacity: 1;
+    }
+
+    .reset-icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Hero Showcase Button */
+    .hero-button {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 500;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(15, 15, 15, 0.8);
+      backdrop-filter: blur(20px);
+      color: #8a8a8f;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .hero-button:hover {
+      background: rgba(26, 26, 30, 0.9);
+      color: white;
+      transform: translateX(2px);
+    }
+
+    .hero-icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Header */
+    .page-header {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      padding: 20px;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(to bottom, rgba(10, 14, 26, 0.9), transparent);
+      backdrop-filter: blur(10px);
+      transition: opacity 0.8s ease-out;
+    }
+
+    .page-header.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-logo {
+      font-size: 24px;
+    }
+
+    .header-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: white;
+      margin: 0;
+    }
+
+    @media (min-width: 640px) {
+      .header-logo {
+        font-size: 32px;
+      }
+
+      .header-title {
+        font-size: 20px;
+      }
+    }
+
+    .header-subtitle {
+      font-size: 11px;
+      color: #8a8a8f;
+      margin: 0;
+    }
+
+    @media (min-width: 640px) {
+      .header-subtitle {
+        font-size: 13px;
+      }
+    }
+
+    /* Chat Messages Area */
+    .chat-messages-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: none;
+      flex-direction: column;
+      background: #0a0e1a;
+      z-index: 15;
+      padding: 80px 20px 20px 20px;
+      overflow-y: auto;
+      scroll-behavior: auto;
+      /* Default instant scroll */
+      transition: scroll 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      /* Smooth easing */
+    }
+
+    .chat-messages-container.smooth-scroll {
+      scroll-behavior: smooth;
+    }
+
+    .chat-messages-container.active {
+      display: flex;
+    }
+
+    .messages-wrapper {
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      /* Normal order like Telegram */
+      gap: 8px;
+      /* Smaller gap on mobile */
+      padding-bottom: 20px;
+    }
+
+    @media (min-width: 640px) {
+      .messages-wrapper {
+        gap: 12px;
+      }
+    }
+
+    @media (min-width: 640px) {
+      .messages-wrapper {
+        gap: 16px;
+      }
+    }
+
+    .message {
+      display: flex;
+      gap: 6px;
+      /* Smaller gap on mobile */
+      animation: messageSlideIn 0.3s ease-out;
+    }
+
+    @media (min-width: 640px) {
+      .message {
+        gap: 12px;
+      }
+    }
+
+    @keyframes messageSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInScale {
+      from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    @keyframes selectAndExpand {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      30% {
+        transform: scale(1.05);
+        background: rgba(139, 92, 246, 0.3);
+        border-color: rgba(139, 92, 246, 0.6);
+      }
+
+      60% {
+        transform: scale(0.95);
+        opacity: 0.8;
+      }
+
+      100% {
+        transform: scale(0.9) translateX(20px);
+        opacity: 0;
+      }
+    }
+
+    @keyframes fadeOutOthers {
+      0% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      100% {
+        opacity: 0;
+        transform: scale(0.95) translateX(-10px);
+      }
+    }
+
+    .message.user {
+      flex-direction: row-reverse;
+    }
+
+    .message-avatar {
+      width: 28px;
+      /* Smaller on mobile */
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    @media (min-width: 640px) {
+      .message-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+      }
+    }
+
+    .message.user .message-avatar {
+      background: linear-gradient(135deg, #1488fc, #1a94ff);
+    }
+
+    .message.assistant .message-avatar {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+    }
+
+    .message-content {
+      max-width: 70%;
+      padding: 6px 8px;
+      /* Even smaller padding */
+      border-radius: 10px;
+      line-height: 1.3;
+      font-size: 9px;
+      /* Smaller text */
+      font-weight: 600;
+      /* Bold */
+      color: white;
+    }
+
+    @media (min-width: 640px) {
+      .message-content {
+        padding: 12px 16px;
+        line-height: 1.6;
+        font-size: 12px;
+        font-weight: 600;
+        /* Bold */
+        border-radius: 12px;
+      }
+    }
+
+    .message.user .message-content {
+      background: rgba(20, 136, 252, 0.2);
+      border: 1px solid rgba(20, 136, 252, 0.3);
+    }
+
+    .message.assistant .message-content {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px;
+    }
+
+    .typing-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.6);
+      animation: typing 1.4s infinite;
+    }
+
+    .typing-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typing {
+
+      0%,
+      60%,
+      100% {
+        transform: translateY(0);
+        opacity: 0.6;
+      }
+
+      30% {
+        transform: translateY(-10px);
+        opacity: 1;
+      }
+    }
+
+    .chat-input-fixed {
+      position: sticky;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 8px 20px;
+      /* Еще меньше padding */
+      background: linear-gradient(to top,
+          rgba(10, 14, 26, 0.98) 0%,
+          rgba(10, 14, 26, 0.92) 50%,
+          rgba(10, 14, 26, 0.75) 80%,
+          transparent 100%);
+      backdrop-filter: blur(12px);
+      transition: all 0.3s ease;
+    }
+
+    .chat-input-fixed.collapsed .textarea-wrapper {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+
+    .chat-input-fixed.collapsed .input-box {
+      padding: 8px 12px;
+      transition: all 0.3s ease;
+    }
+
+    .chat-input-fixed .textarea-wrapper {
+      max-height: 200px;
+      opacity: 1;
+      transition: all 0.3s ease;
+    }
+
+    @media (max-width: 768px) {
+      .message-content {
+        max-width: 85%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="main-container">
+    <!-- Ray Background -->
+    <div class="ray-background">
+      <div class="ray-bg-base"></div>
+      <div class="ray-gradient"></div>
+      <div class="ray-rings">
+        <div class="ring ring-1"></div>
+        <div class="ring ring-2"></div>
+        <div class="ring ring-3"></div>
+        <div class="ring ring-4"></div>
+        <div class="ring ring-5"></div>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <header class="page-header" id="pageHeader">
+      <div class="header-content">
+        <div class="header-logo">🤖</div>
+        <div>
+          <h1 class="header-title">AI Чат Помощник</h1>
+          <p class="header-subtitle">Ваш персональный помощник диспетчера</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Back Button -->
+    <a href="../index.html" class="back-button">
+      <svg class="back-icon icon-home" viewBox="0 0 24 24">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+      </svg>
+      <span>Главная</span>
+    </a>
+
+    <!-- Reset Button -->
+    <button class="reset-button" id="resetButton" onclick="resetChat()">
+      <svg class="reset-icon" viewBox="0 0 24 24">
+        <polyline class="icon-chevron" points="1 4 1 10 7 10"></polyline>
+        <polyline class="icon-chevron" points="23 20 23 14 17 14"></polyline>
+        <path class="icon-chevron" d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+      </svg>
+      <span>Сбросить чат</span>
+    </button>
+
+    <!-- Chat Messages Container (Hidden by default) -->
+    <div class="chat-messages-container" id="chatMessagesContainer">
+      <div class="messages-wrapper" id="messagesWrapper">
+        <!-- Messages will be added here -->
+      </div>
+
+      <div class="chat-input-fixed">
+        <div class="input-container">
+          <div class="input-border-glow"></div>
+          <div class="input-box">
+            <div class="textarea-wrapper">
+              <textarea id="chatInputFixed" class="chat-textarea" placeholder="Напишите ваш вопрос..."
+                rows="1"></textarea>
+            </div>
+
+            <div class="input-controls">
+              <div class="left-controls">
+                <button class="attach-button" id="attachButtonFixed">
+                  <svg class="attach-icon" id="attachIconFixed" viewBox="0 0 24 24">
+                    <line class="icon-plus" x1="12" y1="5" x2="12" y2="19"></line>
+                    <line class="icon-plus" x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </button>
+                <div class="hint-tooltip" id="hintTooltip" style="display: none;">
+                  <svg class="hint-arrow" viewBox="0 0 24 24" width="20" height="20">
+                    <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" fill="none"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                  <span class="hint-text">Подсказки</span>
+                </div>
+              </div>
+
+              <div class="right-controls">
+                <button class="plan-button" id="planButtonFixed">
+                  <svg class="plan-icon" viewBox="0 0 24 24">
+                    <path class="icon-lightbulb" d="M9 18h6"></path>
+                    <path class="icon-lightbulb" d="M10 22h4"></path>
+                    <path class="icon-lightbulb"
+                      d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8a6 6 0 0 0-12 0c0 1.33.47 2.48 1.5 3.5.76.76 1.23 1.52 1.41 2.5">
+                    </path>
+                  </svg>
+                  <span class="plan-text">Статистика</span>
+                </button>
+
+                <button class="send-button" id="sendButtonFixed" disabled>
+                  <span class="send-text">Отправить</span>
+                  <svg class="send-icon" viewBox="0 0 24 24">
+                    <line class="icon-send" x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon class="icon-send" points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Announcement Badge -->
+    <div class="announcement-wrapper" id="announcementWrapper">
+      <div class="announcement-badge">
+        <span class="badge-overlay"></span>
+        <span class="badge-glow"></span>
+        <svg class="badge-icon icon-bolt" viewBox="0 0 24 24">
+          <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" />
+        </svg>
+        <span class="badge-text">AI Помощник Диспетчера</span>
+      </div>
+    </div>
+
+    <!-- Content Container -->
+    <div class="content-container" id="contentContainer">
+      <!-- Title Section -->
+      <div class="title-section">
+        <h1 class="main-title">
+          Что вы хотите <span class="title-gradient">узнать</span> сегодня?
+        </h1>
+        <p class="subtitle">Задайте любой вопрос о работе диспетчера грузоперевозок</p>
+      </div>
+
+      <!-- Chat Input -->
+      <div class="chat-input-wrapper">
+        <div class="input-container">
+          <div class="input-border-glow"></div>
+          <div class="input-box">
+            <div class="textarea-wrapper">
+              <textarea id="chatInput" class="chat-textarea" placeholder="Напишите ваш вопрос..." rows="1"></textarea>
+            </div>
+
+            <div class="input-controls">
+              <div class="left-controls">
+                <button class="attach-button" id="attachButton">
+                  <svg class="attach-icon" id="attachIcon" viewBox="0 0 24 24">
+                    <line class="icon-plus" x1="12" y1="5" x2="12" y2="19"></line>
+                    <line class="icon-plus" x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </button>
+              </div>
+
+              <div class="right-controls">
+                <button class="plan-button" id="planButton">
+                  <svg class="plan-icon" viewBox="0 0 24 24">
+                    <path class="icon-lightbulb" d="M9 18h6"></path>
+                    <path class="icon-lightbulb" d="M10 22h4"></path>
+                    <path class="icon-lightbulb"
+                      d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8a6 6 0 0 0-12 0c0 1.33.47 2.48 1.5 3.5.76.76 1.23 1.52 1.41 2.5">
+                    </path>
+                  </svg>
+                  <span class="plan-text">Статистика</span>
+                </button>
+
+                <button class="send-button" id="sendButton" disabled>
+                  <span class="send-text">Отправить</span>
+                  <svg class="send-icon" viewBox="0 0 24 24">
+                    <line class="icon-send" x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon class="icon-send" points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Animated Bubbles Section -->
+      <div class="bubbles-section" id="bubblesSection">
+        <div class="bubbles-container" id="bubblesContainer">
+          <!-- Bubbles will be dynamically added here -->
+        </div>
+      </div>
+
+      <!-- Hidden Import Buttons (for reference) -->
+      <div class="import-section" style="display: none;">
+        <div class="import-buttons" id="topicButtons">
+          <button class="import-button" onclick="quickQuestion('Запрос ставки')">
+            <span>💰 Какая ставка за этот груз?</span>
+          </button>
+          <button class="import-button" onclick="quickQuestion('Торг по цене')">
+            <span>🤝 Можете поднять ставку?</span>
+          </button>
+          <button class="import-button" onclick="quickQuestion('Детали груза')">
+            <span>📦 Какой вес и размер груза?</span>
+          </button>
+          <button class="import-button" onclick="quickQuestion('Время погрузки')">
+            <span>⏰ Во сколько погрузка?</span>
+          </button>
+          <button class="import-button" onclick="quickQuestion('Документы')">
+            <span>📄 Какие документы нужны?</span>
+          </button>
+          <button class="import-button" onclick="quickQuestion('Оборудование')">
+            <span>🚛 Какой тип трейлера нужен?</span>
+          </button>
+          <button class="import-button" onclick="quickQuestion('Маршрут')">
+            <span>🗺️ Откуда и куда груз?</span>
+          </button>
+          <button class="import-button" onclick="quickQuestion('Оплата')">
+            <span>💳 Какие условия оплаты?</span>
+          </button>
+          <button class="import-button" onclick="quickQuestion('Доступность груза')">
+            <span>✅ Груз еще доступен?</span>
+          </button>
+          <button class="import-button" onclick="quickQuestion('Дедлайн доставки')">
+            <span>📅 До какого времени доставить?</span>
+          </button>
+          <button class="import-button" onclick="quickQuestion('Особые требования')">
+            <span>⚠️ Есть особые требования?</span>
+          </button>
+          <button class="import-button" onclick="quickQuestion('Контакты получателя')">
+            <span>📞 Контакты для доставки?</span>
+          </button>
+          <button class="import-button" onclick="quickQuestion('Layover')">
+            <span>🏨 Оплачивается ли layover?</span>
+          </button>
+          <button class="import-button" onclick="quickQuestion('Detention')">
+            <span>⏱️ Есть detention pay?</span>
+          </button>
+          <button class="import-button" onclick="quickQuestion('TONU')">
+            <span>❌ Что с TONU компенсацией?</span>
+          </button>
+          <button class="import-button" onclick="quickQuestion('Fuel surcharge')">
+            <span>⛽ Включен fuel surcharge?</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Show random buttons (3 on mobile, 8 on desktop)
+    function shuffleTopicButtons() {
+      const container = document.getElementById('topicButtons');
+      const buttons = Array.from(container.children);
+
+      // Shuffle array
+      for (let i = buttons.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [buttons[i], buttons[j]] = [buttons[j], buttons[i]];
+      }
+
+      // Determine how many buttons to show
+      const maxButtons = window.innerWidth <= 768 ? 3 : 8;
+
+      // Clear and add shuffled buttons
+      container.innerHTML = '';
+      buttons.forEach((btn, index) => {
+        if (index < maxButtons) {
+          container.appendChild(btn);
+        }
+      });
+    }
+
+    // Run on load
+    shuffleTopicButtons();
+
+    // Run on resize
+    window.addEventListener('resize', shuffleTopicButtons);
+  </script>
+
+  <script>
+    const chatInput = document.getElementById('chatInput');
+    const sendButton = document.getElementById('sendButton');
+    const attachButton = document.getElementById('attachButton');
+    const attachIcon = document.getElementById('attachIcon');
+
+    const chatInputFixed = document.getElementById('chatInputFixed');
+    const sendButtonFixed = document.getElementById('sendButtonFixed');
+    const attachButtonFixed = document.getElementById('attachButtonFixed');
+    const attachIconFixed = document.getElementById('attachIconFixed');
+
+    const contentContainer = document.getElementById('contentContainer');
+    const announcementWrapper = document.getElementById('announcementWrapper');
+    const chatMessagesContainer = document.getElementById('chatMessagesContainer');
+    const messagesWrapper = document.getElementById('messagesWrapper');
+    const resetButton = document.getElementById('resetButton');
+    const pageHeader = document.getElementById('pageHeader');
+
+    const modelSelector = document.getElementById('modelSelector');
+    const modelSelectorFixed = document.getElementById('modelSelectorFixed');
+    const modelDropdown = document.getElementById('modelDropdown');
+    const modelDropdownFixed = document.getElementById('modelDropdownFixed');
+    const modelChevron = document.getElementById('modelChevron');
+    const modelChevronFixed = document.getElementById('modelChevronFixed');
+    const modelSelectorText = document.getElementById('modelSelectorText');
+    const modelSelectorTextFixed = document.getElementById('modelSelectorTextFixed');
+
+    const planButton = document.getElementById('planButton');
+    const planButtonFixed = document.getElementById('planButtonFixed');
+
+    // Track if input is collapsed
+    let inputCollapsed = false;
+    let firstMessageSent = false;
+
+    // Function to collapse input after first message
+    function collapseInput() {
+      const chatInputFixedContainer = document.querySelector('.chat-input-fixed');
+      if (chatInputFixedContainer && !inputCollapsed) {
+        chatInputFixedContainer.classList.add('collapsed');
+        inputCollapsed = true;
+      }
+    }
+
+    // Function to expand input
+    function expandInput() {
+      const chatInputFixedContainer = document.querySelector('.chat-input-fixed');
+      if (chatInputFixedContainer && inputCollapsed) {
+        chatInputFixedContainer.classList.remove('collapsed');
+        inputCollapsed = false;
+        setTimeout(() => chatInputFixed.focus(), 100);
+      }
+    }
+
+    // Toggle input on input box click
+    document.addEventListener('click', function (e) {
+      const inputBox = e.target.closest('.input-box');
+      if (inputBox) {
+        if (inputCollapsed) {
+          expandInput();
+        } else {
+          // Only collapse if not typing in textarea
+          const isTextarea = e.target.classList.contains('chat-textarea');
+          if (!isTextarea) {
+            collapseInput();
+          }
+        }
+      }
+    });
+
+    let currentMode = 'broker'; // 'broker' or 'driver'
+    let translateMode = false; // false = Russian, true = English
+
+    // Auto-resize textarea (main)
+    chatInput.addEventListener('input', function () {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+      sendButton.disabled = !this.value.trim();
+    });
+
+    // Auto-resize textarea (fixed)
+    chatInputFixed.addEventListener('input', function () {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+      sendButtonFixed.disabled = !this.value.trim();
+    });
+
+    // Send on Enter (main)
+    chatInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Send on Enter (fixed)
+    chatInputFixed.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessageFixed();
+      }
+    });
+
+    // Attach button animation
+    attachButton.addEventListener('click', function () {
+      attachIcon.classList.toggle('rotated');
+    });
+
+    attachButtonFixed.addEventListener('click', function () {
+      // Button reserved for future functionality
+      // Currently does nothing
+    });
+
+    // Model selector dropdown (only if exists)
+    if (modelSelector) {
+      modelSelector.addEventListener('click', function (e) {
+        e.stopPropagation();
+        modelDropdown.classList.toggle('active');
+        modelChevron.classList.toggle('rotated');
+      });
+    }
+
+    if (modelSelectorFixed) {
+      modelSelectorFixed.addEventListener('click', function (e) {
+        e.stopPropagation();
+        modelDropdownFixed.classList.toggle('active');
+        modelChevronFixed.classList.toggle('rotated');
+      });
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function () {
+      if (modelDropdown) modelDropdown.classList.remove('active');
+      if (modelDropdownFixed) modelDropdownFixed.classList.remove('active');
+      if (modelChevron) modelChevron.classList.remove('rotated');
+      if (modelChevronFixed) modelChevronFixed.classList.remove('rotated');
+    });
+
+    // Handle mode selection
+    function selectMode(mode, modeName) {
+      currentMode = mode;
+      if (modelSelectorText) modelSelectorText.textContent = modeName;
+      if (modelSelectorTextFixed) modelSelectorTextFixed.textContent = modeName;
+
+      // Update selected state in both dropdowns
+      document.querySelectorAll('.model-option').forEach(option => {
+        if (option.dataset.mode === mode) {
+          option.classList.add('selected');
+        } else {
+          option.classList.remove('selected');
+        }
+      });
+
+      // Close dropdowns
+      if (modelDropdown) modelDropdown.classList.remove('active');
+      if (modelDropdownFixed) modelDropdownFixed.classList.remove('active');
+      if (modelChevron) modelChevron.classList.remove('rotated');
+      if (modelChevronFixed) modelChevronFixed.classList.remove('rotated');
+    }
+
+    // Add click handlers to all model options
+    document.querySelectorAll('.model-option').forEach(option => {
+      option.addEventListener('click', function (e) {
+        e.stopPropagation();
+        const mode = this.dataset.mode;
+        const modeName = this.querySelector('.model-option-name').textContent;
+        selectMode(mode, modeName);
+      });
+    });
+
+    // Translation dictionary (English to Russian)
+    const translations = {
+      // Common phrases
+      'Hello': 'Привет',
+      'Hi': 'Привет',
+      'Good morning': 'Доброе утро',
+      'Good afternoon': 'Добрый день',
+      'Good evening': 'Добрый вечер',
+      'Thank you': 'Спасибо',
+      'Thanks': 'Спасибо',
+      'Please': 'Пожалуйста',
+      'Yes': 'Да',
+      'No': 'Нет',
+      'Okay': 'Хорошо',
+      'OK': 'Хорошо',
+      'Sure': 'Конечно',
+
+      // Load/Freight terms
+      'load': 'груз',
+      'freight': 'груз',
+      'shipment': 'отгрузка',
+      'pickup': 'погрузка',
+      'delivery': 'доставка',
+      'rate': 'ставка',
+      'price': 'цена',
+      'mile': 'миля',
+      'miles': 'миль',
+      'truck': 'грузовик',
+      'trailer': 'трейлер',
+      'driver': 'водитель',
+      'broker': 'брокер',
+      'dispatcher': 'диспетчер',
+
+      // Equipment
+      'Dry Van': 'Сухой фургон',
+      'Reefer': 'Рефрижератор',
+      'Flatbed': 'Платформа',
+
+      // Documents
+      'Rate Confirmation': 'Подтверждение ставки',
+      'BOL': 'Накладная',
+      'POD': 'Подтверждение доставки',
+
+      // Questions
+      'What': 'Какой',
+      'Where': 'Где',
+      'When': 'Когда',
+      'How': 'Как',
+      'Why': 'Почему',
+      'How much': 'Сколько'
+    };
+
+    // Simple translation function
+    function translateText(text, toRussian = true) {
+      if (!toRussian) return text; // If translating to English, return as is (would need reverse dictionary)
+
+      let translated = text;
+
+      // Replace each English word/phrase with Russian
+      for (const [english, russian] of Object.entries(translations)) {
+        const regex = new RegExp('\\b' + english + '\\b', 'gi');
+        translated = translated.replace(regex, russian);
+      }
+
+      return translated;
+    }
+
+    // Show statistics function
+    function showStats() {
+      const total = responseStats.good + responseStats.normal + responseStats.bad + responseStats.reject;
+
+      if (total === 0) {
+        showStatsContainer('Пока нет статистики. Выберите варианты ответов, чтобы начать отслеживание.', true, true);
+        return;
+      }
+
+      const goodPercent = ((responseStats.good / total) * 100).toFixed(1);
+      const normalPercent = ((responseStats.normal / total) * 100).toFixed(1);
+      const badPercent = ((responseStats.bad / total) * 100).toFixed(1);
+      const rejectPercent = ((responseStats.reject / total) * 100).toFixed(1);
+
+      // Calculate score from 1 to 10
+      let score = 1;
+      let scoreColor = '#ef4444';
+
+      // Calculate weighted score
+      const weightedScore = (
+        (responseStats.good * 10) +
+        (responseStats.normal * 6) +
+        (responseStats.bad * 3) +
+        (responseStats.reject * 0)
+      ) / total;
+
+      score = Math.round(weightedScore);
+
+      let scoreEmoji = '😞';
+      let scoreComment = 'Нужно больше практики';
+
+      if (score >= 9) {
+        scoreColor = '#22c55e';
+        scoreEmoji = '🌟';
+        scoreComment = 'Превосходно!';
+      } else if (score >= 8) {
+        scoreColor = '#3b82f6';
+        scoreEmoji = '⭐';
+        scoreComment = 'Отлично!';
+      } else if (score >= 7) {
+        scoreColor = '#10b981';
+        scoreEmoji = '😊';
+        scoreComment = 'Хорошо!';
+      } else if (score >= 6) {
+        scoreColor = '#f59e0b';
+        scoreEmoji = '🙂';
+        scoreComment = 'Неплохо';
+      } else if (score >= 5) {
+        scoreColor = '#f97316';
+        scoreEmoji = '😐';
+        scoreComment = 'Средне';
+      } else if (score >= 4) {
+        scoreColor = '#ef4444';
+        scoreEmoji = '😕';
+        scoreComment = 'Можно лучше';
+      } else if (score >= 3) {
+        scoreColor = '#ef4444';
+        scoreEmoji = '😟';
+        scoreComment = 'Слабо';
+      } else {
+        scoreColor = '#ef4444';
+        scoreEmoji = '😞';
+        scoreComment = 'Нужно больше практики';
+      }
+
+      // Check if mobile
+      const isMobile = window.innerWidth < 640;
+
+      const statsHTML = `
+        <style>
+          .stats-content { font-size: 13px; color: rgba(255,255,255,0.95); line-height: 1.6; }
+          .stats-title { font-size: 16px; font-weight: 700; margin-bottom: 14px; text-align: center; }
+          .stats-header { font-size: 14px; font-weight: 600; margin-bottom: 10px; color: rgba(139, 92, 246, 1); }
+          .stats-items { margin-bottom: 12px; line-height: 1.8; }
+          .stats-item { display: ${isMobile ? 'block' : 'inline'}; margin-bottom: ${isMobile ? '6px' : '0'}; }
+          .stats-divider { border-top: 1px solid rgba(139, 92, 246, 0.3); padding-top: 12px; margin-top: 12px; }
+          .stats-summary { display: ${isMobile ? 'block' : 'inline-block'}; margin-right: ${isMobile ? '0' : '16px'}; margin-bottom: ${isMobile ? '8px' : '0'}; }
+          
+          @media (max-width: 640px) {
+            .stats-item { display: block; margin-bottom: 6px; }
+            .stats-summary { display: block; margin-right: 0; margin-bottom: 8px; }
+          }
+        </style>
+        
+        <div class="stats-content">
+          <div class="stats-title">
+            🎉 Разговор завершен!
+          </div>
+          
+          <div class="stats-header">
+            📊 СТАТИСТИКА РАЗГОВОРА
+          </div>
+          
+          <div class="stats-items">
+            <div class="stats-item">
+              <span style="color: #22c55e;">✅</span> Профессиональный подход: <strong>${responseStats.good}</strong> <span style="color: rgba(255,255,255,0.5);">(${goodPercent}%)</span>
+            </div>
+            <div class="stats-item">
+              <span style="color: #f59e0b;">⚠️</span> Хороший уровень: <strong>${responseStats.normal}</strong> <span style="color: rgba(255,255,255,0.5);">(${normalPercent}%)</span>
+            </div>
+            <div class="stats-item">
+              <span style="color: #ef4444;">🚫</span> Приемлемо: <strong>${responseStats.bad}</strong> <span style="color: rgba(255,255,255,0.5);">(${badPercent}%)</span>
+            </div>
+            <div class="stats-item">
+              <span style="color: #dc2626;">❌</span> Непрофессионально: <strong>${responseStats.reject}</strong> <span style="color: rgba(255,255,255,0.5);">(${rejectPercent}%)</span>
+            </div>
+          </div>
+          
+          <div class="stats-divider">
+            <div class="stats-summary">
+              Всего ответов: <strong>${total}</strong>
+            </div>
+            <div class="stats-summary">
+              ⭐ Итоговая оценка: <strong style="font-size: 16px; color: ${scoreColor};">${score}/10</strong> ${scoreEmoji} <span style="color: rgba(255,255,255,0.7);">${scoreComment}</span>
+            </div>
+          </div>
+        </div>
+      `;
+
+      showStatsContainer(statsHTML, false);
+    }
+
+    function showStatsContainer(content, isPlainText, autoHide = false) {
+      // Remove existing stats container if any
+      const existingStats = document.getElementById('statsContainer');
+      if (existingStats) {
+        existingStats.remove();
+      }
+
+      // Remove any existing click outside listener
+      document.removeEventListener('click', handleStatsClickOutside);
+
+      const statsContainer = document.createElement('div');
+      statsContainer.id = 'statsContainer';
+
+      // Check if mobile
+      const isMobile = window.innerWidth < 640;
+
+      statsContainer.style.cssText = `
+        position: fixed;
+        ${isMobile ? 'top: 50%; transform: translate(-50%, -50%);' : 'bottom: 80px; transform: translateX(-50%);'}
+        left: 50%;
+        width: ${isMobile ? '95%' : '90%'};
+        max-width: 600px;
+        max-height: ${isMobile ? '85vh' : '70vh'};
+        background: rgba(20, 20, 30, 0.98);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(139, 92, 246, 0.4);
+        border-radius: 16px;
+        padding: ${isMobile ? '20px 16px' : '20px'};
+        z-index: 1001;
+        box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.2);
+        animation: fadeIn 0.3s ease-out;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+      `;
+
+      // Prevent click propagation on the container
+      statsContainer.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+
+      // Add close button
+      const closeButton = document.createElement('button');
+      closeButton.innerHTML = '✕';
+      closeButton.style.cssText = `
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 18px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        z-index: 10;
+      `;
+
+      closeButton.onmouseover = () => {
+        closeButton.style.background = 'rgba(255, 255, 255, 0.2)';
+        closeButton.style.color = '#fff';
+      };
+      closeButton.onmouseout = () => {
+        closeButton.style.background = 'rgba(255, 255, 255, 0.1)';
+        closeButton.style.color = 'rgba(255, 255, 255, 0.8)';
+      };
+
+      closeButton.onclick = (e) => {
+        e.stopPropagation();
+        statsContainer.remove();
+        document.removeEventListener('click', handleStatsClickOutside);
+      };
+
+      statsContainer.appendChild(closeButton);
+
+      // Add content wrapper
+      const contentWrapper = document.createElement('div');
+      contentWrapper.style.cssText = `
+        padding-right: ${isMobile ? '8px' : '12px'};
+      `;
+
+      if (isPlainText) {
+        contentWrapper.innerHTML = `<div style="font-size: 14px; color: rgba(255,255,255,0.9); text-align: center;">${content}</div>`;
+      } else {
+        contentWrapper.innerHTML = content;
+      }
+
+      statsContainer.appendChild(contentWrapper);
+      document.body.appendChild(statsContainer);
+
+      if (autoHide) {
+        // Auto-hide after 2 seconds
+        setTimeout(() => {
+          const container = document.getElementById('statsContainer');
+          if (container) {
+            container.remove();
+          }
+        }, 2000);
+      } else {
+        // Close on click outside
+        setTimeout(() => {
+          document.addEventListener('click', handleStatsClickOutside);
+        }, 100);
+      }
+    }
+
+    function handleStatsClickOutside(event) {
+      const statsContainer = document.getElementById('statsContainer');
+      const planBtn = document.getElementById('planButton');
+      const planBtnFixed = document.getElementById('planButtonFixed');
+
+      if (statsContainer &&
+        !statsContainer.contains(event.target) &&
+        event.target !== planBtn &&
+        event.target !== planBtnFixed &&
+        !planBtn?.contains(event.target) &&
+        !planBtnFixed?.contains(event.target)) {
+        statsContainer.remove();
+        document.removeEventListener('click', handleStatsClickOutside);
+      }
+    }
+
+    // Plan button click handlers
+    planButton.addEventListener('click', function (e) {
+      e.stopPropagation(); // Prevent click from bubbling to document
+      showStats();
+    });
+    planButtonFixed.addEventListener('click', function (e) {
+      e.stopPropagation(); // Prevent click from bubbling to document
+      showStats();
+    });
+
+    function switchToChatView() {
+      // Add fade out animations - everything fades in place
+      contentContainer.classList.add('fade-out');
+      announcementWrapper.classList.add('fade-out');
+      pageHeader.classList.add('hidden');
+
+      // Wait for animation to complete before switching
+      setTimeout(() => {
+        contentContainer.style.display = 'none';
+        announcementWrapper.style.display = 'none';
+        chatMessagesContainer.classList.add('active');
+        resetButton.classList.add('active');
+      }, 800); // Match animation duration
+    }
+
+    function resetChat() {
+      // Clear all messages
+      messagesWrapper.innerHTML = '';
+
+      // Reset conversation state
+      conversationActive = false;
+      conversationStep = 0;
+      dispatcherMessageSent = false; // Reset dispatcher message flag
+
+      // Reset statistics
+      responseStats = {
+        good: 0,
+        normal: 0,
+        bad: 0,
+        reject: 0
+      };
+
+      // Select new random scenario
+      brokerScenarios = allScenarios[Math.floor(Math.random() * allScenarios.length)];
+
+      // Clear inputs
+      chatInput.value = '';
+      chatInputFixed.value = '';
+      chatInput.style.height = 'auto';
+      chatInputFixed.style.height = 'auto';
+      sendButton.disabled = true;
+      sendButtonFixed.disabled = true;
+
+      // Remove any suggestion bubbles from chat
+      document.querySelectorAll('.suggestions-bubble-container').forEach(el => el.remove());
+
+      // Start new conversation immediately
+      startAutoConversation();
+    }
+
+    function addMessage(text, type, isClickableReset = false) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${type}`;
+
+      const avatar = document.createElement('div');
+      avatar.className = 'message-avatar';
+      avatar.textContent = type === 'user' ? '🚚' : '💼';
+
+      const content = document.createElement('div');
+      content.className = 'message-content';
+      content.textContent = text;
+
+      // Make message clickable if it's a reset message
+      if (isClickableReset) {
+        content.style.cursor = 'pointer';
+        content.style.transition = 'all 0.2s';
+        content.addEventListener('mouseover', () => {
+          content.style.background = 'rgba(139, 92, 246, 0.2)';
+          content.style.borderColor = 'rgba(139, 92, 246, 0.5)';
+        });
+        content.addEventListener('mouseout', () => {
+          content.style.background = 'rgba(255, 255, 255, 0.05)';
+          content.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+        });
+        content.addEventListener('click', () => {
+          resetChat();
+        });
+      }
+
+      messageDiv.appendChild(avatar);
+      messageDiv.appendChild(content);
+      messagesWrapper.appendChild(messageDiv);
+
+      // First scroll - instant (fast, no animation)
+      chatMessagesContainer.style.scrollBehavior = 'auto';
+      const scrollToBottom = () => {
+        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+      };
+
+      // Immediate fast scroll
+      scrollToBottom();
+      setTimeout(scrollToBottom, 50);
+      setTimeout(scrollToBottom, 150);
+
+      // For broker messages (assistant), add slow smooth scroll to bottom after delay
+      if (type === 'assistant') {
+        setTimeout(() => {
+          // Very slow smooth scroll to the very bottom
+          const start = chatMessagesContainer.scrollTop;
+          const end = chatMessagesContainer.scrollHeight;
+          const distance = end - start;
+          const duration = 2000; // 2 seconds for very smooth animation
+          let startTime = null;
+
+          function animate(currentTime) {
+            if (!startTime) startTime = currentTime;
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+
+            // Ease-in-out for smooth acceleration and deceleration
+            const easeProgress = progress < 0.5
+              ? 2 * progress * progress
+              : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+            chatMessagesContainer.scrollTop = start + (distance * easeProgress);
+
+            if (progress < 1) {
+              requestAnimationFrame(animate);
+            }
+          }
+
+          requestAnimationFrame(animate);
+        }, 800); // Start slow scroll after 800ms
+      }
+    }
+
+    // Add analysis bubble with conversation context
+    function addAnalysisBubble(analysisText) {
+      const bubbleDiv = document.createElement('div');
+      bubbleDiv.className = 'analysis-bubble';
+      bubbleDiv.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin: 6px auto;
+        padding: 6px 10px;
+        max-width: 600px;
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(99, 102, 241, 0.1));
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 8px;
+        font-size: 8px;
+        color: rgba(255, 255, 255, 0.85);
+        line-height: 1.3;
+        animation: fadeInScale 0.4s ease-out;
+      `;
+
+      const icon = document.createElement('span');
+      icon.textContent = '💡';
+      icon.style.cssText = `
+        font-size: 12px;
+        flex-shrink: 0;
+      `;
+
+      const text = document.createElement('span');
+      text.textContent = analysisText;
+      text.style.cssText = `
+        flex: 1;
+        font-weight: 500;
+      `;
+
+      bubbleDiv.appendChild(icon);
+      bubbleDiv.appendChild(text);
+      messagesWrapper.appendChild(bubbleDiv);
+
+      // Don't auto-scroll - let user see broker's message first
+    }
+
+    // Add suggestion buttons as bubbles in chat
+    function addSuggestionBubbles(suggestions, analysisText) {
+      // Limit suggestions to 3-4 random options
+      let limitedSuggestions = suggestions;
+      if (suggestions.length > 4) {
+        // Shuffle and pick 3-4 suggestions
+        const isMobile = window.innerWidth < 640;
+        const numToShow = isMobile ? 3 : 4;
+
+        // Shuffle array
+        const shuffled = [...suggestions].sort(() => Math.random() - 0.5);
+        limitedSuggestions = shuffled.slice(0, numToShow);
+      }
+
+      // First add analysis text
+      if (analysisText) {
+        addAnalysisBubble(analysisText);
+      }
+
+      // Then add suggestion buttons container
+      const suggestionsDiv = document.createElement('div');
+      suggestionsDiv.className = 'suggestions-bubble-container';
+      suggestionsDiv.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin: 8px auto;
+        max-width: 600px;
+        animation: fadeInScale 0.4s ease-out;
+      `;
+
+      limitedSuggestions.forEach((suggestion, index) => {
+        const suggestionText = typeof suggestion === 'string' ? suggestion : suggestion.text;
+        const quality = typeof suggestion === 'object' ? suggestion.quality : 'normal';
+
+        const btn = document.createElement('button');
+        btn.textContent = suggestionText;
+
+        // Check if mobile or desktop for responsive styling
+        const isMobile = window.innerWidth < 640;
+
+        btn.style.cssText = `
+          padding: ${isMobile ? '6px 8px' : '12px 16px'};
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: ${isMobile ? '10px' : '12px'};
+          color: white;
+          font-size: ${isMobile ? '9px' : '12px'};
+          font-weight: 600;
+          line-height: ${isMobile ? '1.3' : '1.6'};
+          text-align: left;
+          cursor: pointer;
+          transition: all 0.2s;
+          animation: fadeInScale 0.4s ease-out;
+          animation-delay: ${index * 0.05}s;
+          opacity: 0;
+          animation-fill-mode: forwards;
+        `;
+
+        btn.onmouseover = () => {
+          btn.style.background = 'rgba(255, 255, 255, 0.08)';
+          btn.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+          btn.style.transform = 'translateX(4px)';
+        };
+        btn.onmouseout = () => {
+          btn.style.background = 'rgba(255, 255, 255, 0.05)';
+          btn.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+          btn.style.transform = 'translateX(0)';
+        };
+        btn.onclick = () => {
+          // Prevent multiple clicks
+          if (btn.classList.contains('selected')) return;
+          btn.classList.add('selected');
+
+          // Track statistics if quality exists
+          if (quality && responseStats[quality] !== undefined) {
+            responseStats[quality]++;
+            window.lastResponseQuality = quality;
+          }
+
+          // Animate the selected button
+          btn.style.animation = 'selectAndExpand 0.5s ease-out forwards';
+
+          // Animate other buttons to fade out
+          const allButtons = suggestionsDiv.querySelectorAll('button');
+          allButtons.forEach(otherBtn => {
+            if (otherBtn !== btn) {
+              otherBtn.style.animation = 'fadeOutOthers 0.4s ease-out forwards';
+              otherBtn.style.pointerEvents = 'none';
+            }
+          });
+
+          // Wait for animation to complete before removing and continuing
+          setTimeout(() => {
+            // Remove all suggestion bubbles
+            document.querySelectorAll('.suggestions-bubble-container').forEach(el => el.remove());
+            document.querySelectorAll('.analysis-bubble').forEach(el => el.remove());
+
+            // Scroll to top (where new messages appear with column-reverse)
+            chatMessagesContainer.scrollTo({
+              top: 0,
+              behavior: 'smooth'
+            });
+
+            // Collapse input after selection
+            if (!inputCollapsed) {
+              collapseInput();
+            }
+
+            // Set input value and send
+            chatInputFixed.value = suggestionText;
+            chatInputFixed.dispatchEvent(new Event('input'));
+
+            // Auto-send after selection with slight delay for smooth scroll
+            setTimeout(() => {
+              sendMessageFixed();
+            }, 300);
+          }, 500); // Wait 500ms for animation to complete
+        };
+
+        suggestionsDiv.appendChild(btn);
+      });
+
+      messagesWrapper.appendChild(suggestionsDiv);
+
+      // Keep scroll position - don't auto-scroll when adding suggestions
+      // This keeps broker's message visible at the top
+    }
+
+    function showTypingIndicator() {
+      const indicator = document.createElement('div');
+      indicator.className = 'message assistant';
+      indicator.id = 'typingIndicator';
+
+      const avatar = document.createElement('div');
+      avatar.className = 'message-avatar';
+      avatar.textContent = '💼';
+
+      const typing = document.createElement('div');
+      typing.className = 'message-content typing-indicator';
+      typing.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+
+      indicator.appendChild(avatar);
+      indicator.appendChild(typing);
+      messagesWrapper.appendChild(indicator);
+
+      // Force scroll to bottom
+      const scrollToBottom = () => {
+        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+      };
+      scrollToBottom();
+      setTimeout(scrollToBottom, 50);
+      setTimeout(scrollToBottom, 150);
+    }
+
+    function hideTypingIndicator() {
+      const indicator = document.getElementById('typingIndicator');
+      if (indicator) {
+        indicator.remove();
+      }
+    }
+
+    // Conversation context tracking
+    let conversationContext = {
+      stage: 'greeting', // greeting, availability, details, rate, negotiation, booking
+      loadAvailable: true,
+      askedAbout: [],
+      dispatcherName: null,
+      companyName: null
+    };
+
+    function generateResponse(message) {
+      const lower = message.toLowerCase();
+
+      // Extract dispatcher name and company if mentioned
+      if (!conversationContext.dispatcherName) {
+        const nameMatch = message.match(/(?:my name is|i'm|im|this is)\s+([A-Z][a-z]+)/i);
+        if (nameMatch) conversationContext.dispatcherName = nameMatch[1];
+      }
+      if (!conversationContext.companyName) {
+        const companyMatch = message.match(/from\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i);
+        if (companyMatch) conversationContext.companyName = companyMatch[1];
+      }
+
+      // STAGE 1: GREETING
+      if (conversationContext.stage === 'greeting') {
+        if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey') ||
+          lower.includes('good morning') || lower.includes('good afternoon')) {
+          conversationContext.stage = 'availability';
+          const greeting = conversationContext.dispatcherName ?
+            `Hi ${conversationContext.dispatcherName}! ` : 'Hello! ';
+          return greeting + "Thanks for calling. What can I help you with today?";
+        }
+
+        if (lower.includes('calling about') || lower.includes('interested in') || lower.includes('load')) {
+          conversationContext.stage = 'availability';
+          return "Yes, we have several loads available. Which route are you interested in?";
+        }
+      }
+
+      // STAGE 2: AVAILABILITY CHECK
+      if (conversationContext.stage === 'availability' || lower.includes('available') ||
+        lower.includes('still open') || lower.includes('still there')) {
+        conversationContext.stage = 'details';
+        return "Yes, the load is still available! It's going from Chicago, IL to Dallas, TX. 950 miles, Dry Van, 38,000 lbs. Pickup tomorrow at 8 AM. Are you interested?";
+      }
+
+      // STAGE 3: LOAD DETAILS
+      if (lower.includes('detail') || lower.includes('tell me more') || lower.includes('information')) {
+        conversationContext.askedAbout.push('details');
+        return "Sure! Here are the details:\n• Route: Chicago, IL → Dallas, TX (950 miles)\n• Weight: 38,000 lbs (18 pallets)\n• Equipment: 53' Dry Van\n• Pickup: Tomorrow 8-10 AM\n• Delivery: 2 days, by 5 PM\n• Freight: General cargo, no special requirements\n\nWhat else would you like to know?";
+      }
+
+      // RATE QUESTIONS
+      if (lower.includes('rate') || lower.includes('pay') || lower.includes('price') ||
+        lower.includes('how much') || lower.includes('offer')) {
+        conversationContext.stage = 'rate';
+        conversationContext.askedAbout.push('rate');
+        return "The rate for this load is $2.50 per mile, so that's $2,375 total for 950 miles. It's a good rate for this lane. Does that work for you?";
+      }
+
+      // NEGOTIATION
+      if (lower.includes('higher') || lower.includes('more') || lower.includes('increase') ||
+        lower.includes('can you do') || lower.match(/\$\d+/)) {
+        conversationContext.stage = 'negotiation';
+        const requestedRate = message.match(/\$?([\d,]+)/);
+        if (requestedRate) {
+          const amount = parseInt(requestedRate[1].replace(',', ''));
+          if (amount > 2600) {
+            return `I understand you're looking for $${amount}, but that's above our budget. The best I can do is $2.60 per mile ($2,470 total). This is a fair rate for this lane. Can we make it work?`;
+          } else if (amount > 2400) {
+            return `Okay, I can work with that. Let me check with my manager... Alright, I can do $${amount}. Let's book it! What's your MC number?`;
+          }
+        }
+        return "I hear you. The market rate for this lane is around $2.50-2.70 per mile. I can bump it up to $2.60 per mile ($2,470 total). That's the best I can offer. What do you think?";
+      }
+
+      // EQUIPMENT QUESTIONS
+      if (lower.includes('equipment') || lower.includes('truck') || lower.includes('trailer') ||
+        lower.includes('dry van') || lower.includes('reefer')) {
+        conversationContext.askedAbout.push('equipment');
+        return "We need a 53-foot Dry Van with air ride suspension. No reefer needed. Make sure the trailer is clean and in good condition - this is valuable freight. Do you have that available?";
+      }
+
+      // PICKUP/DELIVERY TIME
+      if (lower.includes('pickup') || lower.includes('delivery') || lower.includes('when') ||
+        lower.includes('time') || lower.includes('schedule')) {
+        conversationContext.askedAbout.push('schedule');
+        return "Pickup is tomorrow between 8-10 AM at 123 Industrial Blvd, Chicago, IL. Delivery needs to be in 2 days by 5 PM at 456 Warehouse Dr, Dallas, TX. There's a 2-5 PM delivery window. Can your driver make that schedule?";
+      }
+
+      // DOCUMENTS
+      if (lower.includes('document') || lower.includes('paperwork') || lower.includes('rate con') ||
+        lower.includes('pod') || lower.includes('bol')) {
+        conversationContext.askedAbout.push('documents');
+        return "I'll send you the Rate Confirmation within 30 minutes after we book. You'll get the BOL at pickup. Make sure to get a signed POD at delivery and send it back to dispatch@company.com. We also need a copy of your MC Authority. Standard stuff!";
+      }
+
+      // PAYMENT TERMS
+      if (lower.includes('payment') || lower.includes('quick pay') || lower.includes('factoring') ||
+        lower.includes('how long') || lower.includes('days')) {
+        conversationContext.askedAbout.push('payment');
+        return "Standard payment is NET 30 days after we receive the POD. We do offer Quick Pay - 3% fee, and you get paid within 24 hours. We also work with factoring companies. Which payment option works best for you?";
+      }
+
+      // BOOKING/CONFIRMATION
+      if (lower.includes('book') || lower.includes('take it') || lower.includes('deal') ||
+        lower.includes('yes') || lower.includes('okay') || lower.includes('sounds good')) {
+        conversationContext.stage = 'booking';
+        return "Great! Let's book it. I need your MC number, truck number, and driver's name and phone number. Also, please confirm your email for the Rate Confirmation.";
+      }
+
+      // MC NUMBER PROVIDED
+      if (lower.includes('mc') || lower.match(/\d{6,}/)) {
+        return "Perfect! Got your MC number. I'm sending the Rate Confirmation to your email right now. You should receive it in the next few minutes. Make sure your driver is at the pickup location tomorrow between 8-10 AM. Contact number at pickup is John: 555-0123. Any other questions?";
+      }
+
+      // REJECTION/DECLINE
+      if (lower.includes('no thanks') || lower.includes('not interested') || lower.includes('pass') ||
+        lower.includes('too low') || lower.includes('can\'t do')) {
+        return "No problem, I understand. Thanks for calling! If you change your mind or if you're looking for other loads, feel free to reach out. Have a great day!";
+      }
+
+      // THANK YOU
+      if (lower.includes('thank') || lower.includes('appreciate')) {
+        return "You're welcome! Safe travels and let me know if you need anything else. Good luck with the delivery!";
+      }
+
+      // DEFAULT RESPONSES
+      const responses = [
+        "Could you clarify that? Are you asking about the rate, pickup time, or something else?",
+        "I want to make sure I understand correctly. Can you rephrase that?",
+        "Let me know what specific information you need - rate, schedule, equipment requirements, or payment terms?",
+        "I'm here to help! What would you like to know about this load?"
+      ];
+
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    function sendMessage() {
+      const message = chatInput.value.trim();
+      if (!message) return;
+
+      // Switch to chat view
+      switchToChatView();
+
+      // Add user message
+      addMessage(message, 'user');
+
+      chatInput.value = '';
+      chatInput.style.height = 'auto';
+      sendButton.disabled = true;
+
+      // Show typing indicator
+      showTypingIndicator();
+
+      // Simulate AI response
+      setTimeout(() => {
+        hideTypingIndicator();
+        const response = generateResponse(message);
+        addMessage(response, 'assistant');
+
+        // Add suggestion bubbles after broker's response
+        setTimeout(() => {
+          const suggestions = getDynamicSuggestions();
+          const analysisText = getContextualAnalysis();
+          addSuggestionBubbles(suggestions, analysisText);
+        }, 300);
+      }, 1500 + Math.random() * 1000);
+    }
+
+    function sendMessageFixed() {
+      const message = chatInputFixed.value.trim();
+      if (!message) return;
+
+      // Add user message
+      addMessage(message, 'user');
+
+      chatInputFixed.value = '';
+      chatInputFixed.style.height = 'auto';
+      sendButtonFixed.disabled = true;
+
+      // Collapse input after first message
+      if (!firstMessageSent) {
+        firstMessageSent = true;
+        setTimeout(() => collapseInput(), 500);
+      }
+
+      // Show typing indicator
+      showTypingIndicator();
+
+      // Simulate AI response
+      setTimeout(() => {
+        hideTypingIndicator();
+        const response = generateResponse(message);
+        addMessage(response, 'assistant');
+
+        // Add suggestion bubbles after broker's response
+        setTimeout(() => {
+          const suggestions = getDynamicSuggestions();
+          const analysisText = getContextualAnalysis();
+          addSuggestionBubbles(suggestions, analysisText);
+        }, 300);
+      }, 1500 + Math.random() * 1000);
+    }
+
+    function quickQuestion(topic) {
+      let question = '';
+
+      switch (topic) {
+        case 'Запрос ставки':
+          question = 'Какая ставка за этот груз? Сколько вы предлагаете за милю?';
+          break;
+        case 'Торг по цене':
+          question = 'Можете поднять ставку? Мой минимум $2.50 за милю. Как насчет $2.80?';
+          break;
+        case 'Детали груза':
+          question = 'Какой вес груза? Сколько паллет? Есть ли особые требования к перевозке?';
+          break;
+        case 'Время погрузки':
+          question = 'Во сколько погрузка? До какого времени нужно доставить? Есть ли окно для разгрузки?';
+          break;
+        case 'Документы':
+          question = 'Какие документы нужны? Когда пришлете Rate Confirmation? Нужен ли POD?';
+          break;
+        case 'Оборудование':
+          question = 'Какой тип трейлера нужен? Dry Van или Reefer? Нужна ли температура?';
+          break;
+        case 'Маршрут':
+          question = 'Откуда и куда груз? Сколько миль? Есть ли остановки по пути?';
+          break;
+        case 'Оплата':
+          question = 'Какие условия оплаты? Quick Pay доступен? Сколько дней на оплату?';
+          break;
+        default:
+          question = topic;
+      }
+
+      chatInput.value = question;
+      chatInput.focus();
+      chatInput.dispatchEvent(new Event('input'));
+    }
+
+    sendButton.addEventListener('click', sendMessage);
+    sendButtonFixed.addEventListener('click', sendMessageFixed);
+
+    // Auto-conversation system - Multiple scenarios
+    let conversationStep = 0;
+    let conversationActive = false;
+    let dispatcherMessageSent = false; // Track if dispatcher's first message was sent
+
+    // Statistics tracking
+    let responseStats = {
+      good: 0,
+      normal: 0,
+      bad: 0,
+      reject: 0
+    };
+
+    // All available scenarios - 10 Realistic Scenarios with Natural Dialogue
+    const allScenarios = [
+
+      // ========================================
+      // SHORT HAULS (550-750 miles, 1 day) - DRY VAN
+      // ========================================
+
+      // Scenario 1: Atlanta, GA → Charlotte, NC (650 miles, Dry Van, 28,000 lbs)
+      // Rate: $2.70/mile = $1,755
+      [
+        {
+          dispatcherMessage: "Good morning! This is Jake from Apex Logistics. Calling about your Atlanta to Charlotte load. Is it still available?",
+          dispatcherSuggestions: [
+            "Good morning! This is Jake from Apex Logistics. Calling about your Atlanta to Charlotte load. Is it still available?",
+            "Hi, Jake with Apex Logistics here. Saw your Atlanta, GA to Charlotte, NC posting. Still open?",
+            "Hey there! Jake from Apex Logistics. Your Atlanta to Charlotte run - can we talk about it?",
+            "Morning! This is Jake, Apex Logistics. Interested in the Atlanta to Charlotte load. Available?",
+            "Hello! Jake from Apex Logistics calling. I'm looking at your ATL to CLT load. Is it still there?",
+            "Hi! Jake with Apex Logistics. Calling about the Atlanta, GA to Charlotte, NC freight. Still open?",
+            "Good day! This is Jake from Apex Logistics. Your Atlanta to Charlotte posting - can we discuss?",
+            "Hey! Jake, Apex Logistics here. Saw your load Atlanta to Charlotte. Still available?",
+            "Morning! Jake from Apex Logistics. I'm interested in your Atlanta, GA to Charlotte, NC load. Open?",
+            "Hi there! This is Jake with Apex Logistics. Calling about the ATL-CLT run. Still available?"
+          ],
+          question: "Morning! Yeah, it's open. What's your MC?",
+          expectedKeywords: ['mc', 'number', 'authority', '\\d{6}'],
+          goodResponse: "Got it, checking you now... Alright, you're good. So it's Atlanta to Charlotte - 650 miles, 28,000 pounds. Pickup today between 2-6 PM, deliver tomorrow by noon. What equipment you running?",
+          badResponse: "Need your MC number to proceed.",
+          suggestions: [
+            { text: "MC 445566, we run this lane weekly", quality: "good" },
+            { text: "MC 445566, driver's ready in Atlanta", quality: "good" },
+            { text: "It's MC 445566, we're based in Georgia", quality: "good" },
+            { text: "MC 445566, been running Southeast for 5 years", quality: "good" },
+            { text: "MC 778899", quality: "normal" },
+            { text: "MC 778899, let me confirm equipment", quality: "normal" },
+            { text: "778899", quality: "normal" },
+            { text: "Let me grab that real quick", quality: "bad" },
+            { text: "One second, checking", quality: "bad" },
+            { text: "Hold on", quality: "bad" }
+          ]
+        },
+        {
+          question: "What kind of trailer you got?",
+          expectedKeywords: ['dry van', 'van', '53', 'trailer', 'dry'],
+          goodResponse: "Perfect, that'll work. Can your driver be there today between 2 and 6?",
+          badResponse: "I need to know what equipment you have.",
+          suggestions: [
+            { text: "53-foot dry van, air ride, driver's 30 minutes out", quality: "good" },
+            { text: "Dry van, 53 footer", quality: "normal" },
+            { text: "Van", quality: "bad" }
+          ]
+        },
+        {
+          question: "Can you make pickup today 2-6 PM?",
+          expectedKeywords: ['yes', 'today', 'can', 'sure', 'available'],
+          goodResponse: "Excellent. Rate is $1,755 - that's $2.70 per mile. Work for you?",
+          badResponse: "Need to confirm pickup time.",
+          suggestions: [
+            { text: "Yes, driver can be there by 3 PM today", quality: "good" },
+            { text: "Yeah, today works", quality: "normal" },
+            { text: "Probably, need to check", quality: "bad" },
+            { text: "Can't do today", quality: "reject" }
+          ]
+        },
+        {
+          question: "$1,755 for 650 miles. That work?",
+          expectedKeywords: ['yes', 'ok', 'deal', 'book', 'accept', 'good'],
+          goodResponse: "Great! Sending rate con right now. Email me your insurance cert and we're set.",
+          badResponse: "So is that a yes on $1,755?",
+          suggestions: [
+            { text: "Yes, $1,755 works. Let's book it", quality: "good" },
+            { text: "Can you do $1,850? That's our target", quality: "normal" },
+            { text: "Need $2,000 minimum", quality: "bad" },
+            { text: "Too low, can't do it", quality: "reject" }
+          ]
+        },
+        {
+          question: "Perfect! Rate con sent. Shipper contact is Mike at 404-555-0123. Any questions?",
+          expectedKeywords: ['no', 'good', 'clear', 'thanks', 'all set'],
+          goodResponse: "Awesome! Have your driver call me when loaded. Safe travels!",
+          badResponse: "Let me know if you need anything else.",
+          suggestions: [
+            { text: "All clear, we'll call you at pickup. Thanks!", quality: "good" },
+            { text: "No questions, thanks", quality: "normal" },
+            { text: "OK", quality: "bad" }
+          ]
+        }
+      ],
+
+      // Scenario 2: Dallas, TX → Memphis, TN (750 miles, Dry Van, 32,000 lbs)
+      // Rate: $2.60/mile = $1,950
+      [
+        {
+          dispatcherMessage: "Hi! Sarah from Quick Dispatch. Your Dallas to Memphis load - is it still open?",
+          dispatcherSuggestions: [
+            "Hi! Sarah from Quick Dispatch. Your Dallas to Memphis load - is it still open?",
+            "Hello, this is Sarah with Quick Dispatch. Calling about the Dallas, TX to Memphis, TN load. Available?",
+            "Good afternoon! Sarah from Quick Dispatch here. I saw your Dallas to Memphis posting. Still there?",
+            "Hey! Sarah, Quick Dispatch. Interested in your Dallas, TX to Memphis, TN run. Open?",
+            "Hi there! This is Sarah from Quick Dispatch. Your Dallas to Memphis freight - still available?",
+            "Morning! Sarah with Quick Dispatch calling. Dallas to Memphis load - can we discuss it?",
+            "Hello! Sarah from Quick Dispatch. I'm looking at your DAL to MEM load. Still open?",
+            "Hi! This is Sarah, Quick Dispatch. Calling about the Dallas to Memphis shipment. Available?",
+            "Good day! Sarah from Quick Dispatch here. Your Dallas, TX to Memphis, TN load - is it there?",
+            "Hey there! Sarah with Quick Dispatch. Saw your Dallas to Memphis posting. Can we talk?"
+          ],
+          question: "Hey! Yeah, still available. MC number?",
+          expectedKeywords: ['mc', 'number', 'authority', '\\d{6}'],
+          goodResponse: "Thanks, pulling you up... Okay, all good. Dallas to Memphis - 750 miles, 32,000 lbs. Pickup tomorrow morning 6-10 AM, deliver next day by 5 PM. You got a dry van?",
+          badResponse: "I'll need your MC first.",
+          suggestions: [
+            { text: "MC 556677, driver is in Dallas now", quality: "good" },
+            { text: "MC 556677, we specialize in Texas routes", quality: "good" },
+            { text: "It's MC 556677, truck is ready to load", quality: "good" },
+            { text: "MC 556677, been hauling this lane for years", quality: "good" },
+            { text: "MC 889900", quality: "normal" },
+            { text: "889900, checking equipment now", quality: "normal" },
+            { text: "MC 889900, one moment", quality: "normal" },
+            { text: "One sec, finding it", quality: "bad" },
+            { text: "Let me check", quality: "bad" },
+            { text: "Hold on a sec", quality: "bad" }
+          ]
+        },
+        {
+          question: "You have a 53-foot dry van available?",
+          expectedKeywords: ['yes', 'dry van', 'van', '53', 'have', 'got'],
+          goodResponse: "Good deal. Can you do pickup tomorrow 6-10 AM?",
+          badResponse: "Need to confirm equipment type.",
+          suggestions: [
+            { text: "Yes, 53' dry van ready to roll", quality: "good" },
+            { text: "We have a dry van", quality: "normal" },
+            { text: "Have a trailer", quality: "bad" }
+          ]
+        },
+        {
+          question: "Pickup tomorrow morning 6-10 AM work?",
+          expectedKeywords: ['yes', 'tomorrow', 'morning', 'can', 'works'],
+          goodResponse: "Perfect. I'm at $1,950 for the 750 miles. That's $2.60 per mile. Good?",
+          badResponse: "I need confirmation on tomorrow morning.",
+          suggestions: [
+            { text: "Yes, driver will be there at 7 AM sharp", quality: "good" },
+            { text: "Tomorrow morning works", quality: "normal" },
+            { text: "Maybe, I'll check", quality: "bad" },
+            { text: "Can't do tomorrow", quality: "reject" }
+          ]
+        },
+        {
+          question: "$1,950 total. Can you do it?",
+          expectedKeywords: ['yes', 'ok', 'deal', 'book', 'accept'],
+          goodResponse: "Awesome! Sending rate con now. I'll need your W9 and COI emailed over.",
+          badResponse: "Need a yes or no on $1,950.",
+          suggestions: [
+            { text: "Yes, $1,950 is good. Book it", quality: "good" },
+            { text: "Can you bump it to $2,100?", quality: "normal" },
+            { text: "Need $2,300 minimum", quality: "bad" },
+            { text: "Can't work with that rate", quality: "reject" }
+          ]
+        },
+        {
+          question: "Rate con sent! Shipper is John at 214-555-0199. All clear?",
+          expectedKeywords: ['yes', 'clear', 'good', 'thanks'],
+          goodResponse: "Great! Call me when your driver's loaded. Good luck!",
+          badResponse: "Let me know if you have questions.",
+          suggestions: [
+            { text: "All clear, we'll update you at pickup", quality: "good" },
+            { text: "Looks good, thanks", quality: "normal" },
+            { text: "OK", quality: "bad" }
+          ]
+        }
+      ],
+
+      // ========================================
+      // MEDIUM HAULS (800-1500 miles, 2 days) - DRY VAN
+      // ========================================
+
+      // Scenario 3: Chicago, IL → Nashville, TN (850 miles, Dry Van, 35,000 lbs)
+      // Rate: $2.50/mile = $2,125
+      [
+        {
+          dispatcherMessage: "Good morning! Mike from Midwest Freight. Calling about your Chicago to Nashville load. Still open?",
+          dispatcherSuggestions: [
+            "Good morning! Mike from Midwest Freight. Calling about your Chicago to Nashville load. Still open?",
+            "Hi! This is Mike with Midwest Freight. Your Chicago, IL to Nashville, TN load - available?",
+            "Hey there! Mike from Midwest Freight. Saw your Chicago to Nashville posting. Can we discuss?",
+            "Morning! Mike, Midwest Freight here. Interested in the Chicago to Nashville run. Open?",
+            "Hello! Mike from Midwest Freight calling. I'm looking at your CHI to NSH load. Still there?",
+            "Hi! This is Mike with Midwest Freight. Calling about the Chicago to Nashville freight. Available?",
+            "Good day! Mike from Midwest Freight. Your Chicago, IL to Nashville, TN posting - still open?",
+            "Hey! Mike, Midwest Freight. Your Chicago to Nashville load - can we talk about it?",
+            "Morning! This is Mike from Midwest Freight. Chicago to Nashville run - is it available?",
+            "Hi there! Mike with Midwest Freight. Saw your Chicago to Nashville load. Still open?"
+          ],
+          question: "Morning! Yes, it's open. What's your MC?",
+          expectedKeywords: ['mc', 'number', 'authority', '\\d{6}'],
+          goodResponse: "Got it, verifying... All set. Chicago to Nashville - 850 miles, 35,000 pounds. Pickup tomorrow 8 AM-2 PM, deliver day after by 4 PM. What equipment you got?",
+          badResponse: "Need MC number.",
+          suggestions: [
+            { text: "MC 667788, we run Midwest lanes regularly", quality: "good" },
+            { text: "MC 667788, driver's in Chicago area", quality: "good" },
+            { text: "It's MC 667788, we're Midwest based", quality: "good" },
+            { text: "MC 667788, been running IL-TN for 3 years", quality: "good" },
+            { text: "MC 990011", quality: "normal" },
+            { text: "990011, checking availability", quality: "normal" },
+            { text: "MC 990011, one sec", quality: "normal" },
+            { text: "Let me find it", quality: "bad" },
+            { text: "Give me a moment", quality: "bad" },
+            { text: "Hold on", quality: "bad" }
+          ]
+        },
+        {
+          question: "What type of trailer?",
+          expectedKeywords: ['dry van', 'van', '53', 'trailer'],
+          goodResponse: "Perfect. Can you do pickup tomorrow 8 AM to 2 PM?",
+          badResponse: "I need equipment type.",
+          suggestions: [
+            { text: "53-foot dry van with air ride, clean", quality: "good" },
+            { text: "Dry van", quality: "normal" },
+            { text: "Trailer", quality: "bad" }
+          ]
+        },
+        {
+          question: "Pickup tomorrow 8-2, deliver day after by 4 PM. Work?",
+          expectedKeywords: ['yes', 'works', 'can', 'sure'],
+          goodResponse: "Great. Rate is $2,125 - $2.50 per mile. That work for you?",
+          badResponse: "Need timeline confirmation.",
+          suggestions: [
+            { text: "Yes, driver can handle that schedule", quality: "good" },
+            { text: "That works", quality: "normal" },
+            { text: "Need to check", quality: "bad" },
+            { text: "Can't make that", quality: "reject" }
+          ]
+        },
+        {
+          question: "$2,125 for 850 miles. Good?",
+          expectedKeywords: ['yes', 'ok', 'deal', 'book'],
+          goodResponse: "Excellent! Sending rate con. Email your docs to dispatch@company.com",
+          badResponse: "Is $2,125 acceptable?",
+          suggestions: [
+            { text: "Yes, $2,125 works. Let's book it", quality: "good" },
+            { text: "Can you do $2,300?", quality: "normal" },
+            { text: "Need $2,500 minimum", quality: "bad" },
+            { text: "Rate too low", quality: "reject" }
+          ]
+        },
+        {
+          question: "Rate con sent! Contact is Lisa at 312-555-0145. Questions?",
+          expectedKeywords: ['no', 'clear', 'good'],
+          goodResponse: "Perfect! Call when loaded. Safe travels!",
+          badResponse: "Let me know if you need anything.",
+          suggestions: [
+            { text: "No questions, all clear. Thanks!", quality: "good" },
+            { text: "All good", quality: "normal" },
+            { text: "OK", quality: "bad" }
+          ]
+        }
+      ],
+
+      // Scenario 4: Phoenix, AZ → Denver, CO (1,200 miles, Dry Van, 38,000 lbs)
+      // Rate: $2.40/mile = $2,880
+      [
+        {
+          dispatcherMessage: "Hi! Lisa from Desert Logistics. Your Phoenix to Denver load - still available?",
+          dispatcherSuggestions: [
+            "Hi! Lisa from Desert Logistics. Your Phoenix to Denver load - still available?",
+            "Hello, this is Lisa with Desert Logistics. Calling about the Phoenix, AZ to Denver, CO load. Open?",
+            "Good morning! Lisa from Desert Logistics here. Saw your Phoenix to Denver posting. Available?",
+            "Hey! Lisa, Desert Logistics. Interested in your Phoenix, AZ to Denver, CO run. Still there?",
+            "Hi there! This is Lisa from Desert Logistics. Your Phoenix to Denver freight - is it open?",
+            "Morning! Lisa with Desert Logistics calling. Phoenix to Denver load - can we discuss?",
+            "Hello! Lisa from Desert Logistics. I'm looking at your PHX to DEN load. Still available?",
+            "Hi! This is Lisa, Desert Logistics. Calling about the Phoenix to Denver shipment. Open?",
+            "Good day! Lisa from Desert Logistics here. Your Phoenix, AZ to Denver, CO load - still there?",
+            "Hey there! Lisa with Desert Logistics. Saw your Phoenix to Denver posting. Can we talk?"
+          ],
+          question: "Hey! Yeah, still open. MC?",
+          expectedKeywords: ['mc', 'number', 'authority', '\\d{6}'],
+          goodResponse: "Thanks, checking... Okay, good. Phoenix to Denver - 1,200 miles, 38,000 lbs. Pickup today 4-8 PM, deliver in 2 days by 6 PM. Dry van?",
+          badResponse: "Need your MC.",
+          suggestions: [
+            { text: "MC 778899, driver is in Phoenix area", quality: "good" },
+            { text: "MC 778899, we run Southwest regularly", quality: "good" },
+            { text: "It's MC 778899, truck's ready", quality: "good" },
+            { text: "MC 778899, been hauling AZ-CO for years", quality: "good" },
+            { text: "MC 112233", quality: "normal" },
+            { text: "112233, verifying equipment", quality: "normal" },
+            { text: "MC 112233, hold on", quality: "normal" },
+            { text: "Hold on", quality: "bad" },
+            { text: "Let me check real quick", quality: "bad" },
+            { text: "One moment", quality: "bad" }
+          ]
+        },
+        {
+          question: "You got a 53' dry van ready?",
+          expectedKeywords: ['yes', 'dry van', 'van', '53', 'have'],
+          goodResponse: "Good. Pickup today 4-8 PM work?",
+          badResponse: "Need equipment confirmation.",
+          suggestions: [
+            { text: "Yes, 53-foot dry van ready to go", quality: "good" },
+            { text: "We have dry van", quality: "normal" },
+            { text: "Have trailer", quality: "bad" }
+          ]
+        },
+        {
+          question: "Can you pick up today 4-8 PM, deliver in 2 days?",
+          expectedKeywords: ['yes', 'today', 'can', 'works'],
+          goodResponse: "Perfect. I'm at $2,880 for 1,200 miles. That's $2.40/mile. Work?",
+          badResponse: "Need timing confirmation.",
+          suggestions: [
+            { text: "Yes, driver can be there by 5 PM today", quality: "good" },
+            { text: "Today works", quality: "normal" },
+            { text: "Maybe", quality: "bad" },
+            { text: "Can't do today", quality: "reject" }
+          ]
+        },
+        {
+          question: "$2,880 total. Can you do it?",
+          expectedKeywords: ['yes', 'ok', 'deal', 'book'],
+          goodResponse: "Great! Sending rate con now. Need your insurance and W9.",
+          badResponse: "Yes or no on $2,880?",
+          suggestions: [
+            { text: "Yes, $2,880 works. Book it", quality: "good" },
+            { text: "Can you do $3,000?", quality: "normal" },
+            { text: "Need $3,200", quality: "bad" },
+            { text: "Too low", quality: "reject" }
+          ]
+        },
+        {
+          question: "Rate con sent! Shipper is Tom at 602-555-0177. Clear?",
+          expectedKeywords: ['yes', 'clear', 'good'],
+          goodResponse: "Awesome! Call when loaded. Good luck!",
+          badResponse: "Questions?",
+          suggestions: [
+            { text: "All clear, thanks!", quality: "good" },
+            { text: "Good", quality: "normal" },
+            { text: "OK", quality: "bad" }
+          ]
+        }
+      ],
+
+      // ========================================
+      // REEFER SHORT (500-750 miles)
+      // ========================================
+
+      // Scenario 5: Seattle, WA → Portland, OR (600 miles, Reefer, 30,000 lbs, 34°F)
+      // Rate: $3.20/mile = $1,920
+      [
+        {
+          dispatcherMessage: "Good morning! Tom from Cold Chain Express. Your Seattle to Portland reefer load - still open?",
+          dispatcherSuggestions: [
+            "Good morning! Tom from Cold Chain Express. Your Seattle to Portland reefer load - still open?",
+            "Hi! This is Tom with Cold Chain Express. Calling about the Seattle, WA to Portland, OR reefer. Available?",
+            "Hey there! Tom from Cold Chain Express. Saw your Seattle to Portland reefer posting. Still there?",
+            "Morning! Tom, Cold Chain Express here. Interested in the Seattle to Portland reefer run. Open?",
+            "Hello! Tom from Cold Chain Express calling. I'm looking at your SEA to PDX reefer load. Available?",
+            "Hi! This is Tom with Cold Chain Express. Your Seattle to Portland reefer freight - still open?",
+            "Good day! Tom from Cold Chain Express. Seattle, WA to Portland, OR reefer - can we discuss?",
+            "Hey! Tom, Cold Chain Express. Your Seattle to Portland reefer load - is it there?",
+            "Morning! This is Tom from Cold Chain Express. Seattle to Portland reefer - available?",
+            "Hi there! Tom with Cold Chain Express. Saw your Seattle to Portland reefer. Still open?"
+          ],
+          question: "Morning! Yes, it's available. MC number?",
+          expectedKeywords: ['mc', 'number', 'authority', '\\d{6}'],
+          goodResponse: "Got it, checking... All good. Seattle to Portland - 600 miles, 30,000 lbs, reefer at 34°F. Pickup tomorrow 6 AM-12 PM, deliver same day by 8 PM. You have reefer?",
+          badResponse: "Need MC first.",
+          suggestions: [
+            { text: "MC 889900, we specialize in reefer", quality: "good" },
+            { text: "MC 889900, driver's in Seattle with reefer unit", quality: "good" },
+            { text: "It's MC 889900, we run cold chain logistics", quality: "good" },
+            { text: "MC 889900, been hauling reefer for 7 years", quality: "good" },
+            { text: "MC 223344", quality: "normal" },
+            { text: "223344, confirming reefer availability", quality: "normal" },
+            { text: "MC 223344, checking", quality: "normal" },
+            { text: "Let me get it", quality: "bad" },
+            { text: "One sec", quality: "bad" },
+            { text: "Hold on a moment", quality: "bad" }
+          ]
+        },
+        {
+          question: "You got a reefer trailer that can maintain 34°F?",
+          expectedKeywords: ['yes', 'reefer', 'temperature', 'have', '34'],
+          goodResponse: "Perfect. Pickup tomorrow 6 AM-12 PM work?",
+          badResponse: "This requires reefer equipment.",
+          suggestions: [
+            { text: "Yes, 53' reefer ready, can maintain 34°F no problem", quality: "good" },
+            { text: "We have reefer", quality: "normal" },
+            { text: "Have dry van", quality: "bad" },
+            { text: "No reefer", quality: "reject" }
+          ]
+        },
+        {
+          question: "Can you pick up tomorrow morning 6-12, deliver same day by 8 PM?",
+          expectedKeywords: ['yes', 'tomorrow', 'can', 'works'],
+          goodResponse: "Great. Rate is $1,920 - $3.20 per mile. That work?",
+          badResponse: "Need timing confirmation.",
+          suggestions: [
+            { text: "Yes, driver can be there at 8 AM", quality: "good" },
+            { text: "Tomorrow works", quality: "normal" },
+            { text: "Maybe", quality: "bad" },
+            { text: "Can't do tomorrow", quality: "reject" }
+          ]
+        },
+        {
+          question: "$1,920 for 600 miles. Good?",
+          expectedKeywords: ['yes', 'ok', 'deal', 'book'],
+          goodResponse: "Excellent! Sending rate con. Keep temp at 34°F throughout.",
+          badResponse: "Is $1,920 acceptable?",
+          suggestions: [
+            { text: "Yes, $1,920 works. Let's book it", quality: "good" },
+            { text: "Can you do $2,000?", quality: "normal" },
+            { text: "Need $2,200", quality: "bad" },
+            { text: "Too low", quality: "reject" }
+          ]
+        },
+        {
+          question: "Rate con sent! Monitor temp closely. Shipper is Dave at 206-555-0188. Questions?",
+          expectedKeywords: ['no', 'clear', 'good'],
+          goodResponse: "Perfect! Call when loaded. Safe travels!",
+          badResponse: "Let me know if you need anything.",
+          suggestions: [
+            { text: "All clear, we'll monitor temp. Thanks!", quality: "good" },
+            { text: "No questions", quality: "normal" },
+            { text: "OK", quality: "bad" }
+          ]
+        }
+      ],
+
+      // ========================================
+      // REEFER LONG (1000-2000 miles)
+      // ========================================
+
+      // Scenario 6: Los Angeles, CA → Chicago, IL (1,800 miles, Reefer, 40,000 lbs, 36°F)
+      // Rate: $2.80/mile = $5,040
+      [
+        {
+          dispatcherMessage: "Hi! Maria from West Coast Reefer. Your LA to Chicago reefer load - still available?",
+          dispatcherSuggestions: [
+            "Hi! Maria from West Coast Reefer. Your LA to Chicago reefer load - still available?",
+            "Hello, this is Maria with West Coast Reefer. Calling about the Los Angeles to Chicago reefer. Open?",
+            "Good morning! Maria from West Coast Reefer here. Saw your LA to Chicago reefer posting. Available?",
+            "Hey! Maria, West Coast Reefer. Interested in your Los Angeles, CA to Chicago, IL reefer. Still there?",
+            "Hi there! This is Maria from West Coast Reefer. Your LA to Chicago reefer freight - is it open?",
+            "Morning! Maria with West Coast Reefer calling. LA to Chicago reefer load - can we discuss?",
+            "Hello! Maria from West Coast Reefer. I'm looking at your LAX to ORD reefer load. Available?",
+            "Hi! This is Maria, West Coast Reefer. Calling about the LA to Chicago reefer shipment. Open?",
+            "Good day! Maria from West Coast Reefer here. Your Los Angeles to Chicago reefer - still there?",
+            "Hey there! Maria with West Coast Reefer. Saw your LA to Chicago reefer posting. Can we talk?"
+          ],
+          question: "Hey! Yeah, still open. What's your MC?",
+          expectedKeywords: ['mc', 'number', 'authority', '\\d{6}'],
+          goodResponse: "Thanks, verifying... Okay, all set. LA to Chicago - 1,800 miles, 40,000 lbs, reefer at 36°F. Pickup tomorrow 8 AM-4 PM, deliver in 3 days by 6 PM. You have reefer?",
+          badResponse: "Need MC number.",
+          suggestions: [
+            { text: "MC 334455, we run reefer cross-country", quality: "good" },
+            { text: "MC 334455, driver's in LA with reefer trailer", quality: "good" },
+            { text: "It's MC 334455, we specialize in long haul reefer", quality: "good" },
+            { text: "MC 334455, been running coast-to-coast reefer for 10 years", quality: "good" },
+            { text: "MC 556677", quality: "normal" },
+            { text: "556677, checking reefer unit", quality: "normal" },
+            { text: "MC 556677, one moment", quality: "normal" },
+            { text: "One sec", quality: "bad" },
+            { text: "Let me find it", quality: "bad" },
+            { text: "Hold on", quality: "bad" }
+          ]
+        },
+        {
+          question: "You got a reefer that can maintain 36°F for 3 days?",
+          expectedKeywords: ['yes', 'reefer', 'temperature', 'have', '36'],
+          goodResponse: "Good. Can you do pickup tomorrow 8-4, deliver in 3 days?",
+          badResponse: "This requires reefer equipment.",
+          suggestions: [
+            { text: "Yes, 53' reefer ready, can maintain 36°F throughout", quality: "good" },
+            { text: "We have reefer available", quality: "normal" },
+            { text: "Have dry van", quality: "bad" },
+            { text: "No reefer", quality: "reject" }
+          ]
+        },
+        {
+          question: "Pickup tomorrow, deliver in 3 days. Work?",
+          expectedKeywords: ['yes', 'works', 'can', 'sure'],
+          goodResponse: "Perfect. Rate is $5,040 - $2.80 per mile. That work for you?",
+          badResponse: "Need timeline confirmation.",
+          suggestions: [
+            { text: "Yes, driver can handle that schedule", quality: "good" },
+            { text: "That works", quality: "normal" },
+            { text: "Need 4 days", quality: "bad" },
+            { text: "Can't make it", quality: "reject" }
+          ]
+        },
+        {
+          question: "$5,040 for 1,800 miles. Good?",
+          expectedKeywords: ['yes', 'ok', 'deal', 'book'],
+          goodResponse: "Excellent! Sending rate con. Keep temp at 36°F. Email your docs.",
+          badResponse: "Is $5,040 acceptable?",
+          suggestions: [
+            { text: "Yes, $5,040 works. Let's book it", quality: "good" },
+            { text: "Can you do $5,400?", quality: "normal" },
+            { text: "Need $5,800", quality: "bad" },
+            { text: "Rate too low", quality: "reject" }
+          ]
+        },
+        {
+          question: "Rate con sent! Monitor temp closely. Shipper is Carlos at 213-555-0166. Questions?",
+          expectedKeywords: ['no', 'clear', 'good'],
+          goodResponse: "Great! Call when loaded. Safe travels!",
+          badResponse: "Let me know if you need anything.",
+          suggestions: [
+            { text: "All clear, we'll monitor temp throughout. Thanks!", quality: "good" },
+            { text: "No questions", quality: "normal" },
+            { text: "OK", quality: "bad" }
+          ]
+        }
+      ],
+
+      // ========================================
+      // MORE SHORT HAULS (550-750 miles)
+      // ========================================
+
+      // Scenario 7: Houston, TX → New Orleans, LA (550 miles, Dry Van, 25,000 lbs)
+      // Rate: $2.80/mile = $1,540
+      [
+        {
+          dispatcherMessage: "Good afternoon! Carlos from Gulf Coast Transport. Your Houston to New Orleans load - is it open?",
+          dispatcherSuggestions: [
+            "Good afternoon! Carlos from Gulf Coast Transport. Your Houston to New Orleans load - is it open?",
+            "Hi! This is Carlos with Gulf Coast Transport. Calling about the Houston, TX to New Orleans, LA load. Available?",
+            "Hey there! Carlos from Gulf Coast Transport. Saw your Houston to New Orleans posting. Still there?",
+            "Afternoon! Carlos, Gulf Coast Transport here. Interested in the Houston to New Orleans run. Open?",
+            "Hello! Carlos from Gulf Coast Transport calling. I'm looking at your HOU to MSY load. Available?",
+            "Hi! This is Carlos with Gulf Coast Transport. Your Houston to New Orleans freight - still open?",
+            "Good day! Carlos from Gulf Coast Transport. Houston, TX to New Orleans, LA - can we discuss?",
+            "Hey! Carlos, Gulf Coast Transport. Your Houston to New Orleans load - is it there?",
+            "Afternoon! This is Carlos from Gulf Coast Transport. Houston to New Orleans - available?",
+            "Hi there! Carlos with Gulf Coast Transport. Saw your Houston to New Orleans load. Still open?"
+          ],
+          question: "Afternoon! Yes, it's open. MC?",
+          expectedKeywords: ['mc', 'number', 'authority', '\\d{6}'],
+          goodResponse: "Got it, checking... All good. Houston to New Orleans - 550 miles, 25,000 lbs. Pickup today 6-10 PM, deliver tomorrow by 4 PM. Dry van?",
+          badResponse: "Need MC number.",
+          suggestions: [
+            { text: "MC 445566, driver is in Houston now", quality: "good" },
+            { text: "MC 445566, we run Gulf Coast routes daily", quality: "good" },
+            { text: "It's MC 445566, truck's ready for tonight pickup", quality: "good" },
+            { text: "MC 445566, been hauling TX-LA for 4 years", quality: "good" },
+            { text: "MC 778899", quality: "normal" },
+            { text: "778899, confirming driver location", quality: "normal" },
+            { text: "MC 778899, checking", quality: "normal" },
+            { text: "Let me find it", quality: "bad" },
+            { text: "One moment please", quality: "bad" },
+            { text: "Hold on", quality: "bad" }
+          ]
+        },
+        {
+          question: "You got a dry van ready?",
+          expectedKeywords: ['yes', 'dry van', 'van', '53', 'have'],
+          goodResponse: "Perfect. Can you pick up tonight 6-10 PM?",
+          badResponse: "Need equipment type.",
+          suggestions: [
+            { text: "Yes, 53-foot dry van ready", quality: "good" },
+            { text: "Dry van", quality: "normal" },
+            { text: "Van", quality: "bad" }
+          ]
+        },
+        {
+          question: "Pickup tonight 6-10 PM, deliver tomorrow by 4. Work?",
+          expectedKeywords: ['yes', 'tonight', 'can', 'works'],
+          goodResponse: "Great. Rate is $1,540 - $2.80 per mile. That work?",
+          badResponse: "Need timing confirmation.",
+          suggestions: [
+            { text: "Yes, driver can be there by 7 PM tonight", quality: "good" },
+            { text: "Tonight works", quality: "normal" },
+            { text: "Maybe", quality: "bad" },
+            { text: "Can't do tonight", quality: "reject" }
+          ]
+        },
+        {
+          question: "$1,540 for 550 miles. Good?",
+          expectedKeywords: ['yes', 'ok', 'deal', 'book'],
+          goodResponse: "Excellent! Sending rate con now. Email your docs.",
+          badResponse: "Is $1,540 acceptable?",
+          suggestions: [
+            { text: "Yes, $1,540 works. Book it", quality: "good" },
+            { text: "Can you do $1,650?", quality: "normal" },
+            { text: "Need $1,800", quality: "bad" },
+            { text: "Too low", quality: "reject" }
+          ]
+        },
+        {
+          question: "Rate con sent! Shipper is Jose at 713-555-0155. Questions?",
+          expectedKeywords: ['no', 'clear', 'good'],
+          goodResponse: "Perfect! Call when loaded. Safe travels!",
+          badResponse: "Let me know if you need anything.",
+          suggestions: [
+            { text: "All clear, thanks!", quality: "good" },
+            { text: "No questions", quality: "normal" },
+            { text: "OK", quality: "bad" }
+          ]
+        }
+      ],
+
+      // Scenario 8: Indianapolis, IN → Columbus, OH (700 miles, Dry Van, 30,000 lbs)
+      // Rate: $2.65/mile = $1,855
+      [
+        {
+          dispatcherMessage: "Morning! David from Midwest Express. Your Indianapolis to Columbus load - still available?",
+          dispatcherSuggestions: [
+            "Morning! David from Midwest Express. Your Indianapolis to Columbus load - still available?",
+            "Hi! This is David with Midwest Express. Calling about the Indianapolis, IN to Columbus, OH load. Open?",
+            "Good morning! David from Midwest Express here. Saw your Indianapolis to Columbus posting. Available?",
+            "Hey! David, Midwest Express. Interested in your Indianapolis, IN to Columbus, OH run. Still there?",
+            "Hi there! This is David from Midwest Express. Your Indianapolis to Columbus freight - is it open?",
+            "Morning! David with Midwest Express calling. Indianapolis to Columbus load - can we discuss?",
+            "Hello! David from Midwest Express. I'm looking at your IND to CMH load. Available?",
+            "Hi! This is David, Midwest Express. Calling about the Indianapolis to Columbus shipment. Open?",
+            "Good day! David from Midwest Express here. Your Indianapolis to Columbus load - still there?",
+            "Hey there! David with Midwest Express. Saw your Indianapolis to Columbus posting. Can we talk?"
+          ],
+          question: "Morning! Yeah, it's open. MC number?",
+          expectedKeywords: ['mc', 'number', 'authority', '\\d{6}'],
+          goodResponse: "Thanks, verifying... Okay, good. Indianapolis to Columbus - 700 miles, 30,000 lbs. Pickup tomorrow 7 AM-1 PM, deliver next day by 5 PM. Dry van?",
+          badResponse: "Need your MC.",
+          suggestions: [
+            { text: "MC 556677, we run this route weekly", quality: "good" },
+            { text: "MC 556677, driver's in Indianapolis ready to go", quality: "good" },
+            { text: "It's MC 556677, we're Midwest specialists", quality: "good" },
+            { text: "MC 556677, been running IN-OH for 6 years", quality: "good" },
+            { text: "MC 889900", quality: "normal" },
+            { text: "889900, checking driver schedule", quality: "normal" },
+            { text: "MC 889900, one sec", quality: "normal" },
+            { text: "Hold on", quality: "bad" },
+            { text: "Let me check", quality: "bad" },
+            { text: "Give me a second", quality: "bad" }
+          ]
+        },
+        {
+          question: "You have a 53' dry van?",
+          expectedKeywords: ['yes', 'dry van', 'van', '53', 'have'],
+          goodResponse: "Good. Pickup tomorrow 7 AM-1 PM work?",
+          badResponse: "Need equipment confirmation.",
+          suggestions: [
+            { text: "Yes, 53-foot dry van ready to go", quality: "good" },
+            { text: "We have dry van", quality: "normal" },
+            { text: "Have trailer", quality: "bad" }
+          ]
+        },
+        {
+          question: "Can you pick up tomorrow morning 7-1, deliver next day by 5?",
+          expectedKeywords: ['yes', 'tomorrow', 'can', 'works'],
+          goodResponse: "Perfect. I'm at $1,855 for 700 miles. That's $2.65/mile. Work?",
+          badResponse: "Need timing confirmation.",
+          suggestions: [
+            { text: "Yes, driver can be there at 9 AM tomorrow", quality: "good" },
+            { text: "Tomorrow works", quality: "normal" },
+            { text: "Maybe", quality: "bad" },
+            { text: "Can't do tomorrow", quality: "reject" }
+          ]
+        },
+        {
+          question: "$1,855 total. Can you do it?",
+          expectedKeywords: ['yes', 'ok', 'deal', 'book'],
+          goodResponse: "Great! Sending rate con now. Need your insurance and W9.",
+          badResponse: "Yes or no on $1,855?",
+          suggestions: [
+            { text: "Yes, $1,855 works. Book it", quality: "good" },
+            { text: "Can you do $1,950?", quality: "normal" },
+            { text: "Need $2,100", quality: "bad" },
+            { text: "Too low", quality: "reject" }
+          ]
+        },
+        {
+          question: "Rate con sent! Shipper is Mark at 317-555-0144. Clear?",
+          expectedKeywords: ['yes', 'clear', 'good'],
+          goodResponse: "Awesome! Call when loaded. Good luck!",
+          badResponse: "Questions?",
+          suggestions: [
+            { text: "All clear, thanks!", quality: "good" },
+            { text: "Good", quality: "normal" },
+            { text: "OK", quality: "bad" }
+          ]
+        }
+      ],
+
+      // ========================================
+      // MORE MEDIUM HAULS (800-1500 miles)
+      // ========================================
+
+      // Scenario 9: Miami, FL → Atlanta, GA → Nashville, TN (1,100 miles, Dry Van, 36,000 lbs)
+      // Rate: $2.45/mile = $2,695
+      [
+        {
+          dispatcherMessage: "Hi! Rachel from Southeast Freight. Your Miami to Nashville load - is it still open?",
+          dispatcherSuggestions: [
+            "Hi! Rachel from Southeast Freight. Your Miami to Nashville load - is it still open?",
+            "Hello, this is Rachel with Southeast Freight. Calling about the Miami, FL to Nashville, TN load. Available?",
+            "Good morning! Rachel from Southeast Freight here. Saw your Miami to Nashville posting. Still there?",
+            "Hey! Rachel, Southeast Freight. Interested in your Miami, FL to Nashville, TN run. Open?",
+            "Hi there! This is Rachel from Southeast Freight. Your Miami to Nashville freight - is it open?",
+            "Morning! Rachel with Southeast Freight calling. Miami to Nashville load - can we discuss?",
+            "Hello! Rachel from Southeast Freight. I'm looking at your MIA to BNA load. Available?",
+            "Hi! This is Rachel, Southeast Freight. Calling about the Miami to Nashville shipment. Open?",
+            "Good day! Rachel from Southeast Freight here. Your Miami to Nashville load - still there?",
+            "Hey there! Rachel with Southeast Freight. Saw your Miami to Nashville posting. Can we talk?"
+          ],
+          question: "Hey! Yes, still available. MC?",
+          expectedKeywords: ['mc', 'number', 'authority', '\\d{6}'],
+          goodResponse: "Thanks, checking... All set. Miami to Nashville - 1,100 miles, 36,000 lbs. Pickup tomorrow 6 AM-12 PM, deliver in 2 days by 6 PM. Dry van?",
+          badResponse: "Need MC first.",
+          suggestions: [
+            { text: "MC 667788, driver is in Miami area", quality: "good" },
+            { text: "MC 667788, we run Southeast corridors regularly", quality: "good" },
+            { text: "It's MC 667788, truck's ready for morning pickup", quality: "good" },
+            { text: "MC 667788, been hauling FL-TN for 5 years", quality: "good" },
+            { text: "MC 990011", quality: "normal" },
+            { text: "990011, verifying equipment", quality: "normal" },
+            { text: "MC 990011, checking", quality: "normal" },
+            { text: "Let me get it", quality: "bad" },
+            { text: "One moment", quality: "bad" },
+            { text: "Hold on a sec", quality: "bad" }
+          ]
+        },
+        {
+          question: "You got a 53-foot dry van available?",
+          expectedKeywords: ['yes', 'dry van', 'van', '53', 'have'],
+          goodResponse: "Perfect. Can you do pickup tomorrow morning 6-12?",
+          badResponse: "Need equipment type.",
+          suggestions: [
+            { text: "Yes, 53' dry van ready", quality: "good" },
+            { text: "Dry van", quality: "normal" },
+            { text: "Van", quality: "bad" }
+          ]
+        },
+        {
+          question: "Pickup tomorrow 6-12, deliver in 2 days by 6 PM. Work?",
+          expectedKeywords: ['yes', 'tomorrow', 'can', 'works'],
+          goodResponse: "Great. Rate is $2,695 - $2.45 per mile. That work?",
+          badResponse: "Need timing confirmation.",
+          suggestions: [
+            { text: "Yes, driver can handle that schedule", quality: "good" },
+            { text: "That works", quality: "normal" },
+            { text: "Need to check", quality: "bad" },
+            { text: "Can't make it", quality: "reject" }
+          ]
+        },
+        {
+          question: "$2,695 for 1,100 miles. Good?",
+          expectedKeywords: ['yes', 'ok', 'deal', 'book'],
+          goodResponse: "Excellent! Sending rate con. Email your docs to dispatch@company.com",
+          badResponse: "Is $2,695 acceptable?",
+          suggestions: [
+            { text: "Yes, $2,695 works. Let's book it", quality: "good" },
+            { text: "Can you do $2,850?", quality: "normal" },
+            { text: "Need $3,000", quality: "bad" },
+            { text: "Rate too low", quality: "reject" }
+          ]
+        },
+        {
+          question: "Rate con sent! Contact is Steve at 305-555-0133. Questions?",
+          expectedKeywords: ['no', 'clear', 'good'],
+          goodResponse: "Perfect! Call when loaded. Safe travels!",
+          badResponse: "Let me know if you need anything.",
+          suggestions: [
+            { text: "No questions, all clear. Thanks!", quality: "good" },
+            { text: "All good", quality: "normal" },
+            { text: "OK", quality: "bad" }
+          ]
+        }
+      ],
+
+      // Scenario 10: Boston, MA → Charlotte, NC (1,400 miles, Dry Van, 38,000 lbs)
+      // Rate: $2.35/mile = $3,290
+      [
+        {
+          dispatcherMessage: "Good morning! Kevin from Northeast Logistics. Your Boston to Charlotte load - still available?",
+          dispatcherSuggestions: [
+            "Good morning! Kevin from Northeast Logistics. Your Boston to Charlotte load - still available?",
+            "Hi! This is Kevin with Northeast Logistics. Calling about the Boston, MA to Charlotte, NC load. Open?",
+            "Hey there! Kevin from Northeast Logistics. Saw your Boston to Charlotte posting. Available?",
+            "Morning! Kevin, Northeast Logistics here. Interested in the Boston to Charlotte run. Still there?",
+            "Hello! Kevin from Northeast Logistics calling. I'm looking at your BOS to CLT load. Available?",
+            "Hi! This is Kevin with Northeast Logistics. Your Boston to Charlotte freight - is it open?",
+            "Good day! Kevin from Northeast Logistics. Boston, MA to Charlotte, NC - can we discuss?",
+            "Hey! Kevin, Northeast Logistics. Your Boston to Charlotte load - is it there?",
+            "Morning! This is Kevin from Northeast Logistics. Boston to Charlotte - available?",
+            "Hi there! Kevin with Northeast Logistics. Saw your Boston to Charlotte load. Still open?"
+          ],
+          question: "Morning! Yes, it's open. What's your MC?",
+          expectedKeywords: ['mc', 'number', 'authority', '\\d{6}'],
+          goodResponse: "Got it, verifying... All good. Boston to Charlotte - 1,400 miles, 38,000 lbs. Pickup today 4-8 PM, deliver in 2 days by 5 PM. Dry van?",
+          badResponse: "Need MC number.",
+          suggestions: [
+            { text: "MC 778899, we run East Coast regularly", quality: "good" },
+            { text: "MC 112233", quality: "normal" },
+            { text: "Let me find it", quality: "bad" }
+          ]
+        },
+        {
+          question: "You have a 53' dry van ready?",
+          expectedKeywords: ['yes', 'dry van', 'van', '53', 'have'],
+          goodResponse: "Good. Can you pick up today 4-8 PM?",
+          badResponse: "Need equipment confirmation.",
+          suggestions: [
+            { text: "Yes, 53-foot dry van ready to go", quality: "good" },
+            { text: "We have dry van", quality: "normal" },
+            { text: "Have trailer", quality: "bad" }
+          ]
+        },
+        {
+          question: "Pickup today 4-8 PM, deliver in 2 days by 5. Work?",
+          expectedKeywords: ['yes', 'today', 'can', 'works'],
+          goodResponse: "Perfect. I'm at $3,290 for 1,400 miles. That's $2.35/mile. Work?",
+          badResponse: "Need timing confirmation.",
+          suggestions: [
+            { text: "Yes, driver can be there by 5 PM today", quality: "good" },
+            { text: "Today works", quality: "normal" },
+            { text: "Maybe", quality: "bad" },
+            { text: "Can't do today", quality: "reject" }
+          ]
+        },
+        {
+          question: "$3,290 total. Can you do it?",
+          expectedKeywords: ['yes', 'ok', 'deal', 'book'],
+          goodResponse: "Great! Sending rate con now. Need your insurance and W9.",
+          badResponse: "Yes or no on $3,290?",
+          suggestions: [
+            { text: "Yes, $3,290 works. Book it", quality: "good" },
+            { text: "Can you do $3,500?", quality: "normal" },
+            { text: "Need $3,700", quality: "bad" },
+            { text: "Too low", quality: "reject" }
+          ]
+        },
+        {
+          question: "Rate con sent! Shipper is Paul at 617-555-0122. Clear?",
+          expectedKeywords: ['yes', 'clear', 'good'],
+          goodResponse: "Awesome! Call when loaded. Good luck!",
+          badResponse: "Questions?",
+          suggestions: [
+            { text: "All clear, thanks!", quality: "good" },
+            { text: "Good", quality: "normal" },
+            { text: "OK", quality: "bad" }
+          ]
+        }
+      ]
+    ];
+
+    // Select random scenario on page load
+    let brokerScenarios = allScenarios[Math.floor(Math.random() * allScenarios.length)];
+
+    // Show suggestions below input
+    let suggestionsVisible = false;
+
+    // Get contextual analysis text based on conversation stage
+    function getContextualAnalysis() {
+      const stage = conversationContext.stage;
+
+      const analysisTexts = {
+        'greeting': 'Начало разговора: Поздоровайтесь с брокером и спросите о доступности груза',
+        'availability': 'Проверка доступности: Брокер подтвердил груз. Узнайте детали о маршруте и оборудовании',
+        'details': 'Детали груза: Получена информация о грузе. Спросите о ставке или условиях',
+        'rate': 'Обсуждение ставки: Брокер назвал цену. Оцените и начните переговоры если нужно',
+        'negotiation': 'Переговоры: Идет торг о цене. Предложите свою ставку или согласитесь',
+        'booking': 'Бронирование: Условия согласованы. Предоставьте MC номер и контакты'
+      };
+
+      return analysisTexts[stage] || 'Выберите подходящий ответ для продолжения разговора';
+    }
+
+    // Generate dynamic suggestions based on conversation context
+    function getDynamicSuggestions() {
+      const stage = conversationContext.stage;
+
+      if (stage === 'greeting') {
+        return [
+          "Hello! I'm calling about the load from Chicago to Dallas.",
+          "Hi, this is [Your Name] from [Company]. Is the load still available?",
+          "Good morning! I saw your posting on the load board. Can we discuss it?"
+        ];
+      }
+
+      if (stage === 'availability') {
+        return [
+          "Yes, I'm interested! Can you tell me more about it?",
+          "Is it still available? What's the rate?",
+          "What are the pickup and delivery times?"
+        ];
+      }
+
+      if (stage === 'details') {
+        return [
+          "What's the rate for this load?",
+          "What equipment do you need?",
+          "When is the pickup and delivery?",
+          "What are the payment terms?"
+        ];
+      }
+
+      if (stage === 'rate') {
+        return [
+          "Can you do $2.70 per mile?",
+          "That works for me. Let's book it!",
+          "The rate is a bit low. Can you go higher?",
+          "I need at least $2.65 per mile to make it work."
+        ];
+      }
+
+      if (stage === 'negotiation') {
+        return [
+          "Okay, I can do $2.60 per mile. Let's book it!",
+          "Can you meet me at $2.65?",
+          "That's still too low for me. Thanks anyway.",
+          "Alright, deal! What do you need from me?"
+        ];
+      }
+
+      if (stage === 'booking') {
+        return [
+          "My MC number is 123456",
+          "Sure, my email is dispatch@company.com",
+          "The driver's name is John Smith, phone: 555-1234",
+          "When will I receive the Rate Confirmation?"
+        ];
+      }
+
+      // Default suggestions
+      return [
+        "Can you tell me more about the load?",
+        "What's the rate?",
+        "Is it still available?",
+        "What are the requirements?"
+      ];
+    }
+
+    function showDynamicSuggestions() {
+      const suggestions = getDynamicSuggestions();
+      const analysisText = getContextualAnalysis();
+
+      // Add suggestions as bubbles in chat
+      addSuggestionBubbles(suggestions, analysisText);
+    }
+
+    function toggleSuggestions() {
+      if (suggestionsVisible) {
+        hideSuggestions();
+        suggestionsVisible = false;
+      } else {
+        showSuggestions();
+        suggestionsVisible = true;
+      }
+    }
+
+    function showSuggestions() {
+      // If in free conversation mode (not following scenario), show dynamic suggestions
+      if (!conversationActive || conversationStep === 0) {
+        showDynamicSuggestions();
+        return;
+      }
+
+      // Check if we should show dispatcher suggestions (first message)
+      if (!dispatcherMessageSent && conversationStep === 0) {
+        const scenario = brokerScenarios[0];
+        if (scenario.dispatcherSuggestions) {
+          showDispatcherSuggestions(scenario.dispatcherSuggestions);
+          return;
+        }
+      }
+
+      // Show regular suggestions for broker questions
+      if (conversationStep >= brokerScenarios.length) {
+        return;
+      }
+
+      const scenario = brokerScenarios[conversationStep];
+      if (!scenario.suggestions) {
+        return;
+      }
+
+      let suggestionsContainer = document.getElementById('suggestionsContainer');
+      if (!suggestionsContainer) {
+        suggestionsContainer = document.createElement('div');
+        suggestionsContainer.id = 'suggestionsContainer';
+        suggestionsContainer.style.cssText = `
+          position: fixed;
+          bottom: 80px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 85%;
+          max-width: 500px;
+          background: rgba(20, 20, 30, 0.75);
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(139, 92, 246, 0.25);
+          border-radius: 10px;
+          padding: 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          z-index: 1000;
+          box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+          opacity: 0.9;
+        `;
+
+        document.body.appendChild(suggestionsContainer);
+      }
+
+      // Generate contextual analysis based on scenario step
+      let analysisText = 'Выберите подходящий ответ для продолжения разговора';
+      if (scenario.prompt) {
+        // Use scenario prompt as context
+        analysisText = scenario.prompt;
+      } else if (conversationStep === 1) {
+        analysisText = 'Брокер назвал детали груза. Спросите о ставке или уточните условия';
+      } else if (conversationStep === 2) {
+        analysisText = 'Обсуждение ставки: Оцените предложение и начните переговоры';
+      } else if (conversationStep === 3) {
+        analysisText = 'Финальный этап: Согласуйте условия и предоставьте контакты';
+      }
+
+      suggestionsContainer.innerHTML = `<div style="font-size: 10px; color: rgba(255,255,255,0.5); margin-bottom: 4px;">💡 ${analysisText}</div>`;
+
+      scenario.suggestions.forEach(suggestion => {
+        const btn = document.createElement('button');
+        const suggestionText = typeof suggestion === 'string' ? suggestion : suggestion.text;
+        const quality = typeof suggestion === 'object' ? suggestion.quality : 'normal';
+
+        // Initially all buttons look the same (neutral style)
+        let borderColor = 'rgba(139, 92, 246, 0.25)';
+        let bgColor = 'rgba(139, 92, 246, 0.1)';
+        let hoverBg = 'rgba(139, 92, 246, 0.2)';
+        let hoverBorder = 'rgba(139, 92, 246, 0.5)';
+
+        // No quality icon shown initially
+        btn.textContent = suggestionText;
+        btn.style.cssText = `
+          padding: 8px 12px;
+          background: ${bgColor};
+          border: 1px solid ${borderColor};
+          border-radius: 7px;
+          color: rgba(255, 255, 255, 0.85);
+          font-size: 11px;
+          text-align: left;
+          cursor: pointer;
+          transition: all 0.2s;
+        `;
+        btn.onmouseover = () => {
+          btn.style.background = hoverBg;
+          btn.style.borderColor = hoverBorder;
+        };
+        btn.onmouseout = () => {
+          btn.style.background = bgColor;
+          btn.style.borderColor = borderColor;
+        };
+        btn.onclick = () => {
+          // Track statistics
+          responseStats[quality]++;
+
+          // Store quality for this response
+          window.lastResponseQuality = quality;
+
+          chatInputFixed.value = suggestionText;
+          chatInputFixed.dispatchEvent(new Event('input'));
+          hideSuggestions();
+          suggestionsVisible = false;
+
+          // Auto-send after selection
+          setTimeout(() => {
+            sendMessageFixed();
+          }, 100);
+        };
+        suggestionsContainer.appendChild(btn);
+      });
+
+      // Close suggestions when clicking outside
+      setTimeout(() => {
+        document.addEventListener('click', handleClickOutside);
+      }, 100);
+    }
+
+    function showDispatcherSuggestions(suggestions) {
+      let suggestionsContainer = document.getElementById('suggestionsContainer');
+      if (!suggestionsContainer) {
+        suggestionsContainer = document.createElement('div');
+        suggestionsContainer.id = 'suggestionsContainer';
+        suggestionsContainer.style.cssText = `
+          position: fixed;
+          bottom: 80px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 85%;
+          max-width: 500px;
+          background: rgba(20, 20, 30, 0.75);
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(139, 92, 246, 0.25);
+          border-radius: 10px;
+          padding: 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          z-index: 1000;
+          box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+          opacity: 0.9;
+        `;
+
+        document.body.appendChild(suggestionsContainer);
+      }
+
+      // Get contextual analysis based on conversation step
+      const analysisText = conversationStep === 0
+        ? 'Начало разговора: Поздоровайтесь с брокером и спросите о доступности груза'
+        : getContextualAnalysis();
+
+      suggestionsContainer.innerHTML = `<div style="font-size: 10px; color: rgba(255,255,255,0.5); margin-bottom: 4px;">💡 ${analysisText}</div>`;
+
+      suggestions.forEach(suggestion => {
+        const btn = document.createElement('button');
+        btn.textContent = suggestion;
+        btn.style.cssText = `
+          padding: 8px 12px;
+          background: rgba(139, 92, 246, 0.1);
+          border: 1px solid rgba(139, 92, 246, 0.25);
+          border-radius: 7px;
+          color: rgba(255, 255, 255, 0.85);
+          font-size: 11px;
+          text-align: left;
+          cursor: pointer;
+          transition: all 0.2s;
+        `;
+        btn.onmouseover = () => {
+          btn.style.background = 'rgba(139, 92, 246, 0.2)';
+          btn.style.borderColor = 'rgba(139, 92, 246, 0.5)';
+        };
+        btn.onmouseout = () => {
+          btn.style.background = 'rgba(139, 92, 246, 0.1)';
+          btn.style.borderColor = 'rgba(139, 92, 246, 0.25)';
+        };
+        btn.onclick = () => {
+          chatInputFixed.value = suggestion;
+          chatInputFixed.dispatchEvent(new Event('input'));
+          hideSuggestions();
+          suggestionsVisible = false;
+
+          // Mark that dispatcher message was sent
+          dispatcherMessageSent = true;
+
+          // Auto-send after selection
+          setTimeout(() => {
+            sendMessageFixed();
+          }, 100);
+        };
+        suggestionsContainer.appendChild(btn);
+      });
+
+      // Close suggestions when clicking outside
+      setTimeout(() => {
+        document.addEventListener('click', handleClickOutside);
+      }, 100);
+    }
+
+    function handleClickOutside(event) {
+      const suggestionsContainer = document.getElementById('suggestionsContainer');
+      const attachBtn = document.getElementById('attachButtonFixed');
+
+      if (suggestionsContainer &&
+        !suggestionsContainer.contains(event.target) &&
+        !attachBtn.contains(event.target)) {
+        hideSuggestions();
+        suggestionsVisible = false;
+        document.removeEventListener('click', handleClickOutside);
+      }
+    }
+
+    function hideSuggestions() {
+      const suggestionsContainer = document.getElementById('suggestionsContainer');
+      if (suggestionsContainer) {
+        suggestionsContainer.remove();
+      }
+    }
+
+    function startAutoConversation() {
+      if (conversationActive) return;
+
+      conversationActive = true;
+      conversationStep = 0;
+      dispatcherMessageSent = false; // Reset flag
+
+      // Hide bubbles section
+      const bubblesSection = document.getElementById('bubblesSection');
+      if (bubblesSection) {
+        bubblesSection.style.display = 'none';
+      }
+
+      // Show chat input
+      const chatInputWrapper = document.querySelector('.chat-input-wrapper');
+      if (chatInputWrapper) {
+        chatInputWrapper.style.display = 'block';
+      }
+
+      // Switch to chat view
+      switchToChatView();
+
+      // Collapse input at the start of conversation
+      setTimeout(() => {
+        if (!inputCollapsed) {
+          collapseInput();
+        }
+      }, 800);
+
+      // Wait for transition, then show dispatcher suggestions as bubbles
+      setTimeout(() => {
+        const scenario = brokerScenarios[0];
+        if (scenario.dispatcherSuggestions) {
+          const analysisText = 'Начало разговора: Поздоровайтесь с брокером и спросите о доступности груза';
+          addSuggestionBubbles(scenario.dispatcherSuggestions, analysisText);
+        }
+      }, 1000);
+    }
+
+    function askNextQuestion() {
+      if (conversationStep >= brokerScenarios.length) {
+        setTimeout(() => {
+          // Calculate final statistics
+          const total = responseStats.good + responseStats.normal + responseStats.bad + responseStats.reject;
+
+          if (total > 0) {
+            const goodPercent = ((responseStats.good / total) * 100).toFixed(1);
+            const normalPercent = ((responseStats.normal / total) * 100).toFixed(1);
+            const badPercent = ((responseStats.bad / total) * 100).toFixed(1);
+            const rejectPercent = ((responseStats.reject / total) * 100).toFixed(1);
+
+            // Calculate score from 1 to 10
+            let score = 1;
+            let scoreEmoji = '😞';
+            let scoreComment = 'Нужно больше практики';
+
+            // Calculate weighted score
+            const weightedScore = (
+              (responseStats.good * 10) +
+              (responseStats.normal * 6) +
+              (responseStats.bad * 3) +
+              (responseStats.reject * 0)
+            ) / total;
+
+            score = Math.round(weightedScore);
+
+            if (score >= 9) {
+              scoreEmoji = '🌟';
+              scoreComment = 'Превосходно!';
+            } else if (score >= 8) {
+              scoreEmoji = '⭐';
+              scoreComment = 'Отлично!';
+            } else if (score >= 7) {
+              scoreEmoji = '😊';
+              scoreComment = 'Хорошо!';
+            } else if (score >= 6) {
+              scoreEmoji = '🙂';
+              scoreComment = 'Неплохо';
+            } else if (score >= 5) {
+              scoreEmoji = '😐';
+              scoreComment = 'Средне';
+            } else if (score >= 4) {
+              scoreEmoji = '😕';
+              scoreComment = 'Можно лучше';
+            } else if (score >= 3) {
+              scoreEmoji = '😟';
+              scoreComment = 'Слабо';
+            } else {
+              scoreEmoji = '😞';
+              scoreComment = 'Нужно больше практики';
+            }
+
+            const statsMessage = `🎉 Разговор завершен!\n\n` +
+              `📊 СТАТИСТИКА РАЗГОВОРА\n\n` +
+              `✅ Профессиональный подход: ${responseStats.good} (${goodPercent}%)\n` +
+              `⚠️ Хороший уровень: ${responseStats.normal} (${normalPercent}%)\n` +
+              `🚫 Приемлемо: ${responseStats.bad} (${badPercent}%)\n` +
+              `❌ Непрофессионально: ${responseStats.reject} (${rejectPercent}%)\n\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
+              `Всего ответов: ${total}\n\n` +
+              `⭐ Итоговая оценка: ${score}/10 ${scoreEmoji}\n` +
+              `${scoreComment}\n\n` +
+              `👆 Нажмите на это сообщение для нового сценария`;
+
+            addMessage(statsMessage, 'assistant', true);
+          } else {
+            addMessage("🎉 Разговор завершен!\n\n👆 Нажмите на это сообщение для нового сценария", 'assistant', true);
+          }
+
+          conversationActive = false;
+          // Remove any remaining suggestion bubbles
+          document.querySelectorAll('.suggestions-bubble-container').forEach(el => el.remove());
+        }, 1500);
+        return;
+      }
+
+      const scenario = brokerScenarios[conversationStep];
+
+      showTypingIndicator();
+      setTimeout(() => {
+        hideTypingIndicator();
+        addMessage(scenario.question, 'assistant');
+
+        // Scroll to show broker's message at the top (near reset button level)
+        setTimeout(() => {
+          const messages = messagesWrapper.querySelectorAll('.message');
+          const lastBrokerMessage = messages[messages.length - 1];
+          if (lastBrokerMessage) {
+            // Scroll so the message is visible near the top
+            const messageTop = lastBrokerMessage.offsetTop;
+            chatMessagesContainer.scrollTop = messageTop - 100; // 100px from top (near reset button)
+          }
+        }, 100);
+
+        // Add suggestion bubbles in chat instead of separate window
+        setTimeout(() => {
+          let analysisText = 'Выберите подходящий ответ для продолжения разговора';
+          if (scenario.prompt) {
+            analysisText = scenario.prompt;
+          } else if (conversationStep === 1) {
+            analysisText = 'Брокер назвал детали груза. Спросите о ставке или уточните условия';
+          } else if (conversationStep === 2) {
+            analysisText = 'Обсуждение ставки: Оцените предложение и начните переговоры';
+          } else if (conversationStep === 3) {
+            analysisText = 'Финальный этап: Согласуйте условия и предоставьте контакты';
+          }
+
+          if (scenario.suggestions) {
+            addSuggestionBubbles(scenario.suggestions, analysisText);
+          }
+        }, 300);
+      }, 1500);
+    }
+
+    // ============================================
+    // DYNAMIC BROKER RESPONSE GENERATION SYSTEM
+    // ============================================
+
+    // Phrase templates for natural conversation
+    const brokerPhrases = {
+      // Confirming MC number
+      mcConfirm: [
+        "Perfect! Let me pull up your info...",
+        "Got it, checking your MC now...",
+        "Alright, let me verify that...",
+        "Okay, pulling up your profile...",
+        "Thanks! Looking you up real quick...",
+        "Sure thing, one moment...",
+        "Excellent, let me check that MC..."
+      ],
+
+      // Asking about equipment
+      equipmentQuestion: [
+        "What equipment do you have?",
+        "What type of trailer you got?",
+        "What kind of equipment are you running?",
+        "What equipment you have available?",
+        "What's your equipment type?",
+        "Tell me about your equipment.",
+        "What trailer type do you have?"
+      ],
+
+      // Confirming equipment
+      equipmentConfirm: [
+        "Great! That works for us.",
+        "Perfect, that's what we need.",
+        "Excellent, that'll work.",
+        "Good, that's the right equipment.",
+        "Sounds good to me.",
+        "That works perfectly.",
+        "Alright, that's what we're looking for."
+      ],
+
+      // Asking about timing
+      timingQuestion: [
+        "Can your driver pick up {pickup}?",
+        "Can you make pickup {pickup}?",
+        "Is {pickup} doable for pickup?",
+        "Can your driver be there {pickup}?",
+        "Will {pickup} work for pickup?",
+        "Can you handle pickup {pickup}?",
+        "Is your driver available {pickup}?"
+      ],
+
+      // Presenting rate
+      ratePresent: [
+        "Rate is ${rate} for {miles} miles. Can you do it?",
+        "We're offering ${rate} - that's ${perMile}/mile. Does that work?",
+        "I can do ${rate} total. How's that sound?",
+        "Rate is ${rate} for the {miles} miles. Interested?",
+        "We're at ${rate} for this one. Can you work with that?",
+        "I'm showing ${rate} for {miles} miles. That work for you?",
+        "Rate comes out to ${rate}. Does that work?",
+        "${rate} for {miles} miles - ${perMile} per mile. Good?",
+        "We're paying ${rate} on this load. Can you do it?",
+        "I've got ${rate} budgeted. Will that work?"
+      ],
+
+      // Negotiation responses
+      negotiation: [
+        "I hear you. Best I can do is ${rate}. That's my max.",
+        "Let me check with my manager... Okay, I can go to ${rate}.",
+        "That's a bit high. How about ${rate}?",
+        "I understand, but ${rate} is really my ceiling on this.",
+        "I can bump it to ${rate}, but that's as high as I can go.",
+        "Let me see what I can do... Alright, ${rate} final offer.",
+        "${rate} is the absolute max I'm authorized for.",
+        "I can meet you at ${rate}. That's the best I can offer."
+      ],
+
+      // Booking confirmation
+      bookingConfirm: [
+        "Excellent! Sending rate con now.",
+        "Great! I'll send the rate confirmation right away.",
+        "Perfect! Rate con coming your way.",
+        "Awesome! Sending paperwork now.",
+        "Sounds good! I'll get that rate con over to you.",
+        "Alright! Sending the confirmation.",
+        "Perfect! You'll have the rate con in a minute."
+      ],
+
+      // Follow-up questions
+      followUp: [
+        "Any questions about the load?",
+        "Anything else you need to know?",
+        "Any other questions?",
+        "Need any other details?",
+        "Questions about anything?",
+        "Anything else I can clarify?",
+        "All clear on your end?"
+      ],
+
+      // Rejection responses
+      rejection: [
+        "No problem, I understand. Thanks for calling!",
+        "I get it. Thanks for your time!",
+        "No worries. Have a good one!",
+        "Understood. Thanks anyway!",
+        "That's fine. Appreciate you reaching out!",
+        "No problem at all. Good luck out there!",
+        "I understand. Thanks for checking!"
+      ],
+
+      // Filler phrases for natural flow
+      fillers: [
+        "Alright, ",
+        "Okay, ",
+        "Sure, ",
+        "Got it, ",
+        "Perfect, ",
+        "Great, ",
+        "Excellent, ",
+        ""
+      ],
+
+      // Transition phrases
+      transitions: [
+        "So, ",
+        "Now, ",
+        "Next thing, ",
+        "Also, ",
+        "And ",
+        "By the way, ",
+        ""
+      ]
+    };
+
+    // Generate dynamic broker response
+    function generateBrokerResponse(type, context = {}) {
+      const filler = brokerPhrases.fillers[Math.floor(Math.random() * brokerPhrases.fillers.length)];
+      const transition = brokerPhrases.transitions[Math.floor(Math.random() * brokerPhrases.transitions.length)];
+
+      let response = "";
+
+      switch (type) {
+        case 'mcConfirm':
+          response = brokerPhrases.mcConfirm[Math.floor(Math.random() * brokerPhrases.mcConfirm.length)];
+          // Add load details
+          response += ` ${context.origin} to ${context.destination} - ${context.miles} miles, ${context.weight} lbs. `;
+          response += `Pickup ${context.pickup}, delivery ${context.delivery}. `;
+          response += brokerPhrases.equipmentQuestion[Math.floor(Math.random() * brokerPhrases.equipmentQuestion.length)];
+          break;
+
+        case 'equipmentConfirm':
+          response = filler + brokerPhrases.equipmentConfirm[Math.floor(Math.random() * brokerPhrases.equipmentConfirm.length)];
+          break;
+
+        case 'timingQuestion':
+          const timingQ = brokerPhrases.timingQuestion[Math.floor(Math.random() * brokerPhrases.timingQuestion.length)];
+          response = transition + timingQ.replace('{pickup}', context.pickup);
+          break;
+
+        case 'ratePresent':
+          const rateP = brokerPhrases.ratePresent[Math.floor(Math.random() * brokerPhrases.ratePresent.length)];
+          response = filler + rateP
+            .replace('{rate}', context.rate)
+            .replace('{miles}', context.miles)
+            .replace('{perMile}', context.perMile);
+          break;
+
+        case 'negotiation':
+          const negot = brokerPhrases.negotiation[Math.floor(Math.random() * brokerPhrases.negotiation.length)];
+          response = negot.replace('{rate}', context.rate);
+          break;
+
+        case 'bookingConfirm':
+          response = brokerPhrases.bookingConfirm[Math.floor(Math.random() * brokerPhrases.bookingConfirm.length)];
+          // Add follow-up
+          if (Math.random() > 0.5) {
+            response += " " + brokerPhrases.followUp[Math.floor(Math.random() * brokerPhrases.followUp.length)];
+          }
+          break;
+
+        case 'rejection':
+          response = brokerPhrases.rejection[Math.floor(Math.random() * brokerPhrases.rejection.length)];
+          break;
+
+        default:
+          response = context.fallback || "Let me know if you have any questions.";
+      }
+
+      return response;
+    }
+
+    function checkUserResponse(userMessage) {
+      if (!conversationActive) return;
+
+      // Check if this is the first dispatcher message
+      if (!dispatcherMessageSent) {
+        // This is dispatcher's first message, broker should respond with first question
+        dispatcherMessageSent = true;
+
+        showTypingIndicator();
+        setTimeout(() => {
+          hideTypingIndicator();
+          const scenario = brokerScenarios[0];
+          addMessage(scenario.question, 'assistant');
+
+          // Scroll to show broker's message at the top (near reset button level)
+          setTimeout(() => {
+            const messages = messagesWrapper.querySelectorAll('.message');
+            const lastBrokerMessage = messages[messages.length - 1];
+            if (lastBrokerMessage) {
+              // Scroll so the message is visible near the top
+              const messageTop = lastBrokerMessage.offsetTop;
+              chatMessagesContainer.scrollTop = messageTop - 100; // 100px from top (near reset button)
+            }
+          }, 100);
+
+          // Add suggestion bubbles in chat
+          setTimeout(() => {
+            const analysisText = 'Брокер ответил на ваше приветствие. Теперь узнайте детали о грузе';
+            if (scenario.suggestions) {
+              addSuggestionBubbles(scenario.suggestions, analysisText);
+            }
+          }, 300);
+        }, 1500);
+        return;
+      }
+
+      if (conversationStep >= brokerScenarios.length) return;
+
+      const scenario = brokerScenarios[conversationStep];
+      const lowerMessage = userMessage.toLowerCase();
+
+      // Check if this was a reject response
+      const isReject = window.lastResponseQuality === 'reject';
+
+      const hasKeywords = scenario.expectedKeywords.some(keyword => {
+        if (keyword.startsWith('\\')) {
+          return new RegExp(keyword).test(lowerMessage);
+        }
+        return lowerMessage.includes(keyword.toLowerCase());
+      });
+
+      conversationStep++;
+      // Remove previous suggestion bubbles
+      document.querySelectorAll('.suggestions-bubble-container').forEach(el => el.remove());
+
+      showTypingIndicator();
+      setTimeout(() => {
+        hideTypingIndicator();
+
+        if (isReject) {
+          // Handle rejection - end conversation
+          addMessage("I understand. Thanks for your time. Have a good day!", 'assistant');
+
+          setTimeout(() => {
+            // Show final statistics
+            const total = responseStats.good + responseStats.normal + responseStats.bad + responseStats.reject;
+
+            if (total > 0) {
+              const goodPercent = ((responseStats.good / total) * 100).toFixed(1);
+              const normalPercent = ((responseStats.normal / total) * 100).toFixed(1);
+              const badPercent = ((responseStats.bad / total) * 100).toFixed(1);
+              const rejectPercent = ((responseStats.reject / total) * 100).toFixed(1);
+
+              // Calculate score from 1 to 10
+              let score = 1;
+              let scoreEmoji = '😞';
+              let scoreComment = 'Нужно больше практики';
+
+              // Calculate weighted score
+              const weightedScore = (
+                (responseStats.good * 10) +
+                (responseStats.normal * 6) +
+                (responseStats.bad * 3) +
+                (responseStats.reject * 0)
+              ) / total;
+
+              score = Math.round(weightedScore);
+
+              if (score >= 9) {
+                scoreEmoji = '🌟';
+                scoreComment = 'Превосходно!';
+              } else if (score >= 8) {
+                scoreEmoji = '⭐';
+                scoreComment = 'Отлично!';
+              } else if (score >= 7) {
+                scoreEmoji = '😊';
+                scoreComment = 'Хорошо!';
+              } else if (score >= 6) {
+                scoreEmoji = '🙂';
+                scoreComment = 'Неплохо';
+              } else if (score >= 5) {
+                scoreEmoji = '😐';
+                scoreComment = 'Средне';
+              } else if (score >= 4) {
+                scoreEmoji = '😕';
+                scoreComment = 'Можно лучше';
+              } else if (score >= 3) {
+                scoreEmoji = '😟';
+                scoreComment = 'Слабо';
+              } else {
+                scoreEmoji = '😞';
+                scoreComment = 'Нужно больше практики';
+              }
+
+              const statsMessage = `📊 СТАТИСТИКА РАЗГОВОРА\n\n` +
+                `✅ Профессиональный подход: ${responseStats.good} (${goodPercent}%)\n` +
+                `⚠️ Хороший уровень: ${responseStats.normal} (${normalPercent}%)\n` +
+                `🚫 Приемлемо: ${responseStats.bad} (${badPercent}%)\n` +
+                `❌ Непрофессионально: ${responseStats.reject} (${rejectPercent}%)\n\n` +
+                `━━━━━━━━━━━━━━━━━━━━\n` +
+                `Всего ответов: ${total}\n\n` +
+                `⭐ Итоговая оценка: ${score}/10 ${scoreEmoji}\n` +
+                `${scoreComment}\n\n` +
+                `👆 Нажмите на это сообщение для нового сценария`;
+
+              addMessage(statsMessage, 'assistant', true);
+            }
+
+            conversationActive = false;
+          }, 1500);
+
+          return;
+        }
+
+        if (hasKeywords) {
+          addMessage(scenario.goodResponse, 'assistant');
+        } else {
+          addMessage(scenario.badResponse, 'assistant');
+          conversationStep--; // Stay on same step for wrong answer
+        }
+
+        // Scroll to show broker's message at the top (near reset button level)
+        setTimeout(() => {
+          const messages = messagesWrapper.querySelectorAll('.message');
+          const lastBrokerMessage = messages[messages.length - 1];
+          if (lastBrokerMessage) {
+            // Scroll so the message is visible near the top
+            const messageTop = lastBrokerMessage.offsetTop;
+            chatMessagesContainer.scrollTop = messageTop - 100; // 100px from top (near reset button)
+          }
+        }, 100);
+
+        setTimeout(() => {
+          askNextQuestion(); // Always ask next question (or repeat current if wrong)
+        }, 2000);
+      }, 1500);
+
+      // Reset quality flag
+      window.lastResponseQuality = null;
+    }
+
+    // Override sendMessage functions
+    const originalSendMessage = sendMessage;
+    sendMessage = function () {
+      const message = chatInput.value.trim();
+      if (!message) return;
+
+      if (!conversationActive) {
+        startAutoConversation();
+        return;
+      }
+
+      addMessage(message, 'user');
+      chatInput.value = '';
+      chatInput.style.height = 'auto';
+      sendButton.disabled = true;
+
+      checkUserResponse(message);
+    };
+
+    const originalSendMessageFixed = sendMessageFixed;
+    sendMessageFixed = function () {
+      const message = chatInputFixed.value.trim();
+      if (!message) return;
+
+      if (!conversationActive) {
+        startAutoConversation();
+        return;
+      }
+
+      addMessage(message, 'user');
+      chatInputFixed.value = '';
+      chatInputFixed.style.height = 'auto';
+      sendButtonFixed.disabled = true;
+
+      checkUserResponse(message);
+    };
+
+    // Override quickQuestion to start auto conversation
+    const originalQuickQuestion = quickQuestion;
+    quickQuestion = function (topic) {
+      startAutoConversation();
+    };
+
+    // ============================================
+    // ANIMATED BUBBLES FUNCTIONALITY
+    // ============================================
+
+    // Dispatcher greeting variations from Scenario 2 (Dallas to Memphis)
+    const dispatcherGreetings = [
+      // Professional/Good responses
+      "Hi! Sarah from Quick Dispatch. Your Dallas to Memphis load - is it still open?",
+      "Hello, this is Sarah with Quick Dispatch. Calling about the Dallas, TX to Memphis, TN load. Available?",
+      "Good afternoon! Sarah from Quick Dispatch here. I saw your Dallas to Memphis posting. Still there?",
+
+      // Casual but acceptable
+      "Hey! Sarah, Quick Dispatch. Interested in your Dallas, TX to Memphis, TN run. Open?",
+      "Hi there! This is Sarah from Quick Dispatch. Your Dallas to Memphis freight - still available?",
+
+      // More casual
+      "Morning! Sarah with Quick Dispatch calling. Dallas to Memphis load - can we discuss it?",
+      "Hello! Sarah from Quick Dispatch. I'm looking at your DAL to MEM load. Still open?",
+
+      // Very casual
+      "Hi! This is Sarah, Quick Dispatch. Calling about the Dallas to Memphis shipment. Available?",
+      "Good day! Sarah from Quick Dispatch here. Your Dallas, TX to Memphis, TN load - is it there?",
+      "Hey there! Sarah with Quick Dispatch. Saw your Dallas to Memphis posting. Can we talk?"
+    ];
+
+    let currentBubbles = [];
+    let bubbleInterval = null;
+
+    function getRandomGreetings(count = 3) {
+      // Always include at least one professional greeting (first 3 are professional)
+      const professionalGreetings = dispatcherGreetings.slice(0, 3);
+      const otherGreetings = dispatcherGreetings.slice(3);
+
+      // Pick one professional greeting
+      const professionalIndex = Math.floor(Math.random() * professionalGreetings.length);
+      const selectedGreetings = [professionalGreetings[professionalIndex]];
+
+      // Pick remaining greetings from all options
+      const remainingCount = count - 1;
+      const availableGreetings = dispatcherGreetings.filter(g => !selectedGreetings.includes(g));
+
+      // Shuffle and pick
+      const shuffled = availableGreetings.sort(() => Math.random() - 0.5);
+      selectedGreetings.push(...shuffled.slice(0, remainingCount));
+
+      // Shuffle final selection so professional one isn't always first
+      return selectedGreetings.sort(() => Math.random() - 0.5);
+    }
+
+    function createBubble(text, delay = 0) {
+      const bubblesContainer = document.getElementById('bubblesContainer');
+      if (!bubblesContainer) return;
+
+      setTimeout(() => {
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.textContent = text;
+        bubble.style.animationDelay = '0s';
+
+        // Random position within container (organic cloud layout)
+        const containerWidth = bubblesContainer.offsetWidth;
+        const containerHeight = bubblesContainer.offsetHeight;
+
+        // Calculate random position in a circular area around center
+        const angle = Math.random() * Math.PI * 2;
+        const radius = Math.random() * Math.min(containerWidth, containerHeight) * 0.35; // 35% of container
+
+        const centerX = containerWidth / 2;
+        const centerY = containerHeight / 2;
+
+        const x = centerX + Math.cos(angle) * radius;
+        const y = centerY + Math.sin(angle) * radius;
+
+        // Position bubble (accounting for its own size)
+        bubble.style.left = `${x}px`;
+        bubble.style.top = `${y}px`;
+        bubble.style.transform = 'translate(-50%, -50%) scale(0.6)';
+
+        // Click handler to start conversation
+        bubble.addEventListener('click', () => {
+          // Hide all bubbles with animation
+          document.querySelectorAll('.bubble').forEach(b => {
+            b.classList.add('bubble-hidden');
+          });
+
+          // Start conversation after animation
+          setTimeout(() => {
+            startAutoConversation();
+          }, 500);
+        });
+
+        bubblesContainer.appendChild(bubble);
+        currentBubbles.push(bubble);
+      }, delay);
+    }
+
+    function removeBubble(bubble) {
+      if (!bubble || !bubble.parentNode) return;
+
+      bubble.classList.add('bubble-hidden');
+
+      setTimeout(() => {
+        if (bubble.parentNode) {
+          bubble.parentNode.removeChild(bubble);
+        }
+        const index = currentBubbles.indexOf(bubble);
+        if (index > -1) {
+          currentBubbles.splice(index, 1);
+        }
+      }, 500);
+    }
+
+    function showRandomBubbles() {
+      const bubblesContainer = document.getElementById('bubblesContainer');
+      if (!bubblesContainer) return;
+
+      // Clear existing bubbles
+      currentBubbles.forEach(bubble => removeBubble(bubble));
+      currentBubbles = [];
+
+      // Show 3-4 bubbles (3 on mobile, 4 on desktop)
+      const isMobile = window.innerWidth < 640;
+      const numBubbles = isMobile ? 3 : 4;
+
+      // Get random greetings with at least one professional
+      const selectedGreetings = getRandomGreetings(numBubbles);
+
+      // Create bubbles with staggered animation
+      selectedGreetings.forEach((greeting, i) => {
+        const delay = i * 150; // Stagger by 150ms
+        createBubble(greeting, delay);
+      });
+    }
+
+    function startBubbleRotation() {
+      // Show initial bubbles
+      showRandomBubbles();
+
+      // Rotate bubbles every 5 seconds
+      bubbleInterval = setInterval(() => {
+        showRandomBubbles();
+      }, 5000);
+    }
+
+    function stopBubbleRotation() {
+      if (bubbleInterval) {
+        clearInterval(bubbleInterval);
+        bubbleInterval = null;
+      }
+    }
+
+    // Initialize bubbles when page loads
+    window.addEventListener('load', () => {
+      const bubblesSection = document.getElementById('bubblesSection');
+      if (bubblesSection) {
+        startBubbleRotation();
+      }
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      if (currentBubbles.length > 0) {
+        showRandomBubbles();
+      }
+    });
+
+    // Stop bubble rotation when chat starts
+    const originalStartAutoConversation = startAutoConversation;
+    startAutoConversation = function () {
+      stopBubbleRotation();
+      originalStartAutoConversation();
+    };
+  </script>
+</body>
+
+</html>

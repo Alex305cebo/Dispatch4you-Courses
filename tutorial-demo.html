@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tutorial System Demo | DispatcherTraining</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #070b14;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .header h1 {
+      font-size: 48px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #06b6d4, #0ea5e9, #f97316);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+    }
+
+    .header p {
+      font-size: 18px;
+      color: #94a3b8;
+    }
+
+    .demo-section {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 32px;
+    }
+
+    .demo-section h2 {
+      font-size: 24px;
+      font-weight: 800;
+      color: #06b6d4;
+      margin-bottom: 20px;
+    }
+
+    .demo-controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .demo-btn {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .demo-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3);
+    }
+
+    .demo-btn.secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .demo-btn.danger {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+
+    /* Симуляция игровых элементов */
+    .game-simulation {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 24px;
+    }
+
+    .game-panel {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .game-panel h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 16px;
+    }
+
+    .truck-marker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      border-radius: 10px;
+      margin: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .truck-marker:hover {
+      background: rgba(6, 182, 212, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .email-item {
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .email-item:hover {
+      background: rgba(6, 182, 212, 0.1);
+      border-color: rgba(6, 182, 212, 0.3);
+    }
+
+    .email-subject {
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .email-preview {
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    /* Симуляция документа */
+    .doc-simulation {
+      background: #fff;
+      color: #000;
+      padding: 24px;
+      border-radius: 12px;
+      margin-top: 24px;
+    }
+
+    .rc-field {
+      border: 1px solid #ddd;
+      padding: 12px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .rc-field:hover {
+      background: rgba(6, 182, 212, 0.05);
+      border-color: #06b6d4;
+    }
+
+    .rc-field strong {
+      color: #000 !important;
+    }
+
+    .status-panel {
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(14, 165, 233, 0.1));
+      border: 2px solid rgba(6, 182, 212, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 24px;
+    }
+
+    .status-panel h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #06b6d4;
+      margin-bottom: 8px;
+    }
+
+    .status-panel p {
+      font-size: 13px;
+      color: #e2e8f0;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 768px) {
+      .game-simulation {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>🎓 Tutorial System Demo</h1>
+      <p>Демонстрация модульной системы нарративного обучения</p>
+    </div>
+
+    <!-- Controls -->
+    <div class="demo-section">
+      <h2>🎮 Управление обучением</h2>
+      <div class="demo-controls">
+        <button class="demo-btn" id="start-tutorial-btn">▶️ Начать обучение</button>
+        <button class="demo-btn secondary" id="stop-tutorial-btn">⏸️ Остановить</button>
+        <button class="demo-btn secondary" id="skip-tutorial-btn">⏭️ Пропустить</button>
+        <button class="demo-btn danger" id="reset-tutorial-btn">🔄 Сбросить прогресс</button>
+      </div>
+
+      <div class="status-panel" id="status-panel">
+        <h4>📊 Статус системы</h4>
+        <p id="status-text">Система готова к запуску</p>
+      </div>
+    </div>
+
+    <!-- Game Simulation -->
+    <div class="demo-section">
+      <h2>🎯 Симуляция игровых элементов</h2>
+      
+      <div class="game-simulation">
+        <!-- Trucks Panel -->
+        <div class="game-panel">
+          <h3>🚛 Флот траков</h3>
+          <div class="truck-marker" data-truck="truck_1">
+            <span>🚛</span>
+            <span>Truck #1 - Chicago</span>
+          </div>
+          <div class="truck-marker" data-truck="truck_2">
+            <span>🚛</span>
+            <span>Truck #2 - Dallas</span>
+          </div>
+          <div class="truck-marker" data-truck="truck_3">
+            <span>🚛</span>
+            <span>Truck #3 - Atlanta</span>
+          </div>
+        </div>
+
+        <!-- Inbox Panel -->
+        <div class="game-panel">
+          <h3>📧 Входящая почта</h3>
+          <div class="email-item" data-subject="Rate Confirmation - Load #12345">
+            <div class="email-subject">Rate Confirmation - Load #12345</div>
+            <div class="email-preview">New load from ABC Logistics...</div>
+          </div>
+          <div class="email-item" data-subject="POD Request - Load #12340">
+            <div class="email-subject">POD Request - Load #12340</div>
+            <div class="email-preview">Please send POD for yesterday's delivery...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Document Simulation -->
+      <div class="doc-simulation" id="doc-ratecon">
+        <h3 style="text-align: center; margin-bottom: 20px;">📄 Rate Confirmation</h3>
+        
+        <div class="rc-field" data-section="Rate" data-tooltip="Ставка за перевозку.<br><br>Проверь что она соответствует договорённости.">
+          <strong>Rate:</strong> $2,800.00
+        </div>
+
+        <div class="rc-field" data-section="Pickup Date" data-tooltip="Дата и время погрузки.<br><br>Убедись что водитель успеет приехать.">
+          <strong>Pickup:</strong> May 3, 2026 08:00 AM
+        </div>
+
+        <div class="rc-field" data-section="Delivery Date" data-tooltip="Дата и время разгрузки.<br><br>Рассчитай время в пути + запас на HOS.">
+          <strong>Delivery:</strong> May 4, 2026 02:00 PM
+        </div>
+
+        <div class="rc-field" data-section="Pickup Address" data-tooltip="Адрес погрузки.<br><br>Проверь что он полный и правильный.">
+          <strong>Pickup Address:</strong> 123 Warehouse St, Atlanta, GA 30303
+        </div>
+
+        <div class="rc-field" data-section="Delivery Address" data-tooltip="Адрес разгрузки.<br><br>Убедись что нет ошибок.">
+          <strong>Delivery Address:</strong> 456 Distribution Ave, Miami, FL 33101
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 12px; margin-top: 24px;">
+        <button class="demo-btn" id="start-shift-btn">🌅 Начать смену</button>
+        <button class="demo-btn secondary" id="accept-load-btn">✅ Принять груз</button>
+        <button class="demo-btn secondary" id="send-dispatch-btn">📤 Отправить dispatch</button>
+        <button class="demo-btn secondary" id="send-pod-btn">📋 Отправить POD</button>
+        <button class="demo-btn secondary" id="start-game-btn">🚀 Начать игру</button>
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div class="demo-section">
+      <h2>ℹ️ Информация</h2>
+      <p style="line-height: 1.8; color: #94a3b8;">
+        Эта демо-страница показывает работу модульной системы обучения.<br><br>
+        
+        <strong style="color: #fff;">Как использовать:</strong><br>
+        1. Нажми "Начать обучение"<br>
+        2. Следуй инструкциям наставника Майка<br>
+        3. Кликай на элементы которые подсвечиваются<br>
+        4. Проходи шаги один за другим<br><br>
+        
+        <strong style="color: #fff;">Открой консоль браузера</strong> (F12) чтобы видеть логи системы.
+      </p>
+    </div>
+  </div>
+
+  <!-- Tutorial System -->
+  <script type="module">
+    import { initializeAll } from './js/tutorial/integration.js';
+
+    // Инициализация системы
+    const tutorialManager = initializeAll();
+
+    // Обработчики кнопок управления
+    document.getElementById('start-tutorial-btn').addEventListener('click', () => {
+      tutorialManager.start(true);
+      updateStatus('Обучение запущено');
+    });
+
+    document.getElementById('stop-tutorial-btn').addEventListener('click', () => {
+      tutorialManager.stop();
+      updateStatus('Обучение остановлено');
+    });
+
+    document.getElementById('skip-tutorial-btn').addEventListener('click', () => {
+      tutorialManager.skip();
+      updateStatus('Обучение пропущено');
+    });
+
+    document.getElementById('reset-tutorial-btn').addEventListener('click', () => {
+      if (confirm('Сбросить весь прогресс обучения?')) {
+        tutorialManager.reset();
+        updateStatus('Прогресс сброшен');
+      }
+    });
+
+    // Обновление статуса
+    function updateStatus(message) {
+      const statusText = document.getElementById('status-text');
+      const progress = tutorialManager.getProgress();
+      
+      statusText.innerHTML = `
+        <strong>${message}</strong><br>
+        Текущий шаг: ${progress.currentStep || 'Не начато'}<br>
+        Пройдено шагов: ${progress.completedSteps} / ${progress.totalSteps}
+      `;
+    }
+
+    // Обновляем статус каждую секунду
+    setInterval(() => {
+      if (tutorialManager.isActive) {
+        updateStatus('Обучение активно');
+      }
+    }, 1000);
+
+    console.log('✅ Tutorial Demo initialized');
+    console.log('📝 Tutorial Manager:', tutorialManager);
+  </script>
+</body>
+</html>

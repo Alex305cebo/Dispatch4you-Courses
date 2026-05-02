@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0e1a">
+<title>🔗 Load Connect - Платформа поиска грузов | Курсы Диспетчера</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0a0e1a;
+  color: #ffffff;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+/* Hero Section */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 80px 0 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.15), transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.15), transparent 50%);
+  animation: backgroundMove 20s ease infinite;
+  z-index: -1;
+}
+
+@keyframes backgroundMove {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-5%, 5%) scale(1.05); }
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #a5b4fc;
+  margin-bottom: 32px;
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+}
+
+.hero h1 {
+  font-size: clamp(48px, 8vw, 72px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin-bottom: 24px;
+}
+
+.hero h1 .gradient {
+  background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-subtitle {
+  font-size: 22px;
+  line-height: 1.6;
+  color: #94a3b8;
+  max-width: 640px;
+  margin: 0 auto 48px;
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 36px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+}
+
+.cta-button:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(99, 102, 241, 0.5);
+}
+
+.cta-button-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: none;
+}
+
+.cta-button-secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.1);
+}
+
+/* Section */
+.section {
+  padding: 80px 0;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 64px;
+}
+
+.section-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #c4b5fd;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin-bottom: 16px;
+}
+
+.section-subtitle {
+  font-size: 20px;
+  line-height: 1.6;
+  color: #94a3b8;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Features Grid */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 32px;
+  margin-top: 48px;
+}
+
+.feature-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 32px;
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+  border-color: rgba(99, 102, 241, 0.4);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.feature-icon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(99, 102, 241, 0.1));
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 12px;
+  font-size: 32px;
+  margin-bottom: 24px;
+}
+
+.feature-card h3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 12px;
+}
+
+.feature-card p {
+  font-size: 17px;
+  line-height: 1.6;
+  color: #94a3b8;
+}
+
+/* Stats Section */
+.stats-section {
+  padding: 80px 0;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  margin: 80px 0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 48px;
+  text-align: center;
+}
+
+.stat-item {
+  padding: 24px;
+}
+
+.stat-number {
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12px;
+}
+
+.stat-label {
+  font-size: 18px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+/* Pricing Cards */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 32px;
+  margin-top: 48px;
+}
+
+.pricing-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 40px;
+  transition: all 0.3s ease;
+}
+
+.pricing-card.featured {
+  border-color: rgba(99, 102, 241, 0.4);
+  background: rgba(99, 102, 241, 0.05);
+  transform: scale(1.05);
+}
+
+.pricing-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+.pricing-card.featured:hover {
+  transform: translateY(-6px) scale(1.07);
+}
+
+.pricing-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 16px;
+}
+
+.pricing-card h3 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 12px;
+}
+
+.pricing-price {
+  font-size: 48px;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.pricing-price span {
+  font-size: 20px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.pricing-description {
+  font-size: 16px;
+  color: #94a3b8;
+  margin-bottom: 32px;
+}
+
+.pricing-features {
+  list-style: none;
+  margin-bottom: 32px;
+}
+
+.pricing-features li {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #cbd5e1;
+  font-size: 16px;
+}
+
+.pricing-features li:before {
+  content: '✓';
+  color: #22c55e;
+  font-weight: bold;
+  margin-right: 12px;
+}
+
+/* Back Button */
+.back-button {
+  position: fixed;
+  top: 32px;
+  left: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s;
+  z-index: 1000;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateX(-4px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 20px;
+  }
+  
+  .hero {
+    padding: 60px 0 40px;
+  }
+  
+  .hero h1 {
+    font-size: 36px;
+  }
+  
+  .hero-subtitle {
+    font-size: 17px;
+  }
+  
+  .section {
+    padding: 50px 0 30px;
+  }
+  
+  .section-title {
+    font-size: 32px;
+  }
+  
+  .section-subtitle {
+    font-size: 16px;
+  }
+  
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .feature-card {
+    padding: 28px;
+  }
+  
+  .feature-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+  }
+  
+  .feature-card h3 {
+    font-size: 19px;
+  }
+  
+  .feature-card p {
+    font-size: 14px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  
+  .stat-number {
+    font-size: 36px;
+  }
+  
+  .stat-label {
+    font-size: 13px;
+  }
+  
+  .pricing-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .pricing-card {
+    padding: 32px;
+  }
+  
+  .pricing-card.featured {
+    transform: scale(1);
+  }
+  
+  .price {
+    font-size: 40px;
+  }
+  
+  .cta-buttons {
+    flex-direction: column;
+    width: 100%;
+    gap: 16px;
+  }
+  
+  .cta-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .back-button {
+    position: static;
+    display: inline-flex;
+    margin: 20px 8px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 16px;
+  }
+  
+  .hero {
+    padding: 50px 0 30px;
+  }
+  
+  .hero h1 {
+    font-size: 28px;
+  }
+  
+  .hero-subtitle {
+    font-size: 15px;
+  }
+  
+  .hero-badge {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+  
+  .section {
+    padding: 40px 0 20px;
+  }
+  
+  .section-title {
+    font-size: 26px;
+  }
+  
+  .section-subtitle {
+    font-size: 14px;
+  }
+  
+  .feature-card {
+    padding: 20px;
+  }
+  
+  .feature-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+  
+  .feature-card h3 {
+    font-size: 17px;
+  }
+  
+  .feature-card p {
+    font-size: 13px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .stat-number {
+    font-size: 32px;
+  }
+  
+  .pricing-card {
+    padding: 24px;
+  }
+  
+  .pricing-badge {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+  
+  .plan-name {
+    font-size: 22px;
+  }
+  
+  .price {
+    font-size: 36px;
+  }
+  
+  .price-period {
+    font-size: 15px;
+  }
+  
+  .feature-item {
+    font-size: 13px;
+  }
+  
+  .cta-button {
+    padding: 14px 24px;
+    font-size: 14px;
+  }
+}
+</style>
+</head>
+<body>
+
+<a href="../course.html" class="back-button">
+  <span style="font-size: 18px;">←</span>
+  <span>Назад к курсам</span>
+</a>
+<a href="../index.html" class="back-button" style="left: 200px;">
+  <span style="font-size: 18px;">🏠</span>
+  <span>Главная</span>
+</a>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge">
+      <span>🔗</span>
+      <span>Профессиональная платформа для диспетчеров</span>
+    </div>
+    <h1>
+      <span class="gradient">Load Connect</span><br>
+      Ваш путь к успеху
+    </h1>
+    <p class="hero-subtitle">
+      Современная платформа для поиска грузов с тысячами предложений ежедневно. Прямой доступ к проверенным брокерам и грузоотправителям по всей Америке.
+    </p>
+    <div class="cta-buttons">
+      <a href="https://www.loadconnect.com/" target="_blank" class="cta-button">
+        Перейти на Load Connect
+        <span>→</span>
+      </a>
+      <a href="load-finder.html" class="cta-button cta-button-secondary">
+        Попробовать Load Finder
+        <span>🔍</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="stats-section">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-number">10K+</div>
+        <div class="stat-label">Грузов ежедневно</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">5K+</div>
+        <div class="stat-label">Активных брокеров</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">24/7</div>
+        <div class="stat-label">Поддержка</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">50</div>
+        <div class="stat-label">Штатов США</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge">✨ Возможности</span>
+      <h2 class="section-title">Всё для эффективной работы</h2>
+      <p class="section-subtitle">
+        Полный набор инструментов для успешного диспетчера
+      </p>
+    </div>
+    
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🔍</div>
+        <h3>Умный поиск</h3>
+        <p>Расширенные фильтры по маршруту, типу оборудования, весу, цене. Сохранение избранных поисков для быстрого доступа.</p>
+      </div>
+      
+      <div class="feature-card">
+        <div class="feature-icon">📱</div>
+        <h3>Мобильное приложение</h3>
+        <p>Работайте из любой точки мира. iOS и Android приложения с полным функционалом десктопной версии.</p>
+      </div>
+      
+      <div class="feature-card">
+        <div class="feature-icon">🔔</div>
+        <h3>Уведомления в реальном времени</h3>
+        <p>Мгновенные оповещения о новых грузах по вашим критериям. Не упустите выгодные предложения.</p>
+      </div>
+      
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Аналитика и отчеты</h3>
+        <p>Детальная статистика по маршрутам, ценам, брокерам. Принимайте решения на основе данных.</p>
+      </div>
+      
+      <div class="feature-card">
+        <div class="feature-icon">🤝</div>
+        <h3>Проверенные партнеры</h3>
+        <p>Работайте только с надежными брокерами. Рейтинги, отзывы, история платежей.</p>
+      </div>
+      
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h3>Безопасность</h3>
+        <p>Защита данных на уровне банков. Шифрование всех транзакций и конфиденциальной информации.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge">💎 Тарифы</span>
+      <h2 class="section-title">Выберите свой план</h2>
+      <p class="section-subtitle">
+        Гибкие тарифы для компаний любого размера
+      </p>
+    </div>
+    
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <h3>Starter</h3>
+        <div class="pricing-price">$99<span>/месяц</span></div>
+        <p class="pricing-description">Для начинающих диспетчеров</p>
+        <ul class="pricing-features">
+          <li>До 100 поисков в день</li>
+          <li>Базовые фильтры</li>
+          <li>Email поддержка</li>
+          <li>Мобильное приложение</li>
+          <li>История за 30 дней</li>
+        </ul>
+        <a href="https://www.loadconnect.com/" target="_blank" class="cta-button" style="width: 100%; justify-content: center;">
+          Начать
+        </a>
+      </div>
+      
+      <div class="pricing-card featured">
+        <span class="pricing-badge">Популярный</span>
+        <h3>Professional</h3>
+        <div class="pricing-price">$199<span>/месяц</span></div>
+        <p class="pricing-description">Для профессионалов</p>
+        <ul class="pricing-features">
+          <li>Неограниченные поиски</li>
+          <li>Все фильтры и функции</li>
+          <li>Приоритетная поддержка 24/7</li>
+          <li>Расширенная аналитика</li>
+          <li>История за 12 месяцев</li>
+          <li>API доступ</li>
+        </ul>
+        <a href="https://www.loadconnect.com/" target="_blank" class="cta-button" style="width: 100%; justify-content: center;">
+          Начать
+        </a>
+      </div>
+      
+      <div class="pricing-card">
+        <h3>Enterprise</h3>
+        <div class="pricing-price">Custom</div>
+        <p class="pricing-description">Для крупных компаний</p>
+        <ul class="pricing-features">
+          <li>Всё из Professional</li>
+          <li>Персональный менеджер</li>
+          <li>Кастомная интеграция</li>
+          <li>Обучение команды</li>
+          <li>SLA гарантии</li>
+          <li>Белый лейбл</li>
+        </ul>
+        <a href="https://www.loadconnect.com/" target="_blank" class="cta-button cta-button-secondary" style="width: 100%; justify-content: center;">
+          Связаться
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="section">
+  <div class="container" style="text-align: center;">
+    <div class="section-header">
+      <h2 class="section-title">Готовы начать?</h2>
+      <p class="section-subtitle">
+        Присоединяйтесь к тысячам успешных диспетчеров уже сегодня
+      </p>
+    </div>
+    <div class="cta-buttons">
+      <a href="https://www.loadconnect.com/" target="_blank" class="cta-button">
+        Зарегистрироваться бесплатно
+        <span>→</span>
+      </a>
+      <a href="../course.html" class="cta-button cta-button-secondary">
+        Вернуться к курсам
+        <span>📚</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

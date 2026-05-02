@@ -1,0 +1,120 @@
+═══════════════════════════════════════════════════════════════════
+  ПРОМПТ ДЛЯ GEMINI VEO 2 — 8-СЕКУНДНОЕ ЗАЦИКЛЕННОЕ ВИДЕО ТРАКА
+═══════════════════════════════════════════════════════════════════
+
+📋 СКОПИРУЙ И ВСТАВЬ В GEMINI:
+
+───────────────────────────────────────────────────────────────────
+
+Create an 8-second PERFECTLY SEAMLESS LOOPING cinematic video of a 
+modern American semi-truck driving on an interstate highway during 
+golden hour sunset.
+
+⚠️ CRITICAL LOOPING REQUIREMENT:
+This video MUST loop perfectly. At exactly 8.00 seconds, the truck 
+position, camera angle, and all elements must EXACTLY MATCH frame 0.00 
+so it can play infinitely without any visible cut, jump, or discontinuity.
+
+When the video reaches 8 seconds and restarts at 0 seconds, it should 
+look like one continuous infinite shot - NO visible difference.
+
+Camera: Smooth tracking shot from behind-right angle (3/4 rear view), 
+slightly elevated perspective, professional stabilization, CONSTANT 
+speed throughout entire 8 seconds. No camera movement changes.
+
+Truck: Clean Freightliner or Peterbilt with 53-foot dry van trailer, 
+maintaining perfectly steady 65 mph in right lane. Truck must be in 
+IDENTICAL position at 0:00 and 8:00 seconds.
+
+Environment: Wide empty interstate (3-4 lanes), American Southwest 
+landscape, NO other traffic (to ensure clean loop), clear weather, 
+uniform background to help with seamless looping.
+
+Lighting: Consistent golden hour lighting throughout (8 seconds is 
+too short for sun movement), warm orange tones, cinematic color grading.
+
+Style: Professional trucking documentary aesthetic, slightly desaturated, 
+subtle film grain, moody atmosphere.
+
+Technical: EXACTLY 8.0 seconds duration, 4K resolution, 24fps, 
+16:9 aspect ratio.
+
+LOOPING STRATEGY:
+- Truck travels at constant speed with no acceleration
+- Background should be uniform (no unique landmarks)
+- Camera follows at perfectly steady pace
+- All motion is cyclical and repeatable
+- Think of it like a perfect GIF loop
+
+The end must connect seamlessly to the beginning - this is the most 
+important requirement.
+
+───────────────────────────────────────────────────────────────────
+
+✅ ПОСЛЕ ГЕНЕРАЦИИ ПРОВЕРЬ:
+
+1. Открой видео в плеере с loop (VLC)
+2. Включи повтор
+3. Смотри на стык между 8 сек и 0 сек
+4. Не должно быть "прыжка" трака
+
+───────────────────────────────────────────────────────────────────
+
+🔧 ЕСЛИ НЕ ЗАЦИКЛЕНО — ИСПРАВЬ В FFMPEG:
+
+ffmpeg -i input.mp4 -filter_complex \
+"[0:v]split[main][dup]; \
+[dup]trim=start=7:end=8,setpts=PTS-STARTPTS[end]; \
+[main]trim=start=0:end=1,setpts=PTS-STARTPTS[start]; \
+[end][start]xfade=transition=fade:duration=0.5:offset=0.5[fade]; \
+[main][fade]concat=n=2:v=1[out]" \
+-map "[out]" -t 8 output_loop.mp4
+
+───────────────────────────────────────────────────────────────────
+
+📦 ОПТИМИЗАЦИЯ ДЛЯ ВЕБА (после генерации):
+
+# Сжать до 1-2 MB
+ffmpeg -i Truck_loop.mp4 \
+  -vcodec h264 \
+  -crf 28 \
+  -preset slow \
+  -vf scale=1920:1080 \
+  -movflags +faststart \
+  Truck_loop_compressed.mp4
+
+# Конвертировать в WebM (лучше для веба)
+ffmpeg -i Truck_loop.mp4 \
+  -c:v libvpx-vp9 \
+  -b:v 1M \
+  -vf scale=1920:1080 \
+  Truck_loop.webm
+
+───────────────────────────────────────────────────────────────────
+
+🎬 КОД ДЛЯ ИСПОЛЬЗОВАНИЯ В МЕНЮ:
+
+<video
+  autoPlay
+  muted
+  loop
+  playsInline
+  ref={(el) => {
+    if (el) el.playbackRate = 0.5; // Замедлить на 50%
+  }}
+  style={{
+    position: 'absolute',
+    inset: 0,
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    opacity: 0.6,
+  }}
+  src="/Truck_loop.mp4"
+/>
+
+═══════════════════════════════════════════════════════════════════
+Дата: 2 мая 2026
+Для: Google Gemini Veo 2
+Цель: Фоновое видео для меню Dispatch Office
+═══════════════════════════════════════════════════════════════════

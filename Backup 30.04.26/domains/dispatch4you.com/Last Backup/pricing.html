@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тарифы | Курсы Диспетчера</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --accent: #ec4899;
+            --bg-dark: #0f172a;
+            --bg-darker: #020617;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 32px;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 40px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 16px;
+        }
+
+        .btn {
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Hero Section */
+        .pricing-hero {
+            padding: 160px 0 80px;
+            text-align: center;
+            position: relative;
+        }
+
+        .pricing-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .pricing-hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .pricing-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .pricing-title {
+            font-size: clamp(40px, 6vw, 64px);
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.7) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .pricing-subtitle {
+            font-size: clamp(18px, 2vw, 22px);
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto 48px;
+        }
+
+        /* Pricing Toggle */
+        .pricing-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 60px;
+        }
+
+        .toggle-label {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .toggle-label.active {
+            color: var(--text-primary);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.active::after {
+            left: 32px;
+        }
+
+        .save-badge {
+            padding: 4px 12px;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.1));
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #22c55e;
+        }
+
+        /* Pricing Cards */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 32px;
+            margin-bottom: 80px;
+        }
+
+        .pricing-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 40px;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 20px 60px rgba(99, 102, 241, 0.2);
+        }
+
+        .pricing-card.featured {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05));
+            border: 2px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            right: 40px;
+            padding: 6px 16px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 700;
+            color: white;
+            text-transform: uppercase;
+        }
+
+        .plan-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .plan-description {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        .plan-price {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .price-amount {
+            font-size: 48px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fff, rgba(255, 255, 255, 0.8));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .price-currency {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        .price-period {
+            font-size: 16px;
+            color: var(--text-muted);
+        }
+
+        .price-note {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+        }
+
+        .plan-features {
+            list-style: none;
+            margin-bottom: 32px;
+        }
+
+        .plan-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            font-size: 15px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .plan-features li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-icon {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+            border-radius: 50%;
+            font-size: 12px;
+            color: var(--primary);
+        }
+
+        .plan-cta {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        /* FAQ Section */
+        .faq-section {
+            padding: 80px 0;
+            background: linear-gradient(180deg, transparent 0%, rgba(99, 102, 241, 0.02) 100%);
+        }
+
+        .faq-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .faq-title {
+            font-size: clamp(36px, 5vw, 48px);
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .faq-subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+
+        .faq-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.3s;
+        }
+
+        .faq-item:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .faq-question {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .faq-answer {
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
+
+        /* Footer */
+        .footer {
+            padding: 60px 0 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 60px;
+            margin-bottom: 40px;
+        }
+
+        .footer-brand {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .footer-logo {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .footer-description {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .footer-section h4 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .footer-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+
+        .footer-bottom {
+            padding-top: 32px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .nav-links {
+                display: none;
+            }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .faq-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr 1fr;
+                gap: 40px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .pricing-hero {
+                padding: 120px 0 60px;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <a href="index.html" class="logo">
+                    <span>🎓</span>
+                    <span>Курсы Диспетчера</span>
+                </a>
+                <ul class="nav-links">
+                    <li><a href="index.html">Главная</a></li>
+                    <li><a href="courses.html">Курсы</a></li>
+                    <li><a href="pages/documentation.html">Документация</a></li>
+                    <li><a href="pricing.html">Тарифы</a></li>
+                    <li><a href="about.html">О нас</a></li>
+                </ul>
+                <div class="nav-buttons">
+                    <a href="auth.html" class="btn btn-secondary">Войти</a>
+                    <a href="course.html" class="btn btn-primary">Начать обучение</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="pricing-hero">
+        <div class="container">
+            <div class="pricing-hero-content">
+                <div class="pricing-badge">💎 Прозрачные цены</div>
+                <h1 class="pricing-title">Выберите свой тариф</h1>
+                <p class="pricing-subtitle">
+                    Гибкие планы для начинающих и профессионалов. Начните бесплатно или выберите подходящий тариф.
+                </p>
+
+                <!-- Pricing Toggle -->
+                <div class="pricing-toggle">
+                    <span class="toggle-label active" id="monthlyLabel">Ежемесячно</span>
+                    <div class="toggle-switch" id="pricingToggle"></div>
+                    <span class="toggle-label" id="yearlyLabel">Ежегодно</span>
+                    <span class="save-badge">Экономия 20%</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Cards -->
+    <section class="pricing-section">
+        <div class="container">
+            <div class="pricing-grid">
+
+                <!-- Free Plan -->
+                <div class="pricing-card">
+                    <h3 class="plan-name">Базовый</h3>
+                    <p class="plan-description">Идеально для знакомства с профессией диспетчера</p>
+                    <div class="plan-price">
+                        <span class="price-currency">$</span>
+                        <span class="price-amount" data-monthly="0" data-yearly="0">0</span>
+                    </div>
+                    <p class="price-note">Навсегда бесплатно</p>
+                    <ul class="plan-features">
+                        <li><span class="feature-icon">✓</span> Доступ к 3 базовым модулям</li>
+                        <li><span class="feature-icon">✓</span> 10 практических кейсов</li>
+                        <li><span class="feature-icon">✓</span> Базовые материалы и шаблоны</li>
+                        <li><span class="feature-icon">✓</span> Доступ к сообществу</li>
+                    </ul>
+                    <a href="course.html" class="btn btn-secondary plan-cta">Начать бесплатно</a>
+                </div>
+
+                <!-- Pro Plan -->
+                <div class="pricing-card featured">
+                    <div class="popular-badge">Популярный</div>
+                    <h3 class="plan-name">Профессиональный</h3>
+                    <p class="plan-description">Полный курс для серьезного старта карьеры</p>
+                    <div class="plan-price">
+                        <span class="price-currency">$</span>
+                        <span class="price-amount" data-monthly="49" data-yearly="470">49</span>
+                        <span class="price-period">/месяц</span>
+                    </div>
+                    <p class="price-note">Оплата ежемесячно или ежегодно</p>
+                    <ul class="plan-features">
+                        <li><span class="feature-icon">✓</span> Все 9 модулей обучения</li>
+                        <li><span class="feature-icon">✓</span> 50+ практических кейсов</li>
+                        <li><span class="feature-icon">✓</span> Персональный ментор</li>
+                        <li><span class="feature-icon">✓</span> Симулятор диспетчера</li>
+                        <li><span class="feature-icon">✓</span> Помощь в трудоустройстве</li>
+                        <li><span class="feature-icon">✓</span> Доступ к закрытым вебинарам</li>
+                        <li><span class="feature-icon">✓</span> Пожизненные обновления</li>
+                    </ul>
+                    <a href="course.html" class="btn btn-primary plan-cta">Выбрать план</a>
+                </div>
+
+                <!-- Enterprise Plan -->
+                <div class="pricing-card">
+                    <h3 class="plan-name">Корпоративный</h3>
+                    <p class="plan-description">Для компаний и команд от 5 человек</p>
+                    <div class="plan-price">
+                        <span class="price-currency">$</span>
+                        <span class="price-amount" data-monthly="199" data-yearly="1910">199</span>
+                        <span class="price-period">/месяц</span>
+                    </div>
+                    <p class="price-note">До 10 пользователей включено</p>
+                    <ul class="plan-features">
+                        <li><span class="feature-icon">✓</span> Все возможности Pro плана</li>
+                        <li><span class="feature-icon">✓</span> Корпоративная панель управления</li>
+                        <li><span class="feature-icon">✓</span> Индивидуальная программа обучения</li>
+                        <li><span class="feature-icon">✓</span> Приоритетная поддержка 24/7</li>
+                        <li><span class="feature-icon">✓</span> Выделенный менеджер аккаунта</li>
+                        <li><span class="feature-icon">✓</span> API интеграция</li>
+                        <li><span class="feature-icon">✓</span> Аналитика и отчеты</li>
+                    </ul>
+                    <a href="contacts.html" class="btn btn-primary plan-cta">Связаться с нами</a>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <div class="container">
+            <div class="faq-header">
+                <h2 class="faq-title">Часто задаваемые вопросы</h2>
+                <p class="faq-subtitle">Ответы на популярные вопросы о тарифах</p>
+            </div>
+
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <h3 class="faq-question">Можно ли перейти с бесплатного плана на платный?</h3>
+                    <p class="faq-answer">
+                        Да, вы можете в любой момент обновить свой план. Все ваши достижения и прогресс сохранятся,
+                        и вы получите доступ ко всем дополнительным материалам и функциям.
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <h3 class="faq-question">Есть ли гарантия возврата денег?</h3>
+                    <p class="faq-answer">
+                        Да, мы предлагаем 14-дневную гарантию возврата денег. Если курс вам не подойдет,
+                        мы вернем полную стоимость без лишних вопросов.
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <h3 class="faq-question">Какие способы оплаты вы принимаете?</h3>
+                    <p class="faq-answer">
+                        Мы принимаем все основные кредитные карты (Visa, Mastercard, American Express),
+                        PayPal, а также банковские переводы для корпоративных клиентов.
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <h3 class="faq-question">Можно ли отменить подписку в любое время?</h3>
+                    <p class="faq-answer">
+                        Да, вы можете отменить подписку в любое время без штрафов. Доступ к материалам
+                        сохранится до конца оплаченного периода.
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <h3 class="faq-question">Что включает помощь в трудоустройстве?</h3>
+                    <p class="faq-answer">
+                        Мы помогаем составить резюме, подготовиться к собеседованиям, предоставляем доступ
+                        к базе вакансий и рекомендуем вас нашим партнерам-работодателям.
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <h3 class="faq-question">Сколько длится доступ к курсу?</h3>
+                    <p class="faq-answer">
+                        При покупке Pro плана вы получаете пожизненный доступ ко всем материалам курса,
+                        включая все будущие обновления и новые модули.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="footer-logo">🚛 Курсы Диспетчера</div>
+                    <p class="footer-description">
+                        Профессиональное обучение диспетчеров грузоперевозок.
+                        Станьте востребованным специалистом за 3-4 недели.
+                    </p>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Обучение</h4>
+                    <ul class="footer-links">
+                        <li><a href="courses.html">Все курсы</a></li>
+                        <li><a href="course.html">Начать обучение</a></li>
+                        <li><a href="pricing.html">Тарифы</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Компания</h4>
+                    <ul class="footer-links">
+                        <li><a href="about.html">О нас</a></li>
+                        <li><a href="career.html">Карьера</a></li>
+                        <li><a href="blog.html">Блог</a></li>
+                        <li><a href="contacts.html">Контакты</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Поддержка</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Помощь</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Политика</a></li>
+                        <li><a href="#">Условия</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2026 Курсы Диспетчера. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Pricing Toggle
+        const toggle = document.getElementById('pricingToggle');
+        const monthlyLabel = document.getElementById('monthlyLabel');
+        const yearlyLabel = document.getElementById('yearlyLabel');
+        const priceAmounts = document.querySelectorAll('.price-amount');
+        const pricePeriods = document.querySelectorAll('.price-period');
+
+        let isYearly = false;
+
+        toggle.addEventListener('click', () => {
+            isYearly = !isYearly;
+            toggle.classList.toggle('active');
+
+            if (isYearly) {
+                monthlyLabel.classList.remove('active');
+                yearlyLabel.classList.add('active');
+            } else {
+                monthlyLabel.classList.add('active');
+                yearlyLabel.classList.remove('active');
+            }
+
+            priceAmounts.forEach(amount => {
+                const monthly = amount.dataset.monthly;
+                const yearly = amount.dataset.yearly;
+                amount.textContent = isYearly ? yearly : monthly;
+            });
+
+            pricePeriods.forEach(period => {
+                period.textContent = isYearly ? '/год' : '/месяц';
+            });
+        });
+    </script>
+</body>
+
+</html>

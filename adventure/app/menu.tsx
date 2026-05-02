@@ -10,6 +10,7 @@ import SavesManagerPopup from '../components/SavesManagerPopup';
 import SettingsPopup from '../components/SettingsPopup';
 import TruckShopModal from '../components/TruckShopModal';
 import RepairGarageModal from '../components/RepairGarageModal';
+import ProfilePopup from '../components/ProfilePopup';
 
 export default function MainMenu() {
   const router = useRouter();
@@ -33,9 +34,30 @@ export default function MainMenu() {
 
   async function checkSaveAndUser() {
     try {
+      // Проверяем старое сохранение
       const raw = localStorage.getItem('dispatcher-game-save');
-      if (raw) { const s = JSON.parse(raw); if (s?.version >= 6 && s?.phase === 'playing') setHasSave(true); }
+      if (raw) { 
+        const s = JSON.parse(raw); 
+        if (s?.version >= 6 && s?.phase === 'playing') {
+          setHasSave(true);
+        }
+      }
+      
+      // Проверяем слоты (1, 2, 3)
+      if (!hasSave) {
+        for (let i = 1; i <= 3; i++) {
+          const slotRaw = localStorage.getItem(`dispatcher-save-slot-${i}`);
+          if (slotRaw) {
+            const slotData = JSON.parse(slotRaw);
+            if (slotData?.version >= 6 && slotData?.phase === 'playing') {
+              setHasSave(true);
+              break;
+            }
+          }
+        }
+      }
     } catch {}
+    
     try {
       const u = await getCurrentUser();
       if (u) {
@@ -63,21 +85,61 @@ export default function MainMenu() {
   async function handleContinue() {
     setLoading(true);
     try {
-      const ok = await loadGame();
-      if (ok) {
-        sessionStorage.setItem('enteredViaMenu', '1');
-        // Небольшая задержка для гарантии монтирования Root Layout
-        setTimeout(() => router.replace('/game'), 50);
-      } else alert('Не удалось загрузить');
+      // Ищем последнее сохранение (самое свежее по timestamp)
+      let latestSave = null;
+      let latestSlot = null;
+      let latestTimestamp = 0;
+      
+      // Проверяем старое сохранение
+      try {
+        const raw = localStorage.getItem('dispatcher-game-save');
+        if (raw) {
+          const s = JSON.parse(raw);
+          if (s?.version >= 6 && s?.phase === 'playing' && s?.lastSaved) {
+            latestSave = s;
+            latestTimestamp = s.lastSaved;
+          }
+        }
+      } catch {}
+      
+      // Проверяем слоты
+      for (let i = 1; i <= 3; i++) {
+        try {
+          const slotRaw = localStorage.getItem(`dispatcher-save-slot-${i}`);
+          if (slotRaw) {
+            const slotData = JSON.parse(slotRaw);
+            if (slotData?.version >= 6 && slotData?.phase === 'playing' && slotData?.lastSaved) {
+              if (slotData.lastSaved > latestTimestamp) {
+                latestSave = slotData;
+                latestSlot = i;
+                latestTimestamp = slotData.lastSaved;
+              }
+            }
+          }
+        } catch {}
+      }
+      
+      // Загружаем найденное сохранение
+      if (latestSave) {
+        const ok = await loadGame(latestSlot);
+        if (ok) {
+          sessionStorage.setItem('enteredViaMenu', '1');
+          setTimeout(() => router.replace('/game'), 50);
+        } else {
+          alert('Не удалось загрузить сохранение');
+        }
+      } else {
+        alert('Сохранение не найдено');
+      }
     }
     finally { setLoading(false); }
   }
 
-  async function handleNewGame() {
+  async function handleNewGame(slotId?: number) {
     if (hasSave && !window.confirm('⚠️ Начать новую игру? Прогресс будет потерян.')) return;
     setLoading(true);
     try {
-      await startShift(1, 'Новая смена');
+      await startShift(1, 'Новая смена', slotId);
       sessionStorage.setItem('enteredViaMenu', '1');
       // Небольшая задержка для гарантии монтирования Root Layout
       setTimeout(() => router.replace('/game'), 50);
@@ -88,10 +150,8 @@ export default function MainMenu() {
   const items = [
     ...(hasSave ? [{ id:'continue', icon:'▶', label:'Продолжить', sub:'Последнее сохранение', color:'#22c55e', action: handleContinue, hot: true }] : []),
     { id:'new', icon:'⚡', label: hasSave ? 'Новая игра' : 'Начать игру', sub:'1 трак · Knoxville, TN', color:'#3b82f6', action: handleNewGame, hot: !hasSave },
-    { id:'saves', icon:'☁', label:'Сохранения', sub: userEmail ? 'Облачная история' : 'Войдите для облака', color:'#a78bfa', action: () => setShowSaves(true) },
-    { id:'garage', icon:'🔧', label:'Гараж', sub:'Ремонт и улучшения', color:'#f59e0b', action: () => { useGameStore.getState().setRepairGarageOpen(true); } },
+    { id:'profile', icon:'◉', label:'Профиль', sub:'Сохранения · Гараж', color:'#ec4899', action: () => setShowProfile(true) },
     { id:'settings', icon:'⚙', label:'Настройки', sub:'Графика · Звук', color:'#06b6d4', action: () => setShowSettings(true) },
-    { id:'profile', icon:'◉', label:'Профиль', sub:'Статистика · Достижения', color:'#ec4899', action: () => setShowProfile(true), soon: true },
   ];
 
   // Адаптивные размеры
@@ -125,13 +185,24 @@ export default function MainMenu() {
             if (el && !(el as any)._init) { 
               (el as any)._init = true; 
               el.playbackRate = 0.5;
-              // Fallback: если первый путь не загрузился, пробуем второй
+              // Fallback: если первый путь не загрузился, пробуем альтернативные
               el.addEventListener('error', () => {
-                if (el.src.includes('./Truck_loop.mp4')) {
-                  el.src = '/game/Truck_loop.mp4';
-                } else if (el.src.includes('/game/Truck_loop.mp4')) {
+                console.error('❌ Video failed to load:', el.src);
+                if (el.src.includes('/Truck_loop.mp4')) {
+                  console.log('🔄 Trying: /assets/Truck_loop.mp4');
+                  el.src = '/assets/Truck_loop.mp4';
+                } else if (el.src.includes('/assets/Truck_loop.mp4')) {
+                  console.log('🔄 Trying: ./Truck_loop.mp4');
+                  el.src = './Truck_loop.mp4';
+                } else if (el.src.includes('./Truck_loop.mp4')) {
+                  console.log('🔄 Trying: ./assets/Truck_loop.mp4');
                   el.src = './assets/Truck_loop.mp4';
+                } else {
+                  console.error('❌ All video paths failed');
                 }
+              }, { once: false });
+              el.addEventListener('loadeddata', () => {
+                console.log('✅ Video loaded successfully:', el.src);
               }, { once: true });
             }
           }}
@@ -140,7 +211,7 @@ export default function MainMenu() {
             width: '100%', height: '100%',
             objectFit: 'cover', opacity: 0.6,
           } as any}
-          src="./Truck_loop.mp4"
+          src="/Truck_loop.mp4"
         />
         {/* Затемнение для читаемости */}
         <LinearGradient
@@ -172,7 +243,7 @@ export default function MainMenu() {
                 <Text style={[s.logoTitle2, { fontSize: titleSize }]}>OFFICE</Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 }}>
-                <View style={s.betaTag}><Text style={s.betaText}>BETA 2.2</Text></View>
+                <View style={s.betaTag}><Text style={s.betaText}>BETA 3.3</Text></View>
                 {userEmail && <Text style={s.emailText} numberOfLines={1}>{userEmail}</Text>}
               </View>
             </View>
@@ -267,7 +338,7 @@ export default function MainMenu() {
           {/* Нижняя панель — версия + выход */}
           <View style={s.bottomBar}>
             <View style={s.bottomStats}>
-              {[['v2.2','версия'],['48','штатов'],['5','траков']].map(([v,l], i) => (
+              {[['v3.3','версия'],['48','штатов'],['5','траков']].map(([v,l], i) => (
                 <View key={i} style={{ flexDirection: 'row', alignItems: 'center' }}>
                   {i > 0 && <View style={s.bottomDiv} />}
                   <View style={{ alignItems: 'center', paddingHorizontal: 10 }}>
@@ -296,15 +367,13 @@ export default function MainMenu() {
       {showSettings && <SettingsPopup onClose={() => setShowSettings(false)} />}
       <RepairGarageModal />
       {showProfile  && (
-        <View style={s.modalOverlay}>
-          <View style={s.modalBox}>
-            <Text style={{ fontSize: 20, fontWeight: '800', color: '#e2e8f0' }}>👤 Профиль</Text>
-            <Text style={{ fontSize: 13, color: '#94a3b8' }}>Раздел в разработке</Text>
-            <TouchableOpacity style={s.modalBtn} onPress={() => setShowProfile(false)}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: '#fff' }}>Закрыть</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        <ProfilePopup 
+          onClose={() => setShowProfile(false)} 
+          onStartGame={(slotId) => {
+            setShowProfile(false);
+            handleNewGame(slotId);
+          }}
+        />
       )}
     </View>
   );

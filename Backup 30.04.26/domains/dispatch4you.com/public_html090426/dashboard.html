@@ -1,0 +1,1901 @@
+﻿<!DOCTYPE html>
+<html lang="ru" style="background:#070b14">
+
+<head>
+  <!-- 🔒 ЗАЩИТА САЙТА ПАРОЛЕМ -->
+  <!-- ВРЕМЕННО ОТКЛЮЧЕНО -->
+  <!-- <script src="site-protection.js"></script> -->
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Личный кабинет | Курсы Диспетчера</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100vw;
+    }
+
+    :root {
+      --primary: #6366f1;
+      --secondary: #8b5cf6;
+      --accent: #ec4899;
+      --bg-dark: #0f172a;
+      --bg-darker: #020617;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    [data-theme="light"] {
+      --bg-dark: #ffffff;
+      --bg-darker: #f8fafc;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-darker);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100vw;
+      margin: 0;
+      padding: 0;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background:
+        radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+
+    /* Dashboard Layout */
+    .dashboard {
+      padding-top: 100px;
+      padding-bottom: 60px;
+    }
+
+    .dashboard-header {
+      margin-bottom: 48px;
+    }
+
+    .welcome-section {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      padding: 40px;
+      margin-bottom: 32px;
+    }
+
+    .welcome-title {
+      font-size: 36px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .welcome-subtitle {
+      color: var(--text-secondary);
+      font-size: 18px;
+    }
+
+    @media (max-width: 768px) {
+      .welcome-section {
+        padding: 20px;
+        border-radius: 16px;
+      }
+      .welcome-title {
+        font-size: 24px;
+      }
+      .welcome-subtitle {
+        font-size: 15px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .welcome-section {
+        padding: 16px;
+      }
+      .welcome-title {
+        font-size: 20px;
+      }
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 32px;
+      transition: all 0.3s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
+    }
+
+    .stat-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin-bottom: 16px;
+    }
+
+    .stat-icon.primary {
+      background: rgba(99, 102, 241, 0.2);
+    }
+
+    .stat-icon.success {
+      background: rgba(16, 185, 129, 0.2);
+    }
+
+    .stat-icon.warning {
+      background: rgba(245, 158, 11, 0.2);
+    }
+
+    .stat-icon.accent {
+      background: rgba(236, 72, 153, 0.2);
+    }
+
+    /* XP Block */
+    .xp-block {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 24px;
+      padding: 32px;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+
+    .xp-level-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 120px;
+    }
+
+    .xp-level-icon {
+      font-size: 48px;
+      margin-bottom: 8px;
+    }
+
+    .xp-level-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: #a5b4fc;
+      text-align: center;
+    }
+
+    .xp-level-num {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .xp-progress-section {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .xp-total {
+      font-size: 28px;
+      font-weight: 800;
+      color: #f1f5f9;
+      margin-bottom: 4px;
+    }
+
+    .xp-total span {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .xp-next-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .xp-bar-wrap {
+      width: 100%;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+
+    .xp-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
+      border-radius: 100px;
+      transition: width 0.6s ease;
+    }
+
+    .xp-stats-row {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .xp-stat-item {
+      text-align: center;
+    }
+
+    .xp-stat-val {
+      font-size: 18px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+
+    .xp-stat-lbl {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    /* Leaderboard */
+    .leaderboard-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .leaderboard-table th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .leaderboard-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 14px;
+    }
+
+    .leaderboard-table tr:hover td {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .lb-rank {
+      font-weight: 800;
+      font-size: 16px;
+      color: var(--text-muted);
+    }
+
+    .lb-rank.top1 {
+      color: #fbbf24;
+    }
+
+    .lb-rank.top2 {
+      color: #94a3b8;
+    }
+
+    .lb-rank.top3 {
+      color: #cd7c2f;
+    }
+
+    .lb-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .lb-xp {
+      font-weight: 700;
+      color: #818cf8;
+    }
+
+    .lb-you {
+      background: rgba(99, 102, 241, 0.08) !important;
+    }
+
+    .lb-you td {
+      border-left: 3px solid #6366f1;
+    }
+
+    @media (max-width: 768px) {
+      .xp-block {
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .xp-stats-row {
+        gap: 16px;
+      }
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 32px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      overflow-x: auto;
+    }
+
+    .tab {
+      padding: 12px 24px;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.3s;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+    }
+
+    .tab:hover {
+      color: var(--text-primary);
+    }
+
+    .tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    /* Tab Content */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Course Cards */
+    .courses-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 24px;
+    }
+
+    @media (max-width: 1024px) {
+      .courses-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .courses-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .courses-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+    }
+
+    .course-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+
+    .course-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
+    }
+
+    .course-image {
+      width: 100%;
+      height: 160px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+    }
+
+    .course-content {
+      padding: 24px;
+    }
+
+    .course-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .course-desc {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 768px) {
+      .course-image {
+        height: 80px;
+        font-size: 28px;
+      }
+      .course-content {
+        padding: 10px 8px;
+      }
+      .course-title {
+        font-size: 13px;
+        margin-bottom: 3px;
+      }
+      .course-desc {
+        display: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .course-image {
+        height: 64px;
+        font-size: 22px;
+      }
+      .course-content {
+        padding: 8px 6px;
+      }
+      .course-title {
+        font-size: 12px;
+      }
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      border-radius: 100px;
+      transition: width 0.3s;
+    }
+
+    .btn-continue {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-continue:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+    }
+
+    @media (max-width: 768px) {
+      .btn-continue {
+        padding: 7px 6px;
+        font-size: 11px;
+        border-radius: 8px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .btn-continue {
+        padding: 6px 4px;
+        font-size: 10px;
+        border-radius: 6px;
+      }
+    }
+
+    /* Profile Section */
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 32px;
+    }
+
+    .profile-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      padding: 32px;
+      text-align: center;
+    }
+
+    .profile-avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      margin: 0 auto 24px;
+    }
+
+    .profile-name {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .profile-email {
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    .profile-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .profile-stat {
+      text-align: center;
+    }
+
+    .profile-stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .profile-stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    /* Settings Form */
+    .settings-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      padding: 32px;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      transition: all 0.3s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-save {
+      padding: 14px 32px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-save:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+    }
+
+    /* Certificates */
+    .certificates-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    .certificate-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 32px;
+      text-align: center;
+      transition: all 0.3s;
+    }
+
+    .certificate-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
+    }
+
+    .certificate-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .certificate-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .certificate-date {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    .btn-download {
+      padding: 10px 24px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-download:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 0 24px;
+      }
+
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .courses-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      #recommendCards {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+
+      #courseProgressBar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+      }
+
+      #courseProgressBar a {
+        text-align: center;
+      }
+    }
+
+    /* ===== ACHIEVEMENTS ===== */
+    .achieve-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 16px 12px;
+      text-align: center;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .achieve-card.unlocked {
+      border-color: rgba(99,102,241,0.35);
+      background: rgba(99,102,241,0.07);
+      box-shadow: 0 4px 20px rgba(99,102,241,0.15);
+    }
+    .achieve-card.unlocked:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 32px rgba(99,102,241,0.25);
+    }
+    .achieve-card.locked {
+      opacity: 0.45;
+      filter: grayscale(0.6);
+    }
+    .achieve-icon { font-size: 32px; margin-bottom: 8px; }
+    .achieve-name { font-size: 12px; font-weight: 700; color: #e2e8f0; margin-bottom: 4px; line-height: 1.3; }
+    .achieve-desc { font-size: 11px; color: #64748b; line-height: 1.4; }
+    .achieve-card.unlocked .achieve-desc { color: #94a3b8; }
+    .achieve-new-badge {
+      position: absolute; top: 8px; right: 8px;
+      background: linear-gradient(135deg,#f59e0b,#ef4444);
+      color: white; font-size: 9px; font-weight: 800;
+      padding: 2px 6px; border-radius: 8px; letter-spacing: 0.05em;
+    }
+    .achieve-xp-badge {
+      display: inline-block; margin-top: 6px;
+      background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.3);
+      color: #a5b4fc; font-size: 10px; font-weight: 700;
+      padding: 2px 8px; border-radius: 10px;
+    }
+
+    /* ===== XP TOAST ENHANCED ===== */
+    @keyframes achievePopIn {
+      0% { transform: scale(0.5) translateX(120%); opacity: 0; }
+      60% { transform: scale(1.08) translateX(0); opacity: 1; }
+      100% { transform: scale(1) translateX(0); opacity: 1; }
+    }
+
+    /* ===== RECOMMEND CARDS ===== */
+    .rec-card {
+      display: flex; flex-direction: column;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-bottom: 3px solid transparent;
+      border-radius: 14px; padding: 14px;
+      text-decoration: none; color: inherit;
+      transition: all 0.22s ease;
+      cursor: pointer; position: relative; overflow: hidden;
+    }
+    .rec-card:hover {
+      transform: translateY(-4px);
+      background: rgba(255,255,255,0.06);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .rec-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .rec-card-icon { font-size: 24px; }
+    .rec-card-xp {
+      font-size: 11px; font-weight: 800;
+      padding: 3px 8px; border-radius: 10px;
+      letter-spacing: 0.03em;
+    }
+    .rec-card-title { font-size: 13px; font-weight: 700; color: #f1f5f9; margin-bottom: 4px; line-height: 1.3; }
+    .rec-card-desc  { font-size: 11px; color: #64748b; line-height: 1.4; flex: 1; }
+    .rec-card-action {
+      margin-top: 10px; font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .rec-card-done {
+      position: absolute; top: 8px; right: 8px;
+      font-size: 10px; font-weight: 700; color: #6ee7b7;
+      background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25);
+      padding: 2px 7px; border-radius: 8px;
+    }
+  </style>
+  <link rel="stylesheet" href="shared-nav.css?v=7.6">
+  <script type="module" src="firebase-auth-init.js?v=4.0"></script>
+</head>
+
+<body>
+
+  <div id="nav-placeholder"></div>
+  <script src="nav-loader.js?v=7.4"></script>
+
+  <!-- Dashboard -->
+  <section class="dashboard">
+    <div class="container">
+
+      <!-- Welcome Section -->
+      <div class="dashboard-header">
+        <div class="welcome-section">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+            <span style="background:linear-gradient(135deg,rgba(99,102,241,0.25),rgba(139,92,246,0.25));border:1px solid rgba(99,102,241,0.4);color:#a5b4fc;font-size:11px;font-weight:800;padding:4px 12px;border-radius:20px;letter-spacing:0.08em;text-transform:uppercase;">📚 Студент</span>
+            <span id="trialBadge" style="display:none;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;">⏳ Пробный период</span>
+          </div>
+          <h1 class="welcome-title">Добро пожаловать, <span id="userName">Студент</span>!</h1>
+          <p class="welcome-subtitle" id="welcomeSubtitle">Продолжайте обучение и достигайте новых высот</p>
+          <a id="adminPanelBtn" href="pages/admin.html"
+            style="display:none;margin-top:16px;padding:10px 24px;background:linear-gradient(135deg,#f59e0b,#ef4444);color:white;border-radius:12px;text-decoration:none;font-weight:700;font-size:14px;">⚡ Супер Админ Панель</a>
+
+          <!-- Динамические карточки: что изучить дальше -->
+          <div id="studentInfoGrid" style="margin-top:24px;">
+            <div style="font-size:12px;font-weight:700;color:#64748b;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">⚡ Изучи это — получи больше всего XP</div>
+            <div id="recommendCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- XP Block -->
+      <div class="xp-block" id="xpBlock" style="display:none;">
+        <div class="xp-level-badge">
+          <div class="xp-level-icon" id="xpLevelIcon">🔰</div>
+          <div class="xp-level-label" id="xpLevelLabel">Стажёр</div>
+          <div class="xp-level-num" id="xpLevelNum">Уровень 1</div>
+        </div>
+        <div class="xp-progress-section">
+          <div class="xp-total"><span id="xpTotal">0</span> XP <span>всего</span></div>
+          <div class="xp-next-label" id="xpNextLabel">До следующего уровня: <b id="xpToNext">50</b> XP</div>
+          <div class="xp-bar-wrap">
+            <div class="xp-bar-fill" id="xpBarFill" style="width:0%"></div>
+          </div>
+          <div class="xp-stats-row">
+            <div class="xp-stat-item">
+              <div class="xp-stat-val" id="xpStreak">0</div>
+              <div class="xp-stat-lbl">🔥 Серия дней</div>
+            </div>
+            <div class="xp-stat-item">
+              <div class="xp-stat-val" id="xpQuizzes">0</div>
+              <div class="xp-stat-lbl">✅ Квизов</div>
+            </div>
+            <div class="xp-stat-item">
+              <div class="xp-stat-val" id="xpModules">0</div>
+              <div class="xp-stat-lbl">📚 Модулей</div>
+            </div>
+            <div class="xp-stat-item">
+              <div class="xp-stat-val" id="xpAudio">0</div>
+              <div class="xp-stat-lbl">🎧 Аудио</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Achievements Preview (18 штук на главной) -->
+      <div id="achievementsBlock" style="display:none;margin-bottom:32px;">
+        <div id="achievementsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;"></div>
+        <div style="text-align:center;margin-top:16px;">
+          <button id="showAllAchievesBtn" onclick="switchTab('achievements');document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab')[1].classList.add('active');" style="padding:10px 28px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.35);border-radius:12px;color:#a5b4fc;font-size:13px;font-weight:700;cursor:pointer;display:none;">
+            🏅 Показать все ачивки →
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('courses')">Мои курсы</button>
+        <button class="tab" onclick="switchTab('achievements')">🏅 Ачивки</button>
+        <button class="tab" onclick="switchTab('rating')">🏆 Рейтинг</button>
+        <button class="tab" onclick="switchTab('certificates')">Сертификаты</button>
+        <button class="tab" onclick="switchTab('profile')">👤 Профиль</button>
+      </div>
+
+      <!-- Tab: My Courses -->
+      <div id="tab-courses" class="tab-content active">
+
+        <!-- Прогресс по курсу -->
+        <div id="courseProgressBar" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:200px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+              <span style="font-size:14px;font-weight:700;">📚 Прогресс курса</span>
+              <span id="courseProgressPct" style="font-size:14px;font-weight:700;color:#818cf8;">0 / 12 модулей</span>
+            </div>
+            <div style="height:8px;background:rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;">
+              <div id="courseProgressFill" style="height:100%;background:linear-gradient(90deg,#6366f1,#a78bfa);border-radius:8px;transition:width 0.5s ease;width:0%;"></div>
+            </div>
+          </div>
+          <a href="pages/modules-index.html" style="padding:10px 20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border-radius:12px;text-decoration:none;font-weight:700;font-size:14px;white-space:nowrap;">📖 Все модули →</a>
+        </div>
+
+        <div class="courses-grid" id="modulesGrid" style="gap:14px;"></div>
+      </div>
+
+      <!-- Tab: Achievements (все ачивки) -->
+      <div id="tab-achievements" class="tab-content">
+        <div id="allAchievementsContainer">
+          <!-- Заполняется через renderAllAchievements() -->
+          <div style="text-align:center;padding:40px;color:#64748b;">Загрузка ачивок...</div>
+        </div>
+      </div>
+
+      <!-- Tab: Profile + Settings (объединено) -->
+      <div id="tab-profile" class="tab-content">
+        <div style="display:grid;grid-template-columns:280px 1fr;gap:24px;align-items:start;" class="profile-grid">
+
+          <!-- Левая колонка: аватар + статы -->
+          <div class="profile-card">
+            <div class="profile-avatar" id="profileAvatarIcon">👤</div>
+            <h2 class="profile-name" id="profileName">Иван Иванов</h2>
+            <p class="profile-email" id="profileEmail">ivan@example.com</p>
+            <div class="profile-stats">
+              <div class="profile-stat">
+                <div class="profile-stat-value" id="profileModules">0</div>
+                <div class="profile-stat-label">Модулей</div>
+              </div>
+              <div class="profile-stat">
+                <div class="profile-stat-value" id="profileXP">0</div>
+                <div class="profile-stat-label">XP</div>
+              </div>
+              <div class="profile-stat">
+                <div class="profile-stat-value" id="profileStreak">0</div>
+                <div class="profile-stat-label">🔥 Серия</div>
+              </div>
+            </div>
+            <!-- Уровень -->
+            <div id="profileLevelBadge" style="margin-top:16px;padding:8px 16px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:12px;font-size:13px;font-weight:700;color:#a5b4fc;text-align:center;"></div>
+          </div>
+
+          <!-- Правая колонка: форма + настройки -->
+          <div style="display:flex;flex-direction:column;gap:20px;">
+
+            <!-- Информация о профиле -->
+            <div class="settings-card">
+              <h3 style="font-size:18px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px;">👤 Информация о профиле</h3>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="form-group">
+                  <label class="form-label">Имя</label>
+                  <input type="text" class="form-input" id="firstName" value="Иван">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Фамилия</label>
+                  <input type="text" class="form-input" id="lastName" value="Иванов">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" id="email" value="ivan@example.com" disabled style="opacity:0.6;">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Телефон</label>
+                <input type="tel" class="form-input" id="phone" placeholder="+1 (555) 123-4567">
+              </div>
+              <button class="btn-save" onclick="saveProfile()">💾 Сохранить изменения</button>
+            </div>
+
+            <!-- Смена пароля -->
+            <div class="settings-card">
+              <h3 style="font-size:18px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px;">🔐 Безопасность</h3>
+              <div class="form-group">
+                <label class="form-label">Текущий пароль</label>
+                <input type="password" class="form-input" id="currentPassword" placeholder="••••••••">
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="form-group">
+                  <label class="form-label">Новый пароль</label>
+                  <input type="password" class="form-input" id="newPassword" placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Подтвердите пароль</label>
+                  <input type="password" class="form-input" id="confirmPassword" placeholder="••••••••">
+                </div>
+              </div>
+              <button class="btn-save" onclick="changePassword()" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;">🔑 Изменить пароль</button>
+            </div>
+
+            <!-- Уведомления -->
+            <div class="settings-card">
+              <h3 style="font-size:18px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px;">🔔 Уведомления</h3>
+              <div style="display:flex;flex-direction:column;gap:14px;">
+                <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:12px 16px;background:rgba(255,255,255,0.03);border-radius:12px;border:1px solid rgba(255,255,255,0.06);">
+                  <span style="font-size:14px;">📧 Email о новых курсах</span>
+                  <input type="checkbox" checked style="width:18px;height:18px;cursor:pointer;">
+                </label>
+                <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:12px 16px;background:rgba(255,255,255,0.03);border-radius:12px;border:1px solid rgba(255,255,255,0.06);">
+                  <span style="font-size:14px;">⏰ Напоминания об уроках</span>
+                  <input type="checkbox" checked style="width:18px;height:18px;cursor:pointer;">
+                </label>
+                <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:12px 16px;background:rgba(255,255,255,0.03);border-radius:12px;border:1px solid rgba(255,255,255,0.06);">
+                  <span style="font-size:14px;">📰 Новости платформы</span>
+                  <input type="checkbox" style="width:18px;height:18px;cursor:pointer;">
+                </label>
+              </div>
+            </div>
+
+            <!-- Опасная зона -->
+            <div class="settings-card" style="border-color:rgba(239,68,68,0.2);">
+              <h3 style="font-size:18px;font-weight:700;margin-bottom:16px;color:#fca5a5;">⚠️ Опасная зона</h3>
+              <p style="font-size:13px;color:#64748b;margin-bottom:16px;">Выход из аккаунта на всех устройствах</p>
+              <button class="btn-save" onclick="authLogout(event)" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;">🚪 Выйти из аккаунта</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Rating / Leaderboard -->
+      <div id="tab-rating" class="tab-content">
+        <div class="settings-card" style="padding:0;overflow:hidden;">
+          <div
+            style="padding:24px 32px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+            <h3 style="font-size:22px;font-weight:700;">🏆 Рейтинг пользователей</h3>
+            <span style="font-size:13px;color:var(--text-muted);">Топ по XP за всё время</span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="leaderboard-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Пользователь</th>
+                  <th>Уровень</th>
+                  <th>XP</th>
+                  <th>🔥 Серия</th>
+                </tr>
+              </thead>
+              <tbody id="leaderboardBody">
+                <tr>
+                  <td colspan="5" style="text-align:center;padding:32px;color:var(--text-muted);">Загрузка...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Certificates -->
+      <div id="tab-certificates" class="tab-content">
+        <div class="certificates-grid">
+
+          <div class="certificate-card">
+            <div class="certificate-icon">🏆</div>
+            <h3 class="certificate-title">Основы диспетчирования</h3>
+            <p class="certificate-date">Выдан: 15 февраля 2026</p>
+            <button class="btn-download">Скачать PDF</button>
+          </div>
+
+          <div class="certificate-card" style="opacity: 0.5;">
+            <div class="certificate-icon">🔒</div>
+            <h3 class="certificate-title">FMCSA и DOT</h3>
+            <p class="certificate-date">Завершите курс</p>
+            <button class="btn-download" disabled>Недоступно</button>
+          </div>
+
+          <div class="certificate-card" style="opacity: 0.5;">
+            <div class="certificate-icon">🔒</div>
+            <h3 class="certificate-title">Load Boards</h3>
+            <p class="certificate-date">Завершите курс</p>
+            <button class="btn-download" disabled>Недоступно</button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Tab: Settings — объединено с Профилем -->
+
+    </div>
+  </section>
+
+  <script>
+    // Быстрая проверка: если нет user в localStorage — сразу на логин
+    // (Firebase onAuthStateChanged подтвердит или опровергнет позже)
+    (function () {
+      if (!localStorage.getItem('user')) {
+        window.location.href = 'login.html';
+      }
+    })();
+  </script>
+  <script>
+    function checkAuth() { return JSON.parse(localStorage.getItem('user')); }
+    const user = checkAuth();
+
+    // Update user info - заполним после Firebase auth
+    const displayUser = user || { firstName: 'Гость', lastName: '', email: '' };
+    document.getElementById('userName').textContent = displayUser.firstName;
+    if (displayUser.firstName !== 'Гость') {
+      document.getElementById('profileName').textContent = (displayUser.firstName + ' ' + (displayUser.lastName || '')).trim();
+      document.getElementById('profileEmail').textContent = displayUser.email || '';
+      document.getElementById('firstName').value = displayUser.firstName;
+      document.getElementById('lastName').value = displayUser.lastName || '';
+      document.getElementById('email').value = displayUser.email || '';
+    }
+
+    // Рендерим модули сразу (прогресс обновится после Firebase)
+    if (typeof renderModulesGrid === 'function') renderModulesGrid(0, 0);
+
+    // ===== 12 МОДУЛЕЙ =====
+    const MODULES_DATA = [
+      { n:1,  type:'lesson', icon:'📖', title:'Введение',        desc:'Знакомство с профессией',         url:'pages/intro.html',           color:'#06b6d4' },
+      { n:1,  type:'module', icon:'🏭', title:'Индустрия',       desc:'Основы грузоперевозок США $940B',  url:'pages/doc-module-1-complete.html',  color:'#6366f1' },
+      { n:2,  type:'lesson', icon:'📚', title:'Глоссарий',       desc:'Основные термины индустрии',       url:'pages/glossary.html',        color:'#0ea5e9' },
+      { n:2,  type:'module', icon:'📘', title:'Термины',         desc:'75+ профессиональных терминов',    url:'pages/doc-module-2-complete.html',  color:'#8b5cf6' },
+      { n:3,  type:'lesson', icon:'🧑‍💼', title:'Роль диспетчера', desc:'Обязанности и навыки',            url:'pages/role.html',            color:'#8b5cf6' },
+      { n:3,  type:'module', icon:'🧑‍💼', title:'Диспетчер',      desc:'Роль, обязанности, инструменты',  url:'pages/doc-module-3-complete.html',  color:'#06b6d4' },
+      { n:4,  type:'lesson', icon:'🚛', title:'Оборудование',    desc:'Типы трейлеров и грузовиков',     url:'pages/equipment.html',       color:'#f97316' },
+      { n:4,  type:'module', icon:'🔍', title:'Load Boards',     desc:'DAT, Truckstop, поиск грузов',    url:'pages/doc-module-4-complete.html',  color:'#10b981' },
+      { n:5,  type:'lesson', icon:'🗺️', title:'Маршруты',        desc:'Lanes, deadhead, backhaul',       url:'pages/routes.html',          color:'#10b981' },
+      { n:5,  type:'module', icon:'🗺️', title:'Маршруты',        desc:'48 штатов, Interstate коридоры',  url:'pages/doc-module-5-complete.html',  color:'#f59e0b' },
+      { n:6,  type:'lesson', icon:'🔍', title:'Load Boards',     desc:'DAT, Truckstop, 123Loadboard',    url:'pages/loadboards.html',      color:'#6366f1' },
+      { n:6,  type:'module', icon:'🚛', title:'Оборудование',    desc:'Dry Van, Reefer, Flatbed',        url:'pages/doc-module-6-complete.html',  color:'#f97316' },
+      { n:7,  type:'lesson', icon:'💬', title:'Переговоры',      desc:'Техники и скрипты',               url:'pages/negotiation.html',     color:'#ec4899' },
+      { n:7,  type:'module', icon:'💬', title:'Переговоры',      desc:'10 техник + скрипты на английском',url:'pages/doc-module-7-complete.html',  color:'#ec4899' },
+      { n:8,  type:'lesson', icon:'🤝', title:'Брокеры',         desc:'Проверка и работа с брокерами',   url:'pages/brokers.html',         color:'#ef4444' },
+      { n:8,  type:'module', icon:'🤝', title:'Брокеры',         desc:'Проверка, работа, факторинг',     url:'pages/doc-module-8-complete.html',  color:'#ef4444' },
+      { n:9,  type:'lesson', icon:'📄', title:'Документы',       desc:'Rate Con, BOL, POD, Invoice',     url:'pages/docs.html',            color:'#a78bfa' },
+      { n:9,  type:'module', icon:'📊', title:'CSA Scores',      desc:'HOS, ELD, безопасность',          url:'pages/doc-module-9-complete.html',  color:'#a78bfa' },
+      { n:10, type:'lesson', icon:'⚖️', title:'Законы',          desc:'FMCSA, HOS, ELD, CSA',            url:'pages/regulations.html',     color:'#fbbf24' },
+      { n:10, type:'module', icon:'📦', title:'Грузы',           desc:'Типы грузов, особенности',        url:'pages/doc-module-10-complete.html', color:'#34d399' },
+      { n:11, type:'lesson', icon:'💻', title:'TMS',             desc:'Технологии и софт',               url:'pages/technology.html',      color:'#34d399' },
+      { n:11, type:'module', icon:'⚠️', title:'Проблемы',        desc:'Решение нештатных ситуаций',      url:'pages/doc-module-11-complete.html', color:'#fbbf24' },
+      { n:12, type:'lesson', icon:'📞', title:'Коммуникация',    desc:'Общение с водителями и брокерами',url:'pages/communication.html',   color:'#f472b6' },
+      { n:12, type:'module', icon:'🚀', title:'Карьера',         desc:'90-дневный план запуска',          url:'pages/doc-module-12-complete.html', color:'#818cf8' },
+      { n:13, type:'lesson', icon:'⚠️', title:'Проблемы',        desc:'Решение нештатных ситуаций',      url:'pages/problems.html',        color:'#fb923c' },
+      { n:14, type:'lesson', icon:'💰', title:'Финансы',         desc:'Расчёты, факторинг, оплата',      url:'pages/finances.html',        color:'#4ade80' },
+      { n:15, type:'lesson', icon:'🚀', title:'Карьера',         desc:'Запуск карьеры диспетчера',       url:'pages/career.html',          color:'#818cf8' },
+    ];
+
+    window.renderModulesGrid = function renderModulesGrid(completedCount, lessonsCount) {
+      const grid = document.getElementById('modulesGrid');
+      if (!grid) return;
+      const lc = lessonsCount || 0;
+      grid.innerHTML = MODULES_DATA.map((m, idx) => {
+        const isLesson = m.type === 'lesson';
+        const done = isLesson ? (m.n <= lc) : (m.n <= completedCount);
+        const current = isLesson ? (m.n === lc + 1) : (m.n === completedCount + 1);
+        const label = isLesson ? `Урок ${m.n}` : `Модуль ${m.n}`;
+        const labelColor = isLesson ? '#06b6d4' : m.color;
+        return `<div class="course-card" style="cursor:pointer;border-color:${done ? m.color+'40' : current ? m.color+'30' : 'rgba(255,255,255,0.08)'};background:${done ? m.color+'10' : 'rgba(255,255,255,0.03)'};" onclick="window.location.href='${m.url}'">
+          <div class="course-image" style="position:relative;">
+            ${m.icon}
+            ${done ? '<span style="position:absolute;top:-4px;right:-4px;font-size:16px;">✅</span>' : ''}
+            ${current ? '<span style="position:absolute;top:-4px;right:-4px;background:'+m.color+';color:white;border-radius:8px;padding:1px 5px;font-size:10px;font-weight:700;">СЕЙЧАС</span>' : ''}
+          </div>
+          <div class="course-content">
+            <div style="font-size:11px;color:${labelColor};font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em;">${label}</div>
+            <h3 class="course-title">${m.title}</h3>
+            <p class="course-desc">${m.desc}</p>
+            <button class="btn-continue" style="background:${done ? 'rgba(16,185,129,0.15)' : current ? 'linear-gradient(135deg,'+m.color+','+m.color+'cc)' : 'rgba(255,255,255,0.05)'};color:${done ? '#6ee7b7' : '#fff'};border:1px solid ${done ? 'rgba(16,185,129,0.3)' : m.color+'40'};">
+              ${done ? '✅ Завершён' : current ? '▶ Продолжить' : '🔒 Начать'}
+            </button>
+          </div>
+        </div>`;
+      }).join('');
+
+      // Обновляем прогресс бар (модули + уроки)
+      const totalItems = MODULES_DATA.length;
+      const doneItems = MODULES_DATA.filter(m => m.type === 'lesson' ? m.n <= lc : m.n <= completedCount).length;
+      const pct = Math.round((doneItems / totalItems) * 100);
+      const fill = document.getElementById('courseProgressFill');
+      const label2 = document.getElementById('courseProgressPct');
+      if (fill) fill.style.width = pct + '%';
+      if (label2) label2.textContent = `${doneItems} / ${totalItems} пройдено (${pct}%)`;
+    }
+
+    // Tab switching
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.getElementById('tab-' + tabName).classList.add('active');
+      if (event && event.target) event.target.classList.add('active');
+      // При открытии вкладки ачивок — рендерим все
+      if (tabName === 'achievements' && typeof window.renderAllAchievements === 'function') {
+        window.renderAllAchievements('');
+      }
+    }
+
+    // Save profile
+    function saveProfile() {
+      const firstName = document.getElementById('firstName').value;
+      const lastName = document.getElementById('lastName').value;
+
+      // Update localStorage
+      const user = JSON.parse(localStorage.getItem('user'));
+      user.firstName = firstName;
+      user.lastName = lastName;
+      localStorage.setItem('user', JSON.stringify(user));
+
+      // Update UI
+      document.getElementById('userName').textContent = firstName;
+      document.getElementById('profileName').textContent = firstName + ' ' + lastName;
+
+      alert('Профиль успешно обновлён!');
+    }
+
+    // Change password
+    function changePassword() {
+      alert('Функция смены пароля будет доступна в следующей версии');
+    }
+  </script>
+
+  <!-- XP System + Leaderboard -->
+  <script type="module">
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { checkDailyLogin, getLevelByXP, getNextLevel, LEVELS } from "./xp-system.js";
+
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
+      authDomain: "dispatch4you-80e0f.firebaseapp.com",
+      projectId: "dispatch4you-80e0f",
+      storageBucket: "dispatch4you-80e0f.appspot.com",
+      messagingSenderId: "349235354473",
+      appId: "1:349235354473:web:488aeb29211b02bb153bf8"
+    };
+
+    const app = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // ===== ВСЕ РЕСУРСЫ С XP ПОТЕНЦИАЛОМ =====
+    const ALL_RESOURCES = [
+      // 15 уроков курса (база знаний) — 30 XP каждый
+      { id: 'les1',  icon:'📖', title:'Урок 1 — Введение',        desc:'Знакомство с профессией',         url:'pages/intro.html',           xp:30, color:'#06b6d4', key:'lessonViewed', threshold:1,  action:'Читать →' },
+      { id: 'les2',  icon:'📚', title:'Урок 2 — Глоссарий',       desc:'Основные термины индустрии',      url:'pages/glossary.html',        xp:30, color:'#0ea5e9', key:'lessonViewed', threshold:2,  action:'Читать →' },
+      { id: 'les3',  icon:'🧑‍💼', title:'Урок 3 — Роль диспетчера', desc:'Обязанности и навыки',            url:'pages/role.html',            xp:30, color:'#8b5cf6', key:'lessonViewed', threshold:3,  action:'Читать →' },
+      { id: 'les4',  icon:'🚛', title:'Урок 4 — Оборудование',    desc:'Типы трейлеров и грузовиков',     url:'pages/equipment.html',       xp:30, color:'#f97316', key:'lessonViewed', threshold:4,  action:'Читать →' },
+      { id: 'les5',  icon:'🗺️', title:'Урок 5 — Маршруты',        desc:'Lanes, deadhead, backhaul',       url:'pages/routes.html',          xp:30, color:'#10b981', key:'lessonViewed', threshold:5,  action:'Читать →' },
+      { id: 'les6',  icon:'🔍', title:'Урок 6 — Load Boards',     desc:'DAT, Truckstop, 123Loadboard',    url:'pages/loadboards.html',      xp:30, color:'#6366f1', key:'lessonViewed', threshold:6,  action:'Читать →' },
+      { id: 'les7',  icon:'💬', title:'Урок 7 — Переговоры',      desc:'Техники и скрипты',               url:'pages/negotiation.html',     xp:30, color:'#ec4899', key:'lessonViewed', threshold:7,  action:'Читать →' },
+      { id: 'les8',  icon:'🤝', title:'Урок 8 — Брокеры',         desc:'Проверка и работа с брокерами',   url:'pages/brokers.html',         xp:30, color:'#ef4444', key:'lessonViewed', threshold:8,  action:'Читать →' },
+      { id: 'les9',  icon:'📄', title:'Урок 9 — Документы',       desc:'Rate Con, BOL, POD, Invoice',     url:'pages/docs.html',            xp:30, color:'#a78bfa', key:'lessonViewed', threshold:9,  action:'Читать →' },
+      { id: 'les10', icon:'⚖️', title:'Урок 10 — Законы',         desc:'FMCSA, HOS, ELD, CSA',            url:'pages/regulations.html',     xp:30, color:'#fbbf24', key:'lessonViewed', threshold:10, action:'Читать →' },
+      { id: 'les11', icon:'💻', title:'Урок 11 — TMS',            desc:'Технологии и софт',               url:'pages/technology.html',      xp:30, color:'#34d399', key:'lessonViewed', threshold:11, action:'Читать →' },
+      { id: 'les12', icon:'📞', title:'Урок 12 — Коммуникация',   desc:'Общение с водителями и брокерами',url:'pages/communication.html',   xp:30, color:'#f472b6', key:'lessonViewed', threshold:12, action:'Читать →' },
+      { id: 'les13', icon:'⚠️', title:'Урок 13 — Проблемы',       desc:'Решение нештатных ситуаций',      url:'pages/problems.html',        xp:30, color:'#fb923c', key:'lessonViewed', threshold:13, action:'Читать →' },
+      { id: 'les14', icon:'💰', title:'Урок 14 — Финансы',        desc:'Расчёты, факторинг, оплата',      url:'pages/finances.html',        xp:30, color:'#4ade80', key:'lessonViewed', threshold:14, action:'Читать →' },
+      { id: 'les15', icon:'🚀', title:'Урок 15 — Карьера',        desc:'Запуск карьеры диспетчера',       url:'pages/career.html',          xp:30, color:'#818cf8', key:'lessonViewed', threshold:15, action:'Читать →' },
+      // Модули — самые ценные (50 XP каждый)
+      { id: 'mod1',  icon:'🏭', title:'Модуль 1 — Индустрия',    desc:'Основы грузоперевозок США',      url:'pages/doc-module-1-complete.html',  xp:50, color:'#6366f1', key:'moduleComplete', threshold:1,  action:'Начать →' },
+      { id: 'mod2',  icon:'📘', title:'Модуль 2 — Термины',      desc:'75+ профессиональных терминов',  url:'pages/doc-module-2-complete.html',  xp:50, color:'#6366f1', key:'moduleComplete', threshold:2,  action:'Изучить →' },
+      { id: 'mod3',  icon:'🧑‍💼', title:'Модуль 3 — Диспетчер',   desc:'Роль и обязанности диспетчера', url:'pages/doc-module-3-complete.html',  xp:50, color:'#6366f1', key:'moduleComplete', threshold:3,  action:'Изучить →' },
+      { id: 'mod4',  icon:'🔍', title:'Модуль 4 — Load Boards',  desc:'DAT, Truckstop, поиск грузов',   url:'pages/doc-module-4-complete.html',  xp:50, color:'#6366f1', key:'moduleComplete', threshold:4,  action:'Изучить →' },
+      { id: 'mod5',  icon:'🗺️', title:'Модуль 5 — Маршруты',     desc:'48 штатов, Interstate коридоры', url:'pages/doc-module-5-complete.html',  xp:50, color:'#6366f1', key:'moduleComplete', threshold:5,  action:'Изучить →' },
+      { id: 'mod6',  icon:'🚛', title:'Модуль 6 — Оборудование', desc:'Dry Van, Reefer, Flatbed',       url:'pages/doc-module-6-complete.html',  xp:50, color:'#6366f1', key:'moduleComplete', threshold:6,  action:'Изучить →' },
+      { id: 'mod7',  icon:'💬', title:'Модуль 7 — Переговоры',   desc:'10 техник + скрипты на англ.',  url:'pages/doc-module-7-complete.html',  xp:50, color:'#6366f1', key:'moduleComplete', threshold:7,  action:'Изучить →' },
+      { id: 'mod8',  icon:'🤝', title:'Модуль 8 — Брокеры',      desc:'Проверка, работа, факторинг',   url:'pages/doc-module-8-complete.html',  xp:50, color:'#6366f1', key:'moduleComplete', threshold:8,  action:'Изучить →' },
+      { id: 'mod9',  icon:'📊', title:'Модуль 9 — CSA Scores',   desc:'HOS, ELD, безопасность',        url:'pages/doc-module-9-complete.html',  xp:50, color:'#6366f1', key:'moduleComplete', threshold:9,  action:'Изучить →' },
+      { id: 'mod10', icon:'📦', title:'Модуль 10 — Грузы',       desc:'Типы грузов, особенности',      url:'pages/doc-module-10-complete.html', xp:50, color:'#6366f1', key:'moduleComplete', threshold:10, action:'Изучить →' },
+      { id: 'mod11', icon:'⚠️', title:'Модуль 11 — Проблемы',    desc:'Решение нештатных ситуаций',    url:'pages/doc-module-11-complete.html', xp:50, color:'#6366f1', key:'moduleComplete', threshold:11, action:'Изучить →' },
+      { id: 'mod12', icon:'🚀', title:'Модуль 12 — Карьера',     desc:'90-дневный план запуска',       url:'pages/doc-module-12-complete.html', xp:50, color:'#6366f1', key:'moduleComplete', threshold:12, action:'Изучить →' },
+      // Инструменты
+      { id: 'sim',   icon:'🎯', title:'Симулятор',               desc:'Реальные переговоры с брокером', url:'pages/simulator.html',              xp:25, color:'#10b981', key:'simulatorDone',  threshold:1,  action:'Запустить →' },
+      { id: 'test',  icon:'✍️', title:'Тестирование',            desc:'Проверь свои знания',            url:'pages/testing.html',                xp:30, color:'#f59e0b', key:'testPassed',     threshold:1,  action:'Пройти тест →' },
+      { id: 'cases', icon:'💼', title:'Кейсы',                   desc:'Реальные ситуации диспетчера',   url:'pages/cases.html',                  xp:8,  color:'#ec4899', key:'caseStudyRead',  threshold:1,  action:'Читать →' },
+      { id: 'gloss', icon:'📘', title:'Глоссарий',               desc:'75+ терминов с объяснениями',    url:'pages/glossary.html',               xp:3,  color:'#06b6d4', key:'glossaryViewed', threshold:1,  action:'Открыть →' },
+      { id: 'ai',    icon:'🤖', title:'AI Брокер',               desc:'Практика переговоров с AI',      url:'pages/ai-broker-chat.html',         xp:10, color:'#8b5cf6', key:'aiBrokerUsed',   threshold:1,  action:'Попробовать →' },
+      { id: 'cards', icon:'🃏', title:'Карточки',                desc:'Флэш-карточки для запоминания',  url:'pages/dispatcher-cards.html',       xp:5,  color:'#f97316', key:'audioListened',  threshold:1,  action:'Тренировать →' },
+      { id: 'stats', icon:'📊', title:'Статистика',              desc:'Аналитика по всем студентам',    url:'pages/users-stats.html',            xp:0,  color:'#14b8a6', key:'statsViewed',    threshold:0,  action:'Смотреть →' },
+    ];
+
+    function renderRecommendCards(stats, streak, xp) {
+      const grid = document.getElementById('recommendCards');
+      if (!grid) return;
+
+      // Определяем что НЕ сделано
+      const notDone = ALL_RESOURCES.filter(r => {
+        const done = stats[r.key] || 0;
+        return done < r.threshold;
+      });
+
+      // Рандомизируем (стабильно в течение сессии)
+      const seed = Date.now() % 86400000; // меняется раз в день
+      const shuffled = [...notDone].sort((a, b) => {
+        const ha = (seed * 31 + a.id.charCodeAt(0) * 17 + a.id.length * 7) % 1000;
+        const hb = (seed * 31 + b.id.charCodeAt(0) * 17 + b.id.length * 7) % 1000;
+        return ha - hb;
+      });
+
+      // Берём топ-6 рандомных незавершённых
+      const top = shuffled.slice(0, 6);
+
+      if (top.length === 0) {
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:20px;color:#6ee7b7;font-weight:700;">🎉 Отлично! Вы изучили все основные ресурсы!</div>`;
+        return;
+      }
+
+      grid.innerHTML = top.map(r => `
+        <a href="${r.url}" class="rec-card" style="border-bottom-color:${r.color}40;--rc:${r.color};">
+          <div class="rec-card-top">
+            <span class="rec-card-icon">${r.icon}</span>
+            <span class="rec-card-xp" style="background:${r.color}20;color:${r.color};border:1px solid ${r.color}40;">+${r.xp} XP</span>
+          </div>
+          <div class="rec-card-title">${r.title}</div>
+          <div class="rec-card-desc">${r.desc}</div>
+          <div class="rec-card-action" style="color:${r.color};">${r.action}</div>
+        </a>
+      `).join('');
+
+      // Hover эффект с цветом
+      grid.querySelectorAll('.rec-card').forEach((card, i) => {
+        const color = top[i]?.color || '#6366f1';
+        card.addEventListener('mouseenter', () => {
+          card.style.borderColor = color + '60';
+          card.style.boxShadow = `0 10px 30px ${color}25`;
+        });
+        card.addEventListener('mouseleave', () => {
+          card.style.borderColor = 'rgba(255,255,255,0.08)';
+          card.style.borderBottomColor = color + '40';
+          card.style.boxShadow = '';
+        });
+      });
+    }
+
+    // ===== ВСЕ АЧИВКИ =====
+    // ===== ВСЕ АЧИВКИ (60+) =====
+    // rarity: common | rare | epic | legendary
+    const ALL_ACHIEVEMENTS = [
+
+      // ── ПЕРВЫЕ ШАГИ ──────────────────────────────────────────
+      { id: 'first_login',    icon: '🌅', name: 'Первый шаг',        desc: 'Первый вход в систему',              rarity:'common',    cat:'🚀 Старт',       check: (xp,s,str) => xp >= 0 },
+      { id: 'profile_done',   icon: '👤', name: 'Личность',           desc: 'Заполнить профиль',                  rarity:'common',    cat:'🚀 Старт',       check: (xp,s) => (s.profileComplete||0) >= 1 },
+      { id: 'first_module',   icon: '📖', name: 'Первый модуль',      desc: 'Открыть первый модуль',              rarity:'common',    cat:'🚀 Старт',       check: (xp,s) => (s.moduleComplete||0) >= 1 },
+      { id: 'first_quiz',     icon: '✅', name: 'Первый ответ',       desc: 'Ответить правильно 1 раз',           rarity:'common',    cat:'🚀 Старт',       check: (xp,s) => (s.quizCorrect||0) >= 1 },
+      { id: 'first_audio',    icon: '🎧', name: 'Слушатель',          desc: 'Прослушать первое аудио',            rarity:'common',    cat:'🚀 Старт',       check: (xp,s) => (s.audioListened||0) >= 1 },
+      { id: 'first_case',     icon: '💼', name: 'Аналитик',           desc: 'Изучить первый кейс',                rarity:'common',    cat:'🚀 Старт',       check: (xp,s) => (s.caseStudyRead||0) >= 1 },
+      { id: 'first_sim',      icon: '🎮', name: 'В симулятор!',       desc: 'Запустить симулятор впервые',        rarity:'common',    cat:'🚀 Старт',       check: (xp,s) => (s.simulatorDone||0) >= 1 },
+      { id: 'first_test',     icon: '✍️', name: 'Тест сдан',          desc: 'Пройти первый тест',                 rarity:'common',    cat:'🚀 Старт',       check: (xp,s) => (s.testPassed||0) >= 1 },
+      { id: 'glossary_open',  icon: '📘', name: 'Словарник',          desc: 'Открыть глоссарий',                  rarity:'common',    cat:'🚀 Старт',       check: (xp,s) => (s.glossaryViewed||0) >= 1 },
+      { id: 'ai_first',       icon: '🤖', name: 'AI Помощник',        desc: 'Поговорить с AI Брокером',           rarity:'common',    cat:'🚀 Старт',       check: (xp,s) => (s.aiBrokerUsed||0) >= 1 },
+
+      // ── СЕРИИ ВХОДОВ ─────────────────────────────────────────
+      { id: 'streak_3',       icon: '🔥', name: '3 дня подряд',       desc: 'Серия входов 3 дня',                 rarity:'common',    cat:'🔥 Серии',       check: (xp,s,str) => str >= 3 },
+      { id: 'streak_7',       icon: '💥', name: 'Неделя!',            desc: 'Серия входов 7 дней',                rarity:'rare',      cat:'🔥 Серии',       check: (xp,s,str) => str >= 7 },
+      { id: 'streak_14',      icon: '🌊', name: 'Две недели',         desc: 'Серия входов 14 дней',               rarity:'rare',      cat:'🔥 Серии',       check: (xp,s,str) => str >= 14 },
+      { id: 'streak_30',      icon: '🌟', name: 'Месяц!',             desc: 'Серия входов 30 дней',               rarity:'epic',      cat:'🔥 Серии',       check: (xp,s,str) => str >= 30 },
+      { id: 'streak_60',      icon: '💫', name: 'Два месяца',         desc: 'Серия входов 60 дней',               rarity:'epic',      cat:'🔥 Серии',       check: (xp,s,str) => str >= 60 },
+      { id: 'streak_100',     icon: '👑', name: '100 дней!',          desc: 'Серия входов 100 дней',              rarity:'legendary', cat:'🔥 Серии',       check: (xp,s,str) => str >= 100 },
+
+      // ── XP ПРОГРЕСС ──────────────────────────────────────────
+      { id: 'xp_50',          icon: '⚡', name: 'Первые 50 XP',       desc: 'Набрать 50 XP',                      rarity:'common',    cat:'⚡ XP',          check: (xp) => xp >= 50 },
+      { id: 'xp_150',         icon: '🚀', name: '150 XP',             desc: 'Набрать 150 XP',                     rarity:'common',    cat:'⚡ XP',          check: (xp) => xp >= 150 },
+      { id: 'xp_300',         icon: '💎', name: '300 XP',             desc: 'Набрать 300 XP',                     rarity:'rare',      cat:'⚡ XP',          check: (xp) => xp >= 300 },
+      { id: 'xp_500',         icon: '🏅', name: '500 XP',             desc: 'Набрать 500 XP',                     rarity:'rare',      cat:'⚡ XP',          check: (xp) => xp >= 500 },
+      { id: 'xp_800',         icon: '🥇', name: '800 XP',             desc: 'Набрать 800 XP',                     rarity:'epic',      cat:'⚡ XP',          check: (xp) => xp >= 800 },
+      { id: 'xp_1000',        icon: '🏆', name: '1000 XP',            desc: 'Набрать 1000 XP',                    rarity:'epic',      cat:'⚡ XP',          check: (xp) => xp >= 1000 },
+      { id: 'xp_2000',        icon: '💠', name: '2000 XP',            desc: 'Набрать 2000 XP',                    rarity:'legendary', cat:'⚡ XP',          check: (xp) => xp >= 2000 },
+      { id: 'xp_5000',        icon: '🌌', name: 'Легенда',            desc: 'Набрать 5000 XP',                    rarity:'legendary', cat:'⚡ XP',          check: (xp) => xp >= 5000 },
+
+      // ── КВИЗЫ ────────────────────────────────────────────────
+      { id: 'quiz_5',         icon: '✅', name: '5 правильных',       desc: '5 правильных ответов',               rarity:'common',    cat:'📝 Квизы',       check: (xp,s) => (s.quizCorrect||0) >= 5 },
+      { id: 'quiz_10',        icon: '🎯', name: '10 правильных',      desc: '10 правильных ответов',              rarity:'common',    cat:'📝 Квизы',       check: (xp,s) => (s.quizCorrect||0) >= 10 },
+      { id: 'quiz_25',        icon: '🧩', name: '25 правильных',      desc: '25 правильных ответов',              rarity:'rare',      cat:'📝 Квизы',       check: (xp,s) => (s.quizCorrect||0) >= 25 },
+      { id: 'quiz_50',        icon: '🧠', name: 'Знаток',             desc: '50 правильных ответов',              rarity:'rare',      cat:'📝 Квизы',       check: (xp,s) => (s.quizCorrect||0) >= 50 },
+      { id: 'quiz_100',       icon: '📚', name: 'Эрудит',             desc: '100 правильных ответов',             rarity:'epic',      cat:'📝 Квизы',       check: (xp,s) => (s.quizCorrect||0) >= 100 },
+      { id: 'quiz_250',       icon: '🔮', name: 'Оракул',             desc: '250 правильных ответов',             rarity:'legendary', cat:'📝 Квизы',       check: (xp,s) => (s.quizCorrect||0) >= 250 },
+      { id: 'quiz_complete1', icon: '📝', name: 'Квиз пройден',       desc: 'Завершить первый квиз',              rarity:'common',    cat:'📝 Квизы',       check: (xp,s) => (s.quizComplete||0) >= 1 },
+      { id: 'quiz_complete5', icon: '📋', name: '5 квизов',           desc: 'Завершить 5 квизов',                 rarity:'rare',      cat:'📝 Квизы',       check: (xp,s) => (s.quizComplete||0) >= 5 },
+      { id: 'quiz_complete10',icon: '📊', name: '10 квизов',          desc: 'Завершить 10 квизов',                rarity:'epic',      cat:'📝 Квизы',       check: (xp,s) => (s.quizComplete||0) >= 10 },
+
+      // ── МОДУЛИ ───────────────────────────────────────────────
+      { id: 'module_3',       icon: '📚', name: 'Три модуля',         desc: 'Завершить 3 модуля',                 rarity:'common',    cat:'📚 Модули',      check: (xp,s) => (s.moduleComplete||0) >= 3 },
+      { id: 'module_5',       icon: '📗', name: 'Пять модулей',       desc: 'Завершить 5 модулей',                rarity:'rare',      cat:'📚 Модули',      check: (xp,s) => (s.moduleComplete||0) >= 5 },
+      { id: 'module_8',       icon: '📙', name: 'Восемь модулей',     desc: 'Завершить 8 модулей',                rarity:'epic',      cat:'📚 Модули',      check: (xp,s) => (s.moduleComplete||0) >= 8 },
+      { id: 'module_12',      icon: '📚', name: 'Все модули!',        desc: 'Завершить все 12 модулей',           rarity:'legendary', cat:'📚 Модули',      check: (xp,s) => (s.moduleComplete||0) >= 12 },
+
+      // ── АУДИО ────────────────────────────────────────────────
+      { id: 'audio_5',        icon: '🎵', name: 'Меломан',            desc: 'Прослушать 5 аудио',                 rarity:'common',    cat:'🎧 Аудио',       check: (xp,s) => (s.audioListened||0) >= 5 },
+      { id: 'audio_10',       icon: '🎶', name: 'Аудиофил',           desc: 'Прослушать 10 аудио',                rarity:'rare',      cat:'🎧 Аудио',       check: (xp,s) => (s.audioListened||0) >= 10 },
+      { id: 'audio_30',       icon: '🎼', name: 'Маэстро',            desc: 'Прослушать 30 аудио',                rarity:'epic',      cat:'🎧 Аудио',       check: (xp,s) => (s.audioListened||0) >= 30 },
+
+      // ── СИМУЛЯТОР ────────────────────────────────────────────
+      { id: 'sim_3',          icon: '🕹️', name: 'Геймер',             desc: 'Пройти симулятор 3 раза',            rarity:'rare',      cat:'🎯 Симулятор',   check: (xp,s) => (s.simulatorDone||0) >= 3 },
+      { id: 'sim_5',          icon: '🎮', name: 'Про-геймер',         desc: 'Пройти симулятор 5 раз',             rarity:'rare',      cat:'🎯 Симулятор',   check: (xp,s) => (s.simulatorDone||0) >= 5 },
+      { id: 'sim_10',         icon: '🏆', name: 'Чемпион',            desc: 'Пройти симулятор 10 раз',            rarity:'epic',      cat:'🎯 Симулятор',   check: (xp,s) => (s.simulatorDone||0) >= 10 },
+
+      // ── ТЕСТЫ ────────────────────────────────────────────────
+      { id: 'test_3',         icon: '📋', name: 'Отличник',           desc: 'Пройти 3 теста',                     rarity:'rare',      cat:'✍️ Тесты',        check: (xp,s) => (s.testPassed||0) >= 3 },
+      { id: 'test_5',         icon: '🥇', name: 'Медалист',           desc: 'Пройти 5 тестов',                    rarity:'epic',      cat:'✍️ Тесты',        check: (xp,s) => (s.testPassed||0) >= 5 },
+
+      // ── КЕЙСЫ ────────────────────────────────────────────────
+      { id: 'case_3',         icon: '🗂️', name: 'Кейс-мастер',        desc: 'Изучить 3 кейса',                    rarity:'rare',      cat:'💼 Кейсы',       check: (xp,s) => (s.caseStudyRead||0) >= 3 },
+      { id: 'case_10',        icon: '🔬', name: 'Исследователь',      desc: 'Изучить 10 кейсов',                  rarity:'epic',      cat:'💼 Кейсы',       check: (xp,s) => (s.caseStudyRead||0) >= 10 },
+
+      // ── ИНСТРУМЕНТЫ ──────────────────────────────────────────
+      { id: 'ai_5',           icon: '🤖', name: 'AI Мастер',          desc: 'Использовать AI Брокер 5 раз',       rarity:'rare',      cat:'🛠️ Инструменты', check: (xp,s) => (s.aiBrokerUsed||0) >= 5 },
+      { id: 'ai_20',          icon: '🧬', name: 'AI Эксперт',         desc: 'Использовать AI Брокер 20 раз',      rarity:'epic',      cat:'🛠️ Инструменты', check: (xp,s) => (s.aiBrokerUsed||0) >= 20 },
+      { id: 'loadboard_5',    icon: '🔍', name: 'Охотник за грузами', desc: 'Открыть Load Board 5 раз',           rarity:'rare',      cat:'🛠️ Инструменты', check: (xp,s) => (s.loadboardUsed||0) >= 5 },
+      { id: 'glossary_5',     icon: '📖', name: 'Лингвист',           desc: 'Открыть глоссарий 5 раз',            rarity:'rare',      cat:'🛠️ Инструменты', check: (xp,s) => (s.glossaryViewed||0) >= 5 },
+
+      // ── УРОВНИ ───────────────────────────────────────────────
+      { id: 'level_2',        icon: '📡', name: 'Оператор',            desc: 'Достичь уровня Оператор (50 XP)',    rarity:'common',    cat:'🏅 Уровни',      check: (xp) => xp >= 50 },
+      { id: 'level_3',        icon: '🗺️', name: 'Навигатор',           desc: 'Достичь уровня Навигатор (150 XP)',  rarity:'rare',      cat:'🏅 Уровни',      check: (xp) => xp >= 150 },
+      { id: 'level_4',        icon: '🚛', name: 'Дальнобой',           desc: 'Достичь уровня Дальнобой',           rarity:'rare',      cat:'🏅 Уровни',      check: (xp) => xp >= 300 },
+      { id: 'level_5',        icon: '📋', name: 'Диспетчер',           desc: 'Достичь уровня Диспетчер',           rarity:'epic',      cat:'🏅 Уровни',      check: (xp) => xp >= 500 },
+      { id: 'level_6',        icon: '⚡', name: 'Координатор',         desc: 'Достичь уровня Координатор',         rarity:'epic',      cat:'🏅 Уровни',      check: (xp) => xp >= 800 },
+      { id: 'level_7',        icon: '🎯', name: 'Логист',              desc: 'Достичь уровня Логист',              rarity:'legendary', cat:'🏅 Уровни',      check: (xp) => xp >= 1200 },
+      { id: 'level_8',        icon: '💎', name: 'Наставник',           desc: 'Достичь уровня Наставник',           rarity:'legendary', cat:'🏅 Уровни',      check: (xp) => xp >= 1800 },
+
+      // ── КОМБО ────────────────────────────────────────────────
+      { id: 'combo_learner',  icon: '🌈', name: 'Всесторонний',       desc: 'Квиз + Аудио + Кейс в один день',   rarity:'epic',      cat:'🌟 Комбо',       check: (xp,s) => (s.quizCorrect||0)>=1 && (s.audioListened||0)>=1 && (s.caseStudyRead||0)>=1 },
+      { id: 'combo_tools',    icon: '🛠️', name: 'Мастер инструментов',desc: 'Симулятор + Тест + AI Брокер',       rarity:'epic',      cat:'🌟 Комбо',       check: (xp,s) => (s.simulatorDone||0)>=1 && (s.testPassed||0)>=1 && (s.aiBrokerUsed||0)>=1 },
+      { id: 'combo_all',      icon: '💯', name: 'Полный пакет',       desc: 'Использовать все инструменты',       rarity:'legendary', cat:'🌟 Комбо',       check: (xp,s) => (s.simulatorDone||0)>=1 && (s.testPassed||0)>=1 && (s.aiBrokerUsed||0)>=1 && (s.caseStudyRead||0)>=1 && (s.glossaryViewed||0)>=1 },
+      { id: 'combo_grind',    icon: '⚙️', name: 'Трудяга',            desc: '10 квизов + 5 аудио + 2 модуля',    rarity:'epic',      cat:'🌟 Комбо',       check: (xp,s) => (s.quizCorrect||0)>=10 && (s.audioListened||0)>=5 && (s.moduleComplete||0)>=2 },
+
+      // ── СЕКТОРЫ ──────────────────────────────────────────────
+      { id: 'sector_5',       icon: '📄', name: 'Читатель',           desc: 'Прочитать 5 секторов',               rarity:'common',    cat:'📖 Секторы',     check: (xp,s) => (s.sectorComplete||0) >= 5 },
+      { id: 'sector_20',      icon: '📰', name: 'Книгочей',           desc: 'Прочитать 20 секторов',              rarity:'rare',      cat:'📖 Секторы',     check: (xp,s) => (s.sectorComplete||0) >= 20 },
+      { id: 'sector_50',      icon: '📜', name: 'Архивариус',         desc: 'Прочитать 50 секторов',              rarity:'epic',      cat:'📖 Секторы',     check: (xp,s) => (s.sectorComplete||0) >= 50 },
+    ];
+
+    function getUnlockedAchievements(xp, stats, streak) {
+      return ALL_ACHIEVEMENTS.filter(a => a.check(xp, stats, streak));
+    }
+
+    function renderAchievements(xp, stats, streak) {
+      const grid = document.getElementById('achievementsGrid');
+      const block = document.getElementById('achievementsBlock');
+      const countEl = document.getElementById('achieveCount');
+      if (!grid) return;
+
+      const unlocked = getUnlockedAchievements(xp, stats, streak);
+      const prevUnlocked = JSON.parse(localStorage.getItem('unlocked_achievements') || '[]');
+      const newlyUnlocked = unlocked.map(a => a.id).filter(id => !prevUnlocked.includes(id));
+      localStorage.setItem('unlocked_achievements', JSON.stringify(unlocked.map(a => a.id)));
+      window._unlockedIds = new Set(unlocked.map(a => a.id));
+      window._newlyUnlocked = new Set(newlyUnlocked);
+      window._allAchievements = ALL_ACHIEVEMENTS;
+
+      block.style.display = 'block';
+
+      // Цвета редкости
+      const RARITY = {
+        common:    { color: '#94a3b8', bg: 'rgba(148,163,184,0.1)',  border: 'rgba(148,163,184,0.25)', label: 'Обычная' },
+        rare:      { color: '#60a5fa', bg: 'rgba(96,165,250,0.1)',   border: 'rgba(96,165,250,0.3)',   label: 'Редкая' },
+        epic:      { color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.35)', label: 'Эпическая' },
+        legendary: { color: '#fbbf24', bg: 'rgba(251,191,36,0.12)',  border: 'rgba(251,191,36,0.4)',   label: '✨ Легендарная' },
+      };
+      window._RARITY = RARITY;
+
+      // Заголовок блока на главной
+      if (!block.querySelector('.achieve-header')) {
+        const hdr = document.createElement('div');
+        hdr.className = 'achieve-header';
+        hdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;';
+        hdr.innerHTML = `
+          <div style="display:flex;align-items:center;gap:12px;">
+            <h3 style="font-size:18px;font-weight:700;">🏅 Мои ачивки</h3>
+            <span id="achieveCount" style="font-size:13px;color:#94a3b8;"></span>
+          </div>`;
+        block.insertBefore(hdr, grid);
+      }
+
+      const countElReal = document.getElementById('achieveCount');
+      if (countElReal) countElReal.textContent = `${unlocked.length} / ${ALL_ACHIEVEMENTS.length}`;
+
+      // Показываем первые 18 на главной
+      const preview = ALL_ACHIEVEMENTS.slice(0, 18);
+      grid.innerHTML = preview.map(a => buildAchieveCard(a, RARITY)).join('');
+
+      // Кнопка "Показать все" если ачивок больше 18
+      const showAllBtn = document.getElementById('showAllAchievesBtn');
+      if (showAllBtn && ALL_ACHIEVEMENTS.length > 18) {
+        showAllBtn.style.display = 'inline-block';
+        showAllBtn.textContent = `🏅 Показать все ${ALL_ACHIEVEMENTS.length} ачивок →`;
+      }
+
+      // Рендерим вкладку ачивок
+      renderAllAchievements();
+
+      // Тосты для новых ачивок
+      newlyUnlocked.forEach((id, i) => {
+        const a = ALL_ACHIEVEMENTS.find(x => x.id === id);
+        if (a) setTimeout(() => showAchieveToast(a), i * 1200);
+      });
+    }
+
+    function buildAchieveCard(a, RARITY) {
+      const isUnlocked = (window._unlockedIds || new Set()).has(a.id);
+      const isNew = (window._newlyUnlocked || new Set()).has(a.id);
+      const rar = RARITY[a.rarity] || RARITY.common;
+      return `<div class="achieve-card ${isUnlocked ? 'unlocked' : 'locked'}" title="${a.desc}" style="${isUnlocked ? `border-color:${rar.border};background:${rar.bg};` : ''}">
+        ${isNew ? '<span class="achieve-new-badge">NEW</span>' : ''}
+        <div class="achieve-icon">${a.icon}</div>
+        <div class="achieve-name">${a.name}</div>
+        <div class="achieve-desc">${a.desc}</div>
+        ${isUnlocked
+          ? `<span class="achieve-xp-badge" style="color:${rar.color};border-color:${rar.border};background:${rar.bg};">✓ ${rar.label}</span>`
+          : `<span class="achieve-xp-badge" style="color:#334155;border-color:rgba(255,255,255,0.05);background:transparent;">🔒 ${rar.label}</span>`}
+      </div>`;
+    }
+
+    function renderAllAchievements(filterCat) {
+      const container = document.getElementById('allAchievementsContainer');
+      if (!container) return;
+      const RARITY = window._RARITY || {
+        common:    { color: '#94a3b8', bg: 'rgba(148,163,184,0.1)',  border: 'rgba(148,163,184,0.25)', label: 'Обычная' },
+        rare:      { color: '#60a5fa', bg: 'rgba(96,165,250,0.1)',   border: 'rgba(96,165,250,0.3)',   label: 'Редкая' },
+        epic:      { color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.35)', label: 'Эпическая' },
+        legendary: { color: '#fbbf24', bg: 'rgba(251,191,36,0.12)',  border: 'rgba(251,191,36,0.4)',   label: '✨ Легендарная' },
+      };
+
+      const cats = [...new Set(ALL_ACHIEVEMENTS.map(a => a.cat))];
+      const unlocked = window._unlockedIds || new Set();
+      const list = filterCat ? ALL_ACHIEVEMENTS.filter(a => a.cat === filterCat) : ALL_ACHIEVEMENTS;
+
+      container.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h3 style="font-size:20px;font-weight:700;">🏅 Все ачивки</h3>
+            <p style="font-size:13px;color:#64748b;margin-top:4px;">${unlocked.size} из ${ALL_ACHIEVEMENTS.length} разблокировано</p>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;" id="allAchCatFilter">
+            <button onclick="renderAllAchievements('')" style="padding:5px 14px;border-radius:20px;border:1px solid rgba(99,102,241,0.5);background:rgba(99,102,241,0.2);color:#a5b4fc;font-size:11px;font-weight:700;cursor:pointer;">Все</button>
+            ${cats.map(c => `<button onclick="renderAllAchievements('${c}')" style="padding:5px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#64748b;font-size:11px;font-weight:600;cursor:pointer;">${c}</button>`).join('')}
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;">
+          ${list.map(a => buildAchieveCard(a, RARITY)).join('')}
+        </div>`;
+    }
+    window.renderAllAchievements = renderAllAchievements;
+
+    function showAchieveToast(achieve) {
+      const old = document.getElementById('achieve-toast');
+      if (old) old.remove();
+      const t = document.createElement('div');
+      t.id = 'achieve-toast';
+      t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;
+        background:linear-gradient(135deg,#1e1b4b,#0f172a);
+        border:1px solid rgba(139,92,246,0.5);border-radius:16px;padding:14px 18px;
+        display:flex;align-items:center;gap:12px;
+        box-shadow:0 8px 32px rgba(139,92,246,0.3);min-width:240px;
+        animation:achievePopIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;`;
+      t.innerHTML = `
+        <div style="font-size:32px;line-height:1">${achieve.icon}</div>
+        <div>
+          <div style="color:#fbbf24;font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:2px;">🏅 Новая ачивка!</div>
+          <div style="color:#f1f5f9;font-weight:700;font-size:14px">${achieve.name}</div>
+          <div style="color:#94a3b8;font-size:12px">${achieve.desc}</div>
+        </div>`;
+      document.body.appendChild(t);
+      setTimeout(() => { t.style.animation = 'xpSlideOut 0.4s ease forwards'; setTimeout(() => t.remove(), 400); }, 4000);
+    }
+
+    function renderXPBlock(data, uid) {
+      const xp = data.xp || 0;
+      const level = getLevelByXP(xp);
+      const next = getNextLevel(xp);
+      const streak = data.loginStreak || 0;
+      const stats = data.stats || {};
+
+      document.getElementById('xpBlock').style.display = 'flex';
+      document.getElementById('xpLevelIcon').textContent = level.label.split(' ')[0];
+      document.getElementById('xpLevelLabel').textContent = level.label.replace(/^\S+\s/, '');
+
+      // Обновляем welcome subtitle с уровнем
+      const subtitleEl = document.getElementById('welcomeSubtitle');
+      if (subtitleEl) subtitleEl.textContent = `Уровень: ${level.label} · ${xp} XP · Продолжайте обучение!`;
+
+      // Показываем пробный период если есть
+      try {
+        const u = JSON.parse(localStorage.getItem('user') || '{}');
+        if (u.trialActive && u.trialEndDate) {
+          const daysLeft = Math.max(0, Math.ceil((new Date(u.trialEndDate) - new Date()) / 86400000));
+          const badge = document.getElementById('trialBadge');
+          if (badge && daysLeft > 0) { badge.style.display = 'inline-block'; badge.textContent = `⏳ Пробный период: ${daysLeft} дн.`; }
+        }
+      } catch(e) {}
+
+      document.getElementById('xpLevelNum').textContent = 'Уровень ' + level.level;
+      document.getElementById('xpTotal').textContent = xp;
+      document.getElementById('xpStreak').textContent = streak;
+      document.getElementById('xpQuizzes').textContent = stats.quizCorrect || 0;
+      document.getElementById('xpModules').textContent = stats.moduleComplete || 0;
+      document.getElementById('xpAudio').textContent = stats.audioListened || 0;
+
+      // Обновляем карточку профиля
+      const pm = document.getElementById('profileModules');
+      const px = document.getElementById('profileXP');
+      const ps = document.getElementById('profileStreak');
+      const pl = document.getElementById('profileLevelBadge');
+      if (pm) pm.textContent = stats.moduleComplete || 0;
+      if (px) px.textContent = xp;
+      if (ps) ps.textContent = streak;
+      if (pl) pl.textContent = level.label;
+
+      // Рендерим сетку модулей
+      try { if (typeof window.renderModulesGrid === 'function') window.renderModulesGrid(stats.moduleComplete || 0, stats.lessonsRead || 0); } catch(e) { console.warn('renderModulesGrid error:', e); }
+
+      if (next) {
+        const prevXP = level.minXP;
+        const range = next.minXP - prevXP;
+        const progress = Math.min(100, Math.round(((xp - prevXP) / range) * 100));
+        document.getElementById('xpToNext').textContent = next.minXP - xp;
+        document.getElementById('xpNextLabel').innerHTML = `До уровня <b>${next.label}</b>: <b id="xpToNext">${next.minXP - xp}</b> XP`;
+        document.getElementById('xpBarFill').style.width = progress + '%';
+      } else {
+        document.getElementById('xpNextLabel').textContent = '👑 Максимальный уровень';
+        document.getElementById('xpBarFill').style.width = '100%';
+      }
+
+      // Рендерим ачивки
+      renderAchievements(xp, stats, streak);
+      // Рендерим рекомендации
+      renderRecommendCards(stats, streak, xp);
+    }
+
+    async function loadLeaderboard(currentUid) {
+      const tbody = document.getElementById('leaderboardBody');
+      try {
+        const q = query(collection(db, 'users'), orderBy('xp', 'desc'), limit(20));
+        const snap = await getDocs(q);
+        if (snap.empty) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-muted);">Нет данных</td></tr>';
+          return;
+        }
+        let html = '';
+        let rank = 1;
+        snap.forEach(d => {
+          const u = d.data();
+          const xp = u.xp || 0;
+          const level = getLevelByXP(xp);
+          const name = u.displayName || u.email || 'Пользователь';
+          const streak = u.loginStreak || 0;
+          const isYou = d.id === currentUid;
+          const rankClass = rank === 1 ? 'top1' : rank === 2 ? 'top2' : rank === 3 ? 'top3' : '';
+          const rankIcon = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+          html += `<tr class="${isYou ? 'lb-you' : ''}">
+            <td><span class="lb-rank ${rankClass}">${rankIcon}</span></td>
+            <td><span class="lb-name">${name}${isYou ? ' <span style="color:#818cf8;font-size:11px;">(вы)</span>' : ''}</span></td>
+            <td style="font-size:13px;">${level.label}</td>
+            <td><span class="lb-xp">${xp} XP</span></td>
+            <td style="color:var(--text-secondary);">${streak > 0 ? '🔥 ' + streak : '—'}</td>
+          </tr>`;
+          rank++;
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px;color:#ef4444;">Ошибка загрузки</td></tr>';
+        console.error(e);
+      }
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return;
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        if (snap.exists()) renderXPBlock(snap.data(), user.uid);
+      } catch (e) { console.error('XP load error:', e); }
+
+      // Загружаем лидерборд при открытии вкладки
+      document.querySelectorAll('.tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (btn.textContent.includes('Рейтинг')) loadLeaderboard(user.uid);
+        });
+      });
+    });
+  </script>
+</body>
+
+<!-- Daily Login XP (auto-triggered via xp-system.js onAuthStateChanged) -->
+<script type="module">
+  import "./xp-system.js";
+</script>
+
+<!-- Firebase Auth -->
+<script type="module">
+  import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+  const app = getApps().length ? getApps()[0] : initializeApp({
+    apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
+    authDomain: "dispatch4you-80e0f.firebaseapp.com",
+    projectId: "dispatch4you-80e0f"
+  });
+  const auth = getAuth(app);
+  const SUPER_ADMIN = 'dersire.der@gmail.com';
+
+  onAuthStateChanged(auth, (firebaseUser) => {
+
+    if (firebaseUser) {
+      const parts = (firebaseUser.displayName || '').split(' ');
+      const firstName = parts[0] || firebaseUser.email.split('@')[0];
+      const lastName = parts.slice(1).join(' ') || '';
+      const email = firebaseUser.email;
+
+      // Обновляем UI
+      document.getElementById('userName').textContent = firstName;
+      const pName = document.getElementById('profileName');
+      const pEmail = document.getElementById('profileEmail');
+      const fFirst = document.getElementById('firstName');
+      const fLast = document.getElementById('lastName');
+      const fEmail = document.getElementById('email');
+      if (pName) pName.textContent = (firstName + ' ' + lastName).trim();
+      if (pEmail) pEmail.textContent = email;
+      if (fFirst) fFirst.value = firstName;
+      if (fLast) fLast.value = lastName;
+      if (fEmail) fEmail.value = email;
+
+      // Сохраняем в localStorage — firebase-auth-init.js обновит navbar
+      localStorage.setItem('user', JSON.stringify({ uid: firebaseUser.uid, firstName, lastName, email, photoURL: firebaseUser.photoURL || '' }));
+      if (typeof window.updateAuthUI === 'function') window.updateAuthUI();
+
+      // Кнопка админа — показываем для superuser по роли из Firestore
+      const userRole = localStorage.getItem('user_role');
+      if (email.trim().toLowerCase() === SUPER_ADMIN || userRole === 'superuser') {
+        const btn = document.getElementById('adminPanelBtn');
+        if (btn) btn.style.display = 'inline-block';
+      }
+    } else {
+      // Не авторизован — проверяем localStorage перед редиректом
+      // (Firebase может не работать на localhost/file://)
+      const cachedUser = (() => { try { return JSON.parse(localStorage.getItem('user')); } catch(e) { return null; } })();
+      if (!cachedUser) {
+        localStorage.removeItem('user');
+        window.location.href = 'login.html';
+      }
+      // Если есть кеш — ждём Firebase подтверждения (уже показали данные из кеша)
+    }
+  });
+
+  window.fbSignOut = async () => {
+    await signOut(auth);
+    localStorage.removeItem('user');
+    window.location.href = 'login.html';
+  };
+</script>
+
+<!-- Welcome overlay with countdown -->
+<div id="welcomeOverlay" style="display:none;position:fixed;inset:0;z-index:999999;background:rgba(7,11,20,0.97);backdrop-filter:blur(20px);align-items:center;justify-content:center;flex-direction:column;">
+  <style>
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+    @keyframes ringProgress{from{stroke-dashoffset:220}to{stroke-dashoffset:0}}
+
+    #welcomeOverlay .w-inner{text-align:center;padding:40px 24px;animation:fadeInUp .5s ease both}
+    #welcomeOverlay .w-emoji{font-size:64px;display:block;margin-bottom:20px;animation:fadeInUp .5s ease .1s both}
+    #welcomeOverlay .w-title{font-size:clamp(24px,5vw,36px);font-weight:900;color:#fff;margin-bottom:8px;animation:fadeInUp .5s ease .2s both}
+    #welcomeOverlay .w-sub{font-size:16px;color:#94a3b8;margin-bottom:40px;animation:fadeInUp .5s ease .3s both}
+
+    #welcomeCircleBtn{
+      width:100px;height:100px;border-radius:50%;
+      background:linear-gradient(135deg,#06b6d4,#0ea5e9);
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;border:none;font-family:inherit;
+      position:relative;margin:0 auto 20px;
+      transition:transform .2s,box-shadow .2s;
+      animation:fadeInUp .5s ease .4s both, pulse 2s ease 1s infinite;
+      box-shadow:0 8px 32px rgba(6,182,212,.4);
+    }
+    #welcomeCircleBtn:hover{
+      transform:scale(1.12) !important;
+      box-shadow:0 16px 48px rgba(6,182,212,.6) !important;
+      animation:none !important;
+    }
+    #welcomeCircleBtn:active{transform:scale(1.05) !important}
+
+    #welcomeCircleBtn .ring{
+      position:absolute;inset:-6px;border-radius:50%;
+    }
+    #welcomeCircleBtn .ring circle{
+      fill:none;stroke:rgba(255,255,255,.25);stroke-width:3;
+    }
+    #welcomeCircleBtn .ring .progress{
+      stroke:#fff;stroke-linecap:round;
+      stroke-dasharray:220;stroke-dashoffset:220;
+      transform:rotate(-90deg);transform-origin:50% 50%;
+      transition:stroke-dashoffset 1s linear;
+    }
+    #welcomeCircleBtn .count-num{
+      font-size:40px;font-weight:900;color:#fff;
+      position:relative;z-index:1;line-height:1;
+    }
+
+    #welcomeOverlay .w-hint{
+      font-size:13px;color:#475569;
+      animation:fadeInUp .5s ease .5s both;
+    }
+    #welcomeOverlay .w-hint span{color:#94a3b8}
+  </style>
+
+  <div class="w-inner">
+    <span class="w-emoji">🎉</span>
+    <h1 class="w-title" id="welcomeName">Добро пожаловать!</h1>
+    <p class="w-sub">Вы успешно вошли в систему</p>
+
+    <button id="welcomeCircleBtn" onclick="goHome()" title="Перейти на главную">
+      <svg class="ring" viewBox="0 0 112 112">
+        <circle cx="56" cy="56" r="35"/>
+        <circle class="progress" id="welcomeRing" cx="56" cy="56" r="35"/>
+      </svg>
+      <span class="count-num" id="welcomeCount">3</span>
+    </button>
+
+    <p class="w-hint">Нажмите чтобы перейти сразу · или подождите <span id="welcomeCountText">3</span> сек</p>
+  </div>
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('welcome') !== '1') return;
+
+  var overlay = document.getElementById('welcomeOverlay');
+  overlay.style.display = 'flex';
+
+  // Имя пользователя
+  try {
+    var user = JSON.parse(localStorage.getItem('user') || '{}');
+    var name = user.firstName || '';
+    if (name) document.getElementById('welcomeName').textContent = 'Добро пожаловать, ' + name + '!';
+  } catch(e) {}
+
+  // Прогресс кольца: 220 = полный круг (2πr ≈ 220 при r=35)
+  var total = 3;
+  var count = total;
+  var ring = document.getElementById('welcomeRing');
+  var full = 220;
+
+  // Запускаем анимацию кольца
+  setTimeout(function() {
+    ring.style.strokeDashoffset = '0';
+    ring.style.transition = 'stroke-dashoffset ' + total + 's linear';
+  }, 50);
+
+  var interval = setInterval(function() {
+    count--;
+    document.getElementById('welcomeCount').textContent = count;
+    document.getElementById('welcomeCountText').textContent = count;
+    if (count <= 0) {
+      clearInterval(interval);
+      goHome();
+    }
+  }, 1000);
+
+  window.goHome = function() {
+    clearInterval(interval);
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity .3s ease';
+    setTimeout(function() { window.location.href = 'index.html'; }, 300);
+  };
+})();
+</script>
+
+</body>
+
+</html>

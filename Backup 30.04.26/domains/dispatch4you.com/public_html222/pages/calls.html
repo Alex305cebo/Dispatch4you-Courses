@@ -1,0 +1,2160 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тренировка звонков | Курсы Диспетчера</title>
+<script src="auth-check.js"></script>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0a0e1a;
+  color: #ffffff;
+  line-height: 1.6;
+  padding: 20px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.header h1 {
+  font-size: 42px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header p {
+  font-size: 16px;
+  color: #94a3b8;
+}
+
+.tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.tab {
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+.tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.tab.active {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+  border-color: rgba(99, 102, 241, 0.5);
+  color: #a5b4fc;
+}
+
+.tab.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.tab.disabled:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.05);
+  transform: none;
+}
+
+.content {
+  display: none;
+}
+
+.content.active {
+  display: block;
+}
+
+.scripts-grid {
+  display: grid;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.script-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 32px;
+  transition: all 0.3s ease;
+}
+
+.script-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateY(-2px);
+}
+
+.script-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.script-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.1));
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 12px;
+  font-size: 24px;
+}
+
+.script-title {
+  flex: 1;
+}
+
+.script-title h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.script-title p {
+  font-size: 16px;
+  color: #64748b;
+}
+
+.script-body {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.dialogue {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.message {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.message.dispatcher {
+  flex-direction: row;
+}
+
+.message.other {
+  flex-direction: row-reverse;
+}
+
+.message-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.message.dispatcher .message-avatar {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.message.other .message-avatar {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+
+.message-content {
+  flex: 1;
+  max-width: 70%;
+}
+
+.message-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.message.other .message-label {
+  text-align: right;
+}
+
+.message-bubble {
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 16px;
+  line-height: 1.8;
+  position: relative;
+  padding-right: 90px;
+  white-space: pre-line;
+}
+
+.audio-icon {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  min-width: 70px;
+  height: 32px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2));
+  border: 2px solid rgba(16, 185, 129, 0.4);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 16px;
+  font-weight: 600;
+  color: #d1fae5;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.audio-icon::after {
+  content: 'Play';
+  font-size: 16px;
+  letter-spacing: 0.5px;
+}
+
+.audio-icon:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.3));
+  border-color: rgba(16, 185, 129, 0.6);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.audio-icon.playing {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.4), rgba(5, 150, 105, 0.4));
+  border-color: rgba(16, 185, 129, 0.7);
+  animation: pulse 1.5s infinite;
+}
+
+.audio-icon.playing::after {
+  content: 'Playing';
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.5);
+  }
+}
+
+.message.dispatcher .message-bubble {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #d1fae5;
+  position: relative;
+  padding-right: 90px;
+}
+
+.message.other .message-bubble {
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: #e0e7ff;
+  position: relative;
+  padding-right: 90px;
+}
+
+.tips {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 20px;
+}
+
+.tips h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fbbf24;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tips ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tips li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 16px;
+  color: #fde68a;
+}
+
+.tips li::before {
+  content: '💡';
+  flex-shrink: 0;
+}
+
+.choice-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.choice-btn {
+  padding: 14px 18px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 2px solid rgba(16, 185, 129, 0.3);
+  border-radius: 12px;
+  color: #d1fae5;
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.choice-btn:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.5);
+  transform: translateX(4px);
+}
+
+.choice-btn.correct {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.5);
+  color: #d1fae5;
+  cursor: default;
+}
+
+.choice-btn.incorrect {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #fecaca;
+  cursor: default;
+  opacity: 0.6;
+}
+
+.choice-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.message.fade-in {
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+.audio-player {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.play-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none;
+  color: #ffffff;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.play-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+}
+
+.audio-info {
+  flex: 1;
+}
+
+.audio-info h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.audio-info p {
+  font-size: 16px;
+  color: #94a3b8;
+}
+
+.practice-section {
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 16px;
+  padding: 32px;
+  margin-top: 40px;
+}
+
+.practice-section h2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.practice-section p {
+  font-size: 16px;
+  color: #c4b5fd;
+  margin-bottom: 24px;
+}
+
+.practice-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  border: none;
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.practice-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #94a3b8;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  margin-bottom: 32px;
+  display: inline-flex;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #a5b4fc;
+}
+
+@media (max-width: 768px) {
+  .header h1 {
+    font-size: 32px;
+  }
+  
+  .script-card {
+    padding: 24px;
+  }
+  
+  .message-content {
+    max-width: 85%;
+  }
+  
+  .tabs {
+    flex-direction: column;
+  }
+  
+  .tab {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* Footer */
+.footer {
+  padding: 80px 0 40px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 80px;
+}
+
+.footer .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 60px;
+  margin-bottom: 48px;
+}
+
+@media (max-width: 968px) {
+  .footer-content {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 40px;
+  }
+}
+
+@media (max-width: 568px) {
+  .footer {
+    padding: 40px 0 30px;
+    margin-top: 48px;
+  }
+  
+  .footer-content {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 20px !important;
+  }
+  
+  .footer .container {
+    padding: 0 16px;
+  }
+  
+  .footer-section:first-child {
+    grid-column: 1 / -1;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  
+  .footer-section:first-child h4 {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+  
+  .footer-section:first-child p {
+    font-size: 13px;
+    line-height: 1.5;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  
+  .footer-section {
+    text-align: center;
+  }
+  
+  .footer-section h4 {
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+  
+  .footer-section a {
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+  
+  .footer-section a:hover {
+    transform: translateX(0);
+  }
+  
+  .footer-bottom {
+    font-size: 11px;
+    padding-top: 20px;
+  }
+}
+
+@media (max-width: 400px) {
+  .footer .container {
+    padding: 0 12px;
+  }
+  
+  .footer-content {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+  
+  .footer-section:first-child {
+    margin-bottom: 20px;
+  }
+  
+  .footer-section h4 {
+    font-size: 16px;
+  }
+  
+  .footer-section a {
+    font-size: 13px;
+  }
+}
+}
+
+.footer-section h4 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #f1f5f9;
+}
+
+.footer-section p {
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.footer-section a {
+  display: block;
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.footer-section a:hover {
+  color: #6366f1;
+  transform: translateX(4px);
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: #64748b;
+  font-size: 14px;
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+    <div>
+      <h1>📞 Тренировка звонков</h1>
+      <p>Профессиональная коммуникация с брокерами и водителями</p>
+    </div>
+    <div style="display: flex; gap: 12px; margin-top: 10px;">
+      <a href="../course.html" class="back-btn">← Назад</a>
+      <a href="../index.html" class="back-btn">🏠 Главная</a>
+      <a href="simulator.html" class="back-btn" id="backToSimulator" style="display: none;">← К симулятору</a>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('brokers')">🤝 Звонки брокерам</div>
+    <div class="tab" onclick="switchTab('drivers')">🚛 Звонки водителям</div>
+    <div class="tab disabled" title="В разработке">🎧 Аудио примеры <span style="font-size: 16px; opacity: 0.7;">(В разработке)</span></div>
+  </div>
+
+  <!-- Brokers Tab -->
+  <div id="brokers" class="content active">
+    <div class="scripts-grid">
+      
+      <!-- Interactive Script: Full Call -->
+      <div class="script-card">
+        <div class="script-header">
+          <div class="script-icon">📞</div>
+          <div class="script-title">
+            <h3>Полный звонок брокеру</h3>
+            <p>Интерактивный диалог - от первого контакта до переговоров о ставке</p>
+          </div>
+        </div>
+        
+        <div class="script-body">
+          <div id="dialogue-1" class="dialogue">
+            <!-- Диалог будет генерироваться JavaScript -->
+          </div>
+        </div>
+
+        <div class="tips">
+          <h4>💡 Ключевые моменты</h4>
+          <ul>
+            <li>Всегда представляйтесь и называйте компанию</li>
+            <li>Уточните номер груза для быстрой идентификации</li>
+            <li>Подтвердите наличие подходящего оборудования</li>
+            <li>Обоснуйте свою ставку (расстояние, рынок, расходы)</li>
+            <li>Будьте готовы к компромиссу, но знайте минимум</li>
+            <li>Оставайтесь профессиональными и дружелюбными</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Drivers Tab -->
+  <div id="drivers" class="content">
+    <div class="scripts-grid">
+      
+      <!-- Script 1: Load Assignment - Interactive -->
+      <div class="script-card">
+        <div class="script-header">
+          <div class="script-icon">📦</div>
+          <div class="script-title">
+            <h3>Назначение груза водителю</h3>
+            <p>Интерактивный диалог - передача информации о грузе</p>
+          </div>
+        </div>
+        
+        <div class="script-body">
+          <div id="dialogue-2" class="dialogue">
+            <!-- Диалог будет генерироваться JavaScript -->
+          </div>
+        </div>
+
+        <div class="tips">
+          <h4>💡 Ключевые моменты</h4>
+          <ul>
+            <li>Убедитесь, что водитель готов записывать информацию</li>
+            <li>Передайте полные адреса с контактами отправителя и получателя</li>
+            <li>Уточните точное время погрузки и доставки</li>
+            <li>Подтвердите вес, тип груза и особые требования</li>
+            <li>Сообщите ставку и способ оплаты</li>
+            <li>Убедитесь, что водитель всё понял и готов к отправке</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Script 4: Problem Resolution -->
+      <div class="script-card">
+        <div class="script-header">
+          <div class="script-icon">⚠️</div>
+          <div class="script-title">
+            <h3>Решение проблем в пути</h3>
+            <p>Как реагировать на задержки и проблемы</p>
+          </div>
+        </div>
+        
+        <div class="script-body">
+          <div class="dialogue">
+            <div class="message other">
+              <div class="message-avatar">🚛</div>
+              <div class="message-content">
+                <div class="message-label">Водитель</div>
+                <div class="message-bubble">
+                  Hey, I've got a problem.<br>
+                  The truck broke down near Memphis.<br>
+                  Looks like it's the transmission.
+                  <span class="audio-icon" onclick="playTextAudio('Hey, I\\'ve got a problem. The truck broke down near Memphis. Looks like it\\'s the transmission.', this)">🔊</span>
+                  <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 16px; color: #a5b4fc; font-style: italic;">
+                    У нас возникла проблема. Грузовик вышел из строя рядом с Мемфисом. По-видимому, неисправна коробка передач.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="message dispatcher">
+              <div class="message-avatar">👤</div>
+              <div class="message-content">
+                <div class="message-label">Диспетчер</div>
+                <div class="message-bubble">
+                  Okay, stay calm. Are you in a safe location?<br>
+                  What's your exact location and what does the mechanic say?
+                  <span class="audio-icon" onclick="playTextAudio('Okay, stay calm. Are you in a safe location? What\\'s your exact location and what does the mechanic say?', this)">🔊</span>
+                  <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 16px; color: #d1fae5; font-style: italic;">
+                    Хорошо, сохраняй спокойствие. Ты находишься в безопасном месте? Назови точное местоположение и что говорит механик?
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="message other">
+              <div class="message-avatar">🚛</div>
+              <div class="message-content">
+                <div class="message-label">Водитель</div>
+                <div class="message-bubble">
+                  I'm at a truck stop off I-40, exit 25.<br>
+                  Mechanic says it'll take 6-8 hours to fix.
+                  <span class="audio-icon" onclick="playTextAudio('I\\'m at a truck stop off I-40, exit 25. Mechanic says it\\'ll take 6-8 hours to fix.', this)">🔊</span>
+                  <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 16px; color: #a5b4fc; font-style: italic;">
+                    Я на автостоянке у выезда 25 на I-40. Механик говорит, что ремонт займёт 6-8 часов.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="message dispatcher">
+              <div class="message-avatar">👤</div>
+              <div class="message-content">
+                <div class="message-label">Диспетчер</div>
+                <div class="message-bubble">
+                  Alright, here's the plan:<br>
+                  Get the repair started immediately.<br>
+                  I'll call the broker and receiver to inform them about the delay.<br>
+                  Send me photos of the truck and the repair invoice.<br>
+                  We'll handle this together.
+                  <span class="audio-icon" onclick="playTextAudio('Alright, here\\'s the plan: Get the repair started immediately. I\\'ll call the broker and receiver to inform them about the delay. Send me photos of the truck and the repair invoice. We\\'ll handle this together.', this)">🔊</span>
+                  <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 16px; color: #d1fae5; font-style: italic;">
+                    Понял. Вот план действий: немедленно начни ремонт. Я свяжусь с брокером и получателем, чтобы уведомить их о задержке. Отправь мне фотографии грузовика и счёт-фактуру от механика. Мы решим эту проблему вместе.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="message other">
+              <div class="message-avatar">🚛</div>
+              <div class="message-content">
+                <div class="message-label">Водитель</div>
+                <div class="message-bubble">
+                  Thanks, I appreciate it.<br>
+                  I'll keep you updated every hour.
+                  <span class="audio-icon" onclick="playTextAudio('Thanks, I appreciate it. I\\'ll keep you updated every hour.', this)">🔊</span>
+                  <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 16px; color: #a5b4fc; font-style: italic;">
+                    Спасибо за поддержку. Буду информировать тебя о ходе работ каждый час.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tips">
+          <h4>💡 Действия при проблемах</h4>
+          <ul>
+            <li>Сохраняйте спокойствие и поддерживайте водителя</li>
+            <li>Немедленно информируйте брокера и получателя</li>
+            <li>Документируйте все (фото, чеки, переписка)</li>
+            <li>Предлагайте решения, а не только проблемы</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Audio Examples Tab -->
+  <div id="examples" class="content">
+    <div class="scripts-grid">
+      
+      <div class="script-card">
+        <div class="script-header">
+          <div class="script-icon">🎧</div>
+          <div class="script-title">
+            <h3>Аудио примеры звонков</h3>
+            <p>Слушайте реальные примеры профессиональных звонков</p>
+          </div>
+        </div>
+
+        <div class="audio-player">
+          <button class="play-btn" onclick="alert('Аудио функция будет доступна в следующей версии')">▶</button>
+          <div class="audio-info">
+            <h4>Успешные переговоры с брокером</h4>
+            <p>Пример профессионального звонка с получением хорошей ставки</p>
+          </div>
+        </div>
+
+        <div class="audio-player" style="margin-top: 16px;">
+          <button class="play-btn" onclick="alert('Аудио функция будет доступна в следующей версии')">▶</button>
+          <div class="audio-info">
+            <h4>Назначение груза водителю</h4>
+            <p>Как правильно передать всю информацию о грузе</p>
+          </div>
+        </div>
+
+        <div class="audio-player" style="margin-top: 16px;">
+          <button class="play-btn" onclick="alert('Аудио функция будет доступна в следующей версии')">▶</button>
+          <div class="audio-info">
+            <h4>Решение конфликтной ситуации</h4>
+            <p>Профессиональная работа с недовольным клиентом</p>
+          </div>
+        </div>
+
+        <div class="tips" style="margin-top: 24px;">
+          <h4>💡 Что слушать в записях</h4>
+          <ul>
+            <li>Тон голоса и темп речи</li>
+            <li>Использование профессиональной терминологии</li>
+            <li>Техники убеждения и переговоров</li>
+            <li>Как задаются вопросы и уточнения</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Practice Section -->
+  <div class="practice-section">
+    <h2>🎯 Практика</h2>
+    <p>Готовы попробовать? Запишите свой звонок и проанализируйте его или попрактикуйтесь с коллегой в ролевой игре.</p>
+    <button class="practice-btn" onclick="alert('Функция записи будет доступна в следующей версии')">
+      🎤 Начать запись
+    </button>
+  </div>
+
+</div>
+
+<script>
+// Прокрутка к началу при загрузке/обновлении страницы
+if (history.scrollRestoration) {
+  history.scrollRestoration = 'manual';
+}
+window.scrollTo(0, 0);
+
+// Функция добавления перевода к тексту
+function addTranslation(text) {
+  // Словарь переводов ключевых фраз
+  const translations = {
+    "That's too high for us": "Это слишком высоко для нас",
+    "Best I can do is": "Лучшее что я могу предложить",
+    "I can't go that high": "Я не могу пойти так высоко",
+    "How about": "Как насчет",
+    "That's above our budget": "Это выше нашего бюджета",
+    "I can offer": "Я могу предложить",
+    "as my best price": "как мою лучшую цену",
+    "We can't meet that number": "Мы не можем достичь этой цифры",
+    "is the highest I can go": "это максимум куда я могу пойти",
+    "That's a bit steep for us": "Это немного круто для нас",
+    "I can bump it up to": "Я могу поднять до",
+    "I hear you, but that's too much": "Я вас слышу, но это слишком много",
+    "My max is": "Мой максимум",
+    "I wish I could, but I can't": "Хотел бы я, но не могу",
+    "is my ceiling on this one": "это мой потолок на этом",
+    "That's outside our range": "Это вне нашего диапазона",
+    "I can go up to": "Я могу пойти до",
+    "that's it": "вот и всё",
+    "I understand your position": "Я понимаю вашу позицию",
+    "meet in the middle at": "встретимся посередине на",
+    "My driver is already in": "Мой водитель уже в",
+    "and can pick up on time": "и может забрать вовремя",
+    "Let's find a compromise here": "Давайте найдем компромисс",
+    "What if we settle at": "Что если мы договоримся на",
+    "We have a truck nearby": "У нас есть грузовик рядом",
+    "can guarantee on-time pickup": "можем гарантировать своевременную погрузку",
+    "Can we agree on": "Можем договориться на",
+    "Our driver is local": "Наш водитель местный",
+    "ready to go immediately": "готов ехать немедленно",
+    "and we have a deal": "и у нас сделка",
+    "I'll send the rate confirmation": "Я отправлю подтверждение ставки",
+    "I can do": "Я могу сделать",
+    "Let's book it": "Давайте забронируем",
+    "Sending confirmation now": "Отправляю подтверждение сейчас",
+    "is acceptable": "приемлемо",
+    "I'll get the paperwork over to you": "Я отправлю вам документы",
+    "right away": "прямо сейчас",
+    "Deal at": "Сделка на",
+    "I'll email you the confirmation": "Я отправлю вам подтверждение по email",
+    "in a minute": "через минуту",
+    "You got it": "Договорились",
+    "Rate con coming your way now": "Подтверждение ставки уже в пути",
+    "let's do": "давайте сделаем",
+    "I'll send over the confirmation": "Я отправлю подтверждение",
+    "works": "подходит",
+    "Booking it now": "Бронирую сейчас",
+    "you'll get the rate con shortly": "вы получите подтверждение ставки скоро",
+    "Fair enough": "Справедливо",
+    "it is": "так и есть",
+    "I'll have the confirmation to you": "У вас будет подтверждение",
+    "in a moment": "через мгновение"
+  };
+  
+  // Если текст уже содержит перевод (div с italic), возвращаем как есть
+  if (text.includes('font-style: italic')) {
+    return text;
+  }
+  
+  return text;
+}
+
+// Генератор случайных грузов
+function generateRandomLoad(loadId) {
+  const routes = [
+    { from: 'Los Angeles, CA', to: 'Phoenix, AZ', miles: 370 },
+    { from: 'Chicago, IL', to: 'Memphis, TN', miles: 530 },
+    { from: 'Dallas, TX', to: 'Atlanta, GA', miles: 780 },
+    { from: 'Denver, CO', to: 'Kansas City, MO', miles: 600 },
+    { from: 'Seattle, WA', to: 'Boise, ID', miles: 505 },
+    { from: 'Miami, FL', to: 'Charlotte, NC', miles: 650 },
+    { from: 'Boston, MA', to: 'Cleveland, OH', miles: 640 },
+    { from: 'Detroit, MI', to: 'Nashville, TN', miles: 550 },
+    { from: 'San Francisco, CA', to: 'Portland, OR', miles: 635 },
+    { from: 'Philadelphia, PA', to: 'Atlanta, GA', miles: 745 },
+    { from: 'Phoenix, AZ', to: 'Albuquerque, NM', miles: 465 },
+    { from: 'Minneapolis, MN', to: 'St. Louis, MO', miles: 560 },
+    { from: 'Charlotte, NC', to: 'Jacksonville, FL', miles: 505 },
+    { from: 'Las Vegas, NV', to: 'Salt Lake City, UT', miles: 420 },
+    { from: 'Kansas City, MO', to: 'Memphis, TN', miles: 450 },
+    { from: 'Portland, OR', to: 'Sacramento, CA', miles: 585 },
+    { from: 'Indianapolis, IN', to: 'Atlanta, GA', miles: 515 },
+    { from: 'Columbus, OH', to: 'Charlotte, NC', miles: 485 },
+    { from: 'San Antonio, TX', to: 'Oklahoma City, OK', miles: 465 },
+    { from: 'Houston, TX', to: 'Memphis, TN', miles: 570 }
+  ];
+  
+  const cargoTypes = [
+    { name: 'Electronics', equipment: 'dry van', temp: false, multiplier: 1.0 },
+    { name: 'Fresh Vegetables', equipment: 'reefer', temp: true, multiplier: 1.25 },
+    { name: 'Furniture', equipment: 'dry van', temp: false, multiplier: 1.0 },
+    { name: 'Frozen Food', equipment: 'reefer', temp: true, multiplier: 1.25 },
+    { name: 'Auto Parts', equipment: 'dry van', temp: false, multiplier: 1.0 },
+    { name: 'Beverages', equipment: 'dry van', temp: false, multiplier: 1.0 },
+    { name: 'Pharmaceuticals', equipment: 'reefer', temp: true, multiplier: 1.3 },
+    { name: 'Steel Beams', equipment: 'flatbed', temp: false, multiplier: 1.2 },
+    { name: 'Clothing', equipment: 'dry van', temp: false, multiplier: 1.0 },
+    { name: 'Dairy Products', equipment: 'reefer', temp: true, multiplier: 1.25 }
+  ];
+  
+  const brokers = [
+    { name: 'Mountain Transport', city: 'Denver, CO', rating: 90 },
+    { name: 'Pacific Logistics', city: 'Los Angeles, CA', rating: 85 },
+    { name: 'Midwest Freight', city: 'Chicago, IL', rating: 88 },
+    { name: 'Coastal Shipping', city: 'Miami, FL', rating: 92 },
+    { name: 'Central Carriers', city: 'Dallas, TX', rating: 87 },
+    { name: 'Northeast Express', city: 'Boston, MA', rating: 91 },
+    { name: 'Southern Transport', city: 'Atlanta, GA', rating: 86 },
+    { name: 'Western Haulers', city: 'Seattle, WA', rating: 89 }
+  ];
+  
+  const route = routes[Math.floor(Math.random() * routes.length)];
+  const cargo = cargoTypes[Math.floor(Math.random() * cargoTypes.length)];
+  const broker = brokers[Math.floor(Math.random() * brokers.length)];
+  
+  const weight = 35000 + Math.floor(Math.random() * 10000); // 35,000 - 45,000 lbs
+  const ratePerMile = 2.0 + Math.random() * 1.0; // $2.00-$3.00 per mile for dry van
+  const baseRate = route.miles * ratePerMile * cargo.multiplier;
+  const rate = Math.round(baseRate / 50) * 50; // Round to nearest $50
+  const paymentDays = [15, 20, 25, 30][Math.floor(Math.random() * 4)];
+  
+  return {
+    id: loadId,
+    from: route.from,
+    to: route.to,
+    miles: route.miles,
+    weight: weight,
+    cargo: cargo.name,
+    equipment: cargo.equipment,
+    needsTemp: cargo.temp,
+    rate: rate,
+    broker: broker.name,
+    brokerCity: broker.city,
+    rating: broker.rating,
+    paymentDays: paymentDays,
+    ratePerMile: (rate / route.miles).toFixed(2)
+  };
+}
+
+// Генератор вариантов диалогов
+function generateDialogueVariants() {
+  return {
+    greetings: [
+      (load) => `Good morning! This is John Smith from XYZ Transport. I'm calling about the load from ${load.from.split(',')[0]} to ${load.to.split(',')[0]} that was posted on DAT. Is it still available?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Доброе утро! Это Джон Смит из XYZ Transport. Звоню по поводу груза из ${load.from.split(',')[0]} в ${load.to.split(',')[0]}, который был размещен на DAT. Он еще доступен?</div>`,
+      (load) => `Hi, this is Sarah Johnson with ABC Logistics. I saw your posting for a load from ${load.from.split(',')[0]} to ${load.to.split(',')[0]}. Is this load still open?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Привет, это Сара Джонсон из ABC Logistics. Я видела ваше объявление о грузе из ${load.from.split(',')[0]} в ${load.to.split(',')[0]}. Этот груз еще открыт?</div>`,
+      (load) => `Hello! My name is Mike Davis from Premier Carriers. I'm interested in the load from ${load.from.split(',')[0]} to ${load.to.split(',')[0]}. Can you tell me if it's still available?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Здравствуйте! Меня зовут Майк Дэвис из Premier Carriers. Меня интересует груз из ${load.from.split(',')[0]} в ${load.to.split(',')[0]}. Можете сказать, он еще доступен?</div>`,
+      (load) => `Good afternoon! This is Lisa Martinez calling from Elite Transport regarding the load from ${load.from.split(',')[0]} to ${load.to.split(',')[0]}. Is this shipment still available?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Добрый день! Это Лиза Мартинес из Elite Transport звоню по поводу груза из ${load.from.split(',')[0]} в ${load.to.split(',')[0]}. Эта отправка еще доступна?</div>`,
+      (load) => `Hi there! Tom Wilson with Reliable Freight here. I'm calling about your load from ${load.from.split(',')[0]} to ${load.to.split(',')[0]}. Is it still open?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Привет! Том Уилсон из Reliable Freight. Звоню по поводу вашего груза из ${load.from.split(',')[0]} в ${load.to.split(',')[0]}. Он еще открыт?</div>`,
+      (load) => `Hello, this is Jennifer Brown from Swift Carriers. I'm interested in a load going from ${load.from.split(',')[0]} to ${load.to.split(',')[0]}. Is it still available?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Здравствуйте, это Дженнифер Браун из Swift Carriers. Меня интересует груз из ${load.from.split(',')[0]} в ${load.to.split(',')[0]}. Он еще доступен?</div>`,
+      (load) => `Good morning! Robert Garcia with National Transport calling. I saw a load from ${load.from.split(',')[0]} to ${load.to.split(',')[0]} on the board. Is this still open?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Доброе утро! Роберт Гарсия из National Transport. Я видел груз из ${load.from.split(',')[0]} в ${load.to.split(',')[0]} на доске. Он еще открыт?</div>`,
+      (load) => `Hi! This is Amanda Lee from Express Logistics. I'm calling regarding the load from ${load.from.split(',')[0]} to ${load.to.split(',')[0]}. Is it still available?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Привет! Это Аманда Ли из Express Logistics. Звоню по поводу груза из ${load.from.split(',')[0]} в ${load.to.split(',')[0]}. Он еще доступен?</div>`
+    ],
+    badGreetings: [
+      (load) => `Hi there! I'm calling about a load I saw posted on DAT. Do you have any trucks available right now? I need to move some freight today.<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Привет! Звоню по поводу груза, который видел на DAT. У вас есть свободные грузовики? Мне нужно перевезти груз сегодня.</div>`,
+      (load) => `Hey, how's it going? I saw your posting on the load board earlier. Can you tell me more about what you've got available for pickup?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Привет, как дела? Видел ваше объявление на доске грузов. Расскажите подробнее, что у вас доступно для погрузки?</div>`,
+      (load) => `Hello, I'm interested in the ${load.from.split(',')[0]} load. What's the rate you're offering for this?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Здравствуйте, меня интересует груз из ${load.from.split(',')[0]}. Какую ставку вы предлагаете?</div>`,
+      (load) => `Hi! I have a truck ready to go. Do you have anything going from ${load.from.split(',')[0]} area?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Привет! У меня есть готовый грузовик. Есть что-нибудь из района ${load.from.split(',')[0]}?</div>`,
+      (load) => `Good morning! I'm looking for loads. What do you have available today?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Доброе утро! Ищу грузы. Что у вас есть сегодня?</div>`,
+      (load) => `Hey there! Calling about freight. Got anything heading west?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Привет! Звоню насчет грузов. Есть что-нибудь на запад?</div>`,
+      (load) => `Hi, I saw some loads posted. Can you send me details on what's available?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Привет, видел размещенные грузы. Можете прислать детали по доступным?</div>`,
+      (load) => `Hello! My truck is empty and I need a load. What rates are you paying?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Здравствуйте! Мой грузовик пустой и мне нужен груз. Какие ставки вы платите?</div>`
+    ],
+    brokerDetails: [
+      (load) => {
+        const tempInfo = load.needsTemp ? '<br>Temperature needs to be maintained at 34-36°F.' : '';
+        return `Correct, ${load.weight.toLocaleString()} lbs of ${load.cargo.toLowerCase()}.${tempInfo}<br>Pickup tomorrow at 8 AM, delivery same day by 5 PM.<br>Rate: $${load.rate}.<br>What equipment do you have?`;
+      },
+      (load) => {
+        const tempInfo = load.needsTemp ? '<br>Keep it at 35-38°F throughout.' : '';
+        return `Yes, ${load.weight.toLocaleString()} lbs of ${load.cargo.toLowerCase()}.${tempInfo}<br>Pick up tomorrow morning, deliver by end of day.<br>Rate: $${load.rate}.<br>What type of truck do you have?`;
+      },
+      (load) => {
+        const tempInfo = load.needsTemp ? '<br>Maintain 34-37°F during transport.' : '';
+        return `That's right, ${load.weight.toLocaleString()} lbs, ${load.cargo.toLowerCase()}.${tempInfo}<br>Pickup at 8 AM tomorrow, delivery by 5 PM.<br>Rate: $${load.rate}.<br>What equipment are you running?`;
+      },
+      (load) => {
+        const tempInfo = load.needsTemp ? '<br>Temperature control at 35-36°F required.' : '';
+        return `Exactly, ${load.weight.toLocaleString()} pounds of ${load.cargo.toLowerCase()}.${tempInfo}<br>Loading tomorrow 8 AM, unloading same day by 5 PM.<br>Rate: $${load.rate}.<br>Tell me about your equipment.`;
+      },
+      (load) => {
+        const tempInfo = load.needsTemp ? '<br>Keep temperature between 34-38°F.' : '';
+        return `Yes sir, ${load.weight.toLocaleString()} lbs, ${load.cargo.toLowerCase()}.${tempInfo}<br>Pickup tomorrow morning at 8, delivery by 5 PM.<br>Rate: $${load.rate}.<br>What kind of trailer do you have?`;
+      },
+      (load) => {
+        const tempInfo = load.needsTemp ? '<br>Reefer set to 35-37°F please.' : '';
+        return `Affirmative, ${load.weight.toLocaleString()} lbs of ${load.cargo.toLowerCase()}.${tempInfo}<br>Pick up 8 AM tomorrow, drop off by 5 PM same day.<br>Rate: $${load.rate}.<br>What equipment can you provide?`;
+      }
+    ],
+    equipmentConfirm: [
+      (load) => {
+        const equipmentFull = load.equipment === 'reefer' ? '53-foot reefer with temperature control' : 
+                              load.equipment === 'flatbed' ? '53-foot flatbed with straps and chains' : 
+                              '53-foot dry van with air-ride suspension';
+        return `We have a ${equipmentFull} available.<br>Can you confirm the weight is ${load.weight.toLocaleString()} lbs${load.needsTemp ? ' and provide any special temperature requirements' : ' and any special handling requirements'}?`;
+      },
+      (load) => {
+        const equipmentFull = load.equipment === 'reefer' ? '53-foot refrigerated trailer' : 
+                              load.equipment === 'flatbed' ? '53-foot flatbed trailer' : 
+                              '53-foot dry van';
+        return `I have a ${equipmentFull} ready to go.<br>The weight is ${load.weight.toLocaleString()} lbs, correct${load.needsTemp ? '? Any temperature requirements' : ''}?`;
+      },
+      (load) => {
+        const equipmentName = load.equipment === 'reefer' ? 'reefer' : load.equipment === 'flatbed' ? 'flatbed' : 'dry van';
+        return `We can cover this with our ${equipmentName}.<br>Please confirm ${load.weight.toLocaleString()} lbs${load.needsTemp ? ' and temperature specs' : ' and any special requirements'}.`;
+      },
+      (load) => {
+        const equipmentFull = load.equipment === 'reefer' ? '53-foot reefer unit' : 
+                              load.equipment === 'flatbed' ? '53-foot flatbed with tarps' : 
+                              '53-foot dry van with lift gate';
+        return `I've got a ${equipmentFull} that can handle this.<br>Weight is ${load.weight.toLocaleString()} lbs${load.needsTemp ? ', and what temp do you need' : ', any special handling'}?`;
+      },
+      (load) => {
+        const equipmentName = load.equipment === 'reefer' ? 'refrigerated trailer' : load.equipment === 'flatbed' ? 'flatbed' : 'dry van';
+        return `We operate a ${equipmentName} that's perfect for this.<br>Confirming ${load.weight.toLocaleString()} pounds${load.needsTemp ? ' with temperature control' : ''}?`;
+      }
+    ],
+    badEquipment: [
+      (load) => `We have a standard trailer that should work for most loads.<br>What are the dimensions and weight of your freight?<br>Any special handling needed?`,
+      (load) => `I have a truck ready to go.<br>Before we discuss equipment details, could you first tell me what the rate is for this particular shipment?`,
+      (load) => `Yeah, we've got equipment available.<br>Can you email me all the details so I can review them?`,
+      (load) => `We run various types of trailers.<br>What's the pay on this load first?`,
+      (load) => `I have a trailer that can probably handle it.<br>Let me know the rate and I'll confirm the equipment.`
+    ],
+    brokerDetails: [
+      (load) => {
+        const tempInfo = load.needsTemp ? '<br>Temperature needs to be maintained at 34-36°F.' : '';
+        return `Correct, ${load.weight.toLocaleString()} lbs of ${load.cargo.toLowerCase()}.${tempInfo}<br>Pickup tomorrow at 8 AM, delivery same day by 5 PM.`;
+      },
+      (load) => {
+        const tempInfo = load.needsTemp ? '<br>Keep it at 35-38°F throughout.' : '';
+        return `Yes, ${load.weight.toLocaleString()} lbs of ${load.cargo.toLowerCase()}.${tempInfo}<br>Pick up tomorrow morning, deliver by end of day.`;
+      },
+      (load) => {
+        const tempInfo = load.needsTemp ? '<br>Maintain 34-37°F during transport.' : '';
+        return `That's right, ${load.weight.toLocaleString()} lbs, ${load.cargo.toLowerCase()}.${tempInfo}<br>Pickup at 8 AM tomorrow, delivery by 5 PM.`;
+      },
+      (load) => {
+        const tempInfo = load.needsTemp ? '<br>Temperature control at 35-36°F required.' : '';
+        return `Exactly, ${load.weight.toLocaleString()} pounds of ${load.cargo.toLowerCase()}.${tempInfo}<br>Loading tomorrow 8 AM, unloading same day by 5 PM.`;
+      },
+      (load) => {
+        const tempInfo = load.needsTemp ? '<br>Keep temperature between 34-38°F.' : '';
+        return `Yes sir, ${load.weight.toLocaleString()} lbs, ${load.cargo.toLowerCase()}.${tempInfo}<br>Pickup tomorrow morning at 8, delivery by 5 PM.`;
+      },
+      (load) => {
+        const tempInfo = load.needsTemp ? '<br>Reefer set to 35-37°F please.' : '';
+        return `Affirmative, ${load.weight.toLocaleString()} lbs of ${load.cargo.toLowerCase()}.${tempInfo}<br>Pick up 8 AM tomorrow, drop off by 5 PM same day.`;
+      }
+    ],
+    rateQuestion: [
+      (load) => `Perfect, we can handle that${load.needsTemp ? ' temperature range' : ''}.<br>I see the posting shows $${load.rate}.<br>Is that your final rate, or is there room for negotiation?`,
+      (load) => `Excellent, we're equipped for that${load.needsTemp ? ' temperature control' : ''}.<br>The rate listed is $${load.rate}.<br>Is there any flexibility on that number?`,
+      (load) => `Great, we can meet those requirements${load.needsTemp ? ' including temperature' : ''}.<br>I noticed $${load.rate} posted.<br>Can we discuss the rate?`,
+      (load) => `Sounds good, we're set up for that${load.needsTemp ? ' temp control' : ''}.<br>The posted rate is $${load.rate}.<br>Is that negotiable at all?`,
+      (load) => `No problem, we can accommodate that${load.needsTemp ? ' temperature' : ''}.<br>I see $${load.rate} on the posting.<br>Any room to move on the rate?`,
+      (load) => `Understood, we're ready for that${load.needsTemp ? ' with proper temp control' : ''}.<br>Rate shows $${load.rate}.<br>Is that firm or can we work on it?`
+    ],
+    badRateQuestion: [
+      (load) => `Sounds good to me.<br>Go ahead and send over all the paperwork and documentation.<br>I'll review it and get back to you shortly with confirmation.`,
+      (load) => `That seems like a tight schedule for ${load.miles} miles.<br>I'm not sure we can make the 5 PM delivery.<br>Do you have any flexibility on timing?`,
+      (load) => `Okay, I think we can do that.<br>Just email me everything and I'll confirm later today.`,
+      (load) => `Alright, that works.<br>Send me the rate con and I'll sign it right away.`,
+      (load) => `Perfect! Let's book it.<br>What's the next step?`
+    ],
+    brokerRateResponse: [
+      (load) => `The rate is $${load.rate} as posted.<br>It's ${load.miles < 300 ? 'a short haul' : load.miles < 600 ? 'a medium haul' : 'a long haul'}, pretty standard rate for this route.`,
+      (load) => `$${load.rate} is what we have budgeted for this shipment.<br>That's $${(load.rate/load.miles).toFixed(2)} per mile, which is fair for this lane.`,
+      (load) => `We're offering $${load.rate} for this load.<br>Given the ${load.miles} miles, that's a competitive rate.`,
+      (load) => `The posted rate of $${load.rate} is what we can do.<br>That works out to $${(load.rate/load.miles).toFixed(2)} per mile.`,
+      (load) => `I can confirm $${load.rate} for this shipment.<br>For ${load.miles} miles, that's market rate right now.`,
+      (load) => `We're at $${load.rate} on this one.<br>It's ${load.miles < 300 ? 'short distance' : load.miles < 600 ? 'medium distance' : 'long haul'}, standard pricing.`,
+      (load) => `The rate we have is $${load.rate}.<br>That's about $${(load.rate/load.miles).toFixed(2)} per mile, which is what the market is paying.`,
+      (load) => `$${load.rate} total for the run.<br>Given the ${load.miles}-mile distance, that's a fair rate.`
+    ],
+    negotiationStart: [
+      (load, counterOffer) => `I appreciate the offer, but considering the ${load.miles}-mile distance and current market rates, we would need at least $${counterOffer} to make this work for us.`,
+      (load, counterOffer) => `Thank you for that. However, based on our operating costs and the ${load.miles} miles, we're looking at $${counterOffer} for this shipment.`,
+      (load, counterOffer) => `I understand your position. Given the distance and our expenses, we would need $${counterOffer} to cover this load properly.`
+    ],
+    brokerCounter: [
+      (load, brokerCounter) => `That's too high for us.<br>Best I can do is $${brokerCounter}.`,
+      (load, brokerCounter) => `I can't go that high.<br>How about $${brokerCounter}?`,
+      (load, brokerCounter) => `That's above our budget.<br>I can offer $${brokerCounter} as my best price.`,
+      (load, brokerCounter) => `We can't meet that number.<br>$${brokerCounter} is the highest I can go.`,
+      (load, brokerCounter) => `That's a bit steep for us.<br>I can bump it up to $${brokerCounter}.`,
+      (load, brokerCounter) => `I hear you, but that's too much.<br>My max is $${brokerCounter}.`,
+      (load, brokerCounter) => `I wish I could, but I can't.<br>$${brokerCounter} is my ceiling on this one.`,
+      (load, brokerCounter) => `That's outside our range.<br>I can go up to $${brokerCounter}, that's it.`
+    ],
+    middleOffer: [
+      (load, middleOffer) => `I understand your position.<br>How about we meet in the middle at $${middleOffer}?<br>My driver is already in ${load.from.split(',')[0]} and can pick up on time.`,
+      (load, middleOffer) => `Let's find a compromise here.<br>What if we settle at $${middleOffer}?<br>We have a truck nearby and can guarantee on-time pickup.`,
+      (load, middleOffer) => `I hear you.<br>Can we agree on $${middleOffer}?<br>Our driver is local and ready to go immediately.`
+    ],
+    brokerFinal: [
+      (load, finalOffer) => `Alright, $${finalOffer} and we have a deal.<br>I'll send the rate confirmation.`,
+      (load, finalOffer) => `Okay, I can do $${finalOffer}.<br>Let's book it. Sending confirmation now.`,
+      (load, finalOffer) => `Fine, $${finalOffer} is acceptable.<br>I'll get the paperwork over to you right away.`,
+      (load, finalOffer) => `Deal at $${finalOffer}.<br>I'll email you the confirmation in a minute.`,
+      (load, finalOffer) => `You got it, $${finalOffer}.<br>Rate con coming your way now.`,
+      (load, finalOffer) => `Alright, let's do $${finalOffer}.<br>I'll send over the confirmation right now.`,
+      (load, finalOffer) => `Okay, $${finalOffer} works.<br>Booking it now, you'll get the rate con shortly.`,
+      (load, finalOffer) => `Fair enough, $${finalOffer} it is.<br>I'll have the confirmation to you in a moment.`
+    ]
+  };
+}
+
+// Диалоги с вариантами ответов
+const dialogues = {
+  1: {
+    load: null,
+    steps: [
+      // Шаг 1: Приветствие
+      {
+        type: 'choice',
+        prompt: '',
+        options: []
+      },
+      {
+        type: 'broker',
+        text: ''
+      },
+      // Шаг 2: Вопрос о ставке
+      {
+        type: 'choice',
+        prompt: 'Брокер сообщил детали груза и ставку. Как вы продолжите?',
+        options: []
+      },
+      {
+        type: 'broker',
+        text: ''
+      },
+      // Шаг 3: Начало переговоров
+      {
+        type: 'choice',
+        prompt: '',
+        options: []
+      },
+      {
+        type: 'broker',
+        text: ''
+      },
+      // Шаг 4: Компромисс
+      {
+        type: 'choice',
+        prompt: '',
+        options: []
+      },
+      {
+        type: 'broker',
+        text: ''
+      },
+      // Шаг 5: Финальное решение
+      {
+        type: 'choice',
+        prompt: '',
+        options: []
+      },
+      {
+        type: 'broker',
+        text: ''
+      },
+      // Завершение
+      {
+        type: 'complete',
+        text: ''
+      }
+    ]
+  },
+  2: {
+    load: null,
+    steps: [
+      // Шаг 1: Приветствие и готовность
+      {
+        type: 'choice',
+        prompt: '',
+        options: []
+      },
+      {
+        type: 'driver',
+        text: ''
+      },
+      // Шаг 2: Передача адреса отправителя
+      {
+        type: 'choice',
+        prompt: '',
+        options: []
+      },
+      {
+        type: 'driver',
+        text: ''
+      },
+      // Шаг 3: Передача адреса получателя
+      {
+        type: 'choice',
+        prompt: '',
+        options: []
+      },
+      {
+        type: 'driver',
+        text: ''
+      },
+      // Шаг 4: Передача деталей груза
+      {
+        type: 'choice',
+        prompt: '',
+        options: []
+      },
+      {
+        type: 'driver',
+        text: ''
+      },
+      // Шаг 5: Подтверждение и документы
+      {
+        type: 'choice',
+        prompt: '',
+        options: []
+      },
+      {
+        type: 'driver',
+        text: ''
+      },
+      // Завершение
+      {
+        type: 'complete',
+        text: ''
+      }
+    ]
+  }
+};
+
+// Заполнение диалогов случайными данными
+function fillDialogueWithLoadData(dialogueId) {
+  const dialogue = dialogues[dialogueId];
+  const load = generateRandomLoad(1000 + dialogueId * 100 + Math.floor(Math.random() * 100));
+  dialogue.load = load;
+  
+  const variants = generateDialogueVariants();
+  
+  // Функция для выбора уникальных элементов из массива
+  const pickUnique = (arr, count) => {
+    const shuffled = [...arr].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, count);
+  };
+  
+  const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  
+  if (dialogueId === 1) {
+    // Полный диалог: от первого контакта до переговоров
+    const equipmentName = load.equipment === 'reefer' ? 'reefer' : load.equipment === 'flatbed' ? 'flatbed' : 'dry van';
+    
+    const counterOffer = Math.round(load.rate * 1.22 / 50) * 50; // +22%
+    const brokerCounter = Math.round(load.rate * 1.08 / 50) * 50; // +8%
+    const middleOffer = Math.round(load.rate * 1.15 / 50) * 50; // +15%
+    const finalOffer = Math.round(load.rate * 1.11 / 50) * 50; // +11%
+    
+    // Выбираем уникальные варианты для каждого типа ответа
+    const [correctGreeting] = pickUnique(variants.greetings, 1);
+    const [wrongGreeting1, wrongGreeting2] = pickUnique(variants.badGreetings, 2);
+    
+    const [brokerResponse1] = pickUnique(variants.brokerDetails, 1);
+    
+    const [correctRate] = pickUnique(variants.rateQuestion, 1);
+    const [wrongRate1, wrongRate2] = pickUnique(variants.badRateQuestion, 2);
+    
+    const [brokerResponse2] = pickUnique(variants.brokerRateResponse, 1);
+    
+    const [correctNegotiation] = pickUnique(variants.negotiationStart, 1);
+    const [brokerResponse3] = pickUnique(variants.brokerCounter, 1);
+    
+    const [correctMiddle] = pickUnique(variants.middleOffer, 1);
+    const [brokerResponse4] = pickUnique(variants.brokerFinal, 1);
+    
+    // Шаг 0: Приветствие
+    const equipmentDisplay = load.equipment === 'reefer' ? '🚛 Reefer' : load.equipment === 'flatbed' ? '🚛 Flatbed' : '🚛 Dry Van';
+    
+    dialogue.steps[0].prompt = `📋 ${load.from} → ${load.to} | ${load.miles} миль<br>${equipmentDisplay} | ${load.weight.toLocaleString()} lbs | ${load.cargo} | $${load.rate}<br>🏢 ${load.broker} | ⭐ ${load.rating}/100 | 💰 Оплата: ${load.paymentDays} дней<br><br>Вы звоните брокеру по поводу этого груза. Как вы начнете разговор?`;
+    
+    const greetingOptions = [
+      { text: wrongGreeting1(load), correct: false, feedback: 'Вы не представились и не указали маршрут. Брокер не поймет, о каком грузе речь.' },
+      { text: correctGreeting(load), correct: true, feedback: `Отлично! Профессиональное представление с полным именем, компанией и указанием маршрута ${load.from.split(',')[0]} → ${load.to.split(',')[0]}.` },
+      { text: wrongGreeting2(load), correct: false, feedback: 'Слишком неформально и расплывчато. Нужно четко указать маршрут и представиться профессионально.' }
+    ];
+    greetingOptions.sort(() => Math.random() - 0.5);
+    dialogue.steps[0].options = greetingOptions;
+    
+    dialogue.steps[1].text = brokerResponse1(load);
+    
+    // Шаг 2: Вопрос о ставке
+    const rateOptions = [
+      { text: wrongRate1(load), correct: false, feedback: `Вы не спросили о ставке. Груз показывает $${load.rate}, но нужно подтвердить финальную ставку с брокером.` },
+      { text: correctRate(load), correct: true, feedback: `Отлично! Подтвердили возможность выполнения требований и тактично спросили о ставке, оставив место для переговоров.` },
+      { text: wrongRate2(load), correct: false, feedback: `${load.miles} миль за день - это легко выполнимо (около ${Math.round(load.miles / 60)} часов езды). Не создавайте проблемы там, где их нет.` }
+    ];
+    rateOptions.sort(() => Math.random() - 0.5);
+    dialogue.steps[2].options = rateOptions;
+    
+    dialogue.steps[3].text = brokerResponse2(load);
+    
+    // Шаг 4: Начало переговоров
+    dialogue.steps[4].prompt = `Брокер предлагает ${load.rate} за этот груз (${equipmentDisplay}, ${load.miles} миль). Как вы ответите?`;
+    
+    const negotiationOptions = [
+      { text: 'That rate is way too low for us!<br>We need at least $2,500 for this distance.<br>Our costs are much higher than what you\'re offering here.', correct: false, feedback: 'Слишком агрессивно и сумма завышена. Будьте профессиональны и реалистичны в переговорах.' },
+      { text: correctNegotiation(load, counterOffer), correct: true, feedback: `Отлично! Вежливый тон, конкретное обоснование и реалистичная контр-ставка (${(counterOffer/load.miles).toFixed(2)}/милю).` },
+      { text: 'Okay, that sounds fair enough.<br>Let\'s go ahead with the posted rate.<br>Please send me the rate confirmation and I\'ll get my driver assigned right away.', correct: false, feedback: 'Слишком быстро согласились без переговоров. Всегда пробуйте получить лучшую ставку.' }
+    ];
+    negotiationOptions.sort(() => Math.random() - 0.5);
+    dialogue.steps[4].options = negotiationOptions;
+    
+    dialogue.steps[5].text = brokerResponse3(load, brokerCounter);
+    
+    // Шаг 6: Компромисс
+    dialogue.steps[6].prompt = `Брокер предложил ${brokerCounter} (${(brokerCounter/load.miles).toFixed(2)}/милю). Как вы продолжите переговоры?`;
+    
+    const middleOptions = [
+      { text: `No, I can\'t accept anything less than ${counterOffer}.<br>That\'s my final offer and I won\'t go any lower.<br>Take it or leave it, your choice.`, correct: false, feedback: 'Слишком жестко и негибко. В переговорах важна готовность к компромиссу, особенно когда брокер уже повысил ставку.' },
+      { text: correctMiddle(load, middleOffer), correct: true, feedback: `Отлично! Показали гибкость (${(middleOffer/load.miles).toFixed(2)}/милю), предложили компромисс и добавили ценность (водитель рядом).` },
+      { text: `Alright, fine. I guess ${brokerCounter} will work for us.<br>It\'s not ideal, but we need to keep the truck moving.<br>Send the confirmation over.`, correct: false, feedback: 'Сдались слишком быстро. Попробуйте найти компромисс - брокер уже показал готовность повышать ставку.' }
+    ];
+    middleOptions.sort(() => Math.random() - 0.5);
+    dialogue.steps[6].options = middleOptions;
+    
+    dialogue.steps[7].text = brokerResponse4(load, finalOffer);
+    
+    // Шаг 8: Финальное решение
+    dialogue.steps[8].prompt = `Брокер предлагает ${finalOffer} (${(finalOffer/load.miles).toFixed(2)}/милю) как финальную ставку. Ваше решение?`;
+    
+    const finalOptions = [
+      { text: `No, we discussed ${middleOffer} and that\'s what I need.<br>I can\'t go down to ${finalOffer}.<br>Let\'s stick with the number I mentioned earlier, please.`, correct: false, feedback: `Брокер уже пошел на компромисс (+${finalOffer - load.rate} от начальной ставки). ${finalOffer} - хорошая ставка, не упускайте сделку.` },
+      { text: 'Deal!<br>Please send the rate confirmation to dispatch@xyztransport.com.<br>I\'ll have my driver contact the shipper within the hour to confirm pickup.', correct: true, feedback: `Отлично! Приняли хорошее предложение (+${finalOffer - load.rate} или +${Math.round((finalOffer - load.rate) / load.rate * 100)}% от начальной ставки) и четко обозначили следующие шаги.` },
+      { text: 'Let me check with my driver first and see if he\'s okay with this rate.<br>I\'ll call you back in about 30 minutes with a final decision.', correct: false, feedback: `Не затягивайте. Брокер может найти другого перевозчика. ${finalOffer} за ${load.miles} миль - хорошая ставка, принимайте сразу.` }
+    ];
+    finalOptions.sort(() => Math.random() - 0.5);
+    dialogue.steps[8].options = finalOptions;
+    
+    dialogue.steps[9].text = 'Perfect!<br>Rate confirmation sent to your email.<br>Thank you for your business!';
+    
+    dialogue.steps[10].text = `✅ Отличная работа! Вы успешно провели звонок брокеру по маршруту ${load.from} → ${load.to} и договорились о ставке ${finalOffer} вместо начальных ${load.rate} (+${finalOffer - load.rate} или +${Math.round((finalOffer - load.rate) / load.rate * 100)}%). Это ${(finalOffer/load.miles).toFixed(2)}/милю - хорошая ставка!`;
+  } else if (dialogueId === 2) {
+    // Полный диалог: назначение груза водителю
+    const pickupHour = 6 + Math.floor(Math.random() * 8); // 6-13
+    const pickupTime = `${pickupHour}:00`;
+    const deliveryTime = ['9:00', '10:00', '11:00'][Math.floor(Math.random() * 3)];
+    const emptyTime = ['11:00', '12:00', '13:00'][Math.floor(Math.random() * 3)];
+    
+    // Шаг 0: Приветствие
+    dialogue.steps[0].prompt = `📋 ${load.from} → ${load.to} | ${load.miles} миль<br>📦 ${load.cargo} | ${load.weight.toLocaleString()} lbs | 💰 $${load.rate}<br><br>Вы звоните водителю, чтобы назначить ему груз. Как вы начнете разговор?`;
+    
+    const greetingOptions = [
+      { text: `Hey, I got a load for you if you want it.<br>It's going from ${load.from.split(',')[0]} to ${load.to.split(',')[0]}.<br>You interested?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Привет, у меня есть груз если хочешь.<br>Из ${load.from.split(',')[0]} в ${load.to.split(',')[0]}.<br>Интересно?</div>`, correct: false, feedback: 'Слишком неформально. Нужно профессионально представить груз и проверить готовность водителя.' },
+      { text: `Hi Mike! I have a confirmed load for you.<br>${load.from} to ${load.to}, ${load.miles} miles, ${load.rate}.<br>When will your trailer be empty and ready for the next pickup?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Привет Майк! У меня подтвержденный груз для тебя.<br>${load.from} в ${load.to}, ${load.miles} миль, ${load.rate}.<br>Когда твой трейлер будет пустым и готов к следующей погрузке?</div>`, correct: true, feedback: `Отлично! Профессионально, указали ключевые детали и проверили готовность водителя.` },
+      { text: `Listen, I need you to take this load right now.<br>Can you do it or not?<br>I don't have time to wait.<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Слушай, мне нужно чтобы ты взял этот груз прямо сейчас.<br>Можешь или нет?<br>У меня нет времени ждать.</div>`, correct: false, feedback: 'Слишком агрессивно. Водитель - ваш партнер, а не подчиненный. Нужно уважительное общение.' }
+    ];
+    greetingOptions.sort(() => Math.random() - 0.5);
+    dialogue.steps[0].options = greetingOptions;
+    
+    dialogue.steps[1].text = `Hey! I'm delivering right now, should be done by ${emptyTime} today.<br>I'll be empty and ready for pickup tomorrow morning.<br>What are the details?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Привет! Я сейчас на доставке, должен закончить к ${emptyTime} сегодня.<br>Буду пустым и готов к погрузке завтра утром.<br>Какие детали?</div>`;
+    
+    // Шаг 2: Адрес отправителя
+    dialogue.steps[2].prompt = `Водитель готов. Как вы отправите информацию о грузе?`;
+    
+    const pickupOptions = [
+      { text: `I'll text you everything right now.<br>Check your phone in a minute.<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Отправлю тебе всё прямо сейчас в сообщении.<br>Проверь телефон через минуту.</div>`, correct: false, feedback: `Недостаточно профессионально. Лучше отправить на email с полными деталями и подтвердить устно ключевую информацию.` },
+      { text: `Perfect! I'm sending all load details to your email now: rate confirmation, BOL, shipper and receiver contacts.<br>Pickup: ${load.from}, tomorrow at ${pickupTime}.<br>Delivery: ${load.to}, day after tomorrow by ${deliveryTime}.<br>Load: ${load.weight.toLocaleString()} lbs of ${load.cargo.toLowerCase()}${load.needsTemp ? ', reefer at 35-37°F' : ''}.<br>Rate: ${load.rate}.<br>Can you confirm you received the email?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Отлично! Отправляю все детали груза на твой email: подтверждение ставки, BOL, контакты отправителя и получателя.<br>Погрузка: ${load.from}, завтра в ${pickupTime}.<br>Доставка: ${load.to}, послезавтра к ${deliveryTime}.<br>Груз: ${load.weight.toLocaleString()} фунтов ${load.cargo.toLowerCase()}${load.needsTemp ? ', рефрижератор 35-37°F' : ''}.<br>Ставка: ${load.rate}.<br>Можешь подтвердить что получил email?</div>`, correct: true, feedback: `Отлично! Профессионально отправили документы на email и устно подтвердили ключевые детали.` },
+      { text: `Just check the load board, all info is there.<br>Let me know if you have questions.<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Просто проверь доску грузов, вся информация там.<br>Дай знать если есть вопросы.</div>`, correct: false, feedback: `Слишком расплывчато. Диспетчер должен активно отправить всю информацию водителю, а не ждать что он сам найдет.` }
+    ];
+    pickupOptions.sort(() => Math.random() - 0.5);
+    dialogue.steps[2].options = pickupOptions;
+    
+    dialogue.steps[3].text = `Got it, checking my email now...<br>Yes, I see everything. Rate con, BOL, all contacts.<br>Looks good!<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Понял, проверяю email сейчас...<br>Да, вижу всё. Подтверждение ставки, BOL, все контакты.<br>Выглядит хорошо!</div>`;
+    
+    // Шаг 4: Адрес получателя
+    dialogue.steps[4].prompt = `Водитель получил документы. Что важно уточнить?`;
+    
+    const deliveryOptions = [
+      { text: `Great! Just call me if anything comes up.<br>Drive safe!<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Отлично! Просто позвони если что-то возникнет.<br>Езжай безопасно!</div>`, correct: false, feedback: `Пропущены важные инструкции. Нужно напомнить о необходимости держать связь и отправлять документы.` },
+      { text: `Perfect! Call me when you're 2 hours out from pickup, and again 2 hours before delivery.<br>After pickup, send me photos of the BOL and seal number right away.<br>Keep me updated on your progress.<br>Any questions about the load?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Отлично! Позвони мне за 2 часа до погрузки, и снова за 2 часа до доставки.<br>После погрузки сразу отправь мне фото BOL и номер пломбы.<br>Держи меня в курсе своего прогресса.<br>Есть вопросы по грузу?</div>`, correct: true, feedback: `Отлично! Дали четкие инструкции по коммуникации с диспетчером и документации. Профессиональный подход.` },
+      { text: `Okay, you know what to do.<br>Just get it delivered on time.<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Ладно, ты знаешь что делать.<br>Просто доставь вовремя.</div>`, correct: false, feedback: `Слишком расплывчато. Всегда давайте четкие инструкции, даже опытным водителям.` }
+    ];
+    deliveryOptions.sort(() => Math.random() - 0.5);
+    dialogue.steps[4].options = deliveryOptions;
+    
+    dialogue.steps[5].text = `No questions, everything is clear.<br>I'll head out tonight to be there by ${pickupTime}.<br>I'll keep you updated on my progress.<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Вопросов нет, всё понятно.<br>Выеду сегодня вечером чтобы быть там к ${pickupTime}.<br>Буду держать тебя в курсе.</div>`;
+    
+    // Шаг 6: Детали груза
+    dialogue.steps[6].prompt = `Водитель записал получателя. Как вы передадите детали груза?`;
+    
+    const loadDetailsOptions = [
+      { text: `It's ${load.cargo.toLowerCase()}.<br>Weight is around ${load.weight.toLocaleString()} lbs.<br>Rate is $${load.rate}.`, correct: true, feedback: `Отлично! Указали тип груза, вес и ставку. Вся необходимая информация.` },
+      { text: `It's some freight.<br>Pretty heavy.<br>You'll get paid $${load.rate}.`, correct: false, feedback: `Слишком неопределённо. Водителю нужны точный тип груза, вес и ставка.` },
+      { text: `${load.cargo.toLowerCase()}, ${load.weight.toLocaleString()} lbs.<br>Rate is $${load.rate}.<br>Special handling: ${load.needsTemp ? 'Keep temperature at 35-37°F' : 'Standard handling'}.`, correct: true, feedback: `Отлично! Полная информация: тип, вес, ставка и особые требования.` }
+    ];
+    loadDetailsOptions.sort(() => Math.random() - 0.5);
+    dialogue.steps[6].options = loadDetailsOptions;
+    
+    dialogue.steps[7].text = `Perfect! I got all the details. When should I head out?`;
+    
+    // Шаг 8: Подтверждение и документы
+    dialogue.steps[8].prompt = `Водитель готов. Как вы завершите разговор?`;
+    
+    const confirmOptions = [
+      { text: `Head out tonight so you're there by 8 AM.<br>I'm sending all documents to your email now.<br>Drive safe!`, correct: true, feedback: `Отлично! Указали время отправления, подтвердили отправку документов и пожелали безопасности.` },
+      { text: `Just head out whenever you want.<br>You'll figure it out.`, correct: false, feedback: `Слишком неопределённо. Водителю нужны точные инструкции по времени отправления и подтверждение документов.` },
+      { text: `Head out tonight.<br>I'll email you the documents later if I remember.`, correct: false, feedback: `Неответственно. Документы нужно отправить сразу, а не "если вспомните".` }
+    ];
+    confirmOptions.sort(() => Math.random() - 0.5);
+    dialogue.steps[8].options = confirmOptions;
+    
+    dialogue.steps[9].text = `Thanks! I'll head out tonight and call you when I'm on the road.`;
+    
+    // Завершение
+    dialogue.steps[10].text = `✅ Отличная работа! Вы успешно назначили груз водителю по маршруту ${load.from} → ${load.to} (${load.miles} миль). Передали все необходимые детали: адреса, время, контакты, вес груза и ставку $${load.rate}. Водитель готов к отправке!`;
+  } else if (dialogueId === 3) {
+    // Диалог: Проверка статуса водителя
+    const currentHour = 6 + Math.floor(Math.random() * 12);
+    const hoursToPickup = Math.floor(Math.random() * 4) + 2;
+    const etaHour = currentHour + hoursToPickup;
+    
+    dialogue.steps[0].prompt = `📋 ${load.from} → ${load.to} | ${load.miles} миль<br>📦 ${load.cargo} | ${load.weight.toLocaleString()} lbs | 💰 ${load.rate}<br><br>Водитель в пути к месту погрузки. Как вы проверите его статус?`;
+    
+    const checkOptions = [
+      { text: `Where are you?<br>Are you going to be on time?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Где ты?<br>Успеешь вовремя?</div>`, correct: false, feedback: 'Слишком резко. Нужно более профессионально и дружелюбно.' },
+      { text: `Hey Mike! Just checking in on your progress.<br>What's your current location and ETA to the pickup?<br>Everything going smoothly?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Привет Майк! Проверяю как дела.<br>Где ты сейчас и когда прибудешь к погрузке?<br>Всё идёт гладко?</div>`, correct: true, feedback: 'Отлично! Дружелюбно, профессионально и проверили все важные моменты.' },
+      { text: `Call me when you get there.<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Позвони когда приедешь.</div>`, correct: false, feedback: 'Недостаточно. Нужно активно контролировать процесс, а не ждать.' }
+    ];
+    checkOptions.sort(() => Math.random() - 0.5);
+    dialogue.steps[0].options = checkOptions;
+    
+    dialogue.steps[1].text = `Hey! I'm about ${hoursToPickup} hours out, near ${['Nashville', 'Louisville', 'Indianapolis', 'St. Louis'][Math.floor(Math.random() * 4)]}.<br>Should arrive around ${etaHour}:00.<br>Everything is good, truck is running fine.<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Привет! Примерно в ${hoursToPickup} часах езды, около ${['Нэшвилла', 'Луисвилла', 'Индианаполиса', 'Сент-Луиса'][Math.floor(Math.random() * 4)]}.<br>Должен прибыть около ${etaHour}:00.<br>Всё хорошо, грузовик работает отлично.</div>`;
+    
+    dialogue.steps[2].prompt = `Водитель на правильном пути. Что важно напомнить?`;
+    
+    const reminderOptions = [
+      { text: `Okay, good.<br>Drive safe.<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Хорошо.<br>Езжай безопасно.</div>`, correct: false, feedback: 'Пропущены важные напоминания о процедурах.' },
+      { text: `Perfect! Remember to call me when you're 2 hours out so I can notify the shipper.<br>After loading, send me BOL photos and seal number immediately.<br>Any questions or concerns?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Отлично! Не забудь позвонить мне за 2 часа чтобы я уведомил отправителя.<br>После погрузки сразу отправь фото BOL и номер пломбы.<br>Есть вопросы или проблемы?</div>`, correct: true, feedback: 'Отлично! Напомнили о всех важных процедурах и проверили наличие вопросов.' },
+      { text: `Just get there on time.<br>That's all I need.<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Просто приезжай вовремя.<br>Это всё что нужно.</div>`, correct: false, feedback: 'Слишком холодно. Нужно поддерживать водителя и напоминать о процедурах.' }
+    ];
+    reminderOptions.sort(() => Math.random() - 0.5);
+    dialogue.steps[2].options = reminderOptions;
+    
+    dialogue.steps[3].text = `No questions, everything is clear.<br>I'll call you in about ${hoursToPickup - 2} hours.<br>Thanks for checking in!<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Вопросов нет, всё понятно.<br>Позвоню тебе примерно через ${hoursToPickup - 2} часа.<br>Спасибо что проверил!</div>`;
+    
+    dialogue.steps[4].text = `✅ Отличная работа! Вы профессионально проверили статус водителя, подтвердили что он на правильном пути и напомнили о важных процедурах. Водитель чувствует поддержку и знает что делать!`;
+    
+  } else if (dialogueId === 4) {
+    // Диалог: Отказ водителя от груза
+    const refusalReasons = [
+      { reason: 'too far from home', translation: 'слишком далеко от дома' },
+      { reason: 'wrong direction', translation: 'не в том направлении' },
+      { reason: 'rate is too low', translation: 'ставка слишком низкая' }
+    ];
+    const selectedReason = refusalReasons[Math.floor(Math.random() * refusalReasons.length)];
+    const altLoad = generateRandomLoad();
+    
+    dialogue.steps[0].prompt = `📋 ${load.from} → ${load.to} | ${load.miles} миль<br>📦 ${load.cargo} | ${load.weight.toLocaleString()} lbs | 💰 ${load.rate}<br><br>Вы предлагаете водителю груз. Как начнете?`;
+    
+    const offerOptions = [
+      { text: `I have a load for you.<br>Take it or leave it.<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">У меня есть груз для тебя.<br>Бери или нет.</div>`, correct: false, feedback: 'Слишком агрессивно. Водитель имеет право выбирать грузы.' },
+      { text: `Hey Mike! I have a load available: ${load.from} to ${load.to}, ${load.miles} miles, ${load.rate}.<br>Pickup tomorrow morning.<br>Does this work for you?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Привет Майк! У меня есть доступный груз: ${load.from} в ${load.to}, ${load.miles} миль, ${load.rate}.<br>Погрузка завтра утром.<br>Тебе подходит?</div>`, correct: true, feedback: 'Отлично! Профессионально представили груз и спросили мнение водителя.' },
+      { text: `You need to take this load.<br>I already booked it for you.<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Тебе нужно взять этот груз.<br>Я уже забронировал его для тебя.</div>`, correct: false, feedback: 'Неправильно. Нельзя бронировать груз без согласия водителя.' }
+    ];
+    offerOptions.sort(() => Math.random() - 0.5);
+    dialogue.steps[0].options = offerOptions;
+    
+    dialogue.steps[1].text = `Hey, thanks for the offer, but I think I'll pass on this one.<br>It's ${selectedReason.reason} for me right now.<br>Do you have anything else available?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Привет, спасибо за предложение, но я пропущу этот груз.<br>Он ${selectedReason.translation} для меня сейчас.<br>Есть что-то ещё?</div>`;
+    
+    dialogue.steps[2].prompt = `Водитель отказался от груза. Как вы отреагируете?`;
+    
+    const reactionOptions = [
+      { text: `Fine, I'll find someone else.<br>You're missing out.<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Ладно, найду кого-то другого.<br>Ты упускаешь возможность.</div>`, correct: false, feedback: 'Слишком негативно. Это разрушит отношения с водителем.' },
+      { text: `No problem, I understand!<br>Let me check what else I have available.<br>What direction are you looking for?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Без проблем, понимаю!<br>Дай мне проверить что ещё есть.<br>В каком направлении ты ищешь?</div>`, correct: true, feedback: 'Отлично! Проявили понимание и готовность найти альтернативу.' },
+      { text: `You always refuse loads.<br>This is getting frustrating.<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Ты всегда отказываешься от грузов.<br>Это начинает раздражать.</div>`, correct: false, feedback: 'Непрофессионально. Водитель имеет право выбирать грузы.' }
+    ];
+    reactionOptions.sort(() => Math.random() - 0.5);
+    dialogue.steps[2].options = reactionOptions;
+    
+    dialogue.steps[3].text = `I'm looking for something heading ${['east', 'west', 'south', 'north'][Math.floor(Math.random() * 4)]}, closer to home.<br>Preferably ${Math.floor(Math.random() * 200) + 400}-${Math.floor(Math.random() * 200) + 600} miles.<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Ищу что-то на ${['восток', 'запад', 'юг', 'север'][Math.floor(Math.random() * 4)]}, ближе к дому.<br>Желательно ${Math.floor(Math.random() * 200) + 400}-${Math.floor(Math.random() * 200) + 600} миль.</div>`;
+    
+    dialogue.steps[4].prompt = `Водитель указал предпочтения. Как предложите альтернативу?`;
+    
+    const alternativeOptions = [
+      { text: `I don't have anything like that.<br>Let me know if you change your mind.<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">У меня нет ничего такого.<br>Дай знать если передумаешь.</div>`, correct: false, feedback: 'Слишком пассивно. Нужно активно искать решение.' },
+      { text: `Perfect! I have another option: ${altLoad.from} to ${altLoad.to}, ${altLoad.miles} miles, ${altLoad.rate}.<br>This should work better for you.<br>Interested?<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Отлично! У меня есть другой вариант: ${altLoad.from} в ${altLoad.to}, ${altLoad.miles} миль, ${altLoad.rate}.<br>Это должно лучше подойти.<br>Интересно?</div>`, correct: true, feedback: 'Отлично! Быстро нашли альтернативу согласно предпочтениям водителя.' },
+      { text: `That's too picky.<br>You need to be more flexible.<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Это слишком привередливо.<br>Тебе нужно быть более гибким.</div>`, correct: false, feedback: 'Непрофессионально. Уважайте предпочтения водителя.' }
+    ];
+    alternativeOptions.sort(() => Math.random() - 0.5);
+    dialogue.steps[4].options = alternativeOptions;
+    
+    dialogue.steps[5].text = `Yes! That's much better for me.<br>I'll take this one.<br>Send me the details!<div style="margin-top: 8px; font-size: 16px; color: #94a3b8; font-style: italic;">Да! Это намного лучше для меня.<br>Я возьму этот груз.<br>Отправь мне детали!</div>`;
+    
+    dialogue.steps[6].text = `✅ Отличная работа! Вы профессионально отреагировали на отказ водителя, выслушали его предпочтения и быстро нашли альтернативный груз ${altLoad.from} → ${altLoad.to} (${altLoad.miles} миль, ${altLoad.rate}). Водитель доволен и готов работать!`;
+  }
+}
+
+// Инициализация диалогов
+function initDialogue(dialogueId) {
+  const container = document.getElementById(`dialogue-${dialogueId}`);
+  const dialogue = dialogues[dialogueId];
+  let currentStep = 0;
+
+  function showStep(stepIndex) {
+    const step = dialogue.steps[stepIndex];
+    
+    if (step.type === 'broker') {
+      // Показать сообщение брокера с аудио иконкой внутри bubble
+      const audioFile = `../audio/broker_response_${dialogueId}_${stepIndex}.mp3`;
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message other fade-in';
+      messageDiv.innerHTML = `
+        <div class="message-avatar">🤝</div>
+        <div class="message-content">
+          <div class="message-label">Брокер</div>
+          <div class="message-bubble">
+            ${step.text}
+            <span class="audio-icon" onclick="playBrokerAudio('${audioFile}', this)">🔊</span>
+          </div>
+        </div>
+      `;
+      container.appendChild(messageDiv);
+      
+      // Автоматически показать следующий шаг (вопрос диспетчера)
+      setTimeout(() => {
+        currentStep++;
+        if (currentStep < dialogue.steps.length) {
+          showStep(currentStep);
+        }
+      }, 800);
+      
+    } else if (step.type === 'driver') {
+      // Показать сообщение водителя
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message other fade-in';
+      messageDiv.innerHTML = `
+        <div class="message-avatar">🚛</div>
+        <div class="message-content">
+          <div class="message-label">Водитель</div>
+          <div class="message-bubble">
+            ${step.text}
+            <span class="audio-icon" onclick="playTextAudio(\`${step.text.replace(/`/g, '\\`').replace(/<[^>]*>/g, '')}\`, this)">🔊</span>
+          </div>
+        </div>
+      `;
+      container.appendChild(messageDiv);
+      
+      // Автоматически показать следующий шаг (вопрос диспетчера)
+      setTimeout(() => {
+        currentStep++;
+        if (currentStep < dialogue.steps.length) {
+          showStep(currentStep);
+        }
+      }, 800);
+      
+    } else if (step.type === 'choice') {
+      // Показать варианты ответов
+      const choiceDiv = document.createElement('div');
+      choiceDiv.className = 'message dispatcher fade-in';
+      choiceDiv.innerHTML = `
+        <div class="message-avatar">👤</div>
+        <div class="message-content">
+          <div class="message-label">Диспетчер</div>
+          ${step.prompt ? `<div class="message-bubble" style="background: rgba(251, 191, 36, 0.15); border-color: rgba(251, 191, 36, 0.3); color: #fde68a; margin-bottom: 12px; padding-right: 16px;">${step.prompt}</div>` : ''}
+          <div class="choice-buttons" id="choices-${dialogueId}-${stepIndex}">
+            ${step.options.map((option, index) => `
+              <button class="choice-btn" onclick="selectChoice(${dialogueId}, ${stepIndex}, ${index})">
+                ${option.text}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `;
+      container.appendChild(choiceDiv);
+      
+    } else if (step.type === 'complete') {
+      // Показать завершение
+      const completeDiv = document.createElement('div');
+      completeDiv.className = 'message dispatcher fade-in';
+      completeDiv.innerHTML = `
+        <div class="message-avatar">🎉</div>
+        <div class="message-content">
+          <div class="message-bubble" style="background: rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.5); color: #d1fae5; font-weight: 600;">
+            ${step.text}
+          </div>
+          <button class="choice-btn" style="margin-top: 16px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2)); border: 2px solid rgba(16, 185, 129, 0.4); color: #d1fae5; font-weight: 600;" onclick="restartDialogue(${dialogueId})">
+            🔄 Начать новый диалог
+          </button>
+        </div>
+      `;
+      container.appendChild(completeDiv);
+    }
+    
+    // Прокрутка вниз
+    container.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }
+
+  // Начать диалог
+  showStep(0);
+  
+  // Сохранить состояние для доступа из selectChoice
+  window[`dialogue${dialogueId}State`] = {
+    dialogue,
+    currentStep,
+    showStep,
+    container
+  };
+}
+
+function restartDialogue(dialogueId) {
+  // Очистить контейнер диалога
+  const container = document.getElementById(`dialogue-${dialogueId}`);
+  container.innerHTML = '';
+  
+  // Перезаполнить диалог новыми данными
+  fillDialogueWithLoadData(dialogueId);
+  
+  // Перезапустить диалог
+  initDialogue(dialogueId);
+}
+
+function selectChoice(dialogueId, stepIndex, optionIndex) {
+  const state = window[`dialogue${dialogueId}State`];
+  const step = state.dialogue.steps[stepIndex];
+  const option = step.options[optionIndex];
+  const choicesContainer = document.getElementById(`choices-${dialogueId}-${stepIndex}`);
+  const buttons = choicesContainer.querySelectorAll('.choice-btn');
+  
+  // Если выбран правильный ответ
+  if (option.correct) {
+    // Отключить все кнопки
+    buttons.forEach((btn, index) => {
+      btn.disabled = true;
+      if (index === optionIndex) {
+        btn.classList.add('correct');
+      } else {
+        btn.style.opacity = '0.3';
+      }
+    });
+    
+    // Показать feedback
+    const feedbackDiv = document.createElement('div');
+    feedbackDiv.className = 'message dispatcher fade-in';
+    feedbackDiv.innerHTML = `
+      <div class="message-avatar">✅</div>
+      <div class="message-content">
+        <div class="message-bubble" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3);">
+          ${option.feedback}
+        </div>
+      </div>
+    `;
+    state.container.appendChild(feedbackDiv);
+    
+    // Показать выбранный ответ
+    const selectedDiv = document.createElement('div');
+    selectedDiv.className = 'message dispatcher fade-in';
+    
+    // Извлечь только английский текст (до первого <div)
+    const englishText = option.text.split('<div')[0].trim();
+    const cleanText = englishText.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+    
+    selectedDiv.innerHTML = `
+      <div class="message-avatar">👤</div>
+      <div class="message-content">
+        <div class="message-label">Диспетчер</div>
+        <div class="message-bubble">
+          ${option.text}
+          <span class="audio-icon" onclick="playTextAudio('${cleanText.replace(/'/g, "\\'")}', this)">🔊</span>
+        </div>
+      </div>
+    `;
+    state.container.appendChild(selectedDiv);
+    
+    // Продолжить диалог - пропустить следующий шаг broker/driver и перейти к следующему choice
+    setTimeout(() => {
+      state.currentStep = stepIndex + 1;
+      // Показываем ответ брокера или водителя (следующий шаг)
+      if (state.currentStep < state.dialogue.steps.length) {
+        const nextStep = state.dialogue.steps[state.currentStep];
+        if (nextStep.type === 'broker') {
+          // Показать ответ брокера с аудио иконкой внутри bubble
+          const audioFile = `../audio/broker_response_${dialogueId}_${state.currentStep}.mp3`;
+          const brokerDiv = document.createElement('div');
+          brokerDiv.className = 'message other fade-in';
+          brokerDiv.innerHTML = `
+            <div class="message-avatar">🤝</div>
+            <div class="message-content">
+              <div class="message-label">Брокер</div>
+              <div class="message-bubble">
+                ${nextStep.text}
+                <span class="audio-icon" onclick="playBrokerAudio('${audioFile}', this)">🔊</span>
+              </div>
+            </div>
+          `;
+          state.container.appendChild(brokerDiv);
+          
+          // Прокрутка к ответу брокера
+          setTimeout(() => {
+            brokerDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 100);
+          
+          // Переходим к следующему вопросу
+          setTimeout(() => {
+            state.currentStep++;
+            if (state.currentStep < state.dialogue.steps.length) {
+              state.showStep(state.currentStep);
+            }
+          }, 800);
+        } else if (nextStep.type === 'driver') {
+          // Показать ответ водителя
+          const driverDiv = document.createElement('div');
+          driverDiv.className = 'message other fade-in';
+          driverDiv.innerHTML = `
+            <div class="message-avatar">🚛</div>
+            <div class="message-content">
+              <div class="message-label">Водитель</div>
+              <div class="message-bubble">
+                ${nextStep.text}
+                <span class="audio-icon" onclick="playTextAudio(\`${nextStep.text.replace(/`/g, '\\`').replace(/<[^>]*>/g, '')}\`, this)">🔊</span>
+              </div>
+            </div>
+          `;
+          state.container.appendChild(driverDiv);
+          
+          // Прокрутка к ответу водителя
+          setTimeout(() => {
+            driverDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 100);
+          
+          // Переходим к следующему вопросу
+          setTimeout(() => {
+            state.currentStep++;
+            if (state.currentStep < state.dialogue.steps.length) {
+              state.showStep(state.currentStep);
+            }
+          }, 800);
+        } else {
+          state.showStep(state.currentStep);
+        }
+      }
+    }, 1500);
+    
+  } else {
+    // Если выбран неправильный ответ - показать feedback, но оставить кнопки активными
+    const btn = buttons[optionIndex];
+    btn.classList.add('incorrect');
+    btn.disabled = true;
+    
+    // Показать feedback для неправильного ответа
+    const feedbackDiv = document.createElement('div');
+    feedbackDiv.className = 'message dispatcher fade-in';
+    feedbackDiv.innerHTML = `
+      <div class="message-avatar">❌</div>
+      <div class="message-content">
+        <div class="message-bubble" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3);">
+          ${option.feedback}<br><br>
+          <strong>Попробуйте выбрать другой вариант.</strong>
+        </div>
+      </div>
+    `;
+    state.container.appendChild(feedbackDiv);
+  }
+  
+  // Прокрутка вниз
+  state.container.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+function switchTab(tabName) {
+  // Hide all content
+  document.querySelectorAll('.content').forEach(content => {
+    content.classList.remove('active');
+  });
+  
+  // Remove active from all tabs
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  
+  // Show selected content
+  document.getElementById(tabName).classList.add('active');
+  
+  // Add active to clicked tab
+  event.target.classList.add('active');
+  
+  // Initialize dialogue 2 if drivers tab is clicked and not already initialized
+  if (tabName === 'drivers' && !window.dialogue2State) {
+    fillDialogueWithLoadData(2);
+    initDialogue(2);
+  }
+  
+  // Initialize dialogue 3 if drivers tab is clicked and not already initialized
+  if (tabName === 'drivers' && !window.dialogue3State) {
+    fillDialogueWithLoadData(3);
+    initDialogue(3);
+  }
+  
+  // Initialize dialogue 4 if drivers tab is clicked and not already initialized
+  if (tabName === 'drivers' && !window.dialogue4State) {
+    fillDialogueWithLoadData(4);
+    initDialogue(4);
+  }
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+  // Прокрутка к началу страницы
+  window.scrollTo(0, 0);
+  
+  fillDialogueWithLoadData(1);
+  initDialogue(1);
+});
+
+// Функция воспроизведения аудио
+let currentAudio = null;
+
+function playBrokerAudio(audioFile, iconElement) {
+  // Остановить предыдущее аудио, если оно играет
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    // Убрать класс playing со всех иконок
+    document.querySelectorAll('.audio-icon').forEach(icon => {
+      icon.classList.remove('playing');
+    });
+  }
+  
+  // Создать новое аудио
+  currentAudio = new Audio(audioFile);
+  
+  // Добавить класс playing к иконке
+  iconElement.classList.add('playing');
+  
+  // Воспроизвести
+  currentAudio.play().catch(err => {
+    console.log('Audio playback failed:', err);
+    iconElement.classList.remove('playing');
+  });
+  
+  // Убрать класс playing когда аудио закончится
+  currentAudio.onended = function() {
+    iconElement.classList.remove('playing');
+  };
+}
+
+// Универсальная функция для воспроизведения любого текста
+function playTextAudio(text, iconElement) {
+  // Убрать HTML теги и лишние пробелы
+  const cleanText = text.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  
+  // Попытаться найти соответствующий аудио файл
+  const audioFile = findAudioFile(cleanText);
+  
+  if (audioFile) {
+    // Если файл найден - воспроизвести MP3
+    playBrokerAudio(audioFile, iconElement);
+  } else {
+    // Если файла нет - использовать Web Speech API
+    playWebSpeech(cleanText, iconElement);
+  }
+}
+
+// Функция для поиска аудио файла по тексту
+function findAudioFile(text) {
+  // Словарь: ключевые слова -> имя файла
+  const audioMap = {
+    // Диспетчер - Приветствия
+    'calling about the load from.*posted on DAT': 'disp_load_from_X_to_Y_posted_on_DAT.mp3',
+    'saw your posting for a load from': 'disp_posting_for_load_from_X_to_Y.mp3',
+    'interested in the load from.*Can you tell me if': 'disp_load_from_X_to_Y_still_available.mp3',
+    
+    // Брокер - Ответы на приветствие
+    "Yes, it's still available.*MC number": 'broker_yes_its_still_available_load_number.mp3',
+    "Yes, it's still open.*MC number": 'broker_yes_still_open_whats_your_MC_number.mp3',
+    "Yes, it's available.*Can I get your MC": 'broker_yes_available_can_I_get_MC.mp3',
+    
+    // Диспетчер - Оборудование
+    '53-foot reefer with temperature control': 'disp_53_foot_reefer_with_temperature_control.mp3',
+    '53-foot dry van with air-ride suspension': 'disp_53_foot_dry_van_air_ride_suspension.mp3',
+    
+    // Брокер - Детали груза
+    'Pickup tomorrow at 8 AM.*Rate:.*What equipment': 'broker_pickup_8AM_delivery_5PM_rate_X_equipment.mp3',
+    'Pick up tomorrow morning.*deliver by end of day.*What type of truck': 'broker_pickup_morning_end_of_day_rate_X_truck.mp3',
+    
+    // Диспетчер - Вопросы о ставке
+    'posting shows.*final rate.*or.*negotiation': 'disp_posting_shows_X_final_rate_or_negotiation.mp3',
+    'rate listed.*flexibility on that number': 'disp_rate_listed_X_flexibility_on_that_number.mp3',
+    
+    // Брокер - Ответы о ставке
+    'rate.*as posted.*standard rate for this route': 'broker_rate_X_as_posted_standard_this_route.mp3',
+    'budgeted.*per mile.*fair for this lane': 'broker_X_budgeted_per_mile_fair_this_lane.mp3',
+    
+    // Диспетчер - Переговоры
+    'considering the.*distance.*market rates.*need at least': 'disp_distance_market_rates_need_at_least_X.mp3',
+    'operating costs.*miles.*looking at': 'disp_operating_costs_miles_looking_at_X.mp3',
+    
+    // Брокер - Контр-предложения
+    "too high.*Best I can do": 'broker_too_high_best_I_can_do_is_X.mp3',
+    "can't go that high.*How about": 'broker_cant_go_high_how_about_X.mp3',
+    'above our budget.*offer.*best price': 'broker_above_budget_offer_X_best_price.mp3',
+    
+    // Диспетчер - Компромисс
+    'meet in the middle.*driver already in': 'disp_meet_middle_X_driver_already_in_city.mp3',
+    'settle at.*truck nearby.*on-time': 'disp_settle_at_X_truck_nearby_on_time.mp3',
+    
+    // Брокер - Финальное согласие
+    'Alright.*deal.*send the rate confirmation': 'broker_alright_X_deal_send_rate_confirmation.mp3',
+    'Okay.*can do.*book it.*Sending confirmation': 'broker_okay_do_X_book_it_sending_confirmation.mp3',
+    'Fine.*acceptable.*paperwork.*right away': 'broker_fine_X_acceptable_paperwork_right_away.mp3'
+  };
+  
+  // Поиск подходящего файла по паттерну
+  for (const [pattern, filename] of Object.entries(audioMap)) {
+    const regex = new RegExp(pattern, 'i');
+    if (regex.test(text)) {
+      return `../audio/${filename}`;
+    }
+  }
+  
+  return null; // Файл не найден
+}
+
+// Функция для Web Speech API (fallback)
+function playWebSpeech(text, iconElement) {
+  // Остановить предыдущее аудио
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+  }
+  
+  // Остановить Web Speech если играет
+  window.speechSynthesis.cancel();
+  
+  // Убрать класс playing со всех иконок
+  document.querySelectorAll('.audio-icon').forEach(icon => {
+    icon.classList.remove('playing');
+  });
+  
+  // Создать озвучку через Web Speech API
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'en-US';
+  utterance.rate = 0.95;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+  
+  // Добавить класс playing
+  iconElement.classList.add('playing');
+  
+  // Убрать класс когда закончится
+  utterance.onend = () => {
+    iconElement.classList.remove('playing');
+  };
+  
+  utterance.onerror = () => {
+    iconElement.classList.remove('playing');
+  };
+  
+  // Запустить озвучку
+  window.speechSynthesis.speak(utterance);
+}
+
+// Показать кнопку "Назад к симулятору" если пришли из simulator.html
+document.addEventListener('DOMContentLoaded', function() {
+  const url = window.location.href;
+  const backToSimulatorBtn = document.getElementById('backToSimulator');
+  
+  if (url.includes('from=simulator')) {
+    backToSimulatorBtn.style.display = 'inline-flex';
+  }
+});
+</script>
+
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Курсы Диспетчера</h4>
+        <p>Профессиональное обучение диспетчеров грузоперевозок</p>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Обучение</h4>
+        <a href="courses.html">Курсы</a>
+        <a href="certification.html">Сертификация</a>
+        <a href="webinars.html">Вебинары</a>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Поддержка</h4>
+        <a href="faq.html">FAQ</a>
+        <a href="contacts.html">Контакты</a>
+        <a href="help.html">Помощь</a>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Компания</h4>
+        <a href="about.html">О нас</a>
+        <a href="blog.html">Блог</a>
+        <a href="career.html">Карьера</a>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <p>&copy; 2024 Курсы Диспетчера. Все права защищены.</p>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

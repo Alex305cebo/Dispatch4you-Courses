@@ -1,0 +1,776 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Курсы Диспетчера | DispatcherPro</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="stylesheet" href="../shared-nav.css?v=5.1.1774288314">
+    <script>
+        // MAINTENANCE MODE (COMMENTED OUT)
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #f093fb;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary: #b8c5d6;
+            --text-muted: #8892aa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            min-height: 80px;
+        }
+
+        /* Основные стили для body чтобы избежать горизонтальной прокрутки */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
+            padding-top: 100px;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1), transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(240, 147, 251, 0.1), transparent 50%);
+            animation: none;
+            z-index: -1;
+        }
+
+25% {
+            transform: translate(5%, 5%) scale(1.05);
+        }
+
+        50% {
+            transform: translate(-5%, 5%) scale(1.1);
+        }
+
+        75% {
+            transform: translate(5%, -5%) scale(1.05);
+        }
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--primary);
+        }
+
+        /* Main Content */
+        .main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 60px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .hero h1 {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 800;
+            margin-bottom: 20px;
+            word-wrap: break-word;
+        }
+
+        background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Progress Overview */
+        .progress-overview {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 50px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .progress-stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 20px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .overall-progress {
+            width: 100%;
+            max-width: 400px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        .overall-progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 4px;
+            width: 50%;
+            transition: width 0.3s ease;
+        }
+
+        /* Modules Grid */
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .module-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        position: relative;
+        overflow: hidden;
+        }
+
+        .module-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
+            border-color: var(--primary);
+        }
+
+        .module-card.locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .module-card.locked:hover {
+            transform: none;
+            box-shadow: none;
+            border-color: var(--border);
+        }
+
+        .module-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .module-number {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .module-status {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .module-status.completed {
+            background: var(--success);
+            color: white;
+        }
+
+        .module-status.current {
+            background: var(--warning);
+            color: white;
+            animation: pulse 2s ease infinite;
+        }
+
+        .module-status.locked {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .module-card h3 {
+            font-size: 1.3rem;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .module-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .module-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Mobile Responsive - Complete Coverage */
+        @media (max-width: 1200px) {
+            .nav {
+                padding: 0 15px;
+            }
+
+            .main {
+                max-width: 100%;
+                padding: 50px 15px;
+            }
+
+            .modules-grid {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 100px;
+            }
+
+            .header {
+                padding: 15px 0;
+                min-height: 70px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .nav {
+                justify-content: center;
+            }
+
+            .main {
+                padding: 40px 15px;
+            }
+
+            .hero h1 {
+                font-size: 2.2rem;
+                line-height: 1.2;
+            }
+
+            .hero p {
+                font-size: 1rem;
+                padding: 0 10px;
+            }
+
+            .progress-overview {
+                padding: 25px 15px;
+                margin-bottom: 40px;
+            }
+
+            .progress-stats {
+                gap: 25px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .stat {
+                min-width: 80px;
+            }
+
+            .stat-number {
+                font-size: 1.8rem;
+            }
+
+            .stat-label {
+                font-size: 0.85rem;
+            }
+
+            .overall-progress {
+                width: 100%;
+                max-width: 400px;
+            }
+
+            .overall-progress-fill {
+                height: 100%;
+                background: linear-gradient(135deg, var(--primary), var(--secondary));
+                border-radius: 4px;
+                width: 50%;
+                transition: width 0.3s ease;
+            }
+
+            /* Modules Grid */
+            .modules-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .module-card {
+                padding: 20px;
+                margin: 0 5px;
+            }
+
+            .module-header {
+                margin-bottom: 12px;
+            }
+
+            .module-number {
+                width: 45px;
+                height: 45px;
+                font-size: 1.1rem;
+            }
+
+            .module-status {
+                width: 32px;
+                height: 32px;
+                font-size: 0.9rem;
+            }
+
+            .module-card h3 {
+                font-size: 1.2rem;
+                margin-bottom: 8px;
+            }
+
+            .module-card p {
+                font-size: 0.9rem;
+                margin-bottom: 12px;
+            }
+
+            .module-meta {
+                display: flex;
+                justify-content: space-between;
+                font-size: 0.85rem;
+                color: var(--text-muted);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main {
+                padding: 30px 10px;
+            }
+
+            .hero h1 {
+                font-size: 1.8rem;
+                padding: 0 5px;
+            }
+
+            .hero p {
+                font-size: 0.9rem;
+                padding: 0 5px;
+            }
+
+            .progress-overview {
+                padding: 20px 10px;
+                margin-bottom: 30px;
+            }
+
+            .progress-stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .stat-number {
+                font-size: 1.6rem;
+            }
+
+            .stat-label {
+                font-size: 0.8rem;
+            }
+
+            .overall-progress {
+                max-width: 100%;
+            }
+
+            .modules-grid {
+                gap: 15px;
+            }
+
+            .module-card {
+                padding: 15px 10px;
+                margin: 0;
+            }
+
+            .module-number {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+
+            .module-status {
+                width: 28px;
+                height: 28px;
+                font-size: 0.8rem;
+            }
+
+            .module-card h3 {
+                font-size: 1.1rem;
+                line-height: 1.3;
+            }
+
+            .module-card p {
+                font-size: 0.85rem;
+                line-height: 1.4;
+            }
+
+            .module-meta {
+                flex-direction: column;
+                gap: 5px;
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .main {
+                padding: 25px 8px;
+            }
+
+            .hero h1 {
+                font-size: 1.6rem;
+            }
+
+            .hero p {
+                font-size: 0.85rem;
+            }
+
+            .progress-overview {
+                padding: 15px 8px;
+            }
+
+            .modules-grid {
+                gap: 12px;
+            }
+
+            .module-card {
+                padding: 12px 8px;
+            }
+
+            .module-number {
+                width: 35px;
+                height: 35px;
+                font-size: 0.9rem;
+            }
+
+            .module-status {
+                width: 25px;
+                height: 25px;
+                font-size: 0.7rem;
+            }
+
+            .module-card h3 {
+                font-size: 1rem;
+            }
+
+            .module-card p {
+                font-size: 0.8rem;
+            }
+
+            .module-meta {
+                flex-direction: column;
+                gap: 5px;
+                font-size: 0.7rem;
+            }
+        }
+
+        /* Large screens optimization */
+        @media (min-width: 1400px) {
+            .main {
+                max-width: 1300px;
+            }
+
+            .modules-grid {
+                grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+                gap: 30px;
+            }
+
+            .module-card {
+                padding: 30px;
+            }
+
+            .module-card h3 {
+                font-size: 1.4rem;
+            }
+
+            .module-card p {
+                font-size: 1rem;
+            }
+        }
+
+        /* Ultra-wide screens */
+        @media (min-width: 1920px) {
+            .main {
+                max-width: 1500px;
+            }
+
+            .modules-grid {
+                grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            }
+        }
+
+        /* Step and Tool Cards Hover Effects */
+        .step-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.2);
+            border-color: var(--primary);
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3);
+        }
+
+        @media (max-width: 768px) {
+
+            .next-steps-section h2,
+            .tools-section h2 {
+                font-size: 1.6rem !important;
+                padding: 0 15px;
+            }
+
+            .tools-section {
+                padding: 30px 0 !important;
+            }
+
+            .tools-section>div {
+                padding: 0 15px !important;
+                gap: 20px !important;
+            }
+
+            .step-card,
+            .tool-card {
+                padding: 20px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+
+            .next-steps-section,
+            .tools-section {
+                margin-top: 40px !important;
+            }
+
+            .next-steps-section h2,
+            .tools-section h2 {
+                font-size: 1.4rem !important;
+                margin-bottom: 25px !important;
+            }
+
+            .step-card h3,
+            .tool-card h3 {
+                font-size: 1.1rem !important;
+            }
+
+            .step-card p,
+            .tool-card p {
+                font-size: 0.85rem !important;
+            }
+        }
+
+        /* Navigation styles removed - using shared-nav.css */
+
+                /* Tablet landscape specific */
+        @media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+            .modules-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .progress-stats {
+                gap: 30px;
+            }
+        }
+
+        /* Small tablet portrait */
+        @media (min-width: 600px) and (max-width: 768px) {
+            .modules-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+
+            .module-card {
+                padding: 18px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="../mobile-fix.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div id="nav-placeholder"></div>
+        <script src="../nav-loader.js?v=5.1.1774288314"></script>
+
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Hero Section -->
+        <div class="hero">
+            <h1>Все курсы обучения диспетчеров</h1>
+            <p>Подробное описание всех учебных модулей. Узнайте, что вы изучите, сколько времени займет каждый модуль, и как он поможет вам стать успешным диспетчером.</p>
+        </div>
+
+        <!-- Progress Overview -->
+        <div class="progress-overview">
+            <div class="progress-stats">
+                <div class="stat">
+                    <div class="stat-number">12</div>
+                    <div class="stat-label">Модулей</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">12</div>
+                    <div class="stat-label">Часов просмотра</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">355</div>
+                    <div class="stat-label">Часов всего</div>
+                </div>
+            </div>
+            <div class="overall-progress">
+                <div class="overall-progress-fill"></div>
+            </div>
+        </div>
+
+        <!-- Modules Grid -->
+        <div class="modules-grid">
+            <!-- Module 1: Введение -->
+            <div class="module-card" onclick="location.href='doc-module-1-complete.html'">
+                <div class="module-header">
+                    <div class="module-number">01</div>
+                    <div class="module-status completed">?</div>
+                </div>
+                <h3>Введение и терминология</h3>
+                <p>Обзор логистической индустрии США ($875B), роль диспетчера, структура рынка грузоперевозок, ключевые термины, KPI успеха, прогнозы и тенденции рынка 2024-2030.</p>
+                <div class="module-meta">
+                    <span>7 уроков</span>
+                    <span>45 мин</span>
+                </div>
+            </div>
+
+            <!-- Module 2: Регулирование -->
+            <div class="module-card" onclick="location.href='doc-module-2-complete.html'">
+                <div class="module-header">
+                    <div class="module-number">02</div>
+                    <div class="module-status current">?</div>
+                </div>
+                <h3>Регулирование и соответствие</h3>
+                <p>FMCSA и DOT регулирование, Hours of Service (11/14/60/70 часов), ELD mandate, DOT inspections, CSA points, compliance и штрафы до $16,000.</p>
+                <div class="module-meta">
+                    <span>4 урока</span>

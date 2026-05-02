@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Личный кабинет | Курсы Диспетчера</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --primary: #6366f1; --secondary: #8b5cf6; --accent: #ec4899;
+  --bg-dark: #0f172a; --bg-darker: #020617;
+  --text-primary: #f1f5f9; --text-secondary: #94a3b8; --text-muted: #64748b;
+  --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+}
+[data-theme="light"] {
+  --bg-dark: #ffffff; --bg-darker: #f8fafc;
+  --text-primary: #0f172a; --text-secondary: #475569;
+}
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-darker);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+.container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 0 40px; }
+
+/* Navigation */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 16px 0;
+}
+[data-theme="light"] .navbar { background: rgba(248, 250, 252, 0.8); }
+.nav-content { display: flex; align-items: center; justify-content: space-between; }
+.logo { display: flex; align-items: center; gap: 12px; text-decoration: none;
+  font-size: 20px; font-weight: 700; color: var(--text-primary); }
+.logo-icon { font-size: 28px; }
+.nav-links { display: flex; gap: 32px; }
+.nav-link { text-decoration: none; color: var(--text-secondary); font-weight: 500; transition: color 0.3s; }
+.nav-link:hover, .nav-link.active { color: var(--primary); }
+
+/* Dashboard Layout */
+.dashboard { padding-top: 100px; padding-bottom: 60px; }
+.dashboard-header {
+  margin-bottom: 48px;
+}
+.welcome-section {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 40px;
+  margin-bottom: 32px;
+}
+.welcome-title {
+  font-size: 36px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.welcome-subtitle {
+  color: var(--text-secondary);
+  font-size: 18px;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+  margin-bottom: 48px;
+}
+.stat-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 32px;
+  transition: all 0.3s;
+}
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
+}
+.stat-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin-bottom: 16px;
+}
+.stat-icon.primary { background: rgba(99, 102, 241, 0.2); }
+.stat-icon.success { background: rgba(16, 185, 129, 0.2); }
+.stat-icon.warning { background: rgba(245, 158, 11, 0.2); }
+.stat-icon.accent { background: rgba(236, 72, 153, 0.2); }
+.stat-value {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.stat-label {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  overflow-x: auto;
+}
+.tab {
+  padding: 12px 24px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+.tab:hover { color: var(--text-primary); }
+.tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* Tab Content */
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Course Cards */
+.courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+.course-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+.course-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
+}
+.course-image {
+  width: 100%;
+  height: 160px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+}
+.course-content { padding: 24px; }
+.course-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.course-progress {
+  margin: 16px 0;
+}
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 100px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  border-radius: 100px;
+  transition: width 0.3s;
+}
+.btn-continue {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-continue:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+}
+
+/* Profile Section */
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 32px;
+}
+.profile-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 32px;
+  text-align: center;
+}
+.profile-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  margin: 0 auto 24px;
+}
+.profile-name {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.profile-email {
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 24px;
+}
+.profile-stat {
+  text-align: center;
+}
+.profile-stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary);
+}
+.profile-stat-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* Settings Form */
+.settings-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 32px;
+}
+.form-group {
+  margin-bottom: 24px;
+}
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  transition: all 0.3s;
+}
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: rgba(255, 255, 255, 0.08);
+}
+.btn-save {
+  padding: 14px 32px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-save:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+}
+
+/* Certificates */
+.certificates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+.certificate-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 32px;
+  text-align: center;
+  transition: all 0.3s;
+}
+.certificate-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
+}
+.certificate-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+.certificate-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.certificate-date {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+.btn-download {
+  padding: 10px 24px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-download:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 768px) {
+  .container { padding: 0 24px; }
+  .profile-grid { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: 1fr; }
+  .courses-grid { grid-template-columns: 1fr; }
+  .nav-links { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="navbar">
+  <div class="container">
+    <div class="nav-content">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">🎓</span>
+        <span>Курсы Диспетчера</span>
+      </a>
+      <div class="nav-links">
+        <a href="index.html" class="nav-link">Главная</a>
+        <a href="courses.html" class="nav-link">Курсы</a>
+        <a href="dashboard.html" class="nav-link active">Личный кабинет</a>
+      </div>
+      <div class="nav-actions"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- Dashboard -->
+<section class="dashboard">
+  <div class="container">
+    
+    <!-- Welcome Section -->
+    <div class="dashboard-header">
+      <div class="welcome-section">
+        <h1 class="welcome-title">Добро пожаловать, <span id="userName">Студент</span>!</h1>
+        <p class="welcome-subtitle">Продолжайте обучение и достигайте новых высот</p>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon primary">📚</div>
+          <div class="stat-value" id="activeCourses">3</div>
+          <div class="stat-label">Активных курсов</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon success">✅</div>
+          <div class="stat-value" id="completedCourses">1</div>
+          <div class="stat-label">Завершено курсов</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon warning">⏱️</div>
+          <div class="stat-value" id="studyHours">24</div>
+          <div class="stat-label">Часов обучения</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon accent">🏆</div>
+          <div class="stat-value" id="certificates">1</div>
+          <div class="stat-label">Сертификатов</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('courses')">Мои курсы</button>
+      <button class="tab" onclick="switchTab('profile')">Профиль</button>
+      <button class="tab" onclick="switchTab('certificates')">Сертификаты</button>
+      <button class="tab" onclick="switchTab('settings')">Настройки</button>
+    </div>
+
+    <!-- Tab: My Courses -->
+    <div id="tab-courses" class="tab-content active">
+      <div class="courses-grid">
+        
+        <div class="course-card">
+          <div class="course-image">🚀</div>
+          <div class="course-content">
+            <h3 class="course-title">Основы диспетчирования</h3>
+            <div class="course-progress">
+              <div class="progress-label">
+                <span>Прогресс</span>
+                <span>100%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 100%"></div>
+              </div>
+            </div>
+            <button class="btn-continue">Завершено ✓</button>
+          </div>
+        </div>
+
+        <div class="course-card">
+          <div class="course-image">📋</div>
+          <div class="course-content">
+            <h3 class="course-title">FMCSA и DOT регуляции</h3>
+            <div class="course-progress">
+              <div class="progress-label">
+                <span>Прогресс</span>
+                <span>65%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 65%"></div>
+              </div>
+            </div>
+            <button class="btn-continue">Продолжить →</button>
+          </div>
+        </div>
+
+        <div class="course-card">
+          <div class="course-image">💼</div>
+          <div class="course-content">
+            <h3 class="course-title">Работа с Load Boards</h3>
+            <div class="course-progress">
+              <div class="progress-label">
+                <span>Прогресс</span>
+                <span>30%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 30%"></div>
+              </div>
+            </div>
+            <button class="btn-continue">Продолжить →</button>
+          </div>
+        </div>
+
+        <div class="course-card">
+          <div class="course-image">🎯</div>
+          <div class="course-content">
+            <h3 class="course-title">Тренажёр вопросов</h3>
+            <div class="course-progress">
+              <div class="progress-label">
+                <span>Интерактивные карточки</span>
+                <span>Новое!</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 0%"></div>
+              </div>
+            </div>
+            <button class="btn-continue" onclick="window.location.href='quiz-cards.html'">Начать тренировку →</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Tab: Profile -->
+    <div id="tab-profile" class="tab-content">
+      <div class="profile-grid">
+        <div class="profile-card">
+          <div class="profile-avatar">👤</div>
+          <h2 class="profile-name" id="profileName">Иван Иванов</h2>
+          <p class="profile-email" id="profileEmail">ivan@example.com</p>
+          <div class="profile-stats">
+            <div class="profile-stat">
+              <div class="profile-stat-value">4</div>
+              <div class="profile-stat-label">Курсов</div>
+            </div>
+            <div class="profile-stat">
+              <div class="profile-stat-value">1</div>
+              <div class="profile-stat-label">Сертификатов</div>
+            </div>
+          </div>
+        </div>
+        <div class="settings-card">
+          <h3 style="font-size: 24px; font-weight: 700; margin-bottom: 24px;">Информация о профиле</h3>
+          <div class="form-group">
+            <label class="form-label">Имя</label>
+            <input type="text" class="form-input" id="firstName" value="Иван">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Фамилия</label>
+            <input type="text" class="form-input" id="lastName" value="Иванов">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" id="email" value="ivan@example.com" disabled>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Телефон</label>
+            <input type="tel" class="form-input" placeholder="+1 (555) 123-4567">
+          </div>
+          <button class="btn-save" onclick="saveProfile()">Сохранить изменения</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Certificates -->
+    <div id="tab-certificates" class="tab-content">
+      <div class="certificates-grid">
+        
+        <div class="certificate-card">
+          <div class="certificate-icon">🏆</div>
+          <h3 class="certificate-title">Основы диспетчирования</h3>
+          <p class="certificate-date">Выдан: 15 февраля 2026</p>
+          <button class="btn-download">Скачать PDF</button>
+        </div>
+
+        <div class="certificate-card" style="opacity: 0.5;">
+          <div class="certificate-icon">🔒</div>
+          <h3 class="certificate-title">FMCSA и DOT</h3>
+          <p class="certificate-date">Завершите курс</p>
+          <button class="btn-download" disabled>Недоступно</button>
+        </div>
+
+        <div class="certificate-card" style="opacity: 0.5;">
+          <div class="certificate-icon">🔒</div>
+          <h3 class="certificate-title">Load Boards</h3>
+          <p class="certificate-date">Завершите курс</p>
+          <button class="btn-download" disabled>Недоступно</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Tab: Settings -->
+    <div id="tab-settings" class="tab-content">
+      <div class="settings-card" style="max-width: 600px;">
+        <h3 style="font-size: 24px; font-weight: 700; margin-bottom: 24px;">Настройки аккаунта</h3>
+        
+        <div class="form-group">
+          <label class="form-label">Текущий пароль</label>
+          <input type="password" class="form-input" placeholder="••••••••">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Новый пароль</label>
+          <input type="password" class="form-input" placeholder="••••••••">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Подтвердите новый пароль</label>
+          <input type="password" class="form-input" placeholder="••••••••">
+        </div>
+        <button class="btn-save" onclick="changePassword()">Изменить пароль</button>
+
+        <hr style="margin: 40px 0; border: none; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+
+        <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">Уведомления</h3>
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+            <input type="checkbox" checked style="width: 18px; height: 18px;">
+            <span>Email уведомления о новых курсах</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+            <input type="checkbox" checked style="width: 18px; height: 18px;">
+            <span>Напоминания о незавершённых уроках</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+            <input type="checkbox" style="width: 18px; height: 18px;">
+            <span>Новости и обновления платформы</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<script src="auth.js"></script>
+<script>
+// Check if user is logged in (TEMPORARILY DISABLED)
+const user = checkAuth();
+// Временно отключена проверка авторизации
+// if (!user) {
+//   alert('Пожалуйста, войдите в систему');
+//   window.location.href = 'login.html';
+// }
+
+// Update user info - используем демо данные если пользователь не авторизован
+const displayUser = user || {
+  firstName: 'Гость',
+  lastName: 'Демо',
+  email: 'demo@example.com'
+};
+
+document.getElementById('userName').textContent = displayUser.firstName;
+document.getElementById('profileName').textContent = displayUser.firstName + ' ' + displayUser.lastName;
+document.getElementById('profileEmail').textContent = displayUser.email;
+document.getElementById('firstName').value = displayUser.firstName;
+document.getElementById('lastName').value = displayUser.lastName;
+document.getElementById('email').value = displayUser.email;
+
+// Tab switching
+function switchTab(tabName) {
+  // Hide all tabs
+  document.querySelectorAll('.tab-content').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  
+  // Show selected tab
+  document.getElementById('tab-' + tabName).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// Save profile
+function saveProfile() {
+  const firstName = document.getElementById('firstName').value;
+  const lastName = document.getElementById('lastName').value;
+  
+  // Update localStorage
+  const user = JSON.parse(localStorage.getItem('user'));
+  user.firstName = firstName;
+  user.lastName = lastName;
+  localStorage.setItem('user', JSON.stringify(user));
+  
+  // Update UI
+  document.getElementById('userName').textContent = firstName;
+  document.getElementById('profileName').textContent = firstName + ' ' + lastName;
+  
+  alert('Профиль успешно обновлён!');
+}
+
+// Change password
+function changePassword() {
+  alert('Функция смены пароля будет доступна в следующей версии');
+}
+</script>
+
+</body>
+</html>

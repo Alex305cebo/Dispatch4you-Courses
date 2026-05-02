@@ -1,0 +1,1401 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Load Board - Реестр грузов | Курсы - Диспетчера</title>
+    <script src="auth-check.js"></script>
+        <style>
+        :root {
+            --bg: #070b14;
+            --text: #f0f4ff;
+            --text-secondary: #8892aa;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+            --primary: #8b5cf6;
+            --primary-dark: #7c3aed;
+            --success: #22c55e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 30px 20px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.15), transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.15), transparent 50%);
+            animation: backgroundMove 20s ease infinite;
+            z-index: -2;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+        }
+
+        @keyframes backgroundMove {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-5%, 5%) scale(1.05); }
+        }
+
+        .container {
+            max-width: 1600px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            padding: 20px 40px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: var(--text);
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .back-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .stats {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            padding: 30px 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-box {
+            text-align: center;
+        }
+
+        .stat-box .number {
+            font-size: 36px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-box .label {
+            color: var(--text-secondary);
+            font-size: 16px;
+            margin-top: 4px;
+        }
+
+        .filters {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .filters h3 {
+            color: var(--text);
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .filter-item input, .filter-item select {
+            width: 100%;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 16px;
+            color: var(--text);
+        }
+
+        .filter-item input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .filter-item label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .loads-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 20px;
+            align-items: start;
+        }
+
+        .load-card {
+            perspective: 1000px;
+            height: 620px;
+            cursor: pointer;
+        }
+
+        .load-card-inner {
+            position: relative;
+            width: 100%;
+            height: 620px;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .load-card.flipped .load-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .load-card-front,
+        .load-card-back {
+            position: absolute;
+            width: 100%;
+            height: 620px;
+            backface-visibility: hidden;
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .load-card-front {
+            border-left: 3px solid var(--primary);
+        }
+
+        .load-card-back {
+            transform: rotateY(180deg);
+            border-left: 3px solid #3b82f6;
+            overflow-y: auto;
+        }
+
+        /* Красивый скроллбар для карточек */
+        .load-card-back::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .load-card-back::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        .load-card-back::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary), #3b82f6);
+            border-radius: 3px;
+        }
+
+        .load-card-back::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+        }
+
+        /* Для мобильных устройств */
+        @media (max-width: 768px) {
+            .load-card-front::-webkit-scrollbar,
+            .load-card-back::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            .load-card-front::-webkit-scrollbar-track,
+            .load-card-back::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 2px;
+            }
+
+            .load-card-front::-webkit-scrollbar-thumb,
+            .load-card-back::-webkit-scrollbar-thumb {
+                background: linear-gradient(135deg, var(--primary), #3b82f6);
+                border-radius: 2px;
+            }
+        }
+
+        .load-card:hover .load-card-front {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(139, 92, 246, 0.4);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .load-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+
+        .load-route-header {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+            text-align: center;
+            flex: 1;
+            line-height: 1.2;
+        }
+
+        .load-rate {
+            font-size: 26px;
+            font-weight: 900;
+            color: var(--success);
+            white-space: nowrap;
+        }
+
+        .load-route {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .route-text {
+            color: var(--text);
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .load-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .detail-item {
+            color: var(--text);
+            font-size: 16px;
+        }
+
+        .detail-label {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .load-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+            margin-top: 8px;
+        }
+
+        .equipment-badge {
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            color: #a78bfa;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: var(--success);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .analysis-section {
+            margin-bottom: 10px;
+        }
+
+        .analysis-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .analysis-content {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .metric-value {
+            color: var(--text);
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .rating-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 3px;
+        }
+
+        .rating-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #3b82f6);
+            transition: width 0.3s ease;
+        }
+
+        .recommendation {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            padding: 8px;
+            border-radius: 8px;
+            margin-top: 8px;
+            font-size: 16px;
+        }
+
+        .recommendation.positive {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+
+        .recommendation.negative {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .flip-hint {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            font-size: 16px;
+            color: var(--text);
+            opacity: 0.3;
+            font-weight: 700;
+            animation: fadeOut 4s forwards;
+        }
+
+        @keyframes fadeOut {
+            0% {
+                opacity: 0.7;
+            }
+            70% {
+                opacity: 0.7;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        #scrollToTop {
+            display: none;
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+            transition: all 0.3s ease;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #scrollToTop:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 24px rgba(139, 92, 246, 0.5);
+        }
+
+        /* Theme Toggle Button */
+        #themeToggle {
+            display: none !important;
+        }
+
+        #themeToggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .filters {
+                padding: 20px;
+            }
+
+            .filter-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .stats {
+                padding: 20px;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+
+            .loads-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .load-card {
+                height: 620px;
+            }
+
+            .load-card-inner {
+                height: 620px;
+            }
+
+            .load-card-front,
+            .load-card-back {
+                height: 620px;
+                overflow-y: auto;
+            }
+
+            .load-route-header {
+                font-size: 16px;
+            }
+
+            .load-rate {
+                font-size: 22px;
+            }
+
+            .load-details {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            #scrollToTop {
+                width: 45px;
+                height: 45px;
+                bottom: 20px;
+                right: 20px;
+                font-size: 16px;
+            }
+
+            #themeToggle {
+                width: 45px;
+                height: 45px;
+                top: 15px;
+                right: 15px;
+                font-size: 20px;
+             display: none !important;}
+
+            .flip-hint {
+                animation: fadeOutMobile 5s forwards;
+            }
+
+            @keyframes fadeOutMobile {
+                0% {
+                    opacity: 0.7;
+                }
+                80% {
+                    opacity: 0.7;
+                }
+                100% {
+                    opacity: 0;
+                }
+            }
+
+            .load-card:hover .flip-hint {
+                animation: fadeOutMobile 5s forwards;
+            }
+        }
+    
+/* Footer */
+.footer {
+  padding: 80px 0 40px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 80px;
+}
+
+.footer .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 60px;
+  margin-bottom: 48px;
+}
+
+@media (max-width: 968px) {
+  .footer-content {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 40px;
+  }
+}
+
+@media (max-width: 568px) {
+  .footer-content {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  
+  .footer .container {
+    padding: 0 20px;
+  }
+}
+
+.footer-section h4 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #f1f5f9;
+}
+
+.footer-section p {
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.footer-section a {
+  display: block;
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.footer-section a:hover {
+  color: #6366f1;
+  transform: translateX(4px);
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: #64748b;
+  font-size: 14px;
+}
+
+</style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Load Board - Реестр грузов США</h1>
+            <div style="display: flex; gap: 12px;">
+                <a href="../course.html" class="back-btn">← Назад</a>
+                <a href="../index.html" class="back-btn">🏠 Главная</a>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-box">
+                <div class="number" id="totalLoads">63</div>
+                <div class="label">Доступных грузов</div>
+            </div>
+            <div class="stat-box">
+                <div class="number">50</div>
+                <div class="label">Штатов США</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="avgRate">$1,200</div>
+                <div class="label">Средняя ставка</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="totalMiles">15,000</div>
+                <div class="label">Общий пробег</div>
+            </div>
+        </div>
+
+        <div class="filters">
+            <h3>🔍 Фильтры поиска</h3>
+            <div class="filter-grid">
+                <div class="filter-item">
+                    <label>Штат отправления</label>
+                    <select id="stateFilter">
+                        <option value="">Все штаты</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>Штат направления груза</label>
+                    <select id="deliveryStateFilter">
+                        <option value="">Все штаты</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>Тип оборудования</label>
+                    <select id="equipmentFilter">
+                        <option value="">Все типы</option>
+                        <option value="53ft Dry Van">53ft Dry Van</option>
+                        <option value="53ft Reefer">53ft Reefer</option>
+                        <option value="Flatbed">Flatbed</option>
+                        <option value="Amazon">Amazon</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>Минимальная ставка ($)</label>
+                    <input type="number" id="minRate" placeholder="0">
+                </div>
+            </div>
+        </div>
+
+        <div class="loads-grid" id="loadsContainer">
+        </div>
+    </div>
+
+    <button id="themeToggle">🌙</button>
+    <button id="scrollToTop">↑</button>
+
+    <script>
+        const loads = [
+            // Первые 3 груза с полной детальной информацией
+            {id:1001,shipper:'Amazon Distribution Center',pickupCity:'Los Angeles',pickupState:'CA',deliveryCity:'Las Vegas',deliveryState:'NV',distance:270,weight:45000,cargoType:'General Merchandise',rate:4000,equipment:'53ft Dry Van',pickupTime:'08:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Hyperlux Logistics',companyLocation:'Loveland, OH',creditScore:97,daysToPayAvg:20,contactEmail:'jack.keeney@hyperlux.com',contactPhone:'MC#582169',deadhead:186,totalMiles:456,mpg:6.8,fuelCostCalc:234.71,rpm:8.77,profit:3565.29,spotDate:'$4,396',spotDateRange:'($16.28/mi)',contractRate:'$4,000 ($4,520 @ 1/02 - $14.81/mi)'},
+            {id:1002,shipper:'Fresh Foods Inc',pickupCity:'Fresno',pickupState:'CA',deliveryCity:'Phoenix',deliveryState:'AZ',distance:380,weight:40000,cargoType:'Refrigerated Produce',rate:2850,equipment:'53ft Reefer',pickupTime:'07:00 - 15:00',pickupDate:'2025-02-23',deliveryDate:'2025-02-24',company:'ColdChain Express',companyLocation:'Phoenix, AZ',creditScore:92,daysToPayAvg:15,contactEmail:'dispatch@coldchain.com',contactPhone:'MC#745821',deadhead:95,totalMiles:475,mpg:5.9,fuelCostCalc:281.78,rpm:6.0,profit:2378.22,spotDate:'$2,650',spotDateRange:'($6.97/mi)',contractRate:'$2,850 ($3,100 @ 12/28 - $6.51/mi)'},
+            {id:1003,shipper:'AutoParts Wholesale',pickupCity:'Dallas',pickupState:'TX',deliveryCity:'Houston',deliveryState:'TX',distance:240,weight:35000,cargoType:'Automotive Parts',rate:1680,equipment:'53ft Dry Van',pickupTime:'09:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Texas Freight Solutions',companyLocation:'Dallas, TX',creditScore:88,daysToPayAvg:30,contactEmail:'loads@texasfreight.com',contactPhone:'MC#892341',deadhead:45,totalMiles:285,mpg:7.2,fuelCostCalc:138.54,rpm:5.89,profit:1421.46,spotDate:'$1,550',spotDateRange:'($6.46/mi)',contractRate:'$1,680 ($1,800 @ 1/05 - $6.32/mi)'},
+            // Грузы 1004-1020 с полной информацией
+            {id:1004,shipper:'Construction Materials Co',pickupCity:'Denver',pickupState:'CO',deliveryCity:'Salt Lake City',deliveryState:'UT',distance:525,weight:48000,cargoType:'Building Materials',rate:2100,equipment:'Flatbed',pickupTime:'07:00 - 16:00',pickupDate:'2025-02-25',deliveryDate:'2025-02-26',company:'Mountain Transport',companyLocation:'Denver, CO',creditScore:90,daysToPayAvg:25,contactEmail:'dispatch@mountaintransport.com',contactPhone:'MC#456123',deadhead:120,totalMiles:645,mpg:6.5,fuelCostCalc:347.31,rpm:3.26,profit:1490.19,spotDate:'$2,200',spotDateRange:'($4.19/mi)',contractRate:'$2,100 ($2,400 @ 12/30 - $4.00/mi)'},
+            {id:1005,shipper:'Retail Express',pickupCity:'Chicago',pickupState:'IL',deliveryCity:'Detroit',deliveryState:'MI',distance:280,weight:42000,cargoType:'Retail Goods',rate:1120,equipment:'53ft Dry Van',pickupTime:'10:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Midwest Carriers',companyLocation:'Chicago, IL',creditScore:85,daysToPayAvg:35,contactEmail:'dispatch@midwestcarriers.com',contactPhone:'MC#789456',deadhead:75,totalMiles:355,mpg:7.0,fuelCostCalc:177.50,rpm:3.15,profit:802.50,spotDate:'$1,050',spotDateRange:'($3.75/mi)',contractRate:'$1,120 ($1,200 @ 1/03 - $3.57/mi)'},
+            {id:1006,shipper:'Chemical Logistics',pickupCity:'Houston',pickupState:'TX',deliveryCity:'Beaumont',deliveryState:'TX',distance:85,weight:40000,cargoType:'Hazmat - Class 3',rate:680,equipment:'Amazon',pickupTime:'08:00 - 15:00',pickupDate:'2025-02-23',deliveryDate:'2025-02-23',company:'Gulf Coast Freight',companyLocation:'Houston, TX',creditScore:91,daysToPayAvg:18,contactEmail:'dispatch@gulfcoast.com',contactPhone:'MC#321654',deadhead:30,totalMiles:115,mpg:6.2,fuelCostCalc:64.92,rpm:5.91,profit:557.58,spotDate:'$650',spotDateRange:'($7.65/mi)',contractRate:'$680 ($720 @ 12/29 - $8.00/mi)'},
+            {id:1007,shipper:'Electronics Distributor',pickupCity:'San Jose',pickupState:'CA',deliveryCity:'Portland',deliveryState:'OR',distance:635,weight:25000,cargoType:'Electronics',rate:3810,equipment:'53ft Dry Van',pickupTime:'07:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-25',company:'Pacific Tech Logistics',companyLocation:'San Jose, CA',creditScore:95,daysToPayAvg:10,contactEmail:'dispatch@pacifictech.com',contactPhone:'MC#456789',deadhead:120,totalMiles:755,mpg:7.5,fuelCostCalc:352.33,rpm:5.04,profit:3140.17,spotDate:'$3,500',spotDateRange:'($5.51/mi)',contractRate:'$3,810 ($4,200 @ 12/30 - $5.56/mi)'},
+            {id:1008,shipper:'Furniture Direct',pickupCity:'Atlanta',pickupState:'GA',deliveryCity:'Miami',deliveryState:'FL',distance:660,weight:45000,cargoType:'Furniture',rate:1980,equipment:'53ft Dry Van',pickupTime:'08:00 - 16:00',pickupDate:'2025-02-25',deliveryDate:'2025-02-26',company:'Southern Express',companyLocation:'Atlanta, GA',creditScore:89,daysToPayAvg:22,contactEmail:'dispatch@southernexpress.com',contactPhone:'MC#654987',deadhead:95,totalMiles:755,mpg:6.9,fuelCostCalc:382.97,rpm:2.62,profit:1267.03,spotDate:'$1,850',spotDateRange:'($2.80/mi)',contractRate:'$1,980 ($2,100 @ 1/02 - $3.00/mi)'},
+            {id:1009,shipper:'National Beverage Co',pickupCity:'Seattle',pickupState:'WA',deliveryCity:'Vancouver',deliveryState:'WA',distance:315,weight:48000,cargoType:'Beverages',rate:1260,equipment:'53ft Reefer',pickupTime:'07:00 - 14:00',pickupDate:'2025-02-23',deliveryDate:'2025-02-23',company:'Northwest Logistics',companyLocation:'Seattle, WA',creditScore:93,daysToPayAvg:12,contactEmail:'dispatch@nwlogistics.com',contactPhone:'MC#147258',deadhead:80,totalMiles:395,mpg:6.1,fuelCostCalc:226.64,rpm:3.19,profit:875.86,spotDate:'$1,200',spotDateRange:'($3.81/mi)',contractRate:'$1,260 ($1,350 @ 12/28 - $4.00/mi)'},
+            {id:1010,shipper:'Industrial Supply',pickupCity:'Memphis',pickupState:'TN',deliveryCity:'Nashville',deliveryState:'TN',distance:210,weight:36000,cargoType:'Industrial Equipment',rate:840,equipment:'53ft Dry Van',pickupTime:'09:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Central Freight',companyLocation:'Memphis, TN',creditScore:87,daysToPayAvg:28,contactEmail:'dispatch@centralfreight.com',contactPhone:'MC#369258',deadhead:55,totalMiles:265,mpg:7.1,fuelCostCalc:130.63,rpm:3.17,profit:604.37,spotDate:'$800',spotDateRange:'($3.81/mi)',contractRate:'$840 ($900 @ 1/04 - $4.00/mi)'},
+            {id:1011,shipper:'Grocery Warehouse',pickupCity:'Phoenix',pickupState:'AZ',deliveryCity:'Tucson',deliveryState:'AZ',distance:120,weight:44000,cargoType:'Packaged Foods',rate:480,equipment:'53ft Dry Van',pickupTime:'08:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Desert Logistics',companyLocation:'Phoenix, AZ',creditScore:86,daysToPayAvg:32,contactEmail:'dispatch@desertlogistics.com',contactPhone:'MC#753951',deadhead:40,totalMiles:160,mpg:7.3,fuelCostCalc:76.71,rpm:3.00,profit:343.29,spotDate:'$450',spotDateRange:'($3.75/mi)',contractRate:'$480 ($520 @ 12/30 - $4.00/mi)'},
+            {id:1012,shipper:'Steel Manufacturing',pickupCity:'Pittsburgh',pickupState:'PA',deliveryCity:'Cleveland',deliveryState:'OH',distance:135,weight:50000,cargoType:'Steel Coils',rate:810,equipment:'Flatbed',pickupTime:'07:00 - 15:00',pickupDate:'2025-02-23',deliveryDate:'2025-02-23',company:'Keystone Freight',companyLocation:'Pittsburgh, PA',creditScore:88,daysToPayAvg:26,contactEmail:'dispatch@keystonefreight.com',contactPhone:'MC#852963',deadhead:45,totalMiles:180,mpg:6.4,fuelCostCalc:98.44,rpm:4.50,profit:644.06,spotDate:'$750',spotDateRange:'($5.56/mi)',contractRate:'$810 ($850 @ 1/02 - $6.00/mi)'},
+            {id:1013,shipper:'Software Logistics',pickupCity:'San Francisco',pickupState:'CA',deliveryCity:'Sacramento',deliveryState:'CA',distance:390,weight:18000,cargoType:'Computer Parts',rate:1560,equipment:'53ft Dry Van',pickupTime:'10:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Bay Area Transport',companyLocation:'San Francisco, CA',creditScore:96,daysToPayAvg:8,contactEmail:'dispatch@bayareatransport.com',contactPhone:'MC#159753',deadhead:65,totalMiles:455,mpg:7.6,fuelCostCalc:209.54,rpm:3.43,profit:1155.46,spotDate:'$1,450',spotDateRange:'($3.72/mi)',contractRate:'$1,560 ($1,650 @ 12/29 - $3.85/mi)'},
+            {id:1014,shipper:'Textile Mills',pickupCity:'Charlotte',pickupState:'NC',deliveryCity:'Atlanta',deliveryState:'GA',distance:245,weight:38000,cargoType:'Textiles',rate:980,equipment:'53ft Dry Van',pickupTime:'08:00 - 16:00',pickupDate:'2025-02-25',deliveryDate:'2025-02-25',company:'Carolina Carriers',companyLocation:'Charlotte, NC',creditScore:90,daysToPayAvg:20,contactEmail:'dispatch@carolinacarriers.com',contactPhone:'MC#357159',deadhead:70,totalMiles:315,mpg:7.0,fuelCostCalc:157.50,rpm:3.11,profit:665.00,spotDate:'$920',spotDateRange:'($3.76/mi)',contractRate:'$980 ($1,050 @ 1/03 - $4.00/mi)'},
+            {id:1015,shipper:'Petroleum Distribution',pickupCity:'Houston',pickupState:'TX',deliveryCity:'Dallas',deliveryState:'TX',distance:240,weight:44000,cargoType:'Fuel Tanker',rate:1440,equipment:'Amazon',pickupTime:'07:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Gulf Coast Freight',companyLocation:'Houston, TX',creditScore:91,daysToPayAvg:18,contactEmail:'dispatch@gulfcoast.com',contactPhone:'MC#951357',deadhead:60,totalMiles:300,mpg:6.0,fuelCostCalc:175.00,rpm:4.80,profit:1145.00,spotDate:'$1,350',spotDateRange:'($5.63/mi)',contractRate:'$1,440 ($1,550 @ 12/30 - $6.00/mi)'},
+            {id:1016,shipper:'Meat Processing',pickupCity:'Sioux Falls',pickupState:'SD',deliveryCity:'Des Moines',deliveryState:'IA',distance:180,weight:42000,cargoType:'Frozen Meat',rate:1260,equipment:'53ft Reefer',pickupTime:'07:00 - 15:00',pickupDate:'2025-02-23',deliveryDate:'2025-02-23',company:'Heartland Carriers',companyLocation:'Kansas City, MO',creditScore:87,daysToPayAvg:28,contactEmail:'dispatch@heartlandcarriers.com',contactPhone:'MC#753852',deadhead:50,totalMiles:230,mpg:6.3,fuelCostCalc:127.78,rpm:5.48,profit:1042.22,spotDate:'$1,180',spotDateRange:'($6.56/mi)',contractRate:'$1,260 ($1,350 @ 1/02 - $7.00/mi)'},
+            {id:1017,shipper:'Appliance Distributor',pickupCity:'Indianapolis',pickupState:'IN',deliveryCity:'Cincinnati',deliveryState:'OH',distance:105,weight:41000,cargoType:'Appliances',rate:630,equipment:'53ft Dry Van',pickupTime:'09:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Midwest Carriers',companyLocation:'Chicago, IL',creditScore:85,daysToPayAvg:35,contactEmail:'dispatch@midwestcarriers.com',contactPhone:'MC#159357',deadhead:35,totalMiles:140,mpg:7.2,fuelCostCalc:68.06,rpm:4.50,profit:509.44,spotDate:'$590',spotDateRange:'($5.62/mi)',contractRate:'$630 ($680 @ 12/29 - $6.00/mi)'},
+            {id:1018,shipper:'Lumber Yard',pickupCity:'Portland',pickupState:'OR',deliveryCity:'Seattle',deliveryState:'WA',distance:175,weight:46000,cargoType:'Lumber',rate:1050,equipment:'Flatbed',pickupTime:'07:00 - 16:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Northwest Logistics',companyLocation:'Seattle, WA',creditScore:93,daysToPayAvg:12,contactEmail:'dispatch@nwlogistics.com',contactPhone:'MC#357951',deadhead:55,totalMiles:230,mpg:6.5,fuelCostCalc:123.85,rpm:4.57,profit:813.65,spotDate:'$980',spotDateRange:'($5.60/mi)',contractRate:'$1,050 ($1,120 @ 1/03 - $6.00/mi)'},
+            {id:1019,shipper:'Pharmaceutical Co',pickupCity:'New Jersey',pickupState:'NJ',deliveryCity:'Boston',deliveryState:'MA',distance:215,weight:16000,cargoType:'Pharmaceuticals',rate:1505,equipment:'53ft Dry Van',pickupTime:'08:00 - 17:00',pickupDate:'2025-02-25',deliveryDate:'2025-02-25',company:'East Coast Transport',companyLocation:'New York, NY',creditScore:94,daysToPayAvg:14,contactEmail:'dispatch@eastcoasttransport.com',contactPhone:'MC#753159',deadhead:60,totalMiles:275,mpg:7.4,fuelCostCalc:130.07,rpm:5.47,profit:1267.43,spotDate:'$1,420',spotDateRange:'($6.60/mi)',contractRate:'$1,505 ($1,600 @ 12/30 - $7.00/mi)'},
+            {id:1020,shipper:'Paper Mills',pickupCity:'Portland',pickupState:'ME',deliveryCity:'Boston',deliveryState:'MA',distance:105,weight:47000,cargoType:'Paper Products',rate:735,equipment:'53ft Dry Van',pickupTime:'10:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'New England Transport',companyLocation:'Boston, MA',creditScore:93,daysToPayAvg:15,contactEmail:'dispatch@newenglandtransport.com',contactPhone:'MC#951753',deadhead:40,totalMiles:145,mpg:7.1,fuelCostCalc:71.48,rpm:5.07,profit:611.02,spotDate:'$690',spotDateRange:'($6.57/mi)',contractRate:'$735 ($780 @ 1/02 - $7.00/mi)'},
+            // Грузы 1021-1040
+            {id:1021,shipper:'Farm Produce',pickupCity:'Salinas',pickupState:'CA',deliveryCity:'San Francisco',deliveryState:'CA',distance:120,weight:39000,cargoType:'Fresh Vegetables',rate:600,equipment:'53ft Reefer',pickupTime:'07:00 - 14:00',pickupDate:'2025-02-23',deliveryDate:'2025-02-23',company:'Bay Area Transport',companyLocation:'San Francisco, CA',creditScore:96,daysToPayAvg:8,contactEmail:'dispatch@bayareatransport.com',contactPhone:'MC#357258',deadhead:35,totalMiles:155,mpg:6.8,fuelCostCalc:79.78,rpm:3.87,profit:460.22,spotDate:'$560',spotDateRange:'($4.67/mi)',contractRate:'$600 ($640 @ 12/29 - $5.00/mi)'},
+            {id:1022,shipper:'Tire Manufacturing',pickupCity:'Akron',pickupState:'OH',deliveryCity:'Detroit',deliveryState:'MI',distance:150,weight:44000,cargoType:'Automotive Tires',rate:900,equipment:'53ft Dry Van',pickupTime:'08:00 - 16:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Midwest Carriers',companyLocation:'Chicago, IL',creditScore:85,daysToPayAvg:35,contactEmail:'dispatch@midwestcarriers.com',contactPhone:'MC#159852',deadhead:45,totalMiles:195,mpg:7.0,fuelCostCalc:97.50,rpm:4.62,profit:727.50,spotDate:'$840',spotDateRange:'($5.60/mi)',contractRate:'$900 ($960 @ 1/03 - $6.00/mi)'},
+            {id:1023,shipper:'Glass Manufacturing',pickupCity:'Toledo',pickupState:'OH',deliveryCity:'Chicago',deliveryState:'IL',distance:280,weight:45000,cargoType:'Glass Sheets',rate:1400,equipment:'Flatbed',pickupTime:'07:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Central Freight',companyLocation:'Memphis, TN',creditScore:87,daysToPayAvg:28,contactEmail:'dispatch@centralfreight.com',contactPhone:'MC#753456',deadhead:70,totalMiles:350,mpg:6.6,fuelCostCalc:185.61,rpm:4.00,profit:1074.39,spotDate:'$1,320',spotDateRange:'($4.71/mi)',contractRate:'$1,400 ($1,500 @ 12/30 - $5.00/mi)'},
+            {id:1024,shipper:'Bakery Supply',pickupCity:'Kansas City',pickupState:'MO',deliveryCity:'St. Louis',deliveryState:'MO',distance:250,weight:28000,cargoType:'Bakery Products',rate:1000,equipment:'53ft Reefer',pickupTime:'07:00 - 15:00',pickupDate:'2025-02-23',deliveryDate:'2025-02-23',company:'Heartland Carriers',companyLocation:'Kansas City, MO',creditScore:87,daysToPayAvg:28,contactEmail:'dispatch@heartlandcarriers.com',contactPhone:'MC#951456',deadhead:60,totalMiles:310,mpg:6.4,fuelCostCalc:169.53,rpm:3.23,profit:705.47,spotDate:'$940',spotDateRange:'($3.76/mi)',contractRate:'$1,000 ($1,080 @ 1/02 - $4.00/mi)'},
+            {id:1025,shipper:'Machinery Supplier',pickupCity:'Milwaukee',pickupState:'WI',deliveryCity:'Chicago',deliveryState:'IL',distance:95,weight:48000,cargoType:'Heavy Machinery',rate:855,equipment:'Flatbed',pickupTime:'09:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Midwest Carriers',companyLocation:'Chicago, IL',creditScore:85,daysToPayAvg:35,contactEmail:'dispatch@midwestcarriers.com',contactPhone:'MC#357654',deadhead:30,totalMiles:125,mpg:6.2,fuelCostCalc:70.56,rpm:6.84,profit:722.94,spotDate:'$800',spotDateRange:'($8.42/mi)',contractRate:'$855 ($920 @ 12/29 - $9.00/mi)'},
+            {id:1026,shipper:'Greeting Cards',pickupCity:'Toledo',pickupState:'OH',deliveryCity:'Cleveland',deliveryState:'OH',distance:120,weight:21000,cargoType:'Greeting Cards',rate:480,equipment:'53ft Dry Van',pickupTime:'08:00 - 16:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Central Freight',companyLocation:'Memphis, TN',creditScore:87,daysToPayAvg:28,contactEmail:'dispatch@centralfreight.com',contactPhone:'MC#159654',deadhead:40,totalMiles:160,mpg:7.3,fuelCostCalc:76.71,rpm:3.00,profit:343.29,spotDate:'$450',spotDateRange:'($3.75/mi)',contractRate:'$480 ($520 @ 1/03 - $4.00/mi)'},
+            {id:1027,shipper:'Plastic Products',pickupCity:'Dallas',pickupState:'TX',deliveryCity:'Austin',deliveryState:'TX',distance:195,weight:35000,cargoType:'Plastic Materials',rate:780,equipment:'53ft Dry Van',pickupTime:'10:00 - 17:00',pickupDate:'2025-02-25',deliveryDate:'2025-02-25',company:'Texas Freight Solutions',companyLocation:'Dallas, TX',creditScore:88,daysToPayAvg:30,contactEmail:'loads@texasfreight.com',contactPhone:'MC#753258',deadhead:50,totalMiles:245,mpg:7.1,fuelCostCalc:120.77,rpm:3.18,profit:561.73,spotDate:'$730',spotDateRange:'($3.74/mi)',contractRate:'$780 ($840 @ 12/30 - $4.00/mi)'},
+            {id:1028,shipper:'Water Distribution',pickupCity:'Denver',pickupState:'CO',deliveryCity:'Boulder',deliveryState:'CO',distance:45,weight:46000,cargoType:'Bottled Water',rate:270,equipment:'53ft Dry Van',pickupTime:'07:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Mountain Transport',companyLocation:'Denver, CO',creditScore:90,daysToPayAvg:25,contactEmail:'dispatch@mountaintransport.com',contactPhone:'MC#951258',deadhead:20,totalMiles:65,mpg:7.4,fuelCostCalc:30.74,rpm:4.15,profit:216.76,spotDate:'$250',spotDateRange:'($5.56/mi)',contractRate:'$270 ($290 @ 1/02 - $6.00/mi)'},
+            {id:1029,shipper:'Wine Distribution',pickupCity:'Napa',pickupState:'CA',deliveryCity:'Los Angeles',deliveryState:'CA',distance:380,weight:26000,cargoType:'Wine & Beer',rate:1900,equipment:'53ft Dry Van',pickupTime:'08:00 - 16:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Bay Area Transport',companyLocation:'San Francisco, CA',creditScore:96,daysToPayAvg:8,contactEmail:'dispatch@bayareatransport.com',contactPhone:'MC#357951',deadhead:85,totalMiles:465,mpg:7.2,fuelCostCalc:225.69,rpm:4.09,profit:1484.31,spotDate:'$1,780',spotDateRange:'($4.68/mi)',contractRate:'$1,900 ($2,050 @ 12/29 - $5.00/mi)'},
+            {id:1030,shipper:'Cleaning Supplies',pickupCity:'Long Beach',pickupState:'CA',deliveryCity:'San Diego',deliveryState:'CA',distance:120,weight:38000,cargoType:'Chemicals',rate:600,equipment:'53ft Dry Van',pickupTime:'07:00 - 15:00',pickupDate:'2025-02-23',deliveryDate:'2025-02-23',company:'Pacific Tech Logistics',companyLocation:'San Jose, CA',creditScore:95,daysToPayAvg:10,contactEmail:'dispatch@pacifictech.com',contactPhone:'MC#159753',deadhead:35,totalMiles:155,mpg:7.0,fuelCostCalc:77.50,rpm:3.87,profit:462.50,spotDate:'$560',spotDateRange:'($4.67/mi)',contractRate:'$600 ($640 @ 1/03 - $5.00/mi)'},
+            {id:1031,shipper:'Office Furniture',pickupCity:'Raleigh',pickupState:'NC',deliveryCity:'Durham',deliveryState:'NC',distance:30,weight:42000,cargoType:'Office Furniture',rate:180,equipment:'53ft Dry Van',pickupTime:'09:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Carolina Carriers',companyLocation:'Charlotte, NC',creditScore:90,daysToPayAvg:20,contactEmail:'dispatch@carolinacarriers.com',contactPhone:'MC#753654',deadhead:15,totalMiles:45,mpg:7.5,fuelCostCalc:21.00,rpm:4.00,profit:144.00,spotDate:'$170',spotDateRange:'($5.67/mi)',contractRate:'$180 ($200 @ 12/30 - $6.00/mi)'},
+            {id:1032,shipper:'Seafood Distribution',pickupCity:'Miami',pickupState:'FL',deliveryCity:'Jacksonville',deliveryState:'FL',distance:345,weight:36000,cargoType:'Seafood',rate:1725,equipment:'53ft Reefer',pickupTime:'06:15 - 14:00',pickupDate:'2025-02-25',deliveryDate:'2025-02-25',company:'Sunshine Logistics',companyLocation:'Miami, FL',creditScore:91,daysToPayAvg:16,contactEmail:'dispatch@sunshinelogistics.com',contactPhone:'MC#357456',deadhead:80,totalMiles:425,mpg:6.3,fuelCostCalc:236.31,rpm:4.06,profit:1316.19,spotDate:'$1,620',spotDateRange:'($4.70/mi)',contractRate:'$1,725 ($1,850 @ 1/02 - $5.00/mi)'},
+            {id:1033,shipper:'Clothing Distributor',pickupCity:'New York',pickupState:'NY',deliveryCity:'Philadelphia',deliveryState:'PA',distance:95,weight:25000,cargoType:'Apparel',rate:570,equipment:'53ft Dry Van',pickupTime:'10:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'East Coast Transport',companyLocation:'New York, NY',creditScore:94,daysToPayAvg:14,contactEmail:'dispatch@eastcoasttransport.com',contactPhone:'MC#951357',deadhead:30,totalMiles:125,mpg:7.4,fuelCostCalc:59.12,rpm:4.56,profit:463.38,spotDate:'$530',spotDateRange:'($5.58/mi)',contractRate:'$570 ($610 @ 12/29 - $6.00/mi)'},
+            {id:1034,shipper:'Paint Manufacturing',pickupCity:'Columbus',pickupState:'OH',deliveryCity:'Indianapolis',deliveryState:'IN',distance:175,weight:41000,cargoType:'Paint',rate:875,equipment:'53ft Dry Van',pickupTime:'08:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Central Freight',companyLocation:'Memphis, TN',creditScore:87,daysToPayAvg:28,contactEmail:'dispatch@centralfreight.com',contactPhone:'MC#357852',deadhead:50,totalMiles:225,mpg:7.0,fuelCostCalc:112.50,rpm:3.89,profit:675.00,spotDate:'$820',spotDateRange:'($4.69/mi)',contractRate:'$875 ($940 @ 1/03 - $5.00/mi)'},
+            {id:1035,shipper:'Pet Food Co',pickupCity:'Springfield',pickupState:'MO',deliveryCity:'Kansas City',deliveryState:'MO',distance:165,weight:39000,cargoType:'Pet Food',rate:660,equipment:'53ft Dry Van',pickupTime:'07:00 - 15:00',pickupDate:'2025-02-23',deliveryDate:'2025-02-23',company:'Heartland Carriers',companyLocation:'Kansas City, MO',creditScore:87,daysToPayAvg:28,contactEmail:'dispatch@heartlandcarriers.com',contactPhone:'MC#159456',deadhead:45,totalMiles:210,mpg:7.1,fuelCostCalc:103.52,rpm:3.14,profit:473.98,spotDate:'$620',spotDateRange:'($3.76/mi)',contractRate:'$660 ($710 @ 12/30 - $4.00/mi)'},
+            {id:1036,shipper:'Dairy Products',pickupCity:'Madison',pickupState:'WI',deliveryCity:'Milwaukee',deliveryState:'WI',distance:80,weight:43000,cargoType:'Dairy Products',rate:480,equipment:'53ft Reefer',pickupTime:'07:00 - 14:00',pickupDate:'2025-02-23',deliveryDate:'2025-02-23',company:'Midwest Carriers',companyLocation:'Chicago, IL',creditScore:85,daysToPayAvg:35,contactEmail:'dispatch@midwestcarriers.com',contactPhone:'MC#753159',deadhead:25,totalMiles:105,mpg:6.5,fuelCostCalc:56.54,rpm:4.57,profit:383.46,spotDate:'$450',spotDateRange:'($5.63/mi)',contractRate:'$480 ($520 @ 1/02 - $6.00/mi)'},
+            {id:1037,shipper:'Book Publisher',pickupCity:'Minneapolis',pickupState:'MN',deliveryCity:'St. Paul',deliveryState:'MN',distance:12,weight:32000,cargoType:'Books',rate:120,equipment:'53ft Dry Van',pickupTime:'09:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Midwest Carriers',companyLocation:'Chicago, IL',creditScore:85,daysToPayAvg:35,contactEmail:'dispatch@midwestcarriers.com',contactPhone:'MC#357159',deadhead:10,totalMiles:22,mpg:7.6,fuelCostCalc:10.13,rpm:5.45,profit:103.87,spotDate:'$110',spotDateRange:'($9.17/mi)',contractRate:'$120 ($130 @ 12/29 - $10.00/mi)'},
+            {id:1038,shipper:'Medical Devices',pickupCity:'Minneapolis',pickupState:'MN',deliveryCity:'Chicago',deliveryState:'IL',distance:405,weight:19000,cargoType:'Medical Equipment',rate:2025,equipment:'53ft Dry Van',pickupTime:'08:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-25',company:'Midwest Carriers',companyLocation:'Chicago, IL',creditScore:85,daysToPayAvg:35,contactEmail:'dispatch@midwestcarriers.com',contactPhone:'MC#951654',deadhead:90,totalMiles:495,mpg:7.3,fuelCostCalc:237.33,rpm:4.09,profit:1585.17,spotDate:'$1,900',spotDateRange:'($4.69/mi)',contractRate:'$2,025 ($2,180 @ 1/03 - $5.00/mi)'},
+            {id:1039,shipper:'Cosmetics Distributor',pickupCity:'Los Angeles',pickupState:'CA',deliveryCity:'Anaheim',deliveryState:'CA',distance:30,weight:22000,cargoType:'Cosmetics',rate:180,equipment:'53ft Dry Van',pickupTime:'10:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Pacific Tech Logistics',companyLocation:'San Jose, CA',creditScore:95,daysToPayAvg:10,contactEmail:'dispatch@pacifictech.com',contactPhone:'MC#753357',deadhead:15,totalMiles:45,mpg:7.5,fuelCostCalc:21.00,rpm:4.00,profit:144.00,spotDate:'$170',spotDateRange:'($5.67/mi)',contractRate:'$180 ($200 @ 12/30 - $6.00/mi)'},
+            {id:1040,shipper:'Refrigeration Equipment',pickupCity:'Phoenix',pickupState:'AZ',deliveryCity:'Las Vegas',deliveryState:'NV',distance:300,weight:48000,cargoType:'HVAC Equipment',rate:1500,equipment:'Flatbed',pickupTime:'07:00 - 16:00',pickupDate:'2025-02-25',deliveryDate:'2025-02-25',company:'Desert Logistics',companyLocation:'Phoenix, AZ',creditScore:86,daysToPayAvg:32,contactEmail:'dispatch@desertlogistics.com',contactPhone:'MC#159951',deadhead:75,totalMiles:375,mpg:6.4,fuelCostCalc:205.08,rpm:4.00,profit:1144.92,spotDate:'$1,410',spotDateRange:'($4.70/mi)',contractRate:'$1,500 ($1,620 @ 1/02 - $5.00/mi)'},
+            // Грузы 1041-1063
+            {id:1041,shipper:'Birmingham Steel',pickupCity:'Birmingham',pickupState:'AL',deliveryCity:'Montgomery',deliveryState:'AL',distance:95,weight:48000,cargoType:'Steel Products',rate:660,equipment:'Flatbed',pickupTime:'08:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Southern Express',companyLocation:'Atlanta, GA',creditScore:89,daysToPayAvg:22,contactEmail:'dispatch@southernexpress.com',contactPhone:'MC#357753',deadhead:30,totalMiles:125,mpg:6.3,fuelCostCalc:69.44,rpm:5.28,profit:543.06,spotDate:'$620',spotDateRange:'($6.53/mi)',contractRate:'$660 ($710 @ 12/30 - $7.00/mi)'},
+            {id:1042,shipper:'Alaska Seafood',pickupCity:'Juneau',pickupState:'AK',deliveryCity:'Anchorage',deliveryState:'AK',distance:650,weight:35000,cargoType:'Seafood',rate:3250,equipment:'53ft Reefer',pickupTime:'07:00 - 15:00',pickupDate:'2025-02-26',deliveryDate:'2025-02-27',company:'Northwest Logistics',companyLocation:'Seattle, WA',creditScore:93,daysToPayAvg:12,contactEmail:'dispatch@nwlogistics.com',contactPhone:'MC#951456',deadhead:150,totalMiles:800,mpg:6.0,fuelCostCalc:466.67,rpm:4.06,profit:2458.33,spotDate:'$3,050',spotDateRange:'($4.69/mi)',contractRate:'$3,250 ($3,500 @ 1/03 - $5.00/mi)'},
+            {id:1043,shipper:'Arkansas Lumber',pickupCity:'Pine Bluff',pickupState:'AR',deliveryCity:'Little Rock',deliveryState:'AR',distance:85,weight:46000,cargoType:'Timber',rate:510,equipment:'Flatbed',pickupTime:'09:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Central Freight',companyLocation:'Memphis, TN',creditScore:87,daysToPayAvg:28,contactEmail:'dispatch@centralfreight.com',contactPhone:'MC#753951',deadhead:30,totalMiles:115,mpg:6.4,fuelCostCalc:62.89,rpm:4.43,profit:404.61,spotDate:'$480',spotDateRange:'($5.65/mi)',contractRate:'$510 ($550 @ 12/29 - $6.00/mi)'},
+            {id:1044,shipper:'Connecticut Manufacturing',pickupCity:'Hartford',pickupState:'CT',deliveryCity:'New Haven',deliveryState:'CT',distance:150,weight:32000,cargoType:'Industrial Parts',rate:900,equipment:'53ft Dry Van',pickupTime:'08:00 - 16:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'New England Transport',companyLocation:'Boston, MA',creditScore:93,daysToPayAvg:15,contactEmail:'dispatch@newenglandtransport.com',contactPhone:'MC#357258',deadhead:45,totalMiles:195,mpg:7.2,fuelCostCalc:94.79,rpm:4.62,profit:730.21,spotDate:'$840',spotDateRange:'($5.60/mi)',contractRate:'$900 ($970 @ 1/02 - $6.00/mi)'},
+            {id:1045,shipper:'Delaware Chemical',pickupCity:'Wilmington',pickupState:'DE',deliveryCity:'Dover',deliveryState:'DE',distance:125,weight:40000,cargoType:'Chemicals',rate:750,equipment:'Amazon',pickupTime:'07:00 - 17:00',pickupDate:'2025-02-25',deliveryDate:'2025-02-25',company:'East Coast Transport',companyLocation:'New York, NY',creditScore:94,daysToPayAvg:14,contactEmail:'dispatch@eastcoasttransport.com',contactPhone:'MC#159753',deadhead:40,totalMiles:165,mpg:6.8,fuelCostCalc:84.93,rpm:4.55,profit:602.57,spotDate:'$700',spotDateRange:'($5.60/mi)',contractRate:'$750 ($810 @ 12/30 - $6.00/mi)'},
+            {id:1046,shipper:'Hawaii Sugar',pickupCity:'Honolulu',pickupState:'HI',deliveryCity:'Hilo',deliveryState:'HI',distance:200,weight:44000,cargoType:'Agricultural Products',rate:1400,equipment:'53ft Dry Van',pickupTime:'07:00 - 15:00',pickupDate:'2025-02-27',deliveryDate:'2025-02-28',company:'Pacific Tech Logistics',companyLocation:'San Jose, CA',creditScore:95,daysToPayAvg:10,contactEmail:'dispatch@pacifictech.com',contactPhone:'MC#951357',deadhead:60,totalMiles:260,mpg:7.0,fuelCostCalc:130.00,rpm:5.38,profit:1170.00,spotDate:'$1,310',spotDateRange:'($6.55/mi)',contractRate:'$1,400 ($1,510 @ 1/03 - $7.00/mi)'},
+            {id:1047,shipper:'Idaho Potatoes',pickupCity:'Boise',pickupState:'ID',deliveryCity:'Pocatello',deliveryState:'ID',distance:240,weight:40000,cargoType:'Vegetables',rate:960,equipment:'53ft Reefer',pickupTime:'08:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Mountain Transport',companyLocation:'Denver, CO',creditScore:90,daysToPayAvg:25,contactEmail:'dispatch@mountaintransport.com',contactPhone:'MC#753456',deadhead:65,totalMiles:305,mpg:6.5,fuelCostCalc:164.23,rpm:3.15,profit:675.77,spotDate:'$900',spotDateRange:'($3.75/mi)',contractRate:'$960 ($1,040 @ 12/29 - $4.00/mi)'},
+            {id:1048,shipper:'Kansas Wheat',pickupCity:'Topeka',pickupState:'KS',deliveryCity:'Wichita',deliveryState:'KS',distance:200,weight:45000,cargoType:'Grain',rate:900,equipment:'53ft Dry Van',pickupTime:'09:00 - 17:00',pickupDate:'2025-02-25',deliveryDate:'2025-02-25',company:'Heartland Carriers',companyLocation:'Kansas City, MO',creditScore:87,daysToPayAvg:28,contactEmail:'dispatch@heartlandcarriers.com',contactPhone:'MC#357654',deadhead:55,totalMiles:255,mpg:7.1,fuelCostCalc:125.70,rpm:3.53,profit:674.30,spotDate:'$840',spotDateRange:'($4.20/mi)',contractRate:'$900 ($970 @ 1/02 - $4.50/mi)'},
+            {id:1049,shipper:'Kentucky Bourbon',pickupCity:'Louisville',pickupState:'KY',deliveryCity:'Lexington',deliveryState:'KY',distance:85,weight:38000,cargoType:'Beverages',rate:510,equipment:'53ft Dry Van',pickupTime:'07:00 - 16:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Central Freight',companyLocation:'Memphis, TN',creditScore:87,daysToPayAvg:28,contactEmail:'dispatch@centralfreight.com',contactPhone:'MC#951258',deadhead:30,totalMiles:115,mpg:7.0,fuelCostCalc:57.50,rpm:4.43,profit:410.00,spotDate:'$480',spotDateRange:'($5.65/mi)',contractRate:'$510 ($550 @ 12/30 - $6.00/mi)'},
+            {id:1050,shipper:'Louisiana Oil',pickupCity:'Baton Rouge',pickupState:'LA',deliveryCity:'New Orleans',deliveryState:'LA',distance:80,weight:48000,cargoType:'Petroleum',rate:560,equipment:'Amazon',pickupTime:'08:00 - 17:00',pickupDate:'2025-02-23',deliveryDate:'2025-02-23',company:'Gulf Coast Freight',companyLocation:'Houston, TX',creditScore:91,daysToPayAvg:18,contactEmail:'dispatch@gulfcoast.com',contactPhone:'MC#357951',deadhead:25,totalMiles:105,mpg:6.2,fuelCostCalc:59.27,rpm:5.33,profit:460.73,spotDate:'$520',spotDateRange:'($6.50/mi)',contractRate:'$560 ($600 @ 1/02 - $7.00/mi)'},
+            {id:1051,shipper:'Maryland Plastics',pickupCity:'Baltimore',pickupState:'MD',deliveryCity:'Annapolis',deliveryState:'MD',distance:35,weight:34000,cargoType:'Plastic Products',rate:245,equipment:'53ft Dry Van',pickupTime:'10:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'East Coast Transport',companyLocation:'New York, NY',creditScore:94,daysToPayAvg:14,contactEmail:'dispatch@eastcoasttransport.com',contactPhone:'MC#753159',deadhead:15,totalMiles:50,mpg:7.4,fuelCostCalc:23.65,rpm:4.90,profit:203.85,spotDate:'$230',spotDateRange:'($6.57/mi)',contractRate:'$245 ($265 @ 12/29 - $7.00/mi)'},
+            {id:1052,shipper:'Michigan Automotive',pickupCity:'Detroit',pickupState:'MI',deliveryCity:'Flint',deliveryState:'MI',distance:65,weight:43000,cargoType:'Auto Parts',rate:390,equipment:'53ft Dry Van',pickupTime:'07:00 - 15:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Midwest Carriers',companyLocation:'Chicago, IL',creditScore:85,daysToPayAvg:35,contactEmail:'dispatch@midwestcarriers.com',contactPhone:'MC#159357',deadhead:25,totalMiles:90,mpg:7.2,fuelCostCalc:43.75,rpm:4.33,profit:313.75,spotDate:'$360',spotDateRange:'($5.54/mi)',contractRate:'$390 ($420 @ 1/03 - $6.00/mi)'},
+            {id:1053,shipper:'Mississippi Timber',pickupCity:'Jackson',pickupState:'MS',deliveryCity:'Gulfport',deliveryState:'MS',distance:195,weight:46000,cargoType:'Lumber',rate:975,equipment:'Flatbed',pickupTime:'08:00 - 17:00',pickupDate:'2025-02-25',deliveryDate:'2025-02-25',company:'Southern Express',companyLocation:'Atlanta, GA',creditScore:89,daysToPayAvg:22,contactEmail:'dispatch@southernexpress.com',contactPhone:'MC#357456',deadhead:55,totalMiles:250,mpg:6.5,fuelCostCalc:134.62,rpm:3.90,profit:742.88,spotDate:'$910',spotDateRange:'($4.67/mi)',contractRate:'$975 ($1,050 @ 12/30 - $5.00/mi)'},
+            {id:1054,shipper:'Montana Logging',pickupCity:'Missoula',pickupState:'MT',deliveryCity:'Billings',deliveryState:'MT',distance:325,weight:47000,cargoType:'Logs',rate:1625,equipment:'Flatbed',pickupTime:'07:00 - 16:00',pickupDate:'2025-02-26',deliveryDate:'2025-02-26',company:'Mountain Transport',companyLocation:'Denver, CO',creditScore:90,daysToPayAvg:25,contactEmail:'dispatch@mountaintransport.com',contactPhone:'MC#951753',deadhead:90,totalMiles:415,mpg:6.4,fuelCostCalc:226.95,rpm:3.92,profit:1235.55,spotDate:'$1,520',spotDateRange:'($4.68/mi)',contractRate:'$1,625 ($1,750 @ 1/02 - $5.00/mi)'},
+            {id:1055,shipper:'Nebraska Corn',pickupCity:'Omaha',pickupState:'NE',deliveryCity:'Lincoln',deliveryState:'NE',distance:55,weight:44000,cargoType:'Grain',rate:330,equipment:'53ft Dry Van',pickupTime:'09:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Great Plains Transport',companyLocation:'Omaha, NE',creditScore:84,daysToPayAvg:30,contactEmail:'dispatch@greatplainstransport.com',contactPhone:'MC#357852',deadhead:20,totalMiles:75,mpg:7.3,fuelCostCalc:35.96,rpm:4.40,profit:266.54,spotDate:'$310',spotDateRange:'($5.64/mi)',contractRate:'$330 ($360 @ 12/29 - $6.00/mi)'},
+            {id:1056,shipper:'New Mexico Oil',pickupCity:'Albuquerque',pickupState:'NM',deliveryCity:'Santa Fe',deliveryState:'NM',distance:65,weight:45000,cargoType:'Crude Oil',rate:390,equipment:'Amazon',pickupTime:'08:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Desert Logistics',companyLocation:'Phoenix, AZ',creditScore:86,daysToPayAvg:32,contactEmail:'dispatch@desertlogistics.com',contactPhone:'MC#753654',deadhead:25,totalMiles:90,mpg:6.2,fuelCostCalc:50.81,rpm:4.33,profit:306.69,spotDate:'$360',spotDateRange:'($5.54/mi)',contractRate:'$390 ($420 @ 1/03 - $6.00/mi)'},
+            {id:1057,shipper:'New Hampshire Publishing',pickupCity:'Manchester',pickupState:'NH',deliveryCity:'Portsmouth',deliveryState:'NH',distance:55,weight:30000,cargoType:'Print Materials',rate:330,equipment:'53ft Dry Van',pickupTime:'10:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'New England Transport',companyLocation:'Boston, MA',creditScore:93,daysToPayAvg:15,contactEmail:'dispatch@newenglandtransport.com',contactPhone:'MC#159654',deadhead:20,totalMiles:75,mpg:7.5,fuelCostCalc:35.00,rpm:4.40,profit:267.50,spotDate:'$310',spotDateRange:'($5.64/mi)',contractRate:'$330 ($360 @ 12/30 - $6.00/mi)'},
+            {id:1058,shipper:'Rhode Island Textiles',pickupCity:'Providence',pickupState:'RI',deliveryCity:'Warwick',deliveryState:'RI',distance:25,weight:29000,cargoType:'Fabrics',rate:150,equipment:'53ft Dry Van',pickupTime:'07:00 - 15:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'New England Transport',companyLocation:'Boston, MA',creditScore:93,daysToPayAvg:15,contactEmail:'dispatch@newenglandtransport.com',contactPhone:'MC#951456',deadhead:10,totalMiles:35,mpg:7.6,fuelCostCalc:16.12,rpm:4.29,profit:121.38,spotDate:'$140',spotDateRange:'($5.60/mi)',contractRate:'$150 ($165 @ 1/02 - $6.00/mi)'},
+            {id:1059,shipper:'South Carolina Textiles',pickupCity:'Charleston',pickupState:'SC',deliveryCity:'Columbia',deliveryState:'SC',distance:125,weight:37000,cargoType:'Textiles',rate:750,equipment:'53ft Dry Van',pickupTime:'08:00 - 17:00',pickupDate:'2025-02-25',deliveryDate:'2025-02-25',company:'Carolina Carriers',companyLocation:'Charlotte, NC',creditScore:90,daysToPayAvg:20,contactEmail:'dispatch@carolinacarriers.com',contactPhone:'MC#357753',deadhead:40,totalMiles:165,mpg:7.1,fuelCostCalc:81.34,rpm:4.55,profit:606.16,spotDate:'$700',spotDateRange:'($5.60/mi)',contractRate:'$750 ($810 @ 12/29 - $6.00/mi)'},
+            {id:1060,shipper:'Vermont Maple',pickupCity:'Montpelier',pickupState:'VT',deliveryCity:'Burlington',deliveryState:'VT',distance:40,weight:25000,cargoType:'Maple Syrup',rate:240,equipment:'53ft Dry Van',pickupTime:'09:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'New England Transport',companyLocation:'Boston, MA',creditScore:93,daysToPayAvg:15,contactEmail:'dispatch@newenglandtransport.com',contactPhone:'MC#753258',deadhead:15,totalMiles:55,mpg:7.5,fuelCostCalc:25.67,rpm:4.36,profit:194.33,spotDate:'$225',spotDateRange:'($5.63/mi)',contractRate:'$240 ($260 @ 1/03 - $6.00/mi)'},
+            {id:1061,shipper:'Virginia Tobacco',pickupCity:'Richmond',pickupState:'VA',deliveryCity:'Norfolk',deliveryState:'VA',distance:110,weight:36000,cargoType:'Tobacco',rate:660,equipment:'53ft Dry Van',pickupTime:'07:00 - 16:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'East Coast Transport',companyLocation:'New York, NY',creditScore:94,daysToPayAvg:14,contactEmail:'dispatch@eastcoasttransport.com',contactPhone:'MC#159951',deadhead:35,totalMiles:145,mpg:7.2,fuelCostCalc:70.49,rpm:4.55,profit:534.51,spotDate:'$620',spotDateRange:'($5.64/mi)',contractRate:'$660 ($710 @ 12/30 - $6.00/mi)'},
+            {id:1062,shipper:'West Virginia Coal',pickupCity:'Charleston',pickupState:'WV',deliveryCity:'Huntington',deliveryState:'WV',distance:95,weight:50000,cargoType:'Coal',rate:660,equipment:'Flatbed',pickupTime:'08:00 - 17:00',pickupDate:'2025-02-24',deliveryDate:'2025-02-24',company:'Keystone Freight',companyLocation:'Pittsburgh, PA',creditScore:88,daysToPayAvg:26,contactEmail:'dispatch@keystonefreight.com',contactPhone:'MC#357159',deadhead:30,totalMiles:125,mpg:6.3,fuelCostCalc:69.44,rpm:5.28,profit:543.06,spotDate:'$620',spotDateRange:'($6.53/mi)',contractRate:'$660 ($710 @ 1/02 - $7.00/mi)'},
+            {id:1063,shipper:'Wyoming Oil',pickupCity:'Casper',pickupState:'WY',deliveryCity:'Cheyenne',deliveryState:'WY',distance:180,weight:46000,cargoType:'Oil Equipment',rate:1080,equipment:'Flatbed',pickupTime:'07:00 - 17:00',pickupDate:'2025-02-25',deliveryDate:'2025-02-25',company:'Rocky Mountain Freight',companyLocation:'Salt Lake City, UT',creditScore:89,daysToPayAvg:24,contactEmail:'dispatch@rockymountainfreight.com',contactPhone:'MC#951753',deadhead:50,totalMiles:230,mpg:6.5,fuelCostCalc:123.85,rpm:4.70,profit:866.15,spotDate:'$1,010',spotDateRange:'($5.61/mi)',contractRate:'$1,080 ($1,160 @ 12/30 - $6.00/mi)'}
+        ];
+
+        // Populate state filters
+        const pickupStates = [...new Set(loads.map(l => l.pickupState))].sort();
+        const deliveryStates = [...new Set(loads.map(l => l.deliveryState))].sort();
+        
+        const stateFilter = document.getElementById('stateFilter');
+        pickupStates.forEach(state => {
+            const option = document.createElement('option');
+            option.value = state;
+            option.textContent = state;
+            stateFilter.appendChild(option);
+        });
+
+        const deliveryStateFilter = document.getElementById('deliveryStateFilter');
+        deliveryStates.forEach(state => {
+            const option = document.createElement('option');
+            option.value = state;
+            option.textContent = state;
+            deliveryStateFilter.appendChild(option);
+        });
+
+        function analyzeLoad(load) {
+            // Базовые расчеты
+            const ratePerMile = load.rate / load.distance;
+            const fuelCost = load.fuelCostCalc ? Math.round(load.fuelCostCalc / 3.5) : Math.round(load.distance / 6);
+            const fuelCostUSD = load.fuelCostCalc || Math.round(fuelCost * 3.5);
+            const estimatedProfit = load.profit || Math.round(load.rate - fuelCostUSD - (load.distance * 0.5));
+            const driveTime = Math.round(load.distance / 55);
+            const profitMargin = ((estimatedProfit / load.rate) * 100).toFixed(1);
+
+            // Расширенный анализ прибыльности
+            let profitRating = 0;
+            let profitAnalysis = '';
+            
+            if (ratePerMile >= 8) {
+                profitRating = 10;
+                profitAnalysis = 'Исключительная ставка! Значительно выше рынка.';
+            } else if (ratePerMile >= 6) {
+                profitRating = 9;
+                profitAnalysis = 'Отличная ставка, +40-60% к рынку. Высокая рентабельность.';
+            } else if (ratePerMile >= 5) {
+                profitRating = 8;
+                profitAnalysis = 'Очень хорошая ставка, +25-40% к рынку.';
+            } else if (ratePerMile >= 4) {
+                profitRating = 7;
+                profitAnalysis = 'Хорошая ставка, верхняя граница рынка.';
+            } else if (ratePerMile >= 3.5) {
+                profitRating = 6;
+                profitAnalysis = 'Средняя ставка, в пределах нормы.';
+            } else if (ratePerMile >= 3) {
+                profitRating = 5;
+                profitAnalysis = 'Ниже среднего, но приемлемо.';
+            } else if (ratePerMile >= 2.5) {
+                profitRating = 4;
+                profitAnalysis = 'Низкая ставка. Минимальная прибыль.';
+            } else {
+                profitRating = 3;
+                profitAnalysis = 'Очень низкая ставка. Риск убытков.';
+            }
+
+            // Анализ рисков
+            const risks = [];
+            let riskScore = 0;
+
+            // Финансовые риски
+            if (load.creditScore < 85) {
+                risks.push('⚠️ Средний кредитный рейтинг - возможны задержки');
+                riskScore += 2;
+            }
+            if (load.daysToPayAvg > 30) {
+                risks.push('⚠️ Длительный срок оплаты (>30 дней)');
+                riskScore += 2;
+            }
+            if (estimatedProfit < 500) {
+                risks.push('⚠️ Низкая прибыль');
+                riskScore += 1;
+            }
+
+            // Операционные риски
+            if (load.equipment === '53ft Reefer') {
+                risks.push('🌡️ Рефрижератор - контроль температуры');
+                riskScore += 1;
+            }
+            if (load.equipment === 'Flatbed') {
+                risks.push('🌧️ Открытая платформа - зависимость от погоды');
+                riskScore += 1;
+            }
+            if (load.weight >= 45000) {
+                risks.push('⚖️ Тяжелый груз - повышенный расход топлива');
+                riskScore += 1;
+            }
+            if (load.distance > 800) {
+                risks.push('🛣️ Длинная дистанция - HOS ограничения');
+                riskScore += 1;
+            }
+            if (load.deadhead > 100) {
+                risks.push('📍 Большой deadhead - доп. расходы');
+                riskScore += 2;
+            }
+
+            // Преимущества и возможности
+            const advantages = [];
+            let advantageScore = 0;
+
+            if (load.creditScore >= 90) {
+                advantages.push('✅ Высокий кредитный рейтинг (90+) - надежный плательщик');
+                advantageScore += 2;
+            }
+            if (load.daysToPayAvg <= 15) {
+                advantages.push('💰 Быстрая оплата (≤15 дней)');
+                advantageScore += 2;
+            }
+            if (ratePerMile >= 5) {
+                advantages.push('💵 Премиальная ставка - выше рынка');
+                advantageScore += 3;
+            }
+            if (load.pickupState === load.deliveryState) {
+                advantages.push('🗺️ Внутриштатная перевозка');
+                advantageScore += 1;
+            }
+            if (load.distance < 150) {
+                advantages.push('⚡ Короткий маршрут - быстрая доставка');
+                advantageScore += 2;
+            }
+            if (load.deadhead < 50) {
+                advantages.push('📍 Минимальный deadhead');
+                advantageScore += 1;
+            }
+            if (estimatedProfit > 1500) {
+                advantages.push('💎 Высокая прибыль');
+                advantageScore += 2;
+            }
+            if (load.equipment === '53ft Dry Van') {
+                advantages.push('📦 Стандартный трейлер');
+                advantageScore += 1;
+            }
+
+            // Анализ маршрута
+            let routeAnalysis = '';
+            const majorHighways = {
+                'CA-NV': 'I-15 или I-80 - хорошие дороги, умеренный трафик',
+                'TX-LA': 'I-10 или I-20 - интенсивное движение, возможны пробки',
+                'FL-GA': 'I-95 или I-75 - высокий трафик, особенно у городов',
+                'NY-PA': 'I-80 или I-81 - горная местность, зимой сложные условия',
+                'IL-IN': 'I-90 или I-80 - через Чикаго, высокий риск пробок',
+                'WA-OR': 'I-5 - живописный маршрут, возможны дожди',
+                'AZ-NM': 'I-10 или I-40 - пустынная местность, жаркий климат',
+                'CO-WY': 'I-25 или I-80 - горы, зимой опасные условия'
+            };
+
+            const routeKey = `${load.pickupState}-${load.deliveryState}`;
+            routeAnalysis = majorHighways[routeKey] || 'Стандартный маршрут - проверьте актуальные дорожные условия';
+
+            // Анализ времени
+            let timingAnalysis = '';
+            const pickupHour = parseInt(load.pickupTime.split(':')[0]);
+
+            if (pickupHour >= 7 && pickupHour <= 9) {
+                timingAnalysis += 'Утренняя погрузка - возможны очереди. ';
+            } else if (pickupHour >= 14 && pickupHour <= 17) {
+                timingAnalysis += 'Дневная погрузка - оптимальное время. ';
+            }
+
+            if (driveTime > 11) {
+                timingAnalysis += 'Требуется остановка по HOS (>11ч). ';
+            }
+
+            if (load.distance > 500) {
+                timingAnalysis += 'Многодневный рейс.';
+            } else {
+                timingAnalysis += 'Однодневный рейс.';
+            }
+
+            // Сравнение с рынком
+            let marketComparison = '';
+            
+            // Парсим spotRate из spotDate (формат: "$4,396")
+            const spotRate = load.spotDate ? parseFloat(load.spotDate.replace(/[$,]/g, '')) : load.rate;
+            // Парсим contractRate (формат: "$4,000 ($4,520 @ 1/02 - $14.81/mi)")
+            const contractRateMatch = load.contractRate ? load.contractRate.match(/\$([0-9,]+)/) : null;
+            const contractRate = contractRateMatch ? parseFloat(contractRateMatch[1].replace(/,/g, '')) : load.rate;
+            
+            const spotDiff = ((load.rate - spotRate) / spotRate * 100).toFixed(1);
+            const contractDiff = ((load.rate - contractRate) / contractRate * 100).toFixed(1);
+
+            if (spotDiff > 0) {
+                marketComparison = `Ставка на ${spotDiff}% выше спотового рынка ($${spotRate.toLocaleString()}). `;
+            } else {
+                marketComparison = `Ставка на ${Math.abs(spotDiff)}% ниже спотового рынка ($${spotRate.toLocaleString()}). `;
+            }
+
+            if (contractDiff > 0) {
+                marketComparison += `На ${contractDiff}% выше контрактной ставки ($${contractRate.toLocaleString()}).`;
+            } else {
+                marketComparison += `На ${Math.abs(contractDiff)}% ниже контрактной ставки ($${contractRate.toLocaleString()}).`;
+            }
+
+            // Итоговая рекомендация
+            let recommendation = '';
+            let reason = '';
+            let recommendationClass = '';
+            const totalScore = profitRating + advantageScore - riskScore;
+
+            if (totalScore >= 10 && profitRating >= 8) {
+                recommendation = '🌟 НАСТОЯТЕЛЬНО РЕКОМЕНДУЕТСЯ';
+                reason = `Отличное соотношение прибыли и рисков. Прибыль: $${estimatedProfit} (${profitMargin}% маржа). ${profitAnalysis}`;
+                recommendationClass = 'positive';
+            } else if (totalScore >= 7 && profitRating >= 7) {
+                recommendation = '✅ РЕКОМЕНДУЕТСЯ ВЗЯТЬ';
+                reason = `Хорошая прибыльность с приемлемыми рисками. Прибыль: $${estimatedProfit}. ${profitAnalysis}`;
+                recommendationClass = 'positive';
+            } else if (totalScore >= 5 || profitRating >= 6) {
+                recommendation = '⚠️ СРЕДНИЙ ПРИОРИТЕТ';
+                reason = `Умеренная прибыль. Прибыль: $${estimatedProfit}. Оцените альтернативы. ${profitAnalysis}`;
+                recommendationClass = '';
+            } else if (totalScore >= 3) {
+                recommendation = '⚠️ НИЗКИЙ ПРИОРИТЕТ';
+                reason = `Низкая рентабельность или высокие риски. Прибыль: $${estimatedProfit}. ${profitAnalysis}`;
+                recommendationClass = 'negative';
+            } else {
+                recommendation = '❌ НЕ РЕКОМЕНДУЕТСЯ';
+                reason = `Высокие риски и низкая прибыль. Прибыль: $${estimatedProfit}. ${profitAnalysis}`;
+                recommendationClass = 'negative';
+            }
+
+            return {
+                ratePerMile: ratePerMile.toFixed(2),
+                fuelCost,
+                fuelCostUSD,
+                estimatedProfit,
+                driveTime,
+                profitRating,
+                profitMargin,
+                profitAnalysis,
+                risks,
+                riskScore,
+                advantages,
+                advantageScore,
+                routeAnalysis,
+                timingAnalysis,
+                marketComparison,
+                recommendation,
+                reason,
+                recommendationClass,
+                totalScore
+            };
+        }
+
+        function renderLoads(filteredLoads) {
+            const container = document.getElementById('loadsContainer');
+            container.innerHTML = '';
+
+            filteredLoads.forEach(load => {
+                const analysis = analyzeLoad(load);
+                
+                const card = document.createElement('div');
+                card.className = 'load-card';
+                card.onclick = function() {
+                    this.classList.toggle('flipped');
+                    
+                    // Перезапуск анимации для flip-hint
+                    const hints = this.querySelectorAll('.flip-hint');
+                    hints.forEach(hint => {
+                        hint.style.animation = 'none';
+                        setTimeout(() => {
+                            hint.style.animation = 'fadeOut 4s forwards';
+                        }, 10);
+                    });
+                };
+                
+                card.innerHTML = `
+                    <div class="load-card-inner">
+                        <div class="load-card-front">
+                            <div class="load-header">
+                                <div class="load-route-header">${load.pickupState} → ${load.deliveryState}</div>
+                                <div class="load-rate">$${load.rate.toLocaleString()}</div>
+                            </div>
+                            <div class="load-route">
+                                <div style="font-size: 16px; color: var(--text-secondary); margin-bottom: 4px;">Груз #${load.id}</div>
+                                <div class="route-text">
+                                    🚛 ${load.pickupCity}, ${load.pickupState} → ${load.deliveryCity}, ${load.deliveryState}
+                                </div>
+                            </div>
+                            ${load.company ? `
+                            <div style="background: rgba(139, 92, 246, 0.1); padding: 6px 8px; border-radius: 6px; margin: 6px 0; border-left: 2px solid var(--primary);">
+                                <div style="font-weight: 700; color: var(--text); margin-bottom: 2px; font-size: 16px;">🏢 ${load.company}</div>
+                                <div style="font-size: 16px; color: var(--text-secondary); display: flex; justify-content: space-between;">
+                                    <span>📍 ${load.companyLocation}</span>
+                                    <span>⭐ ${load.creditScore}/100</span>
+                                </div>
+                                <div style="font-size: 16px; color: var(--text-secondary); margin-top: 2px;">
+                                    💰 Оплата: ${load.daysToPayAvg} дней
+                                </div>
+                            </div>
+                            ` : ''}
+                            <div class="load-details">
+                                <div>
+                                    <div class="detail-label">Грузоотправитель</div>
+                                    <div class="detail-item">${load.shipper}</div>
+                                </div>
+                                ${load.deadhead ? `
+                                <div>
+                                    <div class="detail-label">Deadhead</div>
+                                    <div class="detail-item">+${load.deadhead} миль</div>
+                                </div>
+                                ` : ''}
+                                <div>
+                                    <div class="detail-label">Расстояние</div>
+                                    <div class="detail-item">${load.distance} миль</div>
+                                </div>
+                                <div>
+                                    <div class="detail-label">Вес</div>
+                                    <div class="detail-item">${load.weight.toLocaleString()} фунтов</div>
+                                </div>
+                                <div>
+                                    <div class="detail-label">Тип груза</div>
+                                    <div class="detail-item">${load.cargoType}</div>
+                                </div>
+                                <div>
+                                    <div class="detail-label">Дата погрузки</div>
+                                    <div class="detail-item">${load.pickupDate ? new Date(load.pickupDate).toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric'}) : 'TBD'}</div>
+                                </div>
+                                <div>
+                                    <div class="detail-label">Время погрузки</div>
+                                    <div class="detail-item">${load.pickupTime}</div>
+                                </div>
+                                <div>
+                                    <div class="detail-label">Дата разгрузки</div>
+                                    <div class="detail-item">${load.deliveryDate ? new Date(load.deliveryDate).toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric'}) : 'TBD'}</div>
+                                </div>
+                                ${load.mpg ? `
+                                <div>
+                                    <div class="detail-label">MPG</div>
+                                    <div class="detail-item">${load.mpg}</div>
+                                </div>
+                                ` : ''}
+                                ${load.rpm ? `
+                                <div>
+                                    <div class="detail-label">RPM</div>
+                                    <div class="detail-item" style="color: #48bb78; font-weight: bold;">${load.rpm}</div>
+                                </div>
+                                ` : ''}
+                                <div>
+                                    <div class="detail-label">$/миля</div>
+                                    <div class="detail-item" style="color: #48bb78; font-weight: bold;">$${(load.rate / load.distance).toFixed(2)}/миля</div>
+                                </div>
+                            </div>
+                            ${load.contactEmail ? `
+                            <div style="background: rgba(59, 130, 246, 0.1); padding: 6px 8px; border-radius: 6px; margin-top: 6px; font-size: 16px;">
+                                <div style="color: var(--text-secondary);">📧 ${load.contactEmail}</div>
+                                <div style="color: var(--text-secondary); margin-top: 2px;">📞 ${load.contactPhone}</div>
+                            </div>
+                            ` : ''}
+                            <div class="load-footer">
+                                <span class="equipment-badge">${load.equipment}</span>
+                                <span class="status-badge">✓ Доступен</span>
+                            </div>
+                            <div class="flip-hint">🔄 Нажмите для анализа</div>
+                        </div>
+                        <div class="load-card-back">
+                            <div class="analysis-title">📊 Анализ груза #${load.id}</div>
+                            
+                            <div class="analysis-section">
+                                <div class="metric-row">
+                                    <span class="metric-label">Рейтинг прибыльности</span>
+                                    <span class="metric-value">${analysis.profitRating}/10</span>
+                                </div>
+                                <div class="rating-bar">
+                                    <div class="rating-fill" style="width: ${analysis.profitRating * 10}%"></div>
+                                </div>
+                                <div style="font-size: 16px; color: var(--text-secondary); margin-top: 6px; line-height: 1.4;">
+                                    ${analysis.profitAnalysis}
+                                </div>
+                            </div>
+
+                            <div class="analysis-section">
+                                ${load.profit ? `
+                                <div class="metric-row">
+                                    <span class="metric-label">💰 Прибыль</span>
+                                    <span class="metric-value" style="color: #22c55e; font-weight: 700;">$${load.profit.toFixed(2)}</span>
+                                </div>
+                                ` : ''}
+                                ${load.totalMiles ? `
+                                <div class="metric-row">
+                                    <span class="metric-label">Общий пробег (с deadhead)</span>
+                                    <span class="metric-value">${load.totalMiles} миль</span>
+                                </div>
+                                ` : ''}
+                                <div class="metric-row">
+                                    <span class="metric-label">Ставка за милю</span>
+                                    <span class="metric-value" style="color: ${analysis.ratePerMile >= 5 ? '#22c55e' : analysis.ratePerMile >= 3.5 ? '#f59e0b' : '#ef4444'}">$${analysis.ratePerMile}/миля</span>
+                                </div>
+                                ${!load.profit ? `
+                                <div class="metric-row">
+                                    <span class="metric-label">Общая прибыль</span>
+                                    <span class="metric-value" style="color: #22c55e">$${analysis.estimatedProfit}</span>
+                                </div>
+                                ` : ''}
+                                ${load.fuelCostCalc ? `
+                                <div class="metric-row">
+                                    <span class="metric-label">Расход топлива</span>
+                                    <span class="metric-value">$${load.fuelCostCalc.toFixed(2)}</span>
+                                </div>
+                                ` : `
+                                <div class="metric-row">
+                                    <span class="metric-label">Расход топлива</span>
+                                    <span class="metric-value">~${analysis.fuelCost} галлонов ($${analysis.fuelCostUSD})</span>
+                                </div>
+                                `}
+                                <div class="metric-row">
+                                    <span class="metric-label">Время в пути</span>
+                                    <span class="metric-value">${analysis.driveTime} часов</span>
+                                </div>
+                            </div>
+
+                            ${analysis.advantages.length > 0 ? `
+                            <div class="analysis-section">
+                                <div class="analysis-title" style="font-size: 16px; color: #22c55e;">✅ Преимущества</div>
+                                <div class="analysis-content" style="font-size: 16px; line-height: 1.5;">
+                                    ${analysis.advantages.map(a => `• ${a}`).join('<br>')}
+                                </div>
+                            </div>
+                            ` : ''}
+
+                            ${analysis.risks.length > 0 ? `
+                            <div class="analysis-section">
+                                <div class="analysis-title" style="font-size: 16px; color: #f59e0b;">⚠️ Риски и особенности</div>
+                                <div class="analysis-content" style="font-size: 16px; line-height: 1.5;">
+                                    ${analysis.risks.map(r => `• ${r}`).join('<br>')}
+                                </div>
+                            </div>
+                            ` : ''}
+
+                            <div class="analysis-section">
+                                <div class="analysis-title" style="font-size: 16px;">🗺️ Анализ маршрута</div>
+                                <div class="analysis-content" style="font-size: 16px; line-height: 1.4;">
+                                    ${analysis.routeAnalysis}
+                                </div>
+                            </div>
+
+                            <div class="analysis-section">
+                                <div class="analysis-title" style="font-size: 16px;">⏰ Анализ времени</div>
+                                <div class="analysis-content" style="font-size: 16px; line-height: 1.4;">
+                                    ${analysis.timingAnalysis}
+                                </div>
+                            </div>
+
+                            ${load.spotDate ? `
+                            <div class="analysis-section">
+                                <div class="analysis-title" style="font-size: 16px;">📈 Сравнение с рынком</div>
+                                <div class="analysis-content" style="font-size: 16px; line-height: 1.4;">
+                                    ${analysis.marketComparison}
+                                </div>
+                                <div style="background: rgba(255, 255, 255, 0.05); padding: 6px; border-radius: 6px; font-size: 16px; margin-top: 6px;">
+                                    <div style="color: var(--text-secondary);">Spot: ${load.spotDate} | Contract: ${load.contractRate}</div>
+                                </div>
+                            </div>
+                            ` : ''}
+
+                            <div class="recommendation ${analysis.recommendationClass}">
+                                <strong style="font-size: 16px;">${analysis.recommendation}</strong><br>
+                                <small style="opacity: 0.9; font-size: 16px; line-height: 1.4; display: block; margin-top: 4px;">${analysis.reason}</small>
+                            </div>
+                            
+                            <div class="flip-hint">🔄 Нажмите чтобы вернуться</div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            document.getElementById('totalLoads').textContent = filteredLoads.length;
+            const avgRate = Math.round(filteredLoads.reduce((sum, l) => sum + l.rate, 0) / filteredLoads.length);
+            document.getElementById('avgRate').textContent = '$' + avgRate.toLocaleString();
+            const totalMiles = filteredLoads.reduce((sum, l) => sum + l.distance, 0);
+            document.getElementById('totalMiles').textContent = totalMiles.toLocaleString();
+        }
+
+        function applyFilters() {
+            const stateFilter = document.getElementById('stateFilter').value;
+            const deliveryStateFilter = document.getElementById('deliveryStateFilter').value;
+            const equipmentFilter = document.getElementById('equipmentFilter').value;
+            const minRate = parseFloat(document.getElementById('minRate').value) || 0;
+
+            const filtered = loads.filter(load => {
+                const matchPickupState = !stateFilter || load.pickupState === stateFilter;
+                const matchDeliveryState = !deliveryStateFilter || load.deliveryState === deliveryStateFilter;
+                const matchEquipment = !equipmentFilter || load.equipment === equipmentFilter;
+                const matchRate = load.rate >= minRate;
+
+                return matchPickupState && matchDeliveryState && matchEquipment && matchRate;
+            });
+
+            // Shuffle filtered results
+            const shuffledFiltered = shuffleArray(filtered);
+            renderLoads(shuffledFiltered);
+        }
+
+        // Shuffle function for randomizing load order
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // Event listeners
+        document.getElementById('stateFilter').addEventListener('change', applyFilters);
+        document.getElementById('deliveryStateFilter').addEventListener('change', applyFilters);
+        document.getElementById('equipmentFilter').addEventListener('change', applyFilters);
+        document.getElementById('minRate').addEventListener('input', applyFilters);
+
+        // Initial render with randomized order
+        const shuffledLoads = shuffleArray(loads);
+        renderLoads(shuffledLoads);
+
+        // Scroll to top button
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+        window.addEventListener('scroll', () => {
+            const scrollPercent = (window.pageYOffset / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+            if (scrollPercent > 25) {
+                scrollToTopBtn.style.display = 'flex';
+            } else {
+                scrollToTopBtn.style.display = 'none';
+            }
+        });
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+        
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        if (savedTheme === 'light') {
+            html.setAttribute('data-theme', 'light');
+            themeToggle.textContent = '☀️';
+        }
+        
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = html.getAttribute('data-theme');
+            if (currentTheme === 'light') {
+                html.removeAttribute('data-theme');
+                themeToggle.textContent = '🌙';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.setAttribute('data-theme', 'light');
+                themeToggle.textContent = '☀️';
+                localStorage.setItem('theme', 'light');
+            }
+        });
+    </script>
+<script src="../theme-switcher.js"></script>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Курсы Диспетчера</h4>
+        <p>Профессиональное обучение диспетчеров грузоперевозок</p>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Обучение</h4>
+        <a href="courses.html">Курсы</a>
+        <a href="certification.html">Сертификация</a>
+        <a href="webinars.html">Вебинары</a>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Поддержка</h4>
+        <a href="faq.html">FAQ</a>
+        <a href="contacts.html">Контакты</a>
+        <a href="help.html">Помощь</a>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Компания</h4>
+        <a href="about.html">О нас</a>
+        <a href="blog.html">Блог</a>
+        <a href="career.html">Карьера</a>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <p>&copy; 2024 Курсы Диспетчера. Все права защищены.</p>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

@@ -400,6 +400,7 @@ interface GameState {
   gameMinute: number; // 0 = 08:43
   timeSpeed: 1 | 2 | 5 | 10;
   sessionName: string;
+  currentSlotId?: number; // текущий слот сохранения (1, 2 или 3)
 
   // Финансы
   balance: number;
@@ -478,7 +479,7 @@ interface GameState {
 
   // ─── ACTIONS ───
 
-  startShift: (truckCount?: number, sessionName?: string) => void;
+  startShift: (truckCount?: number, sessionName?: string, slotId?: number) => void;
   tickClock: () => void;
   triggerRandomEvent: () => void;
   setTimeSpeed: (speed: 1 | 2 | 5 | 10) => void;
@@ -513,8 +514,8 @@ interface GameState {
   setLoadBoardSearch: (city: string) => void;
   
   // Сохранение и загрузка
-  saveGame: () => void;
-  loadGame: () => Promise<boolean>;
+  saveGame: (slotId?: number) => void;
+  loadGame: (slotId?: number) => Promise<boolean>;
   clearSave: () => void;
   testDeliveryPopup: () => void;
 
@@ -1588,8 +1589,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     return true;
   },
 
-  startShift: async (truckCount: number = 1, sessionName: string = '') => {
-    logger.log(`🎮 Starting shift with ${truckCount} trucks, session: "${sessionName}"`);
+  startShift: async (truckCount: number = 1, sessionName: string = '', slotId?: number) => {
+    logger.log(`🎮 Starting shift with ${truckCount} trucks, session: "${sessionName}", slot: ${slotId || 'default'}`);
     
     // Всегда сбрасываем старое сохранение и начинаем заново
     get().clearSave();
@@ -1672,6 +1673,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       financeLog: [],
       reputation: 100,
       sessionName: sessionName || `Смена · ${truckCount} трака`,
+      currentSlotId: slotId, // сохраняем ID слота
       trucks: trucksWithRoutes,
       availableLoads: [
         ...generateLoads(0),
@@ -3726,14 +3728,18 @@ case 'detention': {
     }
   },
 
-  saveGame: () => {
+  saveGame: (slotId?: number) => {
     const state = get();
+    // Используем переданный slotId или текущий из state
+    const targetSlot = slotId || state.currentSlotId;
+    
     const saveData = {
       version: 6,
       phase: state.phase,
       day: state.day,
       gameMinute: state.gameMinute,
       sessionName: state.sessionName,
+      currentSlotId: targetSlot,
       balance: state.balance,
       totalEarned: state.totalEarned,
       totalLost: state.totalLost,
@@ -3750,21 +3756,49 @@ case 'detention': {
       unreadCount: state.unreadCount,
       pendingEmailResponses: state.pendingEmailResponses,
       savedAt: Date.now(),
+      lastPlayed: Date.now(),
       activeWeatherZones: state.activeWeatherZones,
       driverCandidates: state.driverCandidates,
       pendingFactoringOffers: state.pendingFactoringOffers,
     };
     
+    // Сохраняем в слот если указан
+    if (targetSlot) {
+      const slotKey = `dispatcher-save-slot-${targetSlot}`;
+      try {
+        localStorage.setItem(slotKey, JSON.stringify(saveData));
+        logger.log(`✅ Game saved to slot ${targetSlot}`);
+      } catch (error) {
+        logger.error(`❌ Failed to save to slot ${targetSlot}:`, error);
+      }
+    }
+    
+    // Также сохраняем в основное хранилище для совместимости
     // Гибридное сохранение: localStorage + Firebase
     hybridSave(saveData).catch(error => {
       logger.error('❌ Hybrid save failed:', error);
     });
   },
 
-  loadGame: async () => {
+  loadGame: async (slotId?: number) => {
     try {
-      // Гибридная загрузка: сначала Firebase, потом localStorage
-      const saveData = await hybridLoad();
+      let saveData: any = null;
+      
+      // Если указан слот — загружаем из него
+      if (slotId) {
+        const slotKey = `dispatcher-save-slot-${slotId}`;
+        const raw = localStorage.getItem(slotKey);
+        if (raw) {
+          saveData = JSON.parse(raw);
+          logger.log(`✅ Loading from slot ${slotId}`);
+        }
+      }
+      
+      // Если не указан слот или слот пуст — пробуем гибридную загрузку
+      if (!saveData) {
+        // Гибридная загрузка: сначала Firebase, потом localStorage
+        saveData = await hybridLoad();
+      }
       
       if (!saveData) {
         logger.log('ℹ️ No save found');
@@ -3808,6 +3842,7 @@ case 'detention': {
         day: saveData.day,
         gameMinute: saveData.gameMinute,
         sessionName: saveData.sessionName || '',
+        currentSlotId: saveData.currentSlotId || slotId, // восстанавливаем ID слота
         balance: saveData.balance,
         totalEarned: saveData.totalEarned,
         totalLost: saveData.totalLost,

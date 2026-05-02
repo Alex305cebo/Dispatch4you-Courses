@@ -13,7 +13,7 @@ const getTruckImageUri = (id: number): string => {
     window.location.pathname.startsWith('/game') ||
     window.location.pathname.includes('/game/')
   );
-  const basePath = isGame ? '/game/assets/Truck%20Pic' : '/assets/Truck%20Pic';
+  const basePath = isGame ? '/game/assets/Truck_Pic' : '/assets/Truck_Pic';
   return `${basePath}/${id}.webp`;
 };
 

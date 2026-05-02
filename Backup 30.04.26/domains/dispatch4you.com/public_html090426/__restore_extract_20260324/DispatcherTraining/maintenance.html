@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сайт в разработке | Курсы Диспетчера</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #020617;
+            color: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            overflow-y: auto;
+            padding: 40px 0;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 60% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 20px 24px;
+            max-width: 520px;
+        }
+
+        .icon {
+            font-size: 52px;
+            margin-bottom: 12px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        h1 {
+            font-size: 30px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .progress-wrap {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 18px 24px;
+            margin-bottom: 16px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 100px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 75%;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
+            border-radius: 100px;
+            animation: shimmer 2s infinite;
+            background-size: 200% 100%;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .feature {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 12px 8px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .feature-icon {
+            font-size: 22px;
+            margin-bottom: 6px;
+        }
+
+        .notify-form {
+            display: flex;
+            gap: 10px;
+            max-width: 400px;
+            margin: 0 auto 14px;
+        }
+
+        .notify-form input {
+            flex: 1;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #f1f5f9;
+            font-size: 14px;
+        }
+
+        .notify-form input::placeholder {
+            color: #64748b;
+        }
+
+        .notify-form input:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .admin-link {
+            margin-top: 16px;
+            font-size: 13px;
+            color: #475569;
+            cursor: pointer;
+            user-select: none;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        .admin-link:hover {
+            color: #94a3b8;
+        }
+
+        /* Registration form */
+        .reg-section {
+            margin-top: 24px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 28px 24px;
+            text-align: left;
+        }
+
+        .reg-title {
+            font-size: 18px;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+
+        .reg-subtitle {
+            font-size: 13px;
+            color: #94a3b8;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #94a3b8;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 11px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: #f1f5f9;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .form-group input::placeholder {
+            color: #475569;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 15px;
+            height: 15px;
+            margin-top: 2px;
+            flex-shrink: 0;
+            accent-color: #6366f1;
+        }
+
+        .checkbox-group label {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .checkbox-group label a {
+            color: #6366f1;
+            text-decoration: none;
+        }
+
+        .btn-reg {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 12px;
+        }
+
+        .btn-reg:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-reg:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 12px 0;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .divider span {
+            background: #0f172a;
+            padding: 0 12px;
+            position: relative;
+            color: #475569;
+            font-size: 12px;
+        }
+
+        .btn-google {
+            width: 100%;
+            padding: 11px;
+            background: white;
+            border: none;
+            border-radius: 12px;
+            color: #1f2937;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s;
+            margin-bottom: 14px;
+        }
+
+        .btn-google:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-google img {
+            width: 18px;
+            height: 18px;
+        }
+
+        .reg-bottom {
+            text-align: center;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .reg-bottom a {
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .reg-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: #fca5a5;
+            font-size: 12px;
+            margin-bottom: 12px;
+            display: none;
+        }
+
+        .reg-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: #6ee7b7;
+            font-size: 12px;
+            margin-bottom: 12px;
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Admin bypass modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: #0f172a;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 32px;
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+        }
+
+        .modal-box h3 {
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+
+        .modal-box input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #f1f5f9;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .modal-box input:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+
+        .modal-error {
+            color: #fca5a5;
+            font-size: 13px;
+            margin-bottom: 12px;
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 28px;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+
+            .notify-form {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="icon">🚧</div>
+        <h1>Сайт в разработке</h1>
+        <p class="subtitle">Мы работаем над чем-то крутым. Скоро откроемся — следите за обновлениями!</p>
+
+        <div class="progress-wrap">
+            <div class="progress-label">
+                <span>Готовность платформы</span>
+                <span>75%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+        </div>
+
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">📚</div>
+                12 модулей обучения
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🎧</div>
+                Аудио уроки
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🎯</div>
+                Симулятор звонков
+            </div>
+        </div>
+
+        <div class="notify-form">
+            <input type="email" id="notifyEmail" placeholder="Ваш email для уведомления">
+            <button class="btn" onclick="notify()">Уведомить</button>
+        </div>
+
+        <!-- Toggle button -->
+        <div style="margin-top:20px;text-align:center;">
+            <button onclick="toggleRegForm()" id="toggleBtn"
+                style="background:none;border:none;padding:8px 20px;color:rgba(255,255,255,0.12);font-size:18px;cursor:pointer;letter-spacing:6px;transition:all 0.3s;"
+                title="">···</button>
+        </div>
+
+        <!-- Registration Form (hidden by default) -->
+        <div class="reg-section" id="regSection" style="display:none;margin-top:16px;">
+            <div class="reg-title">🚀 Зарегистрируйтесь сейчас</div>
+            <p class="reg-subtitle">Получите доступ сразу после открытия</p>
+
+            <div class="reg-error" id="regError"></div>
+            <div class="reg-success" id="regSuccess"></div>
+
+            <form id="registerForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Имя</label>
+                        <input type="text" id="regFirstName" placeholder="Иван" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Фамилия</label>
+                        <input type="text" id="regLastName" placeholder="Иванов" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="regEmail" placeholder="your@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Пароль</label>
+                    <input type="password" id="regPassword" placeholder="Минимум 8 символов" required minlength="8">
+                </div>
+                <div class="form-group">
+                    <label>Подтвердите пароль</label>
+                    <input type="password" id="regConfirm" placeholder="Повторите пароль" required minlength="8">
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="regTerms" required>
+                    <label for="regTerms">Я согласен с <a href="#">условиями использования</a> и <a href="#">политикой
+                            конфиденциальности</a></label>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:0;">
+                    <button type="submit" class="btn-reg" id="regSubmitBtn" style="margin-bottom:0;">Создать
+                        аккаунт</button>
+                    <a href="login.html" class="btn-reg"
+                        style="display:flex;align-items:center;justify-content:center;text-decoration:none;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.35);color:#a5b4fc;margin-bottom:0;">Войти
+                        →</a>
+                </div>
+            </form>
+
+            <div class="divider"><span>или</span></div>
+
+            <button class="btn-google" id="regGoogleBtn">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                Продолжить с Google
+            </button>
+
+            <div class="reg-bottom" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- Admin bypass modal -->
+    <div class="modal" id="adminModal">
+        <div class="modal-box">
+            <h3>🔐 Вход для администраторов</h3>
+            <input type="text" id="adminLogin" placeholder="Логин" onkeydown="if(event.key==='Enter')checkAdmin()">
+            <input type="password" id="adminPass" placeholder="Пароль" onkeydown="if(event.key==='Enter')checkAdmin()">
+            <div class="modal-error" id="modalError">Неверный логин или пароль</div>
+            <button class="btn" style="width:100%;margin-bottom:8px" onclick="checkAdmin()">Войти</button>
+            <button onclick="closeModal()"
+                style="background:none;border:none;color:#64748b;cursor:pointer;font-size:13px">Отмена</button>
+        </div>
+    </div>
+
+    <script>
+        // Если уже авторизован как супер-админ через Firebase — пропускаем
+        (function () {
+            const user = localStorage.getItem('user');
+            if (user) {
+                try {
+                    const u = JSON.parse(user);
+                    if ((u.email || '').toLowerCase() === 'dersire.der@gmail.com') {
+                        window.location.href = 'index.html';
+                    }
+                } catch (e) { }
+            }
+            // Уже есть bypass
+            if (localStorage.getItem('maintenance_bypass') === '1') {
+                window.location.href = 'index.html';
+            }
+        })();
+
+        // Список администраторов: логин -> пароль
+        const ADMINS = {
+            'alex': 'Der.69008',
+            'admin': 'Der.69008',
+            'mike': 'Mike.123',
+            'dima': 'Dima.123',
+        };
+
+        function notify() {
+            const email = document.getElementById('notifyEmail').value.trim();
+            if (!email) return;
+            alert('Спасибо! Мы уведомим вас на ' + email);
+            document.getElementById('notifyEmail').value = '';
+        }
+
+        function showAdminModal() {
+            document.getElementById('adminModal').classList.add('active');
+            setTimeout(() => document.getElementById('adminLogin').focus(), 100);
+        }
+
+        function closeModal() {
+            document.getElementById('adminModal').classList.remove('active');
+            document.getElementById('adminLogin').value = '';
+            document.getElementById('adminPass').value = '';
+            document.getElementById('modalError').style.display = 'none';
+        }
+
+        function checkAdmin() {
+            const login = document.getElementById('adminLogin').value.trim().toLowerCase();
+            const pass = document.getElementById('adminPass').value;
+            if (ADMINS[login] && ADMINS[login] === pass) {
+                localStorage.setItem('maintenance_bypass', '1');
+                window.location.href = 'index.html';
+            } else {
+                document.getElementById('modalError').style.display = 'block';
+            }
+        }
+
+        function toggleRegForm() {
+            const section = document.getElementById('regSection');
+            const btn = document.getElementById('toggleBtn');
+            const isOpen = section.style.display !== 'none';
+            section.style.display = isOpen ? 'none' : 'block';
+            btn.style.color = isOpen ? '#94a3b8' : '#a5b4fc';
+            btn.style.borderColor = isOpen ? 'rgba(255,255,255,0.12)' : 'rgba(99,102,241,0.4)';
+            if (!isOpen) {
+                setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+            }
+        }
+
+        document.getElementById('adminModal').addEventListener('click', function (e) {
+            if (e.target === this) closeModal();
+        });
+    </script>
+
+    <!-- Firebase Registration -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+        const app = initializeApp({
+            apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
+            authDomain: "dispatch4you-80e0f.firebaseapp.com",
+            projectId: "dispatch4you-80e0f",
+            storageBucket: "dispatch4you-80e0f.firebasestorage.app",
+            messagingSenderId: "349235354473",
+            appId: "1:349235354473:web:488aeb29211b02bb153bf8"
+        });
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        const regError = document.getElementById('regError');
+        const regSuccess = document.getElementById('regSuccess');
+
+        function showErr(msg) { regError.textContent = msg; regError.style.display = 'block'; regSuccess.style.display = 'none'; }
+        function showOk(msg) { regSuccess.textContent = msg; regSuccess.style.display = 'block'; regError.style.display = 'none'; }
+        function xlateErr(code) {
+            const m = {
+                'auth/email-already-in-use': 'Этот email уже зарегистрирован.',
+                'auth/invalid-email': 'Неверный формат email.',
+                'auth/weak-password': 'Пароль слишком слабый. Минимум 8 символов.',
+                'auth/network-request-failed': 'Ошибка сети. Проверьте интернет.',
+            };
+            return m[code] || 'Ошибка: ' + code;
+        }
+
+        async function saveUser(user, firstName, lastName) {
+            localStorage.setItem('user', JSON.stringify({ uid: user.uid, firstName, lastName, email: user.email }));
+            try {
+                await setDoc(doc(db, 'users', user.uid), {
+                    uid: user.uid, firstName, lastName, email: user.email,
+                    displayName: firstName + ' ' + lastName,
+                    lastLogin: serverTimestamp(), provider: user.providerData[0]?.providerId || 'password'
+                }, { merge: true });
+            } catch (e) { console.error('Firestore:', e); }
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const firstName = document.getElementById('regFirstName').value.trim();
+            const lastName = document.getElementById('regLastName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regConfirm').value;
+            const btn = document.getElementById('regSubmitBtn');
+
+            if (password !== confirm) { showErr('Пароли не совпадают!'); return; }
+            btn.disabled = true; btn.textContent = 'Создаём аккаунт...';
+
+            try {
+                const cred = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(cred.user, { displayName: firstName + ' ' + lastName });
+                await saveUser(cred.user, firstName, lastName);
+                showOk('✅ Аккаунт создан! Перенаправляем...');
+                setTimeout(() => { window.location.href = 'dashboard.html'; }, 1200);
+            } catch (err) {
+                showErr(xlateErr(err.code));
+                btn.disabled = false; btn.textContent = 'Создать аккаунт';
+            }
+        });
+
+        document.getElementById('regGoogleBtn').addEventListener('click', async () => {
+            try {
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+                const parts = (user.displayName || '').split(' ');
+                const firstName = parts[0] || user.email.split('@')[0];
+                const lastName = parts.slice(1).join(' ') || '';
+                await saveUser(user, firstName, lastName);
+                window.location.href = 'dashboard.html';
+            } catch (err) {
+                if (err.code !== 'auth/popup-closed-by-user') showErr(xlateErr(err.code));
+            }
+        });
+    </script>
+</body>
+
+</html>

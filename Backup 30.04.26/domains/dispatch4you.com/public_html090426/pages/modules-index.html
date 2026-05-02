@@ -1,0 +1,514 @@
+﻿<!DOCTYPE html>
+<html lang="ru" style="background:#070b14">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список Модулей | Курсы Диспетчера</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../shared-nav.css?v=7.6">
+    <link rel="stylesheet" href="../shared-styles.css?v=2.0">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        html{overflow-x:hidden;scroll-behavior:smooth}
+        :root{--primary:#06b6d4;--secondary:#0ea5e9;--accent:#f97316;--bg:#070b14;--card:rgba(255,255,255,.03);--border:rgba(255,255,255,.08);--t1:#fff;--t2:#e2e8f0;--t3:#cbd5e1}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);line-height:1.6;overflow-x:hidden}
+        body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 20% 30%,rgba(6,182,212,.12),transparent 50%),radial-gradient(circle at 80% 70%,rgba(249,115,22,.08),transparent 50%);background-size:200% 200%;animation:ambient-bg 15s ease infinite;z-index:-1;pointer-events:none}
+        @keyframes ambient-bg{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+        .container{max-width:1200px;margin:0 auto;padding:0 40px}
+
+        /* HERO */
+        .hero{padding:80px 0 20px;text-align:center}
+        .hero-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.25);border-radius:20px;font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px}
+        .hero h1{font-size:clamp(32px,5vw,52px);font-weight:900;background:linear-gradient(135deg,#06b6d4,#0ea5e9,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;line-height:1.1}
+        .hero>p{font-size:16px;color:var(--t2);max-width:700px;margin:0 auto;line-height:1.7}
+        .hero-xp{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:12px}
+        .hero-level{padding:6px 14px;background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.25);border-radius:16px;font-size:13px;font-weight:700;color:var(--primary)}
+        .hero-streak{padding:6px 14px;background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.25);border-radius:16px;font-size:13px;font-weight:700;color:var(--accent)}
+        .hero-progress{width:120px;height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+        .hero-progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:3px;transition:width .8s ease}
+        .hero-xp-text{font-size:11px;color:var(--t3);font-weight:600}
+        .stats{display:flex;justify-content:center;gap:40px;margin:20px 0;flex-wrap:wrap}
+        .stat{text-align:center}.stat-num{font-size:32px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .stat-label{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-top:2px}
+        .progress-bar{max-width:400px;margin:0 auto 24px;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+        .progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:3px;width:100%;transition:width 1s ease}
+
+        /* PROGRESS TRACKER */
+        .progress-tracker{display:flex;align-items:center;justify-content:space-between;position:relative;max-width:800px;margin:0 auto 24px;padding:0 20px}
+        .tracker-line{position:absolute;top:50%;left:20px;right:20px;height:3px;background:rgba(255,255,255,.08);border-radius:2px;transform:translateY(-50%);z-index:0}
+        .tracker-line-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:2px;width:0%;transition:width .8s ease}
+        .tracker-dot{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--t3);cursor:pointer;position:relative;z-index:1;transition:all .3s ease}
+        .tracker-dot:hover{transform:scale(1.2);border-color:var(--primary)}
+        .tracker-dot.completed{background:rgba(6,182,212,.15);border-color:var(--primary);color:var(--primary)}
+        .tracker-dot.completed span{font-size:0}
+        .tracker-dot.completed::after{content:'✓';font-size:13px;font-weight:700;color:var(--primary)}
+        .tracker-dot.current{background:rgba(249,115,22,.15);border-color:var(--accent);color:var(--accent);animation:pulse-tracker 2s ease-in-out infinite}
+        @keyframes pulse-tracker{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,.2)}50%{box-shadow:0 0 12px 4px rgba(249,115,22,.15)}}
+        .tracker-compact{display:none;text-align:center;margin:0 auto 16px;padding:8px 16px;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);border-radius:12px;font-size:13px;font-weight:600;color:var(--primary)}
+
+        /* FILTER BAR */
+        .filter-bar{display:flex;justify-content:center;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+        .filter-btn{padding:8px 16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:20px;color:var(--t2);font-size:12px;font-weight:600;cursor:pointer;transition:all .3s;font-family:inherit;display:flex;align-items:center;gap:6px}
+        .filter-btn:hover{border-color:rgba(6,182,212,.3);color:var(--t1)}
+        .filter-btn.active{background:rgba(6,182,212,.15);border-color:rgba(6,182,212,.4);color:var(--primary)}
+        .filter-count{background:rgba(255,255,255,.08);padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700}
+        .filter-btn.active .filter-count{background:rgba(6,182,212,.2);color:var(--primary)}
+
+        /* MODULES GRID — 3 per row */
+        .modules-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:32px}
+
+        /* MODULE CARD — informative with expand effect */
+        .module-card{
+            background:var(--card);border:1px solid var(--border);border-radius:16px;
+            padding:24px;cursor:pointer;position:relative;overflow:hidden;
+            text-decoration:none;color:var(--t1);display:block;
+            transition:transform .4s cubic-bezier(.25,.46,.45,.94),box-shadow .4s ease,border-color .3s ease;
+            transform-origin:center center;
+        }
+        .module-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0;opacity:0;transition:opacity .3s}
+
+        /* EXPAND on hover — scale up */
+        .module-card:hover{
+            transform:scale(1.06);
+            z-index:10;
+            box-shadow:0 20px 60px rgba(0,0,0,.4),0 8px 24px rgba(6,182,212,.15);
+            border-color:rgba(6,182,212,.3);
+        }
+        .module-card:hover::before{opacity:1}
+        .module-card:active{transform:scale(1.02);transition:transform .1s}
+
+        /* Card inner layout */
+        .card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+        .card-num{font-size:28px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+        .card-badges{display:flex;align-items:center;gap:6px}
+        .card-status-icon{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+        .card-status-icon.done{background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3)}
+        .card-status-icon.current{background:rgba(249,115,22,.15);color:#f97316;border:1px solid rgba(249,115,22,.3)}
+        .card-status-icon.locked{background:rgba(255,255,255,.05);color:var(--t3);border:1px solid var(--border)}
+        .diff-badge{padding:3px 8px;border-radius:8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+        .diff-badge.easy{background:rgba(16,185,129,.12);color:#10b981;border:1px solid rgba(16,185,129,.2)}
+        .diff-badge.medium{background:rgba(245,158,11,.12);color:#f59e0b;border:1px solid rgba(245,158,11,.2)}
+        .diff-badge.hard{background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.2)}
+
+        .module-card h3{font-size:17px;font-weight:700;margin-bottom:8px;line-height:1.3;color:var(--t1)}
+        .module-card .card-desc{font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+        .card-meta{display:flex;gap:12px;font-size:11px;color:var(--t3);font-weight:500;margin-bottom:10px}
+        .card-meta span{display:flex;align-items:center;gap:4px}
+
+        /* Progress bar inside card */
+        .card-progress{height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+        .card-progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),#10b981);border-radius:2px;transition:width .5s ease}
+        .card-xp-row{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+        .card-xp{font-size:11px;font-weight:700;color:var(--primary)}
+        .card-xp-label{font-size:10px;color:var(--t3)}
+
+        /* Expand reveal — extra info on hover */
+        .card-expand{max-height:0;overflow:hidden;opacity:0;transition:max-height .4s ease,opacity .3s ease .1s}
+        .module-card:hover .card-expand{max-height:80px;opacity:1}
+
+        /* STATE: completed */
+        .module-card[data-status="completed"]::before{background:linear-gradient(90deg,#10b981,#06b6d4);opacity:1}
+        .module-card[data-status="completed"]:hover{box-shadow:0 20px 60px rgba(0,0,0,.4),0 8px 24px rgba(16,185,129,.2);border-color:rgba(16,185,129,.3)}
+        /* STATE: current */
+        .module-card[data-status="current"]::before{background:linear-gradient(90deg,var(--accent),#f59e0b);opacity:1}
+        .module-card[data-status="current"]{animation:pulse-current 2s ease-in-out infinite}
+        .module-card[data-status="current"]:hover{animation:none;box-shadow:0 20px 60px rgba(0,0,0,.4),0 8px 24px rgba(249,115,22,.2);border-color:rgba(249,115,22,.3)}
+        /* STATE: not-started */
+        .module-card[data-status="not-started"]{opacity:.55}
+        .module-card[data-status="not-started"]:hover{opacity:1;box-shadow:0 20px 60px rgba(0,0,0,.4),0 8px 24px rgba(6,182,212,.12);border-color:rgba(6,182,212,.2)}
+        @keyframes pulse-current{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,.12)}50%{box-shadow:0 0 20px 6px rgba(249,115,22,.15)}}
+
+        /* NAV CARD */
+        #navCard{background:linear-gradient(135deg,rgba(6,182,212,.06),rgba(14,165,233,.04));border:1px solid rgba(6,182,212,.15);text-align:left}
+        #navCard:hover{border-color:rgba(6,182,212,.3);box-shadow:0 4px 16px rgba(6,182,212,.1);transform:none}
+        #navCard .course-nav-grid{grid-template-columns:repeat(3,1fr)}
+        .nav-body.open{max-height:800px !important}
+        .nav-arrow.open{transform:rotate(180deg) !important}
+
+        /* TOOLS */
+        .tools{margin:8px 0 32px}
+        .tools h2{font-size:24px;font-weight:800;margin-bottom:12px;text-align:center;background:linear-gradient(135deg,var(--accent),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .tools-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+        .tool-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:all .3s;text-decoration:none;color:var(--t1);display:block}
+        .tool-card:hover{transform:translateY(-4px);border-color:rgba(6,182,212,.3);box-shadow:0 8px 24px rgba(6,182,212,.12)}
+        .tool-icon{font-size:28px;margin-bottom:8px;transition:transform .3s}
+        .tool-card:hover .tool-icon[data-anim="bounce"]{animation:tool-bounce .6s ease}
+        .tool-card:hover .tool-icon[data-anim="wobble"]{animation:tool-wobble .6s ease}
+        .tool-card:hover .tool-icon[data-anim="pulse"]{animation:tool-pulse .6s ease}
+        @keyframes tool-bounce{0%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}60%{transform:translateY(-4px)}}
+        @keyframes tool-wobble{0%,100%{transform:rotate(0)}25%{transform:rotate(-10deg)}75%{transform:rotate(10deg)}}
+        @keyframes tool-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+        .tool-card h4{font-size:13px;font-weight:700;margin-bottom:4px}
+        .tool-card p{font-size:11px;color:var(--t3)}
+        .tool-expanded{max-height:0;overflow:hidden;opacity:0;transition:max-height .3s ease,opacity .3s ease;font-size:10px;color:var(--t2);line-height:1.4}
+        .tool-card:hover .tool-expanded{max-height:60px;opacity:1;margin-top:6px}
+        .tool-usage-badge{display:inline-block;margin-top:6px;padding:3px 8px;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.2);border-radius:8px;font-size:10px;font-weight:600;color:var(--primary)}
+
+        /* ANIMATION */
+        .fade-up{opacity:1;transform:translateY(0);transition:opacity .5s ease,transform .5s ease}
+        .fade-up.animate{opacity:0;transform:translateY(20px)}
+        .fade-up.animate.visible{opacity:1;transform:translateY(0)}
+
+        /* RESPONSIVE */
+        @media(max-width:1400px){.container{padding:0 32px}}
+        @media(max-width:1024px){.modules-grid{grid-template-columns:repeat(2,1fr)}.tools-grid{grid-template-columns:repeat(2,1fr)}}
+        @media(max-width:768px){.container{padding:0 20px}.hero{padding:70px 0 16px}.hero h1{font-size:32px}.modules-grid{grid-template-columns:1fr}.tools-grid{grid-template-columns:repeat(2,1fr)}.stats{gap:24px}.progress-tracker{display:none}.tracker-compact{display:block}#navCard .course-nav-grid{grid-template-columns:1fr}}
+        @media(max-width:480px){.container{padding:0 16px}.modules-grid{grid-template-columns:1fr}.stats{flex-direction:column;gap:12px}.tools-grid{grid-template-columns:1fr}.module-card{min-height:44px}.filter-btn{min-height:44px;padding:10px 16px}}
+        @media(max-width:360px){.container{padding:0 12px}}
+    </style>
+    <script type="module" src="../firebase-auth-init.js?v=4.0"></script>
+</head>
+<body>
+    <script src="../site-protection.js"></script>
+    <script src="../role-guard.js?v=2.1"></script>
+    <div id="nav-placeholder"></div>
+    <script src="../nav-loader.js?v=7.4"></script>
+
+    <div class="container">
+        <!-- HERO -->
+        <section class="hero fade-up">
+            <div class="hero-badge">📚 Проверка знаний</div>
+            <h1>Модули Тестов</h1>
+            <p>12 модулей проверки знаний — от основ индустрии до карьерного роста. Тесты, кейсы и практика.</p>
+            <div class="hero-xp" id="heroXp" style="display:none">
+                <span class="hero-level" id="heroLevel">🌱 Новичок</span>
+                <span class="hero-streak" id="heroStreak">🔥 0 дней</span>
+                <div class="hero-progress"><div class="hero-progress-fill" id="heroProgressFill" style="width:0%"></div></div>
+                <span class="hero-xp-text" id="heroXpText">0 / 50 XP</span>
+            </div>
+        </section>
+        <div class="stats fade-up">
+            <div class="stat"><div class="stat-num" data-target="12">0</div><div class="stat-label">Модулей</div></div>
+            <div class="stat"><div class="stat-num" data-target="12">0</div><div class="stat-label">Часов</div></div>
+            <div class="stat"><div class="stat-num" data-target="90" data-suffix="+">0</div><div class="stat-label">Тестов</div></div>
+        </div>
+        <div class="progress-bar fade-up"><div class="progress-fill"></div></div>
+
+        <!-- FILTER BAR -->
+        <div class="filter-bar fade-up">
+            <button class="filter-btn active" data-filter="all">Все <span class="filter-count">12</span></button>
+            <button class="filter-btn" data-filter="current">В процессе <span class="filter-count">0</span></button>
+            <button class="filter-btn" data-filter="not-started">Не начатые <span class="filter-count">12</span></button>
+        </div>
+
+        <!-- MODULES GRID -->
+        <div class="modules-grid">
+            <!-- NAV CARD -->
+            <div class="module-card fade-up" style="grid-column:1/-1;padding:24px" id="navCard">
+                <div class="card-top" style="cursor:pointer" onclick="event.stopPropagation();var b=this.parentElement.querySelector('.nav-body');var a=this.querySelector('.nav-arrow');b.classList.toggle('open');a.classList.toggle('open')">
+                    <span class="card-num">00</span>
+                    <span style="flex:1;font-size:16px;font-weight:700;margin-left:12px">📚 Навигация по курсу</span>
+                    <span class="nav-arrow" style="font-size:14px;color:var(--primary);transition:transform .3s">▼</span>
+                </div>
+                <div class="nav-body" style="max-height:0;overflow:hidden;transition:max-height .4s ease">
+                    <div class="course-nav-grid" style="margin-top:16px;display:grid;gap:16px">
+                        <div class="cnav-section"><h4 class="cnav-header">▪ РАЗДЕЛЫ</h4><div class="cnav-items">
+                            <a href="intro.html">📋 Введение</a><a href="glossary.html">📖 Глоссарий</a><a href="role.html">👤 Роль</a>
+                            <a href="equipment.html">🚛 Оборудование</a><a href="routes.html">🗺 Маршруты</a><a href="loadboards.html">📡 Load Boards</a>
+                            <a href="negotiation.html">🤝 Переговоры</a><a href="brokers.html">💼 Брокеры</a><a href="docs.html">📄 Документы</a>
+                            <a href="regulations.html">⚖️ Законы</a><a href="technology.html">🖥 TMS</a><a href="communication.html">📞 Коммуникация</a>
+                            <a href="problems.html">⚠️ Проблемы</a><a href="finances.html">💰 Финансы</a><a href="career.html">📈 Карьера</a>
+                        </div></div>
+                        <div class="cnav-section"><h4 class="cnav-header">▪ МОДУЛИ</h4><div class="cnav-items">
+                            <a href="doc-module-1-complete.html">🏭 Индустрия</a><a href="doc-module-2-complete.html">📖 Термины</a><a href="doc-module-3-complete.html">👤 Диспетчер</a>
+                            <a href="doc-module-4-complete.html">📡 Load Boards</a><a href="doc-module-5-complete.html">🗺 Маршруты</a><a href="doc-module-6-complete.html">🚛 Оборудование</a>
+                            <a href="doc-module-7-complete.html">🤝 Переговоры</a><a href="doc-module-8-complete.html">💼 Брокеры</a><a href="doc-module-9-complete.html">📊 CSA Scores</a>
+                            <a href="doc-module-10-complete.html">📦 Грузы</a><a href="doc-module-11-complete.html">⚠️ Проблемы</a><a href="doc-module-12-complete.html">📈 Карьера</a>
+                        </div></div>
+                        <div class="cnav-section"><h4 class="cnav-header">⚡ ИНСТРУМЕНТЫ</h4><div class="cnav-items">
+                            <a href="testing.html">✍️ Все тесты</a><a href="simulator.html">🎯 Симулятор</a><a href="ai-broker-chat.html">🤖 AI Брокер</a><a href="cases.html">💼 Кейсы</a><a href="load-finder.html">🔍 Load Finder</a><a href="dispatcher-cards.html">🃏 Карточки</a>
+                        </div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 1 -->
+            <a href="doc-module-1-complete.html" class="module-card fade-up" data-module="1" data-status="completed">
+                <div class="card-top"><span class="card-num">01</span><div class="card-badges"><span class="diff-badge easy">Лёгкий</span><span class="card-status-icon done">✓</span></div></div>
+                <h3>Введение в индустрию</h3>
+                <p class="card-desc">Индустрия грузоперевозок США ($875B), роль диспетчера, структура рабочего дня, KPI метрики.</p>
+                <div class="card-meta"><span>📖 7 разделов</span><span>⏱ 45 мин</span></div>
+                <div class="card-progress"><div class="card-progress-fill" style="width:100%"></div></div>
+                <div class="card-xp-row"><span class="card-xp">+50 XP</span><span class="card-xp-label">завершён</span></div>
+                <div class="card-expand"><p style="font-size:11px;color:var(--t3);margin-top:8px">Тенденции рынка 2024-2030, типы компаний, зарплаты и перспективы роста.</p></div>
+            </a>
+            <!-- MODULE 2 -->
+            <a href="doc-module-2-complete.html" class="module-card fade-up" data-module="2" data-status="completed">
+                <div class="card-top"><span class="card-num">02</span><div class="card-badges"><span class="diff-badge easy">Лёгкий</span><span class="card-status-icon done">✓</span></div></div>
+                <h3>Регулирование и законы</h3>
+                <p class="card-desc">FMCSA и DOT требования, Hours of Service (11/14/60/70), ELD mandate, CSA points.</p>
+                <div class="card-meta"><span>📖 4 раздела</span><span>⏱ 30 мин</span></div>
+                <div class="card-progress"><div class="card-progress-fill" style="width:100%"></div></div>
+                <div class="card-xp-row"><span class="card-xp">+50 XP</span><span class="card-xp-label">завершён</span></div>
+                <div class="card-expand"><p style="font-size:11px;color:var(--t3);margin-top:8px">Штрафы до $16,000, правила перевозки hazmat, весовые ограничения.</p></div>
+            </a>
+            <!-- MODULE 3 -->
+            <a href="doc-module-3-complete.html" class="module-card fade-up" data-module="3" data-status="completed">
+                <div class="card-top"><span class="card-num">03</span><div class="card-badges"><span class="diff-badge easy">Лёгкий</span><span class="card-status-icon done">✓</span></div></div>
+                <h3>Типы оборудования</h3>
+                <p class="card-desc">Dry Van, Reefer, Flatbed, Step Deck, Power Only, Hazmat. Выбор под груз и RPM.</p>
+                <div class="card-meta"><span>📖 5 разделов</span><span>⏱ 45 мин</span></div>
+                <div class="card-progress"><div class="card-progress-fill" style="width:100%"></div></div>
+                <div class="card-xp-row"><span class="card-xp">+50 XP</span><span class="card-xp-label">завершён</span></div>
+                <div class="card-expand"><p style="font-size:11px;color:var(--t3);margin-top:8px">Размеры трейлеров, грузоподъёмность, специальные требования к перевозке.</p></div>
+            </a>
+            <!-- MODULE 4 -->
+            <a href="doc-module-4-complete.html" class="module-card fade-up" data-module="4" data-status="completed">
+                <div class="card-top"><span class="card-num">04</span><div class="card-badges"><span class="diff-badge easy">Лёгкий</span><span class="card-status-icon done">✓</span></div></div>
+                <h3>Работа с Load Boards</h3>
+                <p class="card-desc">DAT, Truckstop, 123Loadboard. Multi-board стратегия, saved searches, анализ RPM.</p>
+                <div class="card-meta"><span>📖 5 разделов</span><span>⏱ 40 мин</span></div>
+                <div class="card-progress"><div class="card-progress-fill" style="width:100%"></div></div>
+                <div class="card-xp-row"><span class="card-xp">+50 XP</span><span class="card-xp-label">завершён</span></div>
+                <div class="card-expand"><p style="font-size:11px;color:var(--t3);margin-top:8px">Deadhead анализ, hot lanes, сезонные тренды и ценообразование.</p></div>
+            </a>
+            <!-- MODULE 5 -->
+            <a href="doc-module-5-complete.html" class="module-card fade-up" data-module="5" data-status="completed">
+                <div class="card-top"><span class="card-num">05</span><div class="card-badges"><span class="diff-badge medium">Средний</span><span class="card-status-icon done">✓</span></div></div>
+                <h3>Переговоры с брокерами</h3>
+                <p class="card-desc">Anchoring, BATNA, Value Stacking, Silence. Психологические техники и скрипты звонков.</p>
+                <div class="card-meta"><span>📖 6 разделов</span><span>⏱ 45 мин</span></div>
+                <div class="card-progress"><div class="card-progress-fill" style="width:100%"></div></div>
+                <div class="card-xp-row"><span class="card-xp">+50 XP</span><span class="card-xp-label">завершён</span></div>
+                <div class="card-expand"><p style="font-size:11px;color:var(--t3);margin-top:8px">Email шаблоны, работа с возражениями, стратегии повышения ставки.</p></div>
+            </a>
+            <!-- MODULE 6 -->
+            <a href="doc-module-6-complete.html" class="module-card fade-up" data-module="6" data-status="completed">
+                <div class="card-top"><span class="card-num">06</span><div class="card-badges"><span class="diff-badge medium">Средний</span><span class="card-status-icon done">✓</span></div></div>
+                <h3>Планирование маршрутов</h3>
+                <p class="card-desc">Коридоры I-95, I-5, I-10. Расчёт топлива, учёт HOS, backhaul стратегии.</p>
+                <div class="card-meta"><span>📖 5 разделов</span><span>⏱ 35 мин</span></div>
+                <div class="card-progress"><div class="card-progress-fill" style="width:100%"></div></div>
+                <div class="card-xp-row"><span class="card-xp">+50 XP</span><span class="card-xp-label">завершён</span></div>
+                <div class="card-expand"><p style="font-size:11px;color:var(--t3);margin-top:8px">Минимизация deadhead, оптимальные остановки, погодные условия.</p></div>
+            </a>
+
+            <!-- MODULE 7 -->
+            <a href="doc-module-7-complete.html" class="module-card fade-up" data-module="7" data-status="completed">
+                <div class="card-top"><span class="card-num">07</span><div class="card-badges"><span class="diff-badge medium">Средний</span><span class="card-status-icon done">✓</span></div></div>
+                <h3>Документооборот</h3>
+                <p class="card-desc">Rate Confirmation, BOL, POD, Invoice. IFTA отчёты, факторинг, TMS системы.</p>
+                <div class="card-meta"><span>📖 6 разделов</span><span>⏱ 45 мин</span></div>
+                <div class="card-progress"><div class="card-progress-fill" style="width:100%"></div></div>
+                <div class="card-xp-row"><span class="card-xp">+50 XP</span><span class="card-xp-label">завершён</span></div>
+                <div class="card-expand"><p style="font-size:11px;color:var(--t3);margin-top:8px">Compliance документы, аудит, электронный документооборот.</p></div>
+            </a>
+            <!-- MODULE 8 -->
+            <a href="doc-module-8-complete.html" class="module-card fade-up" data-module="8" data-status="completed">
+                <div class="card-top"><span class="card-num">08</span><div class="card-badges"><span class="diff-badge medium">Средний</span><span class="card-status-icon done">✓</span></div></div>
+                <h3>Технологии диспетчера</h3>
+                <p class="card-desc">GPS, ELD, TMS системы, коммуникации (SMS, WhatsApp, Telegram), KPI отслеживание.</p>
+                <div class="card-meta"><span>📖 6 разделов</span><span>⏱ 40 мин</span></div>
+                <div class="card-progress"><div class="card-progress-fill" style="width:100%"></div></div>
+                <div class="card-xp-row"><span class="card-xp">+50 XP</span><span class="card-xp-label">завершён</span></div>
+                <div class="card-expand"><p style="font-size:11px;color:var(--t3);margin-top:8px">Автоматизация процессов, интеграция систем, мобильные приложения.</p></div>
+            </a>
+            <!-- MODULE 9 -->
+            <a href="doc-module-9-complete.html" class="module-card fade-up" data-module="9" data-status="completed">
+                <div class="card-top"><span class="card-num">09</span><div class="card-badges"><span class="diff-badge hard">Сложный</span><span class="card-status-icon done">✓</span></div></div>
+                <h3>CSA Scores и безопасность</h3>
+                <p class="card-desc">CSA система (7 BASIC категорий), SMS scores, roadside inspections, OOS violations.</p>
+                <div class="card-meta"><span>📖 7 разделов</span><span>⏱ 55 мин</span></div>
+                <div class="card-progress"><div class="card-progress-fill" style="width:100%"></div></div>
+                <div class="card-xp-row"><span class="card-xp">+50 XP</span><span class="card-xp-label">завершён</span></div>
+                <div class="card-expand"><p style="font-size:11px;color:var(--t3);margin-top:8px">DataQs challenges, улучшение scores, pre-trip inspections.</p></div>
+            </a>
+            <!-- MODULE 10 -->
+            <a href="doc-module-10-complete.html" class="module-card fade-up" data-module="10" data-status="completed">
+                <div class="card-top"><span class="card-num">10</span><div class="card-badges"><span class="diff-badge hard">Сложный</span><span class="card-status-icon done">✓</span></div></div>
+                <h3>Финансы и прибыль</h3>
+                <p class="card-desc">CPM, операционные расходы, RPM цели, profit margin 15-25%, factoring, cash flow.</p>
+                <div class="card-meta"><span>📖 6 разделов</span><span>⏱ 50 мин</span></div>
+                <div class="card-progress"><div class="card-progress-fill" style="width:100%"></div></div>
+                <div class="card-xp-row"><span class="card-xp">+50 XP</span><span class="card-xp-label">завершён</span></div>
+                <div class="card-expand"><p style="font-size:11px;color:var(--t3);margin-top:8px">Налоговое планирование, инвестиции в бизнес, масштабирование.</p></div>
+            </a>
+            <!-- MODULE 11 -->
+            <a href="doc-module-11-complete.html" class="module-card fade-up" data-module="11" data-status="completed">
+                <div class="card-top"><span class="card-num">11</span><div class="card-badges"><span class="diff-badge hard">Сложный</span><span class="card-status-icon done">✓</span></div></div>
+                <h3>Кризисные ситуации</h3>
+                <p class="card-desc">Cargo Theft, аварии, TONU ($200-300), Detention ($50-75/час), споры с брокерами.</p>
+                <div class="card-meta"><span>📖 5 разделов</span><span>⏱ 40 мин</span></div>
+                <div class="card-progress"><div class="card-progress-fill" style="width:100%"></div></div>
+                <div class="card-xp-row"><span class="card-xp">+50 XP</span><span class="card-xp-label">завершён</span></div>
+                <div class="card-expand"><p style="font-size:11px;color:var(--t3);margin-top:8px">Экстренные протоколы, страховые случаи, юридическая защита.</p></div>
+            </a>
+            <!-- MODULE 12 -->
+            <a href="doc-module-12-complete.html" class="module-card fade-up" data-module="12" data-status="completed">
+                <div class="card-top"><span class="card-num">12</span><div class="card-badges"><span class="diff-badge hard">Сложный</span><span class="card-status-icon done">✓</span></div></div>
+                <h3>Карьерный рост</h3>
+                <p class="card-desc">Карьерный путь ($35K → $120K+), открытие компании, сертификация, личный бренд.</p>
+                <div class="card-meta"><span>📖 6 разделов</span><span>⏱ 45 мин</span></div>
+                <div class="card-progress"><div class="card-progress-fill" style="width:100%"></div></div>
+                <div class="card-xp-row"><span class="card-xp">+50 XP</span><span class="card-xp-label">завершён</span></div>
+                <div class="card-expand"><p style="font-size:11px;color:var(--t3);margin-top:8px">Поиск клиентов, networking, построение команды диспетчеров.</p></div>
+            </a>
+        </div>
+
+        <!-- TOOLS -->
+        <section class="tools fade-up">
+            <h2>🛠️ Инструменты</h2>
+            <div class="tools-grid">
+                <a href="simulator.html" class="tool-card" data-tool="simulator"><div class="tool-icon" data-anim="bounce">🎯</div><h4>Симулятор</h4><p>Практика переговоров</p><p class="tool-expanded">Интерактивный тренажёр переговоров с брокерами.</p><span class="tool-usage-badge" style="display:none">0 раз</span></a>
+                <a href="ai-broker-chat.html" class="tool-card" data-tool="ai-broker"><div class="tool-icon" data-anim="wobble">🤖</div><h4>AI Брокер</h4><p>Голосовой тренажёр</p><p class="tool-expanded">Голосовой AI-брокер для практики звонков.</p><span class="tool-usage-badge" style="display:none">0 раз</span></a>
+                <a href="testing.html" class="tool-card" data-tool="testing"><div class="tool-icon" data-anim="pulse">✍️</div><h4>Тестирование</h4><p>Проверка знаний</p><p class="tool-expanded">Тесты по всем модулям с отслеживанием прогресса.</p><span class="tool-usage-badge" style="display:none">0 раз</span></a>
+                <a href="load-finder.html" class="tool-card" data-tool="load-finder"><div class="tool-icon" data-anim="bounce">🔍</div><h4>Load Finder</h4><p>Поиск грузов</p><p class="tool-expanded">Симулятор поиска грузов на load boards.</p><span class="tool-usage-badge" style="display:none">0 раз</span></a>
+            </div>
+        </section>
+    </div>
+
+    <script type="module">
+    import { LEVELS, getLevelByXP, getNextLevel } from '../xp-system.js';
+
+    // === XP Data Loading ===
+    function loadUserData() {
+        try {
+            const userRaw = localStorage.getItem('user');
+            const xpRaw = localStorage.getItem('xp_data');
+            if (!userRaw) { updateModuleStatuses(null); return; }
+            const user = JSON.parse(userRaw);
+            const xpData = xpRaw ? JSON.parse(xpRaw) : null;
+            const totalXP = (xpData && typeof xpData.totalXP === 'number') ? Math.max(xpData.totalXP, 0) : 0;
+            const streak = (xpData && typeof xpData.loginStreak === 'number') ? Math.max(xpData.loginStreak, 0)
+                         : (user && typeof user.loginStreak === 'number') ? Math.max(user.loginStreak, 0) : 0;
+            const currentLevel = getLevelByXP(totalXP);
+            const nextLevel = getNextLevel(totalXP);
+            const heroXp = document.getElementById('heroXp');
+            if (heroXp) heroXp.style.display = 'flex';
+            const heroLevel = document.getElementById('heroLevel');
+            if (heroLevel) heroLevel.textContent = currentLevel.label;
+            const heroStreak = document.getElementById('heroStreak');
+            if (heroStreak) heroStreak.textContent = '🔥 ' + streak + ' дней';
+            const heroProgressFill = document.getElementById('heroProgressFill');
+            const heroXpText = document.getElementById('heroXpText');
+            if (nextLevel) {
+                const pct = ((totalXP - currentLevel.minXP) / (nextLevel.minXP - currentLevel.minXP)) * 100;
+                if (heroProgressFill) heroProgressFill.style.width = Math.min(Math.max(pct, 0), 100) + '%';
+                if (heroXpText) heroXpText.textContent = totalXP + ' / ' + nextLevel.minXP + ' XP';
+            } else {
+                if (heroProgressFill) heroProgressFill.style.width = '100%';
+                if (heroXpText) heroXpText.textContent = totalXP + ' XP (макс)';
+            }
+            updateModuleStatuses(xpData);
+            updateToolBadges(xpData);
+        } catch (err) { console.warn('XP data unavailable', err); updateModuleStatuses(null); }
+    }
+
+    function updateToolBadges(xpData) {
+        if (!xpData || !xpData.stats) return;
+        const map = { 'simulator': xpData.stats.simulatorDone||0, 'ai-broker': xpData.stats.simulatorDone||0, 'testing': xpData.stats.testPassed||0, 'load-finder': xpData.stats.quizComplete||0 };
+        document.querySelectorAll('.tool-card[data-tool]').forEach(c => {
+            const badge = c.querySelector('.tool-usage-badge');
+            const count = map[c.getAttribute('data-tool')] || 0;
+            if (badge && count > 0) { badge.style.display = ''; badge.textContent = count + ' раз'; }
+        });
+    }
+
+    function updateModuleStatuses(xpData) {
+        // Read real per-module progress from localStorage
+        const moduleProgress = JSON.parse(localStorage.getItem('moduleProgress') || '{}');
+        // Total quizzes per module (hardcoded — each module has 7 quick-checks)
+        const QUIZZES_PER_MODULE = 7;
+
+        let completedCount = 0;
+        if (xpData && xpData.stats && typeof xpData.stats.moduleComplete === 'number') completedCount = Math.max(0, Math.min(xpData.stats.moduleComplete, 12));
+        else if (xpData && typeof xpData.moduleComplete === 'number') completedCount = Math.max(0, Math.min(xpData.moduleComplete, 12));
+
+        document.querySelectorAll('.module-card[data-module]').forEach(card => {
+            const id = parseInt(card.getAttribute('data-module'), 10);
+            if (isNaN(id)) return;
+            let status, iconClass, iconText, xpLabel;
+            if (id <= completedCount) { status='completed'; iconClass='done'; iconText='✓'; xpLabel='завершён'; }
+            else if (id === completedCount + 1) { status='current'; iconClass='current'; iconText='●'; xpLabel='в процессе'; }
+            else { status='not-started'; iconClass='locked'; iconText='○'; xpLabel='не начат'; }
+            card.setAttribute('data-status', status);
+            const icon = card.querySelector('.card-status-icon');
+            if (icon) { icon.className = 'card-status-icon ' + iconClass; icon.textContent = iconText; }
+
+            // Calculate real progress from moduleProgress localStorage
+            const modKey = 'module-' + id;
+            const modData = moduleProgress[modKey] || {};
+            const completedQuizzes = Object.keys(modData).filter(k => modData[k] && modData[k].completed).length;
+            const progressPct = Math.min(Math.round((completedQuizzes / QUIZZES_PER_MODULE) * 100), 100);
+
+            const pf = card.querySelector('.card-progress-fill');
+            const xp = card.querySelector('.card-xp');
+            const xl = card.querySelector('.card-xp-label');
+            if (pf) pf.style.width = progressPct + '%';
+            if (xp) xp.textContent = completedQuizzes + '/' + QUIZZES_PER_MODULE + ' тестов';
+            if (xl) xl.textContent = progressPct > 0 ? progressPct + '%' : xpLabel;
+        });
+        updateTracker(completedCount);
+        updateFilterCounts();
+    }
+
+    // Staggered scroll animations
+    const obs = new IntersectionObserver((entries) => {
+        entries.filter(e => e.isIntersecting).forEach((e, i) => {
+            setTimeout(() => { e.target.classList.add('visible'); obs.unobserve(e.target); }, i * 90);
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
+
+    // Fallback: показать всё если IntersectionObserver не сработал
+    setTimeout(() => {
+        document.querySelectorAll('.fade-up:not(.visible)').forEach(el => el.classList.add('visible'));
+    }, 400);
+
+    // Parallax disabled — hero stays fixed
+
+    // Count-up
+    const statsEl = document.querySelector('.stats');
+    if (statsEl) {
+        new IntersectionObserver((entries) => { entries.forEach(entry => { if (!entry.isIntersecting) return;
+            entry.target.querySelectorAll('.stat-num[data-target]').forEach(el => {
+                const target = parseInt(el.dataset.target, 10), suffix = el.dataset.suffix || '', dur = 1500; let start = null;
+                const ease = t => 1 - Math.pow(1 - t, 4);
+                (function step(ts) { if (!start) start = ts; const p = Math.min((ts - start) / dur, 1); el.textContent = Math.round(ease(p) * target) + (p === 1 ? suffix : ''); if (p < 1) requestAnimationFrame(step); })(performance.now());
+            }); }, { once: true }); }, { threshold: 0.2 }).observe(statsEl);
+    }
+
+    // XP real-time
+    document.addEventListener('xpUpdated', e => {
+        const d = e.detail; if (!d) return;
+        const xp = Math.max(d.totalXP || 0, 0), cl = getLevelByXP(xp), nl = getNextLevel(xp);
+        const hx = document.getElementById('heroXp'); if (hx) hx.style.display = 'flex';
+        const hl = document.getElementById('heroLevel'); if (hl) hl.textContent = cl.label;
+        const hpf = document.getElementById('heroProgressFill'), hxt = document.getElementById('heroXpText');
+        if (nl) { const p = ((xp - cl.minXP) / (nl.minXP - cl.minXP)) * 100; if (hpf) hpf.style.width = Math.min(Math.max(p,0),100)+'%'; if (hxt) hxt.textContent = xp+' / '+nl.minXP+' XP'; }
+        else { if (hpf) hpf.style.width = '100%'; if (hxt) hxt.textContent = xp + ' XP (макс)'; }
+    });
+
+    // Tracker
+    function updateTracker(n) {
+        document.querySelectorAll('.tracker-dot').forEach(d => { const id = parseInt(d.dataset.module, 10); d.classList.remove('completed','current'); if (id <= n) d.classList.add('completed'); else if (id === n+1) d.classList.add('current'); });
+        const fill = document.getElementById('trackerFill'); if (fill) fill.style.width = (n/12*100)+'%';
+        const ct = document.getElementById('trackerCompactText'); if (ct) ct.textContent = n+'/12 пройдено';
+    }
+    document.querySelectorAll('.tracker-dot').forEach(d => d.addEventListener('click', function() {
+        const card = document.querySelector('.module-card[data-module="'+this.dataset.module+'"]');
+        if (card) { card.scrollIntoView({behavior:'smooth',block:'center'}); card.style.boxShadow='0 0 20px rgba(6,182,212,0.4)'; setTimeout(()=>card.style.boxShadow='',2000); }
+    }));
+
+    // Filters
+    function initFilters() {
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.addEventListener('click', function() {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active')); this.classList.add('active');
+            const f = this.dataset.filter;
+            document.querySelectorAll('.module-card[data-module]').forEach(c => { c.style.display = (f==='all' || c.dataset.status===f) ? '' : 'none'; });
+        }));
+    }
+    function updateFilterCounts() {
+        const counts = {all:0,completed:0,current:0,'not-started':0};
+        document.querySelectorAll('.module-card[data-module]').forEach(c => { counts.all++; const s=c.dataset.status; if(counts[s]!==undefined) counts[s]++; });
+        document.querySelectorAll('.filter-btn').forEach(b => { const ce=b.querySelector('.filter-count'); if(ce && counts[b.dataset.filter]!==undefined) ce.textContent=counts[b.dataset.filter]; });
+    }
+
+    loadUserData();
+    initFilters();
+    </script>
+</body>
+</html>

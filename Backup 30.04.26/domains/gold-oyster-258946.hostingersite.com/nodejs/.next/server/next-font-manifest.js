@@ -1,0 +1,1 @@
+self.__NEXT_FONT_MANIFEST='{"pages":{},"app":{"/home/u724602277/domains/gold-oyster-258946.hostingersite.com/public_html/.builds/source/repository/src/app/layout":["static/media/e4af272ccee01ff0-s.p.woff2","static/media/21350d82a1f187e9-s.p.woff2"]},"appUsingSizeAdjust":true,"pagesUsingSizeAdjust":false}';

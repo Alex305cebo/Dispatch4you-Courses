@@ -1,0 +1,1055 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dispatcher Cards - Тренажёр вопросов</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        #webgl-bg,
+        #canvas-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #webgl-bg {
+            z-index: 0;
+            opacity: 0.5;
+        }
+
+        #canvas-bg {
+            z-index: 1;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 430px;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.95);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .header {
+            padding: 12px 16px;
+            background: rgba(15, 23, 42, 0.98);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .category {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .hint {
+            flex: 1;
+            text-align: center;
+            font-size: 11px;
+            color: #d8b4fe;
+            line-height: 1.3;
+        }
+
+        .counter {
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .card-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 350px;
+            height: 500px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+            border: 2px solid rgba(168, 85, 247, 0.3);
+            border-radius: 24px;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+            position: relative;
+            backdrop-filter: blur(10px);
+            touch-action: pan-y;
+            user-select: none;
+        }
+
+        .card:hover {
+            transform: scale(1.02);
+        }
+
+        .card.flipped .card-front {
+            display: none;
+        }
+
+        .card.flipped .card-back {
+            display: block;
+        }
+
+        .card-front,
+        .card-back {
+            width: 100%;
+        }
+
+        .card-back {
+            display: none;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: rgba(168, 85, 247, 0.2);
+            border: 1px solid rgba(168, 85, 247, 0.5);
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #a855f7;
+            margin-bottom: 20px;
+        }
+
+        .question-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+
+        .hint-text {
+            font-size: 14px;
+            color: #cbd5e1;
+            line-height: 1.6;
+            font-style: italic;
+        }
+
+        .answer-text {
+            font-size: 15px;
+            font-weight: 500;
+            color: #e2e8f0;
+            line-height: 1.7;
+            text-align: left;
+        }
+
+        .flip-hint {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .buttons {
+            padding: 20px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .btn {
+            flex: 1;
+            max-width: 140px;
+            padding: 16px;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+        }
+
+        .btn-no {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .btn-yes {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .results {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .results.show {
+            display: flex;
+        }
+
+        .results-content {
+            background: rgba(15, 23, 42, 0.98);
+            border: 2px solid rgba(168, 85, 247, 0.3);
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .results-title {
+            font-size: 32px;
+            font-weight: 900;
+            color: white;
+            margin-bottom: 24px;
+        }
+
+        .results-score {
+            font-size: 48px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+        }
+
+        .results-text {
+            font-size: 16px;
+            color: #cbd5e1;
+            margin-bottom: 32px;
+        }
+
+        .btn-restart {
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-restart:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        /* ========== DESKTOP (Large screens) ========== */
+        @media (min-width: 1441px) {
+            .container {
+                max-width: 500px;
+            }
+
+            .card {
+                max-width: 420px;
+                min-height: 500px;
+                padding: 40px;
+            }
+
+            .question-text {
+                font-size: 24px;
+            }
+
+            .answer-text {
+                font-size: 18px;
+            }
+        }
+
+        /* ========== LAPTOP (Standard desktop) ========== */
+        @media (min-width: 1025px) and (max-width: 1440px) {
+            .container {
+                max-width: 450px;
+            }
+
+            .card {
+                max-width: 380px;
+                min-height: 450px;
+            }
+        }
+
+        /* ========== TABLET (Landscape & Portrait) ========== */
+        /* ========== TABLET (Landscape & Portrait) ========== */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .container {
+                max-width: 600px;
+            }
+
+            .card-container {
+                padding: 24px;
+            }
+
+            .card {
+                max-width: 500px;
+                min-height: 450px;
+                max-height: calc(100vh - 180px);
+                padding: 36px;
+            }
+
+            .card-front h2 {
+                font-size: 24px;
+                line-height: 1.4;
+            }
+
+            .card-back p {
+                font-size: 18px;
+                line-height: 1.6;
+            }
+
+            .btn {
+                padding: 16px 32px;
+                font-size: 16px;
+                max-width: 160px;
+            }
+
+            .header {
+                padding: 16px 20px;
+            }
+
+            .category,
+            .counter {
+                font-size: 13px;
+            }
+
+            .hint {
+                font-size: 13px;
+            }
+
+            .question-text {
+                font-size: 24px;
+            }
+
+            .answer-text {
+                font-size: 17px;
+            }
+        }
+
+        /* ========== MOBILE (Large phones) ========== */
+        @media (max-width: 768px) {
+            html {
+                height: -webkit-fill-available;
+            }
+
+            body {
+                padding: 0;
+                align-items: stretch;
+            }
+
+            .container {
+                max-width: 100%;
+                min-height: 100vh;
+                min-height: -webkit-fill-available;
+                border-radius: 0;
+                padding-bottom: 5vh;
+            }
+
+            .card-container {
+                padding: 10px;
+                flex: 1;
+            }
+
+            .card {
+                max-width: 100%;
+                height: auto;
+                min-height: 320px;
+                max-height: 70vh;
+                padding: 20px 16px;
+                overflow-y: auto;
+            }
+
+            .card-front h2 {
+                font-size: 17px;
+                line-height: 1.3;
+                margin-bottom: 12px;
+            }
+
+            .card-back p {
+                font-size: 14px;
+                line-height: 1.4;
+            }
+
+            .buttons {
+                gap: 8px;
+                flex-wrap: wrap;
+                margin-top: 16px;
+            }
+
+            .btn {
+                padding: 10px 18px;
+                font-size: 13px;
+                min-width: 110px;
+            }
+
+            .header {
+                padding: 10px 12px;
+            }
+
+            .category,
+            .counter {
+                font-size: 10px;
+            }
+
+            .hint {
+                font-size: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding-bottom: 3vh;
+            }
+
+            .card-container {
+                padding: 8px;
+            }
+
+            .card {
+                min-height: 280px;
+                max-height: 65vh;
+                padding: 16px 12px;
+                border-radius: 18px;
+            }
+
+            .card-front h2 {
+                font-size: 15px;
+                line-height: 1.3;
+                margin-bottom: 10px;
+            }
+
+            .card-back p {
+                font-size: 13px;
+                line-height: 1.4;
+            }
+
+            .btn {
+                padding: 9px 14px;
+                font-size: 12px;
+                min-width: 95px;
+            }
+
+            .buttons {
+                gap: 6px;
+                margin-top: 12px;
+            }
+
+            .header {
+                padding: 8px 10px;
+            }
+
+            .category,
+            .counter {
+                font-size: 9px;
+            }
+
+            .hint {
+                font-size: 9px;
+            }
+        }
+
+        .header {
+            padding: 10px 12px;
+        }
+
+        .category,
+        .counter {
+            font-size: 10px;
+        }
+
+        .hint {
+            font-size: 10px;
+        }
+        }
+
+        /* Performance optimization for mobile and tablet */
+        @media (max-width: 1024px) {
+            #webgl-bg {
+                opacity: 0.3;
+            }
+
+            .card {
+                backdrop-filter: blur(5px);
+            }
+        }
+
+        /* Disable animations on low-end devices */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- WebGL Background -->
+    <canvas id="webgl-bg"></canvas>
+    <!-- Canvas 2D Particles -->
+    <canvas id="canvas-bg"></canvas>
+
+    <div class="container">
+        <div class="header">
+            <div class="category">
+                <span id="categoryIcon">🎯</span>
+                <span id="categoryName">Загрузка</span>
+            </div>
+            <div class="hint" id="shortHint">💡 Подумайте над вопросом...</div>
+            <div class="counter">
+                <span id="currentIndex">1</span>/<span id="totalQuestions">30</span>
+            </div>
+        </div>
+
+        <div class="card-container">
+            <div class="card" id="card" onclick="flipCard()">
+                <div class="card-front">
+                    <div class="category-badge" id="categoryBadge">Законодательство</div>
+                    <div class="question-text" id="questionText">Загрузка вопроса...</div>
+                    <div class="hint-text" id="hintText">Подумайте над вопросом...</div>
+                    <div class="flip-hint">Нажмите для просмотра ответа</div>
+                </div>
+                <div class="card-back">
+                    <div class="category-badge" id="categoryBadgeBack">Законодательство</div>
+                    <div class="answer-text" id="answerText">Ответ загружается...</div>
+                    <div class="flip-hint">Нажмите чтобы вернуться</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="buttons">
+            <button class="btn btn-no" onclick="answer(false)">❌ НЕТ</button>
+            <button class="btn btn-yes" onclick="answer(true)">✅ ДА</button>
+        </div>
+    </div>
+
+    <div class="results" id="results">
+        <div class="results-content">
+            <div class="results-title">🎉 Результаты</div>
+            <div class="results-score" id="score">0/30</div>
+            <div class="results-text" id="resultsText">Отличная работа!</div>
+            <button class="btn-restart" onclick="restart()">🔄 Начать заново</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                id: 1,
+                category: "Законодательство",
+                text: "Разрешено ли водителю использовать Personal Conveyance (PC) для поездки домой после разгрузки?",
+                shortHint: "Правила PC",
+                hint: "Personal Conveyance — это статус для личных нужд водителя. Подумайте, считается ли путь домой после завершения рабочего цикла личной поездкой или продвижением к следующей загрузке.",
+                analytics: "Правильный ответ: ДА. Водитель может использовать PC для поездки домой или к месту отдыха, если он полностью освобожден от рабочих обязанностей и это не делается для продвижения к следующей точке погрузки. PC не засчитывается в 14-часовое окно.",
+                isCorrect: true
+            },
+            {
+                id: 2,
+                category: "Законодательство",
+                text: "Может ли 30-минутный перерыв быть выполнен в статусе On-Duty?",
+                shortHint: "Статусы отдыха",
+                hint: "30-минутный перерыв обязателен после 8 часов вождения. Вспомните, какие статусы ELD считаются отдыхом: Off-Duty, Sleeper Berth, или On-Duty тоже подходит?",
+                analytics: "Правильный ответ: НЕТ. Согласно правилам FMCSA, 30-минутный перерыв должен быть выполнен в статусе Off-Duty или Sleeper Berth. Любая рабочая активность (On-Duty) прерывает отдых и не засчитывается как обязательный перерыв.",
+                isCorrect: false
+            }
+        ];
+
+        let currentIndex = 0;
+        let correct = 0;
+        let wrong = 0;
+        let isFlipped = false;
+
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        let sessionQuestions = shuffleArray(questions).slice(0, 30);
+
+        function getCategoryIcon(category) {
+            const icons = {
+                'Законодательство': '⚖️',
+                'Финансы': '💰',
+                'Переговоры': '🤝',
+                'Основы работы': '🚛',
+                'Безопасность': '🛡️',
+                'Документация': '📄',
+                'Проверка брокера': '🔍'
+            };
+            return icons[category] || '🎯';
+        }
+
+        function showQuestion() {
+            if (currentIndex >= sessionQuestions.length) {
+                showResults();
+                return;
+            }
+
+            const question = sessionQuestions[currentIndex];
+            const icon = getCategoryIcon(question.category);
+
+            document.getElementById('categoryIcon').textContent = icon;
+            document.getElementById('categoryName').textContent = question.category;
+            document.getElementById('shortHint').textContent = `💡 Наводка: ${question.shortHint}`;
+            document.getElementById('currentIndex').textContent = currentIndex + 1;
+            document.getElementById('totalQuestions').textContent = sessionQuestions.length;
+
+            document.getElementById('categoryBadge').textContent = question.category;
+            document.getElementById('categoryBadgeBack').textContent = question.category;
+            document.getElementById('questionText').textContent = question.text;
+            document.getElementById('hintText').textContent = question.hint;
+            document.getElementById('answerText').textContent = question.analytics;
+
+            isFlipped = false;
+            document.getElementById('card').classList.remove('flipped');
+        }
+
+        function flipCard() {
+            isFlipped = !isFlipped;
+            document.getElementById('card').classList.toggle('flipped');
+        }
+
+        function answer(userAnswer) {
+            const question = sessionQuestions[currentIndex];
+
+            if (userAnswer === question.isCorrect) {
+                correct++;
+            } else {
+                wrong++;
+            }
+
+            currentIndex++;
+            showQuestion();
+        }
+
+        function showResults() {
+            const percentage = Math.round((correct / sessionQuestions.length) * 100);
+            document.getElementById('score').textContent = `${correct}/${sessionQuestions.length}`;
+            document.getElementById('resultsText').textContent =
+                percentage >= 80 ? 'Отличная работа! 🎉' :
+                    percentage >= 60 ? 'Хороший результат! 👍' :
+                        'Продолжайте практиковаться! 💪';
+            document.getElementById('results').classList.add('show');
+        }
+
+        function restart() {
+            currentIndex = 0;
+            correct = 0;
+            wrong = 0;
+            sessionQuestions = shuffleArray(questions).slice(0, 30);
+            document.getElementById('results').classList.remove('show');
+            showQuestion();
+        }
+
+        // Инициализация
+        showQuestion();
+
+        // Swipe functionality
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+
+        const card = document.getElementById('card');
+
+        card.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, false);
+
+        card.addEventListener('touchmove', (e) => {
+            const currentX = e.changedTouches[0].screenX;
+            const currentY = e.changedTouches[0].screenY;
+            const diffX = currentX - touchStartX;
+            const diffY = currentY - touchStartY;
+
+            // Визуальная обратная связь при свайпе
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                card.style.transform = `translateX(${diffX}px) rotate(${diffX * 0.1}deg)`;
+
+                if (diffX > 50) {
+                    card.style.borderColor = 'rgba(34, 197, 94, 0.6)'; // Зеленый для "Да"
+                } else if (diffX < -50) {
+                    card.style.borderColor = 'rgba(239, 68, 68, 0.6)'; // Красный для "Нет"
+                } else {
+                    card.style.borderColor = 'rgba(168, 85, 247, 0.3)';
+                }
+            }
+        }, false);
+
+        card.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            touchEndY = e.changedTouches[0].screenY;
+
+            const diffX = touchEndX - touchStartX;
+            const diffY = touchEndY - touchStartY;
+
+            // Проверяем горизонтальный свайп
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 100) {
+                if (diffX > 0) {
+                    // Свайп вправо - "Да"
+                    card.style.transform = 'translateX(500px) rotate(30deg)';
+                    setTimeout(() => {
+                        answerQuestion(true);
+                        card.style.transform = '';
+                        card.style.borderColor = 'rgba(168, 85, 247, 0.3)';
+                    }, 300);
+                } else {
+                    // Свайп влево - "Нет"
+                    card.style.transform = 'translateX(-500px) rotate(-30deg)';
+                    setTimeout(() => {
+                        answerQuestion(false);
+                        card.style.transform = '';
+                        card.style.borderColor = 'rgba(168, 85, 247, 0.3)';
+                    }, 300);
+                }
+            } else {
+                // Возврат карточки на место
+                card.style.transform = '';
+                card.style.borderColor = 'rgba(168, 85, 247, 0.3)';
+            }
+        }, false);
+    </script>
+
+    <!-- Canvas 2D & WebGL Animation -->
+    <script>
+        // WebGL Gradient Background
+        class WebGLBackground {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+
+                if (!this.gl) return;
+
+                this.time = 0;
+                this.mouse = { x: 0.5, y: 0.5 };
+                this.resize();
+                this.init();
+
+                window.addEventListener('resize', () => this.resize());
+                window.addEventListener('mousemove', (e) => {
+                    this.mouse.x = e.clientX / window.innerWidth;
+                    this.mouse.y = 1.0 - (e.clientY / window.innerHeight);
+                });
+            }
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+                if (this.gl) {
+                    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+                }
+            }
+
+            init() {
+                const gl = this.gl;
+
+                const vertexShaderSource = `
+                    attribute vec2 position;
+                    void main() {
+                        gl_Position = vec4(position, 0.0, 1.0);
+                    }
+                `;
+
+                const fragmentShaderSource = `
+                    precision mediump float;
+                    uniform float time;
+                    uniform vec2 resolution;
+                    uniform vec2 mouse;
+                    
+                    void main() {
+                        vec2 uv = gl_FragCoord.xy / resolution.xy;
+                        vec2 center = vec2(0.5, 0.5);
+                        
+                        float dist = length(uv - center);
+                        float angle = atan(uv.y - center.y, uv.x - center.x);
+                        
+                        vec3 color1 = vec3(0.4, 0.494, 0.918);
+                        vec3 color2 = vec3(0.463, 0.294, 0.635);
+                        vec3 color3 = vec3(0.659, 0.361, 0.965);
+                        
+                        float wave1 = sin(dist * 10.0 - time * 0.5 + angle * 2.0) * 0.5 + 0.5;
+                        float wave2 = sin(dist * 8.0 + time * 0.3 - angle * 3.0) * 0.5 + 0.5;
+                        float wave3 = sin(dist * 12.0 - time * 0.7 + angle * 1.5) * 0.5 + 0.5;
+                        
+                        vec2 mouseInfluence = mouse - uv;
+                        float mouseDist = length(mouseInfluence);
+                        float mouseEffect = smoothstep(0.5, 0.0, mouseDist);
+                        
+                        vec3 color = mix(color1, color2, wave1);
+                        color = mix(color, color3, wave2);
+                        color += vec3(wave3 * 0.2);
+                        color += vec3(mouseEffect * 0.3);
+                        
+                        float vignette = smoothstep(1.0, 0.3, dist);
+                        color *= vignette;
+                        
+                        gl_FragColor = vec4(color * 0.4, 1.0);
+                    }
+                `;
+
+                const vertexShader = this.compileShader(gl.VERTEX_SHADER, vertexShaderSource);
+                const fragmentShader = this.compileShader(gl.FRAGMENT_SHADER, fragmentShaderSource);
+
+                this.program = gl.createProgram();
+                gl.attachShader(this.program, vertexShader);
+                gl.attachShader(this.program, fragmentShader);
+                gl.linkProgram(this.program);
+                gl.useProgram(this.program);
+
+                const vertices = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
+                const buffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+                gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+                const position = gl.getAttribLocation(this.program, 'position');
+                gl.enableVertexAttribArray(position);
+                gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+
+                this.timeLocation = gl.getUniformLocation(this.program, 'time');
+                this.resolutionLocation = gl.getUniformLocation(this.program, 'resolution');
+                this.mouseLocation = gl.getUniformLocation(this.program, 'mouse');
+            }
+
+            compileShader(type, source) {
+                const gl = this.gl;
+                const shader = gl.createShader(type);
+                gl.shaderSource(shader, source);
+                gl.compileShader(shader);
+
+                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                    console.error('Shader compile error:', gl.getShaderInfoLog(shader));
+                    gl.deleteShader(shader);
+                    return null;
+                }
+
+                return shader;
+            }
+
+            render() {
+                if (!this.gl) return;
+
+                const gl = this.gl;
+                this.time += 0.016;
+
+                gl.uniform1f(this.timeLocation, this.time);
+                gl.uniform2f(this.resolutionLocation, this.canvas.width, this.canvas.height);
+                gl.uniform2f(this.mouseLocation, this.mouse.x, this.mouse.y);
+
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+                requestAnimationFrame(() => this.render());
+            }
+        }
+
+        // Canvas 2D Particle System
+        class ParticleSystem {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.particles = [];
+                this.mouse = { x: 0, y: 0 };
+                this.resize();
+                this.init();
+
+                window.addEventListener('resize', () => this.resize());
+                window.addEventListener('mousemove', (e) => {
+                    this.mouse.x = e.clientX;
+                    this.mouse.y = e.clientY;
+                });
+            }
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+
+            init() {
+                // Reduce particles on mobile and tablet
+                const isMobile = window.innerWidth < 768;
+                const isTablet = window.innerWidth >= 768 && window.innerWidth <= 1024;
+                const particleCount = isMobile ? 40 : isTablet ? 60 : 80;
+
+                for (let i = 0; i < particleCount; i++) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        vx: (Math.random() - 0.5) * 0.5,
+                        vy: (Math.random() - 0.5) * 0.5,
+                        radius: Math.random() * 2 + 1,
+                        color: this.getRandomColor(),
+                        alpha: Math.random() * 0.5 + 0.3
+                    });
+                }
+            }
+
+            getRandomColor() {
+                const colors = [
+                    { r: 102, g: 126, b: 234 },
+                    { r: 118, g: 75, b: 162 },
+                    { r: 168, g: 85, b: 247 },
+                    { r: 139, g: 92, b: 246 }
+                ];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            drawParticles() {
+                this.particles.forEach(particle => {
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+
+                    const dx = this.mouse.x - particle.x;
+                    const dy = this.mouse.y - particle.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 120) {
+                        const force = (120 - distance) / 120;
+                        particle.x -= dx * force * 0.03;
+                        particle.y -= dy * force * 0.03;
+                    }
+
+                    if (particle.x < 0 || particle.x > this.canvas.width) particle.vx *= -1;
+                    if (particle.y < 0 || particle.y > this.canvas.height) particle.vy *= -1;
+
+                    particle.x = Math.max(0, Math.min(this.canvas.width, particle.x));
+                    particle.y = Math.max(0, Math.min(this.canvas.height, particle.y));
+
+                    particle.alpha = 0.3 + Math.sin(Date.now() * 0.001 + particle.x) * 0.3;
+
+                    this.ctx.beginPath();
+                    this.ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+                    this.ctx.fillStyle = `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particle.alpha})`;
+                    this.ctx.fill();
+
+                    const gradient = this.ctx.createRadialGradient(
+                        particle.x, particle.y, 0,
+                        particle.x, particle.y, particle.radius * 4
+                    );
+                    gradient.addColorStop(0, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particle.alpha * 0.5})`);
+                    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+                    this.ctx.beginPath();
+                    this.ctx.arc(particle.x, particle.y, particle.radius * 4, 0, Math.PI * 2);
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.fill();
+                });
+
+                for (let i = 0; i < this.particles.length; i++) {
+                    for (let j = i + 1; j < this.particles.length; j++) {
+                        const dx = this.particles[i].x - this.particles[j].x;
+                        const dy = this.particles[i].y - this.particles[j].y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance < 100) {
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(this.particles[i].x, this.particles[i].y);
+                            this.ctx.lineTo(this.particles[j].x, this.particles[j].y);
+                            const alpha = (1 - distance / 100) * 0.15;
+                            this.ctx.strokeStyle = `rgba(168, 85, 247, ${alpha})`;
+                            this.ctx.lineWidth = 1;
+                            this.ctx.stroke();
+                        }
+                    }
+                }
+            }
+
+            animate() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.drawParticles();
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        // Initialize
+        const isMobile = window.innerWidth < 768;
+        const isTablet = window.innerWidth >= 768 && window.innerWidth <= 1024;
+        const isLowEnd = navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4;
+
+        // WebGL on desktop and tablets, optional on mobile
+        if (!isMobile || !isLowEnd) {
+            const webglCanvas = document.getElementById('webgl-bg');
+            const webglBg = new WebGLBackground(webglCanvas);
+            if (webglBg.gl) {
+                webglBg.render();
+            }
+        }
+
+        const canvas2d = document.getElementById('canvas-bg');
+        const particleSystem = new ParticleSystem(canvas2d);
+        particleSystem.animate();
+
+        // Adjust canvas quality on resize
+        let currentDevice = isMobile ? 'mobile' : isTablet ? 'tablet' : 'desktop';
+        window.addEventListener('resize', () => {
+            const newIsMobile = window.innerWidth < 768;
+            const newIsTablet = window.innerWidth >= 768 && window.innerWidth <= 1024;
+            const newDevice = newIsMobile ? 'mobile' : newIsTablet ? 'tablet' : 'desktop';
+
+            if (newDevice !== currentDevice) {
+                location.reload();
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -366,21 +366,11 @@ export default function GameScreen() {
   }, [availableLoads.length, activeTab]);
 
   useEffect(() => {
-    // При прямом открытии /game (без прохождения через меню)
+    // ВСЕГДА перенаправляем на меню при прямом открытии /game
     const enteredViaMenu = sessionStorage.getItem('enteredViaMenu');
     if (!enteredViaMenu) {
-      // Пробуем загрузить сохранение — если есть, остаёмся в игре
-      if (phase === 'menu') {
-        loadGame().then(loaded => {
-          if (loaded) {
-            // Сохранение найдено — восстанавливаем сессию
-            sessionStorage.setItem('enteredViaMenu', '1');
-          } else {
-            // Нет сохранения — на меню
-            setTimeout(() => router.replace('/'), 50);
-          }
-        });
-      }
+      // Не пришли через меню — перенаправляем на меню
+      setTimeout(() => router.replace('/'), 50);
       return;
     }
     // При рефреше — восстанавливаем сохранение только если phase === 'menu' (store в дефолтном состоянии)
@@ -448,12 +438,23 @@ export default function GameScreen() {
 
   useEffect(() => { if (availableLoads.length < 5) refreshLoadBoard(); }, []);
   useEffect(() => {
-    if (clockRef.current) clearInterval(clockRef.current);
+    console.log('🎮 Setting up game clock...');
+    if (clockRef.current) {
+      console.log('⏹️ Clearing existing interval');
+      clearInterval(clockRef.current);
+    }
     // Динамический тик на основе производительности устройства
     const perfSettings = getCurrentPerformanceSettings();
     console.log(`⚙️ Game tick interval: ${perfSettings.tickInterval}ms (${1000/perfSettings.tickInterval} ticks/sec)`);
-    clockRef.current = setInterval(() => { tickClock(); }, perfSettings.tickInterval);
-    return () => { if (clockRef.current) clearInterval(clockRef.current); };
+    clockRef.current = setInterval(() => { 
+      console.log('⏰ Tick called');
+      tickClock(); 
+    }, perfSettings.tickInterval);
+    console.log(`✅ Game clock started with interval ID: ${clockRef.current}`);
+    return () => { 
+      console.log('🛑 Cleaning up game clock');
+      if (clockRef.current) clearInterval(clockRef.current); 
+    };
   }, []);
 
   // Функция для получения текущего индикатора трака
@@ -1862,6 +1863,13 @@ export default function GameScreen() {
             truckName={truck?.name}
             truckNum={truckNum}
             trailerNum={trailerNum}
+            onCallRepair={() => {
+              // Вызов ремонта по кнопке
+              const truckId = (activeEventDialog as any)._truckId;
+              if (truckId) {
+                useGameStore.getState().repairBreakdown(truckId, 'roadside');
+              }
+            }}
             onComplete={(stars, total) => {
               // После завершения диалога — автоматически запускаем roadside repair
               const truckId = (activeEventDialog as any)._truckId;

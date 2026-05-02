@@ -1,0 +1,389 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iOS Preview - Диспетчер США</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .phone-frame {
+            width: 375px;
+            height: 812px;
+            background: #000;
+            border-radius: 40px;
+            padding: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 30px;
+            background: #000;
+            border-radius: 0 0 20px 20px;
+            z-index: 10;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 32px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .status-bar {
+            height: 44px;
+            background: #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .time {
+            font-weight: 600;
+        }
+
+        .indicators {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .app-content {
+            height: calc(100% - 44px);
+            overflow-y: auto;
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .app-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .app-subtitle {
+            font-size: 14px;
+            color: #718096;
+        }
+
+        .features {
+            padding: 20px;
+            display: grid;
+            gap: 15px;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .feature-icon {
+            font-size: 32px;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f7fafc;
+            border-radius: 12px;
+        }
+
+        .feature-info {
+            flex: 1;
+        }
+
+        .feature-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 4px;
+        }
+
+        .feature-desc {
+            font-size: 13px;
+            color: #718096;
+        }
+
+        .cta-button {
+            margin: 20px;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.02);
+        }
+
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding-bottom: 20px;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            color: #718096;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: #667eea;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            max-width: 300px;
+        }
+
+        .controls h3 {
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+
+        .control-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .info {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #4a5568;
+        }
+
+        @media (max-width: 768px) {
+            .phone-frame {
+                width: 100%;
+                max-width: 375px;
+                height: 90vh;
+            }
+
+            .controls {
+                position: static;
+                margin-top: 20px;
+                max-width: 100%;
+            }
+
+            body {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-frame">
+        <div class="notch"></div>
+        <div class="screen">
+            <div class="status-bar">
+                <div class="time">9:41</div>
+                <div class="indicators">
+                    <span>📶</span>
+                    <span>📡</span>
+                    <span>🔋</span>
+                </div>
+            </div>
+
+            <div class="app-content">
+                <div class="header">
+                    <div class="logo">🚛</div>
+                    <div class="app-title">Диспетчер США</div>
+                    <div class="app-subtitle">Профессиональное обучение</div>
+                </div>
+
+                <div class="features">
+                    <div class="feature-card" onclick="window.location.href='pages/documentation.html'" style="cursor: pointer;">
+                        <div class="feature-icon">📖</div>
+                        <div class="feature-info">
+                            <div class="feature-title">Документация</div>
+                            <div class="feature-desc">Полное руководство по диспетчерству</div>
+                        </div>
+                    </div>
+
+                    <div class="feature-card" onclick="window.location.href='pages/modules.html'" style="cursor: pointer;">
+                        <div class="feature-icon">📚</div>
+                        <div class="feature-info">
+                            <div class="feature-title">10 Модулей</div>
+                            <div class="feature-desc">Комплексное обучение с тестами</div>
+                        </div>
+                    </div>
+
+                    <div class="feature-card" onclick="window.location.href='pages/simulator.html'" style="cursor: pointer;">
+                        <div class="feature-icon">🎮</div>
+                        <div class="feature-info">
+                            <div class="feature-title">Симулятор</div>
+                            <div class="feature-desc">4-этапный процесс работы</div>
+                        </div>
+                    </div>
+
+                    <div class="feature-card" onclick="window.location.href='pages/loads.html'" style="cursor: pointer;">
+                        <div class="feature-icon">📦</div>
+                        <div class="feature-info">
+                            <div class="feature-title">Примеры грузов</div>
+                            <div class="feature-desc">Реальные данные из США</div>
+                        </div>
+                    </div>
+
+                    <div class="feature-card" onclick="window.location.href='pages/loadboard.html'" style="cursor: pointer;">
+                        <div class="feature-icon">🔍</div>
+                        <div class="feature-info">
+                            <div class="feature-title">Load Board</div>
+                            <div class="feature-desc">Расширенные фильтры</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cta-button" onclick="window.location.href='pages/modules.html'" style="cursor: pointer;">
+                    🚀 Начать обучение
+                </div>
+
+                <div class="bottom-nav">
+                    <div class="nav-item active" onclick="window.location.href='index.html'">
+                        <div class="nav-icon">🏠</div>
+                        <div>Главная</div>
+                    </div>
+                    <div class="nav-item" onclick="window.location.href='pages/modules.html'">
+                        <div class="nav-icon">📚</div>
+                        <div>Модули</div>
+                    </div>
+                    <div class="nav-item" onclick="window.location.href='pages/simulator.html'">
+                        <div class="nav-icon">🎮</div>
+                        <div>Симулятор</div>
+                    </div>
+                    <div class="nav-item" onclick="window.location.href='pages/loads.html'">
+                        <div class="nav-icon">📦</div>
+                        <div>Грузы</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <h3>📱 iOS Preview</h3>
+        <button class="control-btn" onclick="window.location.href='index.html'">
+            🏠 Открыть главную страницу
+        </button>
+        <button class="control-btn" onclick="window.location.href='pages/documentation.html'">
+            📖 Открыть документацию
+        </button>
+        <button class="control-btn" onclick="window.location.href='pages/loadboard.html'">
+            🔍 Открыть Load Board
+        </button>
+        <button class="control-btn" onclick="window.location.href='pages/simulator.html'">
+            🎮 Открыть симулятор
+        </button>
+
+        <div class="info">
+            <strong>ℹ️ Информация:</strong><br>
+            Это предпросмотр того, как приложение будет выглядеть на iPhone. 
+            Для реальной установки на iOS используйте Safari и добавьте на экран «Домой».
+        </div>
+    </div>
+
+    <script>
+        // Feature cards now navigate directly via onclick
+        document.querySelector('.cta-button').style.cursor = 'pointer';
+        
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.style.cursor = 'pointer';
+        });
+    </script>
+<script src="theme-switcher.js"></script>
+</body>
+</html>

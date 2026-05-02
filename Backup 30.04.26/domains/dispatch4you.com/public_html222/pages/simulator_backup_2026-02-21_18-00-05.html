@@ -1,0 +1,1636 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Симулятор диспетчера | Курсы - Диспетчера</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg:      #070b14;
+            --card:    rgba(255,255,255,0.03);
+            --border:  rgba(255,255,255,0.07);
+            --text:    #f0f4ff;
+            --text-2:  #8892aa;
+            --text-3:  #4a566a;
+            --primary: #667eea;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 16px;
+            line-height: 1.6;
+            padding: 0;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* Фоновая сетка */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(102,126,234,.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(102,126,234,.03) 1px, transparent 1px);
+            background-size: 56px 56px;
+        }
+
+        /* Фоновые орбы */
+        body::after {
+            content: '';
+            position: fixed;
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, rgba(102,126,234,.13), transparent 70%);
+            top: -180px;
+            left: -180px;
+            border-radius: 50%;
+            filter: blur(90px);
+            pointer-events: none;
+            z-index: 0;
+            animation: orb 22s ease-in-out infinite;
+        }
+
+        @keyframes orb {
+            0%, 100% { transform: translate(0, 0); }
+            33% { transform: translate(35px, -25px); }
+            66% { transform: translate(-20px, 20px); }
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+            color: var(--text);
+            padding: 24px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 10;
+        }
+
+        .header-content {
+            max-width: 1050px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text);
+            background: linear-gradient(135deg, #667eea, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 16px;
+            color: var(--text-2);
+            margin-top: 4px;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            font-size: 16px;
+        }
+
+        .btn-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-header:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .main {
+            max-width: 1050px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .card-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .steps {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .step-badge {
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .step-badge:hover {
+            transform: translateY(-2px);
+        }
+
+        .step-active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .step-active:hover {
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .step-inactive {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .step-inactive:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .step-inactive:hover {
+            background: #e5e7eb;
+        }
+
+        .section-title {
+            font-weight: 700;
+            margin-bottom: 16px;
+            font-size: 18px;
+            color: var(--text);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-label {
+            font-size: 13px;
+            color: var(--text-2);
+            font-weight: 500;
+        }
+
+        .form-input {
+            padding: 10px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-3);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-primary:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-warning {
+            background: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .btn-warning:hover {
+            background: rgba(251, 191, 36, 0.25);
+        }
+
+        .btn-yellow {
+            background: linear-gradient(to right, #facc15, #eab308);
+            color: #1f2937;
+            font-weight: 600;
+        }
+
+        .btn-yellow:hover {
+            background: linear-gradient(to right, #eab308, #ca8a04);
+        }
+
+        .btn-indigo {
+            background: linear-gradient(to right, #4f46e5, #4338ca);
+            color: white;
+            font-weight: 600;
+        }
+
+        .btn-indigo:hover {
+            background: linear-gradient(to right, #4338ca, #3730a3);
+        }
+
+        .btn-gray {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: 600;
+        }
+
+        .btn-gray:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .button-group-right {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .loads-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+            max-height: 800px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+
+        .load-card {
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .load-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .load-card-selected {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .load-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 8px;
+        }
+
+        .load-title {
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--text);
+            letter-spacing: 0.5px;
+        }
+
+        .load-rate {
+            color: #10b981;
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        .load-route {
+            font-size: 15px;
+            color: var(--text);
+            margin-bottom: 8px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .btn-select {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .info-box {
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .info-box h4 {
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text);
+            font-size: 17px;
+        }
+
+        .info-box p {
+            margin: 4px 0;
+            font-size: 16px;
+            color: var(--text-2);
+        }
+
+        .info-box strong {
+            color: var(--text);
+        }
+
+        .message-preview {
+            background: rgba(102, 126, 234, 0.08);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        .message-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #a5b4fc;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .message-content {
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-2);
+        }
+
+        .message-section {
+            margin: 12px 0;
+        }
+
+        .message-greeting {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .message-text {
+            padding-left: 12px;
+            border-left: 2px solid #667eea;
+            color: var(--text-2);
+        }
+
+        .message-details {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .message-detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message-detail-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-3);
+            font-weight: 600;
+        }
+
+        .message-detail-value {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .message-detail-value.highlight {
+            color: #60a5fa;
+            font-weight: 600;
+        }
+
+        .message-detail-value.success {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .message-empty {
+            text-align: center;
+            padding: 16px;
+            color: var(--text-3);
+            font-size: 13px;
+        }
+
+        .journal {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .journal-title {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+        }
+
+        .journal-empty {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-3);
+        }
+
+        .journal-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .journal-message {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .journal-message:hover {
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .journal-message summary {
+            padding: 12px 16px;
+            font-weight: 600;
+            color: var(--text);
+            user-select: none;
+        }
+
+        .journal-message-content {
+            padding: 12px 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .journal-message pre {
+            font-size: 12px;
+            color: var(--text-2);
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Scrollbar styling */
+        .loads-grid::-webkit-scrollbar,
+        .journal-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .loads-grid::-webkit-scrollbar-track,
+        .journal-messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 4px;
+        }
+
+        .loads-grid::-webkit-scrollbar-thumb,
+        .journal-messages::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.3);
+            border-radius: 4px;
+        }
+
+        .loads-grid::-webkit-scrollbar-thumb:hover,
+        .journal-messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(102, 126, 234, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .steps {
+                flex-wrap: wrap;
+            }
+
+            .loads-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .message-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+    <script>!function(){var t=localStorage.getItem('dispatcher-theme')||'dark';'dark'===t&&document.documentElement.setAttribute('data-theme','dark')}();</script>
+
+
+    <link rel="stylesheet" href="../dark-theme.css">
+    <script src="../dark-mode.js"></script>
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-content">
+            <div>
+                <h1>Симулятор диспетчера</h1>
+                <p>Практическая рабочая поверхность для тренировки задач диспетчера</p>
+            </div>
+            <div class="header-buttons">
+                <a href="loadboard.html" class="btn btn-header">Открыть Load Board</a>
+                <a href="../index.html" class="btn btn-header">Главная</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="card">
+            <div class="card-header">
+                <div class="steps">
+                    <span class="step-badge step-active" id="step1-badge" onclick="goToStep(1)">Подготовка</span>
+                    <span class="step-badge step-inactive" id="step2-badge" onclick="goToStep(2)">Поиск грузов</span>
+                    <span class="step-badge step-inactive" id="step3-badge" onclick="goToStep(3)">Проверка готовности</span>
+                    <span class="step-badge step-inactive" id="step4-badge" onclick="goToStep(4)">Связь с брокером</span>
+                </div>
+            </div>
+
+            <!-- Step 1: Driver Preparation -->
+            <section id="step1" style="display: block;">
+                <h3 class="section-title">Подготовка водителя и сбор информации</h3>
+
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label" style="font-size: 16px; font-weight: 600; color: #2d3748;">Имя водителя</label>
+                        <input type="text" id="driverName" class="form-input" placeholder="Имя водителя" style="font-size: 16px; padding: 12px;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">MC номер</label>
+                        <input type="text" id="mcNumber" class="form-input" placeholder="MC-123456">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Номер трака</label>
+                        <input type="text" id="truckNumber" class="form-input" placeholder="TRK-001">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Номер трейлера</label>
+                        <input type="text" id="trailerNumber" class="form-input" placeholder="TRL-001">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Номер телефона водителя</label>
+                        <input type="tel" id="driverPhone" class="form-input" placeholder="+1 (555) 123-4567">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Система отслеживания</label>
+                        <select id="trackingSystem" class="form-input">
+                            <option value="">Выберите систему</option>
+                            <option value="Macropoint">Macropoint</option>
+                            <option value="Trucker Tools">Trucker Tools</option>
+                            <option value="Other">Другая</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Когда трейлер освободится (время)</label>
+                        <select id="trailerFreeAt" class="form-input">
+                            <option value="00:00">00:00 - Полночь</option>
+                            <option value="01:00">01:00</option>
+                            <option value="02:00">02:00</option>
+                            <option value="03:00">03:00</option>
+                            <option value="04:00">04:00</option>
+                            <option value="05:00">05:00</option>
+                            <option value="06:00">06:00</option>
+                            <option value="07:00">07:00</option>
+                            <option value="08:00" selected>08:00 - Утро</option>
+                            <option value="09:00">09:00</option>
+                            <option value="10:00">10:00</option>
+                            <option value="11:00">11:00</option>
+                            <option value="12:00">12:00 - Полдень</option>
+                            <option value="13:00">13:00</option>
+                            <option value="14:00">14:00</option>
+                            <option value="15:00">15:00</option>
+                            <option value="16:00">16:00</option>
+                            <option value="17:00">17:00</option>
+                            <option value="18:00">18:00 - Вечер</option>
+                            <option value="19:00">19:00</option>
+                            <option value="20:00">20:00</option>
+                            <option value="21:00">21:00</option>
+                            <option value="22:00">22:00</option>
+                            <option value="23:00">23:00</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Информационный блок -->
+                <div style="background: linear-gradient(135deg, #ebf4ff 0%, #e0e7ff 100%); border-left: 4px solid #4f46e5; padding: 18px; border-radius: 8px; margin-top: 20px; margin-bottom: 16px;">
+                    <h4 style="color: #1e40af; margin-bottom: 14px; font-size: 18px; font-weight: 700;">📋 Действия диспетчера на этапе подготовки:</h4>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
+                        <div style="background: white; padding: 12px 14px; border-radius: 6px; border-left: 3px solid #4f46e5;">
+                            <strong style="color: #1e40af; font-size: 15px; font-weight: 700; display: block; margin-bottom: 6px;">1. Связь с водителем</strong>
+                            <p style="margin: 0; color: #4b5563; font-size: 16px; font-weight: 500; line-height: 1.6;">Позвоните водителю и уточните его текущий статус, местоположение и готовность трака.</p>
+                        </div>
+                        
+                        <div style="background: white; padding: 12px 14px; border-radius: 6px; border-left: 3px solid #4f46e5;">
+                            <strong style="color: #1e40af; font-size: 15px; font-weight: 700; display: block; margin-bottom: 6px;">2. Сбор данных о траке</strong>
+                            <p style="margin: 0; color: #4b5563; font-size: 16px; font-weight: 500; line-height: 1.6;">Запишите MC номер, номера трака и трейлера для бронирования и отслеживания.</p>
+                        </div>
+                        
+                        <div style="background: white; padding: 12px 14px; border-radius: 6px; border-left: 3px solid #4f46e5;">
+                            <strong style="color: #1e40af; font-size: 15px; font-weight: 700; display: block; margin-bottom: 6px;">3. Система отслеживания</strong>
+                            <p style="margin: 0; color: #4b5563; font-size: 16px; font-weight: 500; line-height: 1.6;">Уточните систему отслеживания (Macropoint/Trucker Tools) и регистрацию водителя.</p>
+                        </div>
+                        
+                        <div style="background: white; padding: 12px 14px; border-radius: 6px; border-left: 3px solid #4f46e5;">
+                            <strong style="color: #1e40af; font-size: 15px; font-weight: 700; display: block; margin-bottom: 6px;">4. Планирование времени</strong>
+                            <p style="margin: 0; color: #4b5563; font-size: 16px; font-weight: 500; line-height: 1.6;">Определите точное время освобождения трейлера для подбора груза.</p>
+                        </div>
+                        
+                        <div style="background: white; padding: 12px 14px; border-radius: 6px; border-left: 3px solid #4f46e5;">
+                            <strong style="color: #1e40af; font-size: 15px; font-weight: 700; display: block; margin-bottom: 6px;">5. Контактная информация</strong>
+                            <p style="margin: 0; color: #4b5563; font-size: 16px; font-weight: 500; line-height: 1.6;">Убедитесь в актуальности номера телефона водителя для связи.</p>
+                        </div>
+                        
+                        <div style="background: #fef3c7; padding: 12px 14px; border-radius: 6px; border-left: 3px solid #f59e0b;">
+                            <strong style="color: #92400e; font-size: 15px; font-weight: 700; display: block; margin-bottom: 6px;">💡 Совет</strong>
+                            <p style="margin: 0; color: #78350f; font-size: 16px; font-weight: 500; line-height: 1.6;">Пустые поля заполнятся автоматически при переходе на следующий шаг.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <div></div>
+                    <button class="btn btn-primary" onclick="goToStep(2)">Далее</button>
+                </div>
+            </section>
+
+            <!-- Step 2: Load Search -->
+            <section id="step2" style="display: none;">
+                <h3 class="section-title">Поиск грузов</h3>
+                <div class="search-bar">
+                    <input type="text" id="searchQuery" class="search-input" placeholder="Поиск по городу или штату">
+                    <button class="btn btn-secondary" onclick="clearSearch()">Сброс</button>
+                </div>
+                <div class="loads-grid" id="loadsGrid"></div>
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="goToStep(1)">Назад</button>
+                    <button class="btn btn-primary" onclick="goToStep(3)">Далее</button>
+                </div>
+            </section>
+
+            <!-- Step 3: Readiness Check -->
+            <section id="step3" style="display: none;">
+                <h3 class="section-title">Проверка готовности водителя и трака</h3>
+                <div class="info-grid">
+                    <div class="info-box">
+                        <h4>Информация о водителе и траке</h4>
+                        <p><strong>Имя:</strong> <span id="driverInfo">—</span></p>
+                        <p><strong>MC номер:</strong> <span id="mcInfo">—</span></p>
+                        <p><strong>Номер трака:</strong> <span id="truckNumberInfo">—</span></p>
+                        <p><strong>Номер трейлера:</strong> <span id="trailerNumberInfo">—</span></p>
+                        <p><strong>Телефон водителя:</strong> <span id="driverPhoneInfo">—</span></p>
+                        <p><strong>Система отслеживания:</strong> <span id="trackingSystemInfo">—</span></p>
+                        <p><strong>Трейлер свободен:</strong> <span id="trailerInfo">—</span></p>
+                    </div>
+                    <div class="info-box">
+                        <h4>Выбранный груз</h4>
+                        <div id="selectedLoadInfo">
+                            <p style="font-size: 16px; color: #6b7280;">Груз не выбран</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="goToStep(2)">Назад</button>
+                    <div class="button-group-right">
+                        <button class="btn btn-warning" onclick="goToStep(1)">Править данные водителя</button>
+                        <button class="btn btn-success" id="dispatchBtn" onclick="handleDispatch()">Подтвердить назначение</button>
+                        <button class="btn btn-primary" onclick="goToStep(4)">Связаться с брокером</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 4: Broker Communication -->
+            <section id="step4" style="display: none;">
+                <h3 class="section-title">📞 Связь с брокером</h3>
+                
+                <div class="info-grid">
+                    <!-- Email Section -->
+                    <div class="info-box" style="border: 1px solid rgba(59, 130, 246, 0.3); background: rgba(59, 130, 246, 0.08);">
+                        <h4 style="color: #93c5fd;">✉️ Письмо брокеру</h4>
+                        <div class="form-group">
+                            <label class="form-label">Email брокера</label>
+                            <input type="text" id="brokerContact" class="form-input" value="broker@loadboard.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Тема</label>
+                            <input type="text" id="emailSubject" class="form-input" placeholder="Richmond, VA to Atlanta, GA *** CHECKING YOUR LOAD ***">
+                        </div>
+                        <div class="message-preview" id="messagePreview" style="margin-top: 16px;"></div>
+                        <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); padding: 12px; border-radius: 8px; margin-top: 12px; font-size: 12px; color: #8892aa;">
+                            <p style="margin: 0 0 8px 0; font-weight: 600; color: #93c5fd;">📝 Email Template Example:</p>
+                            <p style="margin: 0; line-height: 1.6; color: #f0f4ff; font-family: monospace;">
+                                Hello,<br><br>
+                                Could you please provide more details for the following load?<br><br>
+                                <strong>Reference Number:</strong> #1001<br>
+                                <strong>MC Number:</strong> MC-123456<br>
+                                <strong>Origin:</strong> Los Angeles, CA<br>
+                                <strong>Destination:</strong> Las Vegas, NV<br>
+                                <strong>Load Available:</strong> 2/21/2025<br>
+                                <strong>Truck Location:</strong> Alexander City, AL<br>
+                                <strong>Deadhead:</strong> 15 miles<br>
+                                <strong>Trip:</strong> 270 miles<br>
+                                <strong>Rate:</strong> $1,350<br><br>
+                                Could you also confirm the commodity and the best available rate for this shipment?<br><br>
+                                Thank you
+                            </p>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px;">
+                            <button class="btn btn-primary" onclick="copyMessage()" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">📋 Скопировать письмо</button>
+                            <button class="btn btn-success" onclick="sendMessage()">✉️ Отправить письмо</button>
+                        </div>
+                    </div>
+
+                    <!-- Phone Call Section -->
+                    <div class="info-box" style="border: 1px solid rgba(34, 197, 94, 0.3); background: rgba(34, 197, 94, 0.08);">
+                        <h4 style="color: #86efac;">☎️ Звонок брокеру</h4>
+                        <div class="form-group">
+                            <label class="form-label">Телефон брокера</label>
+                            <input type="text" id="brokerPhone" class="form-input" value="+1 (555) 123-4567" readonly style="background: rgba(255, 255, 255, 0.03); color: #f0f4ff;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Телефон водителя</label>
+                            <input type="text" id="driverPhoneStep4" class="form-input" readonly style="background: rgba(255, 255, 255, 0.03); color: #f0f4ff;">
+                        </div>
+                        <button class="btn btn-success" onclick="startPhoneCall()" style="width: 100%; margin-top: 12px; background: linear-gradient(135deg, #10b981, #059669);">📞 Начать звонок</button>
+                        
+                        <!-- Conversation Log inside Phone Call -->
+                        <div id="phoneConversationLog" style="margin-top: 16px; display: none;">
+                            <h5 style="color: #86efac; margin: 0 0 12px 0; font-size: 16px; font-weight: 600;">💬 Транскрипт звонка</h5>
+                            <div id="conversationLog" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 8px; padding: 12px; display: grid; gap: 8px; max-height: 300px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Load Details for Reference -->
+                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 16px; margin-top: 20px;">
+                    <h4 style="color: #f0f4ff; margin-bottom: 12px; font-size: 16px; font-weight: 700;">📋 Информация о грузе</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+                        <div style="background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px;">
+                            <p style="margin: 0; font-size: 11px; color: #8892aa; font-weight: 600; text-transform: uppercase;">ID груза</p>
+                            <p style="margin: 4px 0 0 0; font-size: 16px; font-weight: 700; color: #f0f4ff;" id="loadIdRef">—</p>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px;">
+                            <p style="margin: 0; font-size: 11px; color: #8892aa; font-weight: 600; text-transform: uppercase;">Маршрут</p>
+                            <p style="margin: 4px 0 0 0; font-size: 16px; font-weight: 700; color: #f0f4ff;" id="loadRouteRef">—</p>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px;">
+                            <p style="margin: 0; font-size: 11px; color: #8892aa; font-weight: 600; text-transform: uppercase;">Ставка</p>
+                            <p style="margin: 4px 0 0 0; font-size: 16px; font-weight: 700; color: #10b981;" id="loadRateRef">—</p>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px;">
+                            <p style="margin: 0; font-size: 11px; color: #8892aa; font-weight: 600; text-transform: uppercase;">Расстояние</p>
+                            <p style="margin: 4px 0 0 0; font-size: 16px; font-weight: 700; color: #f0f4ff;" id="loadDistanceRef">—</p>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px;">
+                            <p style="margin: 0; font-size: 11px; color: #8892aa; font-weight: 600; text-transform: uppercase;">Тип груза</p>
+                            <p style="margin: 4px 0 0 0; font-size: 16px; font-weight: 700; color: #f0f4ff;" id="loadCargoRef">—</p>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px;">
+                            <p style="margin: 0; font-size: 11px; color: #8892aa; font-weight: 600; text-transform: uppercase;">Оборудование</p>
+                            <p style="margin: 4px 0 0 0; font-size: 16px; font-weight: 700; color: #f0f4ff;" id="loadEquipmentRef">—</p>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px;">
+                            <p style="margin: 0; font-size: 11px; color: #8892aa; font-weight: 600; text-transform: uppercase;">Вес</p>
+                            <p style="margin: 4px 0 0 0; font-size: 16px; font-weight: 700; color: #f0f4ff;" id="loadWeightRef">—</p>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px;">
+                            <p style="margin: 0; font-size: 11px; color: #8892aa; font-weight: 600; text-transform: uppercase;">Дата погрузки</p>
+                            <p style="margin: 4px 0 0 0; font-size: 16px; font-weight: 700; color: #f0f4ff;" id="loadPickupRef">—</p>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px;">
+                            <p style="margin: 0; font-size: 11px; color: #8892aa; font-weight: 600; text-transform: uppercase;">Дата разгрузки</p>
+                            <p style="margin: 4px 0 0 0; font-size: 16px; font-weight: 700; color: #f0f4ff;" id="loadDeliveryRef">—</p>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px;">
+                            <p style="margin: 0; font-size: 11px; color: #8892aa; font-weight: 600; text-transform: uppercase;">Время погрузки</p>
+                            <p style="margin: 4px 0 0 0; font-size: 16px; font-weight: 700; color: #f0f4ff;" id="loadPickupTimeRef">—</p>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px;">
+                            <p style="margin: 0; font-size: 11px; color: #8892aa; font-weight: 600; text-transform: uppercase;">Время разгрузки</p>
+                            <p style="margin: 4px 0 0 0; font-size: 16px; font-weight: 700; color: #f0f4ff;" id="loadDeliveryTimeRef">—</p>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px;">
+                            <p style="margin: 0; font-size: 11px; color: #8892aa; font-weight: 600; text-transform: uppercase;">Длительность разгрузки</p>
+                            <p style="margin: 4px 0 0 0; font-size: 16px; font-weight: 700; color: #f0f4ff;" id="loadUnloadTimeRef">—</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="goToStep(3)">← Назад</button>
+                    <button class="btn btn-warning" onclick="goToStep(1)">Начать заново</button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        // Mock loads data
+        const mockLoads = [
+            {id: 1001, shipper: 'Amazon Distribution Center', pickupLocation: '123 Industrial Blvd', pickupCity: 'Los Angeles', pickupState: 'CA', deliveryLocation: '456 Commerce Drive', deliveryCity: 'Las Vegas', deliveryState: 'NV', distance: 270, weight: 45000, cargoType: 'General Merchandise', rate: 1350, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 2, pickupTime: '08:15', pickupDate: '2025-02-21', deliveryDate: '2025-02-21', deliveryTime: '14:30'},
+            {id: 1002, shipper: 'Fresh Foods Inc', pickupLocation: '789 Farm Road', pickupCity: 'Fresno', pickupState: 'CA', deliveryLocation: '111 Grocery Plaza', deliveryCity: 'Phoenix', deliveryState: 'AZ', distance: 380, weight: 40000, cargoType: 'Refrigerated Produce', rate: 1900, equipment: '53ft Reefer', createdAt: '2025-02-19', status: 'Available', unloadTime: 4, pickupTime: '05:30', pickupDate: '2025-02-22', deliveryDate: '2025-02-22', deliveryTime: '12:45'},
+            {id: 1003, shipper: 'AutoParts Wholesale', pickupLocation: '555 Warehouse Way', pickupCity: 'Dallas', pickupState: 'TX', deliveryLocation: '999 Distribution Center', deliveryCity: 'Houston', deliveryState: 'TX', distance: 240, weight: 35000, cargoType: 'Automotive Parts', rate: 960, equipment: '53ft Dry Van', createdAt: '2025-02-18', status: 'Available', unloadTime: 2, pickupTime: '09:45', pickupDate: '2025-02-21', deliveryDate: '2025-02-21', deliveryTime: '15:00'},
+            {id: 1004, shipper: 'Construction Materials Co', pickupLocation: '222 Industrial Park', pickupCity: 'Denver', pickupState: 'CO', deliveryLocation: '333 Building Supply', deliveryCity: 'Salt Lake City', deliveryState: 'UT', distance: 525, weight: 48000, cargoType: 'Building Materials', rate: 2100, equipment: 'Flatbed', createdAt: '2025-02-19', status: 'Available', unloadTime: 6, pickupTime: '06:00', pickupDate: '2025-02-22', deliveryDate: '2025-02-23', deliveryTime: '08:30'},
+            {id: 1005, shipper: 'Retail Express', pickupLocation: '666 Distribution Hub', pickupCity: 'Chicago', pickupState: 'IL', deliveryLocation: '777 Retail Center', deliveryCity: 'Detroit', deliveryState: 'MI', distance: 280, weight: 42000, cargoType: 'Retail Goods', rate: 1120, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 1, pickupTime: '10:30', pickupDate: '2025-02-21', deliveryDate: '2025-02-21', deliveryTime: '16:15'},
+            {id: 1006, shipper: 'Chemical Logistics', pickupLocation: '888 Industrial Blvd', pickupCity: 'Houston', pickupState: 'TX', deliveryLocation: '999 Plant', deliveryCity: 'Beaumont', deliveryState: 'TX', distance: 85, weight: 40000, cargoType: 'Hazmat - Class 3', rate: 680, equipment: 'Amazon', createdAt: '2025-02-19', status: 'Available', unloadTime: 3, pickupTime: '14:20', pickupDate: '2025-02-21', deliveryDate: '2025-02-21', deliveryTime: '17:45'},
+            {id: 1007, shipper: 'Electronics Distributor', pickupLocation: '1111 Tech Park', pickupCity: 'San Jose', pickupState: 'CA', deliveryLocation: '2222 Tech Center', deliveryCity: 'Portland', deliveryState: 'OR', distance: 635, weight: 25000, cargoType: 'Electronics', rate: 2540, equipment: '53ft Dry Van', createdAt: '2025-02-18', status: 'Available', unloadTime: 5, pickupTime: '07:00', pickupDate: '2025-02-22', deliveryDate: '2025-02-23', deliveryTime: '10:30'},
+            {id: 1008, shipper: 'Furniture Direct', pickupLocation: '3333 Warehouse St', pickupCity: 'Atlanta', pickupState: 'GA', deliveryLocation: '4444 Store', deliveryCity: 'Miami', deliveryState: 'FL', distance: 660, weight: 45000, cargoType: 'Furniture', rate: 1980, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 2, pickupTime: '17:15', pickupDate: '2025-02-21', deliveryDate: '2025-02-22', deliveryTime: '06:00'},
+            {id: 1009, shipper: 'National Beverage Co', pickupLocation: '5555 Plant Road', pickupCity: 'Seattle', pickupState: 'WA', deliveryLocation: '6666 Distribution', deliveryCity: 'Vancouver', deliveryState: 'WA', distance: 315, weight: 48000, cargoType: 'Beverages', rate: 1260, equipment: '53ft Reefer', createdAt: '2025-02-19', status: 'Available', unloadTime: 3, pickupTime: '04:45', pickupDate: '2025-02-22', deliveryDate: '2025-02-22', deliveryTime: '11:00'},
+            {id: 1010, shipper: 'Industrial Supply', pickupLocation: '7777 Warehouse Ln', pickupCity: 'Memphis', pickupState: 'TN', deliveryLocation: '8888 Factory', deliveryCity: 'Nashville', deliveryState: 'TN', distance: 210, weight: 36000, cargoType: 'Industrial Equipment', rate: 840, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 4, pickupTime: '12:00', pickupDate: '2025-02-21', deliveryDate: '2025-02-21', deliveryTime: '16:30'},
+            {id: 1011, shipper: 'Grocery Warehouse', pickupLocation: '9999 Storage Way', pickupCity: 'Phoenix', pickupState: 'AZ', deliveryLocation: '1111 Market', deliveryCity: 'Tucson', deliveryState: 'AZ', distance: 120, weight: 44000, cargoType: 'Packaged Foods', rate: 480, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 2, pickupTime: '20:30', pickupDate: '2025-02-21', deliveryDate: '2025-02-21', deliveryTime: '23:15'},
+            {id: 1012, shipper: 'Steel Manufacturing', pickupLocation: '2222 Mill St', pickupCity: 'Pittsburgh', pickupState: 'PA', deliveryLocation: '3333 Construction', deliveryCity: 'Cleveland', deliveryState: 'OH', distance: 135, weight: 50000, cargoType: 'Steel Coils', rate: 810, equipment: 'Flatbed', createdAt: '2025-02-19', status: 'Available', unloadTime: 5, pickupTime: '08:30', pickupDate: '2025-02-22', deliveryDate: '2025-02-22', deliveryTime: '14:00'},
+            {id: 1013, shipper: 'Software Logistics', pickupLocation: '4444 Tech Blvd', pickupCity: 'San Francisco', pickupState: 'CA', deliveryLocation: '5555 Office Park', deliveryCity: 'Sacramento', deliveryState: 'CA', distance: 390, weight: 18000, cargoType: 'Computer Parts', rate: 1560, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 1, pickupTime: '13:45', pickupDate: '2025-02-21', deliveryDate: '2025-02-22', deliveryTime: '01:00'},
+            {id: 1014, shipper: 'Textile Mills', pickupLocation: '6666 Factory Rd', pickupCity: 'Charlotte', pickupState: 'NC', deliveryLocation: '7777 Warehouse', deliveryCity: 'Atlanta', deliveryState: 'GA', distance: 245, weight: 38000, cargoType: 'Textiles', rate: 980, equipment: '53ft Dry Van', createdAt: '2025-02-18', status: 'Available', unloadTime: 2, pickupTime: '18:00', pickupDate: '2025-02-21', deliveryDate: '2025-02-22', deliveryTime: '02:30'},
+            {id: 1015, shipper: 'Petroleum Distribution', pickupLocation: '8888 Port Ln', pickupCity: 'Houston', pickupState: 'TX', deliveryLocation: '9999 Terminal', deliveryCity: 'Dallas', deliveryState: 'TX', distance: 240, weight: 44000, cargoType: 'Fuel Tanker', rate: 1440, equipment: 'Amazon', createdAt: '2025-02-19', status: 'Available', unloadTime: 2, pickupTime: '22:15', pickupDate: '2025-02-21', deliveryDate: '2025-02-22', deliveryTime: '06:00'},
+            {id: 1016, shipper: 'Meat Processing', pickupLocation: '1010 Cold Storage', pickupCity: 'Sioux Falls', pickupState: 'SD', deliveryLocation: '2020 Distribution', deliveryCity: 'Des Moines', deliveryState: 'IA', distance: 180, weight: 42000, cargoType: 'Frozen Meat', rate: 1260, equipment: '53ft Reefer', createdAt: '2025-02-19', status: 'Available', unloadTime: 3, pickupTime: '06:30', pickupDate: '2025-02-22', deliveryDate: '2025-02-22', deliveryTime: '11:45'},
+            {id: 1017, shipper: 'Appliance Distributor', pickupLocation: '3030 Warehouse', pickupCity: 'Indianapolis', pickupState: 'IN', deliveryLocation: '4040 Store', deliveryCity: 'Cincinnati', deliveryState: 'OH', distance: 105, weight: 41000, cargoType: 'Appliances', rate: 630, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 4, pickupTime: '11:15', pickupDate: '2025-02-21', deliveryDate: '2025-02-21', deliveryTime: '15:00'},
+            {id: 1018, shipper: 'Lumber Yard', pickupLocation: '5050 Mill Rd', pickupCity: 'Portland', pickupState: 'OR', deliveryLocation: '6060 Building Supply', deliveryCity: 'Seattle', deliveryState: 'WA', distance: 175, weight: 46000, cargoType: 'Lumber', rate: 1050, equipment: 'Flatbed', createdAt: '2025-02-19', status: 'Available', unloadTime: 3, pickupTime: '07:45', pickupDate: '2025-02-22', deliveryDate: '2025-02-22', deliveryTime: '12:30'},
+            {id: 1019, shipper: 'Pharmaceutical Co', pickupLocation: '7070 Lab Rd', pickupCity: 'New Jersey', pickupState: 'NJ', deliveryLocation: '8080 Distribution', deliveryCity: 'Boston', deliveryState: 'MA', distance: 215, weight: 16000, cargoType: 'Pharmaceuticals', rate: 1505, equipment: '53ft Dry Van', createdAt: '2025-02-18', status: 'Available', unloadTime: 1, pickupTime: '09:00', pickupDate: '2025-02-22', deliveryDate: '2025-02-22', deliveryTime: '14:15'},
+            {id: 1020, shipper: 'Paper Mills', pickupLocation: '9090 Factory Ln', pickupCity: 'Portland', pickupState: 'ME', deliveryLocation: '1111 Printing', deliveryCity: 'Boston', deliveryState: 'MA', distance: 105, weight: 47000, cargoType: 'Paper Products', rate: 735, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 2, pickupTime: '15:30', pickupDate: '2025-02-21', deliveryDate: '2025-02-21', deliveryTime: '19:00'},
+            {id: 1021, shipper: 'Farm Produce', pickupLocation: '2222 Farm Rd', pickupCity: 'Salinas', pickupState: 'CA', deliveryLocation: '3333 Market', deliveryCity: 'San Francisco', deliveryState: 'CA', distance: 120, weight: 39000, cargoType: 'Fresh Vegetables', rate: 600, equipment: '53ft Reefer', createdAt: '2025-02-19', status: 'Available', unloadTime: 2, pickupTime: '05:00', pickupDate: '2025-02-22', deliveryDate: '2025-02-22', deliveryTime: '09:30'},
+            {id: 1022, shipper: 'Tire Manufacturing', pickupLocation: '4444 Plant', pickupCity: 'Akron', pickupState: 'OH', deliveryLocation: '5555 Warehouse', deliveryCity: 'Detroit', deliveryState: 'MI', distance: 150, weight: 44000, cargoType: 'Automotive Tires', rate: 900, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 3, pickupTime: '10:00', pickupDate: '2025-02-21', deliveryDate: '2025-02-21', deliveryTime: '14:45'},
+            {id: 1023, shipper: 'Glass Manufacturing', pickupLocation: '6666 Factory Ave', pickupCity: 'Toledo', pickupState: 'OH', deliveryLocation: '7777 Warehouse', deliveryCity: 'Chicago', deliveryState: 'IL', distance: 280, weight: 45000, cargoType: 'Glass Sheets', rate: 1400, equipment: 'Flatbed', createdAt: '2025-02-19', status: 'Available', unloadTime: 5, pickupTime: '16:45', pickupDate: '2025-02-21', deliveryDate: '2025-02-22', deliveryTime: '02:00'},
+            {id: 1024, shipper: 'Bakery Supply', pickupLocation: '8888 Plant Rd', pickupCity: 'Kansas City', pickupState: 'MO', deliveryLocation: '9999 Distribution', deliveryCity: 'St. Louis', deliveryState: 'MO', distance: 250, weight: 28000, cargoType: 'Bakery Products', rate: 1000, equipment: '53ft Reefer', createdAt: '2025-02-19', status: 'Available', unloadTime: 2, pickupTime: '03:30', pickupDate: '2025-02-22', deliveryDate: '2025-02-22', deliveryTime: '09:00'},
+            {id: 1025, shipper: 'Machinery Supplier', pickupLocation: '1111 Industrial', pickupCity: 'Milwaukee', pickupState: 'WI', deliveryLocation: '2222 Factory', deliveryCity: 'Chicago', deliveryState: 'IL', distance: 95, weight: 48000, cargoType: 'Heavy Machinery', rate: 855, equipment: 'Flatbed', createdAt: '2025-02-19', status: 'Available', unloadTime: 6, pickupTime: '07:30', pickupDate: '2025-02-22', deliveryDate: '2025-02-22', deliveryTime: '14:30'},
+            {id: 1026, shipper: 'Greeting Cards', pickupLocation: '3333 Distribution', pickupCity: 'Toledo', pickupState: 'OH', deliveryLocation: '4444 Retail', deliveryCity: 'Cleveland', deliveryState: 'OH', distance: 120, weight: 21000, cargoType: 'Greeting Cards', rate: 480, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 1, pickupTime: '14:00', pickupDate: '2025-02-21', deliveryDate: '2025-02-21', deliveryTime: '17:30'},
+            {id: 1027, shipper: 'Plastic Products', pickupLocation: '5555 Plant', pickupCity: 'Dallas', pickupState: 'TX', deliveryLocation: '6666 Warehouse', deliveryCity: 'Austin', deliveryState: 'TX', distance: 195, weight: 35000, cargoType: 'Plastic Materials', rate: 780, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 2, pickupTime: '19:45', pickupDate: '2025-02-21', deliveryDate: '2025-02-22', deliveryTime: '01:15'},
+            {id: 1028, shipper: 'Water Distribution', pickupLocation: '7777 Plant Rd', pickupCity: 'Denver', pickupState: 'CO', deliveryLocation: '8888 Warehouse', deliveryCity: 'Boulder', deliveryState: 'CO', distance: 45, weight: 46000, cargoType: 'Bottled Water', rate: 270, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 1, pickupTime: '08:00', pickupDate: '2025-02-21', deliveryDate: '2025-02-21', deliveryTime: '10:15'},
+            {id: 1029, shipper: 'Wine Distribution', pickupLocation: '9999 Vineyard', pickupCity: 'Napa', pickupState: 'CA', deliveryLocation: '1212 Restaurant', deliveryCity: 'Los Angeles', deliveryState: 'CA', distance: 380, weight: 26000, cargoType: 'Wine & Beer', rate: 1900, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 1, pickupTime: '12:30', pickupDate: '2025-02-21', deliveryDate: '2025-02-22', deliveryTime: '00:00'},
+            {id: 1030, shipper: 'Cleaning Supplies', pickupLocation: '2323 Plant', pickupCity: 'Long Beach', pickupState: 'CA', deliveryLocation: '3434 Distribution', deliveryCity: 'San Diego', deliveryState: 'CA', distance: 120, weight: 38000, cargoType: 'Chemicals', rate: 600, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 2, pickupTime: '21:00', pickupDate: '2025-02-21', deliveryDate: '2025-02-22', deliveryTime: '01:30'},
+            {id: 1031, shipper: 'Office Furniture', pickupLocation: '4545 Warehouse', pickupCity: 'Raleigh', pickupState: 'NC', deliveryLocation: '5656 Office', deliveryCity: 'Durham', deliveryState: 'NC', distance: 30, weight: 42000, cargoType: 'Office Furniture', rate: 180, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 3, pickupTime: '10:30', pickupDate: '2025-02-21', deliveryDate: '2025-02-21', deliveryTime: '12:45'},
+            {id: 1032, shipper: 'Seafood Distribution', pickupLocation: '6767 Port', pickupCity: 'Miami', pickupState: 'FL', deliveryLocation: '7878 Market', deliveryCity: 'Jacksonville', deliveryState: 'FL', distance: 345, weight: 36000, cargoType: 'Seafood', rate: 1725, equipment: '53ft Reefer', createdAt: '2025-02-19', status: 'Available', unloadTime: 4, pickupTime: '06:15', pickupDate: '2025-02-22', deliveryDate: '2025-02-22', deliveryTime: '13:30'},
+            {id: 1033, shipper: 'Clothing Distributor', pickupLocation: '8989 Warehouse', pickupCity: 'New York', pickupState: 'NY', deliveryLocation: '9999 Store', deliveryCity: 'Philadelphia', deliveryState: 'PA', distance: 95, weight: 25000, cargoType: 'Apparel', rate: 570, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 1, pickupTime: '13:20', pickupDate: '2025-02-21', deliveryDate: '2025-02-21', deliveryTime: '16:00'},
+            {id: 1034, shipper: 'Paint Manufacturing', pickupLocation: '1313 Factory', pickupCity: 'Columbus', pickupState: 'OH', deliveryLocation: '2424 Warehouse', deliveryCity: 'Indianapolis', deliveryState: 'IN', distance: 175, weight: 41000, cargoType: 'Paint', rate: 875, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 2, pickupTime: '17:45', pickupDate: '2025-02-21', deliveryDate: '2025-02-21', deliveryTime: '22:00'},
+            {id: 1035, shipper: 'Pet Food Co', pickupLocation: '3535 Plant', pickupCity: 'Springfield', pickupState: 'MO', deliveryLocation: '4646 Distribution', deliveryCity: 'Kansas City', deliveryState: 'MO', distance: 165, weight: 39000, cargoType: 'Pet Food', rate: 660, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 2, pickupTime: '23:15', pickupDate: '2025-02-21', deliveryDate: '2025-02-22', deliveryTime: '04:30'},
+            {id: 1036, shipper: 'Dairy Products', pickupLocation: '5757 Facility', pickupCity: 'Madison', pickupState: 'WI', deliveryLocation: '6868 Market', deliveryCity: 'Milwaukee', deliveryState: 'WI', distance: 80, weight: 43000, cargoType: 'Dairy Products', rate: 480, equipment: '53ft Reefer', createdAt: '2025-02-19', status: 'Available', unloadTime: 2, pickupTime: '04:00', pickupDate: '2025-02-22', deliveryDate: '2025-02-22', deliveryTime: '07:30'},
+            {id: 1037, shipper: 'Book Publisher', pickupLocation: '7979 Warehouse', pickupCity: 'Minneapolis', pickupState: 'MN', deliveryLocation: '8080 Distribution', deliveryCity: 'St. Paul', deliveryState: 'MN', distance: 12, weight: 32000, cargoType: 'Books', rate: 120, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 1, pickupTime: '09:30', pickupDate: '2025-02-21', deliveryDate: '2025-02-21', deliveryTime: '11:00'},
+            {id: 1038, shipper: 'Medical Devices', pickupLocation: '9191 Plant', pickupCity: 'Minneapolis', pickupState: 'MN', deliveryLocation: '0202 Hospital', deliveryCity: 'Chicago', deliveryState: 'IL', distance: 405, weight: 19000, cargoType: 'Medical Equipment', rate: 2025, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 1, pickupTime: '11:45', pickupDate: '2025-02-21', deliveryDate: '2025-02-22', deliveryTime: '00:15'},
+            {id: 1039, shipper: 'Cosmetics Distributor', pickupLocation: '3131 Warehouse', pickupCity: 'Los Angeles', pickupState: 'CA', deliveryLocation: '4242 Store', deliveryCity: 'Anaheim', deliveryState: 'CA', distance: 30, weight: 22000, cargoType: 'Cosmetics', rate: 180, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 1, pickupTime: '15:00', pickupDate: '2025-02-21', deliveryDate: '2025-02-21', deliveryTime: '16:45'},
+            {id: 1040, shipper: 'Refrigeration Equipment', pickupLocation: '5454 Factory', pickupCity: 'Phoenix', pickupState: 'AZ', deliveryLocation: '6565 Warehouse', deliveryCity: 'Las Vegas', deliveryState: 'NV', distance: 300, weight: 48000, cargoType: 'HVAC Equipment', rate: 1500, equipment: 'Flatbed', createdAt: '2025-02-19', status: 'Available', unloadTime: 5, pickupTime: '20:00', pickupDate: '2025-02-21', deliveryDate: '2025-02-22', deliveryTime: '07:00'},
+            {id: 1041, shipper: 'Birmingham Steel', pickupLocation: '1111 Factory AL', pickupCity: 'Birmingham', pickupState: 'AL', deliveryLocation: '2222 Warehouse AL', deliveryCity: 'Montgomery', deliveryState: 'AL', distance: 95, weight: 48000, cargoType: 'Steel Products', rate: 660, equipment: 'Flatbed', createdAt: '2025-02-19', status: 'Available', unloadTime: 5, pickupTime: '07:00', pickupDate: '2025-02-22', deliveryDate: '2025-02-22', deliveryTime: '13:30'},
+            {id: 1042, shipper: 'Alaska Seafood', pickupLocation: '3333 Port AK', pickupCity: 'Juneau', pickupState: 'AK', deliveryLocation: '4444 Warehouse AK', deliveryCity: 'Anchorage', deliveryState: 'AK', distance: 650, weight: 35000, cargoType: 'Seafood', rate: 3250, equipment: '53ft Reefer', createdAt: '2025-02-19', status: 'Available', unloadTime: 4, pickupTime: '05:45', pickupDate: '2025-02-22', deliveryDate: '2025-02-23', deliveryTime: '10:00'},
+            {id: 1043, shipper: 'Arkansas Lumber', pickupLocation: '5555 Mill AR', pickupCity: 'Pine Bluff', pickupState: 'AR', deliveryLocation: '6666 Storage AR', deliveryCity: 'Little Rock', deliveryState: 'AR', distance: 85, weight: 46000, cargoType: 'Timber', rate: 510, equipment: 'Flatbed', createdAt: '2025-02-19', status: 'Available', unloadTime: 4, pickupTime: '14:30', pickupDate: '2025-02-21', deliveryDate: '2025-02-21', deliveryTime: '19:00'},
+            {id: 1044, shipper: 'Connecticut Manufacturing', pickupLocation: '7777 Factory CT', pickupCity: 'Hartford', pickupState: 'CT', deliveryLocation: '8888 Warehouse CT', deliveryCity: 'New Haven', deliveryState: 'CT', distance: 150, weight: 32000, cargoType: 'Industrial Parts', rate: 900, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 2, pickupTime: '08:45', pickupDate: '2025-02-22', deliveryDate: '2025-02-22', deliveryTime: '13:15'},
+            {id: 1045, shipper: 'Delaware Chemical', pickupLocation: '9999 Plant DE', pickupCity: 'Wilmington', pickupState: 'DE', deliveryLocation: '1010 Distribution DE', deliveryCity: 'Dover', deliveryState: 'DE', distance: 125, weight: 40000, cargoType: 'Chemicals', rate: 750, equipment: 'Amazon', createdAt: '2025-02-19', status: 'Available', unloadTime: 3, pickupTime: '18:30', pickupDate: '2025-02-21', deliveryDate: '2025-02-21', deliveryTime: '22:45'},
+            {id: 1046, shipper: 'Hawaii Sugar', pickupLocation: '1111 Farm HI', pickupCity: 'Honolulu', pickupState: 'HI', deliveryLocation: '2222 Port HI', deliveryCity: 'Hilo', deliveryState: 'HI', distance: 200, weight: 44000, cargoType: 'Agricultural Products', rate: 1400, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 3, pickupTime: '03:00', pickupDate: '2025-02-22', deliveryDate: '2025-02-22', deliveryTime: '07:30'},
+            {id: 1047, shipper: 'Idaho Potatoes', pickupLocation: '3333 Farm ID', pickupCity: 'Boise', pickupState: 'ID', deliveryLocation: '4444 Warehouse ID', deliveryCity: 'Pocatello', deliveryState: 'ID', distance: 240, weight: 40000, cargoType: 'Vegetables', rate: 960, equipment: '53ft Reefer', createdAt: '2025-02-19', status: 'Available', unloadTime: 2, pickupTime: '06:45', pickupDate: '2025-02-22', deliveryDate: '2025-02-22', deliveryTime: '11:30'},
+            {id: 1048, shipper: 'Kansas Wheat', pickupLocation: '5555 Farm KS', pickupCity: 'Topeka', pickupState: 'KS', deliveryLocation: '6666 Mill KS', deliveryCity: 'Wichita', deliveryState: 'KS', distance: 200, weight: 45000, cargoType: 'Grain', rate: 900, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 2, pickupTime: '12:15', pickupDate: '2025-02-22', deliveryDate: '2025-02-22', deliveryTime: '16:45'},
+            {id: 1049, shipper: 'Kentucky Bourbon', pickupLocation: '7777 Distillery KY', pickupCity: 'Louisville', pickupState: 'KY', deliveryLocation: '8888 Distribution KY', deliveryCity: 'Lexington', deliveryState: 'KY', distance: 85, weight: 38000, cargoType: 'Beverages', rate: 510, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 1, pickupTime: '19:30', pickupDate: '2025-02-22', deliveryDate: '2025-02-22', deliveryTime: '22:00'},
+            {id: 1050, shipper: 'Louisiana Oil', pickupLocation: '9999 Plant LA', pickupCity: 'Baton Rouge', pickupState: 'LA', deliveryLocation: '1111 Terminal LA', deliveryCity: 'New Orleans', deliveryState: 'LA', distance: 80, weight: 48000, cargoType: 'Petroleum', rate: 560, equipment: 'Amazon', createdAt: '2025-02-19', status: 'Available', unloadTime: 2, pickupTime: '21:45', pickupDate: '2025-02-22', deliveryDate: '2025-02-23', deliveryTime: '00:15'},
+            {id: 1051, shipper: 'Maryland Plastics', pickupLocation: '2222 Factory MD', pickupCity: 'Baltimore', pickupState: 'MD', deliveryLocation: '3333 Warehouse MD', deliveryCity: 'Annapolis', deliveryState: 'MD', distance: 35, weight: 34000, cargoType: 'Plastic Products', rate: 245, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 1, pickupTime: '10:15', pickupDate: '2025-02-23', deliveryDate: '2025-02-23', deliveryTime: '11:30'},
+            {id: 1052, shipper: 'Michigan Automotive', pickupLocation: '4444 Plant MI', pickupCity: 'Detroit', pickupState: 'MI', deliveryLocation: '5555 Warehouse MI', deliveryCity: 'Flint', deliveryState: 'MI', distance: 65, weight: 43000, cargoType: 'Auto Parts', rate: 390, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 2, pickupTime: '13:00', pickupDate: '2025-02-23', deliveryDate: '2025-02-23', deliveryTime: '14:30'},
+            {id: 1053, shipper: 'Mississippi Timber', pickupLocation: '6666 Mill MS', pickupCity: 'Jackson', pickupState: 'MS', deliveryLocation: '7777 Warehouse MS', deliveryCity: 'Gulfport', deliveryState: 'MS', distance: 195, weight: 46000, cargoType: 'Lumber', rate: 975, equipment: 'Flatbed', createdAt: '2025-02-19', status: 'Available', unloadTime: 4, pickupTime: '16:20', pickupDate: '2025-02-23', deliveryDate: '2025-02-23', deliveryTime: '21:15'},
+            {id: 1054, shipper: 'Montana Logging', pickupLocation: '8888 Mill MT', pickupCity: 'Missoula', pickupState: 'MT', deliveryLocation: '9999 Warehouse MT', deliveryCity: 'Billings', deliveryState: 'MT', distance: 325, weight: 47000, cargoType: 'Logs', rate: 1625, equipment: 'Flatbed', createdAt: '2025-02-19', status: 'Available', unloadTime: 5, pickupTime: '22:00', pickupDate: '2025-02-23', deliveryDate: '2025-02-24', deliveryTime: '04:30'},
+            {id: 1055, shipper: 'Nebraska Corn', pickupLocation: '1010 Farm NE', pickupCity: 'Omaha', pickupState: 'NE', deliveryLocation: '2020 Mill NE', deliveryCity: 'Lincoln', deliveryState: 'NE', distance: 55, weight: 44000, cargoType: 'Grain', rate: 330, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 2, pickupTime: '05:15', pickupDate: '2025-02-24', deliveryDate: '2025-02-24', deliveryTime: '06:30'},
+            {id: 1056, shipper: 'New Mexico Oil', pickupLocation: '3030 Plant NM', pickupCity: 'Albuquerque', pickupState: 'NM', deliveryLocation: '4040 Terminal NM', deliveryCity: 'Santa Fe', deliveryState: 'NM', distance: 65, weight: 45000, cargoType: 'Crude Oil', rate: 390, equipment: 'Amazon', createdAt: '2025-02-19', status: 'Available', unloadTime: 3, pickupTime: '09:15', pickupDate: '2025-02-24', deliveryDate: '2025-02-24', deliveryTime: '10:45'},
+            {id: 1057, shipper: 'New Hampshire Publishing', pickupLocation: '5050 Plant NH', pickupCity: 'Manchester', pickupState: 'NH', deliveryLocation: '6060 Warehouse NH', deliveryCity: 'Portsmouth', deliveryState: 'NH', distance: 55, weight: 30000, cargoType: 'Print Materials', rate: 330, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 1, pickupTime: '14:50', pickupDate: '2025-02-24', deliveryDate: '2025-02-24', deliveryTime: '16:00'},
+            {id: 1058, shipper: 'Rhode Island Textiles', pickupLocation: '7070 Factory RI', pickupCity: 'Providence', pickupState: 'RI', deliveryLocation: '8080 Warehouse RI', deliveryCity: 'Warwick', deliveryState: 'RI', distance: 25, weight: 29000, cargoType: 'Fabrics', rate: 150, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 1, pickupTime: '11:30', pickupDate: '2025-02-24', deliveryDate: '2025-02-24', deliveryTime: '12:15'},
+            {id: 1059, shipper: 'South Carolina Textiles', pickupLocation: '9090 Mill SC', pickupCity: 'Charleston', pickupState: 'SC', deliveryLocation: '1010 Warehouse SC', deliveryCity: 'Columbia', deliveryState: 'SC', distance: 125, weight: 37000, cargoType: 'Textiles', rate: 750, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 2, pickupTime: '15:45', pickupDate: '2025-02-24', deliveryDate: '2025-02-24', deliveryTime: '18:45'},
+            {id: 1060, shipper: 'Vermont Maple', pickupLocation: '2020 Farm VT', pickupCity: 'Montpelier', pickupState: 'VT', deliveryLocation: '3030 Distribution VT', deliveryCity: 'Burlington', deliveryState: 'VT', distance: 40, weight: 25000, cargoType: 'Maple Syrup', rate: 240, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 1, pickupTime: '17:00', pickupDate: '2025-02-24', deliveryDate: '2025-02-24', deliveryTime: '18:00'},
+            {id: 1061, shipper: 'Virginia Tobacco', pickupLocation: '4040 Farm VA', pickupCity: 'Richmond', pickupState: 'VA', deliveryLocation: '5050 Warehouse VA', deliveryCity: 'Norfolk', deliveryState: 'VA', distance: 110, weight: 36000, cargoType: 'Tobacco', rate: 660, equipment: '53ft Dry Van', createdAt: '2025-02-19', status: 'Available', unloadTime: 2, pickupTime: '20:15', pickupDate: '2025-02-24', deliveryDate: '2025-02-24', deliveryTime: '23:00'},
+            {id: 1062, shipper: 'West Virginia Coal', pickupLocation: '6060 Mine WV', pickupCity: 'Charleston', pickupState: 'WV', deliveryLocation: '7070 Plant WV', deliveryCity: 'Huntington', deliveryState: 'WV', distance: 95, weight: 50000, cargoType: 'Coal', rate: 660, equipment: 'Flatbed', createdAt: '2025-02-19', status: 'Available', unloadTime: 4, pickupTime: '23:30', pickupDate: '2025-02-24', deliveryDate: '2025-02-25', deliveryTime: '02:00'}
+        ];
+
+        // State
+        let currentStep = 1;
+        let selectedLoad = null;
+        let brokerMessages = [];
+        let conversationLog = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            renderLoads();
+            updateStepBadges();
+            
+            // Search functionality
+            document.getElementById('searchQuery').addEventListener('input', renderLoads);
+        });
+
+        function timeToMinutes(time) {
+            const [h, m] = time.split(':').map(x => parseInt(x, 10));
+            return h * 60 + (m || 0);
+        }
+
+        function goToStep(step) {
+            // Auto-generate all fields if empty when leaving step 1
+            if (currentStep === 1 && step > 1) {
+                // Generate driver name
+                const driverName = document.getElementById('driverName').value.trim();
+                if (!driverName) {
+                    const first = ['Alex','Sam','Taylor','Jordan','Chris','Pat','Lee','Morgan','Drew','Casey'];
+                    const last = ['Ivanov','Petrov','Smith','Johnson','Brown','Davis','Miller','Wilson','Moore','Taylor'];
+                    const generated = `${first[Math.floor(Math.random()*first.length)]} ${last[Math.floor(Math.random()*last.length)]}`;
+                    document.getElementById('driverName').value = generated;
+                }
+
+                // Generate MC number
+                const mcNumber = document.getElementById('mcNumber').value.trim();
+                if (!mcNumber) {
+                    const randomMC = Math.floor(Math.random() * 900000) + 100000;
+                    document.getElementById('mcNumber').value = `MC-${randomMC}`;
+                }
+
+                // Generate truck number
+                const truckNumber = document.getElementById('truckNumber').value.trim();
+                if (!truckNumber) {
+                    const randomTruck = Math.floor(Math.random() * 900) + 100;
+                    document.getElementById('truckNumber').value = `TRK-${randomTruck}`;
+                }
+
+                // Generate trailer number
+                const trailerNumber = document.getElementById('trailerNumber').value.trim();
+                if (!trailerNumber) {
+                    const randomTrailer = Math.floor(Math.random() * 900) + 100;
+                    document.getElementById('trailerNumber').value = `TRL-${randomTrailer}`;
+                }
+
+                // Generate driver phone
+                const driverPhone = document.getElementById('driverPhone').value.trim();
+                if (!driverPhone) {
+                    const area = Math.floor(Math.random() * 900) + 100;
+                    const prefix = Math.floor(Math.random() * 900) + 100;
+                    const line = Math.floor(Math.random() * 9000) + 1000;
+                    document.getElementById('driverPhone').value = `+1 (${area}) ${prefix}-${line}`;
+                }
+
+                // Generate tracking system
+                const trackingSystem = document.getElementById('trackingSystem').value;
+                if (!trackingSystem) {
+                    const systems = ['Macropoint', 'Trucker Tools'];
+                    const randomSystem = systems[Math.floor(Math.random() * systems.length)];
+                    document.getElementById('trackingSystem').value = randomSystem;
+                }
+            }
+
+            // Hide all steps
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById('step' + i).style.display = 'none';
+            }
+
+            // Show current step
+            currentStep = step;
+            document.getElementById('step' + step).style.display = 'block';
+            updateStepBadges();
+
+            // Update info on step 3
+            if (step === 3) {
+                updateStep3Info();
+            }
+
+            // Update message preview on step 4
+            if (step === 4) {
+                // Copy driver phone to Step 4
+                document.getElementById('driverPhoneStep4').value = document.getElementById('driverPhone').value || '—';
+                
+                // Update load details for reference
+                if (selectedLoad) {
+                    document.getElementById('loadIdRef').textContent = selectedLoad.id || '—';
+                    document.getElementById('loadRouteRef').textContent = `${selectedLoad.pickupState} → ${selectedLoad.deliveryState}`;
+                    document.getElementById('loadRateRef').textContent = `$${selectedLoad.rate}`;
+                    document.getElementById('loadDistanceRef').textContent = `${selectedLoad.distance} miles`;
+                    document.getElementById('loadCargoRef').textContent = selectedLoad.cargoType || '—';
+                    document.getElementById('loadEquipmentRef').textContent = selectedLoad.equipment || '—';
+                    document.getElementById('loadWeightRef').textContent = `${selectedLoad.weight} lbs`;
+                    document.getElementById('loadPickupRef').textContent = selectedLoad.pickupDate || '—';
+                    document.getElementById('loadDeliveryRef').textContent = selectedLoad.deliveryDate || '—';
+                    document.getElementById('loadPickupTimeRef').textContent = selectedLoad.pickupTime || '—';
+                    document.getElementById('loadDeliveryTimeRef').textContent = selectedLoad.deliveryTime || '—';
+                    document.getElementById('loadUnloadTimeRef').textContent = `${selectedLoad.unloadTime} hours` || '—';
+                    
+                    // Generate email subject if empty
+                    const emailSubject = document.getElementById('emailSubject').value.trim();
+                    if (!emailSubject) {
+                        const subject = `${selectedLoad.pickupCity}, ${selectedLoad.pickupState} to ${selectedLoad.deliveryCity}, ${selectedLoad.deliveryState} *** CHECKING YOUR LOAD ***`;
+                        document.getElementById('emailSubject').value = subject;
+                    }
+                }
+                
+                updateMessagePreview();
+            }
+        }
+
+        function updateStepBadges() {
+            for (let i = 1; i <= 4; i++) {
+                const badge = document.getElementById('step' + i + '-badge');
+                if (i === currentStep) {
+                    badge.className = 'step-badge step-active';
+                } else {
+                    badge.className = 'step-badge step-inactive';
+                }
+            }
+        }
+
+        function renderLoads() {
+            const query = document.getElementById('searchQuery').value.trim().toLowerCase();
+            const grid = document.getElementById('loadsGrid');
+            
+            let filtered = mockLoads;
+            if (query) {
+                filtered = mockLoads.filter(l => 
+                    l.pickupCity.toLowerCase().includes(query) ||
+                    l.deliveryCity.toLowerCase().includes(query) ||
+                    l.pickupState.toLowerCase().includes(query) ||
+                    l.deliveryState.toLowerCase().includes(query)
+                );
+            } else {
+                filtered = mockLoads.slice(0, 20);
+            }
+
+            // Рандомизация порядка грузов
+            filtered = shuffleArray([...filtered]);
+
+            grid.innerHTML = filtered.map(load => `
+                <div class="load-card ${selectedLoad && selectedLoad.id === load.id ? 'load-card-selected' : ''}" onclick="selectLoad(${load.id})">
+                    <div class="load-header">
+                        <div>
+                            <div class="load-title">${load.pickupState} → ${load.deliveryState}</div>
+                            <div class="load-rate">$${load.rate}</div>
+                        </div>
+                    </div>
+                    <div class="load-route">${load.pickupCity}, ${load.pickupState} → ${load.deliveryCity}, ${load.deliveryState}</div>
+                    <div style="font-size: 15px; color: #374151; margin-top: 12px; display: grid; gap: 8px; line-height: 1.6;">
+                        <div><strong style="font-weight: 700;">📏 Расстояние:</strong> ${load.distance} миль</div>
+                        <div><strong style="font-weight: 700;">⚖️ Вес:</strong> ${load.weight} lbs</div>
+                        <div><strong style="font-weight: 700;">🚛 Оборудование:</strong> ${load.equipment}</div>
+                        <div><strong style="font-weight: 700;">📅 Погрузка:</strong> ${load.pickupDate} ${load.pickupTime}</div>
+                        <div><strong style="font-weight: 700;">📅 Разгрузка:</strong> ${load.deliveryDate} ${load.deliveryTime}</div>
+                    </div>
+                    <button class="btn btn-primary btn-select" onclick="selectLoad(${load.id}); event.stopPropagation();" style="margin-top: 12px;">Выбрать</button>
+                </div>
+            `).join('');
+        }
+
+        function selectLoad(id) {
+            selectedLoad = mockLoads.find(l => l.id === id);
+            renderLoads();
+            // Автоматически переходим на следующий шаг
+            setTimeout(() => {
+                goToStep(3);
+            }, 300);
+        }
+
+        // Функция для рандомизации массива (Fisher-Yates shuffle)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function clearSearch() {
+            document.getElementById('searchQuery').value = '';
+            renderLoads();
+        }
+
+        function updateStep3Info() {
+            const driverName = document.getElementById('driverName').value || '—';
+            const mcNumber = document.getElementById('mcNumber').value || '—';
+            const truckNumber = document.getElementById('truckNumber').value || '—';
+            const trailerNumber = document.getElementById('trailerNumber').value || '—';
+            const driverPhone = document.getElementById('driverPhone').value || '—';
+            const trackingSystem = document.getElementById('trackingSystem').value || '—';
+            const trailerFreeAt = document.getElementById('trailerFreeAt').value;
+
+            document.getElementById('driverInfo').textContent = driverName;
+            document.getElementById('mcInfo').textContent = mcNumber;
+            document.getElementById('truckNumberInfo').textContent = truckNumber;
+            document.getElementById('trailerNumberInfo').textContent = trailerNumber;
+            document.getElementById('driverPhoneInfo').textContent = driverPhone;
+            document.getElementById('trackingSystemInfo').textContent = trackingSystem;
+            document.getElementById('trailerInfo').textContent = trailerFreeAt;
+
+            const loadInfo = document.getElementById('selectedLoadInfo');
+            if (selectedLoad) {
+                loadInfo.innerHTML = `
+                    <p><strong>${selectedLoad.pickupState} → ${selectedLoad.deliveryState}</strong></p>
+                    <p>${selectedLoad.pickupCity}, ${selectedLoad.pickupState} → ${selectedLoad.deliveryCity}, ${selectedLoad.deliveryState}</p>
+                    <p>Время погрузки: ${selectedLoad.pickupTime}</p>
+                    <p>Ставка: $${selectedLoad.rate}</p>
+                `;
+
+                // Update dispatch button
+                const canDispatch = timeToMinutes(trailerFreeAt) <= timeToMinutes(selectedLoad.pickupTime);
+                const dispatchBtn = document.getElementById('dispatchBtn');
+                
+                if (selectedLoad.status === 'Assigned') {
+                    dispatchBtn.textContent = 'Назначено';
+                    dispatchBtn.disabled = true;
+                    dispatchBtn.className = 'btn btn-primary';
+                    dispatchBtn.style.background = '#d1d5db';
+                    dispatchBtn.style.color = '#9ca3af';
+                } else {
+                    dispatchBtn.textContent = 'Подтвердить назначение';
+                    dispatchBtn.disabled = false;
+                    if (canDispatch) {
+                        dispatchBtn.className = 'btn btn-success';
+                        dispatchBtn.style.background = '';
+                        dispatchBtn.style.color = '';
+                    } else {
+                        dispatchBtn.className = 'btn btn-primary';
+                        dispatchBtn.style.background = '#d1d5db';
+                        dispatchBtn.style.color = '#9ca3af';
+                    }
+                }
+            } else {
+                loadInfo.innerHTML = '<p style="font-size: 16px; color: #6b7280;">Груз не выбран</p>';
+            }
+        }
+
+        function handleDispatch() {
+            if (!selectedLoad) {
+                alert('Выберите груз прежде чем назначать');
+                return;
+            }
+
+            const trailerFreeAt = document.getElementById('trailerFreeAt').value;
+            const driverName = document.getElementById('driverName').value;
+
+            const canDispatch = timeToMinutes(trailerFreeAt) <= timeToMinutes(selectedLoad.pickupTime);
+
+            if (!canDispatch) {
+                alert('Трейлер будет занят к моменту погрузки.');
+                return;
+            }
+
+            // Assign driver
+            selectedLoad.status = 'Assigned';
+            selectedLoad.assignedDriver = driverName;
+            
+            updateStep3Info();
+        }
+
+        function formatDate(dateStr) {
+            // Преобразует YYYY-MM-DD в MM/DD/YYYY
+            const [year, month, day] = dateStr.split('-');
+            return `${month}/${day}/${year}`;
+        }
+
+        // Phone call simulation
+        function startPhoneCall() {
+            const preview = document.getElementById('messagePreview');
+            const driverLocation = document.getElementById('driverLocation').value;
+            const driverDistance = document.getElementById('driverDistance').value;
+
+            if (!selectedLoad) {
+                preview.innerHTML = `
+                    <p class="message-title">📧 Предпросмотр сообщения</p>
+                    <div class="message-empty">📭 Груз не выбран — выберите груз на шаге 2, чтобы увидеть предпросмотр.</div>
+                `;
+                return;
+            }
+
+            preview.innerHTML = `
+                <p class="message-title">📧 Предпросмотр сообщения</p>
+                <div class="message-content">
+                    <div class="message-section">
+                        <p class="message-greeting">Hello,</p>
+                    </div>
+                    <div class="message-section">
+                        <p class="message-text">Could you please provide more details about the following load?</p>
+                    </div>
+                    <div class="message-details">
+                        <div class="message-detail-item">
+                            <span class="message-detail-label">Load Number</span>
+                            <span class="message-detail-value highlight">${selectedLoad.id}</span>
+                        </div>
+                        <div class="message-detail-item">
+                            <span class="message-detail-label">Available Date</span>
+                            <span class="message-detail-value">${formatDate(selectedLoad.createdAt)}</span>
+                        </div>
+                        <div class="message-detail-item">
+                            <span class="message-detail-label">Pickup From</span>
+                            <span class="message-detail-value">${selectedLoad.pickupCity}, ${selectedLoad.pickupState}</span>
+                        </div>
+                        <div class="message-detail-item">
+                            <span class="message-detail-label">Delivery To</span>
+                            <span class="message-detail-value">${selectedLoad.deliveryCity}, ${selectedLoad.deliveryState}</span>
+                        </div>
+                        <div class="message-detail-item">
+                            <span class="message-detail-label">Driver Location</span>
+                            <span class="message-detail-value">${driverLocation}</span>
+                        </div>
+                        <div class="message-detail-item">
+                            <span class="message-detail-label">Deadhead</span>
+                            <span class="message-detail-value">${driverDistance} miles</span>
+                        </div>
+                        <div class="message-detail-item">
+                            <span class="message-detail-label">Trip Distance</span>
+                            <span class="message-detail-value">${selectedLoad.distance} miles</span>
+                        </div>
+                        <div class="message-detail-item">
+                            <span class="message-detail-label">Rate</span>
+                            <span class="message-detail-value success">$${selectedLoad.rate}</span>
+                        </div>
+                    </div>
+                    <div class="message-section">
+                        <p class="message-text">Could you also confirm the commodity type and the best available rate for this shipment?</p>
+                    </div>
+                    <div class="message-section">
+                        <p class="message-greeting">Thank you</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function copyMessage() {
+            if (!selectedLoad) {
+                alert('Выберите груз прежде чем копировать сообщение');
+                return;
+            }
+
+            const driverLocation = document.getElementById('driverLocation').value;
+            const driverDistance = document.getElementById('driverDistance').value;
+            const emailSubject = document.getElementById('emailSubject').value || `${selectedLoad.pickupCity}, ${selectedLoad.pickupState} to ${selectedLoad.deliveryCity}, ${selectedLoad.deliveryState} *** CHECKING YOUR LOAD ***`;
+
+            const message = `Subject: ${emailSubject}
+
+Hello,
+
+Could you please provide more details about the following load?
+
+Load Number: ${selectedLoad.id}
+Pickup From: ${selectedLoad.pickupCity}, ${selectedLoad.pickupState}
+Delivery To: ${selectedLoad.deliveryCity}, ${selectedLoad.deliveryState}
+Available Date: ${formatDate(selectedLoad.createdAt)}
+Driver Location: ${driverLocation}
+Deadhead: ${driverDistance} miles
+Trip Distance: ${selectedLoad.distance} miles
+Rate: $${selectedLoad.rate}
+
+Could you also confirm the commodity type and the best available rate for this shipment?
+
+Thank you`;
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(message).then(() => {
+                    alert('✅ Сообщение скопировано в буфер обмена');
+                }).catch(err => {
+                    console.error('Clipboard error', err);
+                    prompt('Скопируйте сообщение вручную:', message);
+                });
+            } else {
+                prompt('Скопируйте сообщение вручную:', message);
+            }
+        }
+
+        function sendMessage() {
+            if (!selectedLoad) {
+                alert('Выберите груз прежде чем отправлять сообщение');
+                return;
+            }
+
+            const brokerContact = document.getElementById('brokerContact').value;
+            const driverLocation = document.getElementById('driverLocation').value;
+            const driverDistance = document.getElementById('driverDistance').value;
+            const emailSubject = document.getElementById('emailSubject').value || `${selectedLoad.pickupCity}, ${selectedLoad.pickupState} to ${selectedLoad.deliveryCity}, ${selectedLoad.deliveryState} *** CHECKING YOUR LOAD ***`;
+
+            const msg = `To: ${brokerContact}
+Subject: ${emailSubject}
+
+Hello,
+
+Could you please provide more details about the following load?
+
+Load Number: ${selectedLoad.id}
+Pickup From: ${selectedLoad.pickupCity}, ${selectedLoad.pickupState}
+Delivery To: ${selectedLoad.deliveryCity}, ${selectedLoad.deliveryState}
+Available Date: ${formatDate(selectedLoad.createdAt)}
+Driver Location: ${driverLocation}
+Deadhead: ${driverDistance} miles
+Trip Distance: ${selectedLoad.distance} miles
+Rate: $${selectedLoad.rate}
+
+Could you also confirm the commodity type and the best available rate for this shipment?
+
+Thank you`;
+
+            brokerMessages.unshift(msg);
+            updateJournal();
+            alert('✅ Сообщение отправлено брокеру (эмуляция)');
+        }
+
+        function updateJournal() {
+            const journal = document.getElementById('journalContent');
+            
+            if (brokerMessages.length === 0) {
+                journal.innerHTML = '<div class="journal-empty">Отправленных сообщений нет. Отправляйте сообщения брокерам для заполнения журнала.</div>';
+                return;
+            }
+
+            journal.innerHTML = `
+                <div class="journal-messages">
+                    ${brokerMessages.map((msg, idx) => `
+                        <details class="journal-message">
+                            <summary>Сообщение #${brokerMessages.length - idx}</summary>
+                            <div class="journal-message-content">
+                                <pre>${msg}</pre>
+                            </div>
+                        </details>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function clearJournal() {
+            brokerMessages = [];
+            updateJournal();
+        }
+
+        // Phone call simulation
+        function startPhoneCall() {
+            if (!selectedLoad) {
+                alert('Please select a load first');
+                return;
+            }
+
+            const brokerPhone = document.getElementById('brokerPhone').value;
+            
+            addConversationEntry('☎️ Phone Call Started', `Calling broker at ${brokerPhone}`);
+            
+            // Simulate broker responses
+            setTimeout(() => {
+                addConversationEntry('🎤 Broker', 'Hello! Thanks for calling. I see you\'re interested in Load #' + selectedLoad.id);
+                updateConversationLog();
+            }, 1000);
+            
+            setTimeout(() => {
+                addConversationEntry('🎤 Broker', `The rate is $${selectedLoad.rate} for ${selectedLoad.distance} miles. Can your driver make the pickup at ${selectedLoad.pickupTime}?`);
+                updateConversationLog();
+            }, 2500);
+            
+            setTimeout(() => {
+                addConversationEntry('💬 You', 'Yes, my driver can be there. What about the equipment requirements?');
+                updateConversationLog();
+            }, 4000);
+            
+            setTimeout(() => {
+                addConversationEntry('🎤 Broker', `We need a ${selectedLoad.equipment}. Your driver will need to confirm the load details and sign the BOL.`);
+                updateConversationLog();
+            }, 5500);
+            
+            setTimeout(() => {
+                addConversationEntry('💬 You', 'Perfect! We\'re ready to go. Send me the load details and we\'ll get started.');
+                updateConversationLog();
+            }, 7000);
+            
+            setTimeout(() => {
+                addConversationEntry('🎤 Broker', 'Great! I\'ll email you the BOL and load details. Your driver should arrive by ' + selectedLoad.pickupTime);
+                addConversationEntry('✅ Call Ended', 'Phone call completed successfully');
+                updateConversationLog();
+            }, 8500);
+        }
+
+        function addConversationEntry(speaker, message) {
+            conversationLog.push({ speaker, message, time: new Date().toLocaleTimeString() });
+        }
+
+        function updateConversationLog() {
+            const log = document.getElementById('conversationLog');
+            const phoneConversationLog = document.getElementById('phoneConversationLog');
+            
+            if (conversationLog.length === 0) {
+                log.innerHTML = '<div class="message-empty">No conversations yet. Start a phone call to begin.</div>';
+                phoneConversationLog.style.display = 'none';
+                return;
+            }
+
+            phoneConversationLog.style.display = 'block';
+            log.innerHTML = conversationLog.map((entry, idx) => `
+                <div style="background: rgba(255, 255, 255, 0.05); padding: 10px 12px; border-radius: 8px; border-left: 2px solid ${entry.speaker.includes('Broker') ? '#3b82f6' : entry.speaker.includes('You') ? '#10b981' : '#8b5cf6'};">
+                    <p style="margin: 0; font-size: 12px; color: #8892aa; font-weight: 600;">${entry.speaker} <span style="float: right; font-size: 11px;">${entry.time}</span></p>
+                    <p style="margin: 4px 0 0 0; font-size: 13px; color: #f0f4ff;">${entry.message}</p>
+                </div>
+            `).join('');
+            
+            // Auto-scroll to bottom
+            log.scrollTop = log.scrollHeight;
+        }
+    </script>
+
+    <!-- Кнопка "Наверх" -->
+    <button id="scrollToTop" style="display: none; position: fixed; bottom: 20px; right: 20px; z-index: 1000; padding: 10px 15px; background: rgba(66, 153, 225, 0.7); color: white; border: none; border-radius: 50%; cursor: pointer; font-size: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: all 0.3s ease; opacity: 0.6;">
+        ↑
+    </button>
+    <script>
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+        scrollToTopBtn.addEventListener('mouseenter', () => {
+            scrollToTopBtn.style.opacity = '1';
+        });
+        scrollToTopBtn.addEventListener('mouseleave', () => {
+            scrollToTopBtn.style.opacity = '0.6';
+        });
+        window.addEventListener('scroll', () => {
+            const scrollPercent = (window.pageYOffset / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+            if (scrollPercent > 25) {
+                scrollToTopBtn.style.display = 'block';
+            } else {
+                scrollToTopBtn.style.display = 'none';
+            }
+        });
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    </script>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Курсы Диспетчера</h4>
+        <p>Профессиональное обучение диспетчеров грузоперевозок</p>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Обучение</h4>
+        <a href="courses.html">Курсы</a>
+        <a href="certification.html">Сертификация</a>
+        <a href="webinars.html">Вебинары</a>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Поддержка</h4>
+        <a href="faq.html">FAQ</a>
+        <a href="contacts.html">Контакты</a>
+        <a href="help.html">Помощь</a>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Компания</h4>
+        <a href="about.html">О нас</a>
+        <a href="blog.html">Блог</a>
+        <a href="career.html">Карьера</a>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <p>&copy; 2024 Курсы Диспетчера. Все права защищены.</p>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

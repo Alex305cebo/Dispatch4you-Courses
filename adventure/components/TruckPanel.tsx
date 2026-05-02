@@ -27,7 +27,7 @@ const STATUS_ICON: Record<string, string> = {
 
 const getTruckImageUri = (id: number): string => {
   const isGame = typeof window !== 'undefined' && window.location.pathname.startsWith('/game');
-  return `${isGame ? '/game' : ''}/assets/TruckPic/${id}.webp`;
+  return `${isGame ? '/game' : ''}/assets/Truck_Pic/${id}.webp`;
 };
 
 export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}) {

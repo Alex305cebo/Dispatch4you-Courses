@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎯 Dispatcher Cards - Выбор сложности</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #000000;
+  color: #ffffff;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated Background */
+body::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 40% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+  animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 500px;
+  width: 100%;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 48px 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: #94a3b8;
+}
+
+.form-group {
+  margin-bottom: 32px;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-bottom: 12px;
+}
+
+.input {
+  width: 100%;
+  padding: 16px 20px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: white;
+  font-size: 16px;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.3s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: rgba(139, 92, 246, 0.5);
+  background: rgba(30, 41, 59, 0.8);
+}
+
+.input::placeholder {
+  color: #64748b;
+}
+
+.difficulty-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-bottom: 16px;
+}
+
+.difficulty-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.difficulty-card {
+  background: rgba(30, 41, 59, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.difficulty-card:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(139, 92, 246, 0.3);
+  transform: translateX(8px);
+}
+
+.difficulty-card.selected {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.6);
+}
+
+.difficulty-indicator {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.difficulty-card.easy .difficulty-indicator {
+  background: rgba(34, 197, 94, 0.2);
+  border: 2px solid rgba(34, 197, 94, 0.5);
+}
+
+.difficulty-card.medium .difficulty-indicator {
+  background: rgba(251, 191, 36, 0.2);
+  border: 2px solid rgba(251, 191, 36, 0.5);
+}
+
+.difficulty-card.hard .difficulty-indicator {
+  background: rgba(239, 68, 68, 0.2);
+  border: 2px solid rgba(239, 68, 68, 0.5);
+}
+
+.difficulty-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.difficulty-card.easy .difficulty-dot {
+  background: #22c55e;
+}
+
+.difficulty-card.medium .difficulty-dot {
+  background: #fbbf24;
+}
+
+.difficulty-card.hard .difficulty-dot {
+  background: #ef4444;
+}
+
+.difficulty-info {
+  flex: 1;
+}
+
+.difficulty-name {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.difficulty-desc {
+  font-size: 13px;
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+
+.difficulty-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.start-btn {
+  width: 100%;
+  padding: 18px;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 32px;
+}
+
+.start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(139, 92, 246, 0.4);
+}
+
+.start-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.back-link {
+  display: block;
+  text-align: center;
+  margin-top: 20px;
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.3s;
+}
+
+.back-link:hover {
+  color: #8b5cf6;
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 32px 24px;
+  }
+  
+  .title {
+    font-size: 28px;
+  }
+  
+  .difficulty-name {
+    font-size: 16px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="icon">🚚</div>
+    <h1 class="title">Dispatcher Cards</h1>
+    <p class="subtitle">Тренировка знаний диспетчера</p>
+  </div>
+
+  <form id="quiz-form">
+    <div class="form-group">
+      <label class="label">
+        <span>👤</span>
+        <span>Ваше имя</span>
+      </label>
+      <input 
+        type="text" 
+        class="input" 
+        id="username" 
+        placeholder="Введите ваше имя"
+        required
+      >
+    </div>
+
+    <div class="form-group">
+      <div class="difficulty-label">
+        <span>🎯</span>
+        <span>Выберите сложность</span>
+      </div>
+      
+      <div class="difficulty-options">
+        <div class="difficulty-card easy" data-difficulty="easy">
+          <div class="difficulty-indicator">
+            <div class="difficulty-dot"></div>
+          </div>
+          <div class="difficulty-info">
+            <div class="difficulty-name">Легкий</div>
+            <div class="difficulty-desc">Идеально для начинающих</div>
+            <div class="difficulty-stats">
+              <span>15 вопросов</span>
+              <span>макс. 10 ошибок</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="difficulty-card medium" data-difficulty="medium">
+          <div class="difficulty-indicator">
+            <div class="difficulty-dot"></div>
+          </div>
+          <div class="difficulty-info">
+            <div class="difficulty-name">Средний</div>
+            <div class="difficulty-desc">Стандартный тест</div>
+            <div class="difficulty-stats">
+              <span>30 вопросов</span>
+              <span>макс. 15 ошибок</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="difficulty-card hard" data-difficulty="hard">
+          <div class="difficulty-indicator">
+            <div class="difficulty-dot"></div>
+          </div>
+          <div class="difficulty-info">
+            <div class="difficulty-name">Сложный</div>
+            <div class="difficulty-desc">Для профессионалов</div>
+            <div class="difficulty-stats">
+              <span>50 вопросов</span>
+              <span>макс. 20 ошибок</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="start-btn" id="start-btn" disabled>
+      Начать тренировку →
+    </button>
+  </form>
+
+  <a href="index.html" class="back-link">← Назад к списку тестов</a>
+</div>
+
+<script>
+let selectedDifficulty = null;
+
+// Handle difficulty selection
+document.querySelectorAll('.difficulty-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.difficulty-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    selectedDifficulty = card.dataset.difficulty;
+    updateStartButton();
+  });
+});
+
+// Handle username input
+document.getElementById('username').addEventListener('input', updateStartButton);
+
+function updateStartButton() {
+  const username = document.getElementById('username').value.trim();
+  const startBtn = document.getElementById('start-btn');
+  startBtn.disabled = !(username && selectedDifficulty);
+}
+
+// Handle form submission
+document.getElementById('quiz-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const username = document.getElementById('username').value.trim();
+  
+  // Save to localStorage
+  localStorage.setItem('dispatcher_username', username);
+  localStorage.setItem('dispatcher_difficulty', selectedDifficulty);
+  
+  // Redirect to quiz page
+  window.location.href = `cards-quiz.html?difficulty=${selectedDifficulty}&name=${encodeURIComponent(username)}`;
+});
+</script>
+
+</body>
+</html>

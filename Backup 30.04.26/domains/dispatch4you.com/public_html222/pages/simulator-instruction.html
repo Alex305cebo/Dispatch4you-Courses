@@ -1,0 +1,621 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>������ ����������: ��� ����������� � �������� | ��������� ����������</title>
+    <script src="auth-check.js"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../shared-styles.css">
+    <script>!function(){var t=localStorage.getItem('dispatcher-theme')||'dark';'dark'===t&&document.documentElement.setAttribute('data-theme','dark')}();</script>
+    <link rel="stylesheet" href="../dark-theme.css">
+    <script src="../dark-mode.js"></script>
+    <style>
+        .instruction-container {
+            max-width: 1050px;
+            margin: 0 auto;
+            padding: 20px 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .instruction-header {
+            padding: 20px 0 16px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .instruction-header h1 {
+            font-size: clamp(28px, 5vw, 40px);
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: -1.5px;
+            margin-bottom: 8px;
+        }
+
+        .instruction-header h1 span {
+            background: linear-gradient(135deg, #667eea, #a78bfa 50%, #60a5fa);
+            background-size: 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .instruction-header p {
+            font-size: 16px;
+            color: var(--text-2);
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,.05);
+            border: 1px solid var(--border);
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all .3s ease;
+            margin-bottom: 24px;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,.08);
+            border-color: rgba(var(--primary-rgb), .3);
+            transform: translateX(-3px);
+        }
+
+        .step-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: 900;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        .step-title {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: var(--text);
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .step-description {
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--text-2);
+            margin-bottom: 16px;
+        }
+
+        .step-content {
+            background: rgba(255,255,255,.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .step-content h4 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+
+        .step-content ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .step-content li {
+            font-size: 16px;
+            color: var(--text-2);
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+            line-height: 1.5;
+        }
+
+        .step-content li:before {
+            content: "?";
+            position: absolute;
+            left: 0;
+            color: #34d399;
+            font-weight: 700;
+        }
+
+        .tip-box {
+            background: rgba(102,126,234,.08);
+            border-left: 4px solid #667eea;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 16px;
+        }
+
+        .tip-box h5 {
+            color: #a5b4fc;
+            margin-bottom: 8px;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .tip-box p {
+            color: var(--text-2);
+            font-size: 16px;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .warning-box {
+            background: rgba(251,146,60,.08);
+            border-left: 4px solid #fb923c;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 16px;
+        }
+
+        .warning-box h5 {
+            color: #fdba74;
+            margin-bottom: 8px;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .warning-box p {
+            color: var(--text-2);
+            font-size: 16px;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .example-box {
+            background: rgba(59,130,246,.08);
+            border: 1px solid rgba(59,130,246,.2);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: var(--text-2);
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all .3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 14px rgba(102,126,234,.35);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(102,126,234,.55);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,.05);
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,.08);
+            border-color: rgba(var(--primary-rgb), .3);
+        }
+
+        @media (max-width: 768px) {
+            .instruction-container {
+                padding: 16px 12px;
+            }
+
+            .step-card {
+                padding: 16px;
+            }
+
+            .step-title {
+                font-size: 20px;
+            }
+
+            .step-description {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="instruction-container">
+        <a href="simulator.html" class="back-btn">< ��������� � ����������</a>
+
+        <div class="instruction-header">
+            <h1><span>������ ����������</span></h1>
+            <p>��� ����������� � �������� � ������������ � �����</p>
+        </div>
+
+        <!-- ��� 1 -->
+        <div class="step-card">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <h2 class="step-title">���������� � ������</h2>
+            </div>
+            <p class="step-description">����� ��� ��� ������� �������, ���������, ��� � ��� ���� ��� ����������� ���������� � �������� � �����.</p>
+            
+            <div class="step-content">
+                <h4>��� ����� �����������:</h4>
+                <ul>
+                    <li>��� �������� � ��� ����� ��������</li>
+                    <li>MC ����� ����� ��������</li>
+                    <li>����� ����� � ��������</li>
+                    <li>������� �������������� ��������</li>
+                    <li>�����, ����� ������� ����� ��������</li>
+                    <li>��� ������������ (53ft Dry Van, Reefer � �.�.)</li>
+                    <li>������������ ��� �����, ������� ����� ����� ��������</li>
+                </ul>
+            </div>
+
+            <div class="tip-box">
+                <h5>?? �����</h5>
+                <p>�������� ��� ���������� �� ����� ������ ��� � �������� �� ��������. ��� ������� ��� �� ������ ������ ������ �� ����� ���������.</p>
+            </div>
+        </div>
+
+        <!-- ��� 2 -->
+        <div class="step-card">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <h2 class="step-title">����� ����� �� Load Board</h2>
+            </div>
+            <p class="step-description">������� ���������� ���� �� DAT, Truckstop ��� ������ load board, ������� ������������� ������������ ������ ��������.</p>
+            
+            <div class="step-content">
+                <h4>�������� ������ �����:</h4>
+                <ul>
+                    <li>������� �������� �������� (�� ������� ������ �� ��� �������� ��������������)</li>
+                    <li>��� ����� �� ��������� ���������������� �����</li>
+                    <li>��� ������������ ��������� (Dry Van, Reefer, Flatbed � �.�.)</li>
+                    <li>����� �������� ��������� � �������� ������������ ��������</li>
+                    <li>������ �� ���� ��������� (������ $2-3 �� ���� ��� Dry Van)</li>
+                    <li>������ ����� ������� ���������</li>
+                </ul>
+            </div>
+
+            <div class="warning-box">
+                <h5>?? �����</h5>
+                <p>������ ���������� MC ����� ������� �� FMCSA.dot.gov ����� ��� ��� �������. ��� ������� ��� �� ����������.</p>
+            </div>
+        </div>
+
+        <!-- ��� 3 -->
+        <div class="step-card">
+            <div class="step-header">
+                <div class="step-number">3</div>
+                <h2 class="step-title">������ ������� � ��������</h2>
+            </div>
+            <p class="step-description">��������� ������� � �������������. ������ ������� � ���������������.</p>
+            
+            <div class="step-content">
+                <h4>��� ������ ��������:</h4>
+                <ul>
+                    <li>�������������� � �������������: "������, ��� [���� ���] �� [�������� ��������]"</li>
+                    <li>�������, ��� �� ��������� � ����� ����</li>
+                    <li>�������� ����� �����, ������� ��� ����������</li>
+                    <li>��������, �������� �� ����: "���� #1234 ��� ��������?"</li>
+                    <li>���� ��, ��������� ��������� ����������</li>
+                </ul>
+            </div>
+
+            <div class="example-box">������:
+"������, ��� ���� �� �������� TransLogistics. � ���������. ���������� ���� #5678 �� ���-��������� � ���-�����. ���� ��� ��������?"</div>
+        </div>
+
+        <!-- ��� 4 -->
+        <div class="step-card">
+            <div class="step-header">
+                <div class="step-number">4</div>
+                <h2 class="step-title">��������� ���������� � �����</h2>
+            </div>
+            <p class="step-description">���� ���� ��������, ��������� � ������� ��� ����������� ����������.</p>
+            
+            <div class="step-content">
+                <h4>����������, ������� ����� ��������:</h4>
+                <ul>
+                    <li>������ ����� �������� � ������� ����������������</li>
+                    <li>������ ����� ��������� � ������� ����������</li>
+                    <li>����� �������� (���� � �����)</li>
+                    <li>����� ��������� (���� � �����)</li>
+                    <li>�������� ����� (���, ���, �������, ���������� ������)</li>
+                    <li>����������� ���������� (Hazmat, �����������, ��������� � �.�.)</li>
+                    <li>��������� ������ �� ����</li>
+                    <li>������� ������ (����� ������, ��� ������)</li>
+                </ul>
+            </div>
+
+            <div class="tip-box">
+                <h5>?? �����</h5>
+                <p>����������� ��� ���������� �� ����� ���������. �� ����������� �� ������. ��� ������� �������� ������ � �������������.</p>
+            </div>
+        </div>
+
+        <!-- ��� 5 -->
+        <div class="step-card">
+            <div class="step-header">
+                <div class="step-number">5</div>
+                <h2 class="step-title">���������� � ������</h2>
+            </div>
+            <p class="step-description">���� ������ ��� �� ����������, ���������� ������������ � ������ ����.</p>
+            
+            <div class="step-content">
+                <h4>��� ����� ����������:</h4>
+                <ul>
+                    <li>������ �������� ������ ��� ����� ��������</li>
+                    <li>�� ���������� ������ �����������</li>
+                    <li>��������� ���� ����: "������ �� ���� ������� ������ $X �� ����"</li>
+                    <li>������ ������ � ������������</li>
+                    <li>������� � ������������ ����������, � �� ������ � ������� ������</li>
+                    <li>�� ��������� ���� �������������</li>
+                </ul>
+            </div>
+
+            <div class="warning-box">
+                <h5>?? �����</h5>
+                <p>���� ������ �� ����� �������������� � ������ ������� ������, ������� ����������. ���� ������ ����� � �������.</p>
+            </div>
+        </div>
+
+        <!-- ��� 6 -->
+        <div class="step-card">
+            <div class="step-header">
+                <div class="step-number">6</div>
+                <h2 class="step-title">������������� �����</h2>
+            </div>
+            <p class="step-description">����� �� ����������� � ���������, ����������� ���� � �������� ���������� �������������.</p>
+            
+            <div class="step-content">
+                <h4>��� ����� �������:</h4>
+                <ul>
+                    <li>������� �������: "����������� ���� #1234 �� ������ $X"</li>
+                    <li>��������� ��������� Rate Confirmation �� email</li>
+                    <li>����� ������� ���������� � ����� ��������</li>
+                    <li>�������, ����� �������� ����� �� ����� ��������</li>
+                    <li>�������� �������� ���������������� � ����������</li>
+                </ul>
+            </div>
+
+            <div class="tip-box">
+                <h5>?? �����</h5>
+                <p>������ ��������� ���������� ������������� (Rate Confirmation). ��� ������� ��� � ������ ����� � ������ ��� ��������.</p>
+            </div>
+        </div>
+
+        <!-- ��� 7 -->
+        <div class="step-card">
+            <div class="step-header">
+                <div class="step-number">7</div>
+                <h2 class="step-title">�������������� ��������</h2>
+            </div>
+            <p class="step-description">��������� �������� � �������� ��� ��� ������ �����.</p>
+            
+            <div class="step-content">
+                <h4>��� ����� �������� ��������:</h4>
+                <ul>
+                    <li>����� ����� � ������</li>
+                    <li>����� �������� � ������� ����������������</li>
+                    <li>����� ��������� � ������� ����������</li>
+                    <li>����� �������� � ���������</li>
+                    <li>�������� ����� � ����������� ����������</li>
+                    <li>������� � ��������� ����� � ����</li>
+                    <li>����� �������� ������� (�� ������ �������)</li>
+                </ul>
+            </div>
+
+            <div class="example-box">������:
+"������, [��� ��������]! � ���� ���� ���� ��� ����. ���� #5678, ������ $1350. �������� � ���-��������� ������ � 8:15, ��������� � ���-������ � 14:30. ���� - ����� ������, 45000 ������. ������� �������� 270 ����. �������� ����������������: [�����]. �� ��������?"</div>
+        </div>
+
+        <!-- ��� 8 -->
+        <div class="step-card">
+            <div class="step-header">
+                <div class="step-number">8</div>
+                <h2 class="step-title">�������� ����������</h2>
+            </div>
+            <p class="step-description">��������� �������� ��� ����������� ��������� �� email ��� SMS.</p>
+            
+            <div class="step-content">
+                <h4>���������, ������� ����� ���������:</h4>
+                <ul>
+                    <li>Rate Confirmation (������������� ������ �� �������)</li>
+                    <li>BOL (Bill of Lading) - ���� ��������</li>
+                    <li>�������� ���������������� � ����������</li>
+                    <li>������� � GPS ����������</li>
+                    <li>����� �������� �������</li>
+                </ul>
+            </div>
+
+            <div class="tip-box">
+                <h5>?? �����</h5>
+                <p>����������� WhatsApp, SMS ��� email ��� �������� ����������. ���������, ��� �������� ������� � �������� ��� ���������.</p>
+            </div>
+        </div>
+
+        <!-- ��� 9 -->
+        <div class="step-card">
+            <div class="step-header">
+                <div class="step-number">9</div>
+                <h2 class="step-title">���������� �����</h2>
+            </div>
+            <p class="step-description">������������ ���� �� ����� �������� � ������ ������ ������ ��� ������������� �������.</p>
+            
+            <div class="step-content">
+                <h4>��� ����� ������:</h4>
+                <ul>
+                    <li>���������� GPS ������ ������ 2-3 ����</li>
+                    <li>���������, ��� �������� ��������� �� ���������� ��������</li>
+                    <li>���������� ����� ��������</li>
+                    <li>������ ������ ������ ��� ������������� ������� (�������, ������ � �.�.)</li>
+                    <li>������������� ����� � ���������</li>
+                    <li>����������� ���������� � ������� ��������</li>
+                </ul>
+            </div>
+
+            <div class="warning-box">
+                <h5>?? �����</h5>
+                <p>���� �������� �������� (�������, �������� � �.�.), ���������� ��������� � �������� � ���������. ������������ �� � ��������.</p>
+            </div>
+        </div>
+
+        <!-- ��� 10 -->
+        <div class="step-card">
+            <div class="step-header">
+                <div class="step-number">10</div>
+                <h2 class="step-title">���������� ��������</h2>
+            </div>
+            <p class="step-description">����� �������� ����� ��������� ��� ����������� ���������.</p>
+            
+            <div class="step-content">
+                <h4>��� ����� �������:</h4>
+                <ul>
+                    <li>�������� POD (Proof of Delivery) �� ��������</li>
+                    <li>���������, ��� ���� ��������� � ������ ������ � ��� �����������</li>
+                    <li>�������� ���� (Invoice) ��� ������</li>
+                    <li>��������� ���� �������</li>
+                    <li>������������ ������</li>
+                    <li>�������� TMS (Transportation Management System) � ����������� � ��������</li>
+                    <li>������� �������� �� ������� ������</li>
+                </ul>
+            </div>
+
+            <div class="tip-box">
+                <h5>?? �����</h5>
+                <p>������ ������� ��������� � ��������� � ����������. ��� ������� ��� �������� ������ ������ � ������� � ������ �������.</p>
+            </div>
+        </div>
+
+        <!-- �������� ���������� -->
+        <div class="step-card" style="background: linear-gradient(135deg, rgba(102,126,234,.1) 0%, rgba(167,139,250,.1) 100%); border: 1px solid rgba(102,126,234,.2);">
+            <h2 class="step-title" style="margin-bottom: 24px;">? �� ������!</h2>
+            <p class="step-description">������ �� ������ ��� ����, ����������� ��� ����, ����� ����������� � �������� � ������������ � �����. �������:</p>
+            
+            <div class="step-content">
+                <ul>
+                    <li>������ ������ ��������������� � �������</li>
+                    <li>���������� ���������� � ������� ����� �������</li>
+                    <li>����������� ��� ������ �� ����� ���������</li>
+                    <li>��������� ���������� �������������</li>
+                    <li>������������ �������� � ���� �������</li>
+                    <li>������������ ���� �� ����� ��������</li>
+                    <li>���������� ��� ��������� ����� ��������</li>
+                </ul>
+            </div>
+
+            <div class="action-buttons">
+                <a href="simulator.html" class="btn btn-primary">< ��������� � ����������</a>
+                <a href="../pages/documentation.html" class="btn btn-secondary">?? ������ ������������</a>
+            </div>
+        </div>
+    </div>
+
+    <button id="scrollToTop" style="display: none; position: fixed; bottom: 24px; right: 24px; z-index: 1000; width: 42px; height: 42px; border-radius: 12px; background: rgba(102,126,234,.75); color: white; border: none; cursor: pointer; font-size: 17px; transition: all .3s ease; backdrop-filter: blur(8px); box-shadow: 0 4px 14px rgba(102,126,234,.35); align-items: center; justify-content: center; display: flex;">^</button>
+
+    <script>
+        const stt = document.getElementById('scrollToTop');
+        window.addEventListener('scroll', () => {
+            stt.style.display = window.pageYOffset > 320 ? 'flex' : 'none';
+        });
+        stt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    </script>
+<script src="../theme-switcher.js"></script>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Курсы Диспетчера</h4>
+        <p>Профессиональное обучение диспетчеров грузоперевозок</p>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Обучение</h4>
+        <a href="courses.html">Курсы</a>
+        <a href="certification.html">Сертификация</a>
+        <a href="webinars.html">Вебинары</a>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Поддержка</h4>
+        <a href="faq.html">FAQ</a>
+        <a href="contacts.html">Контакты</a>
+        <a href="help.html">Помощь</a>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Компания</h4>
+        <a href="about.html">О нас</a>
+        <a href="blog.html">Блог</a>
+        <a href="career.html">Карьера</a>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <p>&copy; 2024 Курсы Диспетчера. Все права защищены.</p>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,1170 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пример реальных грузов США | Курсы - Диспетчера</title>
+    <script src="auth-check.js"></script>
+        <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            min-height: 100vh;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            background: white; backdrop-filter: blur(10px);
+            padding: 20px 40px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 32px;
+        }
+
+        .back-btn {
+            padding: 12px 24px;
+            background: #48bb78;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+        }
+
+        .container {
+            max-width: 1050px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .info-card {
+            background: white; backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .info-card h2 {
+            color: #2d3748;
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        .info-card p {
+            color: #4a5568;
+            font-size: 18px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white; backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            transition: all 0.3s ease;
+            border-top: 3px solid #48bb78;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+        }
+
+        .stat-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #48bb78;
+            margin-bottom: 8px;
+            line-height: 1;
+        }
+
+        .stat-label {
+            color: #4a5568;
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .features-list {
+            background: white; backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .features-list h3 {
+            color: #2d3748;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .features-list ul {
+            list-style: none;
+        }
+
+        .features-list li {
+            color: #4a5568;
+            font-size: 16px;
+            padding: 12px 0;
+            padding-left: 35px;
+            position: relative;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .features-list li:last-child {
+            border-bottom: none;
+        }
+
+        .features-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #48bb78;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .action-btn {
+            display: inline-block;
+            width: 100%;
+            padding: 18px 40px;
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-size: 20px;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+        }
+
+        .load-accordion {
+            background: white; backdrop-filter: blur(10px);
+            border: 2px solid #e2e8f0;
+            border-radius: 50px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .load-accordion:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .load-header {
+            padding: 20px 25px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .load-header:hover {
+            opacity: 0.9;
+        }
+
+        .load-header h3 {
+            color: #2d3748;
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+
+        .load-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+
+        .load-content.open {
+            max-height: 1000px;
+        }
+
+        .arrow {
+            font-size: 24px;
+            transition: transform 0.3s ease;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .info-card {
+                padding: 25px 20px;
+            }
+
+            .info-card h2 {
+                font-size: 22px;
+            }
+
+            .info-card p {
+                font-size: 16px;
+                line-height: 1.7;
+            }
+
+            .stat-card {
+                padding: 20px 15px;
+            }
+
+            .stat-icon {
+                font-size: 36px;
+                margin-bottom: 8px;
+            }
+
+            .stat-number {
+                font-size: 32px;
+            }
+
+            .stat-label {
+                font-size: 13px;
+                line-height: 1.3;
+            }
+
+            .features-list {
+                padding: 25px 20px;
+            }
+
+            .features-list h3 {
+                font-size: 20px;
+            }
+
+            .features-list li {
+                font-size: 15px;
+                line-height: 1.7;
+            }
+
+            /* Улучшение карточек грузов для мобильных */
+            div[style*="border: 2px solid #e2e8f0"] {
+                padding: 20px 15px !important;
+            }
+
+            /* Заголовки грузов */
+            h3[style*="font-size: 22px"] {
+                font-size: 18px !important;
+                line-height: 1.4 !important;
+            }
+
+            /* Информация о грузе */
+            div[style*="font-size: 14px"] {
+                font-size: 15px !important;
+            }
+
+            /* Ставки */
+            div[style*="font-size: 32px"] {
+                font-size: 28px !important;
+            }
+
+            /* Сетки в карточках */
+            div[style*="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr))"] {
+                grid-template-columns: 1fr !important;
+                gap: 12px !important;
+            }
+
+            div[style*="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr))"] {
+                grid-template-columns: 1fr !important;
+                gap: 12px !important;
+            }
+
+            /* Кнопки анализа */
+            button[onclick*="toggleAnalysis"] {
+                font-size: 15px !important;
+                padding: 14px !important;
+            }
+
+            /* Детальный анализ */
+            div[id^="analysis"] h4 {
+                font-size: 17px !important;
+            }
+
+            div[id^="analysis"] ul {
+                font-size: 15px !important;
+                line-height: 1.8 !important;
+            }
+
+            /* Списки */
+            ul {
+                font-size: 15px !important;
+                line-height: 1.8 !important;
+            }
+
+            /* Термины Load Board */
+            div[style*="border-left: 4px solid #4299e1"] strong {
+                font-size: 15px !important;
+            }
+
+            div[style*="border-left: 4px solid #4299e1"] span {
+                font-size: 15px !important;
+            }
+        }
+    body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3), transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(138, 43, 226, 0.3), transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(75, 0, 130, 0.2), transparent 50%);
+    animation: backgroundMove 20s ease infinite;
+    z-index: -1;
+}
+
+@keyframes backgroundMove {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(5%, 5%) scale(1.05); }
+    50% { transform: translate(-5%, 5%) scale(1.1); }
+    75% { transform: translate(5%, -5%) scale(1.05); }
+}</style>
+
+    <script>!function(){var t=localStorage.getItem('dispatcher-theme')||'dark';'dark'===t&&document.documentElement.setAttribute('data-theme','dark')}();</script>
+
+
+    <link rel="stylesheet" href="../dark-theme.css">
+    <script src="../dark-mode.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 Пример реальных грузов США</h1>
+            <div style="display: flex; gap: 12px;">
+                <a href="../course.html" class="back-btn">← Назад</a>
+                <a href="../index.html" class="back-btn">🏠 Главная</a>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <h2>Реальные данные из всех штатов США</h2>
+            <p>
+                Наша база данных содержит более 63 реальных грузов со всех 50 штатов США. 
+                Каждый груз включает детальную информацию о маршруте, весе, типе оборудования, 
+                ставке и времени доставки. Система автоматически генерирует дополнительные грузы 
+                для штатов, где данных недостаточно.
+            </p>
+            <a href="loadboard.html" class="action-btn" style="display: inline-block; margin-top: 20px;">🚀 Просмотреть все грузы в Load Board</a>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📦</div>
+                <div class="stat-number">116+</div>
+                <div class="stat-label">Доступных грузов</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">🗺️</div>
+                <div class="stat-number">50</div>
+                <div class="stat-label">Штатов США</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">🚛</div>
+                <div class="stat-number">4</div>
+                <div class="stat-label">Типа оборудования</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">💰</div>
+                <div class="stat-number">$800+</div>
+                <div class="stat-label">Средняя ставка</div>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <h2>📋 Примеры реальных грузов</h2>
+            <p style="margin-bottom: 25px;">
+                Ниже представлены примеры реальных грузов из разных штатов США с полной информацией для анализа:
+            </p>
+
+            <!-- Груз 1 -->
+            <div style="background: white; backdrop-filter: blur(10px); border: 2px solid #e2e8f0; border-radius: 50px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h3 style="color: #2d3748; font-size: 22px; margin-bottom: 8px;">🚚 Chicago, IL → Dallas, TX</h3>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap; color: #718096; font-size: 16px;">
+                            <span>📏 950 миль</span>
+                            <span>⏱️ 14 часов</span>
+                            <span>📦 Dry Van</span>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 32px; font-weight: bold; color: #48bb78;">$2,800</div>
+                        <div style="color: #718096; font-size: 16px;">$2.95/миля</div>
+                    </div>
+                </div>
+                <div style="background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div>
+                            <strong style="color: #4a5568;">Вес:</strong> 42,000 lbs
+                        </div>
+                        <div>
+                            <strong style="color: #4a5568;">Груз:</strong> Упакованные товары
+                        </div>
+                        <div>
+                            <strong style="color: #4a5568;">Погрузка:</strong> 2/18/2025 08:00
+                        </div>
+                        <div>
+                            <strong style="color: #4a5568;">Разгрузка:</strong> 2/19/2025 10:00
+                        </div>
+                    </div>
+                </div>
+                <div style="background: #f0fff4; padding: 12px 15px; border-radius: 6px; border-left: 4px solid #48bb78; margin-bottom: 15px;">
+                    <strong style="color: #22543d;">💡 Краткий анализ:</strong> 
+                    <span style="color: #4a5568;">Отличная ставка $2.95/миля. Удобное время погрузки. Популярный маршрут с возможностью найти обратный груз.</span>
+                </div>
+                <button onclick="toggleAnalysis('analysis1')" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 16px;">
+                    📊 Показать детальный анализ
+                </button>
+                <div id="analysis1" style="display: none; margin-top: 15px; animation: slideDown 0.3s ease;">
+                    <div style="background: #f7fafc; padding: 20px; border-radius: 8px; border: 2px solid #e2e8f0;">
+                        <h4 style="color: #2d3748; margin-bottom: 15px; font-size: 18px;">📊 Детальный финансовый анализ:</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Валовая выручка</div>
+                                <div style="color: #48bb78; font-size: 24px; font-weight: bold;">$2,800</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Топливо (950 миль × $0.50)</div>
+                                <div style="color: #e53e3e; font-size: 24px; font-weight: bold;">-$475</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Прочие расходы (~15%)</div>
+                                <div style="color: #e53e3e; font-size: 24px; font-weight: bold;">-$420</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Чистая прибыль</div>
+                                <div style="color: #48bb78; font-size: 24px; font-weight: bold;">$1,905</div>
+                            </div>
+                        </div>
+                        <div style="background: #ebf8ff; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                            <strong style="color: #2c5282;">💰 Рентабельность:</strong> 68% (отличный показатель)
+                        </div>
+                        <div style="background: #fff5f5; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                            <strong style="color: #c53030;">⚠️ Риски:</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px; color: #4a5568; line-height: 1.8;">
+                                <li>Длинный маршрут - требуется планирование отдыха водителя</li>
+                                <li>Проверить погодные условия на маршруте</li>
+                                <li>Убедиться что водитель имеет достаточно HOS времени</li>
+                            </ul>
+                        </div>
+                        <div style="background: #f0fff4; padding: 15px; border-radius: 6px;">
+                            <strong style="color: #22543d;">✅ Рекомендации:</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px; color: #4a5568; line-height: 1.8;">
+                                <li>БРАТЬ! Отличная ставка и прибыльность</li>
+                                <li>Искать обратный груз из Dallas в Chicago или близлежащие города</li>
+                                <li>Запланировать 10-часовой отдых после доставки</li>
+                                <li>Проверить брокера через Carrier411 перед подтверждением</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Груз 2 -->
+            <div style="background: white; backdrop-filter: blur(10px); border: 2px solid #e2e8f0; border-radius: 50px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h3 style="color: #2d3748; font-size: 22px; margin-bottom: 8px;">❄️ Los Angeles, CA → Phoenix, AZ</h3>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap; color: #718096; font-size: 16px;">
+                            <span>📏 373 миль</span>
+                            <span>⏱️ 5.5 часов</span>
+                            <span>❄️ Reefer</span>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 32px; font-weight: bold; color: #4299e1;">$1,200</div>
+                        <div style="color: #718096; font-size: 16px;">$3.22/миля</div>
+                    </div>
+                </div>
+                <div style="background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div>
+                            <strong style="color: #4a5568;">Вес:</strong> 38,500 lbs
+                        </div>
+                        <div>
+                            <strong style="color: #4a5568;">Груз:</strong> Свежие продукты
+                        </div>
+                        <div>
+                            <strong style="color: #4a5568;">Температура:</strong> 34-38°F
+                        </div>
+                        <div>
+                            <strong style="color: #4a5568;">Погрузка:</strong> 2/18/2025 06:00
+                        </div>
+                    </div>
+                </div>
+                <div style="background: #ebf8ff; padding: 12px 15px; border-radius: 6px; border-left: 4px solid #4299e1; margin-bottom: 15px;">
+                    <strong style="color: #2c5282;">💡 Краткий анализ:</strong> 
+                    <span style="color: #4a5568;">Премиум ставка $3.22/миля для reefer. Короткое расстояние, быстрая доставка. Требуется рефрижератор.</span>
+                </div>
+                <button onclick="toggleAnalysis('analysis2')" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 16px;">
+                    📊 Показать детальный анализ
+                </button>
+                <div id="analysis2" style="display: none; margin-top: 15px;">
+                    <div style="background: #f7fafc; padding: 20px; border-radius: 8px; border: 2px solid #e2e8f0;">
+                        <h4 style="color: #2d3748; margin-bottom: 15px; font-size: 18px;">📊 Детальный финансовый анализ:</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Валовая выручка</div>
+                                <div style="color: #4299e1; font-size: 24px; font-weight: bold;">$1,200</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Топливо (373 миль × $0.55)</div>
+                                <div style="color: #e53e3e; font-size: 24px; font-weight: bold;">-$205</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Reefer топливо (~$50)</div>
+                                <div style="color: #e53e3e; font-size: 24px; font-weight: bold;">-$50</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Чистая прибыль</div>
+                                <div style="color: #4299e1; font-size: 24px; font-weight: bold;">$945</div>
+                            </div>
+                        </div>
+                        <div style="background: #ebf8ff; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                            <strong style="color: #2c5282;">💰 Рентабельность:</strong> 79% (превосходный показатель для короткого маршрута)
+                        </div>
+                        <div style="background: #fff5f5; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                            <strong style="color: #c53030;">⚠️ Риски:</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px; color: #4a5568; line-height: 1.8;">
+                                <li>Требуется исправный рефрижератор с контролем температуры</li>
+                                <li>Ранняя погрузка в 06:00 - водитель должен быть готов</li>
+                                <li>Свежие продукты - критична своевременная доставка</li>
+                                <li>Проверить уровень топлива в reefer unit перед погрузкой</li>
+                            </ul>
+                        </div>
+                        <div style="background: #f0fff4; padding: 15px; border-radius: 6px;">
+                            <strong style="color: #22543d;">✅ Рекомендации:</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px; color: #4a5568; line-height: 1.8;">
+                                <li>БРАТЬ! Отличная короткая поездка с высокой прибылью</li>
+                                <li>Можно сделать 2-3 таких рейса в день</li>
+                                <li>Проверить reefer unit за день до погрузки</li>
+                                <li>Установить температуру 34-38°F за 2 часа до погрузки</li>
+                                <li>Искать обратный груз из Phoenix в LA или San Diego</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Груз 3 -->
+            <div style="background: white; backdrop-filter: blur(10px); border: 2px solid #e2e8f0; border-radius: 50px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h3 style="color: #2d3748; font-size: 22px; margin-bottom: 8px;">📏 Atlanta, GA → Miami, FL</h3>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap; color: #718096; font-size: 16px;">
+                            <span>📏 663 миль</span>
+                            <span>⏱️ 10 часов</span>
+                            <span>📏 Flatbed</span>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 32px; font-weight: bold; color: #f6ad55;">$2,100</div>
+                        <div style="color: #718096; font-size: 16px;">$3.17/миля</div>
+                    </div>
+                </div>
+                <div style="background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div>
+                            <strong style="color: #4a5568;">Вес:</strong> 45,000 lbs
+                        </div>
+                        <div>
+                            <strong style="color: #4a5568;">Груз:</strong> Стройматериалы
+                        </div>
+                        <div>
+                            <strong style="color: #4a5568;">Погрузка:</strong> 2/19/2025 07:00
+                        </div>
+                        <div>
+                            <strong style="color: #4a5568;">Разгрузка:</strong> 2/19/2025 18:00
+                        </div>
+                    </div>
+                </div>
+                <div style="background: #fef5e7; padding: 12px 15px; border-radius: 6px; border-left: 4px solid #f6ad55; margin-bottom: 15px;">
+                    <strong style="color: #7c2d12;">💡 Краткий анализ:</strong> 
+                    <span style="color: #4a5568;">Высокая ставка $3.17/миля для flatbed. Требуется крепление груза. Доставка в тот же день.</span>
+                </div>
+                <button onclick="toggleAnalysis('analysis3')" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 16px;">
+                    📊 Показать детальный анализ
+                </button>
+                <div id="analysis3" style="display: none; margin-top: 15px;">
+                    <div style="background: #f7fafc; padding: 20px; border-radius: 8px; border: 2px solid #e2e8f0;">
+                        <h4 style="color: #2d3748; margin-bottom: 15px; font-size: 18px;">📊 Детальный финансовый анализ:</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Валовая выручка</div>
+                                <div style="color: #f6ad55; font-size: 24px; font-weight: bold;">$2,100</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Топливо (663 миль × $0.50)</div>
+                                <div style="color: #e53e3e; font-size: 24px; font-weight: bold;">-$332</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Крепление груза</div>
+                                <div style="color: #e53e3e; font-size: 24px; font-weight: bold;">-$50</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Чистая прибыль</div>
+                                <div style="color: #f6ad55; font-size: 24px; font-weight: bold;">$1,718</div>
+                            </div>
+                        </div>
+                        <div style="background: #fef5e7; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                            <strong style="color: #7c2d12;">💰 Рентабельность:</strong> 82% (отличный показатель для flatbed)
+                        </div>
+                        <div style="background: #fff5f5; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                            <strong style="color: #c53030;">⚠️ Риски:</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px; color: #4a5568; line-height: 1.8;">
+                                <li>Требуется правильное крепление груза (chains, straps, tarps)</li>
+                                <li>Тяжелый груз 45,000 lbs - проверить весовые ограничения</li>
+                                <li>Доставка в тот же день - нет времени на задержки</li>
+                                <li>Погодные условия - дождь может повредить стройматериалы</li>
+                            </ul>
+                        </div>
+                        <div style="background: #f0fff4; padding: 15px; border-radius: 6px;">
+                            <strong style="color: #22543d;">✅ Рекомендации:</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px; color: #4a5568; line-height: 1.8;">
+                                <li>БРАТЬ! Высокая прибыльность для flatbed</li>
+                                <li>Убедиться что водитель имеет опыт крепления груза</li>
+                                <li>Проверить наличие chains, straps, tarps</li>
+                                <li>Выехать рано утром чтобы избежать пробок в Miami</li>
+                                <li>Сфотографировать груз после крепления для документации</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Груз 4 -->
+            <div style="background: white; backdrop-filter: blur(10px); border: 2px solid #e2e8f0; border-radius: 50px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h3 style="color: #2d3748; font-size: 22px; margin-bottom: 8px;">🚚 New York, NY → Boston, MA</h3>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap; color: #718096; font-size: 16px;">
+                            <span>📏 215 миль</span>
+                            <span>⏱️ 3.5 часа</span>
+                            <span>📦 Dry Van</span>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 32px; font-weight: bold; color: #48bb78;">$650</div>
+                        <div style="color: #718096; font-size: 16px;">$3.02/миля</div>
+                    </div>
+                </div>
+                <div style="background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div>
+                            <strong style="color: #4a5568;">Вес:</strong> 28,000 lbs
+                        </div>
+                        <div>
+                            <strong style="color: #4a5568;">Груз:</strong> Электроника
+                        </div>
+                        <div>
+                            <strong style="color: #4a5568;">Погрузка:</strong> 2/18/2025 14:00
+                        </div>
+                        <div>
+                            <strong style="color: #4a5568;">Разгрузка:</strong> 2/18/2025 19:00
+                        </div>
+                    </div>
+                </div>
+                <div style="background: #f0fff4; padding: 12px 15px; border-radius: 6px; border-left: 4px solid #48bb78; margin-bottom: 15px;">
+                    <strong style="color: #22543d;">💡 Краткий анализ:</strong> 
+                    <span style="color: #4a5568;">Отличная короткая поездка $3.02/миля. Можно сделать 2-3 рейса в день. Популярный коридор Восточного побережья.</span>
+                </div>
+                <button onclick="toggleAnalysis('analysis4')" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 16px;">
+                    📊 Показать детальный анализ
+                </button>
+                <div id="analysis4" style="display: none; margin-top: 15px;">
+                    <div style="background: #f7fafc; padding: 20px; border-radius: 8px; border: 2px solid #e2e8f0;">
+                        <h4 style="color: #2d3748; margin-bottom: 15px; font-size: 18px;">📊 Детальный финансовый анализ:</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Валовая выручка</div>
+                                <div style="color: #48bb78; font-size: 24px; font-weight: bold;">$650</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Топливо (215 миль × $0.50)</div>
+                                <div style="color: #e53e3e; font-size: 24px; font-weight: bold;">-$108</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Прочие расходы</div>
+                                <div style="color: #e53e3e; font-size: 24px; font-weight: bold;">-$65</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Чистая прибыль</div>
+                                <div style="color: #48bb78; font-size: 24px; font-weight: bold;">$477</div>
+                            </div>
+                        </div>
+                        <div style="background: #ebf8ff; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                            <strong style="color: #2c5282;">💰 Рентабельность:</strong> 73% | <strong>Потенциал дня:</strong> $1,431 (3 рейса)
+                        </div>
+                        <div style="background: #fff5f5; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                            <strong style="color: #c53030;">⚠️ Риски:</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px; color: #4a5568; line-height: 1.8;">
+                                <li>Плотный трафик на I-95 - планировать время с запасом</li>
+                                <li>Электроника - требуется аккуратная погрузка/разгрузка</li>
+                                <li>Короткое окно доставки - всего 5 часов</li>
+                            </ul>
+                        </div>
+                        <div style="background: #f0fff4; padding: 15px; border-radius: 6px;">
+                            <strong style="color: #22543d;">✅ Рекомендации:</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px; color: #4a5568; line-height: 1.8;">
+                                <li>БРАТЬ! Идеально для коротких рейсов</li>
+                                <li>Искать 2-3 похожих груза в этом коридоре</li>
+                                <li>Избегать часов пик (7-9 AM, 4-7 PM)</li>
+                                <li>Проверить наличие обратного груза Boston → NYC</li>
+                                <li>Можно заработать $1,400+ за день на таких рейсах</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Груз 5 -->
+            <div style="background: white; backdrop-filter: blur(10px); border: 2px solid #e2e8f0; border-radius: 50px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h3 style="color: #2d3748; font-size: 22px; margin-bottom: 8px;">⚠️ Houston, TX → Denver, CO</h3>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap; color: #718096; font-size: 16px;">
+                            <span>📏 1,019 миль</span>
+                            <span>⏱️ 15 часов</span>
+                            <span>⚠️ Hazmat</span>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 32px; font-weight: bold; color: #fc8181;">$3,800</div>
+                        <div style="color: #718096; font-size: 16px;">$3.73/миля</div>
+                    </div>
+                </div>
+                <div style="background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div>
+                            <strong style="color: #4a5568;">Вес:</strong> 40,000 lbs
+                        </div>
+                        <div>
+                            <strong style="color: #4a5568;">Груз:</strong> Химикаты (Class 3)
+                        </div>
+                        <div>
+                            <strong style="color: #4a5568;">Погрузка:</strong> 2/20/2025 08:00
+                        </div>
+                        <div>
+                            <strong style="color: #4a5568;">Разгрузка:</strong> 2/21/2025 114:00
+                        </div>
+                    </div>
+                </div>
+                <div style="background: #fff5f5; padding: 12px 15px; border-radius: 6px; border-left: 4px solid #fc8181; margin-bottom: 15px;">
+                    <strong style="color: #c53030;">💡 Краткий анализ:</strong> 
+                    <span style="color: #4a5568;">Премиум ставка $3.73/миля для Hazmat. Требуется специальная лицензия и сертификация. Высокая ответственность.</span>
+                </div>
+                <button onclick="toggleAnalysis('analysis5')" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #fc8181 0%, #f56565 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 16px;">
+                    📊 Показать детальный анализ
+                </button>
+                <div id="analysis5" style="display: none; margin-top: 15px;">
+                    <div style="background: #f7fafc; padding: 20px; border-radius: 8px; border: 2px solid #e2e8f0;">
+                        <h4 style="color: #2d3748; margin-bottom: 15px; font-size: 18px;">📊 Детальный финансовый анализ:</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Валовая выручка</div>
+                                <div style="color: #fc8181; font-size: 24px; font-weight: bold;">$3,800</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Топливо (1,019 миль × $0.50)</div>
+                                <div style="color: #e53e3e; font-size: 24px; font-weight: bold;">-$510</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Hazmat страховка</div>
+                                <div style="color: #e53e3e; font-size: 24px; font-weight: bold;">-$150</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Чистая прибыль</div>
+                                <div style="color: #fc8181; font-size: 24px; font-weight: bold;">$3,140</div>
+                            </div>
+                        </div>
+                        <div style="background: #fff5f5; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                            <strong style="color: #c53030;">💰 Рентабельность:</strong> 83% (премиум показатель для Hazmat)
+                        </div>
+                        <div style="background: #fff5f5; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                            <strong style="color: #c53030;">⚠️ Критические требования:</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px; color: #4a5568; line-height: 1.8;">
+                                <li><strong>ОБЯЗАТЕЛЬНО:</strong> Водитель должен иметь HAZMAT endorsement на CDL</li>
+                                <li><strong>ОБЯЗАТЕЛЬНО:</strong> Действующий TSA security clearance</li>
+                                <li><strong>ОБЯЗАТЕЛЬНО:</strong> Hazmat training certificate (в течение 3 лет)</li>
+                                <li>Специальная страховка для опасных грузов</li>
+                                <li>Placards для химикатов Class 3 (легковоспламеняющиеся)</li>
+                                <li>Emergency response guidebook в траке</li>
+                                <li>Запрещено курить в радиусе 25 футов от трака</li>
+                            </ul>
+                        </div>
+                        <div style="background: #fff5f5; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                            <strong style="color: #c53030;">⚠️ Дополнительные риски:</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px; color: #4a5568; line-height: 1.8;">
+                                <li>Высокая ответственность - штрафы до $75,000 за нарушения</li>
+                                <li>Ограничения маршрута - нельзя через туннели и некоторые мосты</li>
+                                <li>Обязательная остановка на всех weigh stations</li>
+                                <li>Требуется детальное планирование маршрута</li>
+                                <li>Нельзя парковаться в жилых зонах</li>
+                            </ul>
+                        </div>
+                        <div style="background: #f0fff4; padding: 15px; border-radius: 6px;">
+                            <strong style="color: #22543d;">✅ Рекомендации:</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px; color: #4a5568; line-height: 1.8;">
+                                <li>БРАТЬ только если водитель имеет все сертификаты!</li>
+                                <li>Проверить срок действия HAZMAT endorsement</li>
+                                <li>Спланировать маршрут с учетом ограничений Hazmat</li>
+                                <li>Избегать туннелей - использовать альтернативные маршруты</li>
+                                <li>Убедиться что placards установлены правильно</li>
+                                <li>Иметь emergency contact numbers shipper и receiver</li>
+                                <li>Высокая прибыль оправдывает дополнительные требования</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Груз 6 - Seattle → Portland -->
+            <div style="background: white; backdrop-filter: blur(10px); border: 2px solid #e2e8f0; border-radius: 50px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h3 style="color: #2d3748; font-size: 22px; margin-bottom: 8px;">🚚 Seattle, WA → Portland, OR</h3>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap; color: #718096; font-size: 16px;">
+                            <span>📏 175 миль</span>
+                            <span>⏱️ 3 часа</span>
+                            <span>📦 Dry Van</span>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 32px; font-weight: bold; color: #9f7aea;">$525</div>
+                        <div style="color: #718096; font-size: 16px;">$3.00/миля</div>
+                    </div>
+                </div>
+                <div style="background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div><strong style="color: #4a5568;">Вес:</strong> 25,000 lbs</div>
+                        <div><strong style="color: #4a5568;">Груз:</strong> Книги и печатная продукция</div>
+                        <div><strong style="color: #4a5568;">Погрузка:</strong> 2/20/2025 10:00</div>
+                        <div><strong style="color: #4a5568;">Разгрузка:</strong> 2/20/2025 14:00</div>
+                    </div>
+                </div>
+                <div style="background: #faf5ff; padding: 12px 15px; border-radius: 6px; border-left: 4px solid #9f7aea; margin-bottom: 15px;">
+                    <strong style="color: #6b46c1;">💡 Краткий анализ:</strong> 
+                    <span style="color: #4a5568;">Отличная короткая поездка $3.00/миля. Легкий груз, быстрая доставка. Популярный коридор Западного побережья.</span>
+                </div>
+                <button onclick="toggleAnalysis('analysis6')" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 16px;">
+                    📊 Показать детальный анализ
+                </button>
+                <div id="analysis6" style="display: none; margin-top: 15px;">
+                    <div style="background: #f7fafc; padding: 20px; border-radius: 8px; border: 2px solid #e2e8f0;">
+                        <h4 style="color: #2d3748; margin-bottom: 15px; font-size: 18px;">📊 Детальный финансовый анализ:</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Валовая выручка</div>
+                                <div style="color: #9f7aea; font-size: 24px; font-weight: bold;">$525</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Топливо (175 миль × $0.45)</div>
+                                <div style="color: #e53e3e; font-size: 24px; font-weight: bold;">-$79</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Прочие расходы</div>
+                                <div style="color: #e53e3e; font-size: 24px; font-weight: bold;">-$50</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 6px;">
+                                <div style="color: #718096; font-size: 16px; margin-bottom: 5px;">Чистая прибыль</div>
+                                <div style="color: #9f7aea; font-size: 24px; font-weight: bold;">$396</div>
+                            </div>
+                        </div>
+                        <div style="background: #faf5ff; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                            <strong style="color: #6b46c1;">💰 Рентабельность:</strong> 75% | <strong>Потенциал дня:</strong> $1,584 (4 рейса)
+                        </div>
+                        <div style="background: #fff5f5; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                            <strong style="color: #c53030;">⚠️ Риски:</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px; color: #4a5568; line-height: 1.8;">
+                                <li>Легкий груз - низкий риск повреждения</li>
+                                <li>Короткое расстояние - минимальные риски</li>
+                                <li>Популярный маршрут - возможны пробки в часы пик</li>
+                                <li>Печатная продукция - защита от влаги</li>
+                            </ul>
+                        </div>
+                        <div style="background: #f0fff4; padding: 15px; border-radius: 6px;">
+                            <strong style="color: #22543d;">✅ Рекомендации:</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px; color: #4a5568; line-height: 1.8;">
+                                <li>БРАТЬ! Идеально для коротких рейсов</li>
+                                <li>Можно сделать 4 таких рейса за день</li>
+                                <li>Избегать часов пик на I-5</li>
+                                <li>Искать обратный груз Portland → Seattle</li>
+                                <li>Потенциал заработка $1,500+ за день</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="features-list">
+            <h3>Информация о каждом грузе включает:</h3>
+            <ul style="text-align: center; list-style-position: inside;">
+                <li>Полный маршрут: город отправления и назначения</li>
+                <li>Расстояние в милях и время в пути</li>
+                <li>Вес груза в фунтах</li>
+                <li>Тип груза и требуемое оборудование</li>
+                <li>Ставка оплаты в долларах</li>
+                <li>Время погрузки и разгрузки</li>
+                <li>Статус груза (доступен, назначен, в пути, доставлен)</li>
+                <li>Информация о грузоотправителе</li>
+                <li>Связанные грузы для оптимизации маршрута</li>
+            </ul>
+        </div>
+
+        <div class="info-card">
+            <h2>🚛 Типы оборудования</h2>
+            <p style="margin-bottom: 25px;">
+                В грузоперевозках США используются различные типы траков в зависимости от груза:
+            </p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                <div style="background: #f7fafc; padding: 30px 20px; border-radius: 10px; border-left: 4px solid #48bb78;">
+                    <h4 style="color: #2d3748; margin-bottom: 10px; font-size: 18px;">🚚 Dry Van</h4>
+                    <p style="color: #4a5568; font-size: 15px; line-height: 1.6;">
+                        Закрытый фургон 53 фута. Самый распространенный тип. Используется для упакованных товаров, 
+                        электроники, одежды. Защита от погоды.
+                    </p>
+                </div>
+                <div style="background: #f7fafc; padding: 30px 20px; border-radius: 10px; border-left: 4px solid #4299e1;">
+                    <h4 style="color: #2d3748; margin-bottom: 10px; font-size: 18px;">❄️ Reefer</h4>
+                    <p style="color: #4a5568; font-size: 15px; line-height: 1.6;">
+                        Рефрижератор с контролем температуры. Для продуктов питания, медикаментов, 
+                        цветов. Температура от -20°F до +70°F. Выше ставки.
+                    </p>
+                </div>
+                <div style="background: #f7fafc; padding: 30px 20px; border-radius: 10px; border-left: 4px solid #f6ad55;">
+                    <h4 style="color: #2d3748; margin-bottom: 10px; font-size: 18px;">📏 Flatbed</h4>
+                    <p style="color: #4a5568; font-size: 15px; line-height: 1.6;">
+                        Открытая платформа 48-53 фута. Для строительных материалов, оборудования, 
+                        металла. Требует крепления груза.
+                    </p>
+                </div>
+                <div style="background: #f7fafc; padding: 30px 20px; border-radius: 10px; border-left: 4px solid #fc8181;">
+                    <h4 style="color: #2d3748; margin-bottom: 10px; font-size: 18px;">⚠️ Hazmat</h4>
+                    <p style="color: #4a5568; font-size: 15px; line-height: 1.6;">
+                        Опасные материалы. Химикаты, топливо, газы. Требуется специальная лицензия 
+                        и сертификация. Премиум ставки.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <h2>📊 Ключевые термины Load Board</h2>
+            <div style="display: grid; gap: 15px;">
+                <div style="background: #ebf8ff; padding: 15px 20px; border-radius: 8px; border-left: 4px solid #4299e1;">
+                    <strong style="color: #2c5282; font-size: 16px;">Deadhead:</strong>
+                    <span style="color: #4a5568; margin-left: 10px;">Расстояние от текущего местоположения трака до точки погрузки (без груза). Чем меньше deadhead, тем выгоднее груз.</span>
+                </div>
+                <div style="background: #ebf8ff; padding: 15px 20px; border-radius: 8px; border-left: 4px solid #4299e1;">
+                    <strong style="color: #2c5282; font-size: 16px;">Rate per mile (RPM):</strong>
+                    <span style="color: #4a5568; margin-left: 10px;">Ставка за милю. Рассчитывается: общая ставка ÷ расстояние. Хорошая ставка: $2.00-3.00/миля для dry van.</span>
+                </div>
+                <div style="background: #ebf8ff; padding: 15px 20px; border-radius: 8px; border-left: 4px solid #4299e1;">
+                    <strong style="color: #2c5282; font-size: 16px;">TONU (Truck Ordered Not Used):</strong>
+                    <span style="color: #4a5568; margin-left: 10px;">Трак заказан, но не использован. Когда грузоотправитель отменяет груз после прибытия трака. Можно требовать компенсацию.</span>
+                </div>
+                <div style="background: #ebf8ff; padding: 15px 20px; border-radius: 8px; border-left: 4px solid #4299e1;">
+                    <strong style="color: #2c5282; font-size: 16px;">Detention:</strong>
+                    <span style="color: #4a5568; margin-left: 10px;">Плата за задержку. Если погрузка/разгрузка занимает больше 2 часов, можно требовать $25-75/час за ожидание.</span>
+                </div>
+                <div style="background: #ebf8ff; padding: 15px 20px; border-radius: 8px; border-left: 4px solid #4299e1;">
+                    <strong style="color: #2c5282; font-size: 16px;">Layover:</strong>
+                    <span style="color: #4a5568; margin-left: 10px;">Плата за простой. Когда водитель вынужден ждать следующий день для погрузки/разгрузки. Обычно $50-150/день.</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <h2>💡 Практические советы диспетчера</h2>
+            <div style="background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%); padding: 25px; border-radius: 10px; border-left: 5px solid #f56565; margin-bottom: 20px;">
+                <h4 style="color: #c53030; margin-bottom: 15px; font-size: 18px;">⚠️ На что обращать внимание:</h4>
+                <ul style="color: #4a5568; line-height: 1.8; margin-left: 20px;">
+                    <li>Проверяйте MC/DOT номер брокера через RTS Pro или Carrier411 перед бронированием</li>
+                    <li>Избегайте грузов с очень высокими ставками - возможно мошенничество</li>
+                    <li>Учитывайте deadhead при расчете прибыльности груза</li>
+                    <li>Проверяйте время погрузки/разгрузки - ночные слоты могут быть проблемными</li>
+                    <li>Всегда получайте Rate Confirmation в письменном виде перед отправкой трака</li>
+                </ul>
+            </div>
+            <div style="background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%); padding: 25px; border-radius: 10px; border-left: 5px solid #48bb78;">
+                <h4 style="color: #22543d; margin-bottom: 15px; font-size: 18px;">✅ Как выбрать выгодный груз:</h4>
+                <ul style="color: #4a5568; line-height: 1.8; margin-left: 20px;">
+                    <li>Рассчитайте RPM (rate per mile): минимум $1.50/миля, оптимально $2.00-3.00/миля</li>
+                    <li>Минимизируйте deadhead: идеально до 50 миль, максимум 100 миль</li>
+                    <li>Планируйте обратный путь для оптимизации маршрута</li>
+                    <li>Учитывайте стоимость топлива: ~$0.40-0.60 за милю</li>
+                    <li>Проверяйте кредитный рейтинг брокера - работайте с надежными партнерами</li>
+                    <li>Планируйте маршрут с учетом времени отдыха водителя (HOS rules)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="info-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center;">
+            <h2 style="color: white; margin-bottom: 20px;">🎯 Готовы начать работу с реальными грузами?</h2>
+            <p style="color: white; font-size: 18px; margin-bottom: 30px;">
+                Изучите нашу базу данных из 116+ реальных грузов и научитесь анализировать прибыльность маршрутов
+            </p>
+            <a href="loadboard.html" class="action-btn" style="background: white; backdrop-filter: blur(10px); color: #667eea; display: inline-block;">
+                🔍 Открыть полный Load Board
+            </a>
+        </div>
+
+    </div>
+
+    <!-- Кнопка "Наверх" -->
+    <button id="scrollToTop" style="display: none; position: fixed; bottom: 20px; right: 20px; z-index: 1000; padding: 10px 15px; background: rgba(66, 153, 225, 0.7); color: white; border: none; border-radius: 50%; cursor: pointer; font-size: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: all 0.3s ease; opacity: 0.6;">
+        ↑
+    </button>
+    <script>
+        // Функция для переключения видимости детального анализа
+        function toggleAnalysis(id) {
+            const element = document.getElementById(id);
+            const button = event.target;
+            
+            if (element.style.display === 'none' || element.style.display === '') {
+                element.style.display = 'block';
+                button.textContent = '📊 Скрыть детальный анализ';
+                button.style.background = 'linear-gradient(135deg, #718096 0%, #4a5568 100%)';
+            } else {
+                element.style.display = 'none';
+                button.textContent = '📊 Показать детальный анализ';
+                // Восстановить оригинальный цвет кнопки
+                if (id === 'analysis1') {
+                    button.style.background = 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)';
+                } else if (id === 'analysis2') {
+                    button.style.background = 'linear-gradient(135deg, #4299e1 0%, #3182ce 100%)';
+                } else if (id === 'analysis3') {
+                    button.style.background = 'linear-gradient(135deg, #f6ad55 0%, #ed8936 100%)';
+                } else if (id === 'analysis4') {
+                    button.style.background = 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)';
+                } else if (id === 'analysis5') {
+                    button.style.background = 'linear-gradient(135deg, #fc8181 0%, #f56565 100%)';
+                }
+            }
+        }
+
+        // Кнопка "Наверх"
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+        scrollToTopBtn.addEventListener('mouseenter', () => {
+            scrollToTopBtn.style.opacity = '1';
+        });
+        scrollToTopBtn.addEventListener('mouseleave', () => {
+            scrollToTopBtn.style.opacity = '0.6';
+        });
+        window.addEventListener('scroll', () => {
+            const scrollPercent = (window.pageYOffset / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+            if (scrollPercent > 25) {
+                scrollToTopBtn.style.display = 'block';
+            } else {
+                scrollToTopBtn.style.display = 'none';
+            }
+        });
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    </script>
+<script src="../theme-switcher.js"></script>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Курсы Диспетчера</h4>
+        <p>Профессиональное обучение диспетчеров грузоперевозок</p>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Обучение</h4>
+        <a href="courses.html">Курсы</a>
+        <a href="certification.html">Сертификация</a>
+        <a href="webinars.html">Вебинары</a>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Поддержка</h4>
+        <a href="faq.html">FAQ</a>
+        <a href="contacts.html">Контакты</a>
+        <a href="help.html">Помощь</a>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Компания</h4>
+        <a href="about.html">О нас</a>
+        <a href="blog.html">Блог</a>
+        <a href="career.html">Карьера</a>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <p>&copy; 2024 Курсы Диспетчера. Все права защищены.</p>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

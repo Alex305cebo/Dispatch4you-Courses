@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚛 Load Finder - Сбор всех грузов</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .status.searching {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status.completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .examples {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 15px;
+        }
+
+        .examples span {
+            display: inline-block;
+            margin: 5px 10px;
+            padding: 5px 15px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .examples span:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .loads-container {
+            margin-top: 30px;
+        }
+
+        .load-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 25px;
+            color: white;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .load-header {
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .load-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+        }
+
+        .load-icon {
+            font-size: 1.3em;
+            margin-right: 12px;
+            width: 25px;
+        }
+
+        .load-label {
+            font-weight: 600;
+            margin-right: 8px;
+            opacity: 0.9;
+            min-width: 100px;
+        }
+
+        .load-value {
+            flex: 1;
+        }
+
+        .contact-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .stats {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+        }
+
+        .stat-item {
+            flex: 1;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .limit-warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #856404;
+            font-weight: 600;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚛 Load Finder</h1>
+        <p class="subtitle">Автоматический сбор всех грузов с TruckerPath</p>
+
+        <div class="search-box">
+            <input 
+                type="text" 
+                id="cityInput" 
+                placeholder="Введите город и штат (например: Chicago, IL)"
+                onkeypress="if(event.key === 'Enter') searchLoads()"
+            >
+            <button id="searchBtn" onclick="searchLoads()">🔍 Собрать грузы</button>
+        </div>
+
+        <div class="examples">
+            <strong>Примеры:</strong>
+            <span onclick="setCity('Chicago, IL')">Chicago, IL</span>
+            <span onclick="setCity('Miami, FL')">Miami, FL</span>
+            <span onclick="setCity('Atlanta, GA')">Atlanta, GA</span>
+            <span onclick="setCity('Los Angeles, CA')">Los Angeles, CA</span>
+        </div>
+
+        <div id="statusBox" class="hidden"></div>
+        <div id="statsBox" class="hidden"></div>
+        <div id="limitWarning" class="hidden"></div>
+        <div id="loadsContainer" class="hidden"></div>
+    </div>
+
+    <script>
+        let checkInterval = null;
+
+        function setCity(city) {
+            document.getElementById('cityInput').value = city;
+        }
+
+        async function searchLoads() {
+            const city = document.getElementById('cityInput').value.trim();
+            
+            if (!city) {
+                alert('Пожалуйста, введите город и штат');
+                return;
+            }
+
+            const searchBtn = document.getElementById('searchBtn');
+            const statusBox = document.getElementById('statusBox');
+            const statsBox = document.getElementById('statsBox');
+            const loadsContainer = document.getElementById('loadsContainer');
+            const limitWarning = document.getElementById('limitWarning');
+
+            // Отключаем кнопку
+            searchBtn.disabled = true;
+            searchBtn.textContent = '⏳ Собираем грузы...';
+
+            // Показываем статус
+            statusBox.className = 'status searching';
+            statusBox.innerHTML = `
+                <div class="spinner"></div>
+                <p style="font-size: 1.2em; margin: 15px 0;">Собираем грузы из ${city}...</p>
+                <p id="progressText">Груз #0 из 0</p>
+            `;
+            statusBox.classList.remove('hidden');
+            loadsContainer.classList.add('hidden');
+            statsBox.classList.add('hidden');
+            limitWarning.classList.add('hidden');
+
+            try {
+                // Запускаем сбор
+                const response = await fetch('/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ city: city })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка запроса');
+                }
+
+                // Проверяем статус каждые 2 секунды
+                checkInterval = setInterval(checkStatus, 2000);
+
+            } catch (error) {
+                statusBox.className = 'status';
+                statusBox.style.background = '#f8d7da';
+                statusBox.style.color = '#721c24';
+                statusBox.textContent = '❌ Ошибка: ' + error.message;
+                searchBtn.disabled = false;
+                searchBtn.textContent = '🔍 Собрать грузы';
+            }
+        }
+
+        async function checkStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+
+                const statusBox = document.getElementById('statusBox');
+                const statsBox = document.getElementById('statsBox');
+                const loadsContainer = document.getElementById('loadsContainer');
+                const limitWarning = document.getElementById('limitWarning');
+                const searchBtn = document.getElementById('searchBtn');
+                const progressText = document.getElementById('progressText');
+
+                // Обновляем прогресс
+                if (data.status === 'searching' && progressText) {
+                    progressText.textContent = `Груз #${data.current_load} из ${data.total_loads}`;
+                }
+
+                if (data.status === 'completed') {
+                    clearInterval(checkInterval);
+                    
+                    statusBox.className = 'status completed';
+                    statusBox.textContent = '✅ Сбор завершен!';
+
+                    // Показываем предупреждение о лимите
+                    if (data.limit_reached) {
+                        limitWarning.innerHTML = `
+                            ⚠️ <strong>Достигнут дневной лимит просмотров!</strong><br>
+                            При следующем запуске будет создан новый аккаунт.
+                        `;
+                        limitWarning.classList.remove('hidden');
+                    }
+
+                    // Показываем статистику
+                    const loads = data.loads || [];
+                    const loadsWithPhone = loads.filter(l => l.phone).length;
+                    const loadsWithEmail = loads.filter(l => l.email).length;
+                    const loadsWithBoth = loads.filter(l => l.phone && l.email).length;
+
+                    statsBox.innerHTML = `
+                        <div class="stats">
+                            <div class="stat-item">
+                                <div class="stat-number">${loads.length}</div>
+                                <div class="stat-label">Всего грузов</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">${loadsWithPhone}</div>
+                                <div class="stat-label">С телефоном</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">${loadsWithEmail}</div>
+                                <div class="stat-label">С email</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">${loadsWithBoth}</div>
+                                <div class="stat-label">С обоими</div>
+                            </div>
+                        </div>
+                    `;
+                    statsBox.classList.remove('hidden');
+
+                    // Показываем все грузы
+                    if (loads.length > 0) {
+                        let loadsHTML = '<div class="loads-container">';
+                        
+                        loads.forEach(load => {
+                            loadsHTML += `
+                                <div class="load-card">
+                                    <div class="load-header">📦 Груз #${load.load_number}</div>
+                                    
+                                    <div class="load-item">
+                                        <div class="load-icon">📍</div>
+                                        <div class="load-label">Маршрут:</div>
+                                        <div class="load-value">${load.origin || 'N/A'} → ${load.destination || 'N/A'}</div>
+                                    </div>
+                                    
+                                    ${load.rate ? `
+                                    <div class="load-item">
+                                        <div class="load-icon">💰</div>
+                                        <div class="load-label">Ставка:</div>
+                                        <div class="load-value">${load.rate}</div>
+                                    </div>
+                                    ` : ''}
+                                    
+                                    ${load.distance ? `
+                                    <div class="load-item">
+                                        <div class="load-icon">📏</div>
+                                        <div class="load-label">Расстояние:</div>
+                                        <div class="load-value">${load.distance}</div>
+                                    </div>
+                                    ` : ''}
+                                    
+                                    ${load.weight ? `
+                                    <div class="load-item">
+                                        <div class="load-icon">⚖️</div>
+                                        <div class="load-label">Вес:</div>
+                                        <div class="load-value">${load.weight}</div>
+                                    </div>
+                                    ` : ''}
+                                    
+                                    ${load.broker ? `
+                                    <div class="load-item">
+                                        <div class="load-icon">🏢</div>
+                                        <div class="load-label">Брокер:</div>
+                                        <div class="load-value">${load.broker}</div>
+                                    </div>
+                                    ` : ''}
+                                    
+                                    <div class="contact-section">
+                                        ${load.phone ? `
+                                        <div class="load-item">
+                                            <div class="load-icon">📞</div>
+                                            <div class="load-label">Телефон:</div>
+                                            <div class="load-value">${load.phone}</div>
+                                        </div>
+                                        ` : '<div class="load-item"><div class="load-icon">📞</div><div class="load-label">Телефон:</div><div class="load-value">❌ Не найден</div></div>'}
+                                        
+                                        ${load.email ? `
+                                        <div class="load-item">
+                                            <div class="load-icon">📧</div>
+                                            <div class="load-label">Email:</div>
+                                            <div class="load-value">${load.email}</div>
+                                        </div>
+                                        ` : '<div class="load-item"><div class="load-icon">📧</div><div class="load-label">Email:</div><div class="load-value">❌ Не найден</div></div>'}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        loadsHTML += '</div>';
+                        loadsContainer.innerHTML = loadsHTML;
+                        loadsContainer.classList.remove('hidden');
+                    }
+
+                    searchBtn.disabled = false;
+                    searchBtn.textContent = '🔍 Собрать грузы';
+                }
+
+            } catch (error) {
+                clearInterval(checkInterval);
+                console.error('Ошибка проверки статуса:', error);
+            }
+        }
+    </script>
+</body>
+</html>

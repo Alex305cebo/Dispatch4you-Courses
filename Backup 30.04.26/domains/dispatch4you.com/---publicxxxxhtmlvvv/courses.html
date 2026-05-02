@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Курсы | Курсы Диспетчера</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary: #6366f1;
+  --primary-dark: #4f46e5;
+  --secondary: #8b5cf6;
+  --accent: #ec4899;
+  --bg-dark: #0f172a;
+  --bg-darker: #020617;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+}
+
+[data-theme="light"] {
+  --primary: #6366f1;
+  --primary-dark: #4f46e5;
+  --secondary: #8b5cf6;
+  --accent: #ec4899;
+  --bg-dark: #ffffff;
+  --bg-darker: #f8fafc;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-darker);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-theme="light"] body::before {
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+/* Navigation */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 16px 0;
+  transition: all 0.3s ease;
+}
+
+[data-theme="light"] .navbar {
+  background: rgba(248, 250, 252, 0.8);
+}
+
+.nav-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.logo-icon {
+  font-size: 28px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.nav-link.active {
+  color: var(--primary);
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--primary);
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+  width: 100%;
+}
+
+.nav-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-login {
+  padding: 8px 20px;
+  text-decoration: none;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.btn-login:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-signup {
+  padding: 8px 20px;
+  text-decoration: none;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.btn-signup:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+}
+
+/* Theme Toggle */
+.theme-toggle {
+  position: fixed;
+  top: 32px;
+  right: 32px;
+  z-index: 1000;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.theme-toggle svg {
+  width: 24px;
+  height: 24px;
+  transition: all 0.3s ease;
+  color: var(--text-primary);
+}
+
+.theme-icon-sun {
+  display: block;
+}
+
+.theme-icon-moon {
+  display: none;
+}
+
+/* Mobile Menu Toggle */
+.mobile-menu-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 10px;
+  z-index: 1001;
+  transition: all 0.3s ease;
+}
+
+.mobile-menu-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.mobile-menu-toggle span {
+  width: 24px;
+  height: 2px;
+  background: #ffffff;
+  transition: all 0.3s ease;
+}
+
+.mobile-menu-toggle.active span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.mobile-menu-toggle.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.mobile-menu-toggle.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(7px, -6px);
+}
+
+/* Mobile Menu */
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 80%;
+  max-width: 400px;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.98);
+  backdrop-filter: blur(20px);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 80px 32px 32px;
+  transition: right 0.3s ease;
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+.mobile-menu.active {
+  right: 0;
+}
+
+.mobile-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 999;
+}
+
+.mobile-menu-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.mobile-nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.mobile-nav-links .nav-link {
+  padding: 16px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.mobile-nav-links .nav-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--primary);
+}
+
+.mobile-menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+}
+
+[data-theme="light"] .theme-icon-sun {
+  display: none;
+}
+
+[data-theme="light"] .theme-icon-moon {
+  display: block;
+}
+
+/* Page Header */
+.page-header {
+  padding: 140px 0 80px;
+  text-align: center;
+}
+
+.page-title {
+  font-size: clamp(48px, 6vw, 72px);
+  font-weight: 900;
+  margin-bottom: 24px;
+  letter-spacing: -0.02em;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.page-subtitle {
+  font-size: 20px;
+  color: var(--text-secondary);
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* Courses Grid */
+.courses-section {
+  padding: 60px 0 120px;
+}
+
+.courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 32px;
+}
+
+.course-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  overflow: hidden;
+  transition: all 0.4s ease;
+  cursor: pointer;
+}
+
+.course-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 60px rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.course-image {
+  width: 100%;
+  height: 220px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64px;
+}
+
+.course-content {
+  padding: 32px;
+}
+
+.course-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  background: rgba(99, 102, 241, 0.2);
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 16px;
+}
+
+.course-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.course-description {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+  line-height: 1.7;
+}
+
+.course-meta {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.course-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.course-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.course-price {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.course-price-free {
+  color: var(--accent);
+}
+
+.btn-course {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  text-decoration: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.btn-course:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+}
+
+/* Footer */
+.footer {
+  padding: 80px 0 40px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 80px;
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 48px;
+  margin-bottom: 48px;
+}
+
+.footer-section h4 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+}
+
+.footer-section p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.footer-section a {
+  display: block;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.footer-section a:hover {
+  color: var(--primary);
+  transform: translateX(4px);
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 20px;
+  }
+  
+  /* Hide theme toggle and auth buttons on mobile */
+  .theme-toggle {
+    display: none !important;
+  }
+  
+  .nav-actions {
+    display: none !important;
+  }
+  
+  /* Show mobile menu toggle */
+  .mobile-menu-toggle {
+    display: flex !important;
+  }
+  
+  .hero {
+    padding: 60px 0 40px;
+  }
+  
+  .hero h1 {
+    font-size: 36px;
+  }
+  
+  .hero-subtitle {
+    font-size: 17px;
+  }
+  
+  .page-title {
+    font-size: 32px !important;
+    line-height: 1.2 !important;
+  }
+  
+  .page-subtitle {
+    font-size: 16px !important;
+  }
+  
+  .section-title {
+    font-size: 32px;
+  }
+  
+  .section-subtitle {
+    font-size: 16px;
+  }
+  
+  /* Stats grid mobile */
+  div[style*="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr))"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+  }
+  
+  div[style*="font-size: 48px"] {
+    font-size: 36px !important;
+  }
+  
+  div[style*="font-size: 42px"] {
+    font-size: 28px !important;
+  }
+  
+  div[style*="font-size: 36px"] {
+    font-size: 28px !important;
+  }
+  
+  div[style*="font-size: 18px"][style*="text-align: center"] {
+    font-size: 15px !important;
+  }
+  
+  div[style*="padding: 48px"] {
+    padding: 24px !important;
+  }
+  
+  div[style*="margin-bottom: 80px"] {
+    margin-bottom: 48px !important;
+  }
+  
+  .courses-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .course-card {
+    padding: 28px;
+  }
+  
+  .course-icon {
+    width: 56px;
+    height: 56px;
+    font-size: 28px;
+  }
+  
+  .course-card h3 {
+    font-size: 20px;
+  }
+  
+  .course-card p {
+    font-size: 14px;
+  }
+  
+  .nav-links {
+    display: none;
+  }
+  
+  /* Footer mobile optimization */
+  .footer {
+    padding: 40px 0 30px;
+    margin-top: 48px;
+  }
+  
+  .footer-content {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 20px !important;
+  }
+  
+  .footer-section:first-child {
+    grid-column: 1 / -1;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  
+  .footer-section:first-child h4 {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+  
+  .footer-section:first-child p {
+    font-size: 13px;
+    line-height: 1.5;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  
+  .footer-section {
+    text-align: center;
+  }
+  
+  .footer-section h4 {
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+  
+  .footer-section a {
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+  
+  .footer-section a:hover {
+    transform: translateX(0);
+  }
+  
+  .footer-bottom {
+    font-size: 11px;
+    padding-top: 20px;
+  }
+}
+
+@media (max-width: 568px) {
+  .footer {
+    padding: 40px 0 30px;
+  }
+  
+  .footer-content {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 20px !important;
+  }
+  
+  .footer .container {
+    padding: 0 16px;
+  }
+  
+  .footer-section {
+    text-align: center;
+  }
+  
+  .footer-section:first-child {
+    grid-column: 1 / -1;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  
+  .footer-section:first-child h4 {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+  
+  .footer-section:first-child p {
+    font-size: 13px;
+    line-height: 1.5;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  
+  .footer-section h4 {
+    font-size: 14px;
+    margin-bottom: 12px;
+    font-weight: 700;
+  }
+  
+  .footer-section a {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+  
+  .footer-section p {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  
+  .footer-section a:hover {
+    transform: translateX(0);
+  }
+  
+  .footer-bottom {
+    font-size: 11px;
+    padding-top: 20px;
+  }
+}
+
+@media (max-width: 400px) {
+  .footer .container {
+    padding: 0 12px;
+  }
+  
+  .footer-content {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+  
+  .footer-section:first-child {
+    margin-bottom: 20px;
+  }
+  
+  .footer-section h4 {
+    font-size: 16px;
+  }
+  
+  .footer-section a {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 16px;
+  }
+  
+  .hero {
+    padding: 50px 0 30px;
+  }
+  
+  .hero h1 {
+    font-size: 28px;
+  }
+  
+  .hero-subtitle {
+    font-size: 15px;
+  }
+  
+  .page-title {
+    font-size: 24px !important;
+    line-height: 1.2 !important;
+    word-wrap: break-word !important;
+  }
+  
+  .page-subtitle {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+  
+  .section-title {
+    font-size: 26px;
+  }
+  
+  .section-subtitle {
+    font-size: 14px;
+  }
+  
+  /* Stats grid for small screens */
+  div[style*="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr))"] {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  
+  div[style*="font-size: 48px"] {
+    font-size: 32px !important;
+  }
+  
+  div[style*="font-size: 42px"] {
+    font-size: 24px !important;
+  }
+  
+  div[style*="font-size: 36px"] {
+    font-size: 24px !important;
+  }
+  
+  div[style*="font-size: 18px"][style*="text-align: center"] {
+    font-size: 14px !important;
+  }
+  
+  div[style*="padding: 48px"] {
+    padding: 20px !important;
+  }
+  
+  div[style*="padding: 24px"][style*="text-align: center"] {
+    padding: 16px !important;
+  }
+  
+  div[style*="margin-bottom: 80px"] {
+    margin-bottom: 40px !important;
+  }
+  
+  div[style*="margin-bottom: 64px"] {
+    margin-bottom: 32px !important;
+  }
+  
+  h2[style*="font-size: 42px"] {
+    font-size: 24px !important;
+  }
+  
+  h2[style*="font-size: 36px"] {
+    font-size: 22px !important;
+  }
+  
+  p[style*="font-size: 18px"] {
+    font-size: 14px !important;
+  }
+  
+  .course-card {
+    padding: 20px;
+  }
+  
+  .course-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+  }
+  
+  .course-card h3 {
+    font-size: 18px;
+  }
+  
+  .course-card p {
+    font-size: 13px;
+  }
+  
+  .course-meta {
+    font-size: 12px;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="navbar">
+  <div class="container">
+    <div class="nav-content">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">🎓</span>
+        <span class="logo-text">Курсы Диспетчера</span>
+      </a>
+      
+      <div class="nav-links">
+        <a href="index.html#features" class="nav-link">Преимущества</a>
+        <a href="index.html#pricing" class="nav-link">Тарифы</a>
+        <a href="courses.html" class="nav-link active">Курсы</a>
+        <a href="about.html" class="nav-link">О нас</a>
+      </div>
+      
+      <div class="nav-actions">
+        <a href="login.html" class="btn-login">Войти</a>
+        <a href="register.html" class="btn-signup">Регистрация</a>
+      </div>
+      
+      <button class="mobile-menu-toggle" id="mobileMenuToggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile Menu Overlay -->
+<div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <div class="mobile-nav-links">
+    <a href="index.html#features" class="nav-link">Преимущества</a>
+    <a href="index.html#pricing" class="nav-link">Тарифы</a>
+    <a href="courses.html" class="nav-link">Курсы</a>
+    <a href="about.html" class="nav-link">О нас</a>
+  </div>
+  <div class="mobile-menu-actions">
+    <a href="login.html" class="btn-login" style="text-align: center; display: block;">Войти</a>
+    <a href="register.html" class="btn-signup" style="text-align: center; display: block;">Регистрация</a>
+  </div>
+</div>
+
+<!-- Theme Toggle -->
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+  <svg class="theme-icon-sun" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="5"/>
+    <line x1="12" y1="1" x2="12" y2="3"/>
+    <line x1="12" y1="21" x2="12" y2="23"/>
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+    <line x1="1" y1="12" x2="3" y2="12"/>
+    <line x1="21" y1="12" x2="23" y2="12"/>
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+  </svg>
+  <svg class="theme-icon-moon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+</button>
+
+<!-- Page Header -->
+<section class="page-header">
+  <div class="container">
+    <h1 class="page-title">
+      Профессиональный <span class="gradient-text">Курс Диспетчера</span>
+    </h1>
+    <p class="page-subtitle">
+      Полный курс обучения с практическими инструментами и реальными кейсами из индустрии
+    </p>
+  </div>
+</section>
+
+<!-- Course Overview -->
+<section class="courses-section">
+  <div class="container">
+    <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 48px; margin-bottom: 64px;">
+      <h2 style="font-size: 36px; font-weight: 800; margin-bottom: 24px; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">О курсе</h2>
+      <p style="font-size: 18px; line-height: 1.8; color: #94a3b8; margin-bottom: 32px;">
+        Наш курс - это комплексная программа подготовки профессиональных диспетчеров грузоперевозок для американского рынка. Мы объединили теоретические знания с практическими инструментами, которые вы будете использовать в реальной работе.
+      </p>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-top: 32px;">
+        <div style="text-align: center; padding: 24px; background: rgba(99, 102, 241, 0.1); border-radius: 16px;">
+          <div style="font-size: 48px; font-weight: 900; color: #6366f1; margin-bottom: 8px;">1-3</div>
+          <div style="font-size: 14px; color: #94a3b8; font-weight: 600;">НЕДЕЛИ ОБУЧЕНИЯ</div>
+        </div>
+        <div style="text-align: center; padding: 24px; background: rgba(139, 92, 246, 0.1); border-radius: 16px;">
+          <div style="font-size: 48px; font-weight: 900; color: #8b5cf6; margin-bottom: 8px;">12+</div>
+          <div style="font-size: 14px; color: #94a3b8; font-weight: 600;">МОДУЛЕЙ</div>
+        </div>
+        <div style="text-align: center; padding: 24px; background: rgba(236, 72, 153, 0.1); border-radius: 16px;">
+          <div style="font-size: 48px; font-weight: 900; color: #ec4899; margin-bottom: 8px;">6</div>
+          <div style="font-size: 14px; color: #94a3b8; font-weight: 600;">ПРАКТИЧЕСКИХ ИНСТРУМЕНТОВ</div>
+        </div>
+        <div style="text-align: center; padding: 24px; background: rgba(34, 197, 94, 0.1); border-radius: 16px;">
+          <div style="font-size: 48px; font-weight: 900; color: #22c55e; margin-bottom: 8px;">∞</div>
+          <div style="font-size: 14px; color: #94a3b8; font-weight: 600;">ДОСТУП К МАТЕРИАЛАМ</div>
+        </div>
+      </div>
+    </div>
+
+<!-- Courses Section -->
+<section class="courses-section">
+  <div class="container">
+    
+    <!-- Tools Section -->
+    <div style="margin-bottom: 80px;">
+      <h2 style="font-size: 42px; font-weight: 800; text-align: center; margin-bottom: 16px; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Практические инструменты</h2>
+      <p style="font-size: 18px; text-align: center; color: #94a3b8; margin-bottom: 48px; max-width: 700px; margin-left: auto; margin-right: auto;">
+        Все необходимые инструменты для успешной работы диспетчера в одном месте
+      </p>
+      
+      <div class="courses-grid">
+        
+        <!-- Dispatcher Cards -->
+        <div class="course-card" onclick="window.location.href='pages/dispatcher-cards.html'" style="cursor: pointer;">
+          <div class="course-image">🎲</div>
+          <div class="course-content">
+            <span class="course-badge" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">Новинка</span>
+            <h3 class="course-title">Dispatcher Cards</h3>
+            <p class="course-description">
+              Интерактивное приложение для тренировки знаний. Карточки с вопросами трех уровней сложности - от новичка до профессионала.
+            </p>
+            <div class="course-meta">
+              <div class="course-meta-item">
+                <span>🎯</span>
+                <span>3 уровня</span>
+              </div>
+              <div class="course-meta-item">
+                <span>📝</span>
+                <span>50+ вопросов</span>
+              </div>
+            </div>
+            <div class="course-footer">
+              <div class="course-price course-price-free">Бесплатно</div>
+              <a href="pages/dispatcher-cards.html" class="btn-course">Попробовать</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Load Finder -->
+        <div class="course-card" onclick="window.location.href='pages/load-finder.html'" style="cursor: pointer;">
+          <div class="course-image">🚛</div>
+          <div class="course-content">
+            <span class="course-badge" style="background: linear-gradient(135deg, #22c55e, #10b981);">Популярный</span>
+            <h3 class="course-title">Load Finder</h3>
+            <p class="course-description">
+              Автоматический поиск грузов с TruckerPath. База 30+ брокеров, полная информация о ценах и контактах для быстрого старта.
+            </p>
+            <div class="course-meta">
+              <div class="course-meta-item">
+                <span>📊</span>
+                <span>30+ брокеров</span>
+              </div>
+              <div class="course-meta-item">
+                <span>🔍</span>
+                <span>Умный поиск</span>
+              </div>
+            </div>
+            <div class="course-footer">
+              <div class="course-price course-price-free">Бесплатно</div>
+              <a href="pages/load-finder.html" class="btn-course">Открыть</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulator -->
+        <div class="course-card" onclick="window.location.href='pages/simulator.html'" style="cursor: pointer;">
+          <div class="course-image">🎮</div>
+          <div class="course-content">
+            <span class="course-badge" style="background: linear-gradient(135deg, #f59e0b, #d97706);">Практика</span>
+            <h3 class="course-title">Симулятор работы</h3>
+            <p class="course-description">
+              Реалистичный симулятор рабочего дня диспетчера. Практикуйтесь в безопасной среде перед реальной работой.
+            </p>
+            <div class="course-meta">
+              <div class="course-meta-item">
+                <span>🎯</span>
+                <span>Реальные кейсы</span>
+              </div>
+              <div class="course-meta-item">
+                <span>⏱️</span>
+                <span>Без ограничений</span>
+              </div>
+            </div>
+            <div class="course-footer">
+              <div class="course-price course-price-free">Бесплатно</div>
+              <a href="pages/simulator.html" class="btn-course">Запустить</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calls Practice -->
+        <div class="course-card" onclick="window.location.href='pages/calls.html'" style="cursor: pointer;">
+          <div class="course-image">📞</div>
+          <div class="course-content">
+            <span class="course-badge" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">Тренировка</span>
+            <h3 class="course-title">Практика звонков</h3>
+            <p class="course-description">
+              Тренируйте навыки телефонных переговоров с брокерами. Реальные диалоги с аудио примерами и сценариями.
+            </p>
+            <div class="course-meta">
+              <div class="course-meta-item">
+                <span>🎧</span>
+                <span>Аудио примеры</span>
+              </div>
+              <div class="course-meta-item">
+                <span>💬</span>
+                <span>10+ сценариев</span>
+              </div>
+            </div>
+            <div class="course-footer">
+              <div class="course-price course-price-free">Бесплатно</div>
+              <a href="pages/calls.html" class="btn-course">Тренироваться</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cases -->
+        <div class="course-card" onclick="window.location.href='pages/cases.html'" style="cursor: pointer;">
+          <div class="course-image">📋</div>
+          <div class="course-content">
+            <span class="course-badge" style="background: linear-gradient(135deg, #ec4899, #db2777);">Кейсы</span>
+            <h3 class="course-title">Реальные кейсы</h3>
+            <p class="course-description">
+              Разбор реальных ситуаций из практики диспетчеров. Учитесь на примерах и избегайте типичных ошибок.
+            </p>
+            <div class="course-meta">
+              <div class="course-meta-item">
+                <span>📚</span>
+                <span>20+ кейсов</span>
+              </div>
+              <div class="course-meta-item">
+                <span>✅</span>
+                <span>С решениями</span>
+              </div>
+            </div>
+            <div class="course-footer">
+              <div class="course-price course-price-free">Бесплатно</div>
+              <a href="pages/cases.html" class="btn-course">Изучить</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Testing -->
+        <div class="course-card" onclick="window.location.href='pages/testing.html'" style="cursor: pointer;">
+          <div class="course-image">✅</div>
+          <div class="course-content">
+            <span class="course-badge" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">Тестирование</span>
+            <h3 class="course-title">Тесты и проверка</h3>
+            <p class="course-description">
+              Проверьте свои знания с помощью комплексных тестов. Получите сертификат после успешного прохождения.
+            </p>
+            <div class="course-meta">
+              <div class="course-meta-item">
+                <span>📝</span>
+                <span>100+ вопросов</span>
+              </div>
+              <div class="course-meta-item">
+                <span>🏆</span>
+                <span>Сертификат</span>
+              </div>
+            </div>
+            <div class="course-footer">
+              <div class="course-price course-price-free">Бесплатно</div>
+              <a href="pages/testing.html" class="btn-course">Пройти тест</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Learning Modules -->
+    <div style="margin-bottom: 80px;">
+      <h2 style="font-size: 42px; font-weight: 800; text-align: center; margin-bottom: 16px; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Модули обучения</h2>
+      <p style="font-size: 18px; text-align: center; color: #94a3b8; margin-bottom: 48px; max-width: 700px; margin-left: auto; margin-right: auto;">
+        Структурированная программа от основ до профессионального уровня
+      </p>
+    </div>
+
+    <div class="courses-grid">
+      
+      <!-- Module 1 -->
+      <div class="course-card">
+        <div class="course-image">🚀</div>
+        <div class="course-content">
+          <span class="course-badge">Модуль 1</span>
+          <h3 class="course-title">Основы диспетчирования</h3>
+          <p class="course-description">
+            Введение в профессию диспетчера грузоперевозок. Базовые понятия, терминология и первые шаги в индустрии.
+          </p>
+          <div class="course-meta">
+            <div class="course-meta-item">
+              <span>⏱️</span>
+              <span>1 неделя</span>
+            </div>
+            <div class="course-meta-item">
+              <span>📚</span>
+              <span>3 урока</span>
+            </div>
+          </div>
+          <div class="course-footer">
+            <div class="course-price course-price-free">Бесплатно</div>
+            <a href="pages/modules.html" class="btn-course">Начать</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module 2 -->
+      <div class="course-card">
+        <div class="course-image">📋</div>
+        <div class="course-content">
+          <span class="course-badge">Модуль 2</span>
+          <h3 class="course-title">FMCSA и DOT регуляции</h3>
+          <p class="course-description">
+            Полное погружение в правила и регуляции FMCSA и DOT. Обязательные знания для легальной работы в США.
+          </p>
+          <div class="course-meta">
+            <div class="course-meta-item">
+              <span>⏱️</span>
+              <span>2 недели</span>
+            </div>
+            <div class="course-meta-item">
+              <span>📚</span>
+              <span>5 уроков</span>
+            </div>
+          </div>
+          <div class="course-footer">
+            <div class="course-price course-price-free">Бесплатно</div>
+            <a href="pages/modules.html" class="btn-course">Изучить</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module 3 -->
+      <div class="course-card">
+        <div class="course-image">💼</div>
+        <div class="course-content">
+          <span class="course-badge">Модуль 3</span>
+          <h3 class="course-title">Работа с Load Boards</h3>
+          <p class="course-description">
+            Практическая работа с DAT, Truckstop и другими платформами поиска грузов. Реальные примеры и стратегии.
+          </p>
+          <div class="course-meta">
+            <div class="course-meta-item">
+              <span>⏱️</span>
+              <span>1 неделя</span>
+            </div>
+            <div class="course-meta-item">
+              <span>📚</span>
+              <span>4 урока</span>
+            </div>
+          </div>
+          <div class="course-footer">
+            <div class="course-price course-price-free">Бесплатно</div>
+            <a href="pages/modules.html" class="btn-course">Изучить</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module 4 -->
+      <div class="course-card">
+        <div class="course-image">🗣️</div>
+        <div class="course-content">
+          <span class="course-badge">Модуль 4</span>
+          <h3 class="course-title">Переговоры и коммуникация</h3>
+          <p class="course-description">
+            Техники эффективных переговоров с брокерами и водителями. Разрешение конфликтов и построение отношений.
+          </p>
+          <div class="course-meta">
+            <div class="course-meta-item">
+              <span>⏱️</span>
+              <span>1 неделя</span>
+            </div>
+            <div class="course-meta-item">
+              <span>📚</span>
+              <span>3 урока</span>
+            </div>
+          </div>
+          <div class="course-footer">
+            <div class="course-price course-price-free">Бесплатно</div>
+            <a href="pages/modules.html" class="btn-course">Изучить</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module 5 -->
+      <div class="course-card">
+        <div class="course-image">🗺️</div>
+        <div class="course-content">
+          <span class="course-badge">Модуль 5</span>
+          <h3 class="course-title">Планирование маршрутов</h3>
+          <p class="course-description">
+            Оптимизация маршрутов, расчёт времени и расходов. Работа с GPS, картами и логистическими системами.
+          </p>
+          <div class="course-meta">
+            <div class="course-meta-item">
+              <span>⏱️</span>
+              <span>2 недели</span>
+            </div>
+            <div class="course-meta-item">
+              <span>📚</span>
+              <span>4 урока</span>
+            </div>
+          </div>
+          <div class="course-footer">
+            <div class="course-price course-price-free">Бесплатно</div>
+            <a href="pages/modules.html" class="btn-course">Изучить</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module 6 -->
+      <div class="course-card">
+        <div class="course-image">📄</div>
+        <div class="course-content">
+          <span class="course-badge">Модуль 6</span>
+          <h3 class="course-title">Документация</h3>
+          <p class="course-description">
+            Полный курс по документации: BOL, Rate Confirmation, POD и другие важные документы в грузоперевозках.
+          </p>
+          <div class="course-meta">
+            <div class="course-meta-item">
+              <span>⏱️</span>
+              <span>1 неделя</span>
+            </div>
+            <div class="course-meta-item">
+              <span>📚</span>
+              <span>3 урока</span>
+            </div>
+          </div>
+          <div class="course-footer">
+            <div class="course-price course-price-free">Бесплатно</div>
+            <a href="pages/modules.html" class="btn-course">Изучить</a>
+          </div>
+        </div>
+      </div>
+            <div class="course-meta-item">
+              <span>📚</span>
+              <span>6 модулей</span>
+            </div>
+          </div>
+          <div class="course-footer">
+            <div class="course-price">$59</div>
+            <a href="#" class="btn-course">Записаться</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Course 6 -->
+      <div class="course-card">
+        <div class="course-image">💰</div>
+        <div class="course-content">
+          <span class="course-badge">Финансы</span>
+          <h3 class="course-title">Финансовое управление</h3>
+          <p class="course-description">
+            Расчёт ставок, управление бюджетом, работа с факторингом и платёжными системами.
+          </p>
+          <div class="course-meta">
+            <div class="course-meta-item">
+              <span>⏱️</span>
+              <span>1 неделя</span>
+            </div>
+            <div class="course-meta-item">
+              <span>📚</span>
+              <span>4 модуля</span>
+            </div>
+          </div>
+          <div class="course-footer">
+            <div class="course-price">$45</div>
+            <a href="#" class="btn-course">Записаться</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Курсы Диспетчера</h4>
+        <p>Профессиональное обучение диспетчеров грузоперевозок</p>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Обучение</h4>
+        <a href="courses.html">Курсы</a>
+        <a href="certification.html">Сертификация</a>
+        <a href="webinars.html">Вебинары</a>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Поддержка</h4>
+        <a href="faq.html">FAQ</a>
+        <a href="contacts.html">Контакты</a>
+        <a href="help.html">Помощь</a>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Компания</h4>
+        <a href="about.html">О нас</a>
+        <a href="blog.html">Блог</a>
+        <a href="career.html">Карьера</a>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <p>&copy; 2024 Курсы Диспетчера. Все права защищены.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="auth.js"></script>
+
+<script>
+// Theme Toggle
+const themeToggle = document.getElementById('themeToggle');
+const html = document.documentElement;
+
+const currentTheme = localStorage.getItem('theme') || 'dark';
+html.setAttribute('data-theme', currentTheme);
+
+if (themeToggle) {
+  themeToggle.addEventListener('click', () => {
+    const theme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  });
+}
+
+// Mobile Menu Toggle
+const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+const mobileMenu = document.getElementById('mobileMenu');
+const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+
+if (mobileMenuToggle) {
+  mobileMenuToggle.addEventListener('click', () => {
+    mobileMenuToggle.classList.toggle('active');
+    mobileMenu.classList.toggle('active');
+    mobileMenuOverlay.classList.toggle('active');
+  });
+
+  mobileMenuOverlay.addEventListener('click', () => {
+    mobileMenuToggle.classList.remove('active');
+    mobileMenu.classList.remove('active');
+    mobileMenuOverlay.classList.remove('active');
+  });
+
+  // Close menu when clicking on a link
+  const mobileNavLinks = mobileMenu.querySelectorAll('.nav-link, .btn-login, .btn-signup');
+  mobileNavLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      mobileMenuToggle.classList.remove('active');
+      mobileMenu.classList.remove('active');
+      mobileMenuOverlay.classList.remove('active');
+    });
+  });
+}
+
+// Защита доступа к курсам
+document.addEventListener('DOMContentLoaded', function() {
+  // Проверяем авторизацию (TEMPORARILY DISABLED)
+  const user = checkAuth();
+  
+  // Временно отключена проверка авторизации - доступ открыт всем
+  if (false && !user) {
+    // Блокируем все ссылки на курсы
+    const courseLinks = document.querySelectorAll('.btn-course, .course-card');
+    courseLinks.forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        alert('Для доступа к курсам необходимо войти в систему или зарегистрироваться');
+        window.location.href = 'login.html';
+      });
+      
+      // Добавляем визуальную индикацию
+      if (link.classList.contains('btn-course')) {
+        link.style.opacity = '0.6';
+        link.style.cursor = 'not-allowed';
+        link.innerHTML = '🔒 Требуется вход';
+      }
+    });
+  }
+});
+</script>
+
+<!-- Защита контента от копирования -->
+<script>
+(function() {
+  'use strict';
+  
+  // Защита контента отключена - копирование разрешено
+  /*
+  document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    return false;
+  });
+  */
+})();
+</script>
+
+</body>
+</html>

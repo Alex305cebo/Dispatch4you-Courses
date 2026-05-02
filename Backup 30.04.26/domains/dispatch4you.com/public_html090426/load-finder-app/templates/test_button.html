@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Button</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 50px;
+            background: #f0f0f0;
+        }
+        .btn {
+            padding: 20px 40px;
+            font-size: 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background: #5568d3;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Тест кнопки</h1>
+    
+    <select id="state">
+        <option value="AZ">Arizona</option>
+        <option value="CA">California</option>
+        <option value="TX">Texas</option>
+    </select>
+    
+    <select id="equipment">
+        <option value="Dry Van">Dry Van</option>
+        <option value="Reefer">Reefer</option>
+    </select>
+    
+    <br><br>
+    
+    <button class="btn" onclick="testSearch()">🔍 Найти груз</button>
+    
+    <div id="result"></div>
+    
+    <script>
+        async function testSearch() {
+            console.log('🔍 Кнопка нажата!');
+            
+            const state = document.getElementById('state').value;
+            const equipment = document.getElementById('equipment').value;
+            
+            console.log('Штат:', state);
+            console.log('Оборудование:', equipment);
+            
+            document.getElementById('result').innerHTML = '⏳ Отправляем запрос...';
+            
+            try {
+                console.log('Отправляем POST на /api/search');
+                
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        origin_state: state,
+                        equipment_type: equipment
+                    })
+                });
+                
+                console.log('Ответ получен:', response.status);
+                
+                const data = await response.json();
+                console.log('Данные:', data);
+                
+                document.getElementById('result').innerHTML = 
+                    '<h2>✅ Успех!</h2>' +
+                    '<p>Найдено грузов: ' + data.count + '</p>' +
+                    '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+            } catch (error) {
+                console.error('❌ Ошибка:', error);
+                document.getElementById('result').innerHTML = 
+                    '<h2>❌ Ошибка</h2>' +
+                    '<p>' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>

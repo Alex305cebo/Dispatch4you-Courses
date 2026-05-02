@@ -1,0 +1,1096 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0e1a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <title>🚛 Load Finder - Автоматический поиск грузов</title>
+    <link rel="stylesheet" href="../shared-nav.css">
+    <style>
+        /* ═══════════════════════════════════════════════════════════
+           PREMIUM SAAS DESIGN - STRIPE/LINEAR STYLE
+           ═══════════════════════════════════════════════════════════ */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0e1a;
+            color: #ffffff;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            font-size: 125%;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 32px;
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           HEADER
+           ═══════════════════════════════════════════════════════════ */
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #a5b4fc;
+            margin-bottom: 24px;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+        }
+
+        h1 {
+            font-size: clamp(36px, 6vw, 56px);
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+            margin-bottom: 16px;
+        }
+
+        h1 .gradient {
+            background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #94a3b8;
+            max-width: 640px;
+            margin: 0 auto 32px;
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           FEATURES GRID
+           ═══════════════════════════════════════════════════════════ */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, #2563EB, #7C3AED);
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 12px 32px rgba(99, 102, 241, 0.3);
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .feature-card h3 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 0;
+            color: #ffffff;
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           SEARCH BOX
+           ═══════════════════════════════════════════════════════════ */
+        .search-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-size: 16px;
+            color: #ffffff;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        input[type="text"]::placeholder {
+            color: #64748b;
+        }
+
+        button {
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.5);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .examples {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .examples span {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            font-size: 14px;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .examples span:hover {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: rgba(99, 102, 241, 0.4);
+            color: #a5b4fc;
+            transform: scale(1.05);
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           STATUS & STATS
+           ═══════════════════════════════════════════════════════════ */
+        .status {
+            text-align: center;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-weight: 500;
+        }
+
+        .status.searching {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            color: #fbbf24;
+        }
+
+        .status.completed {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981;
+        }
+
+        .spinner {
+            border: 4px solid rgba(99, 102, 241, 0.2);
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .progress-text {
+            font-size: 16px;
+            margin: 12px 0;
+            color: #cbd5e1;
+        }
+
+        /* Progress Steps Display - Simple List Without Container */
+        .progress-steps {
+            margin: 24px auto;
+            padding: 0;
+            max-width: 700px;
+            position: relative;
+            /* Убрано большое окно - только карточки */
+        }
+
+        .progress-steps-inner {
+            position: relative;
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .progress-step {
+            padding: 14px 32px;
+            text-align: center;
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            margin: 6px 16px;
+        }
+
+        /* Completed steps - elegant green glass */
+        .progress-step.completed {
+            color: #10b981;
+            font-size: 15px;
+            font-weight: 500;
+            opacity: 0.6;
+            transform: scale(0.92);
+            filter: blur(0.3px);
+        }
+
+        /* Current step - stunning glass card */
+        .progress-step.current {
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 800;
+            padding: 24px 32px;
+            margin: 12px 16px;
+            transform: scale(1);
+            background: linear-gradient(135deg,
+                    rgba(99, 102, 241, 0.3) 0%,
+                    rgba(139, 92, 246, 0.3) 100%);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow:
+                0 8px 32px 0 rgba(99, 102, 241, 0.4),
+                inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
+                0 0 40px rgba(139, 92, 246, 0.3);
+            animation: glowPulse 3s ease-in-out infinite;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated gradient overlay */
+        .progress-step.current::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg,
+                    transparent 30%,
+                    rgba(255, 255, 255, 0.1) 50%,
+                    transparent 70%);
+            animation: shimmer 3s linear infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+            }
+
+            100% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+            }
+        }
+
+        @keyframes glowPulse {
+
+            0%,
+            100% {
+                box-shadow:
+                    0 8px 32px 0 rgba(99, 102, 241, 0.4),
+                    inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
+                    0 0 40px rgba(139, 92, 246, 0.3);
+            }
+
+            50% {
+                box-shadow:
+                    0 8px 32px 0 rgba(99, 102, 241, 0.6),
+                    inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+                    0 0 60px rgba(139, 92, 246, 0.5);
+            }
+        }
+
+        /* Upcoming steps - colorful glass cards */
+        .progress-step.upcoming {
+            font-size: 17px;
+            font-weight: 600;
+            opacity: 0.7;
+            transform: scale(0.95);
+            padding: 16px 32px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .progress-step.upcoming:nth-child(4) {
+            color: #60a5fa;
+            box-shadow: 0 4px 16px rgba(96, 165, 250, 0.1);
+        }
+
+        .progress-step.upcoming:nth-child(5) {
+            color: #a78bfa;
+            box-shadow: 0 4px 16px rgba(167, 139, 250, 0.1);
+        }
+
+        /* Hover effects */
+        .progress-step.upcoming:hover {
+            transform: scale(0.97);
+            opacity: 0.85;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 800;
+            color: #6366f1;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           TABLE
+           ═══════════════════════════════════════════════════════════ */
+        .table-container {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        .loads-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .loads-table thead {
+            background: rgba(99, 102, 241, 0.1);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .loads-table th {
+            padding: 16px 12px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 11px;
+            color: #a5b4fc;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            vertical-align: middle;
+        }
+
+        .loads-table th .icon {
+            display: block;
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .loads-table th .label {
+            display: block;
+            font-size: 11px;
+        }
+
+        .loads-table td {
+            padding: 16px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 14px;
+            color: #cbd5e1;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .loads-table tbody tr {
+            transition: all 0.2s;
+        }
+
+        .loads-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .loads-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .price-cell {
+            font-weight: 700;
+            color: #10b981;
+            font-size: 16px;
+        }
+
+        .contact-cell {
+            color: #6366f1;
+            font-weight: 500;
+        }
+
+        .no-data {
+            color: #475569;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .limit-warning {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            text-align: center;
+            color: #fbbf24;
+            font-weight: 600;
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           RESPONSIVE
+           ═══════════════════════════════════════════════════════════ */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 16px;
+            }
+
+            h1 {
+                font-size: 32px;
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+
+            .search-card {
+                padding: 20px;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .table-container {
+                overflow-x: auto;
+            }
+
+            .loads-table {
+                min-width: 1200px;
+            }
+        }
+
+        /* ========================================
+       RESPONSIVE DESIGN - ALL BREAKPOINTS
+       ======================================== */
+
+        /* Large Desktop (1400px) */
+        @media (max-width: 1400px) {
+            .container {
+                max-width: 1200px;
+            }
+        }
+
+        /* Desktop/Tablet Landscape (1024px) */
+        @media (max-width: 1024px) {
+            .container {
+                padding: 0 30px;
+            }
+
+            h1 {
+                font-size: clamp(36px, 5vw, 48px);
+            }
+
+            h2 {
+                font-size: clamp(28px, 4vw, 36px);
+            }
+        }
+
+        /* Tablet Portrait (768px) */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 20px;
+            }
+
+            h1 {
+                font-size: clamp(32px, 6vw, 42px);
+            }
+
+            h2 {
+                font-size: clamp(24px, 5vw, 32px);
+            }
+
+            h3 {
+                font-size: clamp(20px, 4vw, 24px);
+            }
+
+            /* Hide desktop navigation */
+            .nav-links {
+                display: none;
+            }
+
+            /* Show mobile menu toggle */
+            .mobile-menu-toggle {
+                display: flex;
+            }
+        }
+
+        /* Mobile (480px) */
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 16px;
+            }
+
+            body {
+                font-size: 14px;
+            }
+
+            h1 {
+                font-size: clamp(28px, 7vw, 36px);
+            }
+
+            h2 {
+                font-size: clamp(22px, 6vw, 28px);
+            }
+
+            h3 {
+                font-size: clamp(18px, 5vw, 22px);
+            }
+
+            p {
+                font-size: 14px;
+                line-height: 1.6;
+            }
+
+            .btn {
+                width: 100%;
+                padding: 14px 20px;
+                font-size: 14px;
+            }
+        }
+
+        /* Small Mobile (360px) */
+        @media (max-width: 360px) {
+            .container {
+                padding: 0 12px;
+            }
+
+            h1 {
+                font-size: 26px;
+            }
+
+            h2 {
+                font-size: 22px;
+            }
+
+            h3 {
+                font-size: 18px;
+            }
+
+            p {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+  <div id="nav-placeholder"></div>
+  <script src="../nav-loader.js"></script>
+
+    <div class="container">
+        <div class="header">
+            <div class="header-badge">
+                <span>🚛</span>
+                <span>Автоматический сбор грузов</span>
+            </div>
+            <h1>
+                <span class="gradient">Load Finder</span>
+            </h1>
+            <p class="subtitle">
+                Профессиональный поиск грузов с полной информацией о брокерах, ценах и контактах
+            </p>
+        </div>
+
+        <!-- Features Grid -->
+        <div class="features-grid" style="margin-bottom: 48px;">
+            <div class="feature-card">
+                <span class="feature-icon">🚛</span>
+                <h3>50+ Брокеров</h3>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">⚡</span>
+                <h3>Реальное время</h3>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">💰</span>
+                <h3>Бесплатно</h3>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">📱</span>
+                <h3>Удобный интерфейс</h3>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">🎓</span>
+                <h3>Для студентов</h3>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">🔄</span>
+                <h3>Постоянные обновления</h3>
+            </div>
+        </div>
+
+        <div class="search-card">
+            <div class="search-box">
+                <input type="text" id="cityInput" placeholder="Введите город и штат (например: Miami, FL)"
+                    onkeypress="if(event.key === 'Enter') searchLoads()">
+                <button id="searchBtn" onclick="searchLoads()">🔍 Начать поиск</button>
+            </div>
+
+            <div class="examples">
+                <span id="city1" onclick="setCity(this.textContent)"></span>
+                <span id="city2" onclick="setCity(this.textContent)"></span>
+                <span id="city3" onclick="setCity(this.textContent)"></span>
+                <span id="city4" onclick="setCity(this.textContent)"></span>
+                <span id="city5" onclick="setCity(this.textContent)"></span>
+                <span id="city6" onclick="setCity(this.textContent)"></span>
+            </div>
+        </div>
+
+        <div id="statusBox" class="hidden"></div>
+        <div id="limitWarning" class="hidden"></div>
+        <div id="statsBox" class="hidden"></div>
+        <div id="loadsContainer" class="hidden"></div>
+    </div>
+
+    <script>
+        let checkInterval = null;
+
+        // Список городов США
+        const cities = [
+            'Miami, FL', 'Chicago, IL', 'Atlanta, GA', 'Los Angeles, CA', 'Dallas, TX',
+            'Houston, TX', 'Phoenix, AZ', 'Philadelphia, PA', 'San Antonio, TX', 'San Diego, CA',
+            'San Jose, CA', 'Austin, TX', 'Jacksonville, FL', 'Fort Worth, TX', 'Columbus, OH',
+            'Charlotte, NC', 'Indianapolis, IN', 'Seattle, WA', 'Denver, CO', 'Boston, MA',
+            'El Paso, TX', 'Nashville, TN', 'Detroit, MI', 'Portland, OR', 'Las Vegas, NV',
+            'Memphis, TN', 'Louisville, KY', 'Baltimore, MD', 'Milwaukee, WI', 'Albuquerque, NM',
+            'Tucson, AZ', 'Fresno, CA', 'Sacramento, CA', 'Kansas City, MO', 'Mesa, AZ',
+            'Omaha, NE', 'Raleigh, NC', 'Long Beach, CA', 'Virginia Beach, VA', 'Oakland, CA',
+            'Minneapolis, MN', 'Tampa, FL', 'Tulsa, OK', 'Arlington, TX', 'New Orleans, LA',
+            'Wichita, KS', 'Cleveland, OH', 'Bakersfield, CA', 'Aurora, CO', 'Anaheim, CA',
+            'Honolulu, HI', 'Santa Ana, CA', 'Riverside, CA', 'Corpus Christi, TX', 'Lexington, KY',
+            'Stockton, CA', 'St. Louis, MO', 'Pittsburgh, PA', 'Anchorage, AK', 'Cincinnati, OH',
+            'Greensboro, NC', 'Newark, NJ', 'Plano, TX', 'Orlando, FL', 'Irvine, CA',
+            'Laredo, TX', 'Buffalo, NY', 'Madison, WI', 'Lubbock, TX', 'Chandler, AZ',
+            'Scottsdale, AZ', 'Reno, NV', 'Norfolk, VA', 'Winston-Salem, NC', 'Glendale, AZ',
+            'Hialeah, FL', 'Garland, TX', 'Boise, ID', 'Spokane, WA', 'Fremont, CA'
+        ];
+
+        // Генерируем 6 случайных городов при загрузке страницы
+        function generateRandomCities() {
+            const shuffled = cities.sort(() => 0.5 - Math.random());
+            const selected = shuffled.slice(0, 6);
+
+            for (let i = 0; i < 6; i++) {
+                document.getElementById(`city${i + 1}`).textContent = selected[i];
+            }
+        }
+
+        // Генерируем города при загрузке
+        window.addEventListener('DOMContentLoaded', generateRandomCities);
+
+        function setCity(city) {
+            document.getElementById('cityInput').value = city;
+        }
+
+        async function searchLoads() {
+            const city = document.getElementById('cityInput').value.trim();
+
+            if (!city) {
+                alert('Пожалуйста, введите город и штат');
+                return;
+            }
+
+            const searchBtn = document.getElementById('searchBtn');
+            const statusBox = document.getElementById('statusBox');
+            const statsBox = document.getElementById('statsBox');
+            const loadsContainer = document.getElementById('loadsContainer');
+            const limitWarning = document.getElementById('limitWarning');
+
+            searchBtn.disabled = true;
+            searchBtn.textContent = '⏳ Поиск...';
+
+            statusBox.className = 'status searching';
+            statusBox.innerHTML = `
+                <div class="spinner"></div>
+                <p style="font-size: 18px; margin: 15px 0; font-weight: 600;">🔍 Поиск грузов из ${city}...</p>
+                <div class="progress-steps">
+                    <div class="progress-steps-inner" id="progressStepsInner">
+                        <div class="progress-step completed" id="step-2"></div>
+                        <div class="progress-step completed" id="step-1"></div>
+                        <div class="progress-step current" id="step0">Подключение к системе...</div>
+                        <div class="progress-step upcoming" id="step1"></div>
+                        <div class="progress-step upcoming" id="step2"></div>
+                    </div>
+                </div>
+            `;
+            statusBox.classList.remove('hidden');
+            loadsContainer.classList.add('hidden');
+            statsBox.classList.add('hidden');
+            limitWarning.classList.add('hidden');
+
+            try {
+                const response = await fetch('http://127.0.0.1:5003/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ city: city })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка запроса');
+                }
+
+                checkInterval = setInterval(checkStatus, 2000);
+
+            } catch (error) {
+                statusBox.className = 'status';
+                statusBox.style.background = 'rgba(239, 68, 68, 0.1)';
+                statusBox.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                statusBox.style.color = '#ef4444';
+                statusBox.textContent = '❌ Ошибка: ' + error.message;
+                searchBtn.disabled = false;
+                searchBtn.textContent = '🔍 Начать поиск';
+            }
+        }
+
+        // Список всех шагов процесса
+        const allSteps = [
+            '🔌 Подключение к системе...',
+            '🌐 Открытие браузера...',
+            '🔍 Поиск формы входа...',
+            '📝 Ввод учетных данных...',
+            '🔐 Авторизация...',
+            '✅ Вход выполнен успешно',
+            '🔄 Обновление страницы...',
+            '📍 Настройка поиска...',
+            '🔍 Поиск поля Pick Up...',
+            '📝 Ввод города...',
+            '⏳ Ожидание списка городов...',
+            '🎯 Выбор города из списка...',
+            '✅ Город выбран из списка',
+            '⏳ Применение выбора...',
+            '🔍 Запуск поиска...',
+            '⏳ Загрузка результатов...',
+            '📊 Анализ результатов...',
+            '📄 Чтение данных страницы...',
+            '💾 Сохранение данных...',
+            '🔍 Поиск грузов на странице...',
+            '📦 Обработка грузов...',
+            '✅ Сбор завершен!'
+        ];
+
+        let currentStepIndex = 0;
+
+        function updateProgressSteps(currentStepText) {
+            // Находим индекс текущего шага
+            const stepIndex = allSteps.findIndex(step => step === currentStepText);
+            if (stepIndex !== -1) {
+                currentStepIndex = stepIndex;
+            }
+
+            // Обновляем 5 строк
+            const step_2 = document.getElementById('step-2');
+            const step_1 = document.getElementById('step-1');
+            const step0 = document.getElementById('step0');
+            const step1 = document.getElementById('step1');
+            const step2 = document.getElementById('step2');
+
+            if (!step0) return;
+
+            // 2 строки назад (completed)
+            if (currentStepIndex >= 2) {
+                step_2.textContent = allSteps[currentStepIndex - 2];
+                step_2.className = 'progress-step completed';
+            } else {
+                step_2.textContent = '';
+            }
+
+            if (currentStepIndex >= 1) {
+                step_1.textContent = allSteps[currentStepIndex - 1];
+                step_1.className = 'progress-step completed';
+            } else {
+                step_1.textContent = '';
+            }
+
+            // Текущий шаг (current - крупный)
+            step0.textContent = currentStepText;
+            step0.className = 'progress-step current';
+
+            // 2 строки вперед (upcoming)
+            if (currentStepIndex + 1 < allSteps.length) {
+                step1.textContent = allSteps[currentStepIndex + 1];
+                step1.className = 'progress-step upcoming';
+            } else {
+                step1.textContent = '';
+            }
+
+            if (currentStepIndex + 2 < allSteps.length) {
+                step2.textContent = allSteps[currentStepIndex + 2];
+                step2.className = 'progress-step upcoming';
+            } else {
+                step2.textContent = '';
+            }
+        }
+
+        async function checkStatus() {
+            try {
+                const response = await fetch('http://127.0.0.1:5003/status');
+                const data = await response.json();
+
+                const statusBox = document.getElementById('statusBox');
+                const statsBox = document.getElementById('statsBox');
+                const loadsContainer = document.getElementById('loadsContainer');
+                const limitWarning = document.getElementById('limitWarning');
+                const searchBtn = document.getElementById('searchBtn');
+
+                // Обновляем 5-строчный индикатор прогресса
+                if (data.status === 'searching') {
+                    updateProgressSteps(data.step_name || 'Обработка');
+                }
+
+                if (data.status === 'completed') {
+                    clearInterval(checkInterval);
+
+                    statusBox.className = 'status completed';
+                    statusBox.innerHTML = '<p style="font-size: 18px; font-weight: 600;">✅ Сбор завершен!</p>';
+
+                    if (data.limit_reached) {
+                        limitWarning.innerHTML = `
+                            ⚠️ <strong>Достигнут дневной лимит просмотров!</strong><br>
+                            Собрано максимум информации до появления ограничения.
+                        `;
+                        limitWarning.classList.remove('hidden');
+                    }
+
+                    const loads = data.loads || [];
+                    const loadsWithPhone = loads.filter(l => l.phone).length;
+                    const loadsWithEmail = loads.filter(l => l.email).length;
+                    const loadsWithBoth = loads.filter(l => l.phone && l.email).length;
+                    const loadsWithPrice = loads.filter(l => l.price).length;
+
+                    statsBox.innerHTML = `
+                        <div class="stats">
+                            <div class="stat-card">
+                                <span class="stat-number">${loads.length}</span>
+                                <span class="stat-label">Всего грузов</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-number">${loadsWithPrice}</span>
+                                <span class="stat-label">С ценой</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-number">${loadsWithPhone}</span>
+                                <span class="stat-label">С телефоном</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-number">${loadsWithEmail}</span>
+                                <span class="stat-label">С email</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-number">${loadsWithBoth}</span>
+                                <span class="stat-label">С обоими</span>
+                            </div>
+                        </div>
+                    `;
+                    statsBox.classList.remove('hidden');
+
+                    if (loads.length > 0) {
+                        let tableHTML = `
+                            <div class="table-container">
+                                <table class="loads-table">
+                                    <thead>
+                                        <tr>
+                                            <th><span class="icon">#</span></th>
+                                            <th><span class="icon">📅</span><span class="label">Дата</span></th>
+                                            <th><span class="icon">📍</span><span class="label">Откуда<br>(Pick up)</span></th>
+                                            <th><span class="icon">📍</span><span class="label">Куда<br>(Delivery)</span></th>
+                                            <th><span class="icon">📏</span><span class="label">Расстояние</span></th>
+                                            <th><span class="icon">🚛</span><span class="label">Трейлер</span></th>
+                                            <th><span class="icon">⚖️</span><span class="label">Вес</span></th>
+                                            <th><span class="icon">💰</span><span class="label">Цена</span></th>
+                                            <th><span class="icon">🏢</span><span class="label">Broker</span></th>
+                                            <th><span class="icon">📞</span><span class="label">Телефон</span></th>
+                                            <th><span class="icon">📧</span><span class="label">Email</span></th>
+                                            <th><span class="icon">🔢</span><span class="label">DOT</span></th>
+                                            <th><span class="icon">🔢</span><span class="label">MC</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                        `;
+
+                        loads.forEach(load => {
+                            tableHTML += `
+                                <tr>
+                                    <td>${load.number}</td>
+                                    <td>${load.date || '-'}</td>
+                                    <td>${load.pickup || '-'}</td>
+                                    <td>${load.dropoff || '-'}</td>
+                                    <td>${load.distance || '-'}</td>
+                                    <td>${load.trailer || '-'}</td>
+                                    <td>${load.weight || '-'}</td>
+                                    <td class="price-cell">${load.price || '-'}</td>
+                                    <td>${load.broker || '-'}</td>
+                                    <td class="${load.phone ? 'contact-cell' : 'no-data'}">${load.phone || '-'}</td>
+                                    <td class="${load.email ? 'contact-cell' : 'no-data'}">${load.email || '-'}</td>
+                                    <td>${load.dot_number || '-'}</td>
+                                    <td>${load.mc_number || '-'}</td>
+                                </tr>
+                            `;
+                        });
+
+                        tableHTML += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+
+                        loadsContainer.innerHTML = tableHTML;
+                        loadsContainer.classList.remove('hidden');
+                    }
+
+                    searchBtn.disabled = false;
+                    searchBtn.textContent = '🔍 Начать поиск';
+                }
+
+            } catch (error) {
+                clearInterval(checkInterval);
+                console.error('Ошибка проверки статуса:', error);
+            }
+        }
+    </script>
+
+    <script src="../auth.js"></script>
+
+    <!-- Mobile menu script -->
+    <script>
+        // Mobile menu functionality
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+
+        if (mobileMenuToggle && mobileMenu && mobileMenuOverlay) {
+            mobileMenuToggle.addEventListener('click', () => {
+                mobileMenu.classList.toggle('active');
+                mobileMenuOverlay.classList.toggle('active');
+                document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+            });
+
+            mobileMenuOverlay.addEventListener('click', () => {
+                mobileMenu.classList.remove('active');
+                mobileMenuOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+    </script>
+
+</body>
+
+</html>

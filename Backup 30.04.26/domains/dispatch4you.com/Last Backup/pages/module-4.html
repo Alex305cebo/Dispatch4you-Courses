@@ -1,0 +1,308 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль 4: Load Boards и поиск грузов | Курсы Диспетчера</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #0a0e1a;
+            color: #ffffff;
+            padding: 40px 20px;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,.05);
+            border: 1px solid rgba(255,255,255,.1);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+        .back-btn:hover { background: rgba(255,255,255,.08); }
+        .module-header {
+            background: rgba(34,197,94,.1);
+            border: 1px solid rgba(34,197,94,.3);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+        .module-badge {
+            display: inline-block;
+            background: rgba(34,197,94,.2);
+            color: #22c55e;
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+        h1 {
+            font-size: 32px;
+            font-weight: 900;
+            margin-bottom: 12px;
+            color: #22c55e;
+        }
+        .description { color: #94a3b8; font-size: 14px; text-align: left; }
+        .content-section {
+            background: rgba(255,255,255,.03);
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+        h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #22c55e;
+            text-align: left;
+        }
+        h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 24px 0 12px;
+            color: #a5b4fc;
+            text-align: left;
+        }
+        ul { margin-left: 20px; margin-bottom: 16px; text-align: left; }
+        li { margin-bottom: 8px; color: #cbd5e1; text-align: left; font-size: 14px; }
+        p { text-align: left; color: #cbd5e1; margin-bottom: 16px; font-size: 14px; }
+        .test-btn {
+            display: inline-block;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 16px;
+            margin-top: 24px;
+        }
+        .test-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+    
+/* Footer */
+.footer {
+  padding: 80px 0 40px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 80px;
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 48px;
+  margin-bottom: 48px;
+}
+
+.footer-section h4 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #f1f5f9;
+}
+
+.footer-section p {
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.footer-section a {
+  display: block;
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.footer-section a:hover {
+  color: #6366f1;
+  transform: translateX(4px);
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: #64748b;
+  font-size: 14px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+        <a href="modules.html" class="back-btn">← Назад к модулям</a>
+        <a href="../index.html" class="back-btn">🏠 Главная</a>
+    </div>
+    
+    <div class="module-header">
+        <div class="module-badge">🌐 Модуль 4</div>
+        <h1>Load Boards и поиск грузов</h1>
+        <p class="description">Работа с платформами поиска грузов</p>
+    </div>
+
+    <div class="content-section">
+        <h2>📚 Содержание модуля</h2>
+        
+        <h3>1. Основные Load Board платформы</h3>
+        <ul>
+            <li><strong>DAT (Dial-A-Truck):</strong> Крупнейшая платформа, $150-200/месяц, огромная база грузов</li>
+            <li><strong>Truckstop.com:</strong> Вторая по популярности, $100-150/месяц</li>
+            <li><strong>123Loadboard:</strong> Бюджетный вариант, $50-80/месяц</li>
+            <li><strong>C.H. Robinson:</strong> Одна из крупнейших брокерских фирм</li>
+            <li><strong>TQL (Total Quality Logistics):</strong> Хорошая репутация и регулярные грузы</li>
+            <li><strong>Arrive Logistics:</strong> Быстрорастущая компания</li>
+            <li><strong>Coyote Logistics:</strong> Принадлежит UPS</li>
+            <li><strong>XPO Logistics:</strong> Глобальная транспортная компания</li>
+        </ul>
+
+        <h3>2. Типы оборудования</h3>
+        <ul>
+            <li><strong>Dry Van (53ft):</strong> Самый распространённый, закрытый трейлер для сухих грузов</li>
+            <li><strong>Reefer (53ft):</strong> Рефрижератор для продуктов, требующих температурного контроля</li>
+            <li><strong>Flatbed (48ft):</strong> Открытая платформа для строительных материалов, оборудования</li>
+            <li><strong>Step Deck:</strong> Платформа с пониженным уровнем для высоких грузов</li>
+            <li><strong>Lowboy:</strong> Очень низкая платформа для тяжёлого оборудования</li>
+            <li><strong>Conestoga:</strong> Flatbed с выдвижным тентом</li>
+            <li><strong>Power Only:</strong> Только тягач без трейлера (клиент предоставляет трейлер)</li>
+        </ul>
+
+        <h3>3. Основные термины</h3>
+        <ul>
+            <li><strong>Deadhead:</strong> Пустой пробег до места погрузки (без груза)</li>
+            <li><strong>RPM (Rate Per Mile):</strong> Ставка за милю ($2.50/mile - хорошая ставка)</li>
+            <li><strong>TONU (Truck Ordered Not Used):</strong> Отмена груза после подтверждения</li>
+            <li><strong>Detention:</strong> Плата за ожидание при погрузке/разгрузке (обычно $25-50/час после 2 часов)</li>
+            <li><strong>Layover:</strong> Плата за вынужденную остановку в пути</li>
+            <li><strong>Drop & Hook:</strong> Быстрая погрузка - оставить трейлер, подцепить загруженный трейлер</li>
+            <li><strong>Live Load/Unload:</strong> Погрузка/разгрузка с ожиданием</li>
+        </ul>
+
+        <h3>4. Detention и Layover платежи</h3>
+        <ul>
+            <li><strong>Detention Pay:</strong> $25-75/час после 2 часов бесплатного ожидания</li>
+            <li><strong>Layover Pay:</strong> $100-200 за вынужденную ночёвку</li>
+            <li><strong>TONU Compensation:</strong> $50-200 за отмену груза</li>
+            <li><strong>Lumper Fee:</strong> Услуги грузчиков ($50-300), обычно возмещается брокером</li>
+            <li><strong>Важно:</strong> Всегда оговаривайте эти условия до подтверждения груза</li>
+            <li><strong>Документация:</strong> Фиксируйте все дополнительные расходы письменно/фото</li>
+        </ul>
+
+        <h3>5. Расчёт ставки и прибыли</h3>
+        <p><strong>Как рассчитывать ставку:</strong></p>
+        <ul>
+            <li><strong>Расстояние:</strong> Используйте Google Maps или PC Miler для расчёта миль</li>
+            <li><strong>Deadhead:</strong> Учитывайте пустой пробег до погрузки</li>
+            <li><strong>RPM:</strong> Делите ставку на общее число миль (включая deadhead)</li>
+            <li><strong>Топливо:</strong> Средний расход 6-7 MPG, цена $3-4/галлон</li>
+            <li><strong>Время:</strong> Средняя скорость 50-55 mph с учётом остановок</li>
+            <li><strong>Backhaul:</strong> Планируйте обратный груз на пути возвращения</li>
+        </ul>
+
+        <h3>6. Пример расчёта груза</h3>
+        <p><strong>Расчёт прибыли:</strong></p>
+        <ul>
+            <li><strong>Ставка брокера:</strong> Маршрут 500 миль ($2,500)</li>
+            <li><strong>Топливо:</strong> (Мили / MPG) × Цена галлона (500 миль / 6.5 MPG × $3.50 = $269)</li>
+            <li><strong>Другие расходы:</strong> Tolls, parking, lumper fees ($50-100)</li>
+            <li><strong>Чистая прибыль:</strong> $2,500 - $269 - $80 = $2,151</li>
+            <li><strong>RPM после расходов:</strong> $2,151 / 500 миль = $4.30/mile</li>
+            <li><strong>Минимум ставки:</strong> $2.00-2.50/mile после всех расходов</li>
+        </ul>
+
+        <h3>7. Проверка брокеров</h3>
+        <ul>
+            <li><strong>RTS Pro:</strong> Платформа для проверки кредитного рейтинга брокеров</li>
+            <li><strong>Carrier411:</strong> База данных с отзывами о брокерах</li>
+            <li><strong>FMCSA Safer System:</strong> Проверка MC/DOT статуса</li>
+            <li><strong>Days to Pay:</strong> Средние дни оплаты (30-45 дней нормально)</li>
+            <li><strong>Credit Score:</strong> A+ до F (работайте только с A-C)</li>
+            <li><strong>Red Flags:</strong> Новый MC номер (<6 месяцев), плохие отзывы, задержки оплаты</li>
+        </ul>
+
+        <h3>8. Стратегии поиска грузов</h3>
+        <ul>
+            <li><strong>Hot Lanes:</strong> Популярные маршруты с высоким спросом (CA-TX, TX-FL, IL-CA)</li>
+            <li><strong>Seasonal Demand:</strong> Сезонность продуктов (produce в CA летом, retail перед Рождеством)</li>
+            <li><strong>Backhaul Planning:</strong> Всегда ищите обратный груз чтобы минимизировать deadhead</li>
+            <li><strong>Relationship Building:</strong> Стройте отношения с надёжными брокерами для лучших предложений</li>
+            <li><strong>Alerts:</strong> Настройте автоматические уведомления на Load Boards</li>
+            <li><strong>Timing:</strong> Лучшее время публикации грузов (6-9 AM EST)</li>
+        </ul>
+    </div>
+
+    <div class="content-section">
+        <h2>🎯 Ключевые навыки</h2>
+        <ul>
+            <li>Работа с основными Load Board платформами</li>
+            <li>Понимание типов оборудования</li>
+            <li>Знание транспортной терминологии</li>
+            <li>Расчёт прибыльности грузов</li>
+            <li>Проверка надёжности брокеров</li>
+            <li>Стратегии эффективного поиска грузов</li>
+        </ul>
+        
+        <a href="module-5.html" class="test-btn">Следующий модуль: Коммуникация с брокерами →</a>
+    </div>
+</div>
+
+<script>
+localStorage.setItem('module_4_viewed', 'true');
+</script>
+
+
+
+
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Курсы Диспетчера</h4>
+        <p>Профессиональное обучение диспетчеров грузоперевозок</p>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Обучение</h4>
+        <a href="../courses.html">Курсы</a>
+        <a href="../certification.html">Сертификация</a>
+        <a href="../webinars.html">Вебинары</a>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Поддержка</h4>
+        <a href="../faq.html">FAQ</a>
+        <a href="../contacts.html">Контакты</a>
+        <a href="../help.html">Помощь</a>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Компания</h4>
+        <a href="../about.html">О нас</a>
+        <a href="../blog.html">Блог</a>
+        <a href="../career.html">Карьера</a>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <p>&copy; 2024 Курсы Диспетчера. Все права защищены.</p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

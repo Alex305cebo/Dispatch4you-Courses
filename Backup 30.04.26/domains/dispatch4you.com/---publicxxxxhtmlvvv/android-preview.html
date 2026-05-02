@@ -1,0 +1,412 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Android Preview - Диспетчер США</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .phone-frame {
+            width: 360px;
+            height: 780px;
+            background: #000;
+            border-radius: 30px;
+            padding: 8px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .status-bar {
+            height: 24px;
+            background: #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 12px;
+            color: white;
+            font-size: 11px;
+        }
+
+        .time {
+            font-weight: 500;
+        }
+
+        .indicators {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            font-size: 10px;
+        }
+
+        .app-bar {
+            height: 56px;
+            background: #667eea;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .menu-icon {
+            font-size: 24px;
+            margin-right: 16px;
+            cursor: pointer;
+        }
+
+        .app-bar-title {
+            font-size: 20px;
+            font-weight: 500;
+            flex: 1;
+        }
+
+        .more-icon {
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .app-content {
+            height: calc(100% - 80px - 56px);
+            overflow-y: auto;
+            background: #f5f5f5;
+        }
+
+        .fab {
+            position: absolute;
+            bottom: 72px;
+            right: 16px;
+            width: 56px;
+            height: 56px;
+            background: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .card {
+            background: white;
+            margin: 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .card-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .card-content {
+            padding: 16px;
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .list-item:hover {
+            background: #f5f5f5;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-icon {
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f5;
+            border-radius: 50%;
+            margin-right: 16px;
+        }
+
+        .list-text {
+            flex: 1;
+        }
+
+        .list-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #212121;
+            margin-bottom: 2px;
+        }
+
+        .list-subtitle {
+            font-size: 14px;
+            color: #757575;
+        }
+
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: #757575;
+            font-size: 12px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: #667eea;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            max-width: 300px;
+        }
+
+        .controls h3 {
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+
+        .control-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .info {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #4a5568;
+        }
+
+        @media (max-width: 768px) {
+            .phone-frame {
+                width: 100%;
+                max-width: 360px;
+                height: 90vh;
+            }
+
+            .controls {
+                position: static;
+                margin-top: 20px;
+                max-width: 100%;
+            }
+
+            body {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-frame">
+        <div class="screen">
+            <div class="status-bar">
+                <div class="time">9:41</div>
+                <div class="indicators">
+                    <span>📶</span>
+                    <span>📡</span>
+                    <span>🔋 85%</span>
+                </div>
+            </div>
+
+            <div class="app-bar">
+                <div class="menu-icon">☰</div>
+                <div class="app-bar-title">Диспетчер США</div>
+                <div class="more-icon">⋮</div>
+            </div>
+
+            <div class="app-content">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🚛 Курсы обучения</div>
+                        <div class="card-subtitle">Профессиональная подготовка диспетчеров</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="list-item" onclick="window.location.href='pages/documentation.html'" style="cursor: pointer;">
+                            <div class="list-icon">📖</div>
+                            <div class="list-text">
+                                <div class="list-title">Документация</div>
+                                <div class="list-subtitle">Полное руководство</div>
+                            </div>
+                        </div>
+                        <div class="list-item" onclick="window.location.href='pages/modules.html'" style="cursor: pointer;">
+                            <div class="list-icon">📚</div>
+                            <div class="list-text">
+                                <div class="list-title">10 Модулей</div>
+                                <div class="list-subtitle">Комплексное обучение с тестами</div>
+                            </div>
+                        </div>
+                        <div class="list-item" onclick="window.location.href='pages/simulator.html'" style="cursor: pointer;">
+                            <div class="list-icon">🎮</div>
+                            <div class="list-text">
+                                <div class="list-title">Симулятор</div>
+                                <div class="list-subtitle">4-этапный процесс</div>
+                            </div>
+                        </div>
+                        <div class="list-item" onclick="window.location.href='pages/loads.html'" style="cursor: pointer;">
+                            <div class="list-icon">📦</div>
+                            <div class="list-text">
+                                <div class="list-title">Примеры грузов</div>
+                                <div class="list-subtitle">Реальные данные США</div>
+                            </div>
+                        </div>
+                        <div class="list-item" onclick="window.location.href='pages/loadboard.html'" style="cursor: pointer;">
+                            <div class="list-icon">🔍</div>
+                            <div class="list-text">
+                                <div class="list-title">Load Board</div>
+                                <div class="list-subtitle">Расширенные фильтры</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab" onclick="window.location.href='pages/modules.html'" style="cursor: pointer;">+</div>
+
+            <div class="bottom-nav">
+                <div class="nav-item active" onclick="window.location.href='index.html'" style="cursor: pointer;">
+                    <div class="nav-icon">🏠</div>
+                    <div>Главная</div>
+                </div>
+                <div class="nav-item" onclick="window.location.href='pages/modules.html'" style="cursor: pointer;">
+                    <div class="nav-icon">📚</div>
+                    <div>Модули</div>
+                </div>
+                <div class="nav-item" onclick="window.location.href='pages/simulator.html'" style="cursor: pointer;">
+                    <div class="nav-icon">🎮</div>
+                    <div>Симулятор</div>
+                </div>
+                <div class="nav-item" onclick="window.location.href='pages/loads.html'" style="cursor: pointer;">
+                    <div class="nav-icon">📦</div>
+                    <div>Грузы</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <h3>🤖 Android Preview</h3>
+        <button class="control-btn" onclick="window.location.href='index.html'">
+            🏠 Открыть главную страницу
+        </button>
+        <button class="control-btn" onclick="window.location.href='pages/documentation.html'">
+            📖 Открыть документацию
+        </button>
+        <button class="control-btn" onclick="window.location.href='pages/loadboard.html'">
+            🔍 Открыть Load Board
+        </button>
+        <button class="control-btn" onclick="window.location.href='pages/simulator.html'">
+            🎮 Открыть симулятор
+        </button>
+
+        <div class="info">
+            <strong>ℹ️ Информация:</strong><br>
+            Это предпросмотр того, как приложение будет выглядеть на Android. 
+            Для реальной установки используйте Chrome и выберите "Установить приложение".
+        </div>
+    </div>
+
+    <script>
+        // List items now navigate directly via onclick
+        document.querySelectorAll('.list-item').forEach(item => {
+            item.style.cursor = 'pointer';
+        });
+
+        document.querySelector('.menu-icon').addEventListener('click', function() {
+            alert('☰ Меню\n\nВ реальном приложении откроется боковое меню навигации.');
+        });
+    </script>
+<script src="theme-switcher.js"></script>
+</body>
+</html>
