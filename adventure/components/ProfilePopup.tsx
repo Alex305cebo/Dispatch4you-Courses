@@ -12,6 +12,7 @@ import RepairGarageModal from './RepairGarageModal';
 interface ProfilePopupProps {
   onClose: () => void;
   onStartGame: (slotId: number) => void;
+  initialTab?: Tab; // Добавляем возможность задать начальную вкладку
 }
 
 type Tab = 'saves' | 'stats' | 'garage';
@@ -31,8 +32,8 @@ interface SaveSlot {
   };
 }
 
-export default function ProfilePopup({ onClose, onStartGame }: ProfilePopupProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('saves');
+export default function ProfilePopup({ onClose, onStartGame, initialTab = 'saves' }: ProfilePopupProps) {
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
@@ -118,12 +119,12 @@ export default function ProfilePopup({ onClose, onStartGame }: ProfilePopupProps
   function handleSlotClick(slot: SaveSlot) {
     if (slot.isEmpty) {
       // Новая игра в этом слоте
-      if (window.confirm(`Начать новую игру в ${slot.name}?`)) {
+      if (window.confirm(`🎮 Начать новую игру в ${slot.name}?\n\nВы начнёте с 1 траком в Knoxville, TN`)) {
         onStartGame(slot.id);
       }
     } else {
       // Загрузить сохранение
-      if (window.confirm(`Загрузить игру из ${slot.name}?`)) {
+      if (window.confirm(`📂 Загрузить игру из ${slot.name}?\n\n${slot.data!.sessionName}\nДень ${slot.data!.day} · ${slot.data!.trucks} траков`)) {
         const key = `dispatcher-save-slot-${slot.id}`;
         const raw = localStorage.getItem(key);
         if (raw) {
@@ -240,6 +241,17 @@ export default function ProfilePopup({ onClose, onStartGame }: ProfilePopupProps
                 Выберите слот для новой игры или загрузите существующее сохранение
               </Text>
 
+              {/* Подсказка для новых игроков */}
+              {slots.every(s => s.isEmpty) && (
+                <View style={s.hintCard}>
+                  <Text style={{ fontSize: 24, marginBottom: 8 }}>🎮</Text>
+                  <Text style={s.hintTitle}>Добро пожаловать!</Text>
+                  <Text style={s.hintText}>
+                    Выберите любой слот чтобы начать новую игру. Вы сможете сохранить до 3 разных игр одновременно.
+                  </Text>
+                </View>
+              )}
+
               {slots.map(slot => (
                 <TouchableOpacity
                   key={slot.id}
@@ -248,12 +260,15 @@ export default function ProfilePopup({ onClose, onStartGame }: ProfilePopupProps
                 >
                   {slot.isEmpty ? (
                     <>
-                      <View style={s.slotIcon}>
-                        <Text style={{ fontSize: 32 }}>➕</Text>
+                      <View style={[s.slotIcon, { backgroundColor: 'rgba(59,130,246,0.15)' }]}>
+                        <Text style={{ fontSize: 32 }}>🎮</Text>
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={s.slotTitle}>{slot.name}</Text>
-                        <Text style={s.slotSub}>Пустой слот — начать новую игру</Text>
+                        <Text style={[s.slotSub, { color: '#60a5fa' }]}>Нажмите чтобы начать новую игру</Text>
+                      </View>
+                      <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(59,130,246,0.2)', alignItems: 'center', justifyContent: 'center' }}>
+                        <Text style={{ fontSize: 20, color: '#60a5fa' }}>→</Text>
                       </View>
                     </>
                   ) : (
@@ -622,5 +637,26 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#06b6d4',
+  },
+  hintCard: {
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: 'rgba(59,130,246,0.08)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(59,130,246,0.25)',
+    marginBottom: 8,
+  },
+  hintTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#60a5fa',
+    marginBottom: 6,
+  },
+  hintText: {
+    fontSize: 13,
+    color: '#94a3b8',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

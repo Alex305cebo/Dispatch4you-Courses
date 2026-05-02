@@ -149,7 +149,7 @@ export default function MainMenu() {
 
   const items = [
     ...(hasSave ? [{ id:'continue', icon:'▶', label:'Продолжить', sub:'Последнее сохранение', color:'#22c55e', action: handleContinue, hot: true }] : []),
-    { id:'new', icon:'⚡', label: hasSave ? 'Новая игра' : 'Начать игру', sub:'1 трак · Knoxville, TN', color:'#3b82f6', action: handleNewGame, hot: !hasSave },
+    { id:'new', icon:'⚡', label: hasSave ? 'Новая игра' : 'Начать игру', sub:'Выбрать слот сохранения', color:'#3b82f6', action: () => setShowProfile(true), hot: !hasSave },
     { id:'profile', icon:'◉', label:'Профиль', sub:'Сохранения · Гараж', color:'#ec4899', action: () => setShowProfile(true) },
     { id:'settings', icon:'⚙', label:'Настройки', sub:'Графика · Звук', color:'#06b6d4', action: () => setShowSettings(true) },
   ];
