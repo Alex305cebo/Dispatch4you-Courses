@@ -581,7 +581,7 @@ export default function GameScreen() {
     return (
       <div style={{
         display: 'flex', alignItems: 'center', gap: isWide ? 12 : isVerySmall ? 3 : 6,
-        height: isWide ? 56 : isLandscape ? 38 : 48, paddingLeft: isWide ? 16 : isVerySmall ? 6 : 10, paddingRight: isWide ? 12 : isVerySmall ? 6 : 8,
+        height: isWide ? 64 : isLandscape ? 44 : 56, paddingLeft: isWide ? 16 : isVerySmall ? 6 : 10, paddingRight: isWide ? 12 : isVerySmall ? 6 : 8,
         paddingTop: 'env(safe-area-inset-top)',
         background: T.topBarBg,
         borderBottom: `1px solid ${T.topBarBorder}`,
@@ -658,11 +658,11 @@ export default function GameScreen() {
           </div>
 
           {/* Кнопки скорости */}
-          <div data-onboarding="time-controls" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 } as any}>
-            <div style={{ fontSize: 8, fontWeight: 700, color: themeMode === 'dark' ? '#64748b' : '#9ca3af', letterSpacing: '0.5px', textTransform: 'uppercase' } as any}>
+          <div data-onboarding="time-controls" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 } as any}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: themeMode === 'dark' ? '#64748b' : '#9ca3af', letterSpacing: '0.5px', textTransform: 'uppercase' } as any}>
               {'Speed \u00b7 ' + (timeSpeed === 1 ? '60' : timeSpeed === 2 ? '120' : timeSpeed === 5 ? '300' : '600') + ' mph'}
             </div>
-            <div style={{ display: 'flex', gap: 3 } as any}>
+            <div style={{ display: 'flex', gap: 4 } as any}>
             {isWide ? (
               // Десктоп — кнопки скорости
               <>
@@ -676,21 +676,24 @@ export default function GameScreen() {
                       e.currentTarget.style.transform = 'scale(1)';
                     }}
                     style={{
-                      padding: '2px 9px', height: 26,
+                      padding: '4px 12px', height: 32,
                       background: timeSpeed === sp
-                        ? (themeMode === 'dark' ? 'rgba(56,189,248,0.2)' : 'rgba(0,122,255,0.12)')
-                        : (themeMode === 'dark' ? 'rgba(255,255,255,0.07)' : '#f3f4f6'),
+                        ? (themeMode === 'dark' ? 'rgba(56,189,248,0.25)' : 'rgba(0,122,255,0.18)')
+                        : (themeMode === 'dark' ? 'rgba(255,255,255,0.08)' : '#f3f4f6'),
                       border: timeSpeed === sp
-                        ? (themeMode === 'dark' ? '1px solid rgba(56,189,248,0.5)' : '1px solid rgba(0,122,255,0.4)')
-                        : (themeMode === 'dark' ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.08)'),
-                      borderRadius: 6, cursor: 'pointer',
-                      fontSize: 10, fontWeight: 800,
+                        ? (themeMode === 'dark' ? '2px solid rgba(56,189,248,0.6)' : '2px solid rgba(0,122,255,0.5)')
+                        : (themeMode === 'dark' ? '1.5px solid rgba(255,255,255,0.15)' : '1.5px solid rgba(0,0,0,0.1)'),
+                      borderRadius: 8, cursor: 'pointer',
+                      fontSize: 13, fontWeight: 900,
                       touchAction: 'manipulation',
                       WebkitTapHighlightColor: 'transparent',
                       color: timeSpeed === sp
                         ? (themeMode === 'dark' ? '#38bdf8' : '#007aff')
                         : (themeMode === 'dark' ? '#94a3b8' : '#6b7280'),
                       transition: 'all 0.15s',
+                      boxShadow: timeSpeed === sp 
+                        ? (themeMode === 'dark' ? '0 0 12px rgba(56,189,248,0.4)' : '0 0 8px rgba(0,122,255,0.3)')
+                        : 'none',
                     } as any}>
                     {sp === 1 ? '×1' : sp === 2 ? '×2' : '×5'}
                   </button>
@@ -708,14 +711,17 @@ export default function GameScreen() {
                     e.currentTarget.style.transform = 'scale(1)';
                   }}
                   style={{
-                    padding: isVerySmall ? '2px 8px' : '3px 10px', borderRadius: 8, cursor: 'pointer',
-                    background: themeMode === 'dark' ? 'rgba(56,189,248,0.15)' : 'rgba(0,122,255,0.1)',
-                    border: themeMode === 'dark' ? '1px solid rgba(56,189,248,0.4)' : '1px solid rgba(0,122,255,0.3)',
-                    fontSize: isVerySmall ? 10 : 11, fontWeight: 900,
+                    padding: isVerySmall ? '4px 12px' : '5px 14px', 
+                    height: isVerySmall ? 32 : 36,
+                    borderRadius: 10, cursor: 'pointer',
+                    background: themeMode === 'dark' ? 'rgba(56,189,248,0.2)' : 'rgba(0,122,255,0.15)',
+                    border: themeMode === 'dark' ? '2px solid rgba(56,189,248,0.5)' : '2px solid rgba(0,122,255,0.4)',
+                    fontSize: isVerySmall ? 13 : 15, fontWeight: 900,
                     color: themeMode === 'dark' ? '#38bdf8' : '#007aff',
                     touchAction: 'manipulation',
                     WebkitTapHighlightColor: 'transparent',
                     transition: 'transform 0.1s',
+                    boxShadow: themeMode === 'dark' ? '0 0 12px rgba(56,189,248,0.4)' : '0 0 8px rgba(0,122,255,0.3)',
                   } as any}>
                   ×{timeSpeed}
                 </button>
