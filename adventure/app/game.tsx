@@ -595,11 +595,18 @@ export default function GameScreen() {
 
         {/* Время — клик переключает 12h/24h */}
         <div
-          style={{ minWidth: isWide ? 86 : isVerySmall ? 56 : 64, flexShrink: 0, cursor: 'pointer', userSelect: 'none' } as any}
+          style={{ minWidth: isWide ? 86 : isVerySmall ? 56 : 64, flexShrink: 0, cursor: 'pointer', userSelect: 'none', touchAction: 'manipulation' } as any}
           onClick={() => {
             const next = timeFormat === '12h' ? '24h' : '12h';
             setTimeFormat(next);
             try { localStorage.setItem('dispatch-time-format', next); } catch {}
+          }}
+          onTouchStart={(e: any) => {
+            // Предотвращаем задержку на мобильных
+            e.currentTarget.style.opacity = '0.7';
+          }}
+          onTouchEnd={(e: any) => {
+            e.currentTarget.style.opacity = '1';
           }}
           title="Нажми чтобы переключить формат"
         >
@@ -662,6 +669,12 @@ export default function GameScreen() {
                 {([1, 2, 5] as const).map(sp => (
                   <button key={sp}
                     onClick={() => setTimeSpeed(sp)}
+                    onTouchStart={(e) => {
+                      e.currentTarget.style.transform = 'scale(0.95)';
+                    }}
+                    onTouchEnd={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }}
                     style={{
                       padding: '2px 9px', height: 26,
                       background: timeSpeed === sp
@@ -673,6 +686,7 @@ export default function GameScreen() {
                       borderRadius: 6, cursor: 'pointer',
                       fontSize: 10, fontWeight: 800,
                       touchAction: 'manipulation',
+                      WebkitTapHighlightColor: 'transparent',
                       color: timeSpeed === sp
                         ? (themeMode === 'dark' ? '#38bdf8' : '#007aff')
                         : (themeMode === 'dark' ? '#94a3b8' : '#6b7280'),
@@ -687,12 +701,21 @@ export default function GameScreen() {
               <>
                 <button
                   onClick={() => setTimeSpeed(timeSpeed === 1 ? 2 : timeSpeed === 2 ? 5 : timeSpeed === 5 ? 10 : 1)}
+                  onTouchStart={(e) => {
+                    e.currentTarget.style.transform = 'scale(0.95)';
+                  }}
+                  onTouchEnd={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                  }}
                   style={{
                     padding: isVerySmall ? '2px 8px' : '3px 10px', borderRadius: 8, cursor: 'pointer',
                     background: themeMode === 'dark' ? 'rgba(56,189,248,0.15)' : 'rgba(0,122,255,0.1)',
                     border: themeMode === 'dark' ? '1px solid rgba(56,189,248,0.4)' : '1px solid rgba(0,122,255,0.3)',
                     fontSize: isVerySmall ? 10 : 11, fontWeight: 900,
                     color: themeMode === 'dark' ? '#38bdf8' : '#007aff',
+                    touchAction: 'manipulation',
+                    WebkitTapHighlightColor: 'transparent',
+                    transition: 'transform 0.1s',
                   } as any}>
                   ×{timeSpeed}
                 </button>
@@ -705,7 +728,14 @@ export default function GameScreen() {
         {/* Статы */}
         <div style={{ display: 'flex', gap: isWide ? 5 : isVerySmall ? 2 : 3, flexShrink: 0 } as any}>
           {/* Баланс */}
-          <button data-onboarding="balance" onClick={() => setShowStats(true)} style={{
+          <button data-onboarding="balance" onClick={() => setShowStats(true)} 
+            onTouchStart={(e) => {
+              e.currentTarget.style.transform = 'scale(0.95)';
+            }}
+            onTouchEnd={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+            style={{
             padding: isWide ? '4px 8px' : isVerySmall ? '3px 5px' : '3px 6px',
             background: balance >= 0
               ? (themeMode === 'dark' ? 'rgba(52,199,89,0.15)' : 'rgba(52,211,153,0.12)')
@@ -714,6 +744,9 @@ export default function GameScreen() {
               ? (themeMode === 'dark' ? 'rgba(52,199,89,0.35)' : 'rgba(52,211,153,0.25)')
               : (themeMode === 'dark' ? 'rgba(255,59,48,0.35)' : 'rgba(248,113,113,0.25)')}`,
             borderRadius: 8, cursor: 'pointer', textAlign: 'left',
+            touchAction: 'manipulation',
+            WebkitTapHighlightColor: 'transparent',
+            transition: 'transform 0.1s',
           } as any}>
             {isWide && <div style={{ fontSize: 8, color: themeMode === 'dark' ? '#64748b' : '#6b7280', fontWeight: 600, marginBottom: 1 } as any}>БАЛАНС</div>}
             <div style={{ fontSize: isWide ? 16 : isVerySmall ? 11 : 13, fontWeight: 900, color: balance >= 0 ? (themeMode === 'dark' ? '#34c759' : '#16a34a') : (themeMode === 'dark' ? '#ff453a' : '#dc2626') } as any}>
@@ -723,11 +756,21 @@ export default function GameScreen() {
 
           {/* Заработано за смену */}
           {totalEarned > 0 && (
-            <button onClick={() => setShowStats(true)} style={{
+            <button onClick={() => setShowStats(true)} 
+              onTouchStart={(e) => {
+                e.currentTarget.style.transform = 'scale(0.95)';
+              }}
+              onTouchEnd={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+              style={{
               padding: isWide ? '4px 8px' : isVerySmall ? '3px 5px' : '3px 6px',
               background: themeMode === 'dark' ? 'rgba(251,191,36,0.15)' : 'rgba(251,191,36,0.12)',
               border: `1px solid ${themeMode === 'dark' ? 'rgba(251,191,36,0.35)' : 'rgba(251,191,36,0.25)'}`,
               borderRadius: 8, cursor: 'pointer', textAlign: 'left',
+              touchAction: 'manipulation',
+              WebkitTapHighlightColor: 'transparent',
+              transition: 'transform 0.1s',
             } as any}>
               {isWide && !isVerySmall && <div style={{ fontSize: 8, color: themeMode === 'dark' ? '#64748b' : '#6b7280', fontWeight: 600, marginBottom: 1 } as any}>ЗАРАБОТАНО</div>}
               <div style={{ fontSize: isWide ? 16 : isVerySmall ? 11 : 13, fontWeight: 900, color: themeMode === 'dark' ? '#fbbf24' : '#b45309' } as any}>
@@ -740,13 +783,23 @@ export default function GameScreen() {
         {/* Действия */}
         <div style={{ display: 'flex', alignItems: 'center', gap: isWide ? 5 : isVerySmall ? 2 : 3, flexShrink: 0 } as any}>
           {/* Гамбургер */}
-          <button onClick={() => setShowMenu(true)} style={{
+          <button onClick={() => setShowMenu(true)} 
+            onTouchStart={(e) => {
+              e.currentTarget.style.transform = 'scale(0.95)';
+            }}
+            onTouchEnd={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+            style={{
             width: isWide ? 38 : isVerySmall ? 28 : 32, height: isWide ? 38 : isVerySmall ? 28 : 32,
             borderRadius: isWide ? 10 : 8,
             background: T.mode === 'dark' ? 'rgba(56,189,248,0.1)' : 'rgba(0,122,255,0.08)',
             border: T.mode === 'dark' ? '1.5px solid rgba(56,189,248,0.3)' : '1.5px solid rgba(0,122,255,0.25)',
             cursor: 'pointer', display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center', gap: isWide ? 4 : isVerySmall ? 2 : 3, padding: isVerySmall ? 4 : 6,
+            touchAction: 'manipulation',
+            WebkitTapHighlightColor: 'transparent',
+            transition: 'transform 0.1s',
           } as any}>
             {[0,1,2].map(i => (
               <span key={i} style={{ width: isWide ? 18 : isVerySmall ? 12 : 14, height: 2, background: T.primary, borderRadius: 2, display: 'block' } as any} />
@@ -756,6 +809,12 @@ export default function GameScreen() {
           {/* Кнопка переключения темы */}
           <button
             onClick={toggleTheme}
+            onTouchStart={(e) => {
+              e.currentTarget.style.transform = 'scale(0.95)';
+            }}
+            onTouchEnd={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
             title={themeMode === 'light' ? 'Тёмная тема' : 'Светлая тема'}
             style={{
               width: isWide ? 38 : isVerySmall ? 28 : 32, height: isWide ? 38 : isVerySmall ? 28 : 32,
@@ -765,7 +824,9 @@ export default function GameScreen() {
               cursor: 'pointer', display: 'flex',
               alignItems: 'center', justifyContent: 'center', padding: 0,
               fontSize: isWide ? 18 : isVerySmall ? 14 : 16,
-              transition: 'all 0.2s',
+              touchAction: 'manipulation',
+              WebkitTapHighlightColor: 'transparent',
+              transition: 'transform 0.1s',
             } as any}
           >
             {themeMode === 'light' ? '🌙' : '☀️'}
@@ -773,6 +834,19 @@ export default function GameScreen() {
         </div>
 
         <style>{`
+          /* Улучшение отклика кнопок на мобильных */
+          button, [role="button"] {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+          }
+          
+          /* Убираем задержку 300ms на мобильных */
+          * {
+            touch-action: manipulation;
+          }
+          
           @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
           @keyframes guideBtnPulse {
             0%,100% { box-shadow: 0 0 10px rgba(129,140,248,0.3); }
