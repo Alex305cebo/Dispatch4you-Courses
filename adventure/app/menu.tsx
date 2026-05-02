@@ -185,25 +185,50 @@ export default function MainMenu() {
             if (el && !(el as any)._init) { 
               (el as any)._init = true; 
               el.playbackRate = 0.5;
-              // Fallback: если первый путь не загрузился, пробуем альтернативные
-              el.addEventListener('error', () => {
-                console.error('❌ Video failed to load:', el.src);
-                if (el.src.includes('/Truck_loop.mp4')) {
-                  console.log('🔄 Trying: /assets/Truck_loop.mp4');
-                  el.src = '/assets/Truck_loop.mp4';
-                } else if (el.src.includes('/assets/Truck_loop.mp4')) {
-                  console.log('🔄 Trying: ./Truck_loop.mp4');
-                  el.src = './Truck_loop.mp4';
-                } else if (el.src.includes('./Truck_loop.mp4')) {
-                  console.log('🔄 Trying: ./assets/Truck_loop.mp4');
-                  el.src = './assets/Truck_loop.mp4';
-                } else {
-                  console.error('❌ All video paths failed');
+              
+              // Список путей для fallback (в порядке приоритета)
+              const videoPaths = [
+                '/game/Truck_loop.mp4',           // Production: dispatch4you.com/game/
+                '/Truck_loop.mp4',                // Root
+                './Truck_loop.mp4',               // Relative root
+                '/assets/Truck_loop.mp4',         // Assets folder
+                './assets/Truck_loop.mp4',        // Relative assets
+                '/game/assets/Truck_loop.mp4',    // Game assets
+                'Truck_loop.mp4',                 // Same directory
+              ];
+              
+              let currentPathIndex = 0;
+              
+              const tryNextPath = () => {
+                if (currentPathIndex >= videoPaths.length) {
+                  console.error('❌ All video paths failed. Tried:', videoPaths);
+                  return;
                 }
-              }, { once: false });
+                
+                const nextPath = videoPaths[currentPathIndex];
+                console.log(`🔄 Trying video path [${currentPathIndex + 1}/${videoPaths.length}]:`, nextPath);
+                el.src = nextPath;
+                currentPathIndex++;
+              };
+              
+              // Обработчик ошибки загрузки
+              el.addEventListener('error', (e) => {
+                console.error('❌ Video failed to load:', el.src, e);
+                tryNextPath();
+              });
+              
+              // Обработчик успешной загрузки
               el.addEventListener('loadeddata', () => {
                 console.log('✅ Video loaded successfully:', el.src);
               }, { once: true });
+              
+              // Дополнительная проверка через 2 секунды
+              setTimeout(() => {
+                if (el.readyState === 0 || el.networkState === 3) {
+                  console.warn('⚠️ Video not loading after 2s, trying next path');
+                  tryNextPath();
+                }
+              }, 2000);
             }
           }}
           style={{
@@ -211,7 +236,7 @@ export default function MainMenu() {
             width: '100%', height: '100%',
             objectFit: 'cover', opacity: 0.6,
           } as any}
-          src="/Truck_loop.mp4"
+          src="/game/Truck_loop.mp4"
         />
         {/* Затемнение для читаемости */}
         <LinearGradient
