@@ -38,7 +38,8 @@ export default function MainMenu() {
       const raw = localStorage.getItem('dispatcher-game-save');
       if (raw) { 
         const s = JSON.parse(raw); 
-        if (s?.version >= 6 && s?.phase === 'playing') {
+        // Более мягкая проверка
+        if (s?.version >= 6 && (s?.phase === 'playing' || s?.trucks?.length > 0)) {
           setHasSave(true);
         }
       }
@@ -49,7 +50,8 @@ export default function MainMenu() {
           const slotRaw = localStorage.getItem(`dispatcher-save-slot-${i}`);
           if (slotRaw) {
             const slotData = JSON.parse(slotRaw);
-            if (slotData?.version >= 6 && slotData?.phase === 'playing') {
+            // Более мягкая проверка
+            if (slotData?.version >= 6 && (slotData?.phase === 'playing' || slotData?.trucks?.length > 0)) {
               setHasSave(true);
               break;
             }
@@ -95,9 +97,13 @@ export default function MainMenu() {
         const raw = localStorage.getItem('dispatcher-game-save');
         if (raw) {
           const s = JSON.parse(raw);
-          if (s?.version >= 6 && s?.phase === 'playing' && s?.lastSaved) {
-            latestSave = s;
-            latestTimestamp = s.lastSaved;
+          // Более мягкая проверка — достаточно version и наличия данных
+          if (s?.version >= 6 && (s?.phase === 'playing' || s?.trucks?.length > 0)) {
+            const ts = s?.lastSaved || s?.lastPlayed || Date.now();
+            if (ts > latestTimestamp) {
+              latestSave = s;
+              latestTimestamp = ts;
+            }
           }
         }
       } catch {}
@@ -108,11 +114,13 @@ export default function MainMenu() {
           const slotRaw = localStorage.getItem(`dispatcher-save-slot-${i}`);
           if (slotRaw) {
             const slotData = JSON.parse(slotRaw);
-            if (slotData?.version >= 6 && slotData?.phase === 'playing' && slotData?.lastSaved) {
-              if (slotData.lastSaved > latestTimestamp) {
+            // Более мягкая проверка — достаточно version и наличия данных
+            if (slotData?.version >= 6 && (slotData?.phase === 'playing' || slotData?.trucks?.length > 0)) {
+              const ts = slotData?.lastSaved || slotData?.lastPlayed || Date.now();
+              if (ts > latestTimestamp) {
                 latestSave = slotData;
                 latestSlot = i;
-                latestTimestamp = slotData.lastSaved;
+                latestTimestamp = ts;
               }
             }
           }
@@ -126,10 +134,10 @@ export default function MainMenu() {
           sessionStorage.setItem('enteredViaMenu', '1');
           setTimeout(() => router.replace('/game'), 50);
         } else {
-          alert('Не удалось загрузить сохранение');
+          alert('❌ Не удалось загрузить сохранение\n\nПопробуйте выбрать слот вручную через Профиль');
         }
       } else {
-        alert('Сохранение не найдено');
+        alert('❌ Сохранение не найдено\n\nНачните новую игру или проверьте слоты в Профиле');
       }
     }
     finally { setLoading(false); }

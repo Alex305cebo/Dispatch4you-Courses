@@ -92,20 +92,26 @@ export default function ProfilePopup({ onClose, onStartGame, initialTab = 'saves
       if (raw) {
         try {
           const data = JSON.parse(raw);
-          newSlots.push({
-            id: i,
-            name: `Слот ${i}`,
-            isEmpty: false,
-            data: {
-              sessionName: data.sessionName || 'Без названия',
-              day: data.day || 1,
-              balance: data.balance || 0,
-              trucks: data.trucks?.length || 0,
-              reputation: data.reputation || 100,
-              totalEarned: data.totalEarned || 0,
-              lastPlayed: data.lastPlayed || Date.now(),
-            },
-          });
+          // Проверяем что сохранение валидное
+          if (data?.version >= 6 && (data?.phase === 'playing' || data?.trucks?.length > 0)) {
+            newSlots.push({
+              id: i,
+              name: `Слот ${i}`,
+              isEmpty: false,
+              data: {
+                sessionName: data.sessionName || 'Без названия',
+                day: data.day || 1,
+                balance: data.balance || 0,
+                trucks: data.trucks?.length || 0,
+                reputation: data.reputation || 100,
+                totalEarned: data.totalEarned || 0,
+                lastPlayed: data.lastSaved || data.lastPlayed || Date.now(),
+              },
+            });
+          } else {
+            // Невалидное сохранение — считаем пустым
+            newSlots.push({ id: i, name: `Слот ${i}`, isEmpty: true });
+          }
         } catch {
           newSlots.push({ id: i, name: `Слот ${i}`, isEmpty: true });
         }
