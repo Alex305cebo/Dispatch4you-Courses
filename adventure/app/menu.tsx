@@ -11,6 +11,11 @@ import SettingsPopup from '../components/SettingsPopup';
 import TruckShopModal from '../components/TruckShopModal';
 import RepairGarageModal from '../components/RepairGarageModal';
 import ProfilePopup from '../components/ProfilePopup';
+// ── АРХИВ: Duolingo системы (законсервированы) ──
+// import DailyQuizPopup from '../components/DailyQuizPopup';
+// import DuolingoQuizDialog from '../components/DuolingoQuizDialog';
+// import AcademyScreen from '../components/AcademyScreen';
+// import { useLessonStore } from '../store/lessonStore';
 
 export default function MainMenu() {
   const router = useRouter();
@@ -85,6 +90,10 @@ export default function MainMenu() {
   }
 
   async function handleContinue() {
+    doContinue();
+  }
+
+  async function doContinue() {
     setLoading(true);
     try {
       // Ищем последнее сохранение (самое свежее по timestamp)
@@ -145,6 +154,11 @@ export default function MainMenu() {
 
   async function handleNewGame(slotId?: number) {
     if (hasSave && !window.confirm('⚠️ Начать новую игру? Прогресс будет потерян.')) return;
+    // Новая игра — НЕ показываем квиз, новичку нужно сначала освоить интерфейс
+    doNewGame(slotId);
+  }
+
+  async function doNewGame(slotId?: number) {
     setLoading(true);
     try {
       await startShift(1, 'Новая смена', slotId);
@@ -408,6 +422,7 @@ export default function MainMenu() {
           }}
         />
       )}
+      {/* ── АРХИВ: Duolingo квизы и Академия (законсервированы) ── */}
     </View>
   );
 }

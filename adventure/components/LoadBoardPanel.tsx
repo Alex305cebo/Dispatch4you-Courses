@@ -488,7 +488,13 @@ export default function LoadBoardPanel({ onNegotiate, onAssigned }: Props) {
               load={load}
               onCall={() => handleCall(load)}
               isExpanded={expandedId === load.id}
-              onToggle={() => setExpandedId(expandedId === load.id ? null : load.id)}
+              onToggle={() => {
+                setExpandedId(expandedId === load.id ? null : load.id);
+                // Онбординг триггер — игрок выбрал груз
+                if (expandedId !== load.id) {
+                  try { (window as any).__onboardingTrigger?.('select_load'); } catch {}
+                }
+              }}
               scrollViewRef={scrollViewRef}
               onLayout={(y) => { rowPositions.current[load.id] = y; }}
               rowY={rowPositions.current[load.id] ?? 0}

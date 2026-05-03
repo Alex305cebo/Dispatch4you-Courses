@@ -30,6 +30,8 @@ export default function AssignModal({ load, onClose, onAssigned }: Props) {
     onAssigned?.(truckId);
     // Назначаем в фоне
     assignLoadToTruck(load, truckId).catch(() => {});
+    // Онбординг триггер
+    try { (window as any).__onboardingTrigger?.('assign_load'); } catch {}
   }
 
   return (

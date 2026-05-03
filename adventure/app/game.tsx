@@ -44,19 +44,26 @@ import { useAccountStore } from '../store/accountStore';
 import GuideSpotlight from '../components/GuideSpotlight';
 import { useGuideStore } from '../store/guideStore';
 import GuideBubble from '../components/GuideBubble';
-import CharacterDialog from '../components/CharacterDialog';
-import { CHARACTERS, DIALOG_DRIVER_START, DIALOG_BROKER_FIRST_CALL, isDialogShown, markDialogShown } from '../data/dialogs';
+// ── АРХИВ: Другие системы диалогов (законсервированы) ──
+// import CharacterDialog from '../components/CharacterDialog';
+// import { CHARACTERS, DIALOG_DRIVER_START, DIALOG_BROKER_FIRST_CALL } from '../data/dialogs';
+import { isDialogShown, markDialogShown } from '../data/dialogs';
 import { getDriverAvatar } from '../utils/driverAvatars';
 import { UnifiedChatUI } from '../components/UnifiedChatUI';
 import { createDemoMessages } from '../utils/demoMessages';
 import TruckShopModal from '../components/TruckShopModal';
 import RepairGarageModal from '../components/RepairGarageModal';
 import { useOnboardingStore } from '../store/onboardingStore';
-import { ONBOARDING_STEPS } from '../data/onboardingConfig';
-import OnboardingOverlay from '../components/OnboardingOverlay';
+// import { ONBOARDING_STEPS } from '../data/onboardingConfig';
+// import OnboardingOverlay from '../components/OnboardingOverlay'; // Система #4 — архив
+import { OnboardingWrapper, triggerOnboardingAction } from '../components/OnboardingWrapper'; // Система #3 — ЭТАЛОН
 import EventDialog from '../components/EventDialog';
 import { SCENARIOS, getScenarioByType, getScenarioForBreakdown, EventDialogScenario } from '../data/eventDialogs';
 import LoadAssignedToast from '../components/LoadAssignedToast';
+// ── АРХИВ: Duolingo квизы в чате (законсервированы) ──
+// import MentorTipCard from '../components/MentorTipCard';
+// import { useLessonStore } from '../store/lessonStore';
+// import { getTriggerForEvent, type ContextTrigger } from '../data/contextTriggers';
 
 type Tab = 'map' | 'loadboard' | 'trucks' | 'chat';
 
@@ -217,6 +224,7 @@ export default function GameScreen() {
   const dialogCheckDone = useRef(false);
 
   // Автоматически создаём демо-сообщения для опытных игроков
+  // и показываем приветственный диалог для новичков
   useEffect(() => {
     if (dialogCheckDone.current) return;
     dialogCheckDone.current = true;
@@ -226,8 +234,7 @@ export default function GameScreen() {
     const completed = onbCheckCompleted(nickname);
     
     if (!completed) {
-      // Новый игрок — НЕ открываем чат автоматически, пусть сам переключится
-      // Просто ждём когда он откроет чат
+      // Новый игрок — система #3 (OnboardingWrapper) запустится автоматически
     } else {
       // Опытный игрок — создаём демо-сообщения если нужно
       const demoTimer = setTimeout(() => {
@@ -257,6 +264,10 @@ export default function GameScreen() {
     if (tab === 'loadboard' || tab === 'chat') {
       autoExpandRightPanel();
     }
+    
+    // Онбординг триггеры
+    if (tab === 'loadboard') triggerOnboardingAction('click_load_board');
+    if (tab === 'chat') triggerOnboardingAction('open_chat');
     
     try {
       localStorage.setItem('dispatch-active-tab', tab);
@@ -398,22 +409,8 @@ export default function GameScreen() {
   // Убрана пауза — онбординг не должен останавливать время
   // (это вызывало баг когда timeSpeed застревал на 0)
 
-  // ── ONBOARDING: auto-switch при смене шага ──
-  useEffect(() => {
-    if (!onbIsActive) return;
-    const config = ONBOARDING_STEPS.find(s => s.id === onbStep);
-    if (!config?.autoSwitch) return;
-
-    if (config.autoSwitch.tab) {
-      switchTab(config.autoSwitch.tab);
-    }
-    if (config.autoSwitch.openModal === 'truckShop') {
-      useGameStore.getState().setTruckShopOpen(true);
-    }
-    if (config.autoSwitch.closeTruckShop) {
-      useGameStore.getState().setTruckShopOpen(false);
-    }
-  }, [onbStep, onbIsActive]);
+  // ── ONBOARDING: auto-switch (система #4 — отключена, система #3 не использует) ──
+  // useEffect для ONBOARDING_STEPS удалён — система #3 управляется через OnboardingWrapper
 
   // ── ONBOARDING: восстановление скорости после завершения ──
   useEffect(() => {
@@ -536,6 +533,9 @@ export default function GameScreen() {
   const idleTrucks = trucks.filter(t => t.status === 'idle').length;
 
   function handleTruckClick(truck: any) {
+    // Онбординг триггер
+    triggerOnboardingAction('click_truck');
+    
     // Если тот же трак — НЕ снимаем выделение, просто фокусируемся на нём
     if (selectedTruckId === truck.id) {
       // Трак уже выбран — просто центрируем карту на нём
@@ -580,15 +580,20 @@ export default function GameScreen() {
 
     return (
       <div style={{
-        display: 'flex', alignItems: 'center', gap: isWide ? 12 : isVerySmall ? 3 : 6,
-        height: isWide ? 64 : isLandscape ? 44 : 56, paddingLeft: isWide ? 16 : isVerySmall ? 6 : 10, paddingRight: isWide ? 12 : isVerySmall ? 6 : 8,
-        paddingTop: 'env(safe-area-inset-top)',
-        background: T.topBarBg,
-        borderBottom: `1px solid ${T.topBarBorder}`,
-        boxShadow: themeMode === 'dark' ? '0 1px 20px rgba(0,0,0,0.4)' : '0 1px 8px rgba(0,0,0,0.06)',
-        position: 'relative', overflow: 'hidden', zIndex: 50,
-        fontFamily: 'sans-serif',
+        position: 'relative',
+        zIndex: 50,
       } as any}>
+        {/* Основное меню */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: isWide ? 12 : isVerySmall ? 3 : 6,
+          height: isWide ? 64 : isLandscape ? 44 : 56, 
+          paddingLeft: isWide ? 16 : isVerySmall ? 6 : 10, 
+          paddingRight: isWide ? 12 : isVerySmall ? 6 : 8,
+          paddingTop: 'env(safe-area-inset-top)',
+          background: T.topBarBg,
+          boxShadow: themeMode === 'dark' ? '0 1px 20px rgba(0,0,0,0.4)' : '0 1px 8px rgba(0,0,0,0.06)',
+          fontFamily: 'sans-serif',
+        } as any}>
 
         {/* Фоновое свечение */}
         <div style={{ display: 'none' } as any} />
@@ -634,102 +639,101 @@ export default function GameScreen() {
           </div>
         </div>
 
-        {/* Прогресс смены */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 } as any}>
-          {/* Трек */}
-          <div style={{
-            height: 6, background: 'rgba(0,0,0,0.06)',
-            borderRadius: 3, overflow: 'hidden', position: 'relative',
-          } as any}>
-            <div style={{
-              height: '100%', width: `${progressPct}%`,
-              background: `linear-gradient(90deg, #007aff, ${timeColor})`,
-              borderRadius: 3,
-              transition: 'width 0.5s ease',
-            } as any} />
-            {/* Маркеры часов */}
-            {[25, 50, 75].map(p => (
-              <div key={p} style={{
-                position: 'absolute', top: 0, bottom: 0,
-                left: `${p}%`, width: 1,
-                background: 'rgba(0,0,0,0.1)',
-              } as any} />
-            ))}
-          </div>
-
-          {/* Кнопки скорости */}
-          <div data-onboarding="time-controls" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 } as any}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: themeMode === 'dark' ? '#64748b' : '#9ca3af', letterSpacing: '0.5px', textTransform: 'uppercase' } as any}>
-              {'Speed \u00b7 ' + (timeSpeed === 1 ? '60' : timeSpeed === 2 ? '120' : timeSpeed === 5 ? '300' : '600') + ' mph'}
+        {/* Кнопки скорости — новый дизайн */}
+        <div data-onboarding="time-controls" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: isWide ? 6 : 4, flexShrink: 0 } as any}>
+          {isWide && (
+            <div style={{ 
+              fontSize: 11, 
+              fontWeight: 700, 
+              color: themeMode === 'dark' ? '#94a3b8' : '#6b7280',
+              letterSpacing: '0.5px', 
+              textTransform: 'uppercase',
+            } as any}>
+              Speed Control
             </div>
-            <div style={{ display: 'flex', gap: 4 } as any}>
-            {isWide ? (
-              // Десктоп — кнопки скорости
-              <>
-                {([1, 2, 5] as const).map(sp => (
-                  <button key={sp}
-                    onClick={() => setTimeSpeed(sp)}
-                    onTouchStart={(e) => {
-                      e.currentTarget.style.transform = 'scale(0.95)';
-                    }}
-                    onTouchEnd={(e) => {
-                      e.currentTarget.style.transform = 'scale(1)';
-                    }}
-                    style={{
-                      padding: '4px 12px', height: 32,
-                      background: timeSpeed === sp
-                        ? (themeMode === 'dark' ? 'rgba(56,189,248,0.25)' : 'rgba(0,122,255,0.18)')
-                        : (themeMode === 'dark' ? 'rgba(255,255,255,0.08)' : '#f3f4f6'),
-                      border: timeSpeed === sp
-                        ? (themeMode === 'dark' ? '2px solid rgba(56,189,248,0.6)' : '2px solid rgba(0,122,255,0.5)')
-                        : (themeMode === 'dark' ? '1.5px solid rgba(255,255,255,0.15)' : '1.5px solid rgba(0,0,0,0.1)'),
-                      borderRadius: 8, cursor: 'pointer',
-                      fontSize: 13, fontWeight: 900,
-                      touchAction: 'manipulation',
-                      WebkitTapHighlightColor: 'transparent',
-                      color: timeSpeed === sp
-                        ? (themeMode === 'dark' ? '#38bdf8' : '#007aff')
-                        : (themeMode === 'dark' ? '#94a3b8' : '#6b7280'),
-                      transition: 'all 0.15s',
-                      boxShadow: timeSpeed === sp 
-                        ? (themeMode === 'dark' ? '0 0 12px rgba(56,189,248,0.4)' : '0 0 8px rgba(0,122,255,0.3)')
-                        : 'none',
-                    } as any}>
-                    {sp === 1 ? '×1' : sp === 2 ? '×2' : '×5'}
-                  </button>
-                ))}
-              </>
-            ) : (
-              // Мобильный — кнопка скорости
-              <>
-                <button
-                  onClick={() => setTimeSpeed(timeSpeed === 1 ? 2 : timeSpeed === 2 ? 5 : timeSpeed === 5 ? 10 : 1)}
-                  onTouchStart={(e) => {
-                    e.currentTarget.style.transform = 'scale(0.95)';
-                  }}
-                  onTouchEnd={(e) => {
-                    e.currentTarget.style.transform = 'scale(1)';
-                  }}
-                  style={{
-                    padding: isVerySmall ? '4px 12px' : '5px 14px', 
-                    height: isVerySmall ? 32 : 36,
-                    borderRadius: 10, cursor: 'pointer',
-                    background: themeMode === 'dark' ? 'rgba(56,189,248,0.2)' : 'rgba(0,122,255,0.15)',
-                    border: themeMode === 'dark' ? '2px solid rgba(56,189,248,0.5)' : '2px solid rgba(0,122,255,0.4)',
-                    fontSize: isVerySmall ? 13 : 15, fontWeight: 900,
-                    color: themeMode === 'dark' ? '#38bdf8' : '#007aff',
-                    touchAction: 'manipulation',
-                    WebkitTapHighlightColor: 'transparent',
-                    transition: 'transform 0.1s',
-                    boxShadow: themeMode === 'dark' ? '0 0 12px rgba(56,189,248,0.4)' : '0 0 8px rgba(0,122,255,0.3)',
-                  } as any}>
-                  ×{timeSpeed}
-                </button>
-              </>
-            )}
-            </div>
+          )}
+          <div style={{ display: 'flex', gap: isWide ? 6 : 4 } as any}>
+            {/* Единая кнопка для всех платформ */}
+            <button
+              onClick={() => {
+                // Циклическое переключение: 1 → 3 → 5 → 10 → 1
+                const nextSpeed = timeSpeed === 1 ? 3 : timeSpeed === 3 ? 5 : timeSpeed === 5 ? 10 : 1;
+                setTimeSpeed(nextSpeed);
+              }}
+              onMouseDown={(e) => {
+                // Только для десктопа - визуальный фидбек
+                if (isWide) {
+                  e.currentTarget.style.transform = 'scale(0.95)';
+                }
+              }}
+              onMouseUp={(e) => {
+                // Только для десктопа
+                if (isWide) {
+                  e.currentTarget.style.transform = 'scale(1)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                // Сброс при уходе курсора
+                if (isWide) {
+                  e.currentTarget.style.transform = 'scale(1)';
+                }
+              }}
+              onTouchStart={(e) => {
+                // Только для мобильных
+                if (!isWide) {
+                  e.currentTarget.style.transform = 'scale(0.95)';
+                }
+              }}
+              onTouchEnd={(e) => {
+                // Только для мобильных
+                if (!isWide) {
+                  e.currentTarget.style.transform = 'scale(1)';
+                }
+              }}
+              className="speed-btn-active"
+              style={{
+                padding: isWide ? '8px 16px' : (isVerySmall ? '5px 10px' : '6px 12px'),
+                height: isWide ? 42 : (isVerySmall ? 32 : 36),
+                borderRadius: 10, 
+                cursor: 'pointer',
+                background: themeMode === 'dark' 
+                  ? 'linear-gradient(135deg, rgba(56,189,248,0.3), rgba(14,165,233,0.2))' 
+                  : 'linear-gradient(135deg, rgba(0,122,255,0.25), rgba(59,130,246,0.15))',
+                border: themeMode === 'dark' ? '2px solid rgba(56,189,248,0.7)' : '2px solid rgba(0,122,255,0.6)',
+                fontSize: isWide ? 16 : (isVerySmall ? 14 : 16),
+                fontWeight: 900,
+                color: themeMode === 'dark' ? '#38bdf8' : '#007aff',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent',
+                transition: 'all 0.2s ease',
+                boxShadow: themeMode === 'dark' 
+                  ? '0 0 16px rgba(56,189,248,0.5), 0 2px 8px rgba(0,0,0,0.3)' 
+                  : '0 0 12px rgba(0,122,255,0.4), 0 2px 6px rgba(0,0,0,0.1)',
+                position: 'relative',
+                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
+                gap: isWide ? 8 : (isVerySmall ? 3 : 4),
+                letterSpacing: '0.3px',
+                userSelect: 'none',
+              } as any}>
+              <span className="speed-lightning" style={{ fontSize: isWide ? 18 : (isVerySmall ? 13 : 15) } as any}>⚡</span>
+              <span>×{timeSpeed}</span>
+              {isWide && (
+                <span style={{ 
+                  opacity: 0.8, 
+                  fontSize: 14,
+                  fontWeight: 700,
+                } as any}>
+                  · {timeSpeed === 1 ? '60' : timeSpeed === 3 ? '180' : timeSpeed === 5 ? '300' : '600'} MPH
+                </span>
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Spacer — занимает всё свободное место */}
+        <div style={{ flex: 1 } as any} />
 
         {/* Статы */}
         <div style={{ display: 'flex', gap: isWide ? 5 : isVerySmall ? 2 : 3, flexShrink: 0 } as any}>
@@ -812,6 +816,35 @@ export default function GameScreen() {
             ))}
           </button>
 
+          {/* 🔄 DEV: Reset — начать заново (для тестирования) */}
+          <button
+            onClick={() => {
+              if (!window.confirm('🔄 Сбросить ВСЁ и начать заново?\n\nУдалит сохранения, прогресс уроков, localStorage.')) return;
+              try {
+                // Очищаем всё
+                localStorage.clear();
+                sessionStorage.clear();
+                // Перезагружаем
+                window.location.href = '/game/';
+              } catch (e) {
+                window.location.reload();
+              }
+            }}
+            title="DEV: Сбросить всё и начать заново"
+            style={{
+              width: isWide ? 38 : isVerySmall ? 28 : 32, height: isWide ? 38 : isVerySmall ? 28 : 32,
+              borderRadius: isWide ? 10 : 8,
+              background: 'rgba(239,68,68,0.12)',
+              border: '1.5px solid rgba(239,68,68,0.35)',
+              cursor: 'pointer', display: 'flex',
+              alignItems: 'center', justifyContent: 'center', padding: 0,
+              fontSize: isWide ? 16 : isVerySmall ? 12 : 14,
+              touchAction: 'manipulation',
+              WebkitTapHighlightColor: 'transparent',
+              transition: 'transform 0.1s',
+            } as any}
+          >🔄</button>
+
           {/* Кнопка переключения темы */}
           <button
             onClick={toggleTheme}
@@ -838,6 +871,36 @@ export default function GameScreen() {
             {themeMode === 'light' ? '🌙' : '☀️'}
           </button>
         </div>
+        </div>
+
+        {/* Прогресс-бар внизу — на всю ширину */}
+        <div style={{
+          width: '100%',
+          height: 4,
+          background: themeMode === 'dark' ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.08)',
+          position: 'relative',
+          overflow: 'hidden',
+        } as any}>
+          {/* Заполнение прогресса */}
+          <div style={{
+            height: '100%',
+            width: `${progressPct}%`,
+            background: `linear-gradient(90deg, #007aff, ${timeColor})`,
+            transition: 'width 0.5s ease',
+          } as any} />
+          
+          {/* Маркеры часов */}
+          {[25, 50, 75].map(p => (
+            <div key={p} style={{
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              left: `${p}%`,
+              width: 1,
+              background: themeMode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)',
+            } as any} />
+          ))}
+        </div>
 
         <style>{`
           /* Улучшение отклика кнопок на мобильных */
@@ -851,6 +914,36 @@ export default function GameScreen() {
           /* Убираем задержку 300ms на мобильных */
           * {
             touch-action: manipulation;
+          }
+          
+          /* Анимация блеска для активной кнопки скорости */
+          @keyframes speedShine {
+            0% { transform: translateX(-100%) skewX(-15deg); }
+            100% { transform: translateX(200%) skewX(-15deg); }
+          }
+          
+          .speed-btn-active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: speedShine 2s ease-in-out infinite;
+            pointer-events: none; /* Не блокирует клики */
+          }
+          
+          /* Пульсация молнии для привлечения внимания */
+          @keyframes lightningPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.15); opacity: 0.85; }
+          }
+          
+          .speed-lightning {
+            display: inline-block;
+            animation: lightningPulse 1.5s ease-in-out infinite;
+            pointer-events: none; /* Не блокирует клики */
           }
           
           @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
@@ -1591,6 +1684,9 @@ export default function GameScreen() {
     }
   }, [trucks.map(t => t.status).join(',')]);
 
+  // ── АРХИВ: Layer 2 Context Mentor Tips — законсервирован ──
+  // (код перенесён в adventure/data/contextTriggers.ts и adventure/components/MentorTipCard.tsx)
+
   const mapProps = {
     onTruckInfo: (id: string) => {
       selectTruck(id);
@@ -1623,7 +1719,7 @@ export default function GameScreen() {
           detail: { lng: truck.position[0], lat: truck.position[1] }
         }));
         window.dispatchEvent(new CustomEvent('followAssignedTruck', {
-          detail: { truckId, zoomOut: 0.2 } // медленный zoom out на 20%
+          detail: { truckId, targetZoom: 9 } // фиксированный zoom 9 при назначении
         }));
       };
       setTimeout(dispatch, 400);
@@ -1638,6 +1734,7 @@ export default function GameScreen() {
   const [showChat, setShowChat] = useState(false);
   // Event Dialog state
   const [activeEventDialog, setActiveEventDialog] = useState<EventDialogScenario | null>(null);
+  // ── АРХИВ: Mentor Tip (Layer 2) — законсервирован ──
   // Load Assigned Toast state
   const [loadAssignedToast, setLoadAssignedToast] = useState<{
     visible: boolean;
@@ -1874,7 +1971,7 @@ export default function GameScreen() {
       )}
 
       {/* ── MODALS ── */}
-      {/* Онбординг отключён — будет новая система с пузырями */}
+      {/* ── ЭТАЛОННАЯ СИСТЕМА: #3 DialogBubble glassmorphism ── */}
 
       {negotiation.open && negotiation.load && false && (
         <ErrorBoundary name="Neg">
@@ -1928,6 +2025,7 @@ export default function GameScreen() {
         onOpenGuide={() => setShowDriverDialog(true)}
         onExit={() => { if (clockRef.current) clearInterval(clockRef.current); }}
       />
+      {/* Онбординг включён через OnboardingOverlay выше */}
       {/* Онбординг отключён */}
       {/* Event Dialog — интерактивные диалоги событий */}
       {activeEventDialog && (() => {
@@ -1998,6 +2096,11 @@ export default function GameScreen() {
           isDark={isDark}
         />
       )} */}
+
+      {/* ── ЭТАЛОННАЯ СИСТЕМА ДИАЛОГОВ: #3 DialogBubble glassmorphism ── */}
+      <OnboardingWrapper isNewGame={!onbCheckCompleted(sessionName || 'player')}>
+        <></>
+      </OnboardingWrapper>
     </View>
   );
 }
