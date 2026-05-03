@@ -10,29 +10,44 @@ import { OnboardingStep } from '../data/onboardingData';
 interface Props {
   step: OnboardingStep;
   onNext: () => void;
+  onBack: () => void;
   onSkip: () => void;
   currentStepIndex: number;
   totalSteps: number;
   progress: number;
+  actionDone?: boolean; // внешний сигнал что действие выполнено
 }
 
 export default function DialogBubbleInline({
-  step, onNext, onSkip, currentStepIndex, totalSteps, progress,
+  step, onNext, onBack, onSkip, currentStepIndex, totalSteps, progress, actionDone,
 }: Props) {
   const [isVisible, setIsVisible] = useState(false);
   const [spotlightRect, setSpotlightRect] = useState<DOMRect | null>(null);
+  const [localActionDone, setLocalActionDone] = useState(false);
+
+  // Сбрасываем при смене шага
+  useEffect(() => {
+    setLocalActionDone(false);
+  }, [step.id]);
 
   useEffect(() => {
     setIsVisible(false);
     setSpotlightRect(null);
     const timer = setTimeout(() => {
       setIsVisible(true);
-      // Найти и замерить подсвеченный элемент
+      // Найти и замерить подсвеченный элемент — с retry
       if (step.highlightElement) {
-        const el = document.querySelector(step.highlightElement) as HTMLElement;
-        if (el) {
-          setSpotlightRect(el.getBoundingClientRect());
-        }
+        let attempts = 0;
+        const tryFind = () => {
+          const el = document.querySelector(step.highlightElement!) as HTMLElement;
+          if (el) {
+            setSpotlightRect(el.getBoundingClientRect());
+          } else if (attempts < 15) {
+            attempts++;
+            setTimeout(tryFind, 200);
+          }
+        };
+        tryFind();
       }
     }, step.delay || 300);
     return () => clearTimeout(timer);
@@ -56,6 +71,15 @@ export default function DialogBubbleInline({
   }, [step.highlightElement, isVisible]);
 
   const isManualNext = step.requiredAction === 'manual_next';
+  // Показываем кнопку Далее если: manual_next ИЛИ действие выполнено
+  const showNextBtn = isManualNext || localActionDone || actionDone;
+
+  // Слушаем событие выполнения действия
+  useEffect(() => {
+    const handler = () => setLocalActionDone(true);
+    window.addEventListener('onboardingActionDone', handler);
+    return () => window.removeEventListener('onboardingActionDone', handler);
+  }, []);
   const PAD = 6; // padding вокруг spotlight
 
   // Позиция карточки
@@ -66,18 +90,25 @@ export default function DialogBubbleInline({
       const vh = window.innerHeight;
       const cardW = Math.min(vw * 0.9, step.position === 'center' ? 600 : 400);
 
-      // Карточка снизу от spotlight если он в верхней половине, иначе сверху
+      // Кнопка в нижней части — карточка диалога над ней, не перекрывает контент
+      if (spotlightRect.top > vh * 0.6) {
+        return {
+          bottom: vh - spotlightRect.top + PAD + 8,
+          left: Math.max(12, Math.min(vw - cardW - 12, spotlightRect.left + spotlightRect.width / 2 - cardW / 2)),
+        };
+      }
+      // Элемент в верхней части — карточка диалога под ним
       if (spotlightRect.top < vh / 2) {
         return {
           top: spotlightRect.bottom + PAD + 12,
           left: Math.max(12, Math.min(vw - cardW - 12, spotlightRect.left + spotlightRect.width / 2 - cardW / 2)),
         };
-      } else {
-        return {
-          bottom: vh - spotlightRect.top + PAD + 12,
-          left: Math.max(12, Math.min(vw - cardW - 12, spotlightRect.left + spotlightRect.width / 2 - cardW / 2)),
-        };
       }
+      // Середина — над элементом
+      return {
+        bottom: vh - spotlightRect.top + PAD + 12,
+        left: Math.max(12, Math.min(vw - cardW - 12, spotlightRect.left + spotlightRect.width / 2 - cardW / 2)),
+      };
     }
 
     switch (step.position) {
@@ -229,8 +260,8 @@ export default function DialogBubbleInline({
               {step.text}
             </div>
 
-            {/* Action Hint */}
-            {!isManualNext && (
+            {/* Action Hint — только пока действие не выполнено */}
+            {!isManualNext && !localActionDone && !actionDone && (
               <div style={{
                 marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8,
                 fontSize: 14, color: '#67e8f9',
@@ -240,37 +271,69 @@ export default function DialogBubbleInline({
               </div>
             )}
 
-            {/* Buttons */}
+            {/* Успех — действие выполнено */}
+            {!isManualNext && (localActionDone || actionDone) && (
+              <div style={{
+                marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8,
+                fontSize: 14, color: '#4ade80',
+              }}>
+                <span>✅</span>
+                <span>Отлично! Теперь нажми «Далее →»</span>
+              </div>
+            )}
+
+            {/* Buttons — все одинакового размера */}
             <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+              display: 'flex', alignItems: 'center', gap: 8,
             }}>
+              {/* Пропустить */}
               <button onClick={onSkip} style={{
-                padding: '8px 16px', borderRadius: 8,
-                fontSize: 14, fontWeight: 600,
-                color: 'rgba(255,255,255,0.7)',
-                background: 'rgba(255,255,255,0.05)',
+                flex: 1, padding: '12px 8px', borderRadius: 10,
+                fontSize: 13, fontWeight: 600,
+                color: 'rgba(255,255,255,0.5)',
+                background: 'transparent',
                 border: '1px solid rgba(255,255,255,0.1)',
                 cursor: 'pointer', transition: 'all 0.2s',
               }}
-                onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'; }}
-                onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                onMouseEnter={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.8)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}
               >
-                Пропустить обучение
+                Пропустить
               </button>
 
-              {isManualNext && (
+              {/* Назад */}
+              {currentStepIndex > 0 ? (
+                <button onClick={onBack} style={{
+                  flex: 1, padding: '12px 8px', borderRadius: 10,
+                  fontSize: 13, fontWeight: 700,
+                  color: 'rgba(255,255,255,0.8)',
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  cursor: 'pointer', transition: 'all 0.2s',
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.14)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+                >
+                  ← Назад
+                </button>
+              ) : (
+                <div style={{ flex: 1 }} />
+              )}
+
+              {/* Далее — показываем если manual_next ИЛИ действие выполнено */}
+              {showNextBtn && (
                 <button onClick={onNext} style={{
-                  padding: '12px 24px', borderRadius: 8,
-                  fontWeight: 800, fontSize: 15, color: '#fff',
+                  flex: 1, padding: '12px 8px', borderRadius: 10,
+                  fontWeight: 800, fontSize: 14, color: '#fff',
                   background: 'linear-gradient(135deg, #06b6d4, #3b82f6)',
                   border: 'none', cursor: 'pointer',
                   boxShadow: '0 4px 15px rgba(6,182,212,0.4)',
                   transition: 'all 0.2s',
                 }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.05)'; }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.03)'; }}
                   onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
                 >
-                  {currentStepIndex === totalSteps - 1 ? 'Начать игру! 🚀' : 'Далее →'}
+                  {currentStepIndex === totalSteps - 1 ? '🚀 Начать!' : 'Далее →'}
                 </button>
               )}
             </div>

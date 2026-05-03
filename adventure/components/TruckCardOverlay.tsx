@@ -161,7 +161,7 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
   const color = getTruckColor(truck);
 
   const hasActiveDeal = negotiation.open && negotiation.load;
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(false); // Всегда открыт при первом показе
   const collapseTimer = React.useRef<any>(null);
   const [hosCountdown, setHosCountdown] = useState<number | null>(null);
 
@@ -177,11 +177,22 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
     if (isSelected && !prevSelected.current) {
       setCollapsed(false);
       if (collapseTimer.current) clearTimeout(collapseTimer.current);
-      if (!hasActiveDeal) collapseTimer.current = setTimeout(() => setCollapsed(true), 6000);
+      // Не сворачиваем автоматически — пользователь сам закроет
     }
     prevSelected.current = isSelected;
     return () => { if (collapseTimer.current) clearTimeout(collapseTimer.current); };
   }, [isSelected]);
+
+  // Раскрываем dropdown при повторном клике на уже выбранный трак
+  useEffect(() => {
+    const handler = (e: Event) => {
+      if ((e as CustomEvent).detail?.truckId === truck.id) {
+        setCollapsed(false);
+      }
+    };
+    window.addEventListener('expandTruckDropdown', handler);
+    return () => window.removeEventListener('expandTruckDropdown', handler);
+  }, [truck.id]);
 
   const prevNegOpen = React.useRef(false);
   useEffect(() => {
@@ -273,7 +284,7 @@ function TruckHUD({ truck, isDark, ps }: { truck: any; isDark: boolean; ps: any 
   if (collapsed) {
     return (
       <div style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: 6, background: BG, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: `1.5px solid ${hosWarn ? '#fbbf2466' : color + '55'}`, borderRadius: '0 0 10px 10px', padding: '5px 10px 5px 8px', cursor: 'pointer', boxShadow: isDark ? '0 2px 12px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.1)', maxWidth: 340, width: '100%', overflow: 'hidden' } as any}
-        onClick={e => { e.stopPropagation(); setCollapsed(false); if (collapseTimer.current) clearTimeout(collapseTimer.current); if (!hasActiveDeal) collapseTimer.current = setTimeout(() => setCollapsed(true), 6000); }}>
+        onClick={e => { e.stopPropagation(); setCollapsed(false); if (collapseTimer.current) clearTimeout(collapseTimer.current); }}>
         {hasRoute && <span style={{ fontSize: 9, fontWeight: 700, color: T2, flexShrink: 0, maxWidth: 52, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{truck.currentCity}</span>}
         {hasRoute ? (
           <div style={{ flex: 1, position: 'relative', height: 14, display: 'flex', alignItems: 'center' }}>
@@ -868,6 +879,69 @@ function TruckDropdown({ truck, events, isDark }: { truck: any; events: GameEven
             </div>
           </div>
         )}
+
+        {/* Кнопки действий */}
+        <div style={{ display: 'flex', gap: 6 }}>
+          {/* Ускорить время */}
+          <button
+            onClick={() => {
+              const store = useGameStore.getState();
+              store.setTimeSpeed(10);
+            }}
+            style={{
+              flex: 1, padding: '8px 6px', borderRadius: 10, cursor: 'pointer',
+              background: isDark ? 'rgba(6,182,212,0.12)' : 'rgba(6,182,212,0.08)',
+              border: '1.5px solid rgba(6,182,212,0.35)',
+              display: 'flex', flexDirection: 'column' as any, alignItems: 'center', gap: 2,
+              transition: 'all 0.15s',
+            } as any}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(6,182,212,0.2)' : 'rgba(6,182,212,0.15)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(6,182,212,0.12)' : 'rgba(6,182,212,0.08)'; }}
+          >
+            <span style={{ fontSize: 16 }}>⚡</span>
+            <span style={{ fontSize: 10, fontWeight: 800, color: '#06b6d4' }}>Ускорить</span>
+            <span style={{ fontSize: 9, color: isDark ? '#64748b' : '#9ca3af' }}>×10 скорость</span>
+          </button>
+
+          {/* Экстренный ремонт — завершить сейчас за доп. плату */}
+          <button
+            onClick={() => {
+              const store = useGameStore.getState();
+              const extraCost = Math.round(minsLeft * 2); // $2 за каждую оставшуюся минуту
+              if (window.confirm(`Завершить ремонт сейчас? Доп. стоимость: $${extraCost}`)) {
+                store.removeMoney(extraCost, `Экстренный ремонт — ${truck.breakdownType}`);
+                store.trucks && store.trucks; // trigger re-render
+                // Устанавливаем outOfOrderUntil = gameMinute (ремонт завершён)
+                const { trucks } = store;
+                const updated = trucks.map((t: any) =>
+                  t.id === truck.id ? { ...t, outOfOrderUntil: store.gameMinute, status: 'idle' } : t
+                );
+                (store as any).set?.({ trucks: updated });
+                // Используем внутренний метод через zustand
+                useGameStore.setState(s => ({
+                  trucks: s.trucks.map((t: any) =>
+                    t.id === truck.id
+                      ? { ...t, outOfOrderUntil: s.gameMinute, status: 'idle', awaitingRepairChoice: false }
+                      : t
+                  )
+                }));
+              }
+            }}
+            style={{
+              flex: 1, padding: '8px 6px', borderRadius: 10, cursor: 'pointer',
+              background: isDark ? 'rgba(251,191,36,0.12)' : 'rgba(251,191,36,0.08)',
+              border: '1.5px solid rgba(251,191,36,0.35)',
+              display: 'flex', flexDirection: 'column' as any, alignItems: 'center', gap: 2,
+              transition: 'all 0.15s',
+            } as any}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(251,191,36,0.2)' : 'rgba(251,191,36,0.15)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(251,191,36,0.12)' : 'rgba(251,191,36,0.08)'; }}
+          >
+            <span style={{ fontSize: 16 }}>🔧</span>
+            <span style={{ fontSize: 10, fontWeight: 800, color: '#fbbf24' }}>Завершить</span>
+            <span style={{ fontSize: 9, color: isDark ? '#64748b' : '#9ca3af' }}>~${minsLeft * 2} доп.</span>
+          </button>
+        </div>
       </div>
     );
   }

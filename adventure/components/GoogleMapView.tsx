@@ -1218,7 +1218,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       if (truck.status !== 'loaded' && truck.status !== 'driving') return;
       if (!truck.destinationCity) return;
 
-      const cacheKey = `${truck.id}:${truck.destinationCity}`;
+      const cacheKey = `${truck.id}:${truck.destinationCity}:${truck.routePath?.length ?? 0}`;
       if (routeCacheRef.current.get(truck.id) === cacheKey) return; // уже нарисован
       routeCacheRef.current.set(truck.id, cacheKey);
 
@@ -1427,7 +1427,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
   // ── FOLLOW ASSIGNED TRUCK — с медленным zoom out ──
   useEffect(() => {
     function handleFollowAssigned(e: Event) {
-      const { truckId, zoomOut } = (e as CustomEvent).detail || {};
+      const { truckId, zoomOut, targetZoom } = (e as CustomEvent).detail || {};
       if (!truckId || !googleMapRef.current || !mapLoaded) return;
       
       const truck = activeTrucks.find((t: any) => t.id === truckId);
@@ -1441,13 +1441,21 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
       lastFollowPositionRef.current = null;
       setSelectedTruck(truck);
       
-      // Медленный zoom out если указан параметр
-      if (zoomOut && typeof zoomOut === 'number') {
-        const currentZoom = userZoomRef.current;
-        const targetZoom = Math.max(3, currentZoom * (1 - zoomOut)); // уменьшаем на zoomOut процентов
-        
-        // Запускаем плавную анимацию zoom out (3 секунды)
-        const duration = 3000; // 3 секунды
+      // Определяем целевой zoom
+      const currentZoom = userZoomRef.current;
+      let finalZoom = currentZoom;
+      
+      if (typeof targetZoom === 'number') {
+        // Фиксированный zoom
+        finalZoom = targetZoom;
+      } else if (zoomOut && typeof zoomOut === 'number') {
+        // Процентный zoom out (legacy)
+        finalZoom = Math.max(3, currentZoom * (1 - zoomOut));
+      }
+      
+      if (finalZoom !== currentZoom) {
+        // Плавная анимация zoom (3 секунды)
+        const duration = 3000;
         const startTime = Date.now();
         const startZoom = currentZoom;
         
@@ -1457,7 +1465,7 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
           
           // Ease-out cubic для плавности
           const eased = 1 - Math.pow(1 - progress, 3);
-          const newZoom = startZoom + (targetZoom - startZoom) * eased;
+          const newZoom = startZoom + (finalZoom - startZoom) * eased;
           
           if (googleMapRef.current) {
             userZoomRef.current = newZoom;
@@ -1476,12 +1484,12 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
         
         requestAnimationFrame(animateZoom);
       } else {
-        // Без zoom out — просто центрируем
+        // Без изменения zoom — просто центрируем
         googleMapRef.current.moveCamera({
           center: position,
           heading: 0,
           tilt: 0,
-          zoom: userZoomRef.current,
+          zoom: currentZoom,
         });
       }
     }
@@ -1827,6 +1835,8 @@ function GoogleMapComponent({ onTruckInfo, onTruckSelect, onFindLoad }: {
 
         {/* 📦 Грузы */}
         <button
+          id="loadboard-tab-btn"
+          data-onboarding="loadboard-tab"
           onTouchStart={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('mapButtonAction', { detail: { action: 'toggleLoadBoard' } })); }}
           onClick={() => window.dispatchEvent(new CustomEvent('mapButtonAction', { detail: { action: 'toggleLoadBoard' } }))}
           style={btnStyle(!!showLoadBoard)}

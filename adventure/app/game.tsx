@@ -266,7 +266,9 @@ export default function GameScreen() {
     }
     
     // Онбординг триггеры
-    if (tab === 'loadboard') triggerOnboardingAction('click_load_board');
+    if (tab === 'loadboard') {
+      triggerOnboardingAction('click_load_board');
+    }
     if (tab === 'chat') triggerOnboardingAction('open_chat');
     
     try {
@@ -434,6 +436,13 @@ export default function GameScreen() {
   }, [phase]);
 
   useEffect(() => { if (availableLoads.length < 5) refreshLoadBoard(); }, []);
+
+  // Если остался 1 трак и скорость ×10 — сбрасываем до ×5
+  useEffect(() => {
+    if (trucks.length <= 1 && timeSpeed === 10) {
+      setTimeSpeed(5);
+    }
+  }, [trucks.length]);
   useEffect(() => {
     console.log('🎮 Setting up game clock...');
     if (clockRef.current) {
@@ -533,12 +542,13 @@ export default function GameScreen() {
   const idleTrucks = trucks.filter(t => t.status === 'idle').length;
 
   function handleTruckClick(truck: any) {
-    // Онбординг триггер
+    // Онбординг триггер — только для шага 4 (click_truck)
     triggerOnboardingAction('click_truck');
+    window.dispatchEvent(new CustomEvent('onboardingActionDone'));
     
-    // Если тот же трак — НЕ снимаем выделение, просто фокусируемся на нём
+    // Если тот же трак — раскрываем dropdown (не сворачиваем)
     if (selectedTruckId === truck.id) {
-      // Трак уже выбран — просто центрируем карту на нём
+      window.dispatchEvent(new CustomEvent('expandTruckDropdown', { detail: { truckId: truck.id } }));
       window.dispatchEvent(new CustomEvent('followTruckFromCard', {
         detail: { truckId: truck.id, lng: truck.position[0], lat: truck.position[1] }
       }));
@@ -657,7 +667,9 @@ export default function GameScreen() {
             <button
               onClick={() => {
                 // Циклическое переключение: 1 → 3 → 5 → 10 → 1
-                const nextSpeed = timeSpeed === 1 ? 3 : timeSpeed === 3 ? 5 : timeSpeed === 5 ? 10 : 1;
+                // ×10 доступен только если траков больше одного
+                const canUse10x = trucks.length > 1;
+                const nextSpeed = timeSpeed === 1 ? 3 : timeSpeed === 3 ? 5 : timeSpeed === 5 ? (canUse10x ? 10 : 1) : 1;
                 setTimeSpeed(nextSpeed);
               }}
               onMouseDown={(e) => {
@@ -726,6 +738,7 @@ export default function GameScreen() {
                   fontWeight: 700,
                 } as any}>
                   · {timeSpeed === 1 ? '60' : timeSpeed === 3 ? '180' : timeSpeed === 5 ? '300' : '600'} MPH
+                  {trucks.length <= 1 && ' · ×10 🔒'}
                 </span>
               )}
             </button>
@@ -1181,10 +1194,11 @@ export default function GameScreen() {
         const AVATAR_W = isWide ? 90 : 76;
 
         return (
-          <div key={truck.id} {...(truckIdx === 0 ? { 'data-onboarding': 'truck-card' } : {})} style={{ position: 'relative', flexShrink: 0, scrollSnapAlign: isWide ? 'none' : 'center', display: 'flex', flexDirection: 'column' } as any}>
+          <div key={truck.id} style={{ position: 'relative', flexShrink: 0, scrollSnapAlign: isWide ? 'none' : 'center', display: 'flex', flexDirection: 'column' } as any}>
 
           {/* ═══ КАРТОЧКА — UBER/LYFT СТИЛЬ (ПРОЗРАЧНАЯ) ═══ */}
           <div
+            {...(truckIdx === 0 ? { 'data-onboarding': 'truck-card' } : {})}
             onClick={() => { if (dragDistance.current < 5 && !isTouchDragging.current) handleTruckClick(truck); }}
             style={{
               width: isWide ? 360 : 290,
@@ -1427,218 +1441,6 @@ export default function GameScreen() {
     map:       ['watch_map', 'get_paid'],
   };
 
-  const SideTabs = () => {
-    const tabDefs = [
-      { id: 'loadboard', icon: '📦', label: 'Грузы',   badge: tabs.find(t => t.id === 'loadboard')?.badge },
-      { id: 'chat',      icon: '💬', label: 'Связь',   badge: tabs.find(t => t.id === 'chat')?.badge },
-      { id: 'trucks',    icon: '🚛', label: 'Траки',   badge: tabs.find(t => t.id === 'trucks')?.badge },
-    ];
-    return (
-      <View style={{
-        flexDirection: 'row', gap: 6,
-        paddingHorizontal: 8, paddingVertical: 8,
-        backgroundColor: themeMode === 'dark' ? '#0d1117' : T.navBg,
-        borderBottomWidth: 1,
-        borderBottomColor: themeMode === 'dark' ? 'rgba(56,189,248,0.15)' : T.navBorder,
-      } as any}>
-        {tabDefs.map(tab => {
-          const isOn = activeTab === tab.id;
-          const isGuideActive = GUIDE_TAB_STEPS[tab.id]?.includes(activeGuideStep as string);
-          return (
-            <TouchableOpacity
-              key={tab.id}
-              {...(tab.id === 'loadboard' ? { 'data-onboarding': 'loadboard-tab' } : {})}
-              onPress={() => {
-                if (tab.onPress) {
-                  tab.onPress();
-                } else {
-                  // Если нажали на уже активную вкладку — закрываем её (переходим на карту)
-                  if (isOn) {
-                    handleMapTabPress();
-                  } else {
-                    switchTab(tab.id as Tab);
-                  }
-                }
-              }}
-              style={{
-                flex: isOn ? 2 : 1,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: isOn ? 6 : 0,
-                paddingVertical: 13,
-                borderRadius: 16,
-                backgroundColor: isOn
-                  ? (themeMode === 'dark' ? 'rgba(6,182,212,0.1)' : T.navActiveBtn)
-                  : (themeMode === 'dark' ? 'rgba(255,255,255,0.08)' : T.navInactiveBtn),
-                borderWidth: 1.5,
-                borderColor: isOn
-                  ? (themeMode === 'dark' ? '#38bdf8' : 'transparent')
-                  : isGuideActive
-                    ? 'rgba(56,189,248,0.5)'
-                    : (themeMode === 'dark' ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.1)'),
-                position: 'relative',
-                ...(isOn && themeMode === 'dark' ? {
-                  shadowColor: '#38bdf8',
-                  shadowOpacity: 0.5,
-                  shadowRadius: 10,
-                  shadowOffset: { width: 0, height: 0 },
-                } : {}),
-              } as any}
-            >
-              <div style={{
-                filter: isOn
-                  ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.18)) drop-shadow(0 1px 3px rgba(0,0,0,0.12))'
-                  : 'drop-shadow(0 3px 6px rgba(0,0,0,0.13)) drop-shadow(0 1px 2px rgba(0,0,0,0.08))',
-                transform: isOn ? 'translateY(-4px)' : 'translateY(-2px)',
-                transition: 'transform 0.2s ease, filter 0.2s ease',
-                lineHeight: 0, display: 'inline-block',
-              } as any}>
-                <Text style={{ fontSize: 24, lineHeight: 28 } as any}>{tab.icon}</Text>
-              </div>
-              {isOn && (
-                <Text style={{
-                  fontSize: 15, fontWeight: '900',
-                  color: themeMode === 'dark' ? '#ffffff' : '#1e293b',
-                  fontFamily: "'Nunito', -apple-system, sans-serif",
-                  letterSpacing: 0.2,
-                } as any}>{tab.label}</Text>
-              )}
-              {isGuideActive && !isOn && (
-                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#38bdf8', marginLeft: 4 } as any} />
-              )}
-              {tab.badge !== undefined && tab.badge > 0 && (
-                <View style={{
-                  position: 'absolute', top: 5, right: 5,
-                  backgroundColor: themeMode === 'dark' ? '#38bdf8' : (isOn ? T.primary : '#ef4444'),
-                  borderRadius: 9, paddingHorizontal: 5, paddingVertical: 1,
-                  minWidth: 18, alignItems: 'center',
-                } as any}>
-                  <Text style={{
-                    fontSize: 10, fontWeight: '800',
-                    color: themeMode === 'dark' ? '#0f172a' : '#fff',
-                  } as any}>{tab.badge}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    );
-  };
-
-  // ── BOTTOM TABS (mobile) ──────────────────────────────────────────────────
-  const BottomTabs = () => {
-    const tabDefs = [
-      { id: 'map',       icon: '🌎',  label: 'Карта',  onPress: handleMapTabPress },
-      { id: 'loadboard', icon: '📦',  label: 'Грузы',  badge: tabs.find(t=>t.id==='loadboard')?.badge },
-      { id: 'chat',      icon: '💬',  label: 'Связь',  badge: tabs.find(t=>t.id==='chat')?.badge },
-      { id: 'trucks',    icon: '🚛',  label: 'Траки',  badge: tabs.find(t=>t.id==='trucks')?.badge },
-    ];
-
-    return (
-      <View style={{
-        flexDirection: 'row',
-        paddingHorizontal: 8,
-        paddingTop: 6,
-        // @ts-ignore
-        paddingBottom: 'max(6px, env(safe-area-inset-bottom))',
-        backgroundColor: 'rgba(6,9,16,0.88)',
-        backdropFilter: 'blur(28px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(28px) saturate(180%)',
-        borderTopWidth: 1,
-        borderTopColor: 'rgba(255,255,255,0.06)',
-        gap: 5,
-      } as any}>
-        {tabDefs.map(tab => {
-          const isOn = activeTab === tab.id;
-          return (
-            <TouchableOpacity
-              key={tab.id}
-              {...(tab.id === 'loadboard' ? { 'data-onboarding': 'loadboard-tab' } : {})}
-              onPress={() => {
-                if (tab.onPress) {
-                  tab.onPress();
-                } else {
-                  if (isOn && tab.id !== 'map') handleMapTabPress();
-                  else switchTab(tab.id as Tab);
-                }
-              }}
-              style={{
-                flex: 1,
-                alignItems: 'center',
-                justifyContent: 'center',
-                paddingVertical: 5,
-                paddingHorizontal: 2,
-                borderRadius: 12,
-                position: 'relative',
-                gap: 2,
-                // Активная кнопка — стеклянная карточка
-                backgroundColor: isOn ? 'rgba(6,182,212,0.13)' : 'rgba(255,255,255,0.04)',
-                borderWidth: 1,
-                borderColor: isOn ? 'rgba(6,182,212,0.5)' : 'rgba(255,255,255,0.07)',
-                // @ts-ignore
-                boxShadow: isOn
-                  ? '0 0 12px rgba(6,182,212,0.25), inset 0 1px 0 rgba(255,255,255,0.08)'
-                  : 'inset 0 1px 0 rgba(255,255,255,0.04)',
-              } as any}
-            >
-              {/* Верхняя полоска-индикатор на активной */}
-              {isOn && (
-                <div style={{
-                  position: 'absolute',
-                  top: -1, left: '25%', right: '25%',
-                  height: 2,
-                  borderRadius: 2,
-                  background: 'linear-gradient(90deg, transparent, #06b6d4, transparent)',
-                } as any} />
-              )}
-
-              {/* Иконка */}
-              <div style={{
-                position: 'relative',
-                transform: isOn ? 'scale(1.1)' : 'scale(0.95)',
-                transition: 'transform 0.2s cubic-bezier(0.34,1.56,0.64,1)',
-                lineHeight: 0,
-                display: 'inline-block',
-                filter: isOn
-                  ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))'
-                  : 'brightness(0.6) drop-shadow(0 1px 2px rgba(0,0,0,0.3))',
-              } as any}>
-                <Text style={{ fontSize: 22, lineHeight: 26 } as any}>{tab.icon}</Text>
-              </div>
-
-              {/* Лейбл */}
-              <Text style={{
-                fontSize: 9,
-                fontWeight: isOn ? '800' : '500',
-                color: isOn ? '#38bdf8' : 'rgba(255,255,255,0.3)',
-                letterSpacing: 0.4,
-                textTransform: 'uppercase',
-              } as any}>{tab.label}</Text>
-
-              {/* Бейдж */}
-              {tab.badge !== undefined && tab.badge > 0 && (
-                <View style={{
-                  position: 'absolute', top: 3, right: 8,
-                  backgroundColor: '#ef4444',
-                  borderRadius: 7, paddingHorizontal: 4, paddingVertical: 1,
-                  minWidth: 15, alignItems: 'center',
-                  borderWidth: 1.5,
-                  borderColor: 'rgba(6,9,16,0.95)',
-                } as any}>
-                  <Text style={{ fontSize: 8, fontWeight: '900', color: '#fff' } as any}>
-                    {tab.badge > 99 ? '99+' : tab.badge}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    );
-  };
-
   // ── TOAST СИСТЕМА ────────────────────────────────────────────────────────
   const [toasts, setToasts] = useState<Array<{id: number; message: string; color: string; truckId?: string}>>([]);
   const toastIdRef = useRef(0);
@@ -1803,6 +1605,9 @@ export default function GameScreen() {
         setShowChat(v => { setShowLoadBoard(false); return !v; });
       } else if (action === 'toggleLoadBoard') {
         setShowLoadBoard(v => { setShowChat(false); return !v; });
+        // Онбординг триггер — нажата кнопка Load Board
+        triggerOnboardingAction('click_load_board');
+        window.dispatchEvent(new CustomEvent('onboardingActionDone'));
       }
     };
     window.addEventListener('mapButtonAction', handler);

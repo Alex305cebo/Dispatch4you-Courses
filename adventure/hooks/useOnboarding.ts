@@ -77,10 +77,10 @@ export const useOnboarding = (isNewGame: boolean = false): UseOnboardingReturn =
     if (currentStep.requiredAction === action) {
       console.log(`✅ Action completed: ${action}`);
       
-      // Автоматический переход к следующему шагу
-      setTimeout(() => {
-        goToNextStep();
-      }, 300); // Небольшая задержка для плавности
+      // Для click_truck и click_load_board — НЕ автопереход,
+      // показываем кнопку «Далее» через onboardingActionDone
+      // Игрок сам нажмёт «Далее» когда будет готов
+      // (автопереход только для manual_next через кнопку)
     }
   }, [currentStep, goToNextStep]);
 
