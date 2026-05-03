@@ -11,10 +11,45 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ─── 1. Статический сайт (game2.html, pages, css, js...) ─────────
+  # ─── Определяем что изменилось ────────────────────────────────────
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      site: ${{ steps.filter.outputs.site }}
+      game: ${{ steps.filter.outputs.game }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            site:
+              - '*.html'
+              - '*.css'
+              - '*.js'
+              - 'pages/**'
+              - 'js/**'
+              - 'css/**'
+              - 'audio/**'
+              - 'audio-transcripts/**'
+              - 'shared-styles.css'
+              - 'dark-theme.css'
+              - 'dark-mode.js'
+              - 'auth.js'
+              - 'auth-check.js'
+              - 'access-control.js'
+              - '.htaccess'
+              - 'Card/**'
+            game:
+              - 'adventure/**'
+
+  # ─── 1. Статический сайт — только если изменились его файлы ───────
   deploy-site:
     name: Deploy static site
     runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.site == 'true' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -55,10 +90,12 @@ jobs:
           remote_user: ${{ secrets.SSH_USERNAME }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-  # ─── 2. React/Expo (game1.html) → /game/ ─────────────────────────
+  # ─── 2. React/Expo (game1.html) → /game/ — только если изменился adventure/ ──
   deploy-react-game:
     name: Build & deploy React game (game1)
     runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.game == 'true' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
