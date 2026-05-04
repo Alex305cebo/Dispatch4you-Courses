@@ -38,13 +38,15 @@ document.addEventListener('DOMContentLoaded', function() {
       this.x += this.speedX;
       this.y += this.speedY;
 
-      // Mouse interaction
+      // Mouse interaction - Optimized with squared distance check
       if (mouse.x !== null && mouse.y !== null) {
         const dx = mouse.x - this.x;
         const dy = mouse.y - this.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distanceSq = dx * dx + dy * dy;
+        const radiusSq = mouse.radius * mouse.radius;
         
-        if (distance < mouse.radius) {
+        if (distanceSq < radiusSq) {
+          const distance = Math.sqrt(distanceSq);
           const force = (mouse.radius - distance) / mouse.radius;
           const angle = Math.atan2(dy, dx);
           this.x -= Math.cos(angle) * force * 3;
@@ -58,16 +60,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     draw() {
+      // Main particle
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
       ctx.fillStyle = this.color;
       ctx.fill();
 
-      // Very subtle glow
-      ctx.shadowBlur = 4;
-      ctx.shadowColor = this.color;
+      // BOLT OPTIMIZATION: Efficient glow effect using secondary arc instead of expensive shadowBlur
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size * 2, 0, Math.PI * 2);
+      ctx.fillStyle = this.color.replace('0.15', '0.05');
       ctx.fill();
-      ctx.shadowBlur = 0;
     }
   }
 
@@ -77,26 +80,23 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function connectParticles() {
+    // BOLT OPTIMIZATION: Use squared distance to avoid unnecessary Math.sqrt
+    const maxDistanceSq = 150 * 150;
     for (let i = 0; i < particles.length; i++) {
       for (let j = i + 1; j < particles.length; j++) {
         const dx = particles[i].x - particles[j].x;
         const dy = particles[i].y - particles[j].y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distanceSq = dx * dx + dy * dy;
 
-        if (distance < 150) {
+        if (distanceSq < maxDistanceSq) {
+          const distance = Math.sqrt(distanceSq);
           const opacity = (1 - distance / 150) * 0.08;
           
-          // Gradient line
-          const gradient = ctx.createLinearGradient(
-            particles[i].x, particles[i].y,
-            particles[j].x, particles[j].y
-          );
-          gradient.addColorStop(0, `rgba(139, 92, 246, ${opacity})`);
-          gradient.addColorStop(0.5, `rgba(59, 130, 246, ${opacity})`);
-          gradient.addColorStop(1, `rgba(6, 182, 212, ${opacity})`);
-          
+          // BOLT OPTIMIZATION: Using solid stroke instead of expensive createLinearGradient
+          // Creating hundreds of gradient objects per frame is CPU intensive and triggers GC.
+          // At 0.3px width, a solid color with variable opacity looks nearly identical.
           ctx.beginPath();
-          ctx.strokeStyle = gradient;
+          ctx.strokeStyle = `rgba(139, 92, 246, ${opacity})`;
           ctx.lineWidth = 0.3;
           ctx.moveTo(particles[i].x, particles[i].y);
           ctx.lineTo(particles[j].x, particles[j].y);
