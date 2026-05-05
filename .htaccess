@@ -6,7 +6,11 @@ RewriteEngine On
 # favicon.ico -> favicon.svg
 RewriteRule ^favicon\.ico$ favicon.svg [L,T=image/svg+xml]
 
-# ВСЕ редиректы (www, HTTPS) убраны — Hostinger управляет ими на уровне сервера
+# Редирект HTTP → HTTPS и www → без www (канонический URL)
+RewriteCond %{HTTPS} off [OR]
+RewriteCond %{HTTP_HOST} ^www\. [NC]
+RewriteCond %{HTTP_HOST} ^(?:www\.)?(.+)$ [NC]
+RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
 
 # ========================================
 # React SPA — /game/ SPA routing fallback
