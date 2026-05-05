@@ -1,46 +1,88 @@
 // ========================================
-// FEATURES CAROUSEL SYSTEM - Two Buttons
+// FEATURES CAROUSEL - Циклическое переключение
 // ========================================
 
 document.addEventListener('DOMContentLoaded', () => {
   const slider = document.querySelector('.features-grid');
-  const prevBtn = document.querySelector('.carousel-prev');
-  const nextBtn = document.querySelector('.carousel-next');
+  const prevBtn = document.querySelector('.carousel-btn-prev');
+  const nextBtn = document.querySelector('.carousel-btn-next');
   const cards = document.querySelectorAll('.feature-card');
   
-  if (!slider || !prevBtn || !nextBtn || !cards.length) return;
-  
-  // Переход к первой карточке
-  function goToFirst() {
-    slider.scrollTo({
-      left: 0,
-      behavior: 'smooth'
-    });
+  if (!slider || !prevBtn || !nextBtn || !cards.length) {
+    console.error('Carousel elements not found');
+    return;
   }
   
-  // Переход к последней карточке
-  function goToLast() {
-    // Вычисляем позицию последней карточки
-    const lastCard = cards[cards.length - 1];
-    const containerWidth = slider.offsetWidth;
-    const cardRight = lastCard.offsetLeft + lastCard.offsetWidth;
-    const scrollPos = Math.max(0, cardRight - containerWidth);
+  let currentIndex = 0;
+  const totalCards = cards.length;
+  
+  // Получаем количество видимых карточек
+  function getVisibleCount() {
+    const width = window.innerWidth;
+    if (width >= 1200) return 3;
+    if (width >= 768) return 2;
+    return 1;
+  }
+  
+  // Вычисляем максимальный индекс
+  function getMaxIndex() {
+    return Math.max(0, totalCards - getVisibleCount());
+  }
+  
+  // Прокрутка к карточке по индексу
+  function scrollToCard(index) {
+    const card = cards[index];
+    if (!card) return;
+    
+    const cardWidth = card.offsetWidth;
+    const gap = 20; // gap между карточками
+    const scrollPosition = index * (cardWidth + gap);
     
     slider.scrollTo({
-      left: scrollPos,
+      left: scrollPosition,
       behavior: 'smooth'
     });
+    
+    currentIndex = index;
+  }
+  
+  // Следующая карточка (циклически)
+  function nextCard() {
+    const maxIndex = getMaxIndex();
+    
+    if (currentIndex >= maxIndex) {
+      // Если на последней позиции - возвращаемся к началу
+      currentIndex = 0;
+    } else {
+      currentIndex++;
+    }
+    
+    scrollToCard(currentIndex);
+  }
+  
+  // Предыдущая карточка (циклически)
+  function prevCard() {
+    const maxIndex = getMaxIndex();
+    
+    if (currentIndex <= 0) {
+      // Если на первой позиции - переходим к концу
+      currentIndex = maxIndex;
+    } else {
+      currentIndex--;
+    }
+    
+    scrollToCard(currentIndex);
   }
   
   // Обработчики кнопок
   prevBtn.addEventListener('click', (e) => {
     e.preventDefault();
-    goToFirst();
+    prevCard();
   });
   
   nextBtn.addEventListener('click', (e) => {
     e.preventDefault();
-    goToLast();
+    nextCard();
   });
   
   // Обработчик клика на карточки
@@ -53,20 +95,68 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
   
-  // Keyboard navigation
+  // Клавиатурная навигация
   document.addEventListener('keydown', (e) => {
-    // Проверяем что фокус не в input/textarea
+    // Игнорируем если фокус в input/textarea
     if (document.activeElement.tagName === 'INPUT' || 
         document.activeElement.tagName === 'TEXTAREA') {
       return;
     }
     
-    if (e.key === 'ArrowLeft' || e.key === 'Home') {
+    if (e.key === 'ArrowLeft') {
       e.preventDefault();
-      goToFirst();
-    } else if (e.key === 'ArrowRight' || e.key === 'End') {
+      prevCard();
+    } else if (e.key === 'ArrowRight') {
       e.preventDefault();
-      goToLast();
+      nextCard();
     }
+  });
+  
+  // Обновление при изменении размера окна
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      // Корректируем текущий индекс если нужно
+      const maxIndex = getMaxIndex();
+      if (currentIndex > maxIndex) {
+        currentIndex = maxIndex;
+      }
+      scrollToCard(currentIndex);
+    }, 250);
+  });
+  
+  // Touch swipe support
+  let touchStartX = 0;
+  let touchEndX = 0;
+  
+  slider.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+  
+  slider.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+  }, { passive: true });
+  
+  function handleSwipe() {
+    const swipeThreshold = 50;
+    const diff = touchStartX - touchEndX;
+    
+    if (Math.abs(diff) > swipeThreshold) {
+      if (diff > 0) {
+        // Swipe left - next
+        nextCard();
+      } else {
+        // Swipe right - prev
+        prevCard();
+      }
+    }
+  }
+  
+  console.log('Carousel initialized:', {
+    totalCards,
+    currentIndex,
+    visibleCount: getVisibleCount()
   });
 });
