@@ -6,6 +6,15 @@ document.addEventListener('DOMContentLoaded', function() {
   const canvas = document.getElementById('neuralCanvas');
   if (!canvas) return;
 
+  // Отключаем анимацию на мобильных для производительности
+  const isMobile = window.innerWidth <= 768;
+  const isLowPerformance = navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4;
+  
+  if (isMobile || isLowPerformance) {
+    canvas.style.display = 'none';
+    return;
+  }
+
   const ctx = canvas.getContext('2d');
   let width = canvas.width = window.innerWidth;
   let height = canvas.height = window.innerHeight;
