@@ -184,24 +184,36 @@
   cursor: pointer;
   transition: all 0.3s ease;
   border: none;
-  padding: 0 !important;
+  padding: 12px !important; /* Увеличена область касания */
   flex-shrink: 0;
   overflow: visible !important;
+  position: relative;
 }
 
-.carousel-indicator:hover {
+/* Визуальная точка внутри области касания */
+.carousel-indicator::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.carousel-indicator:hover::before {
   background: rgba(255, 255, 255, 0.5);
-  transform: scale(1.2);
+  transform: translate(-50%, -50%) scale(1.2);
 }
 
-.carousel-indicator.active {
-  width: 28px !important;
-  min-width: 28px !important;
-  height: 10px !important;
-  min-height: 10px !important;
-  border-radius: 5px !important;
-  background: #06b6d4 !important;
-  overflow: visible !important;
+.carousel-indicator.active::before {
+  width: 28px;
+  height: 10px;
+  border-radius: 5px;
+  background: #06b6d4;
 }
 
 .carousel-pause-btn {
