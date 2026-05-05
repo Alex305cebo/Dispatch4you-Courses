@@ -1,14 +1,14 @@
 // ========================================
-// FEATURES CAROUSEL SYSTEM - Simplified
+// FEATURES CAROUSEL SYSTEM - Two Buttons
 // ========================================
 
 document.addEventListener('DOMContentLoaded', () => {
   const slider = document.querySelector('.features-grid');
-  const firstBtn = document.querySelector('[data-action="first"]');
-  const lastBtn = document.querySelector('[data-action="last"]');
+  const prevBtn = document.querySelector('.carousel-prev');
+  const nextBtn = document.querySelector('.carousel-next');
   const cards = document.querySelectorAll('.feature-card');
   
-  if (!slider || !firstBtn || !lastBtn || !cards.length) return;
+  if (!slider || !prevBtn || !nextBtn || !cards.length) return;
   
   // Переход к первой карточке
   function goToFirst() {
@@ -20,8 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Переход к последней карточке
   function goToLast() {
+    // Вычисляем позицию последней карточки
     const lastCard = cards[cards.length - 1];
-    const scrollPos = lastCard.offsetLeft - slider.offsetLeft;
+    const containerWidth = slider.offsetWidth;
+    const cardRight = lastCard.offsetLeft + lastCard.offsetWidth;
+    const scrollPos = Math.max(0, cardRight - containerWidth);
     
     slider.scrollTo({
       left: scrollPos,
@@ -30,8 +33,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   // Обработчики кнопок
-  firstBtn.addEventListener('click', goToFirst);
-  lastBtn.addEventListener('click', goToLast);
+  prevBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    goToFirst();
+  });
+  
+  nextBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    goToLast();
+  });
   
   // Обработчик клика на карточки
   cards.forEach(card => {
@@ -45,10 +55,16 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Keyboard navigation
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Home') {
+    // Проверяем что фокус не в input/textarea
+    if (document.activeElement.tagName === 'INPUT' || 
+        document.activeElement.tagName === 'TEXTAREA') {
+      return;
+    }
+    
+    if (e.key === 'ArrowLeft' || e.key === 'Home') {
       e.preventDefault();
       goToFirst();
-    } else if (e.key === 'End') {
+    } else if (e.key === 'ArrowRight' || e.key === 'End') {
       e.preventDefault();
       goToLast();
     }
