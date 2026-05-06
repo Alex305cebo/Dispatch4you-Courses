@@ -1575,6 +1575,8 @@ let useWhisper=true; // true = Groq Whisper, false = browser SR
 
 // Live preview SR — runs in parallel with Whisper to show words as you speak
 let livePreviewSR=null, livePreviewActive=false;
+let livePreviewFinal=''; // накопленные финальные слова от SR (внутри одной сессии записи)
+
 function startLivePreview(){
   if(!SR||livePreviewActive)return;
   try{
@@ -1585,24 +1587,33 @@ function startLivePreview(){
     livePreviewSR.maxAlternatives=1;
     livePreviewSR.onresult=e=>{
       if(!isRec||!useWhisper)return;
-      let interim='', final='';
+      let interim='';
       for(let i=e.resultIndex;i<e.results.length;i++){
-        if(e.results[i].isFinal){ final+=e.results[i][0].transcript+' '; }
-        else{ interim+=e.results[i][0].transcript; }
+        if(e.results[i].isFinal){
+          // Финальное слово/фраза — добавляем к SR-буферу, никогда не удаляем
+          livePreviewFinal=(livePreviewFinal+' '+e.results[i][0].transcript).trim();
+        } else {
+          interim+=e.results[i][0].transcript;
+        }
       }
-      const live=(final+interim).trim();
-      // Показываем накопленный текст + то что говорим прямо сейчас
-      const display=accumulatedText ? accumulatedText+' '+live : live;
-      if(display.trim()) TranscriptDisplay.showInterim(display.trim());
+      // Итоговый текст: Whisper-накопленное + SR-финальное + SR-interim (текущее слово)
+      const parts=[accumulatedText, livePreviewFinal, interim].filter(s=>s.trim());
+      const display=parts.join(' ').trim();
+      if(display) TranscriptDisplay.showInterim(display);
     };
     livePreviewSR.onerror=()=>{ livePreviewActive=false; };
-    livePreviewSR.onend=()=>{ livePreviewActive=false; };
+    // SR иногда останавливается сам — перезапускаем пока микрофон включён
+    livePreviewSR.onend=()=>{
+      livePreviewActive=false;
+      if(isRec && useWhisper){ startLivePreview(); }
+    };
     livePreviewSR.start();
     livePreviewActive=true;
   }catch(e){ livePreviewActive=false; }
 }
 function stopLivePreview(){
   livePreviewActive=false;
+  livePreviewFinal=''; // сбрасываем SR-буфер
   if(livePreviewSR){ try{livePreviewSR.stop();}catch(e){} livePreviewSR=null; }
 }
 
@@ -1730,6 +1741,7 @@ async function sendToWhisper(){
     const fixed=fixTerms(text);
     // Накапливаем текст — не отправляем пока микрофон включён
     accumulatedText=(accumulatedText+' '+fixed).trim();
+    livePreviewFinal=''; // Whisper дал точный результат — сбрасываем SR-буфер чтобы не дублировать
     TranscriptDisplay.showInterim(accumulatedText);
     // Если микрофон остановлен — отправляем всё накопленное
     if(!isRec){
@@ -2014,6 +2026,7 @@ function startRec(){
   isRec=true;
   finalText='';
   accumulatedText=''; // сбрасываем буфер при новой записи
+  livePreviewFinal=''; // сбрасываем SR live-буфер
   TranscriptDisplay.clear();
   micBtn.classList.add('rec');
   micBtn.setAttribute('aria-pressed','true');
