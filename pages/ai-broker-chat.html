@@ -1386,6 +1386,7 @@ const _k=['gsk_7b9aEN1PMQBKSKbw','GOyoWGdyb3FYcNiq4FWZScbJ4iZYYSYOF4Qh'];
 const GK=_k[0]+_k[1], GU='https://api.groq.com/openai/v1/chat/completions', MD='llama-3.1-8b-instant';
 let hist=[],scen='free',broker='Mike',busy=false,isRec=false,recognition=null,synth=window.speechSynthesis;
 let widgetState='idle',dialogActive=false;
+let accumulatedText=''; // накапливает весь текст пока микрофон включён
 var sessionManager=null,currentSessionId=null;
 const NAMES=['Sarah','Jessica','Amanda','Rachel','Emily','Nicole','Ashley','Megan','Lauren','Brittany'];
 
@@ -1589,8 +1590,10 @@ function startLivePreview(){
         if(e.results[i].isFinal){ final+=e.results[i][0].transcript+' '; }
         else{ interim+=e.results[i][0].transcript; }
       }
-      const display=(final+interim).trim();
-      if(display) TranscriptDisplay.showInterim(display);
+      const live=(final+interim).trim();
+      // Показываем накопленный текст + то что говорим прямо сейчас
+      const display=accumulatedText ? accumulatedText+' '+live : live;
+      if(display.trim()) TranscriptDisplay.showInterim(display.trim());
     };
     livePreviewSR.onerror=()=>{ livePreviewActive=false; };
     livePreviewSR.onend=()=>{ livePreviewActive=false; };
@@ -1725,11 +1728,33 @@ async function sendToWhisper(){
     }
 
     const fixed=fixTerms(text);
-    TranscriptDisplay.clear();
-    processMsg(fixed);
+    // Накапливаем текст — не отправляем пока микрофон включён
+    accumulatedText=(accumulatedText+' '+fixed).trim();
+    TranscriptDisplay.showInterim(accumulatedText);
+    // Если микрофон остановлен — отправляем всё накопленное
+    if(!isRec){
+      const toSend=accumulatedText;
+      accumulatedText='';
+      TranscriptDisplay.clear();
+      if(toSend) processMsg(toSend);
+      return;
+    }
+    // Если микрофон ещё включён — перезапускаем запись для следующей фразы
+    if(isRec && useWhisper){
+      whisperChunks=[];
+      try{
+        const mimeType2=MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?'audio/webm;codecs=opus':
+                        MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':'audio/ogg';
+        whisperRecorder=new MediaRecorder(whisperStream||await navigator.mediaDevices.getUserMedia({audio:{sampleRate:16000,channelCount:1,echoCancellation:true,noiseSuppression:true}}),{mimeType:mimeType2});
+        whisperRecorder.ondataavailable=e=>{ if(e.data.size>0) whisperChunks.push(e.data); };
+        whisperRecorder.onstop=()=>{ sendToWhisper(); };
+        whisperRecorder.start(250);
+      }catch(ex){ console.warn('[Whisper] Restart failed:',ex); }
+    }
   }catch(e){
     console.warn('[Whisper] Failed:',e.message,'. Falling back to browser SR.');
-    TranscriptDisplay.clear();
+    if(accumulatedText) TranscriptDisplay.showInterim(accumulatedText);
+    else TranscriptDisplay.clear();
     // Don't disable Whisper permanently — just show error
     showNotification('⚠️ Ошибка распознавания Whisper. Попробуйте ещё раз.','warning');
   }
@@ -1988,6 +2013,7 @@ function startRec(){
   }
   isRec=true;
   finalText='';
+  accumulatedText=''; // сбрасываем буфер при новой записи
   TranscriptDisplay.clear();
   micBtn.classList.add('rec');
   micBtn.setAttribute('aria-pressed','true');
@@ -2060,6 +2086,8 @@ function stopRec(){
 
   if(useWhisper){
     stopWhisperRec();
+    // После остановки Whisper ждём финальный чанк, потом отправляем накопленное
+    // sendToWhisper вызовется через onstop, там проверим isRec=false и отправим
   } else {
     try{recognition.stop();}catch(e){}
     finalText='';
