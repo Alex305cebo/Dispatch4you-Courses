@@ -1572,6 +1572,37 @@ const WHISPER_PROMPT='Freight dispatcher call. Terms: MC number, dry van, 53-foo
 let whisperStream=null, whisperRecorder=null, whisperChunks=[];
 let useWhisper=true; // true = Groq Whisper, false = browser SR
 
+// Live preview SR — runs in parallel with Whisper to show words as you speak
+let livePreviewSR=null, livePreviewActive=false;
+function startLivePreview(){
+  if(!SR||livePreviewActive)return;
+  try{
+    livePreviewSR=new SR();
+    livePreviewSR.continuous=true;
+    livePreviewSR.interimResults=true;
+    livePreviewSR.lang='en-US';
+    livePreviewSR.maxAlternatives=1;
+    livePreviewSR.onresult=e=>{
+      if(!isRec||!useWhisper)return;
+      let interim='', final='';
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        if(e.results[i].isFinal){ final+=e.results[i][0].transcript+' '; }
+        else{ interim+=e.results[i][0].transcript; }
+      }
+      const display=(final+interim).trim();
+      if(display) TranscriptDisplay.showInterim(display);
+    };
+    livePreviewSR.onerror=()=>{ livePreviewActive=false; };
+    livePreviewSR.onend=()=>{ livePreviewActive=false; };
+    livePreviewSR.start();
+    livePreviewActive=true;
+  }catch(e){ livePreviewActive=false; }
+}
+function stopLivePreview(){
+  livePreviewActive=false;
+  if(livePreviewSR){ try{livePreviewSR.stop();}catch(e){} livePreviewSR=null; }
+}
+
 // Speech Recognition (browser fallback)
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 let finalText='', micPermission=false, autoSendTimer=null;
@@ -1602,8 +1633,9 @@ async function startWhisperRec(){
     whisperRecorder.ondataavailable=e=>{ if(e.data.size>0) whisperChunks.push(e.data); };
     whisperRecorder.onstop=()=>{ sendToWhisper(); };
     whisperRecorder.start(250);
-    // Показываем live индикатор записи
+    // Показываем live индикатор записи + запускаем live preview
     TranscriptDisplay.showRecording();
+    startLivePreview();
     return true;
   }catch(e){
     console.warn('[Whisper] Mic access failed:',e.name, e.message);
@@ -1646,6 +1678,7 @@ function stopWhisperRec(){
     whisperRecorder.stop();
   }
   if(whisperStream){ whisperStream.getTracks().forEach(t=>t.stop()); whisperStream=null; }
+  stopLivePreview();
 }
 
 async function sendToWhisper(){
