@@ -1,0 +1,3 @@
+## 2025-05-15 - Canvas Animation Optimization
+**Learning:** High-frequency animation loops (like the particle system in `js/main.js`) are heavily impacted by expensive canvas operations such as `createLinearGradient`, `shadowBlur`, and `Math.sqrt`. Replacing these with simpler alternatives (solid strokes, removing shadows, squared distance checks) significantly improves rendering performance without sacrificing visual quality for background elements.
+**Action:** Always prefer squared distance comparisons ($dx*dx + dy*dy < radius*radius$) to avoid `Math.sqrt` in loops, and use solid strokes or cached patterns instead of creating new gradients every frame.
