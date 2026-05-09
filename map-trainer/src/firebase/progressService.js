@@ -36,32 +36,36 @@ export async function loadProgressFromFirestore(uid) {
 }
 
 // ── Инициализировать пользователя в рейтинге ──────────────────
+// ВАЖНО: в рейтинг попадают только игроки с реальным XP (> 0).
+// Это предотвращает засорение leaderboard нулевыми записями
+// от всех кто просто открыл игру.
 export async function initUserInLeaderboard(uid, userData, currentXp = 0) {
   try {
+    // Не пишем в рейтинг если XP ещё нулевой — игрок не начал играть.
+    if (!currentXp || currentXp <= 0) return;
+
     const progressRef = doc(db, "progress", uid);
     const snap = await getDoc(progressRef);
-    
-    // Создаём запись только если её нет
+
     if (!snap.exists()) {
       await setDoc(progressRef, {
         uid,
-        xp: currentXp, // Используем текущий XP из localStorage
+        xp: currentXp,
         firstName: userData?.firstName || "Player",
-        lastName: userData?.lastName || "",
-        photoURL: userData?.photoURL || null,
+        lastName:  userData?.lastName || "",
+        photoURL:  userData?.photoURL || null,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
     } else {
-      // Если запись есть, но XP меньше текущего — обновляем
       const existingXp = snap.data().xp || 0;
       if (currentXp > existingXp) {
         await setDoc(progressRef, {
           uid,
           xp: currentXp,
           firstName: userData?.firstName || snap.data().firstName || "Player",
-          lastName: userData?.lastName || snap.data().lastName || "",
-          photoURL: userData?.photoURL || snap.data().photoURL || null,
+          lastName:  userData?.lastName  || snap.data().lastName  || "",
+          photoURL:  userData?.photoURL  || snap.data().photoURL  || null,
           updatedAt: serverTimestamp(),
         }, { merge: true });
       }
@@ -106,16 +110,19 @@ export async function saveProgressToFirestore(uid, progress, userData = null) {
       });
     }
 
-    // Также сохраняем в коллекцию progress для рейтинга
-    const progressRef = doc(db, "progress", uid);
-    await setDoc(progressRef, {
-      uid,
-      xp: progress.xp,
-      firstName: userData?.firstName || "Player",
-      lastName: userData?.lastName || "",
-      photoURL: userData?.photoURL || null,
-      updatedAt: serverTimestamp(),
-    }, { merge: true });
+    // Также сохраняем в коллекцию progress для рейтинга,
+    // но только если игрок реально заработал XP.
+    if ((progress.xp || 0) > 0) {
+      const progressRef = doc(db, "progress", uid);
+      await setDoc(progressRef, {
+        uid,
+        xp: progress.xp,
+        firstName: userData?.firstName || "Player",
+        lastName:  userData?.lastName  || "",
+        photoURL:  userData?.photoURL  || null,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+    }
 
   } catch (err) {
     console.warn("[mapTrainer] Firestore save failed:", err.message);

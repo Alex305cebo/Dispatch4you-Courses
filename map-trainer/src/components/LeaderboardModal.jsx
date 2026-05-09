@@ -19,10 +19,11 @@ export default function LeaderboardModal({ currentUserId, onClose }) {
         limit(50)
       );
       const snapshot = await getDocs(q);
-      const data = snapshot.docs.map((doc) => ({
-        uid: doc.id,
-        ...doc.data(),
-      }));
+      const data = snapshot.docs
+        .map((doc) => ({ uid: doc.id, ...doc.data() }))
+        // В рейтинге — только игроки с реальным XP.
+        // Защита от старых "пустых" записей до фикса initUserInLeaderboard.
+        .filter((p) => (p.xp || 0) > 0);
       console.log("[Leaderboard] Loaded players:", data.length);
       setPlayers(data);
     } catch (err) {

@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin · Map Trainer Leaderboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(160deg,#060d1a,#0f172a 60%,#1a1040);
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+    .wrap { max-width: 860px; margin: 0 auto; }
+    h1 { font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+    .sub { font-size: 14px; color: #94a3b8; margin-bottom: 20px; }
+
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .status {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    .status b { color: #e2e8f0; }
+    .status .ok  { color: #22c55e; }
+    .status .err { color: #ef4444; }
+
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-right: 8px;
+      margin-bottom: 8px;
+      transition: all .15s;
+    }
+    button:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-primary { background: #06b6d4; color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #0891b2; }
+    .btn-danger  { background: #ef4444; color: #fff; }
+    .btn-danger:hover:not(:disabled)  { background: #dc2626; }
+    .btn-ghost   { background: rgba(255,255,255,0.08); color: #e2e8f0; }
+    .btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,0.14); }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+    .row .name { flex: 1; color: #e2e8f0; font-weight: 600; }
+    .row .xp { color: #fbbf24; font-weight: 700; min-width: 60px; text-align: right; }
+    .row .uid { color: #94a3b8; font-size: 11px; font-family: monospace; }
+    .row.zero { opacity: 0.6; }
+    .row .del {
+      padding: 4px 10px; font-size: 12px; background: rgba(239,68,68,0.15);
+      color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); border-radius: 6px;
+    }
+    .row .del:hover { background: rgba(239,68,68,0.3); }
+
+    .log {
+      font-family: monospace;
+      font-size: 12px;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 10px 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      color: #94a3b8;
+    }
+    .log .ok  { color: #22c55e; }
+    .log .err { color: #ef4444; }
+    .log .warn { color: #fbbf24; }
+
+    .gate {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .gate h2 { color: #fff; margin-bottom: 12px; }
+    .gate p  { color: #94a3b8; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>🏆 Admin · Leaderboard (Map Trainer)</h1>
+    <p class="sub">Коллекция <b style="color:#06b6d4">progress</b> в Firestore. Только для superuser.</p>
+
+    <div id="gate" class="card gate">
+      <h2>🔒 Проверяем доступ…</h2>
+      <p>Если вы не залогинены как superuser — будет редирект на login.html.</p>
+    </div>
+
+    <div id="app" style="display:none;">
+      <div class="card">
+        <div id="status" class="status">Загружаем список…</div>
+        <button id="btnReload" class="btn-ghost">🔄 Перезагрузить</button>
+        <button id="btnDeleteZero" class="btn-danger" disabled>🗑 Удалить всех с XP = 0</button>
+        <button id="btnDeleteAll" class="btn-danger" disabled style="background:#7f1d1d">💥 Удалить ВСЕХ (чистый рейтинг)</button>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:14px;margin-bottom:10px;color:#e2e8f0;">Текущие записи</h3>
+        <div id="list">—</div>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:14px;margin-bottom:10px;color:#e2e8f0;">Лог</h3>
+        <div id="log" class="log">Готов к работе.</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import {
+      getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+    import {
+      getFirestore, collection, getDocs, getDoc, doc, deleteDoc, query, orderBy, limit
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey:            "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
+      authDomain:        "dispatch4you-80e0f.firebaseapp.com",
+      projectId:         "dispatch4you-80e0f",
+      storageBucket:     "dispatch4you-80e0f.appspot.com",
+      messagingSenderId: "349235354473",
+      appId:             "1:349235354473:web:488aeb29211b02bb153bf8",
+    };
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    const $ = (id) => document.getElementById(id);
+    const logEl = $("log");
+    const log = (msg, cls = "") => {
+      const line = document.createElement("div");
+      if (cls) line.className = cls;
+      line.textContent = "[" + new Date().toLocaleTimeString() + "] " + msg;
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight;
+    };
+
+    let players = [];
+
+    async function loadPlayers() {
+      $("status").textContent = "Загружаем…";
+      $("btnDeleteZero").disabled = true;
+      $("btnDeleteAll").disabled  = true;
+      try {
+        const snap = await getDocs(query(collection(db, "progress"), orderBy("xp", "desc"), limit(500)));
+        players = snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+        renderList();
+        const zero = players.filter((p) => (p.xp || 0) <= 0).length;
+        $("status").innerHTML =
+          `Всего записей: <b>${players.length}</b> · С нулевым XP: <b class="${zero ? "err" : "ok"}">${zero}</b>`;
+        $("btnDeleteZero").disabled = zero === 0;
+        $("btnDeleteAll").disabled  = players.length === 0;
+        log(`Загружено ${players.length} записей.`, "ok");
+      } catch (err) {
+        $("status").innerHTML = '<span class="err">Ошибка: ' + (err.code || err.message) + "</span>";
+        log("Ошибка загрузки: " + err.message, "err");
+      }
+    }
+
+    function renderList() {
+      const list = $("list");
+      if (!players.length) {
+        list.innerHTML = '<p style="color:#94a3b8;font-size:13px;">Пусто.</p>';
+        return;
+      }
+      list.innerHTML = "";
+      players.forEach((p) => {
+        const xp = p.xp || 0;
+        const name = ((p.firstName || "") + " " + (p.lastName || "")).trim() || "(без имени)";
+        const row = document.createElement("div");
+        row.className = "row" + (xp === 0 ? " zero" : "");
+        row.innerHTML = `
+          <div class="name">${escapeHtml(name)}</div>
+          <div class="uid">${escapeHtml(p.uid.slice(0, 12))}…</div>
+          <div class="xp">${xp} XP</div>
+          <button class="del" data-uid="${escapeHtml(p.uid)}">✕</button>
+        `;
+        row.querySelector(".del").addEventListener("click", () => deleteOne(p.uid, name));
+        list.appendChild(row);
+      });
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[c]));
+    }
+
+    async function deleteOne(uid, label) {
+      if (!confirm(`Удалить запись "${label}" (${uid.slice(0,12)}…) из рейтинга?`)) return;
+      try {
+        await deleteDoc(doc(db, "progress", uid));
+        log(`Удалено: ${label} [${uid}]`, "ok");
+        await loadPlayers();
+      } catch (err) {
+        log(`Не удалось удалить ${uid}: ${err.message}`, "err");
+      }
+    }
+
+    async function deleteZero() {
+      const targets = players.filter((p) => (p.xp || 0) <= 0);
+      if (!targets.length) { log("Нечего удалять — все с XP > 0.", "warn"); return; }
+      if (!confirm(`Удалить ${targets.length} записей с XP = 0?`)) return;
+      let ok = 0, fail = 0;
+      for (const p of targets) {
+        try { await deleteDoc(doc(db, "progress", p.uid)); ok++; }
+        catch (e) { fail++; log(`FAIL ${p.uid}: ${e.message}`, "err"); }
+      }
+      log(`Готово. Удалено: ${ok}, ошибок: ${fail}.`, ok ? "ok" : "warn");
+      await loadPlayers();
+    }
+
+    async function deleteAll() {
+      if (!players.length) return;
+      const confirm1 = confirm(`Удалить ВСЕ ${players.length} записей из рейтинга? Это необратимо.`);
+      if (!confirm1) return;
+      const confirm2 = prompt('Для подтверждения напишите: WIPE');
+      if (confirm2 !== "WIPE") { log("Отмена.", "warn"); return; }
+      let ok = 0, fail = 0;
+      for (const p of players) {
+        try { await deleteDoc(doc(db, "progress", p.uid)); ok++; }
+        catch (e) { fail++; log(`FAIL ${p.uid}: ${e.message}`, "err"); }
+      }
+      log(`Готово. Удалено: ${ok}, ошибок: ${fail}.`, ok ? "ok" : "warn");
+      await loadPlayers();
+    }
+
+    // ── Вход ──
+    (async () => {
+      try { await setPersistence(auth, browserLocalPersistence); } catch {}
+      onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+          $("gate").innerHTML =
+            '<h2>Требуется вход</h2><p>Открой <a href="https://dispatch4you.com/login.html" style="color:#06b6d4">login.html</a>, войди как superuser и вернись сюда.</p>';
+          return;
+        }
+        // Проверяем роль
+        try {
+          const snap = await getDoc(doc(db, "users", user.uid));
+          const role = snap.exists() ? (snap.data().accessRole || "registered") : "registered";
+          if (role !== "superuser") {
+            $("gate").innerHTML =
+              '<h2>Доступ запрещён</h2><p>Ваша роль: <b>' + role + '</b>. Эта страница только для superuser.</p>';
+            return;
+          }
+        } catch (err) {
+          $("gate").innerHTML =
+            '<h2>Не удалось проверить роль</h2><p style="color:#fca5a5">' + err.message + '</p>';
+          return;
+        }
+
+        $("gate").style.display = "none";
+        $("app").style.display  = "block";
+
+        $("btnReload").addEventListener("click", loadPlayers);
+        $("btnDeleteZero").addEventListener("click", deleteZero);
+        $("btnDeleteAll").addEventListener("click",  deleteAll);
+
+        await loadPlayers();
+      });
+    })();
+  </script>
+</body>
+</html>
