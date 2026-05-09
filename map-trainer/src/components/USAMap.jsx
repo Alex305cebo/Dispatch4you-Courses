@@ -17,7 +17,9 @@ const FIPS_TO_STATE = {
   "51": "VA", "53": "WA", "54": "WV", "55": "WI", "56": "WY",
 };
 
-const GEO_URL = "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
+// Локальный файл — лежит в public/, после билда доступен по /map-trainer/states-10m.json.
+// Не используем CDN чтобы не упираться в CSP главного сайта (connect-src 'self' + whitelist).
+const GEO_URL = `${import.meta.env.BASE_URL}states-10m.json`;
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 2.5;
