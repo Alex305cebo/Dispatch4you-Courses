@@ -22,9 +22,21 @@ import {
   Timestamp,
   Firestore
 } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User, Auth } from 'firebase/auth';
+import {
+  getAuth,
+  onAuthStateChanged,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  setPersistence,
+  browserLocalPersistence,
+  GoogleAuthProvider,
+  signOut,
+  User,
+  Auth
+} from 'firebase/auth';
 
-// Firebase конфигурация (из firebase-auth-init.js)
+// Firebase конфигурация (единая для всех проектов dispatch4you.com)
 const firebaseConfig = {
   apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
   authDomain: "dispatch4you-80e0f.firebaseapp.com",
@@ -43,9 +55,54 @@ try {
   app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
   db = getFirestore(app);
   auth = getAuth(app);
+
+  // Надёжный persistence + настройка Google провайдера
+  setPersistence(auth, browserLocalPersistence).catch((e) => {
+    console.warn('[auth] setPersistence failed:', e?.code || e?.message);
+  });
+
+  // Ловим возврат из signInWithRedirect (Telegram/Instagram и т.п.)
+  getRedirectResult(auth).catch((e) => {
+    console.warn('[auth] getRedirectResult:', e?.code || e?.message);
+  });
+
+  // Автосинхронизация localStorage.user с Firebase Auth — общий кеш с главным сайтом
+  onAuthStateChanged(auth, (fbUser) => {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      if (fbUser) {
+        const parts = (fbUser.displayName || '').trim().split(' ');
+        const userData = {
+          uid: fbUser.uid,
+          firstName: parts[0] || (fbUser.email || '').split('@')[0] || 'User',
+          lastName:  parts.slice(1).join(' ') || '',
+          email:     fbUser.email || '',
+          photoURL:  fbUser.photoURL || null,
+        };
+        localStorage.setItem('user', JSON.stringify(userData));
+        fbUser.getIdToken().then((t) => {
+          try { localStorage.setItem('authToken', t); } catch {}
+        }).catch(() => {});
+      }
+      // Если fbUser == null — не чистим кеш автоматически.
+      // Пусть явный signOutUser это делает, иначе словим временный null
+      // пока Firebase восстанавливает сессию.
+    } catch {}
+  });
+
   console.log('✅ Firebase initialized for game saves');
 } catch (error) {
   console.error('❌ Firebase initialization failed:', error);
+}
+
+// Детект in-app браузера (Telegram / Instagram / Facebook / WhatsApp / WebView)
+function isInAppBrowser(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = ((navigator.userAgent || navigator.vendor || '') as string).toLowerCase();
+  return (
+    /fban|fbav|instagram|telegram|line\/|whatsapp|wv\)/.test(ua) ||
+    (/android/.test(ua) && / wv\)/.test(ua))
+  );
 }
 
 // Интерфейс сохранения
@@ -93,33 +150,119 @@ export interface SaveMetadata {
 }
 
 /**
- * Получить текущего пользователя
+ * Получить текущего пользователя.
+ * Ждёт первый callback onAuthStateChanged (который может прилететь через
+ * несколько сотен мс — Firebase восстанавливает сессию из IndexedDB).
+ * Дополнительно читает localStorage.user (общий с главным сайтом) как
+ * мгновенный fallback, чтобы UI не моргал "войти → ой нет, уже залогинен".
  */
 export function getCurrentUser(): Promise<User | null> {
   return new Promise((resolve) => {
+    // Фоллбэк из общего кеша главного сайта — сразу отдаём, но продолжаем ждать Firebase
+    // (однако если Firebase сам всё подтвердит через подписку, мы возьмём именно его ответ)
+    let settled = false;
+    const finish = (u: User | null) => {
+      if (settled) return;
+      settled = true;
+      resolve(u);
+    };
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       unsubscribe();
-      resolve(user);
+      finish(user);
     });
+
+    // Страховка: если onAuthStateChanged молчит > 4 сек — отдаём что есть
+    setTimeout(() => {
+      if (!settled) {
+        unsubscribe();
+        // Если в кеше главного сайта есть юзер — хотя бы частично считаем залогиненным
+        // (полный User объект вернуть не можем, поэтому null)
+        finish(auth.currentUser);
+      }
+    }, 4000);
   });
 }
 
 /**
- * Войти через Google
+ * Быстрая синхронная проверка — залогинен ли пользователь.
+ * Читает общий localStorage.user (ключ совпадает с главным сайтом и Map Trainer).
+ * Полезно чтобы не показывать экран "войти" когда пользователь уже залогинен на главном сайте.
+ */
+export function isLoggedInFromCache(): boolean {
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('user') : null;
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    return !!data?.uid;
+  } catch { return false; }
+}
+
+/**
+ * Прочитать кешированные данные пользователя (имя/email/фото).
+ * Для быстрого рендера UI до того как Firebase подтвердит сессию.
+ */
+export function getCachedUser(): { uid: string; firstName: string; lastName: string; email: string; photoURL: string | null } | null {
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('user') : null;
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    return data?.uid ? data : null;
+  } catch { return null; }
+}
+
+/**
+ * Войти через Google.
+ *   • Обычный браузер → popup.
+ *   • In-app (Telegram/Instagram/FB) или popup заблокирован → redirect.
+ *   При redirect страница перезагрузится, результат подхватит
+ *   getRedirectResult на следующем старте (уже вызван при инициализации).
  */
 export async function signInWithGoogle(): Promise<User | null> {
   try {
     const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    return result.user;
+    provider.setCustomParameters({ prompt: 'select_account' });
+
+    // Внутри Telegram / Instagram / Facebook / WebView — только redirect
+    if (isInAppBrowser()) {
+      try {
+        await signInWithRedirect(auth, provider);
+      } catch (e: any) {
+        console.error('❌ Redirect sign-in failed:', e?.code, e?.message);
+      }
+      return null; // страница уйдёт на Google, результат придёт при возврате
+    }
+
+    try {
+      const result = await signInWithPopup(auth, provider);
+      return result.user;
+    } catch (err: any) {
+      const code = err?.code || '';
+      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+        return null;
+      }
+      if (
+        code === 'auth/popup-blocked' ||
+        code === 'auth/operation-not-supported-in-this-environment' ||
+        code === 'auth/web-storage-unsupported'
+      ) {
+        await signInWithRedirect(auth, provider);
+        return null;
+      }
+      throw err;
+    }
   } catch (error) {
     console.error('❌ Google sign-in failed:', error);
     return null;
   }
 }
 
+// Детект in-app доступен снаружи для UI (предупреждения пользователю)
+export { isInAppBrowser };
+
 /**
- * Выйти из аккаунта
+ * Выйти из аккаунта — разлогиниваемся из Firebase И чистим общий кеш,
+ * чтобы пользователь вышел и на главном сайте / Map Trainer одновременно.
  */
 export async function signOutUser(): Promise<void> {
   try {
@@ -127,6 +270,14 @@ export async function signOutUser(): Promise<void> {
   } catch (error) {
     console.error('❌ Sign out failed:', error);
   }
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('user');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user_role');
+      localStorage.removeItem('xp_data');
+    }
+  } catch {}
 }
 
 /**

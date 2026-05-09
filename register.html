@@ -186,26 +186,12 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    // Единый модуль авторизации
+    import { signInWithGoogle, onUserChange, auth, db } from "./d4y-auth.js";
     import {
-      getAuth, createUserWithEmailAndPassword, updateProfile,
-      signInWithPopup,
-      GoogleAuthProvider
-    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-
-    const app = initializeApp({
-      apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
-      authDomain: "dispatch4you-80e0f.firebaseapp.com",
-      projectId: "dispatch4you-80e0f",
-      storageBucket: "dispatch4you-80e0f.appspot.com",
-      messagingSenderId: "349235354473",
-      appId: "1:349235354473:web:488aeb29211b02bb153bf8"
-    });
-    const auth = getAuth(app);
-    const db   = getFirestore(app);
-    const gProvider = new GoogleAuthProvider();
-    gProvider.setCustomParameters({ prompt: 'select_account' });
+      createUserWithEmailAndPassword, updateProfile
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+    import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
     const msgError   = document.getElementById('msgError');
     const msgSuccess = document.getElementById('msgSuccess');
@@ -222,31 +208,31 @@
     };
     const err = code => ERRORS[code] || '❌ Ошибка: ' + code;
 
-    async function saveAndRedirect(user, firstName, lastName) {
-      const parts = firstName ? [firstName, lastName] : (user.displayName || '').trim().split(' ');
-      const fn = parts[0] || user.email.split('@')[0];
-      const ln = parts[1] || '';
-      localStorage.setItem('user', JSON.stringify({ uid: user.uid, firstName: fn, lastName: ln, email: user.email, photoURL: user.photoURL || '' }));
-      localStorage.setItem('user_role', 'registered');
-      try {
-        await setDoc(doc(db, 'users', user.uid), {
-          uid: user.uid, firstName: fn, lastName: ln,
-          email: user.email, photoURL: user.photoURL || '',
-          createdAt: serverTimestamp(), lastLogin: serverTimestamp(),
-          accessRole: 'registered',
-          provider: user.providerData[0]?.providerId || 'unknown'
-        }, { merge: true });
-      } catch(e) {}
-      window.location.href = 'dashboard.html?welcome=1';
+    function goAfterLogin() {
+      const ret = localStorage.getItem('returnUrl');
+      localStorage.removeItem('returnUrl');
+      window.location.href = ret || 'dashboard.html?welcome=1';
     }
+
+    // Автоматический редирект как только появится юзер (в т.ч. после redirect flow)
+    let alreadyRedirected = false;
+    onUserChange((user) => {
+      if (user && !alreadyRedirected) {
+        alreadyRedirected = true;
+        goAfterLogin();
+      }
+    });
 
     // Google
     document.getElementById('googleBtn').addEventListener('click', async () => {
       const btn = document.getElementById('googleBtn');
       btn.classList.add('loading'); btn.disabled = true;
       try {
-        const r = await signInWithPopup(auth, gProvider);
-        await saveAndRedirect(r.user);
+        const user = await signInWithGoogle();
+        if (!user) {
+          // popup закрыт или начат redirect
+          btn.classList.remove('loading'); btn.disabled = false;
+        }
       } catch(e) {
         btn.classList.remove('loading'); btn.disabled = false;
         if (e.code === 'auth/popup-blocked') {
@@ -275,7 +261,20 @@
       try {
         const cred = await createUserWithEmailAndPassword(auth, email, pwd);
         await updateProfile(cred.user, { displayName: `${firstName} ${lastName}`.trim() });
-        await saveAndRedirect(cred.user, firstName, lastName);
+        // Создаём/обновляем запись пользователя; d4y-auth сделает это сам, но здесь добавляем имя/фамилию
+        try {
+          await setDoc(doc(db, 'users', cred.user.uid), {
+            uid: cred.user.uid,
+            firstName, lastName,
+            email: cred.user.email,
+            photoURL: '',
+            accessRole: 'registered',
+            createdAt: serverTimestamp(),
+            lastLogin: serverTimestamp(),
+            provider: 'password',
+          }, { merge: true });
+        } catch {}
+        // goAfterLogin вызовется через onUserChange
       } catch(e) {
         showErr(err(e.code));
         btn.disabled = false; btn.textContent = 'Создать аккаунт';

@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════
 //  useAuth.js — unified login with main site
-//  build: 2026-05-08 (fixed Google login)
+//  build: 2026-05-09 (In-app browser detect + shared cache)
 // ═══════════════════════════════════════════════════════════
 import { useState, useEffect } from "react";
 import {
@@ -16,6 +16,16 @@ import { auth, googleProvider } from "../firebase/config";
 
 const LS_USER_KEY  = "user";
 const LS_TOKEN_KEY = "authToken";
+
+// Детект встроенных браузеров Telegram/Instagram/Facebook/WhatsApp.
+// В них popup для Google OAuth не работает — нужен redirect.
+function isInAppBrowser() {
+  const ua = (navigator.userAgent || navigator.vendor || "").toLowerCase();
+  return (
+    /fban|fbav|instagram|telegram|line\/|whatsapp|wv\)/.test(ua) ||
+    (/android/.test(ua) && / wv\)/.test(ua))
+  );
+}
 
 function getUserFromCache() {
   try { return JSON.parse(localStorage.getItem(LS_USER_KEY) || "null"); }
@@ -50,7 +60,7 @@ export function useAuth() {
     let unsub = () => {};
 
     (async () => {
-      // 1) Включаем localStorage persistence — сессия переживёт перезагрузку
+      // 1) localStorage persistence — сессия переживёт закрытие вкладки
       try {
         await setPersistence(auth, browserLocalPersistence);
       } catch (e) {
@@ -68,24 +78,21 @@ export function useAuth() {
         console.warn("[useAuth] getRedirectResult error:", e?.code || e?.message);
       }
 
-      // 3) Подписываемся на изменения Firebase Auth
+      // 3) Основная подписка — Firebase сам видит сессию из другого проекта
+      //    в рамках того же домена через IndexedDB.
       unsub = onAuthStateChanged(auth, (fbUser) => {
         if (fbUser) {
           const userData = persistUser(fbUser);
           setUser(userData);
         } else {
-          // Firebase вернул null.
-          // Если в кэше остался юзер от главного сайта (same Firebase project) —
-          // даём ему шанс: не сносим кэш, но и не считаем залогиненным.
-          // Сайт выше нас уже проверяет токен, так что полный релог неизбежен если
-          // сессии реально нет.
           const cached = getUserFromCache();
           if (!cached) {
             localStorage.removeItem(LS_USER_KEY);
             localStorage.removeItem(LS_TOKEN_KEY);
             setUser(null);
           } else {
-            // Кэш есть, но Firebase не видит сессию — доверяем кэшу.
+            // В рамках одного Firebase project кеш можно считать валидным
+            // короткое время — дальше Firebase его подтвердит или сбросит.
             setUser(cached);
           }
         }
@@ -99,8 +106,14 @@ export function useAuth() {
   // ── Вход через Google ──
   const signIn = async () => {
     try {
-      // На мобильном Chrome/Safari и в in-app браузерах popup часто не открывается.
-      // Пробуем popup → fallback на redirect.
+      // В in-app браузерах (Telegram/Instagram/FB) popup не открывается —
+      // используем signInWithRedirect: страница перезагрузится и Firebase
+      // сам обработает возврат через getRedirectResult на старте.
+      if (isInAppBrowser()) {
+        await signInWithRedirect(auth, googleProvider);
+        return;
+      }
+
       try {
         const res = await signInWithPopup(auth, googleProvider);
         if (res?.user) {
@@ -113,14 +126,13 @@ export function useAuth() {
           code === "auth/popup-closed-by-user" ||
           code === "auth/cancelled-popup-request"
         ) {
-          return; // юзер сам закрыл — ничего не делаем
+          return;
         }
         if (
           code === "auth/popup-blocked" ||
           code === "auth/operation-not-supported-in-this-environment" ||
           code === "auth/web-storage-unsupported"
         ) {
-          // Fallback на redirect
           await signInWithRedirect(auth, googleProvider);
           return;
         }
@@ -147,5 +159,5 @@ export function useAuth() {
     setUser(null);
   };
 
-  return { user, loading, signIn, logOut };
+  return { user, loading, signIn, logOut, isInAppBrowser: isInAppBrowser() };
 }

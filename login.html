@@ -183,25 +183,14 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    // Единый модуль авторизации — d4y-auth.js
+    // Он сам инициализирует Firebase, выставляет persistence,
+    // обрабатывает getRedirectResult и даёт popup→redirect fallback.
+    import { signInWithGoogle, onUserChange, auth, db } from "./d4y-auth.js";
     import {
-      getAuth, signInWithEmailAndPassword, signInWithPopup,
-      GoogleAuthProvider, sendPasswordResetEmail
-    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-
-    const app = initializeApp({
-      apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
-      authDomain: "dispatch4you-80e0f.firebaseapp.com",
-      projectId: "dispatch4you-80e0f",
-      storageBucket: "dispatch4you-80e0f.appspot.com",
-      messagingSenderId: "349235354473",
-      appId: "1:349235354473:web:488aeb29211b02bb153bf8"
-    });
-    const auth = getAuth(app);
-    const db   = getFirestore(app);
-    const gProvider = new GoogleAuthProvider();
-    gProvider.setCustomParameters({ prompt: 'select_account' });
+      signInWithEmailAndPassword, sendPasswordResetEmail
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+    import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
     const msgError   = document.getElementById('msgError');
     const msgInfo    = document.getElementById('msgInfo');
@@ -225,39 +214,37 @@
     };
     const err = code => ERRORS[code] || '❌ Ошибка: ' + code;
 
-    async function saveAndRedirect(user) {
-      const parts = (user.displayName || '').trim().split(' ');
-      const firstName = parts[0] || user.email.split('@')[0];
-      const lastName  = parts.slice(1).join(' ') || '';
-      const userData = { uid: user.uid, firstName, lastName, email: user.email, photoURL: user.photoURL || '' };
-      localStorage.setItem('user', JSON.stringify(userData));
-      try {
-        const token = await user.getIdToken();
-        localStorage.setItem('authToken', token);
-      } catch(e) {}
-      try {
-        await setDoc(doc(db, 'users', user.uid), {
-          uid: user.uid, firstName, lastName, email: user.email,
-          photoURL: user.photoURL || '', lastLogin: serverTimestamp(),
-          provider: user.providerData[0]?.providerId || 'unknown'
-        }, { merge: true });
-        const snap = await getDoc(doc(db, 'users', user.uid));
-        localStorage.setItem('user_role', snap.exists() ? (snap.data().accessRole || 'registered') : 'registered');
-      } catch(e) { localStorage.setItem('user_role', 'registered'); }
+    function goAfterLogin() {
       const ret = localStorage.getItem('returnUrl');
       localStorage.removeItem('returnUrl');
       window.location.href = ret || 'dashboard.html?welcome=1';
     }
 
-    // Google — popup
+    // Если пользователь уже авторизован (например вернулся из redirect)
+    // — d4y-auth уведомит нас и мы сразу уйдём куда нужно.
+    let alreadyRedirected = false;
+    onUserChange((user) => {
+      if (user && !alreadyRedirected) {
+        alreadyRedirected = true;
+        showMsg(msgInfo, '✅ Вход выполнен! Перенаправление...');
+        goAfterLogin();
+      }
+    });
+
+    // Google — popup, при блокировке автоматом redirect
     document.getElementById('googleBtn').addEventListener('click', async () => {
       const btn = document.getElementById('googleBtn');
       btn.classList.add('loading');
       btn.disabled = true;
       try {
-        const r = await signInWithPopup(auth, gProvider);
-        showMsg(msgInfo, '✅ Вход выполнен! Перенаправление...');
-        await saveAndRedirect(r.user);
+        const user = await signInWithGoogle();
+        // Если popup сработал — user придёт сразу и onUserChange редиректнёт.
+        // Если redirect — страница перезагрузится, логика onUserChange сработает после возврата.
+        if (!user) {
+          // Popup мог быть закрыт — возвращаем кнопку в исходное
+          btn.classList.remove('loading');
+          btn.disabled = false;
+        }
       } catch(e) {
         btn.classList.remove('loading');
         btn.disabled = false;
@@ -266,7 +253,7 @@
       }
     });
 
-    // Email/Password
+    // Email/Password — используем тот же auth instance
     document.getElementById('loginForm').addEventListener('submit', async e => {
       e.preventDefault();
       const email = document.getElementById('email').value.trim();
@@ -275,7 +262,14 @@
       btn.disabled = true; btn.textContent = 'Входим...';
       try {
         const r = await signInWithEmailAndPassword(auth, email, pwd);
-        await saveAndRedirect(r.user);
+        // Апдейтим users/ запись и роль (d4y-auth сделает это сам при onAuthStateChanged, но дублируем для надёжности)
+        try {
+          await setDoc(doc(db, 'users', r.user.uid), {
+            lastLogin: serverTimestamp(),
+            provider: r.user.providerData[0]?.providerId || 'password',
+          }, { merge: true });
+        } catch {}
+        // goAfterLogin вызовется автоматом через onUserChange
       } catch(e) {
         showMsg(msgError, err(e.code));
         btn.disabled = false; btn.textContent = 'Войти';
