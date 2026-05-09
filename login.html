@@ -186,7 +186,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import {
       getAuth, signInWithEmailAndPassword, signInWithPopup,
-      signInWithRedirect, getRedirectResult,
       GoogleAuthProvider, sendPasswordResetEmail
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
@@ -250,37 +249,19 @@
       window.location.href = ret || 'dashboard.html?welcome=1';
     }
 
-    // ── Обработка результата redirect (при возврате со страницы Google) ──
-    showMsg(msgInfo, '⏳ Проверка авторизации...');
-    try {
-      const result = await getRedirectResult(auth);
-      if (result && result.user) {
-        showMsg(msgInfo, '✅ Вход выполнен! Перенаправление...');
-        await saveAndRedirect(result.user);
-      } else {
-        // Нет результата redirect — скрываем сообщение, показываем форму
-        msgInfo.style.display = 'none';
-      }
-    } catch(e) {
-      msgInfo.style.display = 'none';
-      if (e.code && e.code !== 'auth/popup-closed-by-user') {
-        showMsg(msgError, err(e.code));
-      }
-    }
-
-    // Google — используем redirect вместо popup (работает везде, включая мобильные)
+    // Google — popup
     document.getElementById('googleBtn').addEventListener('click', async () => {
       const btn = document.getElementById('googleBtn');
       btn.classList.add('loading');
       btn.disabled = true;
-      showMsg(msgInfo, '⏳ Переход на страницу Google...');
       try {
-        await signInWithRedirect(auth, gProvider);
-        // Страница уйдёт на Google и вернётся обратно
+        const r = await signInWithPopup(auth, gProvider);
+        showMsg(msgInfo, '✅ Вход выполнен! Перенаправление...');
+        await saveAndRedirect(r.user);
       } catch(e) {
         btn.classList.remove('loading');
         btn.disabled = false;
-        msgInfo.style.display = 'none';
+        if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return;
         showMsg(msgError, err(e.code));
       }
     });
