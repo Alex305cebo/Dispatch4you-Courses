@@ -229,10 +229,12 @@
       btn.classList.add('loading'); btn.disabled = true;
       try {
         const user = await signInWithGoogle();
-        if (!user) {
-          // popup закрыт или начат redirect
-          btn.classList.remove('loading'); btn.disabled = false;
+        if (user) {
+          alreadyRedirected = true;
+          goAfterLogin();
+          return;
         }
+        btn.classList.remove('loading'); btn.disabled = false;
       } catch(e) {
         btn.classList.remove('loading'); btn.disabled = false;
         if (e.code === 'auth/popup-blocked') {
@@ -261,7 +263,6 @@
       try {
         const cred = await createUserWithEmailAndPassword(auth, email, pwd);
         await updateProfile(cred.user, { displayName: `${firstName} ${lastName}`.trim() });
-        // Создаём/обновляем запись пользователя; d4y-auth сделает это сам, но здесь добавляем имя/фамилию
         try {
           await setDoc(doc(db, 'users', cred.user.uid), {
             uid: cred.user.uid,
@@ -274,7 +275,8 @@
             provider: 'password',
           }, { merge: true });
         } catch {}
-        // goAfterLogin вызовется через onUserChange
+        alreadyRedirected = true;
+        goAfterLogin();
       } catch(e) {
         showErr(err(e.code));
         btn.disabled = false; btn.textContent = 'Создать аккаунт';

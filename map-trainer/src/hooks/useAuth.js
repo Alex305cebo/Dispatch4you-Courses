@@ -53,8 +53,11 @@ function persistUser(fbUser) {
 }
 
 export function useAuth() {
-  const [user,    setUser]    = useState(() => getUserFromCache());
-  const [loading, setLoading] = useState(true);
+  // Если в кеше уже есть юзер (после логина на главном сайте или на другом экране) —
+  // сразу считаем что залогинены, не блокируем UI спиннером.
+  const cachedOnInit = getUserFromCache();
+  const [user,    setUser]    = useState(cachedOnInit);
+  const [loading, setLoading] = useState(!cachedOnInit); // если кеш есть → loading=false сразу
 
   useEffect(() => {
     let unsub = () => {};
@@ -73,6 +76,7 @@ export function useAuth() {
         if (res?.user) {
           const userData = persistUser(res.user);
           setUser(userData);
+          setLoading(false);
         }
       } catch (e) {
         console.warn("[useAuth] getRedirectResult error:", e?.code || e?.message);
@@ -87,17 +91,23 @@ export function useAuth() {
         } else {
           const cached = getUserFromCache();
           if (!cached) {
+            // Гарантированно не залогинен
             localStorage.removeItem(LS_USER_KEY);
             localStorage.removeItem(LS_TOKEN_KEY);
             setUser(null);
-          } else {
-            // В рамках одного Firebase project кеш можно считать валидным
-            // короткое время — дальше Firebase его подтвердит или сбросит.
-            setUser(cached);
           }
+          // Если кеш есть, но Firebase вернул null —
+          // не сносим кеш сразу (Firebase может ещё восстанавливать сессию),
+          // держим пользователя пока сессия не подтвердится или не исчезнет.
         }
         setLoading(false);
       });
+
+      // Страховка: если Firebase никак не ответил за 4 сек и кеша нет —
+      // считаем что не залогинен, показываем LoginScreen
+      setTimeout(() => {
+        setLoading((l) => (l ? false : l));
+      }, 4000);
     })();
 
     return () => { try { unsub(); } catch {} };
@@ -119,6 +129,7 @@ export function useAuth() {
         if (res?.user) {
           const userData = persistUser(res.user);
           setUser(userData);
+          setLoading(false);
         }
       } catch (err) {
         const code = err?.code || "";

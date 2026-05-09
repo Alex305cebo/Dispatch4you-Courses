@@ -238,13 +238,16 @@
       btn.disabled = true;
       try {
         const user = await signInWithGoogle();
-        // Если popup сработал — user придёт сразу и onUserChange редиректнёт.
-        // Если redirect — страница перезагрузится, логика onUserChange сработает после возврата.
-        if (!user) {
-          // Popup мог быть закрыт — возвращаем кнопку в исходное
-          btn.classList.remove('loading');
-          btn.disabled = false;
+        if (user) {
+          // Popup сработал — явно редиректим, не ждём onAuthStateChanged
+          alreadyRedirected = true;
+          showMsg(msgInfo, '✅ Вход выполнен! Перенаправление...');
+          goAfterLogin();
+          return;
         }
+        // user === null → либо popup закрыт, либо идёт redirect (страница уйдёт сама)
+        btn.classList.remove('loading');
+        btn.disabled = false;
       } catch(e) {
         btn.classList.remove('loading');
         btn.disabled = false;
@@ -262,14 +265,15 @@
       btn.disabled = true; btn.textContent = 'Входим...';
       try {
         const r = await signInWithEmailAndPassword(auth, email, pwd);
-        // Апдейтим users/ запись и роль (d4y-auth сделает это сам при onAuthStateChanged, но дублируем для надёжности)
         try {
           await setDoc(doc(db, 'users', r.user.uid), {
             lastLogin: serverTimestamp(),
             provider: r.user.providerData[0]?.providerId || 'password',
           }, { merge: true });
         } catch {}
-        // goAfterLogin вызовется автоматом через onUserChange
+        // Явный редирект — не ждём onUserChange
+        alreadyRedirected = true;
+        goAfterLogin();
       } catch(e) {
         showMsg(msgError, err(e.code));
         btn.disabled = false; btn.textContent = 'Войти';
