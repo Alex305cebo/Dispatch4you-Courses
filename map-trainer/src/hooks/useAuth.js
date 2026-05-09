@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════
 //  useAuth.js — unified login with main site
-//  build: 2026-05-09 (In-app browser detect + shared cache)
+//  build: 2026-05-09 (mobile = always redirect, no popup)
 // ═══════════════════════════════════════════════════════════
 import { useState, useEffect } from "react";
 import {
@@ -17,9 +17,31 @@ import { auth, googleProvider } from "../firebase/config";
 const LS_USER_KEY  = "user";
 const LS_TOKEN_KEY = "authToken";
 
-// Детект встроенных браузеров Telegram/Instagram/Facebook/WhatsApp.
-// В них popup для Google OAuth не работает — нужен redirect.
+/**
+ * На мобильных устройствах signInWithPopup НЕ РАБОТАЕТ надёжно:
+ *   • iOS Safari/WKWebView + Intelligent Tracking Prevention изолирует storage
+ *     между popup и opener → токен не передаётся обратно → popup закрывается
+ *     с null user.
+ *   • iOS Telegram/Instagram/FB используют WKWebView → та же проблема.
+ *   • Android тоже имеет нестабильное поведение popup в in-app браузерах.
+ *
+ * Решение: на любом мобильном устройстве всегда используем signInWithRedirect.
+ * Он навигирует страницу → Google → обратно. Сессия сохраняется через
+ * storage нашего же домена (до ухода и после возврата).
+ */
+function isMobile() {
+  if (typeof navigator === "undefined") return false;
+  const ua = (navigator.userAgent || navigator.vendor || "").toLowerCase();
+  return /iphone|ipad|ipod|android/.test(ua);
+}
+
+/**
+ * Детект in-app браузера — сейчас используется только для UI-подсказок.
+ * На iOS UA не всегда содержит "Telegram", поэтому это вспомогательная
+ * эвристика, а не основа для выбора auth flow.
+ */
 function isInAppBrowser() {
+  if (typeof navigator === "undefined") return false;
   const ua = (navigator.userAgent || navigator.vendor || "").toLowerCase();
   return (
     /fban|fbav|instagram|telegram|line\/|whatsapp|wv\)/.test(ua) ||
@@ -53,27 +75,26 @@ function persistUser(fbUser) {
 }
 
 export function useAuth() {
-  // Если в кеше уже есть юзер (после логина на главном сайте или на другом экране) —
-  // сразу считаем что залогинены, не блокируем UI спиннером.
   const cachedOnInit = getUserFromCache();
   const [user,    setUser]    = useState(cachedOnInit);
-  const [loading, setLoading] = useState(!cachedOnInit); // если кеш есть → loading=false сразу
+  const [loading, setLoading] = useState(!cachedOnInit);
 
   useEffect(() => {
     let unsub = () => {};
 
     (async () => {
-      // 1) localStorage persistence — сессия переживёт закрытие вкладки
       try {
         await setPersistence(auth, browserLocalPersistence);
       } catch (e) {
         console.warn("[useAuth] setPersistence failed:", e?.code || e?.message);
       }
 
-      // 2) Забираем результат, если вернулись с signInWithRedirect
+      // КРИТИЧНО: getRedirectResult должен отработать ДО onAuthStateChanged,
+      // иначе результат redirect-логина потеряется.
       try {
         const res = await getRedirectResult(auth);
         if (res?.user) {
+          console.log("[useAuth] redirect login success:", res.user.email);
           const userData = persistUser(res.user);
           setUser(userData);
           setLoading(false);
@@ -82,8 +103,6 @@ export function useAuth() {
         console.warn("[useAuth] getRedirectResult error:", e?.code || e?.message);
       }
 
-      // 3) Основная подписка — Firebase сам видит сессию из другого проекта
-      //    в рамках того же домена через IndexedDB.
       unsub = onAuthStateChanged(auth, (fbUser) => {
         if (fbUser) {
           const userData = persistUser(fbUser);
@@ -91,20 +110,14 @@ export function useAuth() {
         } else {
           const cached = getUserFromCache();
           if (!cached) {
-            // Гарантированно не залогинен
             localStorage.removeItem(LS_USER_KEY);
             localStorage.removeItem(LS_TOKEN_KEY);
             setUser(null);
           }
-          // Если кеш есть, но Firebase вернул null —
-          // не сносим кеш сразу (Firebase может ещё восстанавливать сессию),
-          // держим пользователя пока сессия не подтвердится или не исчезнет.
         }
         setLoading(false);
       });
 
-      // Страховка: если Firebase никак не ответил за 4 сек и кеша нет —
-      // считаем что не залогинен, показываем LoginScreen
       setTimeout(() => {
         setLoading((l) => (l ? false : l));
       }, 4000);
@@ -116,10 +129,11 @@ export function useAuth() {
   // ── Вход через Google ──
   const signIn = async () => {
     try {
-      // В in-app браузерах (Telegram/Instagram/FB) popup не открывается —
-      // используем signInWithRedirect: страница перезагрузится и Firebase
-      // сам обработает возврат через getRedirectResult на старте.
-      if (isInAppBrowser()) {
+      // ГЛАВНОЕ ПРАВИЛО:
+      //   Мобильное устройство → ВСЕГДА redirect.
+      //   Десктоп → popup (быстрее, UX лучше) + fallback на redirect.
+      if (isMobile()) {
+        console.log("[useAuth] mobile detected → signInWithRedirect");
         await signInWithRedirect(auth, googleProvider);
         return;
       }
@@ -151,14 +165,6 @@ export function useAuth() {
       }
     } catch (err) {
       console.error("[useAuth] signIn error:", err?.code, err?.message);
-      // Последний шанс — редирект на login.html главного сайта
-      try {
-        localStorage.setItem(
-          "returnUrl",
-          window.location.origin + "/map-trainer/"
-        );
-      } catch {}
-      window.location.href = "https://dispatch4you.com/login.html";
     }
   };
 
@@ -170,5 +176,12 @@ export function useAuth() {
     setUser(null);
   };
 
-  return { user, loading, signIn, logOut, isInAppBrowser: isInAppBrowser() };
+  return {
+    user,
+    loading,
+    signIn,
+    logOut,
+    isMobile:       isMobile(),
+    isInAppBrowser: isInAppBrowser(),
+  };
 }
