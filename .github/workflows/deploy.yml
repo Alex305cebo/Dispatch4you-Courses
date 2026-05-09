@@ -210,6 +210,24 @@ jobs:
         env:
           NODE_ENV: production
 
+      - name: Add .htaccess for map-trainer
+        run: |
+          cat > map-trainer/dist/.htaccess << 'EOF'
+          # COOP заголовок — разрешает popup для Firebase Auth
+          <IfModule mod_headers.c>
+            Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+            Header always set Cross-Origin-Embedder-Policy "unsafe-none"
+          </IfModule>
+
+          # SPA routing — все пути ведут на index.html
+          Options -MultiViews
+          RewriteEngine On
+          RewriteBase /map-trainer/
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule ^ index.html [L]
+          EOF
+
       - name: Deploy to /map-trainer/
         uses: burnett01/rsync-deployments@7.0.1
         with:
