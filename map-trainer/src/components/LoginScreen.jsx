@@ -1,91 +1,14 @@
-export default function LoginScreen({ onSignIn, loading }) {
-  // Определяем in-app браузер
-  const isInAppBrowser = () => {
-    const ua = navigator.userAgent || navigator.vendor || window.opera;
-    return (
-      ua.includes('FBAN') || // Facebook
-      ua.includes('FBAV') || // Facebook
-      ua.includes('Instagram') ||
-      ua.includes('Telegram') ||
-      ua.includes('Line/') ||
-      ua.includes('WhatsApp')
-    );
-  };
+const LOGIN_URL = 'https://dispatch4you.com/login.html';
+const RETURN_URL = 'https://dispatch4you.com/map-trainer/';
 
-  const isTelegramBrowser = () => {
-    const ua = navigator.userAgent || navigator.vendor || window.opera;
-    return ua.includes('Telegram');
-  };
-
-  const isIOS = () => {
-    return /iPhone|iPad|iPod/.test(navigator.userAgent);
-  };
-
-  const isAndroid = () => {
-    return /Android/.test(navigator.userAgent);
-  };
-
-  const openInExternalBrowser = () => {
-    const currentUrl = window.location.href;
-    
-    // Для iOS - пытаемся открыть через Safari
-    if (isIOS()) {
-      // Telegram на iOS поддерживает специальную схему
-      if (isTelegramBrowser()) {
-        // Пытаемся открыть через Safari URL scheme
-        window.location.href = `x-safari-https://${window.location.host}${window.location.pathname}`;
-        
-        // Fallback через 1 секунду если не сработало
-        setTimeout(() => {
-          // Показываем инструкцию
-          alert('Нажмите на ⋯ (три точки) в правом верхнем углу\n→ Выберите "Открыть в Safari"');
-        }, 1000);
-      } else {
-        // Для других in-app браузеров на iOS
-        alert('Нажмите на кнопку "Открыть в Safari" или скопируйте ссылку:\n\n' + currentUrl);
-      }
-    } 
-    // Для Android
-    else if (isAndroid()) {
-      // Пытаемся открыть через intent
-      const intent = `intent://${window.location.host}${window.location.pathname}#Intent;scheme=https;package=com.android.chrome;end`;
-      window.location.href = intent;
-      
-      // Fallback через 1 секунду
-      setTimeout(() => {
-        alert('Нажмите ⋯ (три точки) → "Открыть в браузере"\n\nИли скопируйте ссылку:\n' + currentUrl);
-      }, 1000);
-    }
-    // Для остальных
-    else {
-      alert('Пожалуйста, откройте эту страницу в браузере (Safari, Chrome):\n\n' + currentUrl);
-    }
-  };
-
-  const copyLinkToClipboard = async () => {
-    const url = window.location.href;
+export default function LoginScreen({ loading }) {
+  const goToLogin = () => {
+    // Сохраняем куда вернуться после логина
     try {
-      await navigator.clipboard.writeText(url);
-      alert('✅ Ссылка скопирована!\n\nТеперь откройте Safari или Chrome и вставьте ссылку в адресную строку.');
-    } catch (err) {
-      // Fallback для старых браузеров
-      const textArea = document.createElement('textarea');
-      textArea.value = url;
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-999999px';
-      document.body.appendChild(textArea);
-      textArea.select();
-      try {
-        document.execCommand('copy');
-        alert('✅ Ссылка скопирована!\n\nТеперь откройте Safari или Chrome и вставьте ссылку в адресную строку.');
-      } catch (err) {
-        alert('Скопируйте эту ссылку:\n\n' + url);
-      }
-      document.body.removeChild(textArea);
-    }
+      localStorage.setItem('returnUrl', RETURN_URL);
+    } catch (e) {}
+    window.location.href = LOGIN_URL;
   };
-
-  const inApp = isInAppBrowser();
 
   return (
     <div style={{
@@ -128,30 +51,6 @@ export default function LoginScreen({ onSignIn, loading }) {
           Прогресс синхронизируется между устройствами и с основным курсом
         </p>
 
-        {/* Предупреждение для in-app браузеров */}
-        {inApp && (
-          <div style={{
-            background: "rgba(249,115,22,0.1)",
-            border: "2px solid rgba(249,115,22,0.3)",
-            borderRadius: "12px",
-            padding: "14px",
-            marginBottom: "20px",
-            textAlign: "left",
-          }}>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
-              <span style={{ fontSize: "20px", flexShrink: 0 }}>⚠️</span>
-              <div>
-                <p style={{ fontSize: "13px", fontWeight: 700, color: "#fb923c", margin: "0 0 6px 0" }}>
-                  Вход через Google не работает в {isTelegramBrowser() ? 'Telegram' : 'этом приложении'}
-                </p>
-                <p style={{ fontSize: "12px", color: "#fdba74", margin: 0, lineHeight: 1.4 }}>
-                  Откройте страницу в Safari или Chrome для входа
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Преимущества */}
         <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "24px", textAlign: "left" }}>
           {[
@@ -167,109 +66,52 @@ export default function LoginScreen({ onSignIn, loading }) {
           ))}
         </div>
 
-        {/* Кнопки для in-app браузеров */}
-        {inApp ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            {/* Кнопка "Открыть в браузере" */}
-            <button
-              onClick={openInExternalBrowser}
-              style={{
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "10px",
-                padding: "13px 20px",
-                background: "linear-gradient(135deg, #f97316, #fb923c)",
-                border: "none",
-                borderRadius: "12px",
-                fontSize: "15px",
-                fontWeight: 700,
-                color: "#fff",
-                cursor: "pointer",
-                touchAction: "manipulation",
-                transition: "all 0.2s ease",
-                boxShadow: "0 4px 16px rgba(249,115,22,0.4)",
-              }}
-            >
-              <span style={{ fontSize: "18px" }}>🌐</span>
-              Открыть в {isIOS() ? 'Safari' : 'браузере'}
-            </button>
-
-            {/* Кнопка "Скопировать ссылку" */}
-            <button
-              onClick={copyLinkToClipboard}
-              style={{
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "10px",
-                padding: "11px 20px",
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "12px",
-                fontSize: "14px",
-                fontWeight: 600,
-                color: "#94a3b8",
-                cursor: "pointer",
-                touchAction: "manipulation",
-                transition: "all 0.2s ease",
-              }}
-            >
-              <span style={{ fontSize: "16px" }}>📋</span>
-              Скопировать ссылку
-            </button>
-          </div>
-        ) : (
-          /* Кнопка Google для обычных браузеров */
-          <button
-            onClick={onSignIn}
-            disabled={loading}
-            style={{
-              width: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "10px",
-              padding: "13px 20px",
-              background: loading ? "rgba(255,255,255,0.1)" : "#fff",
-              border: "none",
-              borderRadius: "12px",
-              fontSize: "15px",
-              fontWeight: 700,
-              color: loading ? "#94a3b8" : "#1f2937",
-              cursor: loading ? "default" : "pointer",
-              touchAction: "manipulation",
-              transition: "all 0.2s ease",
-              boxShadow: loading ? "none" : "0 4px 16px rgba(0,0,0,0.3)",
-            }}
-          >
-            {loading ? (
-              <>
-                <div style={{
-                  width: "18px", height: "18px",
-                  border: "2px solid rgba(255,255,255,0.3)",
-                  borderTopColor: "#94a3b8",
-                  borderRadius: "50%",
-                  animation: "spin 0.8s linear infinite",
-                }} />
-                Загрузка...
-              </>
-            ) : (
-              <>
-                {/* Google SVG */}
-                <svg width="18" height="18" viewBox="0 0 48 48">
-                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                </svg>
-                Войти через Google
-              </>
-            )}
-          </button>
-        )}
+        {/* Кнопка входа — редирект на главный сайт */}
+        <button
+          onClick={goToLogin}
+          disabled={loading}
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "10px",
+            padding: "13px 20px",
+            background: loading ? "rgba(255,255,255,0.1)" : "#fff",
+            border: "none",
+            borderRadius: "12px",
+            fontSize: "15px",
+            fontWeight: 700,
+            color: loading ? "#94a3b8" : "#1f2937",
+            cursor: loading ? "default" : "pointer",
+            touchAction: "manipulation",
+            transition: "all 0.2s ease",
+            boxShadow: loading ? "none" : "0 4px 16px rgba(0,0,0,0.3)",
+          }}
+        >
+          {loading ? (
+            <>
+              <div style={{
+                width: "18px", height: "18px",
+                border: "2px solid rgba(255,255,255,0.3)",
+                borderTopColor: "#94a3b8",
+                borderRadius: "50%",
+                animation: "spin 0.8s linear infinite",
+              }} />
+              Загрузка...
+            </>
+          ) : (
+            <>
+              <svg width="18" height="18" viewBox="0 0 48 48">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+              </svg>
+              Войти через Google
+            </>
+          )}
+        </button>
 
         <p style={{ fontSize: "11px", color: "#334155", margin: "14px 0 0 0" }}>
           Тот же аккаунт что и на dispatch4you.com
