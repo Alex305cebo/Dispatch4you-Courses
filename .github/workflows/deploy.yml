@@ -18,6 +18,7 @@ jobs:
     outputs:
       site: ${{ steps.filter.outputs.site }}
       game: ${{ steps.filter.outputs.game }}
+      maptrainer: ${{ steps.filter.outputs.maptrainer }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -43,6 +44,12 @@ jobs:
               - 'Card/**'
             game:
               - 'adventure/**'
+            maptrainer:
+              - 'map-trainer/src/**'
+              - 'map-trainer/public/**'
+              - 'map-trainer/index.html'
+              - 'map-trainer/vite.config.js'
+              - 'map-trainer/package.json'
 
   # ─── 1. Статический сайт — только если изменились его файлы ───────
   deploy-site:
@@ -65,6 +72,7 @@ jobs:
             --exclude='.kiro'
             --exclude='adventure'
             --exclude='game'
+            --exclude='map-trainer'
             --exclude='node_modules'
             --exclude='*.md'
             --exclude='*.backup'
@@ -164,6 +172,44 @@ jobs:
           switches: -avzrc --delete
           path: adventure/dist/
           remote_path: ~/domains/dispatch4you.com/public_html/game/
+          remote_host: ${{ secrets.SSH_HOST }}
+          remote_port: ${{ secrets.SSH_PORT }}
+          remote_user: ${{ secrets.SSH_USERNAME }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+  # ─── 3. Map Trainer (React/Vite) → /map-trainer/ ──────────────────
+  deploy-map-trainer:
+    name: Build & deploy React game (map-trainer)
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.maptrainer == 'true' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: map-trainer/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: map-trainer
+
+      - name: Build
+        run: npm run build
+        working-directory: map-trainer
+        env:
+          NODE_ENV: production
+
+      - name: Deploy to /map-trainer/
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avzrc --delete
+          path: map-trainer/dist/
+          remote_path: ~/domains/dispatch4you.com/public_html/map-trainer/
           remote_host: ${{ secrets.SSH_HOST }}
           remote_port: ${{ secrets.SSH_PORT }}
           remote_user: ${{ secrets.SSH_USERNAME }}
