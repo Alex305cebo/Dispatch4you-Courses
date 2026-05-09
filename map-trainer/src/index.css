@@ -31,20 +31,35 @@ button {
   grid-template-columns: minmax(260px, 300px) 1fr !important;
 }
 
-/* ─── МОБИЛЕ: карта сверху, панель снизу ─── */
+/* ─── МОБИЛЕ: карта сверху (гарантированно видна), панель снизу (скроллится) ─── */
 @media (max-width: 768px) {
   .quiz-layout {
     grid-template-columns: 1fr !important;
-    grid-template-rows: 1fr auto !important;
+    /* Карта — фикс 35dvh, не меньше 30dvh, не больше 40dvh.
+       Панель — всё что осталось (1fr), внутренний скролл если много контента. */
+    grid-template-rows: clamp(30dvh, 35dvh, 40dvh) 1fr !important;
   }
 
   .quiz-layout .map-col {
     order: -1;
+    /* Страховка: даже если grid-строка сожмётся — карта всё равно не меньше 30% */
+    min-height: 30dvh;
   }
 
   .quiz-layout .panel-col {
     order: 1;
+    /* Чтобы большая панель не распирала layout — скроллим внутри */
+    overflow-y: auto;
+    min-height: 0;
   }
+}
+
+/* Очень маленькие экраны (iPhone SE, 360×640): чуть меньше карте */
+@media (max-width: 768px) and (max-height: 640px) {
+  .quiz-layout {
+    grid-template-rows: clamp(28dvh, 32dvh, 35dvh) 1fr !important;
+  }
+  .quiz-layout .map-col { min-height: 28dvh; }
 }
 
 /* Скроллбар */
