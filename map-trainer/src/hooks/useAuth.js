@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-//  useAuth.js — signInWithPopup
+//  useAuth.js — unified login with main site
 //  build: 2026-05-08
 // ═══════════════════════════════════════════════════════════
 import { useState, useEffect } from "react";
@@ -30,10 +30,30 @@ function makeUserData(fbUser) {
 }
 
 export function useAuth() {
-  const [user,    setUser]    = useState(() => getUserFromCache());
+  const [user,    setUser]    = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Проверяем есть ли user и token в localStorage (после логина на главном сайте)
+    const checkCachedAuth = () => {
+      const cached = getUserFromCache();
+      const hasToken = !!localStorage.getItem(LS_TOKEN_KEY);
+      
+      if (cached && hasToken) {
+        // Есть кэш — используем его сразу
+        setUser(cached);
+        setLoading(false);
+        return true;
+      }
+      return false;
+    };
+
+    // Сначала проверяем кэш
+    if (checkCachedAuth()) {
+      return;
+    }
+
+    // Если кэша нет — слушаем Firebase
     const unsub = onAuthStateChanged(auth, (fbUser) => {
       if (fbUser) {
         const userData = makeUserData(fbUser);
@@ -41,12 +61,8 @@ export function useAuth() {
         fbUser.getIdToken().then(t => localStorage.setItem(LS_TOKEN_KEY, t)).catch(() => {});
         setUser(userData);
       } else {
-        // Firebase вернул null — проверяем localStorage как fallback
-        const cached = getUserFromCache();
-        const hasToken = !!localStorage.getItem(LS_TOKEN_KEY);
-        if (cached && hasToken) {
-          setUser(cached);
-        } else {
+        // Firebase вернул null — последняя проверка кэша
+        if (!checkCachedAuth()) {
           localStorage.removeItem(LS_USER_KEY);
           localStorage.removeItem(LS_TOKEN_KEY);
           setUser(null);
