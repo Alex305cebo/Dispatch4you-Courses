@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 
 // https://vite.dev/config/
+// build: 2026-05-08
 export default defineConfig({
   base: '/map-trainer/',
   plugins: [react()],
