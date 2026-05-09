@@ -10,7 +10,7 @@ import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/
 
 const FIREBASE_CONFIG = {
     apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
-    authDomain: "dispatch4you-80e0f.firebaseapp.com",
+    authDomain: "dispatch4you.com",
     projectId: "dispatch4you-80e0f",
     storageBucket: "dispatch4you-80e0f.appspot.com",
     messagingSenderId: "349235354473",

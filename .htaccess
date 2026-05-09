@@ -13,6 +13,32 @@ RewriteCond %{HTTP_HOST} ^(?:www\.)?(.+)$ [NC]
 RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
 
 # ========================================
+# Firebase Auth — self-hosted sign-in helper (Option 4 from Firebase docs)
+# Чтобы signInWithRedirect работал во всех браузерах (включая Safari 16+,
+# Chrome 115+, in-app браузеры) без block by storage partitioning.
+# Читай: https://firebase.google.com/docs/auth/web/redirect-best-practices
+#
+# Эти правила ДОЛЖНЫ быть ВЫШЕ любых других RewriteRule,
+# чтобы запросы к /__/auth/* не попадали в "Clean URLs" и не редиректились.
+# ========================================
+<IfModule mod_rewrite.c>
+  # Исключаем /__/ из всех последующих правил: отдать файлы как есть
+  RewriteCond %{REQUEST_URI} ^/__/
+  RewriteRule ^ - [L]
+</IfModule>
+
+# Файлы handler, iframe, links — без расширения, отдаём как HTML
+<Files "handler">
+  ForceType text/html
+</Files>
+<Files "iframe">
+  ForceType text/html
+</Files>
+<Files "links">
+  ForceType text/html
+</Files>
+
+# ========================================
 # React SPA — /game/ SPA routing fallback
 # Все /game/* запросы которые не файлы → /game/index.html
 # ========================================
@@ -20,13 +46,6 @@ RewriteCond %{REQUEST_URI} ^/game/
 RewriteCond %{DOCUMENT_ROOT}/game/%1 !-f
 RewriteCond %{DOCUMENT_ROOT}/game/%1 !-d
 RewriteRule ^game/(.+)$ /game/index.html [L]
-
-# ========================================
-# Firebase Auth files — serve without extension as HTML
-# ========================================
-<FilesMatch "^(handler|iframe|links)$">
-  ForceType text/html
-</FilesMatch>
 
 # ========================================
 # Clean URLs — /pages/name → /pages/name.html
@@ -76,6 +95,12 @@ RewriteRule ^(.+)$ $1.html [L]
   # HTML - не кешируем
   <FilesMatch "\.(html|htm)$">
     Header set Cache-Control "no-cache, no-store, must-revalidate"
+  </FilesMatch>
+
+  # Firebase auth helper files — 1 час с revalidation
+  # (мы синхронизируем их периодически с firebaseapp.com)
+  <FilesMatch "^(handler|iframe|links|handler\.js|iframe\.js|links\.js|experiments\.js)$">
+    Header set Cache-Control "public, max-age=3600, must-revalidate"
   </FilesMatch>
 </IfModule>
 

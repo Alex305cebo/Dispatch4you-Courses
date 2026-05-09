@@ -39,7 +39,10 @@ import {
 // Firebase конфигурация (единая для всех проектов dispatch4you.com)
 const firebaseConfig = {
   apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
-  authDomain: "dispatch4you-80e0f.firebaseapp.com",
+  // authDomain = наш домен. Self-hosted sign-in helper в /__/auth/ убирает
+  // Storage Partitioning issue в Safari 16+/Chrome 115+/Telegram WebView.
+  // https://firebase.google.com/docs/auth/web/redirect-best-practices
+  authDomain: "dispatch4you.com",
   projectId: "dispatch4you-80e0f",
   storageBucket: "dispatch4you-80e0f.appspot.com",
   messagingSenderId: "349235354473",

@@ -46,7 +46,11 @@ import {
 // ── Константы ────────────────────────────────────────────────────────────────
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
-  authDomain:        "dispatch4you-80e0f.firebaseapp.com",
+  // authDomain = наш собственный домен. Файлы sign-in helper (handler/iframe/links)
+  // self-hosted в /__/auth/ на этом же домене, что убирает проблему Storage Partitioning
+  // в Safari 16+/Chrome 115+/in-app браузерах. Option 4 из Firebase docs:
+  // https://firebase.google.com/docs/auth/web/redirect-best-practices
+  authDomain:        "dispatch4you.com",
   projectId:         "dispatch4you-80e0f",
   storageBucket:     "dispatch4you-80e0f.appspot.com",
   messagingSenderId: "349235354473",
