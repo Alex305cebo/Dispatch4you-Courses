@@ -226,22 +226,60 @@
     const err = code => ERRORS[code] || '❌ Ошибка: ' + code;
 
     async function saveAndRedirect(user) {
+      console.log('🔵 Начало сохранения данных пользователя...');
+      
       const parts = (user.displayName || '').trim().split(' ');
       const firstName = parts[0] || user.email.split('@')[0];
       const lastName  = parts.slice(1).join(' ') || '';
-      localStorage.setItem('user', JSON.stringify({ uid: user.uid, firstName, lastName, email: user.email, photoURL: user.photoURL || '' }));
+      
+      // Сохраняем данные пользователя
+      const userData = { 
+        uid: user.uid, 
+        firstName, 
+        lastName, 
+        email: user.email, 
+        photoURL: user.photoURL || '' 
+      };
+      localStorage.setItem('user', JSON.stringify(userData));
+      console.log('✅ Данные пользователя сохранены в localStorage');
+      
+      // Сохраняем токен авторизации
       try {
+        const token = await user.getIdToken();
+        localStorage.setItem('authToken', token);
+        console.log('✅ Токен авторизации сохранён');
+      } catch(e) {
+        console.error('❌ Ошибка получения токена:', e);
+      }
+      
+      // Сохраняем в Firestore
+      try {
+        console.log('🔵 Сохранение в Firestore...');
         await setDoc(doc(db, 'users', user.uid), {
           uid: user.uid, firstName, lastName, email: user.email,
           photoURL: user.photoURL || '', lastLogin: serverTimestamp(),
           provider: user.providerData[0]?.providerId || 'unknown'
         }, { merge: true });
+        console.log('✅ Данные сохранены в Firestore');
+        
         const snap = await getDoc(doc(db, 'users', user.uid));
-        localStorage.setItem('user_role', snap.exists() ? (snap.data().accessRole || 'registered') : 'registered');
-      } catch(e) { localStorage.setItem('user_role', 'registered'); }
+        const role = snap.exists() ? (snap.data().accessRole || 'registered') : 'registered';
+        localStorage.setItem('user_role', role);
+        console.log('✅ Роль пользователя:', role);
+      } catch(e) { 
+        console.error('❌ Ошибка сохранения в Firestore:', e);
+        localStorage.setItem('user_role', 'registered'); 
+      }
+      
+      // Небольшая задержка для завершения всех процессов Firebase
+      console.log('⏳ Ожидание завершения процессов Firebase...');
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       const ret = localStorage.getItem('returnUrl');
       localStorage.removeItem('returnUrl');
-      window.location.href = ret || 'dashboard.html?welcome=1';
+      const redirectUrl = ret || 'dashboard.html?welcome=1';
+      console.log('🔵 Перенаправление на:', redirectUrl);
+      window.location.href = redirectUrl;
     }
 
     // Google
@@ -249,15 +287,33 @@
       const btn = document.getElementById('googleBtn');
       btn.classList.add('loading');
       btn.disabled = true;
+      
+      console.log('🔵 Начало входа через Google...');
+      
       try {
+        console.log('🔵 Открытие popup для Google Auth...');
         const r = await signInWithPopup(auth, gProvider);
+        console.log('✅ Успешная авторизация через Google:', r.user.email);
+        
+        showMsg(msgInfo, '✅ Вход выполнен! Перенаправление...');
         await saveAndRedirect(r.user);
       } catch(e) {
         btn.classList.remove('loading');
         btn.disabled = false;
+        
+        console.error('❌ Ошибка входа через Google:', e.code, e.message);
+        
         if (e.code === 'auth/popup-blocked') {
           showMsg(msgError, '⚠️ Попап заблокирован браузером. Разрешите всплывающие окна для этого сайта и попробуйте снова.');
-        } else if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') {
+        } else if (e.code === 'auth/popup-closed-by-user') {
+          // Пользователь закрыл окно — не показываем ошибку
+          console.log('ℹ️ Пользователь закрыл окно авторизации');
+          return;
+        } else if (e.code === 'auth/cancelled-popup-request') {
+          // Отменён предыдущий запрос — не показываем ошибку
+          console.log('ℹ️ Отменён предыдущий запрос авторизации');
+          return;
+        } else {
           showMsg(msgError, err(e.code));
         }
       }

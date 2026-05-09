@@ -16,8 +16,8 @@
     <meta property="og:url" content="https://dispatch4you.com/map-trainer/" />
     <meta property="og:title" content="USA Map Trainer — Тренажёр географии США для диспетчеров" />
     <meta property="og:description" content="Интерактивный тренажёр для изучения штатов и городов США. Прокачай знания географии для работы диспетчером грузоперевозок. Игровой формат с уровнями и рейтингом." />
-    <meta property="og:image" content="https://dispatch4you.com/map-trainer/USA_Map_Trainer_Pic_Card.png?t=20260508" />
-    <meta property="og:image:secure_url" content="https://dispatch4you.com/map-trainer/USA_Map_Trainer_Pic_Card.png?t=20260508" />
+    <meta property="og:image" content="https://dispatch4you.com/map-trainer/USA_Map_Trainer_Pic_Card.png" />
+    <meta property="og:image:secure_url" content="https://dispatch4you.com/map-trainer/USA_Map_Trainer_Pic_Card.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -30,15 +30,87 @@
     <meta property="twitter:url" content="https://dispatch4you.com/map-trainer/" />
     <meta property="twitter:title" content="USA Map Trainer — Тренажёр географии США для диспетчеров" />
     <meta property="twitter:description" content="Интерактивный тренажёр для изучения штатов и городов США. Прокачай знания географии для работы диспетчером грузоперевозок. Игровой формат с уровнями и рейтингом." />
-    <meta property="twitter:image" content="https://dispatch4you.com/map-trainer/USA_Map_Trainer_Pic_Card.png?t=20260508" />
+    <meta property="twitter:image" content="https://dispatch4you.com/map-trainer/USA_Map_Trainer_Pic_Card.png" />
     
     <!-- Telegram -->
     <meta property="telegram:channel" content="@dispatch4you" />
     
-    <script type="module" crossorigin src="/map-trainer/assets/index-BLrhyO5w.js"></script>
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/map-trainer/assets/index-B7chdwKa.js" as="script" crossorigin />
+    <link rel="preload" href="/map-trainer/assets/index-DdPfSiZb.css" as="style" />
+    
+    <script type="module" crossorigin src="/map-trainer/assets/index-B7chdwKa.js"></script>
     <link rel="stylesheet" crossorigin href="/map-trainer/assets/index-DdPfSiZb.css">
+    
+    <style>
+      /* Loading screen */
+      #loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.3s ease;
+      }
+      #loading-screen.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .loading-logo {
+        font-size: 48px;
+        font-weight: 800;
+        color: #06b6d4;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      .loading-text {
+        font-size: 18px;
+        color: #94a3b8;
+        margin-bottom: 30px;
+      }
+      .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(6, 182, 212, 0.1);
+        border-top-color: #06b6d4;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
   </head>
   <body>
+    <!-- Loading screen for better UX -->
+    <div id="loading-screen">
+      <div class="loading-logo">🗺️ USA Map Trainer</div>
+      <div class="loading-text">Загрузка тренажёра...</div>
+      <div class="loading-spinner"></div>
+    </div>
+    
+    <!-- React app root -->
     <div id="root"></div>
+    
+    <script>
+      // Hide loading screen when React app is ready
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          var loadingScreen = document.getElementById('loading-screen');
+          if (loadingScreen) {
+            loadingScreen.classList.add('hidden');
+            setTimeout(function() {
+              loadingScreen.style.display = 'none';
+            }, 300);
+          }
+        }, 500);
+      });
+    </script>
   </body>
 </html>

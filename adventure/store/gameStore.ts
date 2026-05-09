@@ -1873,7 +1873,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         const breakDuration = (truck as any).mandatoryBreakDuration ?? 30;
         const elapsed = newMinute - breakStart;
         if (elapsed >= breakDuration) {
-          // Перерыв закончен — продолжаем маршрут
+          // Перерыв закончен — перестраиваем маршрут от новой позиции
           const preRestDest = (truck as any).preRestDestCity;
           const preRestPath = (truck as any).preRestRoutePath;
           const preRestProg = (truck as any).preRestProgress ?? truck.progress;
@@ -1885,13 +1885,26 @@ export const useGameStore = create<GameState>((set, get) => ({
             actionRequired: false,
             relatedTruckId: truck.id,
           });
+          // Перестраиваем маршрут от текущей позиции (rest area)
+          const destForBreak = preRestDest ?? truck.destinationCity;
+          if (destForBreak && CITIES[destForBreak]) {
+            const truckId = truck.id;
+            const destCoords = CITIES[destForBreak];
+            fetchRoute(truck.position[0], truck.position[1], destCoords[0], destCoords[1]).then(newRoute => {
+              if (newRoute) {
+                useGameStore.setState(s => ({
+                  trucks: s.trucks.map(t => t.id === truckId && (t.status === 'loaded' || t.status === 'driving') ? { ...t, routePath: newRoute } as any : t)
+                }));
+              }
+            });
+          }
           return {
             ...truck,
             onMandatoryBreak: false,
-            mandatoryBreakDone: true, // больше не останавливаем за эту смену
+            mandatoryBreakDone: true,
             mandatoryBreakStartMinute: undefined,
             status: ((truck as any).preRestStatus ?? truck.status) as TruckStatus,
-            destinationCity: preRestDest ?? truck.destinationCity,
+            destinationCity: destForBreak,
             progress: preRestProg,
             routePath: preRestPath ?? truck.routePath,
             preRestStatus: undefined,
@@ -1973,6 +1986,18 @@ export const useGameStore = create<GameState>((set, get) => ({
             relatedTruckId: truck.id,
           });
           if (shouldResume) {
+            // Перестраиваем маршрут от новой позиции (truck stop) до destination
+            const truckId = truck.id;
+            const destCity = CITIES[preRestDest];
+            if (destCity) {
+              fetchRoute(truck.position[0], truck.position[1], destCity[0], destCity[1]).then(newRoute => {
+                if (newRoute) {
+                  useGameStore.setState(s => ({
+                    trucks: s.trucks.map(t => t.id === truckId && (t.status === 'loaded' || t.status === 'driving') ? { ...t, routePath: newRoute } as any : t)
+                  }));
+                }
+              });
+            }
             return {
               ...truck,
               onNightStop: false,
@@ -1984,7 +2009,7 @@ export const useGameStore = create<GameState>((set, get) => ({
               status: ((truck as any).preRestStatus ?? 'loaded') as TruckStatus,
               destinationCity: preRestDest,
               progress: preRestProg,
-              routePath: preRestPath ?? truck.routePath,
+              routePath: null,  // Будет перестроен асинхронно от текущей позиции
               preRestStatus: undefined,
               preRestDestCity: undefined,
               preRestProgress: undefined,
@@ -2058,14 +2083,14 @@ export const useGameStore = create<GameState>((set, get) => ({
             detail: { message: `✅ ${truck.name} отремонтирован!`, color: '#4ade80', truckId: truck.id }
           }));
 
-          // Если есть груз — восстанавливаем маршрут в фоне (если его нет)
-          if (hasLoad && destCity && CITIES[destCity] && !routePath) {
+          // Если есть груз — перестраиваем маршрут от текущей позиции
+          if (hasLoad && destCity && CITIES[destCity]) {
             const truckId = truck.id;
             const dest = CITIES[destCity];
             fetchRoute(truck.position[0], truck.position[1], dest[0], dest[1]).then(fetchedRoute => {
               if (fetchedRoute) {
                 useGameStore.setState(s => ({
-                  trucks: s.trucks.map(t => t.id === truckId ? { ...t, routePath: fetchedRoute } as any : t)
+                  trucks: s.trucks.map(t => t.id === truckId && (t.status === 'loaded' || t.status === 'driving') ? { ...t, routePath: fetchedRoute } as any : t)
                 }));
               }
             });
@@ -2075,8 +2100,8 @@ export const useGameStore = create<GameState>((set, get) => ({
             ...truck,
             status: resumeStatus,
             destinationCity: destCity,
-            progress: progress, // Восстанавливаем progress
-            routePath: routePath, // Восстанавливаем маршрут
+            progress: progress,
+            routePath: null, // Будет перестроен асинхронно от текущей позиции
             outOfOrderUntil: 0,
             awaitingRepairChoice: false,
             breakdownType: undefined,
@@ -2088,7 +2113,6 @@ export const useGameStore = create<GameState>((set, get) => ({
             preBreakdownDestCity: undefined,
             preBreakdownRoutePath: undefined,
             breakdownStartMinute: undefined,
-            routePath: null, // сбросим — загрузится в фоне
             mood: Math.max(40, (truck.mood ?? 65) - 10),
             idleSinceMinute: hasLoad ? undefined : newMinute,
             idleWarningLevel: 0,
@@ -2167,12 +2191,24 @@ export const useGameStore = create<GameState>((set, get) => ({
           };
 
           if (shouldResume && preRestDest) {
+            // Перестраиваем маршрут от текущей позиции (truck stop) до destination
+            const truckId = truck.id;
+            const destCoords = CITIES[preRestDest];
+            if (destCoords) {
+              fetchRoute(truck.position[0], truck.position[1], destCoords[0], destCoords[1]).then(newRoute => {
+                if (newRoute) {
+                  useGameStore.setState(s => ({
+                    trucks: s.trucks.map(t => t.id === truckId && (t.status === 'loaded' || t.status === 'driving') ? { ...t, routePath: newRoute } as any : t)
+                  }));
+                }
+              });
+            }
             return {
               ...truck, ...cleanHos,
               status: ((truck as any).preRestStatus ?? 'loaded') as TruckStatus,
               destinationCity: preRestDest,
               progress: preRestProg,
-              routePath: preRestPath ?? null,
+              routePath: null,  // Будет перестроен асинхронно от текущей позиции
             } as any;
           }
           return {
@@ -2222,6 +2258,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         const loadDuration = (truck as any).loadDuration ?? (45 + Math.floor(Math.random() * 46));
         const waitTime = newMinute - pickupArrivalMinute;
 
+        console.log(`📦 PICKUP ${truck.id}: waitTime=${waitTime.toFixed(1)}/${loadDuration}min, arrival=${pickupArrivalMinute.toFixed(1)}, now=${newMinute.toFixed(1)}, hasDuration=${!!(truck as any).loadDuration}`);
+
         // Уведомление когда погрузка началась (первый тик)
         if (!(truck as any).loadDuration) {
           const hrs = (loadDuration / 60).toFixed(1);
@@ -2237,13 +2275,19 @@ export const useGameStore = create<GameState>((set, get) => ({
 
         if (waitTime >= loadDuration) {
           // Погрузка завершена — едем на delivery
+          console.log(`✅ PICKUP DONE ${truck.id}: waited ${waitTime.toFixed(1)}min >= ${loadDuration}min, going to ${truck.currentLoad.toCity}`);
+          // ВАЖНО: маршрут мог быть уже загружен заранее (при прибытии на pickup)
+          // Проверяем есть ли уже routePath на траке (загруженный ранее)
+          const existingRoute = truck.routePath;
           const deliveryCity = CITIES[truck.currentLoad.toCity];
-          if (deliveryCity) {
+          
+          if (!existingRoute && deliveryCity) {
+            // Маршрут ещё не загружен — загружаем в фоне
             const truckId = truck.id;
             fetchRoute(truck.position[0], truck.position[1], deliveryCity[0], deliveryCity[1]).then(routePath => {
               if (routePath) {
                 useGameStore.setState(s => ({
-                  trucks: s.trucks.map(t => t.id === truckId && t.status === 'loaded' ? { ...t, routePath } as any : t)
+                  trucks: s.trucks.map(t => t.id === truckId && (t.status === 'loaded' || t.status === 'driving') ? { ...t, routePath } as any : t)
                 }));
               }
             });
@@ -2261,8 +2305,9 @@ export const useGameStore = create<GameState>((set, get) => ({
             status: 'loaded' as TruckStatus,
             destinationCity: truck.currentLoad.toCity,
             progress: 0,
-            routePath: null,
+            routePath: existingRoute ?? null,  // Используем уже загруженный маршрут если есть
             loadDuration: undefined,
+            pickupArrivalMinute: undefined,
             currentLoad: { ...truck.currentLoad, phase: 'to_delivery' as any },
           } as any;
         }
@@ -2278,7 +2323,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (truck.status === 'at_delivery' && truck.currentLoad) {
         const deliveryArrivalMinute = (truck as any).deliveryArrivalMinute ?? newMinute;
         // Случайная длительность разгрузки: 30-120 мин (задаётся при первом тике)
-        const unloadDuration = (truck as any).unloadDuration ?? (5 + Math.floor(Math.random() * 11));
+        const unloadDuration = (truck as any).unloadDuration ?? (30 + Math.floor(Math.random() * 91));
         const waitTime = newMinute - deliveryArrivalMinute;
 
         // Detention: после 120 игровых минут (2 часа) — уведомление
@@ -2338,6 +2383,10 @@ export const useGameStore = create<GameState>((set, get) => ({
           };
           logger.log('🎉 DeliveryResult created:', deliveryResult.loadId, deliveryResult.netProfit);
           newDeliveryResults.push(deliveryResult);
+          // Очки: базовые за доставку + бонус за RPM
+          const rpm = miles > 0 ? agreedRate / miles : 0;
+          const bonus = rpm >= 3.0 ? 50 : rpm >= 2.5 ? 30 : 10;
+          set({ score: get().score + 100 + bonus });
           // Записываем GROSS доход отдельно
           get().addMoney(grossRevenue, `Доставка: ${load.fromCity}→${load.toCity} (${truck.name})`);
           // Записываем расходы отдельно — чтобы totalLost и financeLog были корректны
@@ -2388,6 +2437,8 @@ export const useGameStore = create<GameState>((set, get) => ({
             deliveryArrivalMinute: undefined,
             unloadDuration: undefined,
             detentionNotified: undefined,
+            pickupArrivalMinute: undefined,
+            loadDuration: undefined,
             tripExpenses: [],          // сбрасываем доп. расходы после каждой доставки
             nightStopDelayMinutes: 0,  // сбрасываем задержку ночёвки
           };
@@ -2395,53 +2446,11 @@ export const useGameStore = create<GameState>((set, get) => ({
         return { ...truck, deliveryArrivalMinute, unloadDuration } as any;
       }
 
-      // Если трак на разгрузке/погрузке и у него уже есть следующий груз - автоматически начинаем движение
-      // НО ТОЛЬКО ЕСЛИ ЗАВЕРШИЛ ТЕКУЩУЮ ОПЕРАЦИЮ (иначе уедет раньше времени!)
-      if ((truck.status === 'at_delivery' || truck.status === 'at_pickup') && truck.currentLoad) {
-        // Проверяем что это pre-planned груз (phase должна быть 'to_pickup')
-        if (truck.currentLoad.phase === 'to_pickup') {
-          // ВАЖНО: Проверяем что погрузка/разгрузка ЗАВЕРШЕНА
-          const isAtPickup = truck.status === 'at_pickup';
-          const isAtDelivery = truck.status === 'at_delivery';
-          const pickupArrivalMinute = (truck as any).pickupArrivalMinute ?? newMinute;
-          const deliveryArrivalMinute = (truck as any).deliveryArrivalMinute ?? newMinute;
-          const loadDuration = (truck as any).loadDuration ?? 60;
-          const unloadDuration = (truck as any).unloadDuration ?? 60;
-          const pickupWaitTime = newMinute - pickupArrivalMinute;
-          const deliveryWaitTime = newMinute - deliveryArrivalMinute;
-          
-          // Если ещё грузится/разгружается — НЕ ДВИГАЕМСЯ
-          if ((isAtPickup && pickupWaitTime < loadDuration) || (isAtDelivery && deliveryWaitTime < unloadDuration)) {
-            return truck; // Ждём завершения операции
-          }
-          
-          // Операция завершена — можно ехать к следующему грузу
-          const pickupCity = CITIES[truck.currentLoad.fromCity];
-          if (pickupCity) {
-            const truckId = truck.id;
-            fetchRoute(truck.position[0], truck.position[1], pickupCity[0], pickupCity[1]).then(routePath => {
-              if (routePath) {
-                useGameStore.setState(s => ({
-                  trucks: s.trucks.map(t => t.id === truckId && t.status === 'driving' ? { ...t, routePath } as any : t)
-                }));
-              }
-            });
-          }
-          get().addNotification({
-            type: 'email', priority: 'low', from: 'Система',
-            subject: '🚛 Трак в пути',
-            message: `${truck.name} закончил операцию и начал движение к ${truck.currentLoad.fromCity}`,
-            actionRequired: false, relatedTruckId: truck.id,
-          });
-          return {
-            ...truck,
-            status: 'driving' as TruckStatus,
-            destinationCity: truck.currentLoad.fromCity,
-            progress: 0,
-            routePath: null,
-          };
-        }
-      }
+      // ── PRE-PLANNED LOADS: трак закончил текущую операцию и едет к следующему грузу ──
+      // Этот код НЕ должен выполняться для обычных грузов!
+      // Он только для случая когда трак уже на месте (at_delivery/at_pickup) и у него есть
+      // следующий груз с phase='to_pickup' (ещё не начат)
+      // ВАЖНО: Этот блок НЕ должен перехватывать обычную погрузку/разгрузку!
       
       // ── IDLE WARNING: трак стоит слишком долго ──────────────────────
       if (truck.status === 'idle') {
@@ -2766,21 +2775,16 @@ export const useGameStore = create<GameState>((set, get) => ({
           // Трак приехал в пункт назначения
           const newStatus = truck.status === 'driving' ? 'at_pickup' as TruckStatus : 'at_delivery' as TruckStatus;
 
-          // 💰 Оплата при доставке
+          // 📍 Уведомление при прибытии на delivery (оплата — ТОЛЬКО после разгрузки в блоке at_delivery)
           if (newStatus === 'at_delivery' && truck.currentLoad) {
             const load = truck.currentLoad;
-            get().addMoney(load.agreedRate, `Доставка: ${load.fromCity} → ${load.toCity} (${truck.name})`);
-            // Очки: базовые за доставку + бонус за RPM
-            const rpm = load.agreedRate / load.miles;
-            const bonus = rpm >= 3.0 ? 50 : rpm >= 2.5 ? 30 : 10;
-            set({ score: get().score + 100 + bonus });
             get().addNotification({
               type: 'email',
               priority: 'medium',
               from: `${load.brokerName} - ${load.brokerCompany}`,
-              subject: `✅ Доставка подтверждена — $${load.agreedRate.toLocaleString()}`,
-              message: `Груз доставлен! ${load.fromCity} → ${load.toCity}\n${load.commodity} · ${load.miles} mi\nОплата: $${load.agreedRate.toLocaleString()}\n\nОтправь POD для закрытия.`,
-              actionRequired: true,
+              subject: `📍 ${truck.name} прибыл на разгрузку — ${load.toCity}`,
+              message: `${truck.name} прибыл в ${load.toCity}. Начинается разгрузка.\n${load.commodity} · ${load.miles} mi\nОплата после разгрузки: $${load.agreedRate.toLocaleString()}`,
+              actionRequired: false,
               relatedTruckId: truck.id,
               relatedLoadId: load.id,
             });
@@ -3490,6 +3494,12 @@ case 'detention': {
           routePath,
           idleSinceMinute: undefined,
           idleWarningLevel: 0 as 0,
+          // Очищаем поля от предыдущих погрузок/разгрузок
+          pickupArrivalMinute: undefined,
+          loadDuration: undefined,
+          deliveryArrivalMinute: undefined,
+          unloadDuration: undefined,
+          detentionNotified: undefined,
           // Сбрасываем флаги перерывов для нового рейса
           mandatoryBreakDone: false,
           nightStopDone: false,

@@ -29,6 +29,7 @@ export const OnboardingWrapper: React.FC<OnboardingWrapperProps> = ({
     triggerAction,
     skipOnboarding,
     goToNextStep,
+    goToPreviousStep,
   } = useOnboarding(isNewGame);
 
   // Экспортируем triggerAction наружу через callback
@@ -74,6 +75,7 @@ export const OnboardingWrapper: React.FC<OnboardingWrapperProps> = ({
         <DialogBubbleInline
           step={currentStep}
           onNext={goToNextStep}
+          onBack={goToPreviousStep}
           onSkip={skipOnboarding}
           currentStepIndex={currentStepIndex}
           totalSteps={totalSteps}

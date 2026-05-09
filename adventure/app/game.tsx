@@ -1618,7 +1618,7 @@ export default function GameScreen() {
     <View style={s.root}>
       {/* ══ ЕДИНЫЙ LAYOUT — карта на весь экран ══ */}
       <View style={{ flex: 1, flexDirection: 'column' as any }}>
-        <TopBar />
+        {TopBar()}
         <View style={{ flex: 1, position: 'relative' as any }}>
           {/* Карта — всегда на весь экран */}
           <ErrorBoundary name="Map"><GoogleMapView {...mapProps} /></ErrorBoundary>

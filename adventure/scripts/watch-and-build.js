@@ -52,9 +52,11 @@ const chokidar = require('chokidar');
 const watcher = chokidar.watch([
   'app/**/*.{ts,tsx,js,jsx}',
   'components/**/*.{ts,tsx,js,jsx}',
-  'stores/**/*.{ts,tsx,js,jsx}',
+  'store/**/*.{ts,tsx,js,jsx}',
   'utils/**/*.{ts,tsx,js,jsx}',
   'hooks/**/*.{ts,tsx,js,jsx}',
+  'data/**/*.{ts,tsx,js,jsx}',
+  'constants/**/*.{ts,tsx,js,jsx}',
 ], {
   ignored: /(^|[\/\\])\../, // игнорируем скрытые файлы
   persistent: true,

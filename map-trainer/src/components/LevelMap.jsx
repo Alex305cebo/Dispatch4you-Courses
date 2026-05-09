@@ -18,8 +18,10 @@ export default function LevelMap({ progress, user, onSelectLevel, onReset, onLog
       display: "flex",
       flexDirection: "column",
       overflow: "hidden",
-      padding: "14px 14px 10px",
+      padding: "14px",
       boxSizing: "border-box",
+      maxWidth: "800px",
+      margin: "0 auto",
     }}>
 
       {/* ── Шапка ── */}
