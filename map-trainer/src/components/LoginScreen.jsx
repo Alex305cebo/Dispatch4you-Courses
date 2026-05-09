@@ -1,14 +1,41 @@
-const LOGIN_URL = 'https://dispatch4you.com/login.html';
-const RETURN_URL = 'https://dispatch4you.com/map-trainer/';
+// ═══════════════════════════════════════════════════════════
+//  LoginScreen.jsx — вход в USA Map Trainer
+//  build: 2026-05-08 (fixed Google login)
+// ═══════════════════════════════════════════════════════════
+import { useState } from "react";
 
-export default function LoginScreen({ loading }) {
-  const goToLogin = () => {
-    // Сохраняем куда вернуться после логина
+const FALLBACK_LOGIN_URL = "https://dispatch4you.com/login.html";
+const RETURN_URL         = "https://dispatch4you.com/map-trainer/";
+
+export default function LoginScreen({ onSignIn, loading }) {
+  const [busy,  setBusy]  = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleGoogle = async () => {
+    if (busy) return;
+    setError(null);
+    setBusy(true);
     try {
-      localStorage.setItem('returnUrl', RETURN_URL);
-    } catch (e) {}
-    window.location.href = LOGIN_URL;
+      if (typeof onSignIn === "function") {
+        await onSignIn();
+      } else {
+        // На всякий случай — если проп не передан
+        goToFallback();
+      }
+    } catch (e) {
+      console.error("[LoginScreen] signIn failed:", e);
+      setError("Не удалось войти через Google. Попробуйте ещё раз.");
+    } finally {
+      setBusy(false);
+    }
   };
+
+  const goToFallback = () => {
+    try { localStorage.setItem("returnUrl", RETURN_URL); } catch {}
+    window.location.href = FALLBACK_LOGIN_URL;
+  };
+
+  const disabled = busy || loading;
 
   return (
     <div style={{
@@ -29,7 +56,7 @@ export default function LoginScreen({ loading }) {
         }}>
           USA Map Trainer
         </h1>
-        <p style={{ fontSize: "14px", color: "#64748b", margin: 0 }}>
+        <p style={{ fontSize: "14px", color: "#94a3b8", margin: 0 }}>
           Тренажёр географии для диспетчеров
         </p>
       </div>
@@ -47,12 +74,12 @@ export default function LoginScreen({ loading }) {
         <p style={{ fontSize: "16px", fontWeight: 700, color: "#e2e8f0", margin: "0 0 6px 0" }}>
           Войди чтобы сохранить прогресс
         </p>
-        <p style={{ fontSize: "13px", color: "#64748b", margin: "0 0 24px 0", lineHeight: 1.5 }}>
+        <p style={{ fontSize: "13px", color: "#94a3b8", margin: "0 0 20px 0", lineHeight: 1.5 }}>
           Прогресс синхронизируется между устройствами и с основным курсом
         </p>
 
         {/* Преимущества */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "24px", textAlign: "left" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "20px", textAlign: "left" }}>
           {[
             { icon: "☁️", text: "Прогресс сохраняется в облаке" },
             { icon: "📱", text: "Доступен на любом устройстве" },
@@ -61,15 +88,31 @@ export default function LoginScreen({ loading }) {
           ].map((item) => (
             <div key={item.text} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <span style={{ fontSize: "16px", flexShrink: 0 }}>{item.icon}</span>
-              <span style={{ fontSize: "13px", color: "#94a3b8" }}>{item.text}</span>
+              <span style={{ fontSize: "13px", color: "#e2e8f0" }}>{item.text}</span>
             </div>
           ))}
         </div>
 
-        {/* Кнопка входа — редирект на главный сайт */}
+        {/* Ошибка */}
+        {error && (
+          <div style={{
+            background: "rgba(239,68,68,0.12)",
+            border: "1px solid rgba(239,68,68,0.35)",
+            borderRadius: "10px",
+            padding: "10px 12px",
+            marginBottom: "14px",
+            fontSize: "13px",
+            color: "#fca5a5",
+            textAlign: "left",
+          }}>
+            {error}
+          </div>
+        )}
+
+        {/* ГЛАВНАЯ КНОПКА — прямой Google popup внутри приложения */}
         <button
-          onClick={goToLogin}
-          disabled={loading}
+          onClick={handleGoogle}
+          disabled={disabled}
           style={{
             width: "100%",
             display: "flex",
@@ -77,28 +120,29 @@ export default function LoginScreen({ loading }) {
             justifyContent: "center",
             gap: "10px",
             padding: "13px 20px",
-            background: loading ? "rgba(255,255,255,0.1)" : "#fff",
+            background: disabled ? "rgba(255,255,255,0.1)" : "#fff",
             border: "none",
             borderRadius: "12px",
             fontSize: "15px",
             fontWeight: 700,
-            color: loading ? "#94a3b8" : "#1f2937",
-            cursor: loading ? "default" : "pointer",
+            color: disabled ? "#94a3b8" : "#1f2937",
+            cursor: disabled ? "default" : "pointer",
             touchAction: "manipulation",
             transition: "all 0.2s ease",
-            boxShadow: loading ? "none" : "0 4px 16px rgba(0,0,0,0.3)",
+            boxShadow: disabled ? "none" : "0 4px 16px rgba(0,0,0,0.3)",
+            marginBottom: "10px",
           }}
         >
-          {loading ? (
+          {busy || loading ? (
             <>
               <div style={{
                 width: "18px", height: "18px",
-                border: "2px solid rgba(255,255,255,0.3)",
-                borderTopColor: "#94a3b8",
+                border: "2px solid rgba(0,0,0,0.15)",
+                borderTopColor: "#1f2937",
                 borderRadius: "50%",
                 animation: "spin 0.8s linear infinite",
               }} />
-              Загрузка...
+              Входим...
             </>
           ) : (
             <>
@@ -113,15 +157,34 @@ export default function LoginScreen({ loading }) {
           )}
         </button>
 
-        <p style={{ fontSize: "11px", color: "#334155", margin: "14px 0 0 0" }}>
+        {/* Запасная кнопка — редирект на главный сайт */}
+        <button
+          onClick={goToFallback}
+          disabled={disabled}
+          style={{
+            width: "100%",
+            padding: "10px 14px",
+            background: "transparent",
+            border: "1px solid rgba(255,255,255,0.12)",
+            borderRadius: "10px",
+            fontSize: "12px",
+            fontWeight: 600,
+            color: "#94a3b8",
+            cursor: disabled ? "default" : "pointer",
+            touchAction: "manipulation",
+            transition: "all 0.2s ease",
+          }}
+        >
+          Войти на основном сайте →
+        </button>
+
+        <p style={{ fontSize: "11px", color: "#94a3b8", margin: "14px 0 0 0" }}>
           Тот же аккаунт что и на dispatch4you.com
         </p>
       </div>
 
       <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );
