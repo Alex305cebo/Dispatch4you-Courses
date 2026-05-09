@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Map Trainer · Диагностика логина</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 16px;
+      min-height: 100vh;
+    }
+    h1 { font-size: 18px; color: #fff; margin-bottom: 12px; }
+    h2 { font-size: 14px; color: #06b6d4; margin: 16px 0 8px; }
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+    .row { display: flex; justify-content: space-between; margin: 4px 0; gap: 8px; }
+    .row .key { color: #94a3b8; flex-shrink: 0; }
+    .row .val { color: #e2e8f0; text-align: right; word-break: break-all; }
+    .val.ok { color: #22c55e; }
+    .val.err { color: #ef4444; }
+    .val.warn { color: #fbbf24; }
+    button {
+      display: block;
+      width: 100%;
+      padding: 12px 16px;
+      margin: 6px 0;
+      background: #06b6d4;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    button.alt { background: #475569; }
+    button.danger { background: #ef4444; }
+    .log {
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      background: #000;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 10px;
+      max-height: 40vh;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: #cbd5e1;
+    }
+    .log .err { color: #f87171; }
+    .log .ok  { color: #4ade80; }
+    .log .warn { color: #fbbf24; }
+    .log .info { color: #60a5fa; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Map Trainer · Диагностика логина</h1>
+
+  <h2>Среда</h2>
+  <div class="card" id="envCard">Собираем...</div>
+
+  <h2>Firebase SDK</h2>
+  <div class="card" id="fbCard">Загружаем...</div>
+
+  <h2>Текущее состояние auth</h2>
+  <div class="card" id="authCard">Ждём Firebase...</div>
+
+  <h2>LocalStorage</h2>
+  <div class="card" id="lsCard">...</div>
+
+  <h2>Действия</h2>
+  <button id="btnPopup">▶ Попробовать signInWithPopup</button>
+  <button id="btnRedirect">▶ Попробовать signInWithRedirect</button>
+  <button id="btnSignOut" class="alt">Выйти</button>
+  <button id="btnClearLS" class="danger">Очистить localStorage</button>
+
+  <h2>Лог</h2>
+  <div class="log" id="log"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import {
+      getAuth, onAuthStateChanged,
+      signInWithPopup, signInWithRedirect, getRedirectResult,
+      setPersistence, browserLocalPersistence,
+      GoogleAuthProvider, signOut
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+
+    const $ = (id) => document.getElementById(id);
+    const logEl = $('log');
+    const log = (msg, cls = '') => {
+      const line = document.createElement('div');
+      if (cls) line.className = cls;
+      const t = new Date().toLocaleTimeString();
+      line.textContent = `[${t}] ${msg}`;
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight;
+      console.log('[diag]', msg);
+    };
+
+    // ── Среда ──
+    (function renderEnv() {
+      const ua = navigator.userAgent;
+      const isMobile = /iphone|ipad|ipod|android/i.test(ua);
+      const isIOS = /iphone|ipad|ipod/i.test(ua);
+      const isTelegram = /telegram/i.test(ua);
+      const cookiesEnabled = navigator.cookieEnabled;
+      let thirdPartyCookies = 'unknown';
+      try {
+        // Приблизительная проверка третьесторонних кук
+        thirdPartyCookies = document.cookie.length >= 0 ? 'same-site ok' : 'blocked';
+      } catch {}
+      $('envCard').innerHTML = `
+        <div class="row"><span class="key">URL</span><span class="val">${location.href}</span></div>
+        <div class="row"><span class="key">Origin</span><span class="val">${location.origin}</span></div>
+        <div class="row"><span class="key">Protocol</span><span class="val ${location.protocol === 'https:' ? 'ok' : 'err'}">${location.protocol}</span></div>
+        <div class="row"><span class="key">Мобильный</span><span class="val">${isMobile ? 'ДА' : 'нет'}</span></div>
+        <div class="row"><span class="key">iOS</span><span class="val">${isIOS ? 'ДА' : 'нет'}</span></div>
+        <div class="row"><span class="key">Telegram UA</span><span class="val ${isTelegram ? 'warn' : ''}">${isTelegram ? 'ДА' : 'нет'}</span></div>
+        <div class="row"><span class="key">Cookies</span><span class="val ${cookiesEnabled ? 'ok' : 'err'}">${cookiesEnabled ? 'on' : 'OFF'}</span></div>
+        <div class="row"><span class="key">UserAgent</span><span class="val" style="font-size:10px">${ua}</span></div>
+      `;
+    })();
+
+    // ── Firebase ──
+    const firebaseConfig = {
+      apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
+      authDomain: "dispatch4you-80e0f.firebaseapp.com",
+      projectId: "dispatch4you-80e0f",
+      storageBucket: "dispatch4you-80e0f.appspot.com",
+      messagingSenderId: "349235354473",
+      appId: "1:349235354473:web:488aeb29211b02bb153bf8",
+    };
+
+    let auth;
+    try {
+      const app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      $('fbCard').innerHTML = `
+        <div class="row"><span class="key">SDK version</span><span class="val ok">11.10.0</span></div>
+        <div class="row"><span class="key">authDomain</span><span class="val">${firebaseConfig.authDomain}</span></div>
+        <div class="row"><span class="key">projectId</span><span class="val">${firebaseConfig.projectId}</span></div>
+        <div class="row"><span class="key">init</span><span class="val ok">OK</span></div>
+      `;
+      log('Firebase инициализирован', 'ok');
+    } catch (e) {
+      $('fbCard').innerHTML = `<div class="val err">Ошибка: ${e.message}</div>`;
+      log('Firebase init FAILED: ' + e.message, 'err');
+    }
+
+    // ── Persistence ──
+    try {
+      await setPersistence(auth, browserLocalPersistence);
+      log('setPersistence(browserLocalPersistence) OK', 'ok');
+    } catch (e) {
+      log('setPersistence FAILED: ' + (e.code || e.message), 'err');
+    }
+
+    // ── getRedirectResult ──
+    try {
+      log('Проверяем getRedirectResult...', 'info');
+      const res = await getRedirectResult(auth);
+      if (res && res.user) {
+        log('getRedirectResult: ПОЛЬЗОВАТЕЛЬ ' + res.user.email, 'ok');
+      } else {
+        log('getRedirectResult: null (это нормально если не было redirect)', 'info');
+      }
+    } catch (e) {
+      log('getRedirectResult FAILED: ' + (e.code || e.message), 'err');
+    }
+
+    // ── onAuthStateChanged ──
+    function renderAuth(user) {
+      if (user) {
+        $('authCard').innerHTML = `
+          <div class="row"><span class="key">Status</span><span class="val ok">ЗАЛОГИНЕН</span></div>
+          <div class="row"><span class="key">Email</span><span class="val">${user.email || '-'}</span></div>
+          <div class="row"><span class="key">Name</span><span class="val">${user.displayName || '-'}</span></div>
+          <div class="row"><span class="key">UID</span><span class="val" style="font-size:10px">${user.uid}</span></div>
+        `;
+      } else {
+        $('authCard').innerHTML = `<div class="row"><span class="key">Status</span><span class="val warn">НЕ залогинен</span></div>`;
+      }
+    }
+    onAuthStateChanged(auth, (u) => {
+      log('onAuthStateChanged: ' + (u ? u.email : 'null'), u ? 'ok' : 'info');
+      renderAuth(u);
+    });
+
+    // ── LocalStorage ──
+    function renderLS() {
+      const keys = ['user', 'authToken', 'user_role', 'xp_data', 'returnUrl'];
+      const rows = keys.map(k => {
+        const v = localStorage.getItem(k);
+        const short = v ? (v.length > 60 ? v.slice(0, 60) + '...' : v) : '(пусто)';
+        return `<div class="row"><span class="key">${k}</span><span class="val">${short}</span></div>`;
+      }).join('');
+      $('lsCard').innerHTML = rows;
+    }
+    renderLS();
+
+    // ── Кнопки ──
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+
+    $('btnPopup').addEventListener('click', async () => {
+      log('🔵 signInWithPopup старт', 'info');
+      try {
+        const res = await signInWithPopup(auth, provider);
+        log('✅ signInWithPopup успех: ' + res.user.email, 'ok');
+        renderLS();
+      } catch (e) {
+        log('❌ signInWithPopup FAILED: ' + (e.code || 'no-code') + ' / ' + e.message, 'err');
+        if (e.customData) log('customData: ' + JSON.stringify(e.customData), 'err');
+      }
+    });
+
+    $('btnRedirect').addEventListener('click', async () => {
+      log('🔵 signInWithRedirect старт (страница уйдёт на Google)', 'info');
+      try {
+        await signInWithRedirect(auth, provider);
+        // сюда не должны попасть — навигация ушла
+        log('⚠️ signInWithRedirect вернулся без навигации', 'warn');
+      } catch (e) {
+        log('❌ signInWithRedirect FAILED: ' + (e.code || 'no-code') + ' / ' + e.message, 'err');
+      }
+    });
+
+    $('btnSignOut').addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+        log('signOut OK', 'ok');
+        renderLS();
+      } catch (e) {
+        log('signOut FAILED: ' + e.message, 'err');
+      }
+    });
+
+    $('btnClearLS').addEventListener('click', () => {
+      localStorage.clear();
+      log('localStorage очищен', 'warn');
+      renderLS();
+    });
+
+    // ── Сеть ──
+    (async () => {
+      log('Проверяем доступ к Firebase endpoints...', 'info');
+      const endpoints = [
+        'https://identitytoolkit.googleapis.com/',
+        'https://securetoken.googleapis.com/',
+        'https://firestore.googleapis.com/',
+      ];
+      for (const url of endpoints) {
+        try {
+          const r = await fetch(url, { method: 'GET', mode: 'no-cors' });
+          log('OK: ' + url, 'ok');
+        } catch (e) {
+          log('FAIL: ' + url + ' → ' + e.message, 'err');
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
