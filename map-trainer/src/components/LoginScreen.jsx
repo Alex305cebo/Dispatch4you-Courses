@@ -17,13 +17,71 @@ export default function LoginScreen({ onSignIn, loading }) {
     return ua.includes('Telegram');
   };
 
+  const isIOS = () => {
+    return /iPhone|iPad|iPod/.test(navigator.userAgent);
+  };
+
+  const isAndroid = () => {
+    return /Android/.test(navigator.userAgent);
+  };
+
   const openInExternalBrowser = () => {
-    // Для iOS Telegram
-    if (isTelegramBrowser() && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
-      window.location.href = 'https://dispatch4you.com/map-trainer/';
-    } else {
-      // Для Android и других
-      alert('Пожалуйста, откройте эту страницу в браузере (Safari, Chrome) для входа через Google.\n\nНажмите ⋯ (три точки) → Открыть в браузере');
+    const currentUrl = window.location.href;
+    
+    // Для iOS - пытаемся открыть через Safari
+    if (isIOS()) {
+      // Telegram на iOS поддерживает специальную схему
+      if (isTelegramBrowser()) {
+        // Пытаемся открыть через Safari URL scheme
+        window.location.href = `x-safari-https://${window.location.host}${window.location.pathname}`;
+        
+        // Fallback через 1 секунду если не сработало
+        setTimeout(() => {
+          // Показываем инструкцию
+          alert('Нажмите на ⋯ (три точки) в правом верхнем углу\n→ Выберите "Открыть в Safari"');
+        }, 1000);
+      } else {
+        // Для других in-app браузеров на iOS
+        alert('Нажмите на кнопку "Открыть в Safari" или скопируйте ссылку:\n\n' + currentUrl);
+      }
+    } 
+    // Для Android
+    else if (isAndroid()) {
+      // Пытаемся открыть через intent
+      const intent = `intent://${window.location.host}${window.location.pathname}#Intent;scheme=https;package=com.android.chrome;end`;
+      window.location.href = intent;
+      
+      // Fallback через 1 секунду
+      setTimeout(() => {
+        alert('Нажмите ⋯ (три точки) → "Открыть в браузере"\n\nИли скопируйте ссылку:\n' + currentUrl);
+      }, 1000);
+    }
+    // Для остальных
+    else {
+      alert('Пожалуйста, откройте эту страницу в браузере (Safari, Chrome):\n\n' + currentUrl);
+    }
+  };
+
+  const copyLinkToClipboard = async () => {
+    const url = window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+      alert('✅ Ссылка скопирована!\n\nТеперь откройте Safari или Chrome и вставьте ссылку в адресную строку.');
+    } catch (err) {
+      // Fallback для старых браузеров
+      const textArea = document.createElement('textarea');
+      textArea.value = url;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        alert('✅ Ссылка скопирована!\n\nТеперь откройте Safari или Chrome и вставьте ссылку в адресную строку.');
+      } catch (err) {
+        alert('Скопируйте эту ссылку:\n\n' + url);
+      }
+      document.body.removeChild(textArea);
     }
   };
 
@@ -84,10 +142,10 @@ export default function LoginScreen({ onSignIn, loading }) {
               <span style={{ fontSize: "20px", flexShrink: 0 }}>⚠️</span>
               <div>
                 <p style={{ fontSize: "13px", fontWeight: 700, color: "#fb923c", margin: "0 0 6px 0" }}>
-                  Вход через Google не работает в Telegram
+                  Вход через Google не работает в {isTelegramBrowser() ? 'Telegram' : 'этом приложении'}
                 </p>
                 <p style={{ fontSize: "12px", color: "#fdba74", margin: 0, lineHeight: 1.4 }}>
-                  Откройте эту страницу в браузере (Safari, Chrome) для входа
+                  Откройте страницу в Safari или Chrome для входа
                 </p>
               </div>
             </div>
@@ -109,32 +167,60 @@ export default function LoginScreen({ onSignIn, loading }) {
           ))}
         </div>
 
-        {/* Кнопка "Открыть в браузере" для in-app */}
+        {/* Кнопки для in-app браузеров */}
         {inApp ? (
-          <button
-            onClick={openInExternalBrowser}
-            style={{
-              width: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "10px",
-              padding: "13px 20px",
-              background: "linear-gradient(135deg, #f97316, #fb923c)",
-              border: "none",
-              borderRadius: "12px",
-              fontSize: "15px",
-              fontWeight: 700,
-              color: "#fff",
-              cursor: "pointer",
-              touchAction: "manipulation",
-              transition: "all 0.2s ease",
-              boxShadow: "0 4px 16px rgba(249,115,22,0.4)",
-            }}
-          >
-            <span style={{ fontSize: "18px" }}>🌐</span>
-            Открыть в браузере
-          </button>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {/* Кнопка "Открыть в браузере" */}
+            <button
+              onClick={openInExternalBrowser}
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "10px",
+                padding: "13px 20px",
+                background: "linear-gradient(135deg, #f97316, #fb923c)",
+                border: "none",
+                borderRadius: "12px",
+                fontSize: "15px",
+                fontWeight: 700,
+                color: "#fff",
+                cursor: "pointer",
+                touchAction: "manipulation",
+                transition: "all 0.2s ease",
+                boxShadow: "0 4px 16px rgba(249,115,22,0.4)",
+              }}
+            >
+              <span style={{ fontSize: "18px" }}>🌐</span>
+              Открыть в {isIOS() ? 'Safari' : 'браузере'}
+            </button>
+
+            {/* Кнопка "Скопировать ссылку" */}
+            <button
+              onClick={copyLinkToClipboard}
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "10px",
+                padding: "11px 20px",
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "12px",
+                fontSize: "14px",
+                fontWeight: 600,
+                color: "#94a3b8",
+                cursor: "pointer",
+                touchAction: "manipulation",
+                transition: "all 0.2s ease",
+              }}
+            >
+              <span style={{ fontSize: "16px" }}>📋</span>
+              Скопировать ссылку
+            </button>
+          </div>
         ) : (
           /* Кнопка Google для обычных браузеров */
           <button
