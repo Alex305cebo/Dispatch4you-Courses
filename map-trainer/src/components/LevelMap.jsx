@@ -12,12 +12,15 @@ export default function LevelMap({ progress, user, onSelectLevel, onReset, onLog
   const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   return (
-    <div style={{
-      height: "100dvh",
+    <div className="level-map-root" style={{
+      minHeight: "100dvh",
+      maxHeight: "100dvh",
       background: "linear-gradient(160deg,#060d1a 0%,#0f172a 50%,#1a1040 100%)",
       display: "flex",
       flexDirection: "column",
-      overflow: "hidden",
+      overflowY: "auto",
+      overflowX: "hidden",
+      WebkitOverflowScrolling: "touch",
       padding: "14px",
       boxSizing: "border-box",
       maxWidth: "800px",
@@ -292,13 +295,10 @@ export default function LevelMap({ progress, user, onSelectLevel, onReset, onLog
       </div>
 
       {/* ── Список уровней ── */}
-      <div style={{
-        flex: 1,
+      <div className="level-list" style={{
         display: "flex",
         flexDirection: "column",
         gap: "6px",
-        minHeight: 0,
-        justifyContent: "space-between",
       }}>
         {LEVELS.map((level) => {
           const lp = progress.levels[level.id];
@@ -377,6 +377,7 @@ function LevelCard({ level, levelProgress, isUnlocked, isCompleted, isCurrent, i
 
   return (
     <button
+      className="level-card"
       onClick={onSelect}
       disabled={isLocked}
       style={{
@@ -404,8 +405,7 @@ function LevelCard({ level, levelProgress, isUnlocked, isCompleted, isCurrent, i
         position: "relative",
         overflow: "hidden",
         width: "100%",
-        flex: 1,
-        minHeight: 0,
+        flexShrink: 0,
       }}
     >
       {/* Свечение для текущего */}

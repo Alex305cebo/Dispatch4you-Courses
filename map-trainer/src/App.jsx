@@ -56,11 +56,19 @@ export default function App() {
   const handleTimeout = useCallback(() => {
     if (feedback) return;
     showDelta(-PENALTIES.timeout);
+    const mode = activeLevel?.mode;
+    let timeoutMsg;
+    if (mode === "find-city") {
+      const correctStateName = STATES.find((s) => s.id === currentQuestion?.stateId)?.name || currentQuestion?.stateId;
+      timeoutMsg = `⏱ Время вышло! ${currentQuestion?.cityName} находится в штате ${correctStateName}`;
+    } else {
+      timeoutMsg = `⏱ Время вышло! Правильный ответ: ${currentQuestion?.stateName || currentQuestion?.cityName}`;
+    }
     setFeedback({
       correct: false,
       pointsChange: -PENALTIES.timeout,
       selectedAnswer: null,
-      message: `⏱ Время вышло! Правильный ответ: ${currentQuestion?.stateName || currentQuestion?.cityName}`,
+      message: timeoutMsg,
     });
     setSelectedState("__timeout__");
     setScore((prev) => ({
@@ -70,7 +78,7 @@ export default function App() {
       points: Math.max(0, prev.points - PENALTIES.timeout),
     }));
     if (currentQuestion) recordResult(currentQuestion.stateId, currentQuestion.stateName, false);
-  }, [feedback, currentQuestion, recordResult]); // eslint-disable-line
+  }, [feedback, currentQuestion, activeLevel, recordResult]); // eslint-disable-line
 
   const timer = useTimer(activeLevel?.timePerQ || null, handleTimeout);
 
@@ -170,6 +178,34 @@ export default function App() {
         points:  Math.max(0, prev.points - (correct ? 0 : penalty)),
       }));
       recordResult(currentQuestion.stateId, currentQuestion.stateName, correct);
+      return;
+    }
+
+    if (mode === "find-city") {
+      setSelectedState(stateId);
+      // Для города правильный штат — тот в котором этот город находится
+      const correct = stateId === currentQuestion.stateId;
+      const clickedState = STATES.find((s) => s.id === stateId);
+      const correctStateName = STATES.find((s) => s.id === currentQuestion.stateId)?.name || currentQuestion.stateId;
+      const penalty = hintUsed ? PENALTIES.wrong + PENALTIES.hint : PENALTIES.wrong;
+      timer.stop();
+      showDelta(correct ? 0 : -penalty);
+      setFeedback({
+        correct,
+        pointsChange: correct ? 0 : -penalty,
+        selectedAnswer: stateId,
+        message: correct
+          ? `✓ Верно! ${currentQuestion.cityName} — это штат ${correctStateName}.`
+          : `Это ${clickedState?.name || stateId}. ${currentQuestion.cityName} находится в штате ${correctStateName}.`,
+      });
+      setScore((prev) => ({
+        correct: prev.correct + (correct ? 1 : 0),
+        wrong:   prev.wrong   + (correct ? 0 : 1),
+        skipped: prev.skipped,
+        points:  Math.max(0, prev.points - (correct ? 0 : penalty)),
+      }));
+      recordResult(currentQuestion.stateId, currentQuestion.cityName, correct);
+      return;
     }
   }, [feedback, activeLevel, currentQuestion, hintUsed, timer, showDelta, recordResult]);
 

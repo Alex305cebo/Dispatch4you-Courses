@@ -38,39 +38,38 @@ export default function LevelResult({
   const barColor = pct > 60 ? "#06b6d4" : pct > 30 ? "#f97316" : "#ef4444";
 
   return (
-    <div style={{
-      minHeight: "100dvh",
+    <div className="level-result-root" style={{
+      height: "100dvh",
       background: "linear-gradient(160deg,#060d1a 0%,#0f172a 40%,#1a1040 100%)",
-      display: "flex",
-      flexDirection: "column",
       padding: "20px",
       overflowY: "auto",
+      overflowX: "hidden",
       boxSizing: "border-box",
+      WebkitOverflowScrolling: "touch",
     }}>
       <div style={{
         width: "100%",
         maxWidth: "420px",
-        margin: "auto",
-        flex: "0 1 auto",
+        margin: "0 auto",
       }}>
 
         {/* Заголовок уровня */}
-        <div style={{ textAlign: "center", marginBottom: "20px" }}>
-          <div style={{ fontSize: "36px", marginBottom: "6px" }}>{level.icon}</div>
-          <p style={{ fontSize: "13px", color: "#64748b", margin: "0 0 2px 0" }}>
+        <div className="lr-header" style={{ textAlign: "center", marginBottom: "16px" }}>
+          <div className="lr-header-icon" style={{ fontSize: "36px", marginBottom: "6px", lineHeight: 1 }}>{level.icon}</div>
+          <p style={{ fontSize: "12px", color: "#94a3b8", margin: "0 0 2px 0" }}>
             Уровень {level.id}
           </p>
-          <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#fff", margin: 0 }}>
+          <h2 className="lr-header-title" style={{ fontSize: "20px", fontWeight: 800, color: "#fff", margin: 0 }}>
             {level.title}
           </h2>
         </div>
 
         {/* Карточка результата */}
-        <div style={{
+        <div className="lr-card" style={{
           background: "linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))",
           border: `1px solid rgba(${level.colorRgb},0.3)`,
           borderRadius: "20px",
-          padding: "24px",
+          padding: "20px 18px",
           marginBottom: "12px",
           textAlign: "center",
         }}>

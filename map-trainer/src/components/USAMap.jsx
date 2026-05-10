@@ -270,9 +270,6 @@ export default function USAMap({
             {({ geographies }) =>
               geographies.map((geo) => {
                 const stateId = FIPS_TO_STATE[geo.id];
-                const tzColor = stateId && mode === "timezone"
-                  ? TZ_COLORS[getStateData(stateId)?.tz]
-                  : "#06b6d4";
                 return (
                   <Geography
                     key={geo.rsmKey}
@@ -290,7 +287,7 @@ export default function USAMap({
                       hover: {
                         fill: selectedState
                           ? getStateColor(geo.id)
-                          : (tzColor || levelColor),
+                          : levelColor,
                         stroke: "#0f172a",
                         strokeWidth: 0.8,
                         outline: "none",

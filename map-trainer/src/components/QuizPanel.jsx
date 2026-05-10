@@ -331,17 +331,12 @@ export default function QuizPanel({
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = "rgba(6,182,212,0.12)";
                 e.currentTarget.style.borderColor = "rgba(6,182,212,0.4)";
-                // Подсвечиваем на карте только для timezone (не для region!)
-                if (mode === "timezone") {
-                  onOptionHover?.(opt.value);
-                }
+                // ⚠️ НЕ подсвечиваем карту на hover — это раскрывало бы правильный ответ.
+                // Подсветка зоны показывается только ПОСЛЕ ответа (через correctTz в App.jsx).
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = "rgba(255,255,255,0.05)";
                 e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-                if (mode === "timezone") {
-                  onOptionHover?.(null);
-                }
               }}
               style={{
                 padding: "11px 14px",
