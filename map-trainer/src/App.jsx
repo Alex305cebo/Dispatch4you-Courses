@@ -12,6 +12,7 @@ import { useTimer }    from "./hooks/useTimer";
 import { useStats }    from "./hooks/useStats";
 import { useProgress } from "./hooks/useProgress";
 import { useAuth }     from "./hooks/useAuth";
+import { useSounds }   from "./hooks/useSounds";
 
 // ── Константы ────────────────────────────────────────────────
 const POINTS_PER_Q = 10;
@@ -29,6 +30,7 @@ function shuffle(arr) {
 export default function App() {
   const { user, loading: authLoading, signIn, logOut } = useAuth();
   const { progress, syncing, completeLevel, resetProgress } = useProgress(user?.uid || null, user);
+  const sounds = useSounds();
 
   // Экраны: "map" | "quiz" | "result"
   const [screen,        setScreen]        = useState("map");
@@ -56,6 +58,7 @@ export default function App() {
   const handleTimeout = useCallback(() => {
     if (feedback) return;
     showDelta(-PENALTIES.timeout);
+    sounds.wrong();
     const mode = activeLevel?.mode;
     let timeoutMsg;
     if (mode === "find-city") {
@@ -122,6 +125,7 @@ export default function App() {
   const processAnswer = useCallback((correct, selectedAnswer, penalty) => {
     timer.stop();
     showDelta(correct ? 0 : -penalty);
+    correct ? sounds.correct() : sounds.wrong();
     
     // Устанавливаем selectedState для режимов с вариантами ответа
     setSelectedState(selectedAnswer);
@@ -163,6 +167,7 @@ export default function App() {
       const penalty = hintUsed ? PENALTIES.wrong + PENALTIES.hint : PENALTIES.wrong;
       timer.stop();
       showDelta(correct ? 0 : -penalty);
+      correct ? sounds.correct() : sounds.wrong();
       setFeedback({
         correct,
         pointsChange: correct ? 0 : -penalty,
@@ -190,6 +195,7 @@ export default function App() {
       const penalty = hintUsed ? PENALTIES.wrong + PENALTIES.hint : PENALTIES.wrong;
       timer.stop();
       showDelta(correct ? 0 : -penalty);
+      correct ? sounds.correct() : sounds.wrong();
       setFeedback({
         correct,
         pointsChange: correct ? 0 : -penalty,
@@ -251,6 +257,7 @@ export default function App() {
   const handleNext = useCallback(() => {
     if (currentIdx + 1 >= activeLevel.questions) {
       timer.stop();
+      sounds.levelComplete();
       // Считаем XP
       const finalScore = score;
       const pct = Math.round((finalScore.points / maxPoints) * 100);
@@ -363,7 +370,7 @@ export default function App() {
       }}>
         {/* Левая: кнопка сайта + кнопка уровней */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          {/* Кнопка на главную страницу с логотипом */}
+          {/* Кнопка на главную страницу Dispatch4You */}
           <a
             href="https://dispatch4you.com/"
             target="_blank"
@@ -372,36 +379,27 @@ export default function App() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              padding: "6px 12px",
-              borderRadius: "10px",
-              background: "rgba(6,182,212,0.1)",
-              border: "2px solid rgba(6,182,212,0.3)",
+              width: "36px", height: "36px",
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #3d2e14, #2a1f0e)",
+              border: "2px solid #8b6914",
               textDecoration: "none",
-              transition: "all 0.3s ease",
+              transition: "all 0.2s ease",
               flexShrink: 0,
-              boxShadow: "0 0 15px rgba(6,182,212,0.3)",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+              fontSize: "14px",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(6,182,212,0.15)";
-              e.currentTarget.style.borderColor = "rgba(6,182,212,0.5)";
-              e.currentTarget.style.boxShadow = "0 0 25px rgba(6,182,212,0.5)";
+              e.currentTarget.style.borderColor = "#d4a853";
+              e.currentTarget.style.boxShadow = "0 2px 10px rgba(212,168,83,0.3)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(6,182,212,0.1)";
-              e.currentTarget.style.borderColor = "rgba(6,182,212,0.3)";
-              e.currentTarget.style.boxShadow = "0 0 15px rgba(6,182,212,0.3)";
+              e.currentTarget.style.borderColor = "#8b6914";
+              e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.4)";
             }}
-            title="Dispatch For You"
+            title="Dispatch For You — Главная"
           >
-            <span style={{
-              fontSize: "13px",
-              fontWeight: 900,
-              color: "#06b6d4",
-              textShadow: "0 0 8px rgba(6,182,212,0.8)",
-              letterSpacing: "0.3px",
-            }}>
-              Home
-            </span>
+            🏠
           </a>
 
           <button
@@ -416,6 +414,27 @@ export default function App() {
             }}
           >
             ← Уровни
+          </button>
+
+          {/* Кнопка звука */}
+          <button
+            onClick={() => {
+              const newVal = !sounds.enabled;
+              sounds.setEnabled(newVal);
+              // Force re-render
+              setScore((s) => ({ ...s }));
+            }}
+            style={{
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: "8px",
+              color: "#94a3b8", fontSize: "15px",
+              padding: "7px 10px", cursor: "pointer",
+              minHeight: "36px", touchAction: "manipulation",
+            }}
+            title={sounds.enabled ? "Выключить звук" : "Включить звук"}
+          >
+            {sounds.enabled ? "🔊" : "🔇"}
           </button>
         </div>
 

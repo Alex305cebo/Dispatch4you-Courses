@@ -8,9 +8,11 @@ import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey:            "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
-  // authDomain = наш домен. /__/auth/ self-hosted чтобы redirect работал
-  // во всех современных браузерах (Option 4 из Firebase docs).
-  authDomain:        "dispatch4you.com",
+  // В production используем свой домен для auth (Option 4 из Firebase docs).
+  // На localhost используем стандартный Firebase authDomain для popup.
+  authDomain:        window.location.hostname === "localhost"
+                       ? "dispatch4you-80e0f.firebaseapp.com"
+                       : "dispatch4you.com",
   projectId:         "dispatch4you-80e0f",
   storageBucket:     "dispatch4you-80e0f.appspot.com",
   messagingSenderId: "349235354473",

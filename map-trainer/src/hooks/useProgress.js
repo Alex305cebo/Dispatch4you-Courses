@@ -56,6 +56,11 @@ export function useProgress(uid = null, userData = null) {
   const [syncing,   setSyncing]   = useState(false);
   const saveTimerRef = useRef(null);
 
+  // ── Админ-режим: localhost + ?admin=1 → всё открыто ──────────
+  const isAdmin = typeof window !== "undefined"
+    && window.location.hostname === "localhost"
+    && new URLSearchParams(window.location.search).get("admin") === "1";
+
   // ── При смене uid — загружаем из Firestore ──────────────────
   useEffect(() => {
     if (!uid) return;
@@ -155,7 +160,30 @@ export function useProgress(uid = null, userData = null) {
     }
   }, [uid, userData]);
 
-  return { progress, syncing, completeLevel, resetProgress };
+  return {
+    progress: isAdmin ? makeAdminProgress(progress) : progress,
+    syncing,
+    completeLevel,
+    resetProgress,
+  };
+}
+
+// ── Админский прогресс: все уровни открыты и пройдены ──────
+function makeAdminProgress(real) {
+  return {
+    ...real,
+    xp: Math.max(real.xp, 2400),
+    levels: LEVELS.reduce((acc, l) => {
+      acc[l.id] = {
+        unlocked: true,
+        bestPct: Math.max(real.levels?.[l.id]?.bestPct || 0, 85),
+        bestScore: 17,
+        attempts: Math.max(real.levels?.[l.id]?.attempts || 0, 1),
+        completed: true,
+      };
+      return acc;
+    }, {}),
+  };
 }
 
 // ── Мерж локального и удалённого прогресса ──────────────────
