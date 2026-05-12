@@ -52,6 +52,7 @@ export default function App() {
   const [streak,        setStreak]        = useState(0);
   const [answeredStates, setAnsweredStates] = useState({}); // {stateId: "correct"|"wrong"}
   const [shakePanel,    setShakePanel]    = useState(false);
+  const [quizReady,     setQuizReady]     = useState(false);
 
   const { weakStates, recordResult, reset: resetStats } = useStats();
 
@@ -113,20 +114,21 @@ export default function App() {
     setStreak(0);
     setAnsweredStates({});
     setShakePanel(false);
+    setQuizReady(false);
     resetStats();
     setScreen("quiz");
   }, [resetStats]);
 
-  // Запуск таймера при смене вопроса
+  // Запуск таймера при смене вопроса (только если quizReady)
   useEffect(() => {
-    if (screen === "quiz" && currentQuestion && activeLevel?.timePerQ) {
+    if (screen === "quiz" && currentQuestion && activeLevel?.timePerQ && quizReady) {
       timer.start();
       setHintUsed(false);
       setHintText(null);
       setHoveredTz(null);
       setHoveredRegion(null);
     }
-  }, [currentIdx, screen]); // eslint-disable-line
+  }, [currentIdx, screen, quizReady]); // eslint-disable-line
 
   // ── Обработка ответа ──
   const processAnswer = useCallback((correct, selectedAnswer, penalty) => {
@@ -526,6 +528,154 @@ export default function App() {
         }} />
       </div>
 
+      {/* ── Инструкция перед стартом уровня ── */}
+      {!quizReady && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 1000,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "rgba(6,13,26,0.92)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          padding: "20px",
+          animation: "fadeIn 0.3s ease",
+        }}>
+          <div style={{
+            background: "linear-gradient(160deg, #0f172a 0%, #1a1040 100%)",
+            border: `2px solid rgba(${activeLevel?.colorRgb || "6,182,212"},0.4)`,
+            borderRadius: "24px",
+            padding: "32px 28px",
+            maxWidth: "420px",
+            width: "100%",
+            textAlign: "center",
+            boxShadow: `0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(${activeLevel?.colorRgb || "6,182,212"},0.1)`,
+          }}>
+            {/* Иконка уровня */}
+            <div style={{
+              width: "64px", height: "64px",
+              borderRadius: "50%",
+              background: `rgba(${activeLevel?.colorRgb || "6,182,212"},0.15)`,
+              border: `2px solid ${activeLevel?.color || "#06b6d4"}`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "28px",
+              margin: "0 auto 16px",
+            }}>
+              {activeLevel?.icon}
+            </div>
+
+            {/* Название уровня */}
+            <h2 style={{
+              fontSize: "22px",
+              fontWeight: 800,
+              color: "#fff",
+              margin: "0 0 4px 0",
+            }}>
+              Уровень {activeLevel?.id}: {activeLevel?.title}
+            </h2>
+            <p style={{
+              fontSize: "14px",
+              color: "#94a3b8",
+              margin: "0 0 16px 0",
+            }}>
+              {activeLevel?.subtitle}
+            </p>
+
+            {/* Описание / инструкция */}
+            <div style={{
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: "12px",
+              padding: "14px 16px",
+              marginBottom: "20px",
+              textAlign: "left",
+            }}>
+              <p style={{
+                fontSize: "14px",
+                color: "#e2e8f0",
+                margin: 0,
+                lineHeight: 1.6,
+              }}>
+                {activeLevel?.description}
+              </p>
+            </div>
+
+            {/* Параметры уровня */}
+            <div style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "16px",
+              marginBottom: "24px",
+              flexWrap: "wrap",
+            }}>
+              <div style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: "10px",
+                padding: "8px 14px",
+                textAlign: "center",
+              }}>
+                <p style={{ fontSize: "11px", color: "#64748b", margin: "0 0 2px 0" }}>Вопросов</p>
+                <p style={{ fontSize: "16px", fontWeight: 700, color: "#fff", margin: 0 }}>{activeLevel?.questions}</p>
+              </div>
+              <div style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: "10px",
+                padding: "8px 14px",
+                textAlign: "center",
+              }}>
+                <p style={{ fontSize: "11px", color: "#64748b", margin: "0 0 2px 0" }}>Время</p>
+                <p style={{ fontSize: "16px", fontWeight: 700, color: "#fff", margin: 0 }}>
+                  {activeLevel?.timePerQ ? `${activeLevel.timePerQ}с` : "∞"}
+                </p>
+              </div>
+              <div style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: "10px",
+                padding: "8px 14px",
+                textAlign: "center",
+              }}>
+                <p style={{ fontSize: "11px", color: "#64748b", margin: "0 0 2px 0" }}>XP</p>
+                <p style={{ fontSize: "16px", fontWeight: 700, color: activeLevel?.color || "#06b6d4", margin: 0 }}>+{activeLevel?.xpReward}</p>
+              </div>
+            </div>
+
+            {/* Кнопка Начать */}
+            <button
+              onClick={() => setQuizReady(true)}
+              style={{
+                width: "100%",
+                padding: "16px 24px",
+                background: `linear-gradient(135deg, ${activeLevel?.color || "#06b6d4"}, ${activeLevel?.color || "#06b6d4"}cc)`,
+                border: "none",
+                borderRadius: "14px",
+                color: "#fff",
+                fontSize: "18px",
+                fontWeight: 800,
+                cursor: "pointer",
+                touchAction: "manipulation",
+                boxShadow: `0 4px 20px rgba(${activeLevel?.colorRgb || "6,182,212"},0.3)`,
+                transition: "transform 0.15s ease, box-shadow 0.15s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "scale(1.03)";
+                e.currentTarget.style.boxShadow = `0 6px 28px rgba(${activeLevel?.colorRgb || "6,182,212"},0.45)`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "scale(1)";
+                e.currentTarget.style.boxShadow = `0 4px 20px rgba(${activeLevel?.colorRgb || "6,182,212"},0.3)`;
+              }}
+            >
+              🚀 Начать
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Layout ── */}
       <div className="quiz-layout" style={{
         flex: 1,
@@ -565,6 +715,8 @@ export default function App() {
             onSkip={handleSkip}
             streak={streak}
             shakePanel={shakePanel}
+            quizReady={quizReady}
+            onStartQuiz={() => setQuizReady(true)}
           />
         </div>
 
@@ -600,6 +752,10 @@ export default function App() {
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50%       { opacity: 0.5; }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
         }
       `}</style>
     </div>
