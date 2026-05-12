@@ -738,6 +738,7 @@ export default function App() {
             correctRegion={correctRegion}
             levelColor={activeLevel?.color}
             answeredStates={answeredStates}
+            autoZoomState={!feedback ? currentQuestion?.stateId : null}
           />
         </div>
 

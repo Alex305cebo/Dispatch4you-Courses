@@ -64,12 +64,41 @@ export default function USAMap({
   correctRegion = null,
   levelColor = "#06b6d4",
   answeredStates = {},
+  autoZoomState = null,
 }) {
   const containerRef = useRef(null);
   const [zoom, setZoom]           = useState(1);
   const [translate, setTranslate] = useState([0, 0]);
   const [tilt, setTilt]           = useState({ x: 0, y: 0 });
   const [hoveredGeo, setHoveredGeo] = useState(null);
+
+  // Мелкие штаты Northeast — нужен auto-zoom
+  const SMALL_STATES = new Set(["CT", "RI", "DE", "NJ", "MD", "MA", "NH", "VT", "ME", "DC"]);
+  // Позиции для auto-zoom (translate при zoom 2.0, относительно центра карты)
+  const NORTHEAST_ZOOM = { zoom: 2.0, tx: -180, ty: -60 };
+
+  // Auto-zoom при смене вопроса на мелкий штат
+  const prevAutoZoomRef = useRef(null);
+  useEffect(() => {
+    if (!autoZoomState || autoZoomState === prevAutoZoomRef.current) return;
+    prevAutoZoomRef.current = autoZoomState;
+
+    if (SMALL_STATES.has(autoZoomState)) {
+      // Зумим на Northeast
+      const [w, h] = containerRef.current
+        ? [containerRef.current.clientWidth, containerRef.current.clientHeight]
+        : [800, 500];
+      const z = NORTHEAST_ZOOM.zoom;
+      const tx = w * 0.25 * -1; // сдвиг вправо (Northeast справа)
+      const ty = h * 0.15 * -1; // сдвиг вверх (Northeast сверху)
+      setZoom(z);
+      setTranslate([tx, ty]);
+    } else if (zoom > 1.05) {
+      // Сбрасываем зум для обычных штатов
+      setZoom(1);
+      setTranslate([0, 0]);
+    }
+  }, [autoZoomState]); // eslint-disable-line
 
   const touchRef = useRef({
     lastTap:   0,
