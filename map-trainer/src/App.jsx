@@ -443,136 +443,85 @@ export default function App() {
       minHeight: 0,
     }}>
 
-      {/* ── Шапка ── */}
+      {/* ── Шапка — компактная, в стиле Duolingo ── */}
       <div style={{
         display: "flex",
         alignItems: "center",
-        justifyContent: "space-between",
-        marginBottom: "4px",
+        gap: "10px",
+        marginBottom: "6px",
         flexShrink: 0,
+        padding: "2px 0",
       }}>
-        {/* Левая: кнопка сайта + кнопка уровней */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          {/* Кнопка на главную страницу Dispatch4You */}
-          <a
-            href="https://dispatch4you.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "36px", height: "36px",
-              borderRadius: "50%",
-              background: "linear-gradient(135deg, #3d2e14, #2a1f0e)",
-              border: "2px solid #8b6914",
-              textDecoration: "none",
-              transition: "all 0.2s ease",
-              flexShrink: 0,
-              boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
-              fontSize: "14px",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "#d4a853";
-              e.currentTarget.style.boxShadow = "0 2px 10px rgba(212,168,83,0.3)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "#8b6914";
-              e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.4)";
-            }}
-            title="Dispatch For You — Главная"
-          >
-            🏠
-          </a>
+        {/* Кнопка закрытия / назад */}
+        <button
+          onClick={() => { timer.stop(); setScreen("map"); }}
+          style={{
+            width: "32px", height: "32px",
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            color: "#94a3b8", fontSize: "16px",
+            cursor: "pointer", touchAction: "manipulation",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          ✕
+        </button>
 
-          <button
-            onClick={() => { timer.stop(); setScreen("map"); }}
-            style={{
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "8px",
-              color: "#94a3b8", fontSize: "13px",
-              padding: "7px 14px", cursor: "pointer",
-              minHeight: "36px", touchAction: "manipulation",
-            }}
-          >
-            ← Уровни
-          </button>
-
-          {/* Кнопка звука */}
-          <button
-            onClick={() => {
-              const newVal = !sounds.enabled;
-              sounds.setEnabled(newVal);
-              // Force re-render
-              setScore((s) => ({ ...s }));
-            }}
-            style={{
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "8px",
-              color: "#94a3b8", fontSize: "15px",
-              padding: "7px 10px", cursor: "pointer",
-              minHeight: "36px", touchAction: "manipulation",
-            }}
-            title={sounds.enabled ? "Выключить звук" : "Включить звук"}
-          >
-            {sounds.enabled ? "🔊" : "🔇"}
-          </button>
+        {/* Прогресс-бар — занимает всю середину */}
+        <div style={{
+          flex: 1,
+          height: "10px",
+          background: "rgba(255,255,255,0.08)",
+          borderRadius: "5px",
+          overflow: "hidden",
+          position: "relative",
+        }}>
+          <div style={{
+            height: "100%",
+            width: `${((currentIdx + (feedback ? 1 : 0)) / activeLevel?.questions) * 100}%`,
+            background: `linear-gradient(90deg, ${activeLevel?.color}, ${activeLevel?.color}cc)`,
+            borderRadius: "5px",
+            transition: "width 0.4s ease",
+            boxShadow: `0 0 6px ${activeLevel?.color}44`,
+          }} />
         </div>
 
-        {/* Центр: уровень + очки */}
-        <div style={{ position: "relative", textAlign: "center" }}>
-          <div style={{
-            display: "flex", alignItems: "center", gap: "6px",
-            background: "rgba(255,255,255,0.06)",
-            border: `1px solid rgba(${activeLevel?.colorRgb},0.3)`,
-            borderRadius: "10px", padding: "5px 14px",
+        {/* Очки */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: "4px",
+          flexShrink: 0, position: "relative",
+        }}>
+          <span style={{ fontSize: "14px" }}>⭐</span>
+          <span style={{
+            fontSize: "15px", fontWeight: 800,
+            color: score.points > maxPoints * 0.6 ? activeLevel?.color
+                 : score.points > maxPoints * 0.3 ? "#f97316" : "#ef4444",
           }}>
-            <span style={{ fontSize: "14px" }}>⭐</span>
-            <span style={{
-              fontSize: "18px", fontWeight: 900,
-              color: score.points > maxPoints * 0.6 ? activeLevel?.color
-                   : score.points > maxPoints * 0.3 ? "#f97316" : "#ef4444",
-              transition: "color 0.3s",
-              minWidth: "36px", textAlign: "center",
-            }}>
-              {score.points}
-            </span>
-            <span style={{ fontSize: "11px", color: "#475569" }}>/ {maxPoints}</span>
-          </div>
+            {score.points}
+          </span>
 
           {pointsDelta && (
             <div key={pointsDelta.key} style={{
-              position: "absolute", top: "-22px", left: "50%",
-              transform: "translateX(-50%)",
-              fontSize: "14px", fontWeight: 700,
+              position: "absolute", top: "-18px", right: "0",
+              fontSize: "12px", fontWeight: 700,
               color: pointsDelta.value < 0 ? "#ef4444" : "#22c55e",
               animation: "floatUp 1.2s ease-out forwards",
               pointerEvents: "none", whiteSpace: "nowrap",
             }}>
-              {pointsDelta.value === 0 ? "✓ +10" : `−${Math.abs(pointsDelta.value)}`}
+              {pointsDelta.value === 0 ? "+10" : `${pointsDelta.value > 0 ? "+" : ""}${pointsDelta.value}`}
             </div>
           )}
         </div>
 
-        <span style={{ fontSize: "13px", color: activeLevel?.color, fontWeight: 700 }}>
+        {/* Счётчик вопросов */}
+        <span style={{
+          fontSize: "12px", color: "#64748b", fontWeight: 600,
+          flexShrink: 0,
+        }}>
           {currentIdx + 1}/{activeLevel?.questions}
         </span>
-      </div>
-
-      {/* ── Прогресс-бар ── */}
-      <div style={{
-        height: "3px", background: "rgba(255,255,255,0.06)",
-        borderRadius: "2px", marginBottom: "6px",
-        overflow: "hidden", flexShrink: 0,
-      }}>
-        <div style={{
-          height: "100%",
-          width: `${((currentIdx + (feedback ? 1 : 0)) / activeLevel?.questions) * 100}%`,
-          background: `linear-gradient(90deg,${activeLevel?.color},${activeLevel?.color}88)`,
-          borderRadius: "2px", transition: "width 0.3s ease",
-        }} />
       </div>
 
       {/* ── Инструкция перед стартом уровня ── */}
