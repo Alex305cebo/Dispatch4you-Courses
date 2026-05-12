@@ -9,6 +9,10 @@ export default function ParticlesBackground() {
   const animRef = useRef(null);
   const particlesRef = useRef([]);
 
+  // Отключаем на мобильных полностью
+  const isMobile = typeof window !== "undefined" && /iphone|ipad|ipod|android/i.test(navigator.userAgent);
+  if (isMobile) return null;
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { LEVELS, getRank, MAX_XP } from "../data/levels";
+import { XP_THRESHOLDS } from "../hooks/useProgress";
 import UserProfileModal from "./UserProfileModal";
 import LeaderboardModal from "./LeaderboardModal";
 import OnboardingModal from "./OnboardingModal";
@@ -273,8 +274,8 @@ function LevelCard({ level, levelProgress, isUnlocked, isCompleted, isCurrent, i
   const btnLabel = isLocked
     ? "🔒"
     : isCurrent
-      ? "Играть"
-      : "Пройти";
+      ? "Начать"
+      : "Повторить";
 
   return (
     <button
@@ -288,23 +289,23 @@ function LevelCard({ level, levelProgress, isUnlocked, isCompleted, isCurrent, i
         padding: 0,
         // Деревянный/кожаный фон
         background: isLocked
-          ? "linear-gradient(145deg, #0d1117 0%, #0a0e14 100%)"
+          ? "linear-gradient(145deg, #1a1510 0%, #12100c 100%)"
           : "linear-gradient(145deg, #1a1510 0%, #12100c 50%, #1a1510 100%)",
         border: isLocked
-          ? "1px solid rgba(255,255,255,0.03)"
+          ? "2px solid rgba(74,56,32,0.4)"
           : "2px solid #4a3820",
         borderRadius: "14px",
         cursor: isLocked ? "default" : "pointer",
         textAlign: "left",
         touchAction: "manipulation",
-        opacity: isLocked ? 0.3 : 1,
+        opacity: 1,
         position: "relative",
         overflow: "visible",
         width: "100%",
         minHeight: "110px",
         transition: "all 0.25s ease, transform 0.2s ease",
         boxShadow: isLocked
-          ? "none"
+          ? "0 2px 10px rgba(0,0,0,0.4)"
           : "0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,215,0,0.05)",
       }}
       onMouseEnter={(e) => {
@@ -360,7 +361,7 @@ function LevelCard({ level, levelProgress, isUnlocked, isCompleted, isCurrent, i
             maxHeight: "115%",
             objectFit: "contain",
             filter: isLocked
-              ? "grayscale(1) brightness(0.2)"
+              ? "saturate(0.6) brightness(0.7)"
               : "drop-shadow(0 3px 8px rgba(0,0,0,0.5))",
           }}
         />
@@ -397,16 +398,16 @@ function LevelCard({ level, levelProgress, isUnlocked, isCompleted, isCurrent, i
         {/* Название */}
         <div>
           <p style={{
-            fontSize: "14px", fontWeight: 800,
-            color: isLocked ? "#3d3530" : "#f5e6c8",
-            margin: "0 0 2px 0", lineHeight: 1.2,
+            fontSize: "17px", fontWeight: 800,
+            color: isLocked ? "#8b7355" : "#f5e6c8",
+            margin: "0 0 3px 0", lineHeight: 1.2,
             textShadow: isLocked ? "none" : "0 1px 2px rgba(0,0,0,0.5)",
           }}>
             {level.title}
           </p>
           <p style={{
-            fontSize: "11px",
-            color: isLocked ? "#2a2520" : "#8b7355",
+            fontSize: "13px",
+            color: isLocked ? "#8b7355" : "#8b7355",
             margin: 0, lineHeight: 1.3,
             overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
             paddingRight: isCompleted ? "38px" : 0,
@@ -419,11 +420,11 @@ function LevelCard({ level, levelProgress, isUnlocked, isCompleted, isCurrent, i
         {!isLocked && (
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div style={{
-              padding: "6px 16px",
+              padding: "7px 18px",
               background: btnColors[level.id],
               borderRadius: "18px",
               color: "#fff",
-              fontSize: "11px", fontWeight: 700,
+              fontSize: "13px", fontWeight: 700,
               boxShadow: `0 3px 10px rgba(${level.colorRgb},0.4)`,
               letterSpacing: "0.3px",
               border: "1px solid rgba(255,255,255,0.15)",
@@ -432,13 +433,21 @@ function LevelCard({ level, levelProgress, isUnlocked, isCompleted, isCurrent, i
             </div>
 
             <span style={{
-              fontSize: "11px",
+              fontSize: "13px",
               color: "#d4a853",
               fontWeight: 700,
               textShadow: "0 0 6px rgba(212,168,83,0.4)",
             }}>
               +{level.xpReward} XP
             </span>
+          </div>
+        )}
+        {isLocked && XP_THRESHOLDS[level.id] && (
+          <div style={{
+            fontSize: "13px", color: "#d4a853", fontWeight: 700,
+            display: "flex", alignItems: "center", gap: "6px",
+          }}>
+            <span style={{ fontSize: "18px" }}>🔒</span> Нужно {XP_THRESHOLDS[level.id]} XP
           </div>
         )}
       </div>

@@ -14,6 +14,19 @@ import {
 
 const STORAGE_KEY = "usa_map_trainer_progress";
 
+// XP-пороги для разблокировки уровней
+// Уровни 1-2: открыты сразу, 3-8: по XP
+export const XP_THRESHOLDS = { 3: 100, 4: 250, 5: 500, 6: 800, 7: 1200, 8: 1700 };
+
+function unlockByXp(progress) {
+  for (const [lvlId, threshold] of Object.entries(XP_THRESHOLDS)) {
+    const id = Number(lvlId);
+    if (progress.xp >= threshold && progress.levels[id]) {
+      progress.levels[id].unlocked = true;
+    }
+  }
+}
+
 // ── Локальные утилиты ────────────────────────────────────────
 function loadLocal() {
   try {
@@ -39,7 +52,7 @@ export function initProgress() {
     lastPlayDate: null,
     levels: LEVELS.reduce((acc, l) => {
       acc[l.id] = {
-        unlocked:  l.id === 1,
+        unlocked:  l.id <= 2, // Первые 2 уровня открыты сразу
         bestPct:   0,
         bestScore: 0,
         attempts:  0,
@@ -76,6 +89,8 @@ export function useProgress(uid = null, userData = null) {
         // Мержим: берём лучшее из локального и удалённого
         const local = loadLocal() || initProgress();
         const merged = mergeProgress(local, remote);
+        // Разблокируем уровни по XP
+        unlockByXp(merged);
         saveLocal(merged);
         setProgress(merged);
         
@@ -137,6 +152,17 @@ export function useProgress(uid = null, userData = null) {
         lastPlayDate: today,
         levels:       newLevels,
       };
+
+      // Разблокировка уровней по XP
+      // Уровни 1-2: открыты сразу
+      // Уровень 3: 100 XP, 4: 250 XP, 5: 500 XP, 6: 800 XP, 7: 1200 XP, 8: 1700 XP
+      const XP_THRESHOLDS = { 3: 100, 4: 250, 5: 500, 6: 800, 7: 1200, 8: 1700 };
+      for (const [lvlId, threshold] of Object.entries(XP_THRESHOLDS)) {
+        const id = Number(lvlId);
+        if (newProgress.xp >= threshold && newProgress.levels[id] && !newProgress.levels[id].unlocked) {
+          newProgress.levels[id] = { ...newProgress.levels[id], unlocked: true };
+        }
+      }
 
       saveLocal(newProgress);
       scheduleSave(newProgress);
