@@ -58,6 +58,27 @@ export default function LeaderboardModal({ currentUserId, currentUserEmail, onCl
     }
   };
 
+  // Админ: редактировать XP игрока
+  const editPlayerXp = async (uid, currentXp) => {
+    const input = prompt(`Введите новое значение XP (текущее: ${currentXp}).\nВведите 0 чтобы сбросить:`, currentXp);
+    if (input === null) return; // отмена
+    const newXp = parseInt(input, 10);
+    if (isNaN(newXp) || newXp < 0) {
+      alert("Некорректное значение. Введите число >= 0.");
+      return;
+    }
+    try {
+      await updateDoc(doc(db, "progress", uid), { xp: newXp });
+      setPlayers((prev) =>
+        prev.map((p) => p.uid === uid ? { ...p, xp: newXp } : p)
+          .sort((a, b) => (b.xp || 0) - (a.xp || 0))
+      );
+    } catch (err) {
+      console.error("[Admin] Failed to edit XP:", err);
+      alert("Ошибка при обновлении XP");
+    }
+  };
+
   // Закрытие по ESC
   useEffect(() => {
     const handleEsc = (e) => {
@@ -298,6 +319,19 @@ export default function LeaderboardModal({ currentUserId, currentUserEmail, onCl
                     {/* Админ-кнопки */}
                     {isAdmin && (
                       <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); editPlayerXp(player.uid, player.xp || 0); }}
+                          title="Изменить XP"
+                          style={{
+                            width: "22px", height: "22px", borderRadius: "4px",
+                            background: "rgba(6,182,212,0.15)", border: "1px solid rgba(6,182,212,0.3)",
+                            color: "#06b6d4", fontSize: "11px", cursor: "pointer",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            padding: 0,
+                          }}
+                        >
+                          ✏️
+                        </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); hidePlayer(player.uid); }}
                           title="Скрыть из рейтинга"
