@@ -1,7 +1,24 @@
 import { useRef, useState, useCallback, useEffect } from "react";
-import { ComposableMap, Geographies, Geography } from "react-simple-maps";
+import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps";
 import { STATES } from "../data/states";
 import { TZ_COLORS, REGION_COLORS } from "../data/quizConfig";
+
+// Центры штатов (lon, lat) для отображения аббревиатур
+const STATE_CENTERS = {
+  AL: [-86.8, 32.8], AK: [-153.5, 64.2], AZ: [-111.9, 34.2], AR: [-92.4, 34.8],
+  CA: [-119.7, 37.3], CO: [-105.5, 39.0], CT: [-72.7, 41.6], DE: [-75.5, 39.0],
+  FL: [-81.7, 28.7], GA: [-83.5, 32.7], HI: [-155.5, 20.0], ID: [-114.7, 44.4],
+  IL: [-89.4, 40.0], IN: [-86.3, 39.8], IA: [-93.5, 42.0], KS: [-98.3, 38.5],
+  KY: [-85.3, 37.8], LA: [-92.0, 31.0], ME: [-69.2, 45.4], MD: [-76.6, 39.0],
+  MA: [-71.8, 42.3], MI: [-84.7, 44.3], MN: [-94.3, 46.3], MS: [-89.7, 32.7],
+  MO: [-92.5, 38.4], MT: [-109.6, 47.0], NE: [-99.8, 41.5], NV: [-116.6, 39.3],
+  NH: [-71.6, 43.7], NJ: [-74.7, 40.1], NM: [-106.0, 34.5], NY: [-75.5, 43.0],
+  NC: [-79.4, 35.5], ND: [-100.5, 47.5], OH: [-82.8, 40.4], OK: [-97.5, 35.5],
+  OR: [-120.5, 44.0], PA: [-77.6, 41.0], RI: [-71.5, 41.7], SC: [-80.9, 33.9],
+  SD: [-100.2, 44.4], TN: [-86.3, 35.8], TX: [-99.0, 31.5], UT: [-111.7, 39.3],
+  VT: [-72.6, 44.1], VA: [-79.4, 37.5], WA: [-120.5, 47.4], WV: [-80.6, 38.9],
+  WI: [-89.8, 44.6], WY: [-107.5, 43.0],
+};
 
 // Маппинг FIPS-кодов (числовые ID из us-atlas GeoJSON) → двухбуквенные ID штатов
 const FIPS_TO_STATE = {
@@ -354,6 +371,30 @@ export default function USAMap({
               })
             }
           </Geographies>
+
+          {/* Аббревиатуры на отвеченных штатах */}
+          {Object.entries(answeredStates).map(([stateId, result]) => {
+            const coords = STATE_CENTERS[stateId];
+            if (!coords) return null;
+            return (
+              <Marker key={`label-${stateId}`} coordinates={coords}>
+                <text
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  style={{
+                    fontSize: "8px",
+                    fontWeight: 800,
+                    fill: result === "correct" ? "#4ade80" : "#fca5a5",
+                    pointerEvents: "none",
+                    textShadow: "0 0 3px rgba(0,0,0,0.8)",
+                    fontFamily: "system-ui, sans-serif",
+                  }}
+                >
+                  {stateId}
+                </text>
+              </Marker>
+            );
+          })}
         </ComposableMap>
       </div>
 
