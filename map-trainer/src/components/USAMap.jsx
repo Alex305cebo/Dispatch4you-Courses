@@ -382,12 +382,13 @@ export default function USAMap({
                   textAnchor="middle"
                   dominantBaseline="central"
                   style={{
-                    fontSize: "8px",
-                    fontWeight: 800,
-                    fill: result === "correct" ? "#4ade80" : "#fca5a5",
+                    fontSize: "11px",
+                    fontWeight: 900,
+                    fill: "#fff",
                     pointerEvents: "none",
-                    textShadow: "0 0 3px rgba(0,0,0,0.8)",
-                    fontFamily: "system-ui, sans-serif",
+                    textShadow: "0 0 4px rgba(0,0,0,1), 0 0 2px rgba(0,0,0,0.8)",
+                    fontFamily: "system-ui, -apple-system, sans-serif",
+                    letterSpacing: "0.5px",
                   }}
                 >
                   {stateId}

@@ -469,6 +469,28 @@ export default function App() {
           ✕
         </button>
 
+        {/* Кнопка звука */}
+        <button
+          onClick={() => {
+            const newVal = !sounds.enabled;
+            sounds.setEnabled(newVal);
+            setScore((s) => ({ ...s }));
+          }}
+          style={{
+            width: "32px", height: "32px",
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            color: "#94a3b8", fontSize: "14px",
+            cursor: "pointer", touchAction: "manipulation",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0,
+          }}
+          title={sounds.enabled ? "Выключить звук" : "Включить звук"}
+        >
+          {sounds.enabled ? "🔊" : "🔇"}
+        </button>
+
         {/* Прогресс-бар — занимает всю середину */}
         <div style={{
           flex: 1,
