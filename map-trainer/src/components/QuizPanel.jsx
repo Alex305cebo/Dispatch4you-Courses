@@ -393,7 +393,7 @@ export default function QuizPanel({
 
       {/* Варианты ответа (name-state / timezone / region) */}
       {!isMapClick && options && !feedback && (
-        <div style={{ display: "grid", gridTemplateColumns: options.length >= 4 ? "1fr 1fr" : "1fr", gap: "6px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
           {options.map((opt) => (
             <button
               key={opt.value}
@@ -407,7 +407,7 @@ export default function QuizPanel({
                 e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
               }}
               style={{
-                padding: "9px 12px",
+                padding: "9px 8px",
                 background: "rgba(255,255,255,0.05)",
                 border: "1px solid rgba(255,255,255,0.1)",
                 borderRadius: "10px",
@@ -418,6 +418,10 @@ export default function QuizPanel({
                 textAlign: "center",
                 touchAction: "manipulation",
                 transition: "all 0.15s ease",
+                minWidth: 0,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
               }}
             >
               {opt.label}
@@ -428,7 +432,7 @@ export default function QuizPanel({
 
       {/* Варианты после ответа — с подсветкой */}
       {!isMapClick && options && feedback && (
-        <div style={{ display: "grid", gridTemplateColumns: options.length >= 4 ? "1fr 1fr" : "1fr", gap: "6px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
           {options.map((opt) => {
             const isCorrect = opt.value === question?.correctAnswer;
             const isSelected = opt.value === feedback?.selectedAnswer;
