@@ -591,37 +591,42 @@ export default function QuizPanel({
           }}>
             <p style={{ fontSize: "11px", color: "#64748b", margin: "0 0 4px 0" }}>Правильный ответ:</p>
             <p style={{ fontSize: "18px", fontWeight: 800, color: "#22c55e", margin: "0 0 6px 0" }}>
-              {question?.cityName || getFullStateName(question)}
+              {/* Для find-state/name-state: название штата. Для timezone/region/capitals: correctAnswer. Для find-city: город */}
+              {mode === "find-city"
+                ? question?.cityName
+                : (mode === "timezone" || mode === "region" || mode === "regions-intro" || mode === "capitals")
+                  ? question?.correctAnswer
+                  : getFullStateName(question)
+              }
             </p>
-            {/* Транскрипция */}
+            {/* Название штата — всегда показываем с транскрипцией */}
             {(() => {
-              const name = question?.cityName || getFullStateName(question);
+              const name = getFullStateName(question);
               const pron = getPronunciation(name);
-              return pron && pron.en !== name ? (
-                <div style={{ borderTop: "1px solid rgba(34,197,94,0.15)", paddingTop: "8px", marginTop: "8px", display: "flex", justifyContent: "center", gap: "20px" }}>
-                  <div style={{ textAlign: "center" }}>
-                    <p style={{ fontSize: "9px", color: "#64748b", margin: "0 0 2px 0", textTransform: "uppercase", letterSpacing: "1px" }}>ENGLISH</p>
-                    <p style={{ fontSize: "16px", color: "#e2e8f0", margin: 0, fontFamily: "monospace" }}>[{pron.en}]</p>
-                  </div>
-                  <div style={{ textAlign: "center" }}>
-                    <p style={{ fontSize: "9px", color: "#64748b", margin: "0 0 2px 0", textTransform: "uppercase", letterSpacing: "1px" }}>КИРИЛЛИЦА</p>
-                    <p style={{ fontSize: "16px", color: "#e2e8f0", margin: 0, fontFamily: "monospace" }}>[{pron.ru}]</p>
-                  </div>
-                </div>
-              ) : null;
+              // Показываем штат отдельной строкой для режимов где правильный ответ — не штат
+              const showStateLabel = mode === "timezone" || mode === "region" || mode === "regions-intro" || mode === "capitals" || mode === "find-city";
+              return (
+                <>
+                  {showStateLabel && name && (
+                    <p style={{ fontSize: "14px", color: "#94a3b8", margin: "6px 0 4px 0" }}>
+                      Штат: <span style={{ color: "#e2e8f0", fontWeight: 700 }}>{name}</span>
+                    </p>
+                  )}
+                  {pron && pron.en !== name ? (
+                    <div style={{ borderTop: "1px solid rgba(34,197,94,0.15)", paddingTop: "8px", marginTop: "8px", display: "flex", justifyContent: "center", gap: "20px" }}>
+                      <div style={{ textAlign: "center" }}>
+                        <p style={{ fontSize: "9px", color: "#64748b", margin: "0 0 2px 0", textTransform: "uppercase", letterSpacing: "1px" }}>ENGLISH</p>
+                        <p style={{ fontSize: "16px", color: "#e2e8f0", margin: 0, fontFamily: "monospace" }}>[{pron.en}]</p>
+                      </div>
+                      <div style={{ textAlign: "center" }}>
+                        <p style={{ fontSize: "9px", color: "#64748b", margin: "0 0 2px 0", textTransform: "uppercase", letterSpacing: "1px" }}>КИРИЛЛИЦА</p>
+                        <p style={{ fontSize: "16px", color: "#e2e8f0", margin: 0, fontFamily: "monospace" }}>[{pron.ru}]</p>
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              );
             })()}
-            {/* Пояснение: для какого штата */}
-            {(mode === "timezone" || mode === "region" || mode === "regions-intro" || mode === "capitals") && (
-              <p style={{ fontSize: "14px", color: "#94a3b8", margin: "8px 0 0 0" }}>
-                Штат: {question?.stateName}
-                {(() => {
-                  const statePron = getPronunciation(question?.stateName);
-                  return statePron && statePron.en !== question?.stateName
-                    ? ` [${statePron.ru}]`
-                    : "";
-                })()}
-              </p>
-            )}
           </div>
 
           {/* Кнопка произношения — озвучивает правильный ответ */}
@@ -715,7 +720,7 @@ export default function QuizPanel({
             padding: "6px 10px",
           }}>
             <p style={{ fontSize: "12px", color: "#06b6d4", margin: 0, lineHeight: 1.4 }}>
-              💡 {question?.stateName || question?.cityName}: {question?.region || "—"}, {question?.tz || "—"}
+              💡 {question?.cityName || getFullStateName(question)}: {question?.region || "—"}, {question?.tz || "—"}
             </p>
           </div>
 
