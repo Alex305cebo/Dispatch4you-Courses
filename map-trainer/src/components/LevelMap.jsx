@@ -16,6 +16,8 @@ const LEVEL_IMAGES = {
   6: "level-cards/6.webp",  // Изометрический город
   7: "level-cards/7.webp",  // Контейнеры с глобусом
   8: "level-cards/8.webp",  // Трак
+  9: "level-cards/1.webp",  // Зелёная карта (переиспользуем карту)
+  10: "level-cards/8.webp", // Speed Run (переиспользуем трак)
 };
 
 export default function LevelMap({ progress, user, onSelectLevel, onOpenReference, onReset, onLogOut, onSignIn, isGuest = false }) {
@@ -67,9 +69,7 @@ export default function LevelMap({ progress, user, onSelectLevel, onOpenReferenc
       minHeight: "100dvh",
       background: "#0a0e17",
       position: "relative",
-      overflowY: "auto",
       overflowX: "hidden",
-      WebkitOverflowScrolling: "touch",
       padding: "16px 16px 32px",
       boxSizing: "border-box",
     }}>
@@ -685,6 +685,8 @@ function LevelCard({ level, levelProgress, isUnlocked, isCompleted, isCurrent, i
     6: "linear-gradient(135deg, #ec4899, #db2777)",
     7: "linear-gradient(135deg, #14b8a6, #0d9488)",
     8: "linear-gradient(135deg, #ef4444, #dc2626)",
+    9: "linear-gradient(135deg, #10b981, #059669)",
+    10: "linear-gradient(135deg, #eab308, #ca8a04)",
   };
 
   const btnLabel = isLocked

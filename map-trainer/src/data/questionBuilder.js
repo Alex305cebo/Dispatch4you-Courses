@@ -184,6 +184,71 @@ function buildProMix(count) {
   });
 }
 
+function buildGreenMap(count) {
+  // Микс find-state + name-state — рандомно чередуется
+  const states = pickStates(count);
+  const allNames = STATES.map((s) => s.name);
+
+  return states.map((state) => {
+    const isFind = Math.random() > 0.5; // 50/50 шанс
+    if (isFind) {
+      return {
+        stateId: state.id, stateName: state.name,
+        text: state.name,
+        correctAnswer: state.id,
+        hintText: null,
+        tz: state.tz, region: state.region, capital: state.capital,
+        _mode: "find-state", // для определения типа вопроса в UI
+      };
+    } else {
+      return {
+        stateId: state.id, stateName: state.name,
+        text: "Как называется выделенный штат?",
+        correctAnswer: state.name,
+        options: makeOptions(state.name, allNames),
+        hintText: null,
+        tz: state.tz, region: state.region, capital: state.capital,
+        _mode: "name-state",
+      };
+    }
+  });
+}
+
+function buildSpeedRun(count) {
+  // Бесконечный микс всего — генерируем большой пул
+  const poolSize = Math.min(count, 200);
+  const modes = ["find-state", "name-state", "timezone", "capitals", "region"];
+  const allNames = STATES.map((s) => s.name);
+  const allTZ = [...new Set(STATES.map((s) => s.tz))];
+  const allCapitals = STATES.map((s) => s.capital);
+
+  const questions = [];
+  for (let i = 0; i < poolSize; i++) {
+    const state = STATES[Math.floor(Math.random() * STATES.length)];
+    const mode = modes[Math.floor(Math.random() * modes.length)];
+    const base = { stateId: state.id, stateName: state.name, tz: state.tz, region: state.region, capital: state.capital };
+
+    switch (mode) {
+      case "find-state":
+        questions.push({ ...base, text: state.name, correctAnswer: state.id, _mode: "find-state" });
+        break;
+      case "name-state":
+        questions.push({ ...base, text: "Как называется выделенный штат?", correctAnswer: state.name, options: makeOptions(state.name, allNames), _mode: "name-state" });
+        break;
+      case "timezone":
+        questions.push({ ...base, text: state.name, correctAnswer: state.tz, options: makeOptions(state.tz, allTZ, (t) => `${t} Time`), _mode: "timezone" });
+        break;
+      case "capitals":
+        questions.push({ ...base, text: state.name, correctAnswer: state.capital, options: makeOptions(state.capital, allCapitals), _mode: "capitals" });
+        break;
+      case "region":
+        questions.push({ ...base, text: state.name, correctAnswer: state.region, options: makeOptions(state.region, REGIONS), _mode: "region" });
+        break;
+    }
+  }
+  return questions;
+}
+
 // ── Главная функция ───────────────────────────────────────────
 export function buildQuestions(mode, count) {
   switch (mode) {
@@ -195,6 +260,8 @@ export function buildQuestions(mode, count) {
     case "find-city":     return buildFindCity(count);
     case "region":        return buildRegion(count);
     case "pro-mix":       return buildProMix(count);
+    case "green-map":     return buildGreenMap(count);
+    case "speed-run":     return buildSpeedRun(count);
     default:              return buildFindState(count);
   }
 }
@@ -203,4 +270,4 @@ export function buildQuestions(mode, count) {
 export const MAP_CLICK_MODES = new Set(["find-state", "find-city"]);
 
 // Режимы где карта показывается но ответ через кнопки
-export const MAP_SHOW_MODES = new Set(["find-state", "name-state", "timezone", "capitals", "region", "find-city", "pro-mix", "regions-intro"]);
+export const MAP_SHOW_MODES = new Set(["find-state", "name-state", "timezone", "capitals", "region", "find-city", "pro-mix", "regions-intro", "green-map", "speed-run"]);

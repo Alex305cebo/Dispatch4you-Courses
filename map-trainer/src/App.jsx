@@ -36,6 +36,16 @@ export default function App() {
 
   // Экраны: "map" | "quiz" | "result"
   const [screen,        setScreen]        = useState("map");
+
+  // Блокируем скролл body во время квиза
+  useEffect(() => {
+    if (screen === "quiz") {
+      document.documentElement.classList.add("quiz-active");
+    } else {
+      document.documentElement.classList.remove("quiz-active");
+    }
+    return () => document.documentElement.classList.remove("quiz-active");
+  }, [screen]);
   const [activeLevel,   setActiveLevel]   = useState(null);
   const [questions,     setQuestions]     = useState([]);
   const [currentIdx,    setCurrentIdx]    = useState(0);
@@ -197,7 +207,7 @@ export default function App() {
     if (feedback) return;
     const mode = activeLevel?.mode;
 
-    if (mode === "find-state") {
+    if (mode === "find-state" || (mode === "green-map" && currentQuestion?._mode === "find-state") || (mode === "speed-run" && currentQuestion?._mode === "find-state")) {
       setSelectedState(stateId);
       const correct = stateId === currentQuestion.stateId;
       const clickedState = STATES.find((s) => s.id === stateId);
@@ -414,12 +424,14 @@ export default function App() {
   // ── Квиз ──
   const mode = activeLevel?.mode;
   const needsMap = true;
-  const isMapClick = MAP_CLICK_MODES.has(mode);
+  // Для green-map и speed-run — тип вопроса определяется per-question
+  const questionMode = currentQuestion?._mode || mode;
+  const isMapClick = MAP_CLICK_MODES.has(questionMode) || (mode === "green-map" && currentQuestion?._mode === "find-state") || (mode === "speed-run" && currentQuestion?._mode === "find-state");
   const highlightedState = feedback ? currentQuestion?.stateId : null;
   // markedState — подсвечиваем штат на карте ДО ответа только для name-state
   // (там вопрос "как называется этот штат?" — нужно показать какой именно)
   // Для остальных режимов название штата написано в тексте — подсветка раскрывает ответ
-  const markedState = mode === "name-state" ? currentQuestion?.stateId : null;
+  const markedState = (questionMode === "name-state") ? currentQuestion?.stateId : null;
 
   return (
     <div style={{
@@ -732,7 +744,7 @@ export default function App() {
         {/* Панель — снизу */}
         <div className="panel-col" style={{ display: "flex", flexDirection: "column", minHeight: 0, flexShrink: 0, overflowY: "auto", maxHeight: "45dvh" }}>
           <QuizPanel
-            mode={mode}
+            mode={questionMode}
             level={activeLevel}
             question={currentQuestion}
             feedback={feedback}

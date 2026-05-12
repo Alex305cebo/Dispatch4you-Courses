@@ -366,7 +366,7 @@ export default function QuizPanel({
         </button>
       ) : (
         <div style={{ display: "flex", gap: "8px" }}>
-          {!hintUsed && (
+          {!hintUsed && !level?.noHints && (
             <button onClick={onHint} style={{
               flex: 1, padding: "10px 8px",
               background: "rgba(245,158,11,0.1)",
@@ -378,16 +378,18 @@ export default function QuizPanel({
               💡 −{penaltyHint}pts
             </button>
           )}
-          <button onClick={onSkip} style={{
-            flex: 1, padding: "10px 8px",
-            background: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: "10px",
-            color: "#94a3b8", fontSize: "12px",
-            cursor: "pointer", touchAction: "manipulation",
-          }}>
-            Пропустить −{penaltySkip}pts
-          </button>
+          {!level?.noSkip && (
+            <button onClick={onSkip} style={{
+              flex: 1, padding: "10px 8px",
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: "10px",
+              color: "#94a3b8", fontSize: "12px",
+              cursor: "pointer", touchAction: "manipulation",
+            }}>
+              Пропустить −{penaltySkip}pts
+            </button>
+          )}
         </div>
       )}
 

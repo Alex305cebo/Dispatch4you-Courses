@@ -15,8 +15,9 @@ import {
 const STORAGE_KEY = "usa_map_trainer_progress";
 
 // XP-пороги для разблокировки уровней
-// Уровни 1-2: открыты сразу, 3-8: по XP
-export const XP_THRESHOLDS = { 3: 100, 4: 250, 5: 500, 6: 800, 7: 1200, 8: 1700 };
+// Уровни 1-2: открыты сразу
+// После 4-го уровня — значительно сложнее
+export const XP_THRESHOLDS = { 3: 350, 4: 450, 5: 600, 6: 1000, 7: 1500, 8: 2100, 9: 3000, 10: 4000 };
 
 function unlockByXp(progress) {
   for (const [lvlId, threshold] of Object.entries(XP_THRESHOLDS)) {
@@ -156,7 +157,7 @@ export function useProgress(uid = null, userData = null) {
       // Разблокировка уровней по XP
       // Уровни 1-2: открыты сразу
       // Уровень 3: 100 XP, 4: 250 XP, 5: 500 XP, 6: 800 XP, 7: 1200 XP, 8: 1700 XP
-      const XP_THRESHOLDS = { 3: 100, 4: 250, 5: 500, 6: 800, 7: 1200, 8: 1700 };
+      const XP_THRESHOLDS = { 3: 100, 4: 250, 5: 500, 6: 800, 7: 1200, 8: 1700, 9: 3000, 10: 4000 };
       for (const [lvlId, threshold] of Object.entries(XP_THRESHOLDS)) {
         const id = Number(lvlId);
         if (newProgress.xp >= threshold && newProgress.levels[id] && !newProgress.levels[id].unlocked) {
