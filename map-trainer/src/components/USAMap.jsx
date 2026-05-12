@@ -118,8 +118,8 @@ export default function USAMap({
     }
 
     // Цвет по умолчанию — с учётом ранее отвеченных (яркие, заметные)
-    if (answeredStates[stateId] === "correct") return "#1a5c3a";
-    if (answeredStates[stateId] === "wrong") return "#5c1a1a";
+    if (answeredStates[stateId] === "correct") return "#166534";
+    if (answeredStates[stateId] === "wrong") return "#7f1d1d";
     // Freight hubs — ярче, обычные — темнее
     if (data?.freightHub) return "#264a73";
     return "#1e3a5f";

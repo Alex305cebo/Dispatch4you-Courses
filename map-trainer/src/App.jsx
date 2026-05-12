@@ -205,6 +205,11 @@ export default function App() {
       timer.stop();
       showDelta(correct ? 0 : -penalty);
       correct ? sounds.correct() : sounds.wrong();
+      // Отмечаем штат на карте
+      setAnsweredStates(prev => ({
+        ...prev,
+        [currentQuestion.stateId]: correct ? "correct" : "wrong",
+      }));
       setFeedback({
         correct,
         pointsChange: correct ? 0 : -penalty,
@@ -233,6 +238,11 @@ export default function App() {
       timer.stop();
       showDelta(correct ? 0 : -penalty);
       correct ? sounds.correct() : sounds.wrong();
+      // Отмечаем штат на карте
+      setAnsweredStates(prev => ({
+        ...prev,
+        [currentQuestion.stateId]: correct ? "correct" : "wrong",
+      }));
       setFeedback({
         correct,
         pointsChange: correct ? 0 : -penalty,
