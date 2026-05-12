@@ -11,6 +11,18 @@ export function shuffle(arr) {
   return a;
 }
 
+/**
+ * Выбирает штаты для вопросов:
+ * - Если count >= 50: все штаты в случайном порядке
+ * - Если count < 50: случайные count штатов (без повторов)
+ * Гарантирует максимальное покрытие и рандомный порядок каждый раз.
+ */
+function pickStates(count) {
+  const all = shuffle(STATES);
+  if (count >= all.length) return all;
+  return all.slice(0, count);
+}
+
 function pickWrong(arr, correct, count) {
   return shuffle(arr.filter((x) => x !== correct)).slice(0, count);
 }
@@ -23,8 +35,7 @@ function makeOptions(correct, pool, labelFn = (x) => x) {
 // ── Строители вопросов по режиму ─────────────────────────────
 
 function buildRegionsIntro(count) {
-  // Показываем штат → выбери регион (только 6 вариантов)
-  const states = shuffle(STATES).slice(0, count);
+  const states = pickStates(count);
   return states.map((state) => ({
     stateId:       state.id,
     stateName:     state.name,
@@ -40,7 +51,7 @@ function buildRegionsIntro(count) {
 }
 
 function buildFindState(count) {
-  const states = shuffle(STATES).slice(0, count);
+  const states = pickStates(count);
   return states.map((state) => ({
     stateId:       state.id,
     stateName:     state.name,
@@ -55,7 +66,7 @@ function buildFindState(count) {
 }
 
 function buildNameState(count) {
-  const states = shuffle(STATES).slice(0, count);
+  const states = pickStates(count);
   const allNames = STATES.map((s) => s.name);
   return states.map((state) => ({
     stateId:       state.id,
@@ -72,7 +83,7 @@ function buildNameState(count) {
 }
 
 function buildTimezone(count) {
-  const states = shuffle(STATES).slice(0, count);
+  const states = pickStates(count);
   const allTZ = [...new Set(STATES.map((s) => s.tz))];
   return states.map((state) => ({
     stateId:       state.id,
@@ -89,7 +100,7 @@ function buildTimezone(count) {
 }
 
 function buildCapitals(count) {
-  const states = shuffle(STATES).slice(0, count);
+  const states = pickStates(count);
   const allCapitals = STATES.map((s) => s.capital);
   return states.map((state) => ({
     stateId:       state.id,
@@ -129,7 +140,7 @@ function buildFindCity(count) {
 }
 
 function buildRegion(count) {
-  const states = shuffle(STATES).slice(0, count);
+  const states = pickStates(count);
   return states.map((state) => ({
     stateId:       state.id,
     stateName:     state.name,
@@ -145,16 +156,32 @@ function buildRegion(count) {
 }
 
 function buildProMix(count) {
-  // Микс всех режимов
-  const perMode = Math.ceil(count / 5);
-  const all = [
-    ...buildFindState(perMode),
-    ...buildNameState(perMode),
-    ...buildTimezone(perMode),
-    ...buildCapitals(perMode),
-    ...buildRegion(perMode),
-  ];
-  return shuffle(all).slice(0, count);
+  // Микс всех режимов — каждый штат появляется в случайном режиме
+  const states = pickStates(count);
+  const modes = ["find-state", "name-state", "timezone", "capitals", "region"];
+  const allNames = STATES.map((s) => s.name);
+  const allTZ = [...new Set(STATES.map((s) => s.tz))];
+  const allCapitals = STATES.map((s) => s.capital);
+
+  return states.map((state) => {
+    const mode = modes[Math.floor(Math.random() * modes.length)];
+    const base = { stateId: state.id, stateName: state.name, tz: state.tz, region: state.region, capital: state.capital };
+
+    switch (mode) {
+      case "find-state":
+        return { ...base, text: state.name, correctAnswer: state.id, hintText: `Регион: ${state.region} · ${state.tz} Time` };
+      case "name-state":
+        return { ...base, text: "Как называется выделенный штат?", correctAnswer: state.name, options: makeOptions(state.name, allNames), hintText: `Регион: ${state.region}` };
+      case "timezone":
+        return { ...base, text: state.name, correctAnswer: state.tz, options: makeOptions(state.tz, allTZ, (t) => `${t} Time`), hintText: `Регион: ${state.region}` };
+      case "capitals":
+        return { ...base, text: state.name, correctAnswer: state.capital, options: makeOptions(state.capital, allCapitals), hintText: `Регион: ${state.region}` };
+      case "region":
+        return { ...base, text: state.name, correctAnswer: state.region, options: makeOptions(state.region, REGIONS), hintText: `${state.tz} Time` };
+      default:
+        return { ...base, text: state.name, correctAnswer: state.id, hintText: `${state.region} · ${state.tz}` };
+    }
+  });
 }
 
 // ── Главная функция ───────────────────────────────────────────

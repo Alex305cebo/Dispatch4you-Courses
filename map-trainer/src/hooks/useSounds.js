@@ -56,6 +56,19 @@ function playClick() {
   playTone(480, 0.04, "sine", 0.06);
 }
 
+// ── Вибрация (мобильные устройства) ──
+function vibrateShort() {
+  try { navigator?.vibrate?.(40); } catch {}
+}
+
+function vibrateDouble() {
+  try { navigator?.vibrate?.([50, 30, 50]); } catch {}
+}
+
+function vibrateLevelUp() {
+  try { navigator?.vibrate?.([30, 20, 30, 20, 60]); } catch {}
+}
+
 // ── Хук ──
 export function useSounds() {
   const enabledRef = useRef(
@@ -68,14 +81,17 @@ export function useSounds() {
   }, []);
 
   const correct = useCallback(() => {
+    vibrateShort();
     if (enabledRef.current) playCorrect();
   }, []);
 
   const wrong = useCallback(() => {
+    vibrateDouble();
     if (enabledRef.current) playWrong();
   }, []);
 
   const levelComplete = useCallback(() => {
+    vibrateLevelUp();
     if (enabledRef.current) playLevelComplete();
   }, []);
 

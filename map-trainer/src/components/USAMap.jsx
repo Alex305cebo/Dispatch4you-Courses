@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 import { STATES } from "../data/states";
 import { TZ_COLORS, REGION_COLORS } from "../data/quizConfig";
@@ -51,6 +51,8 @@ export default function USAMap({
   const containerRef = useRef(null);
   const [zoom, setZoom]           = useState(1);
   const [translate, setTranslate] = useState([0, 0]);
+  const [tilt, setTilt]           = useState({ x: 0, y: 0 });
+  const [hoveredGeo, setHoveredGeo] = useState(null);
 
   const touchRef = useRef({
     lastTap:   0,
@@ -118,6 +120,8 @@ export default function USAMap({
     // Цвет по умолчанию — с учётом ранее отвеченных (яркие, заметные)
     if (answeredStates[stateId] === "correct") return "#1a5c3a";
     if (answeredStates[stateId] === "wrong") return "#5c1a1a";
+    // Freight hubs — ярче, обычные — темнее
+    if (data?.freightHub) return "#264a73";
     return "#1e3a5f";
   };
 
@@ -240,27 +244,59 @@ export default function USAMap({
   const handleMouseMove = useCallback(() => {}, []);
   const handleMouseLeave = useCallback(() => {}, []);
 
+  // ── 3D TILT (десктоп) ──
+  const handleTiltMove = useCallback((e) => {
+    if (zoom > 1.05) { setTilt({ x: 0, y: 0 }); return; }
+    const el = containerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;  // -0.5 to 0.5
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    setTilt({ x: y * -4, y: x * 4 }); // subtle 4deg max
+  }, [zoom]);
+
+  const handleTiltLeave = useCallback(() => {
+    setTilt({ x: 0, y: 0 });
+  }, []);
+
   const transform = `translate(${translate[0]}px, ${translate[1]}px) scale(${zoom})`;
+  const tiltTransform = `perspective(800px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`;
   const isDragging = mouseRef.current.isDragging;
 
   return (
     <div
       ref={containerRef}
+      onMouseMove={(e) => { handleMouseMoveDesktop(e); handleTiltMove(e); }}
       style={{
         width: "100%", height: "100%", position: "relative",
         userSelect: "none", overflow: "hidden",
         cursor: isDragging ? "grabbing" : "grab",
-        touchAction: "none", /* Запрещаем браузеру обрабатывать жесты — pinch/pan обрабатываем сами */
+        touchAction: "none",
+        transform: tiltTransform,
+        transition: "transform 0.15s ease-out",
+        willChange: "transform",
       }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onWheel={handleWheel}
       onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMoveDesktop}
       onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
+      onMouseLeave={(e) => { handleMouseUp(); handleTiltLeave(); }}
     >
+      {/* SVG фильтр для glow */}
+      <svg style={{ position: "absolute", width: 0, height: 0 }}>
+        <defs>
+          <filter id="state-glow">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+      </svg>
+
       <div style={{
         width: "100%", height: "100%",
         transform,
@@ -277,30 +313,41 @@ export default function USAMap({
             {({ geographies }) =>
               geographies.map((geo) => {
                 const stateId = FIPS_TO_STATE[geo.id];
+                const stateData = stateId ? getStateData(stateId) : null;
+                const isMarked = markedState === stateId;
+                const isHighlighted = highlightedState === stateId;
+                const isFreightHub = stateData?.freightHub;
+                const baseColor = getStateColor(geo.id);
+
                 return (
                   <Geography
                     key={geo.rsmKey}
                     geography={geo}
                     onClick={() => stateId && handleStateClick(stateId)}
-                    onMouseMove={(e) => handleMouseMove(e, stateId)}
-                    onMouseLeave={handleMouseLeave}
+                    onMouseEnter={() => setHoveredGeo(stateId)}
+                    onMouseLeave={() => setHoveredGeo(null)}
                     style={{
                       default: {
-                        fill: getStateColor(geo.id),
-                        stroke: "#0f172a",
-                        strokeWidth: 0.5,
+                        fill: baseColor,
+                        stroke: isMarked ? levelColor : isFreightHub ? "#1a3a5f" : "#0a1628",
+                        strokeWidth: isMarked ? 1.5 : isFreightHub ? 0.7 : 0.4,
                         outline: "none",
+                        filter: isMarked ? "url(#state-glow)" : "none",
+                        opacity: isMarked ? 1 : isFreightHub ? 1 : 0.92,
+                        transition: "fill 0.2s ease, stroke 0.2s ease, opacity 0.2s ease",
                       },
                       hover: {
                         fill: selectedState
-                          ? getStateColor(geo.id)
+                          ? baseColor
                           : levelColor,
-                        stroke: "#0f172a",
-                        strokeWidth: 0.8,
+                        stroke: levelColor,
+                        strokeWidth: 1.2,
                         outline: "none",
                         cursor: "pointer",
+                        filter: "brightness(1.2)",
+                        transition: "fill 0.15s ease",
                       },
-                      pressed: { fill: "#0284c7", outline: "none" },
+                      pressed: { fill: "#0284c7", outline: "none", strokeWidth: 1.5 },
                     }}
                   />
                 );

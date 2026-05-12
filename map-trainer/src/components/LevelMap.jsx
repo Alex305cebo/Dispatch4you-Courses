@@ -18,7 +18,7 @@ const LEVEL_IMAGES = {
   8: "level-cards/8.webp",  // Трак
 };
 
-export default function LevelMap({ progress, user, onSelectLevel, onOpenReference, onReset, onLogOut }) {
+export default function LevelMap({ progress, user, onSelectLevel, onOpenReference, onReset, onLogOut, onSignIn, isGuest = false }) {
   const rank = getRank(progress.xp);
   const xpPct = Math.min(100, Math.round((progress.xp / MAX_XP) * 100));
   const completedCount = LEVELS.filter((l) => progress.levels[l.id]?.completed).length;
@@ -27,6 +27,8 @@ export default function LevelMap({ progress, user, onSelectLevel, onOpenReferenc
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [unlockedLevel, setUnlockedLevel] = useState(null);
+  const [difficultyLevel, setDifficultyLevel] = useState(null);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   // Показываем onboarding только при первом входе
   useEffect(() => {
@@ -134,7 +136,7 @@ export default function LevelMap({ progress, user, onSelectLevel, onOpenReferenc
               </div>
 
               <button
-                onClick={() => setShowProfile(true)}
+                onClick={() => isGuest ? setShowLoginPrompt(true) : setShowProfile(true)}
                 style={{
                   width: "34px", height: "34px", borderRadius: "50%",
                   border: "2px solid #d4a853",
@@ -195,7 +197,7 @@ export default function LevelMap({ progress, user, onSelectLevel, onOpenReferenc
 
           {/* Правая: справочник штатов */}
           <button
-            onClick={onOpenReference}
+            onClick={() => isGuest ? setShowLoginPrompt(true) : onOpenReference()}
             style={{
               display: "block",
               padding: 0,
@@ -256,7 +258,7 @@ export default function LevelMap({ progress, user, onSelectLevel, onOpenReferenc
                 isCompleted={isCompleted}
                 isCurrent={isCurrent}
                 isLocked={isLocked}
-                onSelect={() => isUnlocked && onSelectLevel(level)}
+                onSelect={() => isUnlocked && (isGuest ? setShowLoginPrompt(true) : setDifficultyLevel(level))}
               />
             );
           })}
@@ -306,8 +308,244 @@ export default function LevelMap({ progress, user, onSelectLevel, onOpenReferenc
         />
       )}
 
+      {/* Popup: требуется вход */}
+      {showLoginPrompt && (
+        <div
+          onClick={() => setShowLoginPrompt(false)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 1003,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(0,0,0,0.75)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+            padding: "20px",
+            animation: "fadeIn 0.2s ease",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "linear-gradient(135deg, #0f172a 0%, #1a1040 100%)",
+              border: "2px solid rgba(6,182,212,0.3)",
+              borderRadius: "20px",
+              padding: "28px 24px",
+              maxWidth: "360px",
+              width: "100%",
+              textAlign: "center",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+              animation: "slideUp 0.3s ease",
+            }}
+          >
+            <div style={{ fontSize: "48px", marginBottom: "12px" }}>🔒</div>
+            <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#fff", margin: "0 0 8px 0" }}>
+              Войди чтобы начать
+            </h2>
+            <p style={{ fontSize: "14px", color: "#94a3b8", margin: "0 0 20px 0", lineHeight: 1.5 }}>
+              Прогресс сохраняется и синхронизируется между устройствами
+            </p>
+
+            <button
+              onClick={() => { setShowLoginPrompt(false); onSignIn?.(); }}
+              style={{
+                width: "100%",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
+                padding: "14px 20px",
+                background: "#fff",
+                border: "none",
+                borderRadius: "12px",
+                fontSize: "15px", fontWeight: 700,
+                color: "#1f2937",
+                cursor: "pointer",
+                touchAction: "manipulation",
+                boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+                marginBottom: "12px",
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 48 48">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+              </svg>
+              Войти через Google
+            </button>
+
+            <button
+              onClick={() => setShowLoginPrompt(false)}
+              style={{
+                padding: "10px 20px",
+                background: "transparent",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "10px",
+                color: "#64748b", fontSize: "13px",
+                cursor: "pointer", touchAction: "manipulation",
+              }}
+            >
+              Отмена
+            </button>
+          </div>
+        </div>
+      )}
+
       {showOnboarding && (
         <OnboardingModal onComplete={handleOnboardingComplete} />
+      )}
+
+      {/* Popup: выбор сложности */}
+      {difficultyLevel && (
+        <div
+          onClick={() => setDifficultyLevel(null)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 1002,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(0,0,0,0.7)",
+            backdropFilter: "blur(4px)",
+            WebkitBackdropFilter: "blur(4px)",
+            padding: "20px",
+            animation: "fadeIn 0.2s ease",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "linear-gradient(135deg, #1a1510 0%, #12100c 50%, #1a1510 100%)",
+              border: `2px solid ${difficultyLevel.color}`,
+              borderRadius: "20px",
+              padding: "24px 20px",
+              maxWidth: "340px",
+              width: "100%",
+              textAlign: "center",
+              boxShadow: `0 20px 60px rgba(0,0,0,0.5), 0 0 30px ${difficultyLevel.color}33`,
+              animation: "slideUp 0.3s ease",
+            }}
+          >
+            {/* Заголовок */}
+            <div style={{ marginBottom: "16px" }}>
+              <span style={{ fontSize: "28px" }}>{difficultyLevel.icon}</span>
+              <p style={{ fontSize: "18px", fontWeight: 800, color: "#f5e6c8", margin: "8px 0 2px 0" }}>
+                {difficultyLevel.id}. {difficultyLevel.title}
+              </p>
+              <p style={{ fontSize: "12px", color: "#8b7355", margin: "0 0 10px 0" }}>
+                {difficultyLevel.subtitle}
+              </p>
+              {/* Описание уровня */}
+              <div style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: "10px",
+                padding: "10px 12px",
+                textAlign: "left",
+              }}>
+                <p style={{ fontSize: "12px", color: "#e2e8f0", margin: 0, lineHeight: 1.5 }}>
+                  {difficultyLevel.description}
+                </p>
+              </div>
+            </div>
+
+            {/* Кнопки режимов */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "16px" }}>
+              {/* Быстрый */}
+              <button
+                onClick={() => { onSelectLevel(difficultyLevel, 15); setDifficultyLevel(null); }}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "12px 16px",
+                  background: "rgba(34,197,94,0.1)",
+                  border: "1px solid rgba(34,197,94,0.3)",
+                  borderRadius: "12px",
+                  cursor: "pointer", touchAction: "manipulation",
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.2)"; e.currentTarget.style.borderColor = "#22c55e"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.1)"; e.currentTarget.style.borderColor = "rgba(34,197,94,0.3)"; }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <span style={{ fontSize: "18px" }}>🟢</span>
+                  <div style={{ textAlign: "left" }}>
+                    <p style={{ fontSize: "14px", fontWeight: 700, color: "#22c55e", margin: 0 }}>Быстрый</p>
+                    <p style={{ fontSize: "11px", color: "#8b7355", margin: "2px 0 0 0" }}>~3 минуты</p>
+                  </div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <p style={{ fontSize: "14px", fontWeight: 700, color: "#e2e8f0", margin: 0 }}>15</p>
+                  <p style={{ fontSize: "10px", color: "#64748b", margin: 0 }}>вопросов</p>
+                </div>
+              </button>
+
+              {/* Стандарт */}
+              <button
+                onClick={() => { onSelectLevel(difficultyLevel, 30); setDifficultyLevel(null); }}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "12px 16px",
+                  background: "rgba(245,158,11,0.1)",
+                  border: "2px solid rgba(245,158,11,0.4)",
+                  borderRadius: "12px",
+                  cursor: "pointer", touchAction: "manipulation",
+                  transition: "all 0.15s ease",
+                  boxShadow: "0 0 12px rgba(245,158,11,0.1)",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.2)"; e.currentTarget.style.borderColor = "#f59e0b"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.1)"; e.currentTarget.style.borderColor = "rgba(245,158,11,0.4)"; }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <span style={{ fontSize: "18px" }}>🟡</span>
+                  <div style={{ textAlign: "left" }}>
+                    <p style={{ fontSize: "14px", fontWeight: 700, color: "#f59e0b", margin: 0 }}>Стандарт</p>
+                    <p style={{ fontSize: "11px", color: "#8b7355", margin: "2px 0 0 0" }}>~7 минут</p>
+                  </div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <p style={{ fontSize: "14px", fontWeight: 700, color: "#e2e8f0", margin: 0 }}>30</p>
+                  <p style={{ fontSize: "10px", color: "#64748b", margin: 0 }}>вопросов</p>
+                </div>
+              </button>
+
+              {/* Все штаты */}
+              <button
+                onClick={() => { onSelectLevel(difficultyLevel, 50); setDifficultyLevel(null); }}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "12px 16px",
+                  background: "rgba(239,68,68,0.1)",
+                  border: "1px solid rgba(239,68,68,0.3)",
+                  borderRadius: "12px",
+                  cursor: "pointer", touchAction: "manipulation",
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.2)"; e.currentTarget.style.borderColor = "#ef4444"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.1)"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.3)"; }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <span style={{ fontSize: "18px" }}>🔴</span>
+                  <div style={{ textAlign: "left" }}>
+                    <p style={{ fontSize: "14px", fontWeight: 700, color: "#ef4444", margin: 0 }}>Все штаты</p>
+                    <p style={{ fontSize: "11px", color: "#8b7355", margin: "2px 0 0 0" }}>~12 минут · ×1.5 XP</p>
+                  </div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <p style={{ fontSize: "14px", fontWeight: 700, color: "#e2e8f0", margin: 0 }}>50</p>
+                  <p style={{ fontSize: "10px", color: "#64748b", margin: 0 }}>вопросов</p>
+                </div>
+              </button>
+            </div>
+
+            {/* Отмена */}
+            <button
+              onClick={() => setDifficultyLevel(null)}
+              style={{
+                padding: "10px 24px",
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "10px",
+                color: "#94a3b8", fontSize: "13px", fontWeight: 600,
+                cursor: "pointer", touchAction: "manipulation",
+              }}
+            >
+              Отмена
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Popup: новый уровень разблокирован */}

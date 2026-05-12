@@ -12,7 +12,7 @@ import { PENALTIES } from "./data/quizConfig";
 import { buildQuestions, MAP_CLICK_MODES } from "./data/questionBuilder";
 import { useTimer }    from "./hooks/useTimer";
 import { useStats }    from "./hooks/useStats";
-import { useProgress } from "./hooks/useProgress";
+import { useProgress, initProgress } from "./hooks/useProgress";
 import { useAuth }     from "./hooks/useAuth";
 import { useSounds }   from "./hooks/useSounds";
 
@@ -98,10 +98,13 @@ export default function App() {
   }, []);
 
   // ── Старт уровня ──
-  const startLevel = useCallback((level) => {
-    const qs = buildQuestions(level.mode, level.questions);
-    const initScore = { correct: 0, wrong: 0, skipped: 0, points: level.questions * POINTS_PER_Q };
-    setActiveLevel(level);
+  const startLevel = useCallback((level, questionCount) => {
+    const count = questionCount || level.questions;
+    const qs = buildQuestions(level.mode, count);
+    const initScore = { correct: 0, wrong: 0, skipped: 0, points: count * POINTS_PER_Q };
+    // Создаём копию уровня с выбранным количеством вопросов
+    const activeLvl = { ...level, questions: count };
+    setActiveLevel(activeLvl);
     setQuestions(qs);
     setCurrentIdx(0);
     setScore(initScore);
@@ -115,7 +118,7 @@ export default function App() {
     setStreak(0);
     setAnsweredStates({});
     setShakePanel(false);
-    setQuizReady(false);
+    setQuizReady(true);
     resetStats();
     setScreen("quiz");
   }, [resetStats]);
@@ -295,7 +298,9 @@ export default function App() {
       // Считаем XP
       const finalScore = score;
       const pct = Math.round((finalScore.points / maxPoints) * 100);
-      const earned = Math.round((activeLevel.xpReward * pct) / 100);
+      // Множитель XP: 50 вопросов = ×1.5, 15 вопросов = ×0.6, 30 = ×1.0
+      const xpMultiplier = activeLevel.questions >= 50 ? 1.5 : activeLevel.questions <= 15 ? 0.6 : 1.0;
+      const earned = Math.round((activeLevel.xpReward * pct * xpMultiplier) / 100);
       setXpEarned(earned);
       completeLevel(activeLevel.id, pct, finalScore.correct, earned);
       setScreen("result");
@@ -342,7 +347,20 @@ export default function App() {
   }
 
   if (!user) {
-    return <LoginScreen onSignIn={signIn} loading={authLoading} />;
+    // Незарегистрированный пользователь видит карту уровней, но не может играть
+    return (
+      <LevelMap
+        progress={initProgress()}
+        user={null}
+        syncing={false}
+        onSelectLevel={() => {}}
+        onOpenReference={() => {}}
+        onLogOut={() => {}}
+        onReset={() => {}}
+        onSignIn={signIn}
+        isGuest={true}
+      />
+    );
   }
 
   if (screen === "map") {
@@ -355,6 +373,8 @@ export default function App() {
         onOpenReference={() => setScreen("reference")}
         onLogOut={logOut}
         onReset={() => { if (confirm("Сбросить весь прогресс?")) resetProgress(); }}
+        onSignIn={signIn}
+        isGuest={false}
       />
     );
   }
@@ -704,12 +724,14 @@ export default function App() {
         {/* Карта — сверху, занимает основное пространство */}
         <div className="map-col" style={{
           flex: 1,
-          background: "rgba(255,255,255,0.02)",
-          border: `1px solid rgba(${activeLevel?.colorRgb},0.15)`,
-          borderRadius: "12px",
+          background: "linear-gradient(135deg, rgba(6,13,26,0.95) 0%, rgba(15,23,42,0.9) 50%, rgba(10,22,40,0.95) 100%)",
+          border: `1px solid rgba(${activeLevel?.colorRgb},0.25)`,
+          borderRadius: "14px",
           padding: "0", overflow: "hidden",
           display: "flex", alignItems: "center", justifyContent: "center",
           minHeight: "200px",
+          boxShadow: `inset 0 0 30px rgba(${activeLevel?.colorRgb},0.05), 0 4px 20px rgba(0,0,0,0.3)`,
+          position: "relative",
         }}>
           <USAMap
             highlightedState={highlightedState}
