@@ -224,7 +224,7 @@ export default function LeaderboardModal({ currentUserId, currentUserEmail, onCl
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "12px",
+                    gap: "10px",
                     padding: "10px 12px",
                     background: isCurrentUser
                       ? "rgba(6,182,212,0.12)"
@@ -233,24 +233,24 @@ export default function LeaderboardModal({ currentUserId, currentUserEmail, onCl
                       ? "1px solid rgba(6,182,212,0.4)"
                       : "1px solid rgba(255,255,255,0.08)",
                     borderRadius: "12px",
-                    transition: "all 0.2s",
                   }}
                 >
                   {/* Место */}
                   <div style={{
-                    width: "32px",
+                    width: "24px",
                     textAlign: "center",
-                    fontSize: medal ? "20px" : "14px",
+                    fontSize: medal ? "18px" : "12px",
                     fontWeight: 700,
                     color: medal ? "#fff" : "#64748b",
+                    flexShrink: 0,
                   }}>
-                    {medal || `#${index + 1}`}
+                    {medal || `${index + 1}`}
                   </div>
 
                   {/* Аватар */}
                   <div style={{
-                    width: "36px",
-                    height: "36px",
+                    width: "32px",
+                    height: "32px",
                     borderRadius: "50%",
                     ...(player.photoURL
                       ? {
@@ -263,7 +263,7 @@ export default function LeaderboardModal({ currentUserId, currentUserEmail, onCl
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          fontSize: "16px",
+                          fontSize: "14px",
                           fontWeight: 800,
                           color: "#fff",
                         }),
@@ -276,10 +276,10 @@ export default function LeaderboardModal({ currentUserId, currentUserEmail, onCl
                   {/* Имя и ранг */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{
-                      fontSize: "14px",
+                      fontSize: "13px",
                       fontWeight: 700,
                       color: isCurrentUser ? "#06b6d4" : "#e2e8f0",
-                      margin: "0 0 2px 0",
+                      margin: 0,
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
@@ -288,79 +288,62 @@ export default function LeaderboardModal({ currentUserId, currentUserEmail, onCl
                       {isCurrentUser && " (Вы)"}
                     </p>
                     <p style={{
-                      fontSize: "11px",
+                      fontSize: "10px",
                       color: rank.color,
-                      margin: 0,
+                      margin: "2px 0 0 0",
                     }}>
                       {rank.icon} {rank.title}
                     </p>
                   </div>
 
                   {/* XP */}
-                  <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <div>
-                      <p style={{
-                        fontSize: "16px",
-                        fontWeight: 900,
-                        color: rank.color,
-                        margin: 0,
-                      }}>
-                        {player.xp || 0}
-                      </p>
-                      <p style={{
-                        fontSize: "10px",
-                        color: "#64748b",
-                        margin: 0,
-                      }}>
-                        XP
-                      </p>
-                    </div>
-
-                    {/* Админ-кнопки */}
-                    {isAdmin && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); editPlayerXp(player.uid, player.xp || 0); }}
-                          title="Изменить XP"
-                          style={{
-                            width: "22px", height: "22px", borderRadius: "4px",
-                            background: "rgba(6,182,212,0.15)", border: "1px solid rgba(6,182,212,0.3)",
-                            color: "#06b6d4", fontSize: "11px", cursor: "pointer",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            padding: 0,
-                          }}
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); hidePlayer(player.uid); }}
-                          title="Скрыть из рейтинга"
-                          style={{
-                            width: "22px", height: "22px", borderRadius: "4px",
-                            background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)",
-                            color: "#f59e0b", fontSize: "11px", cursor: "pointer",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            padding: 0,
-                          }}
-                        >
-                          👁
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); deletePlayer(player.uid); }}
-                          title="Удалить из базы"
-                          style={{
-                            width: "22px", height: "22px", borderRadius: "4px",
-                            background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)",
-                            color: "#ef4444", fontSize: "11px", cursor: "pointer",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            padding: 0,
-                          }}
-                        >
-                          🗑
-                        </button>
-                      </div>
-                    )}
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                    <p style={{
+                      fontSize: "15px",
+                      fontWeight: 900,
+                      color: rank.color,
+                      margin: 0,
+                    }}>
+                      {player.xp || 0}
+                    </p>
+                    <p style={{ fontSize: "9px", color: "#64748b", margin: 0 }}>XP</p>
                   </div>
+
+                  {/* Админ-кнопки — горизонтально */}
+                  {isAdmin && (
+                    <div style={{ display: "flex", gap: "4px", flexShrink: 0 }}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); editPlayerXp(player.uid, player.xp || 0); }}
+                        title="Изменить XP"
+                        style={{
+                          width: "26px", height: "26px", borderRadius: "6px",
+                          background: "rgba(6,182,212,0.15)", border: "1px solid rgba(6,182,212,0.3)",
+                          color: "#06b6d4", fontSize: "12px", cursor: "pointer",
+                          display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
+                        }}
+                      >✏️</button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); hidePlayer(player.uid); }}
+                        title="Скрыть"
+                        style={{
+                          width: "26px", height: "26px", borderRadius: "6px",
+                          background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)",
+                          color: "#f59e0b", fontSize: "12px", cursor: "pointer",
+                          display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
+                        }}
+                      >👁</button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deletePlayer(player.uid); }}
+                        title="Удалить"
+                        style={{
+                          width: "26px", height: "26px", borderRadius: "6px",
+                          background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)",
+                          color: "#ef4444", fontSize: "12px", cursor: "pointer",
+                          display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
+                        }}
+                      >🗑</button>
+                    </div>
+                  )}
                 </div>
               );
             })
