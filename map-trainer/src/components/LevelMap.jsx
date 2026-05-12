@@ -16,8 +16,8 @@ const LEVEL_IMAGES = {
   6: "level-cards/6.webp",  // Изометрический город
   7: "level-cards/7.webp",  // Контейнеры с глобусом
   8: "level-cards/8.webp",  // Трак
-  9: "level-cards/1.webp",  // Зелёная карта (переиспользуем карту)
-  10: "level-cards/8.webp", // Speed Run (переиспользуем трак)
+  9: "level-cards/9.webp",  // Зелёная карта
+  10: "level-cards/10.webp", // Speed Run
 };
 
 export default function LevelMap({ progress, user, onSelectLevel, onOpenReference, onReset, onLogOut, onSignIn, isGuest = false }) {

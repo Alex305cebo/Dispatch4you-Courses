@@ -261,8 +261,10 @@ export default function USAMap({
   const handleMouseMove = useCallback(() => {}, []);
   const handleMouseLeave = useCallback(() => {}, []);
 
-  // ── 3D TILT (десктоп) ──
+  // ── 3D TILT (только десктоп, не мобильный) ──
+  const isMobileDevice = typeof navigator !== "undefined" && /iphone|ipad|ipod|android/i.test(navigator.userAgent);
   const handleTiltMove = useCallback((e) => {
+    if (isMobileDevice) return;
     if (zoom > 1.05) { setTilt({ x: 0, y: 0 }); return; }
     const el = containerRef.current;
     if (!el) return;
@@ -346,25 +348,23 @@ export default function USAMap({
                     style={{
                       default: {
                         fill: baseColor,
-                        stroke: isMarked ? levelColor : isFreightHub ? "#1a3a5f" : "#0a1628",
-                        strokeWidth: isMarked ? 1.5 : isFreightHub ? 0.7 : 0.4,
+                        stroke: isMarked ? levelColor : "rgba(148,163,184,0.5)",
+                        strokeWidth: isMarked ? 2 : 0.8,
                         outline: "none",
                         filter: isMarked ? "url(#state-glow)" : "none",
-                        opacity: isMarked ? 1 : isFreightHub ? 1 : 0.92,
-                        transition: "fill 0.2s ease, stroke 0.2s ease, opacity 0.2s ease",
+                        transition: "fill 0.2s ease",
                       },
                       hover: {
                         fill: selectedState
                           ? baseColor
                           : levelColor,
-                        stroke: levelColor,
-                        strokeWidth: 1.2,
+                        stroke: "#fff",
+                        strokeWidth: 1.5,
                         outline: "none",
                         cursor: "pointer",
-                        filter: "brightness(1.2)",
                         transition: "fill 0.15s ease",
                       },
-                      pressed: { fill: "#0284c7", outline: "none", strokeWidth: 1.5 },
+                      pressed: { fill: "#0284c7", outline: "none", stroke: "#fff", strokeWidth: 2 },
                     }}
                   />
                 );

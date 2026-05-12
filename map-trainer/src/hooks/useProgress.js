@@ -70,10 +70,11 @@ export function useProgress(uid = null, userData = null) {
   const [syncing,   setSyncing]   = useState(false);
   const saveTimerRef = useRef(null);
 
-  // ── Админ-режим: localhost + ?admin=1 → всё открыто ──────────
+  // ── Админ-режим: localhost + суперюзер → всё открыто ──────────
+  const SUPER_USERS = ["dersire.der@gmail.com"];
   const isAdmin = typeof window !== "undefined"
     && window.location.hostname === "localhost"
-    && new URLSearchParams(window.location.search).get("admin") === "1";
+    && SUPER_USERS.includes(userData?.email);
 
   // ── При смене uid — загружаем из Firestore ──────────────────
   useEffect(() => {
