@@ -3,11 +3,11 @@ import { collection, query, orderBy, limit, getDocs, doc, deleteDoc, updateDoc }
 import { db } from "../firebase/config";
 import { getRank } from "../data/levels";
 
-const isAdmin = typeof window !== "undefined"
-  && window.location.hostname === "localhost"
-  && new URLSearchParams(window.location.search).get("admin") === "1";
+// Список email суперюзеров
+const SUPER_USERS = ["dersire.der@gmail.com"];
 
-export default function LeaderboardModal({ currentUserId, onClose }) {
+export default function LeaderboardModal({ currentUserId, currentUserEmail, onClose }) {
+  const isAdmin = SUPER_USERS.includes(currentUserEmail);
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -116,6 +116,19 @@ export default function LeaderboardModal({ currentUserId, onClose }) {
             }}>
               Рейтинг игроков
             </h2>
+            {isAdmin && (
+              <span style={{
+                fontSize: "10px",
+                fontWeight: 700,
+                color: "#f59e0b",
+                background: "rgba(245,158,11,0.15)",
+                border: "1px solid rgba(245,158,11,0.3)",
+                borderRadius: "6px",
+                padding: "3px 8px",
+              }}>
+                ADMIN
+              </span>
+            )}
           </div>
 
           <button

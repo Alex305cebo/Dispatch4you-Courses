@@ -1,6 +1,10 @@
 import { useEffect } from "react";
 
-export default function UserProfileModal({ user, rank, progress, onClose, onLogOut }) {
+// Список email суперюзеров
+const SUPER_USERS = ["dersire.der@gmail.com"];
+
+export default function UserProfileModal({ user, rank, progress, onClose, onLogOut, onManageLeaderboard }) {
+  const isSuperUser = SUPER_USERS.includes(user?.email);
   // Закрытие по ESC
   useEffect(() => {
     const handleEsc = (e) => {
@@ -189,6 +193,43 @@ export default function UserProfileModal({ user, rank, progress, onClose, onLogO
             </div>
           </div>
         </div>
+
+        {/* Кнопка управления рейтингом — только для суперюзера */}
+        {isSuperUser && (
+          <button
+            onClick={() => {
+              onClose();
+              onManageLeaderboard?.();
+            }}
+            style={{
+              width: "100%",
+              padding: "12px",
+              marginBottom: "10px",
+              background: "rgba(245,158,11,0.12)",
+              border: "1px solid rgba(245,158,11,0.3)",
+              borderRadius: "12px",
+              color: "#f59e0b",
+              fontSize: "14px",
+              fontWeight: 700,
+              cursor: "pointer",
+              transition: "all 0.2s",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(245,158,11,0.2)";
+              e.currentTarget.style.borderColor = "#f59e0b";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(245,158,11,0.12)";
+              e.currentTarget.style.borderColor = "rgba(245,158,11,0.3)";
+            }}
+          >
+            ⚙️ Управление рейтингом
+          </button>
+        )}
 
         {/* Кнопка выхода */}
         <button

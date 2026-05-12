@@ -245,12 +245,17 @@ export default function LevelMap({ progress, user, onSelectLevel, onReset, onLog
           progress={progress}
           onClose={() => setShowProfile(false)}
           onLogOut={onLogOut}
+          onManageLeaderboard={() => {
+            setShowProfile(false);
+            setShowLeaderboard(true);
+          }}
         />
       )}
 
       {showLeaderboard && (
         <LeaderboardModal
           currentUserId={user?.uid}
+          currentUserEmail={user?.email}
           onClose={() => setShowLeaderboard(false)}
         />
       )}
