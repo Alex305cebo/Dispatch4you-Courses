@@ -1,6 +1,20 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function PronunciationModal({ stateName, pronunciation, isLocked = false, onClose }) {
+  const [voicesLoaded, setVoicesLoaded] = useState(false);
+
+  // Загружаем голоса при монтировании
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      const loadVoices = () => setVoicesLoaded(true);
+      if (window.speechSynthesis.getVoices().length > 0) {
+        setVoicesLoaded(true);
+      } else {
+        window.speechSynthesis.addEventListener("voiceschanged", loadVoices);
+        return () => window.speechSynthesis.removeEventListener("voiceschanged", loadVoices);
+      }
+    }
+  }, []);
   // Закрытие по ESC
   useEffect(() => {
     const handleEsc = (e) => {
@@ -10,18 +24,42 @@ export default function PronunciationModal({ stateName, pronunciation, isLocked 
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
-  // Озвучка через Web Speech API
+  // Озвучка через Web Speech API — выбираем лучший голос
   const handleSpeak = () => {
-    if (isLocked) return; // Блокируем если не выбран ответ
+    if (isLocked) return;
     
     if ('speechSynthesis' in window) {
-      // Останавливаем предыдущую озвучку
       window.speechSynthesis.cancel();
       
       const utterance = new SpeechSynthesisUtterance(stateName);
       utterance.lang = 'en-US';
-      utterance.rate = 0.8; // Медленнее для лучшего понимания
-      utterance.pitch = 1;
+      utterance.rate = 0.75;   // Медленнее — профессиональнее
+      utterance.pitch = 0.95;  // Чуть ниже — мягче, не резкий
+      utterance.volume = 0.85; // Не на максимум — приятнее
+      
+      // Выбираем лучший голос из доступных
+      const voices = window.speechSynthesis.getVoices();
+      // Приоритет: Google US > Microsoft > Apple Samantha > любой en-US
+      const preferred = [
+        "Google US English",
+        "Microsoft Aria Online (Natural)",
+        "Microsoft Jenny Online (Natural)",
+        "Samantha",
+        "Karen",
+        "Daniel",
+      ];
+      
+      let bestVoice = null;
+      for (const name of preferred) {
+        bestVoice = voices.find(v => v.name.includes(name) && v.lang.startsWith("en"));
+        if (bestVoice) break;
+      }
+      // Fallback: любой en-US голос
+      if (!bestVoice) {
+        bestVoice = voices.find(v => v.lang === "en-US") || voices.find(v => v.lang.startsWith("en"));
+      }
+      if (bestVoice) utterance.voice = bestVoice;
+      
       window.speechSynthesis.speak(utterance);
     }
   };

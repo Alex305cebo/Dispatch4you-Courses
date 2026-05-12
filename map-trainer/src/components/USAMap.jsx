@@ -25,7 +25,9 @@ const MIN_ZOOM = 1;
 const MAX_ZOOM = 2.5;
 
 function clampTranslate(tx, ty, zoom, w, h) {
-  const maxTx = (w * (zoom - 1)) / 2;
+  // Разрешаем двигать на 30% больше по горизонтали чтобы видеть края карты
+  const extraX = w * 0.15;
+  const maxTx = (w * (zoom - 1)) / 2 + extraX;
   const maxTy = (h * (zoom - 1)) / 2;
   return [
     Math.max(-maxTx, Math.min(maxTx, tx)),
@@ -98,8 +100,8 @@ export default function USAMap({
     if (highlightedState === stateId && selectedState) return "#22c55e";
     if (selectedState === stateId && highlightedState !== stateId) return "#ef4444";
 
-    // Вопросный штат — жёлтый
-    if (markedState === stateId && !selectedState) return "#f59e0b";
+    // Вопросный штат — яркий белый/жёлтый, выделяется от зелёных/красных
+    if (markedState === stateId && !selectedState) return "#fef08a";
 
     // Подсветка пояса при наведении на вариант ответа
     if (hoveredTz) {
@@ -113,9 +115,9 @@ export default function USAMap({
       return "#0f1f35";
     }
 
-    // Цвет по умолчанию — с учётом ранее отвеченных
-    if (answeredStates[stateId] === "correct") return "rgba(34,197,94,0.25)";
-    if (answeredStates[stateId] === "wrong") return "rgba(239,68,68,0.2)";
+    // Цвет по умолчанию — с учётом ранее отвеченных (яркие, заметные)
+    if (answeredStates[stateId] === "correct") return "#1a5c3a";
+    if (answeredStates[stateId] === "wrong") return "#5c1a1a";
     return "#1e3a5f";
   };
 
@@ -267,7 +269,7 @@ export default function USAMap({
       }}>
         <ComposableMap
           projection="geoAlbersUsa"
-          projectionConfig={{ scale: 900 }}
+          projectionConfig={{ scale: 1120 }}
           style={{ width: "100%", height: "100%", display: "block" }}
         >
           <Geographies geography={GEO_URL}>
@@ -314,19 +316,18 @@ export default function USAMap({
 
       {/* Кнопки зума: + / - / сброс */}
       <div style={{
-        position: "absolute", bottom: "10px", right: "10px",
-        display: "flex", flexDirection: "column", gap: "4px",
+        position: "absolute", bottom: "6px", right: "4px",
+        display: "flex", flexDirection: "column", gap: "3px",
         zIndex: 10,
       }}>
         <button
           onClick={() => applyZoom(zoom * 1.4, translate)}
           style={{
-            width: "32px", height: "32px",
-            background: "rgba(6,182,212,0.15)", border: "1px solid rgba(6,182,212,0.3)",
-            borderRadius: "8px", color: "#06b6d4", fontSize: "16px", fontWeight: 700,
+            width: "26px", height: "26px",
+            background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.2)",
+            borderRadius: "6px", color: "rgba(6,182,212,0.6)", fontSize: "14px", fontWeight: 700,
             cursor: "pointer", touchAction: "manipulation",
             display: "flex", alignItems: "center", justifyContent: "center",
-            backdropFilter: "blur(4px)",
           }}
         >
           +
@@ -334,12 +335,11 @@ export default function USAMap({
         <button
           onClick={() => applyZoom(zoom * 0.7, translate)}
           style={{
-            width: "32px", height: "32px",
-            background: "rgba(6,182,212,0.15)", border: "1px solid rgba(6,182,212,0.3)",
-            borderRadius: "8px", color: "#06b6d4", fontSize: "16px", fontWeight: 700,
+            width: "26px", height: "26px",
+            background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.2)",
+            borderRadius: "6px", color: "rgba(6,182,212,0.6)", fontSize: "14px", fontWeight: 700,
             cursor: "pointer", touchAction: "manipulation",
             display: "flex", alignItems: "center", justifyContent: "center",
-            backdropFilter: "blur(4px)",
           }}
         >
           −
@@ -348,12 +348,11 @@ export default function USAMap({
           <button
             onClick={handleReset}
             style={{
-              width: "32px", height: "32px",
-              background: "rgba(6,182,212,0.15)", border: "1px solid rgba(6,182,212,0.3)",
-              borderRadius: "8px", color: "#06b6d4", fontSize: "12px", fontWeight: 700,
+              width: "26px", height: "26px",
+              background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.2)",
+              borderRadius: "6px", color: "rgba(6,182,212,0.6)", fontSize: "11px", fontWeight: 700,
               cursor: "pointer", touchAction: "manipulation",
               display: "flex", alignItems: "center", justifyContent: "center",
-              backdropFilter: "blur(4px)",
             }}
           >
             ↺

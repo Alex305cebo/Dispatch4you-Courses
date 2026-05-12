@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
-import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
+import { collection, query, orderBy, limit, getDocs, doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { getRank } from "../data/levels";
+
+const isAdmin = typeof window !== "undefined"
+  && window.location.hostname === "localhost"
+  && new URLSearchParams(window.location.search).get("admin") === "1";
 
 export default function LeaderboardModal({ currentUserId, onClose }) {
   const [players, setPlayers] = useState([]);
@@ -21,17 +25,36 @@ export default function LeaderboardModal({ currentUserId, onClose }) {
       const snapshot = await getDocs(q);
       const data = snapshot.docs
         .map((doc) => ({ uid: doc.id, ...doc.data() }))
-        // В рейтинге — только игроки с реальным XP.
-        // Защита от старых "пустых" записей до фикса initUserInLeaderboard.
-        .filter((p) => (p.xp || 0) > 0);
+        .filter((p) => (p.xp || 0) > 0 && !p.hidden);
       console.log("[Leaderboard] Loaded players:", data.length);
       setPlayers(data);
     } catch (err) {
       console.error("[Leaderboard] Failed to load:", err);
-      // Показываем ошибку пользователю
       setPlayers([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Админ: скрыть игрока из рейтинга
+  const hidePlayer = async (uid) => {
+    if (!confirm("Скрыть этого игрока из рейтинга?")) return;
+    try {
+      await updateDoc(doc(db, "progress", uid), { hidden: true });
+      setPlayers((prev) => prev.filter((p) => p.uid !== uid));
+    } catch (err) {
+      console.error("[Admin] Failed to hide player:", err);
+    }
+  };
+
+  // Админ: удалить игрока полностью
+  const deletePlayer = async (uid) => {
+    if (!confirm("УДАЛИТЬ этого игрока из базы? Это необратимо!")) return;
+    try {
+      await deleteDoc(doc(db, "progress", uid));
+      setPlayers((prev) => prev.filter((p) => p.uid !== uid));
+    } catch (err) {
+      console.error("[Admin] Failed to delete player:", err);
     }
   };
 
@@ -240,22 +263,56 @@ export default function LeaderboardModal({ currentUserId, onClose }) {
                   </div>
 
                   {/* XP */}
-                  <div style={{ textAlign: "right" }}>
-                    <p style={{
-                      fontSize: "16px",
-                      fontWeight: 900,
-                      color: rank.color,
-                      margin: 0,
-                    }}>
-                      {player.xp || 0}
-                    </p>
-                    <p style={{
-                      fontSize: "10px",
-                      color: "#64748b",
-                      margin: 0,
-                    }}>
-                      XP
-                    </p>
+                  <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <div>
+                      <p style={{
+                        fontSize: "16px",
+                        fontWeight: 900,
+                        color: rank.color,
+                        margin: 0,
+                      }}>
+                        {player.xp || 0}
+                      </p>
+                      <p style={{
+                        fontSize: "10px",
+                        color: "#64748b",
+                        margin: 0,
+                      }}>
+                        XP
+                      </p>
+                    </div>
+
+                    {/* Админ-кнопки */}
+                    {isAdmin && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); hidePlayer(player.uid); }}
+                          title="Скрыть из рейтинга"
+                          style={{
+                            width: "22px", height: "22px", borderRadius: "4px",
+                            background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)",
+                            color: "#f59e0b", fontSize: "11px", cursor: "pointer",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            padding: 0,
+                          }}
+                        >
+                          👁
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deletePlayer(player.uid); }}
+                          title="Удалить из базы"
+                          style={{
+                            width: "22px", height: "22px", borderRadius: "4px",
+                            background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)",
+                            color: "#ef4444", fontSize: "11px", cursor: "pointer",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            padding: 0,
+                          }}
+                        >
+                          🗑
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               );

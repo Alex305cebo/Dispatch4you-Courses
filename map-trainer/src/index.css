@@ -31,32 +31,30 @@ button {
   grid-template-columns: minmax(260px, 300px) 1fr !important;
 }
 
-/* ─── МОБИЛЕ: карта сверху (гарантированно видна), панель снизу (скроллится) ─── */
+/* ─── МОБИЛЕ: карта сверху, панель снизу (скроллится) ─── */
 @media (max-width: 768px) {
   .quiz-layout {
     grid-template-columns: 1fr !important;
-    grid-template-rows: clamp(25dvh, 30dvh, 35dvh) 1fr !important;
+    grid-template-rows: 1fr auto !important;
   }
 
   .quiz-layout .map-col {
     order: -1;
-    min-height: 25dvh;
+    min-height: 35dvh;
   }
 
   .quiz-layout .panel-col {
     order: 1;
-    /* Чтобы большая панель не распирала layout — скроллим внутри */
     overflow-y: auto;
     min-height: 0;
+    max-height: 55dvh;
   }
 }
 
-/* Очень маленькие экраны (iPhone SE, 360×640): чуть меньше карте */
+/* Очень маленькие экраны (iPhone SE, 360×640) */
 @media (max-width: 768px) and (max-height: 640px) {
-  .quiz-layout {
-    grid-template-rows: clamp(22dvh, 25dvh, 28dvh) 1fr !important;
-  }
-  .quiz-layout .map-col { min-height: 22dvh; }
+  .quiz-layout .map-col { min-height: 30dvh; }
+  .quiz-layout .panel-col { max-height: 60dvh; }
 }
 
 /* Скроллбар */
@@ -112,5 +110,13 @@ button {
   }
   .lr-card {
     padding: 16px 14px !important;
+  }
+}
+
+/* ─── Компактная панель квиза на мобильных ─── */
+@media (max-width: 768px) {
+  .quiz-layout .panel-col > div {
+    padding: 10px 12px !important;
+    gap: 6px !important;
   }
 }

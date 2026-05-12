@@ -77,6 +77,12 @@ export default function QuizPanel({
       return;
     }
 
+    // При неправильном ответе — НЕ запускаем автопереход (ждём кнопку "Продолжить")
+    if (!feedback.correct) {
+      setAutoProgress(0);
+      return;
+    }
+
     // Если открыт поп-ап - не запускаем автопереход
     if (showPronunciation) {
       clearTimeout(autoTimerRef.current);
@@ -168,157 +174,70 @@ export default function QuizPanel({
         </div>
       )}
 
-      {/* Строка: прогресс + счёт */}
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <span style={{ fontSize: "13px", color: "#94a3b8" }}>
-          {total.current} / {total.max}
-        </span>
-        <span style={{ fontSize: "13px" }}>
-          <span style={{ color: "#22c55e" }}>✓ {score.correct}</span>
-          &nbsp;&nbsp;
-          <span style={{ color: "#ef4444" }}>✗ {score.wrong}</span>
-        </span>
-      </div>
-
-      {/* Таймер */}
-      <TimerBar
-        timeLeft={timerLeft}
-        pct={timerPct}
-        color={timerColor}
-        totalSeconds={timerSeconds}
-      />
-
-      {/* Вопрос */}
-      {/* Карточка всегда кликабельная */}
-      <button
-        onClick={handleOpenPronunciation}
-        style={{
-          width: "100%",
-          background: feedback 
-            ? "linear-gradient(135deg,rgba(6,182,212,0.12),rgba(14,165,233,0.08))"
-            : "linear-gradient(135deg,rgba(6,182,212,0.08),rgba(14,165,233,0.05))",
-          border: feedback
-            ? "2px solid rgba(6,182,212,0.3)"
-            : "2px solid rgba(6,182,212,0.2)",
-          borderRadius: "12px",
-          padding: "0",
-          textAlign: "center",
-          position: "relative",
-          cursor: "pointer",
-          transition: "all 0.2s ease",
-          overflow: "hidden",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = feedback
-            ? "linear-gradient(135deg,rgba(6,182,212,0.18),rgba(14,165,233,0.12))"
-            : "linear-gradient(135deg,rgba(6,182,212,0.12),rgba(14,165,233,0.08))";
-          e.currentTarget.style.borderColor = "rgba(6,182,212,0.5)";
-          e.currentTarget.style.transform = "translateY(-2px)";
-          e.currentTarget.style.boxShadow = "0 4px 16px rgba(6,182,212,0.25)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = feedback
-            ? "linear-gradient(135deg,rgba(6,182,212,0.12),rgba(14,165,233,0.08))"
-            : "linear-gradient(135deg,rgba(6,182,212,0.08),rgba(14,165,233,0.05))";
-          e.currentTarget.style.borderColor = feedback
-            ? "rgba(6,182,212,0.3)"
-            : "rgba(6,182,212,0.2)";
-          e.currentTarget.style.transform = "translateY(0)";
-          e.currentTarget.style.boxShadow = "none";
-        }}
-      >
-        {/* Верхняя полоска с подсказкой и иконкой */}
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "8px 12px 6px",
-          background: "rgba(6,182,212,0.05)",
-          borderBottom: "1px solid rgba(6,182,212,0.15)",
-        }}>
-          <p style={{
-            fontSize: "10px",
-            color: "#94a3b8",
-            margin: 0,
-            fontWeight: 600,
-          }}>
-            {question?.hint}
-          </p>
-          
-          {/* Иконка произношения */}
-          <div style={{
-            width: "28px",
-            height: "28px",
-            borderRadius: "50%",
-            background: feedback
-              ? "linear-gradient(135deg, rgba(6,182,212,0.25), rgba(14,165,233,0.2))"
-              : "linear-gradient(135deg, rgba(100,116,139,0.2), rgba(71,85,105,0.15))",
-            border: feedback
-              ? "2px solid rgba(6,182,212,0.5)"
-              : "2px solid rgba(100,116,139,0.3)",
-            color: feedback ? "#06b6d4" : "#64748b",
-            fontSize: "14px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: feedback ? "0 2px 8px rgba(6,182,212,0.3)" : "none",
-            animation: feedback ? "pulse 2s ease-in-out infinite" : "none",
-            flexShrink: 0,
-          }}>
-            {feedback ? "🔊" : "🔒"}
+      {/* ═══ Компактная карточка: прогресс + таймер + вопрос ═══ */}
+      <div style={{
+        background: "rgba(255,255,255,0.03)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: "10px",
+        padding: "8px 10px",
+      }}>
+        {/* Одна строка: таймер-бар (65%) + цифры (35%) */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+          {/* Левая часть: прогресс-бар таймера */}
+          <div style={{ flex: 1 }}>
+            <TimerBar
+              timeLeft={timerLeft}
+              pct={timerPct}
+              color={timerColor}
+              totalSeconds={timerSeconds}
+            />
+          </div>
+          {/* Правая часть: цифры */}
+          <div style={{ flexShrink: 0, textAlign: "right", minWidth: "80px" }}>
+            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 600 }}>
+              {total.current}/{total.max}
+            </span>
+            {" "}
+            <span style={{ fontSize: "12px", color: "#22c55e", fontWeight: 700 }}>✓{score.correct}</span>
+            {" "}
+            <span style={{ fontSize: "12px", color: "#ef4444", fontWeight: 700 }}>✗{score.wrong}</span>
           </div>
         </div>
 
-        {/* Основной текст вопроса */}
-        <div style={{
-          padding: "12px 12px 10px",
-        }}>
+        {/* Вопрос — просто текст, без обёртки */}
+        <button
+          onClick={feedback ? handleOpenPronunciation : undefined}
+          style={{
+            width: "100%",
+            background: feedback
+              ? "linear-gradient(135deg, rgba(6,182,212,0.12), rgba(14,165,233,0.08))"
+              : "none",
+            border: feedback ? "1px solid rgba(6,182,212,0.4)" : "none",
+            borderRadius: "10px",
+            padding: feedback ? "10px 10px 8px" : "6px 0 2px",
+            textAlign: "center",
+            cursor: feedback ? "pointer" : "default",
+            boxShadow: feedback ? "0 0 16px rgba(6,182,212,0.2), inset 0 0 12px rgba(6,182,212,0.05)" : "none",
+            animation: feedback ? "glowPulse 2s ease-in-out infinite" : "none",
+            transition: "all 0.3s ease",
+          }}
+        >
           <p style={{
-            fontSize: "19px",
+            fontSize: "16px",
             fontWeight: 800,
             color: "#fff",
             margin: 0,
             lineHeight: 1.3,
-            letterSpacing: "-0.3px",
           }}>
             {question?.text}
           </p>
-        </div>
-
-        {/* Нижняя подсказка */}
-        <div style={{
-          padding: "6px 12px 8px",
-          background: "rgba(6,182,212,0.05)",
-          borderTop: "1px solid rgba(6,182,212,0.15)",
-        }}>
-          <p style={{
-            fontSize: "10px",
-            color: feedback ? "#64748b" : "#475569",
-            margin: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "4px",
-          }}>
-            <span style={{ fontSize: "12px" }}>{feedback ? "👆" : "🔒"}</span>
-            <span>{feedback ? "Нажми для произношения" : "Транскрипция появится после ответа"}</span>
-          </p>
-        </div>
-
-        {/* Декоративное свечение - только после ответа */}
-        {feedback && (
-          <div style={{
-            position: "absolute",
-            top: "-50%",
-            right: "-20%",
-            width: "150px",
-            height: "150px",
-            background: "radial-gradient(circle, rgba(6,182,212,0.15) 0%, transparent 70%)",
-            pointerEvents: "none",
-            animation: "glow 3s ease-in-out infinite",
-          }} />
-        )}
-      </button>
+          {feedback && (
+            <p style={{ fontSize: "12px", color: "#06b6d4", margin: "6px 0 0 0", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
+              <span style={{ fontSize: "14px" }}>🔊</span> Нажми для произношения
+            </p>
+          )}
+        </button>
+      </div>
 
       <style>{`
         @keyframes pulse {
@@ -328,6 +247,10 @@ export default function QuizPanel({
         @keyframes glow {
           0%, 100% { opacity: 0.3; }
           50% { opacity: 0.6; }
+        }
+        @keyframes glowPulse {
+          0%, 100% { box-shadow: 0 0 12px rgba(6,182,212,0.15), inset 0 0 8px rgba(6,182,212,0.03); }
+          50% { box-shadow: 0 0 20px rgba(6,182,212,0.3), inset 0 0 12px rgba(6,182,212,0.06); }
         }
         @keyframes shakeAnim {
           0%, 100% { transform: translateX(0); }
@@ -446,7 +369,7 @@ export default function QuizPanel({
 
       {/* Варианты ответа (name-state / timezone / region) */}
       {!isMapClick && options && !feedback && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: options.length > 4 ? "1fr 1fr" : "1fr", gap: "6px" }}>
           {options.map((opt) => (
             <button
               key={opt.value}
@@ -454,23 +377,21 @@ export default function QuizPanel({
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = "rgba(6,182,212,0.12)";
                 e.currentTarget.style.borderColor = "rgba(6,182,212,0.4)";
-                // ⚠️ НЕ подсвечиваем карту на hover — это раскрывало бы правильный ответ.
-                // Подсветка зоны показывается только ПОСЛЕ ответа (через correctTz в App.jsx).
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = "rgba(255,255,255,0.05)";
                 e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
               }}
               style={{
-                padding: "11px 14px",
+                padding: "9px 12px",
                 background: "rgba(255,255,255,0.05)",
                 border: "1px solid rgba(255,255,255,0.1)",
                 borderRadius: "10px",
                 color: "#e2e8f0",
-                fontSize: "14px",
+                fontSize: "13px",
                 fontWeight: 600,
                 cursor: "pointer",
-                textAlign: "left",
+                textAlign: "center",
                 touchAction: "manipulation",
                 transition: "all 0.15s ease",
               }}
@@ -483,7 +404,7 @@ export default function QuizPanel({
 
       {/* Варианты после ответа — с подсветкой */}
       {!isMapClick && options && feedback && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: options.length > 4 ? "1fr 1fr" : "1fr", gap: "6px" }}>
           {options.map((opt) => {
             const isCorrect = opt.value === question?.correctAnswer;
             const isSelected = opt.value === feedback?.selectedAnswer;
@@ -494,13 +415,14 @@ export default function QuizPanel({
             else if (isSelected && !isCorrect) { bg = "rgba(239,68,68,0.12)"; border = "rgba(239,68,68,0.4)"; color = "#ef4444"; }
             return (
               <div key={opt.value} style={{
-                padding: "11px 14px",
+                padding: "9px 12px",
                 background: bg,
                 border: `1px solid ${border}`,
                 borderRadius: "10px",
                 color,
-                fontSize: "14px",
+                fontSize: "13px",
                 fontWeight: 600,
+                textAlign: "center",
               }}>
                 {isCorrect ? "✓ " : isSelected ? "✗ " : ""}{opt.label}
               </div>
@@ -509,39 +431,21 @@ export default function QuizPanel({
         </div>
       )}
 
-      {/* Фидбек */}
-      {feedback && (
+      {/* Фидбек — при правильном: компактная строка, при неправильном: popup */}
+      {feedback && feedback.correct && (
         <div style={{
-          background: feedback.correct ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
-          border: `1px solid ${feedback.correct ? "rgba(34,197,94,0.35)" : "rgba(239,68,68,0.35)"}`,
-          borderRadius: "10px",
-          padding: "10px 14px",
+          background: "rgba(34,197,94,0.1)",
+          border: "1px solid rgba(34,197,94,0.3)",
+          borderRadius: "8px",
+          padding: "6px 10px",
           textAlign: "center",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
         }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "3px" }}>
-            <span style={{ fontSize: "14px", fontWeight: 700, color: feedback.correct ? "#22c55e" : "#ef4444" }}>
-              {feedback.correct ? "✓ Правильно!" : "✗ Неправильно"}
-            </span>
-            {feedback.pointsChange !== 0 && (
-              <span style={{
-                fontSize: "12px", fontWeight: 700, color: "#ef4444",
-                background: "rgba(239,68,68,0.15)", padding: "1px 6px", borderRadius: "5px",
-              }}>
-                −{Math.abs(feedback.pointsChange)} pts
-              </span>
-            )}
-            {feedback.correct && (
-              <span style={{
-                fontSize: "12px", fontWeight: 700, color: "#22c55e",
-                background: "rgba(34,197,94,0.15)", padding: "1px 6px", borderRadius: "5px",
-              }}>
-                +10 pts
-              </span>
-            )}
-          </div>
-          <p style={{ fontSize: "12px", color: "#e2e8f0", margin: 0, lineHeight: 1.4 }}>
-            {feedback.message}
-          </p>
+          <span style={{ fontSize: "13px", fontWeight: 700, color: "#22c55e" }}>✓ Правильно!</span>
+          <span style={{ fontSize: "11px", fontWeight: 700, color: "#22c55e", background: "rgba(34,197,94,0.15)", padding: "1px 6px", borderRadius: "4px" }}>+10</span>
+          {feedback.streak >= 3 && (
+            <span style={{ fontSize: "11px", color: "#f59e0b" }}>🔥{feedback.streak}</span>
+          )}
         </div>
       )}
 
@@ -551,26 +455,259 @@ export default function QuizPanel({
           👆 Кликни на карте
         </p>
       )}
+    </div>
 
-      {/* Полоска очков — внизу */}
-      <div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
-          <span style={{ fontSize: "11px", color: "#94a3b8" }}>Очки</span>
-          <span style={{ fontSize: "11px", color: barColor, fontWeight: 700 }}>
-            {score.points} / {maxPoints}
-          </span>
-        </div>
-        <div style={{ height: "5px", background: "rgba(255,255,255,0.08)", borderRadius: "3px", overflow: "hidden" }}>
+    {/* Popup при неправильном ответе */}
+    {feedback && !feedback.correct && (
+      <div
+        onClick={() => {
+          clearTimeout(autoTimerRef.current);
+          cancelAnimationFrame(autoRafRef.current);
+          onNext();
+        }}
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 999,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "rgba(0,0,0,0.6)",
+          backdropFilter: "blur(4px)",
+          WebkitBackdropFilter: "blur(4px)",
+          padding: "20px",
+          animation: "fadeIn 0.2s ease",
+        }}
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            background: "linear-gradient(135deg, #1a0a0a 0%, #2a1015 50%, #1a0a1a 100%)",
+            border: "2px solid rgba(239,68,68,0.4)",
+            borderRadius: "20px",
+            padding: "24px 20px",
+            maxWidth: "360px",
+            width: "100%",
+            textAlign: "center",
+            boxShadow: "0 20px 60px rgba(239,68,68,0.15), 0 0 40px rgba(0,0,0,0.5)",
+            animation: "slideUp 0.3s ease",
+            maxHeight: "85vh",
+            overflowY: "auto",
+            position: "relative",
+          }}
+        >
+          {/* Крестик закрытия */}
+          <button
+            onClick={() => {
+              clearTimeout(autoTimerRef.current);
+              cancelAnimationFrame(autoRafRef.current);
+              onNext();
+            }}
+            style={{
+              position: "absolute", top: "12px", right: "12px",
+              width: "28px", height: "28px", borderRadius: "50%",
+              background: "rgba(255,255,255,0.08)",
+              border: "1px solid rgba(255,255,255,0.15)",
+              color: "#94a3b8", fontSize: "16px",
+              cursor: "pointer", display: "flex",
+              alignItems: "center", justifyContent: "center",
+            }}
+          >
+            ×
+          </button>
+
+          {/* Верхняя часть: иконка + текст + pts — в одну строку */}
           <div style={{
-            height: "100%",
-            width: `${pct * 100}%`,
-            background: barColor,
-            borderRadius: "3px",
-            transition: "width 0.4s ease, background 0.4s ease",
-          }} />
+            display: "flex", alignItems: "center", justifyContent: "center",
+            gap: "10px", marginBottom: "12px",
+          }}>
+            <div style={{
+              width: "36px", height: "36px", borderRadius: "50%",
+              background: "rgba(239,68,68,0.15)",
+              border: "2px solid rgba(239,68,68,0.4)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "16px", color: "#ef4444", flexShrink: 0,
+            }}>
+              ✗
+            </div>
+            <p style={{ fontSize: "17px", fontWeight: 800, color: "#ef4444", margin: 0 }}>
+              Неправильно
+            </p>
+            <span style={{
+              fontSize: "12px", fontWeight: 700, color: "#ef4444",
+              background: "rgba(239,68,68,0.15)", padding: "3px 8px", borderRadius: "5px",
+              flexShrink: 0,
+            }}>
+              −{Math.abs(feedback.pointsChange)}
+            </span>
+          </div>
+
+          {/* Правильный ответ */}
+          <div style={{
+            marginTop: "16px",
+            background: "rgba(34,197,94,0.08)",
+            border: "1px solid rgba(34,197,94,0.25)",
+            borderRadius: "12px",
+            padding: "14px",
+          }}>
+            <p style={{ fontSize: "11px", color: "#64748b", margin: "0 0 4px 0" }}>Правильный ответ:</p>
+            <p style={{ fontSize: "18px", fontWeight: 800, color: "#22c55e", margin: "0 0 6px 0" }}>
+              {question?.correctAnswer}
+            </p>
+            {/* Транскрипция */}
+            {(() => {
+              const pron = getPronunciation(question?.correctAnswer);
+              return pron && pron.en !== question?.correctAnswer ? (
+                <div style={{ borderTop: "1px solid rgba(34,197,94,0.15)", paddingTop: "8px", marginTop: "8px", display: "flex", justifyContent: "center", gap: "20px" }}>
+                  <div style={{ textAlign: "center" }}>
+                    <p style={{ fontSize: "9px", color: "#64748b", margin: "0 0 2px 0", textTransform: "uppercase", letterSpacing: "1px" }}>ENGLISH</p>
+                    <p style={{ fontSize: "16px", color: "#e2e8f0", margin: 0, fontFamily: "monospace" }}>[{pron.en}]</p>
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <p style={{ fontSize: "9px", color: "#64748b", margin: "0 0 2px 0", textTransform: "uppercase", letterSpacing: "1px" }}>РУССКИЙ</p>
+                    <p style={{ fontSize: "16px", color: "#e2e8f0", margin: 0, fontFamily: "monospace" }}>[{pron.ru}]</p>
+                  </div>
+                </div>
+              ) : null;
+            })()}
+            {/* Пояснение: для какого штата */}
+            {(mode === "timezone" || mode === "region" || mode === "regions-intro" || mode === "capitals") && (
+              <p style={{ fontSize: "14px", color: "#94a3b8", margin: "8px 0 0 0" }}>
+                Штат: {question?.stateName}
+                {(() => {
+                  const statePron = getPronunciation(question?.stateName);
+                  return statePron && statePron.en !== question?.stateName
+                    ? ` [${statePron.ru}]`
+                    : "";
+                })()}
+              </p>
+            )}
+          </div>
+
+          {/* Кнопка произношения — озвучивает правильный ответ */}
+          <button
+            onClick={() => {
+              if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                // Озвучиваем: правильный ответ + штат
+                const textToSpeak = question?.correctAnswer + 
+                  (question?.stateName && question?.correctAnswer !== question?.stateName 
+                    ? ". " + question.stateName 
+                    : "");
+                const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.75;
+                utterance.pitch = 0.95;
+                utterance.volume = 0.85;
+                const voices = window.speechSynthesis.getVoices();
+                const preferred = ["Google US English", "Microsoft Aria", "Microsoft Jenny", "Samantha", "Karen", "Daniel"];
+                let bestVoice = null;
+                for (const name of preferred) {
+                  bestVoice = voices.find(v => v.name.includes(name) && v.lang.startsWith("en"));
+                  if (bestVoice) break;
+                }
+                if (!bestVoice) bestVoice = voices.find(v => v.lang === "en-US") || voices.find(v => v.lang.startsWith("en"));
+                if (bestVoice) utterance.voice = bestVoice;
+                window.speechSynthesis.speak(utterance);
+              }
+            }}
+            style={{
+              width: "100%",
+              marginTop: "14px",
+              padding: "14px",
+              background: "linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.1))",
+              border: "2px solid rgba(34,197,94,0.5)",
+              borderRadius: "12px",
+              color: "#22c55e",
+              fontSize: "15px",
+              fontWeight: 700,
+              cursor: "pointer",
+              touchAction: "manipulation",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              boxShadow: "0 4px 12px rgba(34,197,94,0.2)",
+            }}
+          >
+            🔊 Послушать произношение
+          </button>
+
+          {/* Аналитика — 4 столбца (2 пары ключ-значение в строку) */}
+          <div style={{
+            marginTop: "10px",
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: "10px",
+            padding: "8px 10px",
+            display: "grid",
+            gridTemplateColumns: "auto auto auto auto",
+            gap: "4px 8px",
+            alignItems: "center",
+          }}>
+            {question?.tz && (
+              <>
+                <span style={{ fontSize: "11px", color: "#94a3b8" }}>Пояс:</span>
+                <span style={{ fontSize: "11px", color: "#fff", fontWeight: 700 }}>{question.tz}</span>
+              </>
+            )}
+            {question?.region && (
+              <>
+                <span style={{ fontSize: "11px", color: "#94a3b8" }}>Регион:</span>
+                <span style={{ fontSize: "11px", color: "#fff", fontWeight: 700 }}>{question.region}</span>
+              </>
+            )}
+            {question?.capital && (
+              <>
+                <span style={{ fontSize: "11px", color: "#94a3b8" }}>Столица:</span>
+                <span style={{ fontSize: "11px", color: "#fff", fontWeight: 700 }}>{question.capital}</span>
+              </>
+            )}
+            <>
+              <span style={{ fontSize: "11px", color: "#94a3b8" }}>Код:</span>
+              <span style={{ fontSize: "11px", color: "#fff", fontWeight: 700 }}>{question?.stateId}</span>
+            </>
+          </div>
+
+          {/* Совет */}
+          <div style={{
+            marginTop: "8px",
+            background: "rgba(6,182,212,0.06)",
+            border: "1px solid rgba(6,182,212,0.15)",
+            borderRadius: "8px",
+            padding: "6px 10px",
+          }}>
+            <p style={{ fontSize: "12px", color: "#06b6d4", margin: 0, lineHeight: 1.4 }}>
+              💡 {question?.stateName || question?.cityName}: {question?.region || "—"}, {question?.tz || "—"}
+            </p>
+          </div>
+
+          {/* Кнопка продолжить */}
+          <button
+            onClick={() => {
+              clearTimeout(autoTimerRef.current);
+              cancelAnimationFrame(autoRafRef.current);
+              onNext();
+            }}
+            style={{
+              width: "100%",
+              marginTop: "10px",
+              padding: "11px",
+              background: "linear-gradient(135deg, #06b6d4, #0284c7)",
+              border: "none",
+              borderRadius: "10px",
+              color: "#fff",
+              fontSize: "14px",
+              fontWeight: 700,
+              cursor: "pointer",
+              touchAction: "manipulation",
+            }}
+          >
+            Продолжить →
+          </button>
         </div>
       </div>
-    </div>
+    )}
 
     {/* Модальное окно произношения */}
     {showPronunciation && question && (

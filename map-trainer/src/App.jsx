@@ -389,7 +389,7 @@ export default function App() {
       display: "flex",
       flexDirection: "column",
       background: "linear-gradient(160deg,#060d1a 0%,#0f172a 40%,#1a1040 100%)",
-      padding: "10px 14px",
+      padding: "8px 10px",
       boxSizing: "border-box",
       overflow: "hidden",
     }}>
@@ -399,7 +399,7 @@ export default function App() {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        marginBottom: "8px",
+        marginBottom: "4px",
         flexShrink: 0,
       }}>
         {/* Левая: кнопка сайта + кнопка уровней */}
@@ -480,7 +480,7 @@ export default function App() {
             border: `1px solid rgba(${activeLevel?.colorRgb},0.3)`,
             borderRadius: "10px", padding: "5px 14px",
           }}>
-            <span style={{ fontSize: "14px" }}>{activeLevel?.icon}</span>
+            <span style={{ fontSize: "14px" }}>⭐</span>
             <span style={{
               fontSize: "18px", fontWeight: 900,
               color: score.points > maxPoints * 0.6 ? activeLevel?.color
@@ -515,7 +515,7 @@ export default function App() {
       {/* ── Прогресс-бар ── */}
       <div style={{
         height: "3px", background: "rgba(255,255,255,0.06)",
-        borderRadius: "2px", marginBottom: "10px",
+        borderRadius: "2px", marginBottom: "6px",
         overflow: "hidden", flexShrink: 0,
       }}>
         <div style={{
@@ -571,8 +571,8 @@ export default function App() {
         <div className="map-col" style={{
           background: "rgba(255,255,255,0.02)",
           border: `1px solid rgba(${activeLevel?.colorRgb},0.15)`,
-          borderRadius: "16px",
-          padding: "8px", overflow: "hidden",
+          borderRadius: "12px",
+          padding: "0", overflow: "hidden",
           display: "flex", alignItems: "center", justifyContent: "center",
           minHeight: 0,
         }}>
