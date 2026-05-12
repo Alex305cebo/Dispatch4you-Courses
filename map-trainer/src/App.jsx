@@ -4,6 +4,7 @@ import LevelResult  from "./components/LevelResult";
 import USAMap       from "./components/USAMap";
 import QuizPanel    from "./components/QuizPanel";
 import LoginScreen  from "./components/LoginScreen";
+import ParticlesBackground from "./components/ParticlesBackground";
 import { STATES }   from "./data/states";
 import { LEVELS }   from "./data/levels";
 import { PENALTIES } from "./data/quizConfig";
@@ -48,6 +49,9 @@ export default function App() {
   const [xpEarned,      setXpEarned]      = useState(0);
   const [correctTz,     setCorrectTz]     = useState(null);
   const [correctRegion, setCorrectRegion] = useState(null);
+  const [streak,        setStreak]        = useState(0);
+  const [answeredStates, setAnsweredStates] = useState({}); // {stateId: "correct"|"wrong"}
+  const [shakePanel,    setShakePanel]    = useState(false);
 
   const { weakStates, recordResult, reset: resetStats } = useStats();
 
@@ -106,6 +110,9 @@ export default function App() {
     setHintText(null);
     setHoveredTz(null);
     setHoveredRegion(null);
+    setStreak(0);
+    setAnsweredStates({});
+    setShakePanel(false);
     resetStats();
     setScreen("quiz");
   }, [resetStats]);
@@ -124,8 +131,31 @@ export default function App() {
   // ── Обработка ответа ──
   const processAnswer = useCallback((correct, selectedAnswer, penalty) => {
     timer.stop();
-    showDelta(correct ? 0 : -penalty);
+    
+    // Streak логика
+    const newStreak = correct ? streak + 1 : 0;
+    setStreak(newStreak);
+    
+    // Множитель за streak
+    const multiplier = newStreak >= 5 ? 2 : newStreak >= 3 ? 1.5 : 1;
+    const bonusPoints = correct && newStreak >= 3 ? Math.round(POINTS_PER_Q * (multiplier - 1)) : 0;
+    
+    showDelta(correct ? bonusPoints : -penalty);
     correct ? sounds.correct() : sounds.wrong();
+    
+    // Shake при ошибке
+    if (!correct) {
+      setShakePanel(true);
+      setTimeout(() => setShakePanel(false), 500);
+    }
+    
+    // Запоминаем ответ на карте
+    if (currentQuestion?.stateId) {
+      setAnsweredStates(prev => ({
+        ...prev,
+        [currentQuestion.stateId]: correct ? "correct" : "wrong",
+      }));
+    }
     
     // Устанавливаем selectedState для режимов с вариантами ответа
     setSelectedState(selectedAnswer);
@@ -140,20 +170,21 @@ export default function App() {
     
     setFeedback({
       correct,
-      pointsChange: correct ? 0 : -penalty,
+      pointsChange: correct ? bonusPoints : -penalty,
       selectedAnswer,
+      streak: newStreak,
       message: correct
-        ? buildCorrectMsg(currentQuestion)
+        ? (newStreak >= 5 ? "🔥 ОГОНЬ! Двойные очки!" : newStreak >= 3 ? `🔥 ${newStreak} подряд! Бонус!` : buildCorrectMsg(currentQuestion))
         : buildWrongMsg(currentQuestion),
     });
     setScore((prev) => ({
       correct: prev.correct + (correct ? 1 : 0),
       wrong:   prev.wrong   + (correct ? 0 : 1),
       skipped: prev.skipped,
-      points:  Math.max(0, prev.points - (correct ? 0 : penalty)),
+      points:  Math.max(0, prev.points - (correct ? 0 : penalty) + bonusPoints),
     }));
     recordResult(currentQuestion.stateId, currentQuestion.stateName, correct);
-  }, [timer, currentQuestion, activeLevel, showDelta, recordResult]);
+  }, [timer, currentQuestion, activeLevel, showDelta, recordResult, streak, sounds]);
 
   // ── Клик по штату на карте ──
   const handleStateClick = useCallback((stateId) => {
@@ -347,7 +378,10 @@ export default function App() {
   const needsMap = true;
   const isMapClick = MAP_CLICK_MODES.has(mode);
   const highlightedState = feedback ? currentQuestion?.stateId : null;
-  const markedState = !isMapClick ? currentQuestion?.stateId : null;
+  // markedState — подсвечиваем штат на карте ДО ответа только для name-state
+  // (там вопрос "как называется этот штат?" — нужно показать какой именно)
+  // Для остальных режимов название штата написано в тексте — подсветка раскрывает ответ
+  const markedState = mode === "name-state" ? currentQuestion?.stateId : null;
 
   return (
     <div style={{
@@ -529,6 +563,8 @@ export default function App() {
             }}
             onNext={handleNext}
             onSkip={handleSkip}
+            streak={streak}
+            shakePanel={shakePanel}
           />
         </div>
 
@@ -551,6 +587,7 @@ export default function App() {
             correctTz={correctTz}
             correctRegion={correctRegion}
             levelColor={activeLevel?.color}
+            answeredStates={answeredStates}
           />
         </div>
       </div>

@@ -33,6 +33,8 @@ export default function QuizPanel({
   // Кнопки
   onNext,
   onSkip,
+  streak = 0,
+  shakePanel = false,
 }) {
   const pct = score.points / maxPoints;
   const barColor = pct > 0.6 ? (level?.color || "#06b6d4") : pct > 0.3 ? "#f97316" : "#ef4444";
@@ -112,14 +114,59 @@ export default function QuizPanel({
   return (
   <>
     <div style={{
-      background: "rgba(255,255,255,0.04)",
-      border: "1px solid rgba(6,182,212,0.2)",
+      background: "rgba(255,255,255,0.06)",
+      backdropFilter: "blur(12px) saturate(1.3)",
+      WebkitBackdropFilter: "blur(12px) saturate(1.3)",
+      border: `1px solid rgba(${level?.colorRgb || "6,182,212"},0.25)`,
       borderRadius: "16px",
       padding: "14px 16px",
       display: "flex",
       flexDirection: "column",
       gap: "10px",
+      boxShadow: `0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)`,
+      animation: shakePanel ? "shakeAnim 0.5s ease" : "none",
     }}>
+
+      {/* Streak индикатор с огненными частицами */}
+      {streak >= 3 && !feedback && (
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "center",
+          gap: "6px", padding: "6px 14px",
+          background: streak >= 5
+            ? "linear-gradient(135deg, rgba(239,68,68,0.2), rgba(245,158,11,0.15))"
+            : "linear-gradient(135deg, rgba(245,158,11,0.15), rgba(251,191,36,0.1))",
+          border: `1px solid ${streak >= 5 ? "rgba(239,68,68,0.5)" : "rgba(245,158,11,0.4)"}`,
+          borderRadius: "10px",
+          position: "relative",
+          overflow: "hidden",
+          animation: "streakPulse 1s ease-in-out infinite",
+        }}>
+          {/* Огненные частицы */}
+          <div className="fire-particles">
+            {[...Array(8)].map((_, i) => (
+              <span key={i} className="fire-particle" style={{ animationDelay: `${i * 0.15}s` }} />
+            ))}
+          </div>
+          <span style={{ fontSize: "18px", position: "relative", zIndex: 1 }}>🔥</span>
+          <span style={{
+            fontSize: "14px", fontWeight: 800,
+            color: streak >= 5 ? "#fbbf24" : "#f59e0b",
+            position: "relative", zIndex: 1,
+            textShadow: "0 0 8px rgba(251,191,36,0.5)",
+          }}>
+            {streak} подряд!
+          </span>
+          <span style={{
+            fontSize: "11px", fontWeight: 700,
+            color: "#fff",
+            background: streak >= 5 ? "#ef4444" : "#f59e0b",
+            padding: "2px 6px", borderRadius: "4px",
+            position: "relative", zIndex: 1,
+          }}>
+            {streak >= 5 ? "×2 очков" : "×1.5 очков"}
+          </span>
+        </div>
+      )}
 
       {/* Строка: прогресс + счёт */}
       <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -131,25 +178,6 @@ export default function QuizPanel({
           &nbsp;&nbsp;
           <span style={{ color: "#ef4444" }}>✗ {score.wrong}</span>
         </span>
-      </div>
-
-      {/* Полоска очков */}
-      <div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
-          <span style={{ fontSize: "11px", color: "#94a3b8" }}>Очки</span>
-          <span style={{ fontSize: "11px", color: barColor, fontWeight: 700 }}>
-            {score.points} / {maxPoints}
-          </span>
-        </div>
-        <div style={{ height: "5px", background: "rgba(255,255,255,0.08)", borderRadius: "3px", overflow: "hidden" }}>
-          <div style={{
-            height: "100%",
-            width: `${pct * 100}%`,
-            background: barColor,
-            borderRadius: "3px",
-            transition: "width 0.4s ease, background 0.4s ease",
-          }} />
-        </div>
       </div>
 
       {/* Таймер */}
@@ -301,6 +329,49 @@ export default function QuizPanel({
           0%, 100% { opacity: 0.3; }
           50% { opacity: 0.6; }
         }
+        @keyframes shakeAnim {
+          0%, 100% { transform: translateX(0); }
+          15% { transform: translateX(-6px); }
+          30% { transform: translateX(5px); }
+          45% { transform: translateX(-4px); }
+          60% { transform: translateX(3px); }
+          75% { transform: translateX(-2px); }
+          90% { transform: translateX(1px); }
+        }
+        @keyframes streakPulse {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 0 rgba(245,158,11,0); }
+          50% { transform: scale(1.02); box-shadow: 0 0 12px rgba(245,158,11,0.3); }
+        }
+        .fire-particles {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+          pointer-events: none;
+        }
+        .fire-particle {
+          position: absolute;
+          bottom: 0;
+          width: 4px;
+          height: 4px;
+          border-radius: 50%;
+          background: #fbbf24;
+          box-shadow: 0 0 4px #f59e0b, 0 0 8px rgba(239,68,68,0.5);
+          animation: fireFloat 1.2s ease-out infinite;
+          opacity: 0;
+        }
+        .fire-particle:nth-child(1) { left: 10%; }
+        .fire-particle:nth-child(2) { left: 25%; }
+        .fire-particle:nth-child(3) { left: 40%; }
+        .fire-particle:nth-child(4) { left: 55%; }
+        .fire-particle:nth-child(5) { left: 70%; }
+        .fire-particle:nth-child(6) { left: 85%; }
+        .fire-particle:nth-child(7) { left: 15%; }
+        .fire-particle:nth-child(8) { left: 60%; }
+        @keyframes fireFloat {
+          0% { transform: translateY(0) scale(1); opacity: 0.8; }
+          50% { opacity: 1; }
+          100% { transform: translateY(-30px) scale(0.3); opacity: 0; }
+        }
       `}</style>
 
       {/* Подсказка — блок */}
@@ -318,6 +389,58 @@ export default function QuizPanel({
           <p style={{ fontSize: "12px", color: "#fcd34d", margin: 0, lineHeight: 1.4 }}>
             {hint}
           </p>
+        </div>
+      )}
+
+      {/* Кнопки действий — над вариантами, рядом по горизонтали */}
+      {feedback ? (
+        <button
+          onClick={() => {
+            clearTimeout(autoTimerRef.current);
+            cancelAnimationFrame(autoRafRef.current);
+            onNext();
+          }}
+          style={{
+            width: "100%", padding: "12px",
+            background: "linear-gradient(135deg,#06b6d4,#0284c7)",
+            border: "none", borderRadius: "10px",
+            color: "#fff", fontSize: "14px", fontWeight: 700,
+            cursor: "pointer", minHeight: "44px", touchAction: "manipulation",
+            position: "relative", overflow: "hidden",
+          }}
+        >
+          <div style={{
+            position: "absolute", bottom: 0, left: 0,
+            height: "3px", width: `${autoProgress}%`,
+            background: "rgba(255,255,255,0.5)",
+            transition: "none", borderRadius: "0 2px 2px 0",
+          }} />
+          Следующий →
+        </button>
+      ) : (
+        <div style={{ display: "flex", gap: "8px" }}>
+          {!hintUsed && (
+            <button onClick={onHint} style={{
+              flex: 1, padding: "10px 8px",
+              background: "rgba(245,158,11,0.1)",
+              border: "1px solid rgba(245,158,11,0.3)",
+              borderRadius: "10px",
+              color: "#fcd34d", fontSize: "12px", fontWeight: 600,
+              cursor: "pointer", touchAction: "manipulation",
+            }}>
+              💡 −{penaltyHint}pts
+            </button>
+          )}
+          <button onClick={onSkip} style={{
+            flex: 1, padding: "10px 8px",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: "10px",
+            color: "#94a3b8", fontSize: "12px",
+            cursor: "pointer", touchAction: "manipulation",
+          }}>
+            Пропустить −{penaltySkip}pts
+          </button>
         </div>
       )}
 
@@ -422,75 +545,31 @@ export default function QuizPanel({
         </div>
       )}
 
-      {/* Кнопки действий */}
-      {feedback ? (
-        <button
-          onClick={() => {
-            clearTimeout(autoTimerRef.current);
-            cancelAnimationFrame(autoRafRef.current);
-            onNext();
-          }}
-          style={{
-            width: "100%", padding: "13px",
-            background: "linear-gradient(135deg,#06b6d4,#0284c7)",
-            border: "none", borderRadius: "12px",
-            color: "#fff", fontSize: "15px", fontWeight: 700,
-            cursor: "pointer", minHeight: "48px", touchAction: "manipulation",
-            position: "relative", overflow: "hidden",
-          }}
-        >
-          {/* Прогресс-полоска обратного отсчёта */}
-          <div style={{
-            position: "absolute", bottom: 0, left: 0,
-            height: "3px",
-            width: `${autoProgress}%`,
-            background: "rgba(255,255,255,0.5)",
-            transition: "none",
-            borderRadius: "0 2px 2px 0",
-          }} />
-          Следующий →
-        </button>
-      ) : (
-        <div style={{ display: "flex", gap: "8px" }}>
-          {/* Подсказка */}
-          {!hintUsed && (
-            <button
-              onClick={onHint}
-              style={{
-                flex: 1, padding: "11px 8px",
-                background: "rgba(245,158,11,0.1)",
-                border: "1px solid rgba(245,158,11,0.3)",
-                borderRadius: "10px",
-                color: "#fcd34d", fontSize: "13px", fontWeight: 600,
-                cursor: "pointer", touchAction: "manipulation",
-              }}
-            >
-              💡 −{penaltyHint}pts
-            </button>
-          )}
-          {/* Пропустить */}
-          <button
-            onClick={onSkip}
-            style={{
-              flex: hintUsed ? 1 : 1, padding: "11px 8px",
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "10px",
-              color: "#94a3b8", fontSize: "13px",
-              cursor: "pointer", touchAction: "manipulation",
-            }}
-          >
-            Пропустить −{penaltySkip}pts
-          </button>
-        </div>
-      )}
-
       {/* Подсказка для find-state */}
       {isMapClick && !feedback && (
         <p style={{ fontSize: "11px", color: "#475569", textAlign: "center", margin: 0 }}>
           👆 Кликни на карте
         </p>
       )}
+
+      {/* Полоска очков — внизу */}
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
+          <span style={{ fontSize: "11px", color: "#94a3b8" }}>Очки</span>
+          <span style={{ fontSize: "11px", color: barColor, fontWeight: 700 }}>
+            {score.points} / {maxPoints}
+          </span>
+        </div>
+        <div style={{ height: "5px", background: "rgba(255,255,255,0.08)", borderRadius: "3px", overflow: "hidden" }}>
+          <div style={{
+            height: "100%",
+            width: `${pct * 100}%`,
+            background: barColor,
+            borderRadius: "3px",
+            transition: "width 0.4s ease, background 0.4s ease",
+          }} />
+        </div>
+      </div>
     </div>
 
     {/* Модальное окно произношения */}

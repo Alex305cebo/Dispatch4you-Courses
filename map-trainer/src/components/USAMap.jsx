@@ -44,6 +44,7 @@ export default function USAMap({
   correctTz = null,
   correctRegion = null,
   levelColor = "#06b6d4",
+  answeredStates = {},
 }) {
   const containerRef = useRef(null);
   const [zoom, setZoom]           = useState(1);
@@ -112,6 +113,9 @@ export default function USAMap({
       return "#0f1f35";
     }
 
+    // Цвет по умолчанию — с учётом ранее отвеченных
+    if (answeredStates[stateId] === "correct") return "rgba(34,197,94,0.25)";
+    if (answeredStates[stateId] === "wrong") return "rgba(239,68,68,0.2)";
     return "#1e3a5f";
   };
 
@@ -308,35 +312,54 @@ export default function USAMap({
         <div style={{ display: "none" }} />
       )}
 
-      {/* Кнопка сброса зума */}
-      {zoom > 1.05 && (
+      {/* Кнопки зума: + / - / сброс */}
+      <div style={{
+        position: "absolute", bottom: "10px", right: "10px",
+        display: "flex", flexDirection: "column", gap: "4px",
+        zIndex: 10,
+      }}>
         <button
-          onClick={handleReset}
+          onClick={() => applyZoom(zoom * 1.4, translate)}
           style={{
-            position: "absolute", bottom: "10px", right: "10px",
-            background: "rgba(6,182,212,0.2)", border: "1px solid rgba(6,182,212,0.4)",
-            borderRadius: "8px", color: "#06b6d4", fontSize: "12px", fontWeight: 700,
-            padding: "6px 10px", cursor: "pointer", touchAction: "manipulation",
-            backdropFilter: "blur(4px)", zIndex: 10,
+            width: "32px", height: "32px",
+            background: "rgba(6,182,212,0.15)", border: "1px solid rgba(6,182,212,0.3)",
+            borderRadius: "8px", color: "#06b6d4", fontSize: "16px", fontWeight: 700,
+            cursor: "pointer", touchAction: "manipulation",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            backdropFilter: "blur(4px)",
           }}
         >
-          ↺ Сброс
+          +
         </button>
-      )}
-
-      {/* Подсказка зума */}
-      {zoom <= 1.05 && mode !== "timezone" && (
-        <div style={{
-          position: "absolute", bottom: "10px", left: "50%",
-          transform: "translateX(-50%)",
-          background: "rgba(0,0,0,0.5)", borderRadius: "6px",
-          padding: "4px 10px", pointerEvents: "none", zIndex: 10,
-        }}>
-          <span style={{ fontSize: "11px", color: "#94a3b8", whiteSpace: "nowrap" }}>
-            🖱️ Scroll — зум · Drag — перемещение
-          </span>
-        </div>
-      )}
+        <button
+          onClick={() => applyZoom(zoom * 0.7, translate)}
+          style={{
+            width: "32px", height: "32px",
+            background: "rgba(6,182,212,0.15)", border: "1px solid rgba(6,182,212,0.3)",
+            borderRadius: "8px", color: "#06b6d4", fontSize: "16px", fontWeight: 700,
+            cursor: "pointer", touchAction: "manipulation",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            backdropFilter: "blur(4px)",
+          }}
+        >
+          −
+        </button>
+        {zoom > 1.05 && (
+          <button
+            onClick={handleReset}
+            style={{
+              width: "32px", height: "32px",
+              background: "rgba(6,182,212,0.15)", border: "1px solid rgba(6,182,212,0.3)",
+              borderRadius: "8px", color: "#06b6d4", fontSize: "12px", fontWeight: 700,
+              cursor: "pointer", touchAction: "manipulation",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              backdropFilter: "blur(4px)",
+            }}
+          >
+            ↺
+          </button>
+        )}
+      </div>
     </div>
   );
 }
