@@ -390,10 +390,21 @@ export default function App() {
       height: "100dvh",
       display: "flex",
       flexDirection: "column",
+      alignItems: "center",
       background: "linear-gradient(160deg,#060d1a 0%,#0f172a 40%,#1a1040 100%)",
       padding: "8px 10px",
       boxSizing: "border-box",
       overflow: "hidden",
+    }}>
+
+    {/* Обёртка с max-width для центрирования */}
+    <div style={{
+      width: "100%",
+      maxWidth: "680px",
+      display: "flex",
+      flexDirection: "column",
+      flex: 1,
+      minHeight: 0,
     }}>
 
       {/* ── Шапка ── */}
@@ -679,13 +690,38 @@ export default function App() {
       {/* ── Layout ── */}
       <div className="quiz-layout" style={{
         flex: 1,
-        display: "grid",
-        gridTemplateColumns: "minmax(250px,290px) 1fr",
-        gap: "12px",
-        alignItems: "stretch",
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
         minHeight: 0,
       }}>
-        <div className="panel-col" style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
+        {/* Карта — сверху, занимает основное пространство */}
+        <div className="map-col" style={{
+          flex: 1,
+          background: "rgba(255,255,255,0.02)",
+          border: `1px solid rgba(${activeLevel?.colorRgb},0.15)`,
+          borderRadius: "12px",
+          padding: "0", overflow: "hidden",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          minHeight: "200px",
+        }}>
+          <USAMap
+            highlightedState={highlightedState}
+            markedState={markedState}
+            selectedState={selectedState}
+            onStateClick={handleStateClick}
+            mode={mode}
+            hoveredTz={hoveredTz}
+            hoveredRegion={hoveredRegion}
+            correctTz={correctTz}
+            correctRegion={correctRegion}
+            levelColor={activeLevel?.color}
+            answeredStates={answeredStates}
+          />
+        </div>
+
+        {/* Панель — снизу */}
+        <div className="panel-col" style={{ display: "flex", flexDirection: "column", minHeight: 0, flexShrink: 0, overflowY: "auto", maxHeight: "45dvh" }}>
           <QuizPanel
             mode={mode}
             level={activeLevel}
@@ -719,29 +755,6 @@ export default function App() {
             onStartQuiz={() => setQuizReady(true)}
           />
         </div>
-
-        <div className="map-col" style={{
-          background: "rgba(255,255,255,0.02)",
-          border: `1px solid rgba(${activeLevel?.colorRgb},0.15)`,
-          borderRadius: "12px",
-          padding: "0", overflow: "hidden",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          minHeight: 0,
-        }}>
-          <USAMap
-            highlightedState={highlightedState}
-            markedState={markedState}
-            selectedState={selectedState}
-            onStateClick={handleStateClick}
-            mode={mode}
-            hoveredTz={hoveredTz}
-            hoveredRegion={hoveredRegion}
-            correctTz={correctTz}
-            correctRegion={correctRegion}
-            levelColor={activeLevel?.color}
-            answeredStates={answeredStates}
-          />
-        </div>
       </div>
 
       <style>{`
@@ -758,6 +771,7 @@ export default function App() {
           to   { opacity: 1; }
         }
       `}</style>
+    </div>
     </div>
   );
 }
