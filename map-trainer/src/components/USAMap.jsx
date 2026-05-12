@@ -250,6 +250,7 @@ export default function USAMap({
         width: "100%", height: "100%", position: "relative",
         userSelect: "none", overflow: "hidden",
         cursor: isDragging ? "grabbing" : "grab",
+        touchAction: "none", /* Запрещаем браузеру обрабатывать жесты — pinch/pan обрабатываем сами */
       }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
