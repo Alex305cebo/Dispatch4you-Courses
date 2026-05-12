@@ -107,21 +107,25 @@ function buildCapitals(count) {
 
 function buildFindCity(count) {
   const cities = shuffle(CITIES).slice(0, count);
-  return cities.map((city) => ({
-    stateId:       city.state,
-    stateName:     city.state,
-    cityName:      city.name,
-    cityLat:       city.lat,
-    cityLng:       city.lng,
-    cityType:      city.type,
-    text:          city.name,
-    hint:          "Найди этот город на карте:",
-    correctAnswer: city.name,
-    hintText:      `Штат: ${city.state} · ${city.tz} Time`,
-    tz:            city.tz,
-    region:        "",
-    capital:       "",
-  }));
+  return cities.map((city) => {
+    const stateData = STATES.find(s => s.id === city.state);
+    const fullStateName = stateData ? stateData.name : city.state;
+    return {
+      stateId:       city.state,
+      stateName:     fullStateName,
+      cityName:      city.name,
+      cityLat:       city.lat,
+      cityLng:       city.lng,
+      cityType:      city.type,
+      text:          city.name,
+      hint:          "Найди этот город на карте:",
+      correctAnswer: city.name,
+      hintText:      `Штат: ${fullStateName} · ${city.tz} Time`,
+      tz:            city.tz,
+      region:        stateData?.region || "",
+      capital:       stateData?.capital || "",
+    };
+  });
 }
 
 function buildRegion(count) {

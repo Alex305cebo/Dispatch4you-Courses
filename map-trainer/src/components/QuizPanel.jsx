@@ -2,8 +2,30 @@
 import TimerBar from "./TimerBar";
 import PronunciationModal from "./PronunciationModal";
 import { getPronunciation } from "../data/pronunciations";
+import { STATES } from "../data/states";
 
 const AUTO_NEXT_DELAY = 4000; // мс
+
+// Получить полное название штата по ID или вернуть переданное значение
+function getFullStateName(question) {
+  if (question?.stateName) {
+    // Если stateName — это код (2 буквы), ищем полное название
+    if (question.stateName.length === 2) {
+      const found = STATES.find(s => s.id === question.stateName);
+      return found ? found.name : question.stateName;
+    }
+    return question.stateName;
+  }
+  if (question?.correctAnswer) {
+    // Если correctAnswer — это код (2 буквы), ищем полное название
+    if (question.correctAnswer.length === 2) {
+      const found = STATES.find(s => s.id === question.correctAnswer);
+      return found ? found.name : question.correctAnswer;
+    }
+    return question.correctAnswer;
+  }
+  return "";
+}
 
 export default function QuizPanel({
   mode,
@@ -35,6 +57,8 @@ export default function QuizPanel({
   onSkip,
   streak = 0,
   shakePanel = false,
+  quizReady = true,
+  onStartQuiz,
 }) {
   const pct = score.points / maxPoints;
   const barColor = pct > 0.6 ? (level?.color || "#06b6d4") : pct > 0.3 ? "#f97316" : "#ef4444";
@@ -369,7 +393,7 @@ export default function QuizPanel({
 
       {/* Варианты ответа (name-state / timezone / region) */}
       {!isMapClick && options && !feedback && (
-        <div style={{ display: "grid", gridTemplateColumns: options.length > 4 ? "1fr 1fr" : "1fr", gap: "6px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: options.length >= 4 ? "1fr 1fr" : "1fr", gap: "6px" }}>
           {options.map((opt) => (
             <button
               key={opt.value}
@@ -404,7 +428,7 @@ export default function QuizPanel({
 
       {/* Варианты после ответа — с подсветкой */}
       {!isMapClick && options && feedback && (
-        <div style={{ display: "grid", gridTemplateColumns: options.length > 4 ? "1fr 1fr" : "1fr", gap: "6px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: options.length >= 4 ? "1fr 1fr" : "1fr", gap: "6px" }}>
           {options.map((opt) => {
             const isCorrect = opt.value === question?.correctAnswer;
             const isSelected = opt.value === feedback?.selectedAnswer;
@@ -449,10 +473,21 @@ export default function QuizPanel({
         </div>
       )}
 
-      {/* Подсказка для find-state */}
-      {isMapClick && !feedback && (
-        <p style={{ fontSize: "11px", color: "#475569", textAlign: "center", margin: 0 }}>
-          👆 Кликни на карте
+      {/* Подсказка/инструкция */}
+      {!feedback && (
+        <p style={{ fontSize: "13px", color: "#06b6d4", textAlign: "center", margin: 0, fontWeight: 600 }}>
+          {isMapClick
+            ? "👆 Нажми на штат на карте"
+            : mode === "timezone"
+              ? "🕐 Выбери часовой пояс для этого штата"
+              : mode === "region" || mode === "regions-intro"
+                ? "🌎 Выбери регион, в котором находится штат"
+                : mode === "capitals"
+                  ? "🏛️ Выбери столицу этого штата"
+                  : mode === "name-state"
+                    ? "✏️ Выбери правильное название штата"
+                    : "Выбери правильный ответ"
+          }
         </p>
       )}
     </div>
@@ -552,19 +587,20 @@ export default function QuizPanel({
           }}>
             <p style={{ fontSize: "11px", color: "#64748b", margin: "0 0 4px 0" }}>Правильный ответ:</p>
             <p style={{ fontSize: "18px", fontWeight: 800, color: "#22c55e", margin: "0 0 6px 0" }}>
-              {question?.correctAnswer}
+              {question?.cityName || getFullStateName(question)}
             </p>
             {/* Транскрипция */}
             {(() => {
-              const pron = getPronunciation(question?.correctAnswer);
-              return pron && pron.en !== question?.correctAnswer ? (
+              const name = question?.cityName || getFullStateName(question);
+              const pron = getPronunciation(name);
+              return pron && pron.en !== name ? (
                 <div style={{ borderTop: "1px solid rgba(34,197,94,0.15)", paddingTop: "8px", marginTop: "8px", display: "flex", justifyContent: "center", gap: "20px" }}>
                   <div style={{ textAlign: "center" }}>
                     <p style={{ fontSize: "9px", color: "#64748b", margin: "0 0 2px 0", textTransform: "uppercase", letterSpacing: "1px" }}>ENGLISH</p>
                     <p style={{ fontSize: "16px", color: "#e2e8f0", margin: 0, fontFamily: "monospace" }}>[{pron.en}]</p>
                   </div>
                   <div style={{ textAlign: "center" }}>
-                    <p style={{ fontSize: "9px", color: "#64748b", margin: "0 0 2px 0", textTransform: "uppercase", letterSpacing: "1px" }}>РУССКИЙ</p>
+                    <p style={{ fontSize: "9px", color: "#64748b", margin: "0 0 2px 0", textTransform: "uppercase", letterSpacing: "1px" }}>КИРИЛЛИЦА</p>
                     <p style={{ fontSize: "16px", color: "#e2e8f0", margin: 0, fontFamily: "monospace" }}>[{pron.ru}]</p>
                   </div>
                 </div>
@@ -589,11 +625,8 @@ export default function QuizPanel({
             onClick={() => {
               if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
-                // Озвучиваем: правильный ответ + штат
-                const textToSpeak = question?.correctAnswer + 
-                  (question?.stateName && question?.correctAnswer !== question?.stateName 
-                    ? ". " + question.stateName 
-                    : "");
+                // Озвучиваем только полное название штата/города (без кодов)
+                const textToSpeak = question?.cityName || getFullStateName(question);
                 const utterance = new SpeechSynthesisUtterance(textToSpeak);
                 utterance.lang = 'en-US';
                 utterance.rate = 0.75;
