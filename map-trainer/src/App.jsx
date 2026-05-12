@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import LevelMap     from "./components/LevelMap";
 import LevelResult  from "./components/LevelResult";
+import StateReference from "./components/StateReference";
 import USAMap       from "./components/USAMap";
 import QuizPanel    from "./components/QuizPanel";
 import LoginScreen  from "./components/LoginScreen";
@@ -351,10 +352,15 @@ export default function App() {
         user={user}
         syncing={syncing}
         onSelectLevel={startLevel}
+        onOpenReference={() => setScreen("reference")}
         onLogOut={logOut}
         onReset={() => { if (confirm("Сбросить весь прогресс?")) resetProgress(); }}
       />
     );
+  }
+
+  if (screen === "reference") {
+    return <StateReference onBack={() => setScreen("map")} />;
   }
 
   if (screen === "result") {

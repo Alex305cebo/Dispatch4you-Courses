@@ -18,7 +18,7 @@ const LEVEL_IMAGES = {
   8: "level-cards/8.webp",  // Трак
 };
 
-export default function LevelMap({ progress, user, onSelectLevel, onReset, onLogOut }) {
+export default function LevelMap({ progress, user, onSelectLevel, onOpenReference, onReset, onLogOut }) {
   const rank = getRank(progress.xp);
   const xpPct = Math.min(100, Math.round((progress.xp / MAX_XP) * 100));
   const completedCount = LEVELS.filter((l) => progress.levels[l.id]?.completed).length;
@@ -77,114 +77,160 @@ export default function LevelMap({ progress, user, onSelectLevel, onReset, onLog
       <div style={{ maxWidth: "900px", margin: "0 auto", position: "relative", zIndex: 1 }}>
 
         {/* ── Шапка в стиле Legacy ── */}
-        <div style={{
-          background: "linear-gradient(135deg, #1a1208 0%, #2a1f10 50%, #1a1208 100%)",
-          border: "2px solid #5c4a2a",
-          borderRadius: "14px",
-          padding: "10px 14px",
+        {/* ── Шапка + Справочник в одну строку ── */}
+        <div className="header-row" style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "12px",
           marginBottom: "12px",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,215,0,0.1)",
         }}>
-          {/* Строка 1: Home + Заголовок + Аватар */}
+          {/* Левая: шапка */}
           <div style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            marginBottom: "8px",
+            background: "linear-gradient(135deg, #1a1208 0%, #2a1f10 50%, #1a1208 100%)",
+            border: "2px solid #5c4a2a",
+            borderRadius: "14px",
+            padding: "10px 14px",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,215,0,0.1)",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
           }}>
-            {/* Левая часть: домой + заголовок */}
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <a
-                href="https://dispatch4you.com/"
-                target="_blank"
-                rel="noopener noreferrer"
+            {/* Строка 1: Home + Заголовок + Аватар */}
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              marginBottom: "8px",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <a
+                  href="https://dispatch4you.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    width: "30px", height: "30px",
+                    borderRadius: "50%",
+                    background: "linear-gradient(135deg, #3d2e14, #2a1f0e)",
+                    border: "2px solid #8b6914",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    textDecoration: "none",
+                    fontSize: "13px", color: "#d4a853", flexShrink: 0,
+                  }}
+                  title="Dispatch For You — Главная"
+                >
+                  🏠
+                </a>
+                <div>
+                  <p style={{
+                    fontSize: "18px", fontWeight: 900, color: "#f5e6c8",
+                    margin: 0, lineHeight: 1.1,
+                    textShadow: "0 1px 3px rgba(0,0,0,0.5)",
+                    fontFamily: "'Georgia', serif",
+                  }}>
+                    USA Map Trainer
+                  </p>
+                  <p style={{ fontSize: "11px", color: "#8b7355", margin: "2px 0 0 0", fontStyle: "italic" }}>
+                    Тренажёр для диспетчеров
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowProfile(true)}
                 style={{
-                  width: "30px", height: "30px",
-                  borderRadius: "50%",
-                  background: "linear-gradient(135deg, #3d2e14, #2a1f0e)",
-                  border: "2px solid #8b6914",
+                  width: "34px", height: "34px", borderRadius: "50%",
+                  border: "2px solid #d4a853",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  padding: 0,
+                  ...(user?.photoURL
+                    ? { backgroundImage: `url(${user.photoURL})`, backgroundSize: "cover", backgroundPosition: "center" }
+                    : { background: "linear-gradient(135deg, #5c4a2a, #3d2e14)" }),
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  textDecoration: "none",
-                  fontSize: "13px", color: "#d4a853", flexShrink: 0,
+                  fontSize: "14px", flexShrink: 0,
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
                 }}
-                title="Dispatch For You — Главная"
               >
-                🏠
-              </a>
-              <div>
-                <p style={{
-                  fontSize: "20px", fontWeight: 900, color: "#f5e6c8",
-                  margin: 0, lineHeight: 1.1,
-                  textShadow: "0 1px 3px rgba(0,0,0,0.5)",
-                  fontFamily: "'Georgia', serif",
-                }}>
-                  USA Map Trainer
-                </p>
-                <p style={{ fontSize: "12px", color: "#8b7355", margin: "3px 0 0 0", fontStyle: "italic" }}>
-                  Тренажёр для диспетчеров
-                </p>
-              </div>
+                {!user?.photoURL && rank.icon}
+              </button>
             </div>
 
-            {/* Аватар */}
-            <button
-              onClick={() => setShowProfile(true)}
-              style={{
-                width: "34px", height: "34px", borderRadius: "50%",
-                border: "2px solid #d4a853",
-                overflow: "hidden",
-                cursor: "pointer",
-                padding: 0,
-                ...(user?.photoURL
-                  ? { backgroundImage: `url(${user.photoURL})`, backgroundSize: "cover", backgroundPosition: "center" }
-                  : { background: "linear-gradient(135deg, #5c4a2a, #3d2e14)" }),
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "14px", flexShrink: 0,
-                boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
-              }}
-            >
-              {!user?.photoURL && rank.icon}
-            </button>
-          </div>
+            {/* Строка 2: XP + Рейтинг */}
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+            }}>
+              <div style={{ flex: 1, marginRight: "10px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                  <span style={{ fontSize: "14px", color: "#8b7355", fontWeight: 600 }}>
+                    {user?.firstName || "Player"}
+                  </span>
+                  <span style={{ fontSize: "14px", color: "#d4a853", fontWeight: 700 }}>
+                    ⭐ {progress.xp} / {MAX_XP} XP
+                  </span>
+                </div>
+                <div style={{ height: "5px", background: "rgba(255,255,255,0.06)", borderRadius: "3px", overflow: "hidden" }}>
+                  <div style={{
+                    height: "100%", width: `${xpPct}%`,
+                    background: "linear-gradient(90deg, #d4a853, #8b6914)",
+                    borderRadius: "2px",
+                  }} />
+                </div>
+              </div>
 
-          {/* Строка 2: XP + Рейтинг */}
-          <div style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-          }}>
-            {/* XP бар */}
-            <div style={{ flex: 1, marginRight: "10px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                <span style={{ fontSize: "15px", color: "#8b7355", fontWeight: 600 }}>
-                  {user?.firstName || "Player"}
-                </span>
-                <span style={{ fontSize: "15px", color: "#d4a853", fontWeight: 700 }}>
-                  ⭐ {progress.xp} / {MAX_XP} XP
-                </span>
-              </div>
-              <div style={{ height: "5px", background: "rgba(255,255,255,0.06)", borderRadius: "3px", overflow: "hidden" }}>
-                <div style={{
-                  height: "100%", width: `${xpPct}%`,
-                  background: "linear-gradient(90deg, #d4a853, #8b6914)",
-                  borderRadius: "2px",
-                }} />
-              </div>
+              <button
+                onClick={() => setShowLeaderboard(true)}
+                style={{
+                  display: "flex", alignItems: "center", gap: "5px",
+                  padding: "7px 12px",
+                  background: "linear-gradient(135deg, #3d2e14, #2a1f0e)",
+                  border: "1px solid #8b6914",
+                  borderRadius: "8px",
+                  color: "#d4a853", fontSize: "12px", fontWeight: 700,
+                  cursor: "pointer", touchAction: "manipulation",
+                  flexShrink: 0,
+                }}
+              >
+                🏆 Рейтинг
+              </button>
             </div>
-
-            {/* Кнопка Рейтинг */}
-            <button
-              onClick={() => setShowLeaderboard(true)}
-              style={{
-                display: "flex", alignItems: "center", gap: "5px",
-                padding: "7px 14px",
-                background: "linear-gradient(135deg, #3d2e14, #2a1f0e)",
-                border: "1px solid #8b6914",
-                borderRadius: "8px",
-                color: "#d4a853", fontSize: "13px", fontWeight: 700,
-                cursor: "pointer", touchAction: "manipulation",
-                flexShrink: 0,
-              }}
-            >
-              🏆 Рейтинг
-            </button>
           </div>
+
+          {/* Правая: справочник штатов */}
+          <button
+            onClick={onOpenReference}
+            style={{
+              display: "block",
+              padding: 0,
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              touchAction: "manipulation",
+              borderRadius: "14px",
+              overflow: "hidden",
+              transition: "transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.4), 0 0 12px rgba(212,168,83,0.08)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 8px 28px rgba(0,0,0,0.5), 0 0 20px rgba(212,168,83,0.2)";
+              e.currentTarget.style.filter = "brightness(1.08)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.4), 0 0 12px rgba(212,168,83,0.08)";
+              e.currentTarget.style.filter = "brightness(1)";
+            }}
+          >
+            <img
+              src={`${import.meta.env.BASE_URL}level-cards/reference.webp`}
+              alt="Справочник штатов"
+              style={{
+                display: "block",
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                borderRadius: "14px",
+              }}
+            />
+          </button>
         </div>
 
         {/* ── Grid карточек уровней ── */}
@@ -370,8 +416,14 @@ export default function LevelMap({ progress, user, onSelectLevel, onReset, onLog
         .level-grid {
           grid-template-columns: 1fr 1fr;
         }
+        .header-row {
+          grid-template-columns: 1fr 1fr;
+        }
         @media (max-width: 600px) {
           .level-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .header-row {
             grid-template-columns: 1fr !important;
           }
         }
@@ -529,7 +581,7 @@ function LevelCard({ level, levelProgress, isUnlocked, isCompleted, isCurrent, i
             margin: "0 0 3px 0", lineHeight: 1.2,
             textShadow: isLocked ? "none" : "0 1px 2px rgba(0,0,0,0.5)",
           }}>
-            {level.title}
+            {level.id}. {level.title}
           </p>
           <p style={{
             fontSize: "13px",
