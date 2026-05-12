@@ -47,17 +47,18 @@ document.addEventListener('DOMContentLoaded', function() {
       this.x += this.speedX;
       this.y += this.speedY;
 
-      // Mouse interaction
+      // Mouse interaction - Optimized: avoid trig and only calc sqrt if needed
       if (mouse.x !== null && mouse.y !== null) {
         const dx = mouse.x - this.x;
         const dy = mouse.y - this.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distSq = dx * dx + dy * dy;
+        const radiusSq = mouse.radius * mouse.radius;
         
-        if (distance < mouse.radius) {
-          const force = (mouse.radius - distance) / mouse.radius;
-          const angle = Math.atan2(dy, dx);
-          this.x -= Math.cos(angle) * force * 3;
-          this.y -= Math.sin(angle) * force * 3;
+        if (distSq < radiusSq && distSq > 0) {
+          const distance = Math.sqrt(distSq);
+          const forceFactor = (mouse.radius - distance) / (mouse.radius * distance) * 3;
+          this.x -= dx * forceFactor;
+          this.y -= dy * forceFactor;
         }
       }
 
@@ -71,12 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
       ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
       ctx.fillStyle = this.color;
       ctx.fill();
-
-      // Very subtle glow
-      ctx.shadowBlur = 4;
-      ctx.shadowColor = this.color;
-      ctx.fill();
-      ctx.shadowBlur = 0;
+      // Optimization: Removed expensive shadowBlur and second fill call
     }
   }
 
@@ -86,29 +82,25 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function connectParticles() {
+    const maxDistanceSq = 150 * 150;
     for (let i = 0; i < particles.length; i++) {
+      const p1 = particles[i];
       for (let j = i + 1; j < particles.length; j++) {
-        const dx = particles[i].x - particles[j].x;
-        const dy = particles[i].y - particles[j].y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const p2 = particles[j];
+        const dx = p1.x - p2.x;
+        const dy = p1.y - p2.y;
+        const distSq = dx * dx + dy * dy;
 
-        if (distance < 150) {
+        if (distSq < maxDistanceSq) {
+          const distance = Math.sqrt(distSq);
           const opacity = (1 - distance / 150) * 0.08;
           
-          // Gradient line
-          const gradient = ctx.createLinearGradient(
-            particles[i].x, particles[i].y,
-            particles[j].x, particles[j].y
-          );
-          gradient.addColorStop(0, `rgba(139, 92, 246, ${opacity})`);
-          gradient.addColorStop(0.5, `rgba(59, 130, 246, ${opacity})`);
-          gradient.addColorStop(1, `rgba(6, 182, 212, ${opacity})`);
-          
+          // Optimization: Replace expensive gradient with solid color stroke
           ctx.beginPath();
-          ctx.strokeStyle = gradient;
+          ctx.strokeStyle = `rgba(139, 92, 246, ${opacity})`;
           ctx.lineWidth = 0.3;
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
           ctx.stroke();
         }
       }
@@ -118,10 +110,11 @@ document.addEventListener('DOMContentLoaded', function() {
   function animate() {
     ctx.clearRect(0, 0, width, height);
 
-    particles.forEach(particle => {
-      particle.update();
-      particle.draw();
-    });
+    // Optimization: Standard for loop is faster than forEach in animation loops
+    for (let i = 0; i < particles.length; i++) {
+      particles[i].update();
+      particles[i].draw();
+    }
 
     connectParticles();
     requestAnimationFrame(animate);
