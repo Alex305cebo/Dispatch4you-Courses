@@ -120,7 +120,7 @@ export function useAuth() {
 
       setTimeout(() => {
         setLoading((l) => (l ? false : l));
-      }, 4000);
+      }, 6000);
     })();
 
     return () => { try { unsub(); } catch {} };

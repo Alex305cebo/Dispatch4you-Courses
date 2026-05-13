@@ -46,11 +46,12 @@ import {
 // ── Константы ────────────────────────────────────────────────────────────────
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
-  // authDomain = наш собственный домен. Файлы sign-in helper (handler/iframe/links)
-  // self-hosted в /__/auth/ на этом же домене, что убирает проблему Storage Partitioning
-  // в Safari 16+/Chrome 115+/in-app браузерах. Option 4 из Firebase docs:
+  // На localhost используем стандартный Firebase authDomain (popup работает напрямую).
+  // На production — наш домен с self-hosted sign-in helper (Option 4 из Firebase docs):
   // https://firebase.google.com/docs/auth/web/redirect-best-practices
-  authDomain:        "dispatch4you.com",
+  authDomain:        window.location.hostname === "localhost"
+                       ? "dispatch4you-80e0f.firebaseapp.com"
+                       : "dispatch4you.com",
   projectId:         "dispatch4you-80e0f",
   storageBucket:     "dispatch4you-80e0f.appspot.com",
   messagingSenderId: "349235354473",
@@ -219,7 +220,7 @@ let initialized = false;
               notify(null);
               try { document.dispatchEvent(new CustomEvent("roleReady", { detail: { role: "guest" } })); } catch {}
             }
-          }, 3000);
+          }, 6000);
         } else {
           notify(null);
           try { document.dispatchEvent(new CustomEvent("roleReady", { detail: { role: "guest" } })); } catch {}

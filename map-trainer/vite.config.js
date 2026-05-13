@@ -7,6 +7,10 @@ import path from 'path'
 export default defineConfig({
   base: '/map-trainer/',
   plugins: [react()],
+  server: {
+    port: 3000,
+    open: false,
+  },
   resolve: {
     alias: {
       // Фикс для react-simple-maps: prop-types использует CommonJS require()

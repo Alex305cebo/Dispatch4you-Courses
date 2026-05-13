@@ -87,7 +87,7 @@ window.authLogout = function (event) {
   localStorage.removeItem('user');
   localStorage.removeItem('user_role');
   if (window._fbAuth) {
-    import("https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js")
+    import("https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js")
       .then(m => m.signOut(window._fbAuth)).catch(() => { });
   }
   window.location.href = isPages() ? '../index.html' : 'index.html';
