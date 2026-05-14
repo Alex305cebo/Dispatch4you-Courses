@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   const particles = [];
   const particleCount = 40;
-  const mouse = { x: null, y: null, radius: 150 };
+  const mouse = { x: null, y: null, radius: 150, radiusSq: 22500 }; // 150 * 150
 
   class Particle {
     constructor() {
@@ -51,9 +51,10 @@ document.addEventListener('DOMContentLoaded', function() {
       if (mouse.x !== null && mouse.y !== null) {
         const dx = mouse.x - this.x;
         const dy = mouse.y - this.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distSq = dx * dx + dy * dy;
         
-        if (distance < mouse.radius) {
+        if (distSq < mouse.radiusSq && distSq > 0) {
+          const distance = Math.sqrt(distSq);
           const force = (mouse.radius - distance) / mouse.radius;
           const angle = Math.atan2(dy, dx);
           this.x -= Math.cos(angle) * force * 3;
@@ -72,11 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
       ctx.fillStyle = this.color;
       ctx.fill();
 
-      // Very subtle glow
-      ctx.shadowBlur = 4;
-      ctx.shadowColor = this.color;
-      ctx.fill();
-      ctx.shadowBlur = 0;
+      // Optimization: Removed shadowBlur as it's a significant rendering bottleneck
     }
   }
 
@@ -86,26 +83,23 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function connectParticles() {
+    const maxDist = 150;
+    const maxDistSq = 22500; // 150 * 150
+
     for (let i = 0; i < particles.length; i++) {
       for (let j = i + 1; j < particles.length; j++) {
         const dx = particles[i].x - particles[j].x;
         const dy = particles[i].y - particles[j].y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distSq = dx * dx + dy * dy;
 
-        if (distance < 150) {
-          const opacity = (1 - distance / 150) * 0.08;
+        if (distSq < maxDistSq) {
+          const distance = Math.sqrt(distSq);
+          const opacity = (1 - distance / maxDist) * 0.08;
           
-          // Gradient line
-          const gradient = ctx.createLinearGradient(
-            particles[i].x, particles[i].y,
-            particles[j].x, particles[j].y
-          );
-          gradient.addColorStop(0, `rgba(139, 92, 246, ${opacity})`);
-          gradient.addColorStop(0.5, `rgba(59, 130, 246, ${opacity})`);
-          gradient.addColorStop(1, `rgba(6, 182, 212, ${opacity})`);
-          
+          // Optimization: Using solid color instead of createLinearGradient
+          // to reduce rendering overhead in the nested loop
           ctx.beginPath();
-          ctx.strokeStyle = gradient;
+          ctx.strokeStyle = `rgba(139, 92, 246, ${opacity})`;
           ctx.lineWidth = 0.3;
           ctx.moveTo(particles[i].x, particles[i].y);
           ctx.lineTo(particles[j].x, particles[j].y);
