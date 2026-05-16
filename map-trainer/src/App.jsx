@@ -131,6 +131,15 @@ export default function App() {
     setQuizReady(true);
     resetStats();
     setScreen("quiz");
+
+    // Сохраняем сессию квиза в sessionStorage для восстановления при рефреше
+    try {
+      sessionStorage.setItem('mt_quiz_session', JSON.stringify({
+        levelId: level.id,
+        questionCount: count,
+        timestamp: Date.now(),
+      }));
+    } catch {}
   }, [resetStats]);
 
   // Запуск таймера при смене вопроса (только если quizReady)
@@ -143,6 +152,44 @@ export default function App() {
       setHoveredRegion(null);
     }
   }, [currentIdx, screen, quizReady]); // eslint-disable-line
+
+  // ── Восстановление сессии квиза после рефреша ──
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem('mt_quiz_session');
+      if (!saved) return;
+      const session = JSON.parse(saved);
+      // Восстанавливаем только если сессия свежая (< 10 минут)
+      if (Date.now() - session.timestamp > 10 * 60 * 1000) {
+        sessionStorage.removeItem('mt_quiz_session');
+        return;
+      }
+      const level = LEVELS.find((l) => l.id === session.levelId);
+      if (level && screen === 'map') {
+        startLevel(level, session.questionCount);
+      }
+    } catch {}
+  }, []); // eslint-disable-line
+
+  // ── Предупреждение при рефреше во время квиза ──
+  useEffect(() => {
+    function handleBeforeUnload(e) {
+      if (screen === 'quiz') {
+        e.preventDefault();
+        e.returnValue = 'Вы потеряете прогресс текущего уровня. Уверены?';
+        return e.returnValue;
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [screen]);
+
+  // Очищаем сессию при завершении уровня
+  useEffect(() => {
+    if (screen === 'result' || screen === 'map') {
+      try { sessionStorage.removeItem('mt_quiz_session'); } catch {}
+    }
+  }, [screen]);
 
   // ── Обработка ответа ──
   const processAnswer = useCallback((correct, selectedAnswer, penalty) => {
