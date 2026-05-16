@@ -1,0 +1,3 @@
+## 2025-05-22 - [Canvas Particle Optimization]
+**Learning:** The particle system in `js/main.js` was a significant performance bottleneck due to O(n²) operations in the rendering loop, particularly `createLinearGradient` and `shadowBlur`, which are heavy on CPU/GPU. Trigonometric functions (`Math.atan2`, `cos`, `sin`) in the update loop were also unnecessary for simple vector movement.
+**Action:** Replace `Math.sqrt` with squared distance checks for initial range filtering. Use vector normalization (`dx / distance`) instead of trig functions. Hoist canvas state changes (like `lineWidth`). Replace expensive rendering effects (`createLinearGradient`, `shadowBlur`) with solid strokes in high-frequency loops.
