@@ -41,8 +41,8 @@ export async function loadProgressFromFirestore(uid) {
 // от всех кто просто открыл игру.
 export async function initUserInLeaderboard(uid, userData, currentXp = 0) {
   try {
-    // Не пишем в рейтинг если XP ещё нулевой — игрок не начал играть.
-    if (!currentXp || currentXp <= 0) return;
+    // Не пишем в рейтинг если XP меньше 100 — игрок ещё не набрал достаточно опыта.
+    if (!currentXp || currentXp <= 100) return;
 
     const progressRef = doc(db, "progress", uid);
     const snap = await getDoc(progressRef);
@@ -111,8 +111,8 @@ export async function saveProgressToFirestore(uid, progress, userData = null) {
     }
 
     // Также сохраняем в коллекцию progress для рейтинга,
-    // но только если игрок реально заработал XP.
-    if ((progress.xp || 0) > 0) {
+    // но только если игрок набрал больше 100 XP.
+    if ((progress.xp || 0) > 100) {
       const progressRef = doc(db, "progress", uid);
       await setDoc(progressRef, {
         uid,

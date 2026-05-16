@@ -25,7 +25,7 @@ export default function LeaderboardModal({ currentUserId, currentUserEmail, onCl
       const snapshot = await getDocs(q);
       const data = snapshot.docs
         .map((doc) => ({ uid: doc.id, ...doc.data() }))
-        .filter((p) => (p.xp || 0) > 0 && !p.hidden);
+        .filter((p) => (p.xp || 0) > 100 && !p.hidden);
       console.log("[Leaderboard] Loaded players:", data.length);
       setPlayers(data);
     } catch (err) {
