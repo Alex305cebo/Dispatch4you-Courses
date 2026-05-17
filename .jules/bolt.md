@@ -1,0 +1,3 @@
+## 2025-05-14 - [Canvas Animation Hot Path Optimization]
+**Learning:** Per-frame object creation (like `createLinearGradient`) and context state changes (like `shadowBlur`) are massive performance bottlenecks in Canvas animations, especially within O(N²) loops like connectivity checks. Mathematical optimizations (squared distance checks and vector normalization) significantly reduce CPU load compared to `Math.sqrt` and trigonometric functions.
+**Action:** Always prioritize squared distance comparisons and pre-calculate or simplify rendering styles in high-frequency animation loops. Avoid `forEach` in favor of standard `for` loops for a minor but measurable performance boost in hot paths.
