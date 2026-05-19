@@ -3281,8 +3281,8 @@
     <div class="tct" id="toastContainer"></div>
 
     <script type="module">
-        import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+        import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
@@ -3383,6 +3383,18 @@
 
         // Загружаем данные после инициализации панели
         window.addEventListener('adminPanelReady', async () => {
+            // Ждём готовности Firebase Auth (макс 3 сек), чтобы Firestore запросы шли от авторизованного пользователя
+            try {
+                const { getAuth, onAuthStateChanged: onASC } = await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js');
+                const auth = getAuth();
+                if (!auth.currentUser) {
+                    await new Promise(resolve => {
+                        const unsub = onASC(auth, (user) => { unsub(); resolve(user); });
+                        setTimeout(() => resolve(null), 3000);
+                    });
+                }
+            } catch(e) { console.warn('Auth wait skipped:', e); }
+
             const users = await loadUsersFromFirestore();
             window.USERS = users;
             window.filteredUsers = [...users];
@@ -3418,7 +3430,7 @@
             users.forEach(u => { window._fbSyncMap[u.id] = 'synced'; });
 
             try {
-                const { onSnapshot } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js');
+                const { onSnapshot } = await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js');
                 onSnapshot(collection(db, 'users'), (snapshot) => {
                     snapshot.docChanges().forEach(change => {
                         const uid = change.doc.id;
@@ -3837,8 +3849,8 @@
             const origText = btn.textContent;
             btn.disabled = true; btn.textContent = 'Создаём...';
             try {
-                const { initializeApp: initApp } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js');
-                const { getAuth: getAuth2, createUserWithEmailAndPassword: createUser } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js');
+                const { initializeApp: initApp } = await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js');
+                const { getAuth: getAuth2, createUserWithEmailAndPassword: createUser } = await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js');
                 const secondaryApp = initApp({
                     apiKey: "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
                     authDomain: "dispatch4you.com",
@@ -3929,7 +3941,7 @@
                 // Если указан новый пароль - обновляем его через Firebase Auth
                 if (password && password.length >= 8) {
                     try {
-                        const { getAuth, updatePassword } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js');
+                        const { getAuth, updatePassword } = await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js');
                         const auth = getAuth();
                         // Примечание: для изменения пароля другого пользователя нужны Admin SDK права
                         window.toast('⚠️ Пароль можно изменить только через Admin SDK или отправив письмо для сброса', 'i');
@@ -3970,7 +3982,7 @@
             if (!confirm(`Отправить письмо для сброса пароля на ${email}?`)) return;
 
             try {
-                const { getAuth, sendPasswordResetEmail } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js');
+                const { getAuth, sendPasswordResetEmail } = await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js');
                 const auth = getAuth();
                 await sendPasswordResetEmail(auth, email);
                 window.toast('✅ Письмо для сброса пароля отправлено на ' + email, 's');
