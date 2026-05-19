@@ -12,11 +12,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
 
-    <!-- Stripe JS -->
-    <script src="https://js.stripe.com/v3/"></script>
+  <!-- Stripe JS — будет подключен после настройки аккаунта -->
+    <!-- <script src="https://js.stripe.com/v3/"></script> -->
 
-    <!-- PayPal JS -->
-    <script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=USD"></script>
+    <link rel="stylesheet" href="shared-nav.css?v=8.2">
+    <script type="module" src="firebase-auth-init.js?v=4.0"></script>
 
     <style>
         * {
@@ -280,7 +280,10 @@
 </head>
 
 <body>
-    <div class="container">
+    <div id="nav-placeholder"></div>
+    <script src="nav-loader.js?v=8.2"></script>
+
+    <div class="container" style="margin-top:90px;">
         <div class="checkout-header">
             <h1>💳 Оформление заказа</h1>
             <p style="color: var(--text-secondary);">Выберите удобный способ оплаты</p>
@@ -314,92 +317,136 @@
                 <h2>💰 Способ оплаты</h2>
 
                 <div class="payment-methods">
-                    <!-- Stripe -->
-                    <div class="payment-method active" data-method="stripe">
+                    <!-- Zelle -->
+                    <div class="payment-method active" data-method="zelle">
+                        <div class="payment-method-icon">⚡</div>
+                        <div class="payment-method-info">
+                            <h3>Zelle</h3>
+                            <p>Мгновенный перевод (банки США)</p>
+                        </div>
+                    </div>
+
+                    <!-- Venmo -->
+                    <div class="payment-method" data-method="venmo">
+                        <div class="payment-method-icon">💜</div>
+                        <div class="payment-method-info">
+                            <h3>Venmo</h3>
+                            <p>Быстрый перевод через приложение</p>
+                        </div>
+                    </div>
+
+                    <!-- Cash App -->
+                    <div class="payment-method" data-method="cashapp">
+                        <div class="payment-method-icon">💚</div>
+                        <div class="payment-method-info">
+                            <h3>Cash App</h3>
+                            <p>Перевод через Cash App</p>
+                        </div>
+                    </div>
+
+                    <!-- Wire Transfer -->
+                    <div class="payment-method" data-method="wire">
+                        <div class="payment-method-icon">🏦</div>
+                        <div class="payment-method-info">
+                            <h3>Wire Transfer</h3>
+                            <p>Банковский перевод (международный)</p>
+                        </div>
+                    </div>
+
+                    <!-- Card — скоро -->
+                    <div class="payment-method" data-method="card">
                         <div class="payment-method-icon">💳</div>
                         <div class="payment-method-info">
                             <h3>Банковская карта</h3>
-                            <p>Visa, Mastercard, American Express</p>
-                        </div>
-                    </div>
-
-                    <!-- PayPal -->
-                    <div class="payment-method" data-method="paypal">
-                        <div class="payment-method-icon">🅿️</div>
-                        <div class="payment-method-info">
-                            <h3>PayPal</h3>
-                            <p>Оплата через PayPal аккаунт</p>
-                        </div>
-                    </div>
-
-                    <!-- US Payments -->
-                    <div class="payment-method" data-method="us-transfer">
-                        <div class="payment-method-icon">🇺🇸</div>
-                        <div class="payment-method-info">
-                            <h3>Переводы в США</h3>
-                            <p>Zelle, Venmo, Cash App</p>
+                            <p>Visa, Mastercard — скоро</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Stripe Form -->
-                <div class="payment-form active" id="stripe-form">
-                    <div class="form-group">
-                        <label>Имя на карте</label>
-                        <input type="text" id="cardholder-name" placeholder="John Doe" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="email" placeholder="your@email.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Данные карты</label>
-                        <div id="card-element"></div>
-                    </div>
-                    <button class="btn-pay" id="stripe-pay-btn">Оплатить $1,000</button>
-                    <div class="error-message" id="stripe-error"></div>
-                    <div class="success-message" id="stripe-success"></div>
-                </div>
-
-                <!-- PayPal Form -->
-                <div class="payment-form" id="paypal-form">
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="paypal-email" placeholder="your@email.com" required>
-                    </div>
-                    <div id="paypal-button-container"></div>
-                    <div class="error-message" id="paypal-error"></div>
-                    <div class="success-message" id="paypal-success"></div>
-                </div>
-
-                <!-- US Transfer Form -->
-                <div class="payment-form" id="us-transfer-form">
-                    <div class="us-payment-info">
-                        <h4>📱 Переводы для клиентов из США</h4>
-                        <p>Выберите удобный способ:</p>
-
-                        <div class="payment-details">
-                            <p><strong>Zelle:</strong> dispatcher@example.com</p>
-                            <p><strong>Venmo:</strong> @dispatcher-training</p>
-                            <p><strong>Cash App:</strong> $DispatcherCourse</p>
+                <!-- Zelle Form -->
+                <div class="payment-form active" id="zelle-form">
+                    <div class="us-payment-info" style="border-color:rgba(99,102,241,.3);background:rgba(99,102,241,.08)">
+                        <h4 style="color:#a5b4fc">⚡ Оплата через Zelle</h4>
+                        <p style="color:#e2e8f0">Отправьте <strong id="zelle-amount" style="color:#6366f1;font-size:18px">$1,000</strong> на:</p>
+                        <div class="payment-details" style="font-size:16px;padding:16px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.2)">
+                            <p style="color:#e2e8f0"><strong style="color:#a5b4fc">Email:</strong> info@dispatch4you.com</p>
                         </div>
-
-                        <p style="margin-top: 16px; font-size: 13px;">
-                            ⚠️ После перевода отправьте скриншот на email: <strong>support@dispatch4you.com</strong>
-                            <br>Доступ будет активирован в течение 2-4 часов.
+                        <p style="margin-top:14px;font-size:13px;color:#94a3b8">
+                            📌 В комментарии к переводу укажите ваш email для активации доступа.
                         </p>
                     </div>
+                </div>
 
-                    <div class="form-group" style="margin-top: 20px;">
-                        <label>Ваш Email</label>
-                        <input type="email" id="us-email" placeholder="your@email.com" required>
+                <!-- Venmo Form -->
+                <div class="payment-form" id="venmo-form">
+                    <div class="us-payment-info" style="border-color:rgba(139,92,246,.3);background:rgba(139,92,246,.08)">
+                        <h4 style="color:#c4b5fd">💜 Оплата через Venmo</h4>
+                        <p style="color:#e2e8f0">Отправьте <strong id="venmo-amount" style="color:#8b5cf6;font-size:18px">$1,000</strong> на:</p>
+                        <div class="payment-details" style="font-size:16px;padding:16px;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2)">
+                            <p style="color:#e2e8f0"><strong style="color:#c4b5fd">Venmo:</strong> @Dispatch4You</p>
+                        </div>
+                        <p style="margin-top:14px;font-size:13px;color:#94a3b8">
+                            📌 В комментарии укажите ваш email для активации доступа.
+                        </p>
                     </div>
-                    <div class="form-group">
-                        <label>Номер телефона</label>
-                        <input type="tel" id="us-phone" placeholder="+1 (555) 123-4567" required>
+                </div>
+
+                <!-- Cash App Form -->
+                <div class="payment-form" id="cashapp-form">
+                    <div class="us-payment-info" style="border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.08)">
+                        <h4 style="color:#6ee7b7">💚 Оплата через Cash App</h4>
+                        <p style="color:#e2e8f0">Отправьте <strong id="cashapp-amount" style="color:#10b981;font-size:18px">$1,000</strong> на:</p>
+                        <div class="payment-details" style="font-size:16px;padding:16px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2)">
+                            <p style="color:#e2e8f0"><strong style="color:#6ee7b7">Cash App:</strong> $Dispatch4You</p>
+                        </div>
+                        <p style="margin-top:14px;font-size:13px;color:#94a3b8">
+                            📌 В комментарии укажите ваш email для активации доступа.
+                        </p>
                     </div>
-                    <button class="btn-pay" id="us-confirm-btn">Подтвердить перевод</button>
-                    <div class="success-message" id="us-success"></div>
+                </div>
+
+                <!-- Wire Transfer Form -->
+                <div class="payment-form" id="wire-form">
+                    <div class="us-payment-info" style="border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.08)">
+                        <h4 style="color:#93c5fd">🏦 Банковский перевод (Wire Transfer)</h4>
+                        <p style="color:#e2e8f0">Сумма: <strong id="wire-amount" style="color:#3b82f6;font-size:18px">$1,000</strong></p>
+                        <div class="payment-details" style="font-size:14px;padding:16px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);line-height:1.8">
+                            <p style="color:#e2e8f0">Реквизиты будут отправлены после обращения.</p>
+                            <p style="color:#e2e8f0">Напишите нам для получения банковских данных.</p>
+                        </div>
+                        <p style="margin-top:14px;font-size:13px;color:#94a3b8">
+                            📌 Подходит для международных переводов. Обработка 1-3 рабочих дня.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Card Form (скоро) -->
+                <div class="payment-form" id="card-form">
+                    <div class="us-payment-info" style="border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.08)">
+                        <h4 style="color:#fcd34d">💳 Оплата картой — скоро!</h4>
+                        <p style="color:#e2e8f0">Оплата банковской картой (Visa, Mastercard, American Express) будет доступна в ближайшее время.</p>
+                        <p style="margin-top:12px;color:#94a3b8;font-size:13px">Пока используйте один из доступных способов выше или свяжитесь с нами.</p>
+                    </div>
+                </div>
+
+                <!-- Общий блок: после перевода -->
+                <div style="margin-top:24px;padding:20px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:14px">
+                    <p style="font-size:14px;font-weight:700;color:#6ee7b7;margin-bottom:8px">✅ После оплаты:</p>
+                    <p style="font-size:13px;color:#e2e8f0;line-height:1.7">
+                        1. Отправьте скриншот перевода на <strong>info@dispatch4you.com</strong><br>
+                        2. Укажите email, на который зарегистрирован аккаунт<br>
+                        3. Доступ будет активирован в течение <strong>1-4 часов</strong>
+                    </p>
+                </div>
+
+                <!-- Кнопка связаться -->
+                <div style="margin-top:24px;display:flex;flex-direction:column;gap:12px">
+                    <a href="mailto:info@dispatch4you.com?subject=Оплата курса — план: Полный доступ&body=Здравствуйте! Хочу оплатить курс. Мой email для активации: " class="btn-pay" id="btn-contact-email" style="text-decoration:none;text-align:center;display:block">
+                        ✉️ Связаться по Email
+                    </a>
+                    <a href="https://t.me/dispatch4you" target="_blank" class="btn-pay" style="text-decoration:none;text-align:center;display:block;background:linear-gradient(135deg,#0088cc,#00aaee)">
+                        💬 Написать в Telegram
+                    </a>
                 </div>
 
             </div>
@@ -417,11 +464,25 @@
             premium: { name: 'Премиум', price: 1750 }
         };
 
-        const selectedPlan = plans[plan];
+        const selectedPlan = plans[plan] || plans.full;
+        const priceStr = '$' + selectedPlan.price.toLocaleString();
+
         document.getElementById('selected-plan-name').textContent = selectedPlan.name;
-        document.getElementById('selected-plan-price').textContent = `$${selectedPlan.price.toLocaleString()}`;
-        document.getElementById('subtotal').textContent = `$${selectedPlan.price.toLocaleString()}`;
-        document.getElementById('total').textContent = `$${selectedPlan.price.toLocaleString()}`;
+        document.getElementById('selected-plan-price').textContent = priceStr;
+        document.getElementById('subtotal').textContent = priceStr;
+        document.getElementById('total').textContent = priceStr;
+
+        // Обновляем суммы во всех формах
+        ['zelle-amount','venmo-amount','cashapp-amount','wire-amount'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = priceStr;
+        });
+
+        // Обновляем email-ссылку
+        const emailBtn = document.getElementById('btn-contact-email');
+        if (emailBtn) {
+            emailBtn.href = 'mailto:info@dispatch4you.com?subject=' + encodeURIComponent('Оплата курса — план: ' + selectedPlan.name + ' (' + priceStr + ')') + '&body=' + encodeURIComponent('Здравствуйте!\n\nХочу оплатить курс «' + selectedPlan.name + '» (' + priceStr + ').\n\nМой email для активации: \nСпособ оплаты: \n\nСпасибо!');
+        }
 
         // Payment method switching
         const paymentMethods = document.querySelectorAll('.payment-method');
@@ -434,123 +495,9 @@
 
                 const methodType = method.dataset.method;
                 paymentForms.forEach(form => form.classList.remove('active'));
-                document.getElementById(`${methodType}-form`).classList.add('active');
+                const targetForm = document.getElementById(methodType + '-form');
+                if (targetForm) targetForm.classList.add('active');
             });
-        });
-
-        // Stripe Integration
-        const stripe = Stripe('pk_test_YOUR_STRIPE_PUBLIC_KEY'); // Replace with your key
-        const elements = stripe.elements();
-        const cardElement = elements.create('card', {
-            style: {
-                base: {
-                    color: '#f1f5f9',
-                    fontSize: '16px',
-                    '::placeholder': {
-                        color: '#64748b'
-                    }
-                }
-            }
-        });
-        cardElement.mount('#card-element');
-
-        document.getElementById('stripe-pay-btn').addEventListener('click', async () => {
-            const btn = document.getElementById('stripe-pay-btn');
-            btn.disabled = true;
-            btn.textContent = 'Обработка...';
-
-            const cardholderName = document.getElementById('cardholder-name').value;
-            const email = document.getElementById('email').value;
-
-            try {
-                // Create payment intent on your server
-                const response = await fetch('/create-payment-intent', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        amount: selectedPlan.price * 100,
-                        email: email
-                    })
-                });
-
-                const { clientSecret } = await response.json();
-
-                const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-                    payment_method: {
-                        card: cardElement,
-                        billing_details: { name: cardholderName, email: email }
-                    }
-                });
-
-                if (error) {
-                    document.getElementById('stripe-error').textContent = error.message;
-                    document.getElementById('stripe-error').style.display = 'block';
-                } else {
-                    document.getElementById('stripe-success').textContent = '✅ Оплата успешна! Перенаправление...';
-                    document.getElementById('stripe-success').style.display = 'block';
-                    setTimeout(() => window.location.href = '/course.html', 2000);
-                }
-            } catch (err) {
-                document.getElementById('stripe-error').textContent = 'Ошибка обработки платежа';
-                document.getElementById('stripe-error').style.display = 'block';
-            }
-
-            btn.disabled = false;
-            btn.textContent = `Оплатить $${selectedPlan.price.toLocaleString()}`;
-        });
-
-        // PayPal Integration
-        paypal.Buttons({
-            createOrder: function (data, actions) {
-                return actions.order.create({
-                    purchase_units: [{
-                        amount: {
-                            value: selectedPlan.price.toString()
-                        }
-                    }]
-                });
-            },
-            onApprove: function (data, actions) {
-                return actions.order.capture().then(function (details) {
-                    document.getElementById('paypal-success').textContent = '✅ Оплата успешна! Перенаправление...';
-                    document.getElementById('paypal-success').style.display = 'block';
-                    setTimeout(() => window.location.href = '/course.html', 2000);
-                });
-            },
-            onError: function (err) {
-                document.getElementById('paypal-error').textContent = 'Ошибка PayPal платежа';
-                document.getElementById('paypal-error').style.display = 'block';
-            }
-        }).render('#paypal-button-container');
-
-        // US Transfer Confirmation
-        document.getElementById('us-confirm-btn').addEventListener('click', async () => {
-            const email = document.getElementById('us-email').value;
-            const phone = document.getElementById('us-phone').value;
-
-            if (!email || !phone) {
-                alert('Заполните все поля');
-                return;
-            }
-
-            // Send confirmation email
-            try {
-                await fetch('/confirm-transfer', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: email,
-                        phone: phone,
-                        plan: selectedPlan.name,
-                        amount: selectedPlan.price
-                    })
-                });
-
-                document.getElementById('us-success').textContent = '✅ Заявка отправлена! Проверьте email для инструкций.';
-                document.getElementById('us-success').style.display = 'block';
-            } catch (err) {
-                alert('Ошибка отправки. Попробуйте позже.');
-            }
         });
     </script>
 </body>
