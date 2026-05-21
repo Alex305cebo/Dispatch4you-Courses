@@ -1,0 +1,3 @@
+## 2026-05-21 - [Canvas Particle Optimization]
+**Learning:** In canvas-based animations, `createLinearGradient` and `shadowBlur` are significant performance bottlenecks when called within high-frequency loops (like connecting particles). Replacing them with solid strokes and removing unnecessary shadows can drastically reduce rendering time per frame. Additionally, pre-calculating squared distances ($dx^2 + dy^2$) avoids expensive `Math.sqrt` calls in hot paths.
+**Action:** Always prioritize squared distance checks for proximity logic and prefer solid colors over gradients/shadows in hot rendering loops unless visually critical.
