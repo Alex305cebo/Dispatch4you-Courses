@@ -11,7 +11,7 @@
   var PUBLIC_PAGES = ["index.html","login.html","register.html","about.html","career.html","pricing.html","checkout.html","faq.html","contacts.html","404.html",""];
   var REGISTERED_PAGES = ["pages/documentation.html","pages/glossary.html","pages/intro.html","pages/modules-index.html","pages/analytics.html","pages/users-stats.html","pages/doc-module-1-complete.html","dashboard.html"];
   var STUDENT_PAGES = ["pages/simulator.html","pages/load-finder.html","pages/loadboard.html","pages/loadboards.html","pages/dispatcher-cards.html","pages/all-loads.html","pages/testing.html","pages/brokers.html","pages/calls.html","pages/cases.html","pages/communication.html","pages/equipment.html","pages/finances.html","pages/load-connect.html","pages/load-examples.html","pages/negotiation.html","pages/problems.html","pages/regulations.html","pages/routes.html","pages/technology.html","pages/role.html","pages/ai-broker-chat.html","pages/Trainer-Quiz.html","pages/lesson-tracker.html","pages/cargo-stats.html","pages/docs.html","pages/doc-module-2-complete.html","pages/doc-module-3-complete.html","pages/doc-module-4-complete.html","pages/doc-module-5-complete.html","pages/doc-module-6-complete.html","pages/doc-module-7-complete.html","pages/doc-module-8-complete.html","pages/doc-module-9-complete.html","pages/doc-module-10-complete.html","pages/doc-module-11-complete.html","pages/doc-module-12-complete.html"];
-  var SUPERUSER_PAGES = ["pages/admin.html"];
+  var SUPERUSER_PAGES = ["pages/admin.html","game2/index.html","game2/"];
 
   function getPage() { return window.location.pathname.replace(/^\//, "") || ""; }
   function inList(page, list) {
