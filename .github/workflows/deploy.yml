@@ -50,6 +50,7 @@ jobs:
             maptrainer:
               - 'map-trainer/src/**'
               - 'map-trainer/public/**'
+              - 'map-trainer/level-cards/**'
               - 'map-trainer/index.html'
               - 'map-trainer/vite.config.js'
               - 'map-trainer/package.json'
@@ -251,9 +252,20 @@ jobs:
       - name: Deploy to /map-trainer/
         uses: burnett01/rsync-deployments@7.0.1
         with:
-          switches: -avzrc --delete
+          switches: -avzrc --delete --exclude='level-cards'
           path: map-trainer/dist/
           remote_path: ~/domains/dispatch4you.com/public_html/map-trainer/
+          remote_host: ${{ secrets.SSH_HOST }}
+          remote_port: ${{ secrets.SSH_PORT }}
+          remote_user: ${{ secrets.SSH_USERNAME }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy level-cards images
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avzrc
+          path: map-trainer/level-cards/
+          remote_path: ~/domains/dispatch4you.com/public_html/map-trainer/level-cards/
           remote_host: ${{ secrets.SSH_HOST }}
           remote_port: ${{ secrets.SSH_PORT }}
           remote_user: ${{ secrets.SSH_USERNAME }}
