@@ -1,0 +1,3 @@
+## 2026-05-26 - [Canvas Bottlenecks: shadowBlur and createLinearGradient]
+**Learning:** In high-frequency canvas rendering loops (like particle systems), properties like `shadowBlur` and methods like `createLinearGradient` cause significant CPU/GPU overhead. Replacing gradients with solid colors and removing shadow effects can lead to a >2x performance improvement in logic/rendering time per frame. Hoisting constants and using squared distance checks (`dx*dx + dy*dy`) instead of `Math.sqrt` for distance comparisons further reduces the per-iteration cost.
+**Action:** Always prefer solid strokes/fills and pre-calculated squared distances in animation loops unless the visual trade-off is unacceptable.
