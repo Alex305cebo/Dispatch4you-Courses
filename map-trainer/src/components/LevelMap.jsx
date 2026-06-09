@@ -853,46 +853,48 @@ function LevelCard({ level, levelProgress, isUnlocked, isCompleted, isCurrent, i
         </div>
       </div>
 
-      {/* Нижняя полоса: рекорды по сложностям */}
-      {!isLocked && (
-        <div style={{
-          display: "grid", gridTemplateColumns: "1fr 1fr 1fr",
-          borderTop: "1px solid rgba(74,56,32,0.4)",
-          background: "rgba(0,0,0,0.2)",
-          borderRadius: "0 0 12px 12px",
-          padding: "5px 6px",
-          gap: "2px",
-        }}>
-          {[
-            { key: `${level.id}_15`, dot: "🟢", label: "15" },
-            { key: `${level.id}_30`, dot: "🟡", label: "30" },
-            { key: `${level.id}_50`, dot: "🔴", label: "50" },
-          ].map(({ key, dot, label }) => {
-            const rec = recordHolder?.[key];
-            const timeStr = rec?.time ? formatTime(rec.time) : null;
-            return (
-              <div key={key} style={{
-                display: "flex", alignItems: "center", gap: "3px",
-                padding: "2px 3px",
-                borderRadius: "5px",
-                background: rec ? "rgba(212,168,83,0.06)" : "transparent",
-              }}>
-                <span style={{ fontSize: "9px", flexShrink: 0 }}>{dot}</span>
-                {timeStr ? (
-                  <>
-                    <span style={{ fontSize: "10px", fontWeight: 700, color: "#d4a853", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "38px" }}>
-                      {rec.name?.split(" ")[0]}
+      {/* Нижняя полоса: рекорды по сложностям — только если есть хоть один */}
+      {!isLocked && (() => {
+        const diffs = [
+          { key: `${level.id}_15`, dot: "🟢", label: "Быстрый" },
+          { key: `${level.id}_30`, dot: "🟡", label: "Стандарт" },
+          { key: `${level.id}_50`, dot: "🔴", label: "Все штаты" },
+        ];
+        const hasAny = diffs.some(d => recordHolder?.[d.key]?.time);
+        if (!hasAny) return null;
+        return (
+          <div style={{
+            display: "grid", gridTemplateColumns: "1fr 1fr 1fr",
+            borderTop: "1px solid rgba(74,56,32,0.4)",
+            background: "rgba(0,0,0,0.25)",
+            borderRadius: "0 0 12px 12px",
+            padding: "8px 10px",
+            gap: "4px",
+          }}>
+            {diffs.map(({ key, dot, label }) => {
+              const rec = recordHolder?.[key];
+              const timeStr = rec?.time ? formatTime(rec.time) : null;
+              return (
+                <div key={key} style={{
+                  display: "flex", alignItems: "center", gap: "5px",
+                  padding: "4px 6px", borderRadius: "7px",
+                  background: rec ? "rgba(212,168,83,0.1)" : "transparent",
+                  minWidth: 0,
+                }}>
+                  <span style={{ fontSize: "13px", flexShrink: 0 }}>{dot}</span>
+                  {timeStr ? (
+                    <span style={{ fontSize: "12px", color: "#d4a853", fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {rec.name?.split(" ")[0]} · {timeStr}
                     </span>
-                    <span style={{ fontSize: "9px", color: "#8b7355", whiteSpace: "nowrap" }}>·{timeStr}</span>
-                  </>
-                ) : (
-                  <span style={{ fontSize: "9px", color: "#4a3820" }}>{label}в —</span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+                  ) : (
+                    <span style={{ fontSize: "12px", color: "#6b5030", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
 
       {/* Цветная полоска прогресса — поверх нижней границы */}
       <div style={{
