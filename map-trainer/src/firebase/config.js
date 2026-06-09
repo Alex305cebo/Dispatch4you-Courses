@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════════════════════
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore, initializeFirestore, CACHE_SIZE_UNLIMITED, persistentLocalCache, memoryLocalCache } from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey:            "AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI",
@@ -17,18 +17,11 @@ const firebaseConfig = {
   appId:             "1:349235354473:web:488aeb29211b02bb153bf8",
 };
 
+// Не инициализируем повторно если уже есть (SSR / HMR safe)
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
-
-// Отключаем offline persistence — используем memory cache
-// Это предотвращает открытие постоянного Listen/channel соединения
-// и устраняет ошибку "Too many requests"
-export const db = getApps().length > 1
-  ? getFirestore(app)
-  : initializeFirestore(app, {
-      localCache: memoryLocalCache(),
-    });
+export const db   = getFirestore(app);
 
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: "select_account" });
