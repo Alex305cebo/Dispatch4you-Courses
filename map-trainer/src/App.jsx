@@ -141,9 +141,9 @@ export default function App() {
     // Секундомер сессии — запустится при первом вопросе
     sessionTimer.reset();
     setScreen("quiz");
-    // Загружаем рекорд этого уровня
+    // Загружаем рекорды этого уровня для всех сложностей
     getAllLevelRecords().then((records) => {
-      setLevelRecord(records[String(level.id)] || null);
+      setLevelRecord(records);
     }).catch(() => {});
 
     // Сохраняем сессию квиза в sessionStorage для восстановления при рефреше
@@ -394,7 +394,7 @@ export default function App() {
       completeLevel(activeLevel.id, pct, finalScore.correct, earned);
       // Сохраняем рекорд времени если прошёл уровень
       if (pct >= activeLevel.unlockPct && user?.uid && elapsed > 0) {
-        saveLevelRecord(user.uid, user, activeLevel.id, elapsed);
+        saveLevelRecord(user.uid, user, activeLevel.id, activeLevel.questions, elapsed);
       }
       setScreen("result");
       return;
@@ -604,73 +604,42 @@ export default function App() {
       </div>
 
       {/* ── Второй бар: таймер сессии + рекорд ── */}
-      {quizReady && (
-        <div style={{
-          display: "flex", alignItems: "center", gap: "8px",
-          marginBottom: "6px", flexShrink: 0,
-        }}>
-          {/* Текущее время сессии */}
-          <div style={{
-            display: "flex", alignItems: "center", gap: "4px",
-            flexShrink: 0,
-          }}>
-            <span style={{ fontSize: "11px" }}>⏱</span>
-            <span style={{ fontSize: "12px", fontWeight: 700, color: "#94a3b8", fontVariantNumeric: "tabular-nums" }}>
-              {(() => {
-                const s = sessionTimer.elapsed;
-                const m = Math.floor(s / 60);
-                const sec = s % 60;
-                return m > 0 ? `${m}:${String(sec).padStart(2, "0")}` : `0:${String(sec).padStart(2, "0")}`;
-              })()}
-            </span>
-          </div>
-
-          {/* Прогресс-бар времени относительно рекорда */}
-          <div style={{
-            flex: 1, height: "4px",
-            background: "rgba(255,255,255,0.06)",
-            borderRadius: "2px", overflow: "hidden",
-          }}>
-            {levelRecord?.time ? (
+      {quizReady && (() => {
+        const recKey = `${activeLevel?.id}_${activeLevel?.questions}`;
+        const rec = levelRecord?.[recKey] || null;
+        const fmt = (s) => { const m = Math.floor(s/60); const sec = s%60; return m > 0 ? `${m}:${String(sec).padStart(2,"0")}` : `0:${String(sec).padStart(2,"0")}`; };
+        return (
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", flexShrink: 0 }}>
+            {/* Таймер */}
+            <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
+              <span style={{ fontSize: "11px" }}>⏱</span>
+              <span style={{ fontSize: "12px", fontWeight: 700, color: "#94a3b8", fontVariantNumeric: "tabular-nums" }}>
+                {fmt(sessionTimer.elapsed)}
+              </span>
+            </div>
+            {/* Прогресс-бар */}
+            <div style={{ flex: 1, height: "4px", background: "rgba(255,255,255,0.06)", borderRadius: "2px", overflow: "hidden" }}>
               <div style={{
                 height: "100%",
-                width: `${Math.min(100, (sessionTimer.elapsed / levelRecord.time) * 100)}%`,
-                background: sessionTimer.elapsed > levelRecord.time ? "#ef4444" : "#22c55e",
+                width: rec?.time ? `${Math.min(100, (sessionTimer.elapsed / rec.time) * 100)}%` : "0%",
+                background: rec?.time && sessionTimer.elapsed > rec.time ? "#ef4444" : "#22c55e",
                 borderRadius: "2px",
                 transition: "width 1s linear",
               }} />
+            </div>
+            {/* Рекорд */}
+            {rec?.time ? (
+              <div style={{ display: "flex", alignItems: "center", gap: "3px", flexShrink: 0 }}>
+                <span style={{ fontSize: "11px" }}>🥇</span>
+                <span style={{ fontSize: "11px", fontWeight: 700, color: "#d4a853", fontVariantNumeric: "tabular-nums" }}>{fmt(rec.time)}</span>
+                <span style={{ fontSize: "10px", color: "#64748b", maxWidth: "55px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rec.name?.split(" ")[0]}</span>
+              </div>
             ) : (
-              <div style={{
-                height: "100%", width: "0%",
-                background: "#06b6d4", borderRadius: "2px",
-              }} />
+              <span style={{ fontSize: "10px", color: "#475569", flexShrink: 0 }}>нет рекорда</span>
             )}
           </div>
-
-          {/* Рекорд */}
-          {levelRecord?.time ? (
-            <div style={{
-              display: "flex", alignItems: "center", gap: "3px",
-              flexShrink: 0,
-            }}>
-              <span style={{ fontSize: "11px" }}>🥇</span>
-              <span style={{ fontSize: "11px", fontWeight: 700, color: "#d4a853", fontVariantNumeric: "tabular-nums" }}>
-                {(() => {
-                  const s = levelRecord.time;
-                  const m = Math.floor(s / 60);
-                  const sec = s % 60;
-                  return m > 0 ? `${m}:${String(sec).padStart(2, "0")}` : `0:${String(sec).padStart(2, "0")}`;
-                })()}
-              </span>
-              <span style={{ fontSize: "10px", color: "#64748b", maxWidth: "60px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {levelRecord.name?.split(" ")[0]}
-              </span>
-            </div>
-          ) : (
-            <span style={{ fontSize: "10px", color: "#475569", flexShrink: 0 }}>нет рекорда</span>
-          )}
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── Инструкция перед стартом уровня ── */}
       {!quizReady && (

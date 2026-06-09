@@ -265,7 +265,7 @@ export default function LevelMap({ progress, user, onSelectLevel, onOpenReferenc
                 isCompleted={isCompleted}
                 isCurrent={isCurrent}
                 isLocked={isLocked}
-                recordHolder={levelRecords[String(level.id)] || null}
+                recordHolder={levelRecords}
                 onSelect={() => isUnlocked && (isGuest ? setShowLoginPrompt(true) : setDifficultyLevel(level))}
               />
             );
@@ -472,6 +472,11 @@ export default function LevelMap({ progress, user, onSelectLevel, onOpenReferenc
                   <div style={{ textAlign: "left" }}>
                     <p style={{ fontSize: "14px", fontWeight: 700, color: "#22c55e", margin: 0 }}>Быстрый</p>
                     <p style={{ fontSize: "11px", color: "#8b7355", margin: "2px 0 0 0" }}>~3 минуты</p>
+                    {levelRecords[`${difficultyLevel.id}_15`] && (
+                      <p style={{ fontSize: "10px", color: "#d4a853", margin: "2px 0 0 0" }}>
+                        🥇 {levelRecords[`${difficultyLevel.id}_15`].name?.split(" ")[0]} · {(() => { const s = levelRecords[`${difficultyLevel.id}_15`].time; const m = Math.floor(s/60); return m > 0 ? `${m}м ${s%60}с` : `${s}с`; })()}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
@@ -501,6 +506,11 @@ export default function LevelMap({ progress, user, onSelectLevel, onOpenReferenc
                   <div style={{ textAlign: "left" }}>
                     <p style={{ fontSize: "14px", fontWeight: 700, color: "#f59e0b", margin: 0 }}>Стандарт</p>
                     <p style={{ fontSize: "11px", color: "#8b7355", margin: "2px 0 0 0" }}>~7 минут</p>
+                    {levelRecords[`${difficultyLevel.id}_30`] && (
+                      <p style={{ fontSize: "10px", color: "#d4a853", margin: "2px 0 0 0" }}>
+                        🥇 {levelRecords[`${difficultyLevel.id}_30`].name?.split(" ")[0]} · {(() => { const s = levelRecords[`${difficultyLevel.id}_30`].time; const m = Math.floor(s/60); return m > 0 ? `${m}м ${s%60}с` : `${s}с`; })()}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
@@ -529,6 +539,11 @@ export default function LevelMap({ progress, user, onSelectLevel, onOpenReferenc
                   <div style={{ textAlign: "left" }}>
                     <p style={{ fontSize: "14px", fontWeight: 700, color: "#ef4444", margin: 0 }}>Все штаты</p>
                     <p style={{ fontSize: "11px", color: "#8b7355", margin: "2px 0 0 0" }}>~12 минут · ×1.5 XP</p>
+                    {levelRecords[`${difficultyLevel.id}_50`] && (
+                      <p style={{ fontSize: "10px", color: "#d4a853", margin: "2px 0 0 0" }}>
+                        🥇 {levelRecords[`${difficultyLevel.id}_50`].name?.split(" ")[0]} · {(() => { const s = levelRecords[`${difficultyLevel.id}_50`].time; const m = Math.floor(s/60); return m > 0 ? `${m}м ${s%60}с` : `${s}с`; })()}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
@@ -847,28 +862,21 @@ function LevelCard({ level, levelProgress, isUnlocked, isCompleted, isCurrent, i
           }}>
             {level.subtitle}
           </p>
-          {/* Рекордсмен уровня */}
-          {recordHolder && formatTime(recordHolder.time) && (
-            <div style={{
-              display: "flex", alignItems: "center", gap: "4px",
-              marginTop: "4px",
-            }}>
-              <span style={{ fontSize: "11px" }}>🥇</span>
-              <span style={{
-                fontSize: "11px", fontWeight: 700,
-                color: "#d4a853",
-                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                maxWidth: "90px",
-              }}>
-                {recordHolder.name}
-              </span>
-              <span style={{
-                fontSize: "11px", color: "#6b5030", fontWeight: 600,
-              }}>
-                · {formatTime(recordHolder.time)}
-              </span>
-            </div>
-          )}
+          {/* Рекордсмен уровня — лучший из всех сложностей */}
+          {(() => {
+            const keys = [`${level.id}_15`, `${level.id}_30`, `${level.id}_50`];
+            const best = keys.map(k => recordHolder?.[k]).filter(Boolean).sort((a,b) => a.time - b.time)[0];
+            if (!best) return null;
+            const m = Math.floor(best.time/60), sec = best.time%60;
+            const timeStr = m > 0 ? `${m}м ${sec}с` : `${sec}с`;
+            return (
+              <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "3px" }}>
+                <span style={{ fontSize: "11px" }}>🥇</span>
+                <span style={{ fontSize: "11px", fontWeight: 700, color: "#d4a853" }}>{best.name?.split(" ")[0]}</span>
+                <span style={{ fontSize: "11px", color: "#8b7355" }}>· {timeStr}</span>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Кнопка + XP */}

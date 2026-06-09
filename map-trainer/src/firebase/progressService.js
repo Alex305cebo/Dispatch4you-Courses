@@ -128,11 +128,12 @@ export async function syncXpToUserProfile(uid, mapTrainerXp) {
   }
 }
 
-// ── Сохранить рекорд уровня (если это лучшее время) ────────
-// levelRecords/{levelId} → { uid, name, photoURL, time, updatedAt }
-export async function saveLevelRecord(uid, userData, levelId, timeSeconds) {
+// ── Сохранить рекорд уровня по сложности ────────────────────
+// levelRecords/{levelId}_{questionCount} → { uid, name, photoURL, time, updatedAt }
+export async function saveLevelRecord(uid, userData, levelId, questionCount, timeSeconds) {
   try {
-    const recordRef = doc(db, "levelRecords", String(levelId));
+    const key = `${levelId}_${questionCount}`;
+    const recordRef = doc(db, "levelRecords", key);
     const snap = await getDocFromServer(recordRef);
 
     const name = [userData?.firstName, userData?.lastName].filter(Boolean).join(" ") || "Player";
@@ -140,10 +141,10 @@ export async function saveLevelRecord(uid, userData, levelId, timeSeconds) {
 
     if (!existing || timeSeconds < (existing.time || Infinity)) {
       await setDoc(recordRef, {
-        uid,
-        name,
+        uid, name,
         photoURL: userData?.photoURL || null,
         time: timeSeconds,
+        levelId, questionCount,
         updatedAt: serverTimestamp(),
       });
       return true;
@@ -155,13 +156,12 @@ export async function saveLevelRecord(uid, userData, levelId, timeSeconds) {
   }
 }
 
+// Возвращает { [levelId_count]: { uid, name, photoURL, time } }
 export async function getAllLevelRecords() {
   try {
     const snap = await getDocsFromServer(collection(db, "levelRecords"));
     const records = {};
-    snap.forEach((d) => {
-      records[d.id] = d.data();
-    });
+    snap.forEach((d) => { records[d.id] = d.data(); });
     return records;
   } catch (err) {
     console.warn("[mapTrainer] Load level records failed:", err.message);
