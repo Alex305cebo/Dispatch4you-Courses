@@ -13,9 +13,11 @@ import { db } from "./config";
 import {
   doc,
   getDoc,
+  getDocFromServer,
   setDoc,
   collection,
   getDocs,
+  getDocsFromServer,
   increment,
   serverTimestamp,
 } from "firebase/firestore";
@@ -25,10 +27,9 @@ const FIELD = "mapTrainer"; // поле внутри users/{uid}
 // ── Загрузить прогресс из Firestore ──────────────────────────
 export async function loadProgressFromFirestore(uid) {
   try {
-    const snap = await getDoc(doc(db, "users", uid));
+    const snap = await getDocFromServer(doc(db, "users", uid));
     if (snap.exists()) {
-      const data = snap.data();
-      return data[FIELD] || null;
+      return snap.data()[FIELD] || null;
     }
     return null;
   } catch (err) {
@@ -46,7 +47,7 @@ export async function initUserInLeaderboard(uid, userData, currentXp = 0) {
     if (_leaderboardCache[uid] === currentXp) return;
 
     const progressRef = doc(db, "progress", uid);
-    const snap = await getDoc(progressRef);
+    const snap = await getDocFromServer(progressRef);
     const existingXp = snap.exists() ? (snap.data().xp || 0) : 0;
 
     if (currentXp > existingXp) {
@@ -132,7 +133,7 @@ export async function syncXpToUserProfile(uid, mapTrainerXp) {
 export async function saveLevelRecord(uid, userData, levelId, timeSeconds) {
   try {
     const recordRef = doc(db, "levelRecords", String(levelId));
-    const snap = await getDoc(recordRef);
+    const snap = await getDocFromServer(recordRef);
 
     const name = [userData?.firstName, userData?.lastName].filter(Boolean).join(" ") || "Player";
     const existing = snap.exists() ? snap.data() : null;
@@ -156,7 +157,7 @@ export async function saveLevelRecord(uid, userData, levelId, timeSeconds) {
 
 export async function getAllLevelRecords() {
   try {
-    const snap = await getDocs(collection(db, "levelRecords"));
+    const snap = await getDocsFromServer(collection(db, "levelRecords"));
     const records = {};
     snap.forEach((d) => {
       records[d.id] = d.data();

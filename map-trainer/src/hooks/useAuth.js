@@ -91,16 +91,21 @@ export function useAuth() {
 
       // КРИТИЧНО: getRedirectResult должен отработать ДО onAuthStateChanged,
       // иначе результат redirect-логина потеряется.
-      try {
-        const res = await getRedirectResult(auth);
-        if (res?.user) {
-          console.log("[useAuth] redirect login success:", res.user.email);
-          const userData = persistUser(res.user);
-          setUser(userData);
-          setLoading(false);
+      // Проверяем только если страница пришла после redirect (есть маркер в sessionStorage)
+      const pendingRedirect = sessionStorage.getItem("mt_pending_redirect");
+      if (pendingRedirect) {
+        sessionStorage.removeItem("mt_pending_redirect");
+        try {
+          const res = await getRedirectResult(auth);
+          if (res?.user) {
+            console.log("[useAuth] redirect login success:", res.user.email);
+            const userData = persistUser(res.user);
+            setUser(userData);
+            setLoading(false);
+          }
+        } catch (e) {
+          console.warn("[useAuth] getRedirectResult error:", e?.code || e?.message);
         }
-      } catch (e) {
-        console.warn("[useAuth] getRedirectResult error:", e?.code || e?.message);
       }
 
       unsub = onAuthStateChanged(auth, (fbUser) => {
@@ -139,6 +144,7 @@ export function useAuth() {
       //   Десктоп → popup (быстрее, UX лучше) + fallback на redirect.
       if (isMobile()) {
         console.log("[useAuth] mobile detected → signInWithRedirect");
+        sessionStorage.setItem("mt_pending_redirect", "1");
         await signInWithRedirect(auth, googleProvider);
         return;
       }
@@ -163,6 +169,7 @@ export function useAuth() {
           code === "auth/operation-not-supported-in-this-environment" ||
           code === "auth/web-storage-unsupported"
         ) {
+          sessionStorage.setItem("mt_pending_redirect", "1");
           await signInWithRedirect(auth, googleProvider);
           return;
         }
