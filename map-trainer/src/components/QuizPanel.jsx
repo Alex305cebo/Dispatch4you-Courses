@@ -248,14 +248,21 @@ export default function QuizPanel({
       {!feedback && (
         <div className="qp-instruction">
           <span className="qp-instruction-icon">
-            {isMapClick ? "👆" : mode === "timezone" ? "🕐" : mode === "region" || mode === "regions-intro" ? "🌎" : mode === "capitals" ? "🏛️" : mode === "name-state" ? "✏️" : "❓"}
+            {mode === "find-city" ? "🏙️"
+              : mode === "find-state" ? "🗺️"
+              : mode === "timezone" ? "🕐"
+              : mode === "region" || mode === "regions-intro" ? "🌎"
+              : mode === "capitals" ? "🏛️"
+              : mode === "name-state" ? "✏️"
+              : "❓"}
           </span>
           <span className="qp-instruction-text">
-            {isMapClick ? "Нажми на штат на карте"
-              : mode === "timezone" ? "Выбери часовой пояс для этого штата"
-              : mode === "region" || mode === "regions-intro" ? "Выбери регион, в котором находится штат"
-              : mode === "capitals" ? "Выбери столицу этого штата"
-              : mode === "name-state" ? "Выбери правильное название штата"
+            {mode === "find-city" ? "В каком штате находится этот город?"
+              : mode === "find-state" ? "Найди этот штат на карте"
+              : mode === "timezone" ? "Выбери часовой пояс этого штата"
+              : mode === "region" || mode === "regions-intro" ? "В каком регионе находится этот штат?"
+              : mode === "capitals" ? "Какая столица у этого штата?"
+              : mode === "name-state" ? "Как называется выделенный штат?"
               : "Выбери правильный ответ"}
           </span>
         </div>
