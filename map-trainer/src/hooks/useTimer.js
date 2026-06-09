@@ -97,6 +97,10 @@ export function useSessionTimer() {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    // Фиксируем финальное время сразу из startTime
+    if (startTimeRef.current) {
+      setElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000));
+    }
     setRunning(false);
   }, []);
 
@@ -120,5 +124,5 @@ export function useSessionTimer() {
     };
   }, [running]);
 
-  return { elapsed, running, start, stop, reset };
+  return { elapsed, running, start, stop, reset, getElapsed: () => startTimeRef.current ? Math.floor((Date.now() - startTimeRef.current) / 1000) : elapsed };
 }

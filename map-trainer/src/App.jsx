@@ -15,7 +15,7 @@ import { useStats }    from "./hooks/useStats";
 import { useProgress, initProgress } from "./hooks/useProgress";
 import { useAuth }     from "./hooks/useAuth";
 import { useSounds }   from "./hooks/useSounds";
-import { saveLevelRecord } from "./firebase/progressService";
+import { saveLevelRecord, getAllLevelRecords } from "./firebase/progressService";
 
 // ── Константы ────────────────────────────────────────────────
 const POINTS_PER_Q = 10;
@@ -73,7 +73,8 @@ export default function App() {
 
   // ── Секундомер сессии ──
   const sessionTimer = useSessionTimer();
-  const [sessionTime, setSessionTime] = useState(0); // финальное время после завершения
+  const [sessionTime, setSessionTime] = useState(0);
+  const [levelRecord, setLevelRecord] = useState(null); // рекорд текущего уровня
 
   // ── Таймер на вопрос ──
   const handleTimeout = useCallback(() => {
@@ -135,10 +136,15 @@ export default function App() {
     setShakePanel(false);
     setQuizReady(true);
     setSessionTime(0);
+    setLevelRecord(null);
     resetStats();
     // Секундомер сессии — запустится при первом вопросе
     sessionTimer.reset();
     setScreen("quiz");
+    // Загружаем рекорд этого уровня
+    getAllLevelRecords().then((records) => {
+      setLevelRecord(records[String(level.id)] || null);
+    }).catch(() => {});
 
     // Сохраняем сессию квиза в sessionStorage для восстановления при рефреше
     try {
@@ -372,9 +378,11 @@ export default function App() {
   const handleNext = useCallback(() => {
     if (currentIdx + 1 >= activeLevel.questions) {
       timer.stop();
-      // Останавливаем секундомер и фиксируем время
+      // Фиксируем время ДО остановки (elapsed из стейта может не успеть обновиться)
+      const elapsed = sessionTimer.startTimeRef
+        ? Math.floor((Date.now() - sessionTimer.startTimeRef) / 1000)
+        : sessionTimer.elapsed;
       sessionTimer.stop();
-      const elapsed = sessionTimer.elapsed;
       setSessionTime(elapsed);
       sounds.levelComplete();
       // Считаем XP
@@ -594,6 +602,75 @@ export default function App() {
           {currentIdx + 1}/{activeLevel?.questions}
         </span>
       </div>
+
+      {/* ── Второй бар: таймер сессии + рекорд ── */}
+      {quizReady && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: "8px",
+          marginBottom: "6px", flexShrink: 0,
+        }}>
+          {/* Текущее время сессии */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: "4px",
+            flexShrink: 0,
+          }}>
+            <span style={{ fontSize: "11px" }}>⏱</span>
+            <span style={{ fontSize: "12px", fontWeight: 700, color: "#94a3b8", fontVariantNumeric: "tabular-nums" }}>
+              {(() => {
+                const s = sessionTimer.elapsed;
+                const m = Math.floor(s / 60);
+                const sec = s % 60;
+                return m > 0 ? `${m}:${String(sec).padStart(2, "0")}` : `0:${String(sec).padStart(2, "0")}`;
+              })()}
+            </span>
+          </div>
+
+          {/* Прогресс-бар времени относительно рекорда */}
+          <div style={{
+            flex: 1, height: "4px",
+            background: "rgba(255,255,255,0.06)",
+            borderRadius: "2px", overflow: "hidden",
+          }}>
+            {levelRecord?.time ? (
+              <div style={{
+                height: "100%",
+                width: `${Math.min(100, (sessionTimer.elapsed / levelRecord.time) * 100)}%`,
+                background: sessionTimer.elapsed > levelRecord.time ? "#ef4444" : "#22c55e",
+                borderRadius: "2px",
+                transition: "width 1s linear",
+              }} />
+            ) : (
+              <div style={{
+                height: "100%", width: "0%",
+                background: "#06b6d4", borderRadius: "2px",
+              }} />
+            )}
+          </div>
+
+          {/* Рекорд */}
+          {levelRecord?.time ? (
+            <div style={{
+              display: "flex", alignItems: "center", gap: "3px",
+              flexShrink: 0,
+            }}>
+              <span style={{ fontSize: "11px" }}>🥇</span>
+              <span style={{ fontSize: "11px", fontWeight: 700, color: "#d4a853", fontVariantNumeric: "tabular-nums" }}>
+                {(() => {
+                  const s = levelRecord.time;
+                  const m = Math.floor(s / 60);
+                  const sec = s % 60;
+                  return m > 0 ? `${m}:${String(sec).padStart(2, "0")}` : `0:${String(sec).padStart(2, "0")}`;
+                })()}
+              </span>
+              <span style={{ fontSize: "10px", color: "#64748b", maxWidth: "60px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {levelRecord.name?.split(" ")[0]}
+              </span>
+            </div>
+          ) : (
+            <span style={{ fontSize: "10px", color: "#475569", flexShrink: 0 }}>нет рекорда</span>
+          )}
+        </div>
+      )}
 
       {/* ── Инструкция перед стартом уровня ── */}
       {!quizReady && (
