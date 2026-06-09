@@ -732,10 +732,9 @@ function LevelCard({ level, levelProgress, isUnlocked, isCompleted, isCurrent, i
       disabled={isLocked}
       style={{
         display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
+        flexDirection: "column",
+        alignItems: "stretch",
         padding: 0,
-        // Деревянный/кожаный фон
         background: isLocked
           ? "linear-gradient(145deg, #1a1510 0%, #12100c 100%)"
           : "linear-gradient(145deg, #1a1510 0%, #12100c 50%, #1a1510 100%)",
@@ -748,7 +747,7 @@ function LevelCard({ level, levelProgress, isUnlocked, isCompleted, isCurrent, i
         touchAction: "manipulation",
         opacity: 1,
         position: "relative",
-        overflow: "visible",
+        overflow: "hidden",
         width: "100%",
         minHeight: "110px",
         transition: "all 0.25s ease, transform 0.2s ease",
@@ -769,150 +768,144 @@ function LevelCard({ level, levelProgress, isUnlocked, isCompleted, isCurrent, i
         e.currentTarget.style.borderColor = "#4a3820";
       }}
     >
-      {/* Цветная полоска-прогресс внизу */}
+      {/* Верхняя часть: картинка + текст */}
+      <div style={{ display: "flex", flexDirection: "row", alignItems: "center", flex: 1 }}>
+
+        {/* Левая часть: изображение */}
+        <div style={{
+          width: "35%", height: "100px",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          flexShrink: 0, overflow: "visible", padding: "8px",
+        }}>
+          <img
+            src={imgSrc}
+            alt={level.title}
+            loading="lazy"
+            style={{
+              maxWidth: "105%", maxHeight: "115%", objectFit: "contain",
+              filter: isLocked ? "saturate(0.6) brightness(0.7)" : "drop-shadow(0 3px 8px rgba(0,0,0,0.5))",
+            }}
+          />
+        </div>
+
+        {/* Правая часть: текст + кнопка */}
+        <div style={{
+          flex: 1, padding: "12px 12px 12px 0",
+          display: "flex", flexDirection: "column", justifyContent: "center",
+          gap: "8px", minWidth: 0, position: "relative",
+        }}>
+          {/* Бейдж процента */}
+          {isCompleted && (
+            <div style={{
+              position: "absolute", top: "6px", right: "8px",
+              background: "linear-gradient(135deg, #2a1f0e, #1a1208)",
+              border: "2px solid #d4a853", borderRadius: "50%",
+              width: "32px", height: "32px",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 2px 8px rgba(212,168,83,0.3)",
+            }}>
+              <span style={{ fontSize: "9px", fontWeight: 900, color: "#d4a853" }}>{bestPct}%</span>
+            </div>
+          )}
+
+          {/* Название + subtitle */}
+          <div>
+            <p style={{
+              fontSize: "17px", fontWeight: 800,
+              color: isLocked ? "#8b7355" : "#f5e6c8",
+              margin: "0 0 3px 0", lineHeight: 1.2,
+              textShadow: isLocked ? "none" : "0 1px 2px rgba(0,0,0,0.5)",
+            }}>
+              {level.id}. {level.title}
+            </p>
+            <p style={{
+              fontSize: "13px", color: "#8b7355",
+              margin: 0, lineHeight: 1.3,
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              paddingRight: isCompleted ? "38px" : 0,
+            }}>
+              {level.subtitle}
+            </p>
+          </div>
+
+          {/* Кнопка + XP */}
+          {!isLocked && (
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{
+                padding: "7px 18px", background: btnColors[level.id],
+                borderRadius: "18px", color: "#fff",
+                fontSize: "13px", fontWeight: 700,
+                boxShadow: `0 3px 10px rgba(${level.colorRgb},0.4)`,
+                letterSpacing: "0.3px", border: "1px solid rgba(255,255,255,0.15)",
+              }}>
+                {btnLabel}
+              </div>
+              <span style={{ fontSize: "13px", color: "#d4a853", fontWeight: 700, textShadow: "0 0 6px rgba(212,168,83,0.4)" }}>
+                +{level.xpReward} XP
+              </span>
+            </div>
+          )}
+          {isLocked && XP_THRESHOLDS[level.id] && (
+            <div style={{ fontSize: "13px", color: "#d4a853", fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ fontSize: "18px" }}>🔒</span> Нужно {XP_THRESHOLDS[level.id]} XP
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Нижняя полоса: рекорды по сложностям */}
+      {!isLocked && (
+        <div style={{
+          display: "grid", gridTemplateColumns: "1fr 1fr 1fr",
+          borderTop: "1px solid rgba(74,56,32,0.4)",
+          background: "rgba(0,0,0,0.2)",
+          borderRadius: "0 0 12px 12px",
+          padding: "5px 6px",
+          gap: "2px",
+        }}>
+          {[
+            { key: `${level.id}_15`, dot: "🟢", label: "15" },
+            { key: `${level.id}_30`, dot: "🟡", label: "30" },
+            { key: `${level.id}_50`, dot: "🔴", label: "50" },
+          ].map(({ key, dot, label }) => {
+            const rec = recordHolder?.[key];
+            const timeStr = rec?.time ? formatTime(rec.time) : null;
+            return (
+              <div key={key} style={{
+                display: "flex", alignItems: "center", gap: "3px",
+                padding: "2px 3px",
+                borderRadius: "5px",
+                background: rec ? "rgba(212,168,83,0.06)" : "transparent",
+              }}>
+                <span style={{ fontSize: "9px", flexShrink: 0 }}>{dot}</span>
+                {timeStr ? (
+                  <>
+                    <span style={{ fontSize: "10px", fontWeight: 700, color: "#d4a853", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "38px" }}>
+                      {rec.name?.split(" ")[0]}
+                    </span>
+                    <span style={{ fontSize: "9px", color: "#8b7355", whiteSpace: "nowrap" }}>·{timeStr}</span>
+                  </>
+                ) : (
+                  <span style={{ fontSize: "9px", color: "#4a3820" }}>{label}в —</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Цветная полоска прогресса — поверх нижней границы */}
       <div style={{
-        position: "absolute",
-        bottom: 0, left: 0, right: 0,
-        height: "4px",
-        background: "rgba(255,255,255,0.05)",
-        borderRadius: "0 0 14px 14px",
-        overflow: "hidden",
+        position: "absolute", bottom: 0, left: 0, right: 0,
+        height: "3px", background: "rgba(255,255,255,0.04)",
+        borderRadius: "0 0 14px 14px", overflow: "hidden",
       }}>
         <div style={{
-          height: "100%",
-          width: isLocked ? "0%" : `${bestPct}%`,
+          height: "100%", width: isLocked ? "0%" : `${bestPct}%`,
           background: level.color,
-          borderRadius: "0 0 14px 14px",
           boxShadow: bestPct > 0 ? `0 0 8px ${level.color}88` : "none",
           transition: "width 0.6s ease",
         }} />
-      </div>
-
-      {/* Левая часть: изображение */}
-      <div style={{
-        width: "35%",
-        height: "100px",
-        position: "relative",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexShrink: 0,
-        overflow: "visible",
-        padding: "8px",
-      }}>
-        <img
-          src={imgSrc}
-          alt={level.title}
-          loading="lazy"
-          style={{
-            maxWidth: "105%",
-            maxHeight: "115%",
-            objectFit: "contain",
-            filter: isLocked
-              ? "saturate(0.6) brightness(0.7)"
-              : "drop-shadow(0 3px 8px rgba(0,0,0,0.5))",
-          }}
-        />
-      </div>
-
-      {/* Правая часть: текст + кнопка */}
-      <div style={{
-        flex: 1,
-        padding: "12px 12px 12px 0",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        gap: "8px",
-        minWidth: 0,
-        position: "relative",
-      }}>
-        {/* Бейдж процента — золотая рамка */}
-        {isCompleted && (
-          <div style={{
-            position: "absolute", top: "6px", right: "8px",
-            background: "linear-gradient(135deg, #2a1f0e, #1a1208)",
-            border: "2px solid #d4a853",
-            borderRadius: "50%",
-            width: "32px", height: "32px",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 2px 8px rgba(212,168,83,0.3)",
-          }}>
-            <span style={{ fontSize: "9px", fontWeight: 900, color: "#d4a853" }}>
-              {bestPct}%
-            </span>
-          </div>
-        )}
-
-        {/* Название */}
-        <div>
-          <p style={{
-            fontSize: "17px", fontWeight: 800,
-            color: isLocked ? "#8b7355" : "#f5e6c8",
-            margin: "0 0 3px 0", lineHeight: 1.2,
-            textShadow: isLocked ? "none" : "0 1px 2px rgba(0,0,0,0.5)",
-          }}>
-            {level.id}. {level.title}
-          </p>
-          <p style={{
-            fontSize: "13px",
-            color: isLocked ? "#8b7355" : "#8b7355",
-            margin: 0, lineHeight: 1.3,
-            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-            paddingRight: isCompleted ? "38px" : 0,
-          }}>
-            {level.subtitle}
-          </p>
-          {/* Рекордсмен уровня — лучший из всех сложностей */}
-          {(() => {
-            const keys = [`${level.id}_15`, `${level.id}_30`, `${level.id}_50`];
-            const best = keys.map(k => recordHolder?.[k]).filter(Boolean).sort((a,b) => a.time - b.time)[0];
-            if (!best) return null;
-            const m = Math.floor(best.time/60), sec = best.time%60;
-            const timeStr = m > 0 ? `${m}м ${sec}с` : `${sec}с`;
-            return (
-              <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "3px" }}>
-                <span style={{ fontSize: "11px" }}>🥇</span>
-                <span style={{ fontSize: "11px", fontWeight: 700, color: "#d4a853" }}>{best.name?.split(" ")[0]}</span>
-                <span style={{ fontSize: "11px", color: "#8b7355" }}>· {timeStr}</span>
-              </div>
-            );
-          })()}
-        </div>
-
-        {/* Кнопка + XP */}
-        {!isLocked && (
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{
-              padding: "7px 18px",
-              background: btnColors[level.id],
-              borderRadius: "18px",
-              color: "#fff",
-              fontSize: "13px", fontWeight: 700,
-              boxShadow: `0 3px 10px rgba(${level.colorRgb},0.4)`,
-              letterSpacing: "0.3px",
-              border: "1px solid rgba(255,255,255,0.15)",
-            }}>
-              {btnLabel}
-            </div>
-
-            <span style={{
-              fontSize: "13px",
-              color: "#d4a853",
-              fontWeight: 700,
-              textShadow: "0 0 6px rgba(212,168,83,0.4)",
-            }}>
-              +{level.xpReward} XP
-            </span>
-          </div>
-        )}
-        {isLocked && XP_THRESHOLDS[level.id] && (
-          <div style={{
-            fontSize: "13px", color: "#d4a853", fontWeight: 700,
-            display: "flex", alignItems: "center", gap: "6px",
-          }}>
-            <span style={{ fontSize: "18px" }}>🔒</span> Нужно {XP_THRESHOLDS[level.id]} XP
-          </div>
-        )}
       </div>
     </button>
   );
