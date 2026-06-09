@@ -15,6 +15,8 @@ import {
   getDoc,
   setDoc,
   updateDoc,
+  collection,
+  getDocs,
   serverTimestamp,
 } from "firebase/firestore";
 
@@ -150,5 +152,46 @@ export async function syncXpToUserProfile(uid, mapTrainerXp) {
     }
   } catch (err) {
     console.warn("[mapTrainer] XP sync failed:", err.message);
+  }
+}
+
+// ── Сохранить рекорд уровня (если это лучшее время) ────────
+// levelRecords/{levelId} → { uid, name, photoURL, time, updatedAt }
+export async function saveLevelRecord(uid, userData, levelId, timeSeconds) {
+  try {
+    const recordRef = doc(db, "levelRecords", String(levelId));
+    const snap = await getDoc(recordRef);
+
+    const name = [userData?.firstName, userData?.lastName].filter(Boolean).join(" ") || "Player";
+    const existing = snap.exists() ? snap.data() : null;
+
+    if (!existing || timeSeconds < (existing.time || Infinity)) {
+      await setDoc(recordRef, {
+        uid,
+        name,
+        photoURL: userData?.photoURL || null,
+        time: timeSeconds,
+        updatedAt: serverTimestamp(),
+      });
+      return true;
+    }
+    return false;
+  } catch (err) {
+    console.warn("[mapTrainer] Save level record failed:", err.message);
+    return false;
+  }
+}
+
+export async function getAllLevelRecords() {
+  try {
+    const snap = await getDocs(collection(db, "levelRecords"));
+    const records = {};
+    snap.forEach((d) => {
+      records[d.id] = d.data();
+    });
+    return records;
+  } catch (err) {
+    console.warn("[mapTrainer] Load level records failed:", err.message);
+    return {};
   }
 }

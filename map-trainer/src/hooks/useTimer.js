@@ -77,3 +77,48 @@ export function useTimer(seconds, onExpire) {
 
   return { timeLeft, pct, color, start, stop, reset, pause, resume, running, paused };
 }
+
+// ── Секундомер сессии (считает вверх) ─────────────────────────
+// Запускается при старте квиза, останавливается при завершении.
+// Возвращает elapsed seconds.
+export function useSessionTimer() {
+  const [elapsed, setElapsed] = useState(0);
+  const [running, setRunning] = useState(false);
+  const intervalRef = useRef(null);
+  const startTimeRef = useRef(null);
+
+  const start = useCallback(() => {
+    startTimeRef.current = Date.now() - elapsed * 1000;
+    setRunning(true);
+  }, [elapsed]);
+
+  const stop = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setRunning(false);
+  }, []);
+
+  const reset = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setElapsed(0);
+    setRunning(false);
+    startTimeRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    if (!running) return;
+    intervalRef.current = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000));
+    }, 1000);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [running]);
+
+  return { elapsed, running, start, stop, reset };
+}

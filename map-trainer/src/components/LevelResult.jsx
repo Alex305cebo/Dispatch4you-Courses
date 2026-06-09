@@ -7,11 +7,19 @@ export default function LevelResult({
   maxPoints,
   xpEarned,
   weakStates,
+  sessionTime = 0,
   onRestart,
   onNextLevel,
   onBackToMap,
   nextLevel,
 }) {
+  // Форматирование времени: 125 → "2м 05с"
+  function formatTime(s) {
+    if (!s) return "—";
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return m > 0 ? `${m}м ${String(sec).padStart(2, "0")}с` : `${sec}с`;
+  }
   const pct = Math.round((score.points / maxPoints) * 100);
   const passed = pct >= level.unlockPct;
   const totalAnswered = score.correct + score.wrong;

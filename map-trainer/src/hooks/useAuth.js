@@ -106,7 +106,12 @@ export function useAuth() {
       unsub = onAuthStateChanged(auth, (fbUser) => {
         if (fbUser) {
           const userData = persistUser(fbUser);
-          setUser(userData);
+          // Обновляем state только если uid изменился — избегаем лишних ре-рендеров
+          // при обновлении токена Firebase (каждый час)
+          setUser((prev) => {
+            if (prev?.uid === userData.uid) return prev;
+            return userData;
+          });
         } else {
           const cached = getUserFromCache();
           if (!cached) {

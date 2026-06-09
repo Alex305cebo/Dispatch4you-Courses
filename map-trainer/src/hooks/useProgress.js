@@ -69,6 +69,9 @@ export function useProgress(uid = null, userData = null) {
   const [progress,  setProgress]  = useState(() => loadLocal() || initProgress());
   const [syncing,   setSyncing]   = useState(false);
   const saveTimerRef = useRef(null);
+  // Храним userData в ref чтобы не создавать лишние re-renders и циклы
+  const userDataRef = useRef(userData);
+  useEffect(() => { userDataRef.current = userData; }, [userData]);
 
   // ── Админ-режим: localhost + суперюзер → всё открыто ──────────
   const SUPER_USERS = ["dersire.der@gmail.com"];
@@ -77,40 +80,37 @@ export function useProgress(uid = null, userData = null) {
     && SUPER_USERS.includes(userData?.email);
 
   // ── При смене uid — загружаем из Firestore ──────────────────
+  // ВАЖНО: зависимость только от uid — userData в ref чтобы не циклить запросы
   useEffect(() => {
     if (!uid) return;
 
     setSyncing(true);
     
-    // Инициализируем пользователя в рейтинге с текущим XP
     const currentProgress = loadLocal() || initProgress();
-    initUserInLeaderboard(uid, userData, currentProgress.xp);
+    initUserInLeaderboard(uid, userDataRef.current, currentProgress.xp);
     
     loadProgressFromFirestore(uid).then((remote) => {
       if (remote) {
-        // Мержим: берём лучшее из локального и удалённого
         const local = loadLocal() || initProgress();
         const merged = mergeProgress(local, remote);
-        // Разблокируем уровни по XP
         unlockByXp(merged);
         saveLocal(merged);
         setProgress(merged);
-        
-        // Обновляем рейтинг с правильным XP
-        initUserInLeaderboard(uid, userData, merged.xp);
+        initUserInLeaderboard(uid, userDataRef.current, merged.xp);
       }
       setSyncing(false);
     });
-  }, [uid, userData]);
+  }, [uid]); // eslint-disable-line
 
   // ── Дебаунс сохранения в Firestore (не чаще раза в 3 сек) ──
+  // userData берём из ref — чтобы не пересоздавать callback при каждом обновлении токена
   const scheduleSave = useCallback((data) => {
     if (!uid) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
-      saveProgressToFirestore(uid, data, userData);
+      saveProgressToFirestore(uid, data, userDataRef.current);
     }, 3000);
-  }, [uid, userData]);
+  }, [uid]); // userData намеренно исключён — используем userDataRef
 
   // ── Завершить уровень ────────────────────────────────────────
   const completeLevel = useCallback((levelId, pct, score, xpEarned) => {
@@ -184,9 +184,9 @@ export function useProgress(uid = null, userData = null) {
     saveLocal(fresh);
     setProgress(fresh);
     if (uid) {
-      saveProgressToFirestore(uid, fresh, userData);
+      saveProgressToFirestore(uid, fresh, userDataRef.current);
     }
-  }, [uid, userData]);
+  }, [uid]);
 
   return {
     progress: isAdmin ? makeAdminProgress(progress) : progress,

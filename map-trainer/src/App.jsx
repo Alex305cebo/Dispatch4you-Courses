@@ -10,11 +10,12 @@ import { STATES }   from "./data/states";
 import { LEVELS }   from "./data/levels";
 import { PENALTIES } from "./data/quizConfig";
 import { buildQuestions, MAP_CLICK_MODES } from "./data/questionBuilder";
-import { useTimer }    from "./hooks/useTimer";
+import { useTimer, useSessionTimer } from "./hooks/useTimer";
 import { useStats }    from "./hooks/useStats";
 import { useProgress, initProgress } from "./hooks/useProgress";
 import { useAuth }     from "./hooks/useAuth";
 import { useSounds }   from "./hooks/useSounds";
+import { saveLevelRecord } from "./firebase/progressService";
 
 // ── Константы ────────────────────────────────────────────────
 const POINTS_PER_Q = 10;
@@ -70,7 +71,11 @@ export default function App() {
   const currentQuestion = questions[currentIdx];
   const maxPoints = activeLevel ? activeLevel.questions * POINTS_PER_Q : 200;
 
-  // ── Таймер ──
+  // ── Секундомер сессии ──
+  const sessionTimer = useSessionTimer();
+  const [sessionTime, setSessionTime] = useState(0); // финальное время после завершения
+
+  // ── Таймер на вопрос ──
   const handleTimeout = useCallback(() => {
     if (feedback) return;
     showDelta(-PENALTIES.timeout);
@@ -129,7 +134,10 @@ export default function App() {
     setAnsweredStates({});
     setShakePanel(false);
     setQuizReady(true);
+    setSessionTime(0);
     resetStats();
+    // Секундомер сессии — запустится при первом вопросе
+    sessionTimer.reset();
     setScreen("quiz");
 
     // Сохраняем сессию квиза в sessionStorage для восстановления при рефреше
@@ -144,8 +152,11 @@ export default function App() {
 
   // Запуск таймера при смене вопроса (только если quizReady)
   useEffect(() => {
-    if (screen === "quiz" && currentQuestion && activeLevel?.timePerQ && quizReady) {
-      timer.start();
+    if (screen === "quiz" && currentQuestion && quizReady) {
+      // Запускаем секундомер сессии при первом вопросе
+      if (!sessionTimer.running) sessionTimer.start();
+      // Таймер на вопрос
+      if (activeLevel?.timePerQ) timer.start();
       setHintUsed(false);
       setHintText(null);
       setHoveredTz(null);
@@ -361,15 +372,22 @@ export default function App() {
   const handleNext = useCallback(() => {
     if (currentIdx + 1 >= activeLevel.questions) {
       timer.stop();
+      // Останавливаем секундомер и фиксируем время
+      sessionTimer.stop();
+      const elapsed = sessionTimer.elapsed;
+      setSessionTime(elapsed);
       sounds.levelComplete();
       // Считаем XP
       const finalScore = score;
       const pct = Math.round((finalScore.points / maxPoints) * 100);
-      // Множитель XP: 50 вопросов = ×1.5, 15 вопросов = ×0.6, 30 = ×1.0
       const xpMultiplier = activeLevel.questions >= 50 ? 1.5 : activeLevel.questions <= 15 ? 0.6 : 1.0;
       const earned = Math.round((activeLevel.xpReward * pct * xpMultiplier) / 100);
       setXpEarned(earned);
       completeLevel(activeLevel.id, pct, finalScore.correct, earned);
+      // Сохраняем рекорд времени если прошёл уровень
+      if (pct >= activeLevel.unlockPct && user?.uid && elapsed > 0) {
+        saveLevelRecord(user.uid, user, activeLevel.id, elapsed);
+      }
       setScreen("result");
       return;
     }
@@ -378,7 +396,7 @@ export default function App() {
     setFeedback(null);
     setCorrectTz(null);
     setCorrectRegion(null);
-  }, [currentIdx, activeLevel, score, maxPoints, timer, completeLevel]);
+  }, [currentIdx, activeLevel, score, maxPoints, timer, sessionTimer, completeLevel, user]);
 
   // ── Рестарт уровня ──
   const handleRestart = useCallback(() => {
@@ -460,6 +478,7 @@ export default function App() {
         maxPoints={maxPoints}
         xpEarned={xpEarned}
         weakStates={weakStates}
+        sessionTime={sessionTime}
         nextLevel={pct >= activeLevel.unlockPct ? nextLevel : null}
         onRestart={handleRestart}
         onNextLevel={handleNextLevel}
