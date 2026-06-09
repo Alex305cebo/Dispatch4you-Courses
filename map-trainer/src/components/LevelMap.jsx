@@ -5,6 +5,7 @@ import UserProfileModal from "./UserProfileModal";
 import LeaderboardModal from "./LeaderboardModal";
 import OnboardingModal from "./OnboardingModal";
 import ParticlesBackground from "./ParticlesBackground";
+import { getAllLevelRecords } from "../firebase/progressService";
 
 // Изображения для каждого уровня
 const LEVEL_IMAGES = {
@@ -31,6 +32,12 @@ export default function LevelMap({ progress, user, onSelectLevel, onOpenReferenc
   const [unlockedLevel, setUnlockedLevel] = useState(null);
   const [difficultyLevel, setDifficultyLevel] = useState(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [levelRecords, setLevelRecords] = useState({});
+
+  // Загружаем рекорды уровней один раз при монтировании
+  useEffect(() => {
+    getAllLevelRecords().then(setLevelRecords).catch(() => {});
+  }, []);
 
   // Показываем onboarding только при первом входе
   useEffect(() => {
@@ -258,6 +265,7 @@ export default function LevelMap({ progress, user, onSelectLevel, onOpenReferenc
                 isCompleted={isCompleted}
                 isCurrent={isCurrent}
                 isLocked={isLocked}
+                recordHolder={levelRecords[String(level.id)] || null}
                 onSelect={() => isUnlocked && (isGuest ? setShowLoginPrompt(true) : setDifficultyLevel(level))}
               />
             );
@@ -671,9 +679,16 @@ export default function LevelMap({ progress, user, onSelectLevel, onOpenReferenc
 }
 
 // ── Карточка уровня — Legacy Edition ───────────────────
-function LevelCard({ level, levelProgress, isUnlocked, isCompleted, isCurrent, isLocked, onSelect }) {
+function LevelCard({ level, levelProgress, isUnlocked, isCompleted, isCurrent, isLocked, onSelect, recordHolder }) {
   const bestPct = levelProgress?.bestPct || 0;
   const imgSrc = `${import.meta.env.BASE_URL}${LEVEL_IMAGES[level.id]}`;
+
+  function formatTime(s) {
+    if (!s) return null;
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return m > 0 ? `${m}м ${String(sec).padStart(2, "0")}с` : `${sec}с`;
+  }
 
   // Цвета кнопок — яркие на тёмном фоне
   const btnColors = {
@@ -832,6 +847,28 @@ function LevelCard({ level, levelProgress, isUnlocked, isCompleted, isCurrent, i
           }}>
             {level.subtitle}
           </p>
+          {/* Рекордсмен уровня */}
+          {recordHolder && formatTime(recordHolder.time) && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: "4px",
+              marginTop: "4px",
+            }}>
+              <span style={{ fontSize: "11px" }}>🥇</span>
+              <span style={{
+                fontSize: "11px", fontWeight: 700,
+                color: "#d4a853",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                maxWidth: "90px",
+              }}>
+                {recordHolder.name}
+              </span>
+              <span style={{
+                fontSize: "11px", color: "#6b5030", fontWeight: 600,
+              }}>
+                · {formatTime(recordHolder.time)}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Кнопка + XP */}

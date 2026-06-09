@@ -80,24 +80,19 @@ export function useProgress(uid = null, userData = null) {
     && SUPER_USERS.includes(userData?.email);
 
   // ── При смене uid — загружаем из Firestore ──────────────────
-  // ВАЖНО: зависимость только от uid — userData в ref чтобы не циклить запросы
   useEffect(() => {
     if (!uid) return;
 
     setSyncing(true);
     
-    const currentProgress = loadLocal() || initProgress();
-    initUserInLeaderboard(uid, userDataRef.current, currentProgress.xp);
-    
     loadProgressFromFirestore(uid).then((remote) => {
-      if (remote) {
-        const local = loadLocal() || initProgress();
-        const merged = mergeProgress(local, remote);
-        unlockByXp(merged);
-        saveLocal(merged);
-        setProgress(merged);
-        initUserInLeaderboard(uid, userDataRef.current, merged.xp);
-      }
+      const local = loadLocal() || initProgress();
+      const merged = remote ? mergeProgress(local, remote) : local;
+      unlockByXp(merged);
+      saveLocal(merged);
+      setProgress(merged);
+      // Инициализируем рейтинг один раз после загрузки данных
+      initUserInLeaderboard(uid, userDataRef.current, merged.xp);
       setSyncing(false);
     });
   }, [uid]); // eslint-disable-line
