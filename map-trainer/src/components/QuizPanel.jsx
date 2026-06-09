@@ -143,71 +143,47 @@ export default function QuizPanel({
 
   return (
   <>
-    <div style={{
-      background: "rgba(255,255,255,0.06)",
-      backdropFilter: "blur(12px) saturate(1.3)",
-      WebkitBackdropFilter: "blur(12px) saturate(1.3)",
-      border: `1px solid rgba(${level?.colorRgb || "6,182,212"},0.25)`,
-      borderRadius: "16px",
-      padding: "14px 16px",
-      display: "flex",
-      flexDirection: "column",
-      gap: "10px",
-      boxShadow: `0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)`,
-      animation: shakePanel ? "shakeAnim 0.5s ease" : "none",
-    }}>
+    <div
+      className={`qp-panel${shakePanel ? " shake" : ""}`}
+      style={{ borderColor: `rgba(${level?.colorRgb || "6,182,212"},0.22)` }}
+    >
 
-      {/* Streak индикатор с огненными частицами */}
+      {/* Streak индикатор */}
       {streak >= 3 && !feedback && (
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "center",
-          gap: "6px", padding: "6px 14px",
+        <div className="qp-streak" style={{
           background: streak >= 5
-            ? "linear-gradient(135deg, rgba(239,68,68,0.2), rgba(245,158,11,0.15))"
-            : "linear-gradient(135deg, rgba(245,158,11,0.15), rgba(251,191,36,0.1))",
-          border: `1px solid ${streak >= 5 ? "rgba(239,68,68,0.5)" : "rgba(245,158,11,0.4)"}`,
-          borderRadius: "10px",
-          position: "relative",
-          overflow: "hidden",
-          animation: "streakPulse 1s ease-in-out infinite",
+            ? "linear-gradient(135deg, rgba(239,68,68,0.18), rgba(245,158,11,0.12))"
+            : "linear-gradient(135deg, rgba(245,158,11,0.14), rgba(251,191,36,0.08))",
+          border: `1px solid ${streak >= 5 ? "rgba(239,68,68,0.45)" : "rgba(245,158,11,0.35)"}`,
         }}>
-          {/* Огненные частицы */}
           <div className="fire-particles">
             {[...Array(8)].map((_, i) => (
               <span key={i} className="fire-particle" style={{ animationDelay: `${i * 0.15}s` }} />
             ))}
           </div>
-          <span style={{ fontSize: "18px", position: "relative", zIndex: 1 }}>🔥</span>
+          <span style={{ fontSize: "17px", position: "relative", zIndex: 1 }}>🔥</span>
           <span style={{
-            fontSize: "14px", fontWeight: 800,
+            fontSize: "13px", fontWeight: 800,
             color: streak >= 5 ? "#fbbf24" : "#f59e0b",
             position: "relative", zIndex: 1,
-            textShadow: "0 0 8px rgba(251,191,36,0.5)",
           }}>
             {streak} подряд!
           </span>
           <span style={{
-            fontSize: "11px", fontWeight: 700,
-            color: "#fff",
+            fontSize: "11px", fontWeight: 700, color: "#fff",
             background: streak >= 5 ? "#ef4444" : "#f59e0b",
-            padding: "2px 6px", borderRadius: "4px",
+            padding: "2px 7px", borderRadius: "4px",
             position: "relative", zIndex: 1,
           }}>
-            {streak >= 5 ? "×2 очков" : "×1.5 очков"}
+            {streak >= 5 ? "×2" : "×1.5"}
           </span>
         </div>
       )}
 
-      {/* ═══ Компактная карточка: прогресс + таймер + вопрос ═══ */}
-      <div style={{
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        borderRadius: "10px",
-        padding: "8px 10px",
-      }}>
-        {/* Одна строка: таймер-бар (65%) + цифры (35%) */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-          {/* Левая часть: прогресс-бар таймера */}
+      {/* ═══ Карточка вопроса: таймер + текст ═══ */}
+      <div className="qp-question-card">
+        {/* Одна строка: таймер + счёт */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "5px" }}>
           <div style={{ flex: 1 }}>
             <TimerBar
               timeLeft={timerLeft}
@@ -216,9 +192,8 @@ export default function QuizPanel({
               totalSeconds={timerSeconds}
             />
           </div>
-          {/* Правая часть: цифры */}
           <div style={{ flexShrink: 0, textAlign: "right", minWidth: "80px" }}>
-            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 600 }}>
+            <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>
               {total.current}/{total.max}
             </span>
             {" "}
@@ -228,138 +203,74 @@ export default function QuizPanel({
           </div>
         </div>
 
-        {/* Вопрос — просто текст, без обёртки */}
+        {/* Текст вопроса */}
         <button
           onClick={feedback ? handleOpenPronunciation : undefined}
           style={{
             width: "100%",
             background: feedback
-              ? "linear-gradient(135deg, rgba(6,182,212,0.12), rgba(14,165,233,0.08))"
+              ? "linear-gradient(135deg, rgba(6,182,212,0.1), rgba(14,165,233,0.06))"
               : "none",
-            border: feedback ? "1px solid rgba(6,182,212,0.4)" : "none",
-            borderRadius: "10px",
-            padding: feedback ? "10px 10px 8px" : "6px 0 2px",
+            border: feedback ? "1px solid rgba(6,182,212,0.35)" : "none",
+            borderRadius: "8px",
+            padding: feedback ? "10px 12px 8px" : "4px 0 2px",
             textAlign: "center",
             cursor: feedback ? "pointer" : "default",
-            boxShadow: feedback ? "0 0 16px rgba(6,182,212,0.2), inset 0 0 12px rgba(6,182,212,0.05)" : "none",
             animation: feedback ? "glowPulse 2s ease-in-out infinite" : "none",
             transition: "all 0.3s ease",
           }}
         >
-          <p style={{
-            fontSize: "16px",
-            fontWeight: 800,
-            color: "#fff",
-            margin: 0,
-            lineHeight: 1.3,
-          }}>
-            {question?.text}
-          </p>
+          <p className="qp-question-text">{question?.text}</p>
           {feedback && (
-            <p style={{ fontSize: "12px", color: "#06b6d4", margin: "6px 0 0 0", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
-              <span style={{ fontSize: "14px" }}>🔊</span> Нажми для произношения
+            <p style={{ fontSize: "11px", color: "#06b6d4", margin: "5px 0 0 0", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", opacity: 0.85 }}>
+              <span>🔊</span> Нажми для произношения
             </p>
           )}
         </button>
       </div>
 
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.8; transform: scale(1.05); }
-        }
-        @keyframes glow {
-          0%, 100% { opacity: 0.3; }
-          50% { opacity: 0.6; }
-        }
-        @keyframes glowPulse {
-          0%, 100% { box-shadow: 0 0 12px rgba(6,182,212,0.15), inset 0 0 8px rgba(6,182,212,0.03); }
-          50% { box-shadow: 0 0 20px rgba(6,182,212,0.3), inset 0 0 12px rgba(6,182,212,0.06); }
-        }
-        @keyframes shakeAnim {
-          0%, 100% { transform: translateX(0); }
-          15% { transform: translateX(-6px); }
-          30% { transform: translateX(5px); }
-          45% { transform: translateX(-4px); }
-          60% { transform: translateX(3px); }
-          75% { transform: translateX(-2px); }
-          90% { transform: translateX(1px); }
-        }
-        @keyframes streakPulse {
-          0%, 100% { transform: scale(1); box-shadow: 0 0 0 rgba(245,158,11,0); }
-          50% { transform: scale(1.02); box-shadow: 0 0 12px rgba(245,158,11,0.3); }
-        }
-        .fire-particles {
-          position: absolute;
-          inset: 0;
-          overflow: hidden;
-          pointer-events: none;
-        }
-        .fire-particle {
-          position: absolute;
-          bottom: 0;
-          width: 4px;
-          height: 4px;
-          border-radius: 50%;
-          background: #fbbf24;
-          box-shadow: 0 0 4px #f59e0b, 0 0 8px rgba(239,68,68,0.5);
-          animation: fireFloat 1.2s ease-out infinite;
-          opacity: 0;
-        }
-        .fire-particle:nth-child(1) { left: 10%; }
-        .fire-particle:nth-child(2) { left: 25%; }
-        .fire-particle:nth-child(3) { left: 40%; }
-        .fire-particle:nth-child(4) { left: 55%; }
-        .fire-particle:nth-child(5) { left: 70%; }
-        .fire-particle:nth-child(6) { left: 85%; }
-        .fire-particle:nth-child(7) { left: 15%; }
-        .fire-particle:nth-child(8) { left: 60%; }
-        @keyframes fireFloat {
-          0% { transform: translateY(0) scale(1); opacity: 0.8; }
-          50% { opacity: 1; }
-          100% { transform: translateY(-30px) scale(0.3); opacity: 0; }
-        }
-      `}</style>
-
-      {/* Подсказка — блок */}
+      {/* Hint подсказка */}
       {hint && (
         <div style={{
-          background: "rgba(245,158,11,0.1)",
-          border: "1px solid rgba(245,158,11,0.3)",
-          borderRadius: "10px",
-          padding: "8px 12px",
-          display: "flex",
-          alignItems: "flex-start",
-          gap: "8px",
+          background: "rgba(245,158,11,0.08)",
+          border: "1px solid rgba(245,158,11,0.22)",
+          borderRadius: "8px",
+          padding: "7px 12px",
+          display: "flex", alignItems: "flex-start", gap: "7px",
+          animation: "fadeSlideIn 0.2s ease",
         }}>
-          <span style={{ fontSize: "14px" }}>💡</span>
-          <p style={{ fontSize: "12px", color: "#fcd34d", margin: 0, lineHeight: 1.4 }}>
-            {hint}
-          </p>
+          <span style={{ fontSize: "13px", flexShrink: 0 }}>💡</span>
+          <p style={{ fontSize: "12px", color: "#fbbf24", margin: 0, lineHeight: 1.45 }}>{hint}</p>
         </div>
       )}
 
-      {/* Кнопки действий — над вариантами, рядом по горизонтали */}
+      {/* Инструкция */}
+      {!feedback && (
+        <div className="qp-instruction">
+          <span className="qp-instruction-icon">
+            {isMapClick ? "👆" : mode === "timezone" ? "🕐" : mode === "region" || mode === "regions-intro" ? "🌎" : mode === "capitals" ? "🏛️" : mode === "name-state" ? "✏️" : "❓"}
+          </span>
+          <span className="qp-instruction-text">
+            {isMapClick ? "Нажми на штат на карте"
+              : mode === "timezone" ? "Выбери часовой пояс для этого штата"
+              : mode === "region" || mode === "regions-intro" ? "Выбери регион, в котором находится штат"
+              : mode === "capitals" ? "Выбери столицу этого штата"
+              : mode === "name-state" ? "Выбери правильное название штата"
+              : "Выбери правильный ответ"}
+          </span>
+        </div>
+      )}
+
+      {/* Кнопки действий */}
       {feedback ? (
         <button
-          onClick={() => {
-            clearTimeout(autoTimerRef.current);
-            cancelAnimationFrame(autoRafRef.current);
-            onNext();
-          }}
-          style={{
-            width: "100%", padding: "12px",
-            background: "linear-gradient(135deg,#06b6d4,#0284c7)",
-            border: "none", borderRadius: "10px",
-            color: "#fff", fontSize: "14px", fontWeight: 700,
-            cursor: "pointer", minHeight: "44px", touchAction: "manipulation",
-            position: "relative", overflow: "hidden",
-          }}
+          className="qp-next-btn"
+          onClick={() => { clearTimeout(autoTimerRef.current); cancelAnimationFrame(autoRafRef.current); onNext(); }}
         >
           <div style={{
             position: "absolute", bottom: 0, left: 0,
             height: "3px", width: `${autoProgress}%`,
-            background: "rgba(255,255,255,0.5)",
+            background: "rgba(255,255,255,0.4)",
             transition: "none", borderRadius: "0 2px 2px 0",
           }} />
           Следующий →
@@ -367,64 +278,28 @@ export default function QuizPanel({
       ) : (
         <div style={{ display: "flex", gap: "8px" }}>
           {!hintUsed && !level?.noHints && (
-            <button onClick={onHint} style={{
-              flex: 1, padding: "10px 8px",
-              background: "rgba(245,158,11,0.1)",
-              border: "1px solid rgba(245,158,11,0.3)",
-              borderRadius: "10px",
-              color: "#fcd34d", fontSize: "12px", fontWeight: 600,
-              cursor: "pointer", touchAction: "manipulation",
-            }}>
+            <button onClick={onHint} className="qp-action-btn qp-hint-btn">
               💡 −{penaltyHint}pts
             </button>
           )}
           {!level?.noSkip && (
-            <button onClick={onSkip} style={{
-              flex: 1, padding: "10px 8px",
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "10px",
-              color: "#94a3b8", fontSize: "12px",
-              cursor: "pointer", touchAction: "manipulation",
-            }}>
+            <button onClick={onSkip} className="qp-action-btn qp-skip-btn">
               Пропустить −{penaltySkip}pts
             </button>
           )}
         </div>
       )}
 
-      {/* Варианты ответа (name-state / timezone / region) */}
+      {/* Варианты до ответа */}
       {!isMapClick && options && !feedback && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "7px" }}>
           {options.map((opt) => (
             <button
               key={opt.value}
+              className="qp-option"
               onClick={() => onOptionSelect(opt.value)}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(6,182,212,0.12)";
-                e.currentTarget.style.borderColor = "rgba(6,182,212,0.4)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-              }}
-              style={{
-                padding: "9px 8px",
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "10px",
-                color: "#e2e8f0",
-                fontSize: "13px",
-                fontWeight: 600,
-                cursor: "pointer",
-                textAlign: "center",
-                touchAction: "manipulation",
-                transition: "all 0.15s ease",
-                minWidth: 0,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
+              onMouseEnter={() => onOptionHover && onOptionHover(opt.value)}
+              onMouseLeave={() => onOptionHover && onOptionHover(null)}
             >
               {opt.label}
             </button>
@@ -432,28 +307,17 @@ export default function QuizPanel({
         </div>
       )}
 
-      {/* Варианты после ответа — с подсветкой */}
+      {/* Варианты после ответа — подсветка */}
       {!isMapClick && options && feedback && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "7px" }}>
           {options.map((opt) => {
-            const isCorrect = opt.value === question?.correctAnswer;
+            const isCorrect  = opt.value === question?.correctAnswer;
             const isSelected = opt.value === feedback?.selectedAnswer;
-            let bg = "rgba(255,255,255,0.03)";
-            let border = "rgba(255,255,255,0.08)";
-            let color = "#64748b";
-            if (isCorrect) { bg = "rgba(34,197,94,0.12)"; border = "rgba(34,197,94,0.4)"; color = "#22c55e"; }
-            else if (isSelected && !isCorrect) { bg = "rgba(239,68,68,0.12)"; border = "rgba(239,68,68,0.4)"; color = "#ef4444"; }
+            const cls = isCorrect ? "qp-option correct"
+                      : isSelected ? "qp-option wrong"
+                      : "qp-option dimmed";
             return (
-              <div key={opt.value} style={{
-                padding: "9px 12px",
-                background: bg,
-                border: `1px solid ${border}`,
-                borderRadius: "10px",
-                color,
-                fontSize: "13px",
-                fontWeight: 600,
-                textAlign: "center",
-              }}>
+              <div key={opt.value} className={cls}>
                 {isCorrect ? "✓ " : isSelected ? "✗ " : ""}{opt.label}
               </div>
             );
@@ -461,40 +325,13 @@ export default function QuizPanel({
         </div>
       )}
 
-      {/* Фидбек — при правильном: компактная строка, при неправильном: popup */}
+      {/* Фидбек правильного ответа */}
       {feedback && feedback.correct && (
-        <div style={{
-          background: "rgba(34,197,94,0.1)",
-          border: "1px solid rgba(34,197,94,0.3)",
-          borderRadius: "8px",
-          padding: "6px 10px",
-          textAlign: "center",
-          display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
-        }}>
+        <div className="qp-correct-feedback">
           <span style={{ fontSize: "13px", fontWeight: 700, color: "#22c55e" }}>✓ Правильно!</span>
-          <span style={{ fontSize: "11px", fontWeight: 700, color: "#22c55e", background: "rgba(34,197,94,0.15)", padding: "1px 6px", borderRadius: "4px" }}>+10</span>
-          {feedback.streak >= 3 && (
-            <span style={{ fontSize: "11px", color: "#f59e0b" }}>🔥{feedback.streak}</span>
-          )}
+          <span style={{ fontSize: "11px", fontWeight: 700, color: "#22c55e", background: "rgba(34,197,94,0.15)", padding: "1px 7px", borderRadius: "4px" }}>+10</span>
+          {feedback.streak >= 3 && <span style={{ fontSize: "11px", color: "#f59e0b" }}>🔥{feedback.streak}</span>}
         </div>
-      )}
-
-      {/* Подсказка/инструкция */}
-      {!feedback && (
-        <p style={{ fontSize: "13px", color: "#06b6d4", textAlign: "center", margin: 0, fontWeight: 600 }}>
-          {isMapClick
-            ? "👆 Нажми на штат на карте"
-            : mode === "timezone"
-              ? "🕐 Выбери часовой пояс для этого штата"
-              : mode === "region" || mode === "regions-intro"
-                ? "🌎 Выбери регион, в котором находится штат"
-                : mode === "capitals"
-                  ? "🏛️ Выбери столицу этого штата"
-                  : mode === "name-state"
-                    ? "✏️ Выбери правильное название штата"
-                    : "Выбери правильный ответ"
-          }
-        </p>
       )}
     </div>
 
@@ -583,9 +420,82 @@ export default function QuizPanel({
             </span>
           </div>
 
+          {/* Твой ответ (неправильный) — показываем только если есть selectedAnswer и это не таймаут/пропуск */}
+          {feedback.selectedAnswer && (() => {
+            // Получаем отображаемое значение выбранного ответа
+            let selectedDisplay = null;
+            // Подсказка: для чего на самом деле был выбранный вариант
+            let crossHint = null;
+
+            if (mode === "find-state") {
+              const clickedState = STATES.find(s => s.id === feedback.selectedAnswer);
+              selectedDisplay = clickedState ? clickedState.name : feedback.selectedAnswer;
+            } else if (mode === "find-city") {
+              const clickedState = STATES.find(s => s.id === feedback.selectedAnswer);
+              selectedDisplay = clickedState ? clickedState.name : feedback.selectedAnswer;
+            } else if (mode === "capitals") {
+              // selectedAnswer — столица, которую выбрали. Находим штат которому она принадлежит
+              selectedDisplay = feedback.selectedAnswer;
+              const ownerState = STATES.find(s => s.capital === feedback.selectedAnswer);
+              if (ownerState) crossHint = `это столица штата ${ownerState.name}`;
+            } else if (mode === "timezone") {
+              // selectedAnswer — таймзона. Показываем сколько штатов в ней
+              selectedDisplay = feedback.selectedAnswer;
+              const tzCount = STATES.filter(s => s.tz === feedback.selectedAnswer).length;
+              crossHint = `${tzCount} штат${tzCount === 1 ? "" : tzCount < 5 ? "а" : "ов"} в этой зоне`;
+            } else if (mode === "region" || mode === "regions-intro") {
+              // selectedAnswer — регион. Показываем сколько штатов в нём
+              selectedDisplay = feedback.selectedAnswer;
+              const regionCount = STATES.filter(s => s.region === feedback.selectedAnswer).length;
+              crossHint = `регион из ${regionCount} штатов`;
+            } else if (mode === "name-state") {
+              // selectedAnswer — название штата
+              selectedDisplay = feedback.selectedAnswer;
+              const selectedSt = STATES.find(s => s.name === feedback.selectedAnswer);
+              if (selectedSt) crossHint = `код: ${selectedSt.id}, ${selectedSt.region}`;
+            } else {
+              selectedDisplay = feedback.selectedAnswer;
+            }
+
+            return selectedDisplay ? (
+              <div style={{
+                marginTop: "16px",
+                background: "rgba(239,68,68,0.08)",
+                border: "1px solid rgba(239,68,68,0.25)",
+                borderRadius: "12px",
+                padding: "10px 14px",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" }}>
+                  <div style={{ textAlign: "left" }}>
+                    <p style={{ fontSize: "11px", color: "#94a3b8", margin: "0 0 2px 0" }}>Твой ответ:</p>
+                    <p style={{ fontSize: "16px", fontWeight: 700, color: "#ef4444", margin: 0 }}>✗ {selectedDisplay}</p>
+                  </div>
+                  <div style={{
+                    width: "28px", height: "28px", borderRadius: "50%",
+                    background: "rgba(239,68,68,0.2)",
+                    border: "2px solid rgba(239,68,68,0.4)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "14px", color: "#ef4444", flexShrink: 0,
+                  }}>
+                    ✗
+                  </div>
+                </div>
+                {crossHint && (
+                  <p style={{
+                    fontSize: "11px", color: "#f97316", margin: "6px 0 0 0",
+                    background: "rgba(249,115,22,0.1)", borderRadius: "6px",
+                    padding: "4px 8px", display: "inline-block",
+                  }}>
+                    💡 {crossHint}
+                  </p>
+                )}
+              </div>
+            ) : null;
+          })()}
+
           {/* Правильный ответ */}
           <div style={{
-            marginTop: "16px",
+            marginTop: "10px",
             background: "rgba(34,197,94,0.08)",
             border: "1px solid rgba(34,197,94,0.25)",
             borderRadius: "12px",
@@ -644,13 +554,16 @@ export default function QuizPanel({
                 utterance.pitch = 0.95;
                 utterance.volume = 0.85;
                 const voices = window.speechSynthesis.getVoices();
-                const preferred = ["Google US English", "Microsoft Aria", "Microsoft Jenny", "Samantha", "Karen", "Daniel"];
+                const preferred = ["Daniel", "Google US English", "Microsoft Aria", "Microsoft David", "Alex", "Samantha", "Karen"];
                 let bestVoice = null;
                 for (const name of preferred) {
                   bestVoice = voices.find(v => v.name.includes(name) && v.lang.startsWith("en"));
                   if (bestVoice) break;
                 }
-                if (!bestVoice) bestVoice = voices.find(v => v.lang === "en-US") || voices.find(v => v.lang.startsWith("en"));
+                if (!bestVoice) {
+                  bestVoice = voices.find(v => v.name.includes("Daniel") && v.lang.startsWith("en"));
+                  if (!bestVoice) bestVoice = voices.find(v => v.lang === "en-US") || voices.find(v => v.lang.startsWith("en"));
+                }
                 if (bestVoice) utterance.voice = bestVoice;
                 window.speechSynthesis.speak(utterance);
               }

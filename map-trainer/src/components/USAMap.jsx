@@ -283,8 +283,10 @@ export default function USAMap({
     // Не регистрируем клик если это был drag
     if (mouseRef.current.didMove) return;
     if (touchRef.current.isPanning) return;
+    // Не регистрируем клик по штату который уже был отвечен правильно
+    if (answeredStates[stateId] === "correct") return;
     onStateClick && onStateClick(stateId);
-  }, [onStateClick]);
+  }, [onStateClick, answeredStates]);
 
   // ── HOVER tooltip ──
   const handleMouseMove = useCallback(() => {}, []);
@@ -386,11 +388,13 @@ export default function USAMap({
                       hover: {
                         fill: selectedState
                           ? baseColor
-                          : levelColor,
-                        stroke: "#fff",
+                          : answeredStates[stateId] === "correct"
+                            ? baseColor  // зелёные не меняют цвет при hover
+                            : levelColor,
+                        stroke: answeredStates[stateId] === "correct" ? "rgba(34,197,94,0.4)" : "#fff",
                         strokeWidth: 1.5,
                         outline: "none",
-                        cursor: "pointer",
+                        cursor: answeredStates[stateId] === "correct" ? "default" : "pointer",
                         transition: "fill 0.15s ease",
                       },
                       pressed: { fill: "#0284c7", outline: "none", stroke: "#fff", strokeWidth: 2 },

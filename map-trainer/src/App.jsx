@@ -502,28 +502,19 @@ export default function App() {
       minHeight: 0,
     }}>
 
-      {/* ── Шапка — компактная, в стиле Duolingo ── */}
+      {/* ── Шапка ── */}
       <div style={{
         display: "flex",
         alignItems: "center",
         gap: "10px",
-        marginBottom: "6px",
+        marginBottom: "8px",
         flexShrink: 0,
         padding: "2px 0",
       }}>
-        {/* Кнопка закрытия / назад */}
+        {/* Кнопка закрытия */}
         <button
           onClick={() => { timer.stop(); setScreen("map"); }}
-          style={{
-            width: "32px", height: "32px",
-            borderRadius: "50%",
-            background: "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(255,255,255,0.12)",
-            color: "#94a3b8", fontSize: "16px",
-            cursor: "pointer", touchAction: "manipulation",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0,
-          }}
+          className="qb-icon-btn"
         >
           ✕
         </button>
@@ -535,38 +526,22 @@ export default function App() {
             sounds.setEnabled(newVal);
             setScore((s) => ({ ...s }));
           }}
-          style={{
-            width: "32px", height: "32px",
-            borderRadius: "50%",
-            background: "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(255,255,255,0.12)",
-            color: "#94a3b8", fontSize: "14px",
-            cursor: "pointer", touchAction: "manipulation",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0,
-          }}
+          className="qb-icon-btn"
           title={sounds.enabled ? "Выключить звук" : "Включить звук"}
         >
           {sounds.enabled ? "🔊" : "🔇"}
         </button>
 
-        {/* Прогресс-бар — занимает всю середину */}
-        <div style={{
-          flex: 1,
-          height: "10px",
-          background: "rgba(255,255,255,0.08)",
-          borderRadius: "5px",
-          overflow: "hidden",
-          position: "relative",
-        }}>
-          <div style={{
-            height: "100%",
-            width: `${((currentIdx + (feedback ? 1 : 0)) / activeLevel?.questions) * 100}%`,
-            background: `linear-gradient(90deg, ${activeLevel?.color}, ${activeLevel?.color}cc)`,
-            borderRadius: "5px",
-            transition: "width 0.4s ease",
-            boxShadow: `0 0 6px ${activeLevel?.color}44`,
-          }} />
+        {/* Прогресс-бар */}
+        <div className="qb-progress-wrap">
+          <div
+            className="qb-progress-fill"
+            style={{
+              width: `${((currentIdx + (feedback ? 1 : 0)) / activeLevel?.questions) * 100}%`,
+              background: `linear-gradient(90deg, ${activeLevel?.color}99, ${activeLevel?.color})`,
+              boxShadow: `0 0 8px ${activeLevel?.color}55`,
+            }}
+          />
         </div>
 
         {/* Очки */}
@@ -582,11 +557,10 @@ export default function App() {
           }}>
             {score.points}
           </span>
-
           {pointsDelta && (
             <div key={pointsDelta.key} style={{
               position: "absolute", top: "-18px", right: "0",
-              fontSize: "12px", fontWeight: 700,
+              fontSize: "13px", fontWeight: 800,
               color: pointsDelta.value < 0 ? "#ef4444" : "#22c55e",
               animation: "floatUp 1.2s ease-out forwards",
               pointerEvents: "none", whiteSpace: "nowrap",
@@ -596,11 +570,8 @@ export default function App() {
           )}
         </div>
 
-        {/* Счётчик вопросов */}
-        <span style={{
-          fontSize: "12px", color: "#64748b", fontWeight: 600,
-          flexShrink: 0,
-        }}>
+        {/* Счётчик */}
+        <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600, flexShrink: 0 }}>
           {currentIdx + 1}/{activeLevel?.questions}
         </span>
       </div>
@@ -762,15 +733,14 @@ export default function App() {
         minHeight: 0,
       }}>
         {/* Карта — сверху, занимает основное пространство */}
-        <div className="map-col" style={{
+        <div className="map-col qb-map-col" style={{
           flex: 1,
-          background: "linear-gradient(135deg, rgba(6,13,26,0.95) 0%, rgba(15,23,42,0.9) 50%, rgba(10,22,40,0.95) 100%)",
-          border: `1px solid rgba(${activeLevel?.colorRgb},0.25)`,
-          borderRadius: "14px",
+          background: "linear-gradient(160deg, #060e1c 0%, #0a1628 60%, #060e1c 100%)",
+          border: `1px solid rgba(${activeLevel?.colorRgb},0.2)`,
           padding: "0", overflow: "hidden",
           display: "flex", alignItems: "center", justifyContent: "center",
           minHeight: "200px",
-          boxShadow: `inset 0 0 30px rgba(${activeLevel?.colorRgb},0.05), 0 4px 20px rgba(0,0,0,0.3)`,
+          boxShadow: `0 4px 24px rgba(0,0,0,0.45), inset 0 0 40px rgba(${activeLevel?.colorRgb},0.04)`,
           position: "relative",
         }}>
           <USAMap

@@ -169,17 +169,17 @@ function buildProMix(count) {
 
     switch (mode) {
       case "find-state":
-        return { ...base, text: state.name, correctAnswer: state.id, hintText: `Регион: ${state.region} · ${state.tz} Time` };
+        return { ...base, _mode: "find-state",  text: state.name, correctAnswer: state.id, hintText: `Регион: ${state.region} · ${state.tz} Time` };
       case "name-state":
-        return { ...base, text: "Как называется выделенный штат?", correctAnswer: state.name, options: makeOptions(state.name, allNames), hintText: `Регион: ${state.region}` };
+        return { ...base, _mode: "name-state",  text: "Как называется выделенный штат?", correctAnswer: state.name, options: makeOptions(state.name, allNames), hintText: `Регион: ${state.region}` };
       case "timezone":
-        return { ...base, text: state.name, correctAnswer: state.tz, options: makeOptions(state.tz, allTZ, (t) => `${t} Time`), hintText: `Регион: ${state.region}` };
+        return { ...base, _mode: "timezone",    text: state.name, correctAnswer: state.tz, options: makeOptions(state.tz, allTZ, (t) => `${t} Time`), hintText: `Регион: ${state.region}` };
       case "capitals":
-        return { ...base, text: state.name, correctAnswer: state.capital, options: makeOptions(state.capital, allCapitals), hintText: `Регион: ${state.region}` };
+        return { ...base, _mode: "capitals",    text: state.name, correctAnswer: state.capital, options: makeOptions(state.capital, allCapitals), hintText: `Регион: ${state.region}` };
       case "region":
-        return { ...base, text: state.name, correctAnswer: state.region, options: makeOptions(state.region, REGIONS), hintText: `${state.tz} Time` };
+        return { ...base, _mode: "region",      text: state.name, correctAnswer: state.region, options: makeOptions(state.region, REGIONS), hintText: `${state.tz} Time` };
       default:
-        return { ...base, text: state.name, correctAnswer: state.id, hintText: `${state.region} · ${state.tz}` };
+        return { ...base, _mode: "find-state",  text: state.name, correctAnswer: state.id, hintText: `${state.region} · ${state.tz}` };
     }
   });
 }

@@ -117,3 +117,329 @@ button {
     gap: 6px !important;
   }
 }
+
+/* ─── Дизайн-система квиза ─── */
+:root {
+  --quiz-bg:       #07111f;
+  --quiz-surface:  rgba(255,255,255,0.045);
+  --quiz-border:   rgba(255,255,255,0.09);
+  --quiz-radius:   14px;
+  --quiz-radius-sm: 10px;
+  --quiz-text:     #f1f5f9;
+  --quiz-muted:    #94a3b8;
+  --quiz-accent:   #06b6d4;
+  --quiz-correct:  #22c55e;
+  --quiz-wrong:    #ef4444;
+}
+
+/* Панель квиза */
+.qp-panel {
+  background: linear-gradient(160deg, rgba(15,23,42,0.97) 0%, rgba(10,18,36,0.99) 100%);
+  border-radius: var(--quiz-radius);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06), inset 0 -1px 0 rgba(0,0,0,0.3);
+  position: relative;
+  overflow: hidden;
+}
+.qp-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  pointer-events: none;
+}
+.qp-panel.shake {
+  animation: shakeAnim 0.5s ease;
+}
+
+/* Карточка вопроса */
+.qp-question-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--quiz-radius-sm);
+  padding: 8px 12px;
+  position: relative;
+  overflow: hidden;
+}
+.qp-question-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+  pointer-events: none;
+}
+
+/* Текст вопроса */
+.qp-question-text {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+  margin: 4px 0 0;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.4);
+}
+
+/* Кнопки вариантов */
+.qp-option {
+  padding: 11px 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: var(--quiz-radius-sm);
+  color: #e2e8f0;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  touch-action: manipulation;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.qp-option:hover {
+  background: rgba(6,182,212,0.1);
+  border-color: rgba(6,182,212,0.35);
+  transform: translateY(-1px);
+}
+.qp-option:active {
+  transform: translateY(0) scale(0.97);
+}
+.qp-option.correct {
+  background: rgba(34,197,94,0.12);
+  border-color: rgba(34,197,94,0.4);
+  color: #22c55e;
+}
+.qp-option.wrong {
+  background: rgba(239,68,68,0.12);
+  border-color: rgba(239,68,68,0.4);
+  color: #ef4444;
+}
+.qp-option.dimmed {
+  background: rgba(255,255,255,0.02);
+  border-color: rgba(255,255,255,0.05);
+  color: #475569;
+}
+
+/* Кнопка "Следующий" */
+.qp-next-btn {
+  width: 100%;
+  padding: 13px;
+  background: linear-gradient(135deg, #0891b2, #0369a1);
+  border: none;
+  border-radius: var(--quiz-radius-sm);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(8,145,178,0.35);
+  font-family: inherit;
+  transition: box-shadow 0.2s;
+}
+.qp-next-btn:hover {
+  box-shadow: 0 6px 20px rgba(8,145,178,0.5);
+}
+
+/* Кнопки hint/skip */
+.qp-action-btn {
+  flex: 1;
+  padding: 10px 8px;
+  border-radius: var(--quiz-radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+.qp-hint-btn {
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.25);
+  color: #fbbf24;
+}
+.qp-hint-btn:hover {
+  background: rgba(245,158,11,0.14);
+  border-color: rgba(245,158,11,0.4);
+}
+.qp-skip-btn {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #64748b;
+}
+.qp-skip-btn:hover {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.14);
+  color: #94a3b8;
+}
+
+/* Инструкция */
+.qp-instruction {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: rgba(6,182,212,0.07);
+  border: 1px solid rgba(6,182,212,0.18);
+  border-radius: var(--quiz-radius-sm);
+  padding: 8px 12px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.qp-instruction-icon { font-size: 16px; flex-shrink: 0; }
+.qp-instruction-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Фидбек правильного ответа */
+.qp-correct-feedback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(34,197,94,0.09);
+  border: 1px solid rgba(34,197,94,0.28);
+  border-radius: 8px;
+  padding: 7px 12px;
+  animation: fadeSlideIn 0.25s ease;
+}
+
+/* Стрик */
+.qp-streak {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+  animation: streakPulse 1s ease-in-out infinite;
+}
+
+/* Кнопки топбара */
+.qb-icon-btn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #94a3b8;
+  font-size: 15px;
+  cursor: pointer;
+  touch-action: manipulation;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.qb-icon-btn:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.18);
+  color: #e2e8f0;
+}
+
+/* Прогресс-бар */
+.qb-progress-wrap {
+  flex: 1;
+  height: 8px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+.qb-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.45s cubic-bezier(0.4,0,0.2,1);
+  position: relative;
+}
+.qb-progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 24px; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35));
+  border-radius: 4px;
+}
+
+/* Карта */
+.qb-map-col {
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+}
+.qb-map-col::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+  pointer-events: none;
+}
+
+/* Анимации */
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes popIn {
+  0%   { opacity: 0; transform: scale(0.92) translateY(12px); }
+  70%  { transform: scale(1.02) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes floatUp {
+  0%   { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-28px) scale(0.85); }
+}
+@keyframes shakeAnim {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-7px); }
+  30% { transform: translateX(6px); }
+  45% { transform: translateX(-5px); }
+  60% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+  90% { transform: translateX(1px); }
+}
+@keyframes streakPulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.02); }
+}
+@keyframes fireFloat {
+  0%   { transform: translateY(0) scale(1); opacity: 0.8; }
+  50%  { opacity: 1; }
+  100% { transform: translateY(-32px) scale(0.2); opacity: 0; }
+}
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(6,182,212,0.12), inset 0 0 6px rgba(6,182,212,0.03); }
+  50%       { box-shadow: 0 0 22px rgba(6,182,212,0.28), inset 0 0 12px rgba(6,182,212,0.07); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Мобильная инструкция */
+@media (max-width: 480px) {
+  .qp-instruction-icon { font-size: 13px !important; }
+  .qp-instruction-text { font-size: 12px !important; }
+  .qp-instruction      { padding: 6px 10px !important; }
+  .qp-question-text    { font-size: 16px !important; }
+}
