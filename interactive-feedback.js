@@ -6,93 +6,92 @@
 (function() {
     'use strict';
 
+    // Константы для селекторов
+    const CLICK_SELECTORS = [
+        'button',
+        '.btn',
+        '[role="button"]',
+        '.clickable',
+        '.truck-card',
+        '[onclick*="assignLoad"]',
+        '[onclick*="selectLoad"]',
+        '[onclick*="viewTruck"]',
+        'a[href]',
+        '.tab',
+        '[role="tab"]'
+    ].join(', ');
+
+    const HAPTIC_SELECTORS = [
+        'button',
+        '.btn',
+        '[role="button"]',
+        '.truck-card',
+        '[onclick*="assignLoad"]',
+        '[onclick*="selectLoad"]'
+    ].join(', ');
+
     // === ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ ===
     document.addEventListener('DOMContentLoaded', initInteractiveFeedback);
 
     function initInteractiveFeedback() {
-        // Добавляем обработчики на все кликабельные элементы
-        addClickFeedback();
-        
-        // Добавляем вибрацию на мобильных устройствах
-        addHapticFeedback();
+        // Добавляем глобальные обработчики (Event Delegation)
+        addGlobalEventListeners();
         
         // Добавляем визуальный индикатор загрузки
         addLoadingIndicator();
     }
 
-    // === ВИЗУАЛЬНЫЙ FEEDBACK ПРИ КЛИКЕ ===
-    function addClickFeedback() {
-        const selectors = [
-            'button',
-            '.btn',
-            '[role="button"]',
-            '.clickable',
-            '.truck-card',
-            '[onclick*="assignLoad"]',
-            '[onclick*="selectLoad"]',
-            '[onclick*="viewTruck"]',
-            'a[href]',
-            '.tab',
-            '[role="tab"]'
-        ];
+    // === ГЛОБАЛЬНЫЕ ОБРАБОТЧИКИ СОБЫТИЙ (Event Delegation) ===
+    function addGlobalEventListeners() {
+        // Mouse events
+        document.addEventListener('mousedown', handleInteractionStart);
+        document.addEventListener('mouseup', handleInteractionEnd);
+        document.addEventListener('mouseout', handleMouseOut);
 
-        const elements = document.querySelectorAll(selectors.join(', '));
+        // Touch events
+        document.addEventListener('touchstart', handleInteractionStart, { passive: true });
+        document.addEventListener('touchend', handleInteractionEnd);
+        document.addEventListener('touchcancel', handleInteractionEnd);
 
-        elements.forEach(element => {
-            // Пропускаем disabled элементы
-            if (element.disabled || element.hasAttribute('disabled')) return;
+        // Haptic feedback
+        document.addEventListener('click', function(e) {
+            const target = e.target.closest(HAPTIC_SELECTORS);
+            if (target && 'vibrate' in navigator) {
+                navigator.vibrate(20);
+            }
+        }, { passive: true });
+    }
 
-            // Добавляем класс при клике
-            element.addEventListener('mousedown', function(e) {
-                this.classList.add('clicking');
-            });
+    function handleInteractionStart(e) {
+        const target = e.target.closest(CLICK_SELECTORS);
+        if (!target || target.disabled || target.hasAttribute('disabled')) return;
 
-            element.addEventListener('mouseup', function() {
-                setTimeout(() => {
-                    this.classList.remove('clicking');
-                }, 300);
-            });
+        target.classList.add('clicking');
+    }
 
-            element.addEventListener('mouseleave', function() {
-                this.classList.remove('clicking');
-            });
-
-            // Touch события для мобильных
-            element.addEventListener('touchstart', function(e) {
-                this.classList.add('clicking');
-            }, { passive: true });
-
-            element.addEventListener('touchend', function() {
-                setTimeout(() => {
-                    this.classList.remove('clicking');
-                }, 300);
-            });
+    function handleInteractionEnd() {
+        const activeElements = document.querySelectorAll('.clicking');
+        activeElements.forEach(el => {
+            setTimeout(() => {
+                el.classList.remove('clicking');
+            }, 300);
         });
     }
 
+    function handleMouseOut(e) {
+        // Equivalent to mouseleave for delegation
+        const target = e.target.closest('.clicking');
+        if (!target) return;
 
+        // Check if we are really leaving the element
+        let related = e.relatedTarget;
+        while (related) {
+            if (related === target) return;
+            related = related.parentElement;
+        }
 
-    // === ВИБРАЦИЯ НА МОБИЛЬНЫХ - УСИЛЕННАЯ ===
-    function addHapticFeedback() {
-        if (!('vibrate' in navigator)) return;
-
-        const selectors = [
-            'button',
-            '.btn',
-            '[role="button"]',
-            '.truck-card',
-            '[onclick*="assignLoad"]',
-            '[onclick*="selectLoad"]'
-        ];
-
-        const elements = document.querySelectorAll(selectors.join(', '));
-
-        elements.forEach(element => {
-            element.addEventListener('click', function() {
-                // Более заметная вибрация (20ms)
-                navigator.vibrate(20);
-            }, { passive: true });
-        });
+        // If we reached here, we left the element
+        target.classList.remove('clicking');
     }
 
     // === ИНДИКАТОР ЗАГРУЗКИ ДЛЯ КНОПОК ===
@@ -188,26 +187,15 @@
     `;
     document.head.appendChild(style);
 
-    // === ДОПОЛНИТЕЛЬНАЯ ОБРАБОТКА ДЛЯ ДИНАМИЧЕСКИХ ЭЛЕМЕНТОВ ===
-    // Наблюдаем за добавлением новых элементов
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.addedNodes.length) {
-                // Переинициализируем feedback для новых элементов
-                setTimeout(addClickFeedback, 100);
-            }
-        });
-    });
-
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
-
     // === ЭКСПОРТ ДЛЯ ИСПОЛЬЗОВАНИЯ В ДРУГИХ СКРИПТАХ ===
     window.InteractiveFeedback = {
         showButtonLoading: showButtonLoading,
-        reinit: addClickFeedback
+        reinit: function() {
+            // С использованием делегирования событий переинициализация не требуется,
+            // так как новые элементы будут обрабатываться автоматически.
+            // Оставляем функцию для совместимости, но теперь это O(1).
+            console.log('InteractiveFeedback: reinit called (Event Delegation active - no-op)');
+        }
     };
 
 })();
