@@ -1,98 +1,108 @@
 /* ============================================
-   СИСТЕМА ТАКТИЛЬНОЙ ОБРАТНОЙ СВЯЗИ
+   СИСТЕМА ТАКТИЛЬНОЙ ОБРАТНОЙ СВЯЗИ (ОПТИМИЗИРОВАННАЯ)
    Добавляет визуальные и звуковые эффекты при клике
+   Bolt Optimization: Global Event Delegation (O(1) initialization)
    ============================================ */
 
 (function() {
     'use strict';
 
+    const CLICK_SELECTORS = [
+        'button',
+        '.btn',
+        '[role="button"]',
+        '.clickable',
+        '.truck-card',
+        '[onclick*="assignLoad"]',
+        '[onclick*="selectLoad"]',
+        '[onclick*="viewTruck"]',
+        'a[href]',
+        '.tab',
+        '[role="tab"]',
+        '[onclick]', // Bolt: Добавляем элементы с onclick (например, .benefit-card)
+        '.benefit-card' // Bolt: Явный селектор для карточек
+    ].join(', ');
+
+    const HAPTIC_SELECTORS = [
+        'button',
+        '.btn',
+        '[role="button"]',
+        '.truck-card',
+        '[onclick*="assignLoad"]',
+        '[onclick*="selectLoad"]'
+    ].join(', ');
+
     // === ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ ===
     document.addEventListener('DOMContentLoaded', initInteractiveFeedback);
 
     function initInteractiveFeedback() {
-        // Добавляем обработчики на все кликабельные элементы
-        addClickFeedback();
+        // Bolt: Использование делегирования событий вместо перебора всех элементов
+        // Это убирает необходимость в MutationObserver и ускоряет инициализацию в O(N) раз
+        setupEventDelegation();
         
-        // Добавляем вибрацию на мобильных устройствах
-        addHapticFeedback();
-        
-        // Добавляем визуальный индикатор загрузки
+        // Добавляем визуальный индикатор загрузки (уже делегирован)
         addLoadingIndicator();
     }
 
-    // === ВИЗУАЛЬНЫЙ FEEDBACK ПРИ КЛИКЕ ===
-    function addClickFeedback() {
-        const selectors = [
-            'button',
-            '.btn',
-            '[role="button"]',
-            '.clickable',
-            '.truck-card',
-            '[onclick*="assignLoad"]',
-            '[onclick*="selectLoad"]',
-            '[onclick*="viewTruck"]',
-            'a[href]',
-            '.tab',
-            '[role="tab"]'
-        ];
+    function setupEventDelegation() {
+        // Визуальный feedback (mousedown/touchstart)
+        document.addEventListener('mousedown', handleDown);
+        document.addEventListener('touchstart', handleDown, { passive: true });
 
-        const elements = document.querySelectorAll(selectors.join(', '));
+        // Снятие feedback (mouseup/touchend)
+        document.addEventListener('mouseup', handleUp);
+        document.addEventListener('touchend', handleUp, { passive: true });
 
-        elements.forEach(element => {
-            // Пропускаем disabled элементы
-            if (element.disabled || element.hasAttribute('disabled')) return;
+        // Отмена feedback если ушли с элемента (mouseout/touchcancel)
+        document.addEventListener('mouseout', handleOut);
+        document.addEventListener('touchcancel', handleOut, { passive: true });
 
-            // Добавляем класс при клике
-            element.addEventListener('mousedown', function(e) {
-                this.classList.add('clicking');
-            });
+        // Вибрация (click)
+        document.addEventListener('click', handleHaptic, { passive: true });
+    }
 
-            element.addEventListener('mouseup', function() {
-                setTimeout(() => {
-                    this.classList.remove('clicking');
-                }, 300);
-            });
+    function handleDown(e) {
+        const target = e.target.closest(CLICK_SELECTORS);
+        if (target && !target.disabled && !target.hasAttribute('disabled')) {
+            target.classList.add('clicking');
+        }
+    }
 
-            element.addEventListener('mouseleave', function() {
-                this.classList.remove('clicking');
-            });
-
-            // Touch события для мобильных
-            element.addEventListener('touchstart', function(e) {
-                this.classList.add('clicking');
-            }, { passive: true });
-
-            element.addEventListener('touchend', function() {
-                setTimeout(() => {
-                    this.classList.remove('clicking');
-                }, 300);
-            });
+    function handleUp(e) {
+        // Bolt: Ищем любой элемент с классом clicking и убираем его
+        // Это надежнее чем искать ближайший к target в mouseup
+        const elements = document.querySelectorAll('.clicking');
+        elements.forEach(el => {
+            setTimeout(() => {
+                el.classList.remove('clicking');
+            }, 300);
         });
     }
 
+    function handleOut(e) {
+        // Bolt: Если мы выходим за пределы элемента .clicking
+        if (e.target && e.target.classList.contains('clicking')) {
+             if (!e.relatedTarget || !e.target.contains(e.relatedTarget)) {
+                e.target.classList.remove('clicking');
+            }
+            return;
+        }
 
+        const target = e.target.closest('.clicking');
+        if (target) {
+            if (!e.relatedTarget || !target.contains(e.relatedTarget)) {
+                target.classList.remove('clicking');
+            }
+        }
+    }
 
-    // === ВИБРАЦИЯ НА МОБИЛЬНЫХ - УСИЛЕННАЯ ===
-    function addHapticFeedback() {
+    function handleHaptic(e) {
         if (!('vibrate' in navigator)) return;
 
-        const selectors = [
-            'button',
-            '.btn',
-            '[role="button"]',
-            '.truck-card',
-            '[onclick*="assignLoad"]',
-            '[onclick*="selectLoad"]'
-        ];
-
-        const elements = document.querySelectorAll(selectors.join(', '));
-
-        elements.forEach(element => {
-            element.addEventListener('click', function() {
-                // Более заметная вибрация (20ms)
-                navigator.vibrate(20);
-            }, { passive: true });
-        });
+        const target = e.target.closest(HAPTIC_SELECTORS);
+        if (target) {
+            navigator.vibrate(20);
+        }
     }
 
     // === ИНДИКАТОР ЗАГРУЗКИ ДЛЯ КНОПОК ===
@@ -111,7 +121,7 @@
             if (hasAction) {
                 showButtonLoading(button);
             }
-        }, true);
+        });
     }
 
     function showButtonLoading(button) {
@@ -164,7 +174,8 @@
 
         /* Улучшенный feedback для карточек */
         .truck-card.clicking,
-        [class*="truck-card"].clicking {
+        [class*="truck-card"].clicking,
+        .benefit-card.clicking {
             transform: scale(0.97) !important;
             box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25) !important;
             filter: brightness(0.95) !important;
@@ -188,26 +199,10 @@
     `;
     document.head.appendChild(style);
 
-    // === ДОПОЛНИТЕЛЬНАЯ ОБРАБОТКА ДЛЯ ДИНАМИЧЕСКИХ ЭЛЕМЕНТОВ ===
-    // Наблюдаем за добавлением новых элементов
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.addedNodes.length) {
-                // Переинициализируем feedback для новых элементов
-                setTimeout(addClickFeedback, 100);
-            }
-        });
-    });
-
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
-
     // === ЭКСПОРТ ДЛЯ ИСПОЛЬЗОВАНИЯ В ДРУГИХ СКРИПТАХ ===
     window.InteractiveFeedback = {
         showButtonLoading: showButtonLoading,
-        reinit: addClickFeedback
+        reinit: function() { /* Bolt: Больше не требуется благодаря делегированию */ }
     };
 
 })();
