@@ -6,98 +6,110 @@
 (function() {
     'use strict';
 
+    // === КОНСТАНТЫ СЕЛЕКТОРОВ ===
+    const CLICK_SELECTORS = [
+        'button',
+        '.btn',
+        '[role="button"]',
+        '.clickable',
+        '.truck-card',
+        '[onclick*="assignLoad"]',
+        '[onclick*="selectLoad"]',
+        '[onclick*="viewTruck"]',
+        'a[href]',
+        '.tab',
+        '[role="tab"]'
+    ].join(', ');
+
+    const HAPTIC_SELECTORS = [
+        'button',
+        '.btn',
+        '[role="button"]',
+        '.truck-card',
+        '[onclick*="assignLoad"]',
+        '[onclick*="selectLoad"]'
+    ].join(', ');
+
     // === ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ ===
     document.addEventListener('DOMContentLoaded', initInteractiveFeedback);
 
     function initInteractiveFeedback() {
-        // Добавляем обработчики на все кликабельные элементы
-        addClickFeedback();
+        // Настройка делегирования событий для визуального фидбека
+        setupDelegatedClickFeedback();
         
-        // Добавляем вибрацию на мобильных устройствах
-        addHapticFeedback();
+        // Настройка делегирования для вибрации
+        setupDelegatedHapticFeedback();
         
         // Добавляем визуальный индикатор загрузки
         addLoadingIndicator();
     }
 
-    // === ВИЗУАЛЬНЫЙ FEEDBACK ПРИ КЛИКЕ ===
-    function addClickFeedback() {
-        const selectors = [
-            'button',
-            '.btn',
-            '[role="button"]',
-            '.clickable',
-            '.truck-card',
-            '[onclick*="assignLoad"]',
-            '[onclick*="selectLoad"]',
-            '[onclick*="viewTruck"]',
-            'a[href]',
-            '.tab',
-            '[role="tab"]'
-        ];
+    // === ВИЗУАЛЬНЫЙ FEEDBACK ПРИ КЛИКЕ (ДЕЛЕГИРОВАНИЕ) ===
+    function setupDelegatedClickFeedback() {
+        const addClicking = (el) => {
+            if (el && !el.disabled && !el.hasAttribute('disabled')) {
+                el.classList.add('clicking');
+            }
+        };
 
-        const elements = document.querySelectorAll(selectors.join(', '));
+        const removeClicking = (el, delay = 0) => {
+            if (!el) return;
+            if (delay > 0) {
+                setTimeout(() => el.classList.remove('clicking'), delay);
+            } else {
+                el.classList.remove('clicking');
+            }
+        };
 
-        elements.forEach(element => {
-            // Пропускаем disabled элементы
-            if (element.disabled || element.hasAttribute('disabled')) return;
-
-            // Добавляем класс при клике
-            element.addEventListener('mousedown', function(e) {
-                this.classList.add('clicking');
-            });
-
-            element.addEventListener('mouseup', function() {
-                setTimeout(() => {
-                    this.classList.remove('clicking');
-                }, 300);
-            });
-
-            element.addEventListener('mouseleave', function() {
-                this.classList.remove('clicking');
-            });
-
-            // Touch события для мобильных
-            element.addEventListener('touchstart', function(e) {
-                this.classList.add('clicking');
-            }, { passive: true });
-
-            element.addEventListener('touchend', function() {
-                setTimeout(() => {
-                    this.classList.remove('clicking');
-                }, 300);
-            });
+        // Mouse events
+        document.addEventListener('mousedown', (e) => {
+            const target = e.target.closest(CLICK_SELECTORS);
+            if (target) addClicking(target);
         });
+
+        document.addEventListener('mouseup', (e) => {
+            const target = e.target.closest(CLICK_SELECTORS);
+            if (target) removeClicking(target, 300);
+        });
+
+        document.addEventListener('mouseout', (e) => {
+            const target = e.target.closest(CLICK_SELECTORS);
+            if (!target) return;
+
+            // If the mouse is moving to an element outside of the current 'target', remove the class
+            // This prevents flickering when moving between children of the same button
+            if (!target.contains(e.relatedTarget)) {
+                removeClicking(target);
+            }
+        });
+
+        // Touch events
+        document.addEventListener('touchstart', (e) => {
+            const target = e.target.closest(CLICK_SELECTORS);
+            if (target) addClicking(target);
+        }, { passive: true });
+
+        document.addEventListener('touchend', (e) => {
+            const target = e.target.closest(CLICK_SELECTORS);
+            if (target) removeClicking(target, 300);
+        }, { passive: true });
     }
 
-
-
-    // === ВИБРАЦИЯ НА МОБИЛЬНЫХ - УСИЛЕННАЯ ===
-    function addHapticFeedback() {
+    // === ВИБРАЦИЯ НА МОБИЛЬНЫХ (ДЕЛЕГИРОВАНИЕ) ===
+    function setupDelegatedHapticFeedback() {
         if (!('vibrate' in navigator)) return;
 
-        const selectors = [
-            'button',
-            '.btn',
-            '[role="button"]',
-            '.truck-card',
-            '[onclick*="assignLoad"]',
-            '[onclick*="selectLoad"]'
-        ];
-
-        const elements = document.querySelectorAll(selectors.join(', '));
-
-        elements.forEach(element => {
-            element.addEventListener('click', function() {
-                // Более заметная вибрация (20ms)
+        document.addEventListener('click', (e) => {
+            const target = e.target.closest(HAPTIC_SELECTORS);
+            if (target && !target.disabled && !target.hasAttribute('disabled')) {
                 navigator.vibrate(20);
-            }, { passive: true });
-        });
+            }
+        }, { passive: true });
     }
 
     // === ИНДИКАТОР ЗАГРУЗКИ ДЛЯ КНОПОК ===
     function addLoadingIndicator() {
-        // Перехватываем клики на кнопках с onclick
+        // Перехватываем клики на кнопках с onclick (используем capture phase для немедленного перехвата)
         document.addEventListener('click', function(e) {
             const button = e.target.closest('button, .btn, [role="button"]');
             
@@ -188,26 +200,13 @@
     `;
     document.head.appendChild(style);
 
-    // === ДОПОЛНИТЕЛЬНАЯ ОБРАБОТКА ДЛЯ ДИНАМИЧЕСКИХ ЭЛЕМЕНТОВ ===
-    // Наблюдаем за добавлением новых элементов
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.addedNodes.length) {
-                // Переинициализируем feedback для новых элементов
-                setTimeout(addClickFeedback, 100);
-            }
-        });
-    });
-
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
-
     // === ЭКСПОРТ ДЛЯ ИСПОЛЬЗОВАНИЯ В ДРУГИХ СКРИПТАХ ===
     window.InteractiveFeedback = {
         showButtonLoading: showButtonLoading,
-        reinit: addClickFeedback
+        reinit: function() {
+            // Больше не требуется благодаря делегированию событий
+            // Оставлено для обратной совместимости
+        }
     };
 
 })();
