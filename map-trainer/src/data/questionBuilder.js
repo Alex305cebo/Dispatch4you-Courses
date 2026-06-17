@@ -75,7 +75,7 @@ function buildNameState(count) {
     hint:          "Посмотри на карту и выбери правильное название",
     correctAnswer: state.name,
     options:       makeOptions(state.name, allNames),
-    hintText:      `Регион: ${state.region} · Столица: ${state.capital}`,
+    hintText:      `${state.name} · Регион: ${state.region} · Столица: ${state.capital}`,
     tz:            state.tz,
     region:        state.region,
     capital:       state.capital,
