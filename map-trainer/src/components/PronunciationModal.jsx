@@ -39,14 +39,16 @@ export default function PronunciationModal({ stateName, pronunciation, isLocked 
       
       // Выбираем лучший голос из доступных
       const voices = window.speechSynthesis.getVoices();
-      // Приоритет: Google US > Microsoft > Apple Samantha > любой en-US
+      // Приоритет: мужской голос Daniel / David / Google US English
       const preferred = [
+        "Daniel",
+        "Microsoft David",
         "Google US English",
         "Microsoft Aria Online (Natural)",
         "Microsoft Jenny Online (Natural)",
+        "Alex",
         "Samantha",
         "Karen",
-        "Daniel",
       ];
       
       let bestVoice = null;
@@ -56,7 +58,8 @@ export default function PronunciationModal({ stateName, pronunciation, isLocked 
       }
       // Fallback: любой en-US голос
       if (!bestVoice) {
-        bestVoice = voices.find(v => v.lang === "en-US") || voices.find(v => v.lang.startsWith("en"));
+        bestVoice = voices.find(v => v.name.includes("Daniel") && v.lang.startsWith("en"));
+        if (!bestVoice) bestVoice = voices.find(v => v.lang === "en-US") || voices.find(v => v.lang.startsWith("en"));
       }
       if (bestVoice) utterance.voice = bestVoice;
       

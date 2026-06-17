@@ -21,13 +21,16 @@ export default function StateReference({ onBack }) {
     utterance.rate = 0.75;
     utterance.pitch = 0.95;
     const voices = window.speechSynthesis.getVoices();
-    const preferred = ["Google US English", "Microsoft Aria", "Microsoft Jenny", "Samantha"];
+    const preferred = ["Daniel", "Microsoft David", "Google US English", "Microsoft Aria", "Microsoft Jenny", "Samantha"];
     let bestVoice = null;
     for (const name of preferred) {
       bestVoice = voices.find(v => v.name.includes(name) && v.lang.startsWith("en"));
       if (bestVoice) break;
     }
-    if (!bestVoice) bestVoice = voices.find(v => v.lang === "en-US");
+    if (!bestVoice) {
+      bestVoice = voices.find(v => v.name.includes("Daniel") && v.lang.startsWith("en"));
+      if (!bestVoice) bestVoice = voices.find(v => v.lang === "en-US") || voices.find(v => v.lang.startsWith("en"));
+    }
     if (bestVoice) utterance.voice = bestVoice;
     window.speechSynthesis.speak(utterance);
   }, []);
