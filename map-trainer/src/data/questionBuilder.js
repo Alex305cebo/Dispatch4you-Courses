@@ -58,7 +58,7 @@ function buildFindState(count) {
     text:          state.name,
     hint:          "Найди этот штат на карте:",
     correctAnswer: state.id,
-    hintText:      `Регион: ${state.region} · Часовой пояс: ${state.tz} Time`,
+    hintText:      `📍 Штат выделен на карте · ${state.region} · ${state.tz} Time`,
     tz:            state.tz,
     region:        state.region,
     capital:       state.capital,
@@ -131,7 +131,7 @@ function buildFindCity(count) {
       text:          city.name,
       hint:          "Найди этот город на карте:",
       correctAnswer: city.name,
-      hintText:      `Штат: ${fullStateName} · ${city.tz} Time`,
+      hintText:      `📍 Штат выделен на карте · ${fullStateName} · ${city.tz} Time`,
       tz:            city.tz,
       region:        stateData?.region || "",
       capital:       stateData?.capital || "",
@@ -169,7 +169,7 @@ function buildProMix(count) {
 
     switch (mode) {
       case "find-state":
-        return { ...base, _mode: "find-state",  text: state.name, correctAnswer: state.id, hintText: `Регион: ${state.region} · ${state.tz} Time` };
+        return { ...base, _mode: "find-state",  text: state.name, correctAnswer: state.id, hintText: `📍 Штат выделен на карте · ${state.region} · ${state.tz} Time` };
       case "name-state":
         return { ...base, _mode: "name-state",  text: "Как называется выделенный штат?", correctAnswer: state.name, options: makeOptions(state.name, allNames), hintText: `Регион: ${state.region}` };
       case "timezone":
@@ -179,7 +179,7 @@ function buildProMix(count) {
       case "region":
         return { ...base, _mode: "region",      text: state.name, correctAnswer: state.region, options: makeOptions(state.region, REGIONS), hintText: `${state.tz} Time` };
       default:
-        return { ...base, _mode: "find-state",  text: state.name, correctAnswer: state.id, hintText: `${state.region} · ${state.tz}` };
+        return { ...base, _mode: "find-state",  text: state.name, correctAnswer: state.id, hintText: `📍 Штат выделен на карте · ${state.region} · ${state.tz}` };
     }
   });
 }

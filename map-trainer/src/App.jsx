@@ -503,9 +503,14 @@ export default function App() {
   const isMapClick = MAP_CLICK_MODES.has(questionMode) || (mode === "green-map" && currentQuestion?._mode === "find-state") || (mode === "speed-run" && currentQuestion?._mode === "find-state");
   const highlightedState = feedback ? currentQuestion?.stateId : null;
   // markedState — подсвечиваем штат на карте ДО ответа только для name-state
+  // Если подсказка активна — тоже подсвечиваем правильный штат (для find-state, find-city)
   // (там вопрос "как называется этот штат?" — нужно показать какой именно)
   // Для остальных режимов название штата написано в тексте — подсветка раскрывает ответ
-  const markedState = (questionMode === "name-state") ? currentQuestion?.stateId : null;
+  const markedState = (questionMode === "name-state")
+    ? currentQuestion?.stateId
+    : (hintUsed && (questionMode === "find-state" || questionMode === "find-city") && !feedback)
+      ? currentQuestion?.stateId
+      : null;
 
   return (
     <div style={{
