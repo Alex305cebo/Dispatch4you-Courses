@@ -270,3 +270,13 @@ jobs:
           remote_port: ${{ secrets.SSH_PORT }}
           remote_user: ${{ secrets.SSH_USERNAME }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Verify critical files are accessible
+        run: |
+          echo "Checking states-10m.json..."
+          STATUS=$(curl -o /dev/null -s -w "%{http_code}" https://dispatch4you.com/map-trainer/states-10m.json)
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ CRITICAL: states-10m.json returned HTTP $STATUS — map will not render!"
+            exit 1
+          fi
+          echo "✅ states-10m.json OK (HTTP $STATUS)"
