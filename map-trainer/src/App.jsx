@@ -579,12 +579,20 @@ export default function App() {
       minHeight: 0,
     }}>
 
-      {/* ── Шапка ── */}
+      {/* ── Шапка: всё в одну строку ── */}
+      {(() => {
+        const recKey = `${activeLevel?.id}_${activeLevel?.questions}`;
+        const rec = levelRecord?.[recKey] || null;
+        const fmt = (s) => { const m = Math.floor(s/60); const sec = s%60; return m > 0 ? `${m}:${String(sec).padStart(2,"0")}` : `0:${String(sec).padStart(2,"0")}`; };
+        const displayTime = sessionTimer.elapsed + timePenalty;
+        const isOverRecord = rec?.time && displayTime > rec.time;
+        const isPenaltyFlash = pointsDelta && pointsDelta.isTimePenalty;
+        return (
       <div style={{
         display: "flex",
         alignItems: "center",
-        gap: "10px",
-        marginBottom: "8px",
+        gap: "8px",
+        marginBottom: "6px",
         flexShrink: 0,
         padding: "2px 0",
       }}>
@@ -621,7 +629,61 @@ export default function App() {
           />
         </div>
 
-        {/* Точность */}
+        {/* ТАЙМЕР СЕССИИ — крупный */}
+        <div style={{
+          position: "relative",
+          display: "flex", alignItems: "center", gap: "4px",
+          flexShrink: 0,
+          overflow: "visible",
+          zIndex: 100,
+          background: isPenaltyFlash
+            ? "rgba(249,115,22,0.18)"
+            : isOverRecord ? "rgba(239,68,68,0.12)" : "rgba(255,255,255,0.04)",
+          border: `1.5px solid ${isPenaltyFlash
+            ? "rgba(249,115,22,0.6)"
+            : isOverRecord ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.1)"}`,
+          borderRadius: "8px",
+          padding: "3px 10px",
+          transition: "all 0.3s ease",
+          animation: isPenaltyFlash ? "timerShake 0.5s ease-out" : "none",
+        }}>
+          <span style={{ fontSize: "13px" }}>⏱</span>
+          <span style={{
+            fontSize: "18px", fontWeight: 900, letterSpacing: "0.5px",
+            color: isPenaltyFlash ? "#f97316" : isOverRecord ? "#ef4444" : "#e2e8f0",
+            fontVariantNumeric: "tabular-nums",
+            textShadow: isPenaltyFlash
+              ? "0 0 10px rgba(249,115,22,0.6)"
+              : isOverRecord ? "0 0 6px rgba(239,68,68,0.4)" : "none",
+            transition: "color 0.3s, text-shadow 0.3s",
+          }}>
+            {fmt(displayTime)}
+          </span>
+          {/* Рекорд мелко под таймером */}
+          {rec?.time && (
+            <span style={{ fontSize: "9px", color: "#d4a853", fontWeight: 700, marginLeft: "2px" }}>
+              🥇{fmt(rec.time)}
+            </span>
+          )}
+          {/* Анимация штрафа */}
+          {isPenaltyFlash && (
+            <span key={pointsDelta.key} style={{
+              position: "absolute",
+              bottom: "-20px", left: "50%",
+              transform: "translateX(-50%)",
+              fontSize: "14px", fontWeight: 900,
+              color: "#f97316",
+              textShadow: "0 0 6px rgba(249,115,22,0.6)",
+              animation: "penaltyDrop 1.8s ease-out forwards",
+              pointerEvents: "none", whiteSpace: "nowrap",
+              zIndex: 9999,
+            }}>
+              +{pointsDelta.value}с
+            </span>
+          )}
+        </div>
+
+        {/* Точность + счётчик */}
         <div style={{
           display: "flex", alignItems: "center", gap: "4px",
           flexShrink: 0, position: "relative",
@@ -632,92 +694,21 @@ export default function App() {
           }}>
             {accuracy}%
           </span>
-          {pointsDelta && (
+          <span style={{ fontSize: "11px", color: "#64748b", fontWeight: 600 }}>
+            {currentIdx + 1}/{activeLevel?.questions}
+          </span>
+          {pointsDelta && !pointsDelta.isTimePenalty && (
             <div key={pointsDelta.key} style={{
-              position: "absolute", top: "-18px", right: "0",
-              fontSize: "13px", fontWeight: 800,
-              color: pointsDelta.isTimePenalty ? "#f97316" : "#22c55e",
+              position: "absolute", top: "-16px", right: "0",
+              fontSize: "12px", fontWeight: 800, color: "#22c55e",
               animation: "floatUp 1.2s ease-out forwards",
               pointerEvents: "none", whiteSpace: "nowrap",
             }}>
-              {pointsDelta.isTimePenalty
-                ? `⏱ +${pointsDelta.value}с`
-                : `${pointsDelta.value}`}
+              {pointsDelta.value}
             </div>
           )}
         </div>
-
-        {/* Счётчик */}
-        <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600, flexShrink: 0 }}>
-          {currentIdx + 1}/{activeLevel?.questions}
-        </span>
       </div>
-
-      {/* ── Второй бар: КРУПНЫЙ таймер сессии по центру + рекорд ── */}
-      {quizReady && (() => {
-        const recKey = `${activeLevel?.id}_${activeLevel?.questions}`;
-        const rec = levelRecord?.[recKey] || null;
-        const fmt = (s) => { const m = Math.floor(s/60); const sec = s%60; return m > 0 ? `${m}:${String(sec).padStart(2,"0")}` : `0:${String(sec).padStart(2,"0")}`; };
-        const displayTime = sessionTimer.elapsed + timePenalty;
-        const isOverRecord = rec?.time && displayTime > rec.time;
-        const isPenaltyFlash = pointsDelta && pointsDelta.isTimePenalty;
-        return (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", marginBottom: "8px", flexShrink: 0 }}>
-            {/* Крупный таймер по центру */}
-            <div style={{
-              position: "relative",
-              display: "flex", alignItems: "center", gap: "6px",
-              background: isPenaltyFlash
-                ? "rgba(249,115,22,0.18)"
-                : isOverRecord ? "rgba(239,68,68,0.12)" : "rgba(34,197,94,0.08)",
-              border: `1.5px solid ${isPenaltyFlash
-                ? "rgba(249,115,22,0.6)"
-                : isOverRecord ? "rgba(239,68,68,0.4)" : "rgba(34,197,94,0.25)"}`,
-              borderRadius: "10px",
-              padding: "4px 14px",
-              transition: "all 0.3s ease",
-              animation: isPenaltyFlash ? "timerShake 0.5s ease-out" : "none",
-            }}>
-              <span style={{ fontSize: "16px" }}>⏱</span>
-              <span style={{
-                fontSize: "22px", fontWeight: 900, letterSpacing: "1px",
-                color: isPenaltyFlash ? "#f97316" : isOverRecord ? "#ef4444" : "#e2e8f0",
-                fontVariantNumeric: "tabular-nums",
-                textShadow: isPenaltyFlash
-                  ? "0 0 12px rgba(249,115,22,0.7)"
-                  : isOverRecord ? "0 0 8px rgba(239,68,68,0.5)" : "0 0 8px rgba(34,197,94,0.3)",
-                transition: "color 0.3s, text-shadow 0.3s",
-              }}>
-                {fmt(displayTime)}
-              </span>
-              {/* Анимация штрафа "+Xс" рядом с таймером */}
-              {isPenaltyFlash && (
-                <span key={pointsDelta.key} style={{
-                  position: "absolute",
-                  right: "-38px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  fontSize: "16px", fontWeight: 900,
-                  color: "#f97316",
-                  textShadow: "0 0 8px rgba(249,115,22,0.6)",
-                  animation: "penaltyPop 1.2s ease-out forwards",
-                  pointerEvents: "none",
-                  whiteSpace: "nowrap",
-                }}>
-                  +{pointsDelta.value}с
-                </span>
-              )}
-            </div>
-            {/* Рекорд рядом */}
-            {rec?.time ? (
-              <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
-                <span style={{ fontSize: "14px" }}>🥇</span>
-                <span style={{ fontSize: "14px", fontWeight: 800, color: "#d4a853", fontVariantNumeric: "tabular-nums" }}>{fmt(rec.time)}</span>
-              </div>
-            ) : (
-              <span style={{ fontSize: "11px", color: "#475569", flexShrink: 0 }}>нет рекорда</span>
-            )}
-          </div>
         );
       })()}
 
