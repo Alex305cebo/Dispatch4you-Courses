@@ -11,9 +11,9 @@ export default function ParticlesBackground() {
 
   // Отключаем на мобильных полностью
   const isMobile = typeof window !== "undefined" && /iphone|ipad|ipod|android/i.test(navigator.userAgent);
-  if (isMobile) return null;
 
   useEffect(() => {
+    if (isMobile) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -106,6 +106,8 @@ export default function ParticlesBackground() {
       cancelAnimationFrame(animRef.current);
     };
   }, []);
+
+  if (isMobile) return null;
 
   return (
     <div style={{

@@ -36,6 +36,7 @@ const FIPS_TO_STATE = {
 
 // Локальный файл — лежит в public/, после билда доступен по /map-trainer/states-10m.json.
 // Не используем CDN чтобы не упираться в CSP главного сайта (connect-src 'self' + whitelist).
+// v2026-06-19
 const GEO_URL = `${import.meta.env.BASE_URL}states-10m.json`;
 
 const MIN_ZOOM = 1;

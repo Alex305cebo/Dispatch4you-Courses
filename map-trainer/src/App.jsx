@@ -8,17 +8,28 @@ import LoginScreen  from "./components/LoginScreen";
 import ParticlesBackground from "./components/ParticlesBackground";
 import { STATES }   from "./data/states";
 import { LEVELS }   from "./data/levels";
-import { PENALTIES } from "./data/quizConfig";
 import { buildQuestions, MAP_CLICK_MODES } from "./data/questionBuilder";
 import { useTimer, useSessionTimer } from "./hooks/useTimer";
 import { useStats }    from "./hooks/useStats";
 import { useProgress, initProgress } from "./hooks/useProgress";
 import { useAuth }     from "./hooks/useAuth";
 import { useSounds }   from "./hooks/useSounds";
-import { saveLevelRecord, getAllLevelRecords } from "./firebase/progressService";
+import { saveLevelRecord, getAllLevelRecords, clearAllLevelRecords } from "./firebase/progressService";
+
+// ── Версия логики рекордов ────────────────────────────────────
+// При изменении — все старые рекорды сбрасываются автоматически
+const RECORDS_VERSION = "v2-accuracy"; // v1 = points, v2 = accuracy+time
+const RECORDS_VERSION_KEY = "mt_records_version";
 
 // ── Константы ────────────────────────────────────────────────
-const POINTS_PER_Q = 10;
+// points убраны — оценка только по точности и времени
+// Штрафы ко времени рекорда (секунды)
+const TIME_PENALTY = {
+  wrong:   5,   // неправильный ответ
+  skip:    5,   // пропуск
+  timeout: 2,   // истекло время
+  hint:    10,  // подсказка
+};
 
 function shuffle(arr) {
   const a = [...arr];
@@ -50,12 +61,14 @@ export default function App() {
   const [activeLevel,   setActiveLevel]   = useState(null);
   const [questions,     setQuestions]     = useState([]);
   const [currentIdx,    setCurrentIdx]    = useState(0);
-  const [score,         setScore]         = useState(null);
+  const [score,         setScore]         = useState(null);   // { correct, wrong, skipped }
   const [selectedState, setSelectedState] = useState(null);
   const [feedback,      setFeedback]      = useState(null);
-  const [pointsDelta,   setPointsDelta]   = useState(null);
+  const [pointsDelta,   setPointsDelta]   = useState(null);   // анимация +XP / +сек
   const [hintUsed,      setHintUsed]      = useState(false);
   const [hintText,      setHintText]      = useState(null);
+  const [hintCount,     setHintCount]     = useState(0);    // кол-во подсказок (для совместимости)
+  const [timePenalty,   setTimePenalty]   = useState(0);    // суммарный штраф сек: ошибки + подсказки + пропуски
   const [hoveredTz,     setHoveredTz]     = useState(null);
   const [hoveredRegion, setHoveredRegion] = useState(null);
   const [xpEarned,      setXpEarned]      = useState(0);
@@ -68,56 +81,77 @@ export default function App() {
 
   const { weakStates, recordResult, reset: resetStats } = useStats();
 
+  // ── Сброс рекордов при смене версии логики ──
+  useEffect(() => {
+    const storedVersion = localStorage.getItem(RECORDS_VERSION_KEY);
+    if (storedVersion !== RECORDS_VERSION) {
+      clearAllLevelRecords().then(() => {
+        localStorage.setItem(RECORDS_VERSION_KEY, RECORDS_VERSION);
+        console.log("[mapTrainer] Рекорды сброшены — новая версия логики:", RECORDS_VERSION);
+      });
+    }
+  }, []); // eslint-disable-line
+
   const currentQuestion = questions[currentIdx];
-  const maxPoints = activeLevel ? activeLevel.questions * POINTS_PER_Q : 200;
+  // accuracy — процент правильных из отвеченных (для XP и разблокировки)
+  const answeredCount = score ? (score.correct + score.wrong) : 0;
+  const accuracy = answeredCount > 0 ? Math.round((score.correct / answeredCount) * 100) : 100;
 
   // ── Секундомер сессии ──
   const sessionTimer = useSessionTimer();
   const [sessionTime, setSessionTime] = useState(0);
   const [levelRecord, setLevelRecord] = useState(null); // рекорд текущего уровня
 
-  // ── Таймер на вопрос ──
-  const handleTimeout = useCallback(() => {
-    if (feedback) return;
-    showDelta(-PENALTIES.timeout);
-    sounds.wrong();
-    const mode = activeLevel?.mode;
-    let timeoutMsg;
-    if (mode === "find-city") {
-      const correctStateName = STATES.find((s) => s.id === currentQuestion?.stateId)?.name || currentQuestion?.stateId;
-      timeoutMsg = `⏱ Время вышло! ${currentQuestion?.cityName} находится в штате ${correctStateName}`;
-    } else {
-      timeoutMsg = `⏱ Время вышло! Правильный ответ: ${currentQuestion?.stateName || currentQuestion?.cityName}`;
-    }
-    setFeedback({
-      correct: false,
-      pointsChange: -PENALTIES.timeout,
-      selectedAnswer: null,
-      message: timeoutMsg,
-    });
-    setSelectedState("__timeout__");
-    setScore((prev) => ({
-      ...prev,
-      wrong: prev.wrong + 1,
-      skipped: prev.skipped + 1,
-      points: Math.max(0, prev.points - PENALTIES.timeout),
-    }));
-    if (currentQuestion) recordResult(currentQuestion.stateId, currentQuestion.stateName, false);
-  }, [feedback, currentQuestion, activeLevel, recordResult]); // eslint-disable-line
-
-  const timer = useTimer(activeLevel?.timePerQ || null, handleTimeout);
-
   // ── Анимация дельты ──
-  const showDelta = useCallback((value) => {
-    setPointsDelta({ value, key: Date.now() });
+  // value: число (XP бонус за стрик) или null, isTimePenalty: true для +сек подсказки
+  const showDelta = useCallback((value, isTimePenalty = false) => {
+    if (value === null || value === undefined) return;
+    setPointsDelta({ value, key: Date.now(), isTimePenalty });
     setTimeout(() => setPointsDelta(null), 1200);
   }, []);
+
+  // ── Таймер на вопрос ──
+  // Используем ref чтобы избежать TDZ (timer объявляется после handleTimeout)
+  const timerRef = useRef(null);
+
+  // При истечении времени — НЕ засчитываем ошибку, а показываем подсказку
+  // и даём дополнительное время (половина от оригинального)
+  const handleTimeout = useCallback(() => {
+    if (feedback) return;
+    if (hintUsed) {
+      // Если подсказка уже была показана ранее — засчитываем как пропуск
+      sounds.wrong();
+      const mode = activeLevel?.mode;
+      const timeoutMsg = mode === "find-city"
+        ? `⏱ Время вышло! ${currentQuestion?.cityName} → ${STATES.find(s => s.id === currentQuestion?.stateId)?.name}`
+        : `⏱ Время вышло! Правильный ответ: ${currentQuestion?.stateName || currentQuestion?.cityName}`;
+      setFeedback({ correct: false, selectedAnswer: null, message: timeoutMsg });
+      setSelectedState("__timeout__");
+      setScore((prev) => ({ ...prev, wrong: prev.wrong + 1, skipped: prev.skipped + 1 }));
+      setTimePenalty((prev) => prev + TIME_PENALTY.timeout);
+      showDelta(TIME_PENALTY.timeout, true);
+      if (currentQuestion) recordResult(currentQuestion.stateId, currentQuestion.stateName, false);
+      return;
+    }
+    // Первый таймаут — показываем подсказку + штраф + перезапускаем таймер
+    sounds.wrong();
+    setHintUsed(true);
+    setHintText(currentQuestion?.hintText);
+    setTimePenalty((prev) => prev + TIME_PENALTY.timeout);
+    showDelta(TIME_PENALTY.timeout, true);
+    // Перезапускаем таймер на половину оригинального времени (минимум 5с)
+    const extraTime = Math.max(5, Math.floor((activeLevel?.timePerQ || 10) / 2));
+    setTimeout(() => timerRef.current?.startWith(extraTime), 0);
+  }, [feedback, hintUsed, currentQuestion, activeLevel, sounds, showDelta, recordResult]); // eslint-disable-line
+
+  const timer = useTimer(activeLevel?.timePerQ || null, handleTimeout);
+  timerRef.current = timer;
 
   // ── Старт уровня ──
   const startLevel = useCallback((level, questionCount) => {
     const count = questionCount || level.questions;
     const qs = buildQuestions(level.mode, count);
-    const initScore = { correct: 0, wrong: 0, skipped: 0, points: count * POINTS_PER_Q };
+    const initScore = { correct: 0, wrong: 0, skipped: 0 }; // points убраны
     // Создаём копию уровня с выбранным количеством вопросов
     const activeLvl = { ...level, questions: count };
     setActiveLevel(activeLvl);
@@ -129,6 +163,8 @@ export default function App() {
     setPointsDelta(null);
     setHintUsed(false);
     setHintText(null);
+    setHintCount(0);
+    setTimePenalty(0);
     setHoveredTz(null);
     setHoveredRegion(null);
     setStreak(0);
@@ -209,26 +245,31 @@ export default function App() {
   }, [screen]);
 
   // ── Обработка ответа ──
-  const processAnswer = useCallback((correct, selectedAnswer, penalty) => {
+  const processAnswer = useCallback((correct, selectedAnswer) => {
     timer.stop();
-    
+
     // Streak логика
     const newStreak = correct ? streak + 1 : 0;
     setStreak(newStreak);
-    
-    // Множитель за streak
-    const multiplier = newStreak >= 5 ? 2 : newStreak >= 3 ? 1.5 : 1;
-    const bonusPoints = correct && newStreak >= 3 ? Math.round(POINTS_PER_Q * (multiplier - 1)) : 0;
-    
-    showDelta(correct ? bonusPoints : -penalty);
+
+    // Бонус XP за стрик — только визуальная анимация
+    const streakBonus = correct && newStreak >= 3;
+    if (streakBonus) showDelta(newStreak >= 5 ? "+2 XP" : "+1 XP");
+
     correct ? sounds.correct() : sounds.wrong();
-    
+
+    // Штраф ко времени за ошибку
+    if (!correct) {
+      setTimePenalty((prev) => prev + TIME_PENALTY.wrong);
+      showDelta(TIME_PENALTY.wrong, true);
+    }
+
     // Shake при ошибке
     if (!correct) {
       setShakePanel(true);
       setTimeout(() => setShakePanel(false), 500);
     }
-    
+
     // Запоминаем ответ на карте
     if (currentQuestion?.stateId) {
       setAnsweredStates(prev => ({
@@ -236,32 +277,29 @@ export default function App() {
         [currentQuestion.stateId]: correct ? "correct" : "wrong",
       }));
     }
-    
-    // Устанавливаем selectedState для режимов с вариантами ответа
+
     setSelectedState(selectedAnswer);
-    
-    // Устанавливаем правильный часовой пояс или регион для подсветки
+
+    // Подсветка правильного региона/зоны
     const mode = activeLevel?.mode;
     if (mode === "timezone") {
       setCorrectTz(currentQuestion.tz);
     } else if (mode === "region" || mode === "regions-intro") {
       setCorrectRegion(currentQuestion.region);
     }
-    
+
     setFeedback({
       correct,
-      pointsChange: correct ? bonusPoints : -penalty,
       selectedAnswer,
       streak: newStreak,
       message: correct
-        ? (newStreak >= 5 ? "🔥 ОГОНЬ! Двойные очки!" : newStreak >= 3 ? `🔥 ${newStreak} подряд! Бонус!` : buildCorrectMsg(currentQuestion))
+        ? (newStreak >= 5 ? "🔥 ОГОНЬ! Стрик ×5!" : newStreak >= 3 ? `🔥 ${newStreak} подряд!` : buildCorrectMsg(currentQuestion))
         : buildWrongMsg(currentQuestion),
     });
     setScore((prev) => ({
       correct: prev.correct + (correct ? 1 : 0),
       wrong:   prev.wrong   + (correct ? 0 : 1),
       skipped: prev.skipped,
-      points:  Math.max(0, prev.points - (correct ? 0 : penalty) + bonusPoints),
     }));
     recordResult(currentQuestion.stateId, currentQuestion.stateName, correct);
   }, [timer, currentQuestion, activeLevel, showDelta, recordResult, streak, sounds]);
@@ -275,18 +313,15 @@ export default function App() {
       setSelectedState(stateId);
       const correct = stateId === currentQuestion.stateId;
       const clickedState = STATES.find((s) => s.id === stateId);
-      const penalty = hintUsed ? PENALTIES.wrong + PENALTIES.hint : PENALTIES.wrong;
       timer.stop();
-      showDelta(correct ? 0 : -penalty);
       correct ? sounds.correct() : sounds.wrong();
-      // Отмечаем штат на карте
+      if (!correct) { setShakePanel(true); setTimeout(() => setShakePanel(false), 500); }
       setAnsweredStates(prev => ({
         ...prev,
         [currentQuestion.stateId]: correct ? "correct" : "wrong",
       }));
       setFeedback({
         correct,
-        pointsChange: correct ? 0 : -penalty,
         selectedAnswer: stateId,
         message: correct
           ? buildCorrectMsg(currentQuestion)
@@ -296,30 +331,26 @@ export default function App() {
         correct: prev.correct + (correct ? 1 : 0),
         wrong:   prev.wrong   + (correct ? 0 : 1),
         skipped: prev.skipped,
-        points:  Math.max(0, prev.points - (correct ? 0 : penalty)),
       }));
+      if (!correct) { setTimePenalty((prev) => prev + TIME_PENALTY.wrong); showDelta(TIME_PENALTY.wrong, true); }
       recordResult(currentQuestion.stateId, currentQuestion.stateName, correct);
       return;
     }
 
     if (mode === "find-city") {
       setSelectedState(stateId);
-      // Для города правильный штат — тот в котором этот город находится
       const correct = stateId === currentQuestion.stateId;
       const clickedState = STATES.find((s) => s.id === stateId);
       const correctStateName = STATES.find((s) => s.id === currentQuestion.stateId)?.name || currentQuestion.stateId;
-      const penalty = hintUsed ? PENALTIES.wrong + PENALTIES.hint : PENALTIES.wrong;
       timer.stop();
-      showDelta(correct ? 0 : -penalty);
       correct ? sounds.correct() : sounds.wrong();
-      // Отмечаем штат на карте
+      if (!correct) { setShakePanel(true); setTimeout(() => setShakePanel(false), 500); }
       setAnsweredStates(prev => ({
         ...prev,
         [currentQuestion.stateId]: correct ? "correct" : "wrong",
       }));
       setFeedback({
         correct,
-        pointsChange: correct ? 0 : -penalty,
         selectedAnswer: stateId,
         message: correct
           ? `✓ Верно! ${currentQuestion.cityName} — это штат ${correctStateName}.`
@@ -329,38 +360,39 @@ export default function App() {
         correct: prev.correct + (correct ? 1 : 0),
         wrong:   prev.wrong   + (correct ? 0 : 1),
         skipped: prev.skipped,
-        points:  Math.max(0, prev.points - (correct ? 0 : penalty)),
       }));
+      if (!correct) { setTimePenalty((prev) => prev + TIME_PENALTY.wrong); showDelta(TIME_PENALTY.wrong, true); }
       recordResult(currentQuestion.stateId, currentQuestion.cityName, correct);
       return;
     }
-  }, [feedback, activeLevel, currentQuestion, hintUsed, timer, showDelta, recordResult]);
+  }, [feedback, activeLevel, currentQuestion, hintUsed, timer, showDelta, recordResult, sounds]);
 
   // ── Выбор варианта ──
   const handleOptionSelect = useCallback((value) => {
     if (feedback) return;
     const correct = value === currentQuestion.correctAnswer;
-    const penalty = hintUsed ? PENALTIES.wrong + PENALTIES.hint : PENALTIES.wrong;
-    processAnswer(correct, value, penalty);
-  }, [feedback, currentQuestion, hintUsed, processAnswer]);
+    processAnswer(correct, value);
+  }, [feedback, currentQuestion, processAnswer]);
 
   // ── Подсказка ──
+  // На всех уровнях: штраф = +10с к рекорду (очков нет)
+  const HINT_TIME_PENALTY = TIME_PENALTY.hint;
   const handleHint = useCallback(() => {
     if (hintUsed || feedback) return;
     setHintUsed(true);
     setHintText(currentQuestion?.hintText);
-    setScore((prev) => ({ ...prev, points: Math.max(0, prev.points - PENALTIES.hint) }));
-    showDelta(-PENALTIES.hint);
+    setHintCount((prev) => prev + 1);
+    setTimePenalty((prev) => prev + TIME_PENALTY.hint);
+    showDelta(TIME_PENALTY.hint, true);
   }, [hintUsed, feedback, currentQuestion, showDelta]);
 
   // ── Пропустить ──
   const handleSkip = useCallback(() => {
     if (feedback) return;
     timer.stop();
-    showDelta(-PENALTIES.skip);
+    sounds.wrong();
     setFeedback({
       correct: false,
-      pointsChange: -PENALTIES.skip,
       selectedAnswer: null,
       message: `Пропущено. Правильный ответ: ${currentQuestion.stateName || currentQuestion.cityName}`,
     });
@@ -369,32 +401,42 @@ export default function App() {
       ...prev,
       wrong: prev.wrong + 1,
       skipped: prev.skipped + 1,
-      points: Math.max(0, prev.points - PENALTIES.skip),
     }));
+    setTimePenalty((prev) => prev + TIME_PENALTY.skip);
+    showDelta(TIME_PENALTY.skip, true);
     recordResult(currentQuestion.stateId, currentQuestion.stateName, false);
-  }, [feedback, currentQuestion, timer, showDelta, recordResult]);
+  }, [feedback, currentQuestion, timer, sounds, recordResult, showDelta]);
 
   // ── Следующий вопрос ──
   const handleNext = useCallback(() => {
     if (currentIdx + 1 >= activeLevel.questions) {
       timer.stop();
-      // Фиксируем время ДО остановки (elapsed из стейта может не успеть обновиться)
       const elapsed = sessionTimer.startTimeRef
         ? Math.floor((Date.now() - sessionTimer.startTimeRef) / 1000)
         : sessionTimer.elapsed;
       sessionTimer.stop();
       setSessionTime(elapsed);
       sounds.levelComplete();
-      // Считаем XP
+
       const finalScore = score;
-      const pct = Math.round((finalScore.points / maxPoints) * 100);
+      const totalAnswered = finalScore.correct + finalScore.wrong;
+      // Точность = % правильных из всех отвеченных (пропуски — ошибки)
+      const acc = totalAnswered > 0
+        ? Math.round((finalScore.correct / activeLevel.questions) * 100)
+        : 0;
+
+      // XP по точности
       const xpMultiplier = activeLevel.questions >= 50 ? 1.5 : activeLevel.questions <= 15 ? 0.6 : 1.0;
-      const earned = Math.round((activeLevel.xpReward * pct * xpMultiplier) / 100);
+      const earned = Math.round((activeLevel.xpReward * acc * xpMultiplier) / 100);
       setXpEarned(earned);
-      completeLevel(activeLevel.id, pct, finalScore.correct, earned);
-      // Сохраняем рекорд времени если прошёл уровень
-      if (pct >= activeLevel.unlockPct && user?.uid && elapsed > 0) {
-        saveLevelRecord(user.uid, user, activeLevel.id, activeLevel.questions, elapsed);
+
+      // Разблокировка по точности (unlockPct теперь = % правильных из всех вопросов)
+      completeLevel(activeLevel.id, acc, finalScore.correct, earned);
+
+      // Рекорд по времени — суммарный штраф: ошибки + пропуски + таймауты + подсказки
+      const elapsedWithPenalty = elapsed + timePenalty;
+      if (acc >= activeLevel.unlockPct && user?.uid && elapsed > 0) {
+        saveLevelRecord(user.uid, user, activeLevel.id, activeLevel.questions, elapsedWithPenalty);
       }
       setScreen("result");
       return;
@@ -404,7 +446,7 @@ export default function App() {
     setFeedback(null);
     setCorrectTz(null);
     setCorrectRegion(null);
-  }, [currentIdx, activeLevel, score, maxPoints, timer, sessionTimer, completeLevel, user]);
+  }, [currentIdx, activeLevel, score, timer, sessionTimer, completeLevel, user, timePenalty, sounds]);
 
   // ── Рестарт уровня ──
   const handleRestart = useCallback(() => {
@@ -478,16 +520,19 @@ export default function App() {
 
   if (screen === "result") {
     const nextLevel = LEVELS.find((l) => l.id === activeLevel.id + 1);
-    const pct = Math.round((score.points / maxPoints) * 100);
+    const totalAnswered = score.correct + score.wrong;
+    const acc = totalAnswered > 0
+      ? Math.round((score.correct / activeLevel.questions) * 100)
+      : 0;
     return (
       <LevelResult
         level={activeLevel}
         score={score}
-        maxPoints={maxPoints}
+        accuracy={acc}
         xpEarned={xpEarned}
         weakStates={weakStates}
         sessionTime={sessionTime}
-        nextLevel={pct >= activeLevel.unlockPct ? nextLevel : null}
+        nextLevel={acc >= activeLevel.unlockPct ? nextLevel : null}
         onRestart={handleRestart}
         onNextLevel={handleNextLevel}
         onBackToMap={() => setScreen("map")}
@@ -576,28 +621,28 @@ export default function App() {
           />
         </div>
 
-        {/* Очки */}
+        {/* Точность */}
         <div style={{
           display: "flex", alignItems: "center", gap: "4px",
           flexShrink: 0, position: "relative",
         }}>
-          <span style={{ fontSize: "14px" }}>⭐</span>
           <span style={{
-            fontSize: "15px", fontWeight: 800,
-            color: score.points > maxPoints * 0.6 ? activeLevel?.color
-                 : score.points > maxPoints * 0.3 ? "#f97316" : "#ef4444",
+            fontSize: "13px", fontWeight: 800,
+            color: accuracy > 60 ? activeLevel?.color : accuracy > 30 ? "#f97316" : "#ef4444",
           }}>
-            {score.points}
+            {accuracy}%
           </span>
           {pointsDelta && (
             <div key={pointsDelta.key} style={{
               position: "absolute", top: "-18px", right: "0",
               fontSize: "13px", fontWeight: 800,
-              color: pointsDelta.value < 0 ? "#ef4444" : "#22c55e",
+              color: pointsDelta.isTimePenalty ? "#f97316" : "#22c55e",
               animation: "floatUp 1.2s ease-out forwards",
               pointerEvents: "none", whiteSpace: "nowrap",
             }}>
-              {pointsDelta.value === 0 ? "+10" : `${pointsDelta.value > 0 ? "+" : ""}${pointsDelta.value}`}
+              {pointsDelta.isTimePenalty
+                ? `⏱ +${pointsDelta.value}с`
+                : `${pointsDelta.value}`}
             </div>
           )}
         </div>
@@ -838,9 +883,6 @@ export default function App() {
             feedback={feedback}
             score={score}
             total={{ current: currentIdx + 1, max: activeLevel?.questions }}
-            maxPoints={maxPoints}
-            penaltySkip={PENALTIES.skip}
-            penaltyHint={PENALTIES.hint}
             timerLeft={timer.timeLeft}
             timerPct={timer.pct}
             timerColor={timer.color}
