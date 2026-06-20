@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 
 // https://vite.dev/config/
+// deploy: 2024-06-20
 // build: 2026-06-20
 // base '/' — для локального dev и preview
 // для продакшн деплоя на /map-trainer/ используй: vite build --base=/map-trainer/
