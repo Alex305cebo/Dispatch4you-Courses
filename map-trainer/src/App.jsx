@@ -658,7 +658,8 @@ export default function App() {
         const recKey = `${activeLevel?.id}_${activeLevel?.questions}`;
         const rec = levelRecord?.[recKey] || null;
         const fmt = (s) => { const m = Math.floor(s/60); const sec = s%60; return m > 0 ? `${m}:${String(sec).padStart(2,"0")}` : `0:${String(sec).padStart(2,"0")}`; };
-        const isOverRecord = rec?.time && sessionTimer.elapsed > rec.time;
+        const displayTime = sessionTimer.elapsed + timePenalty;
+        const isOverRecord = rec?.time && displayTime > rec.time;
         const isPenaltyFlash = pointsDelta && pointsDelta.isTimePenalty;
         return (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", marginBottom: "8px", flexShrink: 0 }}>
@@ -687,7 +688,7 @@ export default function App() {
                   : isOverRecord ? "0 0 8px rgba(239,68,68,0.5)" : "0 0 8px rgba(34,197,94,0.3)",
                 transition: "color 0.3s, text-shadow 0.3s",
               }}>
-                {fmt(sessionTimer.elapsed)}
+                {fmt(displayTime)}
               </span>
               {/* Анимация штрафа "+Xс" рядом с таймером */}
               {isPenaltyFlash && (
