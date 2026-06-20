@@ -1,0 +1,200 @@
+/* =============================================
+   VIDEO.CSS — Hero Video BG + Scroll-Driven
+   Apple-style scroll video sync
+============================================= */
+
+/* ---- VIDEO HERO BG ---- */
+.video-hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+
+.video-bg-wrap {
+  position: absolute; inset: 0; z-index: 0;
+  overflow: hidden;
+}
+.video-bg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center;
+  will-change: transform;
+}
+/* Dark overlay with gradient */
+.video-bg-overlay {
+  position: absolute; inset: 0; z-index: 1;
+  background:
+    linear-gradient(to bottom,
+      rgba(2,4,10,0.75) 0%,
+      rgba(2,4,10,0.45) 40%,
+      rgba(2,4,10,0.55) 70%,
+      rgba(2,4,10,0.92) 100%),
+    radial-gradient(ellipse at center, transparent 40%, rgba(2,4,10,0.6) 100%);
+}
+/* Cyan tint overlay */
+.video-bg-tint {
+  position: absolute; inset: 0; z-index: 2;
+  background: radial-gradient(ellipse at 30% 50%,
+    rgba(6,182,212,0.08) 0%, transparent 60%);
+  mix-blend-mode: screen;
+}
+/* Scanlines effect */
+.video-scanlines {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.05) 2px,
+    rgba(0,0,0,0.05) 4px
+  );
+  opacity: 0.4;
+}
+
+.video-hero-content {
+  position: relative; z-index: 4;
+  text-align: center; width: 100%;
+}
+
+/* ---- SCROLL-DRIVEN SECTION ---- */
+.scroll-video-section {
+  position: relative;
+  z-index: 1;
+  background: #02040a;
+}
+/* Sticky container — высота определяет длину скролла */
+.scroll-video-sticky-wrap {
+  position: relative;
+  height: 400vh; /* скролл = 4 экрана */
+}
+.scroll-video-sticky {
+  position: sticky; top: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Canvas where we draw video frames */
+#scrollVideoCanvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+/* Overlay for text */
+.scroll-video-overlay {
+  position: absolute; inset: 0; z-index: 2;
+  background: linear-gradient(to bottom,
+    rgba(2,4,10,0.3) 0%,
+    rgba(2,4,10,0.1) 40%,
+    rgba(2,4,10,0.1) 60%,
+    rgba(2,4,10,0.85) 100%);
+}
+
+/* Text panels that change based on scroll */
+.scroll-panels {
+  position: absolute; inset: 0; z-index: 3;
+  display: flex; align-items: center; justify-content: flex-end;
+  padding: 0 clamp(20px,6vw,100px);
+}
+.scroll-panel {
+  max-width: 460px;
+  opacity: 0; transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  position: absolute; right: clamp(20px,6vw,100px);
+  pointer-events: none;
+}
+.scroll-panel.active {
+  opacity: 1; transform: translateY(0);
+  pointer-events: auto;
+}
+.scroll-panel-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: #06b6d4;
+  letter-spacing: 2px; text-transform: uppercase;
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.scroll-panel-num::before {
+  content: ''; width: 24px; height: 1px; background: #06b6d4;
+}
+.scroll-panel-h {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(28px,4vw,50px); font-weight: 800;
+  color: #fff; line-height: 1.1; letter-spacing: -1.5px;
+  margin-bottom: 16px;
+}
+.scroll-panel-p {
+  font-size: 15px; color: rgba(203,213,225,0.8);
+  line-height: 1.7; margin-bottom: 24px;
+}
+.scroll-panel-tag {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 16px; border-radius: 99px;
+  background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.25);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 700; color: #67e8f9;
+}
+
+/* Progress dots */
+.scroll-progress-dots {
+  position: absolute; right: clamp(20px,4vw,60px);
+  top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 10px;
+  z-index: 4;
+}
+.scroll-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  transition: all 0.4s ease; cursor: pointer;
+}
+.scroll-dot.active {
+  background: #06b6d4;
+  box-shadow: 0 0 10px #06b6d4;
+  transform: scale(1.5);
+}
+
+/* Bottom progress bar */
+.scroll-progress-bar-wrap {
+  position: absolute; bottom: 0; left: 0; right: 0; z-index: 4;
+  height: 3px; background: rgba(255,255,255,0.08);
+}
+.scroll-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #06b6d4, #8b5cf6);
+  width: 0%; transition: width 0.1s linear;
+}
+
+/* ---- PARALLAX SECTION ---- */
+.parallax-section {
+  position: relative; z-index: 1; overflow: hidden;
+  min-height: 60vh;
+  display: flex; align-items: center;
+}
+.parallax-video-bg {
+  position: absolute; inset: -20%; z-index: 0;
+  width: 140%; height: 140%;
+  will-change: transform;
+}
+.parallax-video-bg video {
+  width: 100%; height: 100%; object-fit: cover; object-position: center;
+  filter: brightness(0.35) saturate(0.7);
+}
+.parallax-overlay {
+  position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(135deg,
+    rgba(2,4,10,0.85) 0%,
+    rgba(6,182,212,0.08) 50%,
+    rgba(2,4,10,0.85) 100%);
+}
+.parallax-content {
+  position: relative; z-index: 2; width: 100%;
+}
+
+/* ---- RESPONSIVE ---- */
+@media (max-width: 768px) {
+  .scroll-panels { justify-content: center; padding: 0 20px; }
+  .scroll-panel { right: auto; left: 0; right: 0; text-align: center; padding: 0 24px; }
+  .scroll-panel-num { justify-content: center; }
+  .scroll-progress-dots { display: none; }
+  .scroll-video-sticky-wrap { height: 300vh; }
+}

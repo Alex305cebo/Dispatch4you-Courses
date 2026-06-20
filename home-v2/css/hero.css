@@ -1,0 +1,235 @@
+/* =============================================
+   HERO.CSS — Hero Section
+   Style: Aurora UI + Liquid Glass
+   Magic MCP: Particle canvas, typing, aurora bg
+============================================= */
+
+/* ---- BACKGROUND SYSTEM ---- */
+.bg-system {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+}
+
+/* Aurora orbs */
+.bg-orb {
+  position: absolute; border-radius: 50%;
+  filter: blur(90px); will-change: transform;
+  animation: orbFloat 22s ease-in-out infinite;
+}
+.bg-orb-1 {
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(6,182,212,0.14) 0%, transparent 70%);
+  top: -250px; left: -150px; animation-delay: 0s;
+}
+.bg-orb-2 {
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(139,92,246,0.11) 0%, transparent 70%);
+  top: 25%; right: -180px; animation-delay: -8s;
+}
+.bg-orb-3 {
+  width: 800px; height: 800px;
+  background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
+  bottom: -300px; left: 15%; animation-delay: -16s;
+}
+.bg-orb-4 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(249,115,22,0.07) 0%, transparent 70%);
+  top: 60%; right: 25%; animation-delay: -5s;
+  animation-duration: 30s;
+}
+
+/* Dot grid */
+.bg-grid {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: radial-gradient(rgba(6,182,212,0.15) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 85% 85% at 50% 50%, #000 30%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 85% 85% at 50% 50%, #000 30%, transparent 100%);
+}
+
+/* Particle canvas */
+#particleCanvas {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+}
+
+/* ---- HERO SECTION ---- */
+.hero {
+  min-height: calc(100vh - var(--navbar-height));
+  display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+  padding: 80px 0 100px;
+}
+
+.hero-inner {
+  position: relative; z-index: 1;
+  text-align: center;
+  max-width: 940px; margin: 0 auto;
+}
+
+/* ---- LIVE BADGE ---- */
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 8px 20px; border-radius: var(--r-pill);
+  background: linear-gradient(135deg, rgba(6,182,212,0.12), rgba(139,92,246,0.12));
+  border: 1px solid rgba(6,182,212,0.3);
+  font-size: 12px; font-weight: 700; color: #67e8f9;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  margin-bottom: 32px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 0 30px rgba(6,182,212,0.1), inset 0 1px 0 rgba(255,255,255,0.07);
+  animation: heroIn 0.9s var(--ease-out) 0.1s both;
+}
+.hero-badge-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #06b6d4;
+  box-shadow: 0 0 12px #06b6d4;
+  animation: livePulse 1.5s ease infinite;
+}
+@keyframes livePulse {
+  0%,100% { transform:scale(1); box-shadow:0 0 8px #06b6d4; }
+  50%     { transform:scale(1.4); box-shadow:0 0 20px #06b6d4; }
+}
+
+/* ---- HERO TITLE ---- */
+.hero-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(44px, 8vw, 96px);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -3px;
+  color: var(--t1);
+  margin-bottom: 16px;
+  animation: heroIn 0.9s var(--ease-out) 0.2s both;
+}
+.hero-title-row { display: block; }
+.hero-title-grad {
+  display: inline-block;
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 45%, #8b5cf6 90%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradFlow 6s ease infinite;
+  position: relative;
+}
+.hero-title-grad::after {
+  content: '';
+  position: absolute; bottom: -6px; left: 0; right: 0;
+  height: 3px; border-radius: 3px;
+  background: linear-gradient(90deg, #06b6d4, #3b82f6, #8b5cf6);
+  background-size: 200%;
+  animation: shimmerLine 3s ease infinite;
+}
+@keyframes gradFlow {
+  0%,100% { background-position: 0% 50%; }
+  50%     { background-position: 100% 50%; }
+}
+@keyframes shimmerLine {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+/* Cursor typing effect */
+.hero-cursor {
+  display: inline-block;
+  width: 4px; height: clamp(36px, 6vw, 72px);
+  background: #06b6d4;
+  border-radius: 2px;
+  margin-left: 6px;
+  vertical-align: text-bottom;
+  animation: blink 0.8s steps(1) infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ---- HERO SUBTITLE ---- */
+.hero-sub {
+  font-size: clamp(16px, 2.2vw, 21px);
+  color: rgba(226,232,240,0.75);
+  max-width: 660px; margin: 24px auto 0;
+  font-weight: 400; line-height: 1.65;
+  animation: heroIn 0.9s var(--ease-out) 0.35s both;
+}
+
+/* ---- HERO DESCRIPTION BOX ---- */
+.hero-desc {
+  margin: 28px auto 0; max-width: 640px;
+  padding: 18px 28px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--r-md);
+  backdrop-filter: blur(16px);
+  font-size: 14px; color: rgba(203,213,225,0.7);
+  line-height: 1.75;
+  animation: heroIn 0.9s var(--ease-out) 0.45s both;
+}
+
+/* ---- CTA GROUP ---- */
+.hero-cta {
+  display: flex; gap: 14px;
+  justify-content: center; flex-wrap: wrap;
+  margin-top: 40px;
+  animation: heroIn 0.9s var(--ease-out) 0.55s both;
+}
+
+/* ---- STATS ROW ---- */
+.hero-stats {
+  display: flex; align-items: center;
+  justify-content: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 40px;
+  animation: heroIn 0.9s var(--ease-out) 0.65s both;
+}
+.hero-stat {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 16px; border-radius: var(--r-pill);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  font-size: 13px; font-weight: 600; color: var(--t2);
+  backdrop-filter: blur(8px);
+  transition: all var(--t-base) var(--ease);
+}
+.hero-stat:hover {
+  background: rgba(6,182,212,0.08);
+  border-color: rgba(6,182,212,0.25);
+  color: #67e8f9;
+}
+.hero-stat-sep { color: rgba(255,255,255,0.2); font-size: 18px; }
+
+/* ---- SCROLL INDICATOR ---- */
+.scroll-down {
+  position: absolute; bottom: 40px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  color: rgba(148,163,184,0.4);
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+  animation: scrollBounce 2.5s ease-in-out infinite;
+  cursor: pointer; text-decoration: none;
+}
+.scroll-down-line {
+  width: 1px; height: 48px;
+  background: linear-gradient(to bottom, rgba(6,182,212,0.7), transparent);
+}
+@keyframes scrollBounce {
+  0%,100% { opacity:0.4; transform:translateX(-50%) translateY(0); }
+  50%     { opacity:0.9; transform:translateX(-50%) translateY(8px); }
+}
+
+/* ---- HERO ANIMATIONS ---- */
+@keyframes heroIn {
+  from { opacity:0; transform:translateY(36px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ---- RESPONSIVE ---- */
+@media (max-width: 768px) {
+  .hero { padding: 56px 0 80px; min-height: auto; }
+  .hero-title { letter-spacing: -2px; }
+  .hero-desc { padding: 14px 20px; }
+  .hero-stats { gap: 6px; }
+  .hero-stat { font-size: 12px; padding: 6px 12px; }
+  .scroll-down { bottom: 20px; }
+}
+@media (max-width: 480px) {
+  .hero { padding: 40px 0 60px; }
+  .hero-cta { flex-direction: column; align-items: stretch; padding: 0 16px; }
+  .hero-cta .btn { justify-content: center; }
+  .hero-title { letter-spacing: -1.5px; }
+  .hero-cursor { display: none; }
+}

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice-to-Chat</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Заголовок -->
+    <div class="header">
+      <h1>🎤 Voice-to-Chat</h1>
+      <p class="subtitle">Русский → Английский</p>
+    </div>
+
+    <!-- Статус -->
+    <div id="status" class="status ready">
+      ✅ Готов к записи
+    </div>
+
+    <!-- Кнопка помощи -->
+    <button id="helpBtn" class="help-btn" title="Помощь с микрофоном">
+      ❓ Микрофон не работает?
+    </button>
+
+    <!-- НОВАЯ: Кнопка запроса доступа -->
+    <button id="requestAccessBtn" class="request-access-btn" style="display:none;">
+      🔑 РАЗРЕШИТЬ ДОСТУП К МИКРОФОНУ
+    </button>
+
+    <!-- Модальное окно помощи -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>🎤 Как включить микрофон</h2>
+        
+        <div class="help-section">
+          <h3>ШАГ 1: Разрешить в Chrome</h3>
+          <p>Когда нажмёте кнопку записи, Chrome покажет:</p>
+          <div class="help-box">
+            "Voice-to-Chat хочет использовать микрофон"<br>
+            <strong>→ Нажмите "РАЗРЕШИТЬ"</strong>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h3>ШАГ 2: Проверьте иконку в адресной строке</h3>
+          <p>Слева от адреса должна быть иконка микрофона 🎤</p>
+          <p>Если красный крестик ❌ → кликните → выберите "Разрешить"</p>
+        </div>
+
+        <div class="help-section">
+          <h3>ШАГ 3: Настройки Chrome</h3>
+          <button class="help-action-btn" id="openChromeSettings">
+            🔧 Открыть настройки микрофона Chrome
+          </button>
+          <p class="small-text">Проверьте что микрофон разрешён для расширений</p>
+        </div>
+
+        <div class="help-section">
+          <h3>ШАГ 4: Настройки Windows</h3>
+          <button class="help-action-btn" id="openWindowsSettings">
+            🪟 Открыть настройки Windows
+          </button>
+          <p class="small-text">Убедитесь что микрофон включён для браузера</p>
+        </div>
+
+        <div class="help-section success-bg">
+          <h3>✅ Тест микрофона</h3>
+          <button class="help-action-btn" id="testMicrophone">
+            🎤 Протестировать микрофон
+          </button>
+          <div id="testResult" class="test-result"></div>
+        </div>
+
+        <div class="help-section">
+          <h3>💡 Быстрое решение</h3>
+          <ol class="help-list">
+            <li>Перезагрузите расширение (chrome://extensions/ → кнопка ⟳)</li>
+            <li>Перезапустите Chrome</li>
+            <li>Проверьте что микрофон работает в других программах</li>
+            <li>Попробуйте другой браузер (Edge, Brave)</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <!-- Большая кнопка записи -->
+    <button id="recordBtn" class="record-btn">
+      <div class="icon">🔴</div>
+      <div class="text">ЗАЖМИ И ГОВОРИ</div>
+      <div class="hint">(на русском)</div>
+    </button>
+
+    <!-- Результаты -->
+    <div class="results">
+      <!-- Русский текст -->
+      <div class="result-box">
+        <div class="label">📝 Распознано (RU):</div>
+        <textarea id="russianText" readonly placeholder="Здесь появится распознанный текст..."></textarea>
+      </div>
+
+      <!-- Английский перевод -->
+      <div class="result-box">
+        <div class="label">✅ Перевод (EN):</div>
+        <textarea id="englishText" readonly placeholder="Здесь появится английский перевод..."></textarea>
+        <button id="copyBtn" class="copy-btn" disabled>
+          📋 Копировать в буфер
+        </button>
+      </div>
+    </div>
+
+    <!-- Инструкция -->
+    <div class="instruction">
+      💡 Зажми кнопку → Говори → Отпусти → Скопируй
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

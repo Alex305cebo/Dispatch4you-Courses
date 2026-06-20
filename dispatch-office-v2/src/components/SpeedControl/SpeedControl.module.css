@@ -1,0 +1,127 @@
+/* SpeedControl — glassmorphism pill with glow effects */
+
+.pill {
+  display: flex;
+  align-items: stretch;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(10, 15, 30, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  overflow: hidden;
+  height: 34px;
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.pill:hover {
+  border-color: rgba(6, 182, 212, 0.2);
+  box-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(6, 182, 212, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Pause button (left) */
+.pauseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  font-size: 11px;
+  color: rgba(148, 163, 184, 0.8);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.pauseBtn::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 12px;
+  background: transparent;
+  transition: background 0.2s ease;
+}
+
+.pauseBtn:hover {
+  color: #fff;
+}
+
+.pauseBtn:hover::after {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.pauseBtn:active {
+  transform: scale(0.9);
+}
+
+.pauseBtn.paused {
+  color: var(--accent-orange);
+}
+
+.pauseBtn.paused::after {
+  background: rgba(249, 115, 22, 0.12);
+}
+
+/* Divider */
+.divider {
+  width: 1px;
+  margin: 6px 0;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+}
+
+/* Speed button (right) */
+.speedBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent-cyan);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  letter-spacing: -0.3px;
+}
+
+.speedBtn::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 12px;
+  background: transparent;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.speedBtn:hover::after {
+  background: rgba(6, 182, 212, 0.08);
+}
+
+.speedBtn:hover {
+  color: #22d3ee;
+  text-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
+}
+
+.speedBtn:active {
+  transform: scale(0.92);
+}
+
+/* Pulse animation when speed changes */
+@keyframes speedPulse {
+  0% { text-shadow: 0 0 0 rgba(6, 182, 212, 0); }
+  50% { text-shadow: 0 0 12px rgba(6, 182, 212, 0.6); }
+  100% { text-shadow: 0 0 0 rgba(6, 182, 212, 0); }
+}
+
+.speedBtn:active {
+  animation: speedPulse 0.4s ease;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .pill { height: 30px; border-radius: 16px; }
+  .pauseBtn { width: 30px; font-size: 10px; }
+  .speedBtn { padding: 0 10px; font-size: 12px; }
+  .divider { margin: 5px 0; }
+}

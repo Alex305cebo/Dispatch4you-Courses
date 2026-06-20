@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flicker Ghost — 10 вариаций</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#050810;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:clamp(20px,4vw,40px) clamp(12px,3vw,20px)}
+.container{max-width:1100px;margin:0 auto}
+h1{text-align:center;font-size:clamp(20px,4vw,24px);margin-bottom:6px}
+.sub{text-align:center;color:#64748b;font-size:13px;margin-bottom:50px}
+.label{font-size:11px;color:#06b6d4;font-weight:700;margin-bottom:14px;text-transform:uppercase;letter-spacing:1.5px;padding-left:4px}
+.sec{margin-bottom:60px}
+.g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+
+/* Animations */
+@keyframes flicker{0%,100%{opacity:.12}50%{opacity:.28}}
+@keyframes flicker-fast{0%,100%{opacity:.1}30%{opacity:.3}60%{opacity:.15}90%{opacity:.25}}
+@keyframes flicker-slow{0%,100%{opacity:.08}50%{opacity:.22}}
+@keyframes flicker-glitch{0%{opacity:.15;transform:translateY(-50%) translateX(0)}20%{opacity:.25;transform:translateY(-50%) translateX(2px)}40%{opacity:.1;transform:translateY(-50%) translateX(-1px)}60%{opacity:.3;transform:translateY(-50%) translateX(1px)}80%{opacity:.12;transform:translateY(-50%) translateX(-2px)}100%{opacity:.15;transform:translateY(-50%) translateX(0)}}
+@keyframes flicker-scale{0%,100%{opacity:.12;transform:translateY(-50%) scale(1)}50%{opacity:.25;transform:translateY(-50%) scale(1.05)}}
+@keyframes flicker-rotate{0%,100%{opacity:.12;transform:translateY(-50%) rotate(0)}50%{opacity:.22;transform:translateY(-50%) rotate(3deg)}}
+@keyframes ghost-drift{0%,100%{transform:translateY(-50%) translateX(0)}50%{transform:translateY(-50%) translateX(5px)}}
+@keyframes ghost-breathe{0%,100%{filter:blur(6px);opacity:.04}50%{filter:blur(10px);opacity:.1}}
+@keyframes ghost-split{0%,100%{transform:translateY(-50%) translateX(0)}50%{transform:translateY(-50%) translateX(4px)}}
+@keyframes ghost-fade-shift{0%{opacity:.03;transform:translateY(-52%)}50%{opacity:.09;transform:translateY(-48%)}100%{opacity:.03;transform:translateY(-52%)}}
+@keyframes border-pulse{0%,100%{border-color:rgba(255,255,255,.06)}50%{border-color:rgba(6,182,212,.15)}}
+@keyframes subtle-glow{0%,100%{box-shadow:0 0 0 rgba(6,182,212,0)}50%{box-shadow:0 0 20px rgba(6,182,212,.04)}}
+@keyframes bounce-in{0%{transform:scale(.96);opacity:0}100%{transform:scale(1);opacity:1}}
+
+/* Base card */
+.card{position:relative;background:rgba(15,23,42,.85);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:clamp(20px,3vw,28px) clamp(18px,3vw,24px);overflow:hidden;min-height:180px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;transition:all .4s ease;cursor:pointer;animation:bounce-in .5s ease both}
+.card h3{font-size:clamp(15px,2.5vw,18px);font-weight:800;color:#fff;position:relative;z-index:2;line-height:1.3}
+.card p{font-size:clamp(12px,2vw,13px);color:#94a3b8;line-height:1.5;position:relative;z-index:2}
+.card .tag{display:inline-block;font-size:10px;font-weight:700;color:#06b6d4;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.2);border-radius:6px;padding:2px 8px;margin-bottom:4px;position:relative;z-index:2}
+.card .stat{font-size:11px;color:#67e8f9;font-weight:600;margin-top:6px;position:relative;z-index:2}
+.card .icon{position:absolute;top:50%;right:16px;transform:translateY(-50%);width:clamp(65px,12vw,90px);height:clamp(65px,12vw,90px);object-fit:contain;pointer-events:none;transition:all .5s ease}
+.card .ghost{position:absolute;top:50%;right:20px;transform:translateY(-50%);width:clamp(65px,12vw,90px);height:clamp(65px,12vw,90px);object-fit:contain;pointer-events:none}
+
+/* ═══ V1: Classic Flicker — базовый мерцающий ═══ */
+.v1 .icon{opacity:.12;animation:flicker 4s ease-in-out infinite}
+.v1 .ghost{filter:blur(6px);opacity:.05;animation:flicker 4s ease-in-out infinite;animation-delay:2s}
+.v1:hover .icon{opacity:.35;animation:none}
+.v1:hover .ghost{opacity:.12}
+
+/* ═══ V2: Fast Flicker — быстрое нервное мерцание ═══ */
+.v2 .icon{opacity:.1;animation:flicker-fast 2.5s ease-in-out infinite}
+.v2 .ghost{filter:blur(8px);opacity:.04;animation:flicker-fast 2.5s ease-in-out infinite;animation-delay:1s}
+.v2:hover .icon{opacity:.38;animation:none}
+.v2:hover .ghost{opacity:.15;filter:blur(4px)}
+.v2:hover{border-color:rgba(6,182,212,.15)}
+
+/* ═══ V3: Slow Breathe — медленное дыхание ═══ */
+.v3 .icon{opacity:.08;animation:flicker-slow 6s ease-in-out infinite}
+.v3 .ghost{filter:blur(10px);opacity:.03;animation:ghost-breathe 6s ease-in-out infinite}
+.v3:hover .icon{opacity:.3;animation:none}
+.v3:hover .ghost{opacity:.1;filter:blur(6px)}
+.v3{animation:subtle-glow 6s ease-in-out infinite}
+
+/* ═══ V4: Glitch — дёрганый глитч-эффект ═══ */
+.v4 .icon{opacity:.15;animation:flicker-glitch 3s ease-in-out infinite}
+.v4 .ghost{filter:blur(4px);opacity:.06;animation:flicker-glitch 3s ease-in-out infinite;animation-delay:0.3s}
+.v4:hover .icon{opacity:.4;animation:none;transform:translateY(-50%) scale(1.05)}
+.v4:hover .ghost{opacity:.15;filter:blur(3px)}
+.v4:hover{border-color:rgba(139,92,246,.2)}
+
+/* ═══ V5: Scale Pulse — пульсация размером ═══ */
+.v5 .icon{opacity:.12;animation:flicker-scale 4s ease-in-out infinite}
+.v5 .ghost{filter:blur(8px);opacity:.05;animation:flicker-scale 4s ease-in-out infinite;animation-delay:2s;transform-origin:center}
+.v5:hover .icon{opacity:.35;animation:none;transform:translateY(-50%) scale(1.08)}
+.v5:hover .ghost{opacity:.12}
+.v5:hover{box-shadow:0 8px 32px rgba(6,182,212,.05)}
+
+/* ═══ V6: Rotate Tilt — лёгкое покачивание ═══ */
+.v6 .icon{opacity:.12;animation:flicker-rotate 5s ease-in-out infinite}
+.v6 .ghost{filter:blur(7px);opacity:.04;animation:flicker-rotate 5s ease-in-out infinite;animation-delay:2.5s}
+.v6:hover .icon{opacity:.35;animation:none;transform:translateY(-50%) rotate(0)}
+.v6:hover .ghost{opacity:.12;transform:translateY(-50%) rotate(-2deg)}
+
+/* ═══ V7: Drift — призрак смещается в сторону ═══ */
+.v7 .icon{opacity:.15;animation:flicker 4s ease-in-out infinite}
+.v7 .ghost{filter:blur(6px);opacity:.05;animation:ghost-drift 5s ease-in-out infinite}
+.v7:hover .icon{opacity:.38;animation:none}
+.v7:hover .ghost{opacity:.14;animation:none;transform:translateY(-50%) translateX(8px)}
+.v7:hover{border-color:rgba(6,182,212,.12)}
+
+/* ═══ V8: Double Ghost — два призрака (blur + color shift) ═══ */
+.v8 .icon{opacity:.14;animation:flicker 4s ease-in-out infinite}
+.v8 .ghost{filter:blur(6px);opacity:.05;animation:flicker 4s ease-in-out infinite;animation-delay:1.5s}
+.v8 .ghost2{position:absolute;top:50%;right:12px;transform:translateY(-50%);width:clamp(65px,12vw,90px);height:clamp(65px,12vw,90px);object-fit:contain;pointer-events:none;filter:blur(12px) hue-rotate(40deg);opacity:.03;animation:ghost-fade-shift 7s ease-in-out infinite}
+.v8:hover .icon{opacity:.4;animation:none}
+.v8:hover .ghost{opacity:.12}
+.v8:hover .ghost2{opacity:.08}
+
+/* ═══ V9: Split Ghost — призрак раздваивается ═══ */
+.v9 .icon{opacity:.13;animation:flicker 4s ease-in-out infinite}
+.v9 .ghost{filter:blur(5px);opacity:.05;animation:ghost-split 4s ease-in-out infinite}
+.v9 .ghost-left{position:absolute;top:50%;right:24px;transform:translateY(-50%) translateX(-4px);width:clamp(65px,12vw,90px);height:clamp(65px,12vw,90px);object-fit:contain;pointer-events:none;filter:blur(5px);opacity:.04;animation:ghost-split 4s ease-in-out infinite reverse}
+.v9:hover .icon{opacity:.38;animation:none}
+.v9:hover .ghost{opacity:.12;transform:translateY(-50%) translateX(6px)}
+.v9:hover .ghost-left{opacity:.1;transform:translateY(-50%) translateX(-6px)}
+
+/* ═══ V10: Border Pulse + Flicker — граница пульсирует вместе с иконкой ═══ */
+.v10{animation:border-pulse 4s ease-in-out infinite}
+.v10 .icon{opacity:.12;animation:flicker 4s ease-in-out infinite}
+.v10 .ghost{filter:blur(7px);opacity:.04;animation:flicker 4s ease-in-out infinite;animation-delay:2s}
+.v10::after{content:'';position:absolute;top:50%;right:clamp(30px,6vw,50px);transform:translateY(-50%);width:50px;height:50px;border-radius:50%;border:1px solid rgba(6,182,212,.08);animation:flicker 4s ease-in-out infinite;animation-delay:1s;pointer-events:none}
+.v10:hover .icon{opacity:.4;animation:none}
+.v10:hover .ghost{opacity:.14}
+.v10:hover::after{border-color:rgba(6,182,212,.2);width:60px;height:60px}
+.v10:hover{border-color:rgba(6,182,212,.2);animation:none}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Flicker Ghost — 10 вариаций</h1>
+<p class="sub">Один стиль, разные характеры анимации. Наведите на карточку чтобы увидеть hover-эффект.</p>
+
+<div class="sec"><div class="label">1 - Classic Flicker (базовый)</div><div class="g3">
+<div class="card v1"><img class="ghost" src="img/1.png"><img class="icon" src="img/1.png"><span class="tag">AI Practice</span><h3>Реальная практика</h3><p>Тренируйся вести переговоры с брокерами в AI-симуляторе. 50+ сценариев реальных звонков.</p><span class="stat">+120 студентов прошли</span></div>
+<div class="card v1"><img class="ghost" src="img/2.png"><img class="icon" src="img/2.png"><span class="tag">24/7 Support</span><h3>Менторская поддержка</h3><p>Действующие диспетчеры отвечают на вопросы в закрытом чате. Разбор ошибок каждую неделю.</p><span class="stat">Среднее время ответа: 15 мин</span></div>
+<div class="card v1"><img class="ghost" src="img/3.png"><img class="icon" src="img/3.png"><span class="tag">Career</span><h3>Подготовка к карьере</h3><p>Помощь с резюме, подготовка к собеседованию, база вакансий диспетчеров в США.</p><span class="stat">87% находят работу за 2 мес</span></div>
+</div></div>
+
+<div class="sec"><div class="label">2 - Fast Flicker (нервное мерцание)</div><div class="g3">
+<div class="card v2"><img class="ghost" src="img/4.png"><img class="icon" src="img/4.png"><span class="tag">Documents</span><h3>Полная документация</h3><p>Rate Con, BOL, POD, Invoice — все документы с интерактивными примерами и чек-листами.</p><span class="stat">15+ типов документов</span></div>
+<div class="card v2"><img class="ghost" src="img/5.png"><img class="icon" src="img/5.png"><span class="tag">Audio</span><h3>Аудио-обучение</h3><p>Слушай уроки в дороге. Все модули озвучены профессиональными дикторами на русском.</p><span class="stat">12+ часов аудио</span></div>
+<div class="card v2"><img class="ghost" src="img/6.png"><img class="icon" src="img/6.png"><span class="tag">Updates</span><h3>Постоянные обновления</h3><p>Новые правила DOT, изменения ставок, тренды рынка. Обновляется каждый месяц.</p><span class="stat">Обновлено: Май 2026</span></div>
+</div></div>
+
+<div class="sec"><div class="label">3 - Slow Breathe (медленное дыхание)</div><div class="g3">
+<div class="card v3"><img class="ghost" src="img/1.png"><img class="icon" src="img/1.png"><span class="tag">AI Practice</span><h3>Реальная практика</h3><p>Тренируйся вести переговоры с брокерами в AI-симуляторе. 50+ сценариев реальных звонков.</p><span class="stat">+120 студентов прошли</span></div>
+<div class="card v3"><img class="ghost" src="img/2.png"><img class="icon" src="img/2.png"><span class="tag">24/7 Support</span><h3>Менторская поддержка</h3><p>Действующие диспетчеры отвечают на вопросы в закрытом чате. Разбор ошибок каждую неделю.</p><span class="stat">Среднее время ответа: 15 мин</span></div>
+<div class="card v3"><img class="ghost" src="img/3.png"><img class="icon" src="img/3.png"><span class="tag">Career</span><h3>Подготовка к карьере</h3><p>Помощь с резюме, подготовка к собеседованию, база вакансий диспетчеров в США.</p><span class="stat">87% находят работу за 2 мес</span></div>
+</div></div>
+
+<div class="sec"><div class="label">4 - Glitch (дёрганый глитч)</div><div class="g3">
+<div class="card v4"><img class="ghost" src="img/4.png"><img class="icon" src="img/4.png"><span class="tag">Documents</span><h3>Полная документация</h3><p>Rate Con, BOL, POD, Invoice — все документы с интерактивными примерами и чек-листами.</p><span class="stat">15+ типов документов</span></div>
+<div class="card v4"><img class="ghost" src="img/5.png"><img class="icon" src="img/5.png"><span class="tag">Audio</span><h3>Аудио-обучение</h3><p>Слушай уроки в дороге. Все модули озвучены профессиональными дикторами на русском.</p><span class="stat">12+ часов аудио</span></div>
+<div class="card v4"><img class="ghost" src="img/6.png"><img class="icon" src="img/6.png"><span class="tag">Updates</span><h3>Постоянные обновления</h3><p>Новые правила DOT, изменения ставок, тренды рынка. Обновляется каждый месяц.</p><span class="stat">Обновлено: Май 2026</span></div>
+</div></div>
+
+<div class="sec"><div class="label">5 - Scale Pulse (пульсация размером)</div><div class="g3">
+<div class="card v5"><img class="ghost" src="img/1.png"><img class="icon" src="img/1.png"><span class="tag">AI Practice</span><h3>Реальная практика</h3><p>Тренируйся вести переговоры с брокерами в AI-симуляторе. 50+ сценариев реальных звонков.</p><span class="stat">+120 студентов прошли</span></div>
+<div class="card v5"><img class="ghost" src="img/2.png"><img class="icon" src="img/2.png"><span class="tag">24/7 Support</span><h3>Менторская поддержка</h3><p>Действующие диспетчеры отвечают на вопросы в закрытом чате. Разбор ошибок каждую неделю.</p><span class="stat">Среднее время ответа: 15 мин</span></div>
+<div class="card v5"><img class="ghost" src="img/3.png"><img class="icon" src="img/3.png"><span class="tag">Career</span><h3>Подготовка к карьере</h3><p>Помощь с резюме, подготовка к собеседованию, база вакансий диспетчеров в США.</p><span class="stat">87% находят работу за 2 мес</span></div>
+</div></div>
+
+<div class="sec"><div class="label">6 - Rotate Tilt (покачивание)</div><div class="g3">
+<div class="card v6"><img class="ghost" src="img/4.png"><img class="icon" src="img/4.png"><span class="tag">Documents</span><h3>Полная документация</h3><p>Rate Con, BOL, POD, Invoice — все документы с интерактивными примерами и чек-листами.</p><span class="stat">15+ типов документов</span></div>
+<div class="card v6"><img class="ghost" src="img/5.png"><img class="icon" src="img/5.png"><span class="tag">Audio</span><h3>Аудио-обучение</h3><p>Слушай уроки в дороге. Все модули озвучены профессиональными дикторами на русском.</p><span class="stat">12+ часов аудио</span></div>
+<div class="card v6"><img class="ghost" src="img/6.png"><img class="icon" src="img/6.png"><span class="tag">Updates</span><h3>Постоянные обновления</h3><p>Новые правила DOT, изменения ставок, тренды рынка. Обновляется каждый месяц.</p><span class="stat">Обновлено: Май 2026</span></div>
+</div></div>
+
+<div class="sec"><div class="label">7 - Drift (призрак уплывает в сторону)</div><div class="g3">
+<div class="card v7"><img class="ghost" src="img/1.png"><img class="icon" src="img/1.png"><span class="tag">AI Practice</span><h3>Реальная практика</h3><p>Тренируйся вести переговоры с брокерами в AI-симуляторе. 50+ сценариев реальных звонков.</p><span class="stat">+120 студентов прошли</span></div>
+<div class="card v7"><img class="ghost" src="img/2.png"><img class="icon" src="img/2.png"><span class="tag">24/7 Support</span><h3>Менторская поддержка</h3><p>Действующие диспетчеры отвечают на вопросы в закрытом чате. Разбор ошибок каждую неделю.</p><span class="stat">Среднее время ответа: 15 мин</span></div>
+<div class="card v7"><img class="ghost" src="img/3.png"><img class="icon" src="img/3.png"><span class="tag">Career</span><h3>Подготовка к карьере</h3><p>Помощь с резюме, подготовка к собеседованию, база вакансий диспетчеров в США.</p><span class="stat">87% находят работу за 2 мес</span></div>
+</div></div>
+
+<div class="sec"><div class="label">8 - Double Ghost (два призрака + hue shift)</div><div class="g3">
+<div class="card v8"><img class="ghost" src="img/4.png"><img class="ghost2" src="img/4.png"><img class="icon" src="img/4.png"><span class="tag">Documents</span><h3>Полная документация</h3><p>Rate Con, BOL, POD, Invoice — все документы с интерактивными примерами и чек-листами.</p><span class="stat">15+ типов документов</span></div>
+<div class="card v8"><img class="ghost" src="img/5.png"><img class="ghost2" src="img/5.png"><img class="icon" src="img/5.png"><span class="tag">Audio</span><h3>Аудио-обучение</h3><p>Слушай уроки в дороге. Все модули озвучены профессиональными дикторами на русском.</p><span class="stat">12+ часов аудио</span></div>
+<div class="card v8"><img class="ghost" src="img/6.png"><img class="ghost2" src="img/6.png"><img class="icon" src="img/6.png"><span class="tag">Updates</span><h3>Постоянные обновления</h3><p>Новые правила DOT, изменения ставок, тренды рынка. Обновляется каждый месяц.</p><span class="stat">Обновлено: Май 2026</span></div>
+</div></div>
+
+<div class="sec"><div class="label">9 - Split Ghost (призрак раздваивается)</div><div class="g3">
+<div class="card v9"><img class="ghost" src="img/1.png"><img class="ghost-left" src="img/1.png"><img class="icon" src="img/1.png"><span class="tag">AI Practice</span><h3>Реальная практика</h3><p>Тренируйся вести переговоры с брокерами в AI-симуляторе. 50+ сценариев реальных звонков.</p><span class="stat">+120 студентов прошли</span></div>
+<div class="card v9"><img class="ghost" src="img/2.png"><img class="ghost-left" src="img/2.png"><img class="icon" src="img/2.png"><span class="tag">24/7 Support</span><h3>Менторская поддержка</h3><p>Действующие диспетчеры отвечают на вопросы в закрытом чате. Разбор ошибок каждую неделю.</p><span class="stat">Среднее время ответа: 15 мин</span></div>
+<div class="card v9"><img class="ghost" src="img/3.png"><img class="ghost-left" src="img/3.png"><img class="icon" src="img/3.png"><span class="tag">Career</span><h3>Подготовка к карьере</h3><p>Помощь с резюме, подготовка к собеседованию, база вакансий диспетчеров в США.</p><span class="stat">87% находят работу за 2 мес</span></div>
+</div></div>
+
+<div class="sec"><div class="label">10 - Border Pulse (граница пульсирует вместе)</div><div class="g3">
+<div class="card v10"><img class="ghost" src="img/4.png"><img class="icon" src="img/4.png"><span class="tag">Documents</span><h3>Полная документация</h3><p>Rate Con, BOL, POD, Invoice — все документы с интерактивными примерами и чек-листами.</p><span class="stat">15+ типов документов</span></div>
+<div class="card v10"><img class="ghost" src="img/5.png"><img class="icon" src="img/5.png"><span class="tag">Audio</span><h3>Аудио-обучение</h3><p>Слушай уроки в дороге. Все модули озвучены профессиональными дикторами на русском.</p><span class="stat">12+ часов аудио</span></div>
+<div class="card v10"><img class="ghost" src="img/6.png"><img class="icon" src="img/6.png"><span class="tag">Updates</span><h3>Постоянные обновления</h3><p>Новые правила DOT, изменения ставок, тренды рынка. Обновляется каждый месяц.</p><span class="stat">Обновлено: Май 2026</span></div>
+</div></div>
+
+</div>
+</body>
+</html>
