@@ -15,6 +15,7 @@ import {
   getDoc,
   getDocFromServer,
   setDoc,
+  deleteDoc,
   collection,
   getDocs,
   getDocsFromServer,
@@ -152,6 +153,21 @@ export async function saveLevelRecord(uid, userData, levelId, questionCount, tim
     return false;
   } catch (err) {
     console.warn("[mapTrainer] Save level record failed:", err.message);
+    return false;
+  }
+}
+
+// ── Удалить все рекорды (сброс при смене логики) ─────────────
+export async function clearAllLevelRecords() {
+  try {
+    const snap = await getDocsFromServer(collection(db, "levelRecords"));
+    const deletes = [];
+    snap.forEach((d) => deletes.push(deleteDoc(d.ref)));
+    await Promise.all(deletes);
+    console.log(`[mapTrainer] Очищено ${deletes.length} рекордов`);
+    return true;
+  } catch (err) {
+    console.warn("[mapTrainer] Clear records failed:", err.message);
     return false;
   }
 }
