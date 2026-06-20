@@ -56,6 +56,9 @@
 
 | Оригинал | Как писать |
 |---|---|
+| trucking | тракинг |
+| trucker | тракер |
+| truck | трак |
 | Rate Con | рейт кон |
 | Load Board | лоуд борд |
 | Owner-operator | оунер оператор |
