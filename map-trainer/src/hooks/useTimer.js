@@ -11,6 +11,7 @@ export function useTimer(seconds, onExpire) {
   const [paused, setPaused]     = useState(false);
   const intervalRef = useRef(null);
   const onExpireRef = useRef(onExpire);
+  const maxSecondsRef = useRef(seconds); // текущий максимум (меняется при startWith)
   onExpireRef.current = onExpire;
 
   const clear = () => {
@@ -22,10 +23,20 @@ export function useTimer(seconds, onExpire) {
 
   const start = useCallback(() => {
     if (!seconds) return;
+    maxSecondsRef.current = seconds;
     setTimeLeft(seconds);
     setRunning(true);
     setPaused(false);
   }, [seconds]);
+
+  const startWith = useCallback((n) => {
+    if (!n) return;
+    clear();
+    maxSecondsRef.current = n;
+    setTimeLeft(n);
+    setRunning(true);
+    setPaused(false);
+  }, []);
 
   const stop = useCallback(() => {
     clear();
@@ -54,7 +65,7 @@ export function useTimer(seconds, onExpire) {
   }, [seconds]);
 
   useEffect(() => {
-    if (!running || !seconds || paused) return;
+    if (!running || paused) return;
     clear();
     intervalRef.current = setInterval(() => {
       setTimeLeft((t) => {
@@ -69,13 +80,13 @@ export function useTimer(seconds, onExpire) {
       });
     }, 1000);
     return clear;
-  }, [running, seconds, paused]);
+  }, [running, paused]); // убрали seconds — теперь работает и с startWith
 
-  // Процент оставшегося времени
-  const pct = seconds ? (timeLeft / seconds) * 100 : 100;
+  // Процент от текущего максимума (меняется при startWith)
+  const pct = maxSecondsRef.current ? (timeLeft / maxSecondsRef.current) * 100 : 100;
   const color = pct > 50 ? "#22c55e" : pct > 25 ? "#f97316" : "#ef4444";
 
-  return { timeLeft, pct, color, start, stop, reset, pause, resume, running, paused };
+  return { timeLeft, pct, color, start, startWith, stop, reset, pause, resume, running, paused };
 }
 
 // ── Секундомер сессии (считает вверх) ─────────────────────────

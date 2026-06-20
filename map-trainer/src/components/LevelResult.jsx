@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { LEVELS } from "../data/levels";
 
 export default function LevelResult({
   level,
   score,
-  maxPoints,
+  accuracy,          // % правильных из всех вопросов уровня
   xpEarned,
   weakStates,
   sessionTime = 0,
@@ -13,21 +12,31 @@ export default function LevelResult({
   onBackToMap,
   nextLevel,
 }) {
-  // Форматирование времени: 125 → "2м 05с"
   function formatTime(s) {
     if (!s) return "—";
     const m = Math.floor(s / 60);
     const sec = s % 60;
     return m > 0 ? `${m}м ${String(sec).padStart(2, "0")}с` : `${sec}с`;
   }
-  const pct = Math.round((score.points / maxPoints) * 100);
-  const passed = pct >= level.unlockPct;
-  const totalAnswered = score.correct + score.wrong;
-  const accuracy = totalAnswered > 0 ? Math.round((score.correct / totalAnswered) * 100) : 0;
 
-  // Анимация XP счётчика
+  const passed = accuracy >= level.unlockPct;
+  const totalAnswered = score.correct + score.wrong;
+  const answerAccuracy = totalAnswered > 0 ? Math.round((score.correct / totalAnswered) * 100) : 0;
+
+  // Оценка по точности
+  const grade =
+    accuracy >= 90 ? { letter: "S", color: "#f59e0b", label: "Идеально!", emoji: "🏆" } :
+    accuracy >= 75 ? { letter: "A", color: "#22c55e", label: "Отлично!", emoji: "🌟" } :
+    accuracy >= 60 ? { letter: "B", color: "#06b6d4", label: "Хорошо!", emoji: "👍" } :
+    accuracy >= 40 ? { letter: "C", color: "#f97316", label: "Неплохо", emoji: "💪" } :
+                     { letter: "D", color: "#ef4444", label: "Попробуй ещё", emoji: "📚" };
+
+  const accColor = accuracy >= 70 ? "#22c55e" : accuracy >= 40 ? "#f97316" : "#ef4444";
+
+  // Анимация XP
   const [displayXp, setDisplayXp] = useState(0);
   useEffect(() => {
+    if (!xpEarned) return;
     let start = 0;
     const step = Math.ceil(xpEarned / 30);
     const timer = setInterval(() => {
@@ -38,30 +47,21 @@ export default function LevelResult({
     return () => clearInterval(timer);
   }, [xpEarned]);
 
-  const grade =
-    pct >= 90 ? { letter: "S", color: "#f59e0b", label: "Идеально!", emoji: "🏆" } :
-    pct >= 75 ? { letter: "A", color: "#22c55e", label: "Отлично!", emoji: "🌟" } :
-    pct >= 60 ? { letter: "B", color: "#06b6d4", label: "Хорошо!", emoji: "👍" } :
-    pct >= 40 ? { letter: "C", color: "#f97316", label: "Неплохо", emoji: "💪" } :
-                { letter: "D", color: "#ef4444", label: "Попробуй ещё", emoji: "📚" };
-
-  const barColor = pct > 60 ? "#06b6d4" : pct > 30 ? "#f97316" : "#ef4444";
-
-  // Советы на основе результата
+  // Советы
   const tips = [];
   if (score.skipped > 3) tips.push("Старайся не пропускать — даже неправильный ответ учит лучше.");
-  if (accuracy < 60) tips.push("Повтори слабые штаты перед следующей попыткой.");
-  if (accuracy >= 80 && pct < 90) tips.push("Отличная точность! Попробуй быстрее для максимума очков.");
-  if (pct >= 90) tips.push("Ты мастер! Попробуй следующий уровень.");
-  if (weakStates?.length > 3) tips.push("Сфокусируйся на восточных штатах — они самые сложные.");
+  if (answerAccuracy < 60) tips.push("Повтори слабые штаты перед следующей попыткой.");
+  if (accuracy >= 90 && sessionTime > 0) tips.push("Отличная точность! Попробуй побить свой рекорд по времени.");
+  if (passed && nextLevel) tips.push(`Открыт следующий уровень: ${nextLevel.title} +${nextLevel.xpReward} XP`);
+  if (weakStates?.length > 3) tips.push("Обрати внимание на мелкие штаты востока — они самые сложные.");
 
-  // Достижения за этот раунд
+  // Достижения
   const achievements = [];
   if (score.correct >= 15) achievements.push({ icon: "🎯", text: "Снайпер — 15+ правильных" });
   if (score.skipped === 0) achievements.push({ icon: "💎", text: "Без пропусков" });
-  if (accuracy >= 90) achievements.push({ icon: "🧠", text: "Точность 90%+" });
-  if (pct >= 90) achievements.push({ icon: "⭐", text: "Почти идеально!" });
+  if (answerAccuracy >= 90) achievements.push({ icon: "🧠", text: "Точность 90%+" });
   if (score.wrong === 0) achievements.push({ icon: "🏆", text: "Без единой ошибки!" });
+  if (sessionTime > 0 && sessionTime < 120) achievements.push({ icon: "⚡", text: "Быстрее 2 минут!" });
 
   return (
     <div className="level-result-root" style={{
@@ -85,18 +85,14 @@ export default function LevelResult({
             border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px",
             color: "#94a3b8", fontSize: "13px", fontWeight: 600,
             cursor: "pointer", touchAction: "manipulation",
-          }}>
-            ← Уровни
-          </button>
+          }}>← Уровни</button>
           <div style={{ display: "flex", gap: "6px" }}>
             <button onClick={onRestart} style={{
               padding: "8px 14px", background: "rgba(255,255,255,0.06)",
               border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px",
               color: "#e2e8f0", fontSize: "13px", fontWeight: 600,
               cursor: "pointer", touchAction: "manipulation",
-            }}>
-              🔄 Ещё раз
-            </button>
+            }}>🔄 Ещё раз</button>
             {passed && nextLevel && (
               <button onClick={onNextLevel} style={{
                 padding: "8px 14px",
@@ -105,23 +101,17 @@ export default function LevelResult({
                 color: "#fff", fontSize: "13px", fontWeight: 700,
                 cursor: "pointer", touchAction: "manipulation",
                 boxShadow: `0 2px 10px rgba(${level.colorRgb},0.3)`,
-              }}>
-                Далее →
-              </button>
+              }}>Далее →</button>
             )}
           </div>
         </div>
 
-        {/* ── Главная карточка результата ── */}
+        {/* ── Главная карточка ── */}
         <div style={{
           background: "rgba(255,255,255,0.04)",
           border: `1px solid rgba(${level.colorRgb},0.25)`,
-          borderRadius: "16px",
-          padding: "18px",
-          marginBottom: "10px",
-          textAlign: "center",
-          position: "relative",
-          overflow: "hidden",
+          borderRadius: "16px", padding: "18px", marginBottom: "10px",
+          textAlign: "center", position: "relative", overflow: "hidden",
         }}>
           {/* Фоновое свечение */}
           <div style={{
@@ -131,8 +121,8 @@ export default function LevelResult({
             pointerEvents: "none",
           }} />
 
-          {/* Заголовок + оценка */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", marginBottom: "12px", position: "relative" }}>
+          {/* Оценка + заголовок */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", marginBottom: "14px", position: "relative" }}>
             <div style={{
               width: "52px", height: "52px", borderRadius: "50%",
               border: `3px solid ${grade.color}`,
@@ -140,10 +130,8 @@ export default function LevelResult({
               fontSize: "22px", fontWeight: 900, color: grade.color,
               background: `${grade.color}15`,
               boxShadow: `0 0 20px ${grade.color}33`,
-              animation: "resultPulse 2s ease-in-out infinite",
-            }}>
-              {grade.letter}
-            </div>
+              animation: "resultPulse 2s ease-in-out infinite", flexShrink: 0,
+            }}>{grade.letter}</div>
             <div style={{ textAlign: "left" }}>
               <p style={{ fontSize: "11px", color: "#64748b", margin: 0 }}>Уровень {level.id} · {level.title}</p>
               <p style={{ fontSize: "20px", fontWeight: 800, color: "#fff", margin: "2px 0 0 0" }}>
@@ -152,31 +140,51 @@ export default function LevelResult({
             </div>
           </div>
 
-          {/* Очки */}
-          <div style={{ marginBottom: "12px", position: "relative" }}>
-            <p style={{ fontSize: "36px", fontWeight: 900, color: barColor, margin: "0 0 6px 0", lineHeight: 1 }}>
-              {score.points}<span style={{ fontSize: "16px", color: "#475569" }}> / {maxPoints}</span>
+          {/* Точность — главная метрика */}
+          <div style={{ marginBottom: "14px", position: "relative" }}>
+            <p style={{ fontSize: "11px", color: "#64748b", margin: "0 0 4px 0", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              Точность
             </p>
-            <div style={{ height: "6px", background: "rgba(255,255,255,0.08)", borderRadius: "3px", overflow: "hidden", marginBottom: "4px" }}>
-              <div style={{ height: "100%", width: `${pct}%`, background: barColor, borderRadius: "3px", transition: "width 0.8s ease" }} />
+            <p style={{ fontSize: "42px", fontWeight: 900, color: accColor, margin: "0 0 6px 0", lineHeight: 1 }}>
+              {accuracy}<span style={{ fontSize: "20px", color: "#475569" }}>%</span>
+            </p>
+            <div style={{ height: "6px", background: "rgba(255,255,255,0.08)", borderRadius: "3px", overflow: "hidden", marginBottom: "6px" }}>
+              <div style={{ height: "100%", width: `${accuracy}%`, background: `linear-gradient(90deg, ${accColor}99, ${accColor})`, borderRadius: "3px", transition: "width 1s ease" }} />
             </div>
-            <p style={{ fontSize: "12px", color: "#94a3b8", margin: 0 }}>{pct}% · Точность {accuracy}%</p>
+            <p style={{ fontSize: "12px", color: "#94a3b8", margin: 0 }}>
+              {score.correct} из {level.questions} вопросов
+            </p>
           </div>
 
-          {/* Статус + XP */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", flexWrap: "wrap" }}>
+          {/* Время + XP в одну строку */}
+          <div style={{ display: "flex", alignItems: "stretch", gap: "8px", marginBottom: "12px" }}>
+            <div style={{
+              flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: "10px", padding: "10px", textAlign: "center",
+            }}>
+              <p style={{ fontSize: "10px", color: "#64748b", margin: "0 0 3px 0", textTransform: "uppercase", letterSpacing: "0.06em" }}>Время</p>
+              <p style={{ fontSize: "18px", fontWeight: 800, color: "#e2e8f0", margin: 0 }}>⏱ {formatTime(sessionTime)}</p>
+            </div>
+            <div style={{
+              flex: 1, background: `rgba(${level.colorRgb},0.08)`, border: `1px solid rgba(${level.colorRgb},0.2)`,
+              borderRadius: "10px", padding: "10px", textAlign: "center",
+            }}>
+              <p style={{ fontSize: "10px", color: "#64748b", margin: "0 0 3px 0", textTransform: "uppercase", letterSpacing: "0.06em" }}>Опыт</p>
+              <p style={{ fontSize: "18px", fontWeight: 800, color: level.color, margin: 0 }}>⭐ +{displayXp} XP</p>
+            </div>
+          </div>
+
+          {/* Статус прохождения */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
             {passed ? (
-              <span style={{ fontSize: "12px", color: "#22c55e", fontWeight: 700, background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "6px", padding: "4px 10px" }}>
-                ✓ Пройден {nextLevel ? `→ ${nextLevel.title}` : ""}
+              <span style={{ fontSize: "13px", color: "#22c55e", fontWeight: 700, background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "8px", padding: "6px 14px" }}>
+                ✓ Уровень пройден {nextLevel ? `→ открыт ${nextLevel.title}` : ""}
               </span>
             ) : (
-              <span style={{ fontSize: "12px", color: "#ef4444", fontWeight: 700, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "6px", padding: "4px 10px" }}>
-                Нужно {level.unlockPct}%
+              <span style={{ fontSize: "13px", color: "#ef4444", fontWeight: 700, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "8px", padding: "6px 14px" }}>
+                Нужно {level.unlockPct}% · у тебя {accuracy}%
               </span>
             )}
-            <span style={{ fontSize: "13px", fontWeight: 800, color: level.color, background: `rgba(${level.colorRgb},0.1)`, border: `1px solid rgba(${level.colorRgb},0.25)`, borderRadius: "6px", padding: "4px 10px" }}>
-              ⭐ +{displayXp} XP
-            </span>
           </div>
         </div>
 
@@ -200,15 +208,10 @@ export default function LevelResult({
         {/* ── Достижения ── */}
         {achievements.length > 0 && (
           <div style={{
-            background: "rgba(245,158,11,0.06)",
-            border: "1px solid rgba(245,158,11,0.15)",
-            borderRadius: "12px",
-            padding: "10px 14px",
-            marginBottom: "10px",
+            background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)",
+            borderRadius: "12px", padding: "10px 14px", marginBottom: "10px",
           }}>
-            <p style={{ fontSize: "12px", fontWeight: 700, color: "#fbbf24", margin: "0 0 6px 0" }}>
-              🏅 Достижения:
-            </p>
+            <p style={{ fontSize: "12px", fontWeight: 700, color: "#fbbf24", margin: "0 0 6px 0" }}>🏅 Достижения:</p>
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
               {achievements.map((a, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -223,11 +226,8 @@ export default function LevelResult({
         {/* ── Слабые штаты ── */}
         {weakStates && weakStates.length > 0 && (
           <div style={{
-            background: "rgba(239,68,68,0.05)",
-            border: "1px solid rgba(239,68,68,0.12)",
-            borderRadius: "12px",
-            padding: "10px 14px",
-            marginBottom: "10px",
+            background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.12)",
+            borderRadius: "12px", padding: "10px 14px", marginBottom: "10px",
           }}>
             <p style={{ fontSize: "12px", fontWeight: 700, color: "#ef4444", margin: "0 0 6px 0" }}>
               📌 Повтори эти штаты:
@@ -236,8 +236,7 @@ export default function LevelResult({
               {weakStates.map((s) => (
                 <span key={s.id} style={{
                   fontSize: "12px", color: "#e2e8f0",
-                  background: "rgba(239,68,68,0.1)",
-                  border: "1px solid rgba(239,68,68,0.2)",
+                  background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)",
                   padding: "4px 8px", borderRadius: "6px",
                 }}>
                   {s.name} <span style={{ color: "#ef4444", fontSize: "10px" }}>×{s.wrong}</span>
@@ -250,62 +249,44 @@ export default function LevelResult({
         {/* ── Советы ── */}
         {tips.length > 0 && (
           <div style={{
-            background: "rgba(6,182,212,0.05)",
-            border: "1px solid rgba(6,182,212,0.12)",
-            borderRadius: "12px",
-            padding: "10px 14px",
-            marginBottom: "10px",
+            background: "rgba(6,182,212,0.05)", border: "1px solid rgba(6,182,212,0.12)",
+            borderRadius: "12px", padding: "10px 14px", marginBottom: "10px",
           }}>
-            <p style={{ fontSize: "12px", fontWeight: 700, color: "#06b6d4", margin: "0 0 6px 0" }}>
-              💡 Совет:
-            </p>
+            <p style={{ fontSize: "12px", fontWeight: 700, color: "#06b6d4", margin: "0 0 6px 0" }}>💡 Советы:</p>
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
               {tips.map((t, i) => (
-                <p key={i} style={{ fontSize: "12px", color: "#94a3b8", margin: 0, lineHeight: 1.4 }}>
-                  {t}
-                </p>
+                <p key={i} style={{ fontSize: "12px", color: "#94a3b8", margin: 0, lineHeight: 1.4 }}>{t}</p>
               ))}
             </div>
           </div>
         )}
 
-        {/* ── Информация об уровне ── */}
+        {/* ── Параметры уровня ── */}
         <div style={{
-          background: "rgba(255,255,255,0.03)",
-          border: "1px solid rgba(255,255,255,0.06)",
-          borderRadius: "12px",
-          padding: "10px 14px",
-          marginBottom: "20px",
+          background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+          borderRadius: "12px", padding: "10px 14px", marginBottom: "20px",
         }}>
-          <p style={{ fontSize: "12px", fontWeight: 700, color: "#64748b", margin: "0 0 6px 0" }}>
-            📊 Об уровне:
-          </p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
-            <div>
-              <p style={{ fontSize: "10px", color: "#475569", margin: 0 }}>Вопросов</p>
-              <p style={{ fontSize: "13px", color: "#e2e8f0", fontWeight: 700, margin: 0 }}>{level.questions}</p>
-            </div>
-            <div>
-              <p style={{ fontSize: "10px", color: "#475569", margin: 0 }}>Время на вопрос</p>
-              <p style={{ fontSize: "13px", color: "#e2e8f0", fontWeight: 700, margin: 0 }}>{level.timePerQ ? `${level.timePerQ}с` : "∞"}</p>
-            </div>
-            <div>
-              <p style={{ fontSize: "10px", color: "#475569", margin: 0 }}>Для прохождения</p>
-              <p style={{ fontSize: "13px", color: "#e2e8f0", fontWeight: 700, margin: 0 }}>{level.unlockPct}%</p>
-            </div>
-            <div>
-              <p style={{ fontSize: "10px", color: "#475569", margin: 0 }}>Макс. XP</p>
-              <p style={{ fontSize: "13px", color: "#e2e8f0", fontWeight: 700, margin: 0 }}>{level.xpReward}</p>
-            </div>
+          <p style={{ fontSize: "12px", fontWeight: 700, color: "#64748b", margin: "0 0 8px 0" }}>📊 Параметры уровня:</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+            {[
+              { label: "Вопросов", value: level.questions },
+              { label: "Время / вопрос", value: level.timePerQ ? `${level.timePerQ}с` : "без лимита" },
+              { label: "Порог прохождения", value: `${level.unlockPct}%` },
+              { label: "Макс. опыт", value: `${level.xpReward} XP` },
+            ].map((item) => (
+              <div key={item.label}>
+                <p style={{ fontSize: "10px", color: "#475569", margin: "0 0 1px 0" }}>{item.label}</p>
+                <p style={{ fontSize: "13px", color: "#e2e8f0", fontWeight: 700, margin: 0 }}>{item.value}</p>
+              </div>
+            ))}
           </div>
         </div>
 
       </div>
-
       <style>{`
         @keyframes resultPulse {
-          0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(0,0,0,0.2); }
-          50% { transform: scale(1.05); box-shadow: 0 0 25px rgba(0,0,0,0.3); }
+          0%, 100% { transform: scale(1); }
+          50%       { transform: scale(1.05); }
         }
       `}</style>
     </div>

@@ -34,9 +34,6 @@ export default function QuizPanel({
   feedback,
   score,
   total,
-  maxPoints,
-  penaltySkip,
-  penaltyHint,
   // Таймер
   timerLeft,
   timerPct,
@@ -60,8 +57,10 @@ export default function QuizPanel({
   quizReady = true,
   onStartQuiz,
 }) {
-  const pct = score.points / maxPoints;
-  const barColor = pct > 0.6 ? (level?.color || "#06b6d4") : pct > 0.3 ? "#f97316" : "#ef4444";
+  // Точность прямо здесь
+  const answered = (score?.correct || 0) + (score?.wrong || 0);
+  const accuracy = answered > 0 ? Math.round(((score?.correct || 0) / answered) * 100) : 100;
+  const accColor = accuracy >= 70 ? (level?.color || "#06b6d4") : accuracy >= 40 ? "#f97316" : "#ef4444";
   const isMapClick = mode === "find-state" || mode === "find-city";
 
   const [showPronunciation, setShowPronunciation] = useState(false);
@@ -182,7 +181,7 @@ export default function QuizPanel({
 
       {/* ═══ Карточка вопроса: таймер + текст ═══ */}
       <div className="qp-question-card">
-        {/* Одна строка: таймер + счёт */}
+        {/* Одна строка: таймер + точность */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "5px" }}>
           <div style={{ flex: 1 }}>
             <TimerBar
@@ -197,9 +196,7 @@ export default function QuizPanel({
               {total.current}/{total.max}
             </span>
             {" "}
-            <span style={{ fontSize: "12px", color: "#22c55e", fontWeight: 700 }}>✓{score.correct}</span>
-            {" "}
-            <span style={{ fontSize: "12px", color: "#ef4444", fontWeight: 700 }}>✗{score.wrong}</span>
+            <span style={{ fontSize: "12px", fontWeight: 700, color: accColor }}>{accuracy}%</span>
           </div>
         </div>
 
@@ -286,12 +283,14 @@ export default function QuizPanel({
         <div style={{ display: "flex", gap: "8px" }}>
           {!hintUsed && !level?.noHints && (
             <button onClick={onHint} className="qp-action-btn qp-hint-btn">
-              💡 −{penaltyHint}pts
+              <span className="qp-btn-label">💡 Подсказка</span>
+              <span className="qp-btn-sub">+10 сек к времени</span>
             </button>
           )}
           {!level?.noSkip && (
             <button onClick={onSkip} className="qp-action-btn qp-skip-btn">
-              Пропустить −{penaltySkip}pts
+              <span className="qp-btn-label">⏭ Пропустить</span>
+              <span className="qp-btn-sub">считается ошибкой</span>
             </button>
           )}
         </div>

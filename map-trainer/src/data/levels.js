@@ -16,6 +16,7 @@ export const LEVELS = [
     timePerQ: null,       // без таймера на первом уровне
     unlockPct: 60,
     xpReward: 100,
+    hintIsTime: true,     // подсказка = +10с к рекорду, не -pts
     description: "Название штата появляется — кликни на карте. Начинаем с крупных, потом мелкие на востоке.",
   },
   {
