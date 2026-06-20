@@ -78,48 +78,44 @@ export default function USAMap({
   // Позиции для auto-zoom (translate при zoom 2.0, относительно центра карты)
   const NORTHEAST_ZOOM = { zoom: 2.0, tx: -180, ty: -60 };
 
-  // Auto-zoom при смене вопроса на мелкий штат
+  // Auto-zoom при смене вопроса — центрируем любой штат
   const prevAutoZoomRef = useRef(null);
   useEffect(() => {
     if (!autoZoomState || autoZoomState === prevAutoZoomRef.current) return;
     prevAutoZoomRef.current = autoZoomState;
 
-    if (SMALL_STATES.has(autoZoomState)) {
-      // Зумим на конкретный штат
-      const stateCenter = STATE_CENTERS[autoZoomState];
-      if (!stateCenter) return;
+    const stateCenter = STATE_CENTERS[autoZoomState];
+    if (!stateCenter) return;
 
-      const [w, h] = containerRef.current
-        ? [containerRef.current.clientWidth, containerRef.current.clientHeight]
-        : [800, 500];
-      
-      const z = NORTHEAST_ZOOM.zoom;
-      
-      // Вычисляем смещение чтобы центр штата оказался в центре экрана
-      // ComposableMap использует Albers USA projection со scale 1120
-      // Нужно перевести lon/lat в пиксельные координаты проекции
-      // Для упрощения используем готовые смещения для Northeast региона
-      // но корректируем их относительно конкретного штата
-      const NORTHEAST_CENTER_LON = -72; // примерный центр Northeast
-      const NORTHEAST_CENTER_LAT = 42;
-      
-      // Вычисляем относительное смещение штата от центра Northeast
-      const [stateLon, stateLat] = stateCenter;
-      const lonOffset = (stateLon - NORTHEAST_CENTER_LON) * 12; // множитель для пикселей
-      const latOffset = (stateLat - NORTHEAST_CENTER_LAT) * 12;
-      
-      // Базовое смещение для Northeast + корректировка на конкретный штат
-      const tx = (w * 0.25 * -1) - lonOffset;
-      const ty = (h * 0.15 * -1) - latOffset;
-      
-      setZoom(z);
-      setTranslate([tx, ty]);
-    } else if (zoom > 1.05) {
-      // Сбрасываем зум для обычных штатов
-      setZoom(1);
-      setTranslate([0, 0]);
-    }
-  }, [autoZoomState, zoom]); // eslint-disable-line
+    const [w, h] = containerRef.current
+      ? [containerRef.current.clientWidth, containerRef.current.clientHeight]
+      : [800, 500];
+
+    // Мелкие штаты — зумим ближе
+    const isSmall = SMALL_STATES.has(autoZoomState);
+    const z = isSmall ? 2.2 : 1.4;
+
+    // Вычисляем смещение чтобы штат оказался по центру
+    // Albers USA projection: scale 1120, center примерно [-96, 38]
+    // Маппим lon/lat → примерные пиксели от центра карты
+    const [stateLon, stateLat] = stateCenter;
+    const projCenterLon = -96;
+    const projCenterLat = 38;
+    
+    // Коэффициенты перевода градусов в пиксели (приблизительные для Albers USA scale 1120)
+    const pxPerDegLon = w / 60;  // ~60 градусов видимой ширины
+    const pxPerDegLat = h / 28;  // ~28 градусов видимой высоты
+    
+    const statePxX = (stateLon - projCenterLon) * pxPerDegLon;
+    const statePxY = (projCenterLat - stateLat) * pxPerDegLat; // инвертировано (Y вниз)
+    
+    // Смещение чтобы центрировать штат: сдвигаем карту так чтобы штат оказался в центре viewport
+    const tx = -statePxX * (z - 1);
+    const ty = -statePxY * (z - 1);
+    
+    setZoom(z);
+    setTranslate([tx, ty]);
+  }, [autoZoomState]); // eslint-disable-line
 
   const touchRef = useRef({
     lastTap:   0,
