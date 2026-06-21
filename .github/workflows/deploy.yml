@@ -19,6 +19,7 @@ jobs:
       site: ${{ steps.filter.outputs.site }}
       game: ${{ steps.filter.outputs.game }}
       maptrainer: ${{ steps.filter.outputs.maptrainer }}
+      academy: ${{ steps.filter.outputs.academy }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -48,6 +49,12 @@ jobs:
               - '__/**'
             game:
               - 'adventure/**'
+            academy:
+              - 'dispatch-academy-app/src/**'
+              - 'dispatch-academy-app/public/**'
+              - 'dispatch-academy-app/index.html'
+              - 'dispatch-academy-app/vite.config.ts'
+              - 'dispatch-academy-app/package.json'
             maptrainer:
               - 'map-trainer/src/**'
               - 'map-trainer/public/**'
@@ -294,3 +301,63 @@ jobs:
             exit 1
           fi
           echo "✅ states-10m.json OK (HTTP $STATUS)"
+
+  # ─── 4. Dispatch Academy (React/Vite) → /dispatch-academy-app/ ────
+  deploy-academy:
+    name: Build & deploy Dispatch Academy
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.academy == 'true' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+        working-directory: dispatch-academy-app
+
+      - name: Build
+        run: npx vite build
+        working-directory: dispatch-academy-app
+        env:
+          NODE_ENV: production
+
+      - name: Add .htaccess for SPA routing
+        run: |
+          cat > dispatch-academy-app/dist/.htaccess << 'EOF'
+          Options -MultiViews
+          RewriteEngine On
+          RewriteBase /dispatch-academy-app/
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule ^ index.html [L]
+          EOF
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Deploy to /dispatch-academy-app/ (with retry)
+        run: |
+          for i in 1 2 3; do
+            echo "Deploy attempt $i..."
+            rsync -avzrc --delete \
+              -e "ssh -o StrictHostKeyChecking=no -o ConnectTimeout=60 -p ${{ secrets.SSH_PORT }} -i ~/.ssh/deploy_key" \
+              dispatch-academy-app/dist/ \
+              ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:~/domains/dispatch4you.com/public_html/dispatch-academy-app/ \
+              && echo "✅ Deploy successful" && exit 0
+            echo "⚠️ Attempt $i failed, waiting 20s..."
+            sleep 20
+          done
+          echo "❌ Deploy failed after 3 attempts"
+          exit 1

@@ -1,0 +1,157 @@
+{
+  "dayId": 15,
+  "weekId": 3,
+  "title": "Клиентский сервис и коммуникации",
+  "estimatedMinutes": 40,
+  "tasks": [
+    {
+      "id": "d15-t1",
+      "type": "quiz",
+      "title": "Основы клиентского сервиса",
+      "data": {
+        "question": "Какой главный принцип коммуникации диспетчера с брокерами и водителями?",
+        "options": [
+          "Отвечать только когда удобно диспетчеру",
+          "Проактивно сообщать обновления заранее",
+          "Общаться только по email и SMS",
+          "Никогда не сообщать плохие новости"
+        ],
+        "correctIndex": 1,
+        "explanation": "Проактивная коммуникация — золотое правило диспетчерства. Сообщайте статус загрузки/доставки, предупреждайте о задержках заранее. Это строит доверие и репутацию."
+      }
+    },
+    {
+      "id": "d15-t2",
+      "type": "quiz",
+      "title": "Обновления статуса",
+      "data": {
+        "question": "Когда нужно отправлять Check Call (обновление статуса) брокеру?",
+        "options": [
+          "Только когда брокер сам звонит",
+          "При pickup, каждые 4-6 часов, при delivery",
+          "Только при доставке груза получателю",
+          "Раз в день утром по расписанию"
+        ],
+        "correctIndex": 1,
+        "explanation": "Стандартный график Check Calls: при загрузке, каждые 4-6 часов в transit, при доставке. А также НЕМЕДЛЕННО при любых задержках, проблемах или изменениях."
+      }
+    },
+    {
+      "id": "d15-t3",
+      "type": "phone-dialog",
+      "title": "Сообщение о задержке доставки",
+      "data": {
+        "turns": [
+          {
+            "speaker": "npc",
+            "text": "National Freight, this is Jennifer.",
+            "replies": [
+              {
+                "text": "Hi Jennifer, this is dispatch from Swift Transport regarding load #NF-4492. I need to give you an update — we're running about 2 hours behind schedule due to heavy traffic near Nashville. Current ETA is 6 PM instead of 4 PM.",
+                "isCorrect": true,
+                "feedback": "Отлично! Вы сразу представились, назвали номер груза, объяснили причину задержки и дали новый ETA. Профессиональный Check Call."
+              },
+              {
+                "text": "Hey, we might be a little late. Not sure when exactly.",
+                "isCorrect": false,
+                "feedback": "Слишком расплывчато. Брокер должен знать конкретный номер груза, причину задержки и новый ETA."
+              },
+              {
+                "text": "Подождать и позвонить когда водитель приедет на место",
+                "isCorrect": false,
+                "feedback": "Нельзя ждать! Брокер должен знать о задержке ЗАРАНЕЕ, чтобы предупредить получателя. Звоните сразу при обнаружении проблемы."
+              }
+            ]
+          },
+          {
+            "speaker": "npc",
+            "text": "OK thanks for the heads up. The receiver closes at 7 PM, so 6 PM should still work. Can you make sure the driver sends me a text when he's 30 minutes out?",
+            "replies": [
+              {
+                "text": "Absolutely, I'll make sure the driver texts you at 5:30 PM. And I'll send you another update if anything changes. Thanks for understanding, Jennifer.",
+                "isCorrect": true,
+                "feedback": "Правильно! Подтвердили запрос, обозначили конкретное время и предложили дополнительные обновления. Это строит доверие."
+              },
+              {
+                "text": "OK I'll try.",
+                "isCorrect": false,
+                "feedback": "'I'll try' не внушает уверенности. Давайте конкретные обещания и выполняйте их."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "d15-t4",
+      "type": "email-sim",
+      "title": "Жалоба от брокера",
+      "data": {
+        "senderName": "Mark Stevens — Global Freight Solutions",
+        "subject": "URGENT: Driver missed delivery appointment!",
+        "body": "Your driver was 3 hours late to delivery yesterday on load GFS-9901. The receiver refused the load and now we have to reschedule. My customer is furious.\n\nThis is unacceptable. We need:\n1. Explanation of what happened\n2. Guarantee this won't happen again\n3. Confirmation of new delivery appointment\n\nPlease respond ASAP.\n\n— Mark",
+        "responses": [
+          {
+            "text": "Ответить: 'Not our fault — there was traffic.' Без дополнительных деталей",
+            "isCorrect": false,
+            "feedback": "Это непрофессиональный ответ. Нужно взять ответственность, объяснить причину и предложить решение."
+          },
+          {
+            "text": "Ответить с объяснением, извинением и конкретным планом: 'Mark, I apologize for the late delivery. Our driver experienced a mechanical issue that caused the delay. We're confirming a new appointment for tomorrow 8 AM and will ensure on-time delivery. I'll personally monitor this load.'",
+            "isCorrect": true,
+            "feedback": "Правильно! Профессиональный ответ: извинение, объяснение причины, конкретный план решения и личная ответственность. Это сохраняет отношения."
+          },
+          {
+            "text": "Проигнорировать письмо до завтра",
+            "isCorrect": false,
+            "feedback": "URGENT письмо требует немедленного ответа. Задержка только усугубит конфликт и может стоить вам партнёра."
+          }
+        ]
+      }
+    },
+    {
+      "id": "d15-t5",
+      "type": "crisis",
+      "title": "Водитель отказывается от груза",
+      "data": {
+        "scenario": "Водитель приехал на pickup и звонит: 'Здесь написано Hazmat на документах, у меня нет Hazmat endorsement! Я не могу это везти!' Вы уже подтвердили груз брокеру. До pickup appointment осталось 30 минут.",
+        "timeLimitSeconds": 60,
+        "options": [
+          {
+            "text": "Сказать водителю везти как есть — разберёмся потом",
+            "isCorrect": false,
+            "explanation": "Перевозка Hazmat без endorsement — федеральное нарушение! Штрафы, потеря CDL, уголовная ответственность. Категорически запрещено."
+          },
+          {
+            "text": "Немедленно позвонить брокеру: объяснить ситуацию, предложить другого водителя с Hazmat endorsement если есть, или помочь найти замену. Документ в Rate Con не указывал Hazmat — это ошибка брокера",
+            "isCorrect": true,
+            "explanation": "Правильно! Безопасность и закон — приоритет. Сообщите брокеру немедленно. Если в Rate Con не было указано Hazmat — это ошибка брокера, и TONU charge вам не грозит."
+          },
+          {
+            "text": "Отменить груз и не звонить брокеру",
+            "isCorrect": false,
+            "explanation": "Нужно связаться с брокером немедленно! Отмена без уведомления — непрофессионально и может привести к штрафу."
+          },
+          {
+            "text": "Попросить водителя подождать и искать замену 2 часа",
+            "isCorrect": false,
+            "explanation": "Не заставляйте водителя ждать. Первый шаг — позвонить брокеру и объяснить ситуацию. Решение должно быть совместным."
+          }
+        ]
+      }
+    },
+    {
+      "id": "d15-t6",
+      "type": "fill-blank",
+      "title": "Правила коммуникации",
+      "data": {
+        "sentence": "Диспетчер должен отправлять ___ брокеру при pickup, каждые 4-6 часов в пути и при ___. О задержках сообщать ___.",
+        "blanks": [
+          { "correctAnswer": "Check Call", "wordBank": ["Check Call", "Invoice", "Rate Con", "BOL"] },
+          { "correctAnswer": "delivery", "wordBank": ["delivery", "обеде", "заправке", "отдыхе"] },
+          { "correctAnswer": "заранее", "wordBank": ["заранее", "потом", "никогда", "через неделю"] }
+        ]
+      }
+    }
+  ]
+}

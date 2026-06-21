@@ -1,0 +1,111 @@
+{
+  "dayId": 11,
+  "weekId": 3,
+  "title": "Invoicing: выставление счетов",
+  "estimatedMinutes": 40,
+  "tasks": [
+    {
+      "id": "d11-t1",
+      "type": "quiz",
+      "title": "Основы Invoice",
+      "data": {
+        "question": "Какие документы необходимо приложить к Invoice для получения оплаты?",
+        "options": [
+          "Только сам Invoice без приложений",
+          "Invoice + Rate Con + BOL + POD",
+          "Только POD с подписью получателя",
+          "Водительские права и страховой полис"
+        ],
+        "correctIndex": 1,
+        "explanation": "Для получения оплаты нужен полный пакет: Invoice, подписанный Rate Con, BOL и POD с подписью получателя. Без полного пакета брокер имеет право задержать оплату."
+      }
+    },
+    {
+      "id": "d11-t2",
+      "type": "quiz",
+      "title": "Сроки оплаты",
+      "data": {
+        "question": "Каков стандартный срок оплаты (Net Terms) в грузоперевозках?",
+        "options": [
+          "Моментальная оплата при доставке груза",
+          "Net 7 — оплата через семь дней",
+          "Net 30 — оплата через тридцать дней",
+          "Net 90 — оплата через девяносто дней"
+        ],
+        "correctIndex": 2,
+        "explanation": "Стандартный срок оплаты в индустрии — Net 30 (30 дней после получения invoice). Некоторые брокеры предлагают Quick Pay (2-5 дней) за дополнительную комиссию 2-3%."
+      }
+    },
+    {
+      "id": "d11-t3",
+      "type": "calculator",
+      "title": "Расчёт Invoice с Detention",
+      "data": {
+        "problem": "Рассчитайте общую сумму Invoice с detention pay.",
+        "context": "Ставка по Rate Con: $2,100. Detention на pickup: 3 часа (free time 2 часа, ставка detention $75/час). Рассчитайте полную сумму Invoice.",
+        "correctAnswer": 2175,
+        "tolerancePercent": 2,
+        "unit": "$"
+      }
+    },
+    {
+      "id": "d11-t4",
+      "type": "document-review",
+      "title": "Проверка Invoice перед отправкой",
+      "data": {
+        "documentType": "rate-con",
+        "fields": [
+          { "id": "inv-1", "label": "Invoice Number", "value": "INV-2024-0156", "hasError": false },
+          { "id": "inv-2", "label": "Load Reference", "value": "GFS-2024-8821", "hasError": false },
+          { "id": "inv-3", "label": "Carrier Name", "value": "Swift Transport LLC", "hasError": false },
+          { "id": "inv-4", "label": "Rate Amount", "value": "$1,530.00", "hasError": true, "errorExplanation": "Ставка по Rate Con была $1,630. В Invoice указана неверная сумма — на $100 меньше. Всегда сверяйте Invoice с Rate Con." },
+          { "id": "inv-5", "label": "Detention Charge", "value": "$75.00 (1 hr beyond free time)", "hasError": false },
+          { "id": "inv-6", "label": "Total Due", "value": "$1,605.00", "hasError": true, "errorExplanation": "Total должен быть $1,630 + $75 = $1,705. Ошибка в базовой ставке привела к неправильному итогу." },
+          { "id": "inv-7", "label": "Payment Terms", "value": "Net 30", "hasError": false },
+          { "id": "inv-8", "label": "Remit To", "value": "Swift Transport LLC, Account #****4521", "hasError": false }
+        ]
+      }
+    },
+    {
+      "id": "d11-t5",
+      "type": "email-sim",
+      "title": "Отправка Invoice брокеру",
+      "data": {
+        "senderName": "Вы → Accounting Dept (Global Freight Solutions)",
+        "subject": "Invoice for Load GFS-2024-8821",
+        "body": "Нужно отправить Invoice брокеру за выполненную перевозку. Груз доставлен вовремя, POD получен. Выберите правильный подход к отправке:",
+        "responses": [
+          {
+            "text": "Отправить только Invoice без приложений",
+            "isCorrect": false,
+            "feedback": "Без полного пакета документов (Rate Con, BOL, POD) брокер вернёт Invoice и попросит приложить все документы. Это задержит оплату."
+          },
+          {
+            "text": "Отправить полный пакет: Invoice + signed Rate Con + BOL + POD. В теме письма указать номер загрузки. В теле — сумма и реквизиты для оплаты",
+            "isCorrect": true,
+            "feedback": "Правильно! Полный пакет документов ускоряет обработку. Чёткая тема письма и реквизиты в теле — профессиональный стандарт."
+          },
+          {
+            "text": "Позвонить и попросить оплату устно",
+            "isCorrect": false,
+            "feedback": "Устные договорённости не имеют юридической силы. Всегда отправляйте Invoice официально в письменном виде с полным пакетом документов."
+          }
+        ]
+      }
+    },
+    {
+      "id": "d11-t6",
+      "type": "drag-match",
+      "title": "Документы для оплаты",
+      "data": {
+        "pairs": [
+          { "term": "Invoice", "definition": "Счёт от перевозчика брокеру за оказанные услуги" },
+          { "term": "Rate Con", "definition": "Подтверждение ставки — доказательство согласованной цены" },
+          { "term": "BOL", "definition": "Накладная — подтверждает получение груза на pickup" },
+          { "term": "POD", "definition": "Подтверждение доставки с подписью получателя" },
+          { "term": "Detention Invoice", "definition": "Отдельный счёт за время ожидания сверх нормы" }
+        ]
+      }
+    }
+  ]
+}

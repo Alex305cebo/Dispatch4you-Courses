@@ -1,0 +1,127 @@
+{
+  "dayId": 9,
+  "weekId": 2,
+  "title": "Процесс диспетчеризации: от загрузки до доставки",
+  "estimatedMinutes": 45,
+  "tasks": [
+    {
+      "id": "d9-t1",
+      "type": "quiz",
+      "title": "Этапы перевозки",
+      "data": {
+        "question": "Какой правильный порядок этапов перевозки груза?",
+        "options": [
+          "Delivery → Pickup → Invoice → Rate Con",
+          "Rate Con → Pickup → Transit → Delivery → Invoice",
+          "Invoice → Pickup → Delivery → Rate Con",
+          "Pickup → Rate Con → Invoice → Delivery"
+        ],
+        "correctIndex": 1,
+        "explanation": "Правильный порядок: 1) Подписание Rate Con, 2) Pickup (загрузка), 3) Transit (перевозка), 4) Delivery (разгрузка), 5) Получение POD, 6) Выставление Invoice."
+      }
+    },
+    {
+      "id": "d9-t2",
+      "type": "quiz",
+      "title": "Обязанности на Pickup",
+      "data": {
+        "question": "Что водитель обязан проверить при загрузке (Pickup)?",
+        "options": [
+          "Только подписать BOL и уехать сразу",
+          "Количество палет, состояние, BOL, seal number",
+          "Проверить только вес груза на весах",
+          "Сфотографировать склад снаружи и внутри"
+        ],
+        "correctIndex": 1,
+        "explanation": "На Pickup водитель обязан: проверить количество палет, осмотреть состояние груза, сверить BOL с фактическим грузом, записать seal number и сфотографировать загрузку."
+      }
+    },
+    {
+      "id": "d9-t3",
+      "type": "phone-dialog",
+      "title": "Координация с водителем на Pickup",
+      "data": {
+        "turns": [
+          {
+            "speaker": "npc",
+            "text": "Hey boss, I'm at the pickup location but the dock is full. They say I need to wait 2 hours. What should I do?",
+            "replies": [
+              {
+                "text": "OK, wait the 2 hours and call me when loaded.",
+                "isCorrect": false,
+                "feedback": "2 часа ожидания — это потенциальный detention. Нужно задокументировать время прибытия и уведомить брокера."
+              },
+              {
+                "text": "Note your arrival time — I'll call the broker to let them know about the delay. If wait exceeds 2 hours, we may request detention pay. Keep me updated.",
+                "isCorrect": true,
+                "feedback": "Правильно! Зафиксировать время прибытия, уведомить брокера и подготовить основание для detention pay если ожидание затянется."
+              },
+              {
+                "text": "Leave and find another load.",
+                "isCorrect": false,
+                "feedback": "Нельзя просто уехать от подтверждённого груза. Это нарушение Rate Con и может привести к TONU и порче отношений с брокером."
+              }
+            ]
+          },
+          {
+            "speaker": "npc",
+            "text": "OK, noted my check-in time: 8:15 AM. They just told me it might be closer to 3 hours now. This is getting ridiculous.",
+            "replies": [
+              {
+                "text": "I hear you. I'm calling the broker now to discuss detention. Most Rate Cons allow 2 hours free time, after that it's detention pay. Stay patient, document everything.",
+                "isCorrect": true,
+                "feedback": "Правильно! Стандартное free time — 2 часа. После этого начисляется detention pay ($50-75/час). Документация — ключ к получению оплаты."
+              },
+              {
+                "text": "Just wait, there's nothing we can do.",
+                "isCorrect": false,
+                "feedback": "Нужно действовать! Связаться с брокером и потребовать detention pay. Бездействие = потеря денег."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "d9-t4",
+      "type": "email-sim",
+      "title": "Уведомление брокера о задержке",
+      "data": {
+        "senderName": "Вы → Mark (Global Freight Solutions)",
+        "subject": "Re: Load GFS-2024-8821 — Detention Notice",
+        "body": "Вам нужно отправить email брокеру Mark о задержке на pickup. Водитель прибыл в 8:15 AM, а загрузка началась только в 11:30 AM (3 часа 15 минут ожидания). Rate Con предусматривает 2 часа free time.\n\nВыберите наиболее профессиональный ответ:",
+        "responses": [
+          {
+            "text": "Отправить формальное уведомление: 'Hi Mark, driver arrived 8:15 AM, loaded at 11:30 AM. Detention: 1h15m beyond 2h free time. Requesting detention pay per Rate Con terms. Documentation attached.'",
+            "isCorrect": true,
+            "feedback": "Правильно! Чёткое, профессиональное уведомление с фактами: время прибытия, время загрузки, расчёт detention. Обязательно приложите документацию."
+          },
+          {
+            "text": "Написать гневное письмо о потерянном времени",
+            "isCorrect": false,
+            "feedback": "Эмоциональные письма непрофессиональны. Используйте факты и ссылки на условия Rate Con."
+          },
+          {
+            "text": "Не писать ничего и забыть о detention",
+            "isCorrect": false,
+            "feedback": "Без письменного уведомления вы теряете основание для detention pay. Всегда документируйте задержки в письменном виде."
+          }
+        ]
+      }
+    },
+    {
+      "id": "d9-t5",
+      "type": "drag-match",
+      "title": "Этапы перевозки и документы",
+      "data": {
+        "pairs": [
+          { "term": "Rate Con", "definition": "Подписывается до загрузки" },
+          { "term": "BOL", "definition": "Выдаётся на pickup при загрузке" },
+          { "term": "POD", "definition": "Подписывается получателем при delivery" },
+          { "term": "Invoice", "definition": "Отправляется после доставки для оплаты" },
+          { "term": "Detention Notice", "definition": "Подаётся при задержке свыше free time" }
+        ]
+      }
+    }
+  ]
+}

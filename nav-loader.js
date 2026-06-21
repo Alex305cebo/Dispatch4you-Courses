@@ -218,11 +218,11 @@
         if (overlay) overlay.classList.add('active');
         document.body.style.overflow = 'hidden';
         
-        // Автоматически раскрываем первую секцию "Курс обучения"
+        // Автоматически раскрываем секцию "Инструменты"
         setTimeout(function() {
-            var firstAccordion = document.querySelector('.mob-acc');
-            if (firstAccordion && !firstAccordion.classList.contains('open')) {
-                firstAccordion.classList.add('open');
+            var toolsAccordion = document.querySelector('.mob-acc[data-section="tools"]');
+            if (toolsAccordion && !toolsAccordion.classList.contains('open')) {
+                toolsAccordion.classList.add('open');
             }
         }, 100);
     }
