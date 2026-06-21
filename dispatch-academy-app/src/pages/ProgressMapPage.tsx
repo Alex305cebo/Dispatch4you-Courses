@@ -191,7 +191,7 @@ export default function ProgressMapPage() {
       >
         {/* Background image */}
         <img
-          src="/maps/week-1.jpg"
+          src="/dispatch-academy-app/maps/week-1.jpg"
           alt="Карта прогресса"
           className="absolute inset-0 w-full h-full object-fill select-none pointer-events-none"
           draggable={false}
@@ -344,7 +344,7 @@ export default function ProgressMapPage() {
                   <div className="w-28 h-28 lg:w-40 lg:h-40 rounded-2xl overflow-hidden border-2 border-cyan-500/30 shadow-lg shadow-cyan-500/10">
                     <video
                       className="w-full h-full object-cover"
-                      src="/videos/student-avatar.mp4"
+                      src="/dispatch-academy-app/videos/student-avatar.mp4"
                       autoPlay
                       loop
                       muted

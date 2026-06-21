@@ -116,7 +116,7 @@ const router = createBrowserRouter([
       },
     ],
   },
-], { basename: import.meta.env.BASE_URL.replace(/\/$/, '') || '/' });
+], { basename: '/dispatch-academy-app' });
 
 function App() {
   return (
