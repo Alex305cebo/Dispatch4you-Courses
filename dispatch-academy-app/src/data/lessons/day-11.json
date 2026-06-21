@@ -1,110 +1,156 @@
-{
+﻿{
   "dayId": 11,
   "weekId": 3,
-  "title": "Invoicing: выставление счетов",
-  "estimatedMinutes": 40,
+  "title": "Комплексный тест — всё вместе",
+  "estimatedMinutes": 22,
   "tasks": [
     {
       "id": "d11-t1",
-      "type": "quiz",
-      "title": "Основы Invoice",
-      "data": {
-        "question": "Какие документы необходимо приложить к Invoice для получения оплаты?",
-        "options": [
-          "Только сам Invoice без приложений",
-          "Invoice + Rate Con + BOL + POD",
-          "Только POD с подписью получателя",
-          "Водительские права и страховой полис"
-        ],
-        "correctIndex": 1,
-        "explanation": "Для получения оплаты нужен полный пакет: Invoice, подписанный Rate Con, BOL и POD с подписью получателя. Без полного пакета брокер имеет право задержать оплату."
-      }
-    },
-    {
-      "id": "d11-t2",
-      "type": "quiz",
-      "title": "Сроки оплаты",
-      "data": {
-        "question": "Каков стандартный срок оплаты (Net Terms) в грузоперевозках?",
-        "options": [
-          "Моментальная оплата при доставке груза",
-          "Net 7 — оплата через семь дней",
-          "Net 30 — оплата через тридцать дней",
-          "Net 90 — оплата через девяносто дней"
-        ],
-        "correctIndex": 2,
-        "explanation": "Стандартный срок оплаты в индустрии — Net 30 (30 дней после получения invoice). Некоторые брокеры предлагают Quick Pay (2-5 дней) за дополнительную комиссию 2-3%."
-      }
-    },
-    {
-      "id": "d11-t3",
       "type": "calculator",
-      "title": "Расчёт Invoice с Detention",
+      "title": "Комплексный расчёт рейса",
       "data": {
-        "problem": "Рассчитайте общую сумму Invoice с detention pay.",
-        "context": "Ставка по Rate Con: $2,100. Detention на pickup: 3 часа (free time 2 часа, ставка detention $75/час). Рассчитайте полную сумму Invoice.",
-        "correctAnswer": 2175,
-        "tolerancePercent": 2,
+        "problem": "Рассчитайте чистую прибыль за рейс с учётом всех расходов",
+        "context": "Груз: Nashville, TN → Miami, FL. Ставка: $2,850. Расстояние: 890 миль. Deadhead до pickup: 60 миль. Расход: 6.2 миль/галлон. Дизель: $3.75/галлон. Tolls: $35. Dispatcher fee: 8%. Рассчитайте чистую прибыль (ставка минус топливо за ВСЕ мили, минус tolls, минус dispatcher fee).",
+        "correctAnswer": 2158.27,
+        "tolerancePercent": 3,
         "unit": "$"
       }
     },
     {
-      "id": "d11-t4",
-      "type": "document-review",
-      "title": "Проверка Invoice перед отправкой",
+      "id": "d11-t2",
+      "type": "phone-dialog",
+      "title": "Сложные переговоры с HOS pressure",
       "data": {
-        "documentType": "rate-con",
-        "fields": [
-          { "id": "inv-1", "label": "Invoice Number", "value": "INV-2024-0156", "hasError": false },
-          { "id": "inv-2", "label": "Load Reference", "value": "GFS-2024-8821", "hasError": false },
-          { "id": "inv-3", "label": "Carrier Name", "value": "Swift Transport LLC", "hasError": false },
-          { "id": "inv-4", "label": "Rate Amount", "value": "$1,530.00", "hasError": true, "errorExplanation": "Ставка по Rate Con была $1,630. В Invoice указана неверная сумма — на $100 меньше. Всегда сверяйте Invoice с Rate Con." },
-          { "id": "inv-5", "label": "Detention Charge", "value": "$75.00 (1 hr beyond free time)", "hasError": false },
-          { "id": "inv-6", "label": "Total Due", "value": "$1,605.00", "hasError": true, "errorExplanation": "Total должен быть $1,630 + $75 = $1,705. Ошибка в базовой ставке привела к неправильному итогу." },
-          { "id": "inv-7", "label": "Payment Terms", "value": "Net 30", "hasError": false },
-          { "id": "inv-8", "label": "Remit To", "value": "Swift Transport LLC, Account #****4521", "hasError": false }
-        ]
-      }
-    },
-    {
-      "id": "d11-t5",
-      "type": "email-sim",
-      "title": "Отправка Invoice брокеру",
-      "data": {
-        "senderName": "Вы → Accounting Dept (Global Freight Solutions)",
-        "subject": "Invoice for Load GFS-2024-8821",
-        "body": "Нужно отправить Invoice брокеру за выполненную перевозку. Груз доставлен вовремя, POD получен. Выберите правильный подход к отправке:",
-        "responses": [
+        "context": "Брокер предлагает груз Philadelphia → Boston (310 миль), $820, pickup сегодня в 4 PM. Проблема: ваш водитель в Трентоне (30 миль от Philly) но у него осталось только 6 часов driving по 70-hour clock. До Бостона ≈ 5.5 часов. Очень tight.",
+        "turns": [
           {
-            "text": "Отправить только Invoice без приложений",
-            "isCorrect": false,
-            "feedback": "Без полного пакета документов (Rate Con, BOL, POD) брокер вернёт Invoice и попросит приложить все документы. Это задержит оплату."
-          },
-          {
-            "text": "Отправить полный пакет: Invoice + signed Rate Con + BOL + POD. В теме письма указать номер загрузки. В теле — сумма и реквизиты для оплаты",
-            "isCorrect": true,
-            "feedback": "Правильно! Полный пакет документов ускоряет обработку. Чёткая тема письма и реквизиты в теле — профессиональный стандарт."
-          },
-          {
-            "text": "Позвонить и попросить оплату устно",
-            "isCorrect": false,
-            "feedback": "Устные договорённости не имеют юридической силы. Всегда отправляйте Invoice официально в письменном виде с полным пакетом документов."
+            "speaker": "Брокер",
+            "message": "I need this covered ASAP — Philly to Boston, $820, pickup today 4 PM, delivery tomorrow 8 AM. It's a hot load. You in?",
+            "replies": [
+              {"text": "My driver has 6 hours available today. Philly to Boston is about 5.5 hours driving in good traffic. It's tight but doable — however, I need $900 for a same-day hot load with no room for error on HOS.", "isCorrect": true, "feedback": "Отлично! Вы: 1) Показали знание HOS ситуации. 2) Подтвердили что математически рейс возможен (5.5 < 6 часов). 3) Использовали urgency как leverage для повышения ставки. 4) $900/310 = $2.90/mile — справедливо для hot load. Но будьте осторожны: пробки на I-95 могут добавить время!"},
+              {"text": "Absolutely, no problem! We'll be there tonight for sure.", "isCorrect": false, "feedback": "Опасно обещать 'no problem' когда маржа по HOS всего 30 минут! I-95 Philadelphia→Boston — одна из самых загруженных трасс. Любая задержка (пробки, construction, accident) = нарушение HOS. Нужно реалистично оценить риски."},
+              {"text": "No, my driver doesn't have enough hours. Pass.", "isCorrect": false, "feedback": "6 часов driving > 5.5 часов до Бостона — математически рейс ВОЗМОЖЕН. Это tight, но не невозможно. Вместо отказа — попросите больше денег за urgency и tight HOS. $900+ для hot load — разумно."}
+            ]
           }
         ]
       }
     },
     {
-      "id": "d11-t6",
-      "type": "drag-match",
-      "title": "Документы для оплаты",
+      "id": "d11-t3",
+      "type": "crisis",
+      "title": "Мультипроблема: reefer breakdown + deadline",
       "data": {
-        "pairs": [
-          { "term": "Invoice", "definition": "Счёт от перевозчика брокеру за оказанные услуги" },
-          { "term": "Rate Con", "definition": "Подтверждение ставки — доказательство согласованной цены" },
-          { "term": "BOL", "definition": "Накладная — подтверждает получение груза на pickup" },
-          { "term": "POD", "definition": "Подтверждение доставки с подписью получателя" },
-          { "term": "Detention Invoice", "definition": "Отдельный счёт за время ожидания сверх нормы" }
+        "scenario": "Среда, 2 PM. Ваш водитель везёт frozen chicken ($45,000 value) из Tyler, TX в Atlanta, GA. До delivery: 580 миль, delivery: четверг 6 AM (16 часов). Водитель сообщает: reefer unit перестал работать. Температура внутри начинает расти. У водителя осталось 9 часов driving по 14-hr clock.",
+        "options": [
+          {"text": "Пусть водитель едет без reefer — может за 9 часов успеет до Atlanta и груз не испортится", "isCorrect": false},
+          {"text": "Остановить водителя на ближайшем reefer repair shop. Одновременно: уведомить брокера, проверить температуру груза, если ремонт > 2 часов — искать transload на другой reefer trailer. Документировать всё для insurance claim.", "isCorrect": true},
+          {"text": "Отменить рейс и выбросить груз — reefer сломан, ничего не сделаешь", "isCorrect": false},
+          {"text": "Сказать водителю купить мешки со льдом на заправке и засыпать ими груз", "isCorrect": false}
         ]
+      }
+    },
+    {
+      "id": "d11-t4",
+      "type": "email-sim",
+      "title": "Комплексное предложение от брокера",
+      "data": {
+        "senderName": "Sarah Chen — Total Quality Logistics",
+        "subject": "Multi-stop load opportunity",
+        "body": "Hi,\n\nI have a multi-stop load:\n\nPickup 1: Indianapolis, IN — Monday 6 AM (12 pallets)\nPickup 2: Louisville, KY — Monday 2 PM (8 pallets)\nDelivery: Charlotte, NC — Tuesday 8 AM\n\nTotal miles: 620\nRate: $1,750\nEquipment: Dry Van 53'\nWeight total: 39,000 lbs\n\nDetention: 2 hours free, then $75/hr\nQuick Pay available: 3%\n\nLet me know!\nSarah",
+        "responses": [
+          {"text": "Принять как есть — TQL надёжная компания, мультистоп за $1,750 нормально", "isCorrect": false, "feedback": "$1,750/620 миль = $2.82/mile кажется хорошо, но мультистоп = дополнительные расходы! 2 pickup = двойное время ожидания, два города, расход HOS на ожидание. Indianapolis→Louisville = 110 миль + время на 2-й pickup. Реально нужно $2,000+ для мультистопа."},
+          {"text": "Ответить: 'Sarah, multi-stop loads require additional time and HOS planning. I can do this at $2,000 flat. Also, what's the expected loading time at each stop? My driver needs to manage his 14-hour clock carefully for Tuesday delivery.'", "isCorrect": true, "feedback": "Правильно! Мультистоп = больше работы: 1) Два pickup = дополнительные 2-4 часа On Duty. 2) HOS pressure для delivery вовремя. 3) Риск detention на каждой точке. $2,000/620 = $3.23/mile — справедливо для multi-stop. И вы задали важный вопрос про loading time для HOS planning."},
+          {"text": "Отказаться — мультистопы слишком сложные, не берём такие грузы", "isCorrect": false, "feedback": "Мультистопы платят больше per mile именно из-за сложности! $2.82+ за Dry Van — выше рынка. С правильным планированием HOS это отличный груз. Не отказывайтесь от денег из-за страха — торгуйтесь и планируйте."}
+        ]
+      }
+    },
+    {
+      "id": "d11-t5",
+      "type": "map-routing",
+      "title": "Miami → New York: зимний маршрут",
+      "data": {
+        "origin": "Miami, FL",
+        "destination": "New York, NY",
+        "routes": [
+          {"name": "I-95 North (прямой, но tolls $120+)", "miles": 1280, "rate": 2.55, "isOptimal": false},
+          {"name": "I-75 → I-77 → I-81 → I-78 (меньше tolls, горы)", "miles": 1320, "rate": 2.55, "isOptimal": false},
+          {"name": "I-95 → I-85 → I-81 → I-78 (баланс: средние tolls, меньше traffic)", "miles": 1300, "rate": 2.55, "isOptimal": true}
+        ]
+      }
+    },
+    {
+      "id": "d11-t6",
+      "type": "quiz",
+      "title": "Комплексный вопрос: документы + finance",
+      "data": {
+        "question": "Водитель доставил груз, но consignee подписал POD с пометкой '2 pallets damaged'. Какое финансовое последствие это может иметь?",
+        "options": [
+          "Никакого — POD подписан, значит всё оплатят полностью",
+          "Брокер может удержать часть оплаты (deduction) для покрытия damage claim, а carrier может быть обязан компенсировать ущерб из своей cargo insurance",
+          "Водитель заплатит штраф $50 из зарплаты",
+          "Брокер заплатит двойную ставку за неудобства"
+        ],
+        "correctIndex": 1,
+        "explanation": "Damage notation на POD = потенциальный claim! Процесс: 1) Shipper/consignee подаёт claim брокеру. 2) Брокер перенаправляет claim на carrier. 3) Cargo insurance carrier покрывает damage (deductible $1,000-2,500 обычно). 4) Если damage < deductible — carrier платит из своего кармана. ВОТ ПОЧЕМУ важно: проверять груз при загрузке, фиксировать pre-existing damage на BOL, и иметь достаточный cargo insurance ($100,000 minimum)."
+      }
+    },
+    {
+      "id": "d11-t7",
+      "type": "fill-blank",
+      "title": "Полный цикл работы диспетчера",
+      "data": {
+        "sentence": "Утром проверьте {0} водителей. Найдите груз на {1}. Проверьте {2} брокера. Подпишите Rate Con и отправьте водителя. После доставки отправьте {3} с POD для получения оплаты.",
+        "blanks": [
+          {"correctAnswer": "HOS", "wordBank": ["HOS", "GPS", "RPM", "ELD"]},
+          {"correctAnswer": "load board", "wordBank": ["load board", "Google", "YouTube", "email"]},
+          {"correctAnswer": "MC через фактор", "wordBank": ["MC через фактор", "адрес", "фото", "возраст"]},
+          {"correctAnswer": "Invoice", "wordBank": ["Invoice", "BOL", "Rate Con", "Resume"]}
+        ]
+      }
+    },
+    {
+      "id": "d11-t8",
+      "type": "phone-dialog",
+      "title": "Retention claim + negotiation",
+      "data": {
+        "context": "Ваш водитель простоял на разгрузке 6 часов (4 часа сверх бесплатного лимита). Rate Con гарантирует $75/час detention. Брокер не хочет платить.",
+        "turns": [
+          {
+            "speaker": "Брокер",
+            "message": "Look, I talked to the warehouse — they say your driver was late checking in. I can't pay detention for something that's your fault.",
+            "replies": [
+              {"text": "I have the check-in receipt showing my driver arrived at 7:02 AM — appointment was 7:00 AM. Two minutes is not 'late'. I also have GPS logs confirming arrival time. Per Rate Con section 4, detention is $75/hr after 2 hours. That's $300 owed. I'll email the documentation now.", "isCorrect": true, "feedback": "Идеальный ответ! Вы: 1) Опровергли ложное утверждение ФАКТАМИ (check-in receipt). 2) Имеете backup доказательство (GPS). 3) Ссылаетесь на конкретный пункт контракта. 4) Называете точную сумму. 5) Предлагаете отправить документы. Это профессиональная защита своих прав."},
+              {"text": "Oh really? I didn't know he was late... I guess we can't claim detention then.", "isCorrect": false, "feedback": "Не сдавайтесь так легко! Брокер может БЛЕФОВАТЬ — проверьте факты! У вас должны быть: check-in receipt, GPS данные, фото. '2 минуты опоздания' — не причина отказать в detention за 6 часов ожидания. Стойте на своём с доказательствами."},
+              {"text": "You're a liar! My driver is never late! Pay up or I'll sue!", "isCorrect": false, "feedback": "Агрессия и оскорбления = проигрыш. Даже если вы правы, крики разрушают отношения и не решают проблему. Побеждают ФАКТЫ и ДОКУМЕНТЫ, а не эмоции. Профессионально предоставьте доказательства — это сильнее любых угроз."}
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "d11-t9",
+      "type": "crisis",
+      "title": "Двойной booking — этическая дилемма",
+      "data": {
+        "scenario": "Вы подтвердили Rate Con на груз A ($1,600, Dallas → Houston, завтра). Через час звонит другой брокер с грузом B ($2,400, Dallas → San Antonio, тоже завтра). Груз B намного выгоднее. У вас только один трак в Далласе.",
+        "options": [
+          {"text": "Отменить груз A и взять груз B — разница $800 слишком большая", "isCorrect": false},
+          {"text": "Выполнить груз A как обещано (Rate Con подписан — это контракт) и попросить брокера B подождать или предложить ваш трак на послезавтра", "isCorrect": true},
+          {"text": "Взять оба груза и надеяться найти второй трак за ночь", "isCorrect": false},
+          {"text": "Позвонить брокеру A и сказать что трак сломался, чтобы отменить без штрафа", "isCorrect": false}
+        ]
+      }
+    },
+    {
+      "id": "d11-t10",
+      "type": "calculator",
+      "title": "Недельный P&L отчёт",
+      "data": {
+        "problem": "Рассчитайте эффективный RPM за неделю (все доходы ÷ все мили)",
+        "context": "За неделю выполнено 4 рейса. Общий доход: $8,200. Общие оплачиваемые мили: 2,950. Общий deadhead: 280 миль. Рассчитайте эффективный RPM (доход ÷ все мили включая deadhead).",
+        "correctAnswer": 2.54,
+        "tolerancePercent": 2,
+        "unit": "$/mile"
       }
     }
   ]

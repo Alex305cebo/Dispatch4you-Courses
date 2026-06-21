@@ -1,0 +1,180 @@
+﻿{
+  "dayId": 22,
+  "weekId": 6,
+  "title": "Финальный тест Карты 2",
+  "estimatedMinutes": 30,
+  "tasks": [
+    {
+      "id": "d22-t1",
+      "type": "crisis",
+      "title": "Scenario 1: Всё идёт не так",
+      "data": {
+        "scenario": "Пятница 8 AM. Флот 4 трака:\n• Truck 1: Reefer — frozen meat, delivery today 2 PM in Houston. Driver says reefer temp alarm went off (temp: 10°F, should be -5°F).\n• Truck 2: Flatbed — oversize transformer, en route to Denver. Driver just got speeding ticket (72 in 55 zone).\n• Truck 3: Empty in Newark, NJ — no loads found for 2 days (slow market).\n• Truck 4: Loaded, delivery complete at 7 AM — waiting for your next instruction in Atlanta.\nЧто ваш ПЕРВЫЙ action?",
+        "options": [
+          {"text": "Truck 3 — он пустой 2 дня, нужен груз", "isCorrect": false},
+          {"text": "Truck 1 — REEFER ALARM = cargo at immediate risk. Temp 10°F vs required -5°F = rising fast. Action: have driver check reefer unit (fuel? settings? mechanical?). If simple fix (out of fuel) = refuel immediately. If mechanical = find nearest reefer service. 15°F gap = 2-3 hours before cargo is compromised. TIME CRITICAL.", "isCorrect": true},
+          {"text": "Truck 2 — speeding ticket impacts CSA", "isCorrect": false},
+          {"text": "Truck 4 — он свободен, нужно найти груз пока рано", "isCorrect": false}
+        ]
+      }
+    },
+    {
+      "id": "d22-t2",
+      "type": "calculator",
+      "title": "Full week fleet analysis",
+      "data": {
+        "problem": "Рассчитайте fleet utilization rate и revenue per truck per day.",
+        "context": "Fleet: 4 trucks, 5 working days.\nTruck 1: worked 5/5 days, revenue $5,200.\nTruck 2: worked 4/5 days (1 day breakdown), revenue $3,600.\nTruck 3: worked 3/5 days (2 days empty), revenue $2,800.\nTruck 4: worked 5/5 days, revenue $4,900.\nUtilization = total working days ÷ total available days × 100.\nThen calculate average revenue per truck per WORKING day (total revenue ÷ total working days).",
+        "correctAnswer": 970.59,
+        "tolerancePercent": 3,
+        "unit": "$/day"
+      }
+    },
+    {
+      "id": "d22-t3",
+      "type": "phone-dialog",
+      "title": "Комплексная переговорная ситуация",
+      "data": {
+        "context": "Вам нужно закрыть 2 трака одновременно. Truck A пустой в Memphis (reefer). Truck B пустой в Nashville (dry van). Broker из CH Robinson имеет оба типа грузов. Вы хотите bundle deal.",
+        "turns": [
+          {
+            "speaker": "Брокер",
+            "message": "I have two loads. Reefer: Memphis to Miami, 1,000 miles, frozen seafood, $2,800. Dry van: Nashville to Jacksonville, 630 miles, auto parts, $1,500. Both pickup tomorrow. What can you do for me?",
+            "replies": [
+              {"text": "I can cover BOTH loads — that saves you two phone calls and two carriers to manage. Here's my pricing: Reefer Memphis-Miami: $3,400 — it's frozen seafood (high liability), 1,000 miles, and reefer fuel adds cost. Dry van Nash-Jax: $1,850 — current market for that lane is $2.85+/mile. Bundle both: I'll do $5,100 total ($3,300 + $1,800). You get one carrier, one point of contact, reliable coverage. Deal?", "isCorrect": true, "feedback": "Master-level negotiation! Вы: 1) Bundle leverage — 'saves you two phone calls'. 2) Justified each rate with logic (reefer liability, market data). 3) Offered slight bundle discount ($5,250 → $5,100). 4) Value proposition: one carrier = simplicity for broker. This is how top dispatchers work: volume deals, relationship building, both sides win."},
+              {"text": "I'll take both at your posted rates. $2,800 and $1,500. Send Rate Cons.", "isCorrect": false, "feedback": "Вы потеряли $1,200-1,500! Reefer frozen seafood at $2.80/mile = below market (reefer + perishable = $3.20-3.80/mile). Dry van at $2.38/mile = borderline for Nashville outbound. You have LEVERAGE: offering both trucks = convenience for broker. Use it! Negotiate UP."},
+              {"text": "Those rates are insulting. I need $4,000 for the reefer and $2,500 for the dry van. Take it or leave it.", "isCorrect": false, "feedback": "$4.00/mile reefer Memphis→Miami = above market even for peak. $3.97/mile dry van Nashville→Jacksonville = unrealistic. Broker will laugh and move on. Know your market: reefer FL-bound $3.20-3.60/mile. Dry van SE corridor: $2.60-3.00/mile. Price within reason + bundle discount = closes deals."}
+            ]
+          },
+          {
+            "speaker": "Брокер",
+            "message": "Look, $5,100 for both is more than my budget. Best I can do is $4,600 total. Final offer — I have other carriers calling me.",
+            "replies": [
+              {"text": "Let me meet you halfway. $4,850 total — I'll split it $3,100 reefer + $1,750 dry van. That's my floor. Both trucks are ready, clean inspections, experienced drivers. I can confirm right now. Otherwise, you're making 2 more calls and risking coverage on a Friday for tomorrow pickup.", "isCorrect": true, "feedback": "Отличный close! Вы: 1) Compromised ($5,100 → $4,850 = $250 concession). 2) Split allocation логично. 3) Urgency reminder: Friday + tomorrow pickup = broker pressed for time. 4) 'Confirm right now' = immediate value. $4,850 vs original $4,300 = +$550 negotiated. That's real money. Professional."},
+              {"text": "$4,600 is fine. Let's book it.", "isCorrect": false, "feedback": "Вы jumped too fast! Broker said '$4,600 final' — classic negotiation tactic. NEVER accept 'final offer' immediately. Counter $4,800-4,900. Even $100 more = money in your pocket. 'Final offer' rarely is final when you have leverage (2 trucks, Friday, tomorrow pickup). Test it."},
+              {"text": "$5,100 is my price. If you can't pay it, goodbye.", "isCorrect": false, "feedback": "Rigidity = lost deal. $5,100 → $4,600 gap = $500. Neither side will get exactly what they want. Smart negotiators find middle ground. You leave with $4,850 (won $550 vs posted), broker saves vs your ask. Both trucks loaded, both making money. Walking away = two empty trucks on Monday."}
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "d22-t4",
+      "type": "email-sim",
+      "title": "Compliance audit — document preparation",
+      "data": {
+        "senderName": "FMCSA Auditor — Region 4",
+        "subject": "Scheduled Compliance Review — MC-892XXX — Documents Required",
+        "body": "Dear Carrier,\n\nYour compliance review is scheduled for March 15.\n\nPlease have the following available:\n\n1. ELD records — all drivers, past 6 months\n2. Driver Qualification Files (DQ files) — all active drivers\n3. Drug & Alcohol testing records (random pool participation proof)\n4. Vehicle maintenance records & DVIR logs\n5. Insurance certificates (current)\n6. Accident register (last 3 years)\n7. Hours of Service supporting documents\n\nReview will take approximately 4-6 hours on-site.\n\nAuditor: James Mitchell\nFMCSA Region 4",
+        "responses": [
+          {
+            "text": "Ответить: 'Mr. Mitchell, confirmed for March 15. All documents will be prepared.' Затем внутренний action plan: 1) Export 6-month ELD records from Samsara. 2) Audit DQ files: verify each driver has current CDL copy, medical card (not expired!), MVR, application, road test cert. 3) Confirm drug test consortium — get participation letter. 4) Compile maintenance records + DVIR downloads. 5) Verify insurance certificates current. 6) Prepare accident register. 7) Self-audit: find and fix gaps BEFORE auditor arrives.",
+            "isCorrect": true,
+            "feedback": "Подготовка = survival! Most common audit failures: 1) Expired medical cards in DQ file (driver disqualified + violation). 2) Missing random drug test records. 3) Gaps in ELD data. 4) No maintenance records for repairs. Self-audit week before = find issues, fix them, document corrections. Auditor sees organized carrier with corrective actions = Satisfactory rating. Messy files = Conditional or Unsatisfactory."
+          },
+          {
+            "text": "Попросить перенести аудит на более позднюю дату",
+            "isCorrect": false,
+            "feedback": "FMCSA compliance review = MANDATORY. Вы можете попросить reschedule один раз (valid reason only), но это выглядит suspicious и auditor приедет более thorough. Лучше: принять дату и ПОДГОТОВИТЬСЯ идеально. 3+ weeks notice = достаточно времени собрать ВСЕ документы. Delay = red flag для FMCSA."
+          },
+          {
+            "text": "Нанять compliance consultant для подготовки",
+            "isCorrect": false,
+            "feedback": "Consultant не плохая идея для first-time audit, но: 1) Стоит $2,000-5,000. 2) ВЫ всё равно должны иметь документы. 3) Consultant не может создать records that don't exist. Лучший вариант: подготовьтесь САМИ (это ваша работа как dispatcher/safety manager), и consultant только для final review если budget позволяет."
+          }
+        ]
+      }
+    },
+    {
+      "id": "d22-t5",
+      "type": "quiz",
+      "title": "Insurance + market + compliance = комплекс",
+      "data": {
+        "question": "Ваш carrier получил Conditional Safety Rating. Какой КАСКАД последствий это вызовет?",
+        "options": [
+          "Только штраф $1,000",
+          "Insurance premium +30-50% при renewal. Brokers с strict compliance = отказ работать. Contract shippers (Walmart, Amazon) = terminated. Spot market = reduced opportunities. Bank loan = risk. 60 days to fix or face Unsatisfactory → shutdown.",
+          "Никаких — Conditional значит условно хороший",
+          "Только потеря hazmat endorsement"
+        ],
+        "correctIndex": 1,
+        "explanation": "Conditional = домино эффект: 1) Insurance: instant 30-50% increase (or non-renewal). 2) Shippers: Fortune 500 companies auto-terminate Conditional carriers. 3) Brokers: many won't book (TQL, CH Robinson have thresholds). 4) Revenue: -30-50% from lost lanes/clients. 5) Banking: loan terms may change. 6) Recruitment: good drivers don't want Conditional carriers. 7) Clock ticking: 60 days. Это financial DEATH SPIRAL если не исправить быстро."
+      }
+    },
+    {
+      "id": "d22-t6",
+      "type": "crisis",
+      "title": "Final scenario: ethical dilemma under pressure",
+      "data": {
+        "scenario": "Конец месяца. Ваш fleet P&L показывает $4,000 loss. Один O/O предлагает: 'Я могу сделать extra load если поеду без 10-hr break (нарушу HOS). Никто не узнает — я выключу ELD на 2 часа. Мы заработаем $2,200.' Другой driver предлагает: 'Я могу перевезти overweight load (84,000 lbs вместо 80,000 max) — shipper платит extra $800.' Оба нарушения могут 'спасти' месяц.",
+        "options": [
+          {"text": "Согласиться на оба — бизнес есть бизнес, нужно платить bills", "isCorrect": false},
+          {"text": "ОТКАЗАТЬ ОБОИМ. HOS violation: $16,000 fine + CSA points + если авария while fatigued = criminal charges для ВАС как dispatcher. Overweight: $1,000-10,000 fine при weigh station + bridge damage liability. $3,000 'saved' today = $50,000+ risk. Найти ЛЕГАЛЬНЫЕ решения: negotiate better rates, add loads, cut costs. Never compromise safety for short-term cash.", "isCorrect": true},
+          {"text": "Согласиться только на overweight — это менее опасно", "isCorrect": false},
+          {"text": "Согласиться только на HOS — один раз не страшно", "isCorrect": false}
+        ]
+      }
+    },
+    {
+      "id": "d22-t7",
+      "type": "calculator",
+      "title": "Финальный комплексный P&L",
+      "data": {
+        "problem": "Рассчитайте месячный NET PROFIT carrier с учётом ВСЕХ расходов.",
+        "context": "Monthly (3 trucks):\nGross Revenue: $48,000.\nExpenses:\n- Fuel: 3 trucks × 9,000 mi × (1/6.1 mpg) × $3.85 = ?\n- Insurance: $1,950/month\n- Truck payments: 3 × $1,800 = $5,400\n- Maintenance reserve: $1,200\n- Dispatcher salary: $5,200\n- ELD/Software: $135/month\n- Permits/registrations: $250/month\n- Office/phone: $350/month\nCalculate total fuel cost first (3 trucks × 9000mi ÷ 6.1mpg × $3.85), then subtract ALL expenses from revenue.",
+        "correctAnswer": 16,
+        "tolerancePercent": 50,
+        "unit": "$"
+      }
+    },
+    {
+      "id": "d22-t8",
+      "type": "drag-match",
+      "title": "Карта 2 — итоговые понятия",
+      "data": {
+        "pairs": [
+          { "term": "Utilization Rate", "definition": "% времени когда траки загружены и зарабатывают" },
+          { "term": "Deadhead ratio", "definition": "% пустых миль от общего пробега (цель: <15%)" },
+          { "term": "Revenue per truck per week", "definition": "Gross доход ÷ количество траков ÷ недели" },
+          { "term": "CSA percentile", "definition": "Рейтинг safety vs other carriers (ниже = лучше)" },
+          { "term": "Operating ratio", "definition": "Expenses ÷ Revenue × 100% (ниже 95% = profitable)" },
+          { "term": "Spot-to-contract ratio", "definition": "Баланс между volatile spot и stable contract freight" }
+        ]
+      }
+    },
+    {
+      "id": "d22-t9",
+      "type": "phone-dialog",
+      "title": "Final negotiation: contract renewal",
+      "data": {
+        "context": "Ваш годовой contract с P&G истекает. Они предлагают renewal по старой ставке ($2.65/mile). За год: diesel вырос на $0.40/gal, insurance +20%, driver pay +$0.08/mile. Вы должны negotiate increase.",
+        "turns": [
+          {
+            "speaker": "P&G Representative",
+            "message": "Hi, we'd like to renew our Cincinnati-Atlanta lane contract. Same terms as last year: $2.65/mile, 3-4 loads per week. You've been reliable all year — we appreciate it. Can we sign for another 12 months?",
+            "replies": [
+              {"text": "Thank you — we value the P&G partnership. However, our operating costs have increased significantly since last year: diesel +$0.40/gallon (+$0.10/mile effective), insurance +20%, driver compensation +$0.08/mile. To maintain service quality, we need $2.95/mile for the new term. That's a 11% increase matching our cost inflation. I'd also like to add a fuel surcharge clause (DOE-indexed) to protect both sides from future volatility. Thoughts?", "isCorrect": true, "feedback": "Профессиональный renewal negotiation! Вы: 1) Started positive (value relationship). 2) Quantified EACH cost increase (not vague 'costs went up'). 3) Specific number: $2.95 (not 'more money'). 4) FSC clause = forward protection. 5) Framed as partnership ('protect both sides'). $2.95 × 460mi × ~14 loads/month = $19,054/month vs old $17,122 = +$1,932/month. FSC adds further protection."},
+              {"text": "Sure, $2.65 is fine for another year. Let's sign.", "isCorrect": false, "feedback": "Ваши costs grew 10-15% но revenue stays flat! $2.65/mile with $0.18/mile cost increase = effective rate drop to $2.47/mile value. За 12 месяцев: $0.18 × 460mi × 168 loads = $13,910 LOST to inflation. Каждый year вы MUST negotiate rate increases matching (or exceeding) cost increases. Stagnant rate = shrinking profit."},
+              {"text": "We need $3.50/mile or we walk away from this contract.", "isCorrect": false, "feedback": "$3.50 = 32% increase. P&G will say no and find another carrier. Rate increases of 10-15% are reasonable and justifiable. 30%+ requires extraordinary circumstances (market crisis, supply shortage). Don't blow up a reliable contract for unrealistic demands — $2.95-3.05 is achievable and fair."}
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "d22-t10",
+      "type": "fill-blank",
+      "title": "Итог Карты 2 — главные уроки",
+      "data": {
+        "sentence": "Multi-truck fleet: приоритет = {0} emergencies first. O/O dispatch fee стандарт: {1}%. Produce season начинается в {2}. CSA threshold для intervention: {3} percentile. Rate Con ВСЕГДА проверяйте наличие {4} clause.",
+        "blanks": [
+          {"correctAnswer": "safety", "wordBank": ["safety", "profit", "speed", "volume"]},
+          {"correctAnswer": "2-5", "wordBank": ["2-5", "25-30", "1-3", "50"]},
+          {"correctAnswer": "марте", "wordBank": ["марте", "июне", "январе", "сентябре"]},
+          {"correctAnswer": "65th", "wordBank": ["65th", "50th", "90th", "25th"]},
+          {"correctAnswer": "detention/TONU", "wordBank": ["detention/TONU", "цвет", "шрифт", "дату"]}
+        ]
+      }
+    }
+  ]
+}

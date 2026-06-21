@@ -1,111 +1,166 @@
 {
   "dayId": 17,
-  "weekId": 4,
-  "title": "Управление флотом и планирование",
-  "estimatedMinutes": 45,
+  "weekId": 5,
+  "title": "Страхование и ответственность",
+  "estimatedMinutes": 22,
   "tasks": [
     {
       "id": "d17-t1",
-      "type": "quiz",
-      "title": "Принципы планирования",
+      "type": "drag-match",
+      "title": "Типы страховок в trucking",
       "data": {
-        "question": "Какой ключевой показатель эффективности (KPI) наиболее важен при управлении флотом?",
-        "options": [
-          "Количество звонков за рабочий день",
-          "Revenue per truck per week — доход",
-          "Количество отправленных emails за день",
-          "Часы работы диспетчера в офисе"
-        ],
-        "correctIndex": 1,
-        "explanation": "Revenue per truck per week — главный KPI диспетчера. Цель: максимизировать доход каждого трака, минимизируя deadhead и простои. Типичная цель: $5,000-7,000/week на трак."
+        "pairs": [
+          { "term": "Primary Liability ($750K-$1M)", "definition": "Обязательная — покрывает ущерб третьим лицам при аварии" },
+          { "term": "Cargo Insurance ($100K+)", "definition": "Покрывает повреждение или потерю перевозимого груза" },
+          { "term": "Physical Damage", "definition": "Покрывает ремонт/замену собственного трака и прицепа" },
+          { "term": "Bobtail Insurance", "definition": "Liability когда трак едет БЕЗ прицепа (не под dispatch)" },
+          { "term": "Non-Trucking Liability", "definition": "Покрывает owner-operator когда он использует трак для personal use" },
+          { "term": "Workers Compensation", "definition": "Покрывает medical и lost wages если водитель травмирован на работе" }
+        ]
       }
     },
     {
       "id": "d17-t2",
       "type": "quiz",
-      "title": "Минимизация пустого пробега",
+      "title": "Минимальные требования FMCSA",
       "data": {
-        "question": "Что такое 'backhaul' и почему он важен?",
+        "question": "Какой МИНИМУМ liability insurance требует FMCSA для interstate trucking (non-hazmat, >10,001 lbs)?",
         "options": [
-          "Груз в обратном направлении после delivery",
-          "Задний ход трака при парковке",
-          "Дополнительный трейлер в составе автопоезда",
-          "Обратный звонок клиенту или брокеру"
+          "$100,000",
+          "$300,000",
+          "$750,000",
+          "$1,000,000"
         ],
-        "correctIndex": 0,
-        "explanation": "Backhaul — груз в обратном направлении (или к следующей точке загрузки). Хороший диспетчер планирует backhaul ПЕРЕД delivery, чтобы минимизировать пустой пробег."
+        "correctIndex": 2,
+        "explanation": "FMCSA minimum: $750,000 для general freight carriers (>10,001 lbs GVW). Для hazmat: $1,000,000-$5,000,000 в зависимости от класса. Для household goods movers: $750,000. Но большинство brokers требуют $1,000,000 minimum liability для booking loads. Cargo insurance: FMCSA не требует, но brokers обычно требуют $100,000 minimum. Без insurance = no MC authority = illegal operation."
       }
     },
     {
       "id": "d17-t3",
-      "type": "map-routing",
-      "title": "Планирование маршрута для двух грузов",
+      "type": "crisis",
+      "title": "Cargo damage claim",
       "data": {
-        "origin": "After delivery in Miami, FL",
-        "destination": "Need to get back to Atlanta, GA area",
-        "routes": [
-          { "name": "Miami → Jacksonville ($900, 350mi) then deadhead 80mi to next pickup", "miles": 430, "rate": 900, "isOptimal": false },
-          { "name": "Miami → Orlando ($650, 235mi) then deadhead 200mi to Atlanta", "miles": 435, "rate": 650, "isOptimal": false },
-          { "name": "Miami → Atlanta direct ($1,400, 660mi) — backhaul", "miles": 660, "rate": 1400, "isOptimal": true },
-          { "name": "Deadhead empty to Atlanta (660mi, $0)", "miles": 660, "rate": 0, "isOptimal": false }
+        "scenario": "Ваш водитель доставил 18 паллет электроники (TV, стоимость $120,000) в Best Buy DC. При разгрузке обнаружено: 3 паллета повреждены (коробки смяты, экраны разбиты). Receiver подписал POD с notation: '3 pallets damaged — refused'. Ваш cargo insurance: $100,000 coverage, deductible $2,500.",
+        "options": [
+          {"text": "Отрицать всё — может damage был до загрузки", "isCorrect": false},
+          {"text": "Немедленно: 1) Проверить BOL от shipper — есть ли notation о pre-existing damage? 2) Запросить у driver фото при загрузке (was load secured properly?). 3) Уведомить свою cargo insurance company. 4) Не подписывать ничего дополнительного. 5) Сохранить ВСЕ документы: Rate Con, BOL, POD, photos. Ждать formal claim от broker.", "isCorrect": true},
+          {"text": "Заплатить $120,000 из своего кармана сразу чтобы не портить отношения", "isCorrect": false},
+          {"text": "Уехать с dock и не отвечать на звонки", "isCorrect": false}
         ]
       }
     },
     {
       "id": "d17-t4",
-      "type": "calculator",
-      "title": "Расчёт эффективности трака за неделю",
+      "type": "email-sim",
+      "title": "Broker подаёт damage claim",
       "data": {
-        "problem": "Рассчитайте revenue per mile для трака за неделю.",
-        "context": "Трак за неделю проехал: 2,800 миль (из них 2,400 с грузом и 400 deadhead). Общий доход за неделю: $6,200 (3 рейса). Рассчитайте revenue per TOTAL mile (включая deadhead).",
-        "correctAnswer": 2.21,
-        "tolerancePercent": 2,
-        "unit": "$/mile"
-      }
-    },
-    {
-      "id": "d17-t5",
-      "type": "crisis",
-      "title": "Два водителя свободны одновременно",
-      "data": {
-        "scenario": "У вас два водителя освободились в Dallas. На Load Board есть: 1) Dallas→Houston, $550, 240mi (нужен Dry Van). 2) Dallas→Denver, $2,800, 780mi (нужен Reefer). Водитель A имеет Dry Van, водитель B имеет Reefer. Оба доступны. Как распределить?",
-        "timeLimitSeconds": 60,
-        "options": [
+        "senderName": "Claims Department — TQL",
+        "subject": "Cargo Damage Claim — Load #TQL-88291 — $24,500",
+        "body": "Dear Carrier,\n\nWe are filing a cargo damage claim for Load #TQL-88291.\n\nDetails:\n- Shipper: Samsung Distribution, Memphis TN\n- Consignee: Best Buy DC, Charlotte NC\n- Commodity: Electronics (televisions)\n- Damage: 3 pallets crushed/broken\n- Claimed amount: $24,500 (based on invoice value)\n\nPer your signed Rate Confirmation, carrier is liable for cargo damage occurring during transit.\n\nPlease forward this to your cargo insurance provider and provide claim number within 5 business days.\n\nAttached: POD with damage notation, photos of damaged goods, shipper invoice.\n\nRegards,\nTQL Claims Department",
+        "responses": [
           {
-            "text": "Отправить обоих на короткий рейс в Houston",
-            "isCorrect": false,
-            "explanation": "Reefer не нужен для Houston рейса, и отправка обоих на один рейс бессмысленна. Нужно разделить задачи по оборудованию."
-          },
-          {
-            "text": "Водитель A (Dry Van) → Houston за $550. Водитель B (Reefer) → Denver за $2,800. Каждый на подходящий груз по оборудованию",
+            "text": "Ответить: 'Received. Forwarding to our cargo insurance provider today. Claim number will be provided within 3 business days. Note: we are requesting our driver's loading photos and BOL to verify condition at pickup. If damage was pre-existing (noted on BOL at origin), this reduces or eliminates carrier liability. Will update you once insurance assigns adjuster.'",
             "isCorrect": true,
-            "explanation": "Правильно! Логичное распределение: каждый водитель берёт груз, соответствующий его оборудованию. B получает высокооплачиваемый рейс ($3.59/mile), A — короткий с хорошим RPM ($2.29/mile)."
+            "feedback": "Профессиональный ответ! Вы: 1) Acknowledged claim (не игнорируйте!). 2) Forward к insurance немедленно. 3) Защищаете себя: проверяете BOL при загрузке (pre-existing damage?). 4) Уточняете timeline. Key: если BOL при pickup НЕ имеет damage notation = предполагается что cargo was in good condition at origin. Deductible $2,500 = ваша ответственность, остальное покрывает insurance."
           },
           {
-            "text": "Отправить обоих в Denver",
+            "text": "Отказаться: 'We deny all responsibility. The damage was pre-existing.'",
             "isCorrect": false,
-            "explanation": "Houston рейс тоже хороший ($2.29/mile). Нельзя бросать прибыльный груз. К тому же Dry Van не подходит для Denver рейса (нужен Reefer)."
+            "feedback": "Отрицать без доказательств = плохая стратегия. Если BOL при pickup был чистый (no damage noted), суд примет позицию shipper. Правильно: принять claim, передать insurance, ПАРАЛЛЕЛЬНО собирать доказательства (загрузочные фото, BOL, securement). Denial без evidence = lost case."
           },
           {
-            "text": "Оставить обоих в Dallas и искать лучшие грузы завтра",
+            "text": "Игнорировать email — может забудут",
             "isCorrect": false,
-            "explanation": "Простой = потеря денег. Оба груза имеют хороший RPM. Каждый день простоя — минус $700-1000 потенциального дохода."
+            "feedback": "Игнорирование = default judgment! Broker подаст в суд, вы проиграете автоматически. Claim $24,500 + legal fees + possible insurance surcharge. Отвечайте ВСЕГДА в срок. Передайте insurance — для этого вы платите premium. Silence ≠ protection."
           }
         ]
       }
     },
     {
-      "id": "d17-t6",
-      "type": "drag-match",
-      "title": "KPI диспетчера",
+      "id": "d17-t5",
+      "type": "calculator",
+      "title": "Расчёт insurance costs",
       "data": {
-        "pairs": [
-          { "term": "Revenue per truck/week", "definition": "Главный показатель — доход на трак в неделю" },
-          { "term": "Deadhead percentage", "definition": "Процент пустых миль (цель: <15%)" },
-          { "term": "Loaded miles ratio", "definition": "Доля миль с грузом от общего пробега" },
-          { "term": "Average RPM", "definition": "Средняя ставка за милю по всем грузам" },
-          { "term": "Days per load", "definition": "Среднее время на один рейс от pickup до delivery" }
+        "problem": "Рассчитайте годовую стоимость страхования для нового carrier.",
+        "context": "Carrier с 3 траками. Auto Liability: $3,200/truck/year. Cargo Insurance: $1,800/year (covers all trucks). Physical Damage: $2,100/truck/year. Workers Comp: $4,500/year (3 drivers). General Liability: $1,200/year. Рассчитайте ОБЩУЮ годовую стоимость всех страховок.",
+        "correctAnswer": 23400,
+        "tolerancePercent": 2,
+        "unit": "$"
+      }
+    },
+    {
+      "id": "d17-t6",
+      "type": "phone-dialog",
+      "title": "Авария — первые действия",
+      "data": {
+        "context": "Ваш driver Alex только что попал в аварию на I-95 в Virginia. Легковой автомобиль врезался в заднюю часть прицепа на highway. Alex не пострадал, другой водитель жалуется на neck pain. Полиция едет.",
+        "turns": [
+          {
+            "speaker": "Водитель",
+            "message": "Boss, someone rear-ended my trailer on I-95. I'm fine but the car is messed up. The guy is holding his neck and saying he's gonna sue us. Cops are on their way. What do I do?",
+            "replies": [
+              {"text": "Alex, listen carefully: 1) Stay calm, DO NOT admit fault or apologize — anything you say can be used against us. 2) Take photos of EVERYTHING: damage to both vehicles, his license plate, the road conditions, his position behind your trailer. 3) Get his name, insurance, phone. 4) Wait for police report — get the case number. 5) Do NOT discuss the accident with him beyond exchanging info. I'm calling our insurance company RIGHT NOW.", "isCorrect": true, "feedback": "Идеальный протокол! 'Do not admit fault' — критически важно. Даже 'sorry' может быть использовано как admission в суде. Фото = ваша защита (показывает его позицию, damage pattern). Police report = official record. Insurance company needs: police report #, photos, other party info. Rear-end в прицеп = обычно вина другого водителя."},
+              {"text": "Tell him you're sorry and that our insurance will cover everything. Give him your personal phone number.", "isCorrect": false, "feedback": "НИКОГДА! 'Sorry' = potential admission of fault. 'Insurance will cover everything' = promise you can't make. Personal phone = harassment risk. Всё общение через insurance company и attorneys ТОЛЬКО. Будьте вежливы но минимальны: exchange info, wait for police, no admissions."},
+              {"text": "Just drive away — he hit you from behind, it's his fault anyway.", "isCorrect": false, "feedback": "Hit and run = CRIMINAL OFFENSE! Даже если другой виноват, уезд с места аварии = уголовное дело, потеря CDL, потеря MC authority. ВСЕГДА оставайтесь на месте, ждите полицию, документируйте. Неважно чья вина — процедура одна."}
+            ]
+          }
         ]
+      }
+    },
+    {
+      "id": "d17-t7",
+      "type": "quiz",
+      "title": "Cargo Insurance — что покрывает",
+      "data": {
+        "question": "Какие случаи НЕ покрываются стандартным cargo insurance?",
+        "options": [
+          "Кража груза во время transit",
+          "Damage от неправильного securement (load shifting)",
+          "Damage от temperature deviation в reefer (если reefer unit не обслуживался — negligence exclusion)",
+          "Damage при аварии (collision)"
+        ],
+        "correctIndex": 2,
+        "explanation": "Большинство cargo policies имеют NEGLIGENCE EXCLUSION: если damage произошёл из-за carrier negligence (не обслуживал reefer, знал о проблеме и не исправил), insurance может отказать в coverage. Также обычно excluded: inherent vice (товар испортился сам), acts of God иногда с условиями, illegal cargo. ВАЖНО: если reefer unit failed по mechanical причине (не negligence) — обычно covered. Разница: 'не обслуживал' vs 'внезапная поломка'."
+      }
+    },
+    {
+      "id": "d17-t8",
+      "type": "crisis",
+      "title": "Stolen truck — протокол",
+      "data": {
+        "scenario": "Воскресенье 6 AM. Ваш GPS tracking показывает что Truck #3 (с грузом, стоимость cargo $65,000) двигается из truck stop в Теннесси, но водитель Ivan СПИТ дома — он на 34-hr restart. Кто-то украл трак с грузом.",
+        "options": [
+          {"text": "Подождать до утра — может GPS глючит", "isCorrect": false},
+          {"text": "Немедленно: 1) Позвонить 911 и сообщить о theft in progress (дать GPS location). 2) Позвонить в вашу insurance company (theft claim). 3) Уведомить broker о cargo theft. 4) Мониторить GPS tracking для полиции. 5) Зафиксировать время обнаружения. 6) НЕ пытаться преследовать самому.", "isCorrect": true},
+          {"text": "Позвонить Ivan и послать его за траком", "isCorrect": false},
+          {"text": "Дистанционно отключить двигатель через GPS system", "isCorrect": false}
+        ]
+      }
+    },
+    {
+      "id": "d17-t9",
+      "type": "fill-blank",
+      "title": "Insurance ключевые цифры",
+      "data": {
+        "sentence": "Минимум liability для interstate carrier: ${0}. Стандартный cargo insurance deductible: ${1}. При аварии НИКОГДА не говорите {2}. Cargo claim нужно forwarded к insurance за {3} business days.",
+        "blanks": [
+          {"correctAnswer": "750000", "wordBank": ["750000", "100000", "500000", "1000000"]},
+          {"correctAnswer": "2500", "wordBank": ["2500", "500", "1000", "5000"]},
+          {"correctAnswer": "sorry", "wordBank": ["sorry", "hello", "your name", "goodbye"]},
+          {"correctAnswer": "5", "wordBank": ["5", "3", "10", "30"]}
+        ]
+      }
+    },
+    {
+      "id": "d17-t10",
+      "type": "calculator",
+      "title": "Deductible impact на прибыль",
+      "data": {
+        "problem": "Рассчитайте финансовый impact cargo claim с deductible.",
+        "context": "Cargo damage claim: $18,000. Ваш cargo insurance deductible: $2,500. Insurance покроет остаток. Но: insurance premium увеличится на 15% на следующий год (текущий premium: $1,800/year). Рассчитайте ПОЛНУЮ стоимость этого инцидента для carrier за следующий год: deductible + premium increase.",
+        "correctAnswer": 2770,
+        "tolerancePercent": 3,
+        "unit": "$"
       }
     }
   ]

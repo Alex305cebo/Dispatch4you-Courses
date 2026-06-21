@@ -31,7 +31,10 @@ export default function EmailSimTask({ data, onAnswer }: EmailSimTaskProps) {
       if (answered) return;
       setSelectedIndex(index);
       setAnswered(true);
-      onAnswer(data.responses[index]?.isCorrect === true);
+      const response = data.responses[index];
+      const isResponseCorrect = response?.isCorrect === true;
+      const feedbackText = response?.feedback || '';
+      (onAnswer as (correct: boolean, selectedIndex?: number, feedbackText?: string) => void)(isResponseCorrect, index, feedbackText);
     },
     [answered, data.responses, onAnswer]
   );

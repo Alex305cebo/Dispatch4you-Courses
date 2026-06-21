@@ -1,82 +1,50 @@
 {
   "dayId": 9,
-  "weekId": 2,
-  "title": "Процесс диспетчеризации: от загрузки до доставки",
-  "estimatedMinutes": 45,
+  "weekId": 3,
+  "title": "Кризисные ситуации",
+  "estimatedMinutes": 20,
   "tasks": [
     {
       "id": "d9-t1",
-      "type": "quiz",
-      "title": "Этапы перевозки",
+      "type": "crisis",
+      "title": "Поломка на трассе",
       "data": {
-        "question": "Какой правильный порядок этапов перевозки груза?",
+        "scenario": "Ваш водитель Виктор звонит с I-40 в Оклахоме: 'У меня загорелся check engine, трак теряет мощность. Я еду с грузом reefer (замороженная рыба) — delivery завтра в 8 AM в Мемфисе. До Мемфиса ещё 400 миль.'",
         "options": [
-          "Delivery → Pickup → Invoice → Rate Con",
-          "Rate Con → Pickup → Transit → Delivery → Invoice",
-          "Invoice → Pickup → Delivery → Rate Con",
-          "Pickup → Rate Con → Invoice → Delivery"
-        ],
-        "correctIndex": 1,
-        "explanation": "Правильный порядок: 1) Подписание Rate Con, 2) Pickup (загрузка), 3) Transit (перевозка), 4) Delivery (разгрузка), 5) Получение POD, 6) Выставление Invoice."
+          {"text": "Пусть водитель продолжает ехать — maybe check engine ничего серьёзного", "isCorrect": false},
+          {"text": "Остановить водителя на ближайшем truck stop, вызвать mobile mechanic, проверить температуру reefer, уведомить брокера о возможной задержке и найти backup plan (tranship или другой carrier)", "isCorrect": true},
+          {"text": "Отменить груз и пусть водитель вызывает эвакуатор сам", "isCorrect": false},
+          {"text": "Сказать водителю отключить ELD и ехать без остановок до Мемфиса", "isCorrect": false}
+        ]
       }
     },
     {
       "id": "d9-t2",
-      "type": "quiz",
-      "title": "Обязанности на Pickup",
+      "type": "crisis",
+      "title": "Detention на загрузке",
       "data": {
-        "question": "Что водитель обязан проверить при загрузке (Pickup)?",
+        "scenario": "Водитель приехал на pickup в Walmart DC в 7:00 AM (appointment time). Сейчас уже 12:00 PM — водитель ждёт 5 часов. Ему говорят 'ещё час-два'. У водителя delivery в другом городе завтра утром, и время уходит.",
         "options": [
-          "Только подписать BOL и уехать сразу",
-          "Количество палет, состояние, BOL, seal number",
-          "Проверить только вес груза на весах",
-          "Сфотографировать склад снаружи и внутри"
-        ],
-        "correctIndex": 1,
-        "explanation": "На Pickup водитель обязан: проверить количество палет, осмотреть состояние груза, сверить BOL с фактическим грузом, записать seal number и сфотографировать загрузку."
+          {"text": "Ждать сколько скажут — Walmart большой клиент, нельзя портить отношения", "isCorrect": false},
+          {"text": "Позвонить брокеру, зафиксировать detention time (сфотографировать check-in документ), запросить detention pay ($75/час после 2 часов) и уточнить влияние задержки на delivery window", "isCorrect": true},
+          {"text": "Уехать без груза прямо сейчас — время дороже", "isCorrect": false}
+        ]
       }
     },
     {
       "id": "d9-t3",
       "type": "phone-dialog",
-      "title": "Координация с водителем на Pickup",
+      "title": "Авария на маршруте",
       "data": {
+        "context": "Ваш водитель попал в небольшую аварию — кто-то врезался в бок прицепа на парковке truck stop. Груз цел, прицеп повреждён косметически. Водитель в порядке.",
         "turns": [
           {
-            "speaker": "npc",
-            "text": "Hey boss, I'm at the pickup location but the dock is full. They say I need to wait 2 hours. What should I do?",
+            "speaker": "Водитель",
+            "message": "Мне в прицеп врезался пикап на парковке. Вмятина на боку, но двери целые. Груз в порядке. Тот водитель хочет разъехаться без полиции — говорит заплатит наличкой.",
             "replies": [
-              {
-                "text": "OK, wait the 2 hours and call me when loaded.",
-                "isCorrect": false,
-                "feedback": "2 часа ожидания — это потенциальный detention. Нужно задокументировать время прибытия и уведомить брокера."
-              },
-              {
-                "text": "Note your arrival time — I'll call the broker to let them know about the delay. If wait exceeds 2 hours, we may request detention pay. Keep me updated.",
-                "isCorrect": true,
-                "feedback": "Правильно! Зафиксировать время прибытия, уведомить брокера и подготовить основание для detention pay если ожидание затянется."
-              },
-              {
-                "text": "Leave and find another load.",
-                "isCorrect": false,
-                "feedback": "Нельзя просто уехать от подтверждённого груза. Это нарушение Rate Con и может привести к TONU и порче отношений с брокером."
-              }
-            ]
-          },
-          {
-            "speaker": "npc",
-            "text": "OK, noted my check-in time: 8:15 AM. They just told me it might be closer to 3 hours now. This is getting ridiculous.",
-            "replies": [
-              {
-                "text": "I hear you. I'm calling the broker now to discuss detention. Most Rate Cons allow 2 hours free time, after that it's detention pay. Stay patient, document everything.",
-                "isCorrect": true,
-                "feedback": "Правильно! Стандартное free time — 2 часа. После этого начисляется detention pay ($50-75/час). Документация — ключ к получению оплаты."
-              },
-              {
-                "text": "Just wait, there's nothing we can do.",
-                "isCorrect": false,
-                "feedback": "Нужно действовать! Связаться с брокером и потребовать detention pay. Бездействие = потеря денег."
-              }
+              {"text": "НЕТ! Вызывай полицию обязательно. Сфотографируй всё: повреждения, номер его машины, его ID. Возьми police report number. Нам нужна документация для страховки и на случай если он потом заявит что это мы виноваты.", "isCorrect": true, "feedback": "Правильно! ВСЕГДА оформляй полицейский отчёт при аварии! Даже если damage кажется минимальным. Без police report: 1) Страховая может не покрыть ремонт. 2) Другой водитель может позже заявить ложные claims. 3) Нет документальной защиты. Фото + police report = ваша защита."},
+              {"text": "Если damage небольшой, бери наличку и езжай дальше. Не трать время.", "isCorrect": false, "feedback": "Опасная ошибка! Без police report вы: 1) Не можете доказать кто виноват. 2) Не получите страховое возмещение если ремонт дороже, чем казалось. 3) Рискуете будущими claims. $200-500 'наличкой' не стоит рисков убытков в $5,000+."},
+              {"text": "Позвони в нашу страховую компанию и спроси что делать.", "isCorrect": false, "feedback": "Сначала — безопасность и документация! Police report нужен ДО звонка в страховую. Страховая первым делом спросит: есть ли police report и фото? Без них claim будет сложно обработать. Порядок: 1) Полиция → 2) Фото → 3) Страховая."}
             ]
           }
         ]
@@ -84,42 +52,108 @@
     },
     {
       "id": "d9-t4",
-      "type": "email-sim",
-      "title": "Уведомление брокера о задержке",
+      "type": "crisis",
+      "title": "Stolen cargo",
       "data": {
-        "senderName": "Вы → Mark (Global Freight Solutions)",
-        "subject": "Re: Load GFS-2024-8821 — Detention Notice",
-        "body": "Вам нужно отправить email брокеру Mark о задержке на pickup. Водитель прибыл в 8:15 AM, а загрузка началась только в 11:30 AM (3 часа 15 минут ожидания). Rate Con предусматривает 2 часа free time.\n\nВыберите наиболее профессиональный ответ:",
-        "responses": [
-          {
-            "text": "Отправить формальное уведомление: 'Hi Mark, driver arrived 8:15 AM, loaded at 11:30 AM. Detention: 1h15m beyond 2h free time. Requesting detention pay per Rate Con terms. Documentation attached.'",
-            "isCorrect": true,
-            "feedback": "Правильно! Чёткое, профессиональное уведомление с фактами: время прибытия, время загрузки, расчёт detention. Обязательно приложите документацию."
-          },
-          {
-            "text": "Написать гневное письмо о потерянном времени",
-            "isCorrect": false,
-            "feedback": "Эмоциональные письма непрофессиональны. Используйте факты и ссылки на условия Rate Con."
-          },
-          {
-            "text": "Не писать ничего и забыть о detention",
-            "isCorrect": false,
-            "feedback": "Без письменного уведомления вы теряете основание для detention pay. Всегда документируйте задержки в письменном виде."
-          }
+        "scenario": "Водитель позвонил в панике: он остановился на обед на truck stop в Далласе, вернулся через 30 минут — замок на дверях прицепа срезан, 5 из 20 паллет электроники украдены. Стоимость пропавшего груза примерно $85,000.",
+        "options": [
+          {"text": "Позвонить 911, не двигать трак с места, сфотографировать сломанный замок и прицеп, немедленно уведомить брокера и свою страховую (cargo insurance), запросить видео с камер truck stop", "isCorrect": true},
+          {"text": "Закрыть двери и доставить оставшийся груз как ни в чём не бывало — maybe никто не заметит", "isCorrect": false},
+          {"text": "Уехать с truck stop побыстрее — может воры ещё рядом", "isCorrect": false}
         ]
       }
     },
     {
       "id": "d9-t5",
-      "type": "drag-match",
-      "title": "Этапы перевозки и документы",
+      "type": "quiz",
+      "title": "TONU — Truck Order Not Used",
       "data": {
-        "pairs": [
-          { "term": "Rate Con", "definition": "Подписывается до загрузки" },
-          { "term": "BOL", "definition": "Выдаётся на pickup при загрузке" },
-          { "term": "POD", "definition": "Подписывается получателем при delivery" },
-          { "term": "Invoice", "definition": "Отправляется после доставки для оплаты" },
-          { "term": "Detention Notice", "definition": "Подаётся при задержке свыше free time" }
+        "question": "Что такое TONU и когда carrier имеет право на его получение?",
+        "options": [
+          "TONU — штраф за опоздание водителя на загрузку",
+          "TONU — компенсация carrier, когда груз отменяется ПОСЛЕ того, как водитель уже прибыл на pickup или проехал значительное расстояние к нему",
+          "TONU — бонус за быструю доставку",
+          "TONU — налог на перевозку опасных грузов"
+        ],
+        "correctIndex": 1,
+        "explanation": "TONU (Truck Order Not Used) — компенсация за отменённый груз. Если водитель приехал на pickup, а груза нет (отменён, не готов, ошибка) — carrier имеет право на TONU fee. Стандартная сумма: $150-500 (зависит от контракта и ситуации). ВАЖНО: TONU должен быть прописан в Rate Con! Без этой записи получить компенсацию сложнее. Всегда проверяйте TONU policy перед подписанием."
+      }
+    },
+    {
+      "id": "d9-t6",
+      "type": "email-sim",
+      "title": "Брокер отменяет груз",
+      "data": {
+        "senderName": "Kevin Miller — Landstar",
+        "subject": "Load Cancellation — #LS-9921",
+        "body": "Hi,\n\nUnfortunately the shipper has cancelled load #LS-9921.\nYour driver is currently en route to pickup (ETA 2 hours).\n\nI apologize for the inconvenience. We'll try to find you something else in that area.\n\nKevin Miller\nLandstar",
+        "responses": [
+          {"text": "Потребовать TONU fee: 'Kevin, my driver has been driving 3 hours toward this pickup. Per our Rate Con, we're owed a TONU fee of $350. Please confirm and process. Also, I'm open to hearing about alternative loads in the area.'", "isCorrect": true, "feedback": "Правильно! Водитель потратил 3 часа (топливо, время, HOS часы) на путь к отменённому грузу. TONU — ваше законное право. Вы профессионально запрашиваете компенсацию И остаётесь открыты к сотрудничеству. Всегда документируйте: время в пути, мили, расходы."},
+          {"text": "Ответить 'No problem, thanks for letting me know' и искать другой груз", "isCorrect": false, "feedback": "Вы потеряли 3 часа вождения, топливо, и HOS часы водителя! Не просить TONU = дарить деньги брокеру. Это бизнес — вы имеете право на компенсацию за отменённый груз. Вежливо, но твёрдо требуйте TONU."},
+          {"text": "Отправить гневное письмо с угрозами судом и never work again", "isCorrect": false, "feedback": "Отмены случаются — это часть бизнеса. Агрессия разрушает отношения с брокером, который может давать вам грузы в будущем. Профессионально запросите TONU и двигайтесь дальше. Мосты лучше не сжигать."}
+        ]
+      }
+    },
+    {
+      "id": "d9-t7",
+      "type": "crisis",
+      "title": "Инспекция DOT",
+      "data": {
+        "scenario": "Водителя остановили на DOT inspection в Джорджии. Инспектор нашёл нарушение: один из тормозных барабанов изношен ниже нормы. Водителю грозит out-of-service до устранения. Delivery через 6 часов в Джексонвилле (150 миль).",
+        "options": [
+          {"text": "Позвонить инспектору и попросить 'отпустить' водителя — delivery важная", "isCorrect": false},
+          {"text": "Найти ближайшую ремонтную мастерскую, организовать ремонт тормозов, уведомить брокера о задержке 2-4 часа, предоставить обновлённый ETA", "isCorrect": true},
+          {"text": "Пусть водитель оспорит решение инспектора и требует повторную проверку", "isCorrect": false},
+          {"text": "Отменить груз и вызвать эвакуатор", "isCorrect": false}
+        ]
+      }
+    },
+    {
+      "id": "d9-t8",
+      "type": "fill-blank",
+      "title": "Действия при кризисе",
+      "data": {
+        "sentence": "При аварии: вызвать {0} и сделать фото. При поломке: найти {1} и уведомить брокера. При краже груза: звонить {2} и не двигать трак. При отмене груза: требовать {3}.",
+        "blanks": [
+          {"correctAnswer": "полицию", "wordBank": ["полицию", "друга", "адвоката", "жену"]},
+          {"correctAnswer": "механика", "wordBank": ["механика", "другой трак", "магазин", "hotel"]},
+          {"correctAnswer": "911", "wordBank": ["911", "брокеру", "другу", "маме"]},
+          {"correctAnswer": "TONU", "wordBank": ["TONU", "извинения", "bonus", "отпуск"]}
+        ]
+      }
+    },
+    {
+      "id": "d9-t9",
+      "type": "quiz",
+      "title": "Detention claim",
+      "data": {
+        "question": "Как правильно документировать detention для получения оплаты?",
+        "options": [
+          "Просто сообщить брокеру по телефону — этого достаточно",
+          "Сфотографировать check-in документ с временем прибытия, отметить время выезда, сохранить все timestamps, и отправить claim с доказательствами брокеру",
+          "Написать в социальных сетях жалобу на склад",
+          "Ждать пока брокер сам заметит и заплатит"
+        ],
+        "correctIndex": 1,
+        "explanation": "Документация detention: 1) Фото check-in sheet с временем прибытия (timestamp). 2) Фото/запись времени начала загрузки/разгрузки. 3) Фото времени выезда с территории. 4) Скриншот GPS/ELD показывающий время на месте. 5) Отправить формальный detention claim брокеру с Rate Con reference и всеми доказательствами. Без документов = без оплаты. Стандарт: 2 часа бесплатно, далее $75-100/час."
+      }
+    },
+    {
+      "id": "d9-t10",
+      "type": "phone-dialog",
+      "title": "Водитель отказывается от груза",
+      "data": {
+        "context": "Ваш водитель прибыл на загрузку и увидел, что груз — незапечатанные бочки с жидкостью, без маркировки. Rate Con указывает 'general freight'. Водитель чувствует сильный химический запах.",
+        "turns": [
+          {
+            "speaker": "Водитель",
+            "message": "Я не буду это грузить. Тут бочки без маркировки, пахнет химией. В Rate Con написано general freight, а это похоже на hazmat. Что делать?",
+            "replies": [
+              {"text": "Правильно, НЕ грузи! Сфотографируй бочки и отсутствие маркировки. Я звоню брокеру — если это hazmat, нам нужен hazmat endorsement и правильная документация. Без этого мы не имеем права перевозить.", "isCorrect": true, "feedback": "Абсолютно правильно! Перевозка hazmat без endorsement = уголовное дело + штрафы $50,000+. Если груз не соответствует описанию в Rate Con — carrier имеет полное право отказаться. Документируйте (фото) и требуйте от брокера объяснений. Безопасность ВСЕГДА первый приоритет."},
+              {"text": "Ладно, просто загрузи и поехали — мы уже потратили время на deadhead сюда.", "isCorrect": false, "feedback": "ОПАСНО! Перевозка неопознанных химических веществ без hazmat endorsement — федеральное преступление. Штраф до $75,000 и тюрьма. Плюс если случится утечка — ответственность за environmental damage. НИКОГДА не грузите подозрительный груз!"},
+              {"text": "Попроси ребят на складе просто заклеить бочки и поставить любые стикеры, чтобы выглядело нормально.", "isCorrect": false, "feedback": "Это подделка документации — преступление! Маркировка hazmat регулируется DOT/FMCSA. Фальшивые лейблы = уголовное преследование для ВСЕХ участников. Никаких 'обходных путей' с потенциально опасными грузами."}
+            ]
+          }
         ]
       }
     }

@@ -1,113 +1,156 @@
 {
   "dayId": 8,
   "weekId": 2,
-  "title": "Rate Confirmation: анализ и подписание",
-  "estimatedMinutes": 45,
+  "title": "Планирование маршрутов",
+  "estimatedMinutes": 18,
   "tasks": [
     {
       "id": "d8-t1",
-      "type": "quiz",
-      "title": "Элементы Rate Con",
+      "type": "map-routing",
+      "title": "Dallas → Atlanta: выбор маршрута",
       "data": {
-        "question": "Какой элемент Rate Con является САМЫМ важным для проверки перед подписанием?",
-        "options": [
-          "Логотип брокерской компании на документе",
-          "Ставка, адреса, даты и оборудование",
-          "Номер факса и email брокера",
-          "Цвет шрифта и оформление документа"
-        ],
-        "correctIndex": 1,
-        "explanation": "Перед подписанием Rate Con критически важно проверить: ставку, точные адреса pickup/delivery, даты/время, тип оборудования и любые special instructions."
-      }
-    },
-    {
-      "id": "d8-t2",
-      "type": "document-review",
-      "title": "Проверка Rate Confirmation",
-      "data": {
-        "documentType": "rate-con",
-        "fields": [
-          { "id": "rc-1", "label": "Broker", "value": "Global Freight Solutions, MC# 334455", "hasError": false },
-          { "id": "rc-2", "label": "Carrier", "value": "Swift Transport LLC, MC# 112233", "hasError": false },
-          { "id": "rc-3", "label": "Rate", "value": "$1,630.00", "hasError": false },
-          { "id": "rc-4", "label": "Pickup Date", "value": "March 15, 2024 — 8:00 AM", "hasError": false },
-          { "id": "rc-5", "label": "Pickup Address", "value": "1200 Industrial Blvd, Atlanta, GA 30301", "hasError": false },
-          { "id": "rc-6", "label": "Delivery Date", "value": "March 15, 2024 — 6:00 PM", "hasError": true, "errorExplanation": "660 миль от Atlanta до Miami за 10 часов нереально. При средней скорости 55 mph потребуется минимум 12 часов плюс остановки. Delivery date должен быть следующий день." },
-          { "id": "rc-7", "label": "Delivery Address", "value": "890 Ocean Dr, Miami, FL 33139", "hasError": false },
-          { "id": "rc-8", "label": "Equipment", "value": "Reefer 53ft", "hasError": true, "errorExplanation": "В переговорах обсуждался Dry Van, но в Rate Con указан Reefer. Это другой тип оборудования и другая ставка. Нужно исправить." },
-          { "id": "rc-9", "label": "Weight", "value": "42,000 lbs", "hasError": false },
-          { "id": "rc-10", "label": "Reference #", "value": "GFS-2024-8821", "hasError": false }
+        "origin": "Dallas, TX",
+        "destination": "Atlanta, GA",
+        "routes": [
+          {"name": "I-20 East (прямой)", "miles": 780, "rate": 2.45, "isOptimal": true},
+          {"name": "I-30 → I-40 → I-65 South (через Мемфис)", "miles": 860, "rate": 2.45, "isOptimal": false},
+          {"name": "I-10 East → I-65 North (через побережье)", "miles": 920, "rate": 2.45, "isOptimal": false}
         ]
       }
     },
     {
-      "id": "d8-t3",
+      "id": "d8-t2",
       "type": "quiz",
-      "title": "Ошибки в Rate Con",
+      "title": "Факторы выбора маршрута",
       "data": {
-        "question": "Что делать, если вы обнаружили ошибку в Rate Con?",
+        "question": "Какие факторы НАИБОЛЕЕ важны при выборе маршрута для трака?",
         "options": [
-          "Подписать как есть и разобраться потом",
-          "Связаться с брокером и запросить исправление",
-          "Исправить ошибку самостоятельно и подписать",
-          "Отменить груз без каких-либо объяснений"
+          "Только количество миль — чем короче, тем лучше",
+          "Расстояние, toll roads, горный рельеф, погода, truck restrictions, наличие truck stops для отдыха",
+          "Только красота пейзажа и достопримечательности",
+          "Мнение водителя — он сам знает как лучше"
         ],
         "correctIndex": 1,
-        "explanation": "Никогда не подписывайте Rate Con с ошибками! Свяжитесь с брокером, укажите на несоответствие и дождитесь исправленной версии. Подписанный Rate Con — юридический документ."
+        "explanation": "При планировании маршрута учитывайте: 1) Расстояние (miles = fuel cost). 2) Tolls (могут добавить $50-200). 3) Рельеф (горы = больше топлива + износ тормозов). 4) Погода (снег, лёд, ветер). 5) Truck restrictions (мосты с ограничением по весу, запрет траков в некоторых зонах). 6) Fuel stops (планировать заправки на дешёвых станциях). 7) HOS compliance (где водитель будет отдыхать)."
+      }
+    },
+    {
+      "id": "d8-t3",
+      "type": "map-routing",
+      "title": "Chicago → New York: tolls vs distance",
+      "data": {
+        "origin": "Chicago, IL",
+        "destination": "New York, NY",
+        "routes": [
+          {"name": "I-80 → I-76 → NJ Turnpike (стандартный)", "miles": 790, "rate": 2.60, "isOptimal": false},
+          {"name": "I-90 → I-87 (через NY Thruway)", "miles": 830, "rate": 2.60, "isOptimal": false},
+          {"name": "I-80 → I-81 → I-78 (минимум tolls)", "miles": 810, "rate": 2.60, "isOptimal": true}
+        ]
       }
     },
     {
       "id": "d8-t4",
-      "type": "phone-dialog",
-      "title": "Звонок брокеру об ошибке в Rate Con",
+      "type": "crisis",
+      "title": "Снежная буря на маршруте",
       "data": {
+        "scenario": "Ваш водитель едет из Denver в Kansas City по I-70. Погода резко ухудшилась — severe winter storm warning. Видимость падает, дорога обледенела. Водитель на полпути (300 миль до KC). Delivery завтра утром.",
+        "options": [
+          {"text": "Водитель должен продолжать — delivery важнее безопасности", "isCorrect": false},
+          {"text": "Приказать водителю остановиться на ближайшем truck stop, сообщить брокеру о задержке из-за погоды, отправить скриншоты weather alert как доказательство", "isCorrect": true},
+          {"text": "Предложить водителю свернуть на альтернативные дороги и объехать шторм через Оклахому", "isCorrect": false},
+          {"text": "Игнорировать ситуацию — водитель сам разберётся", "isCorrect": false}
+        ]
+      }
+    },
+    {
+      "id": "d8-t5",
+      "type": "quiz",
+      "title": "Fuel planning",
+      "data": {
+        "question": "Зачем диспетчер помогает водителю планировать заправки?",
+        "options": [
+          "Водитель не умеет заправлять трак сам",
+          "Цены на дизель отличаются на $0.30-0.80/галлон между штатами — правильное планирование экономит $50-150 за рейс",
+          "Трак может заправляться только на определённых станциях",
+          "Это просто традиция — реальной пользы нет"
+        ],
+        "correctIndex": 1,
+        "explanation": "Дизель в разных штатах стоит по-разному! Дорогие: California ($5.50+), New York, Illinois. Дешёвые: Texas ($3.40), Oklahoma ($3.50), Missouri ($3.60). Разница $0.50/gal × 100 галлонов = $50 экономии за одну заправку! Инструменты: GasBuddy, Trucker Path, Pilot/Flying J apps. Также fuel cards (Comdata, EFS) дают скидки на определённых сетях."
+      }
+    },
+    {
+      "id": "d8-t6",
+      "type": "map-routing",
+      "title": "LA → Seattle: горы и погода",
+      "data": {
+        "origin": "Los Angeles, CA",
+        "destination": "Seattle, WA",
+        "routes": [
+          {"name": "I-5 North (прямой через горы OR/WA)", "miles": 1135, "rate": 2.35, "isOptimal": true},
+          {"name": "US-101 Coastal (побережье)", "miles": 1290, "rate": 2.35, "isOptimal": false},
+          {"name": "I-15 → I-84 → I-82 (через Boise)", "miles": 1350, "rate": 2.35, "isOptimal": false}
+        ]
+      }
+    },
+    {
+      "id": "d8-t7",
+      "type": "calculator",
+      "title": "ETA с учётом HOS",
+      "data": {
+        "problem": "Рассчитайте время прибытия (ETA) с учётом HOS",
+        "context": "Водитель стартует в 6:00 AM из Memphis, TN. Destination: Jacksonville, FL (680 миль). Средняя скорость: 55 миль/час. После 11 часов вождения нужен 10-hour break. Сколько полных часов пройдёт от старта до прибытия в Jacksonville? (вождение день 1 + break + вождение день 2)",
+        "correctAnswer": 33,
+        "tolerancePercent": 5,
+        "unit": "часов"
+      }
+    },
+    {
+      "id": "d8-t8",
+      "type": "phone-dialog",
+      "title": "Брокер спрашивает ETA",
+      "data": {
+        "context": "Ваш водитель загрузился в Хьюстоне в 10:00 AM. Destination: Orlando, FL (980 миль). Брокер звонит узнать ETA.",
         "turns": [
           {
-            "speaker": "npc",
-            "text": "Global Freight, this is Mark.",
+            "speaker": "Брокер",
+            "message": "Hey, what's the ETA for delivery in Orlando? My customer is asking.",
             "replies": [
-              {
-                "text": "Hey Mark, it's Swift Transport. I got the Rate Con for load GFS-2024-8821, but I found two issues: the equipment shows Reefer but we agreed on Dry Van, and the delivery date seems too tight for 660 miles.",
-                "isCorrect": true,
-                "feedback": "Отлично! Чётко указали обе проблемы с конкретными деталями. Профессиональный подход к решению ошибок."
-              },
-              {
-                "text": "Mark, your Rate Con is all wrong. Fix it.",
-                "isCorrect": false,
-                "feedback": "Слишком агрессивно. Укажите конкретные ошибки вежливо — это сохраняет рабочие отношения."
-              }
-            ]
-          },
-          {
-            "speaker": "npc",
-            "text": "Oh, my apologies! You're right — it should be Dry Van. And yeah, delivery should be March 16 by noon. Let me fix that and resend within 10 minutes.",
-            "replies": [
-              {
-                "text": "Perfect, thank you Mark. I'll hold off on signing until I get the corrected version. My driver is confirmed and ready for tomorrow's pickup.",
-                "isCorrect": true,
-                "feedback": "Правильно! Подтвердили, что ждёте исправленную версию, и одновременно подтвердили готовность к загрузке."
-              },
-              {
-                "text": "OK.",
-                "isCorrect": false,
-                "feedback": "Лучше подтвердить, что вы ждёте новый документ и не подпишете старый. Чёткая коммуникация предотвращает недоразумения."
-              }
+              {"text": "Driver loaded at 10 AM Houston. With HOS he can drive about 550 miles today, 10-hour break, then finish the remaining 430 miles tomorrow. ETA: tomorrow around 2-3 PM Eastern.", "isCorrect": true, "feedback": "Отлично! Вы рассчитали реалистично: 550 миль сегодня (~10 часов driving с учётом загрузки утром), 10-hour mandatory break, затем 430 миль завтра (~8 часов). С учётом часового пояса (Houston CT → Orlando ET +1) ETA 2-3 PM — точная оценка."},
+              {"text": "He'll be there tonight, no worries.", "isCorrect": false, "feedback": "980 миль за один день НЕВОЗМОЖНО по HOS! Это ~17-18 часов вождения. 11 часов driving maximum = ~600 миль в день. Обещать нереалистичный ETA = потеря доверия + проблемы при задержке."},
+              {"text": "I have no idea, let me ask my driver and call you back in a couple of hours.", "isCorrect": false, "feedback": "Диспетчер должен УМЕТЬ рассчитывать ETA без звонка водителю! Формула: мили ÷ 55 mph = часы вождения. Если больше 11 часов — добавить 10-hour break. Это базовый навык."}
             ]
           }
         ]
       }
     },
     {
-      "id": "d8-t5",
+      "id": "d8-t9",
       "type": "fill-blank",
-      "title": "Процесс Rate Con",
+      "title": "Планирование рейса",
       "data": {
-        "sentence": "После получения Rate Con нужно проверить ___, адреса, даты и тип ___. Только после проверки можно ___.",
+        "sentence": "При планировании маршрута проверьте {0} на дорогах. Рассчитайте {1} с учётом HOS. Найдите дешёвые {2} по маршруту. Учитывайте {3} на платных дорогах восточного побережья.",
         "blanks": [
-          { "correctAnswer": "ставку", "wordBank": ["ставку", "логотип", "шрифт", "email"] },
-          { "correctAnswer": "оборудования", "wordBank": ["оборудования", "бумаги", "чернил", "факса"] },
-          { "correctAnswer": "подписать", "wordBank": ["подписать", "удалить", "распечатать", "переслать"] }
+          {"correctAnswer": "погоду", "wordBank": ["погоду", "скорость", "цвет", "музыку"]},
+          {"correctAnswer": "ETA", "wordBank": ["ETA", "RPM", "DOT", "CDL"]},
+          {"correctAnswer": "заправки", "wordBank": ["заправки", "отели", "рестораны", "магазины"]},
+          {"correctAnswer": "tolls", "wordBank": ["tolls", "police", "cameras", "speed"]}
         ]
+      }
+    },
+    {
+      "id": "d8-t10",
+      "type": "quiz",
+      "title": "Truck restrictions",
+      "data": {
+        "question": "Что может случиться, если трак поедет по дороге с ограничением по весу или высоте?",
+        "options": [
+          "Ничего — ограничения только для легковых автомобилей",
+          "Штраф, повреждение моста/трака, out-of-service order, аннулирование страховки и огромная ответственность за ущерб",
+          "Небольшой штраф $25 — не страшно",
+          "Трак автоматически остановится"
+        ],
+        "correctIndex": 1,
+        "explanation": "Нарушение weight/height restrictions — серьёзное дело! Последствия: 1) Штраф $1,000-10,000+. 2) Если повредит мост — ответственность за ремонт (сотни тысяч $). 3) Out-of-service order — трак стоит на месте. 4) Страховка может не покрыть damage. 5) Удар по CSA score. Диспетчер ОБЯЗАН использовать truck GPS (не Google Maps!) и проверять restrictions на маршруте. Standard trailer height: 13'6\". Standard weight limit: 80,000 lbs gross."
       }
     }
   ]

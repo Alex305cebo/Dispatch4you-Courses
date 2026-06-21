@@ -1,156 +1,170 @@
 {
   "dayId": 15,
-  "weekId": 3,
-  "title": "Клиентский сервис и коммуникации",
-  "estimatedMinutes": 40,
+  "weekId": 5,
+  "title": "ELD и электронные логи",
+  "estimatedMinutes": 24,
   "tasks": [
     {
       "id": "d15-t1",
       "type": "quiz",
-      "title": "Основы клиентского сервиса",
+      "title": "Что такое ELD",
       "data": {
-        "question": "Какой главный принцип коммуникации диспетчера с брокерами и водителями?",
+        "question": "Что фиксирует ELD (Electronic Logging Device) и почему это важно для диспетчера?",
         "options": [
-          "Отвечать только когда удобно диспетчеру",
-          "Проактивно сообщать обновления заранее",
-          "Общаться только по email и SMS",
-          "Никогда не сообщать плохие новости"
+          "Только скорость трака для safety department",
+          "Время вождения, On Duty, Sleeper Berth, Off Duty — для контроля HOS compliance. Диспетчер видит реальные доступные часы водителя.",
+          "Только местоположение трака на карте",
+          "Расход топлива и состояние двигателя"
         ],
         "correctIndex": 1,
-        "explanation": "Проактивная коммуникация — золотое правило диспетчерства. Сообщайте статус загрузки/доставки, предупреждайте о задержках заранее. Это строит доверие и репутацию."
+        "explanation": "ELD записывает 4 duty status: Driving, On Duty (Not Driving), Sleeper Berth, Off Duty. Для диспетчера это критически важно: вы видите РЕАЛЬНЫЕ доступные часы водителя (не его слова, а факты). ELD mandate (2017) = все CMV должны иметь ELD. Нарушение = $16,000 штраф для carrier. Основные ELD провайдеры: Samsara, Motive (KeepTruckin), Geotab."
       }
     },
     {
       "id": "d15-t2",
-      "type": "quiz",
-      "title": "Обновления статуса",
+      "type": "drag-match",
+      "title": "ELD статусы и правила",
       "data": {
-        "question": "Когда нужно отправлять Check Call (обновление статуса) брокеру?",
-        "options": [
-          "Только когда брокер сам звонит",
-          "При pickup, каждые 4-6 часов, при delivery",
-          "Только при доставке груза получателю",
-          "Раз в день утром по расписанию"
-        ],
-        "correctIndex": 1,
-        "explanation": "Стандартный график Check Calls: при загрузке, каждые 4-6 часов в transit, при доставке. А также НЕМЕДЛЕННО при любых задержках, проблемах или изменениях."
+        "pairs": [
+          { "term": "Driving", "definition": "Трак в движении — max 11 часов в сутки" },
+          { "term": "On Duty (Not Driving)", "definition": "Работа без вождения: загрузка, inspection, paperwork" },
+          { "term": "Sleeper Berth", "definition": "Отдых в спальной кабине — останавливает 14-hr clock" },
+          { "term": "Off Duty", "definition": "Полный отдых — не связан с работой" },
+          { "term": "14-hour clock", "definition": "Окно от начала duty — после 14 часов нельзя водить" },
+          { "term": "30-min break", "definition": "Обязательный перерыв после 8 часов driving" }
+        ]
       }
     },
     {
       "id": "d15-t3",
-      "type": "phone-dialog",
-      "title": "Сообщение о задержке доставки",
+      "type": "crisis",
+      "title": "ELD violation — что делать",
       "data": {
-        "turns": [
-          {
-            "speaker": "npc",
-            "text": "National Freight, this is Jennifer.",
-            "replies": [
-              {
-                "text": "Hi Jennifer, this is dispatch from Swift Transport regarding load #NF-4492. I need to give you an update — we're running about 2 hours behind schedule due to heavy traffic near Nashville. Current ETA is 6 PM instead of 4 PM.",
-                "isCorrect": true,
-                "feedback": "Отлично! Вы сразу представились, назвали номер груза, объяснили причину задержки и дали новый ETA. Профессиональный Check Call."
-              },
-              {
-                "text": "Hey, we might be a little late. Not sure when exactly.",
-                "isCorrect": false,
-                "feedback": "Слишком расплывчато. Брокер должен знать конкретный номер груза, причину задержки и новый ETA."
-              },
-              {
-                "text": "Подождать и позвонить когда водитель приедет на место",
-                "isCorrect": false,
-                "feedback": "Нельзя ждать! Брокер должен знать о задержке ЗАРАНЕЕ, чтобы предупредить получателя. Звоните сразу при обнаружении проблемы."
-              }
-            ]
-          },
-          {
-            "speaker": "npc",
-            "text": "OK thanks for the heads up. The receiver closes at 7 PM, so 6 PM should still work. Can you make sure the driver sends me a text when he's 30 minutes out?",
-            "replies": [
-              {
-                "text": "Absolutely, I'll make sure the driver texts you at 5:30 PM. And I'll send you another update if anything changes. Thanks for understanding, Jennifer.",
-                "isCorrect": true,
-                "feedback": "Правильно! Подтвердили запрос, обозначили конкретное время и предложили дополнительные обновления. Это строит доверие."
-              },
-              {
-                "text": "OK I'll try.",
-                "isCorrect": false,
-                "feedback": "'I'll try' не внушает уверенности. Давайте конкретные обещания и выполняйте их."
-              }
-            ]
-          }
+        "scenario": "Ваш водитель Mike звонит: 'Мой ELD показывает violation — я проехал 11 часов 20 минут вместо максимальных 11. Я заехал на заправку и не заметил как перешёл лимит. Сейчас я в 40 милях от delivery, appointment через 2 часа.' Violation уже записан в ELD.",
+        "options": [
+          {"text": "Пусть доедет 40 миль — violation уже есть, хуже не будет", "isCorrect": false},
+          {"text": "СТОП. Водитель должен немедленно остановиться и уйти в Off Duty/Sleeper. Violation уже записан — продолжение езды только увеличит severity. Связаться с брокером: задержка delivery на minimum 10 часов (reset). Документировать обстоятельства для потенциального аудита.", "isCorrect": true},
+          {"text": "Попросить водителя перевести ELD в 'unassigned' mode и доехать без логов", "isCorrect": false},
+          {"text": "Отключить ELD — он глючит, пусть едет на бумажных логах", "isCorrect": false}
         ]
       }
     },
     {
       "id": "d15-t4",
       "type": "email-sim",
-      "title": "Жалоба от брокера",
+      "title": "Samsara alert — speeding",
       "data": {
-        "senderName": "Mark Stevens — Global Freight Solutions",
-        "subject": "URGENT: Driver missed delivery appointment!",
-        "body": "Your driver was 3 hours late to delivery yesterday on load GFS-9901. The receiver refused the load and now we have to reschedule. My customer is furious.\n\nThis is unacceptable. We need:\n1. Explanation of what happened\n2. Guarantee this won't happen again\n3. Confirmation of new delivery appointment\n\nPlease respond ASAP.\n\n— Mark",
+        "senderName": "Samsara Fleet Alert",
+        "subject": "⚠️ Speed Alert: Driver Alex — 78 mph in 65 zone",
+        "body": "ALERT DETAILS:\n\nDriver: Alex Petrov\nVehicle: Truck #204\nTime: Today 2:45 PM\nLocation: I-10 West, mile marker 218, Louisiana\nSpeed: 78 mph\nPosted Limit: 65 mph\nDuration: 4 minutes\n\nThis is the 3rd speeding event this week for this driver.\n\nCSA Points Impact: Unsafe Driving BASIC\n\nRecommended Action: Coach driver immediately.",
         "responses": [
           {
-            "text": "Ответить: 'Not our fault — there was traffic.' Без дополнительных деталей",
-            "isCorrect": false,
-            "feedback": "Это непрофессиональный ответ. Нужно взять ответственность, объяснить причину и предложить решение."
-          },
-          {
-            "text": "Ответить с объяснением, извинением и конкретным планом: 'Mark, I apologize for the late delivery. Our driver experienced a mechanical issue that caused the delay. We're confirming a new appointment for tomorrow 8 AM and will ensure on-time delivery. I'll personally monitor this load.'",
+            "text": "Немедленно позвонить Alex: 'Samsara показал 78 в 65 зоне. Это третий раз за неделю. Unsafe Driving CSA points ставят под угрозу наш Safety Rating и могут привести к аудиту. Если получишь ticket — это 3+ CSA points. Снизь скорость до speed limit, это не обсуждается.'",
             "isCorrect": true,
-            "feedback": "Правильно! Профессиональный ответ: извинение, объяснение причины, конкретный план решения и личная ответственность. Это сохраняет отношения."
+            "feedback": "Правильно! 3 speeding events за неделю = серьёзная проблема. CSA Unsafe Driving BASIC: каждый violation = 1-3 points × time weight. Если carrier набирает 65+ percentile — FMCSA intervention. Один speeding ticket = $200-500 fine + CSA points на 3 ГОДА. Немедленный coaching + документирование = ваша защита."
           },
           {
-            "text": "Проигнорировать письмо до завтра",
+            "text": "Проигнорировать — 78 в 65 зоне это нормально, все так ездят",
             "isCorrect": false,
-            "feedback": "URGENT письмо требует немедленного ответа. Задержка только усугубит конфликт и может стоить вам партнёра."
+            "feedback": "13 mph over limit = automatic ticket если поймает DOT/police. 3rd event = паттерн! CSA points накапливаются за 2 года. Unsafe Driving BASIC > 65 percentile = FMCSA Warning Letter → Targeted Inspection → Potential Downgrade. Игнорирование проблемы = путь к закрытию MC authority."
+          },
+          {
+            "text": "Написать Alex текстовое сообщение 'slow down please'",
+            "isCorrect": false,
+            "feedback": "Текст = слабая реакция на 3-й violation за неделю. Driver может проигнорировать. Это требует ЗВОНКА и серьёзного разговора. Документируйте coaching: дата, время, что обсудили. Если driver продолжит — это основание для termination перед тем как он уничтожит ваш CSA score."
           }
         ]
       }
     },
     {
       "id": "d15-t5",
-      "type": "crisis",
-      "title": "Водитель отказывается от груза",
+      "type": "phone-dialog",
+      "title": "Водитель просит edit ELD",
       "data": {
-        "scenario": "Водитель приехал на pickup и звонит: 'Здесь написано Hazmat на документах, у меня нет Hazmat endorsement! Я не могу это везти!' Вы уже подтвердили груз брокеру. До pickup appointment осталось 30 минут.",
-        "timeLimitSeconds": 60,
-        "options": [
+        "context": "Водитель Ivan звонит и просит отредактировать его ELD лог за вчера. Он говорит что забыл переключить статус с Driving на Sleeper Berth когда остановился на ночь. ELD показывает 13.5 часов driving — violation.",
+        "turns": [
           {
-            "text": "Сказать водителю везти как есть — разберёмся потом",
-            "isCorrect": false,
-            "explanation": "Перевозка Hazmat без endorsement — федеральное нарушение! Штрафы, потеря CDL, уголовная ответственность. Категорически запрещено."
-          },
-          {
-            "text": "Немедленно позвонить брокеру: объяснить ситуацию, предложить другого водителя с Hazmat endorsement если есть, или помочь найти замену. Документ в Rate Con не указывал Hazmat — это ошибка брокера",
-            "isCorrect": true,
-            "explanation": "Правильно! Безопасность и закон — приоритет. Сообщите брокеру немедленно. Если в Rate Con не было указано Hazmat — это ошибка брокера, и TONU charge вам не грозит."
-          },
-          {
-            "text": "Отменить груз и не звонить брокеру",
-            "isCorrect": false,
-            "explanation": "Нужно связаться с брокером немедленно! Отмена без уведомления — непрофессионально и может привести к штрафу."
-          },
-          {
-            "text": "Попросить водителя подождать и искать замену 2 часа",
-            "isCorrect": false,
-            "explanation": "Не заставляйте водителя ждать. Первый шаг — позвонить брокеру и объяснить ситуацию. Решение должно быть совместным."
+            "speaker": "Водитель",
+            "message": "Я вчера остановился в 9 PM на truck stop но забыл переключить ELD. Он записал driving до полуночи. Можешь исправить? Поставь Sleeper Berth с 9 PM. Я правда спал!",
+            "replies": [
+              {"text": "Ivan, я могу предложить edit с annotation 'Driver failed to change status — stopped at truck stop 9 PM'. Но edit требует твоего подтверждения в ELD и GPS data должна подтвердить что трак не двигался. Я создам proposed edit с объяснением. Это законная процедура — ошибка статуса, не falsification.", "isCorrect": true, "feedback": "Правильно! ELD edits РАЗРЕШЕНЫ для исправления ошибок переключения статуса — это нормальная практика. Но: 1) GPS должна подтвердить остановку. 2) Annotation обязательна (причина edit). 3) Driver должен accept/reject в течение 14 дней. 4) Оригинальный лог сохраняется — edits видны при аудите. Это НЕ фальсификация если driver действительно стоял."},
+              {"text": "Нет, ELD нельзя редактировать никогда — это federal law.", "isCorrect": false, "feedback": "Неправильно! ELD edits РАЗРЕШЕНЫ по FMCSA правилам (49 CFR 395.8). Carrier/driver МОГУТ редактировать записи для исправления ошибок. Но: каждый edit logged, GPS verified, annotation required. Запрещена ФАЛЬСИФИКАЦИЯ (менять Driving на Off Duty когда реально ехал), но не correction of genuine errors."},
+              {"text": "Конечно, я просто поменяю всё в системе — никто не узнает.", "isCorrect": false, "feedback": "ОПАСНО! Это falsification of records — federal crime! Штраф до $16,000 per violation. При аудите FMCSA видит ВСЕ edits и их обоснования. 'Никто не узнает' — ложь, все edits сохраняются в uneditable audit trail. Правильно: edit с annotation + GPS verification. Но НИКОГДА не фальсифицируйте."}
+            ]
           }
         ]
       }
     },
     {
       "id": "d15-t6",
-      "type": "fill-blank",
-      "title": "Правила коммуникации",
+      "type": "quiz",
+      "title": "ELD providers — Samsara vs Motive",
       "data": {
-        "sentence": "Диспетчер должен отправлять ___ брокеру при pickup, каждые 4-6 часов в пути и при ___. О задержках сообщать ___.",
-        "blanks": [
-          { "correctAnswer": "Check Call", "wordBank": ["Check Call", "Invoice", "Rate Con", "BOL"] },
-          { "correctAnswer": "delivery", "wordBank": ["delivery", "обеде", "заправке", "отдыхе"] },
-          { "correctAnswer": "заранее", "wordBank": ["заранее", "потом", "никогда", "через неделю"] }
+        "question": "Какие ДОПОЛНИТЕЛЬНЫЕ функции (помимо HOS logging) предоставляют современные ELD systems как Samsara и Motive?",
+        "options": [
+          "Только запись часов вождения — больше ничего",
+          "GPS tracking, dashcam video, vehicle diagnostics, fuel monitoring, driver scoring, IFTA reporting, DVIR (vehicle inspection reports)",
+          "Только GPS и топливо",
+          "Только связь с водителем через мессенджер"
+        ],
+        "correctIndex": 1,
+        "explanation": "Современные ELD platforms (Samsara, Motive) — это полные fleet management systems: GPS real-time tracking, AI dashcam (forward + driver-facing), engine diagnostics (fault codes), fuel usage tracking, driver safety scoring, automated IFTA fuel tax reports, electronic DVIR, temperature monitoring (reefer), и alerts (speeding, harsh braking, geofence). Цена: $25-45/truck/month."
+      }
+    },
+    {
+      "id": "d15-t7",
+      "type": "calculator",
+      "title": "HOS planning по ELD данным",
+      "data": {
+        "problem": "Определите может ли водитель завершить рейс сегодня на основе ELD данных.",
+        "context": "ELD водителя показывает: Drive time used today: 6 часов 45 минут. On Duty (not driving): 2 часа 15 минут. 14-hour clock started: 5:00 AM (сейчас 2:00 PM = 9 часов прошло). До delivery: 280 миль (≈5 часов driving при 56 mph). Сколько часов driving ОСТАЛОСЬ у водителя? (11hr max - used driving hours)",
+        "correctAnswer": 4.25,
+        "tolerancePercent": 2,
+        "unit": "hours"
+      }
+    },
+    {
+      "id": "d15-t8",
+      "type": "crisis",
+      "title": "FMCSA audit — запрос ELD данных",
+      "data": {
+        "scenario": "Получено письмо от FMCSA: 'Compliance Review Notice. Your carrier is selected for safety audit. Please provide ELD records for all drivers for the past 6 months, DVIR reports, and drug testing records within 10 business days.' Это ваш первый audit.",
+        "options": [
+          {"text": "Игнорировать письмо — maybe это мошенничество", "isCorrect": false},
+          {"text": "Немедленно: 1) Verify letter authenticity через FMCSA portal. 2) Назначить safety manager для сбора документов. 3) Экспортировать все ELD records из Samsara/Motive (6 месяцев, все drivers). 4) Собрать DVIR reports. 5) Подготовить drug testing records. 6) Если есть violations — подготовить corrective actions documentation. Уложиться в 10 дней.", "isCorrect": true},
+          {"text": "Нанять адвоката и отказаться предоставлять данные", "isCorrect": false},
+          {"text": "Удалить ELD данные с violations перед отправкой", "isCorrect": false}
         ]
+      }
+    },
+    {
+      "id": "d15-t9",
+      "type": "fill-blank",
+      "title": "ELD правила — ключевые цифры",
+      "data": {
+        "sentence": "Максимальное время вождения за смену: {0} часов. 14-hour window начинается когда водитель переходит в {1}. Обязательный break после 8 часов driving: {2} минут. Для full reset HOS нужно {3} часа подряд Off Duty.",
+        "blanks": [
+          {"correctAnswer": "11", "wordBank": ["11", "10", "12", "14"]},
+          {"correctAnswer": "On Duty", "wordBank": ["On Duty", "Driving", "Off Duty", "Sleeper"]},
+          {"correctAnswer": "30", "wordBank": ["30", "15", "45", "60"]},
+          {"correctAnswer": "34", "wordBank": ["34", "24", "10", "48"]}
+        ]
+      }
+    },
+    {
+      "id": "d15-t10",
+      "type": "quiz",
+      "title": "ELD violations — severity levels",
+      "data": {
+        "question": "Какое ELD violation считается САМЫМ серьёзным при DOT roadside inspection?",
+        "options": [
+          "Form & Manner violation (minor log error)",
+          "Driving beyond 11-hour limit (HOS violation)",
+          "Operating with ELD not functioning/disconnected (no ELD)",
+          "Missing driver signature on ELD printout"
+        ],
+        "correctIndex": 2,
+        "explanation": "No ELD / ELD not functioning = Out of Service Order (OOS). Водителя снимают с рейса до устранения. CSA severity weight: 5 (максимум). Driving beyond 11hr = 7 CSA points, серьёзно но не OOS. Form & Manner = 1 point, minor. FMCSA enforcement: no ELD fine $16,000 per day. Диспетчер ОБЯЗАН убедиться что ELD работает перед каждым рейсом."
       }
     }
   ]

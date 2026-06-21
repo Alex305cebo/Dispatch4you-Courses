@@ -12,13 +12,16 @@ const LOAD_TIMEOUT_MS = 15_000;
  * Results are cached for subsequent calls. Rejects with a user-facing error
  * if the import does not resolve within 15 seconds.
  *
- * @param dayId - Day number (1–20)
+ * @param dayId - Day number (1–23 for main levels, 101–111 for dream levels)
  * @returns Parsed DayContent object
- * @throws Error if dayId is outside 1–20 range or load times out
+ * @throws Error if dayId is invalid or load times out
  */
 export async function loadDayContent(dayId: number): Promise<DayContent> {
-  if (dayId < 1 || dayId > 20) {
-    throw new Error(`Invalid dayId: ${dayId}. Must be between 1 and 20.`);
+  const isDream = dayId >= 101 && dayId <= 111;
+  const isMain = dayId >= 1 && dayId <= 23;
+  
+  if (!isDream && !isMain) {
+    throw new Error(`Invalid dayId: ${dayId}. Must be 1-23 or 101-111.`);
   }
 
   const cached = contentCache.get(dayId);
@@ -26,11 +29,19 @@ export async function loadDayContent(dayId: number): Promise<DayContent> {
     return cached;
   }
 
-  const paddedId = String(dayId).padStart(2, '0');
+  let importPromise: Promise<DayContent>;
 
-  const importPromise = import(`../data/lessons/day-${paddedId}.json`).then(
-    (module) => module.default as DayContent
-  );
+  if (isDream) {
+    const dreamNum = String(dayId - 100).padStart(2, '0');
+    importPromise = import(`../data/lessons/dream-${dreamNum}.json`).then(
+      (module) => module.default as DayContent
+    );
+  } else {
+    const paddedId = String(dayId).padStart(2, '0');
+    importPromise = import(`../data/lessons/day-${paddedId}.json`).then(
+      (module) => module.default as DayContent
+    );
+  }
 
   const timeoutPromise = new Promise<never>((_, reject) => {
     setTimeout(() => {

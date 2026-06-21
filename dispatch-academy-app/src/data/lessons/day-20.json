@@ -1,76 +1,77 @@
 {
   "dayId": 20,
-  "weekId": 4,
-  "title": "Итоговая подготовка: всё вместе",
-  "estimatedMinutes": 50,
+  "weekId": 6,
+  "title": "Комплексные multi-step кейсы",
+  "estimatedMinutes": 28,
   "tasks": [
     {
       "id": "d20-t1",
-      "type": "quiz",
-      "title": "Комплексный тест: документы",
+      "type": "crisis",
+      "title": "Утренний хаос: 3 проблемы одновременно",
       "data": {
-        "question": "В каком порядке перевозчик получает/создаёт документы для одного рейса?",
+        "scenario": "Понедельник 7 AM. ВСЁ сразу: 1) Driver Mike — reefer breakdown на I-40 в Oklahoma (frozen seafood $80K, delivery today 4 PM Dallas). 2) Driver Alex — DOT inspection at weigh station в Georgia (waiting 2 hours already). 3) Broker звонит — TONU на вчерашний отменённый load ($450 owed), deadline to submit claim TODAY. Кому внимание ПЕРВОМУ?",
         "options": [
-          "BOL → Rate Con → POD → Invoice",
-          "Rate Con → BOL → POD → Invoice",
-          "Invoice → POD → BOL → Rate Con",
-          "POD → Invoice → Rate Con → BOL"
-        ],
-        "correctIndex": 1,
-        "explanation": "Правильный порядок документов: 1) Rate Con (подписание до рейса), 2) BOL (получение на pickup), 3) POD (подпись получателя на delivery), 4) Invoice (отправка для оплаты)."
+          {"text": "TONU claim — deadline today, деньги нельзя потерять", "isCorrect": false},
+          {"text": "Mike's reefer — $80K cargo at risk, temperature rising every minute. Action: find mobile reefer repair OR transload plan. Meanwhile: Alex's DOT — nothing you can do (wait it out). TONU — submit email claim (takes 5 min) then back to Mike. Priority: perishable cargo > inspection wait > administrative deadline.", "isCorrect": true},
+          {"text": "Alex's DOT inspection — он ждёт 2 часа, это важнее", "isCorrect": false},
+          {"text": "Все три одинаково важны — делать по очереди", "isCorrect": false}
+        ]
       }
     },
     {
       "id": "d20-t2",
-      "type": "quiz",
-      "title": "Комплексный тест: финансы",
+      "type": "phone-dialog",
+      "title": "Цепочка решений: reefer breakdown + time pressure",
       "data": {
-        "question": "Owner-operator с одним траком заработал $6,500 за неделю (gross revenue). После вычета всех расходов (fuel 35%, maintenance 5%, insurance 7%, misc 3%), какова его чистая прибыль?",
-        "options": [
-          "$3,250 — половина от выручки",
-          "$6,500 — вся выручка без расходов",
-          "$3,900 — шестьдесят процентов выручки",
-          "$1,625 — четверть от выручки"
-        ],
-        "correctIndex": 0,
-        "explanation": "Расходы: 35%+5%+7%+3% = 50%. Чистая прибыль: $6,500 × 50% = $3,250. Это типичный показатель для owner-operator при хорошем управлении."
+        "context": "Продолжение: Mike на I-40 Oklahoma, reefer не работает. Frozen seafood temp: начала расти (was -10°F, now 5°F — still OK but rising). Until temp hits 32°F — cargo safe. Вы нашли reefer repair shop в 15 милях. Но repair может занять 3-5 часов. Delivery в Dallas через 8 часов (350 миль от Mike).",
+        "turns": [
+          {
+            "speaker": "Водитель Mike",
+            "message": "Boss, the temp is climbing — 5 degrees now. I found a TA truck stop 15 miles ahead with a reefer mechanic. He says 3-5 hours to fix. But Dallas is 350 miles and delivery at 4 PM... even if he fixes it in 3 hours, I'll be cutting it close with my HOS. What's the plan?",
+            "replies": [
+              {"text": "Mike, go to the TA for repair — cargo safety first. While they work: I'll call the broker and explain situation. Request delivery extension to 8 PM or tomorrow AM. If broker can't extend: I'll find a local carrier to transload and complete delivery. You focus on getting reefer fixed and monitoring temp. If temp hits 20°F before repair starts — we abort repair and find emergency transload immediately.", "isCorrect": true, "feedback": "Комплексный multi-step plan! 1) Priority: save $80K cargo (repair reefer). 2) Parallel action: negotiate delivery extension. 3) Backup plan: transload если timing doesn't work. 4) Decision threshold: 20°F = point of no return. Это реальное мышление senior dispatcher: multiple parallel tracks, clear decision points, cargo value drives priority."},
+              {"text": "Just keep driving to Dallas without reefer — the seafood will be fine for 8 hours.", "isCorrect": false, "feedback": "НЕТ! Frozen seafood must stay below 0°F. At current rate of warming (15°F in unknown time), it'll hit 32°F and start thawing. Thawed frozen seafood = condemned by health inspector = $80,000 TOTAL LOSS + cargo claim. Reefer must be fixed or cargo transloaded to working reefer ASAP."},
+              {"text": "Dump the load and deadhead to Dallas empty. Not worth the stress.", "isCorrect": false, "feedback": "DUMP $80,000 cargo?! Это: 1) Full cargo claim ($80K) on YOUR insurance. 2) Potential criminal negligence for food safety. 3) Broker will never work with you again. 4) Possible FMCSA complaint. The cargo is still SAVEABLE (temp 5°F = still safe). Fix reefer or transload — don't destroy the load!"}
+            ]
+          }
+        ]
       }
     },
     {
       "id": "d20-t3",
       "type": "calculator",
-      "title": "Итоговый расчёт: целесообразность рейса",
+      "title": "Multi-truck weekly P&L",
       "data": {
-        "problem": "Определите, выгоден ли рейс для перевозчика.",
-        "context": "Предложение: $3,100 за рейс Los Angeles → Phoenix (370 миль). Deadhead до LA: 120 миль. Общие расходы на милю (all-in cost): $1.85/mile. Рассчитайте чистую прибыль рейса с учётом deadhead.",
-        "correctAnswer": 2193,
-        "tolerancePercent": 2,
+        "problem": "Рассчитайте недельный P&L для 3-truck fleet.",
+        "context": "Week summary:\nTruck 1: Revenue $4,800. Fuel: 1,600mi ÷ 6.2mpg × $3.80 = $980.65. Tolls: $45.\nTruck 2: Revenue $3,200. Fuel: 1,100mi ÷ 5.9mpg × $3.80 = $708.47. Tolls: $30. Detention earned: $150.\nTruck 3: Revenue $1,400 (2 days breakdown). Fuel: 500mi ÷ 6.0mpg × $3.80 = $316.67. Repair cost: $1,800.\nFleet expenses: Dispatcher salary $1,200/week. Insurance: $380/week.\nCalculate fleet NET PROFIT (all revenue + detention − all fuel − tolls − repair − salary − insurance).",
+        "correctAnswer": 4889.21,
+        "tolerancePercent": 3,
         "unit": "$"
       }
     },
     {
       "id": "d20-t4",
       "type": "email-sim",
-      "title": "Комплексная ситуация: утро диспетчера",
+      "title": "Сложная ситуация: double-broker scam",
       "data": {
-        "senderName": "Multiple — Morning Inbox",
-        "subject": "3 urgent items in your inbox",
-        "body": "Your morning inbox:\n\n1) URGENT — Driver Tom: 'Flat tire on I-10, mile marker 85. Need road service ASAP. Load delivers at 2 PM today.'\n\n2) Broker Mark: 'Need Rate Con signed ASAP for tomorrow's pickup in Houston. $2,400 for Houston→Nashville, 790mi. Dry Van.'\n\n3) Accounting: 'Invoice #INV-0145 ($1,800) is 35 days overdue from XYZ Freight. No response to 2 emails.'\n\nWhich do you handle FIRST?",
+        "senderName": "Unknown — 'Mike from ABC Logistics'",
+        "subject": "HOT LOAD — Need covered in 1 hour — $4,500",
+        "body": "URGENT!!!\n\nHot load, pickup in 1 hour!\n\nPickup: Houston, TX\nDelivery: Phoenix, AZ\nMiles: 1,180\nRate: $4,500 ($3.81/mile!!)\nEquipment: Dry Van\n\nI need a truck IMMEDIATELY. If you can cover, call me NOW at 281-555-0147.\n\nRate Con attached. Quick Pay available — pay you same day!\n\nMike\nABC Logistics\n\nP.S. Don't contact the shipper directly — I'm the exclusive broker.",
         "responses": [
           {
-            "text": "Подписать Rate Con (пункт 2) — это быстрее всего",
-            "isCorrect": false,
-            "feedback": "Rate Con для ЗАВТРАШНЕГО pickup может подождать. Водитель с flat tire и delivery СЕГОДНЯ — приоритет #1!"
-          },
-          {
-            "text": "Решить проблему водителя Tom (#1) — вызвать road service, оценить время ремонта, уведомить брокера о возможной задержке delivery",
+            "text": "Red flags: 1) Unknown broker — never worked together. 2) Rate TOO GOOD ($3.81/mile for Dry Van Houston→Phoenix = above market). 3) 'Don't contact shipper' = classic double-broker warning. 4) Extreme urgency pressure. ДЕЙСТВИЯ: check MC number on FMCSA, check Carrier411, verify broker bond. If anything doesn't check out — DECLINE. Call real shipper on BOL if possible.",
             "isCorrect": true,
-            "feedback": "Правильно! Приоритизация: срочность + impact. Tom имеет delivery СЕГОДНЯ и стоит на дороге. Это #1 priority. Rate Con (#2) и overdue invoice (#3) могут подождать 30 минут."
+            "feedback": "Вы распознали double-broker scam! Признаки: 1) Rate слишком хороший — настоящий broker не переплачивает. 2) 'Don't contact shipper' — потому что shipper наняло ДРУГОГО broker, а этот 'Mike' перепродаёт. 3) Urgency = давление принять без проверки. 4) 'Quick pay same day' — too good. If double-brokered: вы не получите оплату когда fraud раскроется. ВСЕГДА verify unknown brokers."
           },
           {
-            "text": "Разобраться с неоплаченным Invoice (#3) — деньги важнее",
+            "text": "Принять — $3.81/mile великолепная ставка, отправляю трак",
             "isCorrect": false,
-            "feedback": "Invoice просрочен 35 дней — ещё один час ничего не изменит. Водитель на дороге с today's delivery — это urgent priority."
+            "feedback": "Вы попали в double-broker trap! Что произойдёт: 1) Вы доставите груз. 2) 'Mike' исчезнет. 3) Shipper уже заплатил НАСТОЯЩЕМУ broker. 4) Настоящий broker не знает вас — не заплатит. 5) Вы потеряли fuel + driver time + $0 revenue. Loss: $2,000-3,000 на одном рейсе. ВСЕГДА verify broker credentials!"
+          },
+          {
+            "text": "Позвонить по номеру из email и обсудить детали",
+            "isCorrect": false,
+            "feedback": "Звонок без verification = вы уже в их trap. Scammers professional: они ответят, пришлют 'Rate Con', дадут 'pickup number'. Всё выглядит реально. СНАЧАЛА: verify MC number на FMCSA SaferSys, check Carrier411 credit/complaints, Google company. Если ничего не находится или reviews bad — DECLINE. Звонок — только ПОСЛЕ verification."
           }
         ]
       }
@@ -78,46 +79,90 @@
     {
       "id": "d20-t5",
       "type": "crisis",
-      "title": "Финальный кризис: цепная реакция",
+      "title": "Полный день: 5 решений за 1 час",
       "data": {
-        "scenario": "Пятница, 3 PM. Водитель A сломался (delivery сегодня в 7 PM, осталось 60 миль). Водитель B только что delivered и свободен в 30 милях от водителя A. Можно ли перегрузить cargo и доставить вовремя с помощью водителя B?",
-        "timeLimitSeconds": 60,
+        "scenario": "Среда 2 PM. Сценарий: 1) Truck A — delivery в 3 PM, водитель в 45 минутах (tight но doable). 2) Truck B — загрузился, нужен новый Rate Con (broker ошибся в адресе delivery). 3) Truck C — пустой уже 6 часов, хороших грузов нет. 4) Broker звонит с новым грузом на завтра ($2,400/750mi — хороший rate). 5) Voicemail от Insurance agent — нужно перезвонить по renewal. Что делаете ПЕРВЫМ?",
         "options": [
-          {
-            "text": "Да! Отправить водителя B к водителю A, перегрузить cargo и доставить",
-            "isCorrect": false,
-            "explanation": "Перегрузка cargo в полевых условиях — рискованно: повреждение груза, нарушение seal, отсутствие dock. Это крайняя мера только для non-sensitive грузов."
-          },
-          {
-            "text": "Вызвать tow truck для трака A до ближайшего терминала, отправить водителя B туда для перегрузки на dock, уведомить брокера о задержке 1-2 часа",
-            "isCorrect": true,
-            "explanation": "Правильно! Перегрузка на dock — безопаснее. 30 миль для B + tow + перегрузка + 60 миль = ~3 часа. Delivery задержится, но груз будет в безопасности. Уведомить брокера НЕМЕДЛЕННО."
-          },
-          {
-            "text": "Сообщить брокеру, что delivery невозможна до понедельника",
-            "isCorrect": false,
-            "explanation": "Есть решение с водителем B! Задержка на пару часов — лучше чем перенос на понедельник. Ищите solutions, не оправдания."
-          },
-          {
-            "text": "Попросить водителя A починить трак самостоятельно",
-            "isCorrect": false,
-            "explanation": "Если трак сломался серьёзно, самостоятельный ремонт на дороге может быть опасен и неэффективен. Нужен профессиональный подход."
-          }
+          {"text": "Перезвонить Insurance — renewal важен", "isCorrect": false},
+          {"text": "Truck B — неправильный Rate Con адрес. Если водитель поедет по НЕПРАВИЛЬНОМУ адресу = потеря часов + потенциальный TONU. Исправить НЕМЕДЛЕННО (1 min email broker). Затем: подтвердить Truck A ETA. Затем: book завтрашний груз ($2,400). Truck C и Insurance — после.", "isCorrect": true},
+          {"text": "Book новый груз $2,400 — деньги первый приоритет", "isCorrect": false},
+          {"text": "Truck C пустой — каждый час = потерянные деньги", "isCorrect": false}
         ]
       }
     },
     {
       "id": "d20-t6",
-      "type": "drag-match",
-      "title": "Итоговое: термины и определения",
+      "type": "quiz",
+      "title": "Приоритизация задач диспетчера",
       "data": {
-        "pairs": [
-          { "term": "TONU", "definition": "Компенсация за отменённый груз после прибытия" },
-          { "term": "Detention", "definition": "Оплата за ожидание сверх free time" },
-          { "term": "Deadhead", "definition": "Пустой пробег без груза" },
-          { "term": "Backhaul", "definition": "Обратный груз для минимизации пустого пробега" },
-          { "term": "Quick Pay", "definition": "Ускоренная оплата за комиссию 2-5%" },
-          { "term": "Lumper Fee", "definition": "Плата за разгрузку на складе" }
+        "question": "Какой принцип приоритизации ПРАВИЛЬНЫЙ для dispatch office?",
+        "options": [
+          "Первый пришёл — первый обслужен",
+          "Кто громче кричит — тот первый",
+          "Критичность × Срочность × Финансовый impact. Правило: 1) Safety emergencies 2) Revenue-at-risk 3) Operational errors 4) New revenue 5) Administrative tasks",
+          "Всё одинаково важно — делать параллельно"
+        ],
+        "correctIndex": 2,
+        "explanation": "Framework приоритизации: Level 1 (СЕЙЧАС): Safety — аварии, breakdown с perishable cargo, DOT violations. Level 2 (В течение 30 мин): Revenue-at-risk — delivery deadlines, Rate Con errors, detention. Level 3 (В течение 1 часа): New revenue — booking loads, negotiation. Level 4 (Сегодня): Administrative — insurance, paperwork, claims. Этот framework = разница между хаосом и контролем."
+      }
+    },
+    {
+      "id": "d20-t7",
+      "type": "phone-dialog",
+      "title": "Водитель хочет уволиться in the middle of load",
+      "data": {
+        "context": "Company driver Sergey звонит из Теннесси (halfway через рейс Atlanta→Chicago, груз $35,000 electronics). Он говорит что увольняется ПРЯМО СЕЙЧАС — нашёл лучшую работу. Груз в прицепе.",
+        "turns": [
+          {
+            "speaker": "Водитель",
+            "message": "I quit. I got a better offer — starting Monday. I'm dropping the truck at the next Love's and Ubering home. Sorry man, nothing personal.",
+            "replies": [
+              {"text": "Sergey, I understand — better opportunities come up. But here's the situation: you have a $35K load in the trailer. If you abandon it, that's potential cargo abandonment issue on YOUR record. Here's what I propose: finish THIS load to Chicago (6 more hours), I'll book you a load back toward your home on the way, and your last day is Friday. Clean exit, good reference, no issues. Can we do that?", "isCorrect": true, "feedback": "Дипломатия под давлением! Вы: 1) Не паниковали и не кричали. 2) Объяснили consequences (cargo abandonment = bad record). 3) Предложили win-win (finish load + go home + clean exit). 4) Мотивировали: good reference. Если он всё равно откажется — backup plan: find another driver to pick up truck, or contact broker for transload. Но ВСЕГДА try diplomacy first."},
+              {"text": "You can't quit! You signed a contract! I'm calling the police!", "isCorrect": false, "feedback": "Нельзя заставить человека работать! Police не приедут для employment dispute. Threats только ухудшат ситуацию — driver может бросить трак на обочине или повредить груз из злости. У вас $35K cargo в его руках — be diplomatic. Предложите incentive закончить рейс, не угрожайте."},
+              {"text": "OK, just leave the keys at Love's. I'll figure it out.", "isCorrect": false, "feedback": "Трак с $35K cargo на парковке Love's = theft risk + receiver doesn't get goods + late delivery claim + insurance issues. Вам нужен ПЛАН: either convince driver to finish, or arrange another driver to pick up, or contact broker about transload. Don't just abandon the situation because driver quit."}
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "d20-t8",
+      "type": "map-routing",
+      "title": "Repositioning strategy после delivery",
+      "data": {
+        "origin": "Phoenix, AZ (just delivered, truck empty)",
+        "destination": "Best next load origin (3 options)",
+        "routes": [
+          {"name": "Stay Phoenix — wait for outbound (low demand market, may wait 1-2 days)", "miles": 0, "rate": 0, "isOptimal": false},
+          {"name": "Deadhead to LA (370mi) — highest demand market in West Coast, 10+ loads available daily", "miles": 370, "rate": 0, "isOptimal": false},
+          {"name": "Take partial load Phoenix → LA ($650/370mi) reposition AND earn money, then pick premium CA outbound", "miles": 370, "rate": 1.76, "isOptimal": true}
+        ]
+      }
+    },
+    {
+      "id": "d20-t9",
+      "type": "calculator",
+      "title": "Daily dispatcher efficiency score",
+      "data": {
+        "problem": "Рассчитайте KPI эффективности за день.",
+        "context": "Сегодня (3 trucks): Total available truck-hours: 3 trucks × 14 hours = 42 hours. Productive hours (driving + loading/unloading): Truck 1: 11hr driving + 2hr loading = 13hr. Truck 2: 8hr driving + 3hr loading = 11hr. Truck 3: 0hr (breakdown all day). Total productive: 24hr. Utilization = productive hours ÷ total available × 100. Calculate utilization percentage.",
+        "correctAnswer": 57.14,
+        "tolerancePercent": 2,
+        "unit": "%"
+      }
+    },
+    {
+      "id": "d20-t10",
+      "type": "fill-blank",
+      "title": "Принципы senior dispatcher",
+      "data": {
+        "sentence": "При нескольких проблемах одновременно: сначала {0} emergencies, потом {1}. Double-broker scam распознаётся по слишком {2} ставке и запрету контактировать {3}. Пустой трак в плохом рынке — перемести в {4}.",
+        "blanks": [
+          {"correctAnswer": "safety", "wordBank": ["safety", "money", "email", "lunch"]},
+          {"correctAnswer": "revenue-at-risk", "wordBank": ["revenue-at-risk", "paperwork", "отдых", "звонки"]},
+          {"correctAnswer": "высокой", "wordBank": ["высокой", "низкой", "средней", "нормальной"]},
+          {"correctAnswer": "shipper", "wordBank": ["shipper", "driver", "police", "bank"]},
+          {"correctAnswer": "high-demand hub", "wordBank": ["high-demand hub", "домой", "garage", "parking"]}
         ]
       }
     }

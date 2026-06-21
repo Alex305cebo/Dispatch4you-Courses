@@ -44,50 +44,45 @@ export default function AppLayout() {
     <div className="h-full flex flex-col overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white particles-bg">
       {/* Fixed Premium Header — hidden on lesson/exam pages */}
       {!hideBottomNav && (
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/70 border-b border-white/5">
-        <div className="max-w-lg mx-auto px-4 py-3">
-          {/* Top row: Logo + Stats */}
-          <div className="flex items-center justify-between">
-            {/* Logo + Level */}
-            <div className="flex items-center gap-3">
-              <a
-                href="https://dispatch4you.com/"
-                className="flex flex-col"
-                aria-label="Перейти на сайт dispatch4you.com"
-              >
-                <p className="text-sm font-bold text-gradient hover:opacity-80 transition-opacity">Dispatch Academy</p>
-                <p className="text-xs text-slate-400">→ перейти на сайт</p>
-              </a>
-            </div>
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/80 border-b border-white/5">
+        <div className="max-w-lg mx-auto px-3 py-2">
+          {/* Row: Logo | XP + Progress | Avatar */}
+          <div className="flex items-center gap-3">
+            {/* Logo — clickable to site */}
+            <a
+              href="https://dispatch4you.com/"
+              className="shrink-0 flex flex-col"
+              aria-label="Перейти на сайт dispatch4you.com"
+            >
+              <p className="text-sm font-bold text-gradient hover:opacity-80 transition-opacity">Dispatch Academy</p>
+              <p className="text-[10px] text-slate-400">→ перейти на сайт</p>
+            </a>
 
-            {/* Stats: Streak + Daily + XP */}
-            <div className="flex items-center gap-3">
-              {/* Streak */}
-              <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20">
-                <span className="text-sm">🔥</span>
-                <span className="text-sm font-bold text-orange-400">{currentStreak}</span>
-              </div>
+            {/* Spacer */}
+            <div className="flex-1" />
 
-              {/* Daily Goal */}
-              <div
-                className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
-                  completedTaskToday
-                    ? 'bg-green-500/20 border-green-400 shadow-sm shadow-green-400/30'
-                    : 'bg-transparent border-slate-600'
-                }`}
-                title={completedTaskToday ? 'Дневная цель выполнена' : 'Завершите 1+ задание сегодня'}
-                aria-label={completedTaskToday ? 'Дневная цель выполнена' : 'Дневная цель не выполнена'}
-              >
-                {completedTaskToday && <span className="text-xs">✓</span>}
-              </div>
-
-              {/* XP counter */}
-              <div className="text-right">
-                <p className="text-sm font-bold text-cyan-400">{totalXP} XP</p>
+            {/* XP + map progress bar */}
+            <div className="flex items-center gap-2">
+              <div className="flex flex-col items-end gap-0.5">
+                <span className="text-xs font-bold text-cyan-400">{totalXP} XP</span>
+                <div className="w-36 h-2.5 bg-transparent rounded-full overflow-hidden border border-white/50 relative">
+                  <div
+                    className="h-full bg-gradient-to-r from-cyan-500 to-green-400 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.round(((level - 1) / 11) * 100)}%` }}
+                  />
+                </div>
               </div>
             </div>
+
+            {/* Avatar button (right) */}
+            <button
+              onClick={() => navigate('/settings')}
+              className="shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold border-2 border-cyan-300/30 hover:scale-105 transition-transform"
+              aria-label="Профиль"
+            >
+              👤
+            </button>
           </div>
-
         </div>
       </header>
       )}

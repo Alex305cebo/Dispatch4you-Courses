@@ -55,8 +55,26 @@ export default function FillBlankTask({ data, onAnswer }: FillBlankTaskProps) {
     onAnswer(allCorrect);
   }, [submitted, data.blanks, answers, onAnswer]);
 
-  // Split sentence by ___ markers to render parts with blanks
-  const sentenceParts = data.sentence.split('___');
+  // Shuffle word banks on mount (so correct answer isn't always first)
+  const shuffledBlanks = useState(() => 
+    data.blanks.map(blank => ({
+      ...blank,
+      wordBank: blank.wordBank ? [...blank.wordBank].sort(() => Math.random() - 0.5) : undefined,
+    }))
+  )[0];
+  const cleanParts: string[] = [];
+  const rawSentence = data.sentence;
+  const regex = /(\{\d+\}|___)/g;
+  let lastIndex = 0;
+  let match;
+  
+  while ((match = regex.exec(rawSentence)) !== null) {
+    cleanParts.push(rawSentence.slice(lastIndex, match.index));
+    lastIndex = match.index + match[0].length;
+  }
+  cleanParts.push(rawSentence.slice(lastIndex));
+  
+  const finalParts = cleanParts;
 
   // Check if submit is possible (all blanks filled)
   const canSubmit = answers.every((a) => a.trim().length > 0);
@@ -66,13 +84,13 @@ export default function FillBlankTask({ data, onAnswer }: FillBlankTaskProps) {
       {/* Sentence with blanks */}
       <div className="bg-white/5 border border-white/10 rounded-xl p-4 md:p-6 mb-4">
         <p className="text-white text-base md:text-lg leading-relaxed flex flex-wrap items-center gap-1">
-          {sentenceParts.map((part, partIndex) => (
+          {finalParts.map((part, partIndex) => (
             <span key={partIndex} className="inline-flex items-center flex-wrap gap-1">
               {/* Text part */}
               {part && <span>{part}</span>}
 
               {/* Blank input/button (not after the last part) */}
-              {partIndex < sentenceParts.length - 1 && (
+              {partIndex < finalParts.length - 1 && (
                 <BlankField
                   index={partIndex}
                   blank={data.blanks[partIndex]}
@@ -90,7 +108,7 @@ export default function FillBlankTask({ data, onAnswer }: FillBlankTaskProps) {
 
       {/* Word banks (rendered below sentence for blanks that have them) */}
       {!submitted &&
-        data.blanks.map(
+        shuffledBlanks.map(
           (blank, index) =>
             blank.wordBank &&
             blank.wordBank.length > 0 && (

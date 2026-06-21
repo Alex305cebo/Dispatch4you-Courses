@@ -1,128 +1,169 @@
 {
   "dayId": 16,
-  "weekId": 4,
-  "title": "Кризисные ситуации: поломки и аварии",
-  "estimatedMinutes": 45,
+  "weekId": 5,
+  "title": "Detention, Layover, TONU — claims и споры",
+  "estimatedMinutes": 24,
   "tasks": [
     {
       "id": "d16-t1",
       "type": "quiz",
-      "title": "Действия при поломке",
+      "title": "Detention vs Layover vs TONU",
       "data": {
-        "question": "Какой ПЕРВЫЙ шаг диспетчера при получении звонка о поломке трака на трассе?",
+        "question": "В чём разница между Detention, Layover и TONU?",
         "options": [
-          "Начать искать груз для другого водителя",
-          "Убедиться в безопасности и узнать детали",
-          "Позвонить брокеру и отменить этот груз",
-          "Вызвать эвакуатор без уточнения ситуации"
+          "Это одно и то же — оплата за потерянное время",
+          "Detention = ожидание на facility сверх бесплатного лимита. Layover = когда delivery перенесён на следующий день. TONU = груз отменён после arrival водителя.",
+          "Detention = штраф за водителя. Layover = отпуск. TONU = bonus",
+          "Все три — это виды штрафов от DOT"
         ],
         "correctIndex": 1,
-        "explanation": "Первый приоритет — безопасность водителя. Затем: точная локация (GPS/mile marker), характер поломки, есть ли опасность для груза. После этого — планирование решения."
+        "explanation": "Detention: водитель ждёт на facility дольше free time (обычно 2 часа). Оплата: $50-100/час. Layover: delivery невозможна сегодня (facility closed, reschedule) — водитель ночует. Оплата: $150-350/night. TONU (Truck Order Not Used): груз отменён ПОСЛЕ того как driver приехал или проехал значительное расстояние. Оплата: $150-500. ВСЕ ТРИ должны быть в Rate Con!"
       }
     },
     {
       "id": "d16-t2",
-      "type": "crisis",
-      "title": "Поломка с грузом",
+      "type": "phone-dialog",
+      "title": "Detention claim — брокер отказывает",
       "data": {
-        "scenario": "Водитель звонит с Interstate 40 (mile marker 221, Tennessee): 'Двигатель перегрелся, заглох. Reefer с продуктами, температура начинает расти. Delivery через 6 часов в Atlanta.' Что делать?",
-        "timeLimitSeconds": 60,
-        "options": [
+        "context": "Ваш водитель простоял на разгрузке 7 часов в Walmart DC. Rate Con: 2 hours free, then $75/hr. Вы подаёте claim на $375 (5 hrs × $75). Broker отказывается платить.",
+        "turns": [
           {
-            "text": "Вызвать только дорожную помощь и ждать",
-            "isCorrect": false,
-            "explanation": "При reefer поломке температура — критический фактор. Нужно решать проблему двигателя И защитить груз одновременно."
-          },
-          {
-            "text": "Вызвать мобильного механика (roadside repair), уточнить у водителя текущую температуру reefer, уведомить брокера о ситуации и возможной задержке, подготовить план B (backup driver/truck если ремонт затянется)",
-            "isCorrect": true,
-            "explanation": "Правильно! Параллельные действия: 1) Ремонт, 2) Мониторинг температуры, 3) Уведомление брокера, 4) План B. Reefer cargo = время критично."
-          },
-          {
-            "text": "Сказать водителю попробовать завести двигатель ещё раз",
-            "isCorrect": false,
-            "explanation": "При перегреве повторный запуск может усугубить проблему. Нужен профессиональный осмотр механика."
-          },
-          {
-            "text": "Отменить доставку и вернуть груз отправителю",
-            "isCorrect": false,
-            "explanation": "Отмена — крайняя мера. Сначала нужно попытаться отремонтировать или найти backup решение. Reefer cargo можно спасти если действовать быстро."
+            "speaker": "Брокер",
+            "message": "I talked to Walmart — they said your driver didn't check in until 9 AM, but his appointment was 7 AM. He was 2 hours late, so the extra wait time is on you. I can't pay detention.",
+            "replies": [
+              {"text": "I have GPS data showing my driver arrived at Walmart DC at 6:48 AM — 12 minutes EARLY. He checked in at the guard gate at 6:52 AM. The issue was Walmart didn't assign a door until 9 AM — that's THEIR delay, not ours. I'm emailing you the GPS log, guard gate check-in photo, and the signed lumper receipt showing unload started at 9:15 AM. Detention stands: $375.", "isCorrect": true, "feedback": "Безупречная защита! Вы: 1) Опровергли broker claim ФАКТАМИ (GPS arrival 6:48 AM). 2) Объяснили timeline (guard check-in ≠ door assignment). 3) Имеете 3 доказательства (GPS, photo, lumper receipt). 4) Firm но professional. Walmart DC часто delay по 4-8 часов — broker это знает. С документами ваш claim неоспорим."},
+              {"text": "Oh, I didn't know he was late... I'll check with my driver and get back to you.", "isCorrect": false, "feedback": "НЕ принимайте версию broker на веру! Проверьте СВОИ данные: GPS logs, ELD, фото check-in. Broker может блефовать чтобы не платить detention. Walmart DC notorious за долгие ожидания — это системная проблема facility, не вина driver. Имейте факты и стойте на своём."},
+              {"text": "Fine, forget the detention. It's not worth arguing over $375.", "isCorrect": false, "feedback": "$375 за один claim кажется мелочью, но detention happens 2-4 раза в неделю! $375 × 10 claims/month = $3,750/month потерянного дохода. За год = $45,000! НИКОГДА не отказывайтесь от законных claims. Документация + настойчивость = деньги на вашем счету."}
+            ]
           }
         ]
       }
     },
     {
       "id": "d16-t3",
-      "type": "quiz",
-      "title": "Документирование инцидента",
+      "type": "calculator",
+      "title": "Месячные потери от detention",
       "data": {
-        "question": "Какую информацию нужно задокументировать при любом инциденте на дороге?",
-        "options": [
-          "Только время звонка от водителя",
-          "Время, место, описание, фото, действия",
-          "Только номер трака и маршрут",
-          "Только имя водителя и его CDL"
-        ],
-        "correctIndex": 1,
-        "explanation": "Полная документация: время/дата, GPS-координаты, описание инцидента, фотографии, номера вовлечённых сторон, все предпринятые действия и их результаты."
+        "problem": "Рассчитайте месячные потери от неоплаченного detention для флота.",
+        "context": "Флот из 4 траков. Среднее количество загрузок/разгрузок на трак: 8 в неделю. Процент stops с detention (> 2hrs): 30%. Среднее время detention: 3.5 часа сверх free time. Rate: $75/hr. Сколько detention money ваш флот генерирует за МЕСЯЦ (4 недели) если вы claim ВСЁ?",
+        "correctAnswer": 10080,
+        "tolerancePercent": 3,
+        "unit": "$"
       }
     },
     {
       "id": "d16-t4",
-      "type": "phone-dialog",
-      "title": "Координация при аварии",
+      "type": "email-sim",
+      "title": "Layover notification — что делать",
       "data": {
-        "turns": [
+        "senderName": "Mike (Driver) — Text Message",
+        "subject": "Delivery reschedule to tomorrow",
+        "body": "Boss, I'm at the consignee in Charlotte but they said my appointment was rescheduled to tomorrow 7 AM. Nobody told me or you. The receiver says they're full today — no room for unloading.\n\nI'm sitting here with a full trailer and nowhere to go. What should I do? Do I get layover pay?\n\nThe Rate Con says delivery today by 5 PM.",
+        "responses": [
           {
-            "speaker": "npc",
-            "text": "Boss! I just got rear-ended at a red light. Minor damage to the trailer, but the car behind me is messed up. Police is on the way. Nobody is hurt.",
-            "replies": [
-              {
-                "text": "Glad you're OK. Stay calm. DO NOT move the truck until police arrives. Get photos of everything: damage, other vehicle, license plate, road conditions. Get the other driver's info and insurance. I'll call our insurance company now.",
-                "isCorrect": true,
-                "feedback": "Правильно! Приоритеты: 1) Безопасность подтверждена, 2) Не двигать ТС до полиции, 3) Документация (фото!), 4) Обмен информацией, 5) Уведомление страховой."
-              },
-              {
-                "text": "Just drive away if the damage is minor.",
-                "isCorrect": false,
-                "feedback": "НИКОГДА не покидайте место аварии! Это felony (hit and run). Всегда дожидайтесь полицию и документируйте всё."
-              },
-              {
-                "text": "Don't worry about it, just get to the delivery.",
-                "isCorrect": false,
-                "feedback": "Игнорирование аварии — незаконно и опасно. Нужно задокументировать инцидент, дождаться полиции и уведомить страховую."
-              }
-            ]
+            "text": "Немедленные действия: 1) Попросить Mike сфотографировать notice/sign что receiver отказал today. 2) Позвонить broker и сообщить что receiver rescheduled WITHOUT notice. 3) Потребовать layover pay ($250 minimum) — Rate Con says delivery TODAY. 4) Попросить broker подтвердить new appointment in writing. 5) Найти Mike безопасный truck stop на ночь.",
+            "isCorrect": true,
+            "feedback": "Полный набор правильных действий! Receiver rescheduled без уведомления = нарушение appointment. Broker ОБЯЗАН компенсировать layover (если есть в Rate Con). Фото документация = ваше доказательство. Standard layover: $200-350/night. Обязательно: письменное подтверждение нового appointment и layover payment."
           },
           {
-            "speaker": "npc",
-            "text": "OK, police just arrived. They're taking the report. The officer wants our insurance info and MC number. What do I give them?",
-            "replies": [
-              {
-                "text": "Give them our insurance card (should be in the cab), MC number, DOT number, and your CDL. I'm sending you our insurance contact info right now via text. Get a copy of the police report number.",
-                "isCorrect": true,
-                "feedback": "Правильно! Водитель должен предоставить: insurance card, MC/DOT numbers, CDL. Обязательно получить номер полицейского рапорта для страховой."
-              },
-              {
-                "text": "Don't give them anything, wait for our lawyer.",
-                "isCorrect": false,
-                "feedback": "Отказ предоставить информацию полиции — нарушение закона. Страховка, MC/DOT и CDL — обязательны к предъявлению."
-              }
-            ]
+            "text": "Сказать Mike переночевать на парковке consignee и разгрузиться завтра утром — layover не стоит требовать",
+            "isCorrect": false,
+            "feedback": "Layover = ВАШИ ДЕНЬГИ! Driver потерял целый вечер + ночь. Его HOS clock reset, он не может взять другой груз. Cost: $200-350 layover + $500-800 opportunity cost (мог бы делать другой рейс). Плюс: парковка на territory consignee может быть запрещена. ВСЕГДА claim layover когда receiver reschedules."
+          },
+          {
+            "text": "Отменить рейс и увезти груз обратно shipper",
+            "isCorrect": false,
+            "feedback": "Увезти груз обратно = catastrophe! 1) Двойной расход топлива. 2) Потеря ВСЕЙ ставки. 3) Возможный breach of contract. 4) Shipper может отказаться принять обратно. Правильно: забрать layover pay + разгрузиться завтра. Это стандартная ситуация — resolve, не escalate."
           }
         ]
       }
     },
     {
       "id": "d16-t5",
-      "type": "fill-blank",
-      "title": "Протокол при инциденте",
+      "type": "crisis",
+      "title": "TONU — broker отменяет за 30 минут до pickup",
       "data": {
-        "sentence": "При аварии первый приоритет — ___ водителя. Затем нужно вызвать ___ и задокументировать всё ___.",
+        "scenario": "Ваш driver Sergey проехал 180 миль deadhead из Nashville в Memphis для pickup (appointment 2 PM). В 1:30 PM (30 минут до pickup!) broker звонит: 'Sorry, shipper cancelled the load. Load doesn't exist anymore.' Sergey потратил 3 часа driving + $110 на топливо.",
+        "options": [
+          {"text": "Сказать 'OK' и начать искать новый груз из Memphis", "isCorrect": false},
+          {"text": "Немедленно отправить broker формальный TONU claim: email с Rate Con reference, GPS proof of deadhead (180 miles), time invested (3 hours), fuel cost ($110). Потребовать minimum $350 TONU (или сумму из Rate Con если прописано). CC dispatch manager.", "isCorrect": true},
+          {"text": "Угрожать broker судом и требовать полную оплату рейса", "isCorrect": false},
+          {"text": "Позвонить shipper напрямую и попросить другой груз", "isCorrect": false}
+        ]
+      }
+    },
+    {
+      "id": "d16-t6",
+      "type": "drag-match",
+      "title": "Документы для claims",
+      "data": {
+        "pairs": [
+          { "term": "Detention claim", "definition": "Check-in time photo + GPS log + signed delivery receipt с временем" },
+          { "term": "Layover claim", "definition": "Reschedule notice/photo + новый appointment confirmation + Rate Con" },
+          { "term": "TONU claim", "definition": "GPS deadhead proof + Rate Con + cancellation email/confirmation" },
+          { "term": "Lumper claim", "definition": "Lumper receipt + BOL + comcheck/payment proof" },
+          { "term": "Accessorial claim", "definition": "Photos + Rate Con section + driver statement + timestamps" }
+        ]
+      }
+    },
+    {
+      "id": "d16-t7",
+      "type": "phone-dialog",
+      "title": "Спор о detention hours",
+      "data": {
+        "context": "Вы подали detention claim на $450 (6 hours × $75). Broker говорит что по их данным detention was only 3 hours. Вы знаете что driver ждал 8 часов total (6 сверх 2hr free time).",
+        "turns": [
+          {
+            "speaker": "Брокер",
+            "message": "I can only pay 3 hours detention — $225. My receiver says loading started at 11 AM and your driver was loaded by 2 PM. That's 5 hours total, minus 2 free = 3 billable hours. Take it or leave it.",
+            "replies": [
+              {"text": "Let me clarify the timeline. My driver checked in at 7:00 AM. He was NOT called to a door until 11:00 AM — that's 4 hours waiting for a door. Loading took 11 AM to 2 PM. Total time on facility: 7 hours. Minus 2 free = 5 billable hours at $75 = $375. I have ELD showing On Duty from 7 AM, GPS at facility address, and guard gate receipt. I'll send documentation — let's settle at $375.", "isCorrect": true, "feedback": "Чёткий разбор! Broker считал только loading time (11-2), но detention начинается С МОМЕНТА ПРИБЫТИЯ (check-in), а не когда начали грузить! 7AM check-in → 2PM loaded = 7 часов total. Минус 2hr free = 5 billable. Вы compromise с $450 до $375 — fair. ELD + GPS = indisputable evidence."},
+              {"text": "OK, I'll take $225. Better than nothing.", "isCorrect": false, "feedback": "Вы потеряли $150-225! Broker считает detention НЕПРАВИЛЬНО (только loading time). FMCSA и industry standard: detention = total time on facility from check-in to departure. Ваш driver прибыл в 7 AM — ЭТО старт clock. Не соглашайтесь на broker math — используйте СВОИ timestamps и документы."},
+              {"text": "Forget it, just pay me my full line-haul rate and we'll call it even.", "isCorrect": false, "feedback": "Нелогичное требование — broker не заплатит full line-haul за detention dispute. Это подрывает вашу credibility. Stick to facts: exact hours × agreed rate. Документы говорят за вас. Professional claim с доказательствами > эмоциональные требования."}
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "d16-t8",
+      "type": "quiz",
+      "title": "Когда detention НЕ оплачивается",
+      "data": {
+        "question": "В каком случае carrier НЕ имеет права на detention pay?",
+        "options": [
+          "Когда driver приехал на 3 часа РАНЬШЕ appointment time и ждёт — detention clock начинается с appointment time, не с arrival",
+          "Когда ожидание на facility превысило 4 часа",
+          "Когда это Walmart или другой большой retailer",
+          "Когда carrier не предупредил о detention заранее"
+        ],
+        "correctIndex": 0,
+        "explanation": "Detention clock начинается с APPOINTMENT TIME, не с момента прибытия! Если appointment в 10 AM а driver приехал в 7 AM — первые 3 часа ожидания = его проблема. Detention считается: max(arrival, appointment) + free time. Исключение: если facility просит приехать раньше ('come early, we'll fit you in') — тогда clock с arrival. ВСЕГДА фиксируйте appointment time из Rate Con."
+      }
+    },
+    {
+      "id": "d16-t9",
+      "type": "calculator",
+      "title": "TONU расчёт — стоит ли claim",
+      "data": {
+        "problem": "Определите сумму TONU claim и стоит ли подавать.",
+        "context": "Driver проехал 95 миль deadhead к pickup. Расход: 6 mpg, diesel $3.80/gal. Время: 1.5 часа driving. Rate Con НЕ имеет TONU clause. Вы хотите потребовать TONU на основе 'industry standard'. Рассчитайте минимум вашего TONU request: deadhead fuel cost + driver time (driver rate $25/hr) + $50 administrative fee.",
+        "correctAnswer": 147.67,
+        "tolerancePercent": 5,
+        "unit": "$"
+      }
+    },
+    {
+      "id": "d16-t10",
+      "type": "fill-blank",
+      "title": "Claims checklist",
+      "data": {
+        "sentence": "Detention начинается после {0} часов бесплатного ожидания. Для claim нужно фото {1} с временем прибытия. TONU платится когда {2} отменяется после arrival. Layover = рейс перенесён на {3} день.",
         "blanks": [
-          { "correctAnswer": "безопасность", "wordBank": ["безопасность", "груз", "трак", "ставку"] },
-          { "correctAnswer": "полицию", "wordBank": ["полицию", "брокера", "адвоката", "механика"] },
-          { "correctAnswer": "фотографиями", "wordBank": ["фотографиями", "устно", "позже", "через email"] }
+          {"correctAnswer": "2", "wordBank": ["2", "1", "3", "4"]},
+          {"correctAnswer": "check-in", "wordBank": ["check-in", "трака", "водителя", "дороги"]},
+          {"correctAnswer": "груз", "wordBank": ["груз", "водитель", "трак", "брокер"]},
+          {"correctAnswer": "следующий", "wordBank": ["следующий", "этот же", "третий", "любой"]}
         ]
       }
     }

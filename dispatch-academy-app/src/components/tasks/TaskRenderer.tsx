@@ -167,58 +167,80 @@ interface FeedbackOverlayProps {
 function FeedbackOverlay({ isCorrect, explanation, correctAnswer, onNext }: FeedbackOverlayProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
-      className={`w-full max-w-lg mx-auto mt-3 p-3 rounded-xl border-2 relative overflow-hidden ${
-        isCorrect
-          ? 'bg-green-500/10 border-green-500/40'
-          : 'bg-red-500/10 border-red-500/40'
-      }`}
-      role="alert"
-      aria-live="assertive"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
       aria-label={isCorrect ? 'Правильно' : 'Неправильно'}
+      onClick={onNext}
     >
-      {/* CSS-only confetti dots for correct answer */}
-      {isCorrect && <ConfettiDots />}
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+        className={`w-full max-w-sm rounded-2xl border-2 p-5 shadow-2xl relative overflow-hidden ${
+          isCorrect
+            ? 'bg-slate-900 border-green-500/50'
+            : 'bg-slate-900 border-red-500/50'
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close button */}
+        <button
+          onClick={onNext}
+          className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white text-sm transition-colors z-20"
+          aria-label="Закрыть"
+        >
+          ✕
+        </button>
 
-      <div className="flex items-start gap-2 relative z-10">
-        {/* Icon */}
-        <span className="text-lg flex-shrink-0" aria-hidden="true">
-          {isCorrect ? '✅' : '❌'}
-        </span>
-        <div className="flex-1 min-w-0">
-          {/* Title */}
+        {/* CSS-only confetti dots for correct answer */}
+        {isCorrect && <ConfettiDots />}
+
+        {/* Icon + Title */}
+        <div className="flex flex-col items-center text-center relative z-10 mb-3">
+          <span className="text-4xl mb-2" aria-hidden="true">
+            {isCorrect ? '🎉' : '😔'}
+          </span>
           <p
-            className={`font-bold text-sm mb-0.5 ${
-              isCorrect ? 'text-green-300' : 'text-red-300'
+            className={`font-bold text-lg ${
+              isCorrect ? 'text-green-400' : 'text-red-400'
             }`}
           >
             {isCorrect ? 'Правильно!' : 'Неправильно'}
           </p>
-          {/* Correct answer (only on incorrect) */}
-          {!isCorrect && correctAnswer && (
-            <p className="text-sm text-slate-200 mb-2">
-              Правильный ответ:{' '}
-              <span className="font-semibold text-green-300">{correctAnswer}</span>
-            </p>
-          )}
-          {/* Explanation */}
-          {explanation && (
-            <p className="text-xs text-slate-300 leading-snug line-clamp-3">{explanation}</p>
-          )}
         </div>
-      </div>
 
-      {/* "Далее" button — always shown, calls onComplete with result */}
-      <button
-        onClick={onNext}
-        className="w-full min-h-[40px] mt-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-bold text-sm rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 relative z-10"
-        aria-label="Перейти к следующему заданию"
-      >
-        Далее →
-      </button>
+        {/* Correct answer — always shown */}
+        {correctAnswer && (
+          <div className="relative z-10 mb-3 px-3 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30">
+            <p className="text-sm text-slate-200 text-center">
+              ✓ Ответ:{' '}
+              <span className="font-bold text-cyan-300">{correctAnswer}</span>
+            </p>
+          </div>
+        )}
+
+        {/* Explanation — detailed info */}
+        {explanation && (
+          <p className="relative z-10 text-sm text-slate-300 leading-relaxed text-center mb-4">
+            {explanation}
+          </p>
+        )}
+
+        {/* "Далее" button */}
+        <button
+          onClick={onNext}
+          className="relative z-10 w-full min-h-[44px] px-4 py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-bold text-base rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 shadow-lg"
+          aria-label="Перейти к следующему заданию"
+        >
+          Далее →
+        </button>
+      </motion.div>
     </motion.div>
   );
 }
@@ -228,13 +250,15 @@ function FeedbackOverlay({ isCorrect, explanation, correctAnswer, onNext }: Feed
 export default function TaskRenderer({ task, onComplete, isRetry }: TaskRendererProps) {
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
+  const [customFeedback, setCustomFeedback] = useState('');
   const startTimeRef = useRef<Date>(new Date());
   const hasCompletedRef = useRef(false);
   const soundEnabled = useUIStore((state) => state.soundEnabled);
 
   const handleAnswer = useCallback(
-    (correct: boolean) => {
+    (correct: boolean, _selectedIndex?: number, feedbackText?: string) => {
       setIsCorrect(correct);
+      if (feedbackText) setCustomFeedback(feedbackText);
       setShowFeedback(true);
 
       // Play success sound if correct and sound is enabled
@@ -277,49 +301,103 @@ export default function TaskRenderer({ task, onComplete, isRetry }: TaskRenderer
 
   // Get explanation and correct answer for feedback display
   const getFeedbackData = (): { explanation: string; correctAnswer?: string } => {
+    // If custom feedback from the task component, use it
+    if (customFeedback) {
+      switch (task.type) {
+        case 'quiz': {
+          const q = task.data as QuizData;
+          return { explanation: customFeedback, correctAnswer: q.options[q.correctIndex] };
+        }
+        case 'email-sim': {
+          const e = task.data as EmailSimData;
+          return { explanation: customFeedback, correctAnswer: e.responses.find((r) => r.isCorrect)?.text };
+        }
+        default:
+          return { explanation: customFeedback };
+      }
+    }
+
     switch (task.type) {
       case 'quiz': {
         const quizData = task.data as QuizData;
         return {
-          explanation: quizData.explanation,
-          correctAnswer: !isCorrect
-            ? quizData.options[quizData.correctIndex]
-            : undefined,
+          explanation: quizData.explanation || 'Запомните этот ответ — он пригодится в работе диспетчера.',
+          correctAnswer: quizData.options[quizData.correctIndex],
         };
       }
       case 'fill-blank': {
         const fillData = task.data as FillBlankData;
         return {
-          explanation: '',
-          correctAnswer: !isCorrect
-            ? fillData.blanks.map((b) => b.correctAnswer).join(', ')
-            : undefined,
+          explanation: isCorrect
+            ? 'Отлично! Вы правильно заполнили все пропуски.'
+            : 'Обратите внимание на правильные ответы — они важны для ежедневной работы.',
+          correctAnswer: fillData.blanks.map((b) => b.correctAnswer).join(', '),
         };
       }
       case 'email-sim': {
-        // EmailSimTask displays its own inline feedback;
-        // TaskRenderer overlay just provides the "Далее" button
-        return { explanation: '' };
+        const emailData = task.data as EmailSimData;
+        const correctResponse = emailData.responses.find((r) => r.isCorrect);
+        return {
+          explanation: correctResponse?.feedback || 'Всегда уточняйте детали перед принятием решения по грузу.',
+          correctAnswer: correctResponse?.text,
+        };
       }
       case 'map-routing': {
         const mapData = task.data as MapRoutingData;
         const optimal = mapData.routes.find((r) => r.isOptimal);
         return {
           explanation: optimal
-            ? `Оптимальный маршрут: ${optimal.name} — $${(optimal.miles * optimal.rate).toFixed(2)}`
+            ? `Оптимальный маршрут: ${optimal.name}. ${optimal.miles} миль × $${optimal.rate}/миля = $${(optimal.miles * optimal.rate).toFixed(0)}. Всегда сравнивайте RPM при выборе маршрута.`
             : '',
-          correctAnswer: !isCorrect && optimal ? optimal.name : undefined,
+          correctAnswer: optimal ? optimal.name : undefined,
         };
       }
       case 'audio-term': {
         const audioData = task.data as AudioTermData;
         return {
-          explanation: '',
-          correctAnswer: !isCorrect ? audioData.correctTerm : undefined,
+          explanation: isCorrect
+            ? 'Правильно! Знание терминологии — ключ к профессиональному общению.'
+            : 'Запомните этот термин — он часто используется в переговорах.',
+          correctAnswer: audioData.correctTerm,
         };
       }
+      case 'drag-match':
+        return {
+          explanation: isCorrect
+            ? 'Отлично! Вы правильно сопоставили все термины с определениями.'
+            : 'Изучите правильные соответствия — эти термины используются ежедневно.',
+        };
+      case 'calculator': {
+        const calcData = task.data as CalculatorData;
+        return {
+          explanation: `Правильный ответ: ${calcData.correctAnswer} ${calcData.unit}. Точные расчёты — основа прибыльных рейсов.`,
+          correctAnswer: `${calcData.correctAnswer} ${calcData.unit}`,
+        };
+      }
+      case 'crisis': {
+        const crisisData = task.data as CrisisData;
+        const correctOption = crisisData.options.find((o) => o.isCorrect);
+        return {
+          explanation: correctOption
+            ? `Верное действие: «${correctOption.text}». В кризисных ситуациях действуйте быстро и профессионально.`
+            : 'Главное — безопасность водителя и груза.',
+          correctAnswer: correctOption?.text,
+        };
+      }
+      case 'document-review':
+        return {
+          explanation: isCorrect
+            ? 'Вы нашли все ошибки. Внимательная проверка документов предотвращает финансовые потери.'
+            : 'Проверяйте каждое поле — ошибки могут стоить сотни долларов.',
+        };
+      case 'phone-dialog':
+        return {
+          explanation: isCorrect
+            ? 'Отличная коммуникация! Профессиональный тон — ключ к успешным отношениям.'
+            : 'Обратите внимание на тон ответов. Чёткость и профессионализм — обязательны.',
+        };
       default:
-        return { explanation: '' };
+        return { explanation: 'Задание завершено.' };
     }
   };
 
@@ -419,29 +497,31 @@ export default function TaskRenderer({ task, onComplete, isRetry }: TaskRenderer
 
   return (
     <div className="w-full flex flex-col items-center">
-      {/* Task instruction — big, bold, beautiful */}
-      <p
-        className="text-center mb-4 lg:mb-6 font-bold text-white px-2"
-        style={{ fontSize: 'clamp(18px, 4.5vw, 28px)', lineHeight: '1.3' }}
-      >
-        {task.type === 'quiz' ? '🎯 Выберите правильный ответ' :
-         task.type === 'fill-blank' ? '✏️ Заполните пропуски' :
-         task.type === 'drag-match' ? '🔗 Выберите определение для термина' :
-         task.type === 'email-sim' ? '📧 Ответьте на письмо' :
-         task.type === 'phone-dialog' ? '📞 Ведите диалог' :
-         task.type === 'calculator' ? '🧮 Рассчитайте число' :
-         task.type === 'crisis' ? '🚨 Примите решение!' :
-         task.type === 'map-routing' ? '🗺️ Выберите маршрут' :
-         task.type === 'document-review' ? '📄 Найдите ошибки' :
-         task.type === 'audio-term' ? '🔊 Определите термин' :
-         task.type === 'flashcard' ? '🃏 Запомните термин' :
-         '📚 Выполните задание'}
-      </p>
+      {/* Task instruction — hidden when feedback popup is showing */}
+      {!showFeedback && (
+        <p
+          className="text-center mb-4 lg:mb-6 font-bold text-white px-2"
+          style={{ fontSize: 'clamp(18px, 4.5vw, 28px)', lineHeight: '1.3' }}
+        >
+          {task.type === 'quiz' ? '🎯 Выберите правильный ответ' :
+           task.type === 'fill-blank' ? '✏️ Заполните пропуски' :
+           task.type === 'drag-match' ? '🔗 Выберите определение для термина' :
+           task.type === 'email-sim' ? '📧 Ответьте на письмо' :
+           task.type === 'phone-dialog' ? '📞 Ведите диалог' :
+           task.type === 'calculator' ? '🧮 Рассчитайте число' :
+           task.type === 'crisis' ? '🚨 Примите решение!' :
+           task.type === 'map-routing' ? '🗺️ Выберите маршрут' :
+           task.type === 'document-review' ? '📄 Найдите ошибки' :
+           task.type === 'audio-term' ? '🔊 Определите термин' :
+           task.type === 'flashcard' ? '🃏 Запомните термин' :
+           '📚 Выполните задание'}
+        </p>
+      )}
 
-      {/* Task component */}
-      {renderTaskComponent()}
+      {/* Task component — hidden when feedback popup is showing */}
+      {!showFeedback && renderTaskComponent()}
 
-      {/* Feedback overlay with "Далее" button */}
+      {/* Feedback popup — centered modal with all info */}
       <AnimatePresence>
         {showFeedback && (
           <FeedbackOverlay

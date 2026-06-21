@@ -1,92 +1,166 @@
 {
   "dayId": 12,
-  "weekId": 3,
-  "title": "Factoring: ускоренное получение оплаты",
-  "estimatedMinutes": 40,
+  "weekId": 4,
+  "title": "Работа с несколькими траками одновременно",
+  "estimatedMinutes": 22,
   "tasks": [
     {
       "id": "d12-t1",
       "type": "quiz",
-      "title": "Что такое Factoring",
+      "title": "Приоритизация траков",
       "data": {
-        "question": "Что такое Factoring в грузоперевозках?",
+        "question": "У вас 4 трака. Truck A пустой в Далласе, Truck B разгружается в Чикаго (до 2 PM), Truck C едет в Атланту (delivery завтра), Truck D — breakdown в Мемфисе. Кому вы уделяете внимание ПЕРВОМУ утром?",
         "options": [
-          "Страхование грузов от повреждений в пути",
-          "Продажа Invoice за быструю оплату",
-          "Разделение груза на несколько частей",
-          "Расчёт расхода топлива на маршруте"
+          "Truck A — ему нужен груз как можно быстрее",
+          "Truck B — он скоро освободится и нужно планировать",
+          "Truck D — breakdown = потеря денег каждую минуту, нужно решить проблему",
+          "Truck C — проверить ETA и HOS"
         ],
-        "correctIndex": 1,
-        "explanation": "Factoring — услуга, при которой перевозчик продаёт свой Invoice факторинговой компании и получает оплату в течение 24-48 часов вместо ожидания 30-45 дней. Комиссия обычно 2-5%."
+        "correctIndex": 2,
+        "explanation": "Breakdown = деньги утекают каждый час: простой трака ~$500-800/день упущенной выручки + стоимость ремонта. Truck D — критическая ситуация, требующая немедленного действия. После решения проблемы — к Truck A (нужен груз) и B (планирование). Truck C стабилен — только мониторинг. Правило диспетчера: сначала тушим пожары, потом зарабатываем деньги."
       }
     },
     {
       "id": "d12-t2",
-      "type": "quiz",
-      "title": "Плюсы и минусы",
+      "type": "email-sim",
+      "title": "Утренний брифинг: 4 трака",
       "data": {
-        "question": "В каком случае Factoring особенно выгоден для перевозчика?",
-        "options": [
-          "Когда у компании избыток свободных средств",
-          "Когда нужны деньги на расходы до оплаты",
-          "Когда перевозчик хочет увеличить прибыль",
-          "Когда брокер оплачивает счёт быстро"
-        ],
-        "correctIndex": 1,
-        "explanation": "Factoring незаменим для малых перевозчиков и owner-operators, которым нужны деньги на топливо и ежедневные расходы, не дожидаясь 30-45 дней от брокера."
+        "senderName": "Fleet Status Report — автоматическое уведомление",
+        "subject": "Morning Brief: 4 trucks — action required",
+        "body": "FLEET STATUS — Monday 6:00 AM:\n\nTruck 1 (Driver: Sergey) — Empty in Memphis, TN. HOS: 10 hrs driving available. Last load delivered Friday.\n\nTruck 2 (Driver: Alex) — Loaded, en route Phoenix → LA. ETA: 11 AM today. HOS: 4 hrs remaining.\n\nTruck 3 (Driver: Mike) — Pickup today 8 AM in Atlanta, GA. Load to Jacksonville, FL ($1,400/280 mi).\n\nTruck 4 (Driver: Ivan) — 34-hr restart in Nashville, TN. Available tomorrow 6 AM.\n\nACTION NEEDED: Truck 1 empty 3 days — revenue loss.",
+        "responses": [
+          {
+            "text": "Срочно найти груз для Truck 1 — он пустой 3 дня. Проверить DAT/Truckstop для Memphis outbound. Truck 2 — подготовить следующий груз из LA. Truck 3 — подтвердить pickup. Truck 4 — ничего до завтра.",
+            "isCorrect": true,
+            "feedback": "Правильная приоритизация! Truck 1 пустой 3 дня = ~$1,500-2,400 потерянного дохода. Memphis — крупный хаб с грузами на Восток. Параллельно готовите Truck 2 (LA outbound через 5 часов). Truck 3 на контроле. Truck 4 на рестарте — пока свободен."
+          },
+          {
+            "text": "Подождать пока все водители позвонят и сами скажут что им нужно",
+            "isCorrect": false,
+            "feedback": "Пассивный диспетчер = убыточный диспетчер. Каждый день простоя Truck 1 = $500-800 потерь. Инициатива должна идти от вас: вы находите грузы, планируете маршруты, координируете. Водители ездят — вы управляете."
+          },
+          {
+            "text": "Позвонить всем четырём водителям одновременно для update",
+            "isCorrect": false,
+            "feedback": "Нерационально! Truck 3 едет на pickup — не отвлекайте. Truck 4 на рестарте — спит. Truck 2 в пути. Фокус на проблему: Truck 1 пустой. Остальных проверьте по GPS/ELD без звонка, свяжитесь по необходимости."
+          }
+        ]
       }
     },
     {
       "id": "d12-t3",
       "type": "calculator",
-      "title": "Расчёт дохода после Factoring",
+      "title": "Расчёт revenue per truck per week",
       "data": {
-        "problem": "Рассчитайте чистую сумму после факторинга.",
-        "context": "Сумма Invoice: $3,200. Комиссия факторинговой компании: 3%. Сколько получит перевозчик на руки?",
-        "correctAnswer": 3104,
+        "problem": "Рассчитайте средний доход на трак в неделю для флота из 4 траков.",
+        "context": "За неделю ваш флот заработал: Truck 1 — $4,200 (3 рейса). Truck 2 — $3,800 (2 рейса). Truck 3 — $5,100 (3 рейса). Truck 4 — $2,600 (1 рейс + 2 дня breakdown). Рассчитайте средний доход на трак.",
+        "correctAnswer": 3925,
         "tolerancePercent": 2,
         "unit": "$"
       }
     },
     {
       "id": "d12-t4",
-      "type": "email-sim",
-      "title": "Выбор факторинговой компании",
+      "type": "crisis",
+      "title": "Два водителя — одна проблема",
       "data": {
-        "senderName": "Sarah Williams — OTR Capital",
-        "subject": "Factoring Services for Swift Transport",
-        "body": "Hi,\n\nI'm Sarah from OTR Capital. We offer factoring services:\n\n- Same-day funding (by 5 PM if submitted before noon)\n- Flat rate: 3% per invoice\n- No monthly minimums\n- Free credit checks on brokers\n- No long-term contract — cancel anytime\n\nWe also offer fuel advances (up to 50% of load value at pickup).\n\nWould you like to set up an account?\n\nBest,\nSarah Williams\nOTR Capital",
-        "responses": [
-          {
-            "text": "Подписать контракт немедленно без сравнения с другими компаниями",
-            "isCorrect": false,
-            "feedback": "Всегда сравнивайте предложения! Факторинговые компании отличаются ставками (1.5-5%), условиями контракта, скоростью оплаты и дополнительными fees."
-          },
-          {
-            "text": "Запросить полные условия: есть ли hidden fees, batch fees, reserve holdback? Сравнить с 2-3 другими компаниями перед решением",
-            "isCorrect": true,
-            "feedback": "Правильно! Уточните все условия: reserve holdback (обычно 5-10%), batch fees, minimum volume requirements. Сравните минимум 2-3 предложения."
-          },
-          {
-            "text": "Отказаться — Factoring не нужен",
-            "isCorrect": false,
-            "feedback": "Factoring — важный инструмент для cash flow. Даже если сейчас не нужен, стоит иметь аккаунт на случай cash flow проблем."
-          }
+        "scenario": "Вторник, 3 PM. Водитель Sergey (Truck 1) только загрузился в Мемфисе, delivery завтра 8 AM в Нэшвилле (210 миль). Одновременно водитель Alex (Truck 2) звонит из Далласа: 'Flat tire на прицепе, я на обочине I-30. Мой delivery в Little Rock через 5 часов.' Оба требуют вашего внимания СЕЙЧАС.",
+        "options": [
+          {"text": "Забыть про Sergey — его delivery простой, сам доедет. Все силы на Alex: вызвать roadside tire service, уведомить брокера Alex, мониторить repair time. Sergey проверить через час.", "isCorrect": true},
+          {"text": "Помочь сначала Sergey — он загрузился раньше", "isCorrect": false},
+          {"text": "Позвонить обоим и сказать разбираться самим — у вас и так 4 трака", "isCorrect": false},
+          {"text": "Отменить delivery Alex и перебросить его груз на Sergey", "isCorrect": false}
         ]
       }
     },
     {
       "id": "d12-t5",
+      "type": "phone-dialog",
+      "title": "Переговоры за два груза одновременно",
+      "data": {
+        "context": "У вас два пустых трака: один в Houston (Driver Sergey), один в Dallas (Driver Mike). Вы на телефоне с брокером из CH Robinson, у которого два груза в Техасе. Нужно договориться по обоим сразу.",
+        "turns": [
+          {
+            "speaker": "Брокер",
+            "message": "I have two loads from Texas today. Load 1: Houston to New Orleans, 350 miles, $800. Load 2: Dallas to Oklahoma City, 210 miles, $500. Both pickup today by 4 PM. Can your guys handle them?",
+            "replies": [
+              {"text": "I can cover both but the rates need work. Houston to NOLA is $800 for 350 miles — that's $2.28/mile, below market for same-day. I need $1,050 minimum. Dallas to OKC at $500/210 miles is $2.38 — need $650. Bundle deal: both loads for $1,650 total.", "isCorrect": true, "feedback": "Отличная тактика! Вы: 1) Показали готовность взять оба (leverage). 2) Разбили rate per mile для каждого. 3) Предложили bundle deal — брокеру выгодно закрыть оба сразу. $1,650 за 560 миль = $2.95/mile — хороший rate для same-day в Техасе."},
+              {"text": "Sure, we'll take both as posted. Send the Rate Cons.", "isCorrect": false, "feedback": "Вы потеряли деньги! $800/350 = $2.28/mile и $500/210 = $2.38/mile — ниже рынка для same-day pickup. Особенно Houston→NOLA с heavy traffic на I-10. Всегда торгуйтесь, особенно когда у вас leverage: два трака = одно решение для брокера."},
+              {"text": "No, those rates are too low. I'll pass on both.", "isCorrect": false, "feedback": "Два пустых трака — это расходы без дохода! Вместо отказа — торгуйтесь. У вас сильная позиция: брокеру нужно закрыть ОБА груза сегодня. Предложите свою цену. Пустой трак зарабатывает $0/day."}
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "d12-t6",
       "type": "drag-match",
-      "title": "Термины факторинга",
+      "title": "Статусы траков — терминология",
       "data": {
         "pairs": [
-          { "term": "Factoring Rate", "definition": "Комиссия (2-5%) за быструю оплату" },
-          { "term": "Reserve Holdback", "definition": "Часть суммы (5-10%), удерживаемая до оплаты брокером" },
-          { "term": "Recourse Factoring", "definition": "Перевозчик несёт риск если брокер не платит" },
-          { "term": "Non-Recourse", "definition": "Риск неоплаты несёт факторинговая компания" },
-          { "term": "Fuel Advance", "definition": "Аванс на топливо при pickup (30-50% от суммы)" }
+          { "term": "Empty/Available", "definition": "Трак без груза, готов к новому рейсу" },
+          { "term": "Loaded/En Route", "definition": "Трак с грузом, едет к delivery" },
+          { "term": "At Shipper", "definition": "На загрузке, ожидает или грузится" },
+          { "term": "At Consignee", "definition": "На разгрузке, ждёт или разгружается" },
+          { "term": "Out of Service", "definition": "Не работает: breakdown, ремонт, inspection hold" },
+          { "term": "34-hr Restart", "definition": "Водитель на обязательном рестарте HOS" }
         ]
+      }
+    },
+    {
+      "id": "d12-t7",
+      "type": "map-routing",
+      "title": "Оптимизация: два трака в одном регионе",
+      "data": {
+        "origin": "Memphis, TN (Truck 1 empty)",
+        "destination": "Atlanta, GA (high-demand market)",
+        "routes": [
+          {"name": "I-22 → I-65 → I-20 (через Birmingham) — 380 миль", "miles": 380, "rate": 2.60, "isOptimal": false},
+          {"name": "Взять короткий груз Memphis→Nashville ($600/210mi), затем Nashville→Atlanta ($850/250mi)", "miles": 460, "rate": 3.15, "isOptimal": true},
+          {"name": "Deadhead напрямую Memphis→Atlanta (без груза, 380 миль по I-22)", "miles": 380, "rate": 0, "isOptimal": false}
+        ]
+      }
+    },
+    {
+      "id": "d12-t8",
+      "type": "fill-blank",
+      "title": "Утренний checklist диспетчера",
+      "data": {
+        "sentence": "Утром проверьте {0} каждого водителя в ELD. Найдите грузы для {1} траков. Подтвердите {2} для траков на маршруте. Проверьте {3} для траков на ремонте.",
+        "blanks": [
+          {"correctAnswer": "HOS", "wordBank": ["HOS", "зарплату", "настроение", "погоду"]},
+          {"correctAnswer": "пустых", "wordBank": ["пустых", "всех", "новых", "старых"]},
+          {"correctAnswer": "ETA", "wordBank": ["ETA", "скорость", "музыку", "маршрут"]},
+          {"correctAnswer": "статус ремонта", "wordBank": ["статус ремонта", "стоимость", "гарантию", "цвет"]}
+        ]
+      }
+    },
+    {
+      "id": "d12-t9",
+      "type": "calculator",
+      "title": "Потери от простоя",
+      "data": {
+        "problem": "Рассчитайте потери от простоя трака за неделю.",
+        "context": "Truck 4 простоял 5 дней из-за breakdown. Средний дневной доход трака: $850. Стоимость ремонта: $1,200. Сколько компания потеряла ВСЕГО (упущенный доход + ремонт)?",
+        "correctAnswer": 5450,
+        "tolerancePercent": 2,
+        "unit": "$"
+      }
+    },
+    {
+      "id": "d12-t10",
+      "type": "quiz",
+      "title": "Dispatch board — управление флотом",
+      "data": {
+        "question": "Какой ГЛАВНЫЙ показатель эффективности флота из нескольких траков?",
+        "options": [
+          "Количество миль за неделю",
+          "Utilization rate — процент времени когда траки ЗАГРУЖЕНЫ и зарабатывают деньги",
+          "Количество звонков водителям в день",
+          "Средняя скорость движения траков"
+        ],
+        "correctIndex": 1,
+        "explanation": "Utilization rate — ключевой KPI. Если трак работает 5 дней из 7 (2 дня пустой/ремонт) = 71% utilization. Цель: 85-90%+ utilization. Каждый день простоя = $500-1000 потерь. Хороший диспетчер минимизирует deadhead и время между грузами, максимизируя загруженность каждого трака."
       }
     }
   ]
