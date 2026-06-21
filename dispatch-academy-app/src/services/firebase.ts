@@ -1,14 +1,18 @@
-import { initializeApp, type FirebaseApp } from 'firebase/app';
-import { getAuth, type Auth } from 'firebase/auth';
+import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 
+// Same Firebase project as the main site and map-trainer
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'demo-key',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'demo.firebaseapp.com',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'demo-project',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY            || 'AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI',
+  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN         ||
+                       (typeof window !== 'undefined' && window.location.hostname === 'localhost'
+                         ? 'dispatch4you-80e0f.firebaseapp.com'
+                         : 'dispatch4you.com'),
+  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID         || 'dispatch4you-80e0f',
+  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET     || 'dispatch4you-80e0f.appspot.com',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '349235354473',
+  appId:             import.meta.env.VITE_FIREBASE_APP_ID             || '1:349235354473:web:488aeb29211b02bb153bf8',
 };
 
 let app: FirebaseApp;
@@ -16,16 +20,18 @@ let auth: Auth;
 let db: Firestore;
 
 try {
-  app = initializeApp(firebaseConfig);
+  app = getApps().length ? getApps()[0]! : initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = getFirestore(app);
 } catch (e) {
-  console.warn('[Firebase] Init failed — running in demo mode:', e);
-  // Create minimal stubs so imports don't crash
+  console.warn('[Firebase] Init failed:', e);
   app = {} as FirebaseApp;
   auth = {} as Auth;
   db = {} as Firestore;
 }
+
+export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export { auth, db };
 export default app;

@@ -15,6 +15,7 @@ const ExamPage = React.lazy(() => import('./pages/ExamPage'));
 const FlashcardPage = React.lazy(() => import('./pages/FlashcardPage'));
 const CertificatePage = React.lazy(() => import('./pages/CertificatePage'));
 const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
+const LeaderboardPage = React.lazy(() => import('./pages/LeaderboardPage'));
 
 /**
  * Wraps a lazy-loaded component with Suspense fallback and per-route ErrorBoundary.
@@ -111,6 +112,14 @@ const router = createBrowserRouter([
         element: (
           <SuspenseRoute>
             <SettingsPage />
+          </SuspenseRoute>
+        ),
+      },
+      {
+        path: 'leaderboard',
+        element: (
+          <SuspenseRoute>
+            <LeaderboardPage />
           </SuspenseRoute>
         ),
       },

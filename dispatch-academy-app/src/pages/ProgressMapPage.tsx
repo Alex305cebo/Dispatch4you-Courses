@@ -176,7 +176,7 @@ export default function ProgressMapPage() {
   const mapLastLevel = LEVEL_POSITIONS[LEVEL_POSITIONS.length - 1]?.id ?? 11;
   const currentLevel = Math.min(globalCurrentLevel, mapLastLevel + 1);
 
-  // Check if current map is locked (need ALL levels on previous map completed + 70% accuracy)
+  // Check if current map is locked
   const previousMapLevels = currentMapIndex > 0 ? MAPS[currentMapIndex - 1]!.levels : [];
   const previousMapAllCompleted = previousMapLevels.length > 0 && previousMapLevels.every(lvl => completedDayIds.includes(lvl.id));
   
@@ -187,7 +187,15 @@ export default function ProgressMapPage() {
   const globalAccuracy = allScoresArr.length > 0 ? (allScoresArr.filter((s: any) => s?.correct).length / allScoresArr.length) * 100 : 0;
   const isDreamLocked = currentMap.transition === 'dream' && (!map1AllCompleted || globalAccuracy < 80);
   
-  const isMapLocked = (currentMapIndex > 0 && currentMap.transition !== 'dream' && !previousMapAllCompleted) || isDreamLocked;
+  // Dream map levels
+  const dreamMap = MAPS.find(m => m.transition === 'dream');
+  const dreamLevels = dreamMap?.levels ?? [];
+  const dreamAllCompleted = dreamLevels.length > 0 && dreamLevels.every(lvl => completedDayIds.includes(lvl.id));
+
+  // Map 2+ locked: need ALL map 1 levels + ALL dream levels completed
+  const isMap2Locked = currentMapIndex > 0 && currentMap.transition !== 'dream' && (!map1AllCompleted || !dreamAllCompleted);
+  
+  const isMapLocked = isMap2Locked || isDreamLocked;
 
   // Build SVG path connecting completed levels (smooth bezier curves)
   const progressPath = useMemo(() => {
@@ -384,29 +392,63 @@ export default function ProgressMapPage() {
                 boxShadow: 'inset 0 1px 3px rgba(255,255,255,0.1), 0 8px 32px rgba(0,0,0,0.2)',
               }}
             >
+              {/* Close button */}
+              <button
+                onClick={() => { setCurrentMapIndex(0); setEditorPositions(MAPS[0]!.levels.map(p => ({ ...p }))); }}
+                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 hover:text-white text-xs transition-colors"
+              >
+                ✕
+              </button>
               {/* Top refraction highlight */}
               <div className="absolute top-0 left-4 right-4 h-[30%] rounded-t-2xl" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%)' }} />
               <span className="text-3xl relative z-10">🔒</span>
               <p className="text-white/90 text-sm font-bold relative z-10">
                 {isDreamLocked ? 'Бонусная карта заблокирована' : 'Карта заблокирована'}
               </p>
-              <p className="text-white/60 text-xs text-center relative z-10">
-                {isDreamLocked
-                  ? (!map1AllCompleted
-                    ? `Пройдите все уровни карты 1\nПройдено: ${map1Levels.filter(lvl => completedDayIds.includes(lvl.id)).length} / ${map1Levels.length}`
-                    : `Наберите 80% правильных ответов\nСейчас: ${Math.round(globalAccuracy)}%`)
-                  : `Пройдите все уровни на предыдущей карте\nПройдено: ${previousMapLevels.filter(lvl => completedDayIds.includes(lvl.id)).length} / ${previousMapLevels.length}`
-                }
-              </p>
+              <div className="text-white/60 text-xs text-center relative z-10 space-y-1">
+                {isDreamLocked ? (
+                  !map1AllCompleted ? (
+                    <>
+                      <p>Пройдите все уровни карты 1</p>
+                      <p className="text-white/40">Пройдено: {map1Levels.filter(lvl => completedDayIds.includes(lvl.id)).length} / {map1Levels.length}</p>
+                      <p className="text-white/40">+ наберите 80% правильных ответов</p>
+                    </>
+                  ) : (
+                    <>
+                      <p>✅ Карта 1 пройдена</p>
+                      <p>Наберите 80% правильных ответов</p>
+                      <p className="text-white/40">Сейчас: {Math.round(globalAccuracy)}% / 80%</p>
+                    </>
+                  )
+                ) : (
+                  <>
+                    <p className={map1AllCompleted ? 'text-green-400' : ''}>
+                      {map1AllCompleted ? '✅' : '○'} Карта 1: {map1Levels.filter(lvl => completedDayIds.includes(lvl.id)).length}/{map1Levels.length}
+                    </p>
+                    <p className={dreamAllCompleted ? 'text-green-400' : ''}>
+                      {dreamAllCompleted ? '✅' : '○'} Бонус «Сон»: {dreamLevels.filter(lvl => completedDayIds.includes(lvl.id)).length}/{dreamLevels.length}
+                    </p>
+                  </>
+                )}
+              </div>
               {/* Progress indicator */}
               <div className="w-32 h-2 bg-white/10 rounded-full overflow-hidden border border-white/20 relative z-10">
                 <div
                   className="h-full bg-gradient-to-r from-cyan-400 to-green-400 rounded-full transition-all"
                   style={{ width: `${isDreamLocked
                     ? (!map1AllCompleted ? (map1Levels.filter(lvl => completedDayIds.includes(lvl.id)).length / map1Levels.length) * 100 : (globalAccuracy / 80) * 100)
-                    : (previousMapLevels.length > 0 ? (previousMapLevels.filter(lvl => completedDayIds.includes(lvl.id)).length / previousMapLevels.length) * 100 : 0)}%` }}
+                    : (!map1AllCompleted
+                      ? (map1Levels.filter(lvl => completedDayIds.includes(lvl.id)).length / map1Levels.length) * 100
+                      : dreamLevels.length > 0 ? (dreamLevels.filter(lvl => completedDayIds.includes(lvl.id)).length / dreamLevels.length) * 100 : 0)}%` }}
                 />
               </div>
+              {/* Back button */}
+              <button
+                onClick={() => { setCurrentMapIndex(0); setEditorPositions(MAPS[0]!.levels.map(p => ({ ...p }))); }}
+                className="relative z-10 mt-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition-all hover:scale-105"
+              >
+                ← Вернуться
+              </button>
             </div>
           </div>
         )}
@@ -523,11 +565,10 @@ export default function ProgressMapPage() {
         )}
         {/* ===== MAP NAVIGATION ===== */}
         <>
-          {/* Arrow to NEXT map (top center) — requires all levels completed */}
+          {/* Arrow to NEXT map (top center) — requires all levels + dream completed */}
           {currentMapIndex < MAPS.length - 1 && MAPS[currentMapIndex + 1]?.transition !== 'dream' && (() => {
-            const currentMapLevels = MAPS[currentMapIndex]!.levels;
-            const completedOnCurrentMap = currentMapLevels.filter(lvl => completedDayIds.includes(lvl.id)).length;
-            const nextMapUnlocked = completedOnCurrentMap >= currentMapLevels.length;
+            const nextMapUnlocked = map1AllCompleted && dreamAllCompleted;
+            const completedOnCurrentMap = map1Levels.filter(lvl => completedDayIds.includes(lvl.id)).length;
 
             return (
               <button
@@ -543,7 +584,7 @@ export default function ProgressMapPage() {
                 }`}
               >
                 <span>{nextMapUnlocked ? '↑' : '🔒'}</span>
-                {nextMapUnlocked ? `Карта ${currentMapIndex + 2}` : `${completedOnCurrentMap}/${currentMapLevels.length}`}
+                {nextMapUnlocked ? `Карта ${currentMapIndex + 2}` : `${completedOnCurrentMap}/${map1Levels.length}`}
               </button>
             );
           })()}
