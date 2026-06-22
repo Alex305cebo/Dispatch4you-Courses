@@ -1,0 +1,3 @@
+## 2025-05-15 - [Interactive Feedback O(N) Bottleneck]
+**Learning:** The `interactive-feedback.js` script used a `MutationObserver` to re-scan the entire DOM and attach individual event listeners to all interactive elements every time any DOM change occurred. This resulted in O(N) initialization overhead, where N is the number of interactive elements on the page. In benchmarks, adding 1000 elements took ~590ms, and adding 100 more elements took ~727ms, indicating significant performance degradation as the DOM grows.
+**Action:** Replace individual listeners and `MutationObserver` with global event delegation on the `document` to achieve O(1) initialization and zero overhead for dynamic elements.
