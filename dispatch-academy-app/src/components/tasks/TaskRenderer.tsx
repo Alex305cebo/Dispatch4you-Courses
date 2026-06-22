@@ -508,7 +508,7 @@ export default function TaskRenderer({ task, onComplete, isRetry }: TaskRenderer
            task.type === 'drag-match' ? '🔗 Выберите определение для термина' :
            task.type === 'email-sim' ? '📧 Ответьте на письмо' :
            task.type === 'phone-dialog' ? '📞 Ведите диалог' :
-           task.type === 'calculator' ? '🧮 Рассчитайте число' :
+           task.type === 'calculator' ? '🧮 Выберите правильный ответ' :
            task.type === 'crisis' ? '🚨 Примите решение!' :
            task.type === 'map-routing' ? '🗺️ Выберите маршрут' :
            task.type === 'document-review' ? '📄 Найдите ошибки' :

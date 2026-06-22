@@ -8,6 +8,13 @@ import type { Flashcard } from '../types/index';
 import type { FlashcardReviewState, SM2Rating } from '../types/progress';
 
 type PageState = 'loading' | 'error' | 'review' | 'done';
+type DifficultyRating = 'again' | 'hard' | 'good' | 'easy';
+
+interface CardDifficultyState {
+  cardId: string;
+  level: number; // 1-10 difficulty levels
+  correctStreak: number;
+}
 
 /** Returns today's date as YYYY-MM-DD */
 function getToday(): string {
@@ -25,7 +32,33 @@ function createDefaultState(cardId: string): FlashcardReviewState {
   };
 }
 
-const ratingButtons: { rating: SM2Rating; label: string; color: string }[] = [
+/** Creates a default difficulty state for a new card */
+function createDefaultDifficultyState(cardId: string): CardDifficultyState {
+  return {
+    cardId,
+    level: 1,
+    correctStreak: 0,
+  };
+}
+
+/** Calculates XP reward based on difficulty level and rating */
+function calculateXPReward(level: number, rating: DifficultyRating): number {
+  const baseXP = level * 10;
+  switch (rating) {
+    case 'again':
+      return Math.floor(baseXP * 0.2);
+    case 'hard':
+      return Math.floor(baseXP * 0.4);
+    case 'good':
+      return Math.floor(baseXP * 0.8);
+    case 'easy':
+      return baseXP;
+    default:
+      return 0;
+  }
+}
+
+const ratingButtons: { rating: DifficultyRating; label: string; color: string }[] = [
   { rating: 'again', label: 'Снова', color: 'bg-red-500 hover:bg-red-400' },
   { rating: 'hard', label: 'Трудно', color: 'bg-orange-500 hover:bg-orange-400' },
   { rating: 'good', label: 'Хорошо', color: 'bg-green-500 hover:bg-green-400' },
@@ -35,6 +68,8 @@ const ratingButtons: { rating: SM2Rating; label: string; color: string }[] = [
 export default function FlashcardPage() {
   const flashcardStates = useProgressStore((s) => s.flashcardStates);
   const updateFlashcardState = useProgressStore((s) => s.updateFlashcardState);
+  const { totalXP } = useProgressStore();
+  const { addXP } = useProgressStore((s) => ({ addXP: s.addXP || (() => {}) }));
 
   const [pageState, setPageState] = useState<PageState>('loading');
   const [allCards, setAllCards] = useState<Flashcard[]>([]);
@@ -43,6 +78,8 @@ export default function FlashcardPage() {
   const [isFlipped, setIsFlipped] = useState(false);
   const [reviewedToday, setReviewedToday] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
+  const [sessionXP, setSessionXP] = useState(0);
+  const [difficultyStates, setDifficultyStates] = useState<Record<string, CardDifficultyState>>({});
 
   // Initialize states for cards that don't have one yet
   const initializeStates = useCallback(
@@ -83,6 +120,13 @@ export default function FlashcardPage() {
       const today = getToday();
       const states = initializeStates(cards);
 
+      // Initialize difficulty states for all cards
+      const difficulties: Record<string, CardDifficultyState> = {};
+      for (const card of cards) {
+        difficulties[card.id] = createDefaultDifficultyState(card.id);
+      }
+      setDifficultyStates(difficulties);
+
       // Build complete states array
       const allStates = cards.map((c) => states[c.id] ?? createDefaultState(c.id));
       const due = getDueCards(allStates, today);
@@ -90,6 +134,7 @@ export default function FlashcardPage() {
       setDueQueue(due);
       setCurrentIndex(0);
       setIsFlipped(false);
+      setSessionXP(0);
       setPageState(due.length > 0 ? 'review' : 'done');
     } catch (err) {
       const message =
@@ -134,17 +179,17 @@ export default function FlashcardPage() {
     setIsFlipped(true);
   }, []);
 
-  // Handle rating
+  // Handle rating with difficulty progression
   const handleRate = useCallback(
-    (rating: SM2Rating) => {
-      if (!currentDueCard) return;
+    (rating: DifficultyRating) => {
+      if (!currentDueCard || !currentFlashcard) return;
 
       const today = getToday();
       const currentState =
         flashcardStates[currentDueCard.cardId] ?? createDefaultState(currentDueCard.cardId);
-      const newState = calculateSM2(currentState, rating, today);
+      const newState = calculateSM2(currentState, rating as SM2Rating, today);
 
-      // Update the store - we need to directly set the state since the stub doesn't work
+      // Update the store
       useProgressStore.setState((state) => ({
         flashcardStates: {
           ...state.flashcardStates,
@@ -152,9 +197,45 @@ export default function FlashcardPage() {
         },
       }));
 
-      // Also call the action for potential future side effects
-      updateFlashcardState(currentDueCard.cardId, rating);
+      // Calculate XP reward
+      const currentDifficulty = difficultyStates[currentDueCard.cardId] ?? createDefaultDifficultyState(currentDueCard.cardId);
+      const xpReward = calculateXPReward(currentDifficulty.level, rating);
 
+      // Update session XP and difficulty
+      setSessionXP((prev) => prev + xpReward);
+      
+      // Update difficulty state based on rating
+      const newDifficulty = { ...currentDifficulty };
+      switch (rating) {
+        case 'again':
+          newDifficulty.level = Math.max(1, newDifficulty.level - 1);
+          newDifficulty.correctStreak = 0;
+          break;
+        case 'hard':
+          newDifficulty.correctStreak = 0;
+          break;
+        case 'good':
+          newDifficulty.correctStreak += 1;
+          if (newDifficulty.correctStreak >= 2 && newDifficulty.level < 10) {
+            newDifficulty.level += 1;
+            newDifficulty.correctStreak = 0;
+          }
+          break;
+        case 'easy':
+          newDifficulty.correctStreak += 2;
+          if (newDifficulty.correctStreak >= 2 && newDifficulty.level < 10) {
+            newDifficulty.level += 1;
+            newDifficulty.correctStreak = 0;
+          }
+          break;
+      }
+
+      setDifficultyStates((prev) => ({
+        ...prev,
+        [currentDueCard.cardId]: newDifficulty,
+      }));
+
+      updateFlashcardState(currentDueCard.cardId, rating as SM2Rating);
       setReviewedToday((prev) => prev + 1);
 
       // Advance to next card
@@ -166,7 +247,7 @@ export default function FlashcardPage() {
         setIsFlipped(false);
       }
     },
-    [currentDueCard, currentIndex, dueQueue.length, flashcardStates, updateFlashcardState]
+    [currentDueCard, currentFlashcard, currentIndex, dueQueue.length, flashcardStates, difficultyStates, updateFlashcardState]
   );
 
   // --- RENDER STATES ---
@@ -264,10 +345,33 @@ export default function FlashcardPage() {
   }
 
   // Active review state
+  const xpProgressPercent = Math.min(100, (sessionXP / 500) * 100); // 500 XP = full bar
+  const currentDifficultyLevel = currentDueCard 
+    ? difficultyStates[currentDueCard.cardId]?.level ?? 1 
+    : 1;
+
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col">
+      {/* Main XP Progress Bar - Distinctive Top Section */}
+      <div className="bg-gradient-to-b from-slate-800/80 to-slate-900/40 border-b-2 border-cyan-500/30 px-4 py-4">
+        <div className="max-w-lg mx-auto">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-bold text-white">Сессионный прогресс</h2>
+            <span className="text-xs font-semibold text-cyan-400">+{sessionXP} / 500 XP</span>
+          </div>
+          <div className="relative w-full h-3 bg-slate-700/60 rounded-full overflow-hidden border border-cyan-500/20">
+            <motion.div
+              className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 rounded-full shadow-lg shadow-cyan-500/50"
+              animate={{ width: `${xpProgressPercent}%` }}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
+            />
+          </div>
+          <p className="text-xs text-slate-400 mt-2 text-center">Ответьте правильнее чтобы быстрее заполнить шкалу</p>
+        </div>
+      </div>
+
       {/* Stats bar */}
-      <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur-sm border-b border-white/5 px-4 py-3">
+      <div className="bg-slate-900/95 backdrop-blur-sm border-b border-white/5 px-4 py-3">
         <div className="max-w-lg mx-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -280,8 +384,8 @@ export default function FlashcardPage() {
                 <p className="text-sm font-bold text-white">{remainingCount}</p>
               </div>
               <div className="text-center">
-                <p className="text-xs text-slate-400">Усвоение</p>
-                <p className="text-sm font-bold text-green-400">{retentionRate}%</p>
+                <p className="text-xs text-slate-400">Уровень</p>
+                <p className="text-sm font-bold text-yellow-400">{currentDifficultyLevel}/10</p>
               </div>
             </div>
             <span className="text-xs text-slate-500">
@@ -330,13 +434,16 @@ export default function FlashcardPage() {
                     className="absolute inset-0 w-full min-h-[280px] flex flex-col items-center justify-center p-6 bg-gradient-to-br from-slate-800 to-slate-800/80 border border-white/10 rounded-2xl shadow-xl"
                     style={{ backfaceVisibility: 'hidden' }}
                   >
-                    <p className="text-xs text-cyan-400 font-medium uppercase tracking-wide mb-3">
-                      {currentFlashcard.category}
+                    <p className="text-xs text-cyan-400 font-medium uppercase tracking-wide mb-2">
+                      {currentFlashcard.category} • Уровень {currentDifficultyLevel}/10
                     </p>
                     <h2 className="text-2xl font-bold text-white text-center leading-snug">
                       {currentFlashcard.term}
                     </h2>
-                    <p className="text-sm text-slate-400 mt-4">
+                    <p className="text-xs text-slate-500 mt-4 text-center">
+                      Чем выше уровень, тем больше очков получишь
+                    </p>
+                    <p className="text-sm text-slate-400 mt-2">
                       Нажмите чтобы перевернуть
                     </p>
                   </div>
@@ -370,20 +477,24 @@ export default function FlashcardPage() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 20 }}
                     transition={{ duration: 0.3, delay: 0.2 }}
-                    className="flex gap-3 justify-center mt-8"
+                    className="grid grid-cols-2 gap-3 mt-8 w-full max-w-md"
                     role="group"
                     aria-label="Оценка знания карточки"
                   >
-                    {ratingButtons.map(({ rating, label, color }) => (
-                      <button
-                        key={rating}
-                        onClick={() => handleRate(rating)}
-                        className={`min-h-[44px] min-w-[44px] px-4 py-3 ${color} text-white font-semibold rounded-xl transition-colors text-sm focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-slate-900`}
-                        aria-label={`Оценка: ${label}`}
-                      >
-                        {label}
-                      </button>
-                    ))}
+                    {ratingButtons.map(({ rating, label, color }) => {
+                      const xpReward = calculateXPReward(currentDifficultyLevel, rating);
+                      return (
+                        <button
+                          key={rating}
+                          onClick={() => handleRate(rating)}
+                          className={`min-h-[60px] px-4 py-4 ${color} text-white font-semibold rounded-xl transition-all text-sm focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-slate-900 hover:scale-105`}
+                          aria-label={`Оценка: ${label} (+${xpReward} XP)`}
+                        >
+                          <div className="font-bold text-base">{label}</div>
+                          <div className="text-xs opacity-90">+{xpReward} XP</div>
+                        </button>
+                      );
+                    })}
                   </motion.div>
                 )}
               </AnimatePresence>

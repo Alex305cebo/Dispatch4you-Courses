@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import CalculatorTask from './CalculatorTask';
 import type { CalculatorData } from '../../types/index';
+import { generateCalculatorOptions } from '../../logic/calculator-options';
 
 const mockCalcData: CalculatorData = {
   problem: 'Рассчитайте стоимость перевозки',
@@ -11,112 +12,103 @@ const mockCalcData: CalculatorData = {
   unit: '$',
 };
 
+describe('generateCalculatorOptions', () => {
+  it('returns exactly 6 options with one correct index', () => {
+    const result = generateCalculatorOptions(2.4, '$/mile');
+    expect(result.options).toHaveLength(6);
+    expect(result.correctIndex).toBeGreaterThanOrEqual(0);
+    expect(result.correctIndex).toBeLessThan(6);
+    expect(result.options[result.correctIndex]).toBe('2.40 $/mile');
+  });
+
+  it('generates unique options', () => {
+    const result = generateCalculatorOptions(1250, '$');
+    expect(new Set(result.options).size).toBe(6);
+  });
+});
+
 describe('CalculatorTask', () => {
-  it('renders the problem text', () => {
+  it('renders the problem and context', () => {
     const onAnswer = vi.fn();
     render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
     expect(screen.getByText('Рассчитайте стоимость перевозки')).toBeInTheDocument();
-  });
-
-  it('renders the context text', () => {
-    const onAnswer = vi.fn();
-    render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
     expect(screen.getByText('Расстояние 500 миль, ставка $2.50/миля')).toBeInTheDocument();
   });
 
-  it('renders the unit label', () => {
+  it('renders six answer options', () => {
     const onAnswer = vi.fn();
     render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    expect(screen.getByText('$')).toBeInTheDocument();
+    expect(screen.getAllByRole('button')).toHaveLength(6);
   });
 
-  it('renders a submit button with text "Проверить"', () => {
+  it('calls onAnswer(true) when correct option is selected', () => {
     const onAnswer = vi.fn();
+    const { correctIndex } = generateCalculatorOptions(
+      mockCalcData.correctAnswer,
+      mockCalcData.unit
+    );
     render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    expect(screen.getByRole('button', { name: 'Проверить' })).toBeInTheDocument();
-  });
-
-  it('calls onAnswer(true) when correct answer is submitted', () => {
-    const onAnswer = vi.fn();
-    render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    const input = screen.getByLabelText('Ваш ответ');
-    fireEvent.change(input, { target: { value: '1250' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Проверить' }));
+    fireEvent.click(screen.getAllByRole('button')[correctIndex]);
     expect(onAnswer).toHaveBeenCalledWith(true);
   });
 
-  it('calls onAnswer(true) when answer is within ±2% tolerance', () => {
+  it('calls onAnswer(false) when wrong option is selected', () => {
     const onAnswer = vi.fn();
+    const { correctIndex } = generateCalculatorOptions(
+      mockCalcData.correctAnswer,
+      mockCalcData.unit
+    );
+    const wrongIndex = correctIndex === 0 ? 1 : 0;
     render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    const input = screen.getByLabelText('Ваш ответ');
-    // 1250 * 0.02 = 25, so 1225 is within tolerance
-    fireEvent.change(input, { target: { value: '1225' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Проверить' }));
-    expect(onAnswer).toHaveBeenCalledWith(true);
-  });
-
-  it('calls onAnswer(false) when answer is outside tolerance', () => {
-    const onAnswer = vi.fn();
-    render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    const input = screen.getByLabelText('Ваш ответ');
-    // 1200 is 50 off from 1250, 50/1250 = 4% > 2%
-    fireEvent.change(input, { target: { value: '1200' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Проверить' }));
+    fireEvent.click(screen.getAllByRole('button')[wrongIndex]);
     expect(onAnswer).toHaveBeenCalledWith(false);
   });
 
-  it('shows green success message when correct', () => {
+  it('shows success message when correct', () => {
     const onAnswer = vi.fn();
+    const { correctIndex, options } = generateCalculatorOptions(
+      mockCalcData.correctAnswer,
+      mockCalcData.unit
+    );
     render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    const input = screen.getByLabelText('Ваш ответ');
-    fireEvent.change(input, { target: { value: '1250' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Проверить' }));
-    expect(screen.getByText('Верно! Ответ: 1250 $')).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button')[correctIndex]);
+    expect(screen.getByText(`Верно! Ответ: ${options[correctIndex]}`)).toBeInTheDocument();
   });
 
-  it('shows red error message when incorrect', () => {
+  it('shows error message when incorrect', () => {
     const onAnswer = vi.fn();
+    const { correctIndex, options } = generateCalculatorOptions(
+      mockCalcData.correctAnswer,
+      mockCalcData.unit
+    );
+    const wrongIndex = correctIndex === 0 ? 1 : 0;
     render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    const input = screen.getByLabelText('Ваш ответ');
-    fireEvent.change(input, { target: { value: '999' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Проверить' }));
-    expect(screen.getByText('Неверно. Правильный ответ: 1250 $')).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button')[wrongIndex]);
+    expect(
+      screen.getByText(`Неверно. Правильный ответ: ${options[correctIndex]}`)
+    ).toBeInTheDocument();
   });
 
-  it('disables input and button after submission', () => {
+  it('disables options after answering', () => {
     const onAnswer = vi.fn();
     render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    const input = screen.getByLabelText('Ваш ответ');
-    fireEvent.change(input, { target: { value: '1250' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Проверить' }));
-    expect(input).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Проверить' })).toBeDisabled();
+    const buttons = screen.getAllByRole('button');
+    fireEvent.click(buttons[0]);
+    buttons.forEach((button) => {
+      expect(button).toBeDisabled();
+    });
   });
 
-  it('does not submit when input is empty', () => {
+  it('does not call onAnswer more than once', () => {
     const onAnswer = vi.fn();
     render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Проверить' }));
-    expect(onAnswer).not.toHaveBeenCalled();
+    const buttons = screen.getAllByRole('button');
+    fireEvent.click(buttons[0]);
+    fireEvent.click(buttons[1]);
+    expect(onAnswer).toHaveBeenCalledTimes(1);
   });
 
-  it('prevents non-numeric characters in input', () => {
-    const onAnswer = vi.fn();
-    render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    const input = screen.getByLabelText('Ваш ответ') as HTMLInputElement;
-    fireEvent.change(input, { target: { value: 'abc' } });
-    expect(input.value).toBe('');
-  });
-
-  it('allows decimal input', () => {
-    const onAnswer = vi.fn();
-    render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    const input = screen.getByLabelText('Ваш ответ') as HTMLInputElement;
-    fireEvent.change(input, { target: { value: '1250.50' } });
-    expect(input.value).toBe('1250.50');
-  });
-
-  it('validates zero answer correctly', () => {
+  it('handles zero correct answer', () => {
     const zeroData: CalculatorData = {
       problem: 'Рассчитайте прибыль',
       context: 'Доход равен расходу',
@@ -125,21 +117,9 @@ describe('CalculatorTask', () => {
       unit: '$',
     };
     const onAnswer = vi.fn();
+    const { correctIndex } = generateCalculatorOptions(0, '$');
     render(<CalculatorTask data={zeroData} onAnswer={onAnswer} />);
-    const input = screen.getByLabelText('Ваш ответ');
-    fireEvent.change(input, { target: { value: '0' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Проверить' }));
+    fireEvent.click(screen.getAllByRole('button')[correctIndex]);
     expect(onAnswer).toHaveBeenCalledWith(true);
-  });
-
-  it('does not call onAnswer more than once on multiple clicks', () => {
-    const onAnswer = vi.fn();
-    render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    const input = screen.getByLabelText('Ваш ответ');
-    fireEvent.change(input, { target: { value: '1250' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Проверить' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Проверить' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Проверить' }));
-    expect(onAnswer).toHaveBeenCalledTimes(1);
   });
 });

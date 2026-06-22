@@ -18,6 +18,7 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showSiteConfirm, setShowSiteConfirm] = useState(false);
   const { user } = useAuth();
   useFirestoreSync();
 
@@ -54,15 +55,15 @@ export default function AppLayout() {
         <div className="max-w-lg mx-auto px-3 py-2">
           {/* Row: Logo | XP + Progress | Avatar */}
           <div className="flex items-center gap-3">
-            {/* Logo — clickable to site */}
-            <a
-              href="https://dispatch4you.com/"
-              className="shrink-0 flex flex-col"
+            {/* Logo — clickable to site with confirmation */}
+            <button
+              onClick={() => setShowSiteConfirm(true)}
+              className="shrink-0 flex flex-col hover:opacity-80 transition-opacity cursor-pointer"
               aria-label="Перейти на сайт dispatch4you.com"
             >
-              <p className="text-sm font-bold text-gradient hover:opacity-80 transition-opacity">Dispatch Academy</p>
+              <p className="text-sm font-bold text-gradient">Dispatch Academy</p>
               <p className="text-[10px] text-slate-400">→ перейти на сайт</p>
-            </a>
+            </button>
 
             {/* Spacer */}
             <div className="flex-1" />
@@ -80,27 +81,14 @@ export default function AppLayout() {
               </div>
             </div>
 
-            {/* Leaderboard + Avatar buttons (right) */}
+            {/* Leaderboard button (right) */}
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowLeaderboard(true)}
-                className="shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-xs font-bold border-2 border-amber-300/30 hover:scale-105 transition-transform"
+                className="shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-[10px] font-bold border-2 border-amber-300/30 hover:scale-105 transition-transform"
                 aria-label="Рейтинг игроков"
               >
                 🏆
-              </button>
-              <button
-                onClick={() => navigate('/settings')}
-                className="shrink-0 w-8 h-8 rounded-full overflow-hidden border-2 border-cyan-300/30 hover:scale-105 transition-transform"
-                aria-label="Профиль"
-              >
-                {user?.photoURL ? (
-                  <img src={user.photoURL} alt="avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold">
-                    {user ? user.firstName[0]?.toUpperCase() : '👤'}
-                  </div>
-                )}
               </button>
             </div>
           </div>
@@ -218,6 +206,47 @@ export default function AppLayout() {
       {toastMessage && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[60] px-5 py-3 glass-card rounded-xl shadow-2xl text-sm text-white max-w-xs text-center animate-fade-in">
           {toastMessage}
+        </div>
+      )}
+
+      {/* Site Confirmation Modal */}
+      {showSiteConfirm && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowSiteConfirm(false)}
+        >
+          <div
+            className="w-full max-w-xs rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 border border-cyan-500/30 shadow-2xl flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header with gradient line */}
+            <div className="h-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-cyan-500" />
+             
+            <div className="px-4 py-4">
+              <h3 className="text-base font-bold text-white mb-2">Перейти на сайт?</h3>
+              <p className="text-sm text-slate-400 mb-3">Вы будете перенаправлены на dispatch4you.com</p>
+              <p className="text-xs text-slate-500 p-2.5 rounded-lg bg-slate-800/40 border border-slate-700/40">💡 Внизу экрана находятся три кнопки для перехода на <strong>Карту</strong>, <strong>Карточки</strong> и <strong>Настройки</strong></p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2 px-4 pb-4">
+              <button
+                onClick={() => setShowSiteConfirm(false)}
+                className="flex-1 px-3 py-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-sm font-semibold text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={() => {
+                  setShowSiteConfirm(false);
+                  window.location.href = 'https://dispatch4you.com/';
+                }}
+                className="flex-1 px-3 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 border border-cyan-400/30 text-sm font-semibold text-white hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
+              >
+                Перейти
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
