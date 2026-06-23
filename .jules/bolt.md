@@ -1,0 +1,3 @@
+## 2025-05-14 - Canvas Particle System Optimization
+**Learning:** `shadowBlur` and `createLinearGradient` are massive performance killers in Canvas animation loops, especially when used within $O(n^2)$ complexity loops (like particle connections). Removing them or replacing them with solid strokes/simple shapes can dramatically increase FPS with minimal visual impact on background elements. Squared distance checks (`dx*dx + dy*dy < r*r`) should always be preferred over `Math.sqrt` unless the actual distance is needed for further calculations.
+**Action:** Always audit Canvas `animate` loops for expensive state changes and complex rendering effects. Prioritize hoisting constant calculations (like squared radii) and property settings (like `lineWidth`) out of loops.
