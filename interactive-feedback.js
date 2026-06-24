@@ -6,104 +6,113 @@
 (function() {
     'use strict';
 
-    // === ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ ===
-    document.addEventListener('DOMContentLoaded', initInteractiveFeedback);
+    // === КОНФИГУРАЦИЯ ===
+    const SELECTORS = [
+        'button',
+        '.btn',
+        '[role="button"]',
+        '.clickable',
+        '.truck-card',
+        '[onclick*="assignLoad"]',
+        '[onclick*="selectLoad"]',
+        '[onclick*="viewTruck"]',
+        'a[href]',
+        '.tab',
+        '[role="tab"]'
+    ].join(', ');
+
+    const HAPTIC_SELECTORS = [
+        'button',
+        '.btn',
+        '[role="button"]',
+        '.truck-card',
+        '[onclick*="assignLoad"]',
+        '[onclick*="selectLoad"]'
+    ].join(', ');
+
+    // === ИНИЦИАЛИЗАЦИЯ ===
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initInteractiveFeedback);
+    } else {
+        initInteractiveFeedback();
+    }
 
     function initInteractiveFeedback() {
-        // Добавляем обработчики на все кликабельные элементы
-        addClickFeedback();
-        
-        // Добавляем вибрацию на мобильных устройствах
-        addHapticFeedback();
+        // Используем делегирование событий на уровне документа для O(1) инициализации
+        // и автоматической поддержки динамических элементов без MutationObserver.
+        addDelegatedFeedback();
         
         // Добавляем визуальный индикатор загрузки
         addLoadingIndicator();
+
+        // Добавляем CSS анимации
+        injectStyles();
     }
 
-    // === ВИЗУАЛЬНЫЙ FEEDBACK ПРИ КЛИКЕ ===
-    function addClickFeedback() {
-        const selectors = [
-            'button',
-            '.btn',
-            '[role="button"]',
-            '.clickable',
-            '.truck-card',
-            '[onclick*="assignLoad"]',
-            '[onclick*="selectLoad"]',
-            '[onclick*="viewTruck"]',
-            'a[href]',
-            '.tab',
-            '[role="tab"]'
-        ];
-
-        const elements = document.querySelectorAll(selectors.join(', '));
-
-        elements.forEach(element => {
-            // Пропускаем disabled элементы
-            if (element.disabled || element.hasAttribute('disabled')) return;
-
-            // Добавляем класс при клике
-            element.addEventListener('mousedown', function(e) {
-                this.classList.add('clicking');
-            });
-
-            element.addEventListener('mouseup', function() {
-                setTimeout(() => {
-                    this.classList.remove('clicking');
-                }, 300);
-            });
-
-            element.addEventListener('mouseleave', function() {
-                this.classList.remove('clicking');
-            });
-
-            // Touch события для мобильных
-            element.addEventListener('touchstart', function(e) {
-                this.classList.add('clicking');
-            }, { passive: true });
-
-            element.addEventListener('touchend', function() {
-                setTimeout(() => {
-                    this.classList.remove('clicking');
-                }, 300);
-            });
+    // === ДЕЛЕГИРОВАННЫЙ FEEDBACK ===
+    function addDelegatedFeedback() {
+        // Mouse Events
+        document.addEventListener('mousedown', function(e) {
+            const target = e.target.closest(SELECTORS);
+            if (target && !target.disabled && !target.hasAttribute('disabled')) {
+                target.classList.add('clicking');
+            }
         });
-    }
 
+        document.addEventListener('mouseup', function(e) {
+            const target = e.target.closest(SELECTORS);
+            if (target) {
+                setTimeout(() => {
+                    target.classList.remove('clicking');
+                }, 300);
+            }
+        });
 
+        // Предотвращаем залипание при уходе мыши
+        document.addEventListener('mouseout', function(e) {
+            // Если мы действительно покинули элемент (а не перешли на дочерний)
+            const target = e.target.closest(SELECTORS);
+            if (target && e.relatedTarget && !target.contains(e.relatedTarget)) {
+                target.classList.remove('clicking');
+            }
+        });
 
-    // === ВИБРАЦИЯ НА МОБИЛЬНЫХ - УСИЛЕННАЯ ===
-    function addHapticFeedback() {
-        if (!('vibrate' in navigator)) return;
+        // Touch Events
+        document.addEventListener('touchstart', function(e) {
+            const target = e.target.closest(SELECTORS);
+            if (target && !target.disabled && !target.hasAttribute('disabled')) {
+                target.classList.add('clicking');
+            }
+        }, { passive: true });
 
-        const selectors = [
-            'button',
-            '.btn',
-            '[role="button"]',
-            '.truck-card',
-            '[onclick*="assignLoad"]',
-            '[onclick*="selectLoad"]'
-        ];
+        document.addEventListener('touchend', function(e) {
+            const target = e.target.closest(SELECTORS);
+            if (target) {
+                setTimeout(() => {
+                    target.classList.remove('clicking');
+                }, 300);
+            }
+        }, { passive: true });
 
-        const elements = document.querySelectorAll(selectors.join(', '));
+        // Haptic Feedback (Vibration)
+        document.addEventListener('click', function(e) {
+            if (!('vibrate' in navigator)) return;
 
-        elements.forEach(element => {
-            element.addEventListener('click', function() {
-                // Более заметная вибрация (20ms)
+            const target = e.target.closest(HAPTIC_SELECTORS);
+            if (target && !target.disabled && !target.hasAttribute('disabled')) {
                 navigator.vibrate(20);
-            }, { passive: true });
-        });
+            }
+        }, { passive: true });
     }
 
     // === ИНДИКАТОР ЗАГРУЗКИ ДЛЯ КНОПОК ===
     function addLoadingIndicator() {
-        // Перехватываем клики на кнопках с onclick
         document.addEventListener('click', function(e) {
             const button = e.target.closest('button, .btn, [role="button"]');
             
-            if (!button || button.disabled) return;
+            if (!button || button.disabled || button.hasAttribute('disabled')) return;
 
-            // Проверяем, есть ли onclick или это навигация
+            // Проверяем, есть ли действие
             const hasAction = button.hasAttribute('onclick') || 
                             button.getAttribute('href') ||
                             button.closest('form');
@@ -111,10 +120,12 @@
             if (hasAction) {
                 showButtonLoading(button);
             }
-        }, true);
+        }, true); // Используем capture для приоритета
     }
 
     function showButtonLoading(button) {
+        if (button.classList.contains('btn-loading')) return;
+
         // Сохраняем оригинальный контент
         const originalContent = button.innerHTML;
         const originalWidth = button.offsetWidth;
@@ -137,77 +148,66 @@
 
         // Восстанавливаем через 2 секунды (если страница не перезагрузилась)
         setTimeout(() => {
-            button.innerHTML = originalContent;
-            button.disabled = false;
-            button.classList.remove('btn-loading');
-            button.style.minWidth = '';
+            if (button.parentNode) { // Проверка, что элемент все еще в DOM
+                button.innerHTML = originalContent;
+                button.disabled = false;
+                button.classList.remove('btn-loading');
+                button.style.minWidth = '';
+            }
         }, 2000);
     }
 
     // === ДОБАВЛЯЕМ CSS АНИМАЦИИ ===
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
+    function injectStyles() {
+        if (document.getElementById('interactive-feedback-styles')) return;
+
+        const style = document.createElement('style');
+        style.id = 'interactive-feedback-styles';
+        style.textContent = `
+            @keyframes spin {
+                to { transform: rotate(360deg); }
             }
-        }
 
-        .clicking {
-            animation: pulse-click 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        }
-
-        .btn-loading {
-            pointer-events: none;
-            opacity: 0.8;
-        }
-
-        /* Улучшенный feedback для карточек */
-        .truck-card.clicking,
-        [class*="truck-card"].clicking {
-            transform: scale(0.97) !important;
-            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25) !important;
-            filter: brightness(0.95) !important;
-        }
-
-        /* Улучшенный feedback для кнопок */
-        button.clicking,
-        .btn.clicking {
-            transform: scale(0.94) translateY(2px) !important;
-            filter: brightness(0.9) !important;
-        }
-
-        /* Overflow для ripple эффекта — не трогаем индикаторы карусели */
-        button:not(.carousel-indicator),
-        .btn,
-        [role="button"],
-        .clickable {
-            overflow: hidden;
-            position: relative;
-        }
-    `;
-    document.head.appendChild(style);
-
-    // === ДОПОЛНИТЕЛЬНАЯ ОБРАБОТКА ДЛЯ ДИНАМИЧЕСКИХ ЭЛЕМЕНТОВ ===
-    // Наблюдаем за добавлением новых элементов
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.addedNodes.length) {
-                // Переинициализируем feedback для новых элементов
-                setTimeout(addClickFeedback, 100);
+            .clicking {
+                animation: pulse-click 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
             }
-        });
-    });
 
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
+            .btn-loading {
+                pointer-events: none;
+                opacity: 0.8;
+            }
 
-    // === ЭКСПОРТ ДЛЯ ИСПОЛЬЗОВАНИЯ В ДРУГИХ СКРИПТАХ ===
+            /* Улучшенный feedback для карточек */
+            .truck-card.clicking,
+            [class*="truck-card"].clicking {
+                transform: scale(0.97) !important;
+                box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25) !important;
+                filter: brightness(0.95) !important;
+            }
+
+            /* Улучшенный feedback для кнопок */
+            button.clicking,
+            .btn.clicking {
+                transform: scale(0.94) translateY(2px) !important;
+                filter: brightness(0.9) !important;
+            }
+
+            /* Overflow для ripple эффекта */
+            button:not(.carousel-indicator),
+            .btn,
+            [role="button"],
+            .clickable {
+                overflow: hidden;
+                position: relative;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // === ЭКСПОРТ ===
     window.InteractiveFeedback = {
         showButtonLoading: showButtonLoading,
-        reinit: addClickFeedback
+        reinit: () => {} // Теперь не требуется, оставлено для обратной совместимости
     };
 
 })();
