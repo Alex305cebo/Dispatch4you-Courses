@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Benchmark Interactive Feedback</title>
+    <link rel="stylesheet" href="interactive-feedback.css">
+    <style>
+        .container { display: flex; flex-wrap: wrap; gap: 2px; }
+        button { width: 40px; height: 20px; font-size: 8px; }
+    </style>
+</head>
+<body>
+    <h1>Benchmark</h1>
+    <div id="stats"></div>
+    <div id="controls">
+        <button id="add-more" class="btn">Add 100 buttons</button>
+    </div>
+    <div class="container" id="container">
+        <!-- 10,000 buttons will be generated here -->
+    </div>
+
+    <script>
+        const container = document.getElementById('container');
+        const fragment = document.createDocumentFragment();
+        for (let i = 0; i < 10000; i++) {
+            const btn = document.createElement('button');
+            btn.textContent = i;
+            btn.className = 'btn';
+            fragment.appendChild(btn);
+        }
+        container.appendChild(fragment);
+
+        document.getElementById('add-more').onclick = () => {
+            const frag = document.createDocumentFragment();
+            for (let i = 0; i < 100; i++) {
+                const btn = document.createElement('button');
+                btn.textContent = 'new' + i;
+                btn.className = 'btn';
+                frag.appendChild(btn);
+            }
+            container.appendChild(frag);
+        };
+    </script>
+    <script src="interactive-feedback.js"></script>
+</body>
+</html>
