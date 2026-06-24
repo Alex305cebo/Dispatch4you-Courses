@@ -1,0 +1,3 @@
+## 2025-05-15 - Particle System Rendering Bottlenecks
+**Learning:** In vanilla JS Canvas animations, `ctx.shadowBlur` and `ctx.createLinearGradient` are major rendering bottlenecks when called in high-frequency loops (e.g., `requestAnimationFrame`). Removing them in favor of solid colors and standard strokes provides a massive boost in frame stability, especially on lower-end devices. Logic-wise, vector normalization is consistently faster than trigonometric functions like `Math.atan2`.
+**Action:** Always prioritize removing expensive rendering state changes over minor logic tweaks. Hoist drawing properties like `lineWidth` out of loops where possible.
