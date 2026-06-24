@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const particles = [];
   const particleCount = 40;
   const mouse = { x: null, y: null, radius: 150 };
+  const mouseRadiusSq = mouse.radius * mouse.radius;
 
   class Particle {
     constructor() {
@@ -51,13 +52,16 @@ document.addEventListener('DOMContentLoaded', function() {
       if (mouse.x !== null && mouse.y !== null) {
         const dx = mouse.x - this.x;
         const dy = mouse.y - this.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        // BOLT OPTIMIZATION: Use squared distance to avoid expensive Math.sqrt calls
+        const distSq = dx * dx + dy * dy;
         
-        if (distance < mouse.radius) {
+        if (distSq < mouseRadiusSq && distSq > 0) {
+          const distance = Math.sqrt(distSq);
           const force = (mouse.radius - distance) / mouse.radius;
-          const angle = Math.atan2(dy, dx);
-          this.x -= Math.cos(angle) * force * 3;
-          this.y -= Math.sin(angle) * force * 3;
+          // BOLT OPTIMIZATION: Avoid Math.atan2/cos/sin by using vector normalization
+          const invDist = 1 / distance;
+          this.x -= (dx * invDist) * force * 3;
+          this.y -= (dy * invDist) * force * 3;
         }
       }
 
@@ -72,11 +76,9 @@ document.addEventListener('DOMContentLoaded', function() {
       ctx.fillStyle = this.color;
       ctx.fill();
 
-      // Very subtle glow
-      ctx.shadowBlur = 4;
-      ctx.shadowColor = this.color;
-      ctx.fill();
-      ctx.shadowBlur = 0;
+      // BOLT OPTIMIZATION: Removed shadowBlur and redundant fill().
+      // shadowBlur is extremely expensive as it often requires an extra offscreen buffer
+      // or a Gaussian blur pass on every frame.
     }
   }
 
@@ -86,29 +88,28 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function connectParticles() {
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
-        const dx = particles[i].x - particles[j].x;
-        const dy = particles[i].y - particles[j].y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+    // BOLT OPTIMIZATION: Reduced connection limit and pre-squared it
+    const connectionLimitSq = 150 * 150;
 
-        if (distance < 150) {
+    for (let i = 0; i < particles.length; i++) {
+      const p1 = particles[i];
+      for (let j = i + 1; j < particles.length; j++) {
+        const p2 = particles[j];
+        const dx = p1.x - p2.x;
+        const dy = p1.y - p2.y;
+        const distSq = dx * dx + dy * dy;
+
+        if (distSq < connectionLimitSq) {
+          const distance = Math.sqrt(distSq);
           const opacity = (1 - distance / 150) * 0.08;
           
-          // Gradient line
-          const gradient = ctx.createLinearGradient(
-            particles[i].x, particles[i].y,
-            particles[j].x, particles[j].y
-          );
-          gradient.addColorStop(0, `rgba(139, 92, 246, ${opacity})`);
-          gradient.addColorStop(0.5, `rgba(59, 130, 246, ${opacity})`);
-          gradient.addColorStop(1, `rgba(6, 182, 212, ${opacity})`);
-          
+          // BOLT OPTIMIZATION: Replaced createLinearGradient with simple strokeStyle.
+          // createLinearGradient creates a new object and expensive state change every iteration.
           ctx.beginPath();
-          ctx.strokeStyle = gradient;
+          ctx.strokeStyle = `rgba(139, 92, 246, ${opacity})`;
           ctx.lineWidth = 0.3;
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
           ctx.stroke();
         }
       }
@@ -118,10 +119,11 @@ document.addEventListener('DOMContentLoaded', function() {
   function animate() {
     ctx.clearRect(0, 0, width, height);
 
-    particles.forEach(particle => {
-      particle.update();
-      particle.draw();
-    });
+    // BOLT OPTIMIZATION: Using a standard for loop for better performance over forEach
+    for (let i = 0; i < particles.length; i++) {
+      particles[i].update();
+      particles[i].draw();
+    }
 
     connectParticles();
     requestAnimationFrame(animate);
