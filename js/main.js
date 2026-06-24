@@ -51,9 +51,11 @@ document.addEventListener('DOMContentLoaded', function() {
       if (mouse.x !== null && mouse.y !== null) {
         const dx = mouse.x - this.x;
         const dy = mouse.y - this.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distanceSq = dx * dx + dy * dy;
+        const radiusSq = mouse.radius * mouse.radius;
         
-        if (distance < mouse.radius) {
+        if (distanceSq < radiusSq) {
+          const distance = Math.sqrt(distanceSq);
           const force = (mouse.radius - distance) / mouse.radius;
           const angle = Math.atan2(dy, dx);
           this.x -= Math.cos(angle) * force * 3;
@@ -71,12 +73,6 @@ document.addEventListener('DOMContentLoaded', function() {
       ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
       ctx.fillStyle = this.color;
       ctx.fill();
-
-      // Very subtle glow
-      ctx.shadowBlur = 4;
-      ctx.shadowColor = this.color;
-      ctx.fill();
-      ctx.shadowBlur = 0;
     }
   }
 
@@ -86,26 +82,22 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function connectParticles() {
+    const maxDistance = 150;
+    const maxDistanceSq = maxDistance * maxDistance;
+
     for (let i = 0; i < particles.length; i++) {
       for (let j = i + 1; j < particles.length; j++) {
         const dx = particles[i].x - particles[j].x;
         const dy = particles[i].y - particles[j].y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distanceSq = dx * dx + dy * dy;
 
-        if (distance < 150) {
-          const opacity = (1 - distance / 150) * 0.08;
+        if (distanceSq < maxDistanceSq) {
+          const distance = Math.sqrt(distanceSq);
+          const opacity = (1 - distance / maxDistance) * 0.08;
           
-          // Gradient line
-          const gradient = ctx.createLinearGradient(
-            particles[i].x, particles[i].y,
-            particles[j].x, particles[j].y
-          );
-          gradient.addColorStop(0, `rgba(139, 92, 246, ${opacity})`);
-          gradient.addColorStop(0.5, `rgba(59, 130, 246, ${opacity})`);
-          gradient.addColorStop(1, `rgba(6, 182, 212, ${opacity})`);
-          
+          // Optimization: Use solid stroke instead of linear gradient for better performance
           ctx.beginPath();
-          ctx.strokeStyle = gradient;
+          ctx.strokeStyle = `rgba(139, 92, 246, ${opacity})`;
           ctx.lineWidth = 0.3;
           ctx.moveTo(particles[i].x, particles[i].y);
           ctx.lineTo(particles[j].x, particles[j].y);
@@ -118,10 +110,11 @@ document.addEventListener('DOMContentLoaded', function() {
   function animate() {
     ctx.clearRect(0, 0, width, height);
 
-    particles.forEach(particle => {
-      particle.update();
-      particle.draw();
-    });
+    // Use standard for loop for better performance in the hot path
+    for (let i = 0; i < particles.length; i++) {
+      particles[i].update();
+      particles[i].draw();
+    }
 
     connectParticles();
     requestAnimationFrame(animate);
