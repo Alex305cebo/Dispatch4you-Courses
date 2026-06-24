@@ -1,0 +1,3 @@
+## 2026-06-08 - [Global Event Delegation for Interactive Feedback]
+**Learning:** Using `MutationObserver` to scan the entire DOM and attach listeners individually (O(N) setup) causes unnecessary overhead during page load and dynamic updates. Replacing this with Global Event Delegation on `document` achieves O(1) initialization and simplifies the logic for handling dynamic elements. To avoid flickering during delegation, `mouseout` should be paired with a `relatedTarget` check to ensure the pointer has actually exited the element's boundary.
+**Action:** Always prefer global event delegation for generic interactive behaviors (like click feedback or haptic feedback) instead of individual listeners or observers.

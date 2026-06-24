@@ -6,93 +6,92 @@
 (function() {
     'use strict';
 
+    // Константы селекторов для делегирования событий
+    const CLICK_SELECTORS = [
+        'button',
+        '.btn',
+        '[role="button"]',
+        '.clickable',
+        '.truck-card',
+        '.benefit-card',
+        '[onclick*="assignLoad"]',
+        '[onclick*="selectLoad"]',
+        '[onclick*="viewTruck"]',
+        'a[href]',
+        '.tab',
+        '[role="tab"]'
+    ].join(', ');
+
+    const HAPTIC_SELECTORS = [
+        'button',
+        '.btn',
+        '[role="button"]',
+        '.truck-card',
+        '.benefit-card',
+        '[onclick*="assignLoad"]',
+        '[onclick*="selectLoad"]'
+    ].join(', ');
+
     // === ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ ===
     document.addEventListener('DOMContentLoaded', initInteractiveFeedback);
 
     function initInteractiveFeedback() {
-        // Добавляем обработчики на все кликабельные элементы
-        addClickFeedback();
-        
-        // Добавляем вибрацию на мобильных устройствах
-        addHapticFeedback();
+        // Добавляем глобальную делегацию событий
+        setupGlobalDelegation();
         
         // Добавляем визуальный индикатор загрузки
         addLoadingIndicator();
     }
 
-    // === ВИЗУАЛЬНЫЙ FEEDBACK ПРИ КЛИКЕ ===
-    function addClickFeedback() {
-        const selectors = [
-            'button',
-            '.btn',
-            '[role="button"]',
-            '.clickable',
-            '.truck-card',
-            '[onclick*="assignLoad"]',
-            '[onclick*="selectLoad"]',
-            '[onclick*="viewTruck"]',
-            'a[href]',
-            '.tab',
-            '[role="tab"]'
-        ];
+    /**
+     * Глобальная делегация событий для интерактивной обратной связи.
+     * Заменяет индивидуальные обработчики на O(1) инициализацию.
+     */
+    function setupGlobalDelegation() {
+        // Обработка визуального состояния "clicking"
+        document.addEventListener('mousedown', handleInteractionStart);
+        document.addEventListener('touchstart', handleInteractionStart, { passive: true });
 
-        const elements = document.querySelectorAll(selectors.join(', '));
+        document.addEventListener('mouseup', handleInteractionEnd);
+        document.addEventListener('touchend', handleInteractionEnd);
 
-        elements.forEach(element => {
-            // Пропускаем disabled элементы
-            if (element.disabled || element.hasAttribute('disabled')) return;
-
-            // Добавляем класс при клике
-            element.addEventListener('mousedown', function(e) {
-                this.classList.add('clicking');
-            });
-
-            element.addEventListener('mouseup', function() {
-                setTimeout(() => {
-                    this.classList.remove('clicking');
-                }, 300);
-            });
-
-            element.addEventListener('mouseleave', function() {
-                this.classList.remove('clicking');
-            });
-
-            // Touch события для мобильных
-            element.addEventListener('touchstart', function(e) {
-                this.classList.add('clicking');
-            }, { passive: true });
-
-            element.addEventListener('touchend', function() {
-                setTimeout(() => {
-                    this.classList.remove('clicking');
-                }, 300);
-            });
+        // Вспомогательный обработчик для случая, когда курсор уходит с элемента.
+        // Используем relatedTarget для симуляции mouseleave (не снимаем класс при переходе на дочерние элементы).
+        document.addEventListener('mouseout', function(e) {
+            const target = e.target.closest(CLICK_SELECTORS);
+            if (target) {
+                // Если мы переходим на элемент, который не является дочерним для нашего target
+                if (!e.relatedTarget || !target.contains(e.relatedTarget)) {
+                    target.classList.remove('clicking');
+                }
+            }
         });
+
+        // Обработка тактильной отдачи (вибрация)
+        document.addEventListener('click', function(e) {
+            const target = e.target.closest(HAPTIC_SELECTORS);
+            if (target && !target.disabled && !target.hasAttribute('disabled')) {
+                if ('vibrate' in navigator) {
+                    navigator.vibrate(20);
+                }
+            }
+        }, { passive: true });
     }
 
+    function handleInteractionStart(e) {
+        const target = e.target.closest(CLICK_SELECTORS);
+        if (target && !target.disabled && !target.hasAttribute('disabled')) {
+            target.classList.add('clicking');
+        }
+    }
 
-
-    // === ВИБРАЦИЯ НА МОБИЛЬНЫХ - УСИЛЕННАЯ ===
-    function addHapticFeedback() {
-        if (!('vibrate' in navigator)) return;
-
-        const selectors = [
-            'button',
-            '.btn',
-            '[role="button"]',
-            '.truck-card',
-            '[onclick*="assignLoad"]',
-            '[onclick*="selectLoad"]'
-        ];
-
-        const elements = document.querySelectorAll(selectors.join(', '));
-
-        elements.forEach(element => {
-            element.addEventListener('click', function() {
-                // Более заметная вибрация (20ms)
-                navigator.vibrate(20);
-            }, { passive: true });
-        });
+    function handleInteractionEnd(e) {
+        const target = e.target.closest(CLICK_SELECTORS);
+        if (target) {
+            setTimeout(() => {
+                target.classList.remove('clicking');
+            }, 300);
+        }
     }
 
     // === ИНДИКАТОР ЗАГРУЗКИ ДЛЯ КНОПОК ===
@@ -164,7 +163,8 @@
 
         /* Улучшенный feedback для карточек */
         .truck-card.clicking,
-        [class*="truck-card"].clicking {
+        [class*="truck-card"].clicking,
+        .benefit-card.clicking {
             transform: scale(0.97) !important;
             box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25) !important;
             filter: brightness(0.95) !important;
@@ -188,26 +188,10 @@
     `;
     document.head.appendChild(style);
 
-    // === ДОПОЛНИТЕЛЬНАЯ ОБРАБОТКА ДЛЯ ДИНАМИЧЕСКИХ ЭЛЕМЕНТОВ ===
-    // Наблюдаем за добавлением новых элементов
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.addedNodes.length) {
-                // Переинициализируем feedback для новых элементов
-                setTimeout(addClickFeedback, 100);
-            }
-        });
-    });
-
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
-
     // === ЭКСПОРТ ДЛЯ ИСПОЛЬЗОВАНИЯ В ДРУГИХ СКРИПТАХ ===
     window.InteractiveFeedback = {
         showButtonLoading: showButtonLoading,
-        reinit: addClickFeedback
+        reinit: () => {} // Теперь no-op, так как используется делегация
     };
 
 })();
