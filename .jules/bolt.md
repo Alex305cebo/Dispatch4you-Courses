@@ -1,0 +1,3 @@
+## 2025-05-15 - [Canvas Animation Optimization]
+**Learning:** In vanilla JS canvas animations, `Math.sqrt`, `ctx.createLinearGradient`, and `ctx.shadowBlur` are significant performance bottlenecks when called inside frame loops (hot paths). Replacing `Math.sqrt` with squared distance checks ($dx*dx + dy*dy$) for thresholding, and using solid colors instead of gradients, can drastically reduce per-frame overhead. Additionally, vector normalization ($dx/dist$) is faster than trigonometric functions like `Math.atan2`, `Math.cos`, and `Math.sin`.
+**Action:** Always prefer squared distance for proximity checks. Avoid shadows and gradients in high-frequency draw calls. Use standard `for` loops instead of `forEach` for array iteration in `requestAnimationFrame` callbacks.
