@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const particles = [];
   const particleCount = 40;
   const mouse = { x: null, y: null, radius: 150 };
+  const mouseRadiusSq = mouse.radius * mouse.radius;
 
   class Particle {
     constructor() {
@@ -47,17 +48,20 @@ document.addEventListener('DOMContentLoaded', function() {
       this.x += this.speedX;
       this.y += this.speedY;
 
-      // Mouse interaction
+      // Mouse interaction - Optimized: use squared distance and vector normalization
       if (mouse.x !== null && mouse.y !== null) {
         const dx = mouse.x - this.x;
         const dy = mouse.y - this.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distSq = dx * dx + dy * dy;
         
-        if (distance < mouse.radius) {
-          const force = (mouse.radius - distance) / mouse.radius;
-          const angle = Math.atan2(dy, dx);
-          this.x -= Math.cos(angle) * force * 3;
-          this.y -= Math.sin(angle) * force * 3;
+        if (distSq < mouseRadiusSq) {
+          const distance = Math.sqrt(distSq);
+          if (distance > 0) {
+            const force = (mouse.radius - distance) / mouse.radius;
+            // Vector normalization (dx/distance) replaces Math.cos/sin(Math.atan2)
+            this.x -= (dx / distance) * force * 3;
+            this.y -= (dy / distance) * force * 3;
+          }
         }
       }
 
@@ -72,11 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
       ctx.fillStyle = this.color;
       ctx.fill();
 
-      // Very subtle glow
-      ctx.shadowBlur = 4;
-      ctx.shadowColor = this.color;
-      ctx.fill();
-      ctx.shadowBlur = 0;
+      // PERFORMANCE: Removed shadowBlur (glow) as it is very expensive for rendering
     }
   }
 
@@ -85,30 +85,30 @@ document.addEventListener('DOMContentLoaded', function() {
     particles.push(new Particle());
   }
 
-  function connectParticles() {
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
-        const dx = particles[i].x - particles[j].x;
-        const dy = particles[i].y - particles[j].y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+  const CONNECTION_LIMIT = 150;
+  const CONNECTION_LIMIT_SQ = CONNECTION_LIMIT * CONNECTION_LIMIT;
 
-        if (distance < 150) {
-          const opacity = (1 - distance / 150) * 0.08;
+  function connectParticles() {
+    ctx.lineWidth = 0.3; // Hoist constant state change
+
+    for (let i = 0; i < particles.length; i++) {
+      const p1 = particles[i];
+      for (let j = i + 1; j < particles.length; j++) {
+        const p2 = particles[j];
+        const dx = p1.x - p2.x;
+        const dy = p1.y - p2.y;
+        const distSq = dx * dx + dy * dy; // Use squared distance first
+
+        if (distSq < CONNECTION_LIMIT_SQ) {
+          const distance = Math.sqrt(distSq);
+          const opacity = (1 - distance / CONNECTION_LIMIT) * 0.08;
           
-          // Gradient line
-          const gradient = ctx.createLinearGradient(
-            particles[i].x, particles[i].y,
-            particles[j].x, particles[j].y
-          );
-          gradient.addColorStop(0, `rgba(139, 92, 246, ${opacity})`);
-          gradient.addColorStop(0.5, `rgba(59, 130, 246, ${opacity})`);
-          gradient.addColorStop(1, `rgba(6, 182, 212, ${opacity})`);
-          
+          // PERFORMANCE: Use solid stroke instead of createLinearGradient
+          // which is heavy on the CPU/GPU for every single connection line
           ctx.beginPath();
-          ctx.strokeStyle = gradient;
-          ctx.lineWidth = 0.3;
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(139, 92, 246, ${opacity})`;
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
           ctx.stroke();
         }
       }
@@ -118,10 +118,11 @@ document.addEventListener('DOMContentLoaded', function() {
   function animate() {
     ctx.clearRect(0, 0, width, height);
 
-    particles.forEach(particle => {
-      particle.update();
-      particle.draw();
-    });
+    // PERFORMANCE: Use standard for loop instead of forEach for better performance in hot paths
+    for (let i = 0; i < particles.length; i++) {
+      particles[i].update();
+      particles[i].draw();
+    }
 
     connectParticles();
     requestAnimationFrame(animate);
