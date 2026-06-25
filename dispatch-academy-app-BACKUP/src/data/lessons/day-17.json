@@ -1,0 +1,112 @@
+{
+  "dayId": 17,
+  "weekId": 4,
+  "title": "Управление флотом и планирование",
+  "estimatedMinutes": 45,
+  "tasks": [
+    {
+      "id": "d17-t1",
+      "type": "quiz",
+      "title": "Принципы планирования",
+      "data": {
+        "question": "Какой ключевой показатель эффективности (KPI) наиболее важен при управлении флотом?",
+        "options": [
+          "Количество звонков за рабочий день",
+          "Revenue per truck per week — доход",
+          "Количество отправленных emails за день",
+          "Часы работы диспетчера в офисе"
+        ],
+        "correctIndex": 1,
+        "explanation": "Revenue per truck per week — главный KPI диспетчера. Цель: максимизировать доход каждого трака, минимизируя deadhead и простои. Типичная цель: $5,000-7,000/week на трак."
+      }
+    },
+    {
+      "id": "d17-t2",
+      "type": "quiz",
+      "title": "Минимизация пустого пробега",
+      "data": {
+        "question": "Что такое 'backhaul' и почему он важен?",
+        "options": [
+          "Груз в обратном направлении после delivery",
+          "Задний ход трака при парковке",
+          "Дополнительный трейлер в составе автопоезда",
+          "Обратный звонок клиенту или брокеру"
+        ],
+        "correctIndex": 0,
+        "explanation": "Backhaul — груз в обратном направлении (или к следующей точке загрузки). Хороший диспетчер планирует backhaul ПЕРЕД delivery, чтобы минимизировать пустой пробег."
+      }
+    },
+    {
+      "id": "d17-t3",
+      "type": "map-routing",
+      "title": "Планирование маршрута для двух грузов",
+      "data": {
+        "origin": "After delivery in Miami, FL",
+        "destination": "Need to get back to Atlanta, GA area",
+        "routes": [
+          { "name": "Miami → Jacksonville ($900, 350mi) then deadhead 80mi to next pickup", "miles": 430, "rate": 900, "isOptimal": false },
+          { "name": "Miami → Orlando ($650, 235mi) then deadhead 200mi to Atlanta", "miles": 435, "rate": 650, "isOptimal": false },
+          { "name": "Miami → Atlanta direct ($1,400, 660mi) — backhaul", "miles": 660, "rate": 1400, "isOptimal": true },
+          { "name": "Deadhead empty to Atlanta (660mi, $0)", "miles": 660, "rate": 0, "isOptimal": false }
+        ]
+      }
+    },
+    {
+      "id": "d17-t4",
+      "type": "calculator",
+      "title": "Расчёт эффективности трака за неделю",
+      "data": {
+        "problem": "Рассчитайте revenue per mile для трака за неделю.",
+        "context": "Трак за неделю проехал: 2,800 миль (из них 2,400 с грузом и 400 deadhead). Общий доход за неделю: $6,200 (3 рейса). Рассчитайте revenue per TOTAL mile (включая deadhead).",
+        "correctAnswer": 2.21,
+        "tolerancePercent": 2,
+        "unit": "$/mile"
+      }
+    },
+    {
+      "id": "d17-t5",
+      "type": "crisis",
+      "title": "Два водителя свободны одновременно",
+      "data": {
+        "scenario": "У вас два водителя освободились в Dallas. На Load Board есть: 1) Dallas→Houston, $550, 240mi (нужен Dry Van). 2) Dallas→Denver, $2,800, 780mi (нужен Reefer). Водитель A имеет Dry Van, водитель B имеет Reefer. Оба доступны. Как распределить?",
+        "timeLimitSeconds": 60,
+        "options": [
+          {
+            "text": "Отправить обоих на короткий рейс в Houston",
+            "isCorrect": false,
+            "explanation": "Reefer не нужен для Houston рейса, и отправка обоих на один рейс бессмысленна. Нужно разделить задачи по оборудованию."
+          },
+          {
+            "text": "Водитель A (Dry Van) → Houston за $550. Водитель B (Reefer) → Denver за $2,800. Каждый на подходящий груз по оборудованию",
+            "isCorrect": true,
+            "explanation": "Правильно! Логичное распределение: каждый водитель берёт груз, соответствующий его оборудованию. B получает высокооплачиваемый рейс ($3.59/mile), A — короткий с хорошим RPM ($2.29/mile)."
+          },
+          {
+            "text": "Отправить обоих в Denver",
+            "isCorrect": false,
+            "explanation": "Houston рейс тоже хороший ($2.29/mile). Нельзя бросать прибыльный груз. К тому же Dry Van не подходит для Denver рейса (нужен Reefer)."
+          },
+          {
+            "text": "Оставить обоих в Dallas и искать лучшие грузы завтра",
+            "isCorrect": false,
+            "explanation": "Простой = потеря денег. Оба груза имеют хороший RPM. Каждый день простоя — минус $700-1000 потенциального дохода."
+          }
+        ]
+      }
+    },
+    {
+      "id": "d17-t6",
+      "type": "drag-match",
+      "title": "KPI диспетчера",
+      "data": {
+        "pairs": [
+          { "term": "Revenue per truck/week", "definition": "Главный показатель — доход на трак в неделю" },
+          { "term": "Deadhead percentage", "definition": "Процент пустых миль (цель: <15%)" },
+          { "term": "Loaded miles ratio", "definition": "Доля миль с грузом от общего пробега" },
+          { "term": "Average RPM", "definition": "Средняя ставка за милю по всем грузам" },
+          { "term": "Days per load", "definition": "Среднее время на один рейс от pickup до delivery" }
+        ]
+      }
+    }
+  ]
+}

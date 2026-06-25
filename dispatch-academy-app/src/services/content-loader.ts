@@ -80,25 +80,28 @@ function shuffleDayContent(content: DayContent): DayContent {
   // Shuffle the order of tasks
   const shuffledTasks = shuffle(content.tasks).map((task) => {
     // For quiz tasks, shuffle the options and update correctIndex
-    if (task.type === 'quiz') {
-      const quizData = task.data as { question: string; options: string[]; correctIndex: number; explanation: string };
-      const correctAnswer = quizData.options[quizData.correctIndex]!;
-      const shuffledOptions = shuffle(quizData.options);
-      const newCorrectIndex = shuffledOptions.indexOf(correctAnswer);
+    if (task.type === 'quiz' && task.data && 'options' in task.data && 'correctIndex' in task.data) {
+      const quizData = task.data as any;
+      const options = quizData.options as string[];
+      if (Array.isArray(options) && options.length >= 4) {
+        const correctAnswer = options[quizData.correctIndex as number];
+        const shuffledOptions = shuffle(options);
+        const newCorrectIndex = shuffledOptions.indexOf(correctAnswer!);
 
-      return {
-        ...task,
-        data: {
-          ...quizData,
-          options: shuffledOptions,
-          correctIndex: newCorrectIndex,
-        },
-      };
+        return {
+          ...task,
+          data: {
+            ...quizData,
+            options: shuffledOptions as [string, string, string, string],
+            correctIndex: newCorrectIndex as 0 | 1 | 2 | 3,
+          },
+        };
+      }
     }
     return task;
   });
 
-  return { ...content, tasks: shuffledTasks };
+  return { ...content, tasks: shuffledTasks as any };
 }
 
 /**

@@ -88,25 +88,28 @@ export default function DragMatchTask({ data, onAnswer }: DragMatchTaskProps) {
         key={currentIndex}
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-4"
+        className="text-center mb-6"
       >
-        <p className="text-xs text-slate-400 mb-1">Найдите определение для:</p>
-        <p className="text-xl lg:text-2xl font-bold text-white bg-slate-800/60 rounded-xl py-3 px-4 border border-cyan-500/30">{currentTerm}</p>
+        <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-3">📌 Найдите определение для:</p>
+        <div className="bg-gradient-to-br from-cyan-600/20 to-blue-600/20 border-2 border-cyan-500/50 rounded-2xl py-4 px-5">
+          <p className="text-2xl lg:text-3xl font-bold text-cyan-100 mb-1">{currentTerm}</p>
+          <p className="text-xs text-slate-400 italic">выберите правильное определение ниже</p>
+        </div>
       </motion.div>
 
       {/* Definition options */}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2.5">
         {shuffledDefs.map((def, i) => {
-          let classes = 'w-full min-h-[44px] lg:min-h-[52px] px-4 lg:px-5 py-2.5 lg:py-3 rounded-xl text-left text-[14px] lg:text-[16px] font-medium border transition-all ';
+          let classes = 'w-full min-h-[52px] lg:min-h-[60px] px-4 lg:px-5 py-3 lg:py-4 rounded-xl text-left text-[14px] lg:text-[15px] font-medium border-2 transition-all flex items-center gap-3 ';
 
           if (!showResult) {
-            classes += 'bg-slate-800/80 border-slate-600/60 text-white hover:bg-slate-700 cursor-pointer';
+            classes += 'bg-slate-700/60 border-slate-600/40 text-white hover:bg-slate-600/70 hover:border-cyan-500/40 cursor-pointer active:bg-slate-600/80';
           } else if (i === correctDefIndex) {
-            classes += 'bg-green-500/20 border-green-500 text-green-200';
+            classes += 'bg-green-500/30 border-green-500/60 text-green-100 font-semibold';
           } else if (i === selectedDef && i !== correctDefIndex) {
-            classes += 'bg-red-500/20 border-red-500 text-red-200';
+            classes += 'bg-red-500/30 border-red-500/60 text-red-100 font-semibold';
           } else {
-            classes += 'bg-slate-800/40 border-slate-700/40 text-slate-500 opacity-50';
+            classes += 'bg-slate-800/40 border-slate-700/30 text-slate-500 opacity-60';
           }
 
           return (
@@ -117,7 +120,10 @@ export default function DragMatchTask({ data, onAnswer }: DragMatchTaskProps) {
               disabled={showResult}
               whileTap={!showResult ? { scale: 0.97 } : undefined}
             >
-              {def}
+              <span className="text-lg font-bold flex-shrink-0 w-6 h-6 rounded-full bg-slate-600/50 flex items-center justify-center">
+                {String.fromCharCode(65 + i)}
+              </span>
+              <span className="flex-1">{def}</span>
             </motion.button>
           );
         })}

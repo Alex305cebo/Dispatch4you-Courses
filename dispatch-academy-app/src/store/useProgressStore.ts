@@ -65,7 +65,8 @@ export const useProgressStore = create<ProgressState>()(
       updateStreak: () => {
         const today = new Date().toISOString().split('T')[0];
         set((state) => {
-          const result = calculateStreak(state.lastActivityDate, state.currentStreak, today);
+          const todayStr = today ?? new Date().toISOString().split('T')[0];
+          const result = calculateStreak(state.lastActivityDate, state.currentStreak, todayStr || '');
           // Check for streak milestone and notify
           const milestone = checkMilestone(result.newStreak);
           if (milestone) {
@@ -73,7 +74,7 @@ export const useProgressStore = create<ProgressState>()(
           }
           return {
             currentStreak: result.newStreak,
-            lastActivityDate: today,
+            lastActivityDate: todayStr,
           };
         });
       },

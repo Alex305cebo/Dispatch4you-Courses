@@ -16,7 +16,7 @@ describe('LEVELS constant', () => {
 
   it('has thresholds in ascending order', () => {
     for (let i = 1; i < LEVELS.length; i++) {
-      expect(LEVELS[i].xpThreshold).toBeGreaterThan(LEVELS[i - 1].xpThreshold);
+      expect(LEVELS[i]?.xpThreshold).toBeGreaterThan(LEVELS[i - 1]?.xpThreshold ?? 0);
     }
   });
 });

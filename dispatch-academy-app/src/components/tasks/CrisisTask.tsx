@@ -55,7 +55,7 @@ export default function CrisisTask({ data, onAnswer }: CrisisTaskProps) {
       if (intervalRef.current) clearInterval(intervalRef.current);
 
       setSelectedIndex(index);
-      const correct = data.options[index].isCorrect;
+      const correct = data.options[index]?.isCorrect ?? false;
       onAnswer(correct);
     },
     [answered, data.options, onAnswer]
@@ -95,10 +95,15 @@ export default function CrisisTask({ data, onAnswer }: CrisisTaskProps) {
     }
 
     // After answering or timeout
-    if (data.options[index].isCorrect) {
+    const option = data.options[index];
+    if (!option) {
+      return `${base} bg-white/5 border-white/10 text-slate-400 opacity-60 cursor-default`;
+    }
+
+    if (option.isCorrect) {
       return `${base} bg-green-500/20 border-green-500 text-green-300 cursor-default`;
     }
-    if (index === selectedIndex && !data.options[index].isCorrect) {
+    if (index === selectedIndex && !option.isCorrect) {
       return `${base} bg-red-500/20 border-red-500 text-red-300 cursor-default`;
     }
     return `${base} bg-white/5 border-white/10 text-slate-400 opacity-60 cursor-default`;
@@ -141,7 +146,7 @@ export default function CrisisTask({ data, onAnswer }: CrisisTaskProps) {
             onClick={() => handleSelect(index)}
             whileTap={!answered ? { scale: 0.97 } : undefined}
             animate={
-              answered && index === selectedIndex && !data.options[index].isCorrect
+              answered && index === selectedIndex && (data.options[index]?.isCorrect === false)
                 ? { x: [0, -8, 8, -6, 6, -3, 3, 0] }
                 : {}
             }

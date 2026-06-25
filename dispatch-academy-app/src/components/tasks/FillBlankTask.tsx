@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { FillBlankData } from '../../types/index';
 
 interface FillBlankTaskProps {
@@ -43,8 +43,8 @@ export default function FillBlankTask({ data, onAnswer }: FillBlankTaskProps) {
     if (submitted) return;
 
     const blankResults = data.blanks.map((blank, index) => {
-      const userAnswer = answers[index].trim().toLowerCase();
-      const correctAnswer = blank.correctAnswer.trim().toLowerCase();
+      const userAnswer = (answers[index] ?? '').trim().toLowerCase();
+      const correctAnswer = (blank?.correctAnswer ?? '').trim().toLowerCase();
       return userAnswer === correctAnswer;
     });
 
@@ -83,20 +83,20 @@ export default function FillBlankTask({ data, onAnswer }: FillBlankTaskProps) {
     <div className="w-full max-w-lg mx-auto">
       {/* Sentence with blanks */}
       <div className="bg-white/5 border border-white/10 rounded-xl p-4 md:p-6 mb-4">
-        <p className="text-white text-base md:text-lg leading-relaxed flex flex-wrap items-center gap-1">
+        <p className="text-white text-base md:text-lg leading-relaxed">
           {finalParts.map((part, partIndex) => (
-            <span key={partIndex} className="inline-flex items-center flex-wrap gap-1">
-              {/* Text part */}
+            <span key={partIndex}>
+              {/* Text part — inline */}
               {part && <span>{part}</span>}
 
-              {/* Blank input/button (not after the last part) */}
+              {/* Blank input/button — inline with text */}
               {partIndex < finalParts.length - 1 && (
                 <BlankField
                   index={partIndex}
-                  blank={data.blanks[partIndex]}
-                  value={answers[partIndex]}
+                  blank={data.blanks[partIndex] ?? { correctAnswer: '' }}
+                  value={answers[partIndex] ?? ''}
                   submitted={submitted}
-                  isCorrect={results[partIndex]}
+                  isCorrect={results[partIndex] ?? false}
                   onInputChange={handleInputChange}
                   onWordSelect={handleWordBankSelect}
                 />
@@ -106,43 +106,116 @@ export default function FillBlankTask({ data, onAnswer }: FillBlankTaskProps) {
         </p>
       </div>
 
+      {/* Submit button — appears first when all blanks filled */}
+      {!submitted && canSubmit && (
+        <motion.button
+          type="button"
+          onClick={handleSubmit}
+          className="w-full min-h-[44px] px-6 py-3 rounded-xl text-base font-bold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-900 bg-cyan-500 hover:bg-cyan-400 text-slate-900 cursor-pointer mb-6"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          aria-label="Проверить ответ"
+        >
+          ✓ Проверить ответ
+        </motion.button>
+      )}
+
       {/* Word banks (rendered below sentence for blanks that have them) */}
       {!submitted &&
-        shuffledBlanks.map(
-          (blank, index) =>
+        shuffledBlanks
+          .map((blank, index) => ({ blank, index }))
+          .sort((a, b) => {
+            // Selected blocks go to the end
+            const aSelected = answers[a.index] ? 1 : 0;
+            const bSelected = answers[b.index] ? 1 : 0;
+            return aSelected - bSelected;
+          })
+          .map(({ blank, index }) =>
             blank.wordBank &&
             blank.wordBank.length > 0 && (
-              <div key={index} className="mb-3">
-                {data.blanks.length > 1 && (
-                  <p className="text-xs text-slate-400 mb-1.5">
-                    Пропуск {index + 1}:
+              <motion.div
+                key={index}
+                className="mb-6"
+                layout
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, type: 'spring', stiffness: 200 }}
+              >
+                {/* Section header */}
+                <div className={`px-4 py-2 rounded-t-lg mb-0 border-l-4 flex items-center justify-center gap-3 ${
+                  index === 0 ? 'bg-purple-500/15 border-purple-500' :
+                  index === 1 ? 'bg-blue-500/15 border-blue-500' :
+                  index === 2 ? 'bg-cyan-500/15 border-cyan-500' :
+                  index === 3 ? 'bg-green-500/15 border-green-500' :
+                  'bg-orange-500/15 border-orange-500'
+                }`}>
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 ${
+                    index === 0 ? 'bg-purple-500/40' :
+                    index === 1 ? 'bg-blue-500/40' :
+                    index === 2 ? 'bg-cyan-500/40' :
+                    index === 3 ? 'bg-green-500/40' :
+                    'bg-orange-500/40'
+                  }`}>
+                    {index + 1}
+                  </span>
+                  <p className={`text-xs font-bold uppercase tracking-widest text-center ${
+                    index === 0 ? 'text-purple-300' :
+                    index === 1 ? 'text-blue-300' :
+                    index === 2 ? 'text-cyan-300' :
+                    index === 3 ? 'text-green-300' :
+                    'text-orange-300'
+                  }`}>
+                    {index === 0 ? 'Выберите первое подходящее слово' :
+                     index === 1 ? 'Выберите второе подходящее слово' :
+                     index === 2 ? 'Выберите третье подходящее слово' :
+                     index === 3 ? 'Выберите четвёртое подходящее слово' :
+                     `Выберите пятое подходящее слово`}
                   </p>
-                )}
+                </div>
+
+                {/* Options grid */}
                 <div
-                  className="flex flex-wrap gap-2"
+                  className={`grid grid-cols-2 gap-2 p-3 rounded-b-lg ${
+                    index === 0 ? 'bg-purple-500/5' :
+                    index === 1 ? 'bg-blue-500/5' :
+                    index === 2 ? 'bg-cyan-500/5' :
+                    index === 3 ? 'bg-green-500/5' :
+                    'bg-orange-500/5'
+                  }`}
                   role="group"
                   aria-label={`Варианты для пропуска ${index + 1}`}
                 >
-                  {blank.wordBank.map((word) => (
-                    <button
-                      key={word}
-                      type="button"
-                      onClick={() => handleWordBankSelect(index, word)}
-                      className={`min-h-[44px] px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border-2 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-900 ${
-                        answers[index] === word
-                          ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300'
-                          : 'bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-white/20'
-                      }`}
-                      aria-pressed={answers[index] === word}
-                      aria-label={`Выбрать слово: ${word}`}
-                    >
-                      {word}
-                    </button>
-                  ))}
+                  <AnimatePresence>
+                    {blank.wordBank.map((word) => (
+                      <motion.button
+                        key={word}
+                        type="button"
+                        onClick={() => handleWordBankSelect(index, word)}
+                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 border-2 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-slate-900 ${
+                          answers[index] === word
+                            ? index === 0 ? 'bg-purple-500/30 border-purple-400 text-purple-200 shadow-lg shadow-purple-500/20' :
+                              index === 1 ? 'bg-blue-500/30 border-blue-400 text-blue-200 shadow-lg shadow-blue-500/20' :
+                              index === 2 ? 'bg-cyan-500/30 border-cyan-400 text-cyan-200 shadow-lg shadow-cyan-500/20' :
+                              index === 3 ? 'bg-green-500/30 border-green-400 text-green-200 shadow-lg shadow-green-500/20' :
+                              'bg-orange-500/30 border-orange-400 text-orange-200 shadow-lg shadow-orange-500/20'
+                            : 'bg-slate-700/60 border-slate-600/50 text-white hover:bg-slate-600/70 hover:border-slate-500/60'
+                        }`}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        transition={{ duration: 0.3, type: 'spring', stiffness: 300 }}
+                        aria-pressed={answers[index] === word}
+                        aria-label={`Выбрать: ${word}`}
+                      >
+                        {answers[index] === word ? `✓ ${word}` : word}
+                      </motion.button>
+                    ))}
+                  </AnimatePresence>
                 </div>
-              </div>
+              </motion.div>
             )
-        )}
+          )}
 
       {/* Correct answers displayed after submission */}
       {submitted && (
@@ -176,20 +249,15 @@ export default function FillBlankTask({ data, onAnswer }: FillBlankTaskProps) {
         </motion.div>
       )}
 
-      {/* Submit button */}
-      {!submitted && (
+      {/* Submit button — disabled version when not all filled */}
+      {!submitted && !canSubmit && (
         <button
           type="button"
-          onClick={handleSubmit}
-          disabled={!canSubmit}
-          className={`w-full min-h-[44px] px-6 py-3 rounded-xl text-base font-bold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-900 ${
-            canSubmit
-              ? 'bg-cyan-500 hover:bg-cyan-400 text-slate-900 cursor-pointer'
-              : 'bg-white/10 text-slate-500 cursor-not-allowed'
-          }`}
-          aria-label="Проверить ответ"
+          disabled
+          className="w-full min-h-[44px] px-6 py-3 rounded-xl text-base font-bold transition-all duration-200 focus:outline-none bg-white/10 text-slate-500 cursor-not-allowed mb-6"
+          aria-label="Заполните все пропуски"
         >
-          Проверить
+          Заполните все пропуски
         </button>
       )}
     </div>
@@ -216,34 +284,108 @@ function BlankField({
   isCorrect,
   onInputChange,
 }: BlankFieldProps) {
+  // Get color and label based on blank index
+  const getColorAndLabel = (): { bg: string; bgEmpty: string; border: string; borderEmpty: string; text: string; ring: string; label: string } => {
+    const labels = ['①', '②', '③', '④', '⑤'];
+    const label = labels[index % 5] || `(${index + 1})`;
+    
+    switch (index % 5) {
+      case 0:
+        return { 
+          bg: 'bg-purple-500/25', 
+          bgEmpty: 'bg-purple-500/10',
+          border: 'border-purple-400/80', 
+          borderEmpty: 'border-purple-400/40',
+          text: 'text-purple-200', 
+          ring: 'focus:ring-purple-400',
+          label
+        };
+      case 1:
+        return { 
+          bg: 'bg-blue-500/25',
+          bgEmpty: 'bg-blue-500/10',
+          border: 'border-blue-400/80',
+          borderEmpty: 'border-blue-400/40',
+          text: 'text-blue-200', 
+          ring: 'focus:ring-blue-400',
+          label
+        };
+      case 2:
+        return { 
+          bg: 'bg-cyan-500/25',
+          bgEmpty: 'bg-cyan-500/10',
+          border: 'border-cyan-400/80',
+          borderEmpty: 'border-cyan-400/40',
+          text: 'text-cyan-200', 
+          ring: 'focus:ring-cyan-400',
+          label
+        };
+      case 3:
+        return { 
+          bg: 'bg-green-500/25',
+          bgEmpty: 'bg-green-500/10',
+          border: 'border-green-400/80',
+          borderEmpty: 'border-green-400/40',
+          text: 'text-green-200', 
+          ring: 'focus:ring-green-400',
+          label
+        };
+      default:
+        return { 
+          bg: 'bg-orange-500/25',
+          bgEmpty: 'bg-orange-500/10',
+          border: 'border-orange-400/80',
+          borderEmpty: 'border-orange-400/40',
+          text: 'text-orange-200', 
+          ring: 'focus:ring-orange-400',
+          label
+        };
+    }
+  };
+
+  const colors = getColorAndLabel();
+
   // Determine styling based on state
   const getFieldClasses = (): string => {
     const base =
-      'inline-block min-w-[80px] max-w-[160px] min-h-[36px] px-3 py-1.5 rounded-lg text-sm font-medium text-center border-2 transition-all duration-200';
+      'inline-block mx-0.5 min-w-[56px] max-w-[100px] min-h-[32px] px-2 py-1 rounded-md text-xs sm:text-sm font-semibold text-center border-2 align-baseline transition-all duration-200 flex items-center justify-center';
 
     if (!submitted) {
       if (value) {
-        return `${base} bg-cyan-500/10 border-cyan-400/50 text-cyan-200`;
+        return `${base} ${colors.bg} ${colors.border} ${colors.text}`;
       }
-      return `${base} bg-white/5 border-dashed border-white/20 text-white`;
+      return `${base} ${colors.bgEmpty} border-dashed ${colors.borderEmpty} ${colors.text}`;
     }
 
     // After submission
     if (isCorrect) {
-      return `${base} bg-green-500/20 border-green-500 text-green-300`;
+      return `${base} bg-green-500/30 border-green-500/70 text-green-300`;
     }
-    return `${base} bg-red-500/20 border-red-500 text-red-300`;
+    return `${base} bg-red-500/30 border-red-500/70 text-red-300`;
   };
 
   // If wordBank exists, display as a read-only field showing selected word
   if (blank.wordBank && blank.wordBank.length > 0) {
+    // If filled, show as plain text with subtle color highlight
+    if (value) {
+      const highlightClass = 
+        index % 5 === 0 ? 'text-purple-300 bg-purple-500/10 px-1 rounded' :
+        index % 5 === 1 ? 'text-blue-300 bg-blue-500/10 px-1 rounded' :
+        index % 5 === 2 ? 'text-cyan-300 bg-cyan-500/10 px-1 rounded' :
+        index % 5 === 3 ? 'text-green-300 bg-green-500/10 px-1 rounded' :
+        'text-orange-300 bg-orange-500/10 px-1 rounded';
+      
+      return <span className={`font-semibold ${highlightClass}`}>{value}</span>;
+    }
+    
+    // If empty, show colored placeholder
     return (
       <span
         className={getFieldClasses()}
         role="status"
-        aria-label={`Пропуск ${index + 1}: ${value || 'не заполнено'}`}
+        aria-label={`Пропуск ${index + 1}: не заполнено`}
       >
-        {value || '___'}
+        <span className="text-xs opacity-60">{colors.label}</span>
       </span>
     );
   }
@@ -255,10 +397,10 @@ function BlankField({
       value={value}
       onChange={(e) => onInputChange(index, e.target.value)}
       disabled={submitted}
-      placeholder="..."
-      className={`${getFieldClasses()} focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400`}
+      placeholder={colors.label}
+      className={`${getFieldClasses()} focus:outline-none focus:ring-2 ${colors.ring} focus:border-current placeholder-shown:text-xs placeholder-opacity-60`}
       aria-label={`Ввести ответ для пропуска ${index + 1}`}
-      style={{ minHeight: '44px', fontSize: '14px' }}
+      style={{ minHeight: '32px', fontSize: '13px' }}
     />
   );
 }

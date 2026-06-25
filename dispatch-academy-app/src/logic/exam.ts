@@ -15,7 +15,9 @@ export function getModulesForWeek(weekId: number): number[] {
 function shuffle<T>(arr: T[]): T[] {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+    const temp = arr[i] as T;
+    arr[i] = arr[j] as T;
+    arr[j] = temp;
   }
   return arr;
 }
@@ -114,8 +116,10 @@ export function selectFinalExamQuestions(pool: ExamQuestion[]): ExamQuestion[] {
   const result: ExamQuestion[] = [];
   const maxLen = Math.max(quizHalf.length, situationalHalf.length);
   for (let i = 0; i < maxLen; i++) {
-    if (i < quizHalf.length) result.push(quizHalf[i]);
-    if (i < situationalHalf.length) result.push(situationalHalf[i]);
+    const quiz = quizHalf[i];
+    const situational = situationalHalf[i];
+    if (quiz) result.push(quiz);
+    if (situational) result.push(situational);
   }
 
   return result;

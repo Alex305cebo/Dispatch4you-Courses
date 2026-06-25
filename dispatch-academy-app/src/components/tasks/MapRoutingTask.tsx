@@ -26,7 +26,8 @@ export default function MapRoutingTask({ data, onAnswer }: MapRoutingTaskProps) 
       if (answered) return;
       setSelectedIndex(index);
       setAnswered(true);
-      onAnswer(routesWithCost[index].isOptimal);
+      const route = routesWithCost[index];
+      onAnswer(route?.isOptimal ?? false);
     },
     [answered, routesWithCost, onAnswer]
   );
@@ -40,10 +41,15 @@ export default function MapRoutingTask({ data, onAnswer }: MapRoutingTaskProps) 
     }
 
     // After selection
-    if (routesWithCost[index].isOptimal) {
+    const route = routesWithCost[index];
+    if (!route) {
+      return `${base} bg-white/5 border-white/10 opacity-60 cursor-default`;
+    }
+
+    if (route.isOptimal) {
       return `${base} bg-green-500/20 border-green-500 cursor-default`;
     }
-    if (index === selectedIndex && !routesWithCost[index].isOptimal) {
+    if (index === selectedIndex && !route.isOptimal) {
       return `${base} bg-red-500/20 border-red-500 cursor-default`;
     }
     return `${base} bg-white/5 border-white/10 opacity-60 cursor-default`;
@@ -141,13 +147,13 @@ export default function MapRoutingTask({ data, onAnswer }: MapRoutingTaskProps) 
       </div>
 
       {/* Feedback after answer */}
-      {answered && selectedIndex !== null && (
+      {answered && selectedIndex !== null && routesWithCost[selectedIndex] && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.15 }}
           className={`mt-2 p-4 rounded-xl border-2 ${
-            routesWithCost[selectedIndex].isOptimal
+            routesWithCost[selectedIndex]?.isOptimal
               ? 'bg-green-500/10 border-green-500/40'
               : 'bg-red-500/10 border-red-500/40'
           }`}
@@ -156,16 +162,16 @@ export default function MapRoutingTask({ data, onAnswer }: MapRoutingTaskProps) 
         >
           <p
             className={`font-bold text-base mb-1 ${
-              routesWithCost[selectedIndex].isOptimal
+              routesWithCost[selectedIndex]?.isOptimal
                 ? 'text-green-300'
                 : 'text-red-300'
             }`}
           >
-            {routesWithCost[selectedIndex].isOptimal
+            {routesWithCost[selectedIndex]?.isOptimal
               ? '✅ Верно! Это самый выгодный маршрут.'
               : '❌ Неверно.'}
           </p>
-          {!routesWithCost[selectedIndex].isOptimal && (
+          {!routesWithCost[selectedIndex]?.isOptimal && (
             <p className="text-sm text-slate-200">
               Оптимальный маршрут:{' '}
               <span className="font-semibold text-green-300">

@@ -25,11 +25,13 @@ export default function DayPage() {
 
   const [pageState, setPageState] = useState<PageState>('loading');
   const [dayContent, setDayContent] = useState<DayContent | null>(null);
-  const [currentTaskIndex, setCurrentTaskIndex] = useState(0);
+  const [taskQueue, setTaskQueue] = useState<DayContent['tasks']>([]);
+  const [initialTaskCount, setInitialTaskCount] = useState(0);
   const [completedResults, setCompletedResults] = useState<TaskResult[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [meanScore, setMeanScore] = useState(0);
   const [totalXPEarned, setTotalXPEarned] = useState(0);
+  const [skippedIds, setSkippedIds] = useState<Set<string>>(new Set());
 
   const hasPrefetched = useRef(false);
 
@@ -40,6 +42,17 @@ export default function DayPage() {
     try {
       const content = await loadDayContent(dayId);
       setDayContent(content);
+
+      // Progressive task count: day 1 = 1 task, day 2 = 2, ..., day 10+ = all tasks
+      // For dream levels (101-111): dream1 = 1, dream2 = 2, etc.
+      const isDream = dayId >= 100;
+      const levelNumber = isDream ? dayId - 100 : dayId; // 101→1, 102→2, etc.
+      const maxTasks = content.tasks.length;
+      const taskCount = Math.min(levelNumber, maxTasks);
+      const limitedTasks = content.tasks.slice(0, taskCount);
+
+      setTaskQueue([...limitedTasks]);
+      setInitialTaskCount(limitedTasks.length);
       setPageState('active');
     } catch (err) {
       const message =
@@ -70,8 +83,8 @@ export default function DayPage() {
       const isFirstCompletion = !taskScores[result.taskId];
       const isFirstAttempt = result.attempts === 1;
 
-      // Get the task type from dayContent
-      const taskDef = dayContent?.tasks[currentTaskIndex];
+      // Get the task type from queue head
+      const taskDef = taskQueue[0];
       const taskType = taskDef?.type ?? 'quiz';
 
       // Calculate XP using proper logic
@@ -87,8 +100,12 @@ export default function DayPage() {
       setCompletedResults(updatedResults);
       setTotalXPEarned((prev) => prev + taskXP);
 
-      // Check if all tasks are done
-      if (dayContent && updatedResults.length >= dayContent.tasks.length) {
+      // Remove completed task from queue
+      const newQueue = taskQueue.slice(1);
+      setTaskQueue(newQueue);
+
+      // Check if all tasks are done (queue empty)
+      if (newQueue.length === 0) {
         // All tasks completed — calculate day perfect bonus
         const allScores = updatedResults.map((r) => r.score);
         const dayBonus = getDayPerfectBonus(allScores);
@@ -104,36 +121,48 @@ export default function DayPage() {
           unlockNextDay(dayId);
         }
 
-        // Update streak
         updateStreak();
 
-        // Sync to Firestore (fire-and-forget)
-        syncToFirestore().catch(() => {
-          // Silently fail — offline queue handles this
-        });
+        syncToFirestore().catch(() => {});
 
-        // Prefetch next day
         if (!hasPrefetched.current) {
           hasPrefetched.current = true;
           prefetchNextDay(dayId);
         }
 
         setPageState('complete');
-      } else {
-        // Advance to next task
-        setCurrentTaskIndex((prev) => prev + 1);
       }
     },
-    [dayId, dayContent, completedResults, currentTaskIndex, completeTask, unlockNextDay, addXP, updateStreak, syncToFirestore, taskScores]
+    [dayId, taskQueue, completedResults, completeTask, unlockNextDay, addXP, updateStreak, syncToFirestore, taskScores]
   );
 
-  // Progress calculation
-  const totalTasks = dayContent?.tasks.length ?? 0;
+  // Handle skip — move current task to end of queue, don't count it
+  const handleSkip = useCallback(() => {
+    if (taskQueue.length === 0) return;
+    const [current, ...rest] = taskQueue;
+    if (!current) return;
+
+    // Only allow skipping if there are other tasks remaining
+    if (rest.length === 0) {
+      // Last task — can't skip, must answer
+      return;
+    }
+
+    // Track skipped so we can show indicator
+    setSkippedIds((prev) => new Set(prev).add(current.id));
+
+    // Move current to end of queue
+    setTaskQueue([...rest, current]);
+  }, [taskQueue]);
+
+  // Progress calculation — use fixed initial count
+  const totalTasks = initialTaskCount;
   const completedCount = completedResults.length;
   const progressPercent = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
 
-  // Current task
-  const currentTask = dayContent?.tasks[currentTaskIndex] ?? null;
+  // Current task — head of queue
+  const currentTask = taskQueue[0] ?? null;
+  const isSkipped = currentTask ? skippedIds.has(currentTask.id) : false;
 
   // --- RENDER STATES ---
 
@@ -189,8 +218,9 @@ export default function DayPage() {
     const passed = meanScore >= 70;
 
     const handleRetry = () => {
-      setCurrentTaskIndex(0);
+      setTaskQueue(dayContent ? [...dayContent.tasks] : []);
       setCompletedResults([]);
+      setSkippedIds(new Set());
       setTotalXPEarned(0);
       setMeanScore(0);
       setPageState('active');
@@ -293,9 +323,18 @@ export default function DayPage() {
               transition={{ duration: 0.2 }}
               className="w-full max-w-lg lg:max-w-2xl mx-auto"
             >
+              {/* Skipped badge — shown when this task was previously skipped */}
+              {isSkipped && (
+                <div className="flex items-center justify-center gap-1.5 mb-3">
+                  <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-amber-500/15 border border-amber-500/30 text-amber-300">
+                    ↩ Возвращённый вопрос
+                  </span>
+                </div>
+              )}
               <TaskRenderer
                 task={currentTask}
                 onComplete={handleTaskComplete}
+                onSkip={taskQueue.length > 1 ? handleSkip : undefined}
                 isRetry={false}
               />
             </motion.div>

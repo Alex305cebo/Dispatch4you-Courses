@@ -2,8 +2,6 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { useProgressStore } from '../../store/useProgressStore';
 import { useUIStore } from '../../store/useUIStore';
-import { LEVELS } from '../../logic/levels';
-import { useAuth } from '../../hooks/useAuth';
 import { useFirestoreSync } from '../../hooks/useFirestoreSync';
 
 /**
@@ -13,29 +11,13 @@ import { useFirestoreSync } from '../../hooks/useFirestoreSync';
  * Visible on ALL pages, plus a Toast notification layer.
  */
 export default function AppLayout() {
-  const { totalXP, level, currentStreak, lastActivityDate, taskScores } = useProgressStore();
+  const { totalXP, level, taskScores } = useProgressStore();
   const { toastMessage } = useUIStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showSiteConfirm, setShowSiteConfirm] = useState(false);
-  const { user } = useAuth();
   useFirestoreSync();
-
-  const currentLevel = LEVELS.find(l => l.level === level) ?? LEVELS[0];
-  const nextLevel = LEVELS.find(l => l.level === level + 1);
-  const levelTitle = currentLevel?.title ?? 'Наблюдатель';
-
-  // XP progress within current level
-  const currentLevelXP = currentLevel?.xpThreshold ?? 0;
-  const nextLevelXP = nextLevel?.xpThreshold ?? currentLevelXP + 500;
-  const xpInLevel = totalXP - currentLevelXP;
-  const xpNeeded = nextLevelXP - currentLevelXP;
-  const xpPercent = Math.min(100, Math.round((xpInLevel / xpNeeded) * 100));
-
-  // Daily goal: check if student completed at least 1 task today
-  const today = new Date().toISOString().split('T')[0];
-  const completedTaskToday = lastActivityDate === today;
 
   // Bottom nav always visible
   const hideBottomNav = false;

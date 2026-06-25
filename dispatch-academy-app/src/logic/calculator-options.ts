@@ -16,7 +16,9 @@ function seededShuffle<T>(array: T[], seed: number): T[] {
   for (let i = result.length - 1; i > 0; i--) {
     s = (s * 1103515245 + 12345) & 0x7fffffff;
     const j = s % (i + 1);
-    [result[i], result[j]] = [result[j], result[i]];
+    const temp = result[i] as T;
+    result[i] = result[j] as T;
+    result[j] = temp;
   }
   return result;
 }

@@ -18,6 +18,7 @@ import DocReviewTask from './DocReviewTask';
 export interface TaskRendererProps {
   task: Task;
   onComplete: (result: TaskResult) => void;
+  onSkip?: () => void;
   isRetry: boolean;
 }
 
@@ -247,10 +248,12 @@ function FeedbackOverlay({ isCorrect, explanation, correctAnswer, onNext }: Feed
 
 // === Main TaskRenderer Component ===
 
-export default function TaskRenderer({ task, onComplete, isRetry }: TaskRendererProps) {
+export default function TaskRenderer({ task, onComplete, onSkip, isRetry }: TaskRendererProps) {
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [customFeedback, setCustomFeedback] = useState('');
+  const [showHint, setShowHint] = useState(false);
+  const [hintUsed, setHintUsed] = useState(false);
   const startTimeRef = useRef<Date>(new Date());
   const hasCompletedRef = useRef(false);
   const soundEnabled = useUIStore((state) => state.soundEnabled);
@@ -298,6 +301,8 @@ export default function TaskRenderer({ task, onComplete, isRetry }: TaskRenderer
 
     onComplete(result);
   }, [task.id, isCorrect, isRetry, onComplete]);
+
+  // Skip task — handled by parent via onSkip prop
 
   // Get explanation and correct answer for feedback display
   const getFeedbackData = (): { explanation: string; correctAnswer?: string } => {
@@ -521,6 +526,41 @@ export default function TaskRenderer({ task, onComplete, isRetry }: TaskRenderer
       {/* Task component — hidden when feedback popup is showing */}
       {!showFeedback && renderTaskComponent()}
 
+      {/* Hint + Skip buttons row — shown below task, hidden during feedback */}
+      {!showFeedback && (
+        <div className="flex items-center justify-center gap-3 mt-5 w-full max-w-lg px-2">
+          {/* Hint button — only shown if task has a hint */}
+          {task.hint && (
+            <button
+              onClick={() => {
+                setShowHint(true);
+                if (!hintUsed) setHintUsed(true);
+              }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-semibold transition-all border focus:outline-none focus:ring-2 focus:ring-amber-400 bg-amber-500/10 border-amber-500/25 text-amber-300 hover:bg-amber-500/20 hover:border-amber-400/45"
+              aria-label="Показать подсказку"
+            >
+              <span>💡</span>
+              <span>Подсказка</span>
+              {hintUsed && (
+                <span className="text-[10px] text-amber-500/70 ml-0.5">(−5 XP)</span>
+              )}
+            </button>
+          )}
+
+          {/* Skip button — disabled if no onSkip (last task) */}
+          {onSkip && (
+            <button
+              onClick={onSkip}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-semibold bg-white/5 border border-white/15 text-slate-400 hover:bg-white/10 hover:text-slate-300 hover:border-white/25 transition-all focus:outline-none focus:ring-2 focus:ring-slate-400"
+              aria-label="Пропустить задание"
+            >
+              <span>⏭</span>
+              <span>Пропустить</span>
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Feedback popup — centered modal with all info */}
       <AnimatePresence>
         {showFeedback && (
@@ -530,6 +570,98 @@ export default function TaskRenderer({ task, onComplete, isRetry }: TaskRenderer
             correctAnswer={feedbackData.correctAnswer}
             onNext={handleNext}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Hint popup — centered modal overlay */}
+      <AnimatePresence>
+        {showHint && task.hint && !showFeedback && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.22 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-5"
+            style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)' }}
+            onClick={() => setShowHint(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.82, y: 32 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.88, y: 20 }}
+              transition={{ duration: 0.32, ease: [0.34, 1.56, 0.64, 1] }}
+              className="w-full max-w-sm rounded-3xl p-5 relative overflow-hidden"
+              style={{
+                background: 'linear-gradient(145deg, #1a1200, #2d1f00)',
+                border: '2px solid rgba(251,191,36,0.5)',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(251,191,36,0.15), 0 0 40px rgba(251,191,36,0.1)',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Decorative glow blob */}
+              <div
+                className="absolute -top-6 -right-6 w-28 h-28 rounded-full pointer-events-none"
+                style={{ background: 'radial-gradient(circle, rgba(251,191,36,0.2) 0%, transparent 70%)' }}
+              />
+
+              {/* Close button */}
+              <button
+                onClick={() => setShowHint(false)}
+                className="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center transition-colors text-sm font-bold"
+                style={{ background: 'rgba(251,191,36,0.1)', color: 'rgba(251,191,36,0.6)' }}
+                aria-label="Закрыть подсказку"
+              >
+                ✕
+              </button>
+
+              {/* Header */}
+              <div className="flex items-center gap-3 mb-4">
+                <motion.div
+                  animate={{ rotate: [0, -15, 15, -10, 10, 0], scale: [1, 1.2, 1] }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 text-2xl"
+                  style={{ background: 'linear-gradient(135deg, rgba(251,191,36,0.25), rgba(245,158,11,0.15))', border: '1px solid rgba(251,191,36,0.3)', boxShadow: '0 4px 12px rgba(251,191,36,0.15)' }}
+                >
+                  💡
+                </motion.div>
+                <div>
+                  <p className="text-[13px] font-black uppercase tracking-widest text-amber-400">
+                    Подсказка
+                  </p>
+                  <p className="text-[11px] mt-0.5 text-amber-600">
+                    −5 XP за использование
+                  </p>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="h-px mb-4" style={{ background: 'rgba(251,191,36,0.15)' }} />
+
+              {/* Hint text */}
+              <motion.p
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.18, duration: 0.28 }}
+                className="text-[14px] leading-relaxed font-medium text-amber-100"
+              >
+                {task.hint}
+              </motion.p>
+
+              {/* Close button */}
+              <motion.button
+                whileTap={{ scale: 0.96 }}
+                onClick={() => setShowHint(false)}
+                className="mt-5 w-full py-3 rounded-2xl text-[14px] font-bold transition-all"
+                style={{
+                  background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+                  color: '#1c1917',
+                  boxShadow: '0 4px 16px rgba(251,191,36,0.25)',
+                }}
+              >
+                Понятно! 👍
+              </motion.button>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

@@ -61,10 +61,10 @@ describe('addPendingUpdate', () => {
 
     const updates = getPendingUpdates();
     expect(updates).toHaveLength(1);
-    expect(updates[0].id).toBeDefined();
-    expect(updates[0].id.length).toBeGreaterThan(0);
-    expect(updates[0].type).toBe('task-complete');
-    expect(updates[0].payload).toEqual({ taskId: 't1' });
+    expect(updates[0]?.id).toBeDefined();
+    expect(updates[0]?.id?.length).toBeGreaterThan(0);
+    expect(updates[0]?.type).toBe('task-complete');
+    expect(updates[0]?.payload).toEqual({ taskId: 't1' });
   });
 
   it('appends to existing queue', () => {
@@ -73,8 +73,8 @@ describe('addPendingUpdate', () => {
 
     const updates = getPendingUpdates();
     expect(updates).toHaveLength(2);
-    expect(updates[0].type).toBe('task-complete');
-    expect(updates[1].type).toBe('xp-update');
+    expect(updates[0]?.type).toBe('task-complete');
+    expect(updates[1]?.type).toBe('xp-update');
   });
 
   it('evicts oldest when queue exceeds 50 items (FIFO)', () => {
@@ -98,10 +98,10 @@ describe('addPendingUpdate', () => {
     const updates = getPendingUpdates();
     expect(updates).toHaveLength(50);
     // First item should now be index 1 (index 0 was evicted)
-    expect(updates[0].payload).toEqual({ index: 1 });
+    expect(updates[0]?.payload).toEqual({ index: 1 });
     // Last item should be the newly added one
-    expect(updates[49].payload).toEqual({ index: 50 });
-    expect(updates[49].type).toBe('exam-submit');
+    expect(updates[49]?.payload).toEqual({ index: 50 });
+    expect(updates[49]?.type).toBe('exam-submit');
   });
 });
 

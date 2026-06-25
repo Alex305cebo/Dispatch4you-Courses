@@ -1,0 +1,142 @@
+{
+  "dayId": 19,
+  "weekId": 4,
+  "title": "Сложные ситуации: TONU, Detention, Claims",
+  "estimatedMinutes": 45,
+  "tasks": [
+    {
+      "id": "d19-t1",
+      "type": "quiz",
+      "title": "Что такое TONU",
+      "data": {
+        "question": "Что означает TONU (Truck Ordered Not Used) и когда он применяется?",
+        "options": [
+          "Штраф за опоздание водителя на pickup",
+          "Компенсация при отмене груза на pickup",
+          "Бонус за быструю доставку в срок",
+          "Налог на неиспользуемый простаивающий трак"
+        ],
+        "correctIndex": 1,
+        "explanation": "TONU — компенсация ($150-350), выплачиваемая перевозчику, если брокер/shipper отменил груз после того как водитель уже прибыл на pickup location или в пути к нему."
+      }
+    },
+    {
+      "id": "d19-t2",
+      "type": "quiz",
+      "title": "Detention pay",
+      "data": {
+        "question": "Как рассчитывается Detention pay?",
+        "options": [
+          "Фиксированная сумма $500 за любую задержку",
+          "Оплата за ожидание сверх free time",
+          "Процент от общей стоимости перевозимого груза",
+          "Не рассчитывается — это бонус от брокера"
+        ],
+        "correctIndex": 1,
+        "explanation": "Detention pay начисляется после истечения free time (обычно 2 часа на pickup и delivery). Стандартная ставка $50-75/час. Обязательно фиксируйте время прибытия документально!"
+      }
+    },
+    {
+      "id": "d19-t3",
+      "type": "crisis",
+      "title": "Груз отменён на pickup",
+      "data": {
+        "scenario": "Водитель проехал 150 миль до pickup в Sacramento. Прибыл вовремя, но на складе говорят: 'Load has been cancelled. We don't have anything for you.' Брокер не отвечает на звонки. Rate Con подписан, TONU не указан в документе. Что делать?",
+        "timeLimitSeconds": 60,
+        "options": [
+          {
+            "text": "Развернуться и уехать — потеря $200+ на топливо",
+            "isCorrect": false,
+            "explanation": "Нельзя просто уехать! Нужно документировать ситуацию и потребовать TONU. Вы имеете право на компенсацию."
+          },
+          {
+            "text": "Зафиксировать всё: фото таблички склада, timestamp GPS, написать email и SMS брокеру с TONU demand ($250 minimum), приложить документацию. Если не ответит — filing через broker bond",
+            "isCorrect": true,
+            "explanation": "Правильно! Документация — ключ: фото, GPS timestamp, written demand. Даже если TONU не в Rate Con, industry standard предполагает компенсацию. Broker bond — крайняя мера."
+          },
+          {
+            "text": "Подождать на складе весь день — вдруг груз появится",
+            "isCorrect": false,
+            "explanation": "Ждать весь день бессмысленно если груз отменён. Нужно зафиксировать TONU и искать новый груз для водителя."
+          },
+          {
+            "text": "Поругаться с персоналом склада",
+            "isCorrect": false,
+            "explanation": "Персонал склада не виноват в отмене. Ваш контрагент — брокер. Будьте профессиональны с людьми на складе и решайте вопрос с брокером."
+          }
+        ]
+      }
+    },
+    {
+      "id": "d19-t4",
+      "type": "document-review",
+      "title": "Проверка Claim документа",
+      "data": {
+        "documentType": "bol",
+        "fields": [
+          { "id": "cl-1", "label": "Claim Type", "value": "Cargo Damage", "hasError": false },
+          { "id": "cl-2", "label": "Load Reference", "value": "NF-7823", "hasError": false },
+          { "id": "cl-3", "label": "Damage Description", "value": "3 pallets water damaged", "hasError": false },
+          { "id": "cl-4", "label": "Claimed Amount", "value": "$12,500", "hasError": true, "errorExplanation": "Сумма claim ($12,500) кажется завышенной для 3 палет. Нужно запросить детальный breakdown стоимости и фото повреждений. Cargo insurance обычно требует документальное подтверждение." },
+          { "id": "cl-5", "label": "Date of Delivery", "value": "March 20, 2024", "hasError": false },
+          { "id": "cl-6", "label": "Driver Noted on BOL", "value": "No exceptions noted", "hasError": true, "errorExplanation": "Если водитель не записал 'exceptions' при delivery, а получатель теперь заявляет повреждение — это подозрительно. BOL без exceptions = груз был в порядке при доставке." },
+          { "id": "cl-7", "label": "Photos Attached", "value": "None", "hasError": true, "errorExplanation": "Claim без фотографий повреждений — не обоснован. Требуйте фото как обязательное подтверждение любого damage claim." }
+        ]
+      }
+    },
+    {
+      "id": "d19-t5",
+      "type": "phone-dialog",
+      "title": "Оспаривание необоснованного Claim",
+      "data": {
+        "turns": [
+          {
+            "speaker": "npc",
+            "text": "This is Jennifer from National Freight. We need to discuss a cargo damage claim on load NF-7823. The receiver is saying 3 pallets arrived water damaged. They're claiming $12,500.",
+            "replies": [
+              {
+                "text": "Jennifer, I reviewed the BOL and my driver noted NO exceptions at delivery. The receiver signed without any damage notes. Do you have photos of the alleged damage? And what's the breakdown of the $12,500?",
+                "isCorrect": true,
+                "feedback": "Отлично! Вы сразу обратили внимание на ключевой факт: BOL без exceptions. Это ваша сильнейшая защита. Запрос фото и breakdown — обязательный шаг."
+              },
+              {
+                "text": "OK, we'll pay the $12,500.",
+                "isCorrect": false,
+                "feedback": "Никогда не соглашайтесь на claim без проверки! BOL без exceptions — сильная защита. Требуйте доказательства."
+              }
+            ]
+          },
+          {
+            "speaker": "npc",
+            "text": "Hmm, you're right — the BOL shows clean delivery with receiver's signature. Let me go back to the receiver and ask for photos and a detailed breakdown. I'll get back to you.",
+            "replies": [
+              {
+                "text": "Please do. Without photos and a clean BOL on our end, this claim doesn't have grounds. We're happy to cooperate if there's legitimate evidence, but the documentation doesn't support the claim as stated.",
+                "isCorrect": true,
+                "feedback": "Правильно! Вежливо, но твёрдо. Вы обозначили позицию: чистый BOL = груз был в порядке при доставке. Бремя доказательства — на заявителе."
+              },
+              {
+                "text": "Fine, whatever.",
+                "isCorrect": false,
+                "feedback": "Нужно чётко обозначить позицию. Каждое общение по claims должно быть профессиональным и документированным."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "d19-t6",
+      "type": "fill-blank",
+      "title": "Защита от Claims",
+      "data": {
+        "sentence": "При ___ (Truck Ordered Not Used) перевозчик имеет право на компенсацию. При ожидании сверх ___ часов начисляется Detention pay. Для защиты от Cargo Claim важно, чтобы ___ был подписан без exceptions.",
+        "blanks": [
+          { "correctAnswer": "TONU", "wordBank": ["TONU", "POD", "BOL", "ELD"] },
+          { "correctAnswer": "2", "wordBank": ["2", "4", "8", "1"] },
+          { "correctAnswer": "POD", "wordBank": ["POD", "Rate Con", "Invoice", "GPS"] }
+        ]
+      }
+    }
+  ]
+}

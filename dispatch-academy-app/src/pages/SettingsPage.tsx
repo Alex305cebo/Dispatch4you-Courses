@@ -3,7 +3,7 @@ import { useUIStore } from '../store/useUIStore';
 import { useAuth } from '../hooks/useAuth';
 
 export default function SettingsPage() {
-  const { totalXP, level, taskScores, currentStreak } = useProgressStore();
+  const { totalXP, taskScores, currentStreak } = useProgressStore();
   const { soundEnabled, toggleSound } = useUIStore();
   const { user, loading: authLoading, signIn, signOut } = useAuth();
 

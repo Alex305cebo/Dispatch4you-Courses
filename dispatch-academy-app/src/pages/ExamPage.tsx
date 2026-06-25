@@ -461,15 +461,15 @@ export default function ExamPage() {
               <p className="text-white text-lg mb-4">Результат: <span className="font-bold text-green-400">{results.score}%</span></p>
               <div className="grid grid-cols-3 gap-3 mb-6">
                 <div className="bg-gray-700 rounded-lg p-3">
-                  <p className="text-xs text-gray-400">Правильных</p>
+                  <p className="text-xs text-cyan-300">Правильных</p>
                   <p className="text-lg font-bold text-white">{results.correctCount}/{results.totalQuestions}</p>
                 </div>
                 <div className="bg-gray-700 rounded-lg p-3">
-                  <p className="text-xs text-gray-400">Время</p>
+                  <p className="text-xs text-cyan-300">Время</p>
                   <p className="text-lg font-bold text-white">{formatTime(results.timeSpent)}</p>
                 </div>
                 <div className="bg-gray-700 rounded-lg p-3">
-                  <p className="text-xs text-gray-400">XP</p>
+                  <p className="text-xs text-cyan-300">XP</p>
                   <p className="text-lg font-bold text-cyan-400">+{xpReward}</p>
                 </div>
               </div>
@@ -487,13 +487,13 @@ export default function ExamPage() {
             <div className="bg-gray-800 rounded-xl p-4 border border-red-500/30">
               <div className="text-center mb-3">
                 <h2 className="text-lg font-bold text-red-400 mb-1">Не пройдено — {results.score}%</h2>
-                <p className="text-gray-300 text-xs">
+                <p className="text-cyan-300 text-xs">
                   Необходимо {passingScore}% для прохождения. Правильных: {results.correctCount}/{results.totalQuestions}
                 </p>
               </div>
               {/* Per-module breakdown */}
               <div className="mb-3">
-                <h3 className="text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">Результаты по модулям</h3>
+                <h3 className="text-xs font-semibold text-cyan-300 mb-1.5 uppercase tracking-wide">Результаты по модулям</h3>
                 <div className="space-y-1.5">
                   {(isMini ? weekModules : Array.from({ length: 12 }, (_, i) => i + 1))
                     .filter((mid) => results.topicBreakdown[mid] !== undefined)
@@ -503,7 +503,7 @@ export default function ExamPage() {
                       const weak = pct < 70;
                       return (
                         <div key={mid} className="flex items-center gap-3 bg-gray-700/50 rounded-lg px-3 py-2">
-                          <span className="text-sm text-gray-300 w-20 shrink-0">Модуль {mid}</span>
+                          <span className="text-sm text-cyan-200 w-20 shrink-0">Модуль {mid}</span>
                           <div className="flex-1 h-2 bg-gray-600 rounded-full overflow-hidden">
                             <div className={'h-full rounded-full ' + (weak ? 'bg-red-500' : 'bg-green-500')} style={{ width: pct + '%' }} />
                           </div>
@@ -519,11 +519,11 @@ export default function ExamPage() {
               {weakTopics.length > 0 && (
                 <div className="bg-red-900/20 border border-red-500/20 rounded-lg p-2 mb-2">
                   <p className="text-xs font-semibold text-red-400 mb-0.5">Зоны для повторения:</p>
-                  <p className="text-xs text-gray-300">{weakTopics.map((m) => 'Модуль ' + m).join(', ')}</p>
+                  <p className="text-xs text-cyan-200">{weakTopics.map((m) => 'Модуль ' + m).join(', ')}</p>
                 </div>
               )}
               <div className="bg-gray-700/50 rounded-lg p-2 mb-3 text-center">
-                <p className="text-xs text-gray-300">
+                <p className="text-xs text-cyan-300">
                   ⏳ Повтор через <span className="text-cyan-400 font-semibold">{isFinal ? '24 часа' : '30 минут'}</span>
                 </p>
               </div>

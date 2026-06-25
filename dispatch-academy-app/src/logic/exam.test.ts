@@ -48,13 +48,14 @@ describe('getModulesForWeek', () => {
 describe('selectMiniExamQuestions', () => {
   function buildWeekPool(weekId: number, countPerType: number): ExamQuestion[] {
     const modules = getModulesForWeek(weekId);
-    const types: ExamQuestion['type'][] = ['quiz', 'fill-blank', 'calculator', 'drag-match'];
+    // const types: ExamQuestion['type'][] = ['quiz', 'fill-blank', 'calculator', 'drag-match'];
     const pool: ExamQuestion[] = [];
-    let counter = 0;
-    for (const type of types) {
+    let counter: number = 0;
+    const questionTypes: ExamQuestion['type'][] = ['quiz', 'fill-blank', 'calculator', 'drag-match'];
+    for (const type of questionTypes) {
       for (let i = 0; i < countPerType; i++) {
         const mod = modules[i % modules.length];
-        pool.push(makeQuestion(`q${counter++}`, type, mod));
+        pool.push(makeQuestion(`q${counter++}`, type, mod || 1));
       }
     }
     return pool;
@@ -115,7 +116,6 @@ describe('selectMiniExamQuestions', () => {
 
 describe('selectFinalExamQuestions', () => {
   function buildFullPool(): ExamQuestion[] {
-    const types: ExamQuestion['type'][] = ['quiz', 'fill-blank', 'calculator', 'drag-match'];
     const pool: ExamQuestion[] = [];
     let counter = 0;
     // 20 quiz per module and 20 situational per module = plenty for selection
@@ -154,11 +154,15 @@ describe('selectFinalExamQuestions', () => {
     // Due to shuffle this is best verified by checking alternation pattern exists
     let hasAlternation = false;
     for (let i = 0; i < result.length - 1; i++) {
-      const currentIsQuiz = result[i].type === 'quiz';
-      const nextIsQuiz = result[i + 1].type === 'quiz';
-      if (currentIsQuiz !== nextIsQuiz) {
-        hasAlternation = true;
-        break;
+      const current = result[i];
+      const next = result[i + 1];
+      if (current && next) {
+        const currentIsQuiz = current.type === 'quiz';
+        const nextIsQuiz = next.type === 'quiz';
+        if (currentIsQuiz !== nextIsQuiz) {
+          hasAlternation = true;
+          break;
+        }
       }
     }
     expect(hasAlternation).toBe(true);

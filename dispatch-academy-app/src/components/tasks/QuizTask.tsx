@@ -11,8 +11,6 @@ export default function QuizTask({ data, onAnswer }: QuizTaskProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [answered, setAnswered] = useState(false);
 
-  const isCorrect = selectedIndex !== null && selectedIndex === data.correctIndex;
-
   const handleSelect = useCallback(
     (index: number) => {
       if (answered) return;

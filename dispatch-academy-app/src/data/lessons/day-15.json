@@ -11,10 +11,10 @@
       "data": {
         "question": "Что фиксирует ELD (Electronic Logging Device) и почему это важно для диспетчера?",
         "options": [
-          "Только скорость трака для safety department",
-          "Время вождения, On Duty, Sleeper Berth, Off Duty — для контроля HOS compliance. Диспетчер видит реальные доступные часы водителя.",
-          "Только местоположение трака на карте",
-          "Расход топлива и состояние двигателя"
+          "Только скорость трака — исключительно для контроля превышений и safety отчётов",
+          "Время вождения, On Duty, Sleeper Berth, Off Duty — для контроля HOS compliance и диспетчеризации",
+          "Только текущее местоположение трака на карте в режиме реального времени GPS",
+          "Только расход топлива и состояние двигателя для планирования технического обслуживания"
         ],
         "correctIndex": 1,
         "explanation": "ELD записывает 4 duty status: Driving, On Duty (Not Driving), Sleeper Berth, Off Duty. Для диспетчера это критически важно: вы видите РЕАЛЬНЫЕ доступные часы водителя (не его слова, а факты). ELD mandate (2017) = все CMV должны иметь ELD. Нарушение = $16,000 штраф для carrier. Основные ELD провайдеры: Samsara, Motive (KeepTruckin), Geotab."
@@ -26,12 +26,30 @@
       "title": "ELD статусы и правила",
       "data": {
         "pairs": [
-          { "term": "Driving", "definition": "Трак в движении — max 11 часов в сутки" },
-          { "term": "On Duty (Not Driving)", "definition": "Работа без вождения: загрузка, inspection, paperwork" },
-          { "term": "Sleeper Berth", "definition": "Отдых в спальной кабине — останавливает 14-hr clock" },
-          { "term": "Off Duty", "definition": "Полный отдых — не связан с работой" },
-          { "term": "14-hour clock", "definition": "Окно от начала duty — после 14 часов нельзя водить" },
-          { "term": "30-min break", "definition": "Обязательный перерыв после 8 часов driving" }
+          {
+            "term": "Driving",
+            "definition": "Трак в движении — max 11 часов в сутки"
+          },
+          {
+            "term": "On Duty (Not Driving)",
+            "definition": "Работа без вождения: загрузка, inspection, paperwork"
+          },
+          {
+            "term": "Sleeper Berth",
+            "definition": "Отдых в спальной кабине — останавливает 14-hr clock"
+          },
+          {
+            "term": "Off Duty",
+            "definition": "Полный отдых — не связан с работой"
+          },
+          {
+            "term": "14-hour clock",
+            "definition": "Окно от начала duty — после 14 часов нельзя водить"
+          },
+          {
+            "term": "30-min break",
+            "definition": "Обязательный перерыв после 8 часов driving"
+          }
         ]
       }
     },
@@ -42,10 +60,22 @@
       "data": {
         "scenario": "Ваш водитель Mike звонит: 'Мой ELD показывает violation — я проехал 11 часов 20 минут вместо максимальных 11. Я заехал на заправку и не заметил как перешёл лимит. Сейчас я в 40 милях от delivery, appointment через 2 часа.' Violation уже записан в ELD.",
         "options": [
-          {"text": "Пусть доедет 40 миль — violation уже есть, хуже не будет", "isCorrect": false},
-          {"text": "СТОП. Водитель должен немедленно остановиться и уйти в Off Duty/Sleeper. Violation уже записан — продолжение езды только увеличит severity. Связаться с брокером: задержка delivery на minimum 10 часов (reset). Документировать обстоятельства для потенциального аудита.", "isCorrect": true},
-          {"text": "Попросить водителя перевести ELD в 'unassigned' mode и доехать без логов", "isCorrect": false},
-          {"text": "Отключить ELD — он глючит, пусть едет на бумажных логах", "isCorrect": false}
+          {
+            "text": "Пусть доедет 40 миль — violation уже есть, хуже не будет",
+            "isCorrect": false
+          },
+          {
+            "text": "СТОП. Водитель должен немедленно остановиться и уйти в Off Duty/Sleeper. Violation уже записан — продолжение езды только увеличит severity. Связаться с брокером: задержка delivery на minimum 10 часов (reset). Документировать обстоятельства для потенциального аудита.",
+            "isCorrect": true
+          },
+          {
+            "text": "Попросить водителя перевести ELD в 'unassigned' mode и доехать без логов",
+            "isCorrect": false
+          },
+          {
+            "text": "Отключить ELD — он глючит, пусть едет на бумажных логах",
+            "isCorrect": false
+          }
         ]
       }
     },
@@ -87,9 +117,21 @@
             "speaker": "Водитель",
             "message": "Я вчера остановился в 9 PM на truck stop но забыл переключить ELD. Он записал driving до полуночи. Можешь исправить? Поставь Sleeper Berth с 9 PM. Я правда спал!",
             "replies": [
-              {"text": "Ivan, я могу предложить edit с annotation 'Driver failed to change status — stopped at truck stop 9 PM'. Но edit требует твоего подтверждения в ELD и GPS data должна подтвердить что трак не двигался. Я создам proposed edit с объяснением. Это законная процедура — ошибка статуса, не falsification.", "isCorrect": true, "feedback": "Правильно! ELD edits РАЗРЕШЕНЫ для исправления ошибок переключения статуса — это нормальная практика. Но: 1) GPS должна подтвердить остановку. 2) Annotation обязательна (причина edit). 3) Driver должен accept/reject в течение 14 дней. 4) Оригинальный лог сохраняется — edits видны при аудите. Это НЕ фальсификация если driver действительно стоял."},
-              {"text": "Нет, ELD нельзя редактировать никогда — это federal law.", "isCorrect": false, "feedback": "Неправильно! ELD edits РАЗРЕШЕНЫ по FMCSA правилам (49 CFR 395.8). Carrier/driver МОГУТ редактировать записи для исправления ошибок. Но: каждый edit logged, GPS verified, annotation required. Запрещена ФАЛЬСИФИКАЦИЯ (менять Driving на Off Duty когда реально ехал), но не correction of genuine errors."},
-              {"text": "Конечно, я просто поменяю всё в системе — никто не узнает.", "isCorrect": false, "feedback": "ОПАСНО! Это falsification of records — federal crime! Штраф до $16,000 per violation. При аудите FMCSA видит ВСЕ edits и их обоснования. 'Никто не узнает' — ложь, все edits сохраняются в uneditable audit trail. Правильно: edit с annotation + GPS verification. Но НИКОГДА не фальсифицируйте."}
+              {
+                "text": "Ivan, я могу предложить edit с annotation 'Driver failed to change status — stopped at truck stop 9 PM'. Но edit требует твоего подтверждения в ELD и GPS data должна подтвердить что трак не двигался. Я создам proposed edit с объяснением. Это законная процедура — ошибка статуса, не falsification.",
+                "isCorrect": true,
+                "feedback": "Правильно! ELD edits РАЗРЕШЕНЫ для исправления ошибок переключения статуса — это нормальная практика. Но: 1) GPS должна подтвердить остановку. 2) Annotation обязательна (причина edit). 3) Driver должен accept/reject в течение 14 дней. 4) Оригинальный лог сохраняется — edits видны при аудите. Это НЕ фальсификация если driver действительно стоял."
+              },
+              {
+                "text": "Нет, ELD нельзя редактировать никогда — это federal law.",
+                "isCorrect": false,
+                "feedback": "Неправильно! ELD edits РАЗРЕШЕНЫ по FMCSA правилам (49 CFR 395.8). Carrier/driver МОГУТ редактировать записи для исправления ошибок. Но: каждый edit logged, GPS verified, annotation required. Запрещена ФАЛЬСИФИКАЦИЯ (менять Driving на Off Duty когда реально ехал), но не correction of genuine errors."
+              },
+              {
+                "text": "Конечно, я просто поменяю всё в системе — никто не узнает.",
+                "isCorrect": false,
+                "feedback": "ОПАСНО! Это falsification of records — federal crime! Штраф до $16,000 per violation. При аудите FMCSA видит ВСЕ edits и их обоснования. 'Никто не узнает' — ложь, все edits сохраняются в uneditable audit trail. Правильно: edit с annotation + GPS verification. Но НИКОГДА не фальсифицируйте."
+              }
             ]
           }
         ]
@@ -102,10 +144,10 @@
       "data": {
         "question": "Какие ДОПОЛНИТЕЛЬНЫЕ функции (помимо HOS logging) предоставляют современные ELD systems как Samsara и Motive?",
         "options": [
-          "Только запись часов вождения — больше ничего",
-          "GPS tracking, dashcam video, vehicle diagnostics, fuel monitoring, driver scoring, IFTA reporting, DVIR (vehicle inspection reports)",
-          "Только GPS и топливо",
-          "Только связь с водителем через мессенджер"
+          "Только запись часов вождения для HOS compliance — других функций у системы нет",
+          "GPS tracking, dashcam video, vehicle diagnostics, fuel monitoring, driver scoring, IFTA reports и HOS",
+          "Только GPS координаты трака и расход топлива — это базовый минимум для работы",
+          "Только функция связи с водителем через встроенный мессенджер TMS системы"
         ],
         "correctIndex": 1,
         "explanation": "Современные ELD platforms (Samsara, Motive) — это полные fleet management systems: GPS real-time tracking, AI dashcam (forward + driver-facing), engine diagnostics (fault codes), fuel usage tracking, driver safety scoring, automated IFTA fuel tax reports, electronic DVIR, temperature monitoring (reefer), и alerts (speeding, harsh braking, geofence). Цена: $25-45/truck/month."
@@ -130,10 +172,22 @@
       "data": {
         "scenario": "Получено письмо от FMCSA: 'Compliance Review Notice. Your carrier is selected for safety audit. Please provide ELD records for all drivers for the past 6 months, DVIR reports, and drug testing records within 10 business days.' Это ваш первый audit.",
         "options": [
-          {"text": "Игнорировать письмо — maybe это мошенничество", "isCorrect": false},
-          {"text": "Немедленно: 1) Verify letter authenticity через FMCSA portal. 2) Назначить safety manager для сбора документов. 3) Экспортировать все ELD records из Samsara/Motive (6 месяцев, все drivers). 4) Собрать DVIR reports. 5) Подготовить drug testing records. 6) Если есть violations — подготовить corrective actions documentation. Уложиться в 10 дней.", "isCorrect": true},
-          {"text": "Нанять адвоката и отказаться предоставлять данные", "isCorrect": false},
-          {"text": "Удалить ELD данные с violations перед отправкой", "isCorrect": false}
+          {
+            "text": "Игнорировать письмо — maybe это мошенничество",
+            "isCorrect": false
+          },
+          {
+            "text": "Немедленно: 1) Verify letter authenticity через FMCSA portal. 2) Назначить safety manager для сбора документов. 3) Экспортировать все ELD records из Samsara/Motive (6 месяцев, все drivers). 4) Собрать DVIR reports. 5) Подготовить drug testing records. 6) Если есть violations — подготовить corrective actions documentation. Уложиться в 10 дней.",
+            "isCorrect": true
+          },
+          {
+            "text": "Нанять адвоката и отказаться предоставлять данные",
+            "isCorrect": false
+          },
+          {
+            "text": "Удалить ELD данные с violations перед отправкой",
+            "isCorrect": false
+          }
         ]
       }
     },
@@ -144,10 +198,42 @@
       "data": {
         "sentence": "Максимальное время вождения за смену: {0} часов. 14-hour window начинается когда водитель переходит в {1}. Обязательный break после 8 часов driving: {2} минут. Для full reset HOS нужно {3} часа подряд Off Duty.",
         "blanks": [
-          {"correctAnswer": "11", "wordBank": ["11", "10", "12", "14"]},
-          {"correctAnswer": "On Duty", "wordBank": ["On Duty", "Driving", "Off Duty", "Sleeper"]},
-          {"correctAnswer": "30", "wordBank": ["30", "15", "45", "60"]},
-          {"correctAnswer": "34", "wordBank": ["34", "24", "10", "48"]}
+          {
+            "correctAnswer": "11",
+            "wordBank": [
+              "11",
+              "10",
+              "12",
+              "14"
+            ]
+          },
+          {
+            "correctAnswer": "On Duty",
+            "wordBank": [
+              "On Duty",
+              "Driving",
+              "Off Duty",
+              "Sleeper"
+            ]
+          },
+          {
+            "correctAnswer": "30",
+            "wordBank": [
+              "30",
+              "15",
+              "45",
+              "60"
+            ]
+          },
+          {
+            "correctAnswer": "34",
+            "wordBank": [
+              "34",
+              "24",
+              "10",
+              "48"
+            ]
+          }
         ]
       }
     },

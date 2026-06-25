@@ -48,7 +48,8 @@ describe('CalculatorTask', () => {
       mockCalcData.unit
     );
     render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    fireEvent.click(screen.getAllByRole('button')[correctIndex]);
+    const btn = screen.getAllByRole('button')[correctIndex];
+    if (btn) fireEvent.click(btn);
     expect(onAnswer).toHaveBeenCalledWith(true);
   });
 
@@ -60,7 +61,8 @@ describe('CalculatorTask', () => {
     );
     const wrongIndex = correctIndex === 0 ? 1 : 0;
     render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    fireEvent.click(screen.getAllByRole('button')[wrongIndex]);
+    const btn = screen.getAllByRole('button')[wrongIndex];
+    if (btn) fireEvent.click(btn);
     expect(onAnswer).toHaveBeenCalledWith(false);
   });
 
@@ -71,7 +73,8 @@ describe('CalculatorTask', () => {
       mockCalcData.unit
     );
     render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    fireEvent.click(screen.getAllByRole('button')[correctIndex]);
+    const btn = screen.getAllByRole('button')[correctIndex];
+    if (btn) fireEvent.click(btn);
     expect(screen.getByText(`Верно! Ответ: ${options[correctIndex]}`)).toBeInTheDocument();
   });
 
@@ -83,7 +86,8 @@ describe('CalculatorTask', () => {
     );
     const wrongIndex = correctIndex === 0 ? 1 : 0;
     render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    fireEvent.click(screen.getAllByRole('button')[wrongIndex]);
+    const btn = screen.getAllByRole('button')[wrongIndex];
+    if (btn) fireEvent.click(btn);
     expect(
       screen.getByText(`Неверно. Правильный ответ: ${options[correctIndex]}`)
     ).toBeInTheDocument();
@@ -93,7 +97,8 @@ describe('CalculatorTask', () => {
     const onAnswer = vi.fn();
     render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
     const buttons = screen.getAllByRole('button');
-    fireEvent.click(buttons[0]);
+    const btn = buttons[0];
+    if (btn) fireEvent.click(btn);
     buttons.forEach((button) => {
       expect(button).toBeDisabled();
     });
@@ -103,8 +108,10 @@ describe('CalculatorTask', () => {
     const onAnswer = vi.fn();
     render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
     const buttons = screen.getAllByRole('button');
-    fireEvent.click(buttons[0]);
-    fireEvent.click(buttons[1]);
+    const btn0 = buttons[0];
+    const btn1 = buttons[1];
+    if (btn0) fireEvent.click(btn0);
+    if (btn1) fireEvent.click(btn1);
     expect(onAnswer).toHaveBeenCalledTimes(1);
   });
 
@@ -119,7 +126,8 @@ describe('CalculatorTask', () => {
     const onAnswer = vi.fn();
     const { correctIndex } = generateCalculatorOptions(0, '$');
     render(<CalculatorTask data={zeroData} onAnswer={onAnswer} />);
-    fireEvent.click(screen.getAllByRole('button')[correctIndex]);
+    const btn = screen.getAllByRole('button')[correctIndex];
+    if (btn) fireEvent.click(btn);
     expect(onAnswer).toHaveBeenCalledWith(true);
   });
 });

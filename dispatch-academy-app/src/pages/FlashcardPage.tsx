@@ -68,8 +68,8 @@ const ratingButtons: { rating: DifficultyRating; label: string; color: string }[
 export default function FlashcardPage() {
   const flashcardStates = useProgressStore((s) => s.flashcardStates);
   const updateFlashcardState = useProgressStore((s) => s.updateFlashcardState);
-  const { totalXP } = useProgressStore();
-  const { addXP } = useProgressStore((s) => ({ addXP: s.addXP || (() => {}) }));
+  const { } = useProgressStore();
+  const {} = useProgressStore(() => ({ /* addXP not needed */ }));
 
   const [pageState, setPageState] = useState<PageState>('loading');
   const [allCards, setAllCards] = useState<Flashcard[]>([]);

@@ -17,6 +17,7 @@ export interface Task {
   id: string;
   type: TaskType;
   title: string;
+  hint?: string;
   /** Task-specific payload */
   data: TaskData;
 }
@@ -42,9 +43,10 @@ export interface EmailSimData {
 }
 
 export interface PhoneDialogData {
+  context: string;
   turns: Array<{
     speaker: 'npc';
-    text: string;
+    message: string;
     replies: Array<{
       text: string;
       isCorrect: boolean;

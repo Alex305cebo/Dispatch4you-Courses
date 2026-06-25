@@ -110,10 +110,12 @@ export function mergeProgressStates(
     const localStatus = mergedDayStatuses[dayId];
     const remoteStatus = remote.dayStatuses[dayId];
 
-    if (localStatus === undefined) {
-      mergedDayStatuses[dayId] = remoteStatus;
-    } else {
-      mergedDayStatuses[dayId] = compareDayStatus(localStatus, remoteStatus);
+    if (remoteStatus !== undefined) {
+      if (localStatus === undefined) {
+        mergedDayStatuses[dayId] = remoteStatus;
+      } else {
+        mergedDayStatuses[dayId] = compareDayStatus(localStatus, remoteStatus);
+      }
     }
   }
 
@@ -123,11 +125,13 @@ export function mergeProgressStates(
     const localDate = mergedFlashcardDates[key];
     const remoteDate = remote.flashcardNextDates[key];
 
-    if (localDate === undefined) {
-      mergedFlashcardDates[key] = remoteDate;
-    } else {
-      // Compare ISO date strings lexicographically (works for ISO format)
-      mergedFlashcardDates[key] = localDate >= remoteDate ? localDate : remoteDate;
+    if (remoteDate !== undefined) {
+      if (localDate === undefined) {
+        mergedFlashcardDates[key] = remoteDate;
+      } else {
+        // Compare ISO date strings lexicographically (works for ISO format)
+        mergedFlashcardDates[key] = localDate >= remoteDate ? localDate : remoteDate;
+      }
     }
   }
 

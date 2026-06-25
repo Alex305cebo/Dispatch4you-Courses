@@ -172,20 +172,27 @@ export default function ProgressMapPage() {
   const globalCurrentLevel = highestCompleted + 1;
 
   // For the current map: figure out which levels are completed/current/locked
-  const mapFirstLevel = LEVEL_POSITIONS[0]?.id ?? 1;
   const mapLastLevel = LEVEL_POSITIONS[LEVEL_POSITIONS.length - 1]?.id ?? 11;
-  const currentLevel = Math.min(globalCurrentLevel, mapLastLevel + 1);
+  const mapFirstLevel = LEVEL_POSITIONS[0]?.id ?? 1;
 
-  // Check if current map is locked
-  const previousMapLevels = currentMapIndex > 0 ? MAPS[currentMapIndex - 1]!.levels : [];
-  const previousMapAllCompleted = previousMapLevels.length > 0 && previousMapLevels.every(lvl => completedDayIds.includes(lvl.id));
-  
-  // Dream map locked condition: all map 1 levels + 80% accuracy
+  // For dream map (ids 101–111) need separate tracking since ids are non-sequential with main levels
+  const isDreamMap = currentMap.transition === 'dream';
+  const completedOnCurrentMap = LEVEL_POSITIONS.filter(p => completedDayIds.includes(p.id));
+  const highestCompletedOnMap = completedOnCurrentMap.length > 0
+    ? Math.max(...completedOnCurrentMap.map(p => p.id))
+    : 0;
+
+  // currentLevel: next level to play on this map
+  const currentLevel = isDreamMap
+    ? (highestCompletedOnMap > 0 ? highestCompletedOnMap + 1 : mapFirstLevel)
+    : Math.min(globalCurrentLevel, mapLastLevel + 1);
+
+  // Dream map locked condition: all map 1 levels completed
   const map1Levels = MAPS[0]!.levels;
   const map1AllCompleted = map1Levels.every(lvl => completedDayIds.includes(lvl.id));
   const allScoresArr = Object.values(taskScores);
   const globalAccuracy = allScoresArr.length > 0 ? (allScoresArr.filter((s: any) => s?.correct).length / allScoresArr.length) * 100 : 0;
-  const isDreamLocked = currentMap.transition === 'dream' && (!map1AllCompleted || globalAccuracy < 80);
+  const isDreamLocked = currentMap.transition === 'dream' && !map1AllCompleted;
   
   // Dream map levels
   const dreamMap = MAPS.find(m => m.transition === 'dream');
@@ -199,12 +206,19 @@ export default function ProgressMapPage() {
 
   // Build SVG path connecting completed levels (smooth bezier curves)
   const progressPath = useMemo(() => {
-    // Count completed levels on this map
-    const completedOnMap = LEVEL_POSITIONS.filter(p => p.id < currentLevel).length;
-    if (completedOnMap < 1) return '';
+    // Find how many consecutive levels from start are completed
+    let completedCount = 0;
+    for (const pos of LEVEL_POSITIONS) {
+      if (completedDayIds.includes(pos.id)) {
+        completedCount++;
+      } else {
+        break;
+      }
+    }
+    if (completedCount < 1) return '';
 
     // Convert % to SVG viewBox coordinates (1000x1778 for 9:16 ratio)
-    const points = LEVEL_POSITIONS.slice(0, completedOnMap + 1).map((p) => ({
+    const points = LEVEL_POSITIONS.slice(0, completedCount + 1).map((p) => ({
       x: (p.x / 100) * 1000,
       y: (p.y / 100) * 1778,
     }));
@@ -219,10 +233,11 @@ export default function ProgressMapPage() {
       path += ` C ${curr.x} ${midY}, ${next.x} ${midY}, ${next.x} ${next.y}`;
     }
     return path;
-  }, [currentLevel, LEVEL_POSITIONS]);
+  }, [completedDayIds, LEVEL_POSITIONS]);
 
   const handleLevelTap = (levelId: number) => {
-    if (levelId <= currentLevel) {
+    const status = getStatus(levelId);
+    if (status === 'completed' || status === 'current') {
       openLevelPopup(levelId);
     }
   };
@@ -232,6 +247,7 @@ export default function ProgressMapPage() {
   const [popupContent, setPopupContent] = useState<DayContent | null>(null);
   const [popupTaskIndex, setPopupTaskIndex] = useState(0);
   const [popupLevelId, setPopupLevelId] = useState(0);
+  const [popupTaskLimit, setPopupTaskLimit] = useState(0);
 
   const completeTask = useProgressStore((s) => s.completeTask);
   const addXP = useProgressStore((s) => s.addXP);
@@ -239,9 +255,16 @@ export default function ProgressMapPage() {
   const openLevelPopup = useCallback(async (levelId: number) => {
     try {
       const content = await loadDayContent(levelId);
+
+      // Progressive task count: level 1 = 1 task, level 2 = 2 tasks, etc.
+      const isDream = levelId >= 100;
+      const levelNumber = isDream ? levelId - 100 : levelId;
+      const limit = Math.min(levelNumber, content.tasks.length);
+
       setPopupContent(content);
       setPopupTaskIndex(0);
       setPopupLevelId(levelId);
+      setPopupTaskLimit(limit);
       setPopupOpen(true);
     } catch {
       // fallback to navigation
@@ -253,7 +276,8 @@ export default function ProgressMapPage() {
     completeTask(popupLevelId, result);
     addXP(result.correct ? 20 : 5, 'task-complete');
 
-    if (popupContent && popupTaskIndex + 1 >= popupContent.tasks.length) {
+    const nextIndex = popupTaskIndex + 1;
+    if (nextIndex >= popupTaskLimit) {
       // Level complete — close popup
       setTimeout(() => {
         setPopupOpen(false);
@@ -261,9 +285,9 @@ export default function ProgressMapPage() {
       }, 800);
     } else {
       // Next task
-      setPopupTaskIndex((i) => i + 1);
+      setPopupTaskIndex(nextIndex);
     }
-  }, [popupLevelId, popupContent, popupTaskIndex, completeTask, addXP]);
+  }, [popupLevelId, popupContent, popupTaskIndex, popupTaskLimit, completeTask, addXP]);
 
   const closePopup = () => {
     setPopupOpen(false);
@@ -271,8 +295,10 @@ export default function ProgressMapPage() {
   };
 
   const getStatus = (id: number): 'completed' | 'current' | 'locked' => {
-    if (id < currentLevel) return 'completed';
+    if (completedDayIds.includes(id)) return 'completed';
     if (id === currentLevel) return 'current';
+    // For sequential maps: levels below currentLevel that aren't completed (shouldn't happen but guard)
+    if (!isDreamMap && id < currentLevel) return 'completed';
     return 'locked';
   };
 
@@ -411,13 +437,11 @@ export default function ProgressMapPage() {
                     <>
                       <p>Пройдите все уровни карты 1</p>
                       <p className="text-white/40">Пройдено: {map1Levels.filter(lvl => completedDayIds.includes(lvl.id)).length} / {map1Levels.length}</p>
-                      <p className="text-white/40">+ наберите 80% правильных ответов</p>
                     </>
                   ) : (
                     <>
                       <p>✅ Карта 1 пройдена</p>
-                      <p>Наберите 80% правильных ответов</p>
-                      <p className="text-white/40">Сейчас: {Math.round(globalAccuracy)}% / 80%</p>
+                      <p>Карта сна уже должна быть открыта!</p>
                     </>
                   )
                 ) : (
@@ -461,8 +485,8 @@ export default function ProgressMapPage() {
           return (
             <div
               key={pos.id}
-              className={`absolute -translate-x-1/2 -translate-y-1/2 z-20 group ${editorMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
-              style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
+              className={`absolute -translate-x-1/2 -translate-y-1/2 z-20 hover:z-40 group ${editorMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
+              style={{ left: `${pos.x}%`, top: `${pos.y}%`, zIndex: status === 'current' ? 40 : undefined }}
               onPointerDown={editorMode ? (e) => handleEditorPointerDown(pos.id, e) : undefined}
             >
               {/* Sparkle dust around completed levels */}
@@ -480,14 +504,24 @@ export default function ProgressMapPage() {
               )}
 
               {/* Tooltip cloud — show on current AND locked (dimmed) levels */}
-              {!editorMode && (
-                <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 sm:w-36 ${status === 'locked' ? 'opacity-0 group-hover:opacity-60' : status === 'current' ? 'opacity-100' : 'opacity-0 group-hover:opacity-80'} transition-opacity`}>
-                  <div className="px-3 py-1.5 rounded-xl bg-white shadow-lg text-slate-800 text-[11px] sm:text-[13px] font-bold border border-slate-200 text-center leading-snug">
-                    {info}
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 bg-white border-r border-b border-slate-200 rotate-45 -mt-1" />
+              {!editorMode && (() => {
+                const showBelow = pos.y < 20; // near top of map — show tooltip below
+                return (
+                  <div className={`absolute ${showBelow ? 'top-full mt-2' : 'bottom-full mb-2'} left-1/2 -translate-x-1/2 w-32 sm:w-36 z-50 ${status === 'locked' ? 'opacity-0 group-hover:opacity-60' : status === 'current' ? 'opacity-100' : 'opacity-0 group-hover:opacity-80'} transition-opacity`}>
+                    <div className="relative px-3 py-1.5 rounded-xl bg-white shadow-lg text-slate-800 text-[11px] sm:text-[13px] font-bold border border-slate-200 text-center leading-snug">
+                      {info}
+                      {/* Arrow pointing UP (tooltip is below button) */}
+                      {showBelow && (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-2 h-2 bg-white border-l border-t border-slate-200 rotate-45 mb-[-1px]" />
+                      )}
+                      {/* Arrow pointing DOWN (tooltip is above button) */}
+                      {!showBelow && (
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 bg-white border-r border-b border-slate-200 rotate-45 -mt-1" />
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Editor mode: show coordinates */}
               {editorMode && (
@@ -507,29 +541,29 @@ export default function ProgressMapPage() {
                       ? 'text-white hover:scale-110'
                       : status === 'current'
                         ? 'text-white hover:scale-110 animate-current-bounce'
-                        : 'text-white/40 hover:scale-105'
+                        : 'text-white/70 hover:scale-105'
                 }`}
                 style={!editorMode ? {
                   background: status === 'completed'
                     ? 'linear-gradient(135deg, rgba(34,197,94,0.6), rgba(16,185,129,0.4))'
                     : status === 'current'
                       ? 'rgba(6, 182, 212, 0.15)'
-                      : 'rgba(100, 116, 139, 0.08)',
+                      : 'linear-gradient(135deg, rgba(71,85,105,0.75), rgba(51,65,85,0.65))',
                   backdropFilter: status === 'completed' ? 'blur(2px)' : 'blur(4px) saturate(130%)',
                   WebkitBackdropFilter: status === 'completed' ? 'blur(2px)' : 'blur(4px) saturate(130%)',
                   border: status === 'completed'
                     ? '2px solid rgba(34, 197, 94, 0.7)'
                     : status === 'current'
                       ? '1.5px solid rgba(6, 182, 212, 0.5)'
-                      : '1.5px solid rgba(255, 255, 255, 0.12)',
+                      : '1.5px solid rgba(255, 255, 255, 0.35)',
                   boxShadow: status === 'completed'
                     ? '0 0 10px rgba(34,197,94,0.4), inset 0 1px 3px rgba(255,255,255,0.2)'
                     : status === 'current'
                       ? 'inset 0 1px 2px rgba(255,255,255,0.15), 0 0 12px rgba(6,182,212,0.4)'
-                      : 'inset 0 1px 1px rgba(255,255,255,0.05)',
+                      : '0 2px 8px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.1)',
                 } : undefined}
               >
-                {status === 'completed' ? '✓' : pos.id}
+                {status === 'completed' ? '✓' : status === 'locked' ? '🔒' : pos.id}
               </button>
             </div>
           );
@@ -589,9 +623,8 @@ export default function ProgressMapPage() {
             );
           })()}
 
-          {/* Dream map button — liquid glass circle on the house, map 1 only */}
+          {/* Dream map button — visible circle on the map, map 1 only */}
           {MAPS.some(m => m.transition === 'dream') && currentMapIndex === 0 && (() => {
-            // Dream unlocked when ALL levels on map 1 completed + 80% accuracy
             const map1Levels = MAPS[0]!.levels;
             const map1Completed = map1Levels.filter(lvl => completedDayIds.includes(lvl.id)).length;
             const map1AllDone = map1Completed >= map1Levels.length;
@@ -599,52 +632,92 @@ export default function ProgressMapPage() {
             const totalAnswered = allScores.length;
             const totalCorrect = allScores.filter((s: any) => s?.correct).length;
             const accuracy = totalAnswered > 0 ? (totalCorrect / totalAnswered) * 100 : 0;
-            const dreamUnlocked = map1AllDone && accuracy >= 80;
+            const dreamUnlocked = map1AllDone;
 
             return (
               <div
-                className="absolute z-30"
-                style={{ top: '10%', right: '12%' }}
+                className="absolute z-30 flex flex-col items-center"
+                style={{ top: '10%', right: '10%' }}
               >
-                {/* Glow halo when unlocked */}
+                {/* Ripple waves — fires every 5s when unlocked */}
                 {dreamUnlocked && (
-                  <div className="absolute inset-0 -m-3 rounded-full animate-dream-halo" />
+                  <>
+                    <div
+                      className="absolute rounded-full pointer-events-none animate-dream-ripple"
+                      style={{
+                        inset: 0,
+                        border: '2.5px solid rgba(168,85,247,0.8)',
+                      }}
+                    />
+                    <div
+                      className="absolute rounded-full pointer-events-none animate-dream-ripple"
+                      style={{
+                        inset: 0,
+                        border: '2.5px solid rgba(168,85,247,0.5)',
+                        animationDelay: '0.4s',
+                      }}
+                    />
+                  </>
                 )}
 
                 <button
                   onClick={() => {
                     const dreamIdx = MAPS.findIndex(m => m.transition === 'dream');
                     setMapTransition('dream-in');
-                    setTimeout(() => { setCurrentMapIndex(dreamIdx); setEditorPositions(MAPS[dreamIdx]!.levels.map(p => ({ ...p }))); setMapTransition('none'); }, 900);
+                    setTimeout(() => {
+                      setCurrentMapIndex(dreamIdx);
+                      setEditorPositions(MAPS[dreamIdx]!.levels.map(p => ({ ...p })));
+                      setMapTransition('none');
+                    }, 900);
                   }}
-                  className={`w-14 h-14 rounded-full transition-all group ${dreamUnlocked ? 'animate-glass-float hover:scale-110 active:scale-95 cursor-pointer' : 'hover:scale-105 cursor-pointer'}`}
+                  className={`relative flex flex-col items-center justify-center transition-all ${
+                    dreamUnlocked
+                      ? 'animate-glass-float hover:scale-110 active:scale-95 cursor-pointer'
+                      : 'hover:scale-105 cursor-pointer opacity-70'
+                  }`}
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '50%',
+                    background: dreamUnlocked
+                      ? 'linear-gradient(145deg, rgba(192,132,252,0.55), rgba(99,102,241,0.45))'
+                      : 'rgba(60,60,80,0.6)',
+                    border: dreamUnlocked
+                      ? '2.5px solid rgba(216,180,254,0.85)'
+                      : '2px solid rgba(255,255,255,0.3)',
+                    boxShadow: dreamUnlocked
+                      ? '0 0 20px rgba(168,85,247,0.6), 0 0 40px rgba(168,85,247,0.25), inset 0 1px 4px rgba(255,255,255,0.3)'
+                      : '0 2px 10px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.1)',
+                    backdropFilter: 'blur(4px)',
+                    WebkitBackdropFilter: 'blur(4px)',
+                  }}
                 >
-                  {/* Liquid glass layers */}
-                  <div className="absolute inset-0 rounded-full"
+                  {/* Top glare highlight */}
+                  <div
+                    className="absolute top-[3px] left-[8px] right-[8px] rounded-full pointer-events-none"
                     style={{
-                      background: dreamUnlocked ? 'linear-gradient(135deg, rgba(168,85,247,0.3), rgba(99,102,241,0.2))' : 'rgba(255,255,255,0.05)',
-                      backdropFilter: 'blur(3px)',
-                      WebkitBackdropFilter: 'blur(3px)',
-                      border: dreamUnlocked ? '2px solid rgba(168,85,247,0.6)' : '2px solid rgba(255,255,255,0.25)',
-                      boxShadow: dreamUnlocked
-                        ? '0 0 16px rgba(168,85,247,0.4), inset 0 1px 3px rgba(255,255,255,0.2)'
-                        : 'inset 0 1px 2px rgba(255,255,255,0.1), 0 2px 8px rgba(0,0,0,0.15)',
+                      height: '32%',
+                      background: 'linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 100%)',
                     }}
                   />
-                  {/* Top highlight */}
-                  <div className="absolute top-[2px] left-[5px] right-[5px] h-[35%] rounded-full"
-                    style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 100%)' }}
-                  />
                   {/* Icon */}
-                  <span className={`relative z-10 flex items-center justify-center w-full h-full text-base font-bold transition-colors ${dreamUnlocked ? 'text-purple-200' : 'text-white/50'}`}>
-                    {dreamUnlocked ? '★' : '🔒'}
+                  <span className="text-2xl leading-none relative z-10">
+                    {dreamUnlocked ? '💤' : '🔒'}
                   </span>
                 </button>
 
-                {/* Label below */}
-                <p className={`mt-1 text-center text-[8px] font-bold leading-tight ${dreamUnlocked ? 'text-purple-300' : 'text-white/40'}`}>
-                  {dreamUnlocked ? 'Бонус' : !map1AllDone ? `${map1Completed}/${map1Levels.length}` : `${Math.round(accuracy)}%/80%`}
-                </p>
+                {/* Label */}
+                <div
+                  className="mt-1.5 px-2 py-0.5 rounded-full text-center"
+                  style={{
+                    background: dreamUnlocked ? 'rgba(168,85,247,0.35)' : 'rgba(0,0,0,0.45)',
+                    border: dreamUnlocked ? '1px solid rgba(216,180,254,0.5)' : '1px solid rgba(255,255,255,0.2)',
+                  }}
+                >
+                  <p className={`text-[10px] font-bold leading-tight whitespace-nowrap ${dreamUnlocked ? 'text-purple-100' : 'text-white/50'}`}>
+                    {dreamUnlocked ? '💤 Бонус: Сон' : !map1AllDone ? `${map1Completed}/${map1Levels.length}` : `${Math.round(accuracy)}%`}
+                  </p>
+                </div>
               </div>
             );
           })()}
@@ -707,11 +780,11 @@ export default function ProgressMapPage() {
                   <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-cyan-400 to-green-400 rounded-full transition-all duration-300"
-                      style={{ width: `${((popupTaskIndex + 1) / popupContent.tasks.length) * 100}%` }}
+                      style={{ width: `${((popupTaskIndex + 1) / popupTaskLimit) * 100}%` }}
                     />
                   </div>
                   <span className="text-white/80 text-xs font-bold">
-                    {popupTaskIndex + 1}/{popupContent.tasks.length}
+                    {popupTaskIndex + 1}/{popupTaskLimit}
                   </span>
                 </div>
               </div>
@@ -740,6 +813,7 @@ export default function ProgressMapPage() {
                       key={`${popupLevelId}-${popupTaskIndex}`}
                       task={popupContent.tasks[popupTaskIndex]!}
                       onComplete={handlePopupTaskComplete}
+                      onSkip={popupTaskIndex < popupTaskLimit - 1 ? () => setPopupTaskIndex((i) => i + 1) : undefined}
                       isRetry={false}
                     />
                   )}
